@@ -30,7 +30,9 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
+    SID         => '@(#) Net::SSLinfo.pm 1.29 12/12/21 18:42:43',
 };
+
 
 ######################################################## public documentation #
 # Documentaion starts here, so we can use the inline documentation for our
