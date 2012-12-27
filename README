@@ -31,8 +31,8 @@
  )      o-saft.pl +check your.tld
 (       more o-saft.pl
  )
-(       Project home is http://www.owasp.org/index.php/Category:O-Saft_Project
- )
+(       Project home is https://www.owasp.org/index.php/Projects/O-Saft
+ )      Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
 (
  )  Get a Copy
 (       git clone git@github.com:OWASP/O-Saft.git
