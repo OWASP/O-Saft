@@ -34,7 +34,7 @@
 
 use strict;
 
-my $SID     = "@(#) o-saft.pl 1.2 12/12/21 00:32:08";
+my $SID     = "@(#) yeast.pl 1.62 13/01/05 20:45:02";
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 my @DATA    = <DATA>;
 { # perl is clever enough to extract it from itself ;-)
@@ -165,7 +165,7 @@ my %check_cert = (
     #------------------+-----------+------------------------------------------
     # +check            value                 label to be printed (description)
     #------------------+-----------+------------------------------------------
-    #'verify'        => {'val' =>'', 'txt' => "Validity Certificate Chain"},
+    'verify'        => {'val' =>'', 'txt' => "Certificate chain validated"},
     'fingerprint'   => {'val' =>'', 'txt' => "Certificate Fingerprint is not MD5"},
     'expired'       => {'val' => 0, 'txt' => "Certificate is not expired"},
     'hostname'      => {'val' => 0, 'txt' => "Certificate is valid according given hostname"},
@@ -205,16 +205,44 @@ my %check_dest = (
 my %check_conn = (
     'IP'            => {'val' =>'', 'txt' => "IP for given hostname "},
     'reversehost'   => {'val' =>'', 'txt' => "Given hostname is same as reverse resolved hostname"},
-    'default'       => {'val' =>'', 'txt' => "Default Cipher for "},
-    'SSLv2'         => {'val' => 0, 'txt' => "Supported Ciphers for SSLv2:"}, # counter for accepted ciphers, 0 if not supported
-    'SSLv3'         => {'val' => 0, 'txt' => "Supported Ciphers for SSLv3:"},
-    'TLSv1'         => {'val' => 0, 'txt' => "Supported Ciphers for TLSv1:"},
-    'TLSv11'        => {'val' => 0, 'txt' => "Supported Ciphers for TLSv11:"},
-    'TLSv12'        => {'val' => 0, 'txt' => "Supported Ciphers for TLSv12:"},
+    'hostname'      => {'val' =>'', 'txt' => "Connected hostname matches certificate's subject"},
     'BEAST-default' => {'val' =>'', 'txt' => "Connection is safe against BEAST attack (default cipher)"},
     'BEAST'         => {'val' =>'', 'txt' => "Connection is safe against BEAST attack (any cipher)"},
     'CRIME'         => {'val' => 0, 'txt' => "Connection is safe against CRIME attack"},
     'SNI'           => {'val' =>'', 'txt' => "Connection is not based on SNI"},
+    'default'       => {'val' =>'', 'txt' => "Default cipher for "},
+     # counter for accepted ciphers, 0 if not supported
+    'SSLv2'         => {'val' => 0, 'txt' => "Supported ciphers for SSLv2 (total)"},
+    'SSLv3'         => {'val' => 0, 'txt' => "Supported ciphers for SSLv3 (total)"},
+    'TLSv1'         => {'val' => 0, 'txt' => "Supported ciphers for TLSv1 (total)"},
+    'TLSv11'        => {'val' => 0, 'txt' => "Supported ciphers for TLSv11 (total)"},
+    'TLSv12'        => {'val' => 0, 'txt' => "Supported ciphers for TLSv12 (total)"},
+    # counter for this type of cipher
+    'SSLv2-LOW'     => {'val' => 0, 'txt' => "Supported   LOW   security ciphers"},
+    'SSLv2-WEAK'    => {'val' => 0, 'txt' => "Supported  WEAK   security ciphers"},
+    'SSLv2-HIGH'    => {'val' => 0, 'txt' => "Supported  HIGH   security ciphers"},
+    'SSLv2-MEDIUM'  => {'val' => 0, 'txt' => "Supported MEDIUM  security ciphers"},
+    'SSLv2--?-'     => {'val' => 0, 'txt' => "Supported unknown security ciphers"},
+    'SSLv3-LOW'     => {'val' => 0, 'txt' => "Supported   LOW   security ciphers"},
+    'SSLv3-WEAK'    => {'val' => 0, 'txt' => "Supported  WEAK   security ciphers"},
+    'SSLv3-HIGH'    => {'val' => 0, 'txt' => "Supported  HIGH   security ciphers"},
+    'SSLv3-MEDIUM'  => {'val' => 0, 'txt' => "Supported MEDIUM  security ciphers"},
+    'SSLv3--?-'     => {'val' => 0, 'txt' => "Supported unknown security ciphers"},
+    'TLSv1-LOW'     => {'val' => 0, 'txt' => "Supported   LOW   security ciphers"},
+    'TLSv1-WEAK'    => {'val' => 0, 'txt' => "Supported  WEAK   security ciphers"},
+    'TLSv1-HIGH'    => {'val' => 0, 'txt' => "Supported  HIGH   security ciphers"},
+    'TLSv1-MEDIUM'  => {'val' => 0, 'txt' => "Supported MEDIUM  security ciphers"},
+    'TLSv1--?-'     => {'val' => 0, 'txt' => "Supported unknown security ciphers"},
+    'TLSv11-LOW'    => {'val' => 0, 'txt' => "Supported   LOW   security ciphers"},
+    'TLSv11-WEAK'   => {'val' => 0, 'txt' => "Supported  WEAK   security ciphers"},
+    'TLSv11-HIGH'   => {'val' => 0, 'txt' => "Supported  HIGH   security ciphers"},
+    'TLSv11-MEDIUM' => {'val' => 0, 'txt' => "Supported MEDIUM  security ciphers"},
+    'TLSv11--?-'    => {'val' => 0, 'txt' => "Supported unknown security ciphers"},
+    'TLSv12-LOW'    => {'val' => 0, 'txt' => "Supported   LOW   security ciphers"},
+    'TLSv12-WEAK'   => {'val' => 0, 'txt' => "Supported  WEAK   security ciphers"},
+    'TLSv12-HIGH'   => {'val' => 0, 'txt' => "Supported  HIGH   security ciphers"},
+    'TLSv12-MEDIUM' => {'val' => 0, 'txt' => "Supported MEDIUM  security ciphers"},
+    'TLSv12--?-'    => {'val' => 0, 'txt' => "Supported unknown security ciphers"},
 ); # %check_conn
 my %check_size = (
     # counts and sizes are integer values, key mast have prefix (len|cnt)_
@@ -359,7 +387,6 @@ my %cfg = (
     'try'           => 0,
     'trace'         => 0,       # 1=trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
     'verbose'       => 0,
-    'vcipher'       => 0,       # special verbose for +cipher command
     'enabled'       => 0,       # 1: only print enabled
     'disabled'      => 0,       # 1: only print disabled
     'nolocal'       => 0,
@@ -756,7 +783,6 @@ my %text = (
         'ASN'       => 'Autonomous System Number',
         'ASN.1'     => 'Abstract System Notation One',
         'BEAST'     => 'Browser Exploit Against SSL/TLS',
-        'CRIME'     => ' Exploit SSL/TLS ',
         'Blowfish'  => 'symmetric block cipher',
         'CAMELLIA'  => 'Encryption algorithm by Mitsubishi and NTT',
         'CAST-128'  => 'Carlisle Adams and Stafford Tavares, block cipher',
@@ -770,13 +796,15 @@ my %text = (
         'CDP'       => 'CRL Distribution Points',
         'CEK'       => 'Content Encryption Key',
         'CFB'       => 'Cipher Feedback',
-        'CFB3'      => '',
+        'CFB3'      => 'Cipher Feedback',
         'CHAP'      => 'Challenge Handshake Authentication Protocol',
         'CMAC'      => 'block cipher algorithm',
         'CMP'       => 'X509 Certificate Management Protocol',
         'CMS'       => 'Cryptographic Message Syntax',
+        'CN'        => 'Common Name',
         'CPS'       => 'Certification Practice Statement',
         'CRC'       => 'Cyclic Redundancy Check',
+        'CRIME'     => ' Exploit SSL/TLS ',
         'CRL'       => 'Certificate Revocation List',
         'CSP'       => 'Certificate Service Provider',
         'CSR'       => 'Certificate Signing Request',
@@ -792,6 +820,7 @@ my %text = (
         'DER'       => 'Distinguished Encoding Rules',
         'DH'        => 'Diffie-Hellman',
         'DHE'       => 'Diffie-Hellman ephemeral',
+        'DPA'       => 'Dynamic Passcode Authentication (see CAP)',
         'DSA'       => 'Digital Signature Algorithm',
         'DSS'       => 'Digital Signature Standard',
         'DTLSv1'    => '',
@@ -829,6 +858,7 @@ my %text = (
         'HTOP'      => 'HMAC-Based One-Time Password',
         'IDEA'      => 'International Data Encryption Algorithm',
         'IV'        => 'Initialization Vector',
+        'JSSE'      => 'Java Secure Socket Extension',
         'KEA'       => 'Key Exchange Algorithm (alias for FORTEZZA-KEA)',
         'KEK'       => 'Key Encryption Key',
         'MARS'      => '',
@@ -845,8 +875,9 @@ my %text = (
         'OCSP'      => 'Online Certificate Status Protocol',
         'OV-SSL'    => "Organisation Validation Certificate",
         'PEM'       => 'Privacy Enhanced Mail',
+        'PII'       => 'Personally Identifiable Information',
+        'PKCS'      => 'Public Key Cryptography Standards',
         'PKI'       => 'Public Key Infrastructure',
-        'PKCS'      => 'Public-Key Cryptography Standards',
         'PSK'       => 'Pre-shared Key',
         'Rabbit'    => 'stream cipher algorithm',
         'Radix-64'  => 'alias for Base-64',
@@ -891,13 +922,14 @@ my %text = (
         'SSL'       => 'Secure Sockets Layer',
         'SSLv2'     => 'Secure Sockets Layer Version 2',
         'SSLv3'     => 'Secure Sockets Layer Version 3',
+        'SSPI'      => 'Security Support Provider Interface',
         'SST'       => 'Serialized Certificate Store format',
         'TEA'       => 'Tiny Encryption Algorithm',
         'TEK'       => 'Traffic Encryption Key',
         'Tiger'     => 'hash function',
         'Threefish' => 'hash function',
         'TLS'       => 'Transport Layer Security',
-        'TLS'       => 'Transport Layer Security version 1',
+        'TLSv1'     => 'Transport Layer Security version 1',
         'TSK'       => 'Transmission Security Key',
         'TTP'       => 'trusted Third Party',
         'Twofish'   => 'symmetric key block cipher',
@@ -918,6 +950,15 @@ my %text = (
     # RFC 4346: TLS Version 1.1
     # RFC 5246: TLS Version 1.2
     # RFC 3546: TLS Extensions
+    # RFC 4366: TLS Extensions
+    #               Server name Indication (SNI): server_name
+    #               Maximum Fragment Length Negotiation: max_fragment_length
+    #               Client Certificate URLs: client_certificate_url
+    #               Trusted CA Indication: trusted_ca_keys
+    #               Truncated HMAC: truncated_hmac
+    #               Certificate Status Request (i.e. OCSP): status_request
+    # RFC 4366: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
+    # RFC 6066: TLS Extensions: Extension Definitions
     # RFC 4749: TLS Compression Methods
     # RFC 5077: TLS session resumption
     # RFC 6125: Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)
@@ -928,7 +969,6 @@ my %text = (
     # RFC 2560: Online Certificate Status Protocol (OCSP)
     # RFC 5019: simplified RFC 2560
     # RFC 4387: X509 PKI Operational Protocols: Certificate Store Access via HTTP
-    # RFC 4366: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
 
     # AIA  : {http://www.startssl.com/certs/sub.class4.server.ca.crt}
     # CDP  : {http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl}
@@ -940,6 +980,9 @@ my %text = (
     #        Strict-Transport-Security: max-age=16070400; includeSubDomains
     #        Apache config:
     #             Header set Strict-Transport-Security "max-age=16070400; includeSubDomains"
+    # SNI apache: http://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
+    #        SSLStrictSNIVHostCheck, which controls whether to allow non SNI clients to access a name-based virtual host. 
+    #        when client provided the hostname using SNI, the new environment variable SSL_TLS_SNI
 
 ); # %text
 
@@ -948,9 +991,6 @@ $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 
 # inernal functions
 # -------------------------------------
-my $_trace = 0;
-sub _trace($)          { print "#Net::SSLinfo::" . $_[0] . "\n" if ($_trace > 0); }
-
 # check functions for array members and hash keys
 sub _is_hashkey($$)    { my $is=shift; my @in=keys %{$_[0]}; return grep({$_ eq $is} @in); }
 sub _is_member($$)     { my $is=shift; my @in=@{$_[0]};      return grep({$_ eq $is} @in); }
@@ -976,7 +1016,8 @@ sub get_cipher_desc($) { my $c=$_[0]; my @c = @{$ciphers{$c}}; shift @c; return 
 
 # some debug functions
 sub _error    { local $\ = "\n"; print "**ERROR: " . @_; }
-sub _yeast($) { local $\ = "\n"; print "#yeast: "  . $_[0]; }
+sub _yeast($) { local $\ = "\n"; print "#O-Saft: " . $_[0]; }
+sub _trace($) { print "#O-Saft::" . $_[0] if ($cfg{'trace'} > 0); }
 
 sub _setcmd() {
     # check for external commands and initialize %cmd if necessary
@@ -992,11 +1033,13 @@ sub _setcmd() {
         # Windows is too stupid for secure program calls
         $_timeout = '\\' .  $_timeout if (($_timeout ne '') and ($_timeout !~ /\//));
         $_openssl = '\\' .  $_openssl if (($_openssl ne '') and ($_openssl !~ /\//));
-
+        _trace("_setcmd MSWin32");
     }
     print "**WARNING: no timeout command found, expect some long network timeouts (>2 min)\n" if ($_timeout eq '');
     $cmd{'openssl'} = $_openssl;
     $cmd{'timeout'} = $_timeout;
+    _trace("_setcmd timeout: $_timeout");
+    _trace("_setcmd openssl: $_openssl");
 } # _setcmd
 
 
@@ -1043,14 +1086,14 @@ while ($#argv >= 0) {
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
     if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     next; }
-    if ($arg eq  '--vcipher')           { $cfg{'vcipher'}++;     next; }
     if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
+    if ($arg eq  '--trace--')           { $cfg{'trace'}     = -1;next; } # special internal tracing
     # options form other programs for compatibility
     if ($arg =~ /^--?no-failed$/)       { $cfg{'disabled'}  = 0; next; } # sslscan
     if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; }
 #   if ($arg eq  '--insecure')          { $cfg{'no_failed'} = 0; next; } # ToDo to be tested
     if ($arg eq  '--version')           { $arg = '+version';           }
-    # options form other programs which we treat as command
+    # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg eq  '--list')              { $arg = '+list';              } # no next!
     if ($arg eq  '--chain')             { $arg = '+chain';             } # as these
     if ($arg eq  '--cipher')            { $arg = '+cipher';            } # should
@@ -1114,7 +1157,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+check')  { @{$cfg{'do'}} = 'check';          ;next; }
     if ($arg =~ /^\+(.*)/)  { # got a command
         my $val = $1;
-        _yeast("args: command= $val") if ($cfg{'verbose'} == 4);
+        _yeast("args: command= $val") if ($cfg{'trace'} == 4);
         next if ($arg =~ m/^\+\s*$/);  # ignore empty arguments; for CGI mode
         if ($val =~ m/^exec$/i) {      # +exec is special
             $cfg{'exec'} = 1;
@@ -1150,12 +1193,12 @@ while ($#argv >= 0) {
             $port =~ s#(?:[^/]+/+)?([^/]*).*#$1#;  # match host:port
             $port =~ s#[^:]*:(\d+).*#$1#;
             $cfg{'port'} = $port;
-            _yeast("port: $port") if ($cfg{'verbose'} > 0);
+            _yeast("port: $port") if ($cfg{'trace'} > 0);
         }
         $arg =~ s#(?:[^/]+/+)?([^/]*).*#$1#;
         $arg =~ s#:(\d+)##;
         push(@{$cfg{'hosts'}}, $arg);
-        _yeast("host: $arg") if ($cfg{'verbose'} > 0);
+        _yeast("host: $arg") if ($cfg{'trace'} > 0);
         $typ = 'host';
         next;
     }
@@ -1184,8 +1227,10 @@ $Net::SSLinfo::timeout_sec = $cfg{'timeout'};
 
 # call with other libraries
 # -------------------------------------
-_yeast("args: exec= $cfg{'exec'}") if ($cfg{'verbose'} == 4);
-_yeast("args: commands= " . join(' ', @{$cfg{'do'}})) if ($cfg{'verbose'} == 4);
+if ($cfg{'trace'} == 4) {
+    _yeast("args: exec= $cfg{'exec'}");
+    _yeast("args: commands= " . join(' ', @{$cfg{'do'}}));
+}
 
 # NOTE: this must be the very first action/command
 if ($cfg{'exec'} == 0) {
@@ -1197,12 +1242,12 @@ if ($cfg{'exec'} == 0) {
         local $\ = "\n";
         $ENV{PATH} = $cmd{'path'} . ':' . $ENV{PATH};
         $ENV{$cmd{envlibvar}} = $cmd{'libs'};
-        if ($cfg{'verbose'} > 0) {
+        if ($cfg{'trace'} > 0) {
             _yeast("exec: envlibvar= $cmd{envlibvar}");
             _yeast("exec: $cmd{envlibvar}= $ENV{$cmd{envlibvar}}");
             _yeast("exec: PATH= $ENV{PATH}");
         }
-        _yeast("exec: $0 +exec " . join(" ", @ARGV));
+        _trace("exec: $0 +exec " . join(" ", @ARGV));
         exec $0, '+exec', @ARGV;
     }
 }
@@ -1212,7 +1257,7 @@ if ($cfg{'exec'} == 0) {
 push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0); # command
 undef @{$cfg{'version'}} if (_is_do('check'));         # force to: SSLv2 SSLv3 TLSv1
 if ($#{$cfg{'version'}} < 0) {                         # versions
-    _trace "yeast: set default version SSLv2, SSLv3, TLSv1";
+    _yeast("set default version SSLv2, SSLv3, TLSv1") if ($cfg{'trace'} > 0);
     push(@{$cfg{'version'}}, 'SSLv2');
     push(@{$cfg{'version'}}, 'SSLv3');
     push(@{$cfg{'version'}}, 'TLSv1');
@@ -1221,21 +1266,21 @@ if ($#{$cfg{'version'}} < 0) {                         # versions
 
 local $\ = "\n";
 
-if ($cfg{'verbose'} > 0) {
+if ($cfg{'trace'} > 0) {
     @{$cfg{'do'}} = @{$cfg{'info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'info'}});
-    print "#      verbose= $cfg{'verbose'}";
-    print "#        trace= $cfg{'trace'}";
-    print "# cmd->timeout= $cmd{'timeout'}";
-    print "# cmd->openssl= $cmd{'openssl'}";
-    print "#  use_openssl= $cmd{'extopenssl'}";
-    print "#      use_SNI= $Net::SSLinfo::use_SNI";
-    print "#      targets= " . join(' ', @{$cfg{'hosts'}});
+    _yeast("      verbose= $cfg{'verbose'}");
+    _yeast("        trace= $cfg{'trace'}");
+    _yeast(" cmd->timeout= $cmd{'timeout'}");
+    _yeast(" cmd->openssl= $cmd{'openssl'}");
+    _yeast("  use_openssl= $cmd{'extopenssl'}");
+    _yeast("      use_SNI= $Net::SSLinfo::use_SNI");
+    _yeast("      targets= " . join(' ', @{$cfg{'hosts'}}));
     foreach my $key (qw(port format legacy openssl cipher)) {
-        printf("# %12s= %s\n", $key, $cfg{$key});
+        printf("#O-Saft: %12s= %s\n", $key, $cfg{$key});
     }
-    print "#      version= " . join(' ', @{$cfg{'version'}});
-    print "#     commands= " . join(' ', @{$cfg{'do'}});
-    print '';
+    _yeast("      version= " . join(' ', @{$cfg{'version'}}));
+    _yeast("     commands= " . join(' ', @{$cfg{'do'}}));
+    _yeast('');
 }
 
 # main: do the work
@@ -1251,13 +1296,11 @@ if (_is_do('libversion')) {
 }
 
 if (_is_do('list')) {
-    _trace "yeast +list";
+    _trace(" +list");
     my $have_cipher = 0;
     my $miss_cipher = 0;
     my $ciphers     = '';
-    if ($cfg{'verbose'} > 0) {
-        $ciphers = Net::SSLinfo::cipher_local();
-    }
+       $ciphers     = Net::SSLinfo::cipher_local() if ($cfg{'verbose'} > 0);
     print "# List $0 ciphers ...\n";
     print "#Cipher\t" . join("\t", @{$ciphers_desc{'text'}}) . "\n";
     printf("%-31s %s\n", "# cipher", join("\t", @{$ciphers_desc{'head'}}));
@@ -1308,6 +1351,7 @@ if (_is_do('list')) {
 }
 
 if (_is_do('ciphers')) {
+    _trace(" +ciphers");
     if ($#{$cfg{'hosts'}} < 0) {    # no target given, try to use openssl
         print "**WARNING: no target given, try to get cipher list from openssl" if ($cfg{'verbose'} > 0);
         printtext($cfg{'legacy'}, 'ciphers_openssl', Net::SSLinfo::cipher_local());
@@ -1323,7 +1367,7 @@ if ($cfg{'short'} > 0) {            # reconfigure texts
 
 # run the appropriate SSL tests for each host
 foreach my $host (@{$cfg{'hosts'}}) {
-    _trace "yeast(" . ($host||'') . "," . ($cfg{'port'}||'') . ")";
+    _trace(" (" . ($host||'') . "," . ($cfg{'port'}||'') . ")");
     print "# Target: $host:$cfg{'port'}\n" if ($cfg{'verbose'} > 0);
     my $ip = gethostbyname($host);
     my $cn = '';
@@ -1334,11 +1378,12 @@ foreach my $host (@{$cfg{'hosts'}}) {
     $check_conn{'IP'}->{val} = $cfg{'IP'};
     $check_conn{'reversehost'}->{val}   = gethostbyaddr($ip, AF_INET);
 
-    if ($cfg{'usesni'} != 0) {      # following check usefull with SNI only
+    if ($cfg{'usesni'} != 0) {      # following check useful with SNI only
         $Net::SSLinfo::use_SNI     = 0;
         $data{'cn_nossni'}->{val}  = $data{'commonName'}->{val}($host, $cfg{'port'});
         Net::SSLinfo::do_ssl_close($host, $cfg{'port'});
         $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
+        _trace(" cn_nossni: $data{'cn_nossni'}->{val}");
     }
 
     # Check if there is something listening on $host:$port
@@ -1346,43 +1391,62 @@ foreach my $host (@{$cfg{'hosts'}}) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
         # as side effect we get the local cipher list
-    my $ciphers = $cfg{'cipher'};
-    if ($ciphers eq 'yeast') {  # default setting: use all supported
-        $ciphers = Net::SSLinfo::ciphers($host, $cfg{'port'});
-    }
+    my $ciphers = Net::SSLinfo::ciphers($host, $cfg{'port'});
     my $err     = Net::SSLinfo::errors( $host, $cfg{'port'});
     if ($err !~ /^\s*$/) {
         print "# " . $err if ($cfg{'verbose'} > 0);
         warn("**WARNING: Can't make a connection to $host:$cfg{'port'}; target ignored");
         goto CLOSE_SSL;
     }
-    #dbx# print "#dbx# ciphers: " . $ciphers;
+
+    if ($cfg{'cipher'} ne 'yeast') {  # default setting: use all supported
+        if ($cfg{'cipher'} =~ m/(NULL|COMP|DEF|HIG|MED|LOW|PORT| |:|@|!|\+)/) {
+            _trace(" cipher match: $cfg{'cipher'}");
+            Net::SSLinfo::do_ssl_close($host, $cfg{'port'}); # close from previous call
+            # ToDo: Net::SSLinfo::set_cipher_list('SSLv3', $cfg{'cipher'});
+            #       $ciphers = Net::SSLinfo::ciphers($host, $cfg{'port'});
+            # ToDo: 'cause Net::SSLeay::set_cipher_list() returns Segmentation fault
+            # we need to use Net::SSLinfo::do_open_ssl(), see Net::SSLinfo.pm
+            Net::SSLinfo::do_ssl_open( $host, $cfg{'port'}, $cfg{'cipher'});
+            $ciphers = Net::SSLinfo::cipher_local($host, $cfg{'port'});
+            Net::SSLinfo::do_ssl_close($host, $cfg{'port'});
+            _yeast(" ciphers: $ciphers") if ($cfg{'trace'} > 0);
+        }
+    }
 
     if (_is_do('dump')) {
+        _trace(" +dump");
+        if ($cfg{'trace'} > 1) {   # requires: --v --trace --trace
+            _trace(' ############################################################ %SSLinfo');
+            print Net::SSLinfo::dump();
+        }
         printdump($cfg{'legacy'}, $host, $cfg{'port'});
     }
 
     if (($info == 1) or _is_do('check')) {
+        _trace(" +info");
         printruler();
-        printcheck($cfg{'legacy'}, 'Given hostname' . ':',       $host);
-        printcheck($cfg{'legacy'}, 'Reverse resolved hostname:', $cfg{'rhost'});
-        printcheck($cfg{'legacy'}, 'IP for given hostname:',     $cfg{'IP'});
+        printcheck($cfg{'legacy'}, 'Given hostname',            $host);
+        printcheck($cfg{'legacy'}, 'Reverse resolved hostname', $cfg{'rhost'});
+        printcheck($cfg{'legacy'}, 'IP for given hostname',     $cfg{'IP'});
         printruler();
     }
 
     # check ciphers manually (required for +check also)
     if (_is_do('cipher') or _is_do('check')) {
+        _trace(" +cipher");
         foreach my $version (@{$cfg{'version'}}) {
             # TODo: single cipher check: grep for cipher in %{$ciphers}
             @results = ();
             #dbx# print "#dbx# $version # ", keys %{$ciphers} ; #sort keys %hash; # exit;
             printtitle($cfg{'legacy'}, $version, join(':', $host, $cfg{'port'}));
-            checkcipher($version, $host, $cfg{'port'}, $ciphers, \%ciphers);
-            printresult($version, $host, @results);
+            checkciphers($version, $host, $cfg{'port'}, $ciphers, \%ciphers);
+            printciphers($version, $host, @results);
         }
     }
 
     if (_is_do('check')) {
+        _trace(" +check");
         printruler();
         print "**WARNING: no openssl, some checks are missing" if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
         checkssl($host, $cfg{'port'});
@@ -1390,30 +1454,33 @@ foreach my $host (@{$cfg{'hosts'}}) {
     }
 
     if (_is_do('sizes')) {
+        _trace(" +sizes");
         checksizes($host, $cfg{'port'});
         goto CLOSE_SSL;
     }
 
     if (_is_do('sni')) {
+        _trace(" +sni");
         checksni($host, $cfg{'port'});
-        goto CLOSE_SSL;
     }
 
     if (_is_do('s_client')) { # for debugging only
+        _trace(" +s_client");
         print "#{\n", Net::SSLinfo::s_client($_[0], $_[1]), "\n#}";
     }
 
     # now do all other required checks
     local $\ = "\n";
     foreach my $label (@{$cfg{'do'}}) {
-        # ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
+# ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
         next if ($label =~ m/^(exec|cipher|check)$/); # already done or done later
-        print "# do: " . $label if ($cfg{'verbose'} > 1);
+        _trace(" do: " . $label) if ($cfg{'trace'} > 1);
         printtext($cfg{'legacy'}, $label, $host);
     }
 
     CLOSE_SSL:
     Net::SSLinfo::do_ssl_close($host, $cfg{'port'});
+    _trace(" done: $host");
 
 } # foreach host
 
@@ -1427,41 +1494,43 @@ sub _setvalue($)       { return ($_[0] eq '') ? 'yes' : 'no (' . $_[0] . ')'; }
 sub _isbeast($)        { return ($_[0] =~ /(RC4)/) ? '' : $_[0] . ' '; }
     # return given cipher if vulnerable to BEAST attack, empty string otherwise
 
-sub checkcipher($$$$$) {
+sub checkciphers($$$$$) {
     # test target if geven ciphers are accepted, results stored in global @results
     # NOTE that verbose output is printed directly (hence preceeds results)
     my $ssl     = shift;
     my $host    = shift;
     my $port    = shift;
-    my $ciphers = shift;    # ciphers to be checked
-    my $hashref = shift;    # our list of ciphers
+    my $ciphers = shift;# ciphers to be checked
+    my $hashref = shift;# our list of ciphers
     my %hash    = %$hashref;
     my $verbose = $cfg{'verbose'};
+                        # verbose==2 : print remotly checked ciphers
+                        # verbose==3 : print processed ciphers
+                        # verbose==4 : print how cipher is processed
     local   $|  = 1;    # do not buffer (for verbosity)
     my $skip    = 0;
 
-    if ($cfg{'vcipher'} > 0) {
-        $verbose = -10 - $cfg{'vcipher'};  # special verbose starts with -11
-    }
-
-    printf "#" if ($verbose > 0);
+    printf("# checkciphers: ") if ($cfg{'verbose'} == 2);
+    # ToDo: change logic of following loop
+    #     now we loop over *our* ciphers which misses ciphers available in
+    #     the local SSL implementation (if there are more)
     foreach my $c (sort {$hash{$a} cmp $hash{$b}} keys %hash) {
-        printf " $c"      if ($verbose > 0);
-        printf "# $c ..." if ($verbose == -11);
-        if (0 >= grep(/^$c$/, split(" ", $ciphers))) { # cipher not supported by local SSL implementation
-            if (!$cfg{'nolocal'}) {
-                print " skipped" if ($verbose < -10);
-                $skip++;
-                next;
-            }
-            #printline($cfg{'legacy'}, $c, 'not') if (!$cfg{'disabled'}); # ToDo: print with --v only
-            print "# --local" if ($verbose < -10);
-            push(@results, [$c, 'not']);
+        printf("# checkciphers: $c\n") if ($cfg{'verbose'} == 3);
+        printf("# checkciphers: $c\t") if ($cfg{'verbose'} == 4);
+# ToDo:  cipher not supported by local SSL implementation
+        #    if (!$cfg{'nolocal'}) {
+        #        $skip++;
+        #        next;
+        #    }
+        #    #printline($cfg{'legacy'}, $c, 'not') if (!$cfg{'disabled'}); # ToDo: print with --v only
+        #    push(@results, [$c, 'not']);
+        if (0 >= grep(/^$c$/, split(/[ :]/, $ciphers))) {
+            # cipher not to be checked
+            print("skip\n") if ($cfg{'verbose'} == 4);
+            next;
         }
-        if ($verbose < -10) {
-            printf "# $c ... connect to $host:$port using $ssl " if ($verbose < -11);
-            print "";
-        }
+        printf(" $c")    if ($cfg{'verbose'} == 2);
+        print("check\n") if ($cfg{'verbose'} == 4);
         #dbx# print "#dbx# H: $host , $cfg{'host'} \n";
         my $sslsocket = IO::Socket::SSL->new(
             PeerAddr        => $host,
@@ -1486,16 +1555,23 @@ sub checkcipher($$$$$) {
             push(@results, [$c, 'yes']);
 
             # check weak ciphers
-            $check_dest{'NULL'}->{val}  .= ' ' . $c  if ($c =~ /NULL/);
-            $check_dest{'EDH'}->{val}   .= ' ' . $c  if ($c =~ /EDH/);
-            $check_dest{'EXPORT'}->{val}.= ' ' . $c  if ($c =~ /EXP/);
+            $check_dest{'NULL'}->{val}  .= ' ' . $c if ($c =~ /NULL/);
+            $check_dest{'EDH'}->{val}   .= ' ' . $c if ($c =~ /EDH/);
+            $check_dest{'EXPORT'}->{val}.= ' ' . $c if ($c =~ /EXP/);
             # check compliance
-            $check_dest{'ISM'}->{val}   .= ' ' . $c  if ($c =~ /$cfg{'compliance'}->{'ISM'}/);
-            $check_dest{'PCI'}->{val}   .= ' ' . $c  if ($c =~ /$cfg{'compliance'}->{'PCI'}/);
-            $check_dest{'FIPS'}->{val}  .= ' ' . $c  if ($c =~ /$cfg{'compliance'}->{'FIPS-140'}/);
-            $check_dest{'FIPS'}->{val}  .= ' ' . $c  if ($c !~ /(3DES|AES)/);
+            $check_dest{'ISM'}->{val}   .= ' ' . $c if ($c =~ /$cfg{'compliance'}->{'ISM'}/);
+            $check_dest{'PCI'}->{val}   .= ' ' . $c if ($c =~ /$cfg{'compliance'}->{'PCI'}/);
+            $check_dest{'FIPS'}->{val}  .= ' ' . $c if ($c =~ /$cfg{'compliance'}->{'FIPS-140'}/);
+            $check_dest{'FIPS'}->{val}  .= ' ' . $c if ($c !~ /(3DES|AES)/);
             # check attacks
             $check_conn{'BEAST'}->{val} .= _isbeast($c) if ($ssl =~ /(SSLv3|TLSv1)/);
+            # counters
+            my $risk = get_cipher_sec($c);
+            $check_conn{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/);
+            $check_conn{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
+            $check_conn{$ssl . '-WEAK'}->{val}++    if ($risk =~ /WEAK/i);
+            $check_conn{$ssl . '-HIGH'}->{val}++    if ($risk =~ /HIGH/i);
+            $check_conn{$ssl . '-MEDIUM'}->{val}++  if ($risk =~ /MEDIUM/i);
 
 #nok# print Net::SSL::ExpireDate($sslsocket);
 # see: http://search.cpan.org/~mikem/Net-SSLeay-1.48/lib/Net/SSLeay.pod
@@ -1549,9 +1625,9 @@ sub checkcipher($$$$$) {
             $sslsocket->close(SSL_ctx_free => 1);
         }
     } # foreach %hash
-    print "\n" if ($verbose > 0);
+    print "\n" if ($verbose > 1);
 
-} # checkcipher
+} # checkciphers
 
 sub _checksni($$) {
     # check if given FQDN needs to use SNI; sets $check_conn{'SNI'}, $check_cert{'hostname'}
@@ -1564,10 +1640,13 @@ sub _checksni($$) {
             $check_conn{'SNI'}->{val} = $data{'cn_nossni'}->{val};
         }
     }
+    # $check_cert{'hostname'} and $check_conn{'hostname'} are similar
     if ($data{'commonName'}->{val}($host) eq $host) {
         $check_cert{'hostname'}->{val} = '';
+        $check_conn{'hostname'}->{val} = '';
     } else {
         $check_cert{'hostname'}->{val} = $data{'cn_nossni'}->{val}; #$host;
+        $check_conn{'hostname'}->{val} = $host; # $data{'cn_nossni'}->{val}
     }
 } # _checksni
 
@@ -1623,9 +1702,10 @@ sub checksni($$) {
     my $value   = '';
     _checksni($host, $port);
     foreach my $label (qw(SNI hostname)) {
+        _printkey($label) if ($cfg{'trace'} == -1);
         $value = $check_conn{$label}->{val};
         $value = _setvalue($value);
-        printcheck($cfg{'legacy'}, $check_conn{$label}->{txt} . ':', $value);
+        printcheck($cfg{'legacy'}, $check_conn{$label}->{txt}, $value);
     }
 } # checksni
 
@@ -1656,8 +1736,8 @@ sub checkssl($$) {
 
     print "\nPerformed checks:\n";
 
-    # compliance checks are be done in checkcipher() except FIPS
-    # done in checkcipher(): NULL, EDH, EXPORT, ISM, PCI, FIPS, BEAST
+    # compliance checks are be done in checkciphers() except FIPS
+    # done in checkciphers(): NULL, EDH, EXPORT, ISM, PCI, FIPS, BEAST
     foreach $ssl (qw(SSLv2 SSLv3)) { $check_dest{'FIPS'}->{val} .= ' ' . $ssl if ($check_conn{$ssl}->{val} != 0); }
     if ($check_dest{$ssl}->{val} eq 0) {
         $check_dest{'hasSSLv2'}->{val}   = '';
@@ -1675,6 +1755,7 @@ sub checkssl($$) {
         $check_dest{$label}->{val}   = $value if ($value eq '');
     }
     foreach $label (qw(verify selfsigned)) {
+print "#### $label : $value #";
         $value = $data{$label}->{val}($host);
         $check_cert{$label}->{val}   = $value if ($value eq '');
     }
@@ -1691,7 +1772,8 @@ sub checkssl($$) {
         } else {
             $value = $cipher . ' ' . get_cipher_sec($cipher);
         }
-        printcheck($cfg{'legacy'}, $check_conn{default}->{txt} . $ssl . ':', $value);
+        _printkey($ssl) if ($cfg{'trace'} == -1);
+        printcheck($cfg{'legacy'}, $check_conn{default}->{txt} . $ssl, $value);
         if ($ssl =~ /(SSLv3|TLSv1)/) {
             if (_isbeast($cipher) ne '') {
                 $check_conn{'BEAST-default'}->{val} .= $ssl . ':' . $cipher . ' ';
@@ -1701,33 +1783,37 @@ sub checkssl($$) {
 
 # ToDo: folgendes durch sinnvollen Check ersetzten {
     foreach $label (qw(verify_hostname verify_altname verify valid fingerprint modulus_len sigdump_len)) {
+        #_printkey($label) if ($cfg{'trace'} == -1); # not necessary, done in printtext()
         printtext($cfg{'legacy'}, $label, $host);
     }
 #}
     foreach $label (sort keys %check_cert) {
         $value = $check_cert{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
-        printcheck($cfg{'legacy'}, $check_cert{$label}->{txt} . ':', _setvalue($value));
+        _printkey($label) if ($cfg{'trace'} == -1);
+        printcheck($cfg{'legacy'}, $check_cert{$label}->{txt}, _setvalue($value));
     }
     foreach $label (sort keys %check_dest) {
         next if ($label =~ /^\s*$/);                # lazy programming :)
         $value = $check_dest{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
-        printcheck($cfg{'legacy'}, $check_dest{$label}->{txt} . ':', _setvalue($value));
+        _printkey($label) if ($cfg{'trace'} == -1);
+        printcheck($cfg{'legacy'}, $check_dest{$label}->{txt}, _setvalue($value));
     }
     foreach $label (sort (keys %check_conn)) {
         next if ($label =~ /^\s*$/);                # lazy programming :)
         next if ($label =~ /^(SSLv|TLSv|default|IP)/); # already printed
         $value = $check_conn{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
+        _printkey($label) if ($cfg{'trace'} == -1);
         if ($label eq 'BEAST') {                    # check is special
             if (! _is_do('cipher') && ! _is_do('check')) {
                 $value = "(check possible in conjunction with `+cipher' only)";
-                printcheck($cfg{'legacy'}, $check_conn{$label}->{txt} . ':', $value) if ($cfg{'verbose'} > 0);
+                printcheck($cfg{'legacy'}, $check_conn{$label}->{txt}, $value) if ($cfg{'verbose'} > 0);
                 next;
             }
         }
-        printcheck($cfg{'legacy'}, $check_conn{$label}->{txt} . ':', _setvalue($value));
+        printcheck($cfg{'legacy'}, $check_conn{$label}->{txt}, _setvalue($value));
     }
 
     printsizes($cfg{'legacy'});
@@ -1750,7 +1836,7 @@ sub checkssl($$) {
 sub get_default($$$) {
     # return default cipher from target (or local ssl if no target given)
     my $cipher = '';
-    _trace "# get_default(" . ($_[0]||'') . "," . ($_[1]||'') . "," . ($_[2]||'') . ")";
+    _trace(" get_default(" . ($_[0]||'') . "," . ($_[1]||'') . "," . ($_[2]||'') . ")");
     my $sslsocket = IO::Socket::SSL->new(
         PeerAddr        => $_[0],
         PeerPort        => $_[1],
@@ -1776,23 +1862,20 @@ sub _dump($$) {
         # using curly prackets 'cause they most likely are not part og any data
 } # _dump
 sub dumpdata()    { printdump(@_); }
+sub _printkey($)  { printf("#%-16s# ", '[' . join(' ',@_) . ']'); }
 sub printruler()  { print '-'x39, '+' . '-'x35; }
 sub printdump($$) {
     # just dumps internal database %data and %check_*
     my ($legacy, $host, $port) = @_;   # NOT IMPLEMENTED
     print '######################################################################### %data';
     foreach my $key (keys %data) {
-        next if ($key =~ m/(cn|PEM|pem|x509|authority|dates|expire|verify)/); # ignore aliases
+        next if ($key =~ m/(cn|PEM|pem|x509|authority|dates|expire)/); # ignore aliases
         _dump($data{$key}->{txt}, $data{$key}->{val}($host));
     }
     print '######################################################################## %check';
     foreach my $key (keys %check_conn) { _dump($check_conn{$key}->{txt}, $check_conn{$key}->{val}); }
     foreach my $key (keys %check_cert) { _dump($check_cert{$key}->{txt}, $check_cert{$key}->{val}); }
     foreach my $key (keys %check_dest) { _dump($check_dest{$key}->{txt}, $check_dest{$key}->{val}); }
-    if ($cfg{'verbose'} > 1) {
-        print '###################################################################### %SSLinfo';
-        print Net::SSLinfo::dump();
-    }
 } # printdump
 
 sub printtext($$) {
@@ -1802,6 +1885,7 @@ sub printtext($$) {
         warn("**WARNING: unknown label '$label'; ignored") if ($cfg{'verbose'} > 2); # seems to be a programming error
         return;
     }
+    _printkey($label) if ($cfg{'trace'} == -1);
     my $val;
     # { always pretty print
         if ($label =~ m/X509$/) {
@@ -1874,7 +1958,7 @@ sub printtitle($$$) {
     if ($legacy eq 'full')      { print $txt; }
 } # printtitle
 
-sub printhead($) {
+sub printheader($) {
     # print header line according given legacy format
     my $legacy  = shift;
     if ($legacy eq 'sslyze')    {}
@@ -1890,9 +1974,9 @@ sub printhead($) {
         # host:port protocol    supported   cipher    compliant security    description
         printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", 'host:port', 'Protocol', 'supported', 'Cipher', 'compliant', 'Security', 'Description');
     }
-} # printhead
+} # printheader
 
-sub printfoot($) {
+sub printfooter($) {
     # print footer line according given legacy format
     my $legacy  = shift;
     if ($legacy eq 'sslyze')    { print "\n SCAN COMPLETED IN ...\n"; }
@@ -1905,7 +1989,7 @@ sub printfoot($) {
     if ($legacy eq 'simple')    {}
     if ($legacy eq 'compact')   {}
     if ($legacy eq 'full')      {}
-} # printfoot
+} # printfooter
 
 sub printdefault($$) {
     # print default cipher according given legacy format
@@ -1923,6 +2007,28 @@ sub printdefault($$) {
     if ($legacy eq 'full')      {}
     printline($cfg{'legacy'}, $data{default}->{val}($host), 'yes');
 } # printdefault
+
+sub printtotals($$) {
+    # print total number of ciphers supported according given legacy format
+    my $legacy  = shift;
+    my $ssl     = shift;
+    my $key     = '';
+    if ($legacy eq 'ssldiagnos') {
+        print "\n-= SUMMARY =-\n";
+        printf("Weak:         %s\n", $check_conn{$ssl . '-WEAK'}->{val});
+        printf("Intermediate: %s\n", $check_conn{$ssl . '-MEDIUM'}->{val}); # MEDIUM
+        printf("Strong:       %s\n", $check_conn{$ssl . '-HIGH'}->{val});   # HIGH
+    }
+    if ($legacy =~ /(full|simple)/) {
+        foreach (qw(LOW WEAK MEDIUM HIGH -?-)) {
+            $key = $ssl . '-' . $_;
+            _printkey($key) if ($cfg{'trace'} == -1);
+            printcheck($legacy, $check_conn{$key}->{txt}, $check_conn{$key}->{val});
+        }
+        _printkey($ssl) if ($cfg{'trace'} == -1);
+        printcheck($legacy, $check_conn{$ssl}->{txt}, $check_conn{$ssl}->{val});
+    }
+} # printtotals
 
 sub printline($$$) {
     # print cipher check result according given legacy format
@@ -2021,15 +2127,16 @@ sub _is_print($$$) {
     return 0;
 } # _is_print
 
-sub printresult($$@) {
-    # print all cipher check result according given legacy format
+sub printciphers($$@) {
+    # print all cipher check results according given legacy format
     my $ssl     = shift;
     my $host    = shift;
     my @results = @_;
     my $print   = 0; # default: do not print
+    my $c       = '';
     local    $\ = "\n";
     print "# Report " . $#results . " results ..." if ($cfg{'verbose'} > 1);
-    printhead($cfg{'legacy'});
+    printheader( $cfg{'legacy'});
     printdefault($cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslaudit');
 
     if ($cfg{'legacy'} eq 'sslyze') {
@@ -2037,37 +2144,26 @@ sub printresult($$@) {
         printdefault($cfg{'legacy'}, $host);
         print "";
         print "\n      Accepted Cipher Suites:";
-        foreach my $c (@results) {
+        foreach $c (@results) {
             $print = _is_print (${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
             printline($cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print);
         }
         print "";
         print "\n      Rejected Cipher Suites:";
-        foreach my $c (@results) {
+        foreach $c (@results) {
             $print = _is_print (${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
             printline($cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print);
         }
     } else {
-        foreach my $c (@results) {
+        foreach $c (@results) {
             $print = _is_print (${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
             printline($cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print);
         }
     }
     printdefault($cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslscan');
-    if ($cfg{'legacy'} eq 'ssldiagnose') {
-        print "\n-= SUMMARY =-\n";
-        # ToDo: folgende Werte noch berechenen
-        print "Weak:         \n";
-        print "Intermediate: \n"; # MEDIUM
-        print "Strong:       \n"; # HIGH
-    }
-    printfoot($cfg{'legacy'});
-
-    if ($cfg{'legacy'} =~ /(full|simple)/) {
-        print "Supported Ciphers for $ssl: ", $check_conn{$ssl}->{val};
-    }
-    #
-} # printresult
+    printtotals( $cfg{'legacy'}, $ssl);
+    printfooter( $cfg{'legacy'});
+} # printciphers
 
 sub printversion() {
     # print program and module versions
@@ -2109,15 +2205,15 @@ sub printcheck($$$) {
     my $label   = shift;
     my $value   = shift;
     if ( $legacy eq 'full')   {
-        printf("%s\n", $label);
+        printf("%s\n", $label . ':');
         printf("\t%s\n", $value) if (defined $value);
         return;
     }
     if ( $legacy eq 'compact')   {
-        printf("%s", $label);
+        printf("%s", $label . ':');
         printf("%s\n", $value) if (defined $value);
     } else {
-        printf("%-36s", $label);
+        printf("%-36s", $label . ':');
         printf("\t%s\n", $value) if (defined $value);
     }
 } # printcheck
@@ -2127,10 +2223,11 @@ sub printsizes($) {
     my $legacy = shift;
     my ($label, $value);
     foreach $label (sort keys %check_size) {
+        _printkey($label) if ($cfg{'trace'} == -1);
         $value = '';
         $value = ' bytes' if ($label =~ /^(len)/);
         $value = ' bits'  if ($label =~ /^(len_publickey|len_sigdump)/);
-        printcheck($legacy, $check_size{$label}->{txt} . ':', $check_size{$label}->{val} . $value);
+        printcheck($legacy, $check_size{$label}->{txt}, $check_size{$label}->{val} . $value);
     }
 } # printsizes
 
@@ -2329,6 +2426,9 @@ The Most important commands are (in alphabetical order):
 
 =head2 Commands to check SSL details
 
+    Check for SSL connection in  SNI mode and if given  FQDN  matches
+    certificate's subject.
+
 =head3 +check
 
     Check the SSL connection for security issues. This is the same as
@@ -2352,6 +2452,10 @@ The Most important commands are (in alphabetical order):
     This command is intended for debuuging  as it prints some details
     from the used  Net::SSLinfo  module.
 
+=head3 +sni
+
+    Check for Server Name Indication (SNI) usage.
+
 =head3 +sizes
 
     Check length, size and count of some values in the certificate.
@@ -2361,7 +2465,6 @@ The Most important commands are (in alphabetical order):
     Dump data retrived from  "openssl s_client ..."  call.  Should be
     used for debugging only.
 
-
 =head3 +dump
 
     Dumps internal data for SSL connection and target certificate.
@@ -2369,7 +2472,7 @@ The Most important commands are (in alphabetical order):
     other commands (except "+cipher").
     Each key-value pair is enclosed in "#{" and "#}" .
 
-    Using "--v --v" dumps data of  Net::SSLinfo  too.
+    Using "--trace --trace" dumps data of  Net::SSLinfo  too.
 
 =head3 +exec
 
@@ -2521,9 +2624,13 @@ directly but only herein.
 
     Verify if certificate is trusted.
 
+=begin comment
+
 =head3 +verify
 
     Verify if given hostname matches target's certificate.
+
+=end comment
 
 =head1 OPTIONS
 
@@ -2540,17 +2647,22 @@ directly but only herein.
 
 =head3 --v --verbose
 
-  Print debug messages. Full debug with  --v --v --v .
-  All command line arguments are printed with  --v --v --v --v .
+  Print more information about checks.
 
   Note that this option should be first otherwise some debug messages
   may be missing.
 
-=head3 --vcipher
+=head3 --v --v
 
-  Special verbose for "+cipher" command.
-  More verbose with --vcipher --vcipher .
-  Overvrites "--v"  for "+cipher" command.
+  Print remotly checked ciphers.
+
+=head3 --v --v --v
+
+  Print processed ciphers.
+
+=head3 --v --v --v --v
+
+  Print checked ciphers and check.
 
 =head3 --trace
 
@@ -2565,6 +2677,20 @@ directly but only herein.
 
   Print more debugging messages and pass "trace=3" to Net::SSLeay and
   Net::SSLinfo.
+
+=head3 --trace --trace --trace --trace
+
+  Print processing of all command line arguments.
+
+=head3 --trace--
+
+  Print some internal variable names in debugging messages.
+
+=head2 --trace vs. --v
+
+While  I<--v>  is used to print more data,  I<--trace> is used to print
+more information about internal data such as  procedure names  and/or
+variable names and program flow.
 
 =head2 Options for SSL tool
 
@@ -2777,6 +2903,40 @@ options are ambigious.
 =back
 
   These options are silently ignored.
+
+=head2 Options vs. Commands
+
+For comptibility with other programs and lazy users, some options are
+silently taken as commands, means that  I<--THIS>  becomes  I<+THIS> .
+
+=over 4
+
+=item --help
+
+=item --abbr
+
+=item --todo
+
+=item --chain
+
+=item --default
+
+=item --fingerprint
+
+=item --list
+
+=item --version
+
+=back
+
+Take care that this behaviour may be removed in future versions as it
+conflicts with those options and commands which actually exist, like:
+
+=over 4
+
+=item --sni  vs.  +sni
+
+=back
 
 =head1 LIMITATIONS
 
@@ -3070,6 +3230,14 @@ The code is most likely not thread-safe. Anyway, we don't use them.
 
 =over
 
+=item Check for Server Name Indication (SNI) usage only
+
+    $0 +sni example.tld
+
+=item Check for SNI and print certificate's subject and altname
+
+    $0 +sni +cn +altname example.tld
+
 =item Only print supported (enabled) ciphers:
 
     $0 +cipher --disabled example.tld
@@ -3129,7 +3297,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 12.12.20
+@(#) 13.01.05
 
 =head1 AUTHOR
 
@@ -3139,29 +3307,41 @@ Based on ideas (in alphabetical order) of:
 
 TODO
 
-  * am Ende von +cipher jeweils (pro Version) Anzahl ausgeben
-    Weak, Low, Medium, strong, high, etc.
+  * useSNI funktioniert nicht sauber in Net::SSLinfo, Einstieg siehe 
+    # following check useful with SNI only
 
-  * http implementieren
-  
-  * -cipher=CIPHER  vollständig implementieren
+  * implement +http
 
-  * chain implementieren
+  * implement +chain (see Net::SSLinfo.pm implement verify* also)
 
   * +beast
     dazu muss eigene Check-Route gemacht werden, da Protokoll und
     Cipher pro Protokoll geprueft werden (so wie z.Zt. in checks() )
 
-  * +crime, +renegotiation und +resumption alss Command implementieren
+  * implement +crime, +renegotiation und +resumption as command
 
   * check() Rest implementieren (siehe check{XXX}->{val} == 0
           SSL_honor_cipher_order => 1
 
-  * Net::SSLeay 1.42 als fallback verwenden, da 1.49 bei einigen Seiten
-    Probleme hat (connect() funktioniert nicht).
+  * use Net::SSLeay 1.42 as fallback, because 1.49 causes problems at
+    some sites (connect() fails).
 
   * (nicht wichtig, aber sauber programmieren)
     get_default(): Net::SSLinfo::default() benutzen
+    _yeast() und _trace() vereinheitlichen
+  
+  * --cipher=RC4  funktioniert mit openssl, aber nicht hier
+    (wontfix; nur Shortcuts LOW|MEDIUM|HIGH|+ usw. unterstützt)
+
+  * Net::SSLinfo.pm implement verify*
+
+  * Net::SSLinfo.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
+    return error message
+
+  * Net::SSLinfo.pm Net::SSLeay::set_cipher_list() Segmentation fault
+    (with Net::SSLeay 1.49 and newer)
+
+  * Net::SSLinfo.pm Net::SSLeay::get_cipher_bits() Segmentation fault
 
 =end ToDo
 
