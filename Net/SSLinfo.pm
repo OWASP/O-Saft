@@ -30,7 +30,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.29 12/12/21 18:42:43',
+    SID         => '@(#) Net::SSLinfo.pm 1.30 13/01/05 20:49:10',
 };
 
 
@@ -183,7 +183,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '0.12.20.1';
+    $VERSION   = '13.01.05';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -579,7 +579,13 @@ sub do_ssl_open($$) {
     _trace "do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($cipher||'') . ")";
     goto finished if (defined $_SSLinfo{'ssl'});
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
-    $cipher = $_SSLinfo{'cipherlist'} if ($cipher =~ /^\s*$/);
+
+    if ($cipher =~ m/^\s*$/) {
+        $cipher = $_SSLinfo{'cipherlist'} if ($cipher =~ /^\s*$/);
+    } else {
+        $_SSLinfo{'cipherlist'} = $cipher;
+    }
+    _trace "do_ssl_open cipherlist: $_SSLinfo{'cipherlist'}";
     my $src; # reason why something failed
     my $err;
     my $ssl = undef;
@@ -649,14 +655,17 @@ sub do_ssl_open($$) {
             last;
         }
 
+#ah #ToDo: print "# SNI $Net::SSLinfo::use_SNI";
         if ($Net::SSLinfo::use_SNI == 1) {
             _trace "do_ssl_open: SNI";
             # define SSL_CTRL_SET_TLSEXT_HOSTNAME 55
             # define TLSEXT_NAMETYPE_host_name    0
             $src = 'Net::SSLeay::ctrl()';
             Net::SSLeay::ctrl($ssl, 55, 0, $host)         or {$err = $!} and last;
+#ah #ToDo: above sometimes fails but does not return errors, reason yet unknown
         }
 
+	# following may call _check_peer()
         if (Net::SSLeay::connect($ssl) <= 0) {  # something failed
             $err = $!;
             $src = 'Net::SSLeay::connect()';
@@ -930,9 +939,12 @@ Set cipher list for connection.
 Returns empty string on success, errors otherwise.
 =cut
 
-sub set_cipher_list($) {
+# ToDo: buggy, Net::SSLeay::set_cipher_list() returns  Segmentation fault
+#       (12/2012 for Net::SSLeay 1.49, OpenSSL 0.9.8o)
+sub set_cipher_list($$) {
+    my $ssl    = shift;
     my $cipher = shift;
-    Net::SSLeay::set_cipher_list($_SSLinfo{'ssl'}, $cipher) or return SSLINFO . '::set_cipher_list(' . $cipher . ')';
+    Net::SSLeay::set_cipher_list($ssl, $cipher) or return SSLINFO . '::set_cipher_list(' . $cipher . ')';
     $_SSLinfo{'cipherlist'} = $cipher;
     return '';
 }
