@@ -37,5 +37,5 @@
  )  Get a Copy
 (       git clone git@github.com:OWASP/O-Saft.git
  )      git clone https://github.com:OWASP/O-Saft.git
-(       wget https://github.com/OWASP/O-Saft/o-saft.tgz
+(       wget https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_/
