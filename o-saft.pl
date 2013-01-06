@@ -34,7 +34,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.62 13/01/05 20:45:02";
+my $SID     = "@(#) yeast.pl 1.63 13/01/06 15:54:36";
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 my @DATA    = <DATA>;
 { # perl is clever enough to extract it from itself ;-)
@@ -94,7 +94,7 @@ if ($me =~/\.cgi$/) {
 #   %ciphers_desc   - description of %ciphers data structure
 #   %ciphers        - our ciphers
 
-my $info = 0;       # set to 1 if +info was used
+my $info = 0;       # set to 1 if +info or +sni_check was used
 my @results = ();
 my %data = (        # values will be processed in printtext()
     #------------------+---------------------------------------+-------------------------------------------------------
@@ -400,21 +400,22 @@ my %cfg = (
     'exec'          => 0,       # 1: if +exec command
     'command'       => '',
     'commands'      => [qw(ciphers list version libversion exec info info--v check help dump sizes
-                        beast cipher renegotiation resumption selfsigned s_client sni
+                        beast cipher renegotiation resumption selfsigned s_client sni sni_check check_sni
                         cn commonName 
                         certificate pem text issuer subject altname after before expire chain valid
                         fingerprint fingerprint_hash fingerprint_md5 fingerprint_sha1 fingerprint_type
                         email serial signame sigdump sigdump_len extensions aux subject_hash issuer_hash trustout
                         pubkey pubkey_algorithm modulus modulus_len modulus_exponent
                         issuerX509 subjectX509
-                        default verify verify_altname
+                        default verify verify_altname verify_hostname
                         )],
+    'sni--v'        => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'info'          => [qw(
                         cn subject issuer altname before after chain
                         fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5 fingerprint_type
                         email serial signame sigdump_len extensions aux trustout ocsp_uri ocspid
                         pubkey_algorithm modulus modulus_len modulus_exponent
-                        expansion compression selfsigned verify verify_altname
+                        expansion compression selfsigned verify verify_altname verify_hostname
                         default ciphers
                         beast renegotiation resumption
                         )],     # information provided for +info
@@ -423,7 +424,7 @@ my %cfg = (
                         fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5 fingerprint_type
                         email serial signame sigdump_len extensions aux trustout ocsp_uri ocspid
                         pubkey pubkey_algorithm modulus modulus_len modulus_exponent
-                        expansion compression selfsigned verify verify_altname
+                        expansion compression selfsigned verify verify_altname verify_hostname
                         dump
                         default ciphers
                         beast renegotiation resumption
@@ -1085,7 +1086,7 @@ while ($#argv >= 0) {
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
-    if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     next; }
+    if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++; $info = 1; next; }
     if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
     if ($arg eq  '--trace--')           { $cfg{'trace'}     = -1;next; } # special internal tracing
     # options form other programs for compatibility
@@ -1150,11 +1151,13 @@ while ($#argv >= 0) {
     #  +---------+----------+----------------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
-    if ($arg =~ /^--cmd=\+?(.*)/){ $arg = "# CGI ";   $arg = '+' . $1; } # no next
-    if ($arg =~ /^--cgi=?/) { $arg = "# for CGI mode; ignore";   next; }
+    if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI ';   $arg = '+' . $1; } # no next
+    if ($arg =~ /^--cgi=?/) { $arg = '# for CGI mode; ignore';   next; }
     if ($arg eq  '+info')   { @{$cfg{'do'}} = @{$cfg{'info'}};   next; } # +info is just a list of all other commands
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = @{$cfg{'info--v'}};next; } # like +info ...
     if ($arg eq  '+check')  { @{$cfg{'do'}} = 'check';          ;next; }
+    if ($arg eq  '+check_sni' or $arg eq '+sni_check') {
+                   $info = 1; @{$cfg{'do'}} = @{$cfg{'sni--v'}}; next; }
     if ($arg =~ /^\+(.*)/)  { # got a command
         my $val = $1;
         _yeast("args: command= $val") if ($cfg{'trace'} == 4);
@@ -1456,7 +1459,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
     if (_is_do('sizes')) {
         _trace(" +sizes");
         checksizes($host, $cfg{'port'});
-        goto CLOSE_SSL;
+        #goto CLOSE_SSL;
     }
 
     if (_is_do('sni')) {
@@ -1469,13 +1472,20 @@ foreach my $host (@{$cfg{'hosts'}}) {
         print "#{\n", Net::SSLinfo::s_client($_[0], $_[1]), "\n#}";
     }
 
-    # now do all other required checks
+    # now do all other required checks using %data
     local $\ = "\n";
     foreach my $label (@{$cfg{'do'}}) {
 # ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
         next if ($label =~ m/^(exec|cipher|check)$/); # already done or done later
         _trace(" do: " . $label) if ($cfg{'trace'} > 1);
         printtext($cfg{'legacy'}, $label, $host);
+    }
+
+    # now do all other required checks using %check_cert
+    foreach my $label (@{$cfg{'do'}}) {
+        next if (1 !=_is_hashkey($label, \%check_cert));
+        _trace(" do: " . $label) if ($cfg{'trace'} > 1);
+        printcheck($cfg{'legacy'}, $check_cert{$label}->{txt}, _setvalue($check_cert{$label}->{val}));# _setvalue
     }
 
     CLOSE_SSL:
@@ -1650,13 +1660,11 @@ sub _checksni($$) {
     }
 } # _checksni
 
-sub _getsizes($$) {
-    # compute some lengths and count from certificate values, sets %check_size, %check_cert
+sub _getwilds($$) {
+    # compute usage of wildcard in CN and subjectAltname
     my $host    = shift;
     my $port    = shift;
     my ($value, $regex);
-
-    # wildcards (and some sizes)
     foreach $value (split(' ', $data{'altname'}->{val}($host))) {
             $value =~ s/.*://;      # strip prefix
         if ($value =~ m/\*/) {
@@ -1668,12 +1676,22 @@ sub _getsizes($$) {
         $check_size{'cnt_altname'}->{val}++;
         $check_size{'len_altname'}->{val} = length($value) + 1; # count number of characters + type (int)
     }
-    # checking for SNI does not work here 'cause it destroy %data
+    # checking for SNI does not work here 'cause it destroys %data
+} # _getwilds
+
+sub _getsizes($$) {
+    # compute some lengths and count from certificate values, sets %check_size, %check_cert
+    my $host    = shift;
+    my $port    = shift;
+    my ($value, $regex);
+
+    # wildcards (and some sizes)
+    _getwilds($host, $port);
 
     $check_cert{'OCSP'}->{val}     = '' if ($data{'ocsp_uri'}->{val}($host) ne '');
     $check_cert{'rootcert'}->{val} = '' if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
     # ToDo: more checks necessary:
-    #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the cA attribute set TRUE.
+    #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
     #$check_cert{'nonprint'}      =
     #$check_cert{'crnlnull'}      =
@@ -2368,9 +2386,20 @@ command  and those from all other tests and checks like  I<+check>  or
     is considered "secure" and report the reason why it is considered
     insecure otherwise.
 
+    Note that there are tests where  the reuslt sounds confusing when
+    first viewed, like for www.wi.ld:
+        Certificate is valid according given hostname:  no (*.wi.ld)
+        Certificate's wilcard does not match hostname:  yes
+    This can for example occour with:
+        Certificate Common Name:                *.wi.ld
+        Certificate Subject's Alternate Names:  DNS:www.wi.ld
+
+    Please check the result with the  "+info"  command also to verify
+    if the check sounds resonable.
+
 =head3 +info
 
-    The test results contain detailed information. The labels here are
+    The test result contains detailed information. The labels here're
     mainly the same as for the  "+check"  command.
 
 =head1 COMMANDS
@@ -2384,7 +2413,7 @@ commands for historical reason or compatibility to other programs.
 
 The Most important commands are (in alphabetical order):
 
-=head3 +check +cipher +info +list +version
+=head3 +check +cipher +info +list +sni +sni_check +version
 
 =begin comment
 
@@ -2424,6 +2453,10 @@ The Most important commands are (in alphabetical order):
 
     Show version of openssl.
 
+=head3 +todo
+
+    Show known problems and bugs.
+
 =head2 Commands to check SSL details
 
     Check for SSL connection in  SNI mode and if given  FQDN  matches
@@ -2455,6 +2488,11 @@ The Most important commands are (in alphabetical order):
 =head3 +sni
 
     Check for Server Name Indication (SNI) usage.
+
+=head3 +sni_check +check_sni
+
+    Check for Server Name Indication (SNI) usage and validity of all
+    names (CN, subjectAltName, FQDN, etc.).
 
 =head3 +sizes
 
@@ -3180,7 +3218,7 @@ place the libs in the same directory as the  corresponding executable
 The script can be usesed as CGI application. Output is the same as in
 common CLI mode, using  'Content-Type:text/plain'.  Keep in mind that
 the used modules like  L<Net::SSLeay>  will write some  debug messages
-on STDERR instead STDOUT.  Therfor multiple  I<--v>  and/or  I<--trace>
+on  STDERR instead STDOUT. Therfor multiple  I<--v>  and/or  I<--trace>
 options behave slightly different.
 
 Some options are disabled in CGI mode  because they are dangerous  or
@@ -3213,7 +3251,45 @@ The code is most likely not thread-safe. Anyway, we don't use them.
 
 =end comment
 
+=head2 Debugging, Tracing
+
+Following  options and commands  are useful for hunting problems with
+SSL connections and/or this tool. Note that some options can be given
+multiple times to increase amount of listed information. Also keep in
+mind that it's best to specify  I<--v>  as very first argument.
+
+=head3 Commands
+
+=over 4
+
+=item +dump
+
+=item +libversion
+
+=item +s_client
+
+=item +todo
+
+=item +version
+
+=back
+
+=head3 Options
+
+=over 4
+
+=item --v
+
+=item --trace
+
+=item --trace--
+
+=back
+
+
 =head1 EXAMPLES
+
+($0 in all following examples is the name of the tool)
 
 =head2 General
 
@@ -3237,6 +3313,10 @@ The code is most likely not thread-safe. Anyway, we don't use them.
 =item Check for SNI and print certificate's subject and altname
 
     $0 +sni +cn +altname example.tld
+
+=item Check for all SNI, certificate's subject and altname issues
+
+    $0 +sni_check example.tld
 
 =item Only print supported (enabled) ciphers:
 
@@ -3297,11 +3377,11 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.01.05
+@(#) 13.01.06
 
 =head1 AUTHOR
 
-31. July 2012 Achim Hoffmann
+31. July 2012 Achim Hoffmann (at) sicsec de
 
 =begin ToDo # no POD syntax here!
 
