@@ -30,7 +30,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.30 13/01/05 20:49:10',
+    SID         => '@(#) Net::SSLinfo.pm 1.31 13/01/06 12:58:59',
 };
 
 
@@ -183,7 +183,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.01.05';
+    $VERSION   = '13.01.06';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1210,9 +1210,11 @@ Verify if given hostname matches alternate name (subjectAltNames) in certificate
 sub verify_altname($$) {
     my ($host, $port) = @_;
     return undef if !defined do_ssl_open($host, $port);
+    _trace("verify_altname($host)");
     my $match = 'does not match';
     my $cname = $_SSLinfo{'altname'};
     return "No alternate name defined in certificate" if ($cname eq '');
+    _trace("verify_altname: $cname");
     foreach my $alt (split(' ', $cname)) {
         my ($type, $name) = split(':', $alt);
 # ToDo: implement IP and URI
@@ -1222,12 +1224,14 @@ sub verify_altname($$) {
         if ($name =~ m/[*]/) {
             $rex =~ s/(\*)/.*?/;
         }
-        if ($host =~ /$rex/i) { # some people use uppercase in Subject and altnames
+        _trace("verify_altname: $host =~ $rex ");
+        if ($host =~ /^$rex$/i) { # some people use uppercase in Subject and altnames
             $match = 'matches';
             $cname = $alt;   # only show matching name
             last;
         }
     }
+    _trace("verify_altname() done.");
     return sprintf("Given hostname '%s' %s alternate name '%s' in certificate", $host, $match, $cname);
 }
 
