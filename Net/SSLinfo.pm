@@ -30,9 +30,8 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.31 13/01/06 12:58:59',
+    SID         => '@(#) Net::SSLinfo.pm 1.36 13/03/09 21:45:14',
 };
-
 
 ######################################################## public documentation #
 # Documentaion starts here, so we can use the inline documentation for our
@@ -112,12 +111,32 @@ If disabled, the values returned value will be: #
 
 =item $Net::SSLinfo::use_SNI
 
-If set to "1" the specified hostname will be used for SNI, which is needed
-if you have multiple SSL hostnames on the same IP address. If not given it
-the hostname from PeerAddr will be used. This will fail if only an  IP was
-given.
+If set to "1", the specified hostname will be used for SNI. This is needed
+if there're multiple SSL hostnames on the same IP address.  If no hostname 
+given, the hostname from PeerAddr will be used.  This will fail if only an 
+IP was given.
 If set to "0" no SNI will be used. This can be used to check if the target
 supports SNI; default: 1
+
+=item $Net::SSLinfo::no_cert
+
+The target may allow connections using SSL protocol,  but does not provide
+a certificate. In this case all calls to functions to get details from the
+certificate fail (most likely with "segmentation fault" or alike).
+Due to the behaviour of the used low level ssl libraries,  there is no way
+to detect this failure automatically. If the calling programm terminates
+abnormally with an error, then setting this value can help.
+
+If set to "0", collect data from target's certificate; this is default.
+If set to "1", don't collect data from target's certificate  and return an
+empty string.
+If set to "2", don't collect data from target's certificate and return the 
+string defined in  "$Net::SSLinfo::no_cert_txt".
+
+=item $Net::SSLinfo::no_cert_txt
+
+String to be used if "$Net::SSLinfo::no_cert" is set.
+Default is (same as openssl): "unable to load certificate"
 
 =back
 
@@ -183,7 +202,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.01.06';
+    $VERSION   = '13.02.28';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -275,6 +294,13 @@ $Net::SSLinfo::openssl     = 'openssl'; # openssl executable
 $Net::SSLinfo::use_openssl = 1; # 1 use installed openssl executable
 $Net::SSLinfo::use_sclient = 1; # 1 use openssl s_client ...
 $Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target
+$Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
+                                # 1 don't collect data from target's certificate
+                                #   return empty string
+                                # 2 don't collect data from target's certificate
+                                #   return string $Net::SSLinfo::no_cert_txt
+$Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl
+$Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
 $Net::SSLinfo::trace       = 0; # 1=simple debugging Net::SSLinfo
                                 # 2=trace     including $Net::SSLeay::trace=2
@@ -467,6 +493,60 @@ sub _check_port($) {
     return (defined $port) ? 1 : undef;
 }
 
+sub _ssleay_get($$) {
+    #? get specified value from SSLeay certificate
+        # wrapper to get data provided by certificate
+        # note that all these function may produce "segmentation fault" or alike if
+        # the target does not have/use a certificate but allows connection with SSL
+    my ($key, $x509) = @_;
+    _settrace();
+    _trace "_ssleay_get('$key', x509)";
+    if ($Net::SSLinfo::no_cert != 0) {
+            _trace "_ssleay_get 'use_cert' $Net::SSLinfo::no_cert .";
+        return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert == 2);
+        return '';
+    }
+
+    return Net::SSLeay::X509_get_fingerprint(    $x509,  'md5') if ($key eq 'md5');
+    return Net::SSLeay::X509_get_fingerprint(    $x509, 'sha1') if ($key eq 'sha1');
+
+    return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_subject_name($x509)) if($key eq 'subject');
+    return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509)) if($key eq 'issuer');
+    return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if($key eq 'before');
+    return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if($key eq 'after');
+    # constants like NID_CommonName from openssl/objects.h
+    return Net::SSLeay::X509_NAME_get_text_by_NID( Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
+
+    # ToDo: following most likely do not work
+    #     Net::SSLeay::NID_key_usage             = 83
+    #     Net::SSLeay::NID_basic_constraints     = 87
+    #     Net::SSLeay::NID_certificate_policies  = 89
+    #     Net::SSLeay::NID_uniqueIdentifier      = 102
+    #     Net::SSLeay::NID_serialNumber          = 105
+    return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_serialNumber) if ($key eq 'policies');
+
+    # X509_get_subjectAltNames returns array of (type, string)
+    # type: 1 = email, 2 = DNS, 6 = URI, 7 = IPADD, 0 = othername
+    if ($key eq 'altname') {
+        my $ret = '';
+        my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509);
+        while (@altnames) {             # construct string like openssl
+            my ($type, $name) = splice(@altnames, 0, 2);
+            $type = 'DNS'           if ($type eq '2');
+            $type = 'URI'           if ($type eq '6');
+            $type = 'IPADD'         if ($type eq '7');
+            $name = '<unsupported>' if ($type eq '0');
+            $type = 'othername'     if ($type eq '0');
+            $type = 'email'         if ($type eq '1');
+            # all other types are used as is, so we see what's missing
+            $ret .= ' ' . join(':', $type, $name);
+        }
+        return $ret;
+    }
+    _trace "_ssleay_get '' .";  # or warn "**WARNING: wrong key '$key' given; ignored";
+    return '';
+} # _ssleay_get
+
 sub _openssl_MS($$$$) {
     #? wrapper to call external openssl executable on windows
     my $mode = shift;   # must be openssl command
@@ -591,7 +671,7 @@ sub do_ssl_open($$) {
     my $ssl = undef;
 
 # ToDo: proxy settings work in HTTP mode only
-##Net::SSLeay::set_proxy('some.tld', 84, 'z0033vtm', 'pass');
+##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
 ##print "#ERR: $!";
 ##
 
@@ -658,14 +738,13 @@ sub do_ssl_open($$) {
 #ah #ToDo: print "# SNI $Net::SSLinfo::use_SNI";
         if ($Net::SSLinfo::use_SNI == 1) {
             _trace "do_ssl_open: SNI";
-            # define SSL_CTRL_SET_TLSEXT_HOSTNAME 55
-            # define TLSEXT_NAMETYPE_host_name    0
+            # use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
+            # use constant TLSEXT_NAMETYPE_host_name    => 0
             $src = 'Net::SSLeay::ctrl()';
             Net::SSLeay::ctrl($ssl, 55, 0, $host)         or {$err = $!} and last;
 #ah #ToDo: above sometimes fails but does not return errors, reason yet unknown
         }
-
-	# following may call _check_peer()
+        # following may call _check_peer()
         if (Net::SSLeay::connect($ssl) <= 0) {  # something failed
             $err = $!;
             $src = 'Net::SSLeay::connect()';
@@ -674,6 +753,7 @@ sub do_ssl_open($$) {
 
         # SSL established, lets get informations
         # ToDo: starting from here implement error checks
+        $src ='Net::SSLeay::get_peer_certificate()';
         my $x509= Net::SSLeay::get_peer_certificate($ssl);
         $_SSLinfo{'ctx'}        = $ctx;
         $_SSLinfo{'ssl'}        = $ssl;
@@ -685,44 +765,23 @@ sub do_ssl_open($$) {
         #$_SSLinfo{'bits'}       = Net::SSLeay::get_cipher_bits($ssl, $x509); # ToDo: Segmentation fault
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
         $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509);
-#print "folgener Net::SSLeay::X509_get_subject_name($x509) liefert manchmal 'segmentation fault'";
-        $_SSLinfo{'subject'}    = Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_subject_name($x509) );
-        $_SSLinfo{'issuer'}     = Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509) );
-        $_SSLinfo{'before'}     = Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore($x509) );
-        $_SSLinfo{'after'}      = Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter( $x509) );
+        $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
+        $_SSLinfo{'issuer'}     = _ssleay_get('issuer',  $x509);
+        $_SSLinfo{'before'}     = _ssleay_get('before',  $x509);
+        $_SSLinfo{'after'}      = _ssleay_get('after',   $x509);
         if (1.33 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL,
-            # X509_get_subjectAltNames returns array of (type, string)
-            # type: 1 = email, 2 = DNS, 6 = URI, 7 = IPADD, 0 = othername
-            my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509);
-            while (@altnames) {             # construct string like openssl
-                my ($type, $name) = splice(@altnames, 0, 2);
-                $type = 'DNS'           if ($type eq '2');
-                $type = 'URI'           if ($type eq '6');
-                $type = 'IPADD'         if ($type eq '7');
-                $name = '<unsupported>' if ($type eq '0');
-                $type = 'othername'     if ($type eq '0');
-                $type = 'email'         if ($type eq '1');
-                # all other types are used as is, so we see what's missing
-                $_SSLinfo{'altname'} .= ' ' . join(':', $type, $name);
-            }
+            $_SSLinfo{'altname'}= _ssleay_get('altname', $x509);
         } else {
             warn "you need at least Net::SSLeay version 1.33 for getting subjectAltNames";
         }
         if (1.30 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL
-            # constants like NID_CommonName from openssl/objects.h
-            $_SSLinfo{'cn'} = Net::SSLeay::X509_NAME_get_text_by_NID( Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName);
-            $_SSLinfo{'cn'} =~ s{\0$}{};    # work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
+            $_SSLinfo{'cn'}     = _ssleay_get('cn', $x509);
+            $_SSLinfo{'cn'}     =~ s{\0$}{};    # work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
         } else {
             warn "you need at least Net::SSLeay version 1.30 for getting commonName";
         }
-
-        # ToDo: following most likely do not work
-        #     Net::SSLeay::NID_key_usage             = 83
-        #     Net::SSLeay::NID_basic_constraints     = 87
-        #     Net::SSLeay::NID_certificate_policies  = 89
-        #     Net::SSLeay::NID_uniqueIdentifier      = 102
-        #     Net::SSLeay::NID_serialNumber          = 105
-        #$_SSLinfo{'policies'}   = Net::SSLeay::X509_NAME_get_text_by_NID( Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_serialNumber);
+        
+        $_SSLinfo{'policies'}   = _ssleay_get('policies', $x509);
 
         # used by IO::Socket::SSL, allow for compatibility and lazy user
         #      owner commonName cn subject issuer authority subjectAltNames
@@ -732,8 +791,8 @@ sub do_ssl_open($$) {
         $_SSLinfo{'owner'}      = $_SSLinfo{'subject'};
 
         if (1.45 <= $Net::SSLeay::VERSION) {
-            $_SSLinfo{'fingerprint_md5'} = Net::SSLeay::X509_get_fingerprint($x509, "md5");
-            $_SSLinfo{'fingerprint_sha1'}= Net::SSLeay::X509_get_fingerprint($x509, "sha1");
+            $_SSLinfo{'fingerprint_md5'} = _ssleay_get('md5',  $x509);
+            $_SSLinfo{'fingerprint_sha1'}= _ssleay_get('sha1', $x509);
         } else {
             $_SSLinfo{'fingerprint_md5'} = '';
             $_SSLinfo{'fingerprint_sha1'}= '';
@@ -750,6 +809,10 @@ sub do_ssl_open($$) {
             _trace "do_ssl_open() without openssl done.";
             goto finished;
         }
+        # we get following data using openssl executable
+        # there is no need to check $Net::SSLinfo::no_cert  as openssl is
+        # clever enough to return following strings if the cert is missing:
+        #         unable to load certificate
         my $fingerprint                 = _openssl_x509($_SSLinfo{'PEM'}, '-fingerprint');
         chomp $fingerprint;
         $_SSLinfo{'fingerprint_text'}   = $fingerprint;
@@ -1132,7 +1195,6 @@ If certificate is self signed.
 
 =cut
 
-	#	#	#	#	#	#	#	#	#	#	#	#	#	#	#	#	#	#	#	#
 sub s_client        { return _SSLinfo_get('s_client',         $_[0], $_[1]); }
 sub errors          { return _SSLinfo_get('errors',           $_[0], $_[1]); }
 sub PEM             { return _SSLinfo_get('PEM',              $_[0], $_[1]); }
@@ -1197,8 +1259,14 @@ Verify if given hostname matches common name (CN) in certificate.
 sub verify_hostname {
     my ($host, $port) = @_;
     return undef if !defined do_ssl_open($host, $port);
+    return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert != 0);
     my $cname = $_SSLinfo{'cn'};
-    my $match = (lc($host) eq lc($cname)) ? 'matches' : 'does not match';
+    my $match = '';
+    if ($Net::SSLinfo::ignore_case == 1) {
+        $host = lc($host);
+        $cname= lc($cname);
+    }
+    $match = ($host eq $cname) ? 'matches' : 'does not match';
     return sprintf("Given hostname '%s' %s CN '%s' in certificate", $host, $match, $cname);
 }
 
@@ -1210,6 +1278,7 @@ Verify if given hostname matches alternate name (subjectAltNames) in certificate
 sub verify_altname($$) {
     my ($host, $port) = @_;
     return undef if !defined do_ssl_open($host, $port);
+    return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert != 0);
     _trace("verify_altname($host)");
     my $match = 'does not match';
     my $cname = $_SSLinfo{'altname'};
@@ -1220,12 +1289,16 @@ sub verify_altname($$) {
 # ToDo: implement IP and URI
         push(@{$_SSLinfo{'errors'}}, "verify_altname() $type not supported in SNA") if ($type !~ m/DNS/i);
         my $rex = $name;
+        if ($Net::SSLinfo::ignore_case == 1) {
+            $host = lc($host);
+            $rex  = lc($rex);
+        }
         $rex =~ s/[.]/\\./g;
         if ($name =~ m/[*]/) {
             $rex =~ s/(\*)/.*?/;
         }
         _trace("verify_altname: $host =~ $rex ");
-        if ($host =~ /^$rex$/i) { # some people use uppercase in Subject and altnames
+        if ($host =~ /^$rex$/) {
             $match = 'matches';
             $cname = $alt;   # only show matching name
             last;
