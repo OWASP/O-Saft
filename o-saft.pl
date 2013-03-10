@@ -34,7 +34,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.80 13/03/09 22:16:33";
+my $SID     = "@(#) yeast.pl 1.84 13/03/10 21:18:01";
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 my @DATA    = <DATA>;
 { # perl is clever enough to extract it from itself ;-)
@@ -89,14 +89,17 @@ if ($me =~/\.cgi$/) {
 #!#   %check_dest     - collected and checked target (connection) data
 #!#   %check_conn     - collected and checked connection data
 #!#   %check_size     - collected and checked length and count data
-#!#   %data_http      - NOT YET IMPLEMENTED (should be part of %data)
 #!#   %check_http     - NOT YET IMPLEMENTED
+#!#   %data_http      - NOT YET IMPLEMENTED (should be part of %data)
 #!#   %shorttexts     - same as %check_*, but short texts
 #!#   %cmd            - configuration for external commands
 #!#   %cfg            - configuration for commands and options
 #!#   %text           - configuration for texts
 #!#   %ciphers_desc   - description of %ciphers data structure
 #!#   %ciphers        - our ciphers
+#!#
+#!# All %check_*  contain a default 'score' value of 10, see --set-score
+#!# option how to chain that.
 
 my $info = 0;       # set to 1 if +info or +sni_check was used
 my @results = ();
@@ -216,6 +219,7 @@ my %check_cert = (
     #   - contains illegal characters
     # ToDo: wee need an option to specify the the local certificate storage!
 ); # %check_cert
+$check_cert{$_}->{score} = 10 foreach (keys %check_cert);
 my %check_dest = (
     #------------------+-----------+------------------------------------------
     'SGC'           => {'val' => 0, 'txt' => "Target supports Server Gated Cryptography (SGC)"},
@@ -233,6 +237,7 @@ my %check_dest = (
     'renegotiation' => {'val' =>'', 'txt' => "Target supports renegotiation"},
     #------------------+-----------+------------------------------------------
 ); # %check_dest
+$check_dest{$_}->{score} = 10 foreach (keys %check_dest);
 my %check_conn = (
     'IP'            => {'val' =>'', 'txt' => "IP for given hostname "},
     'reversehost'   => {'val' =>'', 'txt' => "Given hostname is same as reverse resolved hostname"},
@@ -242,7 +247,7 @@ my %check_conn = (
     'CRIME'         => {'val' => 0, 'txt' => "Connection is safe against CRIME attack"},
     'SNI'           => {'val' =>'', 'txt' => "Connection is not based on SNI"},
     'default'       => {'val' =>'', 'txt' => "Default cipher for "},
-    'totals'        => {'val' => 0, 'txt' => "# Total number of checked ciphers"},
+    'totals'        => {'val' => 0, 'txt' => "Total number of checked ciphers"},
      # counter for accepted ciphers, 0 if not supported
     'SSLv2'         => {'val' => 0, 'txt' => "Supported ciphers for SSLv2 (total)"},
     'SSLv3'         => {'val' => 0, 'txt' => "Supported ciphers for SSLv3 (total)"},
@@ -276,6 +281,17 @@ my %check_conn = (
     'TLSv12-MEDIUM' => {'val' => 0, 'txt' => "Supported MEDIUM  security ciphers"},
     'TLSv12--?-'    => {'val' => 0, 'txt' => "Supported unknown security ciphers"},
 ); # %check_conn
+# set score
+$check_conn{$_}->{score} = 10 foreach (keys %check_conn);
+$check_conn{'TLSv1-HIGH'}->{score}  = 0;
+$check_conn{'TLSv11-HIGH'}->{score} = 0;
+$check_conn{'TLSv12-HIGH'}->{score} = 0;
+foreach (keys %check_conn) {
+    $check_conn{$_}->{score} = 90 if (m/WEAK/i);
+    $check_conn{$_}->{score} = 30 if (m/LOW/i);
+    $check_conn{$_}->{score} = 10 if (m/MEDIUM/i);
+}
+
 my %check_size = (
     # counts and sizes are integer values, key mast have prefix (len|cnt)_
     #------------------+-----------+------------------------------------------
@@ -299,6 +315,7 @@ my %check_size = (
     #------------------+-----------+------------------------------------------
 # ToDo: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
+$check_size{$_}->{score} = 10 foreach (keys %check_size);
 my %data_http = ( # ToDo: nothing YET IMPLEMENTED
     'banner'        => {'val' => '', 'txt' => "HTTP: Server banner"},
     'alerts'        => {'val' => '', 'txt' => "HTTP: Error alerts"},
@@ -306,7 +323,9 @@ my %data_http = ( # ToDo: nothing YET IMPLEMENTED
     'hsts_maxage'   => {'val' => '', 'txt' => "HTTP: STS MaxAge"},
     'hsts_subdom'   => {'val' => '', 'txt' => "HTTP: STS includes sub-domains"},
 ); # %data_http
-# my %check_http = 
+my %check_http = (
+); # %check_http
+$check_http{$_}->{score} = 10 foreach (keys %check_http);
 my %data_oid = ( # ToDo: nothing YET IMPLEMENTED
 #   '1.3.6.1'                   => {iso(1) org(3) dod(6) iana(1)}
     '1.3.6.1'                   => {'val' => '', 'txt' => "Internet OID"},
@@ -320,7 +339,6 @@ my %data_oid = ( # ToDo: nothing YET IMPLEMENTED
     '1.3.6.1.5.5.7.3.8'         => {'val' => '', 'txt' => "Timestamping"},
     '1.3.6.1.4.1.311.10.3.3'    => {'val' => '', 'txt' => "Microsoft Server Gated Crypto"},
     '2.16.840.1.113730.4.1'     => {'val' => '', 'txt' => "Netscape SGC"},
-	#	#	#	#	=	#	#	=	#	#	#	#
 ); # %data_oid
 my %shorttexts = (
     #------------------+------------------------------------------------------
@@ -436,6 +454,16 @@ my %shorttexts = (
     'fingerprint'       => "Fingerprint:",
     #------------------+------------------------------------------------------
 );
+my %score = (
+    #------------------+-------------+----------------------------------------
+    'check_dest'    => {'val' => 100, 'txt' => "Target checks"},
+    'check_conn'    => {'val' => 100, 'txt' => "SSL connection checks"},
+    'check_ciph'    => {'val' => 100, 'txt' => "Ciphers checks"},
+    'check_cert'    => {'val' => 100, 'txt' => "Certificate checks"},
+    'check_size'    => {'val' => '' , 'txt' => "Certificate sizes checks"},
+    'check_http'    => {'val' => '' , 'txt' => "HTTP(S) checks"},
+    #------------------+-------------+----------------------------------------
+); # %score
 my %cmd = (
     'is_set'        => undef,   # undef indicates not yet initialized
     'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
@@ -1237,7 +1265,7 @@ while ($#argv >= 0) {
     #!#--------+------------------------+----------------------+----------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+----------------------+----------------
-    if ($arg =~ m/^(--|\+)h(?:elp)?=?$/){ printhelp();           exit 0; }
+    if ($arg =~ m/^(--|\+)h(?:elp)?=?(.*)$/){ printhelp($2);           exit 0; }
     if ($arg =~ m/^(--|\+)ab(?:br|k)=?$/){printabbr();           exit 0; }
     if ($arg =~ m/^(--|\+)todo=?$/i)    { printtodo();           exit 0; }
     # some options are for compatibility with other programs
@@ -1306,6 +1334,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^--legacy=(.*)/)       { $typ = 'legacy';  $arg = $1; } # no next
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'sep';          next; }
     if ($arg =~ /^--sep(?:arator)?=(.*)/){$typ = 'sep';     $arg = $1; } # no next
+    if ($arg =~ /^--set[_-]?score$/)    { $typ = 'score';        next; }
+    if ($arg =~ /^--set[_-]?score=(.*)/){ $typ = 'score';   $arg = $1; } # no next
+    if ($arg =~ /^--timeout$/)          { $typ = 'timeout';      next; }
     if ($arg =~ /^--timeout$/)          { $typ = 'timeout';      next; }
     if ($arg =~ /^--timeout=(.*)/)      { $typ = 'timeout'; $arg = $1; } # no next
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'openssl'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
@@ -1359,6 +1390,7 @@ while ($#argv >= 0) {
     if ($typ eq 'timeout')  { $cfg{'timeout'} = $arg;       $typ = 'host'; next; }
     if ($typ eq 'cipher')   { $cfg{'cipher'}  = $arg;       $typ = 'host'; next; }
     if ($typ eq 'format')   { $typ = "** TBD **";           $typ = 'host'; next; }
+    if ($typ eq 'score')    { set_score($arg);              $typ = 'host'; next; }
     if ($typ eq 'ctxt')     { $cfg{'no_cert_txt'} = $arg;   $typ = 'host'; next; }
     if ($typ eq 'port')     { $cfg{'port'}    = $arg;       $typ = 'host'; next; }
     if ($typ eq 'host')     {
@@ -1437,15 +1469,15 @@ foreach my $version (@{$cfg{'versions'}}) {
     $cfg{$version} = 0; # reset to simplify further checks
     # ToDo: DTLS09, DTLS10
     if ($version =~ /^(SSLv2|SSLv3|TLSv1)$/) {
-    	$typ = eval("Net::SSLeay::SSLv2_method()") if ($version eq 'SSLv2');
-    	$typ = eval("Net::SSLeay::SSLv3_method()") if ($version eq 'SSLv3');
-    	$typ = eval("Net::SSLeay::TLSv1_method()") if ($version eq 'TLSv1');
+        $typ = eval("Net::SSLeay::SSLv2_method()") if ($version eq 'SSLv2');
+        $typ = eval("Net::SSLeay::SSLv3_method()") if ($version eq 'SSLv3');
+        $typ = eval("Net::SSLeay::TLSv1_method()") if ($version eq 'TLSv1');
         # ugly eval, but that's the simplest (only?) way to check if required
         # functionality is available; we could try  Net::SSLeay::CTX_v2_new()
         # and similar calls also, but that requires eval too
         # if a version like SSLv2 is not supported, perl bails out with error
         # like:        Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
-	if (defined $typ) {
+        if (defined $typ) {
             push(@{$cfg{'version'}}, $version);
             $cfg{$version} = 1;
         } else {# eval failed ..
@@ -1634,6 +1666,13 @@ foreach my $host (@{$cfg{'hosts'}}) {
             printtitle($cfg{'legacy'}, $version, join(':', $host, $cfg{'port'}));
             checkciphers($version, $host, $cfg{'port'}, $ciphers, \%ciphers);
             printciphers($version, $host, @results);
+            foreach (qw(LOW WEAK MEDIUM HIGH -?-)) {
+                my $key = $version . '-' . $_;
+                if ($check_conn{$key}->{val} != 0) {
+                $score{'check_ciph'}->{val} -= _getscore($key, 'egal', \%check_conn);
+                #$score{'check_conn'}->{val} -= _getscore($key, 'egal', \%check_conn);
+                }
+            }
         }
     }
 
@@ -1642,6 +1681,9 @@ foreach my $host (@{$cfg{'hosts'}}) {
         printruler();
         print "**WARNING: no openssl, some checks are missing" if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
         checkssl($host, $cfg{'port'});
+        printruler();
+        printscore();
+        printruler();
         goto CLOSE_SSL;
     }
 
@@ -1698,6 +1740,16 @@ sub _isbeast($)        { return ($_[0] =~ /(RC4)/) ? '' : $_[0] . ' '; }
 # ToDo: more checks, see: http://www.bolet.org/TestSSLServer/
 sub _iscrime($)        { return 0; }
 # ToDo: for checks, see: http://www.bolet.org/TestSSLServer/
+sub _getscore($$$)     {
+    # return 0 if given value is empty, otherwise score to given key
+    my $key     = shift;
+    my $value   = shift;
+    my $hashref = shift;# list of checks
+    my %hash    = %$hashref;
+    return 0 if ($value eq '');
+    _trace("_getscore: $key : '$value' = ". $hash{$key}->{score});
+    return $hash{$key}->{score};
+}
 
 sub checkciphers($$$$$) {
     # test target if geven ciphers are accepted, results stored in global @results
@@ -1969,11 +2021,12 @@ sub checkssl($$) {
         $check_dest{$label}->{val}   = $value if ($value eq '');
     }
     if ($cfg{'verbose'} > 0) { # ToDo
-    foreach $label (qw(verify selfsigned)) {
+        foreach $label (qw(verify selfsigned)) {
 #ah# print "#### $label : $value #";
-        $value = $data{$label}->{val}($host);
-        $check_cert{$label}->{val}   = $value if ($value eq '');
-    }
+            $value = $data{$label}->{val}($host);
+            $check_cert{$label}->{val}   = $value if ($value eq '');
+#            $score{'check_cert'}->{val} -= _getscore($label, $value, \%check_cert);
+        }
     }
     $check_cert{'selfsigned'}->{val} = $data{'selfsigned'}->{val}($host);
     $check_cert{'fp_not_MD5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
@@ -1987,9 +2040,15 @@ sub checkssl($$) {
         $cipher = get_default($host, $port, $ssl);
         if (($value == 0) && ($cipher eq '')) {
             $value = '(protocol probably supported, but no ciphers accepted)';
+            # _getscore() below fails for this (see with --trace) 'cause there
+            # is no entry %check_conn{'SSLv2-'} ; that's ok
         } else {
             $value = $cipher . ' ' . get_cipher_sec($cipher);
         }
+        # the score can be found in %check_conn, where the key must be computed
+        #  name of key = $ssl . '-' . sec;  # something like: SSLv3-HIGH
+        # as _getscore() returns 0 if given value is empty, we always pass a value
+        $score{'check_conn'}->{val} -= _getscore(($ssl . '-' . get_cipher_sec($cipher)), $value, \%check_conn);
         _printkey($ssl) if ($cfg{'trace'} == -1);
         printcheck($cfg{'legacy'}, $check_conn{default}->{txt} . $ssl, $value);
         if ($ssl =~ /(SSLv3|TLSv1)/) {
@@ -2004,6 +2063,7 @@ sub checkssl($$) {
         $value = $check_cert{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
         $value = $cfg{'no_cert_txt'} if ($cfg{'no_cert'} != 0);
+        $score{'check_cert'}->{val} -= _getscore($label, $value, \%check_cert);
         _printkey($label) if ($cfg{'trace'} == -1);
         printcheck($cfg{'legacy'}, $check_cert{$label}->{txt}, _setvalue($value));
     }
@@ -2012,6 +2072,7 @@ sub checkssl($$) {
         next if ($label =~ /^\s*$/);                # lazy programming :)
         $value = $check_dest{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
+        $score{'check_dest'}->{val} -= _getscore($label, $value, \%check_dest);
         _printkey($label) if ($cfg{'trace'} == -1);
         printcheck($cfg{'legacy'}, $check_dest{$label}->{txt}, _setvalue($value));
     }
@@ -2022,6 +2083,7 @@ sub checkssl($$) {
         next if (($label eq 'hostname') and ($cfg{'no_cert'} != 0));
         $value = $check_conn{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
+        $score{'check_conn'}->{val} -= _getscore($label, $value, \%check_conn);
         _printkey($label) if ($cfg{'trace'} == -1);
         if ($label eq 'BEAST') {                    # check is special
             if (! _is_do('cipher') && ! _is_do('check')) {
@@ -2083,6 +2145,51 @@ sub get_default($$$) {
     return $cipher;
 } # get_default
 
+sub set_score($) {
+    # set given value as 'score' in %check_* hash
+    # if given value is a file, read settings from that file
+    # otherwise given value must be KEY=VALUE format;
+    my $score = shift;
+    if (-f "$score") {  # got a valid file, read from that file
+        _trace(" set_score: read " . $score . "\n");
+        #
+        # formal of each line in file must be:
+        #    anthing following (and inclusing) a hash is a comment and ignored
+        #    empty line are ignored
+        #    setiings mut be in format:  key=value
+        #       where white spaces are allowed arround =
+        my $line ='';
+	open(FID, $score) || warn("**WARNING: cannot open '$score': $! ; ignored");
+        while ($line = <FID>) {
+            chomp $line;
+            $line =~ s/\s*#.*$//;       # remove trailing comments
+            next if ($line =~ m/^\s*$/);# ignore empty lines
+            if ($line !~ m/^[a-zA-Z0-9_?=\s-]*$/) {
+                warn("**WARNING: invalid score value '$line'; ignored");
+                next;
+            }
+            $line =~ s/[^a-zA-Z0-9_?=-]*//g;
+            _trace(" set_score: set " . $line . "\n");
+            set_score($line);
+        }
+	close(FID);
+	return;
+    } # read file
+    my ($key, $val) = split('=', $score);
+    _trace(" set_score(key=" . $key . ", score=" . $val . ").\n");
+    if ($val !~ m/^(\d\d?|100)$/) { # allow 0 .. 100
+        warn("**WARNING: invalid score value '$val'; ignored");
+        return;
+    }
+    # we try $key in all hashes, if they are not unique they are set all
+    # invalid keys are silently ignored
+    $check_dest{$key}->{score} = $val if ($check_dest{$key});
+    $check_conn{$key}->{score} = $val if ($check_conn{$key});
+    $check_cert{$key}->{score} = $val if ($check_cert{$key});
+    $check_size{$key}->{score} = $val if ($check_size{$key});
+    $check_http{$key}->{score} = $val if ($check_http{$key});
+} # set_score
+
 # print functions
 # -------------------------------------
 sub _dump($$) {
@@ -2109,6 +2216,14 @@ sub printdump($$) {
     foreach my $key (keys %check_cert) { _dump($check_cert{$key}->{txt}, $check_cert{$key}->{val}); }
     foreach my $key (keys %check_dest) { _dump($check_dest{$key}->{txt}, $check_dest{$key}->{val}); }
 } # printdump
+
+sub printscore() {
+    # print calculated scores
+    print "Scoring (max value 100):";
+    foreach my $key (keys %score) {
+        printcheck($cfg{'legacy'}, $score{$key}->{txt}, $score{$key}->{val});
+    }
+} # printscore
 
 sub printtext($$) {
     # print given label and text according given legacy format
@@ -2458,12 +2573,58 @@ sub printsizes($) {
         $value = '';
         $value = ' bytes' if ($label =~ /^(len)/);
         $value = ' bits'  if ($label =~ /^(len_publickey|len_sigdump)/);
+# ToDo: $score{'check_size'}->{val} -= _getscore($label, $value, \%check_size);
         printcheck($legacy, $check_size{$label}->{txt}, $check_size{$label}->{val} . $value);
     }
 } # printsizes
 
-sub printhelp() {
+sub printhelp($) {
     # print program's help
+    # if parameter is not empty, print brief list of specified label
+    my $label   = shift;
+    local $\;
+    $\ = "\n";
+    print "# help: $label .\n" if ($cfg{'verbose'} > 0);
+    if ($label =~ m/^(cmd|command)s?/)  { print "# $mename commands:\t+" . join(" +", @{$cfg{'commands'}}); exit; }
+    if ($label =~ m/^(legacy)s?/)       { print "# $mename legacy values:\t" . join(" ", @{$cfg{'legacys'}}); exit; }
+    if ($label =~ m/^compliance/)       { print "# $mename compliance values:\t" . join(" ", keys %{$cfg{'compliance'}}); exit; }
+    if ($label =~ m/^(check|score)$/) {
+        my $key   = "";
+        my $score = "";
+        print "# $mename " . $score{'check_dest'}->{txt} . ":";
+        foreach $key (sort keys %check_dest) {
+            $score = "=" . $check_dest{$key}->{score} if ($label eq 'score');
+            printf("%18s%s\t# %s\n", $key, $score, $check_dest{$key}->{txt});
+        }
+        $score = "";
+        print "# $mename " . $score{'check_conn'}->{txt} . ":";
+        foreach $key (sort keys %check_conn) {
+            $score = "=" . $check_conn{$key}->{score} if ($label eq 'score');
+            printf("%18s%s\t# %s\n", $key, $score, $check_conn{$key}->{txt});
+        }
+        $score = "";
+        print "# $mename " . $score{'check_cert'}->{txt} . ":";
+        foreach $key (sort keys %check_cert) {
+            $score = "=" . $check_cert{$key}->{score} if ($label eq 'score');
+            printf("%18s%s\t# %s\n", $key, $score, $check_cert{$key}->{txt});
+        }
+        $score = "";
+        print "# $mename " . $score{'check_size'}->{txt} . ":";
+        foreach $key (sort keys %check_size) {
+            $score = "=" . $check_size{$key}->{score} if ($label eq 'score');
+            printf("%18s%s\t# %s\n", $key, $score, $check_size{$key}->{txt});
+        }
+        $score = "";
+        print "# $mename " . $score{'check_http'}->{txt} . ":";
+        foreach $key (sort keys %check_http) {
+            $score = "=" . $check_http{$key}->{score} if ($label eq 'score');
+            printf("%18s%s\t# %s\n", $key, $score, $check_http{$key}->{txt});
+        }
+        exit;
+    }
+    if ($label =~ m/score/) {
+        print "# $mename score values:\n";
+    }
     if ($cfg{'verbose'} > 1) { printhist(); exit; }
     if ($cfg{'verbose'} < 1) { # we can test poor man's POD with --v
         if (eval("require POD::Perldoc;")) {
@@ -2477,8 +2638,6 @@ sub printhelp() {
         print "\n# no perldoc and no Pod::Perldoc, try poor man's POD ...\n";
     }
     # go on if exec fails or --v was given
-    local $/;
-    $/ = "\n";
     my $skip  = 0;
     my $ident = "        ";
     foreach (@DATA) {
@@ -2574,7 +2733,7 @@ below.
 
 For the results,  we have to distinguish those returned by  I<+cipher>
 command  and those from all other tests and checks like  I<+check>  or
- I<+info>  command.
+I<+info>  command.
 
 =head3 +cipher
 
@@ -2613,8 +2772,8 @@ command  and those from all other tests and checks like  I<+check>  or
 
 =head3 +info
 
-    The test result contains detailed information. The labels here're
-    mainly the same as for the  "+check"  command.
+    The test result contains  detailed information.  The labels there
+    are mainly the same as for the  "+check"  command.
 
 =head1 COMMANDS
 
@@ -2628,6 +2787,10 @@ commands for historical reason or compatibility to other programs.
 The Most important commands are (in alphabetical order):
 
 =head3 +check +cipher +info +list +sni +sni_check +version
+
+A list of all available commands will be printed with
+
+    $0 --help=commands
 
 =begin comment
 
@@ -2892,6 +3055,30 @@ directly but only herein.
 
   WYSIWYG
 
+=head3 --help=commands
+
+  Show available commands.
+
+=head3 --help=checks
+
+  Show available checks.
+
+=head3 --help=legacy
+
+  Show possible legacy formats (used as value for  "--legacy=KEY"  option).
+
+=head3 --help=compliance
+
+  Show available compliance checks.
+
+=head3 --help=score
+
+  Show score value for each check.
+  Value is printed in format to be used for  "--set-score KEY=VAL"  option.
+
+  Note that the sequence of options is important. Use the options "--trace"
+  and/or  ""--set-score KEY=VAL"  before  "--help=score".
+
 =head3 --n
 
   Do not execute, just show commands (only useful in conjunction with
@@ -2914,7 +3101,7 @@ directly but only herein.
 
 =head3 --v --v --v --v
 
-  Print checked ciphers and check.
+  Print checked ciphers and checks.
 
 =head3 --trace
 
@@ -3089,6 +3276,19 @@ Options used for  I<+check>  command:
   Currently only checks according CN, alternate names in the target's
   certificate compared to the given hostname are effected.
 
+=head3 --set-score KEY=SCORE
+
+  Set the score value  "SCORE"  for the check specified by  "KEY".
+  All score values are set to 10 by default. Values "0" .. "100"  are
+  allowed.
+
+  If  "KEY=SCORE"  is a filename, values are read from that file.
+  To generate a sample file, simply use:
+
+    $0 --help=score
+
+  For deatils how soring works, please see  SCORING  section.
+
 =head2 Options for output format
 
 =head3 --short
@@ -3242,6 +3442,32 @@ conflicts with those options and commands which actually exist, like:
 =item --sni  vs.  +sni
 
 =back
+
+=head1 SCORING
+
+The scoring is implemented for following different values:
+
+=over 4
+
+=item Target checks
+
+=item SSL connection checks
+
+=item Ciphers checks
+
+=item Certificate checks
+
+=item Certificate sizes checks
+
+=item HTTP(S) checks
+
+=back
+
+the max. value for each is  100  and will be decremented by the score
+defined for each check (see  I<--help=score>) if that check fails.
+
+Each check has a default score of  10. This value can be chaged using
+the  I<--set-score>  option.
 
 =head1 LIMITATIONS
 
@@ -3676,7 +3902,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.02.28
+@(#) 13.03.10
 
 =head1 AUTHOR
 
