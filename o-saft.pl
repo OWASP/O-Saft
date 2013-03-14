@@ -34,7 +34,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.84 13/03/10 21:18:01";
+my $SID     = "@(#) yeast.pl 1.86 13/03/14 07:55:16";
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 my @DATA    = <DATA>;
 { # perl is clever enough to extract it from itself ;-)
@@ -90,7 +90,6 @@ if ($me =~/\.cgi$/) {
 #!#   %check_conn     - collected and checked connection data
 #!#   %check_size     - collected and checked length and count data
 #!#   %check_http     - NOT YET IMPLEMENTED
-#!#   %data_http      - NOT YET IMPLEMENTED (should be part of %data)
 #!#   %shorttexts     - same as %check_*, but short texts
 #!#   %cmd            - configuration for external commands
 #!#   %cfg            - configuration for commands and options
@@ -160,6 +159,16 @@ my %data = (        # values will be processed in printtext()
     'fingerprint_md5' =>{'val'=> sub { Net::SSLinfo::fingerprint_md5( $_[0],$_[1])},'txt' => "Certificate Fingerprint  MD5"},
     'fingerprint_type'=>{'val'=> sub { Net::SSLinfo::fingerprint_type($_[0],$_[1])},'txt' => "Certificate Fingerprint Algorithm"},
     'fingerprint'   => {'val' => sub { Net::SSLinfo::fingerprint(   $_[0], $_[1])}, 'txt' => "Certificate Fingerprint"},
+    'http_status'   => {'val' => sub { Net::SSLinfo::http_status(   $_[0], $_[1])}, 'txt' => "HTTP: Status line"},
+    'http_server'   => {'val' => sub { Net::SSLinfo::http_server(   $_[0], $_[1])}, 'txt' => "HTTP: Server banner"},
+    'http_location' => {'val' => sub { Net::SSLinfo::http_location( $_[0], $_[1])}, 'txt' => "HTTP: Location header"},
+    'http_refresh'  => {'val' => sub { Net::SSLinfo::http_refresh(  $_[0], $_[1])}, 'txt' => "HTTP: Refresh header"},
+    'http_alerts'   => {'val' => sub { Net::SSLinfo::http_alerts(   $_[0], $_[1])}, 'txt' => "HTTP: Error alerts"},
+    'http_alerts'   => {'val' => sub { Net::SSLinfo::http_alerts(   $_[0], $_[1])}, 'txt' => "HTTP: Error alerts"},
+    'hsts'          => {'val' => sub { Net::SSLinfo::hsts(          $_[0], $_[1])}, 'txt' => "HTTP: STS header"},
+    'hsts_maxage'   => {'val' => sub { Net::SSLinfo::hsts_maxage(   $_[0], $_[1])}, 'txt' => "HTTP: STS MaxAge"},
+    'hsts_subdom'   => {'val' => sub { Net::SSLinfo::hsts_subdom(   $_[0], $_[1])}, 'txt' => "HTTP: STS include sub-domains"},
+    'hsts_pins'     => {'val' => sub { Net::SSLinfo::hsts_pins(     $_[0], $_[1])}, 'txt' => "HTTP: STS pins"},
     #------------------+---------------------------------------+-------------------------------------------------------
 ); # %data
 # need s_client for: compression|expansion|selfsigned|verify|resumption|renegotiation|
@@ -316,14 +325,14 @@ my %check_size = (
 # ToDo: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
 $check_size{$_}->{score} = 10 foreach (keys %check_size);
-my %data_http = ( # ToDo: nothing YET IMPLEMENTED
-    'banner'        => {'val' => '', 'txt' => "HTTP: Server banner"},
-    'alerts'        => {'val' => '', 'txt' => "HTTP: Error alerts"},
+my %check_http = (
+    'http_status'   => {'val' => '', 'txt' => "HTTP: Status line"},
+    'http_banner'   => {'val' => '', 'txt' => "HTTP: Server banner"},
+    'http_alerts'   => {'val' => '', 'txt' => "HTTP: Error alerts"},
     'hsts'          => {'val' => '', 'txt' => "HTTP: STS header"},
     'hsts_maxage'   => {'val' => '', 'txt' => "HTTP: STS MaxAge"},
     'hsts_subdom'   => {'val' => '', 'txt' => "HTTP: STS includes sub-domains"},
-); # %data_http
-my %check_http = (
+    'hsts_pins'     => {'val' => '', 'txt' => "HTTP: STS pins"},
 ); # %check_http
 $check_http{$_}->{score} = 10 foreach (keys %check_http);
 my %data_oid = ( # ToDo: nothing YET IMPLEMENTED
@@ -452,8 +461,17 @@ my %shorttexts = (
     'fingerprint_sha1'  => "Fingerprint SHA1",
     'fingerprint_md5'   => "Fingerprint  MD5",
     'fingerprint'       => "Fingerprint:",
+    'http_status'   => "HTTP: Status line",
+    'http_server'   => "HTTP: Server banner",
+    'http_alerts'   => "HTTP: Error alerts",
+    'http_location' => "HTTP: Location header",
+    'http_refresh'  => "HTTP: Refresh header",
+    'hsts'          => "HTTP: STS header",
+    'hsts_maxage'   => "HTTP: STS MaxAge",
+    'hsts_subdom'   => "HTTP: STS sub-domains",
+    'hsts_pins'     => "HTTP: STS pins",
     #------------------+------------------------------------------------------
-);
+); # %shorttexts
 my %score = (
     #------------------+-------------+----------------------------------------
     'check_dest'    => {'val' => 100, 'txt' => "Target checks"},
@@ -481,7 +499,8 @@ my %cfg = (
     'enabled'       => 0,       # 1: only print enabled
     'disabled'      => 0,       # 1: only print disabled
     'nolocal'       => 0,
-    'usehttp'       => 0,
+    'usehttp'       => 1,       # 1: make HTTP request
+    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks
     'usesni'        => 1,       # 0: do not make connection in SNI mode
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrived
@@ -511,6 +530,7 @@ my %cfg = (
                         pubkey pubkey_algorithm modulus modulus_len modulus_exponent
                         issuerX509 subjectX509
                         default verify verify_altname verify_hostname
+                        http_status http_server http_alerts hsts hsts_maxage hsts_subdom http_location http_refresh http_pins
                         )],
     'sni--v'        => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'info'          => [qw(
@@ -521,6 +541,7 @@ my %cfg = (
                         expansion compression selfsigned verify verify_altname verify_hostname
                         default ciphers
                         beast renegotiation resumption
+                        http_status http_server http_alerts hsts hsts_maxage hsts_subdom http_location http_refresh http_pins
                         )],     # information provided for +info
     'info--v'       => [qw(
                         certificate text cn subject issuer altname before after dates chain
@@ -531,6 +552,7 @@ my %cfg = (
                         dump
                         default ciphers
                         beast renegotiation resumption
+                        http_status http_server http_alerts hsts hsts_maxage hsts_subdom http_location http_refresh http_pins
                         )],     # information provided for +info --v
     'format'        => "tab",
     'formats'       => [qw(csv html json ssv tab xml fullxml)],
@@ -1265,7 +1287,10 @@ while ($#argv >= 0) {
     #!#--------+------------------------+----------------------+----------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+----------------------+----------------
-    if ($arg =~ m/^(--|\+)h(?:elp)?=?(.*)$/){ printhelp($2);           exit 0; }
+    if ($arg eq  '--http')              { $cfg{'usehttp'}++;     next; } # must be before --help
+    if ($arg =~ m/^--no[_-]?http$/)     { $cfg{'usehttp'}   = 0; next; }
+    if ($arg =~ m/^--h(?:elp)?=?(.*)$/) { printhelp($2);         exit 0; } # allow --h --help --h=*
+    if ($arg =~ m/^\+help=?(.*)$/)      { printhelp($2);         exit 0; } # allow +help +help=*
     if ($arg =~ m/^(--|\+)ab(?:br|k)=?$/){printabbr();           exit 0; }
     if ($arg =~ m/^(--|\+)todo=?$/i)    { printtodo();           exit 0; }
     # some options are for compatibility with other programs
@@ -1289,7 +1314,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';     } # ..
     # our (and some compatibility) options
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;     next; } # sslyze
-    if ($arg eq  '--http')              { $cfg{'usehttp'}++;     next; }
+    if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1; next; }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1; next; }
     if ($arg =~ /^--no[_-]?sni/)        { $cfg{'usesni'}    = 0; next; }
     if ($arg =~ /^--no[_-]?cert$/)      { $cfg{'no_cert'}++;     next; }
@@ -1357,7 +1382,8 @@ while ($#argv >= 0) {
     if ($arg eq  '+info')   { @{$cfg{'do'}} = @{$cfg{'info'}};   next; } # +info is just a list of all other commands
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = @{$cfg{'info--v'}};next; } # like +info ...
     if ($arg eq  '+check')  { @{$cfg{'do'}} = 'check';          ;next; }
-    if ($arg eq  '+check_sni' or $arg eq '+sni_check') {
+    if ($arg eq  '+check_sni'
+     or $arg eq  '+sni_check') {
                    $info = 1; @{$cfg{'do'}} = @{$cfg{'sni--v'}}; next; }
     if ($arg =~ /^\+(.*)/)  { # got a command
         my $val = $1;
@@ -1429,6 +1455,7 @@ $Net::SSLinfo::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
 $Net::SSLinfo::use_openssl = $cmd{'extopenssl'};
 $Net::SSLinfo::use_sclient = $cmd{'extsclient'};
 $Net::SSLinfo::openssl     = $cmd{'openssl'};
+$Net::SSLinfo::use_http    = $cfg{'usehttp'};
 $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
 $Net::SSLinfo::timeout_sec = $cfg{'timeout'};
 $Net::SSLinfo::no_cert     = $cfg{'no_cert'};
@@ -1499,8 +1526,8 @@ if ($cfg{'trace'} > 0) {
     _yeast("  use_openssl= $cmd{'extopenssl'}");
     _yeast("      use_SNI= $Net::SSLinfo::use_SNI");
     _yeast("      targets= " . join(' ', @{$cfg{'hosts'}}));
-    foreach my $key (qw(port format legacy openssl cipher)) {
-        printf("#%s: %12s= %s\n", $mename, $key, $cfg{$key});
+    foreach my $key (qw(port format legacy openssl cipher usehttp)) {
+        printf("#%s: %13s= %s\n", $mename, $key, $cfg{$key});
     }
     _yeast("      version= " . join(' ', @{$cfg{'version'}}));
     _yeast("     commands= " . join(' ', @{$cfg{'do'}}));
@@ -1698,6 +1725,14 @@ foreach my $host (@{$cfg{'hosts'}}) {
         checksni($host, $cfg{'port'});
     }
 
+# ToDo: HTTP checks for hsts*
+# max-age=0   ==> Reset, sehr schlecht!
+# max-age=86400  ==> 1 Tag, sehr schlecht
+# max-age=2592000  ==> 30 Tage, schlecht
+# max-age=31536000  ==> 365 Tage, ausreichend
+# pins= ==> fingerprint des Zertifikats, wenn leer, dann Reset
+# Achtung: pruefen ob STS auch beit http:// gesetzt, sehr schlecht, da MiTM-Angriff moeglich
+
     if (_is_do('s_client')) { # for debugging only
         _trace(" +s_client");
         print "#{\n", Net::SSLinfo::s_client($_[0], $_[1]), "\n#}";
@@ -1802,6 +1837,18 @@ sub checkciphers($$$$$) {
             # if $c not supported locally (part of $ciphers)
             # then new() should fail
             # ToDo: get error if failed
+# SSL_verify_mode
+#              This option sets the verification mode for the peer certificate.
+#              The default (0x00) does no authentication.  You may combine 0x01
+#              (verify peer), 0x02 (fail verification if no peer certificate
+#              exists; ignored for clients), and 0x04 (verify client once) to
+#              change the default.
+# 
+## use IO::Socket::SSL;
+## my $GLOBAL_CONTEXT_ARGS = new IO::Socket::SSL::GLOBAL_CONTEXT_ARGS (
+##    'SSL_verify_mode' => 0x02,
+##    'SSL_ca_path' => '/root/ca/'); 
+##
         );
         #dbx# printf("#dbx# E: %s\n", $sslsocket->opened()); # nok
         if (!$sslsocket) {  # connect failed, cipher not accepted
@@ -1834,51 +1881,6 @@ sub checkciphers($$$$$) {
 # see: http://search.cpan.org/~mikem/Net-SSLeay-1.48/lib/Net/SSLeay.pod
 # see: http://search.cpan.org/~sullr/IO-Socket-SSL-1.76/SSL.pm
 
-# ToDo {
-            # HTTP
-            if ($cfg{'usehttp'} > 0) {
-
-#ok# use LWP::UserAgent;
-# $ENV{HTTPS_DEBUG} = 1;
-# $ENV{HTTPS_VERSION} = 3;
-# $ENV{HTTPS_CA_FILE} = "CA_Bundle.crt";
-#ok# use Crypt::SSLeay::CTX;
-#ok# use Crypt::SSLeay::Conn;
-#ok# use Crypt::SSLeay::X509;
-#ok# use LWP::Simple qw(get);
-#ok# my $ua  = LWP::UserAgent->new;
-#ok# my $req = HTTP::Request->new(GET => 'https://mail.google.com/');
-#ok# my $res = $ua->request($req);
-#ok# print $res->headers_as_string;
-#ok# # liefert:
-#ok# # Client-Date: Sat, 28 Jul 2012 18:52:36 GMT
-#ok# # Client-Peer: 209.85.148.83:443
-#ok# # Client-Response-Num: 1
-#ok# # Client-SSL-Cert-Issuer: /C=ZA/O=Thawte Consulting (Pty) Ltd./CN=Thawte SGC CA
-#ok# # Client-SSL-Cert-Subject: /C=US/ST=California/L=Mountain View/O=Google Inc/CN=mail.google.com
-#ok# # Client-SSL-Cipher: RC4-SHA
-#ok# # Client-SSL-Warning: Peer certificate not verified
-#nok# use Net::SSL;
-#nok# print Net::SSL::get_peer_certificate();
-
-## exit;
-                if ($cfg{'usehttp'} > 1) {
-                    $ENV{HTTPS_DEBUG}   = 1;
-                    #$ENV{HTTPS_VERSION} = 3;
-                    #$ENV{HTTPS_CA_FILE} = "CA_Bundle.crt";
-                }
-                my $httprequest = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
-                my $response401 = '^HTTP/1.1 401 Unauthorized'; # search strings to find to detect friendly "update your browser" responses
-                my $response = "";
-                print $sslsocket $httprequest;
-                $response .= $_ while (<$sslsocket>);
-                if ($verbose < -12) {
-                    my $n = "# " . "=" x 77;
-                    print "\n$n\n#>>>> HTTP Request:\n$httprequest\n#<<<< HTTP Response:\n$response\n$n\n\n";
-                }
-#print "#dbx# E: ". join("\n",sort keys %ENV);    exit;
-            }
-# ToDo }
             $sslsocket->close(SSL_ctx_free => 1);
         }
     } # foreach %hash
@@ -3227,10 +3229,14 @@ Default is  C<ALL:NULL:eNULL:aNULL:LOW>  as specified in Net::SSLinfo.
 
 =head3 --http
 
-  Make a http request if cipher is supported.
+  Make a HTTP request if cipher is supported.
 
   If used twice debugging will be enabled using  environment variable
   HTTPS_DEBUG .
+
+=head3 --no-http
+
+  Do not make HTTP request.
 
 =head3 --sni
 
@@ -3902,7 +3908,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.03.10
+@(#) 13.03.13
 
 =head1 AUTHOR
 
@@ -3915,7 +3921,7 @@ TODO
   * useSNI funktioniert nicht sauber in Net::SSLinfo, Einstieg siehe 
     # following check useful with SNI only
 
-  * implement +http (see %data_http, %check_http also)
+  * complete +http checks (see %check_http also)
 
   * implement +chain (see Net::SSLinfo.pm implement verify* also)
 
