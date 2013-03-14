@@ -30,7 +30,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.36 13/03/09 21:45:14',
+    SID         => '@(#) Net::SSLinfo.pm 1.37 13/03/14 08:00:24',
 };
 
 ######################################################## public documentation #
@@ -118,6 +118,12 @@ IP was given.
 If set to "0" no SNI will be used. This can be used to check if the target
 supports SNI; default: 1
 
+=item $Net::SSLinfo::use_http
+
+If set to "1", make a simple  HTTP request on the open  SSL connection and
+parse the response for additional SSL/TLS related information (for example
+Strict-Transport-Security header); default: 1
+
 =item $Net::SSLinfo::no_cert
 
 The target may allow connections using SSL protocol,  but does not provide
@@ -202,7 +208,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.02.28';
+    $VERSION   = '13.03.13';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -255,6 +261,15 @@ require Exporter;
         version
         keysize
         keyusage
+        http_status
+        http_server
+        http_alerts
+        http_location
+        http_refresh
+        hsts
+        hsts_maxage
+        hsts_subdom
+        hsts_pins
         verify_hostname
         verify_altname
         verify_alias
@@ -294,6 +309,7 @@ $Net::SSLinfo::openssl     = 'openssl'; # openssl executable
 $Net::SSLinfo::use_openssl = 1; # 1 use installed openssl executable
 $Net::SSLinfo::use_sclient = 1; # 1 use openssl s_client ...
 $Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target
+$Net::SSLinfo::use_http    = 1; # 1 make HTTP request and retrive additional data
 $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 1 don't collect data from target's certificate
                                 #   return empty string
@@ -392,6 +408,16 @@ my %_SSLinfo = ( # our internal data structure
     'selfsigned'        => '',  # self-signed certificate
     'compression'       => '',  # compression supported
     'expansion'         => '',  # expansion supported
+    # following from HTTP request
+    'http_status'       => '',  # response (aka status) line
+    'http_server'       => '',  # Server header
+    'http_alerts'       => '',  # Alerts send by server
+    'http_location'     => '',  # Location header send by server
+    'http_refresh'      => '',  # Refresh header send by server
+    'hsts'              => '',  # complete STS header
+    'hsts_maxage'       => '',  # max-age attribute of STS header
+    'hsts_subdom'       => '',  # includeSubDomains attribute of STS header
+    'hsts_pins'         => '',  # pins attribute of STS header
 ); # %_SSLinfo
 
 sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
@@ -546,6 +572,19 @@ sub _ssleay_get($$) {
     _trace "_ssleay_get '' .";  # or warn "**WARNING: wrong key '$key' given; ignored";
     return '';
 } # _ssleay_get
+
+sub _header_get($$) {
+    #? get value for specified header from given HTTP response; empty if not exists
+    my $head    = shift;   # header to search for
+    my $response= shift; # response where to serach
+    my $value   = '';
+    _trace("__header_get('$head', <<response>>)");
+    if ($response =~ m/[\r\n]$head\s*:/i) {
+        $value  =  $response;
+        $value  =~ s/.*?[\r\n]$head\s*:\s*([^\r\n]*).*$/$1/ims;
+    }
+    return $value;
+} # _header_get
 
 sub _openssl_MS($$$$) {
     #? wrapper to call external openssl executable on windows
@@ -802,6 +841,29 @@ sub do_ssl_open($$) {
         #$_SSLinfo{'signatureAl'}= $ssl->peer_certificate('SignatureAlgorithm') || '';
         #$_SSLinfo{'NPN'}        = $ssl->next_proto_negotiated()             || '';
 
+        if ($Net::SSLinfo::use_http > 0) {
+            _trace("do_ssl_open HTTP {");
+            #dbx# $host .= 'x';
+            my $response = '';
+            my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
+            $src = 'Net::SSLeay::write()';
+            Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
+            $response = Net::SSLeay::read($ssl);
+            $_SSLinfo{'http_status'}    =  $response;
+            $_SSLinfo{'http_status'}    =~ s/[\r\n].*$//ms; # get very first line
+            $_SSLinfo{'http_server'}    =  _header_get('Server',   $response);
+            $_SSLinfo{'http_location'}  =  _header_get('Location', $response);
+            $_SSLinfo{'http_refresh'}   =  _header_get('Refresh',  $response);
+            $_SSLinfo{'hsts'}           =  _header_get('Strict-Transport-Security', $response);
+            $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'hsts'};
+            $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
+            $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'hsts'} =~ m/includeSubDomains/i);
+            $_SSLinfo{'hsts_pins'}      =  $_SSLinfo{'hsts'}  if ($_SSLinfo{'hsts'} =~ m/pins=/i);
+            $_SSLinfo{'hsts_pins'}      =~ s/.*?pins=([^;" ]*).*/$1/i;
+# ToDo:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
+            _trace("\n$response \n# do_ssl_open HTTP }");
+        }
+
         if ($Net::SSLinfo::use_openssl == 0) {
             # calling external openssl is a performance penulty
             # it would be better to manually parse $_SSLinfo{'text'} but that
@@ -917,7 +979,7 @@ sub do_ssl_open($$) {
 
         _trace "do_ssl_open() with openssl done.";
         goto finished;
-    }
+    } # TRY
     # error handling
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
     if ($trace > 1) {
@@ -1193,6 +1255,42 @@ Get certificate signature key (bit).
 
 If certificate is self signed.
 
+=head2 http_alerts( )
+
+Get alerts send by server.
+
+=head2 http_status( )
+
+Get response (aka status) line.
+
+=head2 http_server( )
+
+Get Server header.
+
+=head2 http_location( )
+
+Get Location header.
+
+=head2 http_refresh( )
+
+Get Refresh header.
+
+=head2 hsts( )
+
+Get complete STS header.
+
+=head2 hsts_maxage( )
+
+Get max-age attribute of STS header.
+
+=head2 hsts_subdom( )
+
+Get includeSubDomains attribute of STS header.
+
+=head2 hsts_pins( )
+
+Get pins attribute of STS header.
+
 =cut
 
 sub s_client        { return _SSLinfo_get('s_client',         $_[0], $_[1]); }
@@ -1247,6 +1345,15 @@ sub pubkey_algorithm{ return _SSLinfo_get('pubkey_algorithm', $_[0], $_[1]); }
 sub renegotiation   { return _SSLinfo_get('renegotiation',    $_[0], $_[1]); }
 sub resumption      { return _SSLinfo_get('resumption',       $_[0], $_[1]); }
 sub selfsigned      { return _SSLinfo_get('selfsigned',       $_[0], $_[1]); }
+sub http_status     { return _SSLinfo_get('http_status',      $_[0], $_[1]); }
+sub http_server     { return _SSLinfo_get('http_server',      $_[0], $_[1]); }
+sub http_alerts     { return _SSLinfo_get('http_alerts',      $_[0], $_[1]); }
+sub http_location   { return _SSLinfo_get('http_location',    $_[0], $_[1]); }
+sub http_refresh    { return _SSLinfo_get('http_refresh',     $_[0], $_[1]); }
+sub hsts            { return _SSLinfo_get('hsts',             $_[0], $_[1]); }
+sub hsts_maxage     { return _SSLinfo_get('hsts_maxage',      $_[0], $_[1]); }
+sub hsts_subdom     { return _SSLinfo_get('hsts_subdom',      $_[0], $_[1]); }
+sub hsts_pins       { return _SSLinfo_get('hsts_pins',        $_[0], $_[1]); }
 
 =pod
 
