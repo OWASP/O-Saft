@@ -17,6 +17,7 @@
 #!#
 #!# GPL - The GNU General Public License, version 2
 #!#                       as specified in:  http://www.gnu.org/licenses/gpl-2.0
+#!#      or a copy of it https://github.com/OWASP/O-Saft/blob/master/LICENSE.md
 #!# Permits anyone the right to use and modify the software without limitations
 #!# as long as proper  credits are given  and the original  and modified source
 #!# code are included. Requires  that the final product, software derivate from
@@ -30,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.37 13/03/14 08:00:24',
+    SID         => '@(#) Net::SSLinfo.pm 1.40 13/05/26 08:28:26',
 };
 
 ######################################################## public documentation #
@@ -107,7 +108,7 @@ can only be retrived using  "openssl s_client ...".   Unfortunatelly
 the use may result in a  performance penulty  on some systems and so
 it can be disabled with "0"; default: 1
 
-If disabled, the values returned value will be: #
+If disabled, the values returned will be: #
 
 =item $Net::SSLinfo::use_SNI
 
@@ -208,7 +209,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.03.13';
+    $VERSION   = '13.05.22';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -236,9 +237,11 @@ require Exporter;
         aux
         pubkey
         pubkey_algorithm
+        pubkey_value
         signame
         sigdump
-        sigdump_len
+        sigkey_len
+        sigkey_value
         extensions
         trustout
         ocsp_uri
@@ -261,9 +264,12 @@ require Exporter;
         version
         keysize
         keyusage
+        https_status
+        https_server
+        https_alerts
+        https_location
+        https_refresh
         http_status
-        http_server
-        http_alerts
         http_location
         http_refresh
         hsts
@@ -386,9 +392,11 @@ my %_SSLinfo = ( # our internal data structure
     'aux'               => '',  #
     'pubkey'            => '',  # certificates public key
     'pubkey_algorithm'  => '',  # certificates public key algorithm
+    'pubkey_value'      => '',  # certificates public key value (same as modulus)
     'signame'           => '',  #
-    'sigdump'           => '',  #
-    'sigdump_len'       => '',  # bit length  of signature key
+    'sigdump'           => '',  # algorithm and value of signature key
+    'sigkey_len'        => '',  # bit length  of signature key
+    'sigkey_value'      => '',  # value       of signature key
     'extensions'        => '',  #
     'email'             => '',  # the email address(es)
     'serial'            => '',  # the serial number
@@ -409,11 +417,14 @@ my %_SSLinfo = ( # our internal data structure
     'compression'       => '',  # compression supported
     'expansion'         => '',  # expansion supported
     # following from HTTP request
-    'http_status'       => '',  # response (aka status) line
-    'http_server'       => '',  # Server header
-    'http_alerts'       => '',  # Alerts send by server
-    'http_location'     => '',  # Location header send by server
-    'http_refresh'      => '',  # Refresh header send by server
+    'http_status'       => '',  # HTTPS response (aka status) line
+    'http_server'       => '',  # HTTPS Server header
+    'http_alerts'       => '',  # HTTPS Alerts send by server
+    'http_location'     => '',  # HTTPS Location header send by server
+    'http_refresh'      => '',  # HTTPS Refresh header send by server
+    'http_status'       => '',  # HTTP response (aka status) line
+    'http_location'     => '',  # HTTP Location header send by server
+    'http_refresh'      => '',  # HTTP Refresh header send by server
     'hsts'              => '',  # complete STS header
     'hsts_maxage'       => '',  # max-age attribute of STS header
     'hsts_subdom'       => '',  # includeSubDomains attribute of STS header
@@ -443,11 +454,16 @@ sub _dump($$$) { return sprintf("#{ %-12s:%s%s #}\n", @_); }
 sub dump() {
     #? return internal data structure
     my $data = '';
+    if ($Net::SSLinfo::use_sclient > 1) {
+        $data .= _dump('s_client', " ", $_SSLinfo{'s_client'});
+    } else {
+        $data .= _dump('s_client', " ", "#### please set 'Net::SSLinfo::use_sclient > 1' dump s_client data also ###");
+    }
     $data .= _dump('PEM',     " ", $_SSLinfo{'PEM'});
     $data .= _dump('text',    " ", $_SSLinfo{'text'});
     $data .= _dump('ciphers', " ", join(" ", @{$_SSLinfo{'ciphers'}}));
     foreach my $key (keys %_SSLinfo) {
-        next if ($key =~ m/ciphers|errors|PEM|text|fingerprint_/); # handled special
+        next if ($key =~ m/ciphers|errors|PEM|text|fingerprint_|s_client/); # handled special
         $data .= _dump($key, " ", $_SSLinfo{$key});
     }
     foreach my $key (keys %_SSLinfo) {
@@ -842,18 +858,18 @@ sub do_ssl_open($$) {
         #$_SSLinfo{'NPN'}        = $ssl->next_proto_negotiated()             || '';
 
         if ($Net::SSLinfo::use_http > 0) {
-            _trace("do_ssl_open HTTP {");
+            _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x';
             my $response = '';
             my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
             $src = 'Net::SSLeay::write()';
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
             $response = Net::SSLeay::read($ssl);
-            $_SSLinfo{'http_status'}    =  $response;
-            $_SSLinfo{'http_status'}    =~ s/[\r\n].*$//ms; # get very first line
-            $_SSLinfo{'http_server'}    =  _header_get('Server',   $response);
-            $_SSLinfo{'http_location'}  =  _header_get('Location', $response);
-            $_SSLinfo{'http_refresh'}   =  _header_get('Refresh',  $response);
+            $_SSLinfo{'https_status'}   =  $response;
+            $_SSLinfo{'https_status'}   =~ s/[\r\n].*$//ms; # get very first line
+            $_SSLinfo{'https_server'}   =  _header_get('Server',   $response);
+            $_SSLinfo{'https_location'} =  _header_get('Location', $response);
+            $_SSLinfo{'https_refresh'}  =  _header_get('Refresh',  $response);
             $_SSLinfo{'hsts'}           =  _header_get('Strict-Transport-Security', $response);
             $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'hsts'};
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
@@ -861,6 +877,15 @@ sub do_ssl_open($$) {
             $_SSLinfo{'hsts_pins'}      =  $_SSLinfo{'hsts'}  if ($_SSLinfo{'hsts'} =~ m/pins=/i);
             $_SSLinfo{'hsts_pins'}      =~ s/.*?pins=([^;" ]*).*/$1/i;
 # ToDo:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
+            _trace("\n$response \n# do_ssl_open HTTPS }");
+            _trace("do_ssl_open HTTP {");
+            my %headers;
+            ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
+                 Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
+            );
+            # ToDo: not tested if following grep() catches multiple occourances
+            $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0]};
+            $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0]};
             _trace("\n$response \n# do_ssl_open HTTP }");
         }
 
@@ -879,7 +904,7 @@ sub do_ssl_open($$) {
         chomp $fingerprint;
         $_SSLinfo{'fingerprint_text'}   = $fingerprint;
         $_SSLinfo{'fingerprint'}        = $fingerprint; #alias
-        ($_SSLinfo{'fingerprint_type'}, $_SSLinfo{'fingerprint_hash'}) = split('=', $fingerprint);
+       ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split('=', $fingerprint);
         $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/;
 
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
@@ -896,8 +921,10 @@ sub do_ssl_open($$) {
         $_SSLinfo{'extensions'}         = _openssl_x509($_SSLinfo{'PEM'}, 'extensions');
         $_SSLinfo{'signame'}            = _openssl_x509($_SSLinfo{'PEM'}, 'signame');
         $_SSLinfo{'sigdump'}            = _openssl_x509($_SSLinfo{'PEM'}, 'sigdump');
-        $_SSLinfo{'pubkey_algorithm'}   =  $_SSLinfo{'pubkey'};
-        $_SSLinfo{'pubkey_algorithm'}   =~ s/^.*?Algorithm: ([^\r\n]*).*/$1/si;
+       ($_SSLinfo{'sigkey_value'}       =  $_SSLinfo{'sigdump'}) =~ s/.*?\n//ms;
+       ($_SSLinfo{'pubkey_algorithm'}   =  $_SSLinfo{'pubkey'})  =~ s/^.*?Algorithm: ([^\r\n]*).*/$1/si;
+       ($_SSLinfo{'pubkey_value'}       =  $_SSLinfo{'pubkey'})  =~ s/^.*?Modulus ([^\r\n]*)//si;
+        $_SSLinfo{'pubkey_value'}       =~ s/Exponent.*//si;
         $_SSLinfo{'modulus_exponent'}   =  $_SSLinfo{'pubkey'};
         $_SSLinfo{'modulus_exponent'}   =~ s/^.*?Exponent: (.*)$/$1/si;
         $_SSLinfo{'modulus'}            =~ s/^[^=]*=//i;
@@ -905,11 +932,10 @@ sub do_ssl_open($$) {
         $_SSLinfo{'signame'}            =~ s/^[^:]*: //i;
         $_SSLinfo{'modulus_len'}        =  4 * length($_SSLinfo{'modulus'});
             # Note: modulus is hex value where 2 characters are 8 bit
-        $_SSLinfo{'sigdump_len'}        =  $_SSLinfo{'sigdump'};
-        $_SSLinfo{'sigdump_len'}        =~ s/[^\n]*\n//;
-        $_SSLinfo{'sigdump_len'}        =~ s/[\s\n]//g;
-        $_SSLinfo{'sigdump_len'}        =~ s/[:]//g;
-        $_SSLinfo{'sigdump_len'}        =  4 * length($_SSLinfo{'sigdump_len'});
+        $_SSLinfo{'sigkey_len'}         =  $_SSLinfo{'sigkey_value'};
+        $_SSLinfo{'sigkey_len'}         =~ s/[\s\n]//g;
+        $_SSLinfo{'sigkey_len'}         =~ s/[:]//g;
+        $_SSLinfo{'sigkey_len'}         =  4 * length($_SSLinfo{'sigkey_len'});
         chomp $_SSLinfo{'fingerprint_hash'};
         chomp $_SSLinfo{'modulus'};
         chomp $_SSLinfo{'pubkey'};
@@ -978,6 +1004,7 @@ sub do_ssl_open($$) {
         $_SSLinfo{'expansion'}      = $data;
 
         _trace "do_ssl_open() with openssl done.";
+        print Net::SSLinfo::dump() if ($trace > 0);
         goto finished;
     } # TRY
     # error handling
@@ -1168,6 +1195,9 @@ Get certificate (subject, issuer) from certificate.
 
 Print all available (by Net::SSLinfo) data.
 
+Due to huge amount of data, the value for s_client is usually omitted.
+Please set C<$Net::SSLinfo::use_sclient > 1> to print this data also.
+
 =head2 (details)
 
 All following require that C<$Net::SSLinfo::use_openssl=1;> being set.
@@ -1233,6 +1263,11 @@ Get certificate's public key.
 
 Get certificate's public key algorithm.
 
+=head2 pubkey_value( )
+
+Get certificate's public key value.
+Same as I<modulus()>  but may be different format.
+
 =head2 renegotiation( )
 
 Get certificate's renegotiation support.
@@ -1247,33 +1282,49 @@ resumption is assumed.
 If resumption is not detected, increasing the timeout with i.e.
 "$Net::SSLinfo::timeout_sec = 5"  may return different results.
 
-=head2 sigdump_len( )
+=head2 sigkey_len( )
 
 Get certificate signature key (bit).
+
+=head2 sigkey_value( )
+
+Get certificate signature value (hexdump).
 
 =head2 selfsigned( )
 
 If certificate is self signed.
 
-=head2 http_alerts( )
+=head2 https_alerts( )
 
-Get alerts send by server.
+Get HTTPS alerts send by server.
+
+=head2 https_status( )
+
+Get HTTPS response (aka status) line.
+
+=head2 https_server( )
+
+Get HTTPS Server header.
+
+=head2 https_location( )
+
+Get HTTPS Location header.
+
+=head2 https_refresh( )
+
+Get HTTPS Refresh header.
 
 =head2 http_status( )
 
-Get response (aka status) line.
-
-=head2 http_server( )
-
-Get Server header.
+Get HTTP response (aka status) line.
 
 =head2 http_location( )
 
-Get Location header.
+Get HTTP Location header.
 
 =head2 http_refresh( )
 
-Get Refresh header.
+Get HTTP Refresh header.
 
 =head2 hsts( )
 
@@ -1327,7 +1378,8 @@ sub ocspid          { return _SSLinfo_get('ocspid',           $_[0], $_[1]); }
 sub pubkey          { return _SSLinfo_get('pubkey',           $_[0], $_[1]); }
 sub signame         { return _SSLinfo_get('signame',          $_[0], $_[1]); }
 sub sigdump         { return _SSLinfo_get('sigdump',          $_[0], $_[1]); }
-sub sigdump_len     { return _SSLinfo_get('sigdump_len',      $_[0], $_[1]); }
+sub sigkey_value    { return _SSLinfo_get('sigkey_value',     $_[0], $_[1]); }
+sub sigkey_len      { return _SSLinfo_get('sigkey_len',       $_[0], $_[1]); }
 sub subject_hash    { return _SSLinfo_get('subject_hash',     $_[0], $_[1]); }
 sub issuer_hash     { return _SSLinfo_get('issuer_hash',      $_[0], $_[1]); }
 sub verify          { return _SSLinfo_get('verify',           $_[0], $_[1]); }
@@ -1342,12 +1394,16 @@ sub fingerprint     { return _SSLinfo_get('fingerprint',      $_[0], $_[1]); } #
 sub modulus_len     { return _SSLinfo_get('modulus_len',      $_[0], $_[1]); }
 sub modulus_exponent{ return _SSLinfo_get('modulus_exponent', $_[0], $_[1]); }
 sub pubkey_algorithm{ return _SSLinfo_get('pubkey_algorithm', $_[0], $_[1]); }
+sub pubkey_value    { return _SSLinfo_get('pubkey_value',     $_[0], $_[1]); }
 sub renegotiation   { return _SSLinfo_get('renegotiation',    $_[0], $_[1]); }
 sub resumption      { return _SSLinfo_get('resumption',       $_[0], $_[1]); }
 sub selfsigned      { return _SSLinfo_get('selfsigned',       $_[0], $_[1]); }
+sub https_status    { return _SSLinfo_get('https_status',     $_[0], $_[1]); }
+sub https_server    { return _SSLinfo_get('https_server',     $_[0], $_[1]); }
+sub https_alerts    { return _SSLinfo_get('https_alerts',     $_[0], $_[1]); }
+sub https_location  { return _SSLinfo_get('https_location',   $_[0], $_[1]); }
+sub https_refresh   { return _SSLinfo_get('https_refresh',    $_[0], $_[1]); }
 sub http_status     { return _SSLinfo_get('http_status',      $_[0], $_[1]); }
-sub http_server     { return _SSLinfo_get('http_server',      $_[0], $_[1]); }
-sub http_alerts     { return _SSLinfo_get('http_alerts',      $_[0], $_[1]); }
 sub http_location   { return _SSLinfo_get('http_location',    $_[0], $_[1]); }
 sub http_refresh    { return _SSLinfo_get('http_refresh',     $_[0], $_[1]); }
 sub hsts            { return _SSLinfo_get('hsts',             $_[0], $_[1]); }
