@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.40 13/05/26 08:28:26',
+    SID         => '@(#) Net::SSLinfo.pm 1.41 13/09/07 10:02:17',
 };
 
 ######################################################## public documentation #
@@ -272,6 +272,7 @@ require Exporter;
         http_status
         http_location
         http_refresh
+        http_sts
         hsts
         hsts_maxage
         hsts_subdom
@@ -425,6 +426,7 @@ my %_SSLinfo = ( # our internal data structure
     'http_status'       => '',  # HTTP response (aka status) line
     'http_location'     => '',  # HTTP Location header send by server
     'http_refresh'      => '',  # HTTP Refresh header send by server
+    'http_sts'          => '',  # HTTP Strict-Transport-Security header send by server (whish is very bad)
     'hsts'              => '',  # complete STS header
     'hsts_maxage'       => '',  # max-age attribute of STS header
     'hsts_subdom'       => '',  # includeSubDomains attribute of STS header
@@ -886,6 +888,7 @@ sub do_ssl_open($$) {
             # ToDo: not tested if following grep() catches multiple occourances
             $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0]};
             $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0]};
+            $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0]};
             _trace("\n$response \n# do_ssl_open HTTP }");
         }
 
@@ -1326,6 +1329,10 @@ Get HTTP Location header.
 
 Get HTTP Refresh header.
 
+=head2 http_sts( )
+
+Get HTTP Strict-Transport-Security header, if any.
+
 =head2 hsts( )
 
 Get complete STS header.
@@ -1406,6 +1413,7 @@ sub https_refresh   { return _SSLinfo_get('https_refresh',    $_[0], $_[1]); }
 sub http_status     { return _SSLinfo_get('http_status',      $_[0], $_[1]); }
 sub http_location   { return _SSLinfo_get('http_location',    $_[0], $_[1]); }
 sub http_refresh    { return _SSLinfo_get('http_refresh',     $_[0], $_[1]); }
+sub http_sts        { return _SSLinfo_get('http_sts',         $_[0], $_[1]); }
 sub hsts            { return _SSLinfo_get('hsts',             $_[0], $_[1]); }
 sub hsts_maxage     { return _SSLinfo_get('hsts_maxage',      $_[0], $_[1]); }
 sub hsts_subdom     { return _SSLinfo_get('hsts_subdom',      $_[0], $_[1]); }
