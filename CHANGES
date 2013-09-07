@@ -1,0 +1,35 @@
+
+Version: 13.09.07
+  NEW
+    * +quick  command for quick and simple check
+    * +http   command for HTTP(S) checks
+    * --legasy=testsslserver  implemented
+  UPDATE
+    * scoring improved
+    * documentation improved
+  BUGFIX
+    * --short texts corrected
+
+Version: 13.07.31 
+  NEW
+    * STS     checks implemented (scoring not yet perfect)
+    * PFS     checks implemented
+    * --format=raw implemented
+    * new commands:  +sigkey_value, +sigkey_algorithm, +sigkey_len
+  UPDATE
+    * debugging and tracing improved
+
+Version: 13.03.31 
+  NEW
+    * --http  implemented
+    * --set_score implemented
+    * --help=LABEL implemented
+    * --ignorecase implemented
+    * --showhost implemented
+    * scoring implemented (first simple attempt)
+  UPDATE
+    * glossar
+  BUGFIX
+    * avoid useless or wrong output when --no-cert given
+
+
