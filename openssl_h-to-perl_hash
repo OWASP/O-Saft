@@ -1,0 +1,36 @@
+#!/usr/bin/perl -an
+#?
+#? NAME
+#?      openssl_h-to-perl_hash
+#? SYNOPSIS
+#?      cd /opt/tools/openssl-1.0.1c && openssl_h-to-perl_hash  ssl/{ssl2.h,ssl3.h,tls1}
+#? DESCRIPTION
+#?      Convert openSSL's cipher definitions to perlish hash.
+#?           'ssl-ID' => [qw( 0xFFF  cipher-name)],
+#? AUTHOR
+#?      07. September 2013 Achim Hoffmann (at) sicsec de
+#?
+
+
+m/(SSL2|SSL3|TLS1)_(CK|TXT)/&&do{
+  $idx=1;
+  $idx=0 if ($F[1]=~/^...._CK/);
+  $ssl=$F[1];
+  $ssl=~s/^...._(CK|TXT)_//;
+  $txt=$F[2];
+  $txt=~s/["']//g;
+  $a{$ssl}[$idx]=$txt;
+};
+END {
+  print <<EoT;
+    #!#----------------------------------------+-------------+--------------------+
+    #!# cipher suite value                  => [   constant   cipher names        ],
+    #!#----------------------------------------+-------------+--------------------+
+EoT
+  foreach $ssl (sort keys %a) {
+    $c=" ";
+    $c="#" if (($a{$ssl}[0]=~/^\s*$/)||($a{$ssl}[1]=~/^\s*$/));
+    printf"%s   %-40s=> [qw(%s %s)],\n", $c,"'".$ssl."'",$a{$ssl}[0],$a{$ssl}[1];
+  }
+}
+
