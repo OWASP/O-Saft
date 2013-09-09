@@ -1,4 +1,12 @@
 
+Version: 13.09.09
+  BUGFIX
+    * +cipher command corrected
+
+Version: 13.09.08
+  NEW
+    * --cipher= allows other names;  _find_cipher_name() implemented
+
 Version: 13.09.07
   NEW
     * +quick  command for quick and simple check
