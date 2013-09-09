@@ -3037,16 +3037,18 @@ if ($cfg{'exec'} == 0) {
 
 # check given cipher names
 # -------------------------------------
-my $new_list = '';
-foreach my $c (split(' ', $cfg{'cipher'})) {
-    my $new = _find_cipher_name($c);
-    if ($new =~ m/^\s*$/) {
-        warn("**WARNING: unknown cipher name '$c'; ignored");
-        next;
+if ($cfg{'cipher'} eq "yeast") {
+    my $new_list = '';
+    foreach my $c (split(' ', $cfg{'cipher'})) {
+        my $new = _find_cipher_name($c);
+        if ($new =~ m/^\s*$/) {
+            warn("**WARNING: unknown cipher name '$c'; ignored");
+            next;
+        }
+        $new_list = $new . ' ';
     }
-    $new_list = $new . ' ';
+    $cfg{'cipher'} = $new_list;
 }
-$cfg{'cipher'} = $new_list;
 
 # set additional defaults if missing
 # -------------------------------------
@@ -4630,7 +4632,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.08
+@(#) 13.09.09
 
 =head1 AUTHOR
 
