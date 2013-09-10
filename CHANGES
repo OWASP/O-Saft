@@ -1,4 +1,12 @@
 
+Version: 13.09.10
+  BUGFIX
+    * output for some legacy formats corrected (sslscan, ssltest, sslyze)
+    * print correct SSL version for ciphers in results
+    * legacy option --no-failed corrected
+  UPDATE
+    * Glossar improved
+
 Version: 13.09.09
   BUGFIX
     * +cipher command corrected
@@ -8,26 +16,30 @@ Version: 13.09.08
     * --cipher= allows other names;  _find_cipher_name() implemented
 
 Version: 13.09.07
+  BUGFIX
+    * --short texts corrected
+  UPDATE
+    * scoring improved
+    * documentation improved
   NEW
     * +quick  command for quick and simple check
     * +http   command for HTTP(S) checks
     * --legasy=testsslserver  implemented
-  UPDATE
-    * scoring improved
-    * documentation improved
-  BUGFIX
-    * --short texts corrected
 
 Version: 13.07.31 
+  UPDATE
+    * debugging and tracing improved
   NEW
     * STS     checks implemented (scoring not yet perfect)
     * PFS     checks implemented
     * --format=raw implemented
     * new commands:  +sigkey_value, +sigkey_algorithm, +sigkey_len
-  UPDATE
-    * debugging and tracing improved
 
 Version: 13.03.31 
+  BUGFIX
+    * avoid useless or wrong output when --no-cert given
+  UPDATE
+    * glossar
   NEW
     * --http  implemented
     * --set_score implemented
@@ -35,9 +47,5 @@ Version: 13.03.31
     * --ignorecase implemented
     * --showhost implemented
     * scoring implemented (first simple attempt)
-  UPDATE
-    * glossar
-  BUGFIX
-    * avoid useless or wrong output when --no-cert given
 
 
