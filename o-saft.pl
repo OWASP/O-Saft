@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-# dort ###ah weiter ### und bei %score_ssllabs
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -37,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.102 13/09/07 23:08:41";
+my $SID     = "@(#) yeast.pl 1.106 13/09/10 21:41:21";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1322,7 +1320,7 @@ my %text = (
         'DECIPHER'  => 'synonym for decryption',
         'DER'       => 'Distinguished Encoding Rules',
         'DH'        => 'Diffie-Hellman',
-        'DHE'       => 'Diffie-Hellman ephemeral',
+        'DHE'       => 'Diffie-Hellman ephemeral', # historic acronym, often used, mainly in openssl
         'DPA'       => 'Dynamic Passcode Authentication (see CAP)',
         'DSA'       => 'Digital Signature Algorithm',
         'DSS'       => 'Digital Signature Standard',
@@ -1340,7 +1338,8 @@ my %text = (
         'ECDSA'     => 'Elliptic Curve Digital Signature Algorithm',
         'ECMQV'     => 'Elliptic Curve Menezes-Qu-Vanstone',
         'EDE'       => 'Encryption-Decryption-Encryption',
-        'EDH'       => 'Ephemeral Diffie-Hellman',
+        'EDH'       => 'Ephemeral Diffie-Hellman', # official acronym
+        'ElGamal'   => 'asymmetric block cipher',
         'ENCIPHER'  => 'synonym for encryption',
         'ESP'       => 'Encapsulating Security Payload',
         'EV'        => 'Extended Validation',
@@ -1359,9 +1358,13 @@ my %text = (
         'FZA'       => 'FORTEZZA',
         'GCM'       => 'Galois/Counter Mode (block cipher mode)',
         'GOST'      => 'Gossudarstwenny Standard',
+        'Grainv1'   => "stream cipher (64 bit IV)",
+        'Grainv128' => "stream cipher (96 bit IV)",
         'HAVAL'     => 'one-way hashing',
         'HAS-160'   => 'hash function',
         'HAS-V'     => 'hash function',
+        'HC128'     => "stream cipher",
+        'HC256'     => "stream cipher",
         'HMAC'      => 'keyed-Hash Message Authentication Code',
         'HSTS'      => 'HTTP Strict Transport Security',
         'HTOP'      => 'HMAC-Based One-Time Password',
@@ -1381,6 +1384,7 @@ my %text = (
         'MISTY1'    => 'block cipher algorithm',
         'NTLM'      => 'NT Lan Manager. Microsoft Windows challenge-response authentication method.',
         'NPN'       => 'Next Protocol Negotiation',
+        'Neokeon'   => 'symmetric block cipher algorithm',
         'NULL'      => 'no encryption',
         'OAEP'      => 'Optimal Asymmetric Encryption Padding',
         'OFB'       => 'Output Feedback',
@@ -1416,7 +1420,8 @@ my %text = (
         'Radix-64'  => 'alias for Base-64',
         'RC2'       => 'Rivest Cipher 2, block cipher by Ron Rivest',
         'RC4'       => "Rivest Cipher 4, stream cipher (aka Ron's Code)",
-        'RC5'       => 'Rivest Cipher 5, block cipher',
+        'RC5'       => 'Rivest Cipher 5, block cipher (32 bit word)',
+        'RC5-64'    => 'Rivest Cipher 5, block cipher (64 bit word)',
         'RC6'       => 'Rivest Cipher 6',
         'RCSU'      => "Reuters' Compression Scheme for Unicode (aka SCSU)",
         'Rijndael'  => 'symmetric block cipher algorithm',
@@ -1427,6 +1432,7 @@ my %text = (
         'RSS-14'    => 'Reduced Space Symbology, see GS1',
         'RTN'       => 'Routing transit number',
         'SAFER'     => 'Secure And Fast Encryption Routine, block cipher',
+        'Salsa20'   => "stream cipher",
         'SAM'       => 'syriac abbreviation mark',
         'SAN'       => 'Subject Alternate Name',
         'SBCS'      => 'single-byte character set',
@@ -1474,6 +1480,7 @@ my %text = (
         'Twofish'   => 'symmetric key block cipher',
         'UC'        => 'Unified Communications (SSL Certificate using SAN)',
         'UCC'       => 'Unified Communications Certificate (rarley used)',
+        'VMPC'      => "stream cipher",
         'WHIRLPOOL' => 'hash function',
         'X.680'     => 'X.680: ASN.1',
         'X.509'     => 'X.509: The Directory - Authentication Framework',
@@ -2309,15 +2316,16 @@ sub print_dataline($$$) {
     }
 } # print_dataline
 
-sub print_cipherline($$$) {
+sub print_cipherline($$$$) {
     # print cipher check result according given legacy format
+    my $ssl     = shift;
     my $legacy  = shift;
     my $cipher  = shift;
     my $support = shift;
     # variables for better (human) readability
     my $bit  = get_cipher_bits($cipher);
     my $sec  = get_cipher_sec($cipher);
-    my $ssl  = get_cipher_ssl($cipher);
+#   my $ssl  = get_cipher_ssl($cipher);
     my $desc =  join(" ", get_cipher_desc($cipher));
     my $yesno= $text{'legacy'}->{$legacy}->{$support};
     if ($legacy eq 'sslyze')   {
@@ -2421,22 +2429,24 @@ sub print_cipherhead($) {
     }
 } # print_cipherhead
 
-sub print_cipherdefault($$) {
+sub print_cipherdefault($$$) {
     # print default cipher according given legacy format
+    my $ssl     = shift;
     my $legacy  = shift;
     my $host    = shift;
+    my $yesno   = 'yes';
     if ($legacy eq 'sslyze')    { print "\n\n      Preferred Cipher Suites:"; }
     if ($legacy eq 'sslaudit')  {} # ToDo: cipher name should be DEFAULT
     if ($legacy eq 'sslcipher') {}
     if ($legacy eq 'ssldiagnos'){}
-    if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; }
+    if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = '';}
     if ($legacy eq 'ssltest')   {}
     if ($legacy eq 'ssltest-g') {}
     if ($legacy eq 'testsslserver') {}
     if ($legacy eq 'simple')    {}
     if ($legacy eq 'compact')   {}
     if ($legacy eq 'full')      {}
-    print_cipherline($cfg{'legacy'}, $data{default}->{val}($host), 'yes');
+    print_cipherline($ssl, $cfg{'legacy'}, $data{default}->{val}($host), $yesno);
 } # print_cipherdefault
 
 sub print_ciphertotals($$) {
@@ -2488,9 +2498,9 @@ sub printtitle($$$) {
             "[*] Target port: $cfg{'port'}\n",
             "----------------------------------------------------\n";
     }
-    if ($legacy eq 'sslscan')   { print "Testing SSL server $host"; }
-    if ($legacy eq 'ssltest')   { print $txt; }
-    if ($legacy eq 'ssltest-g') { print $txt; }
+    if ($legacy eq 'sslscan')   { $host =~ s/;/ on port /; print "Testing SSL server $host\n"; }
+    if ($legacy eq 'ssltest')   { print "Checking for Supported $ssl Ciphers on $host"; }
+    if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host"; }
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
     if ($legacy eq 'quick')     { print "\n### " . $txt; }
@@ -2501,7 +2511,7 @@ sub printtitle($$$) {
 sub printfooter($) {
     # print footer line according given legacy format
     my $legacy  = shift;
-    if ($legacy eq 'sslyze')    { print "\n SCAN COMPLETED IN ...\n"; }
+    if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
     if ($legacy eq 'sslaudit')  {}
     if ($legacy eq 'sslcipher') {}
     if ($legacy eq 'ssldiagnos'){}
@@ -2545,39 +2555,43 @@ sub _is_print($$$) {
     return 0;
 } # _is_print
 
-sub printciphers($$@) {
+sub printciphers($$$@) {
     #? print all cipher check results according given legacy format
     my $ssl     = shift;
     my $host    = shift;
+    my $count   = shift; # print title line if 0
     my @results = @_;
     my $print   = 0; # default: do not print
     my $c       = '';
     local    $\ = "\n";
-    print_cipherhead( $cfg{'legacy'});
-    print_cipherdefault($cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslaudit');
+    print_cipherhead( $cfg{'legacy'}) if ($count  == 0);
+    print_cipherdefault($ssl, $cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslaudit');
 
     if ($cfg{'legacy'} eq 'sslyze') {
         print "\n  * $ssl Cipher Suites :";
-        print_cipherdefault($cfg{'legacy'}, $host);
-        print "";
-        print "\n      Accepted Cipher Suites:";
-        foreach $c (@results) {
-            $print = _is_print(${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
-            print_cipherline($cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print);
+        print_cipherdefault($ssl, $cfg{'legacy'}, $host);
+        if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
+            print "\n      Accepted Cipher Suites:";
+            foreach $c (@results) {
+                next if (${$c}[1] ne "yes");
+                $print = _is_print(${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
+                print_cipherline($ssl, $cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print == 1);
+            }
         }
-        print "";
-        print "\n      Rejected Cipher Suites:";
-        foreach $c (@results) {
-            $print = _is_print(${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
-            print_cipherline($cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print);
+        if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
+            print "\n      Rejected Cipher Suites:";
+            foreach $c (@results) {
+                next if (${$c}[1] ne "no");
+                $print = _is_print(${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
+                print_cipherline($ssl, $cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print == 1);
+            }
         }
     } else {
         foreach $c (@results) {
             $print = _is_print(${$c}[1], $cfg{'disabled'}, $cfg{'enabled'});
-            print_cipherline($cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print);
+            print_cipherline($ssl, $cfg{'legacy'}, ${$c}[0], ${$c}[1]) if ($print ==1);
         }
     }
-    print_cipherdefault($cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslscan');
     print_ciphertotals( $cfg{'legacy'}, $ssl);
     printcheck(  $cfg{'legacy'}, $check_conn{'totals'}->{txt}, $#results) if ($cfg{'verbose'} > 0);
     printfooter( $cfg{'legacy'});
@@ -2838,7 +2852,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
     if ($arg eq  '--trace--')           { $cfg{'trace'}     = -1;next; } # special internal tracing
     # options form other programs for compatibility
-    if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'disabled'}  = 0; next; } # sslscan
+    if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
     if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; }
 #   if ($arg eq  '--insecure')          { $cfg{'no_failed'} = 0; next; } # ToDo to be tested
     if ($arg eq  '--version')           { $arg = '+version';           }
@@ -3037,7 +3051,7 @@ if ($cfg{'exec'} == 0) {
 
 # check given cipher names
 # -------------------------------------
-if ($cfg{'cipher'} eq "yeast") {
+if ($cfg{'cipher'} ne "yeast") {
     my $new_list = '';
     foreach my $c (split(' ', $cfg{'cipher'})) {
         my $new = _find_cipher_name($c);
@@ -3268,13 +3282,17 @@ foreach my $host (@{$cfg{'hosts'}}) {
         _trace(" ciphers: $ciphers");
         # ToDo: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
+        my $_printtitle = 0;    # count title lines
         foreach my $version (@{$cfg{'version'}}) {
             # TODo: single cipher check: grep for cipher in %{$ciphers}
             @results = ();
             #dbx# _dprint "$version # ", keys %{$ciphers} ; #sort keys %hash; # exit;
-            printtitle($cfg{'legacy'}, $version, join(':', $host, $cfg{'port'}));
+            $_printtitle++;
+            if (($cfg{'legacy'} ne "sslscan") or ($_printtitle <= 1)) {
+                printtitle($cfg{'legacy'}, $version, join(':', $host, $cfg{'port'}));
+            }
             checkciphers($version, $host, $cfg{'port'}, $ciphers, \%ciphers);
-            printciphers($version, $host, @results);
+            printciphers($version, $host, ($cfg{'legacy'} eq "sslscan")?($_printtitle):0, @results);
             foreach (qw(LOW WEAK MEDIUM HIGH -?-)) {
                 # keys in %check_conn look like 'SSLv2-LOW', 'TLSv11-HIGH', etc.
                 my $key = $version . '-' . $_;
@@ -3282,6 +3300,9 @@ foreach my $host (@{$cfg{'hosts'}}) {
                     $score{'check_ciph'}->{val} -= _getscore($key, 'egal', \%check_conn);
                 }
             }
+        }
+        foreach my $version (@{$cfg{'version'}}) {
+            print_cipherdefault($version, $cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslscan');
         }
     }
     print "";
@@ -4632,7 +4653,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.09
+@(#) 13.09.10
 
 =head1 AUTHOR
 
