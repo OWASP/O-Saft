@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.106 13/09/10 21:41:21";
+my $SID     = "@(#) yeast.pl 1.107 13/09/13 00:03:24";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -406,6 +406,7 @@ my %shorttexts = (
     'TLSv1-HIGH'    => "Ciphers HIGH",
     'default'       => "Default Cipher ",
     'IP'            => "IP for hostname",
+    'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
     'expired'       => "Not expired",
     'hostname'      => "Valid for hostname",
@@ -608,9 +609,10 @@ my %cfg = (
     'try'           => 0,
     'trace'         => 0,       # 1=trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
     'verbose'       => 0,
-    'enabled'       => 0,       # 1: only print enabled
-    'disabled'      => 0,       # 1: only print disabled
+    'enabled'       => 0,       # 1: only print enabled ciphers
+    'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
+    'usedns'        => 1,       # 1: make DNS reverse lookup
     'usehttp'       => 1,       # 1: make HTTP request
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks
     'usesni'        => 1,       # 0: do not make connection in SNI mode
@@ -696,8 +698,9 @@ my %cfg = (
     'hosts'         => [],
     'host'          => "",      # currently scanned host
     'ip'            => "",      # currently scanned host's IP
-    'IP'            => "",      # IP human redable (doted octed)
-    'rhost'         => "",      # reverse resolved name of currently scanned host
+    'IP'            => "",      # currently scanned host's IP (human redable, doted octed)
+    'rhost'         => "",      # currently scanned host's reverse resolved name
+    'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
     'port'          => 443,     # default port for connections
     'timeout'       => 1,       # default timeout in seconds for connections
                                 # NOTE that some servers do not connect SSL within this time
@@ -745,6 +748,44 @@ my %cfg = (
         #    TLS_DHE_RSA_WITH_AES_128_CBC_SHA
         #    TLS_RSA_WITH_RC4_128_SHA
         #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
+    },
+    'regex' => {
+        # First some explanations of RegEx used later on. This is done as perl
+        # code, so that people  permanently rejecting to read comments  and/or
+        # relying on any kind of syntax highlighting, will stumple over here.
+        '_or-'      => '[_-]',
+                       # tools use _ or - as separator character
+		'ADHorDHA'  => '(?:A(?NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
+                       # Anonymous DH has various acronyms:
+                       #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, DH_Anon, ...
+        'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
+                       # RC4 has other names due to copyright problems:
+                       #     ARC4, ARCFOUR, RC4
+		'DESor3DES' => '(?:[_-]3DES|DES[_-]_192)',
+                       # Tripple DES is used as 3DES or DES_192
+        'DHEorEDH'  => '(?:DHE|EDH)_',
+                       # DHE and EDH are 2 acronyms for the same thing
+        'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
+                       # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
+        'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
+                       # FORTEZZA has abbrevations FZA and FRZ
+                       # unsure about FORTEZZA_KEA
+		'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
+                       # Numerous protocol prefixes are in use:
+                       #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
+		'aliases'   => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_](?:EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED))',
+                       # various variants for aliases to selct cipher groups
+        'compression'=>'(?:DEFLATE|LZO|NULL)',
+
+        # Now the RegEx used later on
+        # Regex containing pattern to identify vulnerable ciphers
+#       'BEAST'     => 'NULL|^ADH-|DES-CBC-|MD5|RC', # No NULL cipher, No Null Auth, No single DES, No MD5, No RC ciphers
+        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?(?:ARC(?:4|FOUR)|RC4)',
+#       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+#       'CRIME'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+#       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+#       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+       'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
     },
     'cipher'        => "yeast", # which ciphers to be used # <------------------------
 ); # %cfg
@@ -1264,6 +1305,7 @@ my %text = (
         'ADH'       => 'Anonymous Diffie-Hellman',
         'Adler32'   => 'hash function',
         'AEAD'      => 'Authenticated Encryption with Additional Data',
+        'AECDHE'    => 'Anonymous Ephemeral ECDH',
         'AES'       => 'Advanced Encryption Standard',
         'AIA'       => 'Authority Information Access',
         'AKID'      => 'Authority Key IDentifier',
@@ -1316,6 +1358,7 @@ my %text = (
         '3TDEA'     => 'Tripple DES (168 bits)',
         '2TDEA'     => 'Double DES (112 bits)',
         'D5'        => "Verhoeff's Dihedral Group D5 Check",
+        'DDH'       => 'Decisional Diffie-Hellman (Problem)',
         'DEA'       => 'Data Encryption Algorithm (sometimes a synonym for DES)',
         'DECIPHER'  => 'synonym for decryption',
         'DER'       => 'Distinguished Encoding Rules',
@@ -1366,6 +1409,7 @@ my %text = (
         'HC128'     => "stream cipher",
         'HC256'     => "stream cipher",
         'HMAC'      => 'keyed-Hash Message Authentication Code',
+        'HMQV'      => 'h? Menezes-Qu-Vanstone',
         'HSTS'      => 'HTTP Strict Transport Security',
         'HTOP'      => 'HMAC-Based One-Time Password',
         'IDEA'      => 'International Data Encryption Algorithm',
@@ -1382,6 +1426,7 @@ my %text = (
         'MD4'       => 'Message Digest 4',
         'MD5'       => 'Message Digest 5',
         'MISTY1'    => 'block cipher algorithm',
+        'MQV'       => 'Menezes-Qu-Vanstone (authentecated key agreement',
         'NTLM'      => 'NT Lan Manager. Microsoft Windows challenge-response authentication method.',
         'NPN'       => 'Next Protocol Negotiation',
         'Neokeon'   => 'symmetric block cipher algorithm',
@@ -1661,6 +1706,10 @@ sub _find_cipher_name($) {
     return '';
 } # _find_cipher_name
 
+sub _prot_cipher($$)   { return ' ' . join(":", @_); }
+    # return string consisting of given parameters separated by : and prefixed with a space
+    # (mainly used to concatenate SSL Version and cipher suite name)
+
 sub _getscore($$$)     {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
     my $key     = shift;
@@ -1790,7 +1839,7 @@ sub _setcmd() {
 # -------------------------------------
 sub _setvalue($)       { return ($_[0] eq '') ? 'yes' : 'no (' . $_[0] . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
-sub _isbeast($)        { return ($_[0] =~ /(RC4)/) ? '' : $_[0] . ' '; }
+sub _isbeast($)        { return ($_[0] =~ /$cfg{'regex'}->{'BEAST'}/) ? '' : $_[0] . ' '; }
     # return given cipher if vulnerable to BEAST attack, empty string otherwise
 # ToDo: more checks, see: http://www.bolet.org/TestSSLServer/
 #sub _isbreach($)       { return "NOT YET IMPLEMEMNTED"; }
@@ -1884,20 +1933,20 @@ sub checkciphers($$$$$) {
             push(@results, [$c, 'yes']);
 
             # check weak ciphers
-            $check_dest{'NULL'}->{val}  .= ' ' . $c if ($c =~ /NULL/);
-            $check_dest{'EDH'}->{val}   .= ' ' . $c if ($c =~ /EDH/);
-            $check_dest{'EXPORT'}->{val}.= ' ' . $c if ($c =~ /EXP/);
+            $check_dest{'NULL'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
+            $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /EDH/);
+            $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /EXP/);
             # check compliance
-            $check_dest{'ISM'}->{val}   .= ' ' . $c if ($c =~ /$cfg{'compliance'}->{'ISM'}/);
-            $check_dest{'PCI'}->{val}   .= ' ' . $c if ($c =~ /$cfg{'compliance'}->{'PCI'}/);
-            $check_dest{'FIPS'}->{val}  .= ' ' . $c if ($c =~ /$cfg{'compliance'}->{'FIPS-140'}/);
-            $check_dest{'FIPS'}->{val}  .= ' ' . $c if ($c !~ /(3DES|AES)/);
+            $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'ISM'}/);
+            $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'PCI'}/);
+            $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'FIPS-140'}/);
+            $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ($c !~ /(3DES|AES)/);
             # check attacks
-            $check_conn{'BEAST'}->{val} .= _isbeast($c) if ($ssl =~ /(SSLv3|TLSv1)/);
-            $check_conn{'BRAECH'}->{val}.= _isbreach($c);
+            $check_conn{'BEAST'}->{val} .= _prot_cipher($ssl, _isbeast($c)) if ($ssl =~ /(SSLv3|TLSv1)/);
+            $check_conn{'BRAECH'}->{val}.= _prot_cipher($ssl, _isbreach($c));
             # counters
             my $risk = get_cipher_sec($c);
-            $check_conn{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/);
+            $check_conn{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
             $check_conn{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
             $check_conn{$ssl . '-WEAK'}->{val}++    if ($risk =~ /WEAK/i);
             $check_conn{$ssl . '-HIGH'}->{val}++    if ($risk =~ /HIGH/i);
@@ -2034,6 +2083,7 @@ sub checkssl($$) {
     $check_cert{'selfsigned'}->{val} = $data{'selfsigned'}->{val}($host);
     $check_cert{'fp_not_MD5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
     $check_conn{'reversehost'}->{val}= $cfg{'rhost'}        if ($host ne $cfg{'rhost'});
+        # ToDo: previous setting depends on $cfg{'usedns'}
 
     # print default cipher and check if safe against BEAST
     _trace_1arr('@cfg{version}');
@@ -2056,11 +2106,11 @@ sub checkssl($$) {
         printcheck($cfg{'legacy'}, $check_conn{default}->{txt} . $ssl, $value);
         if ($ssl =~ /(SSLv3|TLSv1)/) {
             if (_isbeast($cipher) ne '') {
-                $check_conn{'BEAST-default'}->{val} .= $ssl . ':' . $cipher . ' ';
+                $check_conn{'BEAST-default'}->{val} .= _prot_cipher($ssl, $cipher);
             }
             # PFS (not possible with SSLv2)
             if (_isPFS($cipher) ne '') {
-                $check_dest{'PFS'}->{val} .= $ssl . ':' . $cipher . ' ';
+                $check_dest{'PFS'}->{val} .= _prot_cipher($ssl, $cipher);
             }
         }
     }
@@ -2499,8 +2549,8 @@ sub printtitle($$$) {
             "----------------------------------------------------\n";
     }
     if ($legacy eq 'sslscan')   { $host =~ s/;/ on port /; print "Testing SSL server $host\n"; }
-    if ($legacy eq 'ssltest')   { print "Checking for Supported $ssl Ciphers on $host"; }
-    if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host"; }
+    if ($legacy eq 'ssltest')   { print "Checking for Supported $ssl Ciphers on $host..."; }
+    if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
     if ($legacy eq 'quick')     { print "\n### " . $txt; }
@@ -2853,7 +2903,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--trace--')           { $cfg{'trace'}     = -1;next; } # special internal tracing
     # options form other programs for compatibility
     if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
-    if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; }
+    if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; } # ssltest.pl
+    if ($arg eq  '--http_get')          { $cfg{'usehttp'}++;     next; } # ssltest.pl
 #   if ($arg eq  '--insecure')          { $cfg{'no_failed'} = 0; next; } # ToDo to be tested
     if ($arg eq  '--version')           { $arg = '+version';           }
     # options form other programs which we treat as command; see Options vs. Commands also
@@ -2891,10 +2942,13 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLS09'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?10$/i) { $cfg{'DTLS10'}    = 0; next; } # ..
     if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1; next; } # ..
+    if ($arg =~ /^--no[_-]?dns/)        { $cfg{'usedns'}    = 0; next; }
+    if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1; next; }
     if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1; next; }
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1; next; }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1; next; }
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;    next; }
+    if ($arg eq  '-printavailable')     { $cfg{'enabled'}   = 1; next; } # ssldiagnos
     if ($arg =~ /^-?-h(?:ost)?$/)       { $typ = 'host';         next; } # --h already catched above
     if ($arg =~ /^-?-h(?:ost)?=(.*)/)   { $typ = 'host';    $arg = $1; } # no next
     if ($arg =~ /^-?-p(?:ort)?$/)       { $typ = 'port';         next; }
@@ -2914,13 +2968,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^--set[_-]?score$/)    { $typ = 'score';        next; }
     if ($arg =~ /^--set[_-]?score=(.*)/){ $typ = 'score';   $arg = $1; } # no next
     if ($arg =~ /^--timeout$/)          { $typ = 'timeout';      next; }
-    if ($arg =~ /^--timeout$/)          { $typ = 'timeout';      next; }
     if ($arg =~ /^--timeout=(.*)/)      { $typ = 'timeout'; $arg = $1; } # no next
+    if ($arg eq /^-interval$/)          { $typ = 'timeout';      next; } # ssldiagnos
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'openssl'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'ctxt'; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'ctxt'; $arg = $1; } # no next
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
-    if ($arg =~ /^-(H|s|url|u|U|x)/)    { next; } # silently ignored
+    if ($arg =~ /^-(H|s|t|url|u|U|x)/)  { next; } # silently ignored
+    if ($arg =~ /^-(connect)/)          { next; } # silently ignored
     #} +---------+----------------------+----------------------+----------------
 
     #{ commands
@@ -2949,6 +3004,7 @@ while ($#argv >= 0) {
             $cfg{'exec'} = 1;
             next;
         }
+        $val = lc($val);               # be greedy to allow +BEAST, +CRIME, etc.
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
             push(@{$cfg{'do'}}, $val);
         } else {
@@ -3208,15 +3264,47 @@ if (_is_do('ciphers')) {
 foreach my $host (@{$cfg{'hosts'}}) {
     _trace(" (" . ($host||'') . "," . ($cfg{'port'}||'') . ")");
     _vprint("Target: $host:$cfg{'port'}");
-    my $ip = gethostbyname($host);
-    my $cn = '';
+
+    # prepare DNS stuff
+    my $rhost = '';
+    my $fail  = '<gethostbyaddr() failed>';
     $cfg{'host'}        = $host;
-    $cfg{'ip'}          = $ip;
-    $cfg{'IP'}          = join('.', unpack('W4', $ip));
-    $cfg{'rhost'}       = gethostbyaddr($ip, AF_INET);
-    $cfg{'rhost'}       = '<gethostbyaddr() failed>' if ($? != 0);
-    $check_conn{'reversehost'}->{val}   = $cfg{'rhost'};
-    $check_conn{'IP'}->{val} = $cfg{'IP'};
+    $cfg{'ip'}          = gethostbyname($host); # primary IP as identified by given hostname
+    $cfg{'IP'}          = join('.', unpack('W4', $cfg{'ip'}));
+    if ($cfg{'usedns'} == 1) {  # ToDo: following settings only with --dns
+        $cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET);
+        $cfg{'rhost'}   = $fail if ($? != 0);
+        $check_conn{'reversehost'}->{val}   = $cfg{'rhost'};
+        $check_conn{'IP'}->{val}            = $cfg{'IP'};
+    }
+    if ($cfg{'usedns'} == 1) {
+        my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
+        my $i = 0;
+        foreach my $ip (@ips) {
+            $rhost  = gethostbyaddr($ip, AF_INET);
+            $rhost  = $fail if ($? != 0);
+            $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
+            #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
+        }
+        warn("**WARNING: Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
+    }
+
+    # print DNS stuff
+    if (($info == 1) or _is_do('check')) {
+        _trace(" +info");
+        if ($cfg{'legacy'} =~ /(full|compact|simple)/) {
+            # ToDo: define following (text) labels in %cfg or alike
+            printruler();
+            printcheck($cfg{'legacy'}, 'Given hostname',        $host);
+            printcheck($cfg{'legacy'}, 'IP for given hostname', $cfg{'IP'});
+            if ($cfg{'usedns'} == 1) {
+                printcheck($cfg{'legacy'}, 'Reverse resolved hostname',     $cfg{'rhost'});
+                printcheck($cfg{'legacy'}, 'DNS entries for given hostname', $cfg{'DNS'});
+            }
+            printruler();
+        }
+    }
+
     if ($cfg{'usesni'} != 0) {      # following check useful with SNI only
         $Net::SSLinfo::use_SNI     = 0;
         $data{'cn_nossni'}->{val}  = $data{'commonName'}->{val}($host, $cfg{'port'});
@@ -3226,7 +3314,6 @@ foreach my $host (@{$cfg{'hosts'}}) {
     }
 
     # Check if there is something listening on $host:$port
-
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
         # as side effect we get the local cipher list
@@ -3263,17 +3350,6 @@ foreach my $host (@{$cfg{'hosts'}}) {
             print Net::SSLinfo::dump();
         }
         printdump($cfg{'legacy'}, $host, $cfg{'port'});
-    }
-
-    if (($info == 1) or _is_do('check')) {
-        _trace(" +info");
-        if ($cfg{'legacy'} =~ /(full|compact|simple)/) {
-            printruler();
-            printcheck($cfg{'legacy'}, 'Given hostname',            $host);
-            printcheck($cfg{'legacy'}, 'Reverse resolved hostname', $cfg{'rhost'});
-            printcheck($cfg{'legacy'}, 'IP for given hostname',     $cfg{'IP'});
-            printruler();
-        }
     }
 
     # check ciphers manually (required for +check also)
@@ -3335,6 +3411,9 @@ foreach my $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('pfs')) {
         _trace(" +pfs");
+        foreach my $version (@{$cfg{'version'}}) {
+            checkciphers($version, $host, $cfg{'port'}, $ciphers, \%ciphers);
+        }
         printcheck($cfg{'legacy'}, $check_dest{'PFS'}->{txt}, _setvalue($check_dest{'PFS'}->{val}));
     }
 
@@ -3504,7 +3583,7 @@ commands for historical reason or compatibility to other programs.
 
 The Most important commands are (in alphabetical order):
 
-=head3 +check +cipher +info +list +sni +sni_check +version
+=head3 +check +cipher +info +http +list +quick +sni +sni_check +version
 
 A list of all available commands will be printed with
 
@@ -3554,8 +3633,12 @@ A list of all available commands will be printed with
 
 =head2 Commands to check SSL details
 
+=begin comment wozu-dieser-text
+
     Check for SSL connection in  SNI mode and if given  FQDN  matches
     certificate's subject.
+
+=end comment
 
 =head3 +check
 
@@ -3584,6 +3667,15 @@ A list of all available commands will be printed with
     This command is intended for debuuging  as it prints some details
     from the used  Net::SSLinfo  module.
 
+=head3 +quick
+
+    Quick overview of checks.
+    This command is a shortcut vor:
+        +cipher +fingerprint_hash +email +serial +subject \ 
+            +dates +verify +beast +crime +time +breach \ 
+            +expansion +compression +renegotiation +resumption \ 
+            +hsts +pfs
+
 =head3 +sni
 
     Check for Server Name Indication (SNI) usage.
@@ -3601,6 +3693,8 @@ A list of all available commands will be printed with
 
     Dump data retrived from  "openssl s_client ..."  call.  Should be
     used for debugging only.
+    It can be used just like openssl itself, for example:
+        "openssl s_client -connect host:443 -no_sslv2"
 
 =head3 +dump
 
@@ -3810,6 +3904,24 @@ directly but only herein.
   Note that the sequence of options is important. Use the options "--trace"
   and/or  ""--set-score KEY=VAL"  before  "--help=score".
 
+=head3 --dns
+
+  Do DNS lookups to map given hostname to IP, do a reverse lookup.
+
+=head3 --no-dns
+
+  Do not make DNS lookups.
+  Note  that the corresponding IP and reverse hostname may be missing
+  in some messages then.
+
+=head3 --host HOST, --host=HOST
+
+  Specify HOST as target to be checked.
+
+=head3 --port PORT, --port=PORT
+
+  Specify target's PORT to be used.
+
 =head2 Options for SSL tool
 
 =head3 --s_client
@@ -3904,13 +4016,25 @@ Default is  C<ALL:NULL:eNULL:aNULL:LOW>  as specified in Net::SSLinfo.
 
 =head3 --tls12, --tlsv12
 
-  Tests ciphers for this SSL version.
+  Tests ciphers for this SSL/TLS version.
   Note that these options are discarded for  "+check"  command.
+
+=head3 --nossl2, --nosslv2
+
+=head3 --nossl3, --nosslv3
+
+=head3 --notls1, --notlsv1
+
+=head3 --notls11, --notlsv11
+
+=head3 --notls12, --notlsv12
+
+  Do not tests ciphers for this SSL/TLS version.
 
 =head3 --nullsslv2
 
-  This option forces to assume that  SSLV2 enabled even if no ciphers
-  accepted.
+  This option  forces  to assume that  SSLv2  is enabled  even if the
+  target does not accept any ciphers.
 
   The target server may accept connections with  SSLv2  but not allow
   any cipher. Some checks verify if  SSLv2  is enabled at all,  which
@@ -3946,9 +4070,9 @@ Default is  C<ALL:NULL:eNULL:aNULL:LOW>  as specified in Net::SSLinfo.
   Do not get data from target's certificate, return Net::SSLinfo.pm's
   default string.
 
-=head3 --no-cert-text
+=head3 --no-cert-text TEXT
 
-  Set string to be returned from  "Net::SSLinfo.pm" if no certificate
+  Set  TEXT  to be returned from  "Net::SSLinfo.pm" if no certificate
   data is collected due to use of "--no-cert".
 
 =head2 Options for checks and results
@@ -4088,25 +4212,39 @@ options are ambigious.
 
 =over 4
 
-=item --insecure        (cnark.pl)
+=item --hide_rejected_ciphers (sslyze)  same as I<--disabled>
 
-=item --hide_rejected_ciphers (sslyze)
+=item --http_get        (ssldiagnos)    same as I<--http>
 
-=item --no-failed       (sslscan)
+=for comment =item --insecure        (cnark.pl)
 
-=item --regular         (sslyze)
+=item --no-failed       (sslscan)       same as I<--disabled>
 
-=item --reneg           (sslyze)
+=item --regular         (sslyze)        same as I<--http>
 
-=item --resum           (sslyze)
+=item --reneg           (sslyze)        same as I<+renegotiation>
 
-=item --timeout=SEC     (sslyze)
+=item --resum           (sslyze)        same as I<+resumtion>
 
-=item -H, -s, --timeout, -u, -url, -U, -x
+=for comment =item --timeout=SEC     (sslyze)
 
-=back
+=item -h, -h=HOST       (various tools) same as I<--host HOST>
+
+=item -p, -p=PORT       (various tools) same as I<--port PORT>
+
+=item -connect --fips, --ism, -H, --pci -s, -t --timeout, -u, -url, -U, -x
 
   These options are silently ignored.
+
+=item  -noSSL,  -no-SSL,  -no_SSL        same as I<--noSSL>
+
+=item --noSSL, --no-SSL, --no_SSL       same as I<--noSSL>
+
+  Where C<SSL> can be any of:  ssl, ssl2, ssl3, sslv2, sslv3, 
+  tls, tls1, tls11, tls1.1, tls1-1, tlsv1, tlsv11, tlsv1.1, tlsv1-1
+  (and similar variants for TLSv1.2).
+
+=back
 
 =head2 Options for tracing and debugging
 
@@ -4220,6 +4358,10 @@ Checking the target for supported ciphers may return that a cipher is
 not supported by the server  misleadingly.  Reason is most likely  an
 improper timeout for the connection.
 
+If reverse DNS lookup fails, an error message is returned as hostname,
+like:  C<<gethostbyaddr() failed>>.
+Workaround to get rid of this message: use  I<--no-dns>  option.
+ 
 =head2 Poor Systems
 
 On Windows usage of  L<openssl(1)> is disabled by default due to various
@@ -4653,7 +4795,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.10
+@(#) 13.09.11
 
 =head1 AUTHOR
 
