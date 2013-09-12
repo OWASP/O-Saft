@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.41 13/09/07 10:02:17',
+    SID         => '@(#) Net::SSLinfo.pm 1.42 13/09/12 23:58:53',
 };
 
 ######################################################## public documentation #
@@ -166,6 +166,13 @@ If in doubt use "$Net::SSLinfo::use_openssl = 0" to disable openssl usage.
 Net::SSLeay::X509_get_subject_name()   from version 1.49 sometimes crashes
 with segmentation fault.
 
+Error message like:
+  panic: sv_setpvn called with negative strlen at Net/SSLinfo.pm line 552,
+     <DATA> line 1384.
+
+Reason most likely Net::SSLeay Version (version<1.49) which doesn't define
+C<Net::SSLeay::X509_NAME_get_text_by_NID()>.
+
 =head1 METHODS
 
 All methods are simple getters to retrieve information from `SSL objects'.
@@ -209,7 +216,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.05.22';
+    $VERSION   = '13.09.11';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -386,7 +393,7 @@ my %_SSLinfo = ( # our internal data structure
     'text'      => '',
     'ciphers'           => [],  # list of ciphers offered by local SSL implementation
     # all following are available when calling  openssl only
-    's_client'          => '',  # data we get from `openssl s_client -connext ...'
+    's_client'          => '',  # data we get from `openssl s_client -connect ...'
     'ciphers_openssl'   => '',  # list of ciphers returned by openssl executable
     'subject_hash'      => '',  #
     'issuer_hash'       => '',  #
