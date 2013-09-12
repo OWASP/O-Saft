@@ -1,4 +1,17 @@
 
+Version: 13.09.11
+  BUGFIX
+    * reverse hostname lookup corrected; now prints list
+    * print host (target) information before doing checks
+  UPDATE
+    * be greedy to allow +BEAST, +CRIME, etc.
+    * cipher names are prependet by SSL version in +check output
+    * documentation (COMMANDS, OPTIONS) improved
+    * legacy option improved
+  NEW
+    * -no-dns implemented (workaround for '<gethostbyaddr() failed>)
+    * %cfg{regex} added
+
 Version: 13.09.10
   BUGFIX
     * output for some legacy formats corrected (sslscan, ssltest, sslyze)
