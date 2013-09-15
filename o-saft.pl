@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.111 13/09/15 18:04:02";
+my $SID     = "@(#) yeast.pl 1.112 13/09/15 20:15:02";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -657,7 +657,7 @@ my %cfg = (
                         extensions aux trustout ocsp_uri ocspid
                         selfsigned verify verify_altname verify_hostname
                         default ciphers
-                        expansion compression beast renegotiation resumption
+                        expansion compression renegotiation resumption
                         hsts hsts_maxage hsts_subdom hsts_pins
                         https_status https_location https_refresh https_server https_alerts
                         http_status  http_location  http_refresh  http_301 http_sts
@@ -666,9 +666,10 @@ my %cfg = (
                     # add internal commands
                        qw(
                         check cipher dump check_sni exec help info info--v http quick
-                        list libversion sizes s_client sni sni_check version pfs
+                        list libversion sizes s_client sni sni_check version
                         dates pubkey sigkey
                         certificate text pem expire valid
+                        beast crime pfs
                        ),
                     # add alias commands
                        qw(
@@ -691,6 +692,10 @@ my %cfg = (
     'need_cipher'   => [        # list of commands which need +cipher
                        qw(
                         cipher check beast crime time breach pfs
+                       )],
+    'need_checkssl' => [        # list of commands which need checkssl()
+                       qw(
+                        check beast crime time breach pfs
                        )],
     'format'        => "",
     'format_hex'    => 0,       # 1: convert data to hex format: 2 bytes separated by :
@@ -760,6 +765,7 @@ my %cfg = (
         # relying on any kind of syntax highlighting, will stumple over here.
         '_or-'      => '[_-]',
                        # tools use _ or - as separator character
+# ToDo: + also as used in openssl
         'ADHorDHA'  => '(?:A(?NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
                        # Anonymous DH has various acronyms:
                        #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, DH_Anon, ...
@@ -780,14 +786,15 @@ my %cfg = (
                        #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
         'aliases'   => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_-]|EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED)',
                        # various variants for aliases to select cipher groups
-        'compression'=>'(?:DEFLATE|LZO|NULL)',
+        'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
+        'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
 
         # Now the RegEx used later on
         # Regex containing pattern to identify vulnerable ciphers
 #       'BEAST'     => 'NULL|^ADH-|DES-CBC-|MD5|RC', # No NULL cipher, No Null Auth, No single DES, No MD5, No RC ciphers
         'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?(?:ARC(?:4|FOUR)|RC4)',
 #       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
-#       'CRIME'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+        'CRIME'     => '(?:NONE|NULL|^\s*$)',   # checks compression
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
 #       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
         'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
@@ -1804,6 +1811,8 @@ sub __SSLinfo($$$) {
 
 sub _need_cipher()     { my $is=join("|", @{$cfg{'do'}});    return grep(/^($is)$/,  @{$cfg{'need_cipher'}}); }
     # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_cipher'}
+sub _need_checkssl()   { my $is=join("|", @{$cfg{'do'}});    return grep(/^($is)$/,  @{$cfg{'need_checkssl'}}); }
+    # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_checkssl'}
 sub _is_hashkey($$)    { my $is=shift; my @in=keys %{$_[0]}; return grep({$_ eq $is} @in); }
 sub _is_member($$)     { my $is=shift; my @in=@{$_[0]};      return grep({$_ eq $is} @in); }
 sub _is_do($)          { my $is=shift;                       return _is_member(   $is, \@{$cfg{'do'}}); }
@@ -1867,8 +1876,8 @@ sub _isbreach($)       { return 0; }
     #      *  does not require TLS-layer compression
     #      *  works against any cipher suite
     #      *  can be executed in under a minute
-sub _iscrime($)        { return 0; }
-# ToDo: for checks, see: http://www.bolet.org/TestSSLServer/
+sub _iscrime($)        { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? "" : $_[0] . " "; }
+    # return compression if available, empty string otherwise
 sub _istime($)         { return 0; }
 # ToDo: checks
 sub _ispfs($)          { return ($_[0] =~ /$cfg{'regex'}->{'PFS'}/) ? "" : $_[0] . " "; }
@@ -2078,10 +2087,14 @@ sub checkssl($$) {
     # check for SNI
     checksni($host, $port);
 
+    # vulnerabilities
+    $check_conn{'CRIME'}->{val} = _iscrime($data{'compression'}->{val}($host));
     foreach $label (qw(resumption renegotiation)) {
         $value = $data{$label}->{val}($host);
         $check_dest{$label}->{val}   = $value if ($value eq "");
     }
+
+    # certificate
     if ($cfg{'verbose'} > 0) { # ToDo
         foreach $label (qw(verify selfsigned)) {
             #dbx# _dprint "$label : $value #";
@@ -3432,6 +3445,8 @@ foreach my $host (@{$cfg{'hosts'}}) {
         _trace(" checkciphers }");
      }
 
+# ToDo: BUG! following print requiers data which is later changed in checkssl()
+# ToDo: see "Supported ciphers"
     # check ciphers manually (required for +check also)
     if (_is_do('cipher') or _is_do('check')) {
         _trace(" +cipher");
@@ -3461,12 +3476,17 @@ foreach my $host (@{$cfg{'hosts'}}) {
     }
     print "";
 
+    if (_need_checkssl() > 0) {
+        _trace(" checkssl {");
+        checkssl( $host, $cfg{'port'});
+        _trace(" checkssl }");
+     }
+
     if (_is_do('check')) {
         _trace(" +check");
         printruler();
         print "**WARNING: no openssl, some checks are missing" if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
         checkhttp($host, $cfg{'port'});
-        checkssl( $host, $cfg{'port'});
         printssl(  $cfg{'legacy'}, $host),
         printruler();
         printscore();
@@ -3480,15 +3500,18 @@ foreach my $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('beast')) {
         _trace(" +beast");
-        checkssl( $host, $cfg{'port'});
         foreach my $label (qw(BEAST BEAST-default)) {
             printcheck($cfg{'legacy'}, $check_conn{$label}->{txt}, _setvalue($check_conn{$label}->{val}));
         }
     }
 
+    if (_is_do('crime')) {
+        _trace(" +crime");
+        printcheck($cfg{'legacy'}, $check_conn{'CRIME'}->{txt}, _setvalue($check_conn{'CRIME'}->{val}));
+    }
+
     if (_is_do('pfs')) {
         _trace(" +pfs");
-        checkssl( $host, $cfg{'port'});
         printcheck($cfg{'legacy'}, $check_dest{'PFS'}->{txt}, _setvalue($check_dest{'PFS'}->{val}));
     }
 
@@ -3528,7 +3551,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
         next if ($label =~ m/^(http|hsts)/ and $cfg{'usehttp'} == 0);
         next if ($label =~ m/^(ciphers)/   and $cfg{'verbose'} == 0);   # Client ciphers are less important
 # ToDo: { not labels; need to be corrected
-        next if ($label =~ m/^(beast|chain|extensions|pfs)/);
+        next if ($label =~ m/^(beast|chain|crime|extensions|pfs)/);
 # ToDo: }
         _trace(" do: " . $label) if ($cfg{'trace'} > 1);
         print_dataline($cfg{'legacy'}, $label, $host);
@@ -4534,11 +4557,17 @@ resolve the FQDN again.
 
 Currently (2013) only a simple check is used: only RC4 ciphers used.
 Which is any cipher with RC4, ARC4 or ARCFOUR.
+TLSv1.2 checks are not yet implemented.
+
+=head3 CRIME
+
+Connection is vulnerable if target supports SSL-level compression.
 
 =head3 PFS
 
 Currently (2013) only a simple check is used: only DHE ciphers used.
 Which is any cipher with DHE or ECDHE.
+TLSv1.2 checks are not yet implemented.
 
 =head2 Target (server) Configuration and Support
 
@@ -5075,16 +5104,14 @@ Based on ideas (in alphabetical order) of:
 
 TODO
 
-  * BEAST check (+beast) probably wrong
-
-  * PFS check (+pfs) not yet complete
-
   * implement better PFS checks; i.e. failed if SSLv2 supported
     lower score if not all ciphers support PFS
 
-  * complete CRIME, TIME, BREACH check
+  * complete TIME, BREACH check
 
   * implement check for Lucky 13 vulnerability
+
+  * implement TLSv1.2 checks
 
   * write documentation for CHECKS
 
