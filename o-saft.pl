@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.109 13/09/15 13:30:11";
+my $SID     = "@(#) yeast.pl 1.110 13/09/15 14:18:12";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -790,7 +790,7 @@ my %cfg = (
 #       'CRIME'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
 #       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
-       'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+        'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
     },
     'cipher'        => "yeast", # which ciphers to be used # <------------------------
 ); # %cfg
@@ -1489,6 +1489,7 @@ my %text = (
         'SCEP'      => "Simple Certificate Enrollment Protocol",
         'SCSU'      => "Standard Compression Scheme for Unicode (compressed UTF-16)",
         'SCVP'      => "Server-Based Certificate Validation Protocol",
+        'SDES'      => "Security Description Protokol",
         'SEED'      => "128-bit Symmetric Block Cipher",
         'Serpent'   => "symmetric key block cipher",
         'SGC'       => "Server-Gated Cryptography",
@@ -1866,7 +1867,7 @@ sub _iscrime($)        { return 0; }
 # ToDo: for checks, see: http://www.bolet.org/TestSSLServer/
 sub _istime($)         { return 0; }
 # ToDo: checks
-sub _isPFS($)          { return ($_[0] =~ /^((?:EC)?DHE|EDH)[_-]/) ? "" : $_[0] . " "; }
+sub _ispfs($)          { return ($_[0] =~ /$cfg{'regex'}->{'PFS'}/) ? "" : $_[0] . " "; }
     # return given cipher if it does not support forward secret connections (PFS)
 
 sub checkciphers($$$$$) {
@@ -2125,7 +2126,7 @@ sub checkssl($$) {
                 $check_conn{'BEAST-default'}->{val} .= _prot_cipher($ssl, $cipher);
             }
             # PFS (not possible with SSLv2)
-            if (_isPFS($cipher) ne "") {
+            if (_ispfs($cipher) ne "") {
                 $check_dest{'PFS'}->{val} .= _prot_cipher($ssl, $cipher);
             }
         }
@@ -3474,6 +3475,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('beast')) {
         _trace(" +beast");
+        checkssl( $host, $cfg{'port'});
         foreach my $label (qw(BEAST BEAST-default)) {
             printcheck($cfg{'legacy'}, $check_conn{$label}->{txt}, _setvalue($check_conn{$label}->{val}));
         }
@@ -3482,7 +3484,6 @@ foreach my $host (@{$cfg{'hosts'}}) {
     if (_is_do('pfs')) {
         _trace(" +pfs");
         checkssl( $host, $cfg{'port'});
-### weiter: checkssl() macht den Test mit isPFS(), das in eigene sub packen
         printcheck($cfg{'legacy'}, $check_dest{'PFS'}->{txt}, _setvalue($check_dest{'PFS'}->{val}));
     }
 
@@ -4521,6 +4522,16 @@ resolve the FQDN again.
 
 =head2 SSL Vulnerabilities
 
+=head3 BEAST
+
+Currently (2013) only a simple check is used: only RC4 ciphers used.
+Which is any cipher with RC4, ARC4 or ARCFOUR.
+
+=head3 PFS
+
+Currently (2013) only a simple check is used: only DHE ciphers used.
+Which is any cipher with DHE or ECDHE.
+
 =head2 Target (server) Configuration and Support
 
 =head2 Target (server) Certificate
@@ -5046,7 +5057,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.13
+@(#) 13.09.14
 
 =head1 AUTHOR
 
