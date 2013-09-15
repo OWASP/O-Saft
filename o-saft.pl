@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.110 13/09/15 14:18:12";
+my $SID     = "@(#) yeast.pl 1.111 13/09/15 18:04:02";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1318,6 +1318,7 @@ my %text = (
         'ARCFOUR'   => "alias for ARC4",
         'ASN'       => "Autonomous System Number",
         'ASN.1'     => "Abstract Syntax Notation One",
+        'BDH'       => "Bilinear Diffie-Hellman",
         'BEAST'     => "Browser Exploit Against SSL/TLS",
         'BER'       => "Basic Encoding Rules",
         'Blowfish'  => "symmetric block cipher",
@@ -1336,6 +1337,7 @@ my %text = (
         #   ^^-- spaces to make key unique
         'CCM'       => "CBC-MAC Mode",
         'CCS'       => "Change Cipher Spec (protocol)",
+        'CDH'       => "?  Diffie-Hellman",
         'CDP'       => "CRL Distribution Points",
         'CEK'       => "Content Encryption Key",
         'CFB'       => "Cipher Feedback",
@@ -1355,6 +1357,7 @@ my %text = (
         'CSP '      => "Critical Security Parameter (used in FIPS 140-2)",
         'CSR'       => "Certificate Signing Request",
         'CTS'       => "Cipher Text Stealing",
+        'DDH'       => "?discrete? Diffie-Hellman",
         'DER'       => "Distinguished Encoding Rules",
         'DES'       => "Data Encryption Standard",
         'DESede'    => "alias for 3DES ?java only?",
@@ -1413,6 +1416,7 @@ my %text = (
         'HAS-V'     => "hash function",
         'HC128'     => "stream cipher",
         'HC256'     => "stream cipher",
+        'HIBE'      => "hierarchical identity-based encryption",
         'HMAC'      => "keyed-Hash Message Authentication Code",
         'HMQV'      => "h? Menezes-Qu-Vanstone",
         'HSTS'      => "HTTP Strict Transport Security",
@@ -3308,6 +3312,7 @@ if (_is_do('list')) {
         print "Ciphers (from local ssl): ", $ciphers;
             # ToDo: there may be more "Testable" than "Supported" ciphers
     }
+    exit 0;
 }
 
 if (_is_do('ciphers')) {
@@ -3705,6 +3710,9 @@ A list of all available commands will be printed with
 =end comment
 
 =head2 Commands for information about this tool
+
+All these commands will exit after execution (cannot be used together
+with other commands).
 
 =head3 +ciphers
 
@@ -5057,7 +5065,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.14
+@(#) 13.09.15
 
 =head1 AUTHOR
 
