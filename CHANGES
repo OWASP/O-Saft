@@ -1,4 +1,14 @@
 
+Version: 13.09.15
+  BUGFIX
+    *  +list command exits
+  NEW
+    * check  for CRIME implemented
+
+Version: 13.09.14
+  BUGFIX
+    * BEAST check for default cipher corrected
+
 Version: 13.09.13
   UPDATE
     * documentation improved
