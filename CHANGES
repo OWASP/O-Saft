@@ -1,4 +1,12 @@
 
+Version: 13.09.13
+  UPDATE
+    * documentation improved
+    * huge amount of code cleanup (no change of functionality)
+
+Version: 13.09.12
+    not released
+
 Version: 13.09.11
   BUGFIX
     * reverse hostname lookup corrected; now prints list
