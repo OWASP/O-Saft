@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.112 13/09/15 20:15:02";
+my $SID     = "@(#) yeast.pl 1.113 13/09/16 21:24:38";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -258,7 +258,8 @@ my %check_dest = (
     #------------------+-----------+------------------------------------------
     'SGC'           => {'val' => 0, 'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'hasSSLv2'      => {'val' =>"", 'txt' => "Target supports only safe protocols (no SSL 2.0)"},
-    'EDH'           => {'val' =>"", 'txt' => "Target does not accepts EDH ciphers"},
+    'EDH'           => {'val' =>"", 'txt' => "Target supports EDH ciphers"},
+    'ADH'           => {'val' =>"", 'txt' => "Target does not accepts ADH ciphers"},
     'NULL'          => {'val' =>"", 'txt' => "Target does not accepts NULL ciphers"},
     'EXPORT'        => {'val' =>"", 'txt' => "Target does not accepts EXPORT ciphers"},
     'closure'       => {'val' => 0, 'txt' => "Target understands TLS closure alerts"},
@@ -294,7 +295,7 @@ my %check_conn = (
     'TIME'          => {'val' => 0, 'txt' => "Connection is safe against TIME attack"},
     'SNI'           => {'val' =>"", 'txt' => "Connection is not based on SNI"},
     'default'       => {'val' =>"", 'txt' => "Default cipher for "},
-    'totals'        => {'val' => 0, 'txt' => "Total number of checked ciphers"},
+    'totals'        => {'val' =>"", 'txt' => "Total number of checked ciphers"},
      # counter for accepted ciphers, 0 if not supported
     'SSLv2'         => {'val' => 0, 'txt' => "Supported ciphers for SSLv2 (total)"},
     'SSLv3'         => {'val' => 0, 'txt' => "Supported ciphers for SSLv3 (total)"},
@@ -416,7 +417,8 @@ my %shorttexts = (
     'rootcert'      => "Not root CA",
     'OCSP'          => "OCSP supported",
     'hasSSLv2'      => "No SSL 2.0",
-    'EDH'           => "No EDH ciphers",
+    'ADH'           => "No ADH ciphers",
+    'EDH'           => "EDH ciphers",
     'NULL'          => "No NULL ciphers",
     'EXPORT'        => "No EXPORT ciphers",
     'SGC'           => "SGC supported",
@@ -697,10 +699,8 @@ my %cfg = (
                        qw(
                         check beast crime time breach pfs
                        )],
-    'format'        => "",
-    'format_hex'    => 0,       # 1: convert data to hex format: 2 bytes separated by :
-    'format_raw'    => 0,       # 1: use raw data as passed from Net::SSLinfo
-    'formats'       => [qw(csv html json ssv tab xml fullxml)],
+    'format'        => "",      # empty means some slightly adapted values (no \s\n)
+    'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'lang'          => "de",    # output language
     'langs'         => [qw(de en)],
@@ -766,7 +766,7 @@ my %cfg = (
         '_or-'      => '[_-]',
                        # tools use _ or - as separator character
 # ToDo: + also as used in openssl
-        'ADHorDHA'  => '(?:A(?NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
+        'ADHorDHA'  => '(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
                        # Anonymous DH has various acronyms:
                        #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, DH_Anon, ...
         'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
@@ -774,7 +774,7 @@ my %cfg = (
                        #     ARC4, ARCFOUR, RC4
         'DESor3DES' => '(?:[_-]3DES|DES[_-]_192)',
                        # Tripple DES is used as 3DES or DES_192
-        'DHEorEDH'  => '(?:DHE|EDH)_',
+        'DHEorEDH'  => '(?:DHE|EDH)[_-]',
                        # DHE and EDH are 2 acronyms for the same thing
         'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
                        # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
@@ -1434,7 +1434,7 @@ my %text = (
         'JSSE'      => "Java Secure Socket Extension",
         'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
         'KEK'       => "Key Encryption Key",
-        'Lucky 13'  => "Break SSL/TLS Protocol",
+       'Lucky 13'  => "Break SSL/TLS Protocol",
         'MARS'      => "",
         'MAC'       => "Message Authentication Code",
         'MEK'       => "Message Encryption Key",
@@ -1471,7 +1471,7 @@ my %text = (
         'PKCS6'     => "PKCS #6: RSA Extended Certificate Syntax Standard",
         'PKCS7'     => "PKCS #7: RSA Cryptographic Message Syntax Standard",
         'PKCS8'     => "PKCS #8: RSA Private-Key Information Syntax Standard",
-        'PKCS12'    => "PKCS #12: RSA Personal Information Exchange Syntax Standard (public + private key)",
+        'PKCS12'    => "PKCS #12: RSA Personal Information Exchange Syntax Standard (public + private key stored in files)",
         'PKI'       => "Public Key Infrastructure",
         'PKIX'      => "Internet Public Key Infrastructure Using X.509",
         'PRF'       => "pseudo-random function",
@@ -1558,7 +1558,7 @@ my %text = (
     'mnemonic'      => {
         'example'   => "TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA",
         'description'=> "TLS Version _ key establishment algorithm _ digital signature algorithm _ WITH _ confidentility algorithm _ hash function",
-        'explain'   => "TLS Version1 _ Ephermeral DH key agreement _ DSS which implies DSA _ WITH _ 3DES encryption in CBC mode _ SHA for HMAC"
+        'explain'   => "TLS Version1 _ Ephemeral DH key agreement _ DSS which implies DSA _ WITH _ 3DES encryption in CBC mode _ SHA for HMAC"
     },
     # RFC 2412: OAKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')
     #           alle *DH* sind im Prinzip PFS.
@@ -1792,7 +1792,7 @@ sub _setscore($) {
 # check functions for array members and hash keys
 sub __SSLinfo($$$) {
     # wrapper for Net::SSLinfo::*() functions
-    # Net::SSLinfo::*() return raw data, depending on $cfg{'format_raw'}
+    # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
     # these values will be converted to o-saft's prefered format
     my $cmd = shift;
     my $val = "<__SSLinfo: unknown command: '$cmd'>";
@@ -1802,10 +1802,8 @@ sub __SSLinfo($$$) {
     $val =  Net::SSLinfo::fingerprint_md5(  $_[0], $_[1]) if ($cmd eq 'fingerprint_md5');
     $val =  Net::SSLinfo::pubkey_value(     $_[0], $_[1]) if ($cmd eq 'pubkey_value');
     $val =  Net::SSLinfo::sigkey_value(     $_[0], $_[1]) if ($cmd eq 'sigkey_value');
-    if ($cfg{'format_raw'} != 1) {
-        $val =~ s/[\s\n]//g  if ($cfg{'format_raw'} != 1);
-        $val =~ s/[:]//g     if ($cfg{'format_raw'} != 1);
-    }
+    $val =~ s/[\s\n]//g  if ($cfg{'format'} ne 'raw');
+    $val =~ s/[:]//g     if ($cfg{'format'} ne 'raw');
     return $val;
 }; # __SSLinfo
 
@@ -1900,6 +1898,7 @@ sub checkciphers($$$$$) {
     my $skip    = 0;
 
     _v2print("check cipher $ssl: ");
+    $check_conn{'totals'}->{val} = 0;
     # ToDo: change logic of following loop
     #     now we loop over *our* ciphers which misses ciphers available in
     #     the local SSL implementation (if there are more)
@@ -1958,8 +1957,9 @@ sub checkciphers($$$$$) {
 
             # check weak ciphers
             $check_dest{'NULL'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
-            $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /EDH/);
-            $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /EXP/);
+            $check_dest{'ADH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
+            $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
+            $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
             # check compliance
             $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'ISM'}/);
             $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'PCI'}/);
@@ -1985,6 +1985,13 @@ sub checkciphers($$$$$) {
         }
     } # foreach %hash
     _v2print("\n");
+    $check_dest{'EDH'}->{val} = "" if ($check_dest{'EDH'}->{val} ne ""); # good if we have them
+    $check_conn{'totals'}->{val} +=
+            $check_conn{$ssl . '--?-'}->{val}  +
+            $check_conn{$ssl . '-LOW'}->{val}  +
+            $check_conn{$ssl . '-WEAK'}->{val} +
+            $check_conn{$ssl . '-HIGH'}->{val} +
+            $check_conn{$ssl . '-MEDIUM'}->{val};
 
 } # checkciphers
 
@@ -2162,7 +2169,6 @@ sub checkssl($$) {
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
         $score{'check_dest'}->{val} -= _getscore($label, $value, \%check_dest);
     }
-    _trace_1arr('%check_conn');
     foreach $label (sort (keys %check_conn)) {
         next if ($label =~ /^\s*$/);                # lazy programming :)
         next if ($label =~ /^(SSLv|TLSv|default|IP)/); # already printed
@@ -3136,8 +3142,11 @@ while ($#argv >= 0) {
         next;
     }
     if ($typ eq 'format')   {
-        if ($arg =~ m#^hex$#i) { $cfg{'format_hex'} = 1; }
-        if ($arg =~ m#^raw$#i) { $cfg{'format_raw'} = 1; }
+        if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
+            $cfg{'format'} = $arg;
+        } else {
+            warn("**WARNING: unknown format '$arg'; ignored");
+        }
         $typ = 'host';
     }
     #} +---------+----------+------------------------------+--------------------
@@ -3474,7 +3483,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
             print_cipherdefault($version, $cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslscan');
         }
     }
-    print "";
+    print "" if ($cfg{'format'} ne 'raw');
 
     if (_need_checkssl() > 0) {
         _trace(" checkssl {");
@@ -3551,10 +3560,14 @@ foreach my $host (@{$cfg{'hosts'}}) {
         next if ($label =~ m/^(http|hsts)/ and $cfg{'usehttp'} == 0);
         next if ($label =~ m/^(ciphers)/   and $cfg{'verbose'} == 0);   # Client ciphers are less important
 # ToDo: { not labels; need to be corrected
-        next if ($label =~ m/^(beast|chain|crime|extensions|pfs)/);
+        next if ($label =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time)/);
 # ToDo: }
         _trace(" do: " . $label) if ($cfg{'trace'} > 1);
-        print_dataline($cfg{'legacy'}, $label, $host);
+        if ($cfg{'format'} eq 'raw') {     # should be the only place where format=raw counts
+            print $data{$label}->{val}($host);;
+        } else {
+            print_dataline($cfg{'legacy'}, $label, $host);
+        }
     }
     goto CLOSE_SSL if ($info == 1);
 
@@ -4307,20 +4320,21 @@ Options used for  I<+check>  command:
                   (useful for "+info" only)
     simple:       default format
 
+=head3 --format=FORM
+
+  FORM may be one of follwoing:
+
+    raw           print raw data as passed from Net::SSLinfo
+                  Note: all data is printed as is, without additional
+                  label or formatting.  It is recommended to use this
+                  option in conjunction with exactly one command.
+                  Otherwise the user needs to know how to `read'  the
+                  printed data.
+    hex           convert some data to hex: 2 bytes separated by :
 
 =begin comment
 
 **NOT YET IMPLEMENTED**
-
-=head3 --de
-
-  Deutsche Texte ausgeben. (Betrifft nicht die Texte bei "--legacy" Ausgaben).
-
-=head3 --en
-
-  Print English texts.
-
-=head3 --format=F
 
   csv       print result for cipher test as comma separated list
   ssv       print result for cipher test as semicolon separated list
@@ -4333,6 +4347,14 @@ Options used for  I<+check>  command:
   fullxml   print result for cipher test XML formated (complete XML)
 
   The "--format" option is ignored if "--legacy" is used.
+
+=head3 --de
+
+  Deutsche Texte ausgeben. (Betrifft nicht die Texte bei "--legacy" Ausgaben).
+
+=head3 --en
+
+  Print English texts.
 
 =end comment
 
@@ -4552,6 +4574,16 @@ resolve the FQDN again.
 =head2 SSL Connection
 
 =head2 SSL Vulnerabilities
+
+=head3 ADH
+
+Check if ciphers for anonymous key exchange are supported: ADH|DHA .
+Such key exchanges kan be sniffed.
+
+=head3 EDH
+
+Check if ephemeral ciphers are supported: DHE|EDH .
+They are necessary to support Perfect Forward Secrec (PFS).
 
 =head3 BEAST
 
@@ -5016,6 +5048,11 @@ Following formats are used:
 
     $0 +cipher --lib=/foo/bar-1.42--exe=/foo/bar-1.42/apps some.tld
 
+=item Just for curiosity:
+
+    $0 some.tld +fingerprint --format=raw
+    $0 some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
+
 =back
 
 =head2 Special for hunting problems with connections etc.
@@ -5094,7 +5131,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.15
+@(#) 13.09.16
 
 =head1 AUTHOR
 
@@ -5126,7 +5163,7 @@ TODO
 
   * implement +chain (see Net::SSLinfo.pm implement verify* also)
 
-  * implement +crime, +renegotiation und +resumption as command
+  * implement +renegotiation und +resumption as command
     from sslyze.py:
           Session Renegotiation : 
             Client-initiated Renegotiations:    Rejected
@@ -5137,6 +5174,16 @@ TODO
 
   * use Net::SSLeay 1.42 as fallback, because 1.49 causes problems at
     some sites (connect() fails).
+
+  * 9/2013 bug: output for "+info --openssl" on Windows slighly corrupted:
+       Certificate Signature Key length: 2048
+       Certificate Public Key Algorithm: rsaEncryption
+       Certificate Public Key Value:     SubjectPublicKeyInfoPublicKeyAlgorithm
+       rsaEncryptionPublic-Key(2048bit)Modulus00d517262dc5895aacfeaafa23a115a4b
+       1c3e94680a3e55f6404e3e3d245272bc0376dd651a444d3db1a6f3f60c6792726d641732
+       ebe193389399edc1aa922199406ad2363eec221ce474f4c7e....
+       (see _SSLinfo() $format eq raw)
+    Workaround: use --format=raw
 
   * (nicht wichtig, aber sauber programmieren)
     _get_default(): Net::SSLinfo::default() benutzen
