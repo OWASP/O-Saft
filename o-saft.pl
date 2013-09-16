@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.113 13/09/16 21:24:38";
+my $SID     = "@(#) yeast.pl 1.114 13/09/16 21:42:37";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1351,6 +1351,9 @@ my %text = (
         'CFB3'      => "Cipher Feedback",
         'CFBx'      => "Cipher Feedback x bit mode",
         'CHAP'      => "Challenge Handshake Authentication Protocol",
+        'CKA'       => "", # PKCS#11
+        'CKK'       => "", # PKCS#11
+        'CKM'       => "", # PKCS#11
         'CMAC'      => "block cipher algorithm",
         'CMP'       => "X509 Certificate Management Protocol",
         'CMS'       => "Cryptographic Message Syntax",
@@ -1373,6 +1376,7 @@ my %text = (
         '3TDEA'     => "Tripple DES (168 bits)",
         '2TDEA'     => "Double DES (112 bits)",
         'D5'        => "Verhoeff's Dihedral Group D5 Check",
+        'DANE'      => "DNS-based Authentication of Named Entities",
         'DDH'       => "Decisional Diffie-Hellman (Problem)",
         'DEA'       => "Data Encryption Algorithm (sometimes a synonym for DES)",
         'DECIPHER'  => "synonym for decryption",
@@ -1426,6 +1430,7 @@ my %text = (
         'HIBE'      => "hierarchical identity-based encryption",
         'HMAC'      => "keyed-Hash Message Authentication Code",
         'HMQV'      => "h? Menezes-Qu-Vanstone",
+        'HSM'       => "Hardware Security Module",
         'HSTS'      => "HTTP Strict Transport Security",
         'HTOP'      => "HMAC-Based One-Time Password",
         'IDEA'      => "International Data Encryption Algorithm",
@@ -1434,6 +1439,7 @@ my %text = (
         'JSSE'      => "Java Secure Socket Extension",
         'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
         'KEK'       => "Key Encryption Key",
+        'KSK'       => "Key Signing Key", # DNSSEC
        'Lucky 13'  => "Break SSL/TLS Protocol",
         'MARS'      => "",
         'MAC'       => "Message Authentication Code",
@@ -1446,6 +1452,7 @@ my %text = (
         'NTLM'      => "NT Lan Manager. Microsoft Windows challenge-response authentication method.",
         'NPN'       => "Next Protocol Negotiation",
         'Neokeon'   => "symmetric block cipher algorithm",
+        'NSS'       => "Network Security Services",
         'NULL'      => "no encryption",
         'OAEP'      => "Optimal Asymmetric Encryption Padding",
         'OFB'       => "Output Feedback",
@@ -1471,6 +1478,7 @@ my %text = (
         'PKCS6'     => "PKCS #6: RSA Extended Certificate Syntax Standard",
         'PKCS7'     => "PKCS #7: RSA Cryptographic Message Syntax Standard",
         'PKCS8'     => "PKCS #8: RSA Private-Key Information Syntax Standard",
+        'PKCS11'    => "PKCS #11: RSA Cryptographic Token Interface Standard (keys in hardware devices, cards)",
         'PKCS12'    => "PKCS #12: RSA Personal Information Exchange Syntax Standard (public + private key stored in files)",
         'PKI'       => "Public Key Infrastructure",
         'PKIX'      => "Internet Public Key Infrastructure Using X.509",
@@ -1536,6 +1544,7 @@ my %text = (
 #        'TIME'      => "A Perfect CRIME? TIME Will Tell",
         'Threefish' => "hash function",
         'TLS'       => "Transport Layer Security",
+        'TLSA'      => "TLS Trus Anchors",
         'TLSv1'     => "Transport Layer Security version 1",
         'TSK'       => "Transmission Security Key",
         'TTP'       => "trusted Third Party",
@@ -1554,6 +1563,7 @@ my %text = (
         'XUDA'      => "Xcert Universal Database API",
         'XXTEA'     => "enhanced/corrected Tiny Encryption Algorithm",
         'ZLIB'      => "Lossless compression file format",
+        'ZSK'       => "Zone Signing Key", # DNSSEC
     },
     'mnemonic'      => {
         'example'   => "TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA",
@@ -5182,7 +5192,7 @@ TODO
        rsaEncryptionPublic-Key(2048bit)Modulus00d517262dc5895aacfeaafa23a115a4b
        1c3e94680a3e55f6404e3e3d245272bc0376dd651a444d3db1a6f3f60c6792726d641732
        ebe193389399edc1aa922199406ad2363eec221ce474f4c7e....
-       (see _SSLinfo() $format eq raw)
+    (see _SSLinfo() $format ne raw)
     Workaround: use --format=raw
 
   * (nicht wichtig, aber sauber programmieren)
