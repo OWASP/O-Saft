@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# dort ###ah weiter ### und bei %score_ssllabs
+
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -35,7 +37,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.114 13/09/16 21:42:37";
+my $SID     = "@(#) yeast.pl 1.116 13/09/25 13:19:52";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -723,10 +725,68 @@ my %cfg = (
     'legacys'       => [qw(cnark simple sslaudit sslcipher ssldiagnos sslscan
                         ssltest ssltest-g sslyze testsslserver full compact)],
     'showhost'      => 0,       # 1: prefix printed line with hostname
-    'compliance' => {           # Regex containing pattern for allowed ciphers
-        'ISM'       => 'NULL|^ADH-|DES-CBC-|MD5|RC', # No NULL cipher, No Null Auth, No single DES, No MD5, No RC ciphers
-        'PCI'       => 'NULL|^ADH-|DES-CBC-|^EXP-',  # No NULL cipher, No Null Auth, No single DES, No Export encryption
-        'FIPS-140'  => 'IDEA|RC4|MD5',  # TLSv1, 3DES, AES, no IDEA, no RC4, no MD5
+    'regex' => {
+        # First some basic RegEx used later on, either in following RegEx or
+        # as $cfg{'regex'}->{...}  itself.
+        '_or-'      => '[_-]',
+                       # tools use _ or - as separator character
+# ToDo: + also as used in openssl
+        'ADHorDHA'  => '(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
+                       # Anonymous DH has various acronyms:
+                       #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, ...
+        'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
+                       # RC4 has other names due to copyright problems:
+                       #     ARC4, ARCFOUR, RC4
+        '3DESorCBC3' => '(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)',
+                       # Tripple DES is used as 3DES-CBC, 3DES-EDE-CBC, or DES-CBC3
+        'DESor3DES' => '(?:[_-]3DES|DES[_-]_192)',
+                       # Tripple DES is used as 3DES or DES_192
+        'DHEorEDH'  => '(?:DHE|EDH)[_-]',
+                       # DHE and EDH are 2 acronyms for the same thing
+        'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
+                       # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
+        'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
+                       # FORTEZZA has abbrevations FZA and FRZ
+                       # unsure about FORTEZZA_KEA
+        'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
+                       # Numerous protocol prefixes are in use:
+                       #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
+        'aliases'   => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_-]|EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED)',
+                       # various variants for aliases to select cipher groups
+        'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
+        'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
+
+        # RegEx containing pattern to identify vulnerable ciphers
+            #
+            # In a perfect (perl) world we can use negative lokups like
+            #     (ABC)(?!XYZ)
+            # which means: contains `ABC' but not `XYZ' where `XYZ' could be
+            # to the right or left of `ABC'.
+            # But in real world some perl implementations fail to match such
+            # pattern correctly. Hence we use two pattern:  one for positive
+            # match and second for the negative (not) match. Both patterns
+            # must be used programatically.
+            # Key 'TYPE' must match and key 'notTYPE' must not match.
+        # The following RegEx define what is "vulnerable":
+        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?(?:ARC(?:4|FOUR)|RC4)',
+#       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
+        'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
+#       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
+#       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
+        # The following RegEx define what is "not vulnerable":
+        'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+
+        # Regex containing pattern for compliance checks
+        # The following RegEx define what is "not compliant":
+        'notISM'    => '(?:NULL|A(?:NON[_-])?DH|DH(?:A|[_-]ANON)[_-]|(?:^DES|[_-]DES)[_-]CBC[_-]|MD5|RC)',
+        'notPCI'    => '(?:NULL|(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON)|(?:^DES|[_-]DES)[_-]CBC|EXP(?:ORT)?(?:40|56|1024)?)[_-])',
+        'notFIPS-140'=>'(?:(?:ARC(?:4|FOUR)|RC4)|MD5|IDEA)',
+        'FIPS-140'  => '(?:(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)|AES)', # these are compiant
+    },
+    'compliance' => {           # descriotion of RegEx above for compliance checks
+        'ISM'       => "no NULL cipher, no Anonymous Auth, no single DES, no MD5, no RC ciphers",
+        'PCI'       => "no NULL cipher, no Anonymous Auth, no single DES, no Export encryption, DH > 1023",
+        'FIPS-140'  => "must be TLSv1 or 3DES or AES, no IDEA, no RC4, no MD5",
         'FIPS-140-2'=> "",      # ToDo:
         #
         # NIST SP800-52 recommendations for clients (best first):
@@ -758,46 +818,6 @@ my %cfg = (
         #    TLS_DHE_RSA_WITH_AES_128_CBC_SHA
         #    TLS_RSA_WITH_RC4_128_SHA
         #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
-    },
-    'regex' => {
-        # First some explanations of RegEx used later on. This is done as perl
-        # code, so that people  permanently rejecting to read comments  and/or
-        # relying on any kind of syntax highlighting, will stumple over here.
-        '_or-'      => '[_-]',
-                       # tools use _ or - as separator character
-# ToDo: + also as used in openssl
-        'ADHorDHA'  => '(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
-                       # Anonymous DH has various acronyms:
-                       #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, DH_Anon, ...
-        'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
-                       # RC4 has other names due to copyright problems:
-                       #     ARC4, ARCFOUR, RC4
-        'DESor3DES' => '(?:[_-]3DES|DES[_-]_192)',
-                       # Tripple DES is used as 3DES or DES_192
-        'DHEorEDH'  => '(?:DHE|EDH)[_-]',
-                       # DHE and EDH are 2 acronyms for the same thing
-        'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
-                       # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
-        'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
-                       # FORTEZZA has abbrevations FZA and FRZ
-                       # unsure about FORTEZZA_KEA
-        'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
-                       # Numerous protocol prefixes are in use:
-                       #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
-        'aliases'   => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_-]|EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED)',
-                       # various variants for aliases to select cipher groups
-        'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
-        'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
-
-        # Now the RegEx used later on
-        # Regex containing pattern to identify vulnerable ciphers
-#       'BEAST'     => 'NULL|^ADH-|DES-CBC-|MD5|RC', # No NULL cipher, No Null Auth, No single DES, No MD5, No RC ciphers
-        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?(?:ARC(?:4|FOUR)|RC4)',
-#       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
-        'CRIME'     => '(?:NONE|NULL|^\s*$)',   # checks compression
-#       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
-#       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
-        'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
     },
     'cipher'        => "yeast", # which ciphers to be used # <------------------------
 ); # %cfg
@@ -1359,6 +1379,7 @@ my %text = (
         'CMS'       => "Cryptographic Message Syntax",
         'CMVP'      => "Cryptographic Module Validation Program (NIST)",
         'CN'        => "Common Name",
+        'CP'        => "Certificate policy",
         'CPS'       => "Certification Practice Statement",
         'CRC'       => "Cyclic Redundancy Check",
         'CRIME'     => "Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)",
@@ -1366,6 +1387,7 @@ my %text = (
         'CSP'       => "Certificate Service Provider",
         'CSP '      => "Critical Security Parameter (used in FIPS 140-2)",
         'CSR'       => "Certificate Signing Request",
+        'CTL'       => "Certificate Trust Line",
         'CTS'       => "Cipher Text Stealing",
         'DDH'       => "?discrete? Diffie-Hellman",
         'DER'       => "Distinguished Encoding Rules",
@@ -1543,6 +1565,7 @@ my %text = (
         'TIME'      => "Timing Info-leak Made Easy (Exploit SSL/TLS)",
 #        'TIME'      => "A Perfect CRIME? TIME Will Tell",
         'Threefish' => "hash function",
+        'TSP'       => "trust-Management Service Provider",
         'TLS'       => "Transport Layer Security",
         'TLSA'      => "TLS Trus Anchors",
         'TLSv1'     => "Transport Layer Security version 1",
@@ -1868,13 +1891,19 @@ sub _setcmd() {
 
 # check functions
 # -------------------------------------
-sub _setvalue($)       { return ($_[0] eq "") ? 'yes' : 'no (' . $_[0] . ')'; }
+	#	#	#
+sub _setvalue($){ return ($_[0] eq "") ? 'yes' : 'no (' . $_[0] . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
-sub _isbeast($)        { return ($_[0] =~ /$cfg{'regex'}->{'BEAST'}/) ? "" : $_[0] . " "; }
+sub _isbeast($$){
     # return given cipher if vulnerable to BEAST attack, empty string otherwise
 # ToDo: more checks, see: http://www.bolet.org/TestSSLServer/
+    my ($ssl, $cipher) = @_;
+    return ""      if ($ssl    !~ /(SSLv3|TLSv1)/); # SSLv2 and TLSv1.2 not vulnerable to BEAST
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
+    return "";
+} # _isbeast
 #sub _isbreach($)       { return "NOT YET IMPLEMEMNTED"; }
-sub _isbreach($)       { return 0; }
+sub _isbreach($){ return 0; }
 # ToDo: checks
     # To be vulnerable, a web application must:
     #      Be served from a server that uses HTTP-level compression
@@ -1884,12 +1913,33 @@ sub _isbreach($)       { return 0; }
     #      *  does not require TLS-layer compression
     #      *  works against any cipher suite
     #      *  can be executed in under a minute
-sub _iscrime($)        { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? "" : $_[0] . " "; }
+sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? "" : $_[0] . " "; }
     # return compression if available, empty string otherwise
-sub _istime($)         { return 0; }
+sub _istime($)  { return 0; }
 # ToDo: checks
-sub _ispfs($)          { return ($_[0] =~ /$cfg{'regex'}->{'PFS'}/) ? "" : $_[0] . " "; }
+sub _ispfs($$)  {
     # return given cipher if it does not support forward secret connections (PFS)
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    eq "SSLv2"); # PFS not possible with SSLv2
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'PFS'}/);
+    return "";
+} # _ispfs
+sub _isfips($$) {
+    # return given cipher if it is not FIPS-140 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    ne "TLSv1");
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notFIPS-140'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'FIPS-140'}/);
+    return "";
+} # _isfips
+sub _ispci($$)  {
+    # return given cipher if it is not PCI compliant, empty string otherwise
+# ToDo: DH 1024+ is PCI compliant
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    eq "SSLv2"); # SSLv2 is not PCI compliant
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notPCI'}/);
+    return "";
+} # _ispci
 
 sub checkciphers($$$$$) {
     #? test target if geven ciphers are accepted, results stored in global @results
@@ -1965,20 +2015,21 @@ sub checkciphers($$$$$) {
             $check_conn{$ssl}->{val}++;
             push(@results, [$ssl, $c, 'yes']);
 
+            # following checks add the "not compliant" or vulnerable ciphers
+            # to the corresponding %check_* value
+
             # check weak ciphers
             $check_dest{'NULL'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
             $check_dest{'ADH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
             $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
             $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
             # check compliance
-            $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'ISM'}/);
-            $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'PCI'}/);
-            $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'compliance'}->{'FIPS-140'}/);
-            $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ($c !~ /(3DES|AES)/);
+            $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
+            $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
+            $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
             # check attacks
-### weiter (_isbeast in if statt _prot_cipher)
-            $check_conn{'BEAST'}->{val} .= _prot_cipher($ssl, _isbeast($c)) if ($ssl =~ /(SSLv3|TLSv1)/);
-            $check_conn{'BREACH'}->{val}.= _prot_cipher($ssl, _isbreach($c));
+            $check_conn{'BEAST'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
+            $check_conn{'BREACH'}->{val}.= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
             # counters
             my $risk = get_cipher_sec($c);
             $check_conn{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
@@ -2007,8 +2058,7 @@ sub checkciphers($$$$$) {
 
 sub _getwilds($$) {
     # compute usage of wildcard in CN and subjectAltname
-    my $host    = shift;
-    my $port    = shift;
+    my ($host, $port) = @_;
     my ($value, $regex);
     foreach $value (split(" ", $data{'altname'}->{val}($host))) {
             $value =~ s/.*://;      # strip prefix
@@ -2027,8 +2077,7 @@ sub _getwilds($$) {
 sub checksizes($$) {
     #? compute some lengths and count from certificate values
     # sets %check_size, %check_cert
-    my $host    = shift;
-    my $port    = shift;
+    my ($host, $port) = @_;
     my ($value, $regex);
 
     # wildcards (and some sizes)
@@ -2046,7 +2095,7 @@ sub checksizes($$) {
     $check_size{'len_pembase64'}->{val} = length($value);
     $value =~ s/(----.+----\n)//g;
     chomp $value;
-    $check_size{'len_pembinary'}->{val} = length($value) / 8 * 6;
+    $check_size{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
     $check_size{'len_subject'}->{val}   = length($data{'subject'}->{val}($host));
     $check_size{'len_issuer'}->{val}    = length($data{'issuer'}->{val}($host));
     #$check_size{'len_CPS'}->{val}       = length($data{'CPS'}->{val}($host));
@@ -2061,8 +2110,7 @@ sub checksizes($$) {
 sub checksni($$) {
     #? check if given FQDN needs to use SNI
     # sets $check_conn{'SNI'}, $check_cert{'hostname'}
-    my $host    = shift;
-    my $port    = shift;
+    my ($host, $port) = @_;
     if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
         if ($data{'cn_nossni'}->{val} eq $host) {
             $check_conn{'SNI'}->{val} = "";
@@ -2081,18 +2129,16 @@ sub checksni($$) {
 } # checksni
 
 sub checkssl($$) {
-    #? print SSL checks
-    my $host    = shift;
-    my $port    = shift;
+    #? SSL checks
+    my ($host, $port) = @_;
     my $ciphers = shift;
-
 # ToDo: needs to be modularized
+
     my ($ssl, $label, $cipher, $value, $regex);
 
-    # compliance checks are be done in checkciphers() except FIPS
+    # compliance checks are be done in checkciphers() as they all depend on ciphers
     # done in checkciphers(): NULL, EDH, EXPORT, ISM, PCI, FIPS, BEAST
-# ToDo: PCI no SSLv2; trusted certificate; DH 1024+
-    foreach $ssl (qw(SSLv2 SSLv3)) { $check_dest{'FIPS'}->{val} .= " " . $ssl if ($check_conn{$ssl}->{val} != 0); }
+
     if ($cfg{'SSLv2'} == 0) {
         $check_dest{'hasSSLv2'}->{val}   = '<test disabled>' if ($cfg{'SSLv2'} == 0);
     } else {
@@ -2155,15 +2201,8 @@ sub checkssl($$) {
         #  name of key = $ssl . '-' . sec;  # something like: SSLv3-HIGH
         # as _getscore() returns 0 if given value is empty, we always pass a value
         $score{'check_conn'}->{val} -= _getscore(($ssl . '-' . get_cipher_sec($cipher)), $value, \%check_conn);
-        if ($ssl =~ /(SSLv3|TLSv1)/) {
-            if (_isbeast($cipher) ne "") {
-                $check_conn{'BEAST-default'}->{val} .= _prot_cipher($ssl, $cipher);
-            }
-            # PFS (not possible with SSLv2)
-            if (_ispfs($cipher) ne "") {
-                $check_dest{'PFS'}->{val} .= _prot_cipher($ssl, $cipher);
-            }
-        }
+        $check_conn{'BEAST-default'}->{val} .= _prot_cipher($ssl, $cipher) if ("" ne _isbeast($ssl, $cipher));
+        $check_conn{'PFS'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
     $cfg{'no_cert_txt'} = " " if ($cfg{'no_cert_txt'} eq ""); # ToDo: quick&dirty to avoid "yes" results
     foreach $label (sort keys %check_cert) {
@@ -2209,8 +2248,7 @@ sub _check_maxage($$) {
 
 sub checkhttp($$) {
     #? make HTTP checks
-    my $host    = shift;
-    my $port    = shift;
+    my ($host, $port) = @_;
 
 # pins= ==> fingerprint des Zertifikats, wenn leer, dann Reset
 # Achtung: pruefen ob STS auch beit http:// gesetzt, sehr schlecht, da MiTM-Angriff moeglich
@@ -3205,6 +3243,8 @@ if ($cfg{'exec'} == 0) {
 # check given cipher names
 # -------------------------------------
 if ($cfg{'cipher'} ne "yeast") {
+    # "yeast" is the list of default ciphers
+    # anything else needs to be checked id a valid cipher name
     my $new_list = "";
     foreach my $c (split(" ", $cfg{'cipher'})) {
         my $new = _find_cipher_name($c);
@@ -4608,7 +4648,7 @@ Connection is vulnerable if target supports SSL-level compression.
 =head3 PFS
 
 Currently (2013) only a simple check is used: only DHE ciphers used.
-Which is any cipher with DHE or ECDHE.
+Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
 TLSv1.2 checks are not yet implemented.
 
 =head2 Target (server) Configuration and Support
@@ -5141,7 +5181,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.16
+@(#) 13.09.25
 
 =head1 AUTHOR
 
@@ -5150,9 +5190,6 @@ Based on ideas (in alphabetical order) of:
 =begin ToDo # no POD syntax here!
 
 TODO
-
-  * implement better PFS checks; i.e. failed if SSLv2 supported
-    lower score if not all ciphers support PFS
 
   * complete TIME, BREACH check
 
@@ -5172,6 +5209,8 @@ TODO
     make clear usage of score from %check_dest and %check_http
 
   * implement +chain (see Net::SSLinfo.pm implement verify* also)
+
+  * implement score for PFS; lower score if not all ciphers support PFS
 
   * implement +renegotiation und +resumption as command
     from sslyze.py:
