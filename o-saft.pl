@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.117 13/09/27 16:03:29";
+my $SID     = "@(#) yeast.pl 1.120 13/09/28 01:11:32";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -214,9 +214,10 @@ my %check_cert = (
     'wildcard'      => {'val' =>"", 'txt' => "Certificate does not contain wildcards"},
     'rootcert'      => {'val' =>"", 'txt' => "Certificate is not root CA"},
     'selfsigned'    => {'val' =>"", 'txt' => "Certificate is not self-signed"},
+    'EV+'           => {'val' =>"", 'txt' => "Certificate strict Extended Validation (EV)"},
+    'EV-'           => {'val' =>"", 'txt' => "Certificate lazy Extended Validation (EV)"},
     'OCSP'          => {'val' =>"", 'txt' => "Certificate has OCSP Responder URL"},
     'CRL'           => {'val' => 0, 'txt' => "Certificate has CRL Distribution Points"},
-    'EV'            => {'val' => 0, 'txt' => "Certificate has Extended Validation (EV)"},
     'ZLIB'          => {'val' => 0, 'txt' => "Certificate has (TLS extension) compression"},
     'LZO'           => {'val' => 0, 'txt' => "Certificate has (GnuTLS extension) compression"},
     'SRP'           => {'val' => 0, 'txt' => "Certificate has (TLS extension) authentication"},
@@ -378,9 +379,11 @@ my %check_http = (
     'sts_maxagexy'  => {'val' => 99999999, 'score' => 100, 'txt' => "STS max-age more than one year"},  # high
 ); # %check_http
 
-my %data_oid = ( # ToDo: nothing YET IMPLEMENTED
+my %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
 #   '1.3.6.1'                   => {iso(1) org(3) dod(6) iana(1)}
     '1.3.6.1'                   => {'val' => "", 'txt' => "Internet OID"},
+    '1.3.6.1.5.5.7.1.1'         => {'val' => "", 'txt' => "Authority Information Access"}, # authorityInfoAccess
+    '1.3.6.1.5.5.7.1.12'        => {'val' => "", 'txt' => "undef"},
     '1.3.6.1.5.5.7.3.1'         => {'val' => "", 'txt' => "Server Authentication"},
     '1.3.6.1.5.5.7.3.2'         => {'val' => "", 'txt' => "Client Authentication"},
     '1.3.6.1.5.5.7.3.3'         => {'val' => "", 'txt' => "Code Signing"},
@@ -390,7 +393,48 @@ my %data_oid = ( # ToDo: nothing YET IMPLEMENTED
     '1.3.6.1.5.5.7.3.7'         => {'val' => "", 'txt' => "IPSec user"},
     '1.3.6.1.5.5.7.3.8'         => {'val' => "", 'txt' => "Timestamping"},
     '1.3.6.1.4.1.311.10.3.3'    => {'val' => "", 'txt' => "Microsoft Server Gated Crypto"},
+    '1.3.6.1.4.1.311.10.11'     => {'val' => "", 'txt' => "Microsoft Server: EV additional Attributes"},
+    '1.3.6.1.4.1.311.10.11.11'  => {'val' => "", 'txt' => "Microsoft Server: EV ??friendly name??"},
+    '1.3.6.1.4.1.311.10.11.83'  => {'val' => "", 'txt' => "Microsoft Server: EV ??root program??"},
     '2.16.840.1.113730.4.1'     => {'val' => "", 'txt' => "Netscape SGC"},
+    # EV: OIDs used in EV Certificates
+    '2.5.4.10'                  => {'val' => "", 'txt' => "EV Certificate: subject:organizationName"},
+    '2.5.4.11'                  => {'val' => "", 'txt' => "EV Certificate: subject:organizationalUnitName"},
+    '2.5.4.15'                  => {'val' => "", 'txt' => "EV Certificate: subject:businessCategory"},
+    '2.5.4.3'                   => {'val' => "", 'txt' => "EV Certificate: subject:commonName"}, # or SubjectAlternativeName:dNSName
+    # EV: Jurisdiction of Incorporation or Registration
+    '1.3.6.1.4.1.311.60.2.1.1'  => {'val' => "", 'txt' => "EV Certificate: subject:jurisdictionOfIncorporationLocalityName"},
+    '1.3.6.1.4.1.311.60.2.1.2'  => {'val' => "", 'txt' => "EV Certificate: subject:jurisdictionOfIncorporationStateOrProvinceName"},
+    '1.3.6.1.4.1.311.60.2.1.3'  => {'val' => "", 'txt' => "EV Certificate: subject:jurisdictionOfIncorporationCountryName"},
+    '2.5.4.5'                   => {'val' => "", 'txt' => "EV Certificate: subject:serialNumber"},
+    # EV: Physical Address of Place of Business
+    '2.5.4.6'                   => {'val' => "", 'txt' => "EV Certificate: subject:countryName"},
+    '2.5.4.7'                   => {'val' => "", 'txt' => "EV Certificate: subject:localityName"},
+    '2.5.4.8'                   => {'val' => "", 'txt' => "EV Certificate: subject:stateOrProvinceName"},
+    '2.5.4.9'                   => {'val' => "", 'txt' => "EV Certificate: subject:streetAddress"},
+    '2.5.4.17'                  => {'val' => "", 'txt' => "EV Certificate: subject:postalCode"},
+    # EV: Compliance with European Union Qualified Certificates Standard In addition, RFC 3739
+    '1.3.6.1.4.1.311.60.2.1'    => {'val' => "", 'txt' => "EV Certificate: qcStatements:qcStatement:statementId"},
+    # EV: others
+    '1.3.6.1.4.1.311.60.1.1'    => {'val' => "", 'txt' => "EV Certificate: ??fake root??"},
+    '2.5.29.32.0'               => {'val' => "", 'txt' => "EV Certificate: subject:anyPolicy"},
+    '2.5.29.35'                 => {'val' => "", 'txt' => "EV Certificate: subject:authorityKeyIdentifier"},
+    '2.5.29.37'                 => {'val' => "", 'txt' => "EV Certificate: subject:extendedKeyUsage"},
+    '0.9.2342.19200300.100.1.25'=> {'val' => "", 'txt' => "EV Certificate: subject:domainComponent"},
+    # others
+    '2.5.4.4'                   => {'val' => "", 'txt' => "subject:surname"},
+    '2.5.4.12'                  => {'val' => "", 'txt' => "subject:title"},
+    '2.5.4.41'                  => {'val' => "", 'txt' => "subject:name"},
+    '2.5.4.42'                  => {'val' => "", 'txt' => "subject:givenName"},
+    '2.5.4.43'                  => {'val' => "", 'txt' => "subject:intials"},
+    '2.5.4.44'                  => {'val' => "", 'txt' => "subject:generationQualifier"},
+    '2.5.4.46'                  => {'val' => "", 'txt' => "subject:dnQualifier"},
+    '2.5.29.14'                 => {'val' => "", 'txt' => "subject:subjectKeyIdentifier"},
+    '2.5.29.15'                 => {'val' => "", 'txt' => "subject:keyUsage"},
+    '2.5.29.19'                 => {'val' => "", 'txt' => "subject:basicConstraints"},
+    '2.5.29.31'                 => {'val' => "", 'txt' => "subject:crlDistributionPoints"},
+    '2.5.29.32'                 => {'val' => "", 'txt' => "subject:certificatePolicies"},
+    '0.9.2342.19200300.100.1.3' => {'val' => "", 'txt' => "subject:mail"},
 ); # %data_oid
 
 my %shorttexts = (
@@ -423,7 +467,8 @@ my %shorttexts = (
     'EXPORT'        => "No EXPORT ciphers",
     'SGC'           => "SGC supported",
     'CRL'           => "CRL supported",
-    'EV'            => "EV supported",
+    'EV+'           => "Strict EV supported",
+    'EV-'           => "Lazy EV supported",
     'BEAST-default' => "Default cipher safe to BEAST",
     'BEAST'         => "Supported cipher safe to BEAST",
     'BREACH'        => "Safe to BREACH",
@@ -669,13 +714,13 @@ my %cfg = (
                        qw(
                         check cipher dump check_sni exec help info info--v http quick
                         list libversion sizes s_client sni sni_check version
-                        dates pubkey sigkey
+                        dates pubkey sigkey subject_ev
                         certificate text pem expire valid
                         beast crime pfs
                        ),
                     # add alias commands
                        qw(
-                        commonName
+                        commonName owner
                         issuerX509 subjectX509
                         signame sigdump
                         subject_hash issuer_hash
@@ -786,6 +831,22 @@ my %cfg = (
         'notPCI'    => '(?:NULL|(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON)|(?:^DES|[_-]DES)[_-]CBC|EXP(?:ORT)?(?:40|56|1024)?)[_-])',
         'notFIPS-140'=>'(?:(?:ARC(?:4|FOUR)|RC4)|MD5|IDEA)',
         'FIPS-140'  => '(?:(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)|AES)', # these are compiant
+
+        # Regex for cheking EV-SSL
+        # they should matching:   /key=value/other-key=other-value
+        '2.5.4.10'  => '(?:2\.5\.4\.10|organizationName|O)',
+        '2.5.4.11'  => '(?:2\.5\.4\.1?|organizationalUnitName|OU)',
+        '2.5.4.15'  => '(?:2\.5\.4\.15|businessCategory)',
+        '2.5.4.3'   => '(?:2\.5\.4\.3|commonName|CN)',
+        '2.5.4.5'   => '(?:2\.5\.4\.5|serialNumber)',
+        '2.5.4.6'   => '(?:2\.5\.4\.6|countryName|C)',
+        '2.5.4.7'   => '(?:2\.5\.4\.7|localityName|L)',
+        '2.5.4.8'   => '(?:2\.5\.4\.8|stateOrProvinceName|ST)',
+        '2.5.4.9'   => '(?:2\.5\.4\.9|street(?:Address)?)', # '/street=' is very lazy
+        '2.5.4.17'  => '(?:2\.5\.4\.17|postalCode)',
+        '1.3.6.1.4.1.311.60.2.1.1' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.1|jurisdictionOfIncorporationLocalityName)',
+        '1.3.6.1.4.1.311.60.2.1.2' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.2|jurisdictionOfIncorporationStateOrProvinceName)',
+        '1.3.6.1.4.1.311.60.2.1.3' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.3|jurisdictionOfIncorporationCountryName)',
     },
     'compliance' => {           # descriotion of RegEx above for compliance checks
         'ISM'       => "no NULL cipher, no Anonymous Auth, no single DES, no MD5, no RC ciphers",
@@ -2138,6 +2199,109 @@ sub checksni($$) {
     }
 } # checksni
 
+sub checkev($$) {
+    #? check if certificate is EV-SSL
+    my ($host, $port) = @_;
+    #
+    # most information must be provided in `subject' field
+    # unfortunately the specification is a bit vague which X509  keywords
+    # must be used, hence we use RegEx to math the keyword assigned value
+    #
+    # { According EV Certificate Guidelines - Version 1.0 https://www.cabforum.org/contents.html
+    # == Required ==
+    # Organization name:   subject:organizationName (OID 2.5.4.10 )
+    # Business Category:   subject:businessCategory (OID 2.5.4.15)
+    # Domain name:         subject:commonName (OID 2.5.4.3) or SubjectAlternativeName:dNSName
+    #     This field MUST contain one of the following strings in UTF-8
+    #     English: 'V1.0, Clause 5.(b)', 'V1.0, Clause 5.(c)' or 'V1.0, Clause 5.(d)',
+    #     depending whether the Subject qualifies under the terms of Section 5b, 5c, or
+    #     5d of the Guidelines, respectively.
+    # Jurisdiction of Incorporation or Registration:
+    #     Locality:        subject:jurisdictionOfIncorporationLocalityName (OID 1.3.6.1.4.1.311.60.2.1.1)
+    #     State or Province:subject:jurisdictionOfIncorporationStateOrProvinceName (OID 1.3.6.1.4.1.311.60.2.1.2) 
+    #     Country:         subject:jurisdictionOfIncorporationCountryName (OID 1.3.6.1.4.1.311.60.2.1.3)
+    # Registration Number: subject:serialNumber (OID 2.5.4.5) 
+    # Physical Address of Place of Business
+    #     City or town:    subject:localityName (OID 2.5.4.7)
+    #     State or province: subject:stateOrProvinceName (OID 2.5.4.8)
+    #     Number & street: subject:streetAddress (OID 2.5.4.9)
+    # 
+    # Maximum Validity Period  27 months (recommended: EV Subscriber certificate 12 months)
+    # 
+    # == Optional ==
+    # Physical Address of Place of Business
+    #     Country:         subject:countryName (OID 2.5.4.6)
+    #     Postal code:     subject:postalCode (OID 2.5.4.17)
+    # Compliance with European Union Qualified Certificates Standard In addition,
+    # CAs MAY include a qcStatements extension per RFC 3739. The OID for
+    #                      qcStatements:qcStatement:statementId is 1.3.6.1.4.1.311.60.2.1
+    #
+    # }
+    # Issuer Domain Component: issuer:domainComponent (OID 0.9.2342.19200300.100.1.25)
+    #
+    # See also: http://www.evsslcertificate.com
+    #
+    my $oid     = "";
+    my $subject = $data{'subject'}->{val}($host);
+    my $cn      = $data{'cn'}->{val}($host);
+    my $alt     = $data{'altname'}->{val}($host);
+    # required OID
+    foreach $oid (qw(
+        1.3.6.1.4.1.311.60.2.1.1   1.3.6.1.4.1.311.60.2.1.3
+        2.5.4.5    2.5.4.7   2.5.4.10   2.5.4.15
+        )) {
+        if ($subject =~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
+            $data_oid{$oid}->{val} = $1;
+            _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1\n");
+            #dbx# print "L:$oid: $1";
+        } else {
+            _v2print("EV: " . $cfg{'regex'}->{$oid} . " = required missing\n");
+            $check_cert{'EV+'}->{val} .= " missing " . $data_oid{$oid}->{txt} . ";";
+            $check_cert{'EV-'}->{val} .= " missing " . $data_oid{$oid}->{txt} . ";";
+        }
+    }
+    # lazy but required OID
+    $oid = '2.5.4.3'; # /CN= or commanName or subjectAltname
+    if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
+        $check_cert{'EV+'}->{val} .= " missing " . $data_oid{$oid}->{txt} . ";";
+        if (($cn =~ m/^\s*$/) and ($alt =~ m/^\s*$/)) {
+            $data_oid{$oid}->{val} = $alt if ($alt !~ m/^\s*$/);
+            $data_oid{$oid}->{val} = $cn  if ($cn  !~ m/^\s*$/);
+        } else {
+            $check_cert{'EV-'}->{val} .= " missing " . $data_oid{$oid}->{txt} . ";";
+            _v2print("EV: " . $cfg{'regex'}->{$oid} . " = lazy missing\n");
+        }
+    }
+    $oid = '1.3.6.1.4.1.311.60.2.1.2'; # or /ST=
+    if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
+        $check_cert{'EV+'}->{val} .= " missing " . $data_oid{$oid}->{txt} . ";";
+        $oid = '2.5.4.8'; # or /ST=
+        if ($subject =~ m#/$cfg{'regex'}->{'2.5.4.8'}=([^/\n]*)#) {
+            $data_oid{$oid}->{val} = $1;
+        } else {
+            $check_cert{'EV-'}->{val} .= " missing " . $data_oid{$oid}->{txt} . ";";
+            _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing-\n");
+        }
+    }
+    $oid = '2.5.4.9'; # may be missing
+    if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
+        $check_cert{'EV+'}->{val} .= " missing " . $data_oid{$oid}->{txt} . ";";
+        _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing+\n");
+    }
+    # optional OID
+    foreach $oid (qw(2.5.4.6 2.5.4.17)) {
+    }
+    if (64 < length($data_oid{'2.5.4.10'}->{val})) {
+        $check_cert{'EV+'}->{val} .= " too large " . $data_oid{$oid}->{txt} . ";";
+        _v2print("EV: " . $cfg{'regex'}->{$oid} . " = too large (64)\n");
+    }
+    # ToDo: validity <27 months
+    # ToDo: wildcard no, SAN yes
+    # ToDo: cipher 2048 bit?
+    # ToDo: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
+    # ToDo: Scoring: 100 EV+SGC; 80 EV; 70 EV-; 50 OV; 30 DV
+} #checkev
+
 sub checkssl($$) {
     #? SSL checks
     my ($host, $port) = @_;
@@ -2159,6 +2323,8 @@ sub checkssl($$) {
     checksizes($host, $port);
     # check for SNI
     checksni($host, $port);
+    # check for EV
+    checkev($host, $port);
 
     # vulnerabilities
     $check_conn{'CRIME'}->{val} = _iscrime($data{'compression'}->{val}($host));
@@ -2212,7 +2378,7 @@ sub checkssl($$) {
         # as _getscore() returns 0 if given value is empty, we always pass a value
         $score{'check_conn'}->{val} -= _getscore(($ssl . '-' . get_cipher_sec($cipher)), $value, \%check_conn);
         $check_conn{'BEAST-default'}->{val} .= _prot_cipher($ssl, $cipher) if ("" ne _isbeast($ssl, $cipher));
-        $check_conn{'PFS'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
+        $check_dest{'PFS'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
     $cfg{'no_cert_txt'} = " " if ($cfg{'no_cert_txt'} eq ""); # ToDo: quick&dirty to avoid "yes" results
     foreach $label (sort keys %check_cert) {
@@ -3571,6 +3737,13 @@ foreach my $host (@{$cfg{'hosts'}}) {
         goto CLOSE_SSL;
     }
 
+    if (_is_do('subject_ev')) {
+        _trace(" +subject_ev");
+        print $data{'subject'}->{txt} . ":";
+        print "        " . $_ foreach (split"/", $data{'subject'}->{val}($host));
+        goto CLOSE_SSL;
+    }
+
     if (_is_do('beast')) {
         _trace(" +beast");
         foreach my $label (qw(BEAST BEAST-default)) {
@@ -3610,7 +3783,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('s_client')) { # for debugging only
         _trace(" +s_client");
-        print "#{\n", Net::SSLinfo::s_client($_[0], $_[1]), "\n#}";
+        print "#{\n", Net::SSLinfo::s_client($host, cfg{'port'}), "\n#}";
     }
 
     $cfg{'showhost'} = 0 if (($info == 1) and ($cfg{'showhost'} < 2)); # does not make for +info, but giving option twice ...
@@ -3759,7 +3932,10 @@ I<+info>  command.
     These tests return a line with a label describing the test  and a
     test result for it.  The  idea is to report  "yes"  if the result
     is considered "secure" and report the reason why it is considered
-    insecure otherwise.
+    insecure otherwise. Example of a check considered secure:
+        Label of perfomed check:                yes
+    Example of a check considered insecure:
+        Label of perfomed check:                no (reason why)
 
     Note that there are tests where  the reuslt sounds confusing when
     first viewed, like for www.wi.ld:
@@ -4093,6 +4269,10 @@ directly but only herein.
 =head3 +serial
 
     Show certificate's serial number.
+
+=head3 +subject_ev
+
+    Show certificate's subject with one OID per line.
 
 =head3 +text
 
@@ -4644,12 +4824,12 @@ resolve the FQDN again.
 =head3 ADH
 
 Check if ciphers for anonymous key exchange are supported: ADH|DHA .
-Such key exchanges kan be sniffed.
+Such key exchanges can be sniffed.
 
 =head3 EDH
 
 Check if ephemeral ciphers are supported: DHE|EDH .
-They are necessary to support Perfect Forward Secrec (PFS).
+They are necessary to support Perfect Forward Secrecy (PFS).
 
 =head3 BEAST
 
@@ -4671,7 +4851,39 @@ TLSv1.2 checks are not yet implemented.
 
 =head2 Target (server) Certificate
 
+=head3 EV-SSL - Extended Validation Certificate
+
+This check is performed according the requirements defined by the CA/
+Browser Forum  https://www.cabforum.org/contents.html .
+The Certificate must provide:
+
+=over 4
+
+=item Organization name C</O=> in I<subject> field
+
+=item Organization name must be less to 64 characters
+
+=item Business Category C</businessCategory=> in I<subject> field
+
+=item Registration Number C</serialNumber=> in I<subject> field
+
+=item Address of Place of Business in I<subject> field
+
+Required are: C</C=>, C</ST=>, C</L=>
+
+Optional are: C</street=>, C</postalCode=>
+
+=item Domain name in I<commonName> or I<altname> field
+
+=item Validation period does not exceed 27 month
+
+=back
+
+See  LIMITATIONS  also.
+
 =head2 Target (server) HTTP(S) Support
+
+.
 
 =head1 SCORING
 
@@ -4704,6 +4916,9 @@ improper timeout for the connection.
 If reverse DNS lookup fails, an error message is returned as hostname,
 like:  C<<gethostbyaddr() failed>>.
 Workaround to get rid of this message: use  I<--no-dns>  option.
+
+All checks for EV are solely based on the information provided by the
+certificate.
  
 =head2 Poor Systems
 
@@ -5206,7 +5421,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.27
+@(#) 13.09.28
 
 =head1 AUTHOR
 
@@ -5223,6 +5438,8 @@ TODO
   * implement TLSv1.2 checks
 
   * write documentation for CHECKS
+
+  * EV check is missing: validity <27 months
 
   * improve checkssl()
 
