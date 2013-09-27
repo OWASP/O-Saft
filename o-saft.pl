@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-# dort ###ah weiter ### und bei %score_ssllabs
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -37,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.116 13/09/25 13:19:52";
+my $SID     = "@(#) yeast.pl 1.117 13/09/27 16:03:29";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -178,20 +176,20 @@ my %data    = (     # values will be processed in print_dataline()
     'fingerprint_sha1'=>{'val'=> sub { __SSLinfo('fingerprint_sha1',$_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA1"},
     'fingerprint_md5' =>{'val'=> sub { __SSLinfo('fingerprint_md5', $_[0], $_[1])}, 'txt' => "Certificate Fingerprint  MD5"},
     'fingerprint'   => {'val' => sub { __SSLinfo('fingerprint',     $_[0], $_[1])}, 'txt' => "Certificate Fingerprint"},
-    'https_status'  => {'val' => sub { Net::SSLinfo::https_status(  $_[0], $_[1])}, 'txt' => "HTTPS: Status line"},
-    'https_server'  => {'val' => sub { Net::SSLinfo::https_server(  $_[0], $_[1])}, 'txt' => "HTTPS: Server banner"},
-    'https_location'=> {'val' => sub { Net::SSLinfo::https_location($_[0], $_[1])}, 'txt' => "HTTPS: Location header"},
-    'https_refresh' => {'val' => sub { Net::SSLinfo::https_refresh( $_[0], $_[1])}, 'txt' => "HTTPS: Refresh header"},
-    'https_alerts'  => {'val' => sub { Net::SSLinfo::https_alerts(  $_[0], $_[1])}, 'txt' => "HTTPS: Error alerts"},
-    'hsts'          => {'val' => sub { Net::SSLinfo::hsts(          $_[0], $_[1])}, 'txt' => "HTTPS: STS header"},
-    'hsts_maxage'   => {'val' => sub { Net::SSLinfo::hsts_maxage(   $_[0], $_[1])}, 'txt' => "HTTPS: STS MaxAge"},
-    'hsts_subdom'   => {'val' => sub { Net::SSLinfo::hsts_subdom(   $_[0], $_[1])}, 'txt' => "HTTPS: STS include sub-domains"},
-    'hsts_pins'     => {'val' => sub { Net::SSLinfo::hsts_pins(     $_[0], $_[1])}, 'txt' => "HTTPS: STS pins"},
-    'http_status'   => {'val' => sub { Net::SSLinfo::http_status(   $_[0], $_[1])}, 'txt' => "HTTP: Status line"},
-    'http_location' => {'val' => sub { Net::SSLinfo::http_location( $_[0], $_[1])}, 'txt' => "HTTP: Location header"},
-    'http_refresh'  => {'val' => sub { Net::SSLinfo::http_refresh(  $_[0], $_[1])}, 'txt' => "HTTP: Refresh header"},
-    'http_sts'      => {'val' => sub { Net::SSLinfo::http_sts(      $_[0], $_[1])}, 'txt' => "HTTP: STS header"},
-    'http_301'      => {'val' => sub { return ""; },                                'txt' => "HTTP: Status code 301"},
+    'https_status'  => {'val' => sub { Net::SSLinfo::https_status(  $_[0], $_[1])}, 'txt' => "HTTPS Status line"},
+    'https_server'  => {'val' => sub { Net::SSLinfo::https_server(  $_[0], $_[1])}, 'txt' => "HTTPS Server banner"},
+    'https_location'=> {'val' => sub { Net::SSLinfo::https_location($_[0], $_[1])}, 'txt' => "HTTPS Location header"},
+    'https_refresh' => {'val' => sub { Net::SSLinfo::https_refresh( $_[0], $_[1])}, 'txt' => "HTTPS Refresh header"},
+    'https_alerts'  => {'val' => sub { Net::SSLinfo::https_alerts(  $_[0], $_[1])}, 'txt' => "HTTPS Error alerts"},
+    'hsts'          => {'val' => sub { Net::SSLinfo::hsts(          $_[0], $_[1])}, 'txt' => "HTTPS STS header"},
+    'hsts_maxage'   => {'val' => sub { Net::SSLinfo::hsts_maxage(   $_[0], $_[1])}, 'txt' => "HTTPS STS MaxAge"},
+    'hsts_subdom'   => {'val' => sub { Net::SSLinfo::hsts_subdom(   $_[0], $_[1])}, 'txt' => "HTTPS STS include sub-domains"},
+    'hsts_pins'     => {'val' => sub { Net::SSLinfo::hsts_pins(     $_[0], $_[1])}, 'txt' => "HTTPS STS pins"},
+    'http_status'   => {'val' => sub { Net::SSLinfo::http_status(   $_[0], $_[1])}, 'txt' => "HTTP Status line"},
+    'http_location' => {'val' => sub { Net::SSLinfo::http_location( $_[0], $_[1])}, 'txt' => "HTTP Location header"},
+    'http_refresh'  => {'val' => sub { Net::SSLinfo::http_refresh(  $_[0], $_[1])}, 'txt' => "HTTP Refresh header"},
+    'http_sts'      => {'val' => sub { Net::SSLinfo::http_sts(      $_[0], $_[1])}, 'txt' => "HTTP STS header"},
+    'http_301'      => {'val' => sub { return ""; },                                'txt' => "HTTP Status code 301"},
 #ah#    'hsts_pins'     => {'val' => sub { return 2592999; }, 'txt' => "HTTP: STS pins"},
     #------------------+---------------------------------------+-------------------------------------------------------
 ); # %data
@@ -358,20 +356,20 @@ my %check_size = (
 
 my %check_http = (
     # score are absolute values here, except for 'hsts_maxage', they are set to 100 if attribute is found
-    'hsts'          => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: STS header"},
-    'hsts_pins'     => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: STS pins"},
-    'hsts_subdom'   => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: STS includes sub-domains"},
-    'hsts_maxage'   => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: STS MaxAge"},
-    'https_status'  => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: Status line"},
-    'https_server'  => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: Server banner"},
-    'https_alerts'  => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: Error alerts"},
-    'https_refresh' => {'val' => "",       'score' =>   0, 'txt' => "HTTPS: Refresh header"},
-    'https_location'=> {'val' => "",       'score' =>   0, 'txt' => "HTTPS: Location header"},
-    'http_status'   => {'val' => "",       'score' =>   0, 'txt' => "HTTP: Status line"},
-    'http_301'      => {'val' => "",       'score' =>   0, 'txt' => "HTTP: Status code is 301"},        # RFC6797 requirement
-    'http_location' => {'val' => "",       'score' =>   0, 'txt' => "HTTP: Location header"},
-    'http_refresh'  => {'val' => "",       'score' =>   0, 'txt' => "HTTP: Refresh header"},
-    'http_sts'      => {'val' => "",       'score' =>   0, 'txt' => "HTTP: STS header"},
+    'hsts'          => {'val' => "",       'score' =>   0, 'txt' => "HTTPS STS header"},
+    'hsts_pins'     => {'val' => "",       'score' =>   0, 'txt' => "HTTPS STS pins"},
+    'hsts_subdom'   => {'val' => "",       'score' =>   0, 'txt' => "HTTPS STS includes sub-domains"},
+    'hsts_maxage'   => {'val' => "",       'score' =>   0, 'txt' => "HTTPS STS MaxAge"},
+    'https_status'  => {'val' => "",       'score' =>   0, 'txt' => "HTTPS Status line"},
+    'https_server'  => {'val' => "",       'score' =>   0, 'txt' => "HTTPS Server banner"},
+    'https_alerts'  => {'val' => "",       'score' =>   0, 'txt' => "HTTPS Error alerts"},
+    'https_refresh' => {'val' => "",       'score' =>   0, 'txt' => "HTTPS Refresh header"},
+    'https_location'=> {'val' => "",       'score' =>   0, 'txt' => "HTTPS Location header"},
+    'http_status'   => {'val' => "",       'score' =>   0, 'txt' => "HTTP Status line"},
+    'http_301'      => {'val' => "",       'score' =>   0, 'txt' => "HTTP Status code is 301"},         # RFC6797 requirement
+    'http_location' => {'val' => "",       'score' =>   0, 'txt' => "HTTP Location header"},
+    'http_refresh'  => {'val' => "",       'score' =>   0, 'txt' => "HTTP Refresh header"},
+    'http_sts'      => {'val' => "",       'score' =>   0, 'txt' => "HTTP STS header"},
 # some special values (used for 'hsts_maxage' above)
     'sts_maxage0d'  => {'val' =>        0, 'score' =>   0, 'txt' => "STS max-age not set"},             # very weak
     'sts_maxage1d'  => {'val' =>    86400, 'score' =>  10, 'txt' => "STS max-age less than one day"},   # weak
@@ -514,19 +512,19 @@ my %shorttexts = (
     'fingerprint_sha1'  => "Fingerprint SHA1",
     'fingerprint_md5'   => "Fingerprint  MD5",
     'fingerprint'       => "Fingerprint:",
-    'https_status'  => "HTTPS: Status line",
-    'https_server'  => "HTTPS: Server banner",
-    'https_alerts'  => "HTTPS: Error alerts",
-    'https_location'=> "HTTPS: Location header",
-    'https_refresh' => "HTTPS: Refresh header",
-    'hsts'          => "HTTPS: STS header",
-    'hsts_maxage'   => "HTTPS: STS MaxAge",
-    'hsts_subdom'   => "HTTPS: STS sub-domains",
-    'hsts_pins'     => "HTTPS: STS pins",
-    'http_status'   => "HTTP: Status line",
-    'http_location' => "HTTP: Location header",
-    'http_refresh'  => "HTTP: Refresh header",
-    'http_sts'      => "HTTP: STS header",
+    'https_status'  => "HTTPS Status line",
+    'https_server'  => "HTTPS Server banner",
+    'https_alerts'  => "HTTPS Error alerts",
+    'https_location'=> "HTTPS Location header",
+    'https_refresh' => "HTTPS Refresh header",
+    'hsts'          => "HTTPS STS header",
+    'hsts_maxage'   => "HTTPS STS MaxAge",
+    'hsts_subdom'   => "HTTPS STS sub-domains",
+    'hsts_pins'     => "HTTPS STS pins",
+    'http_status'   => "HTTP Status line",
+    'http_location' => "HTTP Location header",
+    'http_refresh'  => "HTTP Refresh header",
+    'http_sts'      => "HTTP STS header",
     #------------------+------------------------------------------------------
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
@@ -688,7 +686,7 @@ my %cfg = (
                                 # this list is dynamically constructed, see below
     'quick'         => [        # commands for +quick
                        qw(
-                        cipher fingerprint_hash email serial subject
+                        cipher default fingerprint_hash email serial subject
                         dates verify beast crime time breach
                         expansion compression renegotiation resumption hsts pfs
                        )],
@@ -701,6 +699,12 @@ my %cfg = (
                        qw(
                         check beast crime time breach pfs
                        )],
+    'data_hex'      => [        # list of data values which are in hex values
+                                # used in conjunction with --format=hex
+                       qw(
+                        fingerprint_hash fingerprint_sha1 fingerprint_md5
+                        serial sigkey_value pubkey_value modulus
+                       )],      # not fingerprint, as it contains other words too
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
@@ -1835,14 +1839,20 @@ sub __SSLinfo($$$) {
     $val =  Net::SSLinfo::fingerprint_md5(  $_[0], $_[1]) if ($cmd eq 'fingerprint_md5');
     $val =  Net::SSLinfo::pubkey_value(     $_[0], $_[1]) if ($cmd eq 'pubkey_value');
     $val =  Net::SSLinfo::sigkey_value(     $_[0], $_[1]) if ($cmd eq 'sigkey_value');
-    $val =~ s/[\s\n]//g  if ($cfg{'format'} ne 'raw');
-    $val =~ s/[:]//g     if ($cfg{'format'} ne 'raw');
+    if ($cfg{'format'} ne "raw") {
+        $val =~ s/\n\s+//g; # remove trailing spaces
+        $val =~ s/\n/ /g;
+        $val =~ s/\s\s+//g; # remove multiple spaces
+        $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
+    }
     return $val;
 }; # __SSLinfo
 
 sub _need_cipher()     { my $is=join("|", @{$cfg{'do'}});    return grep(/^($is)$/,  @{$cfg{'need_cipher'}}); }
     # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_cipher'}
 sub _need_checkssl()   { my $is=join("|", @{$cfg{'do'}});    return grep(/^($is)$/,  @{$cfg{'need_checkssl'}}); }
+    # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_checkssl'}
+sub _is_hexdata($)     { my $is=shift;                       return grep(/^($is)$/,  @{$cfg{'data_hex'}}); }
     # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_checkssl'}
 sub _is_hashkey($$)    { my $is=shift; my @in=keys %{$_[0]}; return grep({$_ eq $is} @in); }
 sub _is_member($$)     { my $is=shift; my @in=@{$_[0]};      return grep({$_ eq $is} @in); }
@@ -2376,7 +2386,7 @@ sub printruler()  { print '#' . '-'x38, '+' . '-'x35; }
 
 sub print_dataline($$$) {
     # print given label and text from %data according given legacy format
-    my ($legacy, $label, $host, $port) = @_;   # host and port are optional
+    my ($legacy, $label, $host, $port) = @_;   # port is optional
     if (1 != grep(/^$label$/, keys %data)) {   # silently ignore unknown labels
         warn("**WARNING: unknown label '$label'; ignored"); # seems to be a programming error
         return;
@@ -2394,6 +2404,9 @@ sub print_dataline($$$) {
             return;
         }
     # }
+    if (1 eq _is_hexdata($label)) {
+        $val   =~ s#(..)#$1:#g, $val =~ s#:$## if ($cfg{'format'} eq "hex");
+    }
     if ($legacy eq 'compact') {
         $val   =~ s#[\n\r]#; #g;
         $label = $data{$label}->{txt};
@@ -2777,7 +2790,8 @@ sub printssl($$) {
                 next;
             }
         }
-        printcheck($legacy, $check_conn{$label}->{txt}, _setvalue($value));
+        $value = _setvalue($value) if ($label ne "totals"); # ToDo: probably some more here
+        printcheck($legacy, $check_conn{$label}->{txt}, $value);
     }
     if ($cfg{'verbose'} > 0) {
         print "**WARNING: can't print certificate sizes without a certificate (--no-cert)" if ($cfg{'no_cert'} != 0);
@@ -3533,7 +3547,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
             print_cipherdefault($version, $cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslscan');
         }
     }
-    print "" if ($cfg{'format'} ne 'raw');
+    print "" if ($cfg{'format'} ne "raw");
 
     if (_need_checkssl() > 0) {
         _trace(" checkssl {");
@@ -3609,11 +3623,12 @@ foreach my $host (@{$cfg{'hosts'}}) {
         next if ($label =~ m/^(exec|cipher|check)$/); # already done or done later
         next if ($label =~ m/^(http|hsts)/ and $cfg{'usehttp'} == 0);
         next if ($label =~ m/^(ciphers)/   and $cfg{'verbose'} == 0);   # Client ciphers are less important
+        next if ($label =~ m/^modulus$/    and $cfg{'verbose'} == 0);   # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
         next if ($label =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time)/);
 # ToDo: }
         _trace(" do: " . $label) if ($cfg{'trace'} > 1);
-        if ($cfg{'format'} eq 'raw') {     # should be the only place where format=raw counts
+        if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
             print $data{$label}->{val}($host);;
         } else {
             print_dataline($cfg{'legacy'}, $label, $host);
@@ -3872,7 +3887,7 @@ with other commands).
 
     Quick overview of checks.
     This command is a shortcut vor:
-        +cipher +fingerprint_hash +email +serial +subject \ 
+        +cipher +default +fingerprint_hash +email +serial +subject \ 
             +dates +verify +beast +crime +time +breach \ 
             +expansion +compression +renegotiation +resumption \ 
             +hsts +pfs
@@ -4005,6 +4020,7 @@ with the I<+text> command.
 =head3 +modulus
 
     Show certificate public key's modulus.
+    As this value is part of "+pubkey", it's only shown with  "--v".
 
 =head3 +pem
 
@@ -4661,6 +4677,15 @@ TLSv1.2 checks are not yet implemented.
 
 Comming soon ...
 
+=head1 KNOWN PROBLEMS
+
+=head2 Segmentation fault
+
+Sometimes the program terminates with a  `Segmentation fault'.  This
+mainly happens if the target doesn't return certificate information.
+If so, the  I<--no-cert>  option may help.
+
+
 =head1 LIMITATIONS
 
 Port as specified with I<--port> options is the same for all targets.
@@ -5181,7 +5206,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.25
+@(#) 13.09.27
 
 =head1 AUTHOR
 
