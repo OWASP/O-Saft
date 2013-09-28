@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.42 13/09/12 23:58:53',
+    SID         => '@(#) Net::SSLinfo.pm 1.44 13/09/29 00:47:45',
 };
 
 ######################################################## public documentation #
@@ -216,7 +216,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.09.11';
+    $VERSION   = '13.09.28';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1080,6 +1080,7 @@ sub do_openssl($$$) {
             return '#';
         }
     }
+    $host = $port = "" if ($mode =~ m/^-?(ciphers)$/);
     _trace "echo '' | $_timeout $_openssl $mode $host$port 2>&1" ;#if ($trace > 1);
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
