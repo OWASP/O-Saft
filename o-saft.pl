@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.120 13/09/28 01:11:32";
+my $SID     = "@(#) yeast.pl 1.121 13/09/28 21:48:26";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -682,6 +682,7 @@ my %cfg = (
     'DTLS09'        => 0,       # 1: check this SSL version;  default 0
     'DTLS10'        => 0,       # 1: check this SSL version;  default 0
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
+    'cipher'        => "yeast", # which ciphers to be used
     'do'            => [],      # the commands to be performed, any of commands
     'command'       => "",      # NOT YET USED
     'commands'      => [        # Contains all commands known by yeast.pl .
@@ -884,7 +885,14 @@ my %cfg = (
         #    TLS_RSA_WITH_RC4_128_SHA
         #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
     },
-    'cipher'        => "yeast", # which ciphers to be used # <------------------------
+    'done' => {                 # internal administration
+        'checkciphers'  => 0,   # not used, as it's called multiple times
+        'checksizes'=> 0,
+        'checkhttp' => 0,
+        'checksni'  => 0,
+        'checkssl'  => 0,
+        'checkev'   => 0,
+    },
 ); # %cfg
 
 # construct list for 'info' and 'info--v' based on 'commands'
@@ -2150,6 +2158,8 @@ sub checksizes($$) {
     # sets %check_size, %check_cert
     my ($host, $port) = @_;
     my ($value, $regex);
+    return if ($cfg{'done'}->{'checksizes'} == 1);
+    $cfg{'done'}->{'checksizes'} = 1;
 
     # wildcards (and some sizes)
     _getwilds($host, $port);
@@ -2182,6 +2192,8 @@ sub checksni($$) {
     #? check if given FQDN needs to use SNI
     # sets $check_conn{'SNI'}, $check_cert{'hostname'}
     my ($host, $port) = @_;
+    return if ($cfg{'done'}->{'checksni'} == 1);
+    $cfg{'done'}->{'checksni'} = 1;
     if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
         if ($data{'cn_nossni'}->{val} eq $host) {
             $check_conn{'SNI'}->{val} = "";
@@ -2202,6 +2214,8 @@ sub checksni($$) {
 sub checkev($$) {
     #? check if certificate is EV-SSL
     my ($host, $port) = @_;
+    return if ($cfg{'done'}->{'checkev'} == 1);
+    $cfg{'done'}->{'checkev'} = 1;
     #
     # most information must be provided in `subject' field
     # unfortunately the specification is a bit vague which X509  keywords
@@ -2306,6 +2320,8 @@ sub checkssl($$) {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
+    return if ($cfg{'done'}->{'checkssl'} == 1);
+    $cfg{'done'}->{'checkssl'} = 1;
 # ToDo: needs to be modularized
 
     my ($ssl, $label, $cipher, $value, $regex);
@@ -2425,6 +2441,8 @@ sub _check_maxage($$) {
 sub checkhttp($$) {
     #? make HTTP checks
     my ($host, $port) = @_;
+    return if ($cfg{'done'}->{'checkhttp'} == 1);
+    $cfg{'done'}->{'checkhttp'} = 1;
 
 # pins= ==> fingerprint des Zertifikats, wenn leer, dann Reset
 # Achtung: pruefen ob STS auch beit http:// gesetzt, sehr schlecht, da MiTM-Angriff moeglich
@@ -3047,17 +3065,28 @@ sub printversion() {
     print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
     print "    Net::SSLeay          $Net::SSLeay::VERSION";
     print "    Net::SSLinfo         $Net::SSLinfo::VERSION";
-    my $m;
+    my ($m, $d, %p);
     if ($cfg{'verbose'} > 0) {
         print "\nLoaded Modules:";
         foreach $m (sort keys %INC) {
             printf("    %-22s %6s %s\n", $m, $INC{$m});
+            $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
         }
         print "\nLoaded Module Versions:";
         no strict qw(refs); # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
         foreach $m (sort keys %main:: ) {
             next if $m !~ /::/;
             printf("    %-22s %6s %s\n", $m, ${$$m{'VERSION'}}, $INC{$m});
+        }
+    }
+    return if ($^O =~ m/MSWin32/); # not Windows
+    if ($cfg{'verbose'} > 1) {
+        print "\nUsed Shared Objects:";
+        # quick&dirty, don't want to use ::Find module
+        foreach $d (sort keys %p) {
+             next if ($d =~ m/^\s*$/);
+             print "# find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*";
+             print   `find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*`;
         }
     }
 } # printversion
@@ -3267,6 +3296,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--exe=(.*)/)          { $typ = 'exe';     $arg = $1; } # no next
     if ($arg =~ /^--lib$/)              { $typ = 'lib';          next; }
     if ($arg =~ /^--lib=(.*)/)          { $typ = 'lib';     $arg = $1; } # no next
+    if ($arg =~ /^--envlibvar$/)        { $typ = 'env';          next; }
+    if ($arg =~ /^--envlibvar=(.*)/)    { $typ = 'env';     $arg = $1; } # no next
     if ($arg =~ /^--cipher$/)           { $typ = 'cipher';       next; }
     if ($arg =~ /^--cipher=(.*)/)       { $typ = 'cipher';  $arg = $1; } # no next
     if ($arg =~ /^--format$/)           { $typ = 'format';       next; }
@@ -3336,6 +3367,7 @@ while ($#argv >= 0) {
     if ($typ eq 'openssl')  { $cmd{'openssl'} = $arg;       $typ = 'host'; next; }
     if ($typ eq 'exe')      { $cmd{'path'}    = $arg;       $typ = 'host'; next; }
     if ($typ eq 'lib')      { $cmd{'libs'}    = $arg;       $typ = 'host'; next; }
+    if ($typ eq 'env')      { $cmd{'envlibvar'}  = $arg;    $typ = 'host'; next; }
     if ($typ eq 'sep')      { $text{'separator'} = $arg;    $typ = 'host'; next; }
     if ($typ eq 'timeout')  { $cfg{'timeout'} = $arg;       $typ = 'host'; next; }
     if ($typ eq 'cipher')   { $cfg{'cipher'}  = $arg;       $typ = 'host'; next; }
@@ -3410,12 +3442,12 @@ if ($cfg{'exec'} == 0) {
         local $\ = "\n";
         $ENV{PATH} = $cmd{'path'} . ':' . $ENV{PATH};
         $ENV{$cmd{envlibvar}} = $cmd{'libs'};
-        if ($cfg{'trace'} > 0) {
+        if ($cfg{'verbose'} > 0) {
             _yeast("exec: envlibvar= $cmd{envlibvar}");
             _yeast("exec: $cmd{envlibvar}= $ENV{$cmd{envlibvar}}");
             _yeast("exec: PATH= $ENV{PATH}");
         }
-        _trace("exec: $0 +exec " . join(" ", @ARGV));
+        _yeast("exec: $0 +exec " . join(" ", @ARGV));
         exec $0, '+exec', @ARGV;
     }
 }
@@ -3552,7 +3584,6 @@ if (_is_do('list')) {
     if ($cfg{'verbose'} > 0) {
         my @miss = ();
         foreach my $cipher (split(':', $ciphers)) {
-## 10sep: meldet AECDH-NULL-SHA als fehlend
             push(@miss, $cipher) if (! defined $ciphers{$cipher});
         }
         print "\n# Ciphers marked with # above are not supported by local SSL implementation.\n";
@@ -4920,6 +4951,9 @@ Workaround to get rid of this message: use  I<--no-dns>  option.
 All checks for EV are solely based on the information provided by the
 certificate.
  
+I<+quick>  should not be used together with other commands, it returns
+strange output then.
+
 =head2 Poor Systems
 
 On Windows usage of  L<openssl(1)> is disabled by default due to various
@@ -5421,7 +5455,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.28
+@(#) 13.09.28a
 
 =head1 AUTHOR
 
