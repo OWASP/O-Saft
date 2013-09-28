@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.122 13/09/28 23:08:35";
+my $SID     = "@(#) yeast.pl 1.124 13/09/29 01:48:42";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -650,6 +650,7 @@ my %cmd = (
     'path'          => "",      # where to find openssl executable
     'extopenssl'    => 1,       # use external openssl; default yes, except on Win32
     'extsclient'    => 1,       # use openssl s_client; default yes, except on Win32
+    'extciphers'    => 0,       # use openssl s_client -cipher for connection check 
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
 );
 my %cfg = (
@@ -683,6 +684,8 @@ my %cfg = (
     'DTLS10'        => 0,       # 1: check this SSL version;  default 0
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => "yeast", # which ciphers to be used
+    'cipherlist'    => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
+                                # ToDo: must be same as in Net::SSLinfo or used from there
     'do'            => [],      # the commands to be performed, any of commands
     'command'       => "",      # NOT YET USED
     'commands'      => [        # Contains all commands known by yeast.pl .
@@ -2064,10 +2067,24 @@ sub _usesocket($$$$) {
 } # _usesocket
 
 sub _useopenssl($$$$) {
+    # return 1 if cipher accepted by SSL connection
     my ($ssl, $host, $port, $ciphers) = @_;
     _trace("_useopenssl(..., $ciphers)");
-# $host .= ':' if ($port ne '');
-# $data = `echo '' | $_timeout $_openssl $mode $host$port 2>&1`;
+    my $data = Net::SSLinfo::do_openssl("s_client -cipher $ciphers -connect", $host, $port);
+    # we may get for success:
+    #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
+    return 1 if ($data =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#);
+    # we may get any of following errors:
+    #   TIME:error:140790E5:SSL routines:SSL23_WRITE:ssl handshake failure:.\ssl\s23_lib.c:177:
+    #   New, (NONE), Cipher is (NONE)
+    #   connect:errno=11004
+    #   TIME:error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure:s23_clnt.c:602:
+    #   TIME:error:140740B5:SSL routines:SSL23_CLIENT_HELLO:no ciphers available:s23_clnt.c:367:
+    return 0 if ($data =~ m#New, [A-Za-z0-9/.,-]+ Cipher is .?NONE#);
+    return 0 if ($data =~ m#SSL routines.*(?:alert handshake failure|no ciphers available)#);
+    warn("**WARNING: unknown result from openssl; ignored");
+    _trace("_useopenssl #{ $data }");
+    return 0;
 } # _useopenssl
 
 sub checkcipher($$) {
@@ -2137,7 +2154,12 @@ sub checkciphers($$$$$) {
         printf(" $c")     if ($verbose == 2); # don't want _v2print() here
         _v4print("check\n");
         #dbx# _dprint "H: $host , $cfg{'host'} \n";
-        my $supported = _usesocket($ssl, $host, $port, $c);
+        my $supported = 0;
+        if (0 == $cmd{'extciphers'}) {
+            $supported = _usesocket( $ssl, $host, $port, $c);
+        } else { # force openssl
+            $supported = _useopenssl($ssl, $host, $port, $c);
+        }
         if (0 == $supported) {
             #dbx# _dprint "\t$c\t$hash{$c}  -- $ssl  # connect failed, cipher unsupported";
             push(@results, [$ssl, $c, 'no']);
@@ -3288,6 +3310,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ignorecase$/)       { $cfg{'ignorecase'}= 1; next; }
     if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1; next; }
     if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1; next; }
+    if ($arg =~ /^--force[_-]openssl/)  { $cmd{'extciphers'}= 1; next; }
     if ($arg =~ /^--no[_-]?openssl/)    { $cmd{'extopenssl'}= 0; next; }
     if ($arg =~ /^--s_?client/)         { $cmd{'extsclient'}++;  next; }
     if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1; next; } # allow case insensitive
@@ -3545,6 +3568,7 @@ if ($cfg{'trace'} > 0) {
     _yeast(" cmd->timeout= $cmd{'timeout'}");
     _yeast(" cmd->openssl= $cmd{'openssl'}");
     _yeast("  use_openssl= $cmd{'extopenssl'}");
+    _yeast("openssl cipher= $cmd{'extciphers'}");
     _yeast("      use_SNI= $Net::SSLinfo::use_SNI");
     _yeast("      targets= " . join(" ", @{$cfg{'hosts'}}));
     foreach my $key (qw(port format legacy openssl cipher usehttp)) {
@@ -3624,11 +3648,8 @@ if (_is_do('list')) {
 
 if (_is_do('ciphers')) {
     _trace(" +ciphers");
-    if ($#{$cfg{'hosts'}} < 0) {    # no target given, try to use openssl
-        print "**WARNING: no target given, try to get cipher list from openssl" if ($cfg{'verbose'} > 0);
-        print_dataline($cfg{'legacy'}, 'ciphers_openssl', Net::SSLinfo::cipher_local());
-        exit 0;                     # other commands do not make sense without a target
-    }
+    print_dataline($cfg{'legacy'}, 'ciphers_openssl', Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", ""));
+    # list separated by : doesn't matter, as it's show only
 }
 
 # now commands which do make a connection
@@ -3696,6 +3717,9 @@ foreach my $host (@{$cfg{'hosts'}}) {
         # to check the connection (hostname and port)
         # as side effect we get the local cipher list
     my $ciphers = Net::SSLinfo::ciphers($host, $cfg{'port'});
+       $ciphers = Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", "") if ($cmd{'extciphers'} == 1);
+       $ciphers =~ s/:/ /g;
+       #  above should be the same as: Net::SSLinfo::cipher_local()
     my $err     = Net::SSLinfo::errors( $host, $cfg{'port'});
     if ($err !~ /^\s*$/) {
         _v_print($err);
@@ -4433,6 +4457,15 @@ the description is text provided by the user.
   x86_64:   use  ** NOT YET IMPLEMENTED **
   x86Mac:   use  ** NOT YET IMPLEMENTED **
   arch:     use  ** NOT YET IMPLEMENTED **
+
+=head3 --force-openssl
+
+  Use openssl to check for supported ciphers;  default: IO::Socket
+
+  This option forces to use  "openssl s_slient -connect CIPHER .." to
+  check if a cipher is supported by the remote target. This is useful
+  if the  "-lib=LIB"  option doesn't work (for example due to changes
+  of the API or other incompatibilities).
 
 =end comment
 
@@ -5393,7 +5426,15 @@ Following formats are used:
 
 =item Test using a private libssl.so, libcrypto.so and openssl:
 
-    $0 +cipher --lib=/foo/bar-1.42--exe=/foo/bar-1.42/apps some.tld
+    $0 +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps some.tld
+
+=item Test using a private openssl:
+
+    $0 +cipher --openssl=/foo/bar-1.42/openssl some.tld
+
+=item Test using a private openssl also for testing supported ciphers:
+
+    $0 +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
 
 =item Just for curiosity:
 
@@ -5478,7 +5519,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.28b
+@(#) 13.09.29
 
 =head1 AUTHOR
 
@@ -5519,6 +5560,8 @@ TODO
 
   * check() implement remaining checks (see check{XXX}->{val} == 0
           SSL_honor_cipher_order => 1
+
+  * Net::SSLinfo::cipher_local()  probably broken
 
   * use Net::SSLeay 1.42 as fallback, because 1.49 causes problems at
     some sites (connect() fails).
