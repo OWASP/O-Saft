@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.121 13/09/28 21:48:26";
+my $SID     = "@(#) yeast.pl 1.122 13/09/28 23:08:35";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -2020,8 +2020,84 @@ sub _ispci($$)  {
     return "";
 } # _ispci
 
+sub _usesocket($$$$) {
+    # return 1 if cipher accepted by SSL connection
+    my ($ssl, $host, $port, $ciphers) = @_;
+    _trace("_usesocket(..., $ciphers)");
+    my $sslsocket = IO::Socket::SSL->new(
+        PeerAddr        => $host,
+        PeerPort        => $port,
+        Proto           => "tcp",
+        Timeout         => $cfg{'timeout'},
+    #   SSL_hostname    => $host,   # for SNI
+        SSL_version     => $ssl,
+        SSL_cipher_list => $ciphers
+        #SSL_honor_cipher_order => 1
+        #
+        # if $c not supported locally (part of $ciphers)
+        # then new() should fail
+        # ToDo: get error if failed
+# SSL_verify_mode
+#              This option sets the verification mode for the peer certificate.
+#              The default (0x00) does no authentication.  You may combine 0x01
+#              (verify peer), 0x02 (fail verification if no peer certificate
+#              exists; ignored for clients), and 0x04 (verify client once) to
+#              change the default.
+# 
+## use IO::Socket::SSL;
+## my $GLOBAL_CONTEXT_ARGS = new IO::Socket::SSL::GLOBAL_CONTEXT_ARGS (
+##    'SSL_verify_mode' => 0x02,
+##    'SSL_ca_path' => "/root/ca/"); 
+##
+    );
+
+#nok# print Net::SSL::ExpireDate($sslsocket);
+# see: http://search.cpan.org/~mikem/Net-SSLeay-1.48/lib/Net/SSLeay.pod
+# see: http://search.cpan.org/~sullr/IO-Socket-SSL-1.76/SSL.pm
+
+    #dbx# _dprint "E: " . $sslsocket->opened(); # nok
+    if ($sslsocket) {  # connect failed, cipher not accepted
+        $sslsocket->close(SSL_ctx_free => 1);
+        return 1;
+    }
+    return 0;
+} # _usesocket
+
+sub _useopenssl($$$$) {
+    my ($ssl, $host, $port, $ciphers) = @_;
+    _trace("_useopenssl(..., $ciphers)");
+# $host .= ':' if ($port ne '');
+# $data = `echo '' | $_timeout $_openssl $mode $host$port 2>&1`;
+} # _useopenssl
+
+sub checkcipher($$) {
+    #? test given cipher and add result to %check_* value
+    my ($ssl, $c) = @_;
+    my $risk = get_cipher_sec($c);
+    # following checks add the "not compliant" or vulnerable ciphers
+
+    # check weak ciphers
+    $check_dest{'NULL'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
+    $check_dest{'ADH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
+    $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
+    $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
+    # check compliance
+    $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
+    $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
+    $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
+    # check attacks
+    $check_conn{'BEAST'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
+    $check_conn{'BREACH'}->{val}.= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
+    # counters
+    $check_conn{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
+    $check_conn{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
+    $check_conn{$ssl . '-WEAK'}->{val}++    if ($risk =~ /WEAK/i);
+    $check_conn{$ssl . '-HIGH'}->{val}++    if ($risk =~ /HIGH/i);
+    $check_conn{$ssl . '-MEDIUM'}->{val}++  if ($risk =~ /MEDIUM/i);
+} # checkcipher
+
 sub checkciphers($$$$$) {
-    #? test target if geven ciphers are accepted, results stored in global @results
+    #? test target if given ciphers are accepted, results stored in global @results
     # NOTE that verbose output is printed directly (hence preceeds results)
     my $ssl     = shift;
     my $host    = shift;
@@ -2029,10 +2105,11 @@ sub checkciphers($$$$$) {
     my $ciphers = shift;# ciphers to be checked
     my $hashref = shift;# our list of ciphers
     my %hash    = %$hashref;
+    _trace("checkciphers($ssl, .., $ciphers) {");
     my $verbose = $cfg{'verbose'};
-                        # verbose==2 : _v2print() print remotly checked ciphers
-                        # verbose==3 : _v3print() print processed ciphers
-                        # verbose==4 : _v4print() print how cipher is processed
+                    # verbose==2 : _v2print() print remotly checked ciphers
+                    # verbose==3 : _v3print() print processed ciphers
+                    # verbose==4 : _v4print() print how cipher is processed
     local   $|  = 1;    # do not buffer (for verbosity)
     my $skip    = 0;
 
@@ -2054,74 +2131,20 @@ sub checkciphers($$$$$) {
         if (0 >= grep(/^$c$/, split(/[ :]/, $ciphers))) {
             # cipher not to be checked
             _v4print("skip\n");
-            #printf("skip\n") if ($cfg{'verbose'} == 4);
+            #printf("skip\n") if ($verbose == 4);
             next;
         }
-        printf(" $c")     if ($cfg{'verbose'} == 2); # don't want _v2print() here
+        printf(" $c")     if ($verbose == 2); # don't want _v2print() here
         _v4print("check\n");
         #dbx# _dprint "H: $host , $cfg{'host'} \n";
-        my $sslsocket = IO::Socket::SSL->new(
-            PeerAddr        => $host,
-            PeerPort        => $port,
-            Proto           => "tcp",
-            Timeout         => $cfg{'timeout'},
-        #   SSL_hostname    => $host,   # for SNI
-            SSL_version     => $ssl,
-            SSL_cipher_list => $c
-            #SSL_honor_cipher_order => 1
-            #
-            # if $c not supported locally (part of $ciphers)
-            # then new() should fail
-            # ToDo: get error if failed
-# SSL_verify_mode
-#              This option sets the verification mode for the peer certificate.
-#              The default (0x00) does no authentication.  You may combine 0x01
-#              (verify peer), 0x02 (fail verification if no peer certificate
-#              exists; ignored for clients), and 0x04 (verify client once) to
-#              change the default.
-# 
-## use IO::Socket::SSL;
-## my $GLOBAL_CONTEXT_ARGS = new IO::Socket::SSL::GLOBAL_CONTEXT_ARGS (
-##    'SSL_verify_mode' => 0x02,
-##    'SSL_ca_path' => "/root/ca/"); 
-##
-        );
-        #dbx# _dprint "E: " . $sslsocket->opened(); # nok
-        if (!$sslsocket) {  # connect failed, cipher not accepted
-            #dbx# _dprint "\t$c\t$hash{$c}  -- $ssl  # unsupported";
+        my $supported = _usesocket($ssl, $host, $port, $c);
+        if (0 == $supported) {
+            #dbx# _dprint "\t$c\t$hash{$c}  -- $ssl  # connect failed, cipher unsupported";
             push(@results, [$ssl, $c, 'no']);
-        } else {            # connect succeded, cipher accepted
-            $check_conn{$ssl}->{val}++;
+        } else {
+            $check_conn{$ssl}->{val}++; # cipher accepted
             push(@results, [$ssl, $c, 'yes']);
-
-            # following checks add the "not compliant" or vulnerable ciphers
-            # to the corresponding %check_* value
-
-            # check weak ciphers
-            $check_dest{'NULL'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
-            $check_dest{'ADH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
-            $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
-            $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
-            # check compliance
-            $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-            $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
-            $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
-            # check attacks
-            $check_conn{'BEAST'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
-            $check_conn{'BREACH'}->{val}.= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
-            # counters
-            my $risk = get_cipher_sec($c);
-            $check_conn{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
-            $check_conn{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
-            $check_conn{$ssl . '-WEAK'}->{val}++    if ($risk =~ /WEAK/i);
-            $check_conn{$ssl . '-HIGH'}->{val}++    if ($risk =~ /HIGH/i);
-            $check_conn{$ssl . '-MEDIUM'}->{val}++  if ($risk =~ /MEDIUM/i);
-
-#nok# print Net::SSL::ExpireDate($sslsocket);
-# see: http://search.cpan.org/~mikem/Net-SSLeay-1.48/lib/Net/SSLeay.pod
-# see: http://search.cpan.org/~sullr/IO-Socket-SSL-1.76/SSL.pm
-
-            $sslsocket->close(SSL_ctx_free => 1);
+            checkcipher($ssl, $c);
         }
     } # foreach %hash
     _v2print("\n");
@@ -2133,6 +2156,7 @@ sub checkciphers($$$$$) {
             $check_conn{$ssl . '-HIGH'}->{val} +
             $check_conn{$ssl . '-MEDIUM'}->{val};
 
+    _trace(" checkciphers }");
 } # checkciphers
 
 sub _getwilds($$) {
@@ -3707,12 +3731,11 @@ foreach my $host (@{$cfg{'hosts'}}) {
     }
 
     if (_need_cipher() > 0) {
-        _trace(" checkciphers {");
+        _trace(" need_cipher");
         @results = ();          # new list for every host
         foreach my $version (@{$cfg{'version'}}) {
             checkciphers($version, $host, $cfg{'port'}, $ciphers, \%ciphers);
         }
-        _trace(" checkciphers }");
      }
 
 # ToDo: BUG! following print requiers data which is later changed in checkssl()
@@ -5455,7 +5478,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.28a
+@(#) 13.09.28b
 
 =head1 AUTHOR
 
