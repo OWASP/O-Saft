@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# dort ###ah weiter ### und bei %score_ssllabs
+
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -35,7 +37,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.124 13/09/29 01:48:42";
+my $SID     = "@(#) yeast.pl 1.125 13/10/13 01:51:52";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -717,7 +719,7 @@ my %cfg = (
                     # add internal commands
                        qw(
                         check cipher dump check_sni exec help info info--v http quick
-                        list libversion sizes s_client sni sni_check version
+                        list listregex libversion sizes s_client sni sni_check version
                         dates pubkey sigkey subject_ev
                         certificate text pem expire valid
                         beast crime pfs
@@ -751,9 +753,9 @@ my %cfg = (
     'data_hex'      => [        # list of data values which are in hex values
                                 # used in conjunction with --format=hex
                        qw(
-                        fingerprint_hash fingerprint_sha1 fingerprint_md5
+                        fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
                         serial sigkey_value pubkey_value modulus
-                       )],      # not fingerprint, as it contains other words too
+                       )],      # fingerprint is special, see _ishexdata()
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
@@ -1788,6 +1790,7 @@ sub _trace($) { print "#" . $mename . "::" . $_[0] if ($cfg{'trace'} > 0); }
 # if --trace@ given
 sub _trace_1key($) { printf("#[%-16s ",    join(" ",@_) . ']')  if ($cfg{'traceKEY'} > 0); }
 sub _trace_1arr($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceKEY'} > 0); }
+sub _vprintme { _v_print("$0 " . $VERSION); _v_print("$0 " . join(" ", @ARGV) . "\n");     }
 
 sub _initscore()  {
     # set all default score values here
@@ -2635,7 +2638,15 @@ sub print_dataline($$$) {
         }
     # }
     if (1 eq _is_hexdata($label)) {
-        $val   =~ s#(..)#$1:#g, $val =~ s#:$## if ($cfg{'format'} eq "hex");
+        my ($k, $v) = split("=", $val);
+        if (defined $v) {       # i.e SHA Fingerprint=
+            $k .= "=";
+        } else {
+            $v  = $k;
+            $k  = "";
+        }
+        $v   =~ s#(..)#$1:#g, $v =~ s#:$## if ($cfg{'format'} eq "hex");
+        $val = $k . $v;
     }
     if ($legacy eq 'compact') {
         $val   =~ s#[\n\r]#; #g;
@@ -3148,6 +3159,7 @@ sub printhelp($) {
     my $label   = shift;
     local $\;
     $\ = "\n";
+    _vprintme();
     _v_print("help: $label");
     if ($label =~ m/^(cmd|command)s?/i) { print "# $mename commands:\t+" . join(" +", @{$cfg{'commands'}}); exit; }
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t" . join(" ", @{$cfg{'legacys'}}); exit; }
@@ -3209,6 +3221,7 @@ sub printtodo() {
     #? print program's ToDo
     my $txt = join ("", @DATA);
     my $label = "";
+    _vprintme();
     $txt =~ s{.*?=begin\s+ToDo[^\n]*(.*?)=end\s+ToDo.*}{$1}ms;
     print $txt;
     $\   =  "\n";
@@ -3460,7 +3473,7 @@ while ($#argv >= 0) {
 
 } # while
 
-print "# $0 $VERSION\n\n" if ($cfg{'verbose'} > 0);# so we can map output to version ;-)
+_vprintme();
 
 # set defaults for Net::SSLinfo
 # -------------------------------------
@@ -3591,6 +3604,14 @@ if (_is_do('libversion')) {
     exit 0;
 }
 
+if (_is_do('listregex')) {
+    _trace(" +listregex");
+    foreach my $reg (keys %{$cfg{'regex'}}) {
+        printf("%14s => %s\n", $reg, $cfg{'regex'}->{$reg});
+        }
+    exit 0;
+}
+
 if (_is_do('list')) {
     _trace(" +list");
     my $have_cipher = 0;
@@ -3648,6 +3669,7 @@ if (_is_do('list')) {
 
 if (_is_do('ciphers')) {
     _trace(" +ciphers");
+    _v_print("cipher pattern: $cfg{'cipherlist'}");
     print_dataline($cfg{'legacy'}, 'ciphers_openssl', Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", ""));
     # list separated by : doesn't matter, as it's show only
 }
@@ -4975,6 +4997,102 @@ See  LIMITATIONS  also.
 =head1 SCORING
 
 Comming soon ...
+
+=head1 CIPHER NAMES
+
+While the SSL/TLS protocol uses integer numbers to identify  ciphers,
+almost all tools use some kind of  `human readable'  texts for cipher
+names. 
+
+These numbers (which are most likely written  as hex values in source
+code and documentations) are the only true identifier, and we have to
+rely on the tools that they use the proper integers.
+
+As such integer or hex numbers are difficult to handle by humans,  we
+decided to use human readable texts. Unfortunately no common standard
+exists how to construct the names and map them to the correct number.
+Some, but by far not all, oddities are described in L<Name Rodeo>.
+
+The rules for specifying cipher names are:
+
+=over 4
+
+=item 1. textual names as defined by IANA (see [IANA])
+
+=item 2. mapping of names and numbers as defined by IANA (see [IANA])
+
+=item 3. C<->  and  C<_>  are treated the same
+
+=item 4. abbrevations are allowed, as long as they are unique
+
+=item 7. beside IANA, openssl's cipher names are prefered
+
+=item 6. name variants are supported, as long as they are unique
+
+=item 7. hex numbers can be used
+
+=back
+
+[IANA]    http://.../tls-parameters.txt, September 2013
+[openssl] ... openssl 1.0.1
+
+If in any doubt, use  I<+list --v>  to get an idea about the mapping.
+And use  I<+listregex>  to see which regex are used to handle all these
+variants herein.
+
+Mind the traps and dragons with cipher names and what number they are
+actually mapped. In particular when  I<--lib>,  I<--exe>  or  I<--openssl>
+options are in use. Alway use these options with  I<+list>  command too.
+
+=head2 Name Rodeo
+
+As said above, the  SSL/TLS protocol uses integer numbers to identify
+ciphers, but almost all tools use some kind of  human readable  texts
+for cipher names. 
+
+For example the cipher commonly known as C<DES-CBC3-SHA> is identified
+by  C<0x020701c0>  (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
+as constant name. A definition is missing in IANA, but there is 
+C<TLS_RSA_WITH_3DES_EDE_CBC_SHA> ..
+It's each tool's responsibility to map the human readable cipher name
+to the correct (hex, integer) identifier.
+
+For example Firefox uses  C<dhe_dss_des_ede3_sha>,  which is what?
+
+Furthermore, there are different acronyms for the same thing in use.
+For example  C<DHE>  and  C<EDH>  both mean C<Ephemeral Diffie-Hellman>.
+Comments in the openssl sources mention this. And for curiosity these
+sources use both in cypher names but allow only  C<EDH> as shortcut in
+openssl's `ciphers'  command.
+
+Next example is  C<ADH>  which is also known as  C<DH_anon> or C<DHAnon>
+or  C<DHA>  . 
+
+You think this is enough? Then have a look how many acronyms are used
+for  `Tripple DES'.
+
+Compared to above, the interchangeable use of  C<->  vs.  C<_>  in human
+readable cipher names is just a very simple one. However, see openssl
+again what following means (returns):
+    openssl ciphers -v RC4-MD5
+    openssl ciphers -v RC4+MD5
+    openssl ciphers -v RC4:-MD5
+    openssl ciphers -v RC4:!MD5
+    openssl ciphers -v RC4!MD5
+
+Looking at all these oddities, it would be nice to have a common uniq
+nameing scheme for cipher names. We have not. As the SSL/TLS protocol
+just uses a number, it would be natural to use the number as uniq key
+for all cipher names, at least as key in our internal sources.
+
+Unfortunatelly, the assignment of ciphers to numbers changed over the
+years, which means that the same number referes to a different cipher
+depending on the standard, and/or tool, or version of a tool you use.
+
+As a result, we cannot use human readable cipher names as  identifier
+(aka uniq key), as there are to many aliases for the same cipher. And
+also the number cannot be used as uniq key as a key may have multiple
+ciphers assigned.
 
 =head1 KNOWN PROBLEMS
 
