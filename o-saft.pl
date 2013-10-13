@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-# dort ###ah weiter ### und bei %score_ssllabs
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -37,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.125 13/10/13 01:51:52";
+my $SID     = "@(#) yeast.pl 1.126 13/10/13 17:17:22";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -5637,7 +5635,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.09.29
+@(#) 13.10.11
 
 =head1 AUTHOR
 
