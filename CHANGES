@@ -1,4 +1,49 @@
 
+Version: 13.10.11
+  BUGFIX
+  UPDATE
+    * --v honored in various modes
+    * --format=hex  includes +fingerprint
+  NEW
+    * description for CIPHER NAMES
+
+Version: 13.09.29
+  BUGFIX
+    * check --envlibvar= option
+    * +cipher command corrected
+  UPDATE
+    * fomal code changes in checkciphers()
+  NEW
+    * --force-openssl implemented to use openssl for cipher checks
+
+Version: 13.09.28
+  BUGFIX
+    * s_client command corrected
+    * PFS check label text corrected
+    * Net::SSLinfo::do_openssl() supports ciphers command correctly
+  NEW
+    * EV-SSL checks implemented
+    * +subject_ev implemented
+
+Version: 13.09.27
+  UPDATE
+    * minor changes of output texts
+  NEW
+    * --format=hex implemented
+
+Version: 13.09.25
+  UPDATE
+    * regex and check for compliance and attacks improved
+
+Version: 13.09.16
+  BUGFIX
+    * label for EDH check corrected
+    * RegEx ADHorDHA and DHEorEDH corrected
+  UPDATE
+    * glossar improved
+  NEW
+    * --format=raw implemented
+
 Version: 13.09.15
   BUGFIX
     *  +list command exits
