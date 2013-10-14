@@ -1,4 +1,9 @@
 
+Version: 13.10.14
+  BUGFIX
+    * --cmd=cquick is same as +quick
+    * --help=checks instead of --help=check
+
 Version: 13.10.11
   BUGFIX
   UPDATE
