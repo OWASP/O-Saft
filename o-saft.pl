@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.126 13/10/13 17:17:22";
+my $SID     = "@(#) yeast.pl 1.127 13/10/14 22:55:21";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -648,9 +648,9 @@ my %cmd = (
     'openssl'       => "openssl",   # OpenSSL
     'libs'          => "",      # where to find libssl.so and libcrypto.so
     'path'          => "",      # where to find openssl executable
-    'extopenssl'    => 1,       # use external openssl; default yes, except on Win32
-    'extsclient'    => 1,       # use openssl s_client; default yes, except on Win32
-    'extciphers'    => 0,       # use openssl s_client -cipher for connection check 
+    'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
+    'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
+    'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check 
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
 );
 my %cfg = (
@@ -3162,7 +3162,7 @@ sub printhelp($) {
     if ($label =~ m/^(cmd|command)s?/i) { print "# $mename commands:\t+" . join(" +", @{$cfg{'commands'}}); exit; }
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t" . join(" ", @{$cfg{'legacys'}}); exit; }
     if ($label =~ m/^compliance/i)      { print "# $mename compliance values:\t" . join(" ", keys %{$cfg{'compliance'}}); exit; }
-    if ($label =~ m/^(check|score)$/i) {
+    if ($label =~ m/^(checks|score)$/i) {
         $label = lc($label);
         printscoredata($label);
         exit;
@@ -3379,13 +3379,13 @@ while ($#argv >= 0) {
 
     #{ commands
     _yeastARG("command? $arg");
+    if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI ';   $arg = '+' . $1; } # no next
     if ($arg =~ /^\+info/)  { $info  = 1; } # needed 'cause +info converts to list of commands
     if ($arg =~ /^\+quick/) { $quick = 1; } #
     # You may read the lines as table with colums like:
     #  +---------+----------+----------------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
-    if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI ';   $arg = '+' . $1; } # no next
     if ($arg =~ /^--cgi=?/) { $arg = '# for CGI mode; ignore';   next; }
     if ($arg eq  '+info')   { @{$cfg{'do'}} = @{$cfg{'info'}};   next; } # +info is just a list of all other commands
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = @{$cfg{'info--v'}};next; } # like +info ...
@@ -5051,7 +5051,7 @@ for cipher names.
 For example the cipher commonly known as C<DES-CBC3-SHA> is identified
 by  C<0x020701c0>  (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
 as constant name. A definition is missing in IANA, but there is 
-C<TLS_RSA_WITH_3DES_EDE_CBC_SHA> ..
+C<TLS_RSA_WITH_3DES_EDE_CBC_SHA> .
 It's each tool's responsibility to map the human readable cipher name
 to the correct (hex, integer) identifier.
 
@@ -5635,7 +5635,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.10.11
+@(#) 13.10.14
 
 =head1 AUTHOR
 
