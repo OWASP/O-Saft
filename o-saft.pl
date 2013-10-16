@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.127 13/10/14 22:55:21";
+my $SID     = "@(#) yeast.pl 1.128 13/10/17 00:45:57";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1771,7 +1771,7 @@ my %text = (
 $cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 
-_initscore();   # initialize default score values in above hashes
+#_initscore();  # call delayed to prevent warning of prototype check with -w
 
 # internal functions
 # -------------------------------------
@@ -1814,6 +1814,7 @@ sub _initscore()  {
         $check_conn{$_}->{score} = 10 if (m/MEDIUM/i);
     }
 } # _initscore
+_initscore();   # initialize default score values in above hashes
 
 sub _find_cipher_name($) {
     # check if given cipher name is a known cipher
@@ -1842,12 +1843,13 @@ sub _prot_cipher($$)   { return " " . join(":", @_); }
 sub _getscore($$$)     {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
     my $key     = shift;
-    my $value   = shift;
+    my $value   = shift || "";
     my $hashref = shift;# list of checks
     my %hash    = %$hashref;
     return 0 if ($value eq "");
-    _trace("_getscore: $key : '$value' = ". $hash{$key}->{score});
-    return $hash{$key}->{score};
+    my $score   = $hash{$key}->{score} || 0;
+    _trace("_getscore: $key : '$value' = ". $score);
+    return $score;
 } # _getscore
 
 sub _setscore($) {
@@ -1855,6 +1857,7 @@ sub _setscore($) {
     # if given value is a file, read settings from that file
     # otherwise given value must be KEY=VALUE format;
     my $score = shift;
+    no warnings qw(prototype); # avoid: main::_setscore() called too early to check prototype at ./yeast.pl line
     #dbx# _trace("#dbx# _setscore($score)\n";
     if (-f "$score") {  # got a valid file, read from that file
         _trace(" _setscore: read " . $score . "\n");
@@ -1938,15 +1941,15 @@ sub _match_command($)  { my $is=shift;                       return _match_membe
 # some people prefer to use a getter function to get data from objects
 # each function returns a spcific value (column) from the %cipher table
 # see %ciphers_desc about description of the columns
-sub get_cipher_sec($)  { my $c=$_[0]; return $ciphers{$c}[0] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_ssl($)  { my $c=$_[0]; return $ciphers{$c}[1] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_enc($)  { my $c=$_[0]; return $ciphers{$c}[2] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_bits($) { my $c=$_[0]; return $ciphers{$c}[3] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_mac($)  { my $c=$_[0]; return $ciphers{$c}[4] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_auth($) { my $c=$_[0]; return $ciphers{$c}[5] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_keyx($) { my $c=$_[0]; return $ciphers{$c}[6] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_score($){ my $c=$_[0]; return $ciphers{$c}[7] if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_tags($) { my $c=$_[0]; return $ciphers{$c}[8] if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_sec($)  { my $c=$_[0]; return $ciphers{$c}[0] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_ssl($)  { my $c=$_[0]; return $ciphers{$c}[1] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_enc($)  { my $c=$_[0]; return $ciphers{$c}[2] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_bits($) { my $c=$_[0]; return $ciphers{$c}[3] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_mac($)  { my $c=$_[0]; return $ciphers{$c}[4] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_auth($) { my $c=$_[0]; return $ciphers{$c}[5] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_keyx($) { my $c=$_[0]; return $ciphers{$c}[6] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_score($){ my $c=$_[0]; return $ciphers{$c}[7] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_tags($) { my $c=$_[0]; return $ciphers{$c}[8] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
 sub get_cipher_desc($) { my $c=$_[0]; my @c = @{$ciphers{$c}}; shift @c; return @c if (grep(/^$c/, %ciphers)>0); return ""; }
 
 sub _setcmd() {
@@ -2494,11 +2497,11 @@ sub checkhttp($$) {
 # pins= ==> fingerprint des Zertifikats, wenn leer, dann Reset
 # Achtung: pruefen ob STS auch beit http:// gesetzt, sehr schlecht, da MiTM-Angriff moeglich
     # collect informations
-    $check_http{'hsts_maxage'}->{val} = $data{'hsts_maxage'}->{val}($host);
-    $check_http{'hsts_subdom'}->{val} = $data{'hsts_subdom'}->{val}($host);
-    $check_http{'hsts_pins'}  ->{val} = $data{'hsts_pins'}  ->{val}($host);
-    $check_http{'http_sts'}   ->{val} = $data{'http_sts'}   ->{val}($host);
-    $check_http{'http_301'}   ->{val} = $data{'http_status'}->{val}($host);
+    $check_http{'hsts_maxage'}->{val} = $data{'hsts_maxage'}->{val}($host) || 0;
+    $check_http{'hsts_subdom'}->{val} = $data{'hsts_subdom'}->{val}($host) || "";
+    $check_http{'hsts_pins'}  ->{val} = $data{'hsts_pins'}  ->{val}($host) || "";
+    $check_http{'http_sts'}   ->{val} = $data{'http_sts'}   ->{val}($host) || "";
+    $check_http{'http_301'}   ->{val} = $data{'http_status'}->{val}($host) || "";
     $check_http{'http_301'}   ->{val} = ""  if ($check_http{'http_status'}   ->{val} =~ /301/); # RFC6797 requirement
 
     # perform checks
@@ -2519,13 +2522,13 @@ sub checkhttp($$) {
     # score for max-age attribute
     # NOTE: following sequence is important!
     $check_http{'hsts_maxage'}->{score} = 100;
-    foreach my $key (qw(sts_maxagexy sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
+    foreach my $key qw(sts_maxagexy sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d) {
         $check_http{'hsts_maxage'}->{score} = $check_http{$key}->{score} if ($check_http{'hsts_maxage'}->{val} < $check_http{$key}->{val});
     }
 
     $score{'check_http'}->{val} = 100;
     $score{'check_http'}->{val} = $check_http{'hsts_maxage'}->{score};
-    foreach my $key (qw(hsts_subdom hsts_pins http_sts http_location)) {
+    foreach my $key qw(hsts_subdom hsts_pins http_sts http_location) {
 ###ah weiter# print "### $key ='" . $check_http{$key}->{val} . "' : " . $check_http{$key}->{score} . "' => " . $score{'check_http'}->{val};
         $score{'check_http'}->{val} -= _getscore($key, $check_http{$key}->{val}, \%check_http);
     }
@@ -2624,7 +2627,7 @@ sub print_dataline($$$) {
     }
     _trace_1key($label);
     _printhost($host);
-    my $val = $data{$label}->{val}($host);
+    my $val = $data{$label}->{val}($host) || "";
     # { always pretty print
         if ($label =~ m/X509$/) {
             $label =~ s/X509$//;
@@ -3115,7 +3118,6 @@ sub printversion() {
     print "    " . Net::SSLinfo::do_openssl('version', "", "", "");
     # get a quick overview also
     print "Required (and used) Modules:";
-    print "    IPC::System::Simple  $IPC::System::Simple::VERSION";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
     print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
     print "    Net::SSLeay          $Net::SSLeay::VERSION";
@@ -3154,7 +3156,7 @@ sub printopenssl() {
 sub printhelp($) {
     #? print program's help
     # if parameter is not empty, print brief list of specified label
-    my $label   = shift;
+    my $label   = shift || ""; # || to avoid uninitialized value
     local $\;
     $\ = "\n";
     _vprintme();
@@ -3368,7 +3370,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--set[_-]?score=(.*)/){ $typ = 'score';   $arg = $1; } # no next
     if ($arg =~ /^--timeout$/)          { $typ = 'timeout';      next; }
     if ($arg =~ /^--timeout=(.*)/)      { $typ = 'timeout'; $arg = $1; } # no next
-    if ($arg eq /^-interval$/)          { $typ = 'timeout';      next; } # ssldiagnos
+    if ($arg eq  '-interval')           { $typ = 'timeout';      next; } # ssldiagnos
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'openssl'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'ctxt'; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'ctxt'; $arg = $1; } # no next
@@ -3475,16 +3477,19 @@ _vprintme();
 
 # set defaults for Net::SSLinfo
 # -------------------------------------
-$Net::SSLinfo::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
-$Net::SSLinfo::use_openssl = $cmd{'extopenssl'};
-$Net::SSLinfo::use_sclient = $cmd{'extsclient'};
-$Net::SSLinfo::openssl     = $cmd{'openssl'};
-$Net::SSLinfo::use_http    = $cfg{'usehttp'};
-$Net::SSLinfo::use_SNI     = $cfg{'usesni'};
-$Net::SSLinfo::timeout_sec = $cfg{'timeout'};
-$Net::SSLinfo::no_cert     = $cfg{'no_cert'};
-$Net::SSLinfo::no_cert_txt = $cfg{'no_cert_txt'};
-$Net::SSLinfo::ignore_case = $cfg{'ignore_case'};
+{
+    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ./yeast.pl line 
+    $Net::SSLinfo::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    $Net::SSLinfo::use_openssl = $cmd{'extopenssl'};
+    $Net::SSLinfo::use_sclient = $cmd{'extsclient'};
+    $Net::SSLinfo::openssl     = $cmd{'openssl'};
+    $Net::SSLinfo::use_http    = $cfg{'usehttp'};
+    $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
+    $Net::SSLinfo::timeout_sec = $cfg{'timeout'};
+    $Net::SSLinfo::no_cert     = $cfg{'no_cert'};
+    $Net::SSLinfo::no_cert_txt = $cfg{'no_cert_txt'};
+    $Net::SSLinfo::ignore_case = $cfg{'ignorecase'};
+}
 
 # call with other libraries
 # -------------------------------------
@@ -3657,7 +3662,8 @@ if (_is_do('list')) {
         print "Ciphers in $mename:        ", join(":", keys %ciphers);
         print "Supported Ciphers:        ", $have_cipher;
         print "Unsupported Ciphers:      ", $miss_cipher;
-        print "Testable Ciphers:         ", scalar split(":", $ciphers);
+        print "Testable Ciphers:         ", scalar @{[split(":", $ciphers)]}; # @{[...]} to avoid Use of implicit split to @_ is deprecated at 
+
         print "Ciphers missing in $mename:", $#miss, "  ", join(" ", @miss);
         print "Ciphers (from local ssl): ", $ciphers;
             # ToDo: there may be more "Testable" than "Supported" ciphers
@@ -5460,6 +5466,12 @@ mind that it's best to specify  I<--v>  as very first argument.
 
 =back
 
+Note that in trace messages  empty or undefined  strings are writtens as
+"<<undefined>>". Some parameters, in particular those of HTTP responses,
+are written as "<<response>>".  Long parameter lists are abbrevated with
+"...".
+
+
 =head3 Output
 
 When using  I<--v>  and/or  I<--trace>  options,  additional output will
@@ -5633,13 +5645,15 @@ Based on ideas (in alphabetical order) of:
    cnark.pl, SSLAudit.pl sslscan, ssltest.pl, sslyze.py
 
 O-Saft - OWASP SSL advanced forensic tool
-   Thanks to Gregor kuznik for this title.
+   Thanks to Gregor Kuznik for this title.
 
 =for comment: VERSION string must start with @(#) at beginning of a line
 
 =head1 VERSION
 
-@(#) 13.10.16
+@(#) 13.10.17
+bugfix: proper brackets in foreach necessary for ActivePerl
+
 
 =head1 AUTHOR
 
