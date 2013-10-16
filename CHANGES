@@ -1,7 +1,17 @@
 
+Version: 13.10.17
+  BUGFIX
+    * code improved for perl's -w
+
+Version: 13.10.16
+  BUGFIX
+    * syntax improved for ActivePerl
+  UPDATE
+    * INSTALLTION part added to README file
+
 Version: 13.10.14
   BUGFIX
-    * --cmd=cquick is same as +quick
+    * --cmd=quick is same as +quick
     * --help=checks instead of --help=check
 
 Version: 13.10.11
