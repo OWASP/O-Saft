@@ -2519,13 +2519,13 @@ sub checkhttp($$) {
     # score for max-age attribute
     # NOTE: following sequence is important!
     $check_http{'hsts_maxage'}->{score} = 100;
-    foreach my $key qw(sts_maxagexy sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d) {
+    foreach my $key (qw(sts_maxagexy sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
         $check_http{'hsts_maxage'}->{score} = $check_http{$key}->{score} if ($check_http{'hsts_maxage'}->{val} < $check_http{$key}->{val});
     }
 
     $score{'check_http'}->{val} = 100;
     $score{'check_http'}->{val} = $check_http{'hsts_maxage'}->{score};
-    foreach my $key qw(hsts_subdom hsts_pins http_sts http_location) {
+    foreach my $key (qw(hsts_subdom hsts_pins http_sts http_location)) {
 ###ah weiter# print "### $key ='" . $check_http{$key}->{val} . "' : " . $check_http{$key}->{score} . "' => " . $score{'check_http'}->{val};
         $score{'check_http'}->{val} -= _getscore($key, $check_http{$key}->{val}, \%check_http);
     }
@@ -5635,7 +5635,7 @@ Based on ideas (in alphabetical order) of:
 
 =head1 VERSION
 
-@(#) 13.10.14
+@(#) 13.10.16
 
 =head1 AUTHOR
 
