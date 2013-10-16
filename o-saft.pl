@@ -3931,6 +3931,7 @@ __DATA__
 =head1 NAME
 
 o-saft.pl - OWASP SSL audit for testers
+            OWASP SSL advanced forensic tool
 
 =head1 DESCRIPTION
 
@@ -5630,6 +5631,9 @@ nehcildeihcsretnu eid hcusreV mieb  dnatstne looT  meseid uz eedI eiD
 
 Based on ideas (in alphabetical order) of:
    cnark.pl, SSLAudit.pl sslscan, ssltest.pl, sslyze.py
+
+O-Saft - OWASP SSL advanced forensic tool
+   Thanks to Gregor kuznik for this title.
 
 =for comment: VERSION string must start with @(#) at beginning of a line
 
