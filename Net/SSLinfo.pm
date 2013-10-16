@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.44 13/09/29 00:47:45',
+    SID         => '@(#) Net::SSLinfo.pm 1.45 13/10/17 00:37:07',
 };
 
 ######################################################## public documentation #
@@ -78,6 +78,8 @@ C<$Net::SSLeay::trace>.
 
 Debugging of low level SSL can be enabled by setting C<$Net::SSLeay::trace>,
 see L<Net::SSLeay> for details.
+
+In trace messages empty or undefined strings are writtens as "<<undefined>>".
 
 =head1 VARIABLES
 
@@ -216,7 +218,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.09.28';
+    $VERSION   = '13.10.17';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -458,7 +460,7 @@ sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
     $_SSLinfo{'ciphers_openssl'} = '';
 } # _SSLinfo_reset
 
-sub _dump($$$) { return sprintf("#{ %-12s:%s%s #}\n", @_); }
+sub _dump($$$) { return sprintf("#{ %-12s:%s%s #}\n", $_[0], $_[1], ($_[2] || "<<undefined>>")); }
     # my ($label, $separator, $value) = @_;
 sub dump() {
     #? return internal data structure
@@ -510,7 +512,7 @@ sub _SSLinfo_get($$$) {
     if ($key eq 'dates') {
         return ( $_SSLinfo{'before'}, $_SSLinfo{'after'});
     }
-    _trace "_SSLinfo_get '$key'=" . $_SSLinfo{$key};
+    _trace "_SSLinfo_get '$key'=" . ($_SSLinfo{$key} || "");
     return (grep(/^$key$/, keys %_SSLinfo)) ? $_SSLinfo{$key} : '';
 } # _SSLinfo_get
 
@@ -719,6 +721,7 @@ sub _FLAGS_ALLOW_SELFSIGNED () { 0x00000001 }
 
 sub do_ssl_open($$) {
     my ($host, $port, $cipher) = @_;
+    $cipher = "" if (!defined $cipher); # cipher parameter is optional
     _settrace();
     _trace "do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($cipher||'') . ")";
     goto finished if (defined $_SSLinfo{'ssl'});
@@ -893,9 +896,9 @@ sub do_ssl_open($$) {
                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
             );
             # ToDo: not tested if following grep() catches multiple occourances
-            $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0]};
-            $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0]};
-            $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0]};
+            $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0] || ""};
+            $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0] || ""};
+            $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
             _trace("\n$response \n# do_ssl_open HTTP }");
         }
 
@@ -1492,7 +1495,7 @@ sub verify_alias { verify_altname($_[0], $_[1]); }
 sub _check_peer() {
     # TBD
     my ($ok, $x509_store_ctx) = @_;
-    _trace "_check_peer($_)";
+    _trace "_check_peer($ok, $x509_store_ctx)";
     $_SSLinfo{'verify_cnt'} += 1;
     #print "## check_peer $ok";
 }
