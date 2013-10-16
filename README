@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 13.10.16  )
+                                                          Version: 13.10.17  )
 	O-Saft  - OWASP SSL audit for testers                               (
                   OWASP SSL advanced forensic tool                           )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -27,11 +27,12 @@
  )      * administrators
 (
  )  INSTALLATION
-(       o-saft.pl requires that following Perl modules are installed:
+(       o-saft.pl requires following Perl modules:
  )          Net::SSLeay          (prefered >= 1.51)
 (           IO::Socket::SSL      (prefered >= 1.37)
  )          IO::Socket::INET     (prefered >= 1.31)
 (
+ )      Module Net::SSLinfo is part of O-Saft and should be installed in ./Net .
  )      All dependencies for these modules must also be installed.
 (
  )  QUICK START
