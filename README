@@ -1,8 +1,8 @@
- /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~.
-                                                             Version: 13.09.15  )
-	O-Saft  - OWASP SSL audit for testers                                  (
-                                                                                )
- /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~/
+ /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
+                                                          Version: 13.10.16  )
+	O-Saft  - OWASP SSL audit for testers                               (
+                  OWASP SSL advanced forensic tool                           )
+ /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
 (
  )  DESCRIPTION
 (       This tools lists  information about remote target's  SSL  certificate
@@ -26,6 +26,14 @@
 (       * penetration testers
  )      * administrators
 (
+ )  INSTALLATION
+(       o-saft.pl requires that following Perl modules are installed:
+ )          Net::SSLeay          (prefered >= 1.51)
+(           IO::Socket::SSL      (prefered >= 1.37)
+ )          IO::Socket::INET     (prefered >= 1.31)
+(
+ )      All dependencies for these modules must also be installed.
+(
  )  QUICK START
 (       o-saft.pl --help
  )      o-saft.pl +check your.tld
@@ -43,4 +51,4 @@
  )  VERSION
 (       The version of the tarball  o-saft.tgz  represents the version listed
  )      on top herein. All other files may be ahead of this version.
- \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_/
+ \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/
