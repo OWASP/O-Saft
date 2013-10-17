@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.45 13/10/17 00:37:07',
+    SID         => '@(#) Net::SSLinfo.pm 1.46 13/10/17 20:51:12',
 };
 
 ######################################################## public documentation #
@@ -218,7 +218,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.10.17';
+    $VERSION   = '13.10.18';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -736,6 +736,7 @@ sub do_ssl_open($$) {
     my $src; # reason why something failed
     my $err;
     my $ssl = undef;
+    my $dum; # used to avoid warnings with perl's -w
 
 # ToDo: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
@@ -748,7 +749,7 @@ sub do_ssl_open($$) {
         $src = 'socket()';
                 socket( S, &AF_INET, &SOCK_STREAM, 0)     or {$err = $!} and last;
         $src = 'connect()';
-                connect(S, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
+        $dum=()=connect(S, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
         select(S); $| = 1; select(STDOUT);  # Eliminate STDIO buffering
 
         # connection open, lets do SSL
@@ -1046,8 +1047,8 @@ sub do_ssl_close($$) {
     #? close TCP connection for SSL
     my ($host, $port) = @_;
     _trace "do_ssl_close($host,$port)";
-    Net::SSLeay::free($_SSLinfo{'ssl'})    ; # or warn "**WARNING: Net::SSLeay::free(): $!";
-    Net::SSLeay::CTX_free($_SSLinfo{'ctx'}); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
+    Net::SSLeay::free($_SSLinfo{'ssl'})     if (defined $_SSLinfo{'ssl'}); # or warn "**WARNING: Net::SSLeay::free(): $!";
+    Net::SSLeay::CTX_free($_SSLinfo{'ctx'}) if (defined $_SSLinfo{'ctx'}); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
     _SSLinfo_reset();
     close(S);
     return;
