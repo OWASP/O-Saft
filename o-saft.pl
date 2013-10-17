@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+# dort ###ah weiter ### und bei %score_ssllabs
+
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -35,7 +37,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.128 13/10/17 00:45:57";
+my $SID     = "@(#) yeast.pl 1.129 13/10/17 20:36:46";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -2600,8 +2602,9 @@ sub _dump($$) {
     my ($label, $value) = @_;
         $label =~ s/\n//g;
         $label = sprintf("%s %s", $label, '_' x (75 -length($label)));
-        printf("#{ %s\n\t%s\n#}\n", $label, $value);
-        # using curly prackets 'cause they most likely are not part og any data
+    $value = "" if (!defined $value); # value parameter is optional
+    printf("#{ %s\n\t%s\n#}\n", $label, $value);
+    # using curly prackets 'cause they most likely are not part of any data
 } # _dump
 sub printdump($$$) {
     #? just dumps internal database %data and %check_*
@@ -2638,7 +2641,13 @@ sub print_dataline($$$) {
             return;
         }
     # }
-    if (1 eq _is_hexdata($label)) {
+    if ((1 eq _is_hexdata($label)) && ($val !~ m/^\s*$/)) { # check for empty $val to avoid warnings with -w
+        # pubkey_value may look like:
+        #   Subject Public Key Info:Public Key Algorithm: rsaEncryptionPublic-Key: (2048 bit)Modulus=00c11b:...
+        # where we want to convert the key value only but not its prefix
+        # hence the final : is converted to =
+        # (seems to happen on Windows only; reason yet unknown)
+        $val =~ s/([Mm]odulus):/$1=/; #
         my ($k, $v) = split("=", $val);
         if (defined $v) {       # i.e SHA Fingerprint=
             $k .= "=";
@@ -3887,7 +3896,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('s_client')) { # for debugging only
         _trace(" +s_client");
-        print "#{\n", Net::SSLinfo::s_client($host, cfg{'port'}), "\n#}";
+        print "#{\n", Net::SSLinfo::s_client($host, $cfg{'port'}), "\n#}";
     }
 
     $cfg{'showhost'} = 0 if (($info == 1) and ($cfg{'showhost'} < 2)); # does not make for +info, but giving option twice ...
@@ -3902,7 +3911,7 @@ foreach my $host (@{$cfg{'hosts'}}) {
         next if ($label =~ m/^(ciphers)/   and $cfg{'verbose'} == 0);   # Client ciphers are less important
         next if ($label =~ m/^modulus$/    and $cfg{'verbose'} == 0);   # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($label =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time)/);
+        next if ($label =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time|s_client)/);
 # ToDo: }
         _trace(" do: " . $label) if ($cfg{'trace'} > 1);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
@@ -5133,6 +5142,8 @@ certificate.
 I<+quick>  should not be used together with other commands, it returns
 strange output then.
 
+The characters C<+> and C<=> cannot be used for I<--separator> option.
+
 =head2 Poor Systems
 
 On Windows usage of  L<openssl(1)> is disabled by default due to various
@@ -5651,9 +5662,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.10.17
-bugfix: proper brackets in foreach necessary for ActivePerl
-
+@(#) 13.10.18
 
 =head1 AUTHOR
 
@@ -5682,6 +5691,8 @@ TODO
     improve score for these checks
     make clear usage of score from %check_dest and %check_http
 
+  * pubkey_value badly parsed on Windows
+ 
   * implement +chain (see Net::SSLinfo.pm implement verify* also)
 
   * implement score for PFS; lower score if not all ciphers support PFS
