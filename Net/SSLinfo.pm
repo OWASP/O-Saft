@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.47 13/10/19 22:43:26',
+    SID         => '@(#) Net::SSLinfo.pm 1.48 13/10/20 00:59:25',
 };
 
 ######################################################## public documentation #
@@ -218,7 +218,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.10.18a';
+    $VERSION   = '13.10.19';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -491,10 +491,10 @@ sub _SSLinfo_get($$$) {
     # get specified value from %_SSLinfo, first parameter 'key' is mandatory
     my ($key, $host, $port) = @_;
     _settrace();
-    _trace "_SSLinfo_get('$key'," . ($host||'') . "," . ($port||'') . ")";
+    _trace("_SSLinfo_get('$key'," . ($host||'') . "," . ($port||'') . ")");
     if ($key eq 'ciphers_openssl') { # always there, no need to connect target
         _setcmd();
-        _trace "_SSLinfo_get: openssl ciphers $_SSLinfo{'cipherlist'}" if ($trace > 1);
+        _trace("_SSLinfo_get: openssl ciphers $_SSLinfo{'cipherlist'}") if ($trace > 1);
         $_SSLinfo{'ciphers_openssl'} = do_openssl("ciphers $_SSLinfo{'cipherlist'}", '', '');
         chomp $_SSLinfo{'ciphers_openssl'};
         return $_SSLinfo{'ciphers_openssl'};
@@ -512,7 +512,7 @@ sub _SSLinfo_get($$$) {
     if ($key eq 'dates') {
         return ( $_SSLinfo{'before'}, $_SSLinfo{'after'});
     }
-    _trace "_SSLinfo_get '$key'=" . ($_SSLinfo{$key} || "");
+    _trace("_SSLinfo_get '$key'=" . ($_SSLinfo{$key} || ""));
     return (grep(/^$key$/, keys %_SSLinfo)) ? $_SSLinfo{$key} : '';
 } # _SSLinfo_get
 
@@ -523,7 +523,7 @@ sub _SSLinfo_get($$$) {
 sub _check_host($) {
     #? convert hostname to IP and store in $_SSLinfo{'host'}, returns 1 on success
     my $host = shift;
-    _trace "_check_host($host)";
+    _trace("_check_host($host)");
     $host  = $_SSLinfo{'host'} unless defined $host;
     my $ip = undef;
     if($ip = gethostbyname($host)) {
@@ -531,18 +531,18 @@ sub _check_host($) {
         $_SSLinfo{'addr'} = $ip;
         $_SSLinfo{'ip'}   = join('.', unpack('W4', $ip));
     }
-    _trace "_check_host $_SSLinfo{'host'} $_SSLinfo{'ip'} .";
+    _trace("_check_host $_SSLinfo{'host'} $_SSLinfo{'ip'} .");
     return (defined $ip) ? 1 : undef;
 }
 
 sub _check_port($) {
     #? convert port name to number and store in $_SSLinfo{'port'}, returns 1 on success
     my $port = shift;
-    _trace "_check_port($port)";
+    _trace("_check_port($port)");
     $port  = $_SSLinfo{'port'} unless defined $port;
     $port  = getservbyname($port, 'tcp') unless $port =~ /^\d+$/;
     $_SSLinfo{'port'} = $port if (defined $port);
-    _trace "_check_port $port .";
+    _trace("_check_port $port .");
     return (defined $port) ? 1 : undef;
 }
 
@@ -553,9 +553,9 @@ sub _ssleay_get($$) {
         # the target does not have/use a certificate but allows connection with SSL
     my ($key, $x509) = @_;
     _settrace();
-    _trace "_ssleay_get('$key', x509)";
+    _trace("_ssleay_get('$key', x509)");
     if ($Net::SSLinfo::no_cert != 0) {
-            _trace "_ssleay_get 'use_cert' $Net::SSLinfo::no_cert .";
+            _trace("_ssleay_get 'use_cert' $Net::SSLinfo::no_cert .");
         return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert == 2);
         return '';
     }
@@ -567,7 +567,7 @@ sub _ssleay_get($$) {
     return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509)) if($key eq 'issuer');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if($key eq 'before');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if($key eq 'after');
-    # constants like NID_CommonName from openssl/objects.h
+    # constants like NID_CommonName from openssl/objects.h (1.0.0*)
     return Net::SSLeay::X509_NAME_get_text_by_NID( Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
 
     # ToDo: following most likely do not work
@@ -596,7 +596,7 @@ sub _ssleay_get($$) {
         }
         return $ret;
     }
-    _trace "_ssleay_get '' .";  # or warn "**WARNING: wrong key '$key' given; ignored";
+    _trace("_ssleay_get '' .");  # or warn "**WARNING: wrong key '$key' given; ignored";
     return '';
 } # _ssleay_get
 
@@ -622,7 +622,7 @@ sub _openssl_MS($$$$) {
     my $data ='';
     return '' if ($^O !~ m/MSWin32/);
 
-    _trace "_openssl_MS($mode, $host, $port)";
+    _trace("_openssl_MS($mode, $host, $port)");
     $host .= ':' if ($port ne '');
     $text = '""' if (!defined $text);
     chomp $text;
@@ -635,7 +635,7 @@ sub _openssl_MS($$$$) {
     my $err = '';
     my $src = 'open';
     my $tmp = '.\\_yeast.bat'; # do not use $ENV{'TMP'} as it can be empty or unset
-    _trace "_openssl_MS $mode $host$port: cmd.exe /D /C /S $tmp" if ($trace > 1);
+    _trace("_openssl_MS $mode $host$port: cmd.exe /D /C /S $tmp") if ($trace > 1);
     TRY: {
         open( T, '>', $tmp)                or {$err = $!} and last;
         print T "$text | $_openssl $mode $host$port 2>&1";
@@ -647,11 +647,11 @@ sub _openssl_MS($$$$) {
         unlink  $tmp                       or {$err = $!} and last;
          $data =~ s#^[^)]*[^\r\n]*.##s;          # remove cmd.exe's output
          $data =~ s#WARN.*?openssl.cnf[\r\n]##;  # remove WARNINGs
-        _trace "_openssl_MS $mode $host$port : $data #" if ($trace > 1);
+        _trace("_openssl_MS $mode $host$port : $data #") if ($trace > 1);
     }
     if ($err ne '') {
         $text = "_openssl_MS() failed calling $src: $err";
-        _trace $text if ($trace > 1);
+        _trace($text) if ($trace > 1);
         push(@{$_SSLinfo{'errors'}}, $text);
         return '';
     }
@@ -663,10 +663,10 @@ sub _openssl_x509($$) {
     my $pem  = shift;
     my $mode = shift;   # must be one of openssl x509's options
     my $data = '';
-    _trace "_openssl_x509($mode,...).";
+    _trace("_openssl_x509($mode,...).");
     _setcmd();
     if ($_openssl eq '') {
-        _trace "_openssl_x509($mode): WARNING: no openssl" if ($trace > 1);
+        _trace("_openssl_x509($mode): WARNING: no openssl") if ($trace > 1);
         return '#';
     }
 
@@ -685,7 +685,7 @@ sub _openssl_x509($$) {
         $mode =~ s/,,/,/;  # need to remove , also, otherwise we get everything
     }
     $mode = 'x509 -noout ' . $mode;
-    _trace "_openssl_x509(openssl $mode)." if ($trace > 1);
+    _trace("_openssl_x509(openssl $mode).") if ($trace > 1);
     if ($^O !~ m/MSWin32/) {
         $data = `echo '$pem' | $_openssl $mode 2>&1`;
     } else { # it's sooooo simple, except on Windows :-(
@@ -723,7 +723,7 @@ sub do_ssl_open($$) {
     my ($host, $port, $cipher) = @_;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
     _settrace();
-    _trace "do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($cipher||'') . ")";
+    _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
 
@@ -732,7 +732,7 @@ sub do_ssl_open($$) {
     } else {
         $_SSLinfo{'cipherlist'} = $cipher;
     }
-    _trace "do_ssl_open cipherlist: $_SSLinfo{'cipherlist'}";
+    _trace("do_ssl_open cipherlist: $_SSLinfo{'cipherlist'}");
     my $src;         # reason why something failed
     my $err = "";    # error string from sub-system, if any
     my $ssl = undef;
@@ -805,7 +805,7 @@ sub do_ssl_open($$) {
 
 #ah #ToDo: print "# SNI $Net::SSLinfo::use_SNI";
         if ($Net::SSLinfo::use_SNI == 1) {
-            _trace "do_ssl_open: SNI";
+            _trace("do_ssl_open: SNI");
             # use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
             # use constant TLSEXT_NAMETYPE_host_name    => 0
             $src = 'Net::SSLeay::ctrl()';
@@ -909,7 +909,7 @@ sub do_ssl_open($$) {
             # calling external openssl is a performance penulty
             # it would be better to manually parse $_SSLinfo{'text'} but that
             # needs to be adapted to changes of openssl's output then
-            _trace "do_ssl_open() without openssl done.";
+            _trace("do_ssl_open() without openssl done.");
             goto finished;
         }
         # NO Certificate {
@@ -1026,7 +1026,7 @@ sub do_ssl_open($$) {
         $data =~ s/.*?Expansion:\s*([^\n]*).*/$1/si;
         $_SSLinfo{'expansion'}      = $data;
 
-        _trace "do_ssl_open() with openssl done.";
+        _trace("do_ssl_open() with openssl done.");
         print Net::SSLinfo::dump() if ($trace > 0);
         goto finished;
     } # TRY
@@ -1037,11 +1037,11 @@ sub do_ssl_open($$) {
         printf(SSLINFO_ERR);
         print join(SSLINFO_ERR, @{$_SSLinfo{'errors'}});
     }
-    _trace "do_ssl_open() failed.";
+    _trace("do_ssl_open() failed.");
     return undef;
 
     finished:
-    _trace "do_ssl_open() done.";
+    _trace("do_ssl_open() done.");
     return wantarray ? ($_SSLinfo{'ssl'}, $_SSLinfo{'ctx'}) : $_SSLinfo{'ssl'};
 } # do_ssl_open
 
@@ -1055,23 +1055,33 @@ Close Net::SSLeay connection and free allocated objects.
 sub do_ssl_close($$) {
     #? close TCP connection for SSL
     my ($host, $port) = @_;
-    _trace "do_ssl_close($host,$port)";
+    _trace("do_ssl_close($host,$port)");
     Net::SSLeay::free($_SSLinfo{'ssl'})     if (defined $_SSLinfo{'ssl'}); # or warn "**WARNING: Net::SSLeay::free(): $!";
     Net::SSLeay::CTX_free($_SSLinfo{'ctx'}) if (defined $_SSLinfo{'ctx'}); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
     _SSLinfo_reset();
     close(S);
     return;
-}
+} # do_ssl_close
 
 =pod
 
 =head2 do_openssl($command,$host,$port,$data)
 
 Wrapper for call of external L<openssl(1)> executable. Handles special
-behaviours on some plattforms.
-The value of C<$data> if set is piped to openssl.
+behaviours on some platforms.
 
-Returns retrieved data or '#' id openssl or s_client missing.
+If C<$command> equals C<s_client> it will add C<-reconnect -connect> to the
+openssl call. All other values of C<$command> will be used verbatim.
+Note that the SSL version must be part (added) as proper openssl option
+to C<$command> as this option cannot preceed the command in openssl..
+
+Examples for C<$command>:
+    ciphers -sslv3
+    s_client -tlsv1_1 -connect
+
+The value of C<$data>, if set, is piped to openssl.
+
+Returns retrieved data or '#' if openssl or s_client missing.
 =cut
 
 sub do_openssl($$$) {
@@ -1079,25 +1089,25 @@ sub do_openssl($$$) {
     my $mode = shift;   # must be openssl command
     my $host = shift;
     my $port = shift;
-    my $data ='';
-    _trace "do_openssl($mode,$host,$port...).";
+    my $data = shift || "";  # data is optional
+    _trace("do_openssl($mode,$host,$port...).");
     _setcmd();
     if ($_openssl eq '') {
-        _trace "do_openssl($mode): WARNING: no openssl" if ($trace > 1);
+        _trace("do_openssl($mode): WARNING: no openssl") if ($trace > 1);
         return '#';
     }
     if ($mode =~ m/^-?(s_client)$/) {
         $mode =  's_client -reconnect -connect';
         if ($Net::SSLinfo::use_sclient == 0) {
-            _trace "do_openssl($mode): WARNING: no openssl s_client" if ($trace > 1);
+            _trace("do_openssl($mode): WARNING: no openssl s_client") if ($trace > 1);
             return '#';
         }
     }
-    $host = $port = "" if ($mode =~ m/^-?(ciphers)$/);
-    _trace "echo '' | $_timeout $_openssl $mode $host$port 2>&1" ;#if ($trace > 1);
+    $host = $port = "" if ($mode =~ m/^-?(ciphers)/);
+    _trace("echo '' | $_timeout $_openssl $mode $host$port 2>&1") ;#if ($trace > 1);
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
-        $data = `echo '' | $_timeout $_openssl $mode $host$port 2>&1`;
+        $data = `echo $data | $_timeout $_openssl $mode $host$port 2>&1`;
     } else {
         $data = _openssl_MS($mode, $host, $port, '');
     }
@@ -1505,7 +1515,7 @@ sub verify_alias { verify_altname($_[0], $_[1]); }
 sub _check_peer() {
     # TBD
     my ($ok, $x509_store_ctx) = @_;
-    _trace "_check_peer($ok, $x509_store_ctx)";
+    _trace("_check_peer($ok, $x509_store_ctx)");
     $_SSLinfo{'verify_cnt'} += 1;
     #print "## check_peer $ok";
 }
@@ -1515,7 +1525,7 @@ sub _check_client_cert() {print "##check_client_cert\n";}
 sub _check_crl($$) {
     # TBD
     my $ssl = shift;
-    _trace "_check_crl()";
+    _trace("_check_crl()");
 }
 
 sub error($) {
