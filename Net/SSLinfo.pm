@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.46 13/10/17 20:51:12',
+    SID         => '@(#) Net::SSLinfo.pm 1.47 13/10/19 22:43:26',
 };
 
 ######################################################## public documentation #
@@ -218,7 +218,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.10.18';
+    $VERSION   = '13.10.18a';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -733,10 +733,10 @@ sub do_ssl_open($$) {
         $_SSLinfo{'cipherlist'} = $cipher;
     }
     _trace "do_ssl_open cipherlist: $_SSLinfo{'cipherlist'}";
-    my $src; # reason why something failed
-    my $err;
+    my $src;         # reason why something failed
+    my $err = "";    # error string from sub-system, if any
     my $ssl = undef;
-    my $dum; # used to avoid warnings with perl's -w
+    my $dum;         # used to avoid warnings with perl's -w
 
 # ToDo: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
@@ -832,7 +832,9 @@ sub do_ssl_open($$) {
         $_SSLinfo{'default'}    = Net::SSLeay::get_cipher($ssl);
         #$_SSLinfo{'bits'}       = Net::SSLeay::get_cipher_bits($ssl, $x509); # ToDo: Segmentation fault
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
-        $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509);
+        $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
+            # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
+            # this inhibits warnings inside perl (see  NO Certificate  below)
         $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
         $_SSLinfo{'issuer'}     = _ssleay_get('issuer',  $x509);
         $_SSLinfo{'before'}     = _ssleay_get('before',  $x509);
@@ -910,9 +912,14 @@ sub do_ssl_open($$) {
             _trace "do_ssl_open() without openssl done.";
             goto finished;
         }
-        # we get following data using openssl executable
-        # there is no need to check $Net::SSLinfo::no_cert  as openssl is
+        # NO Certificate {
+        # We get following data using openssl executable.
+        # There is no need  to check  $Net::SSLinfo::no_cert  as openssl is
         # clever enough to return following strings if the cert is missing:
+        #         unable to load certificate
+        # If we use  'if (defined $_SSLinfo{'PEM'}) {'  instead of an empty
+        # $_SSLinfo{'PEM'}  (see initial setting above),  then  all values
+        # would contain an empty string instead of the the openssl warning:
         #         unable to load certificate
         my $fingerprint                 = _openssl_x509($_SSLinfo{'PEM'}, '-fingerprint');
         chomp $fingerprint;
@@ -920,6 +927,7 @@ sub do_ssl_open($$) {
         $_SSLinfo{'fingerprint'}        = $fingerprint; #alias
        ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split('=', $fingerprint);
         $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/;
+        $_SSLinfo{'fingerprint_hash'}   = "" if (!defined $_SSLinfo{'fingerprint_hash'});
 
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
@@ -955,6 +963,7 @@ sub do_ssl_open($$) {
         chomp $_SSLinfo{'pubkey'};
         chomp $_SSLinfo{'serial'};
         chomp $_SSLinfo{'signame'};
+        # NO Certificate }
 
         $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port);
         
