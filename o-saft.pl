@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.131 13/10/20 01:18:57";
+my $SID     = "@(#) yeast.pl 1.132 13/10/20 12:58:07";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -65,8 +65,23 @@ if (! eval("require Net::SSLinfo;")) {
     require Net::SSLinfo;
 }
 
-my @argv = @ARGV;
 my $arg;
+my @argv = grep(/--tracearg/, @ARGV); # preserve --tracearg option
+
+# read .rc-file if any
+# -------------------------------------
+my @rc_argv = "";
+open(RC, '<', "./.$me") && do {
+    print "# reading options from  ./.$me \n";
+    @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
+    @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
+    close(RC);
+    push(@argv, @rc_argv);
+    #dbx# print "### .RC: " . join(" ", @rc_argv) . "\n";
+};
+
+push(@argv, @ARGV);
+#dbx# print "### ARG: " . join(" ", @argv);
 
 # CGI
 # -------------------------------------
@@ -2097,12 +2112,14 @@ sub _useopenssl($$$$) {
     #   connect:errno=11004
     #   TIME:error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure:s23_clnt.c:602:
     #   TIME:error:140740B5:SSL routines:SSL23_CLIENT_HELLO:no ciphers available:s23_clnt.c:367:
-    # openssl 1.0.1e
+    # if SSL version not supported (by openssl):
+    #   29153:error:140A90C4:SSL routines:SSL_CTX_new:null ssl method passed:ssl_lib.c:1453:
+    # openssl 1.0.1e :
     #   # unknown messages: 139693193549472:error:1407F0E5:SSL routines:SSL2_WRITE:ssl handshake failure:s2_pkt.c:429:
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
     return 0 if ($data =~ m#New,.*?Cipher is .?NONE#);
-    return 0 if ($data =~ m#SSL routines.*(?:handshake failure|no ciphers? (?:available|match))#);
+    return 0 if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
     warn("**WARNING: unknown result from openssl; ignored");
     _trace("_useopenssl #{ $data }");
     return 0;
@@ -3339,7 +3356,6 @@ sub printabbr() {
     printf( "%15s - %s\n", do{(my $a=$_)=~s/ *$//;$a}, $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}});
 } # printabbr
 
-
 # scan options and arguments
 # -------------------------------------
 my $typ = 'host';
@@ -3983,6 +3999,9 @@ $0 [COMMANDS ..] [OPTIONS ..] target [target target ...]
 Where  [COMMANDS]  and  [OPTIONS]  are described below  and  C<target>
 is a hostname either as full qualified domain name or as IP. Multiple
 commands and targets are possible.
+
+All  commands  and  options  can also be specified in a  rc-file, see
+B<RC-FILE>  below.
 
 =head1 QUICKSTART
 
@@ -5033,6 +5052,23 @@ See  LIMITATIONS  also.
 
 Comming soon ...
 
+=head1 RC-FILE
+
+A  rc-file  can contain any of the commands and options valid for the
+tool itself. The syntax for them is the same as on command line. Each
+command or option must be in a single line. Any empty or comment line
+will be ignored. Comment lines start with a C<#>.
+
+Note that options with arguments must be used as  C<key=value>.
+
+All commands and options given on command line will  overwrite  those
+found in the rc-file.
+
+The rc-file will be searched for in the working directory only.
+
+The name of the rc-file is the name of the program file prefixed by a
+C<.>,  for example:  C<.o-saft.pl>.
+
 =head1 CIPHER NAMES
 
 While the SSL/TLS protocol uses integer numbers to identify  ciphers,
@@ -5683,7 +5719,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.10.19
+@(#) 13.10.20
 
 =head1 AUTHOR
 
