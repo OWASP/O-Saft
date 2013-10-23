@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.132 13/10/20 12:58:07";
+my $SID     = "@(#) yeast.pl 1.134 13/10/23 22:54:31";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -185,6 +185,13 @@ my %data    = (     # values will be processed in print_dataline()
     'selfsigned'    => {'val' => sub { Net::SSLinfo::selfsigned(    $_[0], $_[1])}, 'txt' => "Certificate validity"},
     'compression'   => {'val' => sub { Net::SSLinfo::compression(   $_[0], $_[1])}, 'txt' => "Target supports compression"},
     'expansion'     => {'val' => sub { Net::SSLinfo::expansion(     $_[0], $_[1])}, 'txt' => "Target supports expansion"},
+    'krb5'          => {'val' => sub { Net::SSLinfo::krb5(          $_[0], $_[1])}, 'txt' => "Target supports Krb5"},
+    'psk_hint'      => {'val' => sub { Net::SSLinfo::psk_hint(      $_[0], $_[1])}, 'txt' => "Target supports PSK identity hint"},
+    'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
+    'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
+    'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
+    'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
+    'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
     'verify_altname'=> {'val' => sub { Net::SSLinfo::verify_altname($_[0], $_[1])}, 'txt' => "Validity Alternate Names"},
     'verify_hostname'=>{'val' => sub { Net::SSLinfo::verify_hostname( $_[0],$_[1])},'txt' => "Validity Hostname"},
@@ -211,6 +218,7 @@ my %data    = (     # values will be processed in print_dataline()
     #------------------+---------------------------------------+-------------------------------------------------------
 ); # %data
 # need s_client for: compression|expansion|selfsigned|verify|resumption|renegotiation|
+# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|
 
 
 ### for default score values, please see sub _initscore() below
@@ -237,11 +245,12 @@ my %check_cert = (
     'CRL'           => {'val' => 0, 'txt' => "Certificate has CRL Distribution Points"},
     'ZLIB'          => {'val' => 0, 'txt' => "Certificate has (TLS extension) compression"},
     'LZO'           => {'val' => 0, 'txt' => "Certificate has (GnuTLS extension) compression"},
-    'SRP'           => {'val' => 0, 'txt' => "Certificate has (TLS extension) authentication"},
     'OpenPGP'       => {'val' => 0, 'txt' => "Certificate has (TLS extension) authentication"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'val' => 0, 'txt' => "Certificate contains non-printable characters"},
     'crnlnull'      => {'val' => 0, 'txt' => "Certificate contains CR, NL, NULL characters"},
+# ToDo: SRP is a target feature but also named a `Certificate (TLS extension)'
+#    'srp'           => {'val' =>"", 'txt' => "Certificate has (TLS extension) authentication"},
     #------------------+-----------+------------------------------------------
     # extensions:
     #   KeyUsage:
@@ -299,6 +308,13 @@ my %check_dest = (
     'HTTP_fqdn'     => {'val' =>"", 'txt' => "Target redirect matches given host"},
     'HTTP_301'      => {'val' =>"", 'txt' => "Target redirect with status code 301"},
     'PFS'           => {'val' =>"", 'txt' => "Target supports forward secrecy (PFS)"},
+    'krb5'          => {'val' =>"", 'txt' => "Target supports Krb5"},
+    'psk_hint'      => {'val' =>"", 'txt' => "Target supports PSK identity hint"},
+    'psk_identity'  => {'val' =>"", 'txt' => "Target supports PSK"},
+    'srp'           => {'val' =>"", 'txt' => "Target supports SRP"},
+    'master_key'    => {'val' =>"", 'txt' => "Target's Master-Key"},
+    'session_id'    => {'val' =>"", 'txt' => "Target's Session-ID"},
+    'session_ticket'=> {'val' =>"", 'txt' => "Target's TLS Session Ticket"},
     #------------------+-----------+------------------------------------------
 ); # %check_dest
 
@@ -495,7 +511,6 @@ my %shorttexts = (
     'fallback'      => "Fallback from TLSv1.1",
     'ZLIB'          => "ZLIB extension",
     'LZO'           => "GnuTLS extension",
-    'SRP'           => "SRP extension",
     'OpenPGP'       => "OpenPGP extension",
     'order'         => "Client's cipher order",
     'ISM'           => "ISM compliant",
@@ -510,6 +525,13 @@ my %shorttexts = (
     'crnlnull'      => "CR, NL, NULL",
     'compression'   => "Compression",
     'expansion'     => "Expansion",
+    'krb5'          => "Krb5 Principal",
+    'psk_hint'      => "PSK identity hint",
+    'psk_identity'  => "PSK identity",
+    'srp'           => "SRP username",
+    'master_key'    => "Master-Key",
+    'session_id'    => "Session-ID",
+    'session_ticket'=> "TLS Session Ticket",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -726,6 +748,7 @@ my %cfg = (
                         selfsigned verify verify_altname verify_hostname
                         default ciphers
                         expansion compression renegotiation resumption
+                        krb5 psk_hint psk_identity srp master_key session_id session_ticket
                         hsts hsts_maxage hsts_subdom hsts_pins
                         https_status https_location https_refresh https_server https_alerts
                         http_status  http_location  http_refresh  http_301 http_sts
@@ -770,6 +793,7 @@ my %cfg = (
                        qw(
                         fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
                         serial sigkey_value pubkey_value modulus
+                        master_key session_id session_ticket
                        )],      # fingerprint is special, see _ishexdata()
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
@@ -1747,6 +1771,7 @@ my %text = (
     # RFC 2560: Online Certificate Status Protocol (OCSP)
     # RFC 5019: simplified RFC 2560
     # RFC 4387: X509 PKI Operational Protocols: Certificate Store Access via HTTP
+    # RFC 5746: TLS Renegotiation Indication Extension http://tools.ietf.org/html/rfc5746,
 
     # AIA  : {http://www.startssl.com/certs/sub.class4.server.ca.crt}
     # CDP  : {http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl}
@@ -2459,6 +2484,14 @@ sub checkssl($$) {
     $check_cert{'fp_not_MD5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
     $check_conn{'reversehost'}->{val}= $cfg{'rhost'}        if ($host ne $cfg{'rhost'});
         # ToDo: previous setting depends on $cfg{'usedns'}
+
+    # check target specials
+    foreach $label (qw(krb5 psk_hint psk_identity srp master_key session_id session_ticket)) {
+        $value = $data{$label}->{val}($host);
+        $check_dest{$label}->{val}   = " " if ($value eq "");
+        # if supported we have a value
+	# ToDo: see ZLIB also (seems to be wrong currently)
+    }
 
     # check default cipher
     foreach $ssl (@{$cfg{'versions'}}) {
@@ -5719,7 +5752,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.10.20
+@(#) 13.10.22
 
 =head1 AUTHOR
 
@@ -5777,6 +5810,11 @@ TODO
        ebe193389399edc1aa922199406ad2363eec221ce474f4c7e....
     (see _SSLinfo() $format ne raw)
     Workaround: use --format=raw
+
+  * Net::SSLeay::CTX_clear_options()
+    Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
+    SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
+    see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
 
   * (nicht wichtig, aber sauber programmieren)
     _get_default(): Net::SSLinfo::default() benutzen
