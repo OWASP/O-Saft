@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.48 13/10/20 00:59:25',
+    SID         => '@(#) Net::SSLinfo.pm 1.50 13/10/23 22:42:15',
 };
 
 ######################################################## public documentation #
@@ -218,7 +218,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.10.19';
+    $VERSION   = '13.10.22';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -290,6 +290,15 @@ require Exporter;
         verify_altname
         verify_alias
         verify
+        compression
+        expansion
+        krb5
+        psk_hint
+        psk_identity
+        srp
+        master_key
+        session_id
+        session_ticket
         renegotiation
         resumption
         selfsigned
@@ -420,12 +429,21 @@ my %_SSLinfo = ( # our internal data structure
     'fingerprint_md5'   => '',  # MD5  fingerprint (if available)
     'default'           => '',  # default cipher offered by server
     # all following need output from "openssl s_client ..."
-    'verify'            => '',  # certificate chain verification
-    'renegotiation'     => '',  # renegotiation supported
-    'resumption'        => '',  # resumption supported
-    'selfsigned'        => '',  # self-signed certificate
-    'compression'       => '',  # compression supported
-    'expansion'         => '',  # expansion supported
+    #   as it may be missing in s_client, we set the default to " "
+    #   which means `not there'
+    'verify'            => "",  # certificate chain verification
+    'renegotiation'     => "",  # renegotiation supported
+    'resumption'        => "",  # resumption supported
+    'selfsigned'        => "",  # self-signed certificate
+    'compression'       => "",  # compression supported
+    'expansion'         => "",  # expansion supported
+    'krb5'              => "",  # Krb Principal
+    'psk_hint'          => "",  # PSK identity hint
+    'psk_identity'      => "",  # PSK identity
+    'srp'               => "",  # SRP username
+    'master_key'        => "",  # Master-Key
+    'session_id'        => "",  # Session-ID
+    'session_ticket'    => "",  # TLS session ticket
     # following from HTTP request
     'http_status'       => '',  # HTTPS response (aka status) line
     'http_server'       => '',  # HTTPS Server header
@@ -788,6 +806,10 @@ sub do_ssl_open($$) {
     # 
 # fuer Client-Cert siehe smtp_tls_cert.pl
 ######
+######
+                #Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
+                #Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
+######
 
         $src = 'Net::SSLeay::CTX_set_options()';
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
@@ -968,10 +990,59 @@ sub do_ssl_open($$) {
         $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port);
         
             # from s_client:
-            #   Secure Renegotiation IS supported
+            #    Protocol  : TLSv1
+            #    Session-ID: 322193A0D243EDD1C07BA0B2E68D1044CDB06AF0306B67836558276E8E70655C
+            #    Session-ID-ctx: 
+            #    Master-Key: EAC0900291A1E5B73242C3C1F5DDCD4BAA7D9F8F4BC6E640562654B51E024143E5403716F9BF74672AF3703283456403
+            #    Key-Arg   : None
+            #    Krb5 Principal: None
+            #    PSK identity: None
+            #    PSK identity hint: None
+            #    SRP username: None
+            #    Compression: zlib compression
+            #    Expansion: zlib compression
+        my %match_map = (
+            # %_SSLinfo key       string to match in s_client
+            'session_id'       => "Session-ID:",
+            'master_key'       => "Master-Key:",
+            'krb5'             => "Krb5 Principal:",
+            'psk_identity'     => "PSK identity:",
+            'psk_hint'         => "PSK identity hint:",
+            'srp'              => "SRP username:",
+            'compression'      => "Compression:",
+            'expansion'        => "Expansion:",
+            #'session_ticket'   => "TLS session ticket:",
+            #'renegotiation'    => "Renegotiation".
+        );
+        my $d    = "";
         my $data = $_SSLinfo{'s_client'};
-        $data =~ s/.*?((?:Secure\s*)?Renegotiation[^\n]*)\n.*/$1/si;
-        $_SSLinfo{'renegotiation'}  = $data;
+            # Note: as openssl s_client is called with -resume, the retrived
+            # data may contain output of s_client up to 5 times
+            # it's not ensured that all 5 data sets are identical, hence
+            # we need to check them all -at least the last one-
+            # Unfortunately all following checks us akk 5 data sets.
+        foreach my $key (keys %match_map) {
+            my $regex = $match_map{$key};
+            $d = $data;
+            $d =~ s/.*?$regex\s*([^\n]*)\n.*/$1/si;
+            $_SSLinfo{$key} = $d if ($data =~ m/$regex/);
+        }
+
+        $d = $data; $d =~ s/.*?TLS session ticket:\s*[\n\r]+(.*?)\n\n.*/$1_/si;
+        if ($data =~ m/TLS session ticket:/) {
+            $d =~ s/\s*[0-9a-f]{4}\s*-\s*/_/gi;   # replace leading numbering with marker
+            $d =~ s/^_//g;         # remove useless marker
+            $d =~ s/   .{16}//g;   # remove traling characters
+            $d =~ s/[^0-9a-f]//gi; # remove all none hex characters
+            $_SSLinfo{'session_ticket'} = $d;
+        }
+        
+            # from s_client:
+            #   Secure Renegotiation IS supported
+            # ToDo: pedantically we also need to check if "RENEGOTIATING" is
+            #       there, as just the information "IS supported" does not
+            #       mean that it works
+        $d = $data; $d =~ s/.*?((?:Secure\s*)?Renegotiation[^\n]*)\n.*/$1/si;$_SSLinfo{'renegotiation'}  = $d;
 
             # from s_client:
             #    Reused, TLSv1/SSLv3, Cipher is RC4-SHA
@@ -981,20 +1052,20 @@ sub do_ssl_open($$) {
             # identical *and* the "Session-ID" is the same for all
             # if more than 2 "New" are detected, we assume no resumption
             # finally "Reused" must be part of s_client data
-        $data =  $_SSLinfo{'s_client'};
-        my $cnt =()= $data =~ m/(New|Reused),/g;
+        $d = $data;
+        my $cnt =()= $d =~ m/(New|Reused),/g;
         if ($cnt < 3) {
             _trace("do_ssl_open: slow target server; resumption not detected; try to increase \$Net::SSLinfo::timeout_sec");
         } else {
-            $cnt  =()= $data =~ m/New,/g;
+            $cnt =()= $d =~ m/New,/g;
             _trace("do_ssl_open: checking resumption: found $cnt `New' ");
             if ($cnt > 2) { # too much "New" reconnects, assume no resumption
-                $cnt  =()= $data =~ m/Reused,/g;
+                $cnt =()= $d =~ m/Reused,/g;
                 _trace("do_ssl_open: checking resumption: found $cnt `Reused' ");
                 $_SSLinfo{'resumption'} = 'no';
             } else {
-                $data =~ s/.*?(Reused,[^\n]*).*/$1/si;
-                $_SSLinfo{'resumption'} = $data if ($data =~ m/Reused,/);
+                $d =~ s/.*?(Reused,[^\n]*).*/$1/si;
+                $_SSLinfo{'resumption'} = $d if ($d =~ m/Reused,/);
             }
         }
 
@@ -1002,29 +1073,18 @@ sub do_ssl_open($$) {
             #       Verify return code: 20 (unable to get local issuer certificate)
             #       verify error:num=20:unable to get local issuer certificate
             #       Verify return code: 19 (self signed certificate in certificate chain)
-        $data =  $_SSLinfo{'s_client'};
-        $data =~ s/.*?Verify (?:error|return code):\s*((?:num=)?[\d]*[^\n]*).*/$1/si;
-        $_SSLinfo{'verify'}         = $data;
+        $d = $data; $d =~ s/.*?Verify (?:error|return code):\s*((?:num=)?[\d]*[^\n]*).*/$1/si;
+        $_SSLinfo{'verify'}         = $d;
         # ToDo: $_SSLinfo{'verify_host'}= $ssl->verify_hostname($host, 'http');  # returns 0 or 1
         # scheme can be: ldap, pop3, imap, acap, nntp http, smtp
 
-        $data =~ s/.*?(self signed.*)/$1/si;
-        $_SSLinfo{'selfsigned'}     = $data;
+        $d =~ s/.*?(self signed.*)/$1/si;
+        $_SSLinfo{'selfsigned'}     = $d;
         
             # from s_client:
             # $_SSLinfo{'s_client'} grep
             #       Certificate chain
-        # ToDo: $_SSLinfo{'chain'}    = $data;
-
-            # from s_client:
-            #       Compression: zlib compression
-            #       Expansion: zlib compression
-        $data =  $_SSLinfo{'s_client'};
-        $data =~ s/.*?Compression:\s*([^\n]*).*/$1/si;
-        $_SSLinfo{'compression'}    = $data;
-        $data =  $_SSLinfo{'s_client'};
-        $data =~ s/.*?Expansion:\s*([^\n]*).*/$1/si;
-        $_SSLinfo{'expansion'}      = $data;
+        # ToDo: $_SSLinfo{'chain'}    = $d;
 
         _trace("do_ssl_open() with openssl done.");
         print Net::SSLinfo::dump() if ($trace > 0);
@@ -1238,11 +1298,35 @@ All following require that C<$Net::SSLinfo::use_openssl=1;> being set.
 
 =head2 compression( )
 
-Get certificate's compression support.
+Get target's compression support.
 
 =head2 exapansion( )
 
-Get certificate's exapansion support.
+Get target's exapansion support.
+
+=head2 krb5
+
+Get target's Krb5 Principal.
+
+=head2 psk_identity
+
+Get target's PSK identity.
+
+=head2 psk_hint
+
+Get target's PSK identity hint.
+
+=head2 srp
+
+Get target's SRP username.
+
+=head2 master_key
+
+Get target's Master-Key.
+
+=head2 session_ticket
+
+Get target's TLS session ticket.
 
 =head2 fingerprint_hash( )
 
@@ -1423,6 +1507,13 @@ sub issuer_hash     { return _SSLinfo_get('issuer_hash',      $_[0], $_[1]); }
 sub verify          { return _SSLinfo_get('verify',           $_[0], $_[1]); }
 sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
 sub expansion       { return _SSLinfo_get('expansion',        $_[0], $_[1]); }
+sub krb5            { return _SSLinfo_get('krb5',             $_[0], $_[1]); }
+sub psk_hint        { return _SSLinfo_get('psk_hint',         $_[0], $_[1]); }
+sub psk_identity    { return _SSLinfo_get('psk_identity',     $_[0], $_[1]); }
+sub srp             { return _SSLinfo_get('srp',              $_[0], $_[1]); }
+sub master_key      { return _SSLinfo_get('master_key',       $_[0], $_[1]); }
+sub session_id      { return _SSLinfo_get('session_id',       $_[0], $_[1]); }
+sub session_ticket  { return _SSLinfo_get('session_ticket',   $_[0], $_[1]); }
 sub fingerprint_hash{ return _SSLinfo_get('fingerprint_hash', $_[0], $_[1]); }
 sub fingerprint_text{ return _SSLinfo_get('fingerprint_text', $_[0], $_[1]); }
 sub fingerprint_type{ return _SSLinfo_get('fingerprint_type', $_[0], $_[1]); }
