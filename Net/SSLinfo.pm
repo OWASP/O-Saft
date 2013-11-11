@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.50 13/10/23 22:42:15',
+    SID         => '@(#) Net::SSLinfo.pm 1.51 13/11/11 21:19:40',
 };
 
 ######################################################## public documentation #
@@ -218,7 +218,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.10.22';
+    $VERSION   = '13.11.11';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -601,12 +601,13 @@ sub _ssleay_get($$) {
     if ($key eq 'altname') {
         my $ret = '';
         my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509);
+        _trace("_ssleay_get: Altname: " . join(" ",@altnames));
         while (@altnames) {             # construct string like openssl
             my ($type, $name) = splice(@altnames, 0, 2);
             $type = 'DNS'           if ($type eq '2');
             $type = 'URI'           if ($type eq '6');
             $type = 'IPADD'         if ($type eq '7');
-            $name = '<unsupported>' if ($type eq '0');
+            $name = '<<undefined>>' if(($type eq '0') && ($name!~/^/));
             $type = 'othername'     if ($type eq '0');
             $type = 'email'         if ($type eq '1');
             # all other types are used as is, so we see what's missing
