@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.134 13/10/23 22:54:31";
+my $SID     = "@(#) yeast.pl 1.135 13/11/12 08:55:04";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -289,6 +289,7 @@ my %check_dest = (
     'ADH'           => {'val' =>"", 'txt' => "Target does not accepts ADH ciphers"},
     'NULL'          => {'val' =>"", 'txt' => "Target does not accepts NULL ciphers"},
     'EXPORT'        => {'val' =>"", 'txt' => "Target does not accepts EXPORT ciphers"},
+    'RC4'           => {'val' =>"", 'txt' => "Target does not accepts RC4 ciphers"},
     'closure'       => {'val' => 0, 'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'val' => 0, 'txt' => "Target supports fallback from TLSv1.1"},
     'order'         => {'val' => 0, 'txt' => "Target honors client's cipher order"},
@@ -498,6 +499,7 @@ my %shorttexts = (
     'EDH'           => "EDH ciphers",
     'NULL'          => "No NULL ciphers",
     'EXPORT'        => "No EXPORT ciphers",
+    'RC4'           => "No RC4 ciphers",
     'SGC'           => "SGC supported",
     'CRL'           => "CRL supported",
     'EV+'           => "Strict EV supported",
@@ -760,7 +762,7 @@ my %cfg = (
                         list listregex libversion sizes s_client sni sni_check version
                         dates pubkey sigkey subject_ev
                         certificate text pem expire valid
-                        beast crime pfs
+                        beast crime pfs rc4
                        ),
                     # add alias commands
                        qw(
@@ -776,17 +778,17 @@ my %cfg = (
     'quick'         => [        # commands for +quick
                        qw(
                         cipher default fingerprint_hash email serial subject
-                        dates verify beast crime time breach
+                        dates verify beast crime rc4 time breach
                         expansion compression renegotiation resumption hsts pfs
                        )],      # ToDo: missing checks: fp_not_MD5 hostname EXPORT
     'sni--v'        => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'need_cipher'   => [        # list of commands which need +cipher
                        qw(
-                        cipher check beast crime time breach pfs
+                        cipher check beast crime time breach pfs rc4
                        )],
     'need_checkssl' => [        # list of commands which need checkssl()
                        qw(
-                        check beast crime time breach pfs
+                        check beast crime time breach pfs rc4
                        )],
     'data_hex'      => [        # list of data values which are in hex values
                                 # used in conjunction with --format=hex
@@ -831,7 +833,7 @@ my %cfg = (
         'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
                        # RC4 has other names due to copyright problems:
                        #     ARC4, ARCFOUR, RC4
-        '3DESorCBC3' => '(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)',
+        '3DESorCBC3'=> '(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)',
                        # Tripple DES is used as 3DES-CBC, 3DES-EDE-CBC, or DES-CBC3
         'DESor3DES' => '(?:[_-]3DES|DES[_-]_192)',
                        # Tripple DES is used as 3DES or DES_192
@@ -2061,6 +2063,8 @@ sub _ispfs($$)  {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'PFS'}/);
     return "";
 } # _ispfs
+sub _isrc4($) { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/) ? $_[0] . " " : ""; }
+    # return given cipher if it is RC4
 sub _isfips($$) {
     # return given cipher if it is not FIPS-140 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
@@ -2161,6 +2165,7 @@ sub checkcipher($$) {
     $check_dest{'ADH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
     $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
     $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
+    $check_dest{'RC4'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
     # check compliance
     $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
     $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
@@ -3532,6 +3537,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+info')   { @{$cfg{'do'}} = @{$cfg{'info'}};   next; } # +info is just a list of all other commands
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = @{$cfg{'info--v'}};next; } # like +info ...
     if ($arg eq  '+check')  { @{$cfg{'do'}} = 'check';          ;next; }
+    if ($arg eq  '+sts')    {            $arg = '+hsts';    } # alias hsts
     if ($arg eq  '+sigkey') {            $arg = '+sigdump'; } # alias (sigdump is the traditional one)
     if ($arg eq  '+sigkey_algorithm') {  $arg = '+signame'; } # alias (signame is the traditional one)
     if ($arg eq  '+check_sni'
@@ -4073,6 +4079,8 @@ more in 2012? Some (but not all) reasons are:
 
 =item - missing functionality (checks) according modern SSL/TLS
 
+=item - missing tests (checks) against SSL/TLS vulnerabilities
+
 =item - lack of tests of unusual (SSL, certificate) configurations
 
 =item - new advanced features (CRL, OCSP, EV) not supported
@@ -4083,6 +4091,14 @@ more in 2012? Some (but not all) reasons are:
 
 Other  reasons or problems  are that they are either binary and hence
 not portable to other (newer) platforms.
+
+In contrast to (all?) most other tools,  including openssl, it can be
+used to `ask simple questions' like `does target support STS' just by
+calling:
+
+    $0 +cipher +hsts example.tld
+
+For more, please see B<EXAMPLES> below.
 
 =begin comment
 
@@ -5037,6 +5053,11 @@ TLSv1.2 checks are not yet implemented.
 
 Connection is vulnerable if target supports SSL-level compression.
 
+=head3 RC4
+
+Check if RC4 ciphers are supported.
+They are assumed to be broken.
+
 =head3 PFS
 
 Currently (2013) only a simple check is used: only DHE ciphers used.
@@ -5752,7 +5773,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.10.22
+@(#) 13.11.11
 
 =head1 AUTHOR
 
