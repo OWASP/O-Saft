@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.137 13/11/13 09:33:20";
+my $SID     = "@(#) yeast.pl 1.138 13/11/15 02:00:06";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -296,6 +296,9 @@ my %check_dest = (
     'ISM'           => {'val' =>"", 'txt' => "Target supports ISM compliant ciphers"},
     'PCI'           => {'val' =>"", 'txt' => "Target supports PCI compliant ciphers"},
     'FIPS'          => {'val' =>"", 'txt' => "Target supports FIPS-140 compliant ciphers"},
+    'TR-02102'      => {'val' =>"", 'txt' => "Target supports TR-02102-2 compliant ciphers"},
+    'BSI-TR-02102+' => {'val' =>"", 'txt' => "Target is strict BSI TR-02102-2 compliant"},
+    'BSI-TR-02102-' => {'val' =>"", 'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'resumption'    => {'val' =>"", 'txt' => "Target supports resumption"},
     'renegotiation' => {'val' =>"", 'txt' => "Target supports renegotiation"},
     'STS'           => {'val' =>"", 'txt' => "Target sends STS header"},
@@ -519,6 +522,9 @@ my %shorttexts = (
     'PCI'           => "PCI compliant",
     'PFS'           => "PFS supported",
     'FIPS'          => "FIPS-140 compliant",
+    'TR-02102'      => "TR-02102-2 compliant",
+    'BSI-TR-02102+' => "Strict BSI TR-02102-2 compliant",
+    'BSI-TR-02102-' => "Lazy BSI TR-02102-2 compliant",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
     'selfsigned'    => "self-signed",
@@ -763,6 +769,7 @@ my %cfg = (
                         dates pubkey sigkey subject_ev
                         certificate text pem expire valid
                         beast crime pfs rc4
+                        bsi
                        ),
                     # add alias commands
                        qw(
@@ -784,11 +791,11 @@ my %cfg = (
     'sni--v'        => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'need_cipher'   => [        # list of commands which need +cipher
                        qw(
-                        cipher check beast crime time breach pfs rc4
+                        cipher check beast crime time breach pfs rc4 bsi
                        )],
     'need_checkssl' => [        # list of commands which need checkssl()
                        qw(
-                        check beast crime time breach pfs rc4
+                        check beast crime time breach pfs rc4 bsi
                        )],
     'data_hex'      => [        # list of data values which are in hex values
                                 # used in conjunction with --format=hex
@@ -872,6 +879,15 @@ my %cfg = (
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
 
+        'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]',
+                       # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA
+                       # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exists, hence lazy regex above
+        'notTR-02102'     => '[_-]SHA$',
+                       # ciphers with SHA1 hash are not allowed
+        'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
+                       # if PFS not possible, see TR-02102-2 3.2.1
+        '1.3.6.1.5.5.7.1.1'  =>  '(?:1\.3\.6\.1\.5\.5\.7\.1\.1|authorityInfoAccess)',
+
         # Regex containing pattern for compliance checks
         # The following RegEx define what is "not compliant":
         'notISM'    => '(?:NULL|A(?:NON[_-])?DH|DH(?:A|[_-]ANON)[_-]|(?:^DES|[_-]DES)[_-]CBC[_-]|MD5|RC)',
@@ -895,7 +911,7 @@ my %cfg = (
         '1.3.6.1.4.1.311.60.2.1.2' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.2|jurisdictionOfIncorporationStateOrProvinceName)',
         '1.3.6.1.4.1.311.60.2.1.3' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.3|jurisdictionOfIncorporationCountryName)',
     },
-    'compliance' => {           # descriotion of RegEx above for compliance checks
+    'compliance' => {           # description of RegEx above for compliance checks
         'ISM'       => "no NULL cipher, no Anonymous Auth, no single DES, no MD5, no RC ciphers",
         'PCI'       => "no NULL cipher, no Anonymous Auth, no single DES, no Export encryption, DH > 1023",
         'FIPS-140'  => "must be TLSv1 or 3DES or AES, no IDEA, no RC4, no MD5",
@@ -930,6 +946,9 @@ my %cfg = (
         #    TLS_DHE_RSA_WITH_AES_128_CBC_SHA
         #    TLS_RSA_WITH_RC4_128_SHA
         #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
+        #
+        # NIST SP800-57 recommendations for key management (part 1):
+        'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
     },
     'done' => {                 # internal administration
         'checkciphers'  => 0,   # not used, as it's called multiple times
@@ -938,6 +957,7 @@ my %cfg = (
         'checksni'  => 0,
         'checkssl'  => 0,
         'checkev'   => 0,
+        'checktr02102'  => 0,
     },
     'openssl_option_map' => {   # map our internal option to openessl option
         'SSLv2'     => "-ssl2",
@@ -2085,6 +2105,15 @@ sub _ispfs($$)  {
 } # _ispfs
 sub _isrc4($) { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/) ? $_[0] . " " : ""; }
     # return given cipher if it is RC4
+sub _istr02102($$) {
+    # return given cipher if it is not TR-02102 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-02102'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-02102'}/);
+# ToDo: check for SHA1 missing, which is a lazy accept, see TR-02102-2 3.2.2
+    return "";
+} # _istr02102
 sub _isfips($$) {
     # return given cipher if it is not FIPS-140 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
@@ -2190,6 +2219,7 @@ sub checkcipher($$) {
     $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
     $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
     $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
+    $check_dest{'TR-02102'}->{val}.=_prot_cipher($ssl,$c) if ("" ne _istr02102($ssl, $c));
     # check attacks
     $check_conn{'BEAST'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $check_conn{'BREACH'}->{val}.= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
@@ -2217,6 +2247,8 @@ sub checkciphers($$$$$) {
                     # verbose==4 : _v4print() print how cipher is processed
     local   $|  = 1;    # do not buffer (for verbosity)
     my $skip    = 0;
+    my $hasecdsa= 0;    # ECDHE_ECDSA and ECDHE_RSA are mandatory for TR-02102-2, see 3.2.3
+    my $hasrsa  = 0;    # ECDHE_ECDSA and ECDHE_RSA are mandatory for TR-02102-2, see 3.2.3
 
     _v2print("check cipher $ssl: ");
     $check_conn{'totals'}->{val} = 0;
@@ -2256,9 +2288,14 @@ sub checkciphers($$$$$) {
             push(@results, [$ssl, $c, 'yes']);
             checkcipher($ssl, $c);
         }
+        $hasrsa  = 1 if ($c =~ /EC(?:DHE|EDH)[_-]RSA/);
+        $hasecdsa= 1 if ($c =~ /EC(?:DHE|EDH)[_-]ECDSA/);
     } # foreach %hash
     _v2print("\n");
     $check_dest{'EDH'}->{val} = "" if ($check_dest{'EDH'}->{val} ne ""); # good if we have them
+    # TR-02102-2, see 3.2.3
+    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl,"<<missing ECDHE_RSA>>")   if ($hasrsa != 1);
+    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl,"<<missing ECDHE_ECDSA>>") if ($hasecdsa != 1);
     $check_conn{'totals'}->{val} +=
             $check_conn{$ssl . '--?-'}->{val}  +
             $check_conn{$ssl . '-LOW'}->{val}  +
@@ -2344,6 +2381,79 @@ sub checksni($$) {
         $check_conn{'hostname'}->{val} = $host; # $data{'cn_nossni'}->{val}
     }
 } # checksni
+
+sub checktr02102($$) {
+    #? check if target is compliant to BSI TR-02102-2
+    my ($host, $port) = @_;
+    return if ($cfg{'done'}->{'checktr02102'} == 1);
+    $cfg{'done'}->{'checktr02102'} = 1;
+    my $tr02102ok = ""; # NOT YET USED
+    #
+    # description (see CHECK in pod below) ...
+
+    # All checks according ciphers already done in checkciphers() and stored
+    # in $check_dest{'TR-02102'}. We need to do checks according certificate
+    # and protocol and fill other %check_dest values according requirements.
+
+# ToDo: _getwilds()  muss an zentraler stelle gerufen werden (evtl Bug!)
+    _getwilds($host, $port);
+
+    # TR-02102-2 3.2.1 Empfohlene Cipher Suites
+    # TR-02102-2 3.2.2 Übergangsregelungen
+    # TR-02102-2 3.2.3 Mindestanforderungen für Interoperabilität
+    $check_dest{'BSI-TR-02102+'}->{val}  = $check_dest{'TR-02102'}->{val}; # cipher checks are alreday done
+    $check_dest{'BSI-TR-02102-'}->{val}  = $check_dest{'TR-02102'}->{val}; # .. for lazy check, ciphers are enough
+    $tr02102ok  = "uses recommended ciphers\n" if ($check_dest{'TR-02102'}->{val} eq "");
+
+    # TR-02102-2 3.3 Session Renegotation
+    $check_dest{'BSI-TR-02102+'}->{val} .= " <<secure renegotiation not supported>>" if ($check_dest{'renegotiation'}->{val} ne "");
+    $tr02102ok .= "supports secure renegotiation\n" if ($check_dest{'renegotiation'}->{val} eq "");
+
+    # TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
+    $check_dest{'BSI-TR-02102+'}->{val} .= " <<CRL missing>>" if ($check_cert{'CRL'}->{val} == 0);
+    $check_dest{'BSI-TR-02102+'}->{val} .= " <<uses wildcards:" . $check_cert{'wildcard'}->{val} .">>" if ($check_cert{'wildcard'} ne "");
+    $tr02102ok .= "certificate has CRL\n" if ($check_cert{'CRL'}->{val} != 0);
+    $tr02102ok .= "does not contain wildcard names\n" if ($check_cert{'wildcard'}->{val} eq "");
+# ToDo:
+    {  #
+       # Note about calculating dates:
+       # calculation should be done without using additional perl modules like
+       # Time::Local, Date::Calc, Date::Manip, ...
+       # Hence we convert the date given by the certificate's before and after
+       # value to the format  YYYYMMDD. The format given in the certificate is
+       # always GMT and in fixed form:  MMM DD hh:mm:ss YYYY GMT. So a split()
+       # gives year and day as integer. Just the month is a string, which need
+       # to be converted to an integer using the map() funtion on @mon array.
+       # The same format is used for the current date given by gmtime(), but
+       # convertion is much simpler as no strings exist here.
+    my @now = gmtime(time);
+    my $now = sprintf("%4d%02d%02d ", $now[5]+1900, $now[4]+1, $now[3]);
+    my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+    my $mon = 0;
+    my $m   = 0;
+    my @since = split(/ +/, $data{'before'}->{val}($host));
+    my @until = split(/ +/, $data{'after'} ->{val}($host));
+       map({$m++; $mon=$m if/$since[0]/} @mon); $m = 0;
+    my $start = sprintf("%s%02s%02s", $since[3], $mon, $since[1]);
+       map({$m++; $mon=$m if/$until[0]/} @mon); $m = 0;
+    my $end   = sprintf("%s%02s%02s", $until[3], $mon, $until[1]);
+    #dbx# print "### dates: $now : $start -- $end";
+    #dbx# print "### duration: ", ($until[3] - $since[3]), " years";
+    $check_dest{'BSI-TR-02102+'}->{val} .= " <<invalid certificate>>" if (($now < $start) or ($now > $end));
+    $check_dest{'BSI-TR-02102+'}->{val} .= " <<certificate validity to large>>" if (($until[3] - $since[3]) > 3);
+    }
+
+    # TR-02102-2 3.5 Domainparameter und Schlüssellängen
+# ToDo:
+
+    # TR-02102-2 3.6 Schlüsselspeicherung
+    # TR-02102-2 3.7 Umgang mit Ephemeralschlüsseln
+    # TR-02102-2 3.8 Zufallszahlen
+        # these checks are not possible from remote
+
+    # ToDo: certificate validation check
+    # ToDo: cipher bit length check
+} # checktr02102
 
 sub checkev($$) {
     #? check if certificate is EV-SSL
@@ -2448,7 +2558,7 @@ sub checkev($$) {
     # ToDo: cipher 2048 bit?
     # ToDo: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
     # ToDo: Scoring: 100 EV+SGC; 80 EV; 70 EV-; 50 OV; 30 DV
-} #checkev
+} # checkev
 
 sub checkssl($$) {
     #? SSL checks
@@ -2560,6 +2670,9 @@ sub checkssl($$) {
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
         $score{'check_conn'}->{val} -= _getscore($label, $value, \%check_conn);
     }
+    # check for BSI TR-02102-2
+    checktr02102($host, $port);
+
     if ($cfg{'verbose'} > 0) {
 # ToDo: folgende Checks implementieren
         foreach $label (qw(verify_hostname verify_altname verify valid fingerprint modulus_len sigkey_len)) {
@@ -3788,7 +3901,7 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     # prepare DNS stuff
     my $rhost = "";
-    my $fail  = '<gethostbyaddr() failed>';
+    my $fail  = '<<gethostbyaddr() failed>>';
     $cfg{'host'}        = $host;
     $cfg{'ip'}          = gethostbyname($host); # primary IP as identified by given hostname
     if (!defined $cfg{'ip'}) {
@@ -3970,6 +4083,20 @@ foreach $host (@{$cfg{'hosts'}}) {
         printcheck($cfg{'legacy'}, $check_dest{'PFS'}->{txt}, _setvalue($check_dest{'PFS'}->{val}));
     }
 
+    if (_is_do('bsi')) {
+        _trace(" +bsi");
+        checktr02102($host, $cfg{'port'});
+         print_dataline($cfg{'legacy'}, 'before', $data{before}->{val});
+         print_dataline($cfg{'legacy'}, 'after',  $data{after}->{val});
+        foreach $key (qw(CRL)) {
+            printcheck($cfg{'legacy'}, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));
+        }
+        foreach $key (qw(RC4 renegotiation TR-02102 BSI-TR-02102+ BSI-TR-02102-)) {
+            printcheck($cfg{'legacy'}, $check_dest{$key}->{txt}, _setvalue($check_dest{$key}->{val}));
+        }
+        goto CLOSE_SSL;
+    }
+
     if (_is_do('http')) {
         _trace(" +http");
         checkhttp($host, $cfg{'port'});
@@ -4007,7 +4134,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         next if ($key =~ m/^(ciphers)/   and $cfg{'verbose'} == 0); # Client ciphers are less important
         next if ($key =~ m/^modulus$/    and $cfg{'verbose'} == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time|s_client|hostname)/);
+        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time|s_client|hostname|rc4)/);
 # ToDo: }
         _trace(" do: " . $key) if ($cfg{'trace'} > 1);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
@@ -5122,6 +5249,98 @@ See  LIMITATIONS  also.
 
 .
 
+=head2 Compliances
+
+=head3 FIPS-140
+
+=head3 ISM
+
+=head3 PCI
+
+=head3 BSI TR-02102
+
+Checks if connection and ciphers are compliant according TR-02102-2,
+see L<>
+
+=over 4
+
+=item 3.2.1 Empfohlene Cipher Suites
+
+=item 3.2.2 Übergangsregelungen
+
+    RC4 allowed temporary for TLS 1.0. Only if  TLS 1.1  and  TLS 1.2
+    cannot be supported..
+
+=item 3.2.3 Mindestanforderungen für Interoperabilität
+
+    Must at least support: ECDHE_ECDSA_WITH and ECDHE_RSA
+
+=item 3.3 Session Renegotation
+
+    Only server-side (secure) renegotiation allowed (see RFC5280).
+
+=item 3.4 Zertifikate und Zertifikatsverifikation
+
+    Must have "CRLDistributionPoint" or "AuthorityInfoAccess".
+
+    "PrivateKeyUsage" must not exceed three years for certificate and
+    must not exceed five years for CA certificates.
+
+    "Subject",  "CommonName"  and  "SubjectAltName"  must not contain
+    a wildcard.
+
+    Certificate itself must be valid according dates if validity.
+    Note that  the validity check relies on the years provided by the
+    certificate's  "before" and  "after"  values only. For eaxample a
+    certificate valid  from Jan 2013 to Mar 2016  is considered valid
+    even the validity is more than three years.
+
+    All certificates in the chain must be valid.
+    **NOT YET IMPLEMENTED**
+
+    Above conditions are not required for lazy checks.
+
+=item 3.5 Domainparameter und Schlüssellängen
+
+**NOT YET IMPLEMENTED**
+
+=begin comment
+
++--------------+---------------+--------
+		Minimale
+ Algorithmus	Schlüssellänge	Verwendung bis
++--------------+---------------+--------
+ Signaturschlüssel für Zertifikate und Schlüsseleinigung
+   ECDSA	224 Bit	2015
+   ECDSA	250 Bit	2019+
+     DSS	2000 Bit3	2019+
+     RSA	2000 Bit3	2019+
+ Statische Diffie-Hellman Schlüssel
+    ECDH	224 Bit	2015
+    ECDH	250 Bit	2019+
+     DH	2000 Bit	2019+
+ Ephemerale Diffie-Hellman Schlüssel
+    ECDH	224 Bit	2015
+    ECDH	250 Bit	2019+
+      DH	2000 Bit	2019+
++--------------+---------------+--------
+
+=end comment
+
+=item 3.6 Schlüsselspeicherung
+
+    This requirement is not testable from remote.
+
+=item 3.7 Umgang mit Ephemeralschlüsseln
+
+    This requirement is not testable from remote.
+
+=item 3.8 Zufallszahlen
+
+    This requirement is not testable from remote.
+
+=back
+
 =head1 SCORING
 
 Comming soon ...
@@ -5793,7 +6012,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.12
+@(#) 13.11.13
 
 =head1 AUTHOR
 
