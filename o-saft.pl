@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.138 13/11/15 02:00:06";
+my $SID     = "@(#) yeast.pl 1.139 13/11/16 00:13:00";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -421,6 +421,7 @@ my %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     '1.3.6.1'                   => {'val' => "", 'txt' => "Internet OID"},
     '1.3.6.1.5.5.7.1.1'         => {'val' => "", 'txt' => "Authority Information Access"}, # authorityInfoAccess
     '1.3.6.1.5.5.7.1.12'        => {'val' => "", 'txt' => "undef"},
+    '1.3.6.1.5.5.7.1.14'        => {'val' => "", 'txt' => "Proxy Certification Information"},
     '1.3.6.1.5.5.7.3.1'         => {'val' => "", 'txt' => "Server Authentication"},
     '1.3.6.1.5.5.7.3.2'         => {'val' => "", 'txt' => "Client Authentication"},
     '1.3.6.1.5.5.7.3.3'         => {'val' => "", 'txt' => "Code Signing"},
@@ -455,8 +456,8 @@ my %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     # EV: others
     '1.3.6.1.4.1.311.60.1.1'    => {'val' => "", 'txt' => "EV Certificate: ??fake root??"},
     '2.5.29.32.0'               => {'val' => "", 'txt' => "EV Certificate: subject:anyPolicy"},
-    '2.5.29.35'                 => {'val' => "", 'txt' => "EV Certificate: subject:authorityKeyIdentifier"},
-    '2.5.29.37'                 => {'val' => "", 'txt' => "EV Certificate: subject:extendedKeyUsage"},
+    '2.5.29.35'                 => {'val' => "", 'txt' => "EV Certificate: subject:authorityKeyIdentifier"}, # Authority key id
+    '2.5.29.37'                 => {'val' => "", 'txt' => "EV Certificate: subject:extendedKeyUsage"}, # Extended key usage
     '0.9.2342.19200300.100.1.25'=> {'val' => "", 'txt' => "EV Certificate: subject:domainComponent"},
     # others
     '2.5.4.4'                   => {'val' => "", 'txt' => "subject:surname"},
@@ -466,11 +467,12 @@ my %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     '2.5.4.43'                  => {'val' => "", 'txt' => "subject:intials"},
     '2.5.4.44'                  => {'val' => "", 'txt' => "subject:generationQualifier"},
     '2.5.4.46'                  => {'val' => "", 'txt' => "subject:dnQualifier"},
-    '2.5.29.14'                 => {'val' => "", 'txt' => "subject:subjectKeyIdentifier"},
-    '2.5.29.15'                 => {'val' => "", 'txt' => "subject:keyUsage"},
-    '2.5.29.19'                 => {'val' => "", 'txt' => "subject:basicConstraints"},
-    '2.5.29.31'                 => {'val' => "", 'txt' => "subject:crlDistributionPoints"},
-    '2.5.29.32'                 => {'val' => "", 'txt' => "subject:certificatePolicies"},
+    '2.5.29.14'                 => {'val' => "", 'txt' => "subject:subjectKeyIdentifier"}, # Subject key id
+    '2.5.29.15'                 => {'val' => "", 'txt' => "subject:keyUsage"},             # Key usage
+    '2.5.29.17'                 => {'val' => "", 'txt' => "subject:subjectAlternateName"}, # Subject alternative name
+    '2.5.29.19'                 => {'val' => "", 'txt' => "subject:basicConstraints"},     # Basic constraints
+    '2.5.29.31'                 => {'val' => "", 'txt' => "subject:crlDistributionPoints"},# CRL distribution points
+    '2.5.29.32'                 => {'val' => "", 'txt' => "subject:certificatePolicies"},  # Certificate policy
     '0.9.2342.19200300.100.1.3' => {'val' => "", 'txt' => "subject:mail"},
 ); # %data_oid
 
@@ -688,6 +690,20 @@ my %score_ssllabs = (
     #    ( strongest cipher + weakest cipher ) / 2
     #
 ); # %score_ssllabs
+
+my %info_gnutls = ( # NOT YET USED
+   # extracted from http://www.gnutls.org/manual/gnutls.html
+   #     security   parameter   ECC key
+   #       bits       size       size    security    description
+   #     ----------+-----------+--------+-----------+------------------
+   'I' => "<72      <1008      <160      INSECURE    Considered to be insecure",
+   'W' => "72        1008       160      WEAK        Short term protection against small organizations",
+   'L' => "80        1248       160      LOW         Very short term protection against agencies",
+   'l' => "96        1776       192      LEGACY      Legacy standard level",
+   'M' => "112       2432       224      NORMAL      Medium-term protection",
+   'H' => "128       3248       256      HIGH        Long term protection",
+   'S' => "256       15424      512      ULTRA       Foreseeable future",
+); # %info_gnutls
 
 my %cmd = (
     'is_set'        => undef,   # undef indicates not yet initialized
@@ -1074,7 +1090,7 @@ my %ciphers = (
         'DH-RSA-AES256-SHA'     => [qw(  high -?-   AES   256 SHA1 RSA   DH         11 :)], #
         'DHE-DSS-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 DSS   DH         80 :)],
         'DHE-DSS-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 DSS   DH        100 :)],
-        'DHE-DSS-RC4-SHA'       => [qw(  high SSLv3 RC4   -?- SHA1 DSS   DH         80 :)],
+        'DHE-DSS-RC4-SHA'       => [qw(  high SSLv3 RC4   128 SHA1 DSS   DH         80 :)],
         'DHE-DSS-SEED-SHA'      => [qw(MEDIUM SSLv3 SEED  128 SHA1 DSS   DH         81 OSX)],
         'DHE-RSA-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   DH         80 :)],
         'DHE-RSA-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   DH        100 :)],
@@ -1521,7 +1537,7 @@ my %text = (
         'CKA'       => "", # PKCS#11
         'CKK'       => "", # PKCS#11
         'CKM'       => "", # PKCS#11
-        'CMAC'      => "block cipher algorithm",
+        'CMAC'      => "Cipher-based MAC",
         'CMP'       => "X509 Certificate Management Protocol",
         'CMS'       => "Cryptographic Message Syntax",
         'CMVP'      => "Cryptographic Module Validation Program (NIST)",
@@ -1535,8 +1551,9 @@ my %text = (
         'CSP '      => "Critical Security Parameter (used in FIPS 140-2)",
         'CSR'       => "Certificate Signing Request",
         'CTL'       => "Certificate Trust Line",
-        'CTR'       => "Counter Mode (block cipher mode)",
+        'CTR'       => "Counter Mode (sometimes: CM; block cipher mode)",
         'CTS'       => "Cipher Text Stealing",
+        'CWC'       => "CWC Mode (Carter¿Wegman + CTR mode; block cipher mode)",
         'DDH'       => "?discrete? Diffie-Hellman",
         'DER'       => "Distinguished Encoding Rules",
         'DES'       => "Data Encryption Standard",
@@ -1564,6 +1581,8 @@ my %text = (
         'DV-SSL'    => "Domain Validated Certificate",
         'EAP'       => "Extensible Authentication Protocol",
         'EAP-PSK'   => "Extensible Authentication Protocol using a Pre-Shared Key",
+        'EAX'       => "EAX Mode (block cipher mode)",
+        'EAXprime'  => "alias for EAX Mode",
         'EC'        => "Elliptic Curve",
         'ECB'       => "Electronic Code Book (Mode)",
         'ECC'       => "Elliptic Curve Cryptography",
@@ -1614,6 +1633,8 @@ my %text = (
         'HSM'       => "Hardware Security Module",
         'HSTS'      => "HTTP Strict Transport Security",
         'HTOP'      => "HMAC-Based One-Time Password",
+        'IAPM'      => "Integrity Aware Parallelizable Mode (block cipher mode of operation)",
+        'ICM'       => "Integer Counter Mode (alias for CTR)",
         'IDEA'      => "International Data Encryption Algorithm",
         'IFC'       => "Integer Factorization Cryptography",
         'ISAKMP'    => "Internet Security Association and Key Management Protocol",
@@ -1622,7 +1643,7 @@ my %text = (
         'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
         'KEK'       => "Key Encryption Key",
         'KSK'       => "Key Signing Key", # DNSSEC
-       'Lucky 13'  => "Break SSL/TLS Protocol",
+        'Lucky 13'  => "Break SSL/TLS Protocol",
         'MARS'      => "",
         'MAC'       => "Message Authentication Code",
         'MEK'       => "Message Encryption Key",
@@ -1638,11 +1659,14 @@ my %text = (
         'NULL'      => "no encryption",
         'OAEP'      => "Optimal Asymmetric Encryption Padding",
         'OFB'       => "Output Feedback",
+        'OCB'       => "Offset Codebook Mode (block cipher mode of operation)",
         'OFBx'      => "Output Feedback x bit mode",
         'OID'       => "Object Identifier",
         'OTP'       => "One Time Pad",
         'OCSP'      => "Online Certificate Status Protocol",
         'OCSP stapling' => "formerly known as: TLS Certificate Status Request",
+        'OMAC'      => "One-Key CMAC, aka CBC-MAC",
+        'OMAC1'     => "same as CMAC",
         'OV'        => "Organisation Validation",
         'OV-SSL'    => "Organisational Validated Certificate",
         'P12'       => "see PKCS#12",
@@ -1665,6 +1689,8 @@ my %text = (
         'PKCS12'    => "PKCS #12: RSA Personal Information Exchange Syntax Standard (public + private key stored in files)",
         'PKI'       => "Public Key Infrastructure",
         'PKIX'      => "Internet Public Key Infrastructure Using X.509",
+        'PMAC'      => "Parallelizable MAC",
+        'Poly1305-AES'  => "MAC (by D. Bernstein)",
         'POP'       => "Proof of Possession",
         'PRF'       => "pseudo-random function",
         'PSK'       => "Pre-shared Key",
@@ -1710,6 +1736,7 @@ my %text = (
         'SHA1'      => "alias for SHA-1 (160 bit)",
         'SHA2'      => "alias for SHA-2 (224, 256, 384 or 512 bit)",
         'SHS'       => "Secure Hash Standard",
+        'SIC'       => "Segmented Integer Counter (alias for CTR)",
         'Skein'     => "hash function",
         'Skipjack'  => "encryption algorithm specified as part of the Fortezza",
         'Snefu'     => "hash function",
@@ -1741,12 +1768,15 @@ my %text = (
         'Twofish'   => "symmetric key block cipher",
         'UC'        => "Unified Communications (SSL Certificate using SAN)",
         'UCC'       => "Unified Communications Certificate (rarley used)",
+        'UMAC'      => "Universal hashing MAC",
+        'VMAC'      => "Universal hashing MAC (variant of UMAC?)",
         'VMPC'      => "stream cipher",
         'WHIRLPOOL' => "hash function",
         'X.680'     => "X.680: ASN.1",
         'X.509'     => "X.509: The Directory - Authentication Framework",
         'X680'      => "X.680: ASN.1",
         'X509'      => "X.509: The Directory - Authentication Framework",
+        'XCBC'      => "variant of CMAC",
         'XKMS'      => "XML Key Management Specification",
         'XMLSIG'    => "XML-Signature Syntax and Processing",
         'XTEA'      => "extended Tiny Encryption Algorithm",
@@ -5200,6 +5230,10 @@ TLSv1.2 checks are not yet implemented.
 
 Connection is vulnerable if target supports SSL-level compression.
 
+=head Lucky 13
+
+NOT YET IMPLEMENTED
+
 =head3 RC4
 
 Check if RC4 ciphers are supported.
@@ -5430,7 +5464,7 @@ sources use both in cypher names but allow only  C<EDH> as shortcut in
 openssl's `ciphers'  command.
 
 Next example is  C<ADH>  which is also known as  C<DH_anon> or C<DHAnon>
-or  C<DHA>  . 
+or  C<DHA>  or  <ANON_DH>. 
 
 You think this is enough? Then have a look how many acronyms are used
 for  `Tripple DES'.
@@ -6012,7 +6046,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.13
+@(#) 13.11.14
 
 =head1 AUTHOR
 
