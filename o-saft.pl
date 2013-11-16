@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.141 13/11/16 01:32:21";
+my $SID     = "@(#) yeast.pl 1.142 13/11/16 15:49:50";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -489,6 +489,7 @@ my %shorttexts = (
     #}
     'TLSv1-HIGH'    => "Ciphers HIGH",
     'default'       => "Default Cipher ",
+    'totals'        => "Checked ciphers",
     'IP'            => "IP for hostname",
     'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
@@ -802,7 +803,8 @@ my %cfg = (
                        qw(
                         cipher default fingerprint_hash email serial subject
                         dates verify beast crime rc4 time breach
-                        expansion compression renegotiation resumption hsts pfs
+                        expansion compression resumption renegotiation hsts pfs
+                        beast crime time breach rc4 bsi
                        )],      # ToDo: missing checks: fp_not_MD5 hostname EXPORT
     'sni--v'        => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'need_cipher'   => [        # list of commands which need +cipher
@@ -2421,9 +2423,11 @@ sub checksni($$) {
 
 sub checktr02102($$) {
     #? check if target is compliant to BSI TR-02102-2
+    # assumes that checkssl() already done
     my ($host, $port) = @_;
     return if ($cfg{'done'}->{'checktr02102'} == 1);
     $cfg{'done'}->{'checktr02102'} = 1;
+    checkssl($host, $port) if ($cfg{'done'}->{'checkssl'} < 1);
     my $tr02102ok = ""; # NOT YET USED
     #
     # description (see CHECK in pod below) ...
@@ -3071,7 +3075,7 @@ sub print_ciphertotals($$) {
         print_cipherheadline();
     }
     if ($legacy =~ /(full|compact|simple|quick)/) {
-        print "# Cipher Summary:";
+        print "# Cipher Summary $ssl:";
         _trace_1arr('%check_conn');
         foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
             $key = $ssl . '-' . $sec;
@@ -4078,6 +4082,8 @@ foreach $host (@{$cfg{'hosts'}}) {
     }
     print "" if ($cfg{'format'} ne "raw");
 
+    print("### Quick Checks:") if ($quick == 1);
+
     if (_need_checkssl() > 0) {
         _trace(" checkssl {");
         checkssl( $host, $cfg{'port'});
@@ -4126,7 +4132,7 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('bsi')) {
         _trace(" +bsi");
-        checktr02102($host, $cfg{'port'});
+        # checktr02102($host, $cfg{'port'}); # no need to call, as already done in checkssl
          print_dataline($cfg{'legacy'}, 'before', $data{before}->{val});
          print_dataline($cfg{'legacy'}, 'after',  $data{after}->{val});
         foreach $key (qw(CRL)) {
@@ -4135,7 +4141,6 @@ foreach $host (@{$cfg{'hosts'}}) {
         foreach $key (qw(RC4 renegotiation TR-02102 BSI-TR-02102+ BSI-TR-02102-)) {
             printcheck($cfg{'legacy'}, $check_dest{$key}->{txt}, _setvalue($check_dest{$key}->{val}));
         }
-        goto CLOSE_SSL;
     }
 
     if (_is_do('http')) {
@@ -4168,6 +4173,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     # now do all other required checks using %data
     local $\ = "\n";
     _trace_1arr('%data');
+    print("\n### Quick Information:") if ($quick == 1);
     foreach $key (@{$cfg{'do'}}) {
 # ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
         next if ($key =~ m/^(exec|cipher|check)$/); # already done or done later
@@ -4175,7 +4181,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         next if ($key =~ m/^(ciphers)/   and $cfg{'verbose'} == 0); # Client ciphers are less important
         next if ($key =~ m/^modulus$/    and $cfg{'verbose'} == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time|s_client|hostname|rc4)/);
+        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time|s_client|hostname|rc4|bsi)/);
 # ToDo: }
         _trace(" do: " . $key) if ($cfg{'trace'} > 1);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
@@ -6062,7 +6068,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.16
+@(#) 13.11.17
 
 =head1 AUTHOR
 
