@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.143 13/11/16 16:23:33";
+my $SID     = "@(#) yeast.pl 1.144 13/11/16 17:16:55";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -130,6 +130,11 @@ if ($me =~/\.cgi$/) {
 
 my ($key, $sec);    # some temporary variables used in main
 my $host    = "";   # the host currently processed in main
+my $port    = "";   # the port currently used in main
+my $legacy  = "";   # the legacy mode used in main
+my $verbose = 0;    # verbose mode used in main
+   # above host, port, legacy and verbose are just shortcuts for corresponding
+   # values in $cfg{}, used for better human readability
 my $info    = 0;    # set to 1 if +info  or +sni_check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my @results = ();   # list of checked ciphers: [SSL-Version, ciper suite name, yes|no]
@@ -2652,14 +2657,14 @@ sub checkssl($$) {
 # ToDo
 #   if (_is_do('verify')) {
 #       print "";
-#       print "Hostname validity:       "      . Net::SSLinfo::verify_hostname($host, $cfg{'port'});
-#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $cfg{'port'});
+#       print "Hostname validity:       "      . Net::SSLinfo::verify_hostname($host, $port);
+#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
 #   }
 #
 #   if (_is_do('altname')) {
 #       print "";
-#       print "Certificate AltNames:    "      . Net::SSLinfo::altname($host, $cfg{'port'});
-#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $cfg{'port'});
+#       print "Certificate AltNames:    "      . Net::SSLinfo::altname($host, $port);
+#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
 #   }
         }
     }
@@ -2937,8 +2942,8 @@ sub print_dataline($$$) {
 
 sub print_cipherline($$$$) {
     #? print cipher check result according given legacy format
-    my $ssl     = shift;
     my $legacy  = shift;
+    my $ssl     = shift;
     my $cipher  = shift;
     my $support = shift;
     # variables for better (human) readability
@@ -3050,8 +3055,8 @@ sub print_cipherhead($) {
 
 sub print_cipherdefault($$$) {
     #? print default cipher according given legacy format
-    my $ssl     = shift;
     my $legacy  = shift;
+    my $ssl     = shift;
     my $host    = shift;
     my $yesno   = 'yes';
     if ($legacy eq 'sslyze')    { print "\n\n      Preferred Cipher Suites:"; }
@@ -3065,7 +3070,7 @@ sub print_cipherdefault($$$) {
     if ($legacy eq 'simple')    {}
     if ($legacy eq 'compact')   {}
     if ($legacy eq 'full')      {}
-    print_cipherline($ssl, $cfg{'legacy'}, $data{default}->{val}($host), $yesno);
+    print_cipherline($legacy, $ssl, $data{default}->{val}($host), $yesno);
 } # print_cipherdefault
 
 sub print_ciphertotals($$) {
@@ -3186,25 +3191,26 @@ sub _print_results($$@) {
         next if  (${$c}[0] ne $ssl);
         next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
-        print_cipherline($ssl, $cfg{'legacy'}, ${$c}[1], ${$c}[2]) if ($print ==1);
+        print_cipherline($cfg{'legacy'}, $ssl, ${$c}[1], ${$c}[2]) if ($print ==1);
     }
 } # _print_results
 
 sub printciphers($$$@) {
     #? print all cipher check results according given legacy format
+    my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
     my $count   = shift; # print title line if 0
     my @results = @_;
     local    $\ = "\n";
-    print_cipherhead( $cfg{'legacy'}) if ($count  == 0);
-    print_cipherdefault($ssl, $cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslaudit');
+    print_cipherhead( $legacy) if ($count  == 0);
+    print_cipherdefault($legacy, $ssl, $host) if ($legacy eq 'sslaudit');
 
-    if ($cfg{'legacy'} ne 'sslyze') {
+    if ($legacy ne 'sslyze') {
         _print_results($ssl, "", @results);
     } else {
         print "\n  * $ssl Cipher Suites :";
-        print_cipherdefault($ssl, $cfg{'legacy'}, $host);
+        print_cipherdefault($legacy, $ssl, $host);
         if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Accepted Cipher Suites:";
             _print_results($ssl, "yes", @results);
@@ -3214,13 +3220,14 @@ sub printciphers($$$@) {
             _print_results($ssl, "no", @results);
         }
     }
-    print_ciphertotals( $cfg{'legacy'}, $ssl);
-    printcheck(  $cfg{'legacy'}, $check_conn{'totals'}->{txt}, $#results) if ($cfg{'verbose'} > 0);
-    printfooter( $cfg{'legacy'});
+    print_ciphertotals($legacy, $ssl);
+    printcheck( $legacy, $check_conn{'totals'}->{txt}, $#results) if ($cfg{'verbose'} > 0);
+    printfooter($legacy);
 } # printciphers
 
-sub printscore() {
+sub printscore($) {
     #? print calculated scores
+    my $legacy = shift;
     print "\n### Scoring Results:\n";
     printf("%-39s %s\n", '#Score Description', 'Score (max value 100)');
     printruler();
@@ -3228,7 +3235,7 @@ sub printscore() {
     foreach my $key (keys %score) {
         next if ($key !~ m/^check_/);          # print totals only
         _trace_1key($key);
-        printcheck($cfg{'legacy'}, $score{$key}->{txt}, $score{$key}->{val});
+        printcheck($legacy, $score{$key}->{txt}, $score{$key}->{val});
     }
 } # printscore
 
@@ -3325,7 +3332,7 @@ sub printsni($) {
         _trace_1key($label);
         $value = $check_conn{$label}->{val};
         $value = _setvalue($value);
-        printcheck($cfg{'legacy'}, $check_conn{$label}->{txt}, $value);
+        printcheck($legacy, $check_conn{$label}->{txt}, $value);
     }
 } # printsni
 
@@ -3765,7 +3772,7 @@ while ($#argv >= 0) {
     if ($typ eq 'host')     {
         #  ------+----------+------------------------------+--------------------
         # allow URL   http://f.q.d.n:42/aa*foo=bar:23/
-        my $port = $arg;
+        $port = $arg;
         if ($arg =~ m#.*?:\d+#) {                  # got a port too
             $port =~ s#(?:[^/]+/+)?([^/]*).*#$1#;  # match host:port
             $port =~ s#[^:]*:(\d+).*#$1#;
@@ -3800,6 +3807,7 @@ while ($#argv >= 0) {
     #} +---------+----------+------------------------------+--------------------
 
 } # while
+$verbose = $cfg{'verbose'};
 
 _vprintme();
 
@@ -3833,7 +3841,7 @@ if ($cfg{'exec'} == 0) {
         local $\ = "\n";
         $ENV{PATH} = $cmd{'path'} . ':' . $ENV{PATH};
         $ENV{$cmd{envlibvar}} = $cmd{'libs'};
-        if ($cfg{'verbose'} > 0) {
+        if ($verbose > 0) {
             _yeast("exec: envlibvar= $cmd{envlibvar}");
             _yeast("exec: $cmd{envlibvar}= $ENV{$cmd{envlibvar}}");
             _yeast("exec: PATH= $ENV{PATH}");
@@ -3893,7 +3901,7 @@ foreach my $version (@{$cfg{'versions'}}) {
             push(@{$cfg{'version'}}, $version);
             $cfg{$version} = 1;
         } else {# eval failed ..
-            print "**WARNING: SSL version '$version' not supported by openssl; ignored"; # if ($cfg{'verbose'} > 0);
+            print "**WARNING: SSL version '$version' not supported by openssl; ignored"; # if ($verbose > 0);
         }
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
         warn("**WARNING: unsupported SSL version '$version'; ignored");
@@ -3936,12 +3944,13 @@ printopenssl(),    exit 0   if (_is_do('libversion'));
 printregex(),      exit 0   if (_is_do('listregex'));
 printcipherlist(), exit 0   if (_is_do('list'));
 
+$legacy = $cfg{'legacy'};
 if (_is_do('ciphers')) {
     _trace(" +ciphers");
     _v_print("cipher pattern: $cfg{'cipherlist'}");
     # openssl's 'ciphers' command does not need -ssl2 option or alike,
     # as our $cfg{'cipherlist'} should print anything
-    print_dataline($cfg{'legacy'}, 'ciphers_openssl', Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", ""));
+    print_dataline($legacy, 'ciphers_openssl', Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", ""));
     # list separated by : doesn't matter, as it's show only
 }
 
@@ -3949,8 +3958,9 @@ if (_is_do('ciphers')) {
 
 # run the appropriate SSL tests for each host
 foreach $host (@{$cfg{'hosts'}}) {
-    _trace(" (" . ($host||"") . "," . ($cfg{'port'}||"") . ")");
-    _v_print("Target: $host:$cfg{'port'}");
+    $port = ($cfg{'port'}||"");
+    _trace(" (" . ($host||"") . "," . $port . ")");
+    _v_print("Target: $host:$port");
 
     # prepare DNS stuff
     my $rhost = "";
@@ -3983,14 +3993,14 @@ foreach $host (@{$cfg{'hosts'}}) {
     # print DNS stuff
     if (($info == 1) or _is_do('check')) {
         _trace(" +info");
-        if ($cfg{'legacy'} =~ /(full|compact|simple)/) {
+        if ($legacy =~ /(full|compact|simple)/) {
             # ToDo: define following (text) labels in %cfg or alike
             printruler();
-            printcheck($cfg{'legacy'}, 'Given hostname',        $host);
-            printcheck($cfg{'legacy'}, 'IP for given hostname', $cfg{'IP'});
+            printcheck($legacy, 'Given hostname',        $host);
+            printcheck($legacy, 'IP for given hostname', $cfg{'IP'});
             if ($cfg{'usedns'} == 1) {
-                printcheck($cfg{'legacy'}, 'Reverse resolved hostname',     $cfg{'rhost'});
-                printcheck($cfg{'legacy'}, 'DNS entries for given hostname', $cfg{'DNS'});
+                printcheck($legacy, 'Reverse resolved hostname',      $cfg{'rhost'});
+                printcheck($legacy, 'DNS entries for given hostname', $cfg{'DNS'});
             }
             printruler();
         }
@@ -4003,8 +4013,8 @@ foreach $host (@{$cfg{'hosts'}}) {
     if ($cfg{'usesni'} != 0) {      # useful with SNI only
         _trace(" cn_nossni: {");
         $Net::SSLinfo::use_SNI     = 0;
-        $data{'cn_nossni'}->{val}  = $data{'commonName'}->{val}($host, $cfg{'port'});
-        Net::SSLinfo::do_ssl_close($host, $cfg{'port'});
+        $data{'cn_nossni'}->{val}  = $data{'commonName'}->{val}($host, $port);
+        Net::SSLinfo::do_ssl_close($host, $port);
         $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
         _trace(" cn_nossni: $data{'cn_nossni'}->{val}  }");
     }
@@ -4013,28 +4023,28 @@ foreach $host (@{$cfg{'hosts'}}) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
         # as side effect we get the local cipher list
-    my $ciphers = Net::SSLinfo::ciphers($host, $cfg{'port'});
+    my $ciphers = Net::SSLinfo::ciphers($host, $port);
        $ciphers = Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", "") if ($cmd{'extciphers'} == 1);
        $ciphers =~ s/:/ /g;     # internal format are words separated by spaces
        #  above should be the same as: Net::SSLinfo::cipher_local()
-    my $err     = Net::SSLinfo::errors( $host, $cfg{'port'});
+    my $err     = Net::SSLinfo::errors( $host, $port);
     if ($err !~ /^\s*$/) {
         _v_print($err);
-        warn("**WARNING: Can't make a connection to $host:$cfg{'port'}; target ignored");
+        warn("**WARNING: Can't make a connection to $host:$port; target ignored");
         goto CLOSE_SSL;
     }
 
     if ($cfg{'cipher'} ne 'yeast') {  # default setting: use all supported
         if ($cfg{'cipher'} =~ m/(NULL|COMP|DEF|HIG|MED|LOW|PORT|:|@|!|\+)/) {
             _trace(" cipher match: $cfg{'cipher'}");
-            Net::SSLinfo::do_ssl_close($host, $cfg{'port'}); # close from previous call
+            Net::SSLinfo::do_ssl_close($host, $port); # close from previous call
             # ToDo: Net::SSLinfo::set_cipher_list('SSLv3', $cfg{'cipher'});
-            #       $ciphers = Net::SSLinfo::ciphers($host, $cfg{'port'});
+            #       $ciphers = Net::SSLinfo::ciphers($host, $port);
             # ToDo: 'cause Net::SSLeay::set_cipher_list() returns Segmentation fault
             # we need to use Net::SSLinfo::do_open_ssl(), see Net::SSLinfo.pm
-            Net::SSLinfo::do_ssl_open( $host, $cfg{'port'}, $cfg{'cipher'});
-            $ciphers = Net::SSLinfo::cipher_local($host, $cfg{'port'});
-            Net::SSLinfo::do_ssl_close($host, $cfg{'port'});
+            Net::SSLinfo::do_ssl_open( $host, $port, $cfg{'cipher'});
+            $ciphers = Net::SSLinfo::cipher_local($host, $port);
+            Net::SSLinfo::do_ssl_close($host, $port);
         } else {
             _trace(" cipher privat: $cfg{'cipher'}");
             $ciphers = $cfg{'cipher'};
@@ -4048,14 +4058,14 @@ foreach $host (@{$cfg{'hosts'}}) {
             _trace(' ############################################################ %SSLinfo');
             print Net::SSLinfo::dump();
         }
-        printdump($cfg{'legacy'}, $host, $cfg{'port'});
+        printdump($legacy, $host, $port);
     }
 
     if (_need_cipher() > 0) {
         _trace(" need_cipher");
         @results = ();          # new list for every host
         foreach my $version (@{$cfg{'version'}}) {
-            checkciphers($version, $host, $cfg{'port'}, $ciphers, \%ciphers);
+            checkciphers($version, $host, $port, $ciphers, \%ciphers);
         }
      }
 
@@ -4072,10 +4082,10 @@ foreach $host (@{$cfg{'hosts'}}) {
             # TODo: single cipher check: grep for cipher in %{$ciphers}
             #dbx# _dprint "$version # ", keys %{$ciphers} ; #sort keys %hash; # exit;
             $_printtitle++;
-            if (($cfg{'legacy'} ne "sslscan") or ($_printtitle <= 1)) {
-                printtitle($cfg{'legacy'}, $version, join(":", $host, $cfg{'port'}));
+            if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
+                printtitle($legacy, $version, join(":", $host, $port));
             }
-            printciphers($version, $host, ($cfg{'legacy'} eq "sslscan")?($_printtitle):0, @results);
+            printciphers($legacy, $version, $host, ($legacy eq "sslscan")?($_printtitle):0, @results);
             foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
                 # keys in %check_conn look like 'SSLv2-LOW', 'TLSv11-HIGH', etc.
                 $key = $version . '-' . $sec;
@@ -4085,7 +4095,7 @@ foreach $host (@{$cfg{'hosts'}}) {
             }
         }
         foreach my $version (@{$cfg{'version'}}) {
-            print_cipherdefault($version, $cfg{'legacy'}, $host) if ($cfg{'legacy'} eq 'sslscan');
+            print_cipherdefault($legacy, $version, $host) if ($legacy eq 'sslscan');
         }
     }
     print "" if ($cfg{'format'} ne "raw");
@@ -4094,7 +4104,7 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     if (_need_checkssl() > 0) {
         _trace(" checkssl {");
-        checkssl( $host, $cfg{'port'});
+        checkssl( $host, $port);
         _trace(" checkssl }");
      }
 
@@ -4102,12 +4112,12 @@ foreach $host (@{$cfg{'hosts'}}) {
         _trace(" +check");
         printruler();
         print "**WARNING: no openssl, some checks are missing" if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
-        checkhttp($host, $cfg{'port'});
-        printssl(  $cfg{'legacy'}, $host),
+        checkhttp($host, $port);
+        printssl(  $legacy, $host),
         printruler();
-        printscore();
+        printscore($legacy);
         printruler();
-        if (($cfg{'traceKEY'} > 0) && ($cfg{'verbose'} > 0)) {
+        if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
             printscoredata('score');
             printruler();
         }
@@ -4124,56 +4134,56 @@ foreach $host (@{$cfg{'hosts'}}) {
     if (_is_do('beast')) {
         _trace(" +beast");
         foreach $key (qw(BEAST BEAST-default)) {
-            printcheck($cfg{'legacy'}, $check_conn{$key}->{txt}, _setvalue($check_conn{$key}->{val}));
+            printcheck($legacy, $check_conn{$key}->{txt}, _setvalue($check_conn{$key}->{val}));
         }
     }
 
     if (_is_do('crime')) {
         _trace(" +crime");
-        printcheck($cfg{'legacy'}, $check_conn{'CRIME'}->{txt}, _setvalue($check_conn{'CRIME'}->{val}));
+        printcheck($legacy, $check_conn{'CRIME'}->{txt}, _setvalue($check_conn{'CRIME'}->{val}));
     }
 
     if (_is_do('pfs')) {
         _trace(" +pfs");
-        printcheck($cfg{'legacy'}, $check_dest{'PFS'}->{txt}, _setvalue($check_dest{'PFS'}->{val}));
+        printcheck($legacy, $check_dest{'PFS'}->{txt}, _setvalue($check_dest{'PFS'}->{val}));
     }
 
     if (_is_do('bsi')) {
         _trace(" +bsi");
-        # checktr02102($host, $cfg{'port'}); # no need to call, as already done in checkssl
-         print_dataline($cfg{'legacy'}, 'before', $data{before}->{val});
-         print_dataline($cfg{'legacy'}, 'after',  $data{after}->{val});
+        # checktr02102($host, $port); # no need to call, as already done in checkssl
+         print_dataline($legacy, 'before', $data{before}->{val});
+         print_dataline($legacy, 'after',  $data{after}->{val});
         foreach $key (qw(CRL)) {
-            printcheck($cfg{'legacy'}, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));
+            printcheck($legacy, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));
         }
         foreach $key (qw(RC4 renegotiation TR-02102 BSI-TR-02102+ BSI-TR-02102-)) {
-            printcheck($cfg{'legacy'}, $check_dest{$key}->{txt}, _setvalue($check_dest{$key}->{val}));
+            printcheck($legacy, $check_dest{$key}->{txt}, _setvalue($check_dest{$key}->{val}));
         }
     }
 
     if (_is_do('http')) {
         _trace(" +http");
-        checkhttp($host, $cfg{'port'});
-        printhttp($cfg{'legacy'});
+        checkhttp($host, $port);
+        printhttp($legacy);
         goto CLOSE_SSL;
     }
 
     if (_is_do('sizes')) {
         _trace(" +sizes");
-        checksizes($host, $cfg{'port'});
-        printsizes($cfg{'legacy'});
+        checksizes($host, $port);
+        printsizes($legacy);
         #goto CLOSE_SSL;
     }
 
     if (_is_do('sni')) {
         _trace(" +sni");
-        checksni($host, $cfg{'port'});
-        printsni($cfg{'legacy'});
+        checksni($host, $port);
+        printsni($legacy);
     }
 
     if (_is_do('s_client')) { # for debugging only
         _trace(" +s_client");
-        print "#{\n", Net::SSLinfo::s_client($host, $cfg{'port'}), "\n#}";
+        print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}";
     }
 
     $cfg{'showhost'} = 0 if (($info == 1) and ($cfg{'showhost'} < 2)); # does not make for +info, but giving option twice ...
@@ -4186,8 +4196,8 @@ foreach $host (@{$cfg{'hosts'}}) {
 # ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
         next if ($key =~ m/^(exec|cipher|check)$/); # already done or done later
         next if ($key =~ m/^(http|hsts)/ and $cfg{'usehttp'} == 0);
-        next if ($key =~ m/^(ciphers)/   and $cfg{'verbose'} == 0); # Client ciphers are less important
-        next if ($key =~ m/^modulus$/    and $cfg{'verbose'} == 0); # same values as 'pubkey_value'
+        next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
+        next if ($key =~ m/^modulus$/    and $verbose == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
         next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time|s_client|hostname|rc4|bsi)/);
 # ToDo: }
@@ -4195,7 +4205,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
             print $data{$key}->{val}($host);;
         } else {
-            print_dataline($cfg{'legacy'}, $key, $host);
+            print_dataline($legacy, $key, $host);
         }
     }
     goto CLOSE_SSL if ($info == 1);
@@ -4205,11 +4215,11 @@ foreach $host (@{$cfg{'hosts'}}) {
     foreach $key (@{$cfg{'do'}}) {
         next if (1 !=_is_hashkey($key, \%check_cert));
         _trace(" do: " . $key) if ($cfg{'trace'} > 1);
-        printcheck($cfg{'legacy'}, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));# _setvalue
+        printcheck($legacy, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));# _setvalue
     }
 
     CLOSE_SSL:
-    Net::SSLinfo::do_ssl_close($host, $cfg{'port'});
+    Net::SSLinfo::do_ssl_close($host, $port);
     _trace(" done: $host");
 
 } # foreach host
@@ -6085,7 +6095,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.17
+@(#) 13.11.18
 
 =head1 AUTHOR
 
