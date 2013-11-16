@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.140 13/11/16 00:32:53";
+my $SID     = "@(#) yeast.pl 1.141 13/11/16 01:32:21";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1097,25 +1097,25 @@ my %ciphers = (
         'DHE-RSA-SEED-SHA'      => [qw(MEDIUM SSLv3 SEED  128 SHA1 RSA   DH         81 OSX)],
         'ECDH-ECDSA-AES128-SHA' => [qw(  high SSLv3 AES   128 SHA1 ECDSA ECDH       11 :)], #
         'ECDH-ECDSA-AES256-SHA' => [qw(  high SSLv3 AES   256 SHA1 ECDSA ECDH       11 :)], #
-        'ECDH-ECDSA-DES-CBC3-SHA'=>[qw(   -?- SSLv3 3DES  168 SHA1 ECDSA ECDH/ECDSA 11 :)], # (from openssl-1.0.0d)
+        'ECDH-ECDSA-DES-CBC3-SHA'=>[qw(  HIGH SSLv3 3DES  168 SHA1 ECDSA ECDH/ECDSA 11 :)], # (from openssl-1.0.0d)
        #'ECDH-ECDSA-RC4-SHA'    => [qw(MEDIUM SSLv3 RC4   128 SHA1 ECDSA ECDH/ECDSA 81 :)], # (from openssl-1.0.0d)
         'ECDH-ECDSA-RC4-SHA'    => [qw(  weak SSLv3 RC4   128 SHA1 ECDSA ECDH/ECDSA 81 :)], # (from openssl-1.0.0d)
         'ECDH-ECDSA-NULL-SHA'   => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH/ECDSA 11 :)], # (from openssl-1.0.0d)
-        'ECDH-RSA-AES128-SHA'   => [qw(  -?-  SSLv3 AES   128 SHA1 RSA   ECDH       11 :)], #
-        'ECDH-RSA-AES256-SHA'   => [qw(  -?-  SSLv3 AES   256 SHA1 RSA   ECDH       11 :)], #
-        'ECDH-RSA-DES-CBC3-SHA' => [qw(  -?-  SSLv3 3DES  168 SHA1 RSA   ECDH       11 :)], #
+        'ECDH-RSA-AES128-SHA'   => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   ECDH       11 :)], #
+        'ECDH-RSA-AES256-SHA'   => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   ECDH       11 :)], #
+        'ECDH-RSA-DES-CBC3-SHA' => [qw(  HIGH SSLv3 3DES  168 SHA1 RSA   ECDH       11 :)], #
        #'ECDH-RSA-RC4-SHA'      => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
         'ECDH-RSA-RC4-SHA'      => [qw(  weak SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
         'ECDH-RSA-NULL-SHA'     => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH       11 :)], # (from openssl-1.0.0d)
         'ECDHE-ECDSA-AES128-SHA'=> [qw(  high SSLv3 AES   128 SHA1 ECDSA ECDH       11 :)], #
         'ECDHE-ECDSA-AES256-SHA'=> [qw(  high SSLv3 AES   256 SHA1 ECDSA ECDH       11 :)], #
-        'ECDHE-ECDSA-DES-CBC3-SHA'=> [qw( -?- SSLv3 3DES  168 SHA1 ECDSA ECDH       11 :)], #
+        'ECDHE-ECDSA-DES-CBC3-SHA'=> [qw(HIGH SSLv3 3DES  168 SHA1 ECDSA ECDH       11 :)], #
         'ECDHE-ECDSA-NULL-SHA'  => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH       11 :)], #
        #'ECDHE-ECDSA-RC4-SHA'   => [qw(MEDIUM SSLv3 RC4   128 SHA1 ECDSA ECDH       81 :)], #
         'ECDHE-ECDSA-RC4-SHA'   => [qw(  weak SSLv3 RC4   128 SHA1 ECDSA ECDH       81 :)], #
-        'ECDHE-RSA-AES128-SHA'  => [qw(  -?-  SSLv3 AES   128 SHA1 RSA   ECDH       11 :)], #
-        'ECDHE-RSA-AES256-SHA'  => [qw(  -?-  SSLv3 AES   256 SHA1 RSA   ECDH       11 :)], #
-        'ECDHE-RSA-DES-CBC3-SHA'=> [qw(  -?-  SSLv3 3DES  168 SHA1 RSA   ECDH       11 :)], #
+        'ECDHE-RSA-AES128-SHA'  => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   ECDH       11 :)], #
+        'ECDHE-RSA-AES256-SHA'  => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   ECDH       11 :)], #
+        'ECDHE-RSA-DES-CBC3-SHA'=> [qw(  HIGH SSLv3 3DES  168 SHA1 RSA   ECDH       11 :)], #
        #'ECDHE-RSA-RC4-SHA'     => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
         'ECDHE-RSA-RC4-SHA'     => [qw(  weak SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
         'ECDHE-RSA-NULL-SHA'    => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH       11 :)], #
@@ -1146,16 +1146,16 @@ my %ciphers = (
         'EXP-RC4-56-SHA'        => [qw(  weak SSLv3 RC4    56 SHA  DSS   RSA         2 :)], # (from RSA BSAFE SSL-C) same as EXP1024-RC4-SHA?
         'EXP1024-DES-CBC-SHA'   => [qw(  weak -?-   DES    56 SHA  RSA   RSA         2 :)], #
         'EXP1024-DHE-DSS-DES-CBC-SHA' => [qw(weak -?- DES  56 SHA  DSS   RSA         2 :)], #
-        'EXP1024-RC2-CBC-MD5'   => [qw(  -?-  -?-   RC2    56 MD5  -?-   -?-         1 :)], #
+        'EXP1024-RC2-CBC-MD5'   => [qw(  weak -?-   RC2    56 MD5  -?-   -?-         1 :)], #
         'EXP1024-RC4-MD5'       => [qw(  weak -?-   RC4    56 MD5  -?-   -?-         1 :)], #
         'EXP1024-RC4-SHA'       => [qw(  weak SSLv3 RC4    56 SHA  RSA   -?-         2 :)], #
         'IDEA-CBC-MD5'          => [qw(MEDIUM SSLv2 IDEA  128 MD5  RSA   RSA        80 :)], #
         'IDEA-CBC-SHA'          => [qw(MEDIUM SSLv2 IDEA  128 SHA  RSA   RSA        80 :)], #
         'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA         0 :)],
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
-        'PSK-3DES-EDE-CBC-SHA'  => [qw(  -?-  SSLv3 3DES  168 SHA  PSK   PSK         1 :)], #
-        'PSK-AES128-CBC-SHA'    => [qw(  -?-  SSLv3 AES   128 SHA  PSK   PSK         1 :)], #
-        'PSK-AES256-CBC-SHA'    => [qw(  -?-  SSLv3 AES   256 SHA  PSK   PSK         1 :)], #
+        'PSK-3DES-EDE-CBC-SHA'  => [qw(  HIGH SSLv3 3DES  168 SHA  PSK   PSK         1 :)], #
+        'PSK-AES128-CBC-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA  PSK   PSK         1 :)], #
+        'PSK-AES256-CBC-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA  PSK   PSK         1 :)], #
         'PSK-RC4-SHA'           => [qw(MEDIUM SSLv3 RC4   128 SHA  PSK   PSK         1 :)], #
         'RC2-CBC-MD5'           => [qw(MEDIUM SSLv2 RC2   128 MD5  RSA   RSA        11 :)],
         'RC2-MD5'               => [qw(MEDIUM SSLv2 RC2   128 MD5  RSA   RSA        80 :)],
@@ -1560,7 +1560,7 @@ my %text = (
         'CTL'       => "Certificate Trust Line",
         'CTR'       => "Counter Mode (sometimes: CM; block cipher mode)",
         'CTS'       => "Cipher Text Stealing",
-        'CWC'       => "CWC Mode (Carter¿Wegman + CTR mode; block cipher mode)",
+        'CWC'       => "CWC Mode (Carter-Wegman + CTR mode; block cipher mode)",
         'DDH'       => "?discrete? Diffie-Hellman",
         'DER'       => "Distinguished Encoding Rules",
         'DES'       => "Data Encryption Standard",
@@ -2284,8 +2284,8 @@ sub checkciphers($$$$$) {
                     # verbose==4 : _v4print() print how cipher is processed
     local   $|  = 1;    # do not buffer (for verbosity)
     my $skip    = 0;
-    my $hasecdsa= 0;    # ECDHE_ECDSA and ECDHE_RSA are mandatory for TR-02102-2, see 3.2.3
-    my $hasrsa  = 0;    # ECDHE_ECDSA and ECDHE_RSA are mandatory for TR-02102-2, see 3.2.3
+    my $hasecdsa= 0;    # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
+    my $hasrsa  = 0;    # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
 
     _v2print("check cipher $ssl: ");
     $check_conn{'totals'}->{val} = 0;
@@ -2331,8 +2331,8 @@ sub checkciphers($$$$$) {
     _v2print("\n");
     $check_dest{'EDH'}->{val} = "" if ($check_dest{'EDH'}->{val} ne ""); # good if we have them
     # TR-02102-2, see 3.2.3
-    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl,"<<missing ECDHE_RSA>>")   if ($hasrsa != 1);
-    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl,"<<missing ECDHE_ECDSA>>") if ($hasecdsa != 1);
+    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl,"<<missing ECDHE-RSA-* cipher>>")   if ($hasrsa != 1);
+    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl,"<<missing ECDHE-ECDSA-* cipher>>") if ($hasecdsa != 1);
     $check_conn{'totals'}->{val} +=
             $check_conn{$ssl . '--?-'}->{val}  +
             $check_conn{$ssl . '-LOW'}->{val}  +
@@ -3835,14 +3835,18 @@ if ($cfg{'exec'} == 0) {
 # -------------------------------------
 if ($cfg{'cipher'} ne "yeast") {
     # "yeast" is the list of default ciphers
-    # anything else needs to be checked id a valid cipher name
+    # anything else needs to be checked if a valid cipher name
     my ($c, $new);
     my $new_list = "";
     foreach $c (split(" ", $cfg{'cipher'})) {
         $new = _find_cipher_name($c);
         if ($new =~ m/^\s*$/) {
-            warn("**WARNING: unknown cipher name '$c'; ignored");
-            next;
+            if ($c !~ m/[A-Z0-9:+!-]+/) {
+                # does also not match any special kee accepted by openssl
+# ToDo:
+                warn("**WARNING: unknown cipher name '$c'; ignored");
+                next;
+            }
         }
         $new_list = $new . " ";
     }
@@ -5314,7 +5318,7 @@ see L<>
 
 =item 3.2.3 Mindestanforderungen für Interoperabilität
 
-    Must at least support: ECDHE_ECDSA_WITH and ECDHE_RSA
+    Must at least support: ECDHE-ECDSA-* and ECDHE-RSA-*
 
 =item 3.3 Session Renegotation
 
@@ -5917,6 +5921,7 @@ Following formats are used:
     $0 +cipher example.tld
     $0 +info   example.tld
     $0 +check  example.tld
+    $0 +quick  example.tld
     $0 +list
     $0 +list --v
     $0 +certificate example.tld
@@ -5926,6 +5931,10 @@ Following formats are used:
 =head2 Some specials
 
 =over
+
+=item Get an idea how messages look like
+
+    $0 +check --cipher=tell-me example.tld
 
 =item Check for Server Name Indication (SNI) usage only
 
@@ -6053,7 +6062,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.15
+@(#) 13.11.16
 
 =head1 AUTHOR
 
@@ -6065,13 +6074,13 @@ TODO
 
   * is DHE-DSS-RC4-SHA also weak?
 
+  * --cipher=CIPHER  is buggy if no valid cipher given
+
   * complete TIME, BREACH check
 
   * implement check for Lucky 13 vulnerability
 
   * implement TLSv1.2 checks
-
-  * write documentation for CHECKS
 
   * EV check is missing: validity <27 months
 
@@ -6090,16 +6099,8 @@ TODO
 
   * implement score for PFS; lower score if not all ciphers support PFS
 
-  * implement +renegotiation und +resumption as command
-    from sslyze.py:
-          Session Renegotiation : 
-            Client-initiated Renegotiations:    Rejected
-            Secure Renegotiation:               Supported
-
   * check() implement remaining checks (see check{XXX}->{val} == 0
           SSL_honor_cipher_order => 1
-
-  * Net::SSLinfo::cipher_local()  probably broken
 
   * use Net::SSLeay 1.42 as fallback, because 1.49 causes problems at
     some sites (connect() fails).
@@ -6122,11 +6123,7 @@ TODO
   * (nicht wichtig, aber sauber programmieren)
     _get_default(): Net::SSLinfo::default() benutzen
 
-  * %cipher_names list not yet (09/2013) complete
-    i.e. DHE_RSA_WITH_AES_256_CBC_SHA is missing
-  
-  * --cipher=RC4  works with openssl, but not here
-    (wontfix; nur Shortcuts LOW|MEDIUM|HIGH|+ usw. unterstützt)
+  * Net::SSLinfo::cipher_local()  probably broken
 
   * Net::SSLinfo.pm implement verify*
 
