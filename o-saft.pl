@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.144 13/11/16 17:16:55";
+my $SID     = "@(#) yeast.pl 1.145 13/11/16 21:28:59";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -727,6 +727,7 @@ my %cfg = (
     'exec'          => 0,       # 1: if +exec command used;   default 0
     'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
     'traceARG'      => 0,       # 1: trace yeast's argument processing
+    'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
     'verbose'       => 0,       # used for --v
     'enabled'       => 0,       # 1: only print enabled ciphers
@@ -1918,7 +1919,8 @@ $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 sub _error    { local $\ = "\n"; print "**ERROR: " . @_; }
 # debug functions
 sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; }
-sub _yeastARG { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); }
+sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); }
+sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
 sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); }
 sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); } # must provide \n if wanted
 sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); }
@@ -2306,6 +2308,8 @@ sub checkciphers($$$$$) {
     # ToDo: change logic of following loop
     #     now we loop over *our* ciphers which misses ciphers available in
     #     the local SSL implementation (if there are more)
+    _y_CMD("  use socket ..")  if (0 == $cmd{'extciphers'});
+    _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
     foreach my $c (sort {$hash{$a} cmp $hash{$b}} keys %hash) {
         _v3print("check cipher $ssl: $c");
         _v4print("check cipher $ssl: $c\t");
@@ -2316,6 +2320,7 @@ sub checkciphers($$$$$) {
         #    }
         #    #print_cipherline($cfg{'legacy'}, $c, 'not') if (!$cfg{'disabled'}); # ToDo: print with --v only
         #    push(@results, [$ssl, $c, 'not']);
+        #
         if (0 >= grep(/^$c$/, split(/[ :]/, $ciphers))) {
             # cipher not to be checked
             _v4print("skip\n");
@@ -3588,7 +3593,7 @@ sub printabbr() {
 my $typ = 'host';
 while ($#argv >= 0) {
     $arg = shift @argv;
-    _yeastARG($arg);
+    _y_ARG($arg);
     # When used as CGI we need some special checks:
     #   - remove trailing = for all options except (see below)
     #   - ignore --cgi option
@@ -3626,13 +3631,14 @@ while ($#argv >= 0) {
     if ($arg =~ m/^(--|\+)ab(?:br|k)=?$/)   { printabbr();       exit 0; }
     if ($arg =~ m/^(--|\+)glossar$/)        { printabbr();       exit 0; }
     if ($arg =~ m/^(--|\+)todo=?$/i)        { printtodo();       exit 0; }
-    # some options are for compatibility with other programs
-    #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
-    if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
+    # options for trace and debug
     if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++; $info = 1; next; }
+    if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
     if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
     if ($arg =~ /^--trace(--|[_-]?arg)/){ $cfg{'traceARG'}++;    next; } # special internal tracing
+    if ($arg =~ /^--trace([_-]?cmd)/)   { $cfg{'traceCMD'}++;    next; } # ..
     if ($arg =~ /^--trace(@|[_-]?key)/) { $cfg{'traceKEY'}++;    next; } # ..
+    if ($arg =~ /^--trace=(.*)/)        { $typ = 'trace';   $arg = $1; } # no next
     # options form other programs for compatibility
     if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
     if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; } # ssltest.pl
@@ -3647,7 +3653,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';       } # commands
     if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';        } # ..
     if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';     } # ..
-    # our (and some compatibility) options
+    # some options are for compatibility with other programs
+    #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;     next; } # sslyze
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1; next; }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1; next; }
@@ -3714,7 +3721,7 @@ while ($#argv >= 0) {
     #} +---------+----------------------+----------------------+----------------
 
     #{ commands
-    _yeastARG("command? $arg");
+    _y_ARG("command? $arg");
     if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI ';   $arg = '+' . $1; } # no next
     if ($arg =~ /^\+info/)  { $info  = 1; } # needed 'cause +info converts to list of commands
     if ($arg =~ /^\+quick/) { $quick = 1; } #
@@ -3735,7 +3742,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+(.*)/)  { # got a command
         #                     @{$cfg{'do'}} = $1;                next;
         my $val = $1;
-        _yeastARG("command= $val");
+        _y_ARG("command= $val");
         next if ($arg =~ m/^\+\s*$/);  # ignore empty arguments; for CGI mode
         if ($val =~ m/^exec$/i) {      # +exec is special
             $cfg{'exec'} = 1;
@@ -3754,7 +3761,7 @@ while ($#argv >= 0) {
     next if ($arg =~ /^\s*$/);  # ignore empty arguments; for CGI mode
 
     #{ option arguments
-    _yeastARG("argument? $arg");
+    _y_ARG("argument? $arg");
     #dbx# _dprint "typ: $typ :: ARG: $arg";
     #  +---------+----------+------------------------------+--------------------
     #   argument to process   what to do                    expect next argument
@@ -3783,8 +3790,6 @@ while ($#argv >= 0) {
         $arg =~ s#:(\d+)##;
         push(@{$cfg{'hosts'}}, $arg);
         _yeast("host: $arg") if ($cfg{'trace'} > 0);
-        $typ = 'host';
-        next;
     }
     if ($typ eq 'legacy')   {
         $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
@@ -3793,8 +3798,6 @@ while ($#argv >= 0) {
         } else {
             warn("**WARNING: unknown legacy '$arg'; ignored");
         }
-        $typ = 'host';
-        next;
     }
     if ($typ eq 'format')   {
         if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
@@ -3802,9 +3805,15 @@ while ($#argv >= 0) {
         } else {
             warn("**WARNING: unknown format '$arg'; ignored");
         }
-        $typ = 'host';
     }
-    #} +---------+----------+------------------------------+--------------------
+    if ($typ eq 'trace')   {
+        $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
+        $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
+        $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
+        $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
+    }
+    $typ = 'host';              # expect host as next argument
+    #}
 
 } # while
 $verbose = $cfg{'verbose'};
@@ -3829,8 +3838,7 @@ _vprintme();
 
 # call with other libraries
 # -------------------------------------
-_yeastARG("exec? $cfg{'exec'}");
-_yeastARG("exec commands? " . join(" ", @{$cfg{'do'}}));
+_y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
 if ($cfg{'exec'} == 0) {
     # as all shared libraries used by perl modules are already loaded when
@@ -3838,6 +3846,7 @@ if ($cfg{'exec'} == 0) {
     # being called
     # so we call ourself with proper set environment variables again
     if (($cmd{'path'} ne "") or ($cmd{'libs'} ne "")) {
+        _y_CMD("exec command " . join(" ", @{$cfg{'do'}}));
         local $\ = "\n";
         $ENV{PATH} = $cmd{'path'} . ':' . $ENV{PATH};
         $ENV{$cmd{envlibvar}} = $cmd{'libs'};
@@ -3856,6 +3865,7 @@ if ($cfg{'exec'} == 0) {
 if ($cfg{'cipher'} ne "yeast") {
     # "yeast" is the list of default ciphers
     # anything else needs to be checked if a valid cipher name
+    _y_CMD("cipher-list");
     my ($c, $new);
     my $new_list = "";
     foreach $c (split(" ", $cfg{'cipher'})) {
@@ -3946,7 +3956,7 @@ printcipherlist(), exit 0   if (_is_do('list'));
 
 $legacy = $cfg{'legacy'};
 if (_is_do('ciphers')) {
-    _trace(" +ciphers");
+    _y_CMD("+cipher");
     _v_print("cipher pattern: $cfg{'cipherlist'}");
     # openssl's 'ciphers' command does not need -ssl2 option or alike,
     # as our $cfg{'cipherlist'} should print anything
@@ -3959,7 +3969,7 @@ if (_is_do('ciphers')) {
 # run the appropriate SSL tests for each host
 foreach $host (@{$cfg{'hosts'}}) {
     $port = ($cfg{'port'}||"");
-    _trace(" (" . ($host||"") . "," . $port . ")");
+    _y_CMD("host{ " . ($host||"") . ":" . $port);
     _v_print("Target: $host:$port");
 
     # prepare DNS stuff
@@ -3992,7 +4002,7 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     # print DNS stuff
     if (($info == 1) or _is_do('check')) {
-        _trace(" +info");
+        _y_CMD("+info || +check");
         if ($legacy =~ /(full|compact|simple)/) {
             # ToDo: define following (text) labels in %cfg or alike
             printruler();
@@ -4035,6 +4045,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     }
 
     if ($cfg{'cipher'} ne 'yeast') {  # default setting: use all supported
+        _y_CMD("  get cipher list ..");
         if ($cfg{'cipher'} =~ m/(NULL|COMP|DEF|HIG|MED|LOW|PORT|:|@|!|\+)/) {
             _trace(" cipher match: $cfg{'cipher'}");
             Net::SSLinfo::do_ssl_close($host, $port); # close from previous call
@@ -4053,7 +4064,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     }
 
     if (_is_do('dump')) {
-        _trace(" +dump");
+        _y_CMD("+dump");
         if ($cfg{'trace'} > 1) {   # requires: --v --trace --trace
             _trace(' ############################################################ %SSLinfo');
             print Net::SSLinfo::dump();
@@ -4062,7 +4073,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     }
 
     if (_need_cipher() > 0) {
-        _trace(" need_cipher");
+        _y_CMD("  need_cipher ..");
         @results = ();          # new list for every host
         foreach my $version (@{$cfg{'version'}}) {
             checkciphers($version, $host, $port, $ciphers, \%ciphers);
@@ -4073,7 +4084,7 @@ foreach $host (@{$cfg{'hosts'}}) {
 # ToDo: see "Supported ciphers"
     # check ciphers manually (required for +check also)
     if (_is_do('cipher') or _is_do('check')) {
-        _trace(" +cipher");
+        _y_CMD("+cipher");
         _trace(" ciphers: $ciphers");
         # ToDo: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
@@ -4103,13 +4114,14 @@ foreach $host (@{$cfg{'hosts'}}) {
     print("### Quick Checks:") if ($quick == 1);
 
     if (_need_checkssl() > 0) {
+        _y_CMD("  need_checkssl ..");
         _trace(" checkssl {");
         checkssl( $host, $port);
         _trace(" checkssl }");
      }
 
     if (_is_do('check')) {
-        _trace(" +check");
+        _y_CMD("+check");
         printruler();
         print "**WARNING: no openssl, some checks are missing" if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
         checkhttp($host, $port);
@@ -4125,31 +4137,30 @@ foreach $host (@{$cfg{'hosts'}}) {
     }
 
     if (_is_do('subject_ev')) {
-        _trace(" +subject_ev");
+        _y_CMD("+subject_ev");
         print $data{'subject'}->{txt} . ":";
         print "        " . $_ foreach (split"/", $data{'subject'}->{val}($host));
-        goto CLOSE_SSL;
     }
 
     if (_is_do('beast')) {
-        _trace(" +beast");
+        _y_CMD("+beast");
         foreach $key (qw(BEAST BEAST-default)) {
             printcheck($legacy, $check_conn{$key}->{txt}, _setvalue($check_conn{$key}->{val}));
         }
     }
 
     if (_is_do('crime')) {
-        _trace(" +crime");
+        _y_CMD("+crime");
         printcheck($legacy, $check_conn{'CRIME'}->{txt}, _setvalue($check_conn{'CRIME'}->{val}));
     }
 
     if (_is_do('pfs')) {
-        _trace(" +pfs");
+        _y_CMD("+pfs");
         printcheck($legacy, $check_dest{'PFS'}->{txt}, _setvalue($check_dest{'PFS'}->{val}));
     }
 
     if (_is_do('bsi')) {
-        _trace(" +bsi");
+        _y_CMD("+bsi");
         # checktr02102($host, $port); # no need to call, as already done in checkssl
          print_dataline($legacy, 'before', $data{before}->{val});
          print_dataline($legacy, 'after',  $data{after}->{val});
@@ -4161,30 +4172,14 @@ foreach $host (@{$cfg{'hosts'}}) {
         }
     }
 
-    if (_is_do('http')) {
-        _trace(" +http");
-        checkhttp($host, $port);
-        printhttp($legacy);
-        goto CLOSE_SSL;
-    }
+    if (_is_do('http'))  { _y_CMD("+http");  checkhttp( $host, $port); printhttp($legacy); }
 
-    if (_is_do('sizes')) {
-        _trace(" +sizes");
-        checksizes($host, $port);
-        printsizes($legacy);
-        #goto CLOSE_SSL;
-    }
+    if (_is_do('sizes')) { _y_CMD("+sizes"); checksizes($host, $port); printsizes($legacy); }
 
-    if (_is_do('sni')) {
-        _trace(" +sni");
-        checksni($host, $port);
-        printsni($legacy);
-    }
+    if (_is_do('sni'))   { _y_CMD("+sni");   checksni(  $host, $port); printsni($legacy); }
 
-    if (_is_do('s_client')) { # for debugging only
-        _trace(" +s_client");
-        print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}";
-    }
+    # for debugging only
+    if (_is_do('s_client')) { _y_CMD("+s_client"); print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}"; }
 
     $cfg{'showhost'} = 0 if (($info == 1) and ($cfg{'showhost'} < 2)); # does not make for +info, but giving option twice ...
 
@@ -4199,9 +4194,9 @@ foreach $host (@{$cfg{'hosts'}}) {
         next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
         next if ($key =~ m/^modulus$/    and $verbose == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|time|s_client|hostname|rc4|bsi)/);
+        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|sni|http|time|s_client|hostname|subject_ev|rc4|bsi)/);
 # ToDo: }
-        _trace(" do: " . $key) if ($cfg{'trace'} > 1);
+        _y_CMD("+ " . $key);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
             print $data{$key}->{val}($host);;
         } else {
@@ -4214,11 +4209,12 @@ foreach $host (@{$cfg{'hosts'}}) {
     # now do all other required checks using %check_cert
     foreach $key (@{$cfg{'do'}}) {
         next if (1 !=_is_hashkey($key, \%check_cert));
-        _trace(" do: " . $key) if ($cfg{'trace'} > 1);
+        _y_CMD("+ " . $key);
         printcheck($legacy, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));# _setvalue
     }
 
     CLOSE_SSL:
+    _y_CMD("host}");
     Net::SSLinfo::do_ssl_close($host, $port);
     _trace(" done: $host");
 
@@ -5118,7 +5114,7 @@ options are ambigious.
 
 =head3 --trace
 
-  Print more debugging messages.
+  Print debugging messages.
 
 =head3 --trace --trace
 
@@ -5140,19 +5136,39 @@ options are ambigious.
 
   Print command line argument processing.
 
-=for comment cannot use --trace@  'cause = will be removed (CGI mode)
+=for comment cannot use --trace=  'cause = will be removed (CGI mode)
+
+=head3 --trace-cmd
+
+  Trace execution of command processing (those given as I<+*>).
 
 =head3 --trace@
 
 =head3 --trace-key
 
-  Print some internal variable names in debugging messages.
+  Print some internal variable names in output texts (labels).
   Variable names are prefixed to printed line and enclosed in  # .
   Example without --trace-key :
       Certificate Serial Number:          deadbeef
 
   Example with    --trace-key :
       #serial#          Certificate Serial Number:          deadbeef
+
+=head3 --trace=VALUE
+
+=over 4
+
+=item --trace=1                          same as I<--trace>
+
+=item --trace=2                          same as I<--trace> I<--trace>
+
+=item --trace=arg                        same as I<--trace-arg>
+
+=item --trace=cmd                        same as I<--trace-cmd>
+
+=item --trace=key                        same as I<--trace-key>
+
+=back
 
 =head2 --trace vs. --v
 
@@ -6095,7 +6111,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.18
+@(#) 13.11.19
 
 =head1 AUTHOR
 
