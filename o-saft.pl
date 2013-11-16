@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.145 13/11/16 21:28:59";
+my $SID     = "@(#) yeast.pl 1.147 13/11/16 22:57:09";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -936,6 +936,7 @@ my %cfg = (
         '1.3.6.1.4.1.311.60.2.1.3' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.3|jurisdictionOfIncorporationCountryName)',
     },
     'compliance' => {           # description of RegEx above for compliance checks
+        'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
         'ISM'       => "no NULL cipher, no Anonymous Auth, no single DES, no MD5, no RC ciphers",
         'PCI'       => "no NULL cipher, no Anonymous Auth, no single DES, no Export encryption, DH > 1023",
         'FIPS-140'  => "must be TLSv1 or 3DES or AES, no IDEA, no RC4, no MD5",
@@ -972,19 +973,6 @@ my %cfg = (
         #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
         #
         # NIST SP800-57 recommendations for key management (part 1):
-        'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
-    },
-    'done' => {                 # internal administration
-        'rc-file'   => 0,
-        '_initscore'=> 0,
-        '_get_default'  => 0,
-        'checkciphers'  => 0,   # not used, as it's called multiple times
-        'checksizes'=> 0,
-        'checkhttp' => 0,
-        'checksni'  => 0,
-        'checkssl'  => 0,
-        'checkev'   => 0,
-        'checktr02102'  => 0,
     },
     'openssl_option_map' => {   # map our internal option to openssl option
         'SSLv2'     => "-ssl2",
@@ -994,6 +982,19 @@ my %cfg = (
         'TLSv12'    => "-tls1_2",
         'DTLS1'     => "-dtls1",
      },
+    'done' => {                 # internal administration
+        'hosts'     => 0,
+        'rc-file'   => 0,
+        '_initscore'=> 0,
+        '_get_default'  => 0,
+        'checkciphers'  => 0,   # not used, as it's called multiple times
+        'checktr02102'  => 0,
+        'checksizes'=> 0,
+        'checkhttp' => 0,
+        'checksni'  => 0,
+        'checkssl'  => 0,
+        'checkev'   => 0,
+    },
 ); # %cfg
 
 # construct list for 'info' and 'info--v' based on 'commands'
@@ -3401,14 +3402,16 @@ sub printversion() {
     if ($cfg{'verbose'} > 0) {
         print "\nLoaded Modules:";
         foreach $m (sort keys %INC) {
-            printf("    %-22s %6s %s\n", $m, $INC{$m});
+            printf("    %-22s %6s\n", $m, $INC{$m});
             $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
         }
         print "\nLoaded Module Versions:";
         no strict qw(refs); # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
         foreach $m (sort keys %main:: ) {
             next if $m !~ /::/;
-            printf("    %-22s %6s %s\n", $m, ${$$m{'VERSION'}}, $INC{$m});
+            $d = "?";       # beat the "Use of uninitialized value" dragon
+            $d = ${$$m{'VERSION'}} if (defined ${$$m{'VERSION'}});
+            printf("    %-22s %6s\n", $m, $d);
         }
     }
     return if ($^O =~ m/MSWin32/); # not Windows
@@ -4217,8 +4220,16 @@ foreach $host (@{$cfg{'hosts'}}) {
     _y_CMD("host}");
     Net::SSLinfo::do_ssl_close($host, $port);
     _trace(" done: $host");
+    $cfg{'done'}->{'hosts'}++;
 
 } # foreach host
+
+if ($cfg{'traceCMD'} > 0) {
+    _y_CMD("internal administration ..");
+    _y_CMD("cfg'done'{");
+    _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (keys %{$cfg{'done'}});
+    _y_CMD("cfg'done'}");
+}
 
 exit 0; # main
 
@@ -5140,7 +5151,7 @@ options are ambigious.
 
 =head3 --trace-cmd
 
-  Trace execution of command processing (those given as I<+*>).
+  Trace execution of command processing (those given as  +*).
 
 =head3 --trace@
 
@@ -5225,6 +5236,8 @@ and for compatibility with other programs.
     -p=PORT
 
 This applies to all such options, I<--port> is just an example.
+
+=for comment does not apply to --trace option
 
 =head2 Option Names
 
@@ -5345,7 +5358,8 @@ See  LIMITATIONS  also.
 =head3 BSI TR-02102
 
 Checks if connection and ciphers are compliant according TR-02102-2,
-see L<>
+see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
+(following headlines are taken from there)
 
 =over 4
 
@@ -5917,6 +5931,8 @@ mind that it's best to specify  I<--v>  as very first argument.
 
 =item --trace-arg
 
+=item --trace-cmd
+
 =item --trace-key
 
 =back
@@ -5954,10 +5970,6 @@ Following formats are used:
     Trace information from  "NET::SSLinfo"  for  "--trace"  options.
     These are data lines in the format:   #{ variable name : value #}
     Note that  `value'  here can span multiple lines.
-
-=item #<space>
-
-    Addition text for verbosity ("--v" options).
 
 =back
 
@@ -6120,6 +6132,10 @@ O-Saft - OWASP SSL advanced forensic tool
 =begin ToDo # no POD syntax here!
 
 TODO
+
+  * make a clear concept how to handle +CMD wether they report
+    checks or informations (aka %data vs. %check_*)
+    currently (2013) each single command returns all values
 
   * is DHE-DSS-RC4-SHA also weak?
 
