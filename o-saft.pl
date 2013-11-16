@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.142 13/11/16 15:49:50";
+my $SID     = "@(#) yeast.pl 1.143 13/11/16 16:23:33";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -969,6 +969,9 @@ my %cfg = (
         'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
     },
     'done' => {                 # internal administration
+        'rc-file'   => 0,
+        '_initscore'=> 0,
+        '_get_default'  => 0,
         'checkciphers'  => 0,   # not used, as it's called multiple times
         'checksizes'=> 0,
         'checkhttp' => 0,
@@ -977,7 +980,7 @@ my %cfg = (
         'checkev'   => 0,
         'checktr02102'  => 0,
     },
-    'openssl_option_map' => {   # map our internal option to openessl option
+    'openssl_option_map' => {   # map our internal option to openssl option
         'SSLv2'     => "-ssl2",
         'SSLv3'     => "-ssl3",
         'TLSv1'     => "-tls1",
@@ -1901,6 +1904,7 @@ my %text = (
 
 $cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
+$cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 
 #_initscore();  # call delayed to prevent warning of prototype check with -w
 
@@ -1924,6 +1928,7 @@ sub _vprintme { _v_print("$0 " . $VERSION); _v_print("$0 " . join(" ", @ARGV) . 
 sub _initscore()  {
     # set all default score values here
     # use sub instead of inline code to initialize 'score' values
+    $cfg{'done'}->{'_initscore'}++;
     _trace("_initscore()");
     $check_size{$_}->{score} = 10 foreach (keys %check_size);
     $check_cert{$_}->{score} = 10 foreach (keys %check_cert);
@@ -2279,6 +2284,8 @@ sub checkciphers($$$$$) {
     my $ciphers = shift;# ciphers to be checked
     my $hashref = shift;# our list of ciphers
     my %hash    = %$hashref;
+    #no# $cfg{'done'}->{'checkciphers'}++;
+    #no# return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace("checkciphers($ssl, .., $ciphers) {");
     my $verbose = $cfg{'verbose'};
                     # verbose==2 : _v2print() print remotly checked ciphers
@@ -2368,8 +2375,8 @@ sub checksizes($$) {
     # sets %check_size, %check_cert
     my ($host, $port) = @_;
     my ($value, $regex);
-    return if ($cfg{'done'}->{'checksizes'} == 1);
-    $cfg{'done'}->{'checksizes'} = 1;
+    $cfg{'done'}->{'checksizes'}++;
+    return if ($cfg{'done'}->{'checksizes'} > 1);
 
     # wildcards (and some sizes)
     _getwilds($host, $port);
@@ -2402,8 +2409,8 @@ sub checksni($$) {
     #? check if given FQDN needs to use SNI
     # sets $check_conn{'SNI'}, $check_cert{'hostname'}
     my ($host, $port) = @_;
-    return if ($cfg{'done'}->{'checksni'} == 1);
-    $cfg{'done'}->{'checksni'} = 1;
+    $cfg{'done'}->{'checksni'}++;
+    return if ($cfg{'done'}->{'checksni'} > 1);
     if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
         if ($data{'cn_nossni'}->{val} eq $host) {
             $check_conn{'SNI'}->{val} = "";
@@ -2425,8 +2432,8 @@ sub checktr02102($$) {
     #? check if target is compliant to BSI TR-02102-2
     # assumes that checkssl() already done
     my ($host, $port) = @_;
-    return if ($cfg{'done'}->{'checktr02102'} == 1);
-    $cfg{'done'}->{'checktr02102'} = 1;
+    $cfg{'done'}->{'checktr02102'}++;
+    return if ($cfg{'done'}->{'checktr02102'} > 1);
     checkssl($host, $port) if ($cfg{'done'}->{'checkssl'} < 1);
     my $tr02102ok = ""; # NOT YET USED
     #
@@ -2499,8 +2506,8 @@ sub checktr02102($$) {
 sub checkev($$) {
     #? check if certificate is EV-SSL
     my ($host, $port) = @_;
-    return if ($cfg{'done'}->{'checkev'} == 1);
-    $cfg{'done'}->{'checkev'} = 1;
+    $cfg{'done'}->{'checkev'}++;
+    return if ($cfg{'done'}->{'checkev'} > 1);
     #
     # most information must be provided in `subject' field
     # unfortunately the specification is a bit vague which X509  keywords
@@ -2605,8 +2612,8 @@ sub checkssl($$) {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
-    return if ($cfg{'done'}->{'checkssl'} == 1);
-    $cfg{'done'}->{'checkssl'} = 1;
+    $cfg{'done'}->{'checkssl'}++;
+    return if ($cfg{'done'}->{'checkssl'} > 1);
 # ToDo: needs to be modularized
 
     my ($ssl, $label, $cipher, $value, $regex);
@@ -2738,8 +2745,8 @@ sub checkhttp($$) {
     #? make HTTP checks
     my ($host, $port) = @_;
     my $key = "";
-    return if ($cfg{'done'}->{'checkhttp'} == 1);
-    $cfg{'done'}->{'checkhttp'} = 1;
+    $cfg{'done'}->{'checkhttp'}++;
+    return if ($cfg{'done'}->{'checkhttp'} > 1);
 
 # pins= ==> fingerprint des Zertifikats, wenn leer, dann Reset
 # Achtung: pruefen ob STS auch beit http:// gesetzt, sehr schlecht, da MiTM-Angriff moeglich
@@ -2824,6 +2831,7 @@ sub checkhttp($$) {
 sub _get_default($$$) {
     # return default cipher from target (or local ssl if no target given)
     my $cipher = "";
+    $cfg{'done'}->{'_get_default'}++;
     _trace(" _get_default(" . ($_[0]||"") . "," . ($_[1]||"") . "," . ($_[2]||"") . ")");
     my $sslsocket = IO::Socket::SSL->new(
         PeerAddr        => $_[0],
@@ -5520,18 +5528,32 @@ If so, the  I<--no-cert>  option may help.
 
 =head1 LIMITATIONS
 
-Port as specified with I<--port> options is the same for all targets.
+=head2 Commands
 
-If the specified targets accepts connections but does not speak  SSL,
-the connection will be closed after the system's TCP/IP-timeout. This
-script will hang (about 2-3 minutes).
+Some commands cannot be used together with others, for example I<+list>,
+I<+listregex>, I<+libversion>, I<+version>, I<+check>, I<+help>.
+ 
+I<+quick>  should not be used together with other commands, it returns
+strange output then.
+
+=head2 Options
+
+The characters C<+> and C<=> cannot be used for I<--separator> option.
+
+Port as specified with I<--port> options is the same for all targets.
 
 The used  L<timeout(1)>  command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
+=head2 Problems and Errors
+
 Checking the target for supported ciphers may return that a cipher is
 not supported by the server  misleadingly.  Reason is most likely  an
-improper timeout for the connection.
+improper timeout for the connection. See  I<--timeout=SEC>  option.
+
+If the specified targets accepts connections but does not speak  SSL,
+the connection will be closed after the system's TCP/IP-timeout. This
+script will hang (about 2-3 minutes).
 
 If reverse DNS lookup fails, an error message is returned as hostname,
 like:  C<<gethostbyaddr() failed>>.
@@ -5539,11 +5561,6 @@ Workaround to get rid of this message: use  I<--no-dns>  option.
 
 All checks for EV are solely based on the information provided by the
 certificate.
- 
-I<+quick>  should not be used together with other commands, it returns
-strange output then.
-
-The characters C<+> and C<=> cannot be used for I<--separator> option.
 
 =head2 Poor Systems
 
