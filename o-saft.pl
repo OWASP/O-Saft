@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.147 13/11/16 22:57:09";
+my $SID     = "@(#) yeast.pl 1.148 13/11/17 12:04:30";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -138,7 +138,7 @@ my $verbose = 0;    # verbose mode used in main
 my $info    = 0;    # set to 1 if +info  or +sni_check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my @results = ();   # list of checked ciphers: [SSL-Version, ciper suite name, yes|no]
-my %data    = (     # values will be processed in print_dataline()
+my %data    = (     # values from Net::SSLinfo, will be processed in print_dataline()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
     #!# +command                 value from Net::SSLinfo::*()                                label to be printed
     #!#----------------+-----------------------------------------------------------+-----------------------------------
@@ -221,6 +221,11 @@ my %data    = (     # values will be processed in print_dataline()
     'http_301'      => {'val' => sub { return ""; },                                'txt' => "HTTP Status code 301"},
 #ah#    'hsts_pins'     => {'val' => sub { return 2592999; }, 'txt' => "HTTP: STS pins"},
     #------------------+---------------------------------------+-------------------------------------------------------
+    # following are used for checkdates() only, they must not be a command!
+    # they and are not printed with +info or +check
+    'valid-years'   => {'val' => "", 'txt' => "certificate validity in years"},
+    'valid-months'  => {'val' => "", 'txt' => "certificate validity in months"},
+    'valid-days'    => {'val' => "", 'txt' => "certificate validity in days"},   # approx. value, accurate if < 30
 ); # %data
 # need s_client for: compression|expansion|selfsigned|verify|resumption|renegotiation|
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|
@@ -238,7 +243,8 @@ my %check_cert = (
     #------------------+-----------+------------------------------------------
     'verify'        => {'val' =>"", 'txt' => "Certificate chain validated"},
     'fp_not_MD5'    => {'val' =>"", 'txt' => "Certificate Fingerprint is not MD5"},
-    'expired'       => {'val' => 0, 'txt' => "Certificate is not expired"},
+    'valid'         => {'val' =>"", 'txt' => "Certificate is valid"},
+    'expired'       => {'val' =>"", 'txt' => "Certificate is not expired"},
     'hostname'      => {'val' =>"", 'txt' => "Certificate is valid according given hostname"},
     'wildhost'      => {'val' =>"", 'txt' => "Certificate's wilcard does not match hostname"},
     'wildcard'      => {'val' =>"", 'txt' => "Certificate does not contain wildcards"},
@@ -989,6 +995,7 @@ my %cfg = (
         '_get_default'  => 0,
         'checkciphers'  => 0,   # not used, as it's called multiple times
         'checktr02102'  => 0,
+        'checkdates'=> 0,
         'checksizes'=> 0,
         'checkhttp' => 0,
         'checksni'  => 0,
@@ -2363,6 +2370,48 @@ sub checkciphers($$$$$) {
     _trace(" checkciphers }");
 } # checkciphers
 
+sub checkdates($$) {
+    # check validation of certificate's before and after date
+    my ($host, $port) = @_;
+    $cfg{'done'}->{'checkdates'}++;
+    return if ($cfg{'done'}->{'checkdates'} > 1);
+       #
+       # Note about calculating dates:
+       # calculation should be done without using additional perl modules like
+       # Time::Local, Date::Calc, Date::Manip, ...
+       # Hence we convert the date given by the certificate's before and after
+       # value to the format  YYYYMMDD. The format given in the certificate is
+       # always GMT and in fixed form:  MMM DD hh:mm:ss YYYY GMT. So a split()
+       # gives year and day as integer. Just the month is a string, which need
+       # to be converted to an integer using the map() funtion on @mon array.
+       # The same format is used for the current date given by gmtime(), but
+       # convertion is much simpler as no strings exist here.
+    my @now = gmtime(time);
+    my $now = sprintf("%4d%02d%02d ", $now[5]+1900, $now[4]+1, $now[3]);
+    my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+    my $m   = 0;
+    my @since = split(/ +/, $data{'before'}->{val}($host));
+    my @until = split(/ +/, $data{'after'} ->{val}($host));
+    my $s_mon = 0; my $u_mon = 0;
+       map({$m++; $s_mon=$m if/$since[0]/} @mon); $m = 0;
+       map({$m++; $u_mon=$m if/$until[0]/} @mon); $m = 0;
+    my $start = sprintf("%s%02s%02s", $since[3], $s_mon, $since[1]);
+    my $end   = sprintf("%s%02s%02s", $until[3], $u_mon, $until[1]);
+    # end date magic, do checks ..
+    $check_cert{'valid'}->{val}     =          $data{'before'}->{val}($host) if ($now < $start);
+    $check_cert{'valid'}->{val}    .= " .. " . $data{'after'} ->{val}($host) if ($now > $end);
+    $check_cert{'expired'}->{val}   =          $data{'after'} ->{val}($host) if ($now > $end);
+    $data{'valid-years'}->{val}     = ($until[3]       -  $since[3]);
+    $data{'valid-months'}->{val}    = ($until[3] * 12) - ($since[3] * 12) + $u_mon - $s_mon;
+    $data{'valid-days'}->{val}      = ($data{'valid-years'}->{val}  *  5) + ($data{'valid-months'}->{val} * 30); # approximately
+    $data{'valid-days'}->{val}      = ($until[1] - $since[1]) if ($data{'valid-days'}->{val} < 60); # more accurate
+    _trace("checkdates: start, now, end: : $start, $now, $end");
+    _trace("checkdates: valid:       " . $check_cert{'valid'}->{val});
+    _trace("checkdates: valid-years: " . $data{'valid-years'}->{val});
+    _trace("checkdates: valid-month: " . $data{'valid-months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
+    _trace("checkdates: valid-days:  " . $data{'valid-days'}->{val}   . "  = (" . $data{'valid-years'}->{val} . "*5) + (" . $data{'valid-months'}->{val} . "*30)");
+} # checkdates
+
 sub _getwilds($$) {
     # compute usage of wildcard in CN and subjectAltname
     my ($host, $port) = @_;
@@ -2469,38 +2518,12 @@ sub checktr02102($$) {
     $tr02102ok .= "supports secure renegotiation\n" if ($check_dest{'renegotiation'}->{val} eq "");
 
     # TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
+    $check_dest{'BSI-TR-02102+'}->{val} .= " <<invalid certificate date>>" if ($check_cert{'valid'}->{val} ne "");
+    $check_dest{'BSI-TR-02102+'}->{val} .= " <<certificate validity to large>>" if ($data{'valid-years'}->{val} > 3);
     $check_dest{'BSI-TR-02102+'}->{val} .= " <<CRL missing>>" if ($check_cert{'CRL'}->{val} == 0);
     $check_dest{'BSI-TR-02102+'}->{val} .= " <<uses wildcards:" . $check_cert{'wildcard'}->{val} .">>" if ($check_cert{'wildcard'} ne "");
     $tr02102ok .= "certificate has CRL\n" if ($check_cert{'CRL'}->{val} != 0);
     $tr02102ok .= "does not contain wildcard names\n" if ($check_cert{'wildcard'}->{val} eq "");
-# ToDo:
-    {  #
-       # Note about calculating dates:
-       # calculation should be done without using additional perl modules like
-       # Time::Local, Date::Calc, Date::Manip, ...
-       # Hence we convert the date given by the certificate's before and after
-       # value to the format  YYYYMMDD. The format given in the certificate is
-       # always GMT and in fixed form:  MMM DD hh:mm:ss YYYY GMT. So a split()
-       # gives year and day as integer. Just the month is a string, which need
-       # to be converted to an integer using the map() funtion on @mon array.
-       # The same format is used for the current date given by gmtime(), but
-       # convertion is much simpler as no strings exist here.
-    my @now = gmtime(time);
-    my $now = sprintf("%4d%02d%02d ", $now[5]+1900, $now[4]+1, $now[3]);
-    my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-    my $mon = 0;
-    my $m   = 0;
-    my @since = split(/ +/, $data{'before'}->{val}($host));
-    my @until = split(/ +/, $data{'after'} ->{val}($host));
-       map({$m++; $mon=$m if/$since[0]/} @mon); $m = 0;
-    my $start = sprintf("%s%02s%02s", $since[3], $mon, $since[1]);
-       map({$m++; $mon=$m if/$until[0]/} @mon); $m = 0;
-    my $end   = sprintf("%s%02s%02s", $until[3], $mon, $until[1]);
-    #dbx# print "### dates: $now : $start -- $end";
-    #dbx# print "### duration: ", ($until[3] - $since[3]), " years";
-    $check_dest{'BSI-TR-02102+'}->{val} .= " <<invalid certificate>>" if (($now < $start) or ($now > $end));
-    $check_dest{'BSI-TR-02102+'}->{val} .= " <<certificate validity to large>>" if (($until[3] - $since[3]) > 3);
-    }
 
     # TR-02102-2 3.5 Domainparameter und Schlüssellängen
 # ToDo:
@@ -2510,8 +2533,9 @@ sub checktr02102($$) {
     # TR-02102-2 3.8 Zufallszahlen
         # these checks are not possible from remote
 
-    # ToDo: certificate validation check
+    # ToDo: certificate (chain) validation check
     # ToDo: cipher bit length check
+
 } # checktr02102
 
 sub checkev($$) {
@@ -2610,9 +2634,13 @@ sub checkev($$) {
     }
     if (64 < length($data_oid{'2.5.4.10'}->{val})) {
         $check_cert{'EV+'}->{val} .= " too large " . $data_oid{$oid}->{txt} . ";";
-        _v2print("EV: " . $cfg{'regex'}->{$oid} . " = too large (64)\n");
+        _v2print("EV: too large: 64 < " . $cfg{'regex'}->{$oid} . "\n");
     }
-    # ToDo: validity <27 months
+    # validity <27 months
+    if ($data{'valid-months'}->{val} > 27) {
+        $check_cert{'EV+'}->{val} .= " Certificate validity too long: " . $data{'valid-months'}->{val} . ";";
+        _v2print("EV: Certificate validity too long: 27 < " . $data{'valid-months'}->{val} . "\n");
+    }
     # ToDo: wildcard no, SAN yes
     # ToDo: cipher 2048 bit?
     # ToDo: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
@@ -2642,6 +2670,8 @@ sub checkssl($$) {
     checksizes($host, $port);
     # check for SNI
     checksni($host, $port);
+    # check certificate dates (since, until, exired)
+    checkdates($host, $port);
     # check for EV
     checkev($host, $port);
 
@@ -3051,7 +3081,7 @@ sub print_cipherhead($) {
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); }
     if ($legacy eq 'testsslserver') {}
     if ($legacy eq 'compact')   {}
-    if ($legacy eq 'simple')    { printf("#   %-32s%s\t%s\n", 'Cipher', 'supported', 'Security');
+    if ($legacy eq 'simple')    { printf("#   %-34s%s\t%s\n", 'Cipher', 'supported', 'Security');
                                   print_cipherheadline(); }
     if ($legacy eq 'full')      {
         # host:port protocol    supported   cipher    compliant security    description
@@ -4167,7 +4197,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         # checktr02102($host, $port); # no need to call, as already done in checkssl
          print_dataline($legacy, 'before', $data{before}->{val});
          print_dataline($legacy, 'after',  $data{after}->{val});
-        foreach $key (qw(CRL)) {
+        foreach $key (qw(valid CRL)) {
             printcheck($legacy, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));
         }
         foreach $key (qw(RC4 renegotiation TR-02102 BSI-TR-02102+ BSI-TR-02102-)) {
@@ -4184,11 +4214,12 @@ foreach $host (@{$cfg{'hosts'}}) {
     # for debugging only
     if (_is_do('s_client')) { _y_CMD("+s_client"); print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}"; }
 
-    $cfg{'showhost'} = 0 if (($info == 1) and ($cfg{'showhost'} < 2)); # does not make for +info, but giving option twice ...
+    $cfg{'showhost'} = 0 if (($info == 1) and ($cfg{'showhost'} < 2)); # does not make sense for +info, but giving option twice ...
 
     # now do all other required checks using %data
     local $\ = "\n";
     _trace_1arr('%data');
+    _y_CMD(" do:" . join(" ", @{$cfg{'do'}})) if ($info == 1);
     print("\n### Quick Information:") if ($quick == 1);
     foreach $key (@{$cfg{'do'}}) {
 # ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
@@ -4197,7 +4228,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
         next if ($key =~ m/^modulus$/    and $verbose == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|sni|http|time|s_client|hostname|subject_ev|rc4|bsi)/);
+        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|sni|time|s_client|hostname|subject_ev|rc4|bsi)$/);
 # ToDo: }
         _y_CMD("+ " . $key);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
@@ -6123,7 +6154,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.19
+@(#) 13.11.20
 
 =head1 AUTHOR
 
@@ -6146,8 +6177,6 @@ TODO
   * implement check for Lucky 13 vulnerability
 
   * implement TLSv1.2 checks
-
-  * EV check is missing: validity <27 months
 
   * improve checkssl()
 
