@@ -2524,7 +2524,7 @@ sub checktr02102($$) {
     $check_dest{'BSI-TR-02102+'}->{val} .= $txt                if ($data{'valid-years'}->{val}  > 3);
     $check_dest{'BSI-TR-02102+'}->{val} .= $text{'cert-dates'} if ($check_cert{'valid'}->{val} ne "");
     $check_dest{'BSI-TR-02102+'}->{val} .= $text{'miss-CRL'}   if ($check_cert{'CRL'}->{val}   == 0);
-    $check_dest{'BSI-TR-02102+'}->{val} .= $text{'wildcards'} . $check_cert{'wildcard'}->{val} .">>" if ($check_cert{'wildcard'} ne "");
+    $check_dest{'BSI-TR-02102+'}->{val} .= $text{'wildcards'} . $check_cert{'wildcard'}->{val} .">>" if ($check_cert{'wildcard'}->{val} ne "");
     $tr02102ok .= "certificate has CRL\n" if ($check_cert{'CRL'}->{val} != 0);
     $tr02102ok .= "does not contain wildcard names\n" if ($check_cert{'wildcard'}->{val} eq "");
 
@@ -6164,7 +6164,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.20a
+@(#) 13.11.20b
 
 =head1 AUTHOR
 
