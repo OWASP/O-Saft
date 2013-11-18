@@ -35,7 +35,7 @@
 
 use strict;
 
-my $SID     = "@(#) yeast.pl 1.149 13/11/17 16:31:12";
+my $SID     = "@(#) %M% %I% %E% %U%";
 my @DATA    = <DATA>;
 my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -4007,8 +4007,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     if ($cfg{'usedns'} == 1) {  # ToDo: following settings only with --dns
         $cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET);
         $cfg{'rhost'}   = $fail if ($? != 0);
-        $check_conn{'reversehost'}->{val}   = $cfg{'rhost'};
-        $check_conn{'IP'}->{val}            = $cfg{'IP'};
+        $check_conn{'IP'}->{val}            = $cfg{'IP'}; # ToDo: wrong place to store IP
     }
     if ($cfg{'usedns'} == 1) {
         my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
@@ -4131,7 +4130,6 @@ foreach $host (@{$cfg{'hosts'}}) {
             print_cipherdefault($legacy, $version, $host) if ($legacy eq 'sslscan');
         }
     }
-    print "" if ($cfg{'format'} ne "raw");
 
     print $text{'out-quick'} if ($quick == 1);
 
@@ -6166,7 +6164,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.20
+@(#) 13.11.20a
 
 =head1 AUTHOR
 
