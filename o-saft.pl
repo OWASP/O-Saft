@@ -35,19 +35,19 @@
 
 use strict;
 
-my $SID     = "@(#) %M% %I% %E% %U%";
-my @DATA    = <DATA>;
-my $VERSION = "--is defined at end of this file, and I hate to write it twice--";
+my  $SID    = "@(#) yeast.pl 1.151 13/11/18 23:23:23";
+my  @DATA   = <DATA>;
+our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
-   $VERSION = join ("", @DATA);
-   $VERSION =~ s/.*?\n@\(#\)\s*([^\n]*).*/$1/ms;
+    $VERSION= join ("", @DATA);
+    $VERSION=~ s/.*?\n@\(#\)\s*([^\n]*).*/$1/ms;
 };
 
-my $me      = $0; $me     =~ s#.*/##;
-my $mepath  = $0; $mepath =~ s#/[^/]*$##;
-   $mepath  = "./" if ($mepath eq $me);
-my $mename  = "yeast  ";
-   $mename  = "O-Saft " if ($me !~ /yeast/);
+our $me     = $0; $me     =~ s#.*/##;
+our $mepath = $0; $mepath =~ s#/[^/]*$##;
+    $mepath = "./" if ($mepath eq $me);
+our $mename = "yeast  ";
+    $mename = "O-Saft " if ($me !~ /yeast/);
 
 use IO::Socket::SSL; #  qw(debug2);
 use IO::Socket::INET;
@@ -66,7 +66,7 @@ if (! eval("require Net::SSLinfo;")) {
 }
 
 my $arg;
-my @argv = grep(/--tracearg/, @ARGV); # preserve --tracearg option
+my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 
 # read .rc-file if any
 # -------------------------------------
@@ -77,11 +77,30 @@ open(RC, '<', "./.$me") && do {
     @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
     close(RC);
     push(@argv, @rc_argv);
-    #dbx# print "### .RC: " . join(" ", @rc_argv) . "\n";
+    #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
 };
 
 push(@argv, @ARGV);
-#dbx# print "### ARG: " . join(" ", @argv);
+#dbx# _dbx "ARG: " . join(" ", @argv);
+
+# read file with source for trace and verbose, if any
+# -------------------------------------
+my @dbx = grep(/--(?:trace|v$)/, @argv);    # --trace* can be in .rc-file
+if ($#dbx >= 0) {
+    $arg =  "./o-saft-dbx.pm";
+    $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
+    $arg =~ s#[^=]+=##; # hidden option: --trace=./myfile.pl
+    print "=== reading trace file $arg ===\n";
+    if (! -e $arg) {
+        warn "**WARNING: '$arg' not found";
+        $arg = join("/", $mepath, $arg);    # try to find it in installation directory
+        die  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
+        # no need to continue if required file does not exist
+        # Note: if $mepath or $0 is a symbolic link, above checks fail
+        #       we don't fix that! Workaround: install file in ./
+    }
+    require $arg;   # `our' variables are available there
+}
 
 # CGI
 # -------------------------------------
@@ -233,7 +252,7 @@ my %data    = (     # values from Net::SSLinfo, will be processed in print_datal
 
 ### for default score values, please see sub _initscore() below
 
-my %check_cert = (
+our %check_cert = (
     #
     # default val is "" (empty string) for all following
     # (default is 0 if check not yet implemented)
@@ -292,7 +311,7 @@ my %check_cert = (
     # ToDo: wee need an option to specify the the local certificate storage!
 ); # %check_cert
 
-my %check_dest = (
+our %check_dest = (
     #------------------+-----------+------------------------------------------
     'SGC'           => {'val' => 0, 'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'hasSSLv2'      => {'val' =>"", 'txt' => "Target supports only safe protocols (no SSL 2.0)"},
@@ -333,7 +352,7 @@ my %check_dest = (
     #------------------+-----------+------------------------------------------
 ); # %check_dest
 
-my %check_conn = (
+our %check_conn = (
     'IP'            => {'val' =>"", 'txt' => "IP for given hostname "},
     'reversehost'   => {'val' =>"", 'txt' => "Given hostname is same as reverse resolved hostname"},
     'hostname'      => {'val' =>"", 'txt' => "Connected hostname matches certificate's subject"},
@@ -379,7 +398,7 @@ my %check_conn = (
     'TLSv12--?-'    => {'val' => 0, 'txt' => "Supported unknown security ciphers"},
 ); # %check_conn
 
-my %check_size = (
+our %check_size = (
     # counts and sizes are integer values, key mast have prefix (len|cnt)_
     #------------------+-----------+------------------------------------------
     'len_pembase64' => {'val' => 0, 'txt' => "Size: Certificate PEM (base64)"}, # <(2048/8*6)
@@ -403,7 +422,7 @@ my %check_size = (
 # ToDo: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
 
-my %check_http = (
+our %check_http = (
     # score are absolute values here, except for 'hsts_maxage', they are set to 100 if attribute is found
     'hsts'          => {'val' => "",       'score' =>   0, 'txt' => "HTTPS STS header"},
     'hsts_pins'     => {'val' => "",       'score' =>   0, 'txt' => "HTTPS STS pins"},
@@ -427,7 +446,7 @@ my %check_http = (
     'sts_maxagexy'  => {'val' => 99999999, 'score' => 100, 'txt' => "STS max-age more than one year"},  # high
 ); # %check_http
 
-my %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
+our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
 #   '1.3.6.1'                   => {iso(1) org(3) dod(6) iana(1)}
     '1.3.6.1'                   => {'val' => "", 'txt' => "Internet OID"},
     '1.3.6.1.5.5.7.1.1'         => {'val' => "", 'txt' => "Authority Information Access"}, # authorityInfoAccess
@@ -487,7 +506,7 @@ my %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     '0.9.2342.19200300.100.1.3' => {'val' => "", 'txt' => "subject:mail"},
 ); # %data_oid
 
-my %shorttexts = (
+our %shorttexts = (
     #------------------+------------------------------------------------------
     # %check +check     short label text
     #------------------+------------------------------------------------------
@@ -717,7 +736,7 @@ my %info_gnutls = ( # NOT YET USED
    'S' => "256       15424      512      ULTRA       Foreseeable future",
 ); # %info_gnutls
 
-my %cmd = (
+our %cmd = (
     'is_set'        => undef,   # undef indicates not yet initialized
     'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
     'openssl'       => "openssl",   # OpenSSL
@@ -728,7 +747,7 @@ my %cmd = (
     'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check 
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
 );
-my %cfg = (
+our %cfg = (
     'try'           => 0,       # 1: do not execute openssl, just show
     'exec'          => 0,       # 1: if +exec command used;   default 0
     'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
@@ -990,6 +1009,7 @@ my %cfg = (
      },
     'done' => {                 # internal administration
         'hosts'     => 0,
+        'dbxfile'   => 0,
         'rc-file'   => 0,
         '_initscore'=> 0,
         '_get_default'  => 0,
@@ -1012,13 +1032,13 @@ splice(@{$cfg{'info'}}, $idx);                           # remove trailing comma
 @{$cfg{'info--v'}}  = @{$cfg{'info'}};
 splice(@{$cfg{'info--v'}}, 33, 0, qw(dump));             # insert (ugly, quick&dirty)
 splice(@{$cfg{'info--v'}}, 17, 0, qw(pubkey));           # "
-splice(@{$cfg{'info--v'}}, 14, 0, qw(sigkey));           # "
+splice(@{$cfg{'info--v'}}, 14, 0, qw(sigdump));          # "  (need sigdump instead of sigkey)
 splice(@{$cfg{'info--v'}},  6, 0, qw(dates));            # "
 splice(@{$cfg{'info--v'}},  0, 0, qw(certificate text)); # prepend
-#dbx# print "#dbx# yeast-dummy-marker=$idx";
-#dbx# print "\n#dbx# COMMANDS:\n" . join(" ", @{$cfg{'commands'}}) . "\n";
-#dbx# print "\n#dbx# INFO:\n"   . join(" ", @{$cfg{'info'}});
-#dbx# print "\n#dbx# INFO-v:\n" . join(" ", @{$cfg{'info--v'}}) . "\n";
+#dbx# _dbx "yeast-dummy-marker=$idx";
+#dbx# _dbx "COMMANDS:\n" . join(" ", @{$cfg{'commands'}}) . "\n";
+#dbx# _dbx "INFO:\n"   . join(" ", @{$cfg{'info'}});
+#dbx# _dbx "INFO-v:\n" . join(" ", @{$cfg{'info--v'}}) . "\n";
 # adding more shorttexts
 foreach my $ssl (@{$cfg{'versions'}}) {
     foreach $sec (qw(LOW WEAK HIGH MEDIUM -?-)) {
@@ -1917,27 +1937,31 @@ my %text = (
 
 $cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
+$cfg{'done'}->{'dbxfile'}++ if ($#dbx > 0);
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 
 #_initscore();  # call delayed to prevent warning of prototype check with -w
 
 # internal functions
 # -------------------------------------
-sub _error    { local $\ = "\n"; print "**ERROR: " . @_; }
-# debug functions
-sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; }
-sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); }
-sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
-sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); }
-sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); } # must provide \n if wanted
-sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); }
-sub _v4print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 4); }
-sub _dprint   { local $\ = "\n"; print "#dbx# " . join(" ", @_); }
-sub _trace($) { print "#" . $mename . "::" . $_[0] if ($cfg{'trace'} > 0); }
-# if --trace@ given
-sub _trace_1key($) { printf("#[%-16s ",    join(" ",@_) . ']')  if ($cfg{'traceKEY'} > 0); }
-sub _trace_1arr($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceKEY'} > 0); }
-sub _vprintme { _v_print("$0 " . $VERSION); _v_print("$0 " . join(" ", @ARGV) . "\n");     }
+sub _dprint   { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
+sub _dbx      { _dprint(@_); } # alias for _dprint
+
+# debug functions are defined in o-saft-dbx.pm and loaded on demand
+sub _yeast_init()  {}
+sub _yeast_exit()  {}
+sub _yeast($) {}
+sub _y_ARG    {}
+sub _y_CMD    {}
+sub _v_print  {}
+sub _v2print  {}
+sub _v3print  {}
+sub _v4print  {}
+sub _vprintme {}
+sub _trace($) {}
+# if --trace-arg given
+sub _trace_1key($) {}
+sub _trace_1arr($) {}
 
 sub _initscore()  {
     # set all default score values here
@@ -2008,7 +2032,7 @@ sub _setscore($) {
     # otherwise given value must be KEY=VALUE format;
     my $score = shift;
     no warnings qw(prototype); # avoid: main::_setscore() called too early to check prototype at ./yeast.pl line
-    #dbx# _trace("#dbx# _setscore($score)\n";
+    #dbx# _dbx("_setscore($score)\n";
     if (-f "$score") {  # got a valid file, read from that file
         _trace(" _setscore: read " . $score . "\n");
         my $line ="";
@@ -2226,7 +2250,7 @@ sub _usesocket($$$$) {
 # see: http://search.cpan.org/~mikem/Net-SSLeay-1.48/lib/Net/SSLeay.pod
 # see: http://search.cpan.org/~sullr/IO-Socket-SSL-1.76/SSL.pm
 
-    #dbx# _dprint "E: " . $sslsocket->opened(); # nok
+    #dbx# _dbx "E: " . $sslsocket->opened(); # nok
     if ($sslsocket) {  # connect failed, cipher not accepted
         $sslsocket->close(SSL_ctx_free => 1);
         return 1;
@@ -2338,7 +2362,7 @@ sub checkciphers($$$$$) {
         }
         printf(" $c")     if ($verbose == 2); # don't want _v2print() here
         _v4print("check\n");
-        #dbx# _dprint "H: $host , $cfg{'host'} \n";
+        #dbx# _dbx "H: $host , $cfg{'host'} \n";
         my $supported = 0;
         if (0 == $cmd{'extciphers'}) {
             $supported = _usesocket( $ssl, $host, $port, $c);
@@ -2346,7 +2370,7 @@ sub checkciphers($$$$$) {
             $supported = _useopenssl($ssl, $host, $port, $c);
         }
         if (0 == $supported) {
-            #dbx# _dprint "\t$c\t$hash{$c}  -- $ssl  # connect failed, cipher unsupported";
+            #dbx# _dbx "\t$c\t$hash{$c}  -- $ssl  # connect failed, cipher unsupported";
             push(@results, [$ssl, $c, 'no']);
         } else {
             $check_conn{$ssl}->{val}++; # cipher accepted
@@ -2598,7 +2622,7 @@ sub checkev($$) {
         if ($subject =~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
             $data_oid{$oid}->{val} = $1;
             _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1\n");
-            #dbx# print "L:$oid: $1";
+            #dbx# _dbx "L:$oid: $1";
         } else {
             _v2print("EV: " . _subst($text{'EV-miss'}, $cfg{'regex'}->{$oid}) . "; required\n");
             $txt = _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
@@ -2696,7 +2720,7 @@ sub checkssl($$) {
     # certificate
     if ($cfg{'verbose'} > 0) { # ToDo
         foreach $label (qw(verify selfsigned)) {
-            #dbx# _dprint "$label : $value #";
+            #dbx# _dbx "$label : $value #";
             $value = $data{$label}->{val}($host);
             $check_cert{$label}->{val}   = $value if ($value eq "");
 #            $score{'check_cert'}->{val} -= _getscore($label, $value, \%check_cert);
@@ -2788,7 +2812,7 @@ sub _check_maxage($$) {
     #? return score value for given 'key' if it's value is lower than expected
     my $key     = shift;
     my $value   = shift;
-    #dbx# _dprint "_check_maxage: $key, $value <> $check_http{$key}->{val}";
+    #dbx# _dbx "_check_maxage: $key, $value <> $check_http{$key}->{val}";
     return $check_http{$key}->{score} if ($check_http{$key}->{val} > $value);
     return 0;
 } # _check_maxage
@@ -3426,7 +3450,7 @@ sub printversion() {
             $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
         }
         print "\nLoaded Module Versions:";
-        no strict qw(refs); # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
+        no strict 'refs';   # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
         foreach $m (sort keys %main:: ) {
             next if $m !~ /::/;
             $d = "?";       # beat the "Use of uninitialized value" dragon
@@ -3785,7 +3809,7 @@ while ($#argv >= 0) {
 
     #{ option arguments
     _y_ARG("argument? $arg");
-    #dbx# _dprint "typ: $typ :: ARG: $arg";
+    #dbx# _dbx "typ: $typ :: ARG: $arg";
     #  +---------+----------+------------------------------+--------------------
     #   argument to process   what to do                    expect next argument
     #  +---------+----------+------------------------------+--------------------
@@ -3951,22 +3975,9 @@ if ($cfg{'shorttxt'} > 0) {         # reconfigure texts
 
 local $\ = "\n";
 
-if ($cfg{'trace'} > 0) {
+if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {
     @{$cfg{'do'}} = @{$cfg{'info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'info'}});
-    _yeast("      verbose= $cfg{'verbose'}");
-    _yeast("        trace= $cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceARG=$cfg{'traceKEY'}");
-    _yeast(" cmd->timeout= $cmd{'timeout'}");
-    _yeast(" cmd->openssl= $cmd{'openssl'}");
-    _yeast("  use_openssl= $cmd{'extopenssl'}");
-    _yeast("openssl cipher= $cmd{'extciphers'}");
-    _yeast("      use_SNI= $Net::SSLinfo::use_SNI");
-    _yeast("      targets= " . join(" ", @{$cfg{'hosts'}}));
-    foreach $key (qw(port format legacy openssl cipher usehttp)) {
-        printf("#%s: %13s= %s\n", $mename, $key, $cfg{$key});
-    }
-    _yeast("      version= " . join(" ", @{$cfg{'version'}}));
-    _yeast("     commands= " . join(" ", @{$cfg{'do'}}));
-    _yeast("");
+    _yeast_init();
 }
 
 # main: do the work
@@ -3983,8 +3994,10 @@ if (_is_do('ciphers')) {
     _v_print("cipher pattern: $cfg{'cipherlist'}");
     # openssl's 'ciphers' command does not need -ssl2 option or alike,
     # as our $cfg{'cipherlist'} should print anything
-    print_dataline($legacy, 'ciphers_openssl', Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", ""));
-    # list separated by : doesn't matter, as it's show only
+    if ($cfg{'verbose'} >  0) {
+        print_dataline($legacy, 'ciphers_openssl', Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", ""));
+        # list separated by : doesn't matter, as it's show only
+    }
 }
 
 # now commands which do make a connection
@@ -4113,7 +4126,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         my $_printtitle = 0;    # count title lines
         foreach my $version (@{$cfg{'version'}}) {
             # TODo: single cipher check: grep for cipher in %{$ciphers}
-            #dbx# _dprint "$version # ", keys %{$ciphers} ; #sort keys %hash; # exit;
+            #dbx# _dbx "$version # ", keys %{$ciphers} ; #sort keys %hash; # exit;
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 printtitle($legacy, $version, join(":", $host, $port));
@@ -4216,7 +4229,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
         next if ($key =~ m/^modulus$/    and $verbose == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|quick|sni|time|s_client|hostname|subject_ev|rc4|bsi)$/);
+        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|dump|quick|sni|time|s_client|hostname|subject_ev|rc4|bsi)$/);
 # ToDo: }
         _y_CMD("+ " . $key);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
@@ -4243,12 +4256,7 @@ foreach $host (@{$cfg{'hosts'}}) {
 
 } # foreach host
 
-if ($cfg{'traceCMD'} > 0) {
-    _y_CMD("internal administration ..");
-    _y_CMD("cfg'done'{");
-    _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (keys %{$cfg{'done'}});
-    _y_CMD("cfg'done'}");
-}
+_yeast_exit();
 
 exit 0; # main
 
@@ -5314,7 +5322,7 @@ TLSv1.2 checks are not yet implemented.
 
 Connection is vulnerable if target supports SSL-level compression.
 
-=head Lucky 13
+=head= Lucky 13
 
 NOT YET IMPLEMENTED
 
@@ -5378,8 +5386,13 @@ See  LIMITATIONS  also.
 =head3 BSI TR-02102
 
 Checks if connection and ciphers are compliant according TR-02102-2,
-see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
+see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
+/TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
+
 (following headlines are taken from there)
+
+=for comment above link written in 2 lines, otherwise perldoc complains:
+=for comment "<standard input>:1450: warning [p 12, 2.2i]: can't break line"
 
 =over 4
 
@@ -5843,6 +5856,11 @@ code is needed.
 
 =head3 General
 
+Perl's  `die()'  is used whenever an unrecoverable error occours. The
+message printed will always start with `**ERROR: '.
+Warnings are printed using perl's  "warn()"  function and the message
+always begins with `**WARNING: '.
+
 All C<print*()> functions write on STDOUT directly. They are slightly
 prepared for using texts from  the configuration (%cfg, %check_*), so
 these texts can be adapted easily (either with  OPTIONS  or in code).
@@ -5895,12 +5913,7 @@ Some rules used for function names:
 
     Some kind of helper functions .
 
-=item _error
-
-    Used to print internal errors.
-    Note that warnings are printed using perl's  "warn()"  function.
-
-=item _trace*
+=item _trace* _y*
 
     Print information when  "--trace"  is in use.
 
@@ -5933,6 +5946,17 @@ Following to get perl's variables for checks:
   | awk -F'#' '($2~/^ /){a=$2;gsub(" ","",a);next}(NF>1){printf"%s{%s}\n",a,$2}' \
   | tr '%' '$'
 
+=head3 Debugging, Tracing
+
+Most functionality for trace, debug or verbose output is encapsulated
+in functions (see B<Sub Names> above). These functions are defined as
+empty stubs herein. The real definitions are found in  o-saft-dbx.pm,
+which is loaded on demand when either any  I<--trace*>  or  I<--v>  option
+is specified. As long as these options are not used  o-saft.pl  works
+without  o-saft-dbx.pm.
+
+Note: in contrast to the name of the RC-file, the name  o-saft-dbx.pm
+is hard-coded.
 
 =end comment
 
@@ -5944,6 +5968,9 @@ Following  options and commands  are useful for hunting problems with
 SSL connections and/or this tool. Note that some options can be given
 multiple times to increase amount of listed information. Also keep in
 mind that it's best to specify  I<--v>  as very first argument.
+
+Note that file  o-saft-dbx.pm  is required, if any  I<--trace*>  or  I<--v>
+option is used.
 
 =head3 Commands
 
@@ -6165,7 +6192,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.20c
+@(#) 13.11.21
 
 =head1 AUTHOR
 
