@@ -2918,6 +2918,7 @@ sub printdump($$$) {
     print '######################################################################### %data';
     foreach $key (keys %data) {
         next if ($key =~ m/(cn|PEM|pem|x509|authority|dates|expire)/); # ignore aliases
+        next if ($key =~ m/^valid-/); # ignore internal data
         _dump($data{$key}->{txt}, $data{$key}->{val}($host));
     }
     print '######################################################################## %check';
@@ -6164,7 +6165,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.20b
+@(#) 13.11.20c
 
 =head1 AUTHOR
 
