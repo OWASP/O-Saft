@@ -35,7 +35,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.151 13/11/18 23:23:23";
+my  $SID    = "@(#) %M% %I% %E% %U%";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -866,7 +866,7 @@ our %cfg = (
     'rhost'         => "",      # currently scanned host's reverse resolved name
     'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
     'port'          => 443,     # default port for connections
-    'timeout'       => 1,       # default timeout in seconds for connections
+    'timeout'       => 2,       # default timeout in seconds for connections
                                 # NOTE that some servers do not connect SSL within this time
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
@@ -2337,7 +2337,6 @@ sub checkciphers($$$$$) {
     my $hasrsa  = 0;    # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
 
     _v2print("check cipher $ssl: ");
-    $check_conn{'totals'}->{val} = 0;
     # ToDo: change logic of following loop
     #     now we loop over *our* ciphers which misses ciphers available in
     #     the local SSL implementation (if there are more)
@@ -4110,6 +4109,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     if (_need_cipher() > 0) {
         _y_CMD("  need_cipher ..");
         @results = ();          # new list for every host
+        $check_conn{'totals'}->{val} = 0;
         foreach my $version (@{$cfg{'version'}}) {
             checkciphers($version, $host, $port, $ciphers, \%ciphers);
         }
@@ -6192,7 +6192,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.21
+@(#) 13.11.21a
 
 =head1 AUTHOR
 
