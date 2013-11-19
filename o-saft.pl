@@ -35,7 +35,7 @@
 
 use strict;
 
-my  $SID    = "@(#) %M% %I% %E% %U%";
+my  $SID    = "@(#) yeast.pl 1.153 13/11/19 21:55:06";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1498,13 +1498,14 @@ my %text = (
     'EV-large'      => " <<too large @@>>",
     'EV-miss'       => " <<missing @@>>",
     'out-target'    => "\n==== Target: @@ ====\n",
-    'out-ciphers'   => "=== Checking @@ Ciphers ===",
-    'out-summary'   => "== Cipher Summary @@ ==",
-    'out-scoring'   => "=== Scoring Results ===",
-    'out-checks'    => "=== Performed Checks ===",
-    'out-quick'     => "=== Quick Checks ===",
-    'out-info'      => "=== Quick Information ===",
+    'out-ciphers'   => "\n=== Ciphers: Checking @@ ===",
+    'out-infos'     => "\n=== Informations ===",
+    'out-scoring'   => "\n=== Scoring Results ===",
+    'out-checks'    => "\n=== Performed Checks ===",
+    'out-quick'     => "\n=== Quick Checks ===",
+    'out-info'      => "\n=== Quick Information ===",
     'out-list'      => "=== List @@ Ciphers ===",
+    'out-summary'   => "== Ciphers: Summary @@ ==",
     # misc texts
     'cipher'        => "Cipher",
     'support'       => "supported",
@@ -3133,7 +3134,7 @@ sub print_cipherdefault($$$) {
 } # print_cipherdefault
 
 sub print_ciphertotals($$) {
-    #? print total number of ciphers supported according given legacy format
+    #? print total number of ciphers supported for SSL version according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
     my ($key, $sec);
@@ -3186,9 +3187,9 @@ sub printtitle($$$) {
     if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
-    if ($legacy eq 'quick')     { print "\n" . $txt; }
-    if ($legacy eq 'simple')    { print "\n" . $txt; }
-    if ($legacy eq 'full')      { print "\n" . $txt; }
+    if ($legacy eq 'quick')     { print $txt; }
+    if ($legacy eq 'simple')    { print $txt; }
+    if ($legacy eq 'full')      { print $txt; }
 } # printtitle
 
 sub printfooter($) {
@@ -3277,8 +3278,8 @@ sub printciphers($$$@) {
 sub printscore($) {
     #? print calculated scores
     my $legacy = shift;
-    print "\n" .  $text{'out-scoring'};
-    printf("=%-39s %s\n", $text{'desc'}, $text{'desc-score'});
+    print $text{'out-scoring'};
+    printf("= %-37s %s\n", $text{'desc'}, $text{'desc-score'});
     printruler();
     _trace_1arr('%score');
     foreach my $key (keys %score) {
@@ -3308,8 +3309,8 @@ sub printssl($$) {
     my $host   = shift;
     my ($ssl, $label, $value);
 
-    print "\n". $text{'out-checks'};
-    printf("=%-39s %s\n", $text{'desc'}, $text{'desc-check'});
+    print $text{'out-checks'};
+    printf("= %-37s %s\n", $text{'desc'}, $text{'desc-check'});
     printruler();
 
     _trace_1arr('@cfg{version}');
@@ -3491,7 +3492,7 @@ sub printcipherlist() {
        $ciphers     = Net::SSLinfo::cipher_local() if ($cfg{'verbose'} > 0);
     my $cipher      = "";
     print _subst($text{'out-list'}, $0);
-    print "=Cipher\t" . join("\t", @{$ciphers_desc{'text'}}) . "\n";
+    print "= Cipher\t" . join("\t", @{$ciphers_desc{'text'}}) . "\n";
     printf("%-31s %s\n", "= cipher", join("\t", @{$ciphers_desc{'head'}}));
     printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
     foreach $cipher (sort keys %ciphers) {
@@ -4143,6 +4144,12 @@ foreach $host (@{$cfg{'hosts'}}) {
         foreach my $version (@{$cfg{'version'}}) {
             print_cipherdefault($legacy, $version, $host) if ($legacy eq 'sslscan');
         }
+        printruler() if ($quick == 0);
+        print "\n" . _subst($text{'out-summary'}, "");
+        foreach my $version (@{$cfg{'version'}}) {
+            printcheck($legacy, $check_conn{$version}->{txt}, $check_conn{$version}->{val});
+        }
+        printruler() if ($quick == 0);
     }
 
     print $text{'out-quick'} if ($quick == 1);
@@ -4156,7 +4163,6 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('check')) {
         _y_CMD("+check");
-        printruler();
         print "**WARNING: no openssl, some checks are missing" if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
         checkhttp($host, $port);
         printssl(  $legacy, $host),
@@ -4221,7 +4227,11 @@ foreach $host (@{$cfg{'hosts'}}) {
     local $\ = "\n";
     _trace_1arr('%data');
     _y_CMD(" do:" . join(" ", @{$cfg{'do'}})) if ($info == 1);
-    print $text{'out-info'} if ($quick == 1);
+    if ($quick == 1) {
+        print $text{'out-info'};
+    } else {
+        print $text{'out-infos'};
+    }
     foreach $key (@{$cfg{'do'}}) {
 # ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
         next if ($key =~ m/^(exec|cipher|check)$/); # already done or done later
@@ -6192,7 +6202,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.21a
+@(#) 13.11.22
 
 =head1 AUTHOR
 
