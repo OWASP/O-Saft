@@ -35,7 +35,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.153 13/11/19 21:55:06";
+my  $SID    = "@(#) yeast.pl 1.156 13/11/20 23:02:21";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -72,7 +72,8 @@ my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 # -------------------------------------
 my @rc_argv = "";
 open(RC, '<', "./.$me") && do {
-    print "=== reading options from  ./.$me ===\n";
+    print "=== reading options from  ./.$me ===\n" if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @ARGV) > 0);
+        # $cfg{'out_header'} not yet available, see LIMITATIONS also
     @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
     @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
     close(RC);
@@ -90,7 +91,8 @@ if ($#dbx >= 0) {
     $arg =  "./o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # hidden option: --trace=./myfile.pl
-    print "=== reading trace file $arg ===\n";
+    print "=== reading trace file $arg ===\n" if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @ARGV) > 0);
+        # $cfg{'out_header'} not yet available, see LIMITATIONS also
     if (! -e $arg) {
         warn "**WARNING: '$arg' not found";
         $arg = join("/", $mepath, $arg);    # try to find it in installation directory
@@ -198,8 +200,20 @@ my %data    = (     # values from Net::SSLinfo, will be processed in print_datal
     'sigkey_algorithm'=>{'val'=> sub { Net::SSLinfo::signame(       $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
     'sigkey_value'  => {'val' => sub {    __SSLinfo('sigkey_value', $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
     'trustout'      => {'val' => sub { Net::SSLinfo::trustout(      $_[0], $_[1])}, 'txt' => "Certificate trusted"},
-#   'ocsp_uri'      => {'val' => sub { Net::SSLinfo::ocsp_uri(      $_[0], $_[1])}, 'txt' => "Certificate Authority Information Access:"},
-#   'ocspid'        => {'val' => sub { Net::SSLinfo::ocspid(        $_[0], $_[1])}, 'txt' => "Certificate Authority Information Access ID:"},
+    #'extensions'    => {'val' => sub { Net::SSLinfo::extensions(    $_[0], $_[1])}, 'txt' => "Certificate extensions"},
+    'extensions'    => {'val' => sub { __SSLinfo('extensions',      $_[0], $_[1])}, 'txt' => "Certificate extensions"},
+    'ext_authority' => {'val' => sub { __SSLinfo('ext_authority',   $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
+    'ext_authorityid'=>{'val' => sub { __SSLinfo('ext_authorityid', $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
+    'ext_constrains'=> {'val' => sub { __SSLinfo('ext_constrains',  $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
+    'ext_cps'       => {'val' => sub { __SSLinfo('ext_cps',         $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies"},
+    'ext_cps_policy'=> {'val' => sub { __SSLinfo('ext_cps_policy',  $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
+    'ext_subjectkeyid'=>{'val'=> sub { __SSLinfo('ext_subjectkeyid',$_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
+    'ext_cps_cps'   => {'val' => sub { __SSLinfo('ext_cps_cps',     $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: CPS"},
+    'ext_crl'       => {'val' => sub { __SSLinfo('ext_crl',         $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points"},
+    'ext_crl_crl'   => {'val' => sub { __SSLinfo('ext_crl_crL',     $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points: Full Name"},
+    'ext_keyusage'  => {'val' => sub { __SSLinfo('ext_keyusage',    $_[0], $_[1])}, 'txt' => "Certificate extensions Key Usage"},
+    'ext_extkeyusage'=>{'val' => sub { __SSLinfo('ext_extkeyusage', $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
+    'ext_certtype'  => {'val' => sub { __SSLinfo('ext_certtype',    $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
     'ocsp_uri'      => {'val' => sub { Net::SSLinfo::ocsp_uri(      $_[0], $_[1])}, 'txt' => "Certificate OCSP Responder URL"},
     'ocspid'        => {'val' => sub { Net::SSLinfo::ocspid(        $_[0], $_[1])}, 'txt' => "Certificate OCSP subject, public key hash"},
     'subject_hash'  => {'val' => sub { Net::SSLinfo::subject_hash(  $_[0], $_[1])}, 'txt' => "Certificate Subject Name hash"},
@@ -272,7 +286,8 @@ our %check_cert = (
     'EV+'           => {'val' =>"", 'txt' => "Certificate strict Extended Validation (EV)"},
     'EV-'           => {'val' =>"", 'txt' => "Certificate lazy Extended Validation (EV)"},
     'OCSP'          => {'val' =>"", 'txt' => "Certificate has OCSP Responder URL"},
-    'CRL'           => {'val' => 0, 'txt' => "Certificate has CRL Distribution Points"},
+    'CPS'           => {'val' =>"", 'txt' => "Certificate has Certification Practice Statement"},
+    'CRL'           => {'val' =>"", 'txt' => "Certificate has CRL Distribution Points"},
     'ZLIB'          => {'val' => 0, 'txt' => "Certificate has (TLS extension) compression"},
     'LZO'           => {'val' => 0, 'txt' => "Certificate has (GnuTLS extension) compression"},
     'OpenPGP'       => {'val' => 0, 'txt' => "Certificate has (TLS extension) authentication"},
@@ -537,6 +552,7 @@ our %shorttexts = (
     'EXPORT'        => "No EXPORT ciphers",
     'RC4'           => "No RC4 ciphers",
     'SGC'           => "SGC supported",
+    'CPS'           => "CPS supported",
     'CRL'           => "CRL supported",
     'EV+'           => "Strict EV supported",
     'EV-'           => "Lazy EV supported",
@@ -819,6 +835,14 @@ our %cfg = (
                         beast crime pfs rc4
                         bsi
                        ),
+                    # add special commands for certificate extensions
+                    # they are alredy part of extension (see above) and hence
+                    # there'se noo need to be part of +info
+                       qw(
+                        ext_authority ext_authorityid ext_constrains ext_certtype
+                        ext_cps ext_cps_policy ext_cps_cps ext_subjectkeyid 
+                        ext_crl ext_crl_crl ext_keyusage ext_extkeyusage
+                       ),
                     # add alias commands
                        qw(
                         commonName owner
@@ -855,6 +879,7 @@ our %cfg = (
                        )],      # fingerprint is special, see _ishexdata()
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
+    'out_header'    => 0,       # print header lines in output
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'lang'          => "de",    # output language
     'langs'         => [qw(de en)],
@@ -953,12 +978,15 @@ our %cfg = (
         '2.5.4.5'   => '(?:2\.5\.4\.5|serialNumber)',
         '2.5.4.6'   => '(?:2\.5\.4\.6|countryName|C)',
         '2.5.4.7'   => '(?:2\.5\.4\.7|localityName|L)',
-        '2.5.4.8'   => '(?:2\.5\.4\.8|stateOrProvinceName|ST)',
+        '2.5.4.8'   => '(?:2\.5\.4\.8|stateOrProvinceName|SP|ST)', # ToDo: is ST a bug?
         '2.5.4.9'   => '(?:2\.5\.4\.9|street(?:Address)?)', # '/street=' is very lazy
         '2.5.4.17'  => '(?:2\.5\.4\.17|postalCode)',
         '1.3.6.1.4.1.311.60.2.1.1' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.1|jurisdictionOfIncorporationLocalityName)',
         '1.3.6.1.4.1.311.60.2.1.2' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.2|jurisdictionOfIncorporationStateOrProvinceName)',
         '1.3.6.1.4.1.311.60.2.1.3' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.3|jurisdictionOfIncorporationCountryName)',
+
+        'chars'     => '([a-zA-Z0-9,./:= ?+\'()-])',        # valid characters in EV definitions
+
     },
     'compliance' => {           # description of RegEx above for compliance checks
         'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
@@ -1489,14 +1517,13 @@ my %text = (
     'protocol'      => "<<protocol probably supported, but no ciphers accepted>>",
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
-    'miss-CRL'      => " <<missing CRL>>",
+    'EV-miss'       => " <<missing @@>>",
+    'EV-large'      => " <<too large @@>>",
     'no-reneg'      => " <<secure renegotiation not supported>>",
     'cert-dates'    => " <<invalid certificate date>>",
     'cert-valid'    => " <<certificate validity to large @@>>",
     'wildcards'     => " <<uses wildcards:",
     'gethost'       => " <<gethostbyaddr() failed>>",
-    'EV-large'      => " <<too large @@>>",
-    'EV-miss'       => " <<missing @@>>",
     'out-target'    => "\n==== Target: @@ ====\n",
     'out-ciphers'   => "\n=== Ciphers: Checking @@ ===",
     'out-infos'     => "\n=== Informations ===",
@@ -1589,6 +1616,7 @@ my %text = (
         'CMVP'      => "Cryptographic Module Validation Program (NIST)",
         'CN'        => "Common Name",
         'CP'        => "Certificate policy",
+        'CPD'       => "Certificate Policy Definitions",
         'CPS'       => "Certification Practice Statement",
         'CRC'       => "Cyclic Redundancy Check",
         'CRIME'     => "Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)",
@@ -2083,13 +2111,49 @@ sub __SSLinfo($$$) {
     # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
     # these values will be converted to o-saft's prefered format
     my $cmd = shift;
-    my $val = "<__SSLinfo: unknown command: '$cmd'>";
+    my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
     $val =  Net::SSLinfo::fingerprint(      $_[0], $_[1]) if ($cmd eq 'fingerprint');
     $val =  Net::SSLinfo::fingerprint_hash( $_[0], $_[1]) if ($cmd eq 'fingerprint_hash');
     $val =  Net::SSLinfo::fingerprint_sha1( $_[0], $_[1]) if ($cmd eq 'fingerprint_sha1');
     $val =  Net::SSLinfo::fingerprint_md5(  $_[0], $_[1]) if ($cmd eq 'fingerprint_md5');
     $val =  Net::SSLinfo::pubkey_value(     $_[0], $_[1]) if ($cmd eq 'pubkey_value');
     $val =  Net::SSLinfo::sigkey_value(     $_[0], $_[1]) if ($cmd eq 'sigkey_value');
+    $val =  Net::SSLinfo::extensions(       $_[0], $_[1]) if ($cmd =~ /ext(?:ensions|_)/);
+    if ($cmd =~ m/ext_/) {
+        # all following ar part of Net::SSLinfo::extensions(), now extract parts
+        my $ext = $val;
+        $val =~ s#.*?Authority Information Access:\s*(.*?)(?:X509|Netscape).*#$1#ms if ($cmd eq 'ext_authority');
+        $val =~ s#.*?Authority Key Identifier:\s*(.*?)(?:X509|Netscape).*#$1#ms     if ($cmd eq 'ext_authorityid');
+        $val =~ s#.*?Basic Constraints:\s*(.*?)(?:X509|Netscape).*#$1#ms            if ($cmd eq 'ext_constrains');
+        $val =~ s#.*?Key Usage:\s*(.*?)(?:X509|Netscape).*#$1#ms                    if ($cmd eq 'ext_keyusage');
+        $val =~ s#.*?Subject Key Identifier:\s*(.*?)(?:X509|Netscape).*#$1#ms       if ($cmd eq 'ext_subjectkeyid');
+        $val =~ s#.*?Certificate Policies:\s*(.*?)(?:X509|Netscape).*#$1#ms         if ($cmd =~ /ext_cps/);
+        $val =~ s#.*?CPS\s*:\s*(.*)#$1#ms                if ($cmd eq 'ext_cps_cps');
+        $val =~ s#.*?Policy\s*:\s*(.*?)(?:CPS).*#$1#ims  if ($cmd eq 'ext_cps_policy');
+        $val =~ s#.*?CRL Distribution Points:\s*(.*?)(?:X509|Netscape).*#$1#ms      if ($cmd =~ /ext_crl/);
+# ToDo: following fails, reason unknown
+        #$val =~ s#.*?(URI\s*:.*)#$1#ms                   if ($cmd eq 'ext_crl_crl');
+        $val =~ s#.*?Extended Key Usage:\s*(.*?)(?:X509|Netscape).*#$1#ms           if ($cmd eq 'ext_extkeyusage');
+        $val =~ s#.*?Netscape Cert Type:\s*(.*?)(?:X509|Netscape).*#$1#ms           if ($cmd eq 'ext_certtype');
+        $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
+    }
+    if ($cmd =~ /ext(?:ensions|_)/) {
+        # grrr, formatting extensions is special, take care for traps ...
+        if ($cfg{'format'} ne "raw") {
+            $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
+            # it was quick&dirty, correct some failures
+            $val =~ s/(keyid)/$1:/i;
+            $val =~ s/(CA)(FALSE)/$1:$2/i;
+            if ($cmd eq 'extensions') {
+                # extensions are special as they contain multiple values
+                # values are separated by emty lines
+                $val =~ s/\n\n+/\n/g;   # remove empty lines
+            } else {
+                $val =~ s/\s\s+/ /g;    # remove multiple spaces
+            }
+        }
+        return $val; # ready!
+    }
     if ($cfg{'format'} ne "raw") {
         $val =  "" if (!defined $val);  # avoid warnings
         $val =~ s/\n\s+//g; # remove trailing spaces
@@ -2466,8 +2530,10 @@ sub checksizes($$) {
     # wildcards (and some sizes)
     _getwilds($host, $port);
 
-    $check_cert{'OCSP'}->{val}     = "" if ($data{'ocsp_uri'}->{val}($host) ne "");
-    $check_cert{'rootcert'}->{val} = "" if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
+    $check_cert{'OCSP'}->{val}     = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
+    $check_cert{'rootcert'}->{val} = " " if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
+    $check_cert{'CPS'}->{val}      = " " if ($data{'ext_cps'}->{val}($host) eq "");
+    $check_cert{'CRL'}->{val}      = " " if ($data{'ext_crl'}->{val}($host) eq "");
     # ToDo: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
@@ -2481,8 +2547,8 @@ sub checksizes($$) {
     $check_size{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
     $check_size{'len_subject'}->{val}   = length($data{'subject'}->{val}($host));
     $check_size{'len_issuer'}->{val}    = length($data{'issuer'}->{val}($host));
-    #$check_size{'len_CPS'}->{val}       = length($data{'CPS'}->{val}($host));
-    #$check_size{'len_CRL'}->{val}       = length($data{'CRL'}->{val}($host));
+    $check_size{'len_CPS'}->{val}       = length($data{'ext_cps'}->{val}($host));
+    $check_size{'len_CRL'}->{val}       = length($data{'ext_crl'}->{val}($host));
     #$check_size{'len_CRL_data'}->{val}  = length($data{'CRL'}->{val}($host));
     $check_size{'len_OCSP'}->{val}      = length($data{'ocsp_uri'}->{val}($host));
     #$check_size{'len_OIDs'}->{val}      = length($data{'OIDs'}->{val}($host));
@@ -2521,7 +2587,6 @@ sub checktr02102($$) {
     return if ($cfg{'done'}->{'checktr02102'} > 1);
     checkssl($host, $port) if ($cfg{'done'}->{'checkssl'} < 1);
     my $txt = "";
-    my $tr02102ok = ""; # NOT YET USED
     #
     # description (see CHECK in pod below) ...
 
@@ -2537,20 +2602,18 @@ sub checktr02102($$) {
     # TR-02102-2 3.2.3 Mindestanforderungen für Interoperabilität
     $check_dest{'BSI-TR-02102+'}->{val}  = $check_dest{'TR-02102'}->{val}; # cipher checks are alreday done
     $check_dest{'BSI-TR-02102-'}->{val}  = $check_dest{'TR-02102'}->{val}; # .. for lazy check, ciphers are enough
-    $tr02102ok  = "uses recommended ciphers\n" if ($check_dest{'TR-02102'}->{val} eq "");
 
     # TR-02102-2 3.3 Session Renegotation
     $check_dest{'BSI-TR-02102+'}->{val} .= $text{'no-reneg'}   if ($check_dest{'renegotiation'}->{val} ne "");
-    $tr02102ok .= "supports secure renegotiation\n" if ($check_dest{'renegotiation'}->{val} eq "");
 
     # TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
     $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val});
     $check_dest{'BSI-TR-02102+'}->{val} .= $txt                if ($data{'valid-years'}->{val}  > 3);
     $check_dest{'BSI-TR-02102+'}->{val} .= $text{'cert-dates'} if ($check_cert{'valid'}->{val} ne "");
-    $check_dest{'BSI-TR-02102+'}->{val} .= $text{'miss-CRL'}   if ($check_cert{'CRL'}->{val}   == 0);
+    $check_dest{'BSI-TR-02102+'}->{val} .= _subst($text{'EV-miss'}, 'CRL')  if ($check_cert{'CRL'}->{val}   ne "");
+    $check_dest{'BSI-TR-02102+'}->{val} .= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host)  eq "");
+    $check_dest{'BSI-TR-02102+'}->{val} .= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
     $check_dest{'BSI-TR-02102+'}->{val} .= $text{'wildcards'} . $check_cert{'wildcard'}->{val} .">>" if ($check_cert{'wildcard'}->{val} ne "");
-    $tr02102ok .= "certificate has CRL\n" if ($check_cert{'CRL'}->{val} != 0);
-    $tr02102ok .= "does not contain wildcard names\n" if ($check_cert{'wildcard'}->{val} eq "");
 
     # TR-02102-2 3.5 Domainparameter und Schlüssellängen
 # ToDo:
@@ -2743,6 +2806,8 @@ sub checkssl($$) {
     $check_cert{'fp_not_MD5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
     $check_conn{'reversehost'}->{val}= $cfg{'rhost'}        if ($host ne $cfg{'rhost'});
         # ToDo: previous setting depends on $cfg{'usedns'}
+
+    # check certificate extensions ==> done in checksizes()
 
     # check target specials
     foreach $label (qw(krb5 psk_hint psk_identity srp master_key session_id session_ticket)) {
@@ -2950,6 +3015,7 @@ sub printdump($$$) {
     foreach $key (keys %check_cert) { _dump($check_cert{$key}->{txt}, $check_cert{$key}->{val}); }
     foreach $key (keys %check_dest) { _dump($check_dest{$key}->{txt}, $check_dest{$key}->{val}); }
 } # printdump
+sub printheader   { print @_ if ($cfg{'out_header'} > 0); }
 sub printruler()  { print "=" . '-'x38, "+" . '-'x35; }
 
 sub print_dataline($$$) {
@@ -3148,7 +3214,7 @@ sub print_ciphertotals($$) {
         print_cipherheadline();
     }
     if ($legacy =~ /(full|compact|simple|quick)/) {
-        print _subst($text{'out-summary'}, $ssl);
+        printheader(_subst($text{'out-summary'}, $ssl));
         _trace_1arr('%check_conn');
         foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
             $key = $ssl . '-' . $sec;
@@ -3187,9 +3253,9 @@ sub printtitle($$$) {
     if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
-    if ($legacy eq 'quick')     { print $txt; }
-    if ($legacy eq 'simple')    { print $txt; }
-    if ($legacy eq 'full')      { print $txt; }
+    if ($legacy eq 'quick')     { printheader($txt); }
+    if ($legacy eq 'simple')    { printheader($txt); }
+    if ($legacy eq 'full')      { printheader($txt); }
 } # printtitle
 
 sub printfooter($) {
@@ -3278,7 +3344,7 @@ sub printciphers($$$@) {
 sub printscore($) {
     #? print calculated scores
     my $legacy = shift;
-    print $text{'out-scoring'};
+    printheader($text{'out-scoring'});
     printf("= %-37s %s\n", $text{'desc'}, $text{'desc-score'});
     printruler();
     _trace_1arr('%score');
@@ -3309,7 +3375,7 @@ sub printssl($$) {
     my $host   = shift;
     my ($ssl, $label, $value);
 
-    print $text{'out-checks'};
+    printheader($text{'out-checks'});
     printf("= %-37s %s\n", $text{'desc'}, $text{'desc-check'});
     printruler();
 
@@ -3491,8 +3557,8 @@ sub printcipherlist() {
     my $ciphers     = "";
        $ciphers     = Net::SSLinfo::cipher_local() if ($cfg{'verbose'} > 0);
     my $cipher      = "";
-    print _subst($text{'out-list'}, $0);
-    print "= Cipher\t" . join("\t", @{$ciphers_desc{'text'}}) . "\n";
+    printheader(_subst($text{'out-list'}, $0));
+    printheader("= Cipher\t" . join("\t", @{$ciphers_desc{'text'}}) . "\n");
     printf("%-31s %s\n", "= cipher", join("\t", @{$ciphers_desc{'head'}}));
     printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
     foreach $cipher (sort keys %ciphers) {
@@ -3700,6 +3766,11 @@ while ($#argv >= 0) {
     if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';       } # commands
     if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';        } # ..
     if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';     } # ..
+    # options to handle external openssl
+    if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1; next; }
+    if ($arg =~ /^--force[_-]openssl/)  { $cmd{'extciphers'}= 1; next; }
+    if ($arg =~ /^--no[_-]?openssl/)    { $cmd{'extopenssl'}= 0; next; }
+    if ($arg =~ /^--s_?client/)         { $cmd{'extsclient'}++;  next; }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;     next; } # sslyze
@@ -3710,10 +3781,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?ignorecase$/){ $cfg{'ignorecase'}= 0; next; }
     if ($arg =~ /^--ignorecase$/)       { $cfg{'ignorecase'}= 1; next; }
     if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1; next; }
-    if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1; next; }
-    if ($arg =~ /^--force[_-]openssl/)  { $cmd{'extciphers'}= 1; next; }
-    if ($arg =~ /^--no[_-]?openssl/)    { $cmd{'extopenssl'}= 0; next; }
-    if ($arg =~ /^--s_?client/)         { $cmd{'extsclient'}++;  next; }
+    if ($arg eq  '--header')            { $cfg{'out_header'}= 1; next; }
+    if ($arg =~ /^--no[_-]?header$/)    { $cfg{'out_header'}= 0; next; }
     if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1; next; } # allow case insensitive
     if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1; next; } # ..
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1; next; } # ..
@@ -3932,6 +4001,7 @@ if ($cfg{'cipher'} ne "yeast") {
 
 # set additional defaults if missing
 # -------------------------------------
+$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)/, @ARGV)); # command with headers by default
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
     $cfg{'legacy'}  = "quick";
@@ -4006,7 +4076,7 @@ if (_is_do('ciphers')) {
 foreach $host (@{$cfg{'hosts'}}) {
     $port = ($cfg{'port'}||"");
     _y_CMD("host{ " . ($host||"") . ":" . $port);
-    print _subst($text{'out-target'}, "$host:$port");
+    printheader(_subst($text{'out-target'}, "$host:$port"));
 
     # prepare DNS stuff
     my $rhost = "";
@@ -4145,14 +4215,14 @@ foreach $host (@{$cfg{'hosts'}}) {
             print_cipherdefault($legacy, $version, $host) if ($legacy eq 'sslscan');
         }
         printruler() if ($quick == 0);
-        print "\n" . _subst($text{'out-summary'}, "");
+        printheader("\n" . _subst($text{'out-summary'}, ""));
         foreach my $version (@{$cfg{'version'}}) {
             printcheck($legacy, $check_conn{$version}->{txt}, $check_conn{$version}->{val});
         }
         printruler() if ($quick == 0);
     }
 
-    print $text{'out-quick'} if ($quick == 1);
+    printheader($text{'out-quick'}) if ($quick == 1);
 
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ..");
@@ -4228,9 +4298,9 @@ foreach $host (@{$cfg{'hosts'}}) {
     _trace_1arr('%data');
     _y_CMD(" do:" . join(" ", @{$cfg{'do'}})) if ($info == 1);
     if ($quick == 1) {
-        print $text{'out-info'};
+        printheader($text{'out-info'});
     } else {
-        print $text{'out-infos'};
+        printheader($text{'out-infos'});
     }
     foreach $key (@{$cfg{'do'}}) {
 # ToDo: Spezialbehandlung fuer: fingerprint, verify, altname
@@ -4239,7 +4309,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
         next if ($key =~ m/^modulus$/    and $verbose == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($key =~ m/^(beast|breach|chain|crime|extensions|pfs|dump|quick|sni|time|s_client|hostname|subject_ev|rc4|bsi)$/);
+        next if ($key =~ m/^(beast|breach|chain|crime|pfs|dump|quick|sni|time|s_client|hostname|subject_ev|rc4|bsi)$/);
 # ToDo: }
         _y_CMD("+ " . $key);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
@@ -4641,7 +4711,12 @@ with the I<+text> command.
 
 =head3 +extensions
 
-    Show certificate's X509V3 extensions.
+    Show certificate's X509v3 extensions.
+
+    Folowing command for some extension details are also available:
+    "+ext_authority" "+ext_authorityid" "+ext_constrains" "+ext_cps"
+    "+ext_cps_policy" "+ext_cps_cps"  "+ext_subjectkeyid" "+ext_crl"
+    "+ext_crl_crL" "+ext_keyusage" "+ext_extkeyusage" "+ext_certtype"
 
 =head3 +fingerprint
 
@@ -5047,6 +5122,15 @@ Options used for  I<+check>  command:
                   printed data.
     hex           convert some data to hex: 2 bytes separated by :
 
+=head3 --header
+
+  Print formatting header. Defaultl for  I<+check>,  I<+info>,  I<+quick>.
+
+=head3 --no-header
+
+  Do not print formatting header, even for  I<+check>,  I<+info>,  I<+quick>.
+  Usefull if raw output should be passed to other programs.
+
 =begin comment
 
 **NOT YET IMPLEMENTED**
@@ -5425,6 +5509,8 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
     Must have "CRLDistributionPoint" or "AuthorityInfoAccess".
 
+    MUST have "OCSP URL".
+
     "PrivateKeyUsage" must not exceed three years for certificate and
     must not exceed five years for CA certificates.
 
@@ -5649,6 +5735,10 @@ Port as specified with I<--port> options is the same for all targets.
 
 The used  L<timeout(1)>  command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
+
+Following strings should not be used in any value for options:
+  C<+check>, C<+info>, C<+quick>, C<--header>
+as they my trigger the  -I<--header>  option unintentional.
 
 =head2 Problems and Errors
 
@@ -6202,7 +6292,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.22
+@(#) 13.11.25
 
 =head1 AUTHOR
 
