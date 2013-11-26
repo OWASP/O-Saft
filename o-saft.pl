@@ -35,7 +35,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.156 13/11/20 23:02:21";
+my  $SID    = "@(#) yeast.pl 1.161 13/11/26 20:49:26";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -132,6 +132,7 @@ if ($me =~/\.cgi$/) {
 #!#   %cmd            - configuration for external commands
 #!#   %cfg            - configuration for commands and options
 #!#   %text           - configuration for message texts
+#!#   %score          - scoring values
 #!#   %ciphers_desc   - description of %ciphers data structure
 #!#   %ciphers        - our ciphers
 #!#   %cipher_names   - (hash)map of cipher constant-names to names
@@ -200,7 +201,6 @@ my %data    = (     # values from Net::SSLinfo, will be processed in print_datal
     'sigkey_algorithm'=>{'val'=> sub { Net::SSLinfo::signame(       $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
     'sigkey_value'  => {'val' => sub {    __SSLinfo('sigkey_value', $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
     'trustout'      => {'val' => sub { Net::SSLinfo::trustout(      $_[0], $_[1])}, 'txt' => "Certificate trusted"},
-    #'extensions'    => {'val' => sub { Net::SSLinfo::extensions(    $_[0], $_[1])}, 'txt' => "Certificate extensions"},
     'extensions'    => {'val' => sub { __SSLinfo('extensions',      $_[0], $_[1])}, 'txt' => "Certificate extensions"},
     'ext_authority' => {'val' => sub { __SSLinfo('ext_authority',   $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
     'ext_authorityid'=>{'val' => sub { __SSLinfo('ext_authorityid', $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
@@ -214,6 +214,7 @@ my %data    = (     # values from Net::SSLinfo, will be processed in print_datal
     'ext_keyusage'  => {'val' => sub { __SSLinfo('ext_keyusage',    $_[0], $_[1])}, 'txt' => "Certificate extensions Key Usage"},
     'ext_extkeyusage'=>{'val' => sub { __SSLinfo('ext_extkeyusage', $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
     'ext_certtype'  => {'val' => sub { __SSLinfo('ext_certtype',    $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
+    'ext_issuer'    => {'val' => sub { __SSLinfo('ext_issuer',      $_[0], $_[1])}, 'txt' => "Certificate extensions Issuer Alternative Name"},
     'ocsp_uri'      => {'val' => sub { Net::SSLinfo::ocsp_uri(      $_[0], $_[1])}, 'txt' => "Certificate OCSP Responder URL"},
     'ocspid'        => {'val' => sub { Net::SSLinfo::ocspid(        $_[0], $_[1])}, 'txt' => "Certificate OCSP subject, public key hash"},
     'subject_hash'  => {'val' => sub { Net::SSLinfo::subject_hash(  $_[0], $_[1])}, 'txt' => "Certificate Subject Name hash"},
@@ -255,10 +256,10 @@ my %data    = (     # values from Net::SSLinfo, will be processed in print_datal
 #ah#    'hsts_pins'     => {'val' => sub { return 2592999; }, 'txt' => "HTTP: STS pins"},
     #------------------+---------------------------------------+-------------------------------------------------------
     # following are used for checkdates() only, they must not be a command!
-    # they and are not printed with +info or +check
-    'valid-years'   => {'val' => "", 'txt' => "certificate validity in years"},
-    'valid-months'  => {'val' => "", 'txt' => "certificate validity in months"},
-    'valid-days'    => {'val' => "", 'txt' => "certificate validity in days"},   # approx. value, accurate if < 30
+    # they are not printed with +info or +check; values are integer
+    'valid-years'   => {'val' =>  0, 'txt' => "certificate validity in years"},
+    'valid-months'  => {'val' =>  0, 'txt' => "certificate validity in months"},
+    'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},   # approx. value, accurate if < 30
 ); # %data
 # need s_client for: compression|expansion|selfsigned|verify|resumption|renegotiation|
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|
@@ -294,6 +295,7 @@ our %check_cert = (
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'val' => 0, 'txt' => "Certificate contains non-printable characters"},
     'crnlnull'      => {'val' => 0, 'txt' => "Certificate contains CR, NL, NULL characters"},
+    'EV-chars'      => {'val' =>"", 'txt' => "Certificate has no invalid characters in extensions"},
 # ToDo: SRP is a target feature but also named a `Certificate (TLS extension)'
 #    'srp'           => {'val' =>"", 'txt' => "Certificate has (TLS extension) authentication"},
     #------------------+-----------+------------------------------------------
@@ -327,23 +329,24 @@ our %check_cert = (
 ); # %check_cert
 
 our %check_dest = (
+    # numbers are used as prefix to force sorting of keys
     #------------------+-----------+------------------------------------------
     'SGC'           => {'val' => 0, 'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'hasSSLv2'      => {'val' =>"", 'txt' => "Target supports only safe protocols (no SSL 2.0)"},
-    'EDH'           => {'val' =>"", 'txt' => "Target supports EDH ciphers"},
-    'ADH'           => {'val' =>"", 'txt' => "Target does not accepts ADH ciphers"},
-    'NULL'          => {'val' =>"", 'txt' => "Target does not accepts NULL ciphers"},
-    'EXPORT'        => {'val' =>"", 'txt' => "Target does not accepts EXPORT ciphers"},
-    'RC4'           => {'val' =>"", 'txt' => "Target does not accepts RC4 ciphers"},
+    '2EDH'          => {'val' =>"", 'txt' => "Target supports EDH ciphers"},
+    '1ADH'          => {'val' =>"", 'txt' => "Target does not accepts ADH ciphers"},
+    '1NULL'         => {'val' =>"", 'txt' => "Target does not accepts NULL ciphers"},
+    '1EXPORT'       => {'val' =>"", 'txt' => "Target does not accepts EXPORT ciphers"},
+    '1RC4'          => {'val' =>"", 'txt' => "Target does not accepts RC4 ciphers"},
     'closure'       => {'val' => 0, 'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'val' => 0, 'txt' => "Target supports fallback from TLSv1.1"},
     'order'         => {'val' => 0, 'txt' => "Target honors client's cipher order"},
-    'ISM'           => {'val' =>"", 'txt' => "Target supports ISM compliant ciphers"},
-    'PCI'           => {'val' =>"", 'txt' => "Target supports PCI compliant ciphers"},
-    'FIPS'          => {'val' =>"", 'txt' => "Target supports FIPS-140 compliant ciphers"},
-    'TR-02102'      => {'val' =>"", 'txt' => "Target supports TR-02102-2 compliant ciphers"},
-    'BSI-TR-02102+' => {'val' =>"", 'txt' => "Target is strict BSI TR-02102-2 compliant"},
-    'BSI-TR-02102-' => {'val' =>"", 'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
+    '3ISM'          => {'val' =>"", 'txt' => "Target supports ISM compliant ciphers"},
+    '3PCI'          => {'val' =>"", 'txt' => "Target supports PCI compliant ciphers"},
+    '3FIPS'         => {'val' =>"", 'txt' => "Target supports FIPS-140 compliant ciphers"},
+    '3TR-02102'     => {'val' =>"", 'txt' => "Target supports TR-02102-2 compliant ciphers"},
+    '4BSI-TR-02102+'=> {'val' =>"", 'txt' => "Target is strict BSI TR-02102-2 compliant"},
+    '4BSI-TR-02102-'=> {'val' =>"", 'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'resumption'    => {'val' =>"", 'txt' => "Target supports resumption"},
     'renegotiation' => {'val' =>"", 'txt' => "Target supports renegotiation"},
     'STS'           => {'val' =>"", 'txt' => "Target sends STS header"},
@@ -465,7 +468,7 @@ our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
 #   '1.3.6.1'                   => {iso(1) org(3) dod(6) iana(1)}
     '1.3.6.1'                   => {'val' => "", 'txt' => "Internet OID"},
     '1.3.6.1.5.5.7.1.1'         => {'val' => "", 'txt' => "Authority Information Access"}, # authorityInfoAccess
-    '1.3.6.1.5.5.7.1.12'        => {'val' => "", 'txt' => "undef"},
+    '1.3.6.1.5.5.7.1.12'        => {'val' => "", 'txt' => "<<undef>>"},
     '1.3.6.1.5.5.7.1.14'        => {'val' => "", 'txt' => "Proxy Certification Information"},
     '1.3.6.1.5.5.7.3.1'         => {'val' => "", 'txt' => "Server Authentication"},
     '1.3.6.1.5.5.7.3.2'         => {'val' => "", 'txt' => "Client Authentication"},
@@ -475,10 +478,13 @@ our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     '1.3.6.1.5.5.7.3.6'         => {'val' => "", 'txt' => "IPSec tunnel"},
     '1.3.6.1.5.5.7.3.7'         => {'val' => "", 'txt' => "IPSec user"},
     '1.3.6.1.5.5.7.3.8'         => {'val' => "", 'txt' => "Timestamping"},
+    '1.3.6.1.4.1.11129.2.5.1'   => {'val' => "", 'txt' => "<<undef>>"}, # Certificate Policy?
+    '1.3.6.1.4.1.14370.1.6'     => {'val' => "", 'txt' => "<<undef>>"}, # Certificate Policy?
     '1.3.6.1.4.1.311.10.3.3'    => {'val' => "", 'txt' => "Microsoft Server Gated Crypto"},
     '1.3.6.1.4.1.311.10.11'     => {'val' => "", 'txt' => "Microsoft Server: EV additional Attributes"},
     '1.3.6.1.4.1.311.10.11.11'  => {'val' => "", 'txt' => "Microsoft Server: EV ??friendly name??"},
     '1.3.6.1.4.1.311.10.11.83'  => {'val' => "", 'txt' => "Microsoft Server: EV ??root program??"},
+    '1.3.6.1.4.1.4146.1.10'     => {'val' => "", 'txt' => "<<undef>>"}, # Certificate Policy?
     '2.16.840.1.113730.4.1'     => {'val' => "", 'txt' => "Netscape SGC"},
     # EV: OIDs used in EV Certificates
     '2.5.4.10'                  => {'val' => "", 'txt' => "EV Certificate: subject:organizationName"},
@@ -518,6 +524,9 @@ our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     '2.5.29.19'                 => {'val' => "", 'txt' => "subject:basicConstraints"},     # Basic constraints
     '2.5.29.31'                 => {'val' => "", 'txt' => "subject:crlDistributionPoints"},# CRL distribution points
     '2.5.29.32'                 => {'val' => "", 'txt' => "subject:certificatePolicies"},  # Certificate policy
+    '2.16.840.1.113733.1.7.23.6'=> {'val' => "", 'txt' => "<<undef>>"}, # Certificate Policy?
+    '2.16.840.1.113733.1.7.48.1'=> {'val' => "", 'txt' => "<<undef>>"}, # Certificate Policy?
+    '2.16.840.1.113733.1.7.54'  => {'val' => "", 'txt' => "<<undef>>"}, # Certificate Policy?
     '0.9.2342.19200300.100.1.3' => {'val' => "", 'txt' => "subject:mail"},
 ); # %data_oid
 
@@ -546,16 +555,17 @@ our %shorttexts = (
     'rootcert'      => "Not root CA",
     'OCSP'          => "OCSP supported",
     'hasSSLv2'      => "No SSL 2.0",
-    'ADH'           => "No ADH ciphers",
-    'EDH'           => "EDH ciphers",
-    'NULL'          => "No NULL ciphers",
-    'EXPORT'        => "No EXPORT ciphers",
-    'RC4'           => "No RC4 ciphers",
+    '1ADH'          => "No ADH ciphers",
+    '2EDH'          => "EDH ciphers",
+    '1NULL'         => "No NULL ciphers",
+    '1EXPORT'       => "No EXPORT ciphers",
+    '1RC4'          => "No RC4 ciphers",
     'SGC'           => "SGC supported",
     'CPS'           => "CPS supported",
     'CRL'           => "CRL supported",
     'EV+'           => "Strict EV supported",
     'EV-'           => "Lazy EV supported",
+    'EV-chars'      => "NO invalid characters in extensions",
     'BEAST-default' => "Default cipher safe to BEAST",
     'BEAST'         => "Supported cipher safe to BEAST",
     'BREACH'        => "Safe to BREACH",
@@ -567,13 +577,13 @@ our %shorttexts = (
     'LZO'           => "GnuTLS extension",
     'OpenPGP'       => "OpenPGP extension",
     'order'         => "Client's cipher order",
-    'ISM'           => "ISM compliant",
-    'PCI'           => "PCI compliant",
-    'PFS'           => "PFS supported",
-    'FIPS'          => "FIPS-140 compliant",
-    'TR-02102'      => "TR-02102-2 compliant",
-    'BSI-TR-02102+' => "Strict BSI TR-02102-2 compliant",
-    'BSI-TR-02102-' => "Lazy BSI TR-02102-2 compliant",
+    '3ISM'          => "ISM compliant",
+    '3PCI'          => "PCI compliant",
+    '3PFS'          => "PFS supported",
+    '3FIPS'         => "FIPS-140 compliant",
+    '3TR-02102'     => "TR-02102-2 compliant",
+    '4BSI-TR-02102+'=> "Strict BSI TR-02102-2 compliant",
+    '4BSI-TR-02102-'=> "Lazy BSI TR-02102-2 compliant",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
     'selfsigned'    => "self-signed",
@@ -842,6 +852,7 @@ our %cfg = (
                         ext_authority ext_authorityid ext_constrains ext_certtype
                         ext_cps ext_cps_policy ext_cps_cps ext_subjectkeyid 
                         ext_crl ext_crl_crl ext_keyusage ext_extkeyusage
+                        ext_issuer
                        ),
                     # add alias commands
                        qw(
@@ -985,7 +996,8 @@ our %cfg = (
         '1.3.6.1.4.1.311.60.2.1.2' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.2|jurisdictionOfIncorporationStateOrProvinceName)',
         '1.3.6.1.4.1.311.60.2.1.3' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.3|jurisdictionOfIncorporationCountryName)',
 
-        'chars'     => '([a-zA-Z0-9,./:= ?+\'()-])',        # valid characters in EV definitions
+        'EV-chars'  =>  '[a-zA-Z0-9,./:= @?+\'()-]',        # valid characters in EV definitions
+        'notEV-chars'=>'[^a-zA-Z0-9,./:= @?+\'()-]',        # not valid characters in EV definitions
 
     },
     'compliance' => {           # description of RegEx above for compliance checks
@@ -1042,9 +1054,11 @@ our %cfg = (
         '_initscore'=> 0,
         '_get_default'  => 0,
         'checkciphers'  => 0,   # not used, as it's called multiple times
-        'checktr02102'  => 0,
+        'check02102'=> 0,
         'checkdates'=> 0,
         'checksizes'=> 0,
+        'checkcert' => 0,
+        'checkdest' => 0,
         'checkhttp' => 0,
         'checksni'  => 0,
         'checkssl'  => 0,
@@ -1522,6 +1536,7 @@ my %text = (
     'no-reneg'      => " <<secure renegotiation not supported>>",
     'cert-dates'    => " <<invalid certificate date>>",
     'cert-valid'    => " <<certificate validity to large @@>>",
+    'cert-chars'    => " <<invalid charcters in @@>>",
     'wildcards'     => " <<uses wildcards:",
     'gethost'       => " <<gethostbyaddr() failed>>",
     'out-target'    => "\n==== Target: @@ ====\n",
@@ -2121,20 +2136,30 @@ sub __SSLinfo($$$) {
     $val =  Net::SSLinfo::extensions(       $_[0], $_[1]) if ($cmd =~ /ext(?:ensions|_)/);
     if ($cmd =~ m/ext_/) {
         # all following ar part of Net::SSLinfo::extensions(), now extract parts
+        # The extension section in the certificate starts with
+        #    X509v3 extensions:
+        # then each extension starts with a string prefixed by  X509v3
+        # except following:
+        #    Authority Information Access
+        #    Netscape Cert Type
+        # these are handled in regex below which matches next extension, if any.
+        $val .= " X509";# add string to match last extenion also
+        my $rex = '\s*(.*?)(?:X509|Authority|Netscape).*';
         my $ext = $val;
-        $val =~ s#.*?Authority Information Access:\s*(.*?)(?:X509|Netscape).*#$1#ms if ($cmd eq 'ext_authority');
-        $val =~ s#.*?Authority Key Identifier:\s*(.*?)(?:X509|Netscape).*#$1#ms     if ($cmd eq 'ext_authorityid');
-        $val =~ s#.*?Basic Constraints:\s*(.*?)(?:X509|Netscape).*#$1#ms            if ($cmd eq 'ext_constrains');
-        $val =~ s#.*?Key Usage:\s*(.*?)(?:X509|Netscape).*#$1#ms                    if ($cmd eq 'ext_keyusage');
-        $val =~ s#.*?Subject Key Identifier:\s*(.*?)(?:X509|Netscape).*#$1#ms       if ($cmd eq 'ext_subjectkeyid');
-        $val =~ s#.*?Certificate Policies:\s*(.*?)(?:X509|Netscape).*#$1#ms         if ($cmd =~ /ext_cps/);
-        $val =~ s#.*?CPS\s*:\s*(.*)#$1#ms                if ($cmd eq 'ext_cps_cps');
-        $val =~ s#.*?Policy\s*:\s*(.*?)(?:CPS).*#$1#ims  if ($cmd eq 'ext_cps_policy');
-        $val =~ s#.*?CRL Distribution Points:\s*(.*?)(?:X509|Netscape).*#$1#ms      if ($cmd =~ /ext_crl/);
-# ToDo: following fails, reason unknown
-        #$val =~ s#.*?(URI\s*:.*)#$1#ms                   if ($cmd eq 'ext_crl_crl');
-        $val =~ s#.*?Extended Key Usage:\s*(.*?)(?:X509|Netscape).*#$1#ms           if ($cmd eq 'ext_extkeyusage');
-        $val =~ s#.*?Netscape Cert Type:\s*(.*?)(?:X509|Netscape).*#$1#ms           if ($cmd eq 'ext_certtype');
+        $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
+        $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
+        $val =~ s#.*?Basic Constraints:$rex#$1#ms               if ($cmd eq 'ext_constrains');
+        $val =~ s#.*?Key Usage:$rex#$1#ms                       if ($cmd eq 'ext_keyusage');
+        $val =~ s#.*?Subject Key Identifier:$rex#$1#ms          if ($cmd eq 'ext_subjectkeyid');
+        $val =~ s#.*?Certificate Policies:$rex#$1#ms            if ($cmd =~ /ext_cps/);
+        $val =~ s#.*?CPS\s*:\s*([^\s\n]*).*#$1#ms               if ($cmd eq 'ext_cps_cps');
+        $val =~ s#.*?Policy\s*:\s*(.*?)(?:CPS|User).*#$1#ims    if ($cmd eq 'ext_cps_policy');
+        $val =~ s#.*?CRL Distribution Points:$rex#$1#ms         if ($cmd =~ /ext_crl/);
+        $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
+        $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
+        $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
+        #$val =~ s#.*?(URI\s*:.*)#$1#ms                          if ($cmd eq 'ext_crl_crl');
+# ToDo: previous fails, reason unknown
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
     }
     if ($cmd =~ /ext(?:ensions|_)/) {
@@ -2359,19 +2384,20 @@ sub checkcipher($$) {
     # following checks add the "not compliant" or vulnerable ciphers
 
     # check weak ciphers
-    $check_dest{'NULL'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
-    $check_dest{'ADH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
-    $check_dest{'EDH'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
-    $check_dest{'EXPORT'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
-    $check_dest{'RC4'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+	#	#	#	#   #	#
+    $check_dest{'1NULL'}->{val}     .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
+    $check_dest{'1ADH'}->{val}      .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
+    $check_dest{'2EDH'}->{val}      .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
+    $check_dest{'1EXPORT'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
+    $check_dest{'1RC4'}->{val}      .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
     # check compliance
-    $check_dest{'ISM'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-    $check_dest{'PCI'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
-    $check_dest{'FIPS'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
-    $check_dest{'TR-02102'}->{val}.=_prot_cipher($ssl,$c) if ("" ne _istr02102($ssl, $c));
+    $check_dest{'3ISM'}->{val}      .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
+    $check_dest{'3PCI'}->{val}      .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
+    $check_dest{'3FIPS'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
+    $check_dest{'3TR-02102'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr02102($ssl, $c));
     # check attacks
-    $check_conn{'BEAST'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
-    $check_conn{'BREACH'}->{val}.= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
+    $check_conn{'BEAST'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
+    $check_conn{'BREACH'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     # counters
     $check_conn{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
     $check_conn{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
@@ -2445,10 +2471,12 @@ sub checkciphers($$$$$) {
         $hasecdsa= 1 if ($c =~ /EC(?:DHE|EDH)[_-]ECDSA/);
     } # foreach %hash
     _v2print("\n");
-    $check_dest{'EDH'}->{val} = "" if ($check_dest{'EDH'}->{val} ne ""); # good if we have them
+    $check_dest{'2EDH'}->{val} = "" if ($check_dest{'2EDH'}->{val} ne ""); # good if we have them
     # TR-02102-2, see 3.2.3
-    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa != 1);
-    $check_dest{'TR-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa != 1);
+    if ($check_conn{$ssl}->{val} > 0) { # check do not make sense if there're no ciphers
+        $check_dest{'3TR-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa != 1);
+        $check_dest{'3TR-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa != 1);
+    }
     $check_conn{'totals'}->{val} +=
             $check_conn{$ssl . '--?-'}->{val}  +
             $check_conn{$ssl . '-LOW'}->{val}  +
@@ -2519,42 +2547,75 @@ sub _getwilds($$) {
     # checking for SNI does not work here 'cause it destroys %data
 } # _getwilds
 
-sub checksizes($$) {
-    #? compute some lengths and count from certificate values
-    # sets %check_size, %check_cert
+sub checkcert($$) {
+    #? check certificate settings
     my ($host, $port) = @_;
-    my ($value, $regex);
-    $cfg{'done'}->{'checksizes'}++;
-    return if ($cfg{'done'}->{'checksizes'} > 1);
+    my ($value, $label, $subject, $txt);
+    $cfg{'done'}->{'checkcert'}++;
+    return if ($cfg{'done'}->{'checkcert'} > 1);
 
     # wildcards (and some sizes)
     _getwilds($host, $port);
+    # $check_cert{'hostname'}->{val} ... done in checksni()
 
-    $check_cert{'OCSP'}->{val}     = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
-    $check_cert{'rootcert'}->{val} = " " if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
-    $check_cert{'CPS'}->{val}      = " " if ($data{'ext_cps'}->{val}($host) eq "");
-    $check_cert{'CRL'}->{val}      = " " if ($data{'ext_crl'}->{val}($host) eq "");
+    $check_cert{'rootcert'}->{val}  = $data{'issuer'}->{val}($host) if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
+    #dbx# _dbx "S " .$data{'subject'}->{val}($host);
+    #dbx# _dbx "S " .$data{'issuer'}->{val}($host);
+
+    $check_cert{'OCSP'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
+    $check_cert{'CPS'}->{val}       = " " if ($data{'ext_cps'}->{val}($host) eq "");
+    $check_cert{'CRL'}->{val}       = " " if ($data{'ext_crl'}->{val}($host) eq "");
+	#	#	#	#	#
     # ToDo: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
     #$check_cert{'nonprint'}      =
     #$check_cert{'crnlnull'}      =
-    # sizes
-    $value =  $data{'PEM'}->{val}($host);
-    $check_size{'len_pembase64'}->{val} = length($value);
-    $value =~ s/(----.+----\n)//g;
-    chomp $value;
-    $check_size{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
-    $check_size{'len_subject'}->{val}   = length($data{'subject'}->{val}($host));
-    $check_size{'len_issuer'}->{val}    = length($data{'issuer'}->{val}($host));
-    $check_size{'len_CPS'}->{val}       = length($data{'ext_cps'}->{val}($host));
-    $check_size{'len_CRL'}->{val}       = length($data{'ext_crl'}->{val}($host));
-    #$check_size{'len_CRL_data'}->{val}  = length($data{'CRL'}->{val}($host));
-    $check_size{'len_OCSP'}->{val}      = length($data{'ocsp_uri'}->{val}($host));
-    #$check_size{'len_OIDs'}->{val}      = length($data{'OIDs'}->{val}($host));
-    $check_size{'len_publickey'}->{val} = $data{'modulus_len'}->{val}($host);
-    $check_size{'len_sigdump'}->{val}   = $data{'sigkey_len'}->{val}($host);
-} # checksizes
+
+    # certificate
+    if ($cfg{'verbose'} > 0) { # ToDo
+        foreach $label (qw(verify selfsigned)) {
+            #dbx# _dbx "$label : $value #";
+            $value = $data{$label}->{val}($host);
+            $check_cert{$label}->{val}   = $value if ($value eq "");
+#            $score{'check_cert'}->{val} -= _getscore($label, $value, \%check_cert);
+
+# ToDo
+#   if (_is_do('verify')) {
+#       print "";
+#       print "Hostname validity:       "      . Net::SSLinfo::verify_hostname($host, $port);
+#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
+#   }
+#
+#   if (_is_do('altname')) {
+#       print "";
+#       print "Certificate AltNames:    "      . Net::SSLinfo::altname($host, $port);
+#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
+#   }
+        }
+    }
+    $check_cert{'selfsigned'}->{val} = $data{'selfsigned'}->{val}($host);
+    $check_cert{'fp_not_MD5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+
+    # valid characters (most likely only relevant for EV)
+    #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
+    foreach $label (qw(commonName subject altname extensions ext_crl ocsp_uri)) { # CRL
+        # also (should already be part of others): CN, O, U
+        $subject =  $data{$label}->{val}($host);
+        $subject =~ s#[\r\n]##g;         # CR and NL ar most likely added by openssl
+        if ($subject =~ m#$cfg{'regex'}->{'notEV-chars'}#) {
+            $txt = _subst($text{'cert-chars'}, $label);
+            $check_cert{'EV-chars'}->{val} .= $txt;
+            $check_cert{'EV+'}->{val} .= $txt;
+            $check_cert{'EV-'}->{val} .= $txt;
+             if ($cfg{'verbose'} > 0) {
+                 $subject =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
+                 _v2print("EV:  wrong characters in $label: $subject" . "\n");
+             }
+        }
+    }
+
+} # checkcert
 
 sub checksni($$) {
     #? check if given FQDN needs to use SNI
@@ -2574,59 +2635,80 @@ sub checksni($$) {
         $check_cert{'hostname'}->{val} = "";
         $check_conn{'hostname'}->{val} = "";
     } else {
-        $check_cert{'hostname'}->{val} = $data{'cn_nossni'}->{val}; #$host;
-        $check_conn{'hostname'}->{val} = $host; # $data{'cn_nossni'}->{val}
+        $check_cert{'hostname'}->{val} = $data{'cn_nossni'}->{val} . " <> " . $host;
+        $check_conn{'hostname'}->{val} = $host . " <> " . $data{'cn_nossni'}->{val};
     }
 } # checksni
 
-sub checktr02102($$) {
+sub checksizes($$) {
+    #? compute some lengths and count from certificate values
+    # sets %check_size, %check_cert
+    my ($host, $port) = @_;
+    my ($value, $regex);
+    $cfg{'done'}->{'checksizes'}++;
+    return if ($cfg{'done'}->{'checksizes'} > 1);
+
+    checkcert($host, $port) if ($cfg{'no_cert'} == 0); # in case we missed it before
+    $value =  $data{'PEM'}->{val}($host);
+    $check_size{'len_pembase64'}->{val} = length($value);
+    $value =~ s/(----.+----\n)//g;
+    chomp $value;
+    $check_size{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
+    $check_size{'len_subject'}->{val}   = length($data{'subject'}->{val}($host));
+    $check_size{'len_issuer'}->{val}    = length($data{'issuer'}->{val}($host));
+    $check_size{'len_CPS'}->{val}       = length($data{'ext_cps'}->{val}($host));
+    $check_size{'len_CRL'}->{val}       = length($data{'ext_crl'}->{val}($host));
+    #$check_size{'len_CRL_data'}->{val}  = length($data{'CRL'}->{val}($host));
+    $check_size{'len_OCSP'}->{val}      = length($data{'ocsp_uri'}->{val}($host));
+    #$check_size{'len_OIDs'}->{val}      = length($data{'OIDs'}->{val}($host));
+    $check_size{'len_publickey'}->{val} = $data{'modulus_len'}->{val}($host);
+    $check_size{'len_sigdump'}->{val}   = $data{'sigkey_len'}->{val}($host);
+} # checksizes
+
+sub check02102($$) {
     #? check if target is compliant to BSI TR-02102-2
     # assumes that checkssl() already done
     my ($host, $port) = @_;
-    $cfg{'done'}->{'checktr02102'}++;
-    return if ($cfg{'done'}->{'checktr02102'} > 1);
-    checkssl($host, $port) if ($cfg{'done'}->{'checkssl'} < 1);
+    $cfg{'done'}->{'check02102'}++;
+    return if ($cfg{'done'}->{'check02102'} > 1);
     my $txt = "";
     #
     # description (see CHECK in pod below) ...
 
     # All checks according ciphers already done in checkciphers() and stored
-    # in $check_dest{'TR-02102'}. We need to do checks according certificate
+    # in $check_dest{'3TR-02102'}. We need to do checks according certificate
     # and protocol and fill other %check_dest values according requirements.
 
-# ToDo: _getwilds()  muss an zentraler stelle gerufen werden (evtl Bug!)
-    _getwilds($host, $port);
+    #! TR-02102-2 3.2.1 Empfohlene Cipher Suites
+    #! TR-02102-2 3.2.2 Übergangsregelungen
+    #! TR-02102-2 3.2.3 Mindestanforderungen für Interoperabilität
+    $check_dest{'4BSI-TR-02102+'}->{val} = $check_dest{'3TR-02102'}->{val}; # cipher checks are alreday done
+    $check_dest{'4BSI-TR-02102-'}->{val} = $check_dest{'3TR-02102'}->{val}; # .. for lazy check, ciphers are enough
 
-    # TR-02102-2 3.2.1 Empfohlene Cipher Suites
-    # TR-02102-2 3.2.2 Übergangsregelungen
-    # TR-02102-2 3.2.3 Mindestanforderungen für Interoperabilität
-    $check_dest{'BSI-TR-02102+'}->{val}  = $check_dest{'TR-02102'}->{val}; # cipher checks are alreday done
-    $check_dest{'BSI-TR-02102-'}->{val}  = $check_dest{'TR-02102'}->{val}; # .. for lazy check, ciphers are enough
+    #! TR-02102-2 3.3 Session Renegotation
+    $check_dest{'4BSI-TR-02102+'}->{val}.= $text{'no-reneg'}   if ($check_dest{'renegotiation'}->{val} ne "");
 
-    # TR-02102-2 3.3 Session Renegotation
-    $check_dest{'BSI-TR-02102+'}->{val} .= $text{'no-reneg'}   if ($check_dest{'renegotiation'}->{val} ne "");
-
-    # TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
+    #! TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
     $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val});
-    $check_dest{'BSI-TR-02102+'}->{val} .= $txt                if ($data{'valid-years'}->{val}  > 3);
-    $check_dest{'BSI-TR-02102+'}->{val} .= $text{'cert-dates'} if ($check_cert{'valid'}->{val} ne "");
-    $check_dest{'BSI-TR-02102+'}->{val} .= _subst($text{'EV-miss'}, 'CRL')  if ($check_cert{'CRL'}->{val}   ne "");
-    $check_dest{'BSI-TR-02102+'}->{val} .= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host)  eq "");
-    $check_dest{'BSI-TR-02102+'}->{val} .= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
-    $check_dest{'BSI-TR-02102+'}->{val} .= $text{'wildcards'} . $check_cert{'wildcard'}->{val} .">>" if ($check_cert{'wildcard'}->{val} ne "");
+    $check_dest{'4BSI-TR-02102+'}->{val}.= $txt                if ($data{'valid-years'}->{val}  > 3);
+    $check_dest{'4BSI-TR-02102+'}->{val}.= $text{'cert-dates'} if ($check_cert{'valid'}->{val} ne "");
+    $check_dest{'4BSI-TR-02102+'}->{val}.= _subst($text{'EV-miss'}, 'CRL')  if ($check_cert{'CRL'}->{val}   ne "");
+    $check_dest{'4BSI-TR-02102+'}->{val}.= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host)  eq "");
+    $check_dest{'4BSI-TR-02102+'}->{val}.= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
+    $check_dest{'4BSI-TR-02102+'}->{val}.= $text{'wildcards'} . $check_cert{'wildcard'}->{val} .">>" if ($check_cert{'wildcard'}->{val} ne "");
 
-    # TR-02102-2 3.5 Domainparameter und Schlüssellängen
+    #! TR-02102-2 3.5 Domainparameter und Schlüssellängen
 # ToDo:
 
-    # TR-02102-2 3.6 Schlüsselspeicherung
-    # TR-02102-2 3.7 Umgang mit Ephemeralschlüsseln
-    # TR-02102-2 3.8 Zufallszahlen
+    #! TR-02102-2 3.6 Schlüsselspeicherung
+    #! TR-02102-2 3.7 Umgang mit Ephemeralschlüsseln
+    #! TR-02102-2 3.8 Zufallszahlen
         # these checks are not possible from remote
 
     # ToDo: certificate (chain) validation check
     # ToDo: cipher bit length check
 
-} # checktr02102
+} # check02102
 
 sub checkev($$) {
     #? check if certificate is EV-SSL
@@ -2677,6 +2759,7 @@ sub checkev($$) {
     my $cn      = $data{'cn'}->{val}($host);
     my $alt     = $data{'altname'}->{val}($host);
     my $txt     = "";
+    my $key     = "";
     # required OID
     foreach $oid (qw(
         1.3.6.1.4.1.311.60.2.1.1   1.3.6.1.4.1.311.60.2.1.3
@@ -2739,82 +2822,31 @@ sub checkev($$) {
         $check_cert{'EV+'}->{val} .= $txt;
         _v2print("EV: " . $txt . "\n");
     }
+    # valid characters already don in checkcert()
+
     # ToDo: wildcard no, SAN yes
     # ToDo: cipher 2048 bit?
     # ToDo: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
     # ToDo: Scoring: 100 EV+SGC; 80 EV; 70 EV-; 50 OV; 30 DV
 } # checkev
 
-sub checkssl($$) {
-    #? SSL checks
+sub checkdest($$) {
+    #? check anything related to target and connection, scores also default cipher
     my ($host, $port) = @_;
     my $ciphers = shift;
-    $cfg{'done'}->{'checkssl'}++;
-    return if ($cfg{'done'}->{'checkssl'} > 1);
-# ToDo: needs to be modularized
+    my ($value, $label, $ssl, $cipher);
+    $cfg{'done'}->{'checkdest'}++;
+    return if ($cfg{'done'}->{'checkdest'} > 1);
 
-    my ($ssl, $label, $cipher, $value, $regex);
-
-    # compliance checks are be done in checkciphers() as they all depend on ciphers
-    # done in checkciphers(): NULL, EDH, EXPORT, ISM, PCI, FIPS, BEAST
+    checksni($host, $port);     # set checks according hostname
+    $check_conn{'reversehost'}->{val}   = $host . " <> " . $cfg{'rhost'} if ($host ne $cfg{'rhost'});
+# ToDo: previous setting depends on $cfg{'usedns'}
+    $check_conn{'IP'}->{val}            = $cfg{'IP'};
 
     if ($cfg{'SSLv2'} == 0) {
-        $check_dest{'hasSSLv2'}->{val}   = '<test disabled>' if ($cfg{'SSLv2'} == 0);
+        $check_dest{'hasSSLv2'}->{val}   = '<<test disabled>>' if ($cfg{'SSLv2'} == 0);
     } else {
         $check_dest{'hasSSLv2'}->{val}   = '!' if ($cfg{'nullssl2'} == 1); # SSLv2 enabled, but no ciphers
-    }
-
-    # SNI, wildcards and some sizes
-    checksizes($host, $port);
-    # check for SNI
-    checksni($host, $port);
-    # check certificate dates (since, until, exired)
-    checkdates($host, $port);
-    # check for EV
-    checkev($host, $port);
-
-    # vulnerabilities
-    $check_conn{'CRIME'}->{val} = _iscrime($data{'compression'}->{val}($host));
-    foreach $label (qw(resumption renegotiation)) {
-        $value = $data{$label}->{val}($host);
-        $check_dest{$label}->{val}   = $value if ($value eq "");
-    }
-
-    # certificate
-    if ($cfg{'verbose'} > 0) { # ToDo
-        foreach $label (qw(verify selfsigned)) {
-            #dbx# _dbx "$label : $value #";
-            $value = $data{$label}->{val}($host);
-            $check_cert{$label}->{val}   = $value if ($value eq "");
-#            $score{'check_cert'}->{val} -= _getscore($label, $value, \%check_cert);
-
-# ToDo
-#   if (_is_do('verify')) {
-#       print "";
-#       print "Hostname validity:       "      . Net::SSLinfo::verify_hostname($host, $port);
-#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
-#   }
-#
-#   if (_is_do('altname')) {
-#       print "";
-#       print "Certificate AltNames:    "      . Net::SSLinfo::altname($host, $port);
-#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
-#   }
-        }
-    }
-    $check_cert{'selfsigned'}->{val} = $data{'selfsigned'}->{val}($host);
-    $check_cert{'fp_not_MD5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
-    $check_conn{'reversehost'}->{val}= $cfg{'rhost'}        if ($host ne $cfg{'rhost'});
-        # ToDo: previous setting depends on $cfg{'usedns'}
-
-    # check certificate extensions ==> done in checksizes()
-
-    # check target specials
-    foreach $label (qw(krb5 psk_hint psk_identity srp master_key session_id session_ticket)) {
-        $value = $data{$label}->{val}($host);
-        $check_dest{$label}->{val}   = " " if ($value eq "");
-        # if supported we have a value
-	# ToDo: see ZLIB also (seems to be wrong currently)
     }
 
     # check default cipher
@@ -2837,11 +2869,55 @@ sub checkssl($$) {
         $check_conn{'BEAST-default'}->{val} .= _prot_cipher($ssl, $cipher) if ("" ne _isbeast($ssl, $cipher));
         $check_dest{'PFS'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
-    $cfg{'no_cert_txt'} = " " if ($cfg{'no_cert_txt'} eq ""); # ToDo: quick&dirty to avoid "yes" results
+
+    # vulnerabilities
+    $check_conn{'CRIME'}->{val} = _iscrime($data{'compression'}->{val}($host));
+    foreach $label (qw(resumption renegotiation)) {
+        $value = $data{$label}->{val}($host);
+        $check_dest{$label}->{val}   = $value if ($value eq "");
+    }
+
+    # check target specials
+    foreach $label (qw(krb5 psk_hint psk_identity srp master_key session_id session_ticket)) {
+        $value = $data{$label}->{val}($host);
+        $check_dest{$label}->{val}   = " " if ($value eq "");
+        # if supported we have a value
+	# ToDo: see ZLIB also (seems to be wrong currently)
+    }
+} # checkdest
+
+sub checkssl($$) {
+    #? SSL checks
+    my ($host, $port) = @_;
+    my $ciphers = shift;
+    my ($value, $label);
+    $cfg{'done'}->{'checkssl'}++;
+    return if ($cfg{'done'}->{'checkssl'} > 1);
+
+    $cfg{'no_cert_txt'} = "<<N/A as --no-cert in use>>" if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
+    if ($cfg{'no_cert'} == 0) {
+        # all checks based on certificate can't be done if there was no cert, obviously
+        checkcert( $host, $port);   # SNI, wildcards and certificate
+        checkdates($host, $port);   # check certificate dates (since, until, exired)
+        checkev(   $host, $port);   # check for EV
+        check02102($host, $port);   # check for BSI TR-02102-2
+        checksni(  $host, $port);   # check for SNI
+        checksizes($host, $port);   # some sizes
+    } else {
+        $check_dest{'4BSI-TR-02102+'}->{val} = $cfg{'no_cert_txt'};
+        $check_dest{'4BSI-TR-02102-'}->{val} = $cfg{'no_cert_txt'};
+    }
+
+    # some checks accoring ciphers and compliance are done in checkciphers()
+    # and check02102(); some more are done in checkhttp()
+    # now do remaining for %check_conn, %check_dest
+        checkdest( $host, $port);
+
+    # scoring
     foreach $label (sort keys %check_cert) {
         $value = $check_cert{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
-        $value = $cfg{'no_cert_txt'} if ($cfg{'no_cert'} != 0);
+        $value = $cfg{'no_cert_txt'} if ($cfg{'no_cert'} > 0);
         $score{'check_cert'}->{val} -= _getscore($label, $value, \%check_cert);
     }
     foreach $label (sort keys %check_dest) {
@@ -2854,22 +2930,20 @@ sub checkssl($$) {
     foreach $label (sort (keys %check_conn)) {
         next if ($label =~ /^\s*$/);                # lazy programming :)
         next if ($label =~ /^(SSLv|TLSv|default|IP)/); # already printed
-        next if (($label eq 'hostname') and ($cfg{'no_cert'} != 0));
+        next if (($label eq 'hostname') and ($cfg{'no_cert'} > 0));
+# ToDo: next if BSI-* and no_cert
         $value = $check_conn{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
         $score{'check_conn'}->{val} -= _getscore($label, $value, \%check_conn);
     }
-    # check for BSI TR-02102-2
-    checktr02102($host, $port);
 
     if ($cfg{'verbose'} > 0) {
 # ToDo: folgende Checks implementieren
         foreach $label (qw(verify_hostname verify_altname verify valid fingerprint modulus_len sigkey_len)) {
             #_trace_1key($label); # not necessary, done in print_dataline()
-# ToDo: nicht sinnvoll wenn $cfg{'no_cert'} != 0
+# ToDo: nicht sinnvoll wenn $cfg{'no_cert'} > 0
         }
     }
-#}
 
 } #checkssl
 
@@ -3390,7 +3464,7 @@ sub printssl($$) {
     foreach $label (sort keys %check_cert) {# print certificate checks
         $value = $check_cert{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
-        $value = $cfg{'no_cert_txt'} if ($cfg{'no_cert'} != 0);
+        $value = $cfg{'no_cert_txt'} if ($cfg{'no_cert'} > 0);
         _trace_1key($label);
         printcheck($legacy, $check_cert{$label}->{txt}, _setvalue($value));
     }
@@ -3399,6 +3473,7 @@ sub printssl($$) {
         next if ($label =~ /^\s*$/);                # lazy programming :)
         next if ($label =~ /^(STSlocation|STSrefresh)/); # not yet important
         $value = $check_dest{$label}->{val};
+# ToDo: next if BSI-* and no_cert
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
         _trace_1key($label);
         printcheck($legacy, $check_dest{$label}->{txt}, _setvalue($value));
@@ -3407,7 +3482,7 @@ sub printssl($$) {
     foreach $label (sort (keys %check_conn)) {# print connection checks
         next if ($label =~ /^\s*$/);                # lazy programming :)
         next if ($label =~ /^(SSLv|TLSv|default|IP)/); # already printed
-        next if (($label eq 'hostname') and ($cfg{'no_cert'} != 0));
+        next if (($label eq 'hostname') and ($cfg{'no_cert'} > 0));
         $value = $check_conn{$label}->{val};
         next if ($value eq 0);                      # NOT YET IMPLEMEMNTED
         _trace_1key($label);
@@ -4091,7 +4166,6 @@ foreach $host (@{$cfg{'hosts'}}) {
     if ($cfg{'usedns'} == 1) {  # ToDo: following settings only with --dns
         $cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET);
         $cfg{'rhost'}   = $fail if ($? != 0);
-        $check_conn{'IP'}->{val}            = $cfg{'IP'}; # ToDo: wrong place to store IP
     }
     if ($cfg{'usedns'} == 1) {
         my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
@@ -4271,13 +4345,13 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     if (_is_do('bsi')) {
         _y_CMD("+bsi");
-        # checktr02102($host, $port); # no need to call, as already done in checkssl
+        # checr02102($host, $port); # no need to call, as already done in checkssl
          print_dataline($legacy, 'before', $data{before}->{val});
          print_dataline($legacy, 'after',  $data{after}->{val});
         foreach $key (qw(valid CRL)) {
             printcheck($legacy, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));
         }
-        foreach $key (qw(RC4 renegotiation TR-02102 BSI-TR-02102+ BSI-TR-02102-)) {
+        foreach $key (qw(RC4 renegotiation 3TR-02102 4BSI-TR-02102+ 4BSI-TR-02102-)) {
             printcheck($legacy, $check_dest{$key}->{txt}, _setvalue($check_dest{$key}->{val}));
         }
     }
@@ -4717,6 +4791,7 @@ with the I<+text> command.
     "+ext_authority" "+ext_authorityid" "+ext_constrains" "+ext_cps"
     "+ext_cps_policy" "+ext_cps_cps"  "+ext_subjectkeyid" "+ext_crl"
     "+ext_crl_crL" "+ext_keyusage" "+ext_extkeyusage" "+ext_certtype"
+    "+ext_issuer"
 
 =head3 +fingerprint
 
@@ -5716,6 +5791,11 @@ Sometimes the program terminates with a  `Segmentation fault'.  This
 mainly happens if the target doesn't return certificate information.
 If so, the  I<--no-cert>  option may help.
 
+=head2 **WARNING: unknown result from openssl; ignored at ...
+
+This most likely occours when the  openssl executable is used with a
+very slow connection. Reason is a conncetion timeout.
+Try to use  I<--timout=3>  option.
 
 =head1 LIMITATIONS
 
@@ -6292,7 +6372,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.25
+@(#) 13.11.29
 
 =head1 AUTHOR
 
@@ -6315,8 +6395,6 @@ TODO
   * implement check for Lucky 13 vulnerability
 
   * implement TLSv1.2 checks
-
-  * improve checkssl()
 
   * useSNI funktioniert nicht sauber in Net::SSLinfo, Einstieg siehe 
     # following check useful with SNI only
