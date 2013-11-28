@@ -35,7 +35,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.161 13/11/26 20:49:26";
+my  $SID    = "@(#) yeast.pl 1.162 13/11/28 22:47:19";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -160,14 +160,13 @@ my $verbose = 0;    # verbose mode used in main
 my $info    = 0;    # set to 1 if +info  or +sni_check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my @results = ();   # list of checked ciphers: [SSL-Version, ciper suite name, yes|no]
-my %data    = (     # values from Net::SSLinfo, will be processed in print_dataline()
+our %data   = (     # values from Net::SSLinfo, will be processed in print_dataline()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
     #!# +command                 value from Net::SSLinfo::*()                                label to be printed
     #!#----------------+-----------------------------------------------------------+-----------------------------------
-    'cn_nossni'     => {'val' => "",                                                'txt' => "Certificate CN without SNI"},
+    'cn_nosni'      => {'val' => "",                                                'txt' => "Certificate CN without SNI"},
     'certificate'   => {'val' => sub { Net::SSLinfo::pem(           $_[0], $_[1])}, 'txt' => "Certificate PEM:\n"},
     'pem'           => {'val' => sub { Net::SSLinfo::pem(           $_[0], $_[1])}, 'txt' => "Certificate PEM:\n"},
-    'PEM'           => {'val' => sub { Net::SSLinfo::pem(           $_[0], $_[1])}, 'txt' => "Certificate PEM:\n"},
     'text'          => {'val' => sub { Net::SSLinfo::text(          $_[0], $_[1])}, 'txt' => "Certificate PEM decoded:\n"},
     'cn'            => {'val' => sub { Net::SSLinfo::cn(            $_[0], $_[1])}, 'txt' => "Certificate Common Name"},
     'commonName'    => {'val' => sub { Net::SSLinfo::cn(            $_[0], $_[1])}, 'txt' => "Certificate Common Name"},
@@ -279,7 +278,7 @@ our %check_cert = (
     'fp_not_MD5'    => {'val' =>"", 'txt' => "Certificate Fingerprint is not MD5"},
     'valid'         => {'val' =>"", 'txt' => "Certificate is valid"},
     'expired'       => {'val' =>"", 'txt' => "Certificate is not expired"},
-    'hostname'      => {'val' =>"", 'txt' => "Certificate is valid according given hostname"},
+    'certfqdn'      => {'val' =>"", 'txt' => "Certificate is valid according given hostname"},
     'wildhost'      => {'val' =>"", 'txt' => "Certificate's wilcard does not match hostname"},
     'wildcard'      => {'val' =>"", 'txt' => "Certificate does not contain wildcards"},
     'rootcert'      => {'val' =>"", 'txt' => "Certificate is not root CA"},
@@ -547,8 +546,9 @@ our %shorttexts = (
     'IP'            => "IP for hostname",
     'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
+    'hostname'      => "Nostname matches Subject",
     'expired'       => "Not expired",
-    'hostname'      => "Valid for hostname",
+    'certfqdn'      => "Valid for hostname",
     'wildhost'      => "Wilcard for hostname",
     'wildcard'      => "No wildcards",
     'SNI'           => "Not SNI based",
@@ -579,13 +579,23 @@ our %shorttexts = (
     'order'         => "Client's cipher order",
     '3ISM'          => "ISM compliant",
     '3PCI'          => "PCI compliant",
-    '3PFS'          => "PFS supported",
+    'PFS'           => "PFS supported",
     '3FIPS'         => "FIPS-140 compliant",
     '3TR-02102'     => "TR-02102-2 compliant",
     '4BSI-TR-02102+'=> "Strict BSI TR-02102-2 compliant",
     '4BSI-TR-02102-'=> "Lazy BSI TR-02102-2 compliant",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
+    'STS'           => "STS header",
+    'STSmaxage'     => "STS long max-age",
+    'STSsubdom'     => "STS includeSubdomain",
+    'STSpins'       => "STS certificate pin",
+    'STSlocation'   => "STS and Location header",
+    'STSrefresh'    => "STS and Refresh header",
+    'HTTP_https'    => "Redirects HTTP",
+    'HTTP_STS'      => "Redirects without STS",
+    'HTTP_fqdn'     => "Redirects to same host",
+    'HTTP_301'      => "Redirects with 301",
     'selfsigned'    => "self-signed",
     'verify'        => "Chain",
     'nonprint'      => "non-printables",
@@ -611,14 +621,16 @@ our %shorttexts = (
     'len_altname'   => "Size altname",
     'len_publickey' => "Size pubkey",
     'len_sigdump'   => "Size signature key",
+    'len_chain'     => "Size Certificate Chain",
     'cnt_altname'   => "Count altname",
     'cnt_wildcard'  => "Count wildcards",
+    'cnt_chaindepth'=> "Count Chain Depth",
+    'cnt_ciphers'   => "Count Ciphers",
     #------------------+------------------------------------------------------
     # %data +command    short label text
     #------------------+------------------------------------------------------
     'certificate'   => "PEM",
     'pem'           => "PEM",
-    'PEM'           => "PEM",
     'text'          => "PEM decoded",
     'cn'            => "Common Name (CN)",
     'commonName'    => "Common Name (CN)",
@@ -637,6 +649,7 @@ our %shorttexts = (
     'before'        => "Valid since",
     'after'         => "Valid until",
     'expire'        => "Valid until",
+    'extensions'    => "Extensions",
     'aux'           => "Trust",
     'email'         => "Email",
     'pubkey'        => "Public Key",
@@ -650,6 +663,7 @@ our %shorttexts = (
     'sigdump'       => "Signature (hexdump)",
     'sigkey_len'    => "Signature key length",
     'sigkey_value'  => "Signature key value",
+    'sigkey_algorithm'=>"Signature Algorithm",
     'trustout'      => "Trusted",
     'ocsp_uri'      => "OCSP URL",
     'ocspid'        => "OCSP hashs",
@@ -676,6 +690,7 @@ our %shorttexts = (
     'http_location' => "HTTP Location header",
     'http_refresh'  => "HTTP Refresh header",
     'http_sts'      => "HTTP STS header",
+    'http_301'      => "HTTP redirects with 301",
     #------------------+------------------------------------------------------
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
@@ -819,6 +834,7 @@ our %cfg = (
                                 # arrays in the %cfg hash.
                                 # All commands following yeast-dummy-marker
                                 # are either aliases or internal commands.
+                                # Note that all commands are in lower case.
                     # first commands used for +info, sequence is important!
                        qw(
                         cn subject issuer altname before after chain
@@ -839,7 +855,7 @@ our %cfg = (
                     # add internal commands
                        qw(
                         check cipher dump check_sni exec help info info--v http quick
-                        list listregex libversion sizes s_client sni sni_check version
+                        list listregex libversion sizes s_client sni version
                         dates pubkey sigkey subject_ev
                         certificate text pem expire valid
                         beast crime pfs rc4
@@ -856,10 +872,16 @@ our %cfg = (
                        ),
                     # add alias commands
                        qw(
-                        commonName owner
+                        commonName owner authority
                         issuerX509 subjectX509
                         signame sigdump
                         subject_hash issuer_hash
+                        sni_check 
+                       )],
+    'COMMANDS'      => [        # alias in uppercase (just to keep some internal checks silent)
+                       qw(
+                        PEM
+                        BEAST BREACH CRIME PFS RC4 TIME
                        )],
     'info'          => [""],    # commands for +info
                                 # this list is dynamically constructed, see below
@@ -2244,7 +2266,6 @@ sub _setcmd() {
 
 # check functions
 # -------------------------------------
-	#	#	#
 sub _setvalue($){ return ($_[0] eq "") ? 'yes' : 'no (' . $_[0] . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
 sub _isbeast($$){
@@ -2556,7 +2577,7 @@ sub checkcert($$) {
 
     # wildcards (and some sizes)
     _getwilds($host, $port);
-    # $check_cert{'hostname'}->{val} ... done in checksni()
+    # $check_cert{'certfqdn'}->{val} ... done in checksni()
 
     $check_cert{'rootcert'}->{val}  = $data{'issuer'}->{val}($host) if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
     #dbx# _dbx "S " .$data{'subject'}->{val}($host);
@@ -2619,24 +2640,24 @@ sub checkcert($$) {
 
 sub checksni($$) {
     #? check if given FQDN needs to use SNI
-    # sets $check_conn{'SNI'}, $check_cert{'hostname'}
+    # sets $check_conn{'SNI'}, $check_cert{'certfqdn'}
     my ($host, $port) = @_;
     $cfg{'done'}->{'checksni'}++;
     return if ($cfg{'done'}->{'checksni'} > 1);
     if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
-        if ($data{'cn_nossni'}->{val} eq $host) {
+        if ($data{'cn_nosni'}->{val} eq $host) {
             $check_conn{'SNI'}->{val} = "";
         } else {
-            $check_conn{'SNI'}->{val} = $data{'cn_nossni'}->{val};
+            $check_conn{'SNI'}->{val} = $data{'cn_nosni'}->{val};
         }
     }
-    # $check_cert{'hostname'} and $check_conn{'hostname'} are similar
+    # $check_cert{'certfqdn'} and $check_conn{'hostname'} are similar
     if ($data{'commonName'}->{val}($host) eq $host) {
-        $check_cert{'hostname'}->{val} = "";
+        $check_cert{'certfqdn'}->{val} = "";
         $check_conn{'hostname'}->{val} = "";
     } else {
-        $check_cert{'hostname'}->{val} = $data{'cn_nossni'}->{val} . " <> " . $host;
-        $check_conn{'hostname'}->{val} = $host . " <> " . $data{'cn_nossni'}->{val};
+        $check_cert{'certfqdn'}->{val} = $data{'cn_nosni'}->{val} . " <> " . $host;
+        $check_conn{'hostname'}->{val} = $host . " <> " . $data{'cn_nosni'}->{val};
     }
 } # checksni
 
@@ -2649,7 +2670,7 @@ sub checksizes($$) {
     return if ($cfg{'done'}->{'checksizes'} > 1);
 
     checkcert($host, $port) if ($cfg{'no_cert'} == 0); # in case we missed it before
-    $value =  $data{'PEM'}->{val}($host);
+    $value =  $data{'pem'}->{val}($host);
     $check_size{'len_pembase64'}->{val} = length($value);
     $value =~ s/(----.+----\n)//g;
     chomp $value;
@@ -3080,7 +3101,7 @@ sub printdump($$$) {
     my $key;
     print '######################################################################### %data';
     foreach $key (keys %data) {
-        next if ($key =~ m/(cn|PEM|pem|x509|authority|dates|expire)/); # ignore aliases
+        next if ($key =~ m/(cn|pem|x509|authority|dates|expire)/); # ignore aliases
         next if ($key =~ m/^valid-/); # ignore internal data
         _dump($data{$key}->{txt}, $data{$key}->{val}($host));
     }
@@ -4200,12 +4221,12 @@ foreach $host (@{$cfg{'hosts'}}) {
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
         # finally we close the connection to be clean for all other tests
     if ($cfg{'usesni'} != 0) {      # useful with SNI only
-        _trace(" cn_nossni: {");
-        $Net::SSLinfo::use_SNI     = 0;
-        $data{'cn_nossni'}->{val}  = $data{'commonName'}->{val}($host, $port);
+        _trace(" cn_nosni: {");
+        $Net::SSLinfo::use_SNI  = 0;
+        $data{'cn_nosni'}->{val}= $data{'commonName'}->{val}($host, $port);
         Net::SSLinfo::do_ssl_close($host, $port);
-        $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
-        _trace(" cn_nossni: $data{'cn_nossni'}->{val}  }");
+        $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
+        _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     }
 
     # Check if there is something listening on $host:$port
@@ -4351,7 +4372,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         foreach $key (qw(valid CRL)) {
             printcheck($legacy, $check_cert{$key}->{txt}, _setvalue($check_cert{$key}->{val}));
         }
-        foreach $key (qw(RC4 renegotiation 3TR-02102 4BSI-TR-02102+ 4BSI-TR-02102-)) {
+        foreach $key (qw(1RC4 renegotiation 3TR-02102 4BSI-TR-02102+ 4BSI-TR-02102-)) {
             printcheck($legacy, $check_dest{$key}->{txt}, _setvalue($check_dest{$key}->{val}));
         }
     }
@@ -4383,7 +4404,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
         next if ($key =~ m/^modulus$/    and $verbose == 0); # same values as 'pubkey_value'
 # ToDo: { not labels; need to be corrected
-        next if ($key =~ m/^(beast|breach|chain|crime|pfs|dump|quick|sni|time|s_client|hostname|subject_ev|rc4|bsi)$/);
+        next if ($key =~ m/^(beast|breach|chain|crime|pfs|dump|quick|sni|time|s_client|hostname|wildhost|wildcard|subject_ev|rc4|bsi)$/);
 # ToDo: }
         _y_CMD("+ " . $key);
         if ($cfg{'format'} eq "raw") {     # should be the only place where format=raw counts
@@ -6372,7 +6393,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.29
+@(#) 13.11.30
 
 =head1 AUTHOR
 
