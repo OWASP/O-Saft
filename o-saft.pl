@@ -3012,13 +3012,13 @@ sub checkhttp($$) {
     # score for max-age attribute
     # NOTE: following sequence is important!
     $check_http{'hsts_maxage'}->{score} = 100;
-    foreach $key qw(sts_maxagexy sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d) {
+    foreach $key (qw(sts_maxagexy sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
         $check_http{'hsts_maxage'}->{score} = $check_http{$key}->{score} if ($check_http{'hsts_maxage'}->{val} < $check_http{$key}->{val});
     }
 
     $score{'check_http'}->{val} = 100;
     $score{'check_http'}->{val} = $check_http{'hsts_maxage'}->{score};
-    foreach $key qw(hsts_subdom hsts_pins http_sts http_location) {
+    foreach $key (qw(hsts_subdom hsts_pins http_sts http_location)) {
 ###ah weiter# print "### $key ='" . $check_http{$key}->{val} . "' : " . $check_http{$key}->{score} . "' => " . $score{'check_http'}->{val};
         $score{'check_http'}->{val} -= _getscore($key, $check_http{$key}->{val}, \%check_http);
     }
@@ -6393,7 +6393,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.11.30
+@(#) 13.11.30a
 
 =head1 AUTHOR
 
