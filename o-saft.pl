@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.167 13/12/09 00:04:33";
+my  $SID    = "@(#) yeast.pl 1.168 13/12/09 00:52:27";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -174,8 +174,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'default'       => {'val' => sub { Net::SSLinfo::default(       $_[0], $_[1])}, 'txt' => "Default Cipher"},
     'ciphers_openssl'=>{'val' => sub { $_[0] },                                     'txt' => "OpenSSL Ciphers"},
     'ciphers'       => {'val' => sub { join(" ",  Net::SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
-    'dates'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity"},
-    'valid'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity"},
+    'dates'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
     'before'        => {'val' => sub { Net::SSLinfo::before(        $_[0], $_[1])}, 'txt' => "Certificate valid since"},
     'after'         => {'val' => sub { Net::SSLinfo::after(         $_[0], $_[1])}, 'txt' => "Certificate valid until"},
     'aux'           => {'val' => sub { Net::SSLinfo::aux(           $_[0], $_[1])}, 'txt' => "Certificate Trust Information"},
@@ -190,7 +189,6 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'sigdump'       => {'val' => sub { Net::SSLinfo::sigdump(       $_[0], $_[1])}, 'txt' => "Certificate Signature (hexdump)"},
     'sigkey_len'    => {'val' => sub { Net::SSLinfo::sigkey_len(    $_[0], $_[1])}, 'txt' => "Certificate Signature Key Length"},
     'signame'       => {'val' => sub { Net::SSLinfo::signame(       $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
-    'sigkey_algorithm'=>{'val'=> sub { Net::SSLinfo::signame(       $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
     'sigkey_value'  => {'val' => sub {    __SSLinfo('sigkey_value', $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
     'trustout'      => {'val' => sub { Net::SSLinfo::trustout(      $_[0], $_[1])}, 'txt' => "Certificate trusted"},
     'extensions'    => {'val' => sub { __SSLinfo('extensions',      $_[0], $_[1])}, 'txt' => "Certificate extensions"},
@@ -211,7 +209,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'ocspid'        => {'val' => sub { Net::SSLinfo::ocspid(        $_[0], $_[1])}, 'txt' => "Certificate OCSP subject, public key hash"},
     'subject_hash'  => {'val' => sub { Net::SSLinfo::subject_hash(  $_[0], $_[1])}, 'txt' => "Certificate Subject Name hash"},
     'issuer_hash'   => {'val' => sub { Net::SSLinfo::issuer_hash(   $_[0], $_[1])}, 'txt' => "Certificate Issuer Name hash"},
-    'selfsigned'    => {'val' => sub { Net::SSLinfo::selfsigned(    $_[0], $_[1])}, 'txt' => "Certificate validity"},
+    'selfsigned'    => {'val' => sub { Net::SSLinfo::selfsigned(    $_[0], $_[1])}, 'txt' => "Certificate Validity (signature)"},
     'fingerprint_type'=>{'val'=> sub { Net::SSLinfo::fingerprint_type($_[0],$_[1])},'txt' => "Certificate Fingerprint Algorithm"},
     'fingerprint_hash'=>{'val'=> sub { __SSLinfo('fingerprint_hash',$_[0], $_[1])}, 'txt' => "Certificate Fingerprint Hash Value"},
     'fingerprint_sha1'=>{'val'=> sub { __SSLinfo('fingerprint_sha1',$_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA1"},
@@ -273,7 +271,7 @@ my %check_cert = (
     #------------------+-----------------------------------------------------
     'verify'        => {'txt' => "Certificate chain validated"},
     'fp_not_md5'    => {'txt' => "Certificate Fingerprint is not MD5"},
-    'valid'         => {'txt' => "Certificate is valid"},
+    'dates'         => {'txt' => "Certificate is valid"},
     'expired'       => {'txt' => "Certificate is not expired"},
     'certfqdn'      => {'txt' => "Certificate is valid according given hostname"},
     'wildhost'      => {'txt' => "Certificate's wilcard does not match hostname"},
@@ -609,7 +607,7 @@ our %shorttexts = (
     'HTTP_STS'      => "Redirects without STS",
     'HTTP_fqdn'     => "Redirects to same host",
     'HTTP_301'      => "Redirects with 301",
-    'selfsigned'    => "self-signed",
+    'selfsigned'    => "Validity (signature)",
     'verify'        => "Chain",
     'nonprint'      => "non-printables",
     'crnlnull'      => "CR, NL, NULL",
@@ -652,8 +650,7 @@ our %shorttexts = (
     'ciphers'       => "Client Ciphers",
     'default'       => "Default Cipher",
     'ciphers_openssl'   => "OpenSSL Ciphers",
-    'dates'         => "Validity",
-    'valid'         => "Validity",
+    'dates'         => "Validity (date)",
     'before'        => "Valid since",
     'after'         => "Valid until",
     'extensions'    => "Extensions",
@@ -873,11 +870,11 @@ our %cfg = (
                        qw(
                         default cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast beast-default crime export rc4 valid pfs crl
+                        beast beast-default crime export rc4 pfs crl
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- sts
                        )],
     'cmd-ev'        => [qw(ev ev- ev+ ev-chars subject)], # commands for +ev
-    'cmd-bsi'       => [qw(after valid crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
+    'cmd-bsi'       => [qw(after dates crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'need_cipher'   => [        # list of commands which need +cipher
@@ -2537,15 +2534,15 @@ sub checkdates($$) {
     my $start = sprintf("%s%02s%02s", $since[3], $s_mon, $since[1]);
     my $end   = sprintf("%s%02s%02s", $until[3], $u_mon, $until[1]);
     # end date magic, do checks ..
-    $checks{'valid'}->{val}     =          $data{'before'}->{val}($host) if ($now < $start);
-    $checks{'valid'}->{val}    .= " .. " . $data{'after'} ->{val}($host) if ($now > $end);
+    $checks{'dates'}->{val}     =          $data{'before'}->{val}($host) if ($now < $start);
+    $checks{'dates'}->{val}    .= " .. " . $data{'after'} ->{val}($host) if ($now > $end);
     $checks{'expired'}->{val}   =          $data{'after'} ->{val}($host) if ($now > $end);
     $data{'valid-years'}->{val}     = ($until[3]       -  $since[3]);
     $data{'valid-months'}->{val}    = ($until[3] * 12) - ($since[3] * 12) + $u_mon - $s_mon;
     $data{'valid-days'}->{val}      = ($data{'valid-years'}->{val}  *  5) + ($data{'valid-months'}->{val} * 30); # approximately
     $data{'valid-days'}->{val}      = ($until[1] - $since[1]) if ($data{'valid-days'}->{val} < 60); # more accurate
     _trace("checkdates: start, now, end: : $start, $now, $end");
-    _trace("checkdates: valid:       " . $checks{'valid'}->{val});
+    _trace("checkdates: valid:       " . $checks{'dates'}->{val});
     _trace("checkdates: valid-years: " . $data{'valid-years'}->{val});
     _trace("checkdates: valid-month: " . $data{'valid-months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
     _trace("checkdates: valid-days:  " . $data{'valid-days'}->{val}   . "  = (" . $data{'valid-years'}->{val} . "*5) + (" . $data{'valid-months'}->{val} . "*30)");
@@ -2713,7 +2710,7 @@ sub check02102($$) {
     #! TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
     $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val});
     $checks{'bsi-tr-02102+'}->{val}.= $txt                if ($data{'valid-years'}->{val}  > 3);
-    $checks{'bsi-tr-02102+'}->{val}.= $text{'cert-dates'} if ($checks{'valid'}->{val} ne "");
+    $checks{'bsi-tr-02102+'}->{val}.= $text{'cert-dates'} if ($checks{'dates'}->{val} ne "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'CRL')  if ($checks{'crl'}->{val}   ne "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host)  eq "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
@@ -3067,7 +3064,7 @@ sub checkssl($$) {
 
     if ($cfg{'verbose'} > 0) {
 # ToDo: folgende Checks implementieren
-        foreach $key (qw(verify_hostname verify_altname verify valid fingerprint modulus_len sigkey_len)) {
+        foreach $key (qw(verify_hostname verify_altname verify dates fingerprint modulus_len sigkey_len)) {
             #_trace_1key($key); # not necessary, done in print_data()
 # ToDo: nicht sinnvoll wenn $cfg{'no_cert'} > 0
         }
@@ -6107,7 +6104,7 @@ Following formats are used:
     $0 +list --v
     $0 +certificate  example.tld
     $0 +fingerprint  example.tld 444
-    $0 +after +valid example.tld
+    $0 +after +dates example.tld
 
 =head2 Some specials
 
@@ -6243,7 +6240,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.12.08
+@(#) 13.12.09
 
 =head1 AUTHOR
 
