@@ -1,8 +1,5 @@
 #!/usr/bin/perl -w
 
-# dort ###ah weiter ### und bei %score_ssllabs
-# BUG: doppelte checks: STS hsts usw.
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -37,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.166 13/12/08 02:32:51";
+my  $SID    = "@(#) yeast.pl 1.167 13/12/09 00:04:33";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -2898,8 +2895,13 @@ sub checkdest($$) {
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
     foreach $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
-        $checks{$key}->{val} = $value if ($value eq "");
+        $checks{$key}->{val} = " " if ($value eq "");
     }
+        # Secure Renegotiation IS NOT supported
+    $value = $data{'renegotiation'}->{val}($host);
+    $checks{'renegotiation'}->{val} = $value if ($value =~ m/ IS NOT /i);
+    $value = $data{'resumption'}->{val}($host);
+    $checks{'resumption'}->{val}    = $value if ($value !~ m/^Reused/);
 
     # check target specials
     foreach $key (qw(krb5 psk_hint psk_identity srp master_key session_id session_ticket)) {
