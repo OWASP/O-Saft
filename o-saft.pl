@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.168 13/12/09 00:52:27";
+my  $SID    = "@(#) yeast.pl 1.169 13/12/09 01:29:35";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -816,7 +816,7 @@ our %cfg = (
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
-    'versions'      => [qw( SSLv2 SSLv3 TLSv1 TLSv11  TLSv12)],
+    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11  TLSv12)],
                                 # Note: must be same string as used in %ciphers[ssl]
                                 # ToDo: DTLS09, DTLS10
     'SSLv2'         => 1,       # 1: check this SSL version
@@ -861,11 +861,11 @@ our %cfg = (
                        )],
     'cmd-beast'     => [qw(beast beast-default)],       # commands for +beast
     'cmd-crime'     => [qw(crime)],                     # commands for +crime
-    'cmd-http'      => [""],    # commands for +http, computed below
-    'cmd-info'      => [""],    # commands for +info, simply anything from %data
-    'cmd-info--v'   => [""],    # commands for +info --v
-    'cmd-check'     => [""],    # commands for +check, simply anything from %checks
-    'cmd-sizes'     => [""],    # commands for +sizes
+    'cmd-http'      => [],      # commands for +http, computed below
+    'cmd-info'      => [],      # commands for +info, simply anything from %data
+    'cmd-info--v'   => [],      # commands for +info --v
+    'cmd-check'     => [],      # commands for +check, simply anything from %checks
+    'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
                        qw(
                         default cipher fingerprint_hash fp_not_md5 email serial
@@ -3690,7 +3690,7 @@ sub printcmdintern() {
     foreach $key (sort keys %cfg) {
         next if ($key !~ m/^cmd-(.*)/);
         next if ($key eq 'cmd-intern'); # don't list myself
-        printf("%12s\t%s\n", $1, join(" +", @{$cfg{$key}}));
+        printf("%12s\t+%s\n", $1, join(" +", @{$cfg{$key}}));
     }
 } # printcmdintern
 
@@ -6240,7 +6240,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.12.09
+@(#) 13.12.09a
 
 =head1 AUTHOR
 
