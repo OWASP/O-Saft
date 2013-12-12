@@ -62,9 +62,7 @@ sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) 
 sub _yeast_init() {
     #
     #_yeast_data();  # uncomment to get these informations
-#_yeast_data(); exit;
-    #
-# yeast.pl 28.11.2013 22:29:58
+
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
         _yeast("       verbose= $cfg{'verbose'}");
         _yeast("         trace= $cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
