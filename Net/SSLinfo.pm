@@ -31,7 +31,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.51 13/11/11 21:19:40',
+    SID         => '@(#) Net::SSLinfo.pm 1.52 13/12/12 01:20:16',
 };
 
 ######################################################## public documentation #
@@ -218,7 +218,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.11.11';
+    $VERSION   = '13.12.11';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -486,7 +486,7 @@ sub dump() {
     if ($Net::SSLinfo::use_sclient > 1) {
         $data .= _dump('s_client', " ", $_SSLinfo{'s_client'});
     } else {
-        $data .= _dump('s_client', " ", "#### please set 'Net::SSLinfo::use_sclient > 1' dump s_client data also ###");
+        $data .= _dump('s_client', " ", "#### please set 'Net::SSLinfo::use_sclient > 1' to dump s_client data also ###");
     }
     $data .= _dump('PEM',     " ", $_SSLinfo{'PEM'});
     $data .= _dump('text',    " ", $_SSLinfo{'text'});
@@ -1040,10 +1040,11 @@ sub do_ssl_open($$) {
         
             # from s_client:
             #   Secure Renegotiation IS supported
+            #   Secure Renegotiation IS NOT supported
             # ToDo: pedantically we also need to check if "RENEGOTIATING" is
             #       there, as just the information "IS supported" does not
             #       mean that it works
-        $d = $data; $d =~ s/.*?((?:Secure\s*)?Renegotiation[^\n]*)\n.*/$1/si;$_SSLinfo{'renegotiation'}  = $d;
+        $d = $data; $d =~ s/.*?((?:Secure\s*)?Renegotiation[^\n]*)\n.*/$1/si; $_SSLinfo{'renegotiation'}  = $d;
 
             # from s_client:
             #    Reused, TLSv1/SSLv3, Cipher is RC4-SHA
