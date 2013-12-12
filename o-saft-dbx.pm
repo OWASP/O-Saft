@@ -28,7 +28,7 @@ They must be defined as `our' in L<o-saft.pl>:
 
 =item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, verbose
 
-=item %check_cert %check_dest %check_conn %check_size %check_http
+=item %checks
 
 =back
 
@@ -48,7 +48,7 @@ or any I<--trace>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.2 13/11/28 22:43:55";
+my  $SID    = "@(#) o-saft-dbx.pm 1.3 13/12/12 01:16:28";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -62,6 +62,7 @@ sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) 
 sub _yeast_init() {
     #
     #_yeast_data();  # uncomment to get these informations
+#_yeast_data(); exit;
     #
 # yeast.pl 28.11.2013 22:29:58
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
@@ -73,7 +74,7 @@ sub _yeast_init() {
         _yeast("openssl cipher= $cmd{'extciphers'}");
         _yeast("       use_SNI= $Net::SSLinfo::use_SNI");
         _yeast("       targets= " . join(" ", @{$cfg{'hosts'}}));
-        foreach $key (qw(port format legacy openssl cipher usehttp)) {
+        foreach $key (qw(port out_header format legacy openssl cipher usehttp)) {
             printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
                # cannot use _yeast() 'cause of pretty printing
         }
@@ -103,90 +104,59 @@ sub _vprintme {
     _v_print("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
 }
 
-sub __data($) { (_is_command($_[0]) > 0)   ? "*" : "?"; }
-sub __short($){ defined $shorttexts{$_[0]} ? "*" : "!"; }
+sub __data($) { (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub _yeast_data() {
     print "
 === _yeast_data: check internal data structure ===
 
   This function prints a simple overview of all available commands and checks.
   The purpose is to show if for each command from  %cfg{'commands'}  a proper
-  key is defined  in  %data  and vice versa.
-  The purpose is to show if for each key in  %data  a proper command is defined
-  in  %cfg{'commands'}.
-  It also shows the keys of following hashes:
-      %data %check_cert %check_dest %check_conn %check_size %check_http
-  they should all have a key in the  %shorttexts  hash.
+  key is defined  in  %data  and  %checks  and vice versa.
 ";
     my ($key, $old, $label, $value);
-    my @alias = ();     # list of potential alias commands
     my @yeast = ();     # list of potential internal, private commands
-    printf("%20s %s   %s  %s %s %s %s %s %s\n", "key", "command", "data", " short ", "c._cert", "c._conn", "c._dest", "c._size", "c._http");
-    printf("%20s+%s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
+    printf("%20s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", " score");
+    printf("%20s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
     $old = "";
     foreach $key
             (sort {uc($a) cmp uc($b)}
-		@{$cfg{'commands'}},
-                keys %data,
-                keys %shorttexts,
-                keys %check_cert,
-                keys %check_conn,
-                keys %check_dest,
-                keys %check_size,
-                keys %check_http
+		  @{$cfg{'commands'}}, keys %data, keys %shorttexts, keys %checks
             )
             # we use sort case-insensitively, hence the BLOCK for comparsion
             # it also avoids the warning: sort (...) interpreted as function
     {
         next if ($key eq $old); # unique
         $old = $key;
-	if ((! defined $check_cert{$key}) and
-            (! defined $check_conn{$key}) and
-            (! defined $check_dest{$key}) and
-            (! defined $check_size{$key}) and
-            (! defined $check_http{$key}) and
-            (! defined $data{$key})
-           )
-        {
-	    if (_is_member(uc($key), \@{$cfg{'COMMANDS'}}) > 0) {
-                push(@alias, $key); # seems to be an alias in uppercase
-            } else {
-                push(@yeast, $key); # probaly internal command
-            }
+	if ((! defined $checks{$key}) and (! defined $data{$key})) {
+            push(@yeast, $key); # probaly internal command
             next;
         }
         $cmd = " ";
-	$cmd = "+" if (_is_command($key) > 0);  # command available as is
-	$cmd = "-" if (_is_member(uc($key), \@{$cfg{'COMMANDS'}}) > 0); # command available as uppercase too
-        printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
+	$cmd = "+" if (_is_member($key, \@{$cfg{'commands'}}) > 0);     # command available as is
+        printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
 	    $cmd,
+            (_is_intern($key) > 0)      ?          "I"  : " ",
             (defined $data{$key})       ? __data( $key) : " ",
             (defined $shorttexts{$key}) ?          "*"  : " ",
-            (defined $check_cert{$key}) ? __short($key) : " ",
-            (defined $check_conn{$key}) ? __short($key) : " ",
-            (defined $check_dest{$key}) ? __short($key) : " ",
-            (defined $check_size{$key}) ? __short($key) : " ",
-            (defined $check_http{$key}) ? __short($key) : " ",
+            (defined $checks{$key})     ?          "*"  : " ",
+            (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
-    printf("%20s+%s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
+    printf("%20s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
     print '
     +  command (key) present
-    -  command can be upper or lower case
+    I  command is an internal command or alias
     *  key present
        key not present
-    !  key present but missing in %shorttexts (%check_* only)
     ?  key in %data present but missing in $cfg{commands}
 
     A shorttext should be available for each command and all data keys, except:
         cn_nosni, ext_*, valid-*
 
-    There should be no duplicates in the C._* columns.
-
     Please check following keys, they skipped in table above due to
     ';
-    print "    probably lower-case aliases:\n        "  . join(" ", @alias);
     print "    internal or summary commands:\n        " . join(" ", @yeast);
+    print "";
 }
 
 sub _yeast_cipher() {
