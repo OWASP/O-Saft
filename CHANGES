@@ -1,4 +1,174 @@
 
+Version: 13.12.11
+  BUGFIX
+    * STS check corrected
+  UPDATE
+    * +http improved
+    * huge code cleanup; checks improved; scoring now in sub scoring()
+    * Net/SSLinfo.pm: hsts_pins renamed to https_pins; hsts renamed to https_sts
+  NEW
+    * o-saft-README file implemented
+    * o-saft-dbx.pm with functions for debug, trace and verbose output
+    * .o-saft.pl as local resource file implemented
+    * --cfg_text-*  and --cfg_cmd-* options implemented
+
+Version: 13.12.09
+  UPDATE
+    *  duplicate messages removed
+
+Version: 13.12.08
+  BUGFIX
+    * bugfix: check for renegotiation and resumption corrected
+  UPDATE
+    * --no-header avoids printing most formating lines
+
+Version: 13.12.07
+  BUGFIX
+    * --showhost works for +check too
+    * checks corrected if --no-http was used
+    * checks improved  if --no-cert was used
+    * bugfix: missing (..) added in sub checkhttp
+  UPDATE
+    * code cleanup and simplified, all %check_* --> %checks
+    * documentation improved
+  NEW
+    * --help=cmd, --help=commands, --help=intern
+
+Version: 13.11.30
+  UPDATE
+    * _yeast_data() implemented; documentation improved for o-saft-dbx.pm
+    * cleanup for texts
+
+Version: 13.11.29
+  BUGFIX
+    * some warnings (perl -w) corrected (for --no-cert option)
+  UPDATE
+    * code cleanup for checkssl()
+    * output for +check sorted
+    * output improved for --no-cert option
+
+Version: 13.11.28
+  UPDATE
+    * check hostname vs. certificate name improved
+
+Version: 13.11.27
+  UPDATE
+    * omit cipher checks if protocoll not supported for BSI TR-02102
+
+Version: 13.11.26
+  BUGFIX
+    * better extraction of certificate extensions details
+  NEW
+    * check invalid characters in extensions added
+
+Version: 13.11.25
+  BUGFIX
+    * checks for CRL, OCSP corrected;
+    * missing EV checks for AIA, CRL and OCSP added
+    * ouput of certificate extensions corrected
+  NEW
+    * commands for details of certificate extensions added
+      ext_authority, ext_cps, ext_crl, ...
+
+Version: 13.11.23
+  NEW
+    * +extensions implemented; --header, --no-header implemented
+
+Version: 13.11.22
+  BUGFIX
+    * print cipher totals for all versions; some texts unified
+
+Version: 13.11.21
+  BUGFIX
+    * "Given hostname is same as reverse resolved hostname" ccorrected
+    * check for wildcards in TR-02102-2 compliance corrected
+    * +info--v command fixed; _dump() call
+  UPDATE
+    * texts and output layout unified; prepared for configurable texts
+    * debug, trace and verbose functions are emty stubs, now in o-saft-dbx.pm
+  NEW
+    * o-saft-dbx.pm with functions for debug, trace and verbose output
+
+Version: 13.11.20
+  UPDATE
+    * texts and output layout unified; prepared for configurable texts
+    * certificate's date checks improved
+
+Version: 13.11.19
+  BUGFIX
+    * some warnings (perl -w) corrected
+    * perl warnings fixed for +version command
+  UPDATE
+    * --trace command improved
+    * function calls unified
+    * using temporary variables for better (human) readability
+  NEW
+    * --trace=VALUE implemented; --trace-cmd implemented
+
+Version: 13.11.18
+  UPDATE
+    * function calls unified
+    * using temporary variables for better (human) readability
+
+Version: 13.11.17
+  BUGFIX
+    * missing labels in output added
+    * +bsi does not inhibit other checks
+    * +quick with more check (got lost with implementation of +bsi)
+  UPDATE
+    * some labels in output improved
+    * +quick improved with labels
+
+Version: 13.11.16
+  UPDATE
+    * missing security flag for some ciphers added; documentation improved
+
+Version: 13.11.15
+  UPDATE
+    * RC4 ciphers degraded as weak
+
+Version: 13.11.14
+  UPDATE
+    * documentation and glossar improved
+
+Version: 13.11.13
+  NEW
+    * compliance check: BSI TR-02102 implemented; command +bsi
+
+Version: 13.11.12
+  UPDATE
+    * glossar improved
+
+Version: 13.11.11
+  BUGFIX
+    * parsing altname in certificate corrected
+  UPDATE
+    * +sts alias for +hsts
+  NEW
+    * check for RC4 implemented
+
+Version: 13.10.22
+  UPDATE
+    * retrive target data for: krb5 psk_hint psk_identity srp master_key session_id session_ticket
+
+Version: 13.10.20
+  BUGFIX
+    * connecting with openssl improved for openssl 1.0.1.e
+  UPDATE
+    * --v honored in various modes
+    * --format=hex  includes +fingerprint
+  NEW
+    * reading options and arguments from rc-file implemented
+
+Version: 13.10.19
+  BUGFIX
+    * more improvements for perl's -w
+    * Net::SSLinfo::do_openssl() uses optional $data parameter; code improved
+
+Version: 13.10.18
+  BUGFIX
+    * bugfix: variable syntax corrected; more improvements for perl's -w
+
 Version: 13.10.17
   BUGFIX
     * code improved for perl's -w
