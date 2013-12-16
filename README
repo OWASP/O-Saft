@@ -42,11 +42,12 @@
 (       configurations. It needs to be renamed before used.
  )
 (       o-saft.pl  reads  o-saft-README  if possible and exits.
- )      o-saft-README  must be renamed or removed to get .o-saft.pl  working.
+ )      o-saft-README  must be renamed or removed to get  o-saft.pl  working.
 (
  )  QUICK START
 (       o-saft.pl --help
  )      o-saft.pl +check your.tld
+ )      o-saft.pl +quick your.tld
 (       more o-saft.pl
  )
 (       Project home is https://www.owasp.org/index.php/Projects/O-Saft
@@ -54,7 +55,7 @@
 (
  )  Get a Copy
 (       git clone git@github.com:OWASP/O-Saft.git
- )      git clone https://github.com:OWASP/O-Saft.git
+ )      git clone https://github.com/OWASP/O-Saft.git
 (       wget https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz
  )
 (
