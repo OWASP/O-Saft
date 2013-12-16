@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 13.10.17  )
+                                                          Version: 13.12.11  )
 	O-Saft  - OWASP SSL audit for testers                               (
                   OWASP SSL advanced forensic tool                           )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -33,7 +33,16 @@
  )          IO::Socket::INET     (prefered >= 1.31)
 (
  )      Module Net::SSLinfo is part of O-Saft and should be installed in ./Net .
- )      All dependencies for these modules must also be installed.
+(       All dependencies for these modules must also be installed.
+ )
+(       Following files are optional:
+ )          .o-saft.pl           (private user configuration)
+(           o-saft-dbx.pm        (for debugging, tracing)
+ )      .o-saft.pl is delivered as .o-saft.pl.sample to avoid destroying user
+(       configurations. It needs to be renamed before used.
+ )
+(       o-saft.pl  reads  o-saft-README  if possible and exits.
+ )      o-saft-README  must be renamed or removed to get .o-saft.pl  working.
 (
  )  QUICK START
 (       o-saft.pl --help
