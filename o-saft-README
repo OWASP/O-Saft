@@ -1,0 +1,49 @@
+
+                               VERSION  13.12.11
+
++-----------------------+--+-----------------------+--+-----------------------+
+ *Über diese Datei/Text     *About This File
+ =======================    =======================
+     o-saft-README              o-saft-README
+ Dieser  Text  wird beim    This text  will be show
+ 1'ten Programmstart ge-    when the program starts
+ zeigt. Er informiert ü-    the first time. It will
+ ber wichtige Änderungen    inform  about important
+ der aktuellen Version.     news of this version.
+ Solange diese Datei von    o-saft.pl wont continue
+ o-saft.pl  lesbar  ist,    to work as long as this
+ wird es nicht gestartet    file: o-saft-README, is
+ Die Datei o-saft-README    readable.
+ muss umbenannt  werden,    To get rid of this text
+ damit o-saft.pl  ausge-    the file must either be
+ führt wird.                (re)moved, or made  un-
+                            readable by  o-saft.pl.
+
+ *Release Information       *Release Information
+ =======================    =======================
+        .o-saft.pl                .o-saft.pl
+ Statt  .o-saft.pl  wird    .o-saft.pl.sample  will
+ .o-saft.pl.sample  aus-    delivered   instead  of
+ geliefert.  Diese Datei    .o-saft.pl.  It must be
+ muss zu .o-saft.pl  um-    renamed to be used.
+ nannt werden,  wenn sie    
+ benutzt werden soll.       
+
+      +check  +info              +check  +info
+ Die Ausgaben von  +info    Output of the +info and
+ und +check sind ungeor-    +check  command  is not
+ net, was u.U. verwirrt.    sorted anyhow which may
+ .o-saft.pl kann benutzt    look confusing.
+ werden, um eine  eigene    .o-saft.pl  can be used
+ Reihenfolge/Sortierung     to define own sorting.
+ zu definieren.             
+ In  .o-saft.pl  gibt es    Examples  are  provided
+ Beispiele:                 in .o-saft.pl, see:
+   --cmd-http=                  --cmd-http=
+   --cmd-check=                 --cmd-check=
+
+ Das Scoring ist unvoll-    Scoring is experimental.
+ ständig  und kann  sich    It may change with next
+ mit einer der  nächsten    release.
+ Versionen ändern.
+
