@@ -1,5 +1,7 @@
 #! /usr/bin/perl -w
 
+# Extension suchen: Authority Information Access
+
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -31,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.52 13/12/12 01:20:16',
+    SID         => '@(#) Net::SSLinfo.pm 1.54 13/12/16 00:13:31',
 };
 
 ######################################################## public documentation #
@@ -278,6 +280,7 @@ require Exporter;
         https_alerts
         https_location
         https_refresh
+        https_pins
         http_status
         http_location
         http_refresh
@@ -285,7 +288,6 @@ require Exporter;
         hsts
         hsts_maxage
         hsts_subdom
-        hsts_pins
         verify_hostname
         verify_altname
         verify_alias
@@ -358,7 +360,7 @@ sub _settrace {
 sub _trace { local $\ = "\n"; print '#' . SSLINFO . '::' . $_[0] if ($trace > 0); }
 
 # define some shortcuts to avoid $Net::SSLinfo::*
-my $_echo    = '';              # dangerous if aliased or wrong one found
+my $_echo    = "";              # dangerous if aliased or wrong one found
 my $_timeout = undef;
 my $_openssl = undef;
 
@@ -404,30 +406,30 @@ my %_SSLinfo = ( # our internal data structure
     'text'      => '',
     'ciphers'           => [],  # list of ciphers offered by local SSL implementation
     # all following are available when calling  openssl only
-    's_client'          => '',  # data we get from `openssl s_client -connect ...'
-    'ciphers_openssl'   => '',  # list of ciphers returned by openssl executable
-    'subject_hash'      => '',  #
-    'issuer_hash'       => '',  #
-    'aux'               => '',  #
-    'pubkey'            => '',  # certificates public key
-    'pubkey_algorithm'  => '',  # certificates public key algorithm
-    'pubkey_value'      => '',  # certificates public key value (same as modulus)
-    'signame'           => '',  #
-    'sigdump'           => '',  # algorithm and value of signature key
-    'sigkey_len'        => '',  # bit length  of signature key
-    'sigkey_value'      => '',  # value       of signature key
-    'extensions'        => '',  #
-    'email'             => '',  # the email address(es)
-    'serial'            => '',  # the serial number
-    'modulus'           => '',  # the modulus of the public key
-    'modulus_len'       => '',  # bit length  of the public key
-    'modulus_exponent'  => '',  # exponent    of the public key
-    'fingerprint_text'  => '',  # the fingerprint text
-    'fingerprint_type'  => '',  # just the fingerprint hash algorithm
-    'fingerprint_hash'  => '',  # the fingerprint hash value
-    'fingerprint_sha1'  => '',  # SHA1 fingerprint (if available)
-    'fingerprint_md5'   => '',  # MD5  fingerprint (if available)
-    'default'           => '',  # default cipher offered by server
+    's_client'          => "",  # data we get from `openssl s_client -connect ...'
+    'ciphers_openssl'   => "",  # list of ciphers returned by openssl executable
+    'subject_hash'      => "",  #
+    'issuer_hash'       => "",  #
+    'aux'               => "",  #
+    'pubkey'            => "",  # certificates public key
+    'pubkey_algorithm'  => "",  # certificates public key algorithm
+    'pubkey_value'      => "",  # certificates public key value (same as modulus)
+    'signame'           => "",  #
+    'sigdump'           => "",  # algorithm and value of signature key
+    'sigkey_len'        => "",  # bit length  of signature key
+    'sigkey_value'      => "",  # value       of signature key
+    'extensions'        => "",  #
+    'email'             => "",  # the email address(es)
+    'serial'            => "",  # the serial number
+    'modulus'           => "",  # the modulus of the public key
+    'modulus_len'       => "",  # bit length  of the public key
+    'modulus_exponent'  => "",  # exponent    of the public key
+    'fingerprint_text'  => "",  # the fingerprint text
+    'fingerprint_type'  => "",  # just the fingerprint hash algorithm
+    'fingerprint_hash'  => "",  # the fingerprint hash value
+    'fingerprint_sha1'  => "",  # SHA1 fingerprint (if available)
+    'fingerprint_md5'   => "",  # MD5  fingerprint (if available)
+    'default'           => "",  # default cipher offered by server
     # all following need output from "openssl s_client ..."
     #   as it may be missing in s_client, we set the default to " "
     #   which means `not there'
@@ -444,26 +446,26 @@ my %_SSLinfo = ( # our internal data structure
     'master_key'        => "",  # Master-Key
     'session_id'        => "",  # Session-ID
     'session_ticket'    => "",  # TLS session ticket
-    # following from HTTP request
-    'http_status'       => '',  # HTTPS response (aka status) line
-    'http_server'       => '',  # HTTPS Server header
-    'http_alerts'       => '',  # HTTPS Alerts send by server
-    'http_location'     => '',  # HTTPS Location header send by server
-    'http_refresh'      => '',  # HTTPS Refresh header send by server
-    'http_status'       => '',  # HTTP response (aka status) line
-    'http_location'     => '',  # HTTP Location header send by server
-    'http_refresh'      => '',  # HTTP Refresh header send by server
-    'http_sts'          => '',  # HTTP Strict-Transport-Security header send by server (whish is very bad)
-    'hsts'              => '',  # complete STS header
-    'hsts_maxage'       => '',  # max-age attribute of STS header
-    'hsts_subdom'       => '',  # includeSubDomains attribute of STS header
-    'hsts_pins'         => '',  # pins attribute of STS header
+    # following from HTTP(S) request
+    'https_status'      => "",  # HTTPS response (aka status) line
+    'https_server'      => "",  # HTTPS Server header
+    'https_alerts'      => "",  # HTTPS Alerts send by server
+    'https_location'    => "",  # HTTPS Location header send by server
+    'https_refresh'     => "",  # HTTPS Refresh header send by server
+    'https_pins'        => "",  # HTTPS Public Key Pins header
+    'http_status'       => "",  # HTTP response (aka status) line
+    'http_location'     => "",  # HTTP Location header send by server
+    'http_refresh'      => "",  # HTTP Refresh header send by server
+    'http_sts'          => "",  # HTTP Strict-Transport-Security header send by server (whish is very bad)
+    'https_sts'         => "",  # complete STS header
+    'hsts_maxage'       => "",  # max-age attribute of STS header
+    'hsts_subdom'       => "",  # includeSubDomains attribute of STS header
 ); # %_SSLinfo
 
 sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
     #? reset internal data structure
     foreach my $key (keys %_SSLinfo) {
-        $_SSLinfo{$key}     = '';
+        $_SSLinfo{$key}     = "";
     }
     # some are special
     $_SSLinfo{'key'}        = 'value';
@@ -475,7 +477,7 @@ sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
     $_SSLinfo{'ciphers'}    = [];
     $_SSLinfo{'cipherlist'} = 'ALL:NULL:eNULL:aNULL:LOW';
     $_SSLinfo{'verify_cnt'} = 0;
-    $_SSLinfo{'ciphers_openssl'} = '';
+    $_SSLinfo{'ciphers_openssl'} = "";
 } # _SSLinfo_reset
 
 sub _dump($$$) { return sprintf("#{ %-12s:%s%s #}\n", $_[0], $_[1], ($_[2] || "<<undefined>>")); }
@@ -908,12 +910,11 @@ sub do_ssl_open($$) {
             $_SSLinfo{'https_server'}   =  _header_get('Server',   $response);
             $_SSLinfo{'https_location'} =  _header_get('Location', $response);
             $_SSLinfo{'https_refresh'}  =  _header_get('Refresh',  $response);
-            $_SSLinfo{'hsts'}           =  _header_get('Strict-Transport-Security', $response);
-            $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'hsts'};
+            $_SSLinfo{'https_pins'}     =  _header_get('Public-Key-Pins', $response);
+            $_SSLinfo{'https_sts'}      =  _header_get('Strict-Transport-Security', $response);
+            $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'https_sts'};
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
-            $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'hsts'} =~ m/includeSubDomains/i);
-            $_SSLinfo{'hsts_pins'}      =  $_SSLinfo{'hsts'}  if ($_SSLinfo{'hsts'} =~ m/pins=/i);
-            $_SSLinfo{'hsts_pins'}      =~ s/.*?pins=([^;" ]*).*/$1/i;
+            $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'https_sts'} =~ m/includeSubDomains/i);
 # ToDo:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
             _trace("\n$response \n# do_ssl_open HTTPS }");
             _trace("do_ssl_open HTTP {");
@@ -1462,7 +1463,7 @@ Get max-age attribute of STS header.
 
 Get includeSubDomains attribute of STS header.
 
-=head2 hsts_pins( )
+=head2 https_pins( )
 
 Get pins attribute of STS header.
 
@@ -1534,14 +1535,14 @@ sub https_server    { return _SSLinfo_get('https_server',     $_[0], $_[1]); }
 sub https_alerts    { return _SSLinfo_get('https_alerts',     $_[0], $_[1]); }
 sub https_location  { return _SSLinfo_get('https_location',   $_[0], $_[1]); }
 sub https_refresh   { return _SSLinfo_get('https_refresh',    $_[0], $_[1]); }
+sub https_pins      { return _SSLinfo_get('https_pins',       $_[0], $_[1]); }
 sub http_status     { return _SSLinfo_get('http_status',      $_[0], $_[1]); }
 sub http_location   { return _SSLinfo_get('http_location',    $_[0], $_[1]); }
 sub http_refresh    { return _SSLinfo_get('http_refresh',     $_[0], $_[1]); }
 sub http_sts        { return _SSLinfo_get('http_sts',         $_[0], $_[1]); }
-sub hsts            { return _SSLinfo_get('hsts',             $_[0], $_[1]); }
+sub https_sts       { return _SSLinfo_get('https_sts',        $_[0], $_[1]); }
 sub hsts_maxage     { return _SSLinfo_get('hsts_maxage',      $_[0], $_[1]); }
 sub hsts_subdom     { return _SSLinfo_get('hsts_subdom',      $_[0], $_[1]); }
-sub hsts_pins       { return _SSLinfo_get('hsts_pins',        $_[0], $_[1]); }
 
 =pod
 
