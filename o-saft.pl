@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.169 13/12/09 01:29:35";
+my  $SID    = "@(#) yeast.pl 1.172 13/12/16 01:12:31";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -50,6 +50,10 @@ our $mename = "yeast  ";
 
 use IO::Socket::SSL; #  qw(debug2);
 use IO::Socket::INET;
+
+# README if any
+# -------------------------------------
+open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
 
 # quick&dirty checks
 # -------------------------------------
@@ -85,7 +89,7 @@ push(@argv, @ARGV);
 
 # read file with source for trace and verbose, if any
 # -------------------------------------
-my @dbx = grep(/--(?:trace|v$)/, @argv);    # --trace* can be in .rc-file, hence @argv
+my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # option can be in .rc-file, hence @argv
 if ($#dbx >= 0) {
     $arg =  "./o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
@@ -149,7 +153,7 @@ if ($me =~/\.cgi$/) {
 #     references to $arr->{'val') are most often simplified as $arr->{val)
 #     same applies to 'txt' and 'score'
 
-my ($key, $sec);    # some temporary variables used in main
+my ($key,$sec,$ssl);# some temporary variables used in main
 my $host    = "";   # the host currently processed in main
 my $port    = "";   # the port currently used in main
 my $legacy  = "";   # the legacy mode used in main
@@ -234,16 +238,14 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'https_location'=> {'val' => sub { Net::SSLinfo::https_location($_[0], $_[1])}, 'txt' => "HTTPS Location header"},
     'https_refresh' => {'val' => sub { Net::SSLinfo::https_refresh( $_[0], $_[1])}, 'txt' => "HTTPS Refresh header"},
     'https_alerts'  => {'val' => sub { Net::SSLinfo::https_alerts(  $_[0], $_[1])}, 'txt' => "HTTPS Error alerts"},
-    'hsts'          => {'val' => sub { Net::SSLinfo::hsts(          $_[0], $_[1])}, 'txt' => "HTTPS STS header"},
+    'https_pins'    => {'val' => sub { Net::SSLinfo::https_pins(    $_[0], $_[1])}, 'txt' => "HTTPS Public Key Pins"},
+    'https_sts'     => {'val' => sub { Net::SSLinfo::https_sts(     $_[0], $_[1])}, 'txt' => "HTTPS STS header"},
     'hsts_maxage'   => {'val' => sub { Net::SSLinfo::hsts_maxage(   $_[0], $_[1])}, 'txt' => "HTTPS STS MaxAge"},
     'hsts_subdom'   => {'val' => sub { Net::SSLinfo::hsts_subdom(   $_[0], $_[1])}, 'txt' => "HTTPS STS include sub-domains"},
-    'hsts_pins'     => {'val' => sub { Net::SSLinfo::hsts_pins(     $_[0], $_[1])}, 'txt' => "HTTPS STS pins"},
     'http_status'   => {'val' => sub { Net::SSLinfo::http_status(   $_[0], $_[1])}, 'txt' => "HTTP Status line"},
     'http_location' => {'val' => sub { Net::SSLinfo::http_location( $_[0], $_[1])}, 'txt' => "HTTP Location header"},
     'http_refresh'  => {'val' => sub { Net::SSLinfo::http_refresh(  $_[0], $_[1])}, 'txt' => "HTTP Refresh header"},
     'http_sts'      => {'val' => sub { Net::SSLinfo::http_sts(      $_[0], $_[1])}, 'txt' => "HTTP STS header"},
-    'http_301'      => {'val' => sub { return ""; },                                'txt' => "HTTP Status code 301"},
-#ah#    'hsts_pins'     => {'val' => sub { return 2592999; }, 'txt' => "HTTP: STS pins"},
     #------------------+---------------------------------------+-------------------------------------------------------
     # following are used for checkdates() only, they must not be a command!
     # they are not printed with +info or +check; values are integer
@@ -258,6 +260,7 @@ our %checks = (
     # key           =>  {val => "", txt => "label to be printed", score => 0, typ => "connection"},
     #
     # default for 'val' is "" (empty string), default for 'score' is 0
+    # 'typ' is any of certificate, connection, destination, https, sizes
     # both will be set in sub _initchecks(), please see below
 
     # the default value means "check = ok/yes", otherwise: "check =failed/no"
@@ -372,7 +375,6 @@ my %check_conn = (
 
 my %check_dest = (
     # collected and checked target (connection) data
-    # numbers are used as prefix to force sorting of keys
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'hasSSLv2'      => {'txt' => "Target supports only safe protocols (no SSL 2.0)"},
@@ -392,24 +394,15 @@ my %check_dest = (
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'resumption'    => {'txt' => "Target supports resumption"},
     'renegotiation' => {'txt' => "Target supports renegotiation"},
-    'sts'           => {'txt' => "Target sends STS header"},
-    'sts_maxage'    => {'txt' => "Target sends STS header with long max-age"},
-    'sts_subdom'    => {'txt' => "Target sends STS header with includeSubdomain"},
-    'sts_pins'      => {'txt' => "Target sends STS header with certificate pin"},
-    'sts_location'  => {'txt' => "Target sends STS and Location header"},
-    'sts_refresh'   => {'txt' => "Target sends STS and Refresh header"},
-    'HTTP_https'    => {'txt' => "Target redirects HTTP to HTTPS"},
-    'HTTP_STS'      => {'txt' => "Target redirects HTTP without STS header"},
-    'HTTP_fqdn'     => {'txt' => "Target redirect matches given host"},
-    'HTTP_301'      => {'txt' => "Target redirect with status code 301"},
     'pfs'           => {'txt' => "Target supports forward secrecy (PFS)"},
     'krb5'          => {'txt' => "Target supports Krb5"},
     'psk_hint'      => {'txt' => "Target supports PSK identity hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
-    'master_key'    => {'txt' => "Target's Master-Key"},
-    'session_id'    => {'txt' => "Target's Session-ID"},
-    'session_ticket'=> {'txt' => "Target's TLS Session Ticket"},
+# ToDo: are following checks useful?
+#    'master_key'    => {'txt' => "Target supports Master-Key"},
+#    'session_id'    => {'txt' => "Target supports Session-ID"},
+#    'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"},
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
@@ -441,30 +434,25 @@ my %check_size = (
 
 my %check_http = (
     # HTTP vs HTTPS checks
-    # score are absolute values here, except for 'hsts_maxage', they are set to 100 if attribute is found
-    # key must have prefix (http|hsts|sts); see $cfg{'regex'}->{'cmd-http'}
-    # key with prefix (http|hsts) are for internal use only
+    # score are absolute values here, they are set to 100 if attribute is found
+    # key must have prefix (hsts|sts); see $cfg{'regex'}->{'cmd-http'}
     #------------------+-----------------------------------------------------
-    'hsts'          => {'txt' => "HTTPS STS header"},
-    'hsts_pins'     => {'txt' => "HTTPS STS pins"},
-    'hsts_subdom'   => {'txt' => "HTTPS STS includes sub-domains"},
-    'hsts_maxage'   => {'txt' => "HTTPS STS MaxAge"},
-    'https_status'  => {'txt' => "HTTPS Status line"},
-    'https_server'  => {'txt' => "HTTPS Server banner"},
-    'https_alerts'  => {'txt' => "HTTPS Error alerts"},
-    'https_refresh' => {'txt' => "HTTPS Refresh header"},
-    'https_location'=> {'txt' => "HTTPS Location header"},
-    'http_status'   => {'txt' => "HTTP Status line"},
-    'http_301'      => {'txt' => "HTTP Status code is 301"},         # RFC6797 requirement
-    'http_location' => {'txt' => "HTTP Location header"},
-    'http_refresh'  => {'txt' => "HTTP Refresh header"},
-    'http_sts'      => {'txt' => "HTTP STS header"},
-# some special values (used for 'hsts_maxage' above)
     'sts_maxage0d'  => {'txt' => "STS max-age not set"},             # very weak
     'sts_maxage1d'  => {'txt' => "STS max-age less than one day"},   # weak
     'sts_maxage1m'  => {'txt' => "STS max-age less than one month"}, # low
     'sts_maxage1y'  => {'txt' => "STS max-age less than one year"},  # medium
     'sts_maxagexy'  => {'txt' => "STS max-age more than one year"},  # high
+    'hsts_sts'      => {'txt' => "Target sends STS header"},
+    'sts_maxage'    => {'txt' => "Target sends STS header with proper max-age"},
+    'sts_subdom'    => {'txt' => "Target sends STS header with includeSubdomain"},
+    'hsts_is301'    => {'txt' => "Target redirects with status code 301"}, # RFC6797 requirement
+    'hsts_is30x'    => {'txt' => "Target redirects not with 30x status code"}, # other than 301, 304
+    'hsts_fqdn'     => {'txt' => "Target redirect matches given host"},
+    'http_https'    => {'txt' => "Target redirects HTTP to HTTPS"},
+    'hsts_location' => {'txt' => "Target sends STS and no Location header"},
+    'hsts_refresh'  => {'txt' => "Target sends STS and no Refresh header"},
+    'hsts_redirect' => {'txt' => "Target redirects HTTP without STS header"},
+    'pkp_pins'      => {'txt' => "Target sends Public Key Pins header"},
     #------------------+-----------------------------------------------------
 ); # %check_http
 
@@ -597,16 +585,17 @@ our %shorttexts = (
     'bsi-tr-02102-' => "Lazy BSI TR-02102-2 compliant",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
-    'sts'           => "STS header",
+    'hsts_sts'      => "STS header",
     'sts_maxage'    => "STS long max-age",
     'sts_subdom'    => "STS includeSubdomain",
-    'sts_pins'      => "STS certificate pin",
-    'sts_location'  => "STS and Location header",
-    'sts_refresh'   => "STS and Refresh header",
-    'HTTP_https'    => "Redirects HTTP",
-    'HTTP_STS'      => "Redirects without STS",
-    'HTTP_fqdn'     => "Redirects to same host",
-    'HTTP_301'      => "Redirects with 301",
+    'hsts_location' => "STS and Location header",
+    'hsts_refresh'  => "STS and no Refresh header",
+    'hsts_redirect' => "Redirects without STS",
+    'http_https'    => "Redirects HTTP",
+    'hsts_fqdn'     => "Redirects to same host",
+    'hsts_is301'    => "Redirects with 301",
+    'hsts_is30x'    => "Redirects not with 30x",
+    'pkp_pins'      => "Public Key Pins",
     'selfsigned'    => "Validity (signature)",
     'verify'        => "Chain",
     'nonprint'      => "non-printables",
@@ -683,17 +672,17 @@ our %shorttexts = (
     'https_status'  => "HTTPS Status line",
     'https_server'  => "HTTPS Server banner",
     'https_alerts'  => "HTTPS Error alerts",
-    'https_location'=> "HTTPS Location header",
     'https_refresh' => "HTTPS Refresh header",
-    'hsts'          => "HTTPS STS header",
+    'https_pins'    => "HTTPS Public Key Pins",
+    'https_sts'     => "HTTPS STS header",
     'hsts_maxage'   => "HTTPS STS MaxAge",
     'hsts_subdom'   => "HTTPS STS sub-domains",
-    'hsts_pins'     => "HTTPS STS pins",
+    'hsts_is301'    => "HTTP Status code is 301",
+    'hsts_is30x'    => "HTTP Status code not 30x",
     'http_status'   => "HTTP Status line",
     'http_location' => "HTTP Location header",
     'http_refresh'  => "HTTP Refresh header",
     'http_sts'      => "HTTP STS header",
-    'http_301'      => "HTTP redirects with 301",
     #------------------+------------------------------------------------------
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
@@ -701,13 +690,13 @@ my %scores = (
     # keys starting with 'check_' are for total values printed in printscore()
     # all other keys are for individual score values
     #------------------+-------------+----------------------------------------
-    'checks'        => {'val' => 100, 'txt' => "Scoring for checks"},
     'check_dest'    => {'val' => 100, 'txt' => "Target checks"},
     'check_conn'    => {'val' => 100, 'txt' => "SSL connection checks"},
     'check_ciph'    => {'val' => 100, 'txt' => "Ciphers checks"},
     'check_cert'    => {'val' => 100, 'txt' => "Certificate checks"},
     'check_size'    => {'val' => 100, 'txt' => "Certificate sizes checks"},
     'check_http'    => {'val' => 100, 'txt' => "HTTP(S) checks"},
+    'checks'        => {'val' => 100, 'txt' => "Total scoring"},
     #------------------+-------------+----------------------------------------
 ); # %scores
 
@@ -835,7 +824,7 @@ our %cfg = (
     'cmd-intern'    => [        # add internal commands (they have no key in %data and %checks)
                        qw(
                         check cipher dump check_sni exec help info info--v http quick
-                        default list listregex libversion sizes s_client sni version
+                        default list listregex libversion sizes s_client version
                         sigkey bsi ev
                        ),
                     # add special commands for certificate extensions
@@ -871,7 +860,7 @@ our %cfg = (
                         default cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
                         beast beast-default crime export rc4 pfs crl
-                        resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- sts
+                        resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(ev ev- ev+ ev-chars subject)], # commands for +ev
     'cmd-bsi'       => [qw(after dates crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
@@ -985,7 +974,7 @@ our %cfg = (
         'notFIPS-140'=>'(?:(?:ARC(?:4|FOUR)|RC4)|MD5|IDEA)',
         'FIPS-140'  => '(?:(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)|AES)', # these are compiant
 
-        # Regex for cheking EV-SSL
+        # Regex for checking EV-SSL
         # they should matching:   /key=value/other-key=other-value
         '2.5.4.10'  => '(?:2\.5\.4\.10|organizationName|O)',
         '2.5.4.11'  => '(?:2\.5\.4\.1?|organizationalUnitName|OU)',
@@ -1548,7 +1537,10 @@ my %text = (
     'response'      => "<<response>>",
     'protocol'      => "<<protocol probably supported, but no ciphers accepted>>",
     'need-cipher'   => "<<check possible in conjunction with `+cipher' only>>",
+    'no-STS'        => "<<N/A as STS not set>>",
     'no-dns'        => "<<N/A as --no-dns in use>>",
+    'no-cert'       => "<<N/A as --no-cert in use>>",
+    'no-http'       => "<<N/A as --no-http in use>>",
     'disabled'      => "<<test disabled>>",
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
@@ -1664,6 +1656,7 @@ my %text = (
         'CSP'       => "Certificate Service Provider",
         'CSP '      => "Critical Security Parameter (used in FIPS 140-2)",
         'CSR'       => "Certificate Signing Request",
+        'CP'        => "Certificate Transparency",
         'CTL'       => "Certificate Trust Line",
         'CTR'       => "Counter Mode (sometimes: CM; block cipher mode)",
         'CTS'       => "Cipher Text Stealing",
@@ -1930,7 +1923,7 @@ my %text = (
     # RFC 5246:  TLS Version 1.2  http://tools.ietf.org/html/rfc5346
     # RFC 3546: TLS Extensions
     # RFC 4366: TLS Extensions
-    #               ?AKID - authority key identifier?
+    #               AKID - authority key identifier
     #               Server name Indication (SNI): server_name
     #               Maximum Fragment Length Negotiation: max_fragment_length
     #               Client Certificate URLs: client_certificate_url
@@ -2009,6 +2002,14 @@ $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cfg{'done'}->{'dbxfile'}++ if ($#dbx > 0);
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 
+# save hardcoded settings (command lists, texts); used in o-saft-dbx.pm
+our %org = (
+    'cmd-check' => $cfg{'cmd-check'},
+    'cmd-http'  => $cfg{'cmd-http'},
+    'cmd-info'  => $cfg{'cmd-info'},
+    #'text'      => { %text }, no need for 'glossar' here
+); # %org
+
 #_initchecks();  # call delayed to prevent warning of prototype check with -w
 
 # internal functions
@@ -2038,11 +2039,11 @@ sub _initchecks()  {
     _trace("_initchecks()");
     $checks{$_}->{val}   = "" foreach (keys %checks); # but see below!
     $checks{$_}->{score} = 10 foreach (keys %checks);
-    # some special values %checks{'hsts_maxage'}
+    # some special values %checks{'sts_maxage*'}
     $checks{'sts_maxage0d'}->{val} =        0;
-    $checks{'sts_maxage1d'}->{val} =    86400;
-    $checks{'sts_maxage1m'}->{val} =  2592000;
-    $checks{'sts_maxage1y'}->{val} = 31536000;
+    $checks{'sts_maxage1d'}->{val} =    86400;  # day
+    $checks{'sts_maxage1m'}->{val} =  2592000;  # month
+    $checks{'sts_maxage1y'}->{val} = 31536000;  # year
     $checks{'sts_maxagexy'}->{val} = 99999999;
     $checks{'sts_maxage0d'}->{score} =   0; # very weak
     $checks{'sts_maxage1d'}->{score} =  10; # weak
@@ -2376,6 +2377,7 @@ sub _useopenssl($$$$) {
     my $data = Net::SSLinfo::do_openssl("s_client $ssl -cipher $ciphers -connect", $host, $port);
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
+    _trace("_useopenssl data #{ $data }") if ($cfg{'trace'} > 1);
     return 1 if ($data =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#);
     # grrrr, it's a pain that openssl changes error messages for each version
     # we may get any of following errors:
@@ -2392,10 +2394,36 @@ sub _useopenssl($$$$) {
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
     return 0 if ($data =~ m#New,.*?Cipher is .?NONE#);
     return 0 if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
-    warn("**WARNING: unknown result from openssl; ignored");
+    if ($data =~ m#^\s*$#) {
+        warn("**WARNING: empty result from openssl; ignored");
+    } else {
+        warn("**WARNING: unknown result from openssl; ignored");
+    }
     _trace("_useopenssl #{ $data }");
+    print "**Hint: use options like: --v --trace --timeout=42";
+    # ToDo: client certificates not yet implemented, see t.client-cert.txt
     return 0;
 } # _useopenssl
+
+sub _get_default($$$) {
+    # return default cipher from target (or local ssl if no target given)
+    my $cipher = "";
+    $cfg{'done'}->{'_get_default'}++;
+    _trace(" _get_default(" . ($_[0]||"") . "," . ($_[1]||"") . "," . ($_[2]||"") . ")");
+    my $sslsocket = IO::Socket::SSL->new(
+        PeerAddr        => $_[0],
+        PeerPort        => $_[1],
+        Proto           => "tcp",
+        Timeout         => $cfg{'timeout'},
+        SSL_version     => $_[2],
+        );
+    if ($sslsocket) {
+        $cipher = $sslsocket->get_cipher();
+        $sslsocket->close(SSL_ctx_free => 1);
+    } else {
+    }
+    return $cipher;
+} # _get_default
 
 sub checkcipher($$) {
     #? test given cipher and add result to %check_* value
@@ -2596,7 +2624,6 @@ sub checkcert($$) {
             #dbx# _dbx "$label : $value #";
             $value = $data{$label}->{val}($host);
             $checks{$label}->{val}   = $value if ($value eq "");
-#            $scores{'check_cert'}->{val} -= _getscore($label, $value, \%checks);
 
 # FIXME:
 #   if (_is_do('verify')) {
@@ -2850,7 +2877,7 @@ sub checkev($$) {
 } # checkev
 
 sub checkdest($$) {
-    #? check anything related to target and connection, scores also default cipher
+    #? check anything related to target and connection
     my ($host, $port) = @_;
     my $ciphers = shift;
     my ($key, $value, $ssl, $cipher);
@@ -2880,10 +2907,6 @@ sub checkdest($$) {
             $value = $cipher . " " . get_cipher_sec($cipher);
         }
         $checks{$ssl}->{val} = $value;
-        # the score can be found in %checks, where the key must be computed
-        #  name of key = $ssl . '-' . sec;  # something like: SSLv3-HIGH
-        # as _getscore() returns 0 if given value is empty, we always pass a value
-        $scores{'check_conn'}->{val} -= _getscore(($ssl . '-' . get_cipher_sec($cipher)), $value, \%checks);
         $checks{'beast-default'}->{val} .= _prot_cipher($ssl, $cipher) if ("" ne _isbeast($ssl, $cipher));
         $checks{'pfs'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
@@ -2909,110 +2932,72 @@ sub checkdest($$) {
     }
 } # checkdest
 
-sub _check_maxage($$) {
-    #? return score value for given 'key' if it's value is lower than expected
-    my ($key, $value) = @_;
-    #dbx# _dbx "_check_maxage: $key, $value <> $checks{$key}->{val}";
-    return $checks{$key}->{score} if ($checks{$key}->{val} > $value);
-    return 0;
-} # _check_maxage
-
 sub checkhttp($$) {
-    #? make HTTP checks
+    #? HTTP(S) checks
     my ($host, $port) = @_;
     my $key = "";
+    _y_CMD("checkhttp() " . $cfg{'done'}->{'checkhttp'});
     $cfg{'done'}->{'checkhttp'}++;
     return if ($cfg{'done'}->{'checkhttp'} > 1);
 
-# pins= ==> fingerprint des Zertifikats, wenn leer, dann Reset
-# Achtung: pruefen ob STS auch beit http:// gesetzt, sehr schlecht, da MiTM-Angriff moeglich
     # collect informations
-    $checks{'hsts_maxage'}->{val} = $data{'hsts_maxage'}->{val}($host) || 0;
-    $checks{'hsts_subdom'}->{val} = $data{'hsts_subdom'}->{val}($host) || "";
-    $checks{'hsts_pins'}  ->{val} = $data{'hsts_pins'}  ->{val}($host) || "";
-    $checks{'http_sts'}   ->{val} = $data{'http_sts'}   ->{val}($host) || "";
-    $checks{'http_301'}   ->{val} = $data{'http_status'}->{val}($host) || "";
-    $checks{'http_301'}   ->{val} = ""  if ($checks{'http_status'}   ->{val} =~ /301/); # RFC6797 requirement
+    my $no = " "; # use a variable to make assignments below more human readable
+    my $http_sts      = $data{'http_sts'}     ->{val}($host) || ""; # value may be undefined, avoid perl error
+    my $http_location = $data{'http_location'}->{val}($host) || ""; #  "
+    my $hsts_maxage   = $data{'hsts_maxage'}  ->{val}($host) || -1;
+    my $hsts_fqdn     = $http_location;
+       $hsts_fqdn     =~ s|^(?:https:)?//([^/]*)|$1|i; # get FQDN even without https:
 
+    $checks{'hsts_is301'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
+    $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
-    $checks{'sts'}        ->{val} = " " if ($data{'hsts'}->{val}($host) eq "");
-    $checks{'sts_maxage'} ->{val} = $checks{'hsts_maxage'}->{val} if ($checks{'hsts_maxage'}->{val} < $checks{'sts_maxage1y'}->{val});
-    $checks{'sts_maxage'} ->{val} = " " if ($checks{'hsts_maxage'}   ->{val} eq "");    # above may fail
-    $checks{'sts_subdom'} ->{val} = " " if ($checks{'hsts_subdom'}   ->{val} eq "");
-    $checks{'sts_pins'}   ->{val} = " " if ($checks{'hsts_pins'}     ->{val} eq "");
-    $checks{'sts_location'}->{val}= " " if ($checks{'https_location'}->{val} eq "");
-    $checks{'sts_refresh'}->{val} = " " if ($checks{'https_refresh'} ->{val} eq "");
-    $checks{'HTTP_STS'}   ->{val} = " " if ($checks{'http_sts'}      ->{val} ne "");    # should not be there!
-    $checks{'HTTP_https'} ->{val} = " " if ($checks{'http_location'} ->{val} !~ m|^https://|);
-    $checks{'HTTP_fqdn'}  ->{val} = " " if ($checks{'http_location'} ->{val} !~ m|^https://$host|);
-    $checks{'HTTP_301'}   ->{val} = " " if ($checks{'http_status'}   ->{val} !~ m|^https://$host|);
+    $checks{'http_https'}->{val} = $no if ($http_location eq "");  # HTTP Location is there
+    $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne ""); 
+    if ($data{'https_sts'}->{val}($host) ne "") {
+        $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host) if ($data{'https_location'}->{val}($host) ne "");
+        $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host) if ($data{'https_refresh'} ->{val}($host) ne "");
+        $checks{'hsts_fqdn'}    ->{val} = $hsts_fqdn   if ($http_location !~ m|^https://$host|i);
+        $checks{'hsts_sts'}     ->{val} = $no if ($data{'https_sts'}  ->{val}($host) eq "");
+        $checks{'sts_subdom'}   ->{val} = $no if ($data{'hsts_subdom'}->{val}($host) eq "");
+        $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
+        $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
+        $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
+        # other sts_maxage* are done below as they change {val}
+    } else {
+        $checks{'sts_maxagexy'} ->{val} = $text{'no-STS'};
+        foreach $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_sts sts_subdom sts_maxage)) {
+            $checks{$key}->{val}    = $text{'no-STS'};
+        }
+    }
+    if ($http_location eq "") { # useless if no redirect
+        $checks{'hsts_fqdn'}->{val}  = "<<N/A>>";
+        $checks{'hsts_fqdn'}->{score}= 0;
+    }
+    $checks{'pkp_pins'}->{val}  = $no if ($data{'https_pins'}->{val}($host) eq "");
+# ToDo: pins= ==> fingerprint des Zertifikats
 
-#            $scores{'check_http'}->{val} -= _getscore($key, $checks{$key}->{val}, \%checks);
-
-    # score for max-age attribute
+    # score for max-age attribute; ToDo: move to sub scoring()
     # NOTE: following sequence is important!
-    $checks{'hsts_maxage'}->{score} = 100;
-    foreach $key (qw(sts_maxagexy sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
-        $checks{'hsts_maxage'}->{score} = $checks{$key}->{score} if ($checks{'hsts_maxage'}->{val} < $checks{$key}->{val});
+    foreach $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
+        if ($data{'https_sts'}->{val}($host) ne "") {
+            $checks{'sts_maxage'}->{score} = $checks{$key}->{score} if ($hsts_maxage < $checks{$key}->{val});
+            $checks{$key}->{val}    = ($hsts_maxage < $checks{$key}->{val}) ? "" : "> ".$checks{$key}->{val};
+        } else {
+            $checks{$key}->{val}    = $text{'no-STS'};
+            $checks{$key}->{score}  = 0;
+        }
     }
-
-    $scores{'check_http'}->{val} = 100;
-    $scores{'check_http'}->{val} = $checks{'hsts_maxage'}->{score};
-    foreach $key (qw(hsts_subdom hsts_pins http_sts http_location)) {
-###ah weiter# print "### $key ='" . $checks{$key}->{val} . "' : " . $checks{$key}->{score} . "' => " . $scores{'checks'}->{val};
-        $scores{'check_http'}->{val} -= _getscore($key, $checks{$key}->{val}, \%checks);
-    }
-###ah weiter# exit;
-    # includesubdomains srores 100
-#    $checks{'hsts_subdom'}->{score} = 100 if ($checks{'hsts_subdom'}->{val} ne "");
-
-    # using STS pins= is assumed very safe
-#    $checks{'hsts_pins'}->{score} = 100 if ($checks{'hsts_pins'}->{val} ne "");
-
-    # no STS haeder for http:// is good
-#    $checks{'http_sts'}->{score}  = 100 if ($checks{'http_sts'}->{val} ne "");
-
-    $checks{'sts'}->{score}       = 100;
-    $checks{'sts'}->{score}       = 0   if ($checks{'sts'}->{val} eq "");
-    $checks{'HTTP_STS'}->{score}  = 0   if ($checks{'HTTP_STS'}->{val} eq "");
-    $checks{'HTTP_https'}->{score}= $checks{'sts'}->{score};
-#
-#    $checks{'hsts'}->{score}      = $checks{'sts'}->{score};
-#    $checks{'http_sts'}->{score}  = $checks{'HTTP_STS'}->{score};
-
-    # ToDo: make clear usage of score from %checks
-### weiter ###
-    # ToDo: add location check to score
-
-    _trace("checkhttp: hsts\t"        . $checks{'hsts'}->{score});
-    _trace("checkhttp: hstsmax_age\t" . $checks{'hsts_maxage'}->{score});
-    _trace("checkhttp: hsts_subdom\t" . $checks{'hsts_subdom'}->{score});
-    _trace("checkhttp: hsts_pins\t"   . $checks{'hsts_pins'}->{score});
-    _trace("checkhttp: http_location\t" . $checks{'http_location'}->{score});
-    _trace("checkhttp: http_refresh\t". $checks{'http_refresh'}->{score});
-    _trace("checkhttp: http_sts\t"    . $checks{'http_sts'}->{score});
-
-    # simple rounding in perl: $rounded = int($float + 0.5)
-    $checks{'hsts'}->{score} = int(
-        ((
-          $checks{'hsts_maxage'}->{score}
-        + $checks{'hsts_pins'}  ->{score}
-        + $checks{'hsts_subdom'}->{score}
-        - $checks{'http_sts'}   ->{score}
-        ) / 3 ) + 0.5);
-    $scores{'check_http'}->{val} = $checks{'hsts'}->{score};
-
 } # checkhttp
 
 sub checkssl($$) {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
-    my ($key, $value);
+    my $key;
     $cfg{'done'}->{'checkssl'}++;
     return if ($cfg{'done'}->{'checkssl'} > 1);
 
-    $cfg{'no_cert_txt'} = "<<N/A as --no-cert in use>>" if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
+    $cfg{'no_cert_txt'} = $text{'no-cert'} if ($cfg{'no_cert_txt'} eq ""); # avoid "yes" results
     if ($cfg{'no_cert'} == 0) {
         # all checks based on certificate can't be done if there was no cert, obviously
         checkcert( $host, $port);   # SNI, wildcards and certificate
@@ -3040,7 +3025,7 @@ sub checkssl($$) {
     } else {
         $cfg{'done'}->{'checkhttp'}++;
         foreach $key (sort keys %checks) {
-            $checks{$key}->{val} = "<<N/A as --no-http in use>>" if (_is_member($key, \@{$cfg{'cmd-http'}}));
+            $checks{$key}->{val} = $text{'no-http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
     }
     # some checks accoring ciphers and compliance are done in checkciphers()
@@ -3048,22 +3033,8 @@ sub checkssl($$) {
     # now do remaining for %checks
     checkdest( $host, $port);
 
-    # scoring
-# ToDo: scoring
-    foreach $key (sort keys %checks) {
-        next if ($key =~ /^\s*$/);    # lazy programming :)
-        $value = $checks{$key}->{val};
-        $scores{'check_size'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "sizes");
-        $scores{'check_http'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "https");
-#        $scores{'check_ciph'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "cipher");
-#        $value = $cfg{'no_cert_txt'} if ($cfg{'no_cert'} > 0);
-        $scores{'check_cert'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "certificate");
-        $scores{'check_conn'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "connection");
-        $scores{'check_dest'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "destination");
-    }
-
-    if ($cfg{'verbose'} > 0) {
 # ToDo: folgende Checks implementieren
+    if ($cfg{'verbose'} > 0) {
         foreach $key (qw(verify_hostname verify_altname verify dates fingerprint modulus_len sigkey_len)) {
             #_trace_1key($key); # not necessary, done in print_data()
 # ToDo: nicht sinnvoll wenn $cfg{'no_cert'} > 0
@@ -3072,25 +3043,37 @@ sub checkssl($$) {
 
 } # checkssl
 
-sub _get_default($$$) {
-    # return default cipher from target (or local ssl if no target given)
-    my $cipher = "";
-    $cfg{'done'}->{'_get_default'}++;
-    _trace(" _get_default(" . ($_[0]||"") . "," . ($_[1]||"") . "," . ($_[2]||"") . ")");
-    my $sslsocket = IO::Socket::SSL->new(
-        PeerAddr        => $_[0],
-        PeerPort        => $_[1],
-        Proto           => "tcp",
-        Timeout         => $cfg{'timeout'},
-        SSL_version     => $_[2],
-        );
-    if ($sslsocket) {
-        $cipher = $sslsocket->get_cipher();
-        $sslsocket->close(SSL_ctx_free => 1);
-    } else {
+sub scoring() {
+    #? compute scoring of all checks; sets values in %scores
+    my ($key, $value);
+    $scores{'check_http'}->{val} = 100;
+    foreach $key (sort keys %checks) {
+        next if ($key =~ m/^(ip|reversehost)/); # not scored
+        next if ($key =~ m/^(sts_)/);           # needs special handlicg
+        next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); # FIXME: not yet scored
+        next if ($key =~ m/^TLSv1[12]/);  # FIXME:
+        $value = $checks{$key}->{val};
+        # ToDo: go through @results
+#13.12.11 foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
+#13.12.11     # keys in %checks look like 'SSLv2-LOW', 'TLSv11-HIGH', etc.
+#13.12.11     $key = $ssl . '-' . $sec;
+#13.12.11     if ($checks{$key}->{val} != 0) {    # if set, decrement score
+#13.12.11         $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
+#printf "%20s: %4s %s\n", $key, $scores{'check_ciph'}->{val}, _getscore($key, 'egal', \%checks);
+#13.12.11     }
+#13.12.11 }
+# FIXME $scores{'check_size'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "sizes");
+#       $scores{'check_ciph'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "cipher");
+        $scores{'check_http'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "https"); # done above
+        $scores{'check_cert'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "certificate");
+        $scores{'check_conn'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "connection");
+        $scores{'check_dest'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "destination");
+#_dbx "score certificate $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_cert'}->{val} if($checks{$key}->{typ} eq "certificate");
+#_dbx "score connection  $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_conn'}->{val} if($checks{$key}->{typ} eq "connection");
+#_dbx "score destination $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_dest'}->{val} if($checks{$key}->{typ} eq "destination");
+#_dbx "score http/https  $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_http'}->{val} if($checks{$key}->{typ} eq "https");
     }
-    return $cipher;
-} # _get_default
+} # scoring
 
 # print functions
 # -------------------------------------
@@ -3493,10 +3476,10 @@ sub printchecks($$) {
     _trace_1arr('%checks');
     print "**WARNING: can't print certificate sizes without a certificate (--no-cert)" if ($cfg{'no_cert'} > 0);
     foreach $key (@{$cfg{'do'}}) {
-        next if ($key =~ /^\s*$/);      # lazy programming :)
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
+        next if ($key =~ m/^(SSL|TLS)v[0-9][1-9]?[_-]/); # these counters are already printed
         _y_CMD("(%checks) +" . $key);
         if ($key eq 'beast') {          # check is special
             if (! _is_do('cipher') && ($check <= 0)) {
@@ -3684,15 +3667,32 @@ sub printcommands() {
 } # printcommands
 
 sub printcmdintern() {
-    #? print list off commands for internal command
     my $key;
-    print "\n   Summary and internal commands details\n";
+    print "\n   Summary and internal command details\n";
     foreach $key (sort keys %cfg) {
         next if ($key !~ m/^cmd-(.*)/);
         next if ($key eq 'cmd-intern'); # don't list myself
         printf("%12s\t+%s\n", $1, join(" +", @{$cfg{$key}}));
     }
 } # printcmdintern
+
+sub printexts() {
+    my ($key, $txt);
+    print "\n   Summary of internal texts
+
+    Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
+    The string  @@  inside texts is used as placeholder.
+    (Don't be confused about multiple  =  as they are part of  TEXT.)
+    ";
+    foreach $key (sort keys %text) {
+        next if (ref($text{$key}) ne ""); # skip except string
+        $txt =  $text{$key};
+        $txt =~ s/(\n)/\\n/g;
+        $txt =~ s/(\r)/\\r/g;
+        $txt =~ s/(\t)/\\t/g;
+        printf("%12s=%s\n", $key, $txt);
+    }
+} # printexts
 
 sub printhelp($) {
     #? print program's help
@@ -3706,8 +3706,9 @@ sub printhelp($) {
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
     if ($label =~ m/^compliance/i)      { print "# $mename compliance values:\n"; printf("%13s:\t%s\n", $_, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); exit; }
     if ($label =~ m/^(checks|score)$/i) { printscoredata(lc($label)); exit; }
-    if ($label =~ m/^commands?/i)       { printcommands(); exit; }
+    if ($label =~ m/^commands?/i)       { printcommands();  exit; }
     if ($label =~ m/^intern?/i)         { printcmdintern(); exit; }
+    if ($label =~ m/^text?/i)           { printexts();      exit; }
 
     # no special help, print full one
     if ($cfg{'verbose'} > 1) { printhist(); exit; }
@@ -3814,7 +3815,7 @@ while ($#argv >= 0) {
     #!#--------+------------------------+----------------------+----------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+----------------------+----------------
-    if ($arg eq  '--http')              { $cfg{'usehttp'}++;     next; } # must be before --help
+    if ($arg eq   '--http')             { $cfg{'usehttp'}++;     next; } # must be before --help
     if ($arg =~ m/^--no[_-]?http$/)     { $cfg{'usehttp'}   = 0; next; }
     if ($arg =~ m/^--h(?:elp)?(?:=(.*))?$/) { printhelp($1);     exit 0; } # allow --h --help --h=*
     if ($arg =~ m/^\+help=?(.*)$/)          { printhelp($1);     exit 0; } # allow +help +help=*
@@ -3822,6 +3823,7 @@ while ($#argv >= 0) {
     if ($arg =~ m/^(--|\+)glossar$/)        { printabbr();       exit 0; }
     if ($arg =~ m/^(--|\+)todo=?$/i)        { printtodo();       exit 0; }
     # options for trace and debug
+    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();         exit 0; }
    #if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++; $info = 1; next; }
     if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     next; }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
@@ -3915,7 +3917,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(H|s|t|url|u|U|x)/)  { next; } # silently ignored
     if ($arg =~ /^-(connect)/)          { next; } # silently ignored
     #} +---------+----------------------+----------------------+----------------
-    if ($arg =~ /^--(cmd-(?:[^=]*))=(.*)/){       # set new list of commands
+    if ($arg =~ /^--cfg[_-](cmd-(?:[^=]*))=(.*)/){# set new list of commands
         $typ = $1;      # the command to set, i.e. cmd-http, cmd-sni, ...
         $arg = $2;      # list of commands separated by whitespaces
         @{$cfg{$typ}} = ();
@@ -3926,7 +3928,12 @@ while ($#argv >= 0) {
             next if (_is_intern( $key) > 0);
             warn("**WARNING: unknown command '$key' for '$typ'; ignored");
         }
-        $typ = 'host';  # expect host as next argument
+        $typ = 'host';
+        next;
+    }
+    if ($arg =~ /^--cfg[_-]text-([^=]*)=(.*)/){   # set new text
+        $text{$1} = $2;
+        $typ = 'host';
         next;
     }
 
@@ -4121,29 +4128,29 @@ if ($quick == 1) {
     $cfg{'enabled'} = 1;
     $cfg{'shorttxt'}= 1;
 }
-push(@{$cfg{'do'}}, 'pfs')    if (_is_do('http'));
+push(@{$cfg{'do'}}, 'pfs')    if (_is_do('http')); # FIXME: may produce duplicate output
 push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0); # command
-foreach my $version (@{$cfg{'versions'}}) {
-    next if ($cfg{$version} == 0);
-    $cfg{$version} = 0; # reset to simplify further checks
+foreach $ssl (@{$cfg{'versions'}}) {
+    next if ($cfg{$ssl} == 0);
+    $cfg{$ssl} = 0; # reset to simplify further checks
     # ToDo: DTLS09, DTLS10
-    if ($version =~ /^(SSLv2|SSLv3|TLSv1)$/) {
-        $typ = eval("Net::SSLeay::SSLv2_method()") if ($version eq 'SSLv2');
-        $typ = eval("Net::SSLeay::SSLv3_method()") if ($version eq 'SSLv3');
-        $typ = eval("Net::SSLeay::TLSv1_method()") if ($version eq 'TLSv1');
+    if ($ssl =~ /^(SSLv2|SSLv3|TLSv1)$/) {
+        $typ = eval("Net::SSLeay::SSLv2_method()") if ($ssl eq 'SSLv2');
+        $typ = eval("Net::SSLeay::SSLv3_method()") if ($ssl eq 'SSLv3');
+        $typ = eval("Net::SSLeay::TLSv1_method()") if ($ssl eq 'TLSv1');
         # ugly eval, but that's the simplest (only?) way to check if required
         # functionality is available; we could try  Net::SSLeay::CTX_v2_new()
         # and similar calls also, but that requires eval too
         # if a version like SSLv2 is not supported, perl bails out with error
         # like:        Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
         if (defined $typ) {
-            push(@{$cfg{'version'}}, $version);
-            $cfg{$version} = 1;
+            push(@{$cfg{'version'}}, $ssl);
+            $cfg{$ssl} = 1;
         } else {# eval failed ..
-            print "**WARNING: SSL version '$version' not supported by openssl; ignored"; # if ($verbose > 0);
+            print "**WARNING: SSL version '$ssl' not supported by openssl; ignored"; # if ($verbose > 0);
         }
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
-        warn("**WARNING: unsupported SSL version '$version'; ignored");
+        warn("**WARNING: unsupported SSL version '$ssl'; ignored");
     }
 }
 
@@ -4181,7 +4188,7 @@ if (_is_do('ciphers')) {
 
 # now commands which do make a connection
 
-# run the appropriate SSL tests for each host
+# run the appropriate SSL tests for each host (ugly code down here):
 foreach $host (@{$cfg{'hosts'}}) {
     $port = ($cfg{'port'}||"");
     _y_CMD("host{ " . ($host||"") . ":" . $port);
@@ -4288,8 +4295,8 @@ foreach $host (@{$cfg{'hosts'}}) {
         _y_CMD("  need_cipher ..");
         @results = ();          # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
-        foreach my $version (@{$cfg{'version'}}) {
-            checkciphers($version, $host, $port, $ciphers, \%ciphers);
+        foreach $ssl (@{$cfg{'version'}}) {
+            checkciphers($ssl, $host, $port, $ciphers, \%ciphers);
         }
      }
 
@@ -4300,29 +4307,22 @@ foreach $host (@{$cfg{'hosts'}}) {
         # ToDo: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
         my $_printtitle = 0;    # count title lines
-        foreach my $version (@{$cfg{'version'}}) {
+        foreach $ssl (@{$cfg{'version'}}) {
             # ToDo: single cipher check: grep for cipher in %{$ciphers}
-            #dbx# _dbx "$version # ", keys %{$ciphers} ; #sort keys %hash; # exit;
+            #dbx# _dbx "$ssl # ", keys %{$ciphers} ; #sort keys %hash; # exit;
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
-                printtitle($legacy, $version, join(":", $host, $port));
+                printtitle($legacy, $ssl, join(":", $host, $port));
             }
-            printciphers($legacy, $version, $host, ($legacy eq "sslscan")?($_printtitle):0, @results);
-            foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
-                # keys in %checks look like 'SSLv2-LOW', 'TLSv11-HIGH', etc.
-                $key = $version . '-' . $sec;
-                if ($checks{$key}->{val} != 0) {    # if set, decrement score
-                    $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
-                }
-            }
+            printciphers($legacy, $ssl, $host, ($legacy eq "sslscan")?($_printtitle):0, @results);
         }
-        foreach my $version (@{$cfg{'version'}}) {
-            print_cipherdefault($legacy, $version, $host) if ($legacy eq 'sslscan');
+        foreach $ssl (@{$cfg{'version'}}) {
+            print_cipherdefault($legacy, $ssl, $host) if ($legacy eq 'sslscan');
         }
         printruler() if ($quick == 0);
         printheader("\n" . _subst($text{'out-summary'}, ""), "");
-        foreach my $version (@{$cfg{'version'}}) {
-            print_check($legacy, $checks{$version}->{txt}, $checks{$version}->{val});
+        foreach $ssl (@{$cfg{'version'}}) {
+            print_check($legacy, $checks{$ssl}->{txt}, $checks{$ssl}->{val});
         }
         printruler() if ($quick == 0);
     }
@@ -4354,7 +4354,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     if (_is_do('cipher') <= 0) {
 # FIXME: don't print data and checks when only +cipher given
     }
-        printdata(  $legacy, $host) if ($check == 0); # not for +check
+    printdata(  $legacy, $host) if ($check == 0); # not for +check
 
     if (_is_do('ev')) {
         _y_CMD("+ev");
@@ -4362,9 +4362,17 @@ foreach $host (@{$cfg{'hosts'}}) {
         print "        " . $_ foreach (split"/", $data{'subject'}->{val}($host));
     }
 
-        printchecks($legacy, $host) if ($info  == 0); # not for +info
+    printchecks($legacy, $host) if ($info  == 0); # not for +info
 
-    # scoring
+    scoring();
+    # simple rounding in perl: $rounded = int($float + 0.5)
+    $scores{'checks'}->{val} = int(
+        ((
+          $scores{'check_cert'}->{val}
+        + $scores{'check_conn'}->{val}
+        + $scores{'check_dest'}->{val}
+        + $scores{'check_http'}->{val}
+        ) / 4 ) + 0.5);
     if ($cfg{'out_score'} > 0) {
         printheader($text{'out-scoring'}, $text{'desc-score'});
         _trace_1arr('%scores');
@@ -4373,6 +4381,8 @@ foreach $host (@{$cfg{'hosts'}}) {
             _trace_1key($key);
             print_check($legacy, $scores{$key}->{txt}, $scores{$key}->{val});
         }
+        _trace_1key('checks');
+        print_check($legacy, $scores{'checks'}->{txt}, $scores{'checks'}->{val});
         printruler();
         if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
             printscoredata('score');
@@ -4544,6 +4554,10 @@ either empty lines, or lines beginning with the equal sign  C<=>. These
 modes also use at least one tab character (0x09, TAB) to separate the
 label text from the text of the result. Example:
         Label of perfomed check:TABresult
+
+The acronym C<N/A> may appear in some results.  It means that no proper
+informations was or could be provided. Replace  C<N/A>  by whatever you
+think is adequate:  Not available, Not applicable, No answer, ...
 
 =head1 COMMANDS
 
@@ -4772,6 +4786,9 @@ the description is text provided by the user.
 
   Show internal commands.
 
+=head3 --help=text
+
+  Show internal texts.
 
 =head3 --dns
 
@@ -5099,6 +5116,23 @@ Options used for  I<+check>  command:
 
 =end comment
 
+=head3 --cfg_cmd-CMD=LIST
+
+  Redefine list of commands for command  CMD.
+  CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
+  Example:
+      --cfg_cmd-sni=sni hostname
+
+  To get a list of command an their settings, use:
+
+      $0 --help=intern
+
+  Main purpose is to reduce list of commands or print them sorted.
+
+=head3 --cfg_text-KEY=TEXT
+
+  Replace text for  KEY  with TEXT.
+
 =head2 Options for compatibility with other programs
 
 Please see other programs for detailed description (if not obvious:).
@@ -5389,7 +5423,37 @@ See  LIMITATIONS  also.
 
 =head2 Target (server) HTTP(S) Support
 
-.
+=head3 STS header
+
+Using STS is no perfect security.  While the very first request using
+http: is always prone to a MiTM attack, MiTM is possible to following
+requests again, if STS is not well implemented on the server.
+
+=over 4
+
+=item Request with http: should be redirected to https:
+
+=item Redirects should use status code 301 (even others will work)
+
+=item Redirect's Location header must contain schema https:
+
+=item Redirect's Location header must redirect to same FQDN
+
+=item Redirect may use Refresh instead of Location header (not RFC6797)
+
+=item Redirects from HTTP must not contain STS header
+
+=item Answer from redirected page (HTTPS) must contain STS header
+
+=item STS header must contain includeSubDirectoy directive
+
+=item STS header max-age should be less than 1 month
+
+=back
+
+=head3 Publix Key Pins header
+
+TBD - to be described ...
 
 =head2 Compliances
 
@@ -5641,15 +5705,21 @@ ciphers assigned.
 
 =head2 Segmentation fault
 
-Sometimes the program terminates with a  `Segmentation fault'.  This
-mainly happens if the target doesn't return certificate information.
+Sometimes  the program terminates with a  `Segmentation fault'.  This
+mainly happens if the target does not return certificate information.
 If so, the  I<--no-cert>  option may help.
+
+=head2 **WARNING: empty result from openssl; ignored at ...
+
+This most likely occours when the  provided cipher is not accepted by
+the server, or the server expects client certificates.
 
 =head2 **WARNING: unknown result from openssl; ignored at ...
 
 This most likely occours when the  openssl executable is used with a
 very slow connection. Reason is a conncetion timeout.
 Try to use  I<--timout=SEC>  option.
+To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 
 =head1 LIMITATIONS
 
@@ -6240,7 +6310,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.12.09a
+@(#) 13.12.11
 
 =head1 AUTHOR
 
