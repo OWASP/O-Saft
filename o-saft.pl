@@ -3732,7 +3732,7 @@ sub printhelp($) {
         $ident = "        ";
         next if (/__DATA__$/);
         next if (/^\s*$/);
-        next if (/^=(cut|pod|for).*/);
+        next if (/^=(cut|pod|for|encoding).*/);
         last if (/=end ToDo/);      # quick&dirty fix 18jan13 (@DATA contains script at end)
         s/^=end\s*/  {$skip = 0;}/e && next;
         s/^=begin\s*/{$skip = 1;}/e && next;
@@ -6311,7 +6311,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.12.12a
+@(#) 13.12.12b
 
 =head1 AUTHOR
 
