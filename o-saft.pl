@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.173 13/12/17 10:13:54";
+my  $SID    = "@(#) yeast.pl 1.175 13/12/17 22:41:40";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1899,8 +1899,8 @@ my %text = (
     },
     # RFC 2412: OAKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')
     #           alle *DH* sind im Prinzip PFS.
-    #           wird manchmal zusaetzlich mit DHE bezeichnet, wobei E für ephemeral
-    #           also flüchtige, vergängliche Schlüssel steht
+    #           wird manchmal zusaetzlich mit DHE bezeichnet, wobei E fÃ¼r ephemeral
+    #           also flÃ¼chtige, vergÃ¤ngliche SchlÃ¼ssel steht
     #           D.H. ECDHE_* und DHE_* an den Anfang der Cipherliste stellen, z.B.
     #                TLS_ECDHE_RSA_WITH_RC4_128_SHA
     #                TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
@@ -2726,8 +2726,8 @@ sub check02102($$) {
     # protocol and fill other %checks values according requirements.
 
     #! TR-02102-2 3.2.1 Empfohlene Cipher Suites
-    #! TR-02102-2 3.2.2 Übergangsregelungen
-    #! TR-02102-2 3.2.3 Mindestanforderungen für Interoperabilität
+    #! TR-02102-2 3.2.2 Ãœbergangsregelungen
+    #! TR-02102-2 3.2.3 Mindestanforderungen fÃ¼r InteroperabilitÃ¤t
     $checks{'bsi-tr-02102+'}->{val} = $checks{'tr-02102'}->{val}; # cipher checks are alreday done
     $checks{'bsi-tr-02102-'}->{val} = $checks{'tr-02102'}->{val}; # .. for lazy check, ciphers are enough
 
@@ -2743,11 +2743,11 @@ sub check02102($$) {
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
     $checks{'bsi-tr-02102+'}->{val}.= $text{'wildcards'} . $checks{'wildcard'}->{val} .">>" if ($checks{'wildcard'}->{val} ne "");
 
-    #! TR-02102-2 3.5 Domainparameter und Schlüssellängen
+    #! TR-02102-2 3.5 Domainparameter und SchlÃ¼ssellÃ¤ngen
 # FIXME:
 
-    #! TR-02102-2 3.6 Schlüsselspeicherung
-    #! TR-02102-2 3.7 Umgang mit Ephemeralschlüsseln
+    #! TR-02102-2 3.6 SchlÃ¼sselspeicherung
+    #! TR-02102-2 3.7 Umgang mit EphemeralschlÃ¼sseln
     #! TR-02102-2 3.8 Zufallszahlen
         # these checks are not possible from remote
 
@@ -4420,23 +4420,24 @@ o-saft.pl - OWASP SSL audit for testers
 This tools lists  information about remote target's  SSL  certificate
 and tests the remote target according given list of ciphers.
 
-Note:  C<$0>  in the description is an alias for  C<o-saft.pl> .
+Note:  Throughout this description  C<$0>  is used as an alias for the
+       program name  C<o-saft.pl> .
 
 =head1 SYNOPSIS
 
 $0 [COMMANDS ..] [OPTIONS ..] target [target target ...]
 
 Where  [COMMANDS]  and  [OPTIONS]  are described below  and  C<target>
-is a hostname either as full qualified domain name or as IP. Multiple
-commands and targets are possible.
+is a hostname either as full qualified domain name or as IP address.
+Multiple commands and targets may be combined.
 
 All  commands  and  options  can also be specified in a  rc-file, see
 B<RC-FILE>  below.
 
 =head1 QUICKSTART
 
-Before we go into the details of the purpose and usage,  here are the
-most often used examples:
+Before going into  a detailed description  of the  purpose and usage,
+here are some examples of the most common use cases:
 
 =over
 
@@ -4454,29 +4455,30 @@ most often used examples:
 
 =back
 
-For more special test cases, see  B<COMMANDS>  and  B<OPTIONS>  section
-below.
+For more specialised test cases, refer to the B<COMMANDS> and B<OPTIONS>
+sections below.
 
 =head1 WHY?
 
-Why a new tool for checking SSL  when there already exist a dozens or
-more in 2012? Some (but not all) reasons are:
+Why a new tool for checking SSL security and configuration when there
+are already a dozen or more such tools in existence (circa 2012)?
+Currently available tools suffer from some or all of following issues:
 
 =over
 
 =item - lack of tests of unusual ciphers
 
-=item - different results returned for the same check on same target
+=item - lack of tests of unusual SSL certificate configurations
 
-=item - missing functionality (checks) according modern SSL/TLS
+=item - may return different results for the same checks on a given target
 
-=item - missing tests (checks) against SSL/TLS vulnerabilities
+=item - missing tests for modern SSL/TLS functionality
 
-=item - lack of tests of unusual (SSL, certificate) configurations
+=item - missing tests for specific, known SSL/TLS vulnerabilities
 
-=item - new advanced features (CRL, OCSP, EV) not supported
+=item - no support for newer, advanced, features e.g. CRL, OCSP, EV
 
-=item - (mainly) missing feasability to add own tests
+=item - limited capability to create your own customised tests
 
 =back
 
@@ -4754,6 +4756,13 @@ the description is text provided by the user.
 =head3 --help
 
   WYSIWYG
+
+  Note: The documentation is written  with perl's POD format and uses
+        perl's POD module to print it.  Unfortunately  the first line
+        wriiten by  POD  is:
+            "User Contributed Perl Documentation"
+        which may be a bit misleading, 'cause all descriptions of the
+        documentation belong to this tool itself.
 
 =head3 --help=cmd
 
@@ -5479,12 +5488,12 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
 =item 3.2.1 Empfohlene Cipher Suites
 
-=item 3.2.2 Übergangsregelungen
+=item 3.2.2 Ãœbergangsregelungen
 
     RC4 allowed temporary for TLS 1.0. Only if  TLS 1.1  and  TLS 1.2
     cannot be supported.
 
-=item 3.2.3 Mindestanforderungen für Interoperabilität
+=item 3.2.3 Mindestanforderungen fÃ¼r InteroperabilitÃ¤t
 
     Must at least support: ECDHE-ECDSA-* and ECDHE-RSA-*
 
@@ -5515,7 +5524,7 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
     Above conditions are not required for lazy checks.
 
-=item 3.5 Domainparameter und Schlüssellängen
+=item 3.5 Domainparameter und SchlÃ¼ssellÃ¤ngen
 
 **NOT YET IMPLEMENTED**
 
@@ -5523,18 +5532,18 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
 +--------------+---------------+--------
 		Minimale
- Algorithmus	Schlüssellänge	Verwendung bis
+ Algorithmus	SchlÃ¼ssellÃ¤nge	Verwendung bis
 +--------------+---------------+--------
- Signaturschlüssel für Zertifikate und Schlüsseleinigung
+ SignaturschlÃ¼ssel fÃ¼r Zertifikate und SchlÃ¼sseleinigung
    ECDSA	224 Bit	2015
    ECDSA	250 Bit	2019+
      DSS	2000 Bit3	2019+
      RSA	2000 Bit3	2019+
- Statische Diffie-Hellman Schlüssel
+ Statische Diffie-Hellman SchlÃ¼ssel
     ECDH	224 Bit	2015
     ECDH	250 Bit	2019+
      DH	2000 Bit	2019+
- Ephemerale Diffie-Hellman Schlüssel
+ Ephemerale Diffie-Hellman SchlÃ¼ssel
     ECDH	224 Bit	2015
     ECDH	250 Bit	2019+
       DH	2000 Bit	2019+
@@ -5542,11 +5551,11 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
 =end comment
 
-=item 3.6 Schlüsselspeicherung
+=item 3.6 SchlÃ¼sselspeicherung
 
     This requirement is not testable from remote.
 
-=item 3.7 Umgang mit Ephemeralschlüsseln
+=item 3.7 Umgang mit EphemeralschlÃ¼sseln
 
     This requirement is not testable from remote.
 
@@ -6277,19 +6286,19 @@ Following formats are used:
 
 .raw nerobeg
 sretset rof tidua LSS PSAWO  -  "tfaS-O"   
-retseT r¼Ãf tiduA LSS PSAWO  -  "tfaS-O"   
+retseT reuf tiduA LSS PSAWO  -  "tfaS-O"   
  nnawdnegri nnad sib ,elieW enie sad gnig oS
-..wsu ,"haey-lss" ,"agoy-lss" :etsiL red fua dnats -ret¤Ãps reibŸÃieW
+..wsu ,"haey-lss" ,"agoy-lss" :etsiL red fua dnats -reteaps reibssieW
 eretiew  raap nie-  nohcs se tnha rhi  ,ehcuS eid nnageb os ,nebegrev
  nohcs dnis nemaN ednessap eleiV  .guneg 'giffirg`  thcin reba sad raw
-gnuhciltneff¶ÃreV enie r¼ÃF  .noisrevsgnulkciwtnE red emaN  red tsi saD
-. loot LSS rehtona tey -  "lp.tsaey"   :resseb nohcs tsi
-sad ,aha ,tsaey -- efeH -- reibŸÃieW .thcin sad tgnilk srednoseb ,ajan
+gnuhciltneffeoreV enie reuF .noisrevsgnulkciwtnE red emaN red tsi saD
+. loot LSS rehtona tey -  "lp.tsaey"   :resseb nohcs tsi sad
+,aha ,tsaey -- efeH -- reibssieW -- .thcin sad tgnilk srednoseb ,ajan
 eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"   
 :ehan gal se ,nedrew emaN 'regithcir` nie hcod nnad se etssum
 hcan dnu hcaN  .edruw nefforteg setsre sla "y" sad liew ,"lp.y" :eman
 -ietaD nie snetsednim  ,reh emaN nie etssum sE .slooT seseid pytotorP
-retsre nie nohcs hcua nnad dnatsne iebad ,tetsokeg reibŸÃieW eleiv dnu
+retsre nie nohcs hcua nnad dnatsne iebad ,tetsokeg reibssieW eleiv dnu
 nednutS eginie nnad hcim tah esylanA eiD .)dnis hcon remmi dnu( neraw
 nedeihcsrev rhes esiewliet eis muraw ,nednifuzsuareh dnu nehetsrev uz
 )noitpO "*=ycagel--"  eheis( slooT-tseT-LSS reredna releiv essinbegrE
@@ -6307,11 +6316,13 @@ Based on ideas (in alphabetical order) of:
 O-Saft - OWASP SSL advanced forensic tool
    Thanks to Gregor Kuznik for this title.
 
+For re-writing some docs in proper English, thanks to Robb Watson.
+
 =for comment: VERSION string must start with @(#) at beginning of a line
 
 =head1 VERSION
 
-@(#) 13.12.12b
+@(#) 13.12.13
 
 =head1 AUTHOR
 
