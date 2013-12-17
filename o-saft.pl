@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.172 13/12/16 01:12:31";
+my  $SID    = "@(#) yeast.pl 1.173 13/12/17 10:13:54";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -399,10 +399,10 @@ my %check_dest = (
     'psk_hint'      => {'txt' => "Target supports PSK identity hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
+    'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
 # ToDo: are following checks useful?
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
-#    'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"},
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
@@ -2917,7 +2917,7 @@ sub checkdest($$) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
     }
-        # Secure Renegotiation IS NOT supported
+    #     Secure Renegotiation IS NOT supported
     $value = $data{'renegotiation'}->{val}($host);
     $checks{'renegotiation'}->{val} = $value if ($value =~ m/ IS NOT /i);
     $value = $data{'resumption'}->{val}($host);
@@ -3926,6 +3926,7 @@ while ($#argv >= 0) {
             next if (_is_hashkey($key, \%checks) > 0);
             next if (_is_hashkey($key, \%data) > 0);
             next if (_is_intern( $key) > 0);
+            next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
             warn("**WARNING: unknown command '$key' for '$typ'; ignored");
         }
         $typ = 'host';
@@ -4364,16 +4365,16 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     printchecks($legacy, $host) if ($info  == 0); # not for +info
 
-    scoring();
-    # simple rounding in perl: $rounded = int($float + 0.5)
-    $scores{'checks'}->{val} = int(
-        ((
-          $scores{'check_cert'}->{val}
-        + $scores{'check_conn'}->{val}
-        + $scores{'check_dest'}->{val}
-        + $scores{'check_http'}->{val}
-        ) / 4 ) + 0.5);
-    if ($cfg{'out_score'} > 0) {
+    if ($cfg{'out_score'} > 0) { # no output for +info also
+        scoring();
+        # simple rounding in perl: $rounded = int($float + 0.5)
+        $scores{'checks'}->{val} = int(
+            ((
+              $scores{'check_cert'}->{val}
+            + $scores{'check_conn'}->{val}
+            + $scores{'check_dest'}->{val}
+            + $scores{'check_http'}->{val}
+            ) / 4 ) + 0.5);
         printheader($text{'out-scoring'}, $text{'desc-score'});
         _trace_1arr('%scores');
         foreach $key (keys %scores) {
@@ -6310,7 +6311,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.12.11
+@(#) 13.12.12
 
 =head1 AUTHOR
 
