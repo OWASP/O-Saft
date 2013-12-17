@@ -4202,9 +4202,9 @@ foreach $host (@{$cfg{'hosts'}}) {
     $cfg{'ip'}          = gethostbyname($host); # primary IP as identified by given hostname
     if (!defined $cfg{'ip'}) {
         warn("**WARNING: Can't get IP for host '$host'; ignored");
-        next;
+        next; # otherwise all following fails
     }
-    $cfg{'ip'}          = join(".", unpack("W4", $cfg{'ip'}));
+    $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
     if ($cfg{'usedns'} == 1) {  # following settings only with --dns
         $cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET);
         $cfg{'rhost'}   = $fail if ($? != 0);
@@ -4227,7 +4227,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
             print_check($legacy, $text{'host-host'}, $host);
-            print_check($legacy, $text{'host-IP'}, $cfg{'ip'});
+            print_check($legacy, $text{'host-IP'}, $cfg{'IP'});
             if ($cfg{'usedns'} == 1) {
                 print_check($legacy, $text{'host-rhost'}, $cfg{'rhost'});
                 print_check($legacy, $text{'host-DNS'},   $cfg{'DNS'});
@@ -6311,7 +6311,7 @@ O-Saft - OWASP SSL advanced forensic tool
 
 =head1 VERSION
 
-@(#) 13.12.12
+@(#) 13.12.12a
 
 =head1 AUTHOR
 
