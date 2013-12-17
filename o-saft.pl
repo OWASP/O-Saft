@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.175 13/12/17 22:41:40";
+my  $SID    = "@(#) yeast.pl 1.176 13/12/17 23:08:58";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -5731,6 +5731,33 @@ very slow connection. Reason is a conncetion timeout.
 Try to use  I<--timout=SEC>  option.
 To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 
+=head2 "poor performance"
+
+Sometimes the program seems to hang and then returns strange results
+for some checks. Most common reasons are:
+
+=over 4
+
+=item a) DNS resolver problems
+
+Try with  C<--no-dns>
+
+=item b) target does not accept connections for https
+
+Try with  C<--no-http>
+
+=item c) target's certificate is not valid
+
+Try with  C<--no-cert>
+
+=item d) target expects that the client provides a client certificate
+
+=back
+
+Other options which may help to get closer to the problem's cause:
+
+C<--v>, C<--trace=cmd>, C<--trace>
+
 =head1 LIMITATIONS
 
 =head2 Commands
@@ -6322,7 +6349,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.13
+@(#) 13.12.13a
 
 =head1 AUTHOR
 
