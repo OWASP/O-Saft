@@ -4196,12 +4196,15 @@ foreach $host (@{$cfg{'hosts'}}) {
     printheader(_subst($text{'out-target'}, "$host:$port"), "");
 
     # prepare DNS stuff
+    #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
     my $rhost = "";
     my $fail  = '<<gethostbyaddr() failed>>';
+    $? = 0;
     $cfg{'host'}        = $host;
     $cfg{'ip'}          = gethostbyname($host); # primary IP as identified by given hostname
     if (!defined $cfg{'ip'}) {
         warn("**WARNING: Can't get IP for host '$host'; ignored");
+        _y_CMD("host}");
         next; # otherwise all following fails
     }
     $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
@@ -4209,10 +4212,12 @@ foreach $host (@{$cfg{'hosts'}}) {
         $cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET);
         $cfg{'rhost'}   = $fail if ($? != 0);
     }
+    $? = 0;
     if ($cfg{'usedns'} == 1) {
         my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
         my $i = 0;
         foreach my $ip (@ips) {
+            $? = 0;
             $rhost  = gethostbyaddr($ip, AF_INET);
             $rhost  = $fail if ($? != 0);
             $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
@@ -4220,6 +4225,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         }
         warn("**WARNING: Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
     }
+    $? = 0;
 
     # print DNS stuff
     if (($info + $check) > 0) {
@@ -6349,7 +6355,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.13a
+@(#) 13.12.13b
 
 =head1 AUTHOR
 
