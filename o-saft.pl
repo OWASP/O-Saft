@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.176 13/12/17 23:08:58";
+my  $SID    = "@(#) yeast.pl 1.177 13/12/19 21:56:16";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -289,6 +289,7 @@ my %check_cert = (
     'zlib'          => {'txt' => "Certificate has (TLS extension) compression"},
     'lzo'           => {'txt' => "Certificate has (GnuTLS extension) compression"},
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
+    'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate contains non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate contains CR, NL, NULL characters"},
@@ -423,6 +424,7 @@ my %check_size = (
     'len_sigdump'   => {'txt' => "Size: Certificate signature key"},# > 1024
     'len_altname'   => {'txt' => "Size: Certificate subject altname"},
     'len_chain'     => {'txt' => "Size: Certificate Chain size"},   # < 2048
+    'len_sernumber' => {'txt' => "Size: Certificate Serial Number"},# <=  20 octets
     'cnt_altname'   => {'txt' => "Count: Certificate subject altname"}, # == 0
     'cnt_wildcard'  => {'txt' => "Count: Certificate wildcards"},   # == 0
     'cnt_chaindepth'=> {'txt' => "Count: Certificate Chain Depth"}, # == 1
@@ -551,6 +553,7 @@ our %shorttexts = (
     'wildhost'      => "Wilcard for hostname",
     'wildcard'      => "No wildcards",
     'sni'           => "Not SNI based",
+    'sernumber'     => "Serial Number size (RFC5280)",
     'rootcert'      => "Not root CA",
     'ocsp'          => "OCSP supported",
     'hasSSLv2'      => "No SSL 2.0",
@@ -986,6 +989,12 @@ our %cfg = (
         '2.5.4.8'   => '(?:2\.5\.4\.8|stateOrProvinceName|SP|ST)', # ToDo: is ST a bug?
         '2.5.4.9'   => '(?:2\.5\.4\.9|street(?:Address)?)', # '/street=' is very lazy
         '2.5.4.17'  => '(?:2\.5\.4\.17|postalCode)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|domainComponent|DC)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|surname|SN)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|givenName|GN)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|pseudonym)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|initiala)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|title)',
         '1.3.6.1.4.1.311.60.2.1.1' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.1|jurisdictionOfIncorporationLocalityName)',
         '1.3.6.1.4.1.311.60.2.1.2' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.2|jurisdictionOfIncorporationStateOrProvinceName)',
         '1.3.6.1.4.1.311.60.2.1.3' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.3|jurisdictionOfIncorporationCountryName)',
@@ -2708,6 +2717,9 @@ sub checksizes($$) {
     #$checks{'len_OIDs'}->{val}      = length($data{'OIDs'}->{val}($host));
     $checks{'len_publickey'}->{val} = $data{'modulus_len'}->{val}($host);
     $checks{'len_sigdump'}->{val}   = $data{'sigkey_len'}->{val}($host);
+    $checks{'len_sernumber'}->{val} = int(length($data{'serial'}->{val}($host)) / 2); # value are hex octets
+
+    $checks{'sernumber'}->{val}     = " " if (length($data{'sigkey_len'}->{val}($host)) > 20);
 } # checksizes
 
 sub check02102($$) {
@@ -5407,6 +5419,16 @@ TLSv1.2 checks are not yet implemented.
 
 =head2 Target (server) Certificate
 
+=head3 Sizes and Lengths of Certificate Settings
+
+=over 4
+
+=item Serial Number <= 20 octets (RFC5280, 4.1.2.2.  Serial Number)
+
+=back
+
+...
+
 =head3 EV-SSL - Extended Validation Certificate
 
 This check is performed according the requirements defined by the CA/
@@ -6355,7 +6377,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.13b
+@(#) 13.12.14
 
 =head1 AUTHOR
 
