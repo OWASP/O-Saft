@@ -64,7 +64,12 @@
 ###
 ### redefine +check
 ###
---cfg_cmd-check=default hasSSLv2 cnt_totals order adh export null rc4 edh pfs ism pci fips tr-02102 bsi-tr-02102+ bsi-tr-02102- beast-default beast breach crime time sni hostname reversehost cps crl ev+ ev- ev-chars crnlnull nonprint ocsp fp_not_md5 expired dates rootcert selfsigned verify certfqdn wildcard wildhost http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket closure sgc zlib open_pgp lzo fallback renegotiation resumption srp cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_CPS len_CRL len_CRL_data len_OCSP len_OIDs len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject check
+--cfg_cmd-check=default hasSSLv2 cnt_totals order adh export null rc4 edh pfs ism pci fips tr-02102 bsi-tr-02102+ bsi-tr-02102- beast-default beast breach crime time sni hostname reversehost cps crl ev+ ev- ev-chars crnlnull nonprint ocsp fp_not_md5 expired dates rootcert selfsigned verify certfqdn wildcard wildhost sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket closure sgc zlib open_pgp lzo fallback renegotiation resumption srp cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_CPS len_CRL len_CRL_data len_OCSP len_OIDs len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
 # useless for --cmd-check:    ip
 # don't use   --cmd-check:   (SSLv|TLSv)*
+
+###
+### redefine +quick
+###
+--cfg_cmd-quick=default cipher export rc4 pfs beast beast-default crime fingerprint_hash fp_not_md5 email serial subject dates verify expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
 
