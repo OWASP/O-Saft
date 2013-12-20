@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.54 13/12/16 00:13:31',
+    SID         => '@(#) Net::SSLinfo.pm 1.55 13/12/20 23:34:15',
 };
 
 ######################################################## public documentation #
@@ -220,7 +220,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.11';
+    $VERSION   = '13.12.14';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -777,7 +777,7 @@ sub do_ssl_open($$) {
         my $ctx;
         ($ctx = Net::SSLeay::CTX_new()) or {$src = 'Net::SSLeay::CTX_new()'} and last;
             # ToDo: not sure if CTX_new() can fail
-        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_PEER, \&_check_peer);
+        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer); # in client mode VERIFY_NONE
             # ToDo: not sure if CTX_set_verify() can fail
 ######
             # SSL_version     => 'SSLv2', 'SSLv3', or 'TLSv1'
@@ -787,13 +787,11 @@ sub do_ssl_open($$) {
             # SSL_honor_cipher_order  => true (cipher order provided by client)
 
              # ToDo: setting verify options not yet tested
-# use constant SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE();
-# use constant SSL_VERIFY_PEER => Net::SSLeay::VERIFY_PEER();
-# use constant SSL_VERIFY_FAIL_IF_NO_PEER_CERT => Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT();
+# use constant SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+# use constant SSL_VERIFY_PEER => Net::SSLeay::VERIFY_PEER(); # 1
+# use constant SSL_VERIFY_FAIL_IF_NO_PEER_CERT => Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT(); # 2
 # use constant SSL_VERIFY_CLIENT_ONCE => Net::SSLeay::VERIFY_CLIENT_ONCE();
             # SSL_verify_mode => # 0x00, 0x01 (verify peer), 0x02 (fails if no cert), 0x04 (verify client)
-
-#
 
              # ToDo: setting more options not yet tested
         #Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_NO_SSLv3() | Net::SSLeay::OP_NO_TLSv1()));
@@ -903,8 +901,10 @@ sub do_ssl_open($$) {
             my $response = '';
             my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
             $src = 'Net::SSLeay::write()';
+# $t1 = time();
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
             $response = Net::SSLeay::read($ssl);
+# $t2 = time(); set error = "<<timeout: Net::SSLeay::read()>>";
             $_SSLinfo{'https_status'}   =  $response;
             $_SSLinfo{'https_status'}   =~ s/[\r\n].*$//ms; # get very first line
             $_SSLinfo{'https_server'}   =  _header_get('Server',   $response);
@@ -922,11 +922,17 @@ sub do_ssl_open($$) {
             ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
             );
+# $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
             # ToDo: not tested if following grep() catches multiple occourances
             $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0] || ""};
             $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0] || ""};
             $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
             _trace("\n$response \n# do_ssl_open HTTP }");
+        }
+        if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
+            # both values come as integer, need to be converted to hex
+            $_SSLinfo{'subject_hash'}   =  sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509)); # > Net-SSLeay-1.45
+            $_SSLinfo{'issuer_hash'}    =  sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));  # > Net-SSLeay-1.45
         }
 
         if ($Net::SSLinfo::use_openssl == 0) {
@@ -936,7 +942,12 @@ sub do_ssl_open($$) {
             _trace("do_ssl_open() without openssl done.");
             goto finished;
         }
-        # NO Certificate {
+        if ($Net::SSLinfo::use_openssl == 1) { # openssl required, rewrite prevuous ones
+            $_SSLinfo{'subject_hash'}   = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
+            $_SSLinfo{'issuer_hash'}    = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
+            # ToDo: comming more in future ...
+        }
+        # NO Certificate
         # We get following data using openssl executable.
         # There is no need  to check  $Net::SSLinfo::no_cert  as openssl is
         # clever enough to return following strings if the cert is missing:
@@ -957,8 +968,6 @@ sub do_ssl_open($$) {
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
         $_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
         $_SSLinfo{'email'}              = _openssl_x509($_SSLinfo{'PEM'}, '-email');
-        $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
-        $_SSLinfo{'issuer_hash'}        = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
         $_SSLinfo{'trustout'}           = _openssl_x509($_SSLinfo{'PEM'}, '-trustout');
         $_SSLinfo{'ocsp_uri'}           = _openssl_x509($_SSLinfo{'PEM'}, '-ocsp_uri');
         $_SSLinfo{'ocspid'}             = _openssl_x509($_SSLinfo{'PEM'}, '-ocspid');
@@ -1050,11 +1059,13 @@ sub do_ssl_open($$) {
             # from s_client:
             #    Reused, TLSv1/SSLv3, Cipher is RC4-SHA
             #    Session-ID: F4AD8F441FDEBDCE445D4BD676EE592F6A0CEDA86F08860DF824F8D29049564F
+            #    Start Time: 1387270456
             # we do a simple check: just grep for "Reused" in s_client
             # in details it should check if all "Reused" strings are
             # identical *and* the "Session-ID" is the same for all
             # if more than 2 "New" are detected, we assume no resumption
             # finally "Reused" must be part of s_client data
+            # should also check "Start Time"
         $d = $data;
         my $cnt =()= $d =~ m/(New|Reused),/g;
         if ($cnt < 3) {
@@ -1073,9 +1084,12 @@ sub do_ssl_open($$) {
         }
 
             # from s_client (different openssl return different strings):
-            #       Verify return code: 20 (unable to get local issuer certificate)
             #       verify error:num=20:unable to get local issuer certificate
+            #       verify error:num=21:unable to verify the first certificate
+            #       verify error:num=27:certificate not trusted
             #       Verify return code: 19 (self signed certificate in certificate chain)
+            #       Verify return code: 20 (unable to get local issuer certificate)
+            #       Verify return code: 21 (unable to verify the first certificate)
         $d = $data; $d =~ s/.*?Verify (?:error|return code):\s*((?:num=)?[\d]*[^\n]*).*/$1/si;
         $_SSLinfo{'verify'}         = $d;
         # ToDo: $_SSLinfo{'verify_host'}= $ssl->verify_hostname($host, 'http');  # returns 0 or 1
@@ -1611,7 +1625,7 @@ sub _check_peer() {
     my ($ok, $x509_store_ctx) = @_;
     _trace("_check_peer($ok, $x509_store_ctx)");
     $_SSLinfo{'verify_cnt'} += 1;
-    #print "## check_peer $ok";
+    return $ok;
 }
 sub _check_client_cert() {print "##check_client_cert\n";}
 #$my $err = Net::SSLeay::set_verify ($ssl, Net::SSLeay::VERIFY_CLIENT_ONCE, \&_check_client_cert );
