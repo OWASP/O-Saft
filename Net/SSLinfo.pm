@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.55 13/12/20 23:34:15',
+    SID         => '@(#) Net::SSLinfo.pm 1.56 13/12/21 13:51:11',
 };
 
 ######################################################## public documentation #
@@ -220,7 +220,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.14';
+    $VERSION   = '13.12.15';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -930,9 +930,13 @@ sub do_ssl_open($$) {
             _trace("\n$response \n# do_ssl_open HTTP }");
         }
         if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
-            # both values come as integer, need to be converted to hex
-            $_SSLinfo{'subject_hash'}   =  sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509)); # > Net-SSLeay-1.45
-            $_SSLinfo{'issuer_hash'}    =  sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));  # > Net-SSLeay-1.45
+            # not available before Net-SSLeay-1.45
+                # following values come as integer, need to be converted to hex
+            $_SSLinfo{'subject_hash'}   =  sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509));
+            $_SSLinfo{'issuer_hash'}    =  sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));
+            #$_SSLinfo{'serial'}         =  sprintf("%x", Net::SSLeay::X509_get_serialNumber($x509));
+                # ToDo: X509_get_serialNumber() returns different value than
+                #       openssl (see below); reason yet unknown
         }
 
         if ($Net::SSLinfo::use_openssl == 0) {
@@ -942,11 +946,9 @@ sub do_ssl_open($$) {
             _trace("do_ssl_open() without openssl done.");
             goto finished;
         }
-        if ($Net::SSLinfo::use_openssl == 1) { # openssl required, rewrite prevuous ones
-            $_SSLinfo{'subject_hash'}   = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
-            $_SSLinfo{'issuer_hash'}    = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
-            # ToDo: comming more in future ...
-        }
+        # NOTE: all following are only available when openssl is used
+        #       those alredy set before will be overwritten
+
         # NO Certificate
         # We get following data using openssl executable.
         # There is no need  to check  $Net::SSLinfo::no_cert  as openssl is
@@ -963,7 +965,8 @@ sub do_ssl_open($$) {
        ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split('=', $fingerprint);
         $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/;
         $_SSLinfo{'fingerprint_hash'}   = "" if (!defined $_SSLinfo{'fingerprint_hash'});
-
+        $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
+        $_SSLinfo{'issuer_hash'}        = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
         $_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
@@ -1084,9 +1087,12 @@ sub do_ssl_open($$) {
         }
 
             # from s_client (different openssl return different strings):
+            #       verify error:num=10:certificate has expired
+            #       verify error:num=18:self signed certificate
             #       verify error:num=20:unable to get local issuer certificate
             #       verify error:num=21:unable to verify the first certificate
             #       verify error:num=27:certificate not trusted
+            #       Verify return code: 10 (certificate has expired)
             #       Verify return code: 19 (self signed certificate in certificate chain)
             #       Verify return code: 20 (unable to get local issuer certificate)
             #       Verify return code: 21 (unable to verify the first certificate)
@@ -1097,10 +1103,14 @@ sub do_ssl_open($$) {
 
         $d =~ s/.*?(self signed.*)/$1/si;
         $_SSLinfo{'selfsigned'}     = $d;
+            # beside regex above, which relies on strings returned from s_client
+            # we can compare subject_hash and issuer_hash, which are eqal when
+            # self-digned
         
             # from s_client:
             # $_SSLinfo{'s_client'} grep
             #       Certificate chain
+        $d = $data; $d =~ s/.*?Certificate chain[\r\n]+(.*?)[\r\n]+---[\r\n]+.*/$1/si;
         # ToDo: $_SSLinfo{'chain'}    = $d;
 
         _trace("do_ssl_open() with openssl done.");
