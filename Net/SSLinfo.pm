@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.56 13/12/21 13:51:11',
+    SID         => '@(#) Net::SSLinfo.pm 1.57 13/12/21 17:03:27',
 };
 
 ######################################################## public documentation #
@@ -220,7 +220,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.15';
+    $VERSION   = '13.12.16';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -292,6 +292,7 @@ require Exporter;
         verify_altname
         verify_alias
         verify
+        chain
         compression
         expansion
         krb5
@@ -431,8 +432,7 @@ my %_SSLinfo = ( # our internal data structure
     'fingerprint_md5'   => "",  # MD5  fingerprint (if available)
     'default'           => "",  # default cipher offered by server
     # all following need output from "openssl s_client ..."
-    #   as it may be missing in s_client, we set the default to " "
-    #   which means `not there'
+    'chain'             => "",  # certificate's CA chain
     'verify'            => "",  # certificate chain verification
     'renegotiation'     => "",  # renegotiation supported
     'resumption'        => "",  # resumption supported
@@ -853,7 +853,8 @@ sub do_ssl_open($$) {
         my $c   = '';
         push(@{$_SSLinfo{'ciphers'}}, $c) while ($c = Net::SSLeay::get_cipher_list($ssl, $i++));
         $_SSLinfo{'default'}    = Net::SSLeay::get_cipher($ssl);
-        #$_SSLinfo{'bits'}       = Net::SSLeay::get_cipher_bits($ssl, $x509); # ToDo: Segmentation fault
+            # same as above:      Net::SSLeay::CIPHER_get_name(Net::SSLeay::get_current_cipher($ssl));
+        #ok $_SSLinfo{'bits'}       = Net::SSLeay::CIPHER_get_bits(Net::SSLeay::get_current_cipher($ssl));
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
         $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
@@ -931,6 +932,14 @@ sub do_ssl_open($$) {
         }
         if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
             # not available before Net-SSLeay-1.45
+            #$_SSLinfo{'version'}        = Net::SSLeay::X509_get_version($x509);
+                # ToDo: X509_get_version() returns different value than
+                #       openssl (see below); reason yet unknown
+            #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
+                # returns a structure, needs to be unpacked
+            #$_SSLinfo{'error-depth'}    = Net::SSLeay::X509_STORE_CTX_get_error_depth($x509);
+                # not yet implemented
+
                 # following values come as integer, need to be converted to hex
             $_SSLinfo{'subject_hash'}   =  sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509));
             $_SSLinfo{'issuer_hash'}    =  sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));
@@ -949,12 +958,12 @@ sub do_ssl_open($$) {
         # NOTE: all following are only available when openssl is used
         #       those alredy set before will be overwritten
 
-        # NO Certificate
+        # NO Certificate {
         # We get following data using openssl executable.
         # There is no need  to check  $Net::SSLinfo::no_cert  as openssl is
         # clever enough to return following strings if the cert is missing:
         #         unable to load certificate
-        # If we use  'if (defined $_SSLinfo{'PEM'}) {'  instead of an empty
+        # If we use  'if (defined $_SSLinfo{'PEM'}) '  instead of an empty
         # $_SSLinfo{'PEM'}  (see initial setting above),  then  all values
         # would contain an empty string instead of the the openssl warning:
         #         unable to load certificate
@@ -967,6 +976,7 @@ sub do_ssl_open($$) {
         $_SSLinfo{'fingerprint_hash'}   = "" if (!defined $_SSLinfo{'fingerprint_hash'});
         $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
         $_SSLinfo{'issuer_hash'}        = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
+        $_SSLinfo{'version'}            = _openssl_x509($_SSLinfo{'PEM'}, 'version');
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
         $_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
@@ -976,6 +986,7 @@ sub do_ssl_open($$) {
         $_SSLinfo{'ocspid'}             = _openssl_x509($_SSLinfo{'PEM'}, '-ocspid');
         $_SSLinfo{'aux'}                = _openssl_x509($_SSLinfo{'PEM'}, 'aux');
         $_SSLinfo{'pubkey'}             = _openssl_x509($_SSLinfo{'PEM'}, 'pubkey');
+        $_SSLinfo{'protocols'}          = _openssl_x509($_SSLinfo{'PEM'}, 'protocols');
         $_SSLinfo{'extensions'}         = _openssl_x509($_SSLinfo{'PEM'}, 'extensions');
         $_SSLinfo{'signame'}            = _openssl_x509($_SSLinfo{'PEM'}, 'signame');
         $_SSLinfo{'sigdump'}            = _openssl_x509($_SSLinfo{'PEM'}, 'sigdump');
@@ -1003,6 +1014,9 @@ sub do_ssl_open($$) {
 
         $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port);
         
+            # from s_client: (if openssl supports -nextprotoneg)
+            #    Protocols advertised by server: spdy/4a4, spdy/3.1, spdy/3, http/1.1
+
             # from s_client:
             #    Protocol  : TLSv1
             #    Session-ID: 322193A0D243EDD1C07BA0B2E68D1044CDB06AF0306B67836558276E8E70655C
@@ -1025,6 +1039,7 @@ sub do_ssl_open($$) {
             'srp'              => "SRP username:",
             'compression'      => "Compression:",
             'expansion'        => "Expansion:",
+            'protocols'        => "Protocols advertised by server:",
             #'session_ticket'   => "TLS session ticket:",
             #'renegotiation'    => "Renegotiation".
         );
@@ -1111,7 +1126,7 @@ sub do_ssl_open($$) {
             # $_SSLinfo{'s_client'} grep
             #       Certificate chain
         $d = $data; $d =~ s/.*?Certificate chain[\r\n]+(.*?)[\r\n]+---[\r\n]+.*/$1/si;
-        # ToDo: $_SSLinfo{'chain'}    = $d;
+        $_SSLinfo{'chain'}          = $d;
 
         _trace("do_ssl_open() with openssl done.");
         print Net::SSLinfo::dump() if ($trace > 0);
@@ -1191,7 +1206,7 @@ sub do_openssl($$$) {
         }
     }
     $host = $port = "" if ($mode =~ m/^-?(ciphers)/);
-    _trace("echo '' | $_timeout $_openssl $mode $host$port 2>&1") ;#if ($trace > 1);
+    _trace("echo '' | $_timeout $_openssl $mode $host$port 2>&1") ;
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $data = `echo $data | $_timeout $_openssl $mode $host$port 2>&1`;
@@ -1297,10 +1312,10 @@ Get owner (subject) from certificate.
 Get certificate (subject, issuer) from certificate.
 =cut
 
-#=head2 version( )
-#
-#Get version from certificate.
-#
+=head2 version( )
+
+Get version from certificate.
+
 #=head2 keysize( )
 #
 #Get certificate private key size.
@@ -1435,6 +1450,14 @@ Get certificate signature key (bit).
 
 Get certificate signature value (hexdump).
 
+=head2 subject_hash( ), issuer_hash( )
+
+Get certificate subject/issuer hash value (in hex).
+
+=head2 chain( )
+
+Get certificate's CA chain.
+
 =head2 selfsigned( )
 
 If certificate is self signed.
@@ -1532,6 +1555,7 @@ sub sigkey_len      { return _SSLinfo_get('sigkey_len',       $_[0], $_[1]); }
 sub subject_hash    { return _SSLinfo_get('subject_hash',     $_[0], $_[1]); }
 sub issuer_hash     { return _SSLinfo_get('issuer_hash',      $_[0], $_[1]); }
 sub verify          { return _SSLinfo_get('verify',           $_[0], $_[1]); }
+sub chain           { return _SSLinfo_get('chain',            $_[0], $_[1]); }
 sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
 sub expansion       { return _SSLinfo_get('expansion',        $_[0], $_[1]); }
 sub krb5            { return _SSLinfo_get('krb5',             $_[0], $_[1]); }
