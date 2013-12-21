@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.177 13/12/19 21:56:16";
+my  $SID    = "@(#) yeast.pl 1.178 13/12/21 19:41:46";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -230,6 +230,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
+    'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Target's Certificate Chain"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
     'verify_altname'=> {'val' => sub { Net::SSLinfo::verify_altname($_[0], $_[1])}, 'txt' => "Validity Alternate Names"},
     'verify_hostname'=>{'val' => sub { Net::SSLinfo::verify_hostname( $_[0],$_[1])},'txt' => "Validity Hostname"},
@@ -253,7 +254,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'valid-months'  => {'val' =>  0, 'txt' => "certificate validity in months"},
     'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},   # approx. value, accurate if < 30
 ); # %data
-# need s_client for: compression|expansion|selfsigned|verify|resumption|renegotiation|
+# need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|
 
 our %checks = (
@@ -487,6 +488,7 @@ our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     '1.3.6.1.4.1.311.10.11.83'  => {'txt' => "Microsoft Server: EV ??root program??"},
     '1.3.6.1.4.1.4146.1.10'     => {'txt' => "<<undef>>"}, # Certificate Policy?
     '2.16.840.1.113730.4.1'     => {'txt' => "Netscape SGC"},
+    '1.2.840.113549.1.1.1'      => {'txt' => "SubjectPublicKeyInfo"}, # ???
     # EV: OIDs used in EV Certificates
     '2.5.4.10'                  => {'txt' => "EV Certificate: subject:organizationName"},
     '2.5.4.11'                  => {'txt' => "EV Certificate: subject:organizationalUnitName"},
@@ -600,7 +602,8 @@ our %shorttexts = (
     'hsts_is30x'    => "Redirects not with 30x",
     'pkp_pins'      => "Public Key Pins",
     'selfsigned'    => "Validity (signature)",
-    'verify'        => "Chain",
+    'chain'         => "Certificate Chain",
+    'verify'        => "CA verified",
     'nonprint'      => "non-printables",
     'crnlnull'      => "CR, NL, NULL",
     'compression'   => "Compression",
@@ -844,7 +847,7 @@ our %cfg = (
                        ],
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only 
-                       qw(certificate extensions pem pubkey sigdump text)
+                       qw(certificate extensions pem pubkey sigdump text chain)
                        ],
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
                        qw(
@@ -4845,7 +4848,7 @@ the description is text provided by the user.
   of performance problems. Without this option following informations
   are missing on Windows:
       compression, expansion, renegotiation, resumption,
-      selfsigned, verify
+      selfsigned, verify, chain, protocols
   See "Net::SSLinfo" for details.
 
   If used together with "--trace", s_client data will also be printed
@@ -6377,7 +6380,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.14
+@(#) 13.12.15
 
 =head1 AUTHOR
 
@@ -6410,12 +6413,14 @@ TODO
 
   * pubkey_value badly parsed on Windows
  
-  * implement +chain (see Net::SSLinfo.pm implement verify* also)
+  * implement +check_chain (see Net::SSLinfo.pm implement verify* also)
 
   * implement score for PFS; lower score if not all ciphers support PFS
 
   * check() implement remaining checks (see check{XXX}->{val} == 0
           SSL_honor_cipher_order => 1
+
+  * Net::SSLinfo.pm Net::SSLeay::X509_get_serialNumber() returns strange result
 
   * use Net::SSLeay 1.42 as fallback, because 1.49 causes problems at
     some sites (connect() fails).
