@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.178 13/12/21 19:41:46";
+my  $SID    = "@(#) yeast.pl 1.180 13/12/22 03:18:12";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -227,10 +227,11 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'psk_hint'      => {'val' => sub { Net::SSLinfo::psk_hint(      $_[0], $_[1])}, 'txt' => "Target supports PSK identity hint"},
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
+    'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target supported protocols"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
-    'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Target's Certificate Chain"},
+    'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
     'verify_altname'=> {'val' => sub { Net::SSLinfo::verify_altname($_[0], $_[1])}, 'txt' => "Validity Alternate Names"},
     'verify_hostname'=>{'val' => sub { Net::SSLinfo::verify_hostname( $_[0],$_[1])},'txt' => "Validity Hostname"},
@@ -254,7 +255,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'valid-months'  => {'val' =>  0, 'txt' => "certificate validity in months"},
     'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},   # approx. value, accurate if < 30
 ); # %data
-# need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|
+# need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|protocols|
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|
 
 our %checks = (
@@ -603,7 +604,7 @@ our %shorttexts = (
     'pkp_pins'      => "Public Key Pins",
     'selfsigned'    => "Validity (signature)",
     'chain'         => "Certificate Chain",
-    'verify'        => "CA verified",
+    'verify'        => "Chain verified",
     'nonprint'      => "non-printables",
     'crnlnull'      => "CR, NL, NULL",
     'compression'   => "Compression",
@@ -612,6 +613,7 @@ our %shorttexts = (
     'psk_hint'      => "PSK identity hint",
     'psk_identity'  => "PSK identity",
     'srp'           => "SRP username",
+    'protocols'     => "Protocols",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
     'session_ticket'=> "TLS Session Ticket",
@@ -829,8 +831,8 @@ our %cfg = (
     'commands'      => [],      # contains all commands, constructed below
     'cmd-intern'    => [        # add internal commands (they have no key in %data and %checks)
                        qw(
-                        check cipher dump check_sni exec help info info--v http quick
-                        default list listregex libversion sizes s_client version
+                        check cipher dump check_sni exec help info info--v http
+                        quick default list libversion sizes s_client version
                         sigkey bsi ev
                        ),
                     # add special commands for certificate extensions
@@ -2347,7 +2349,8 @@ sub _usesocket($$$$) {
         PeerPort        => $port,
         Proto           => "tcp",
         Timeout         => $cfg{'timeout'},
-    #   SSL_hostname    => $host,   # for SNI
+    #   SSL_hostname    => $host,# for SNI
+    #   SSL_verify_mode => 0x01, # we dont't need that 'cause we just check ciphers, makes no difference ...
         SSL_version     => $ssl,
         SSL_cipher_list => $ciphers
         #SSL_honor_cipher_order => 1
@@ -2362,9 +2365,7 @@ sub _usesocket($$$$) {
 #              exists; ignored for clients), and 0x04 (verify client once) to
 #              change the default.
 # 
-## use IO::Socket::SSL;
-## my $GLOBAL_CONTEXT_ARGS = new IO::Socket::SSL::GLOBAL_CONTEXT_ARGS (
-##    'SSL_verify_mode' => 0x02,
+## not yet used:
 ##    'SSL_ca_path' => "/root/ca/"); 
 ##
     );
@@ -3513,29 +3514,6 @@ sub printchecks($$) {
 
 # print functions for help and information
 # -------------------------------------
-sub _printscoredata($$$) {
-    #? print score for given entry in given hash
-    my $label   = shift;# check or score
-    my $name    = shift;# name of hash
-    my %hash    = %{$_[0]};
-    my $score = "";
-    my $key   = "";
-    $score = "->{score}"    if ($cfg{'verbose'} > 0);
-    _trace_1arr("%$name $score");
-    $score = "";
-    print "# $mename " . $scores{$name}->{txt} . ":";
-    foreach $key (sort keys %hash) {
-        $score = "=" . $hash{$key}->{score} if ($label eq 'score');
-        printf("%18s%s\t# %s\n", $key, $score, $hash{$key}->{txt});
-    }
-} # _printscoredata
-
-sub printscoredata($) {
-    #? print all initial score values of all &check_* hashes
-    my $label   = shift;
-    _trace("printscoredata($label)");
-    _printscoredata($label, 'checks', \%checks);
-} # printscoredata
 
 sub printversion() {
     #? print program and module versions
@@ -3582,14 +3560,6 @@ sub printopenssl() {
     #? print openssl version
     print Net::SSLinfo::do_openssl('version', "", "", "");
 } # printopenssl
-
-sub printregex() {
-    #? print our regular expressions
-    _trace(" +listregex");
-    foreach my $key (sort keys %{$cfg{'regex'}}) {
-        printf("%14s => %s\n", $key, $cfg{'regex'}->{$key});
-    }
-} # printregex
 
 sub printcipherlist() {
     #? print all our ciphers
@@ -3647,13 +3617,36 @@ sub printcipherlist() {
     }
 } # printcipherlist
 
+sub _print_head($$) { printf("=%15s | %s\n", @_); printf("=%s+%s\n", '-'x16, '-'x60); }
+sub _print_opt($$$) { printf("%16s%s%s\n", @_); }
+sub _print_cmd($$)  { printf("     +%-14s\t%s\n", @_); }
+
+sub printscoreval() {
+    #? print all initial score values of all &check_* hashes
+    #print "# $mename " . $scores{'checks'}->{txt} . ":";
+    _print_head('key=SCORE', "\t# Description");
+    _print_opt($_, "=" . $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks);
+} # printscoreval
+
+sub printregex() {
+    #? print our regular expressions
+    _print_head('key', ' Regular Expressions used internally');
+    _print_opt($_, " => ", $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}});
+} # printregex
+
+sub printabbr() {
+    #? print abbrevations, acronyms used in SSL world
+    _print_head('Abbrevation', 'Description');
+    _print_opt(do{(my $a=$_)=~s/ *$//;$a}, " - ", $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}});
+} # printabbr
+
 sub printcommands() {
     #? print program's help about commands
     # we do not use POD, as most texts are already in %data and %checks
     my $key;
     print "\n   Summary and internal commands";
     foreach $key (@{$cfg{'commands'}}) {
-        printf("\t+%s\n", $key) if (_is_intern($key) > 0);
+        _print_cmd($key, "") if (_is_intern($key) > 0);
     }
     print "
    Commands to show target, connection and certificate details
@@ -3661,12 +3654,12 @@ sub printcommands() {
         The names of these commands are mainly adopted to  openssl's commands
         (see \"openssl cipher\", \"openssl x509\").
         All these commands just show  a single detail which is also available
-        with the I<+text> command.
+        with the  +text  command.
 ";
     foreach $key (@{$cfg{'commands'}}) {
         next if (_is_intern($key) > 0);
         next if (_is_hashkey($key, \%data) <= 0);
-        printf("\t+%s\n\t    %s\n\n", $key, $data{$key}->{txt});
+        _print_cmd($key, $data{$key}->{txt});
     }
     print "
    Commands for checks
@@ -3677,17 +3670,17 @@ sub printcommands() {
         next if (_is_intern($key) > 0);
         next if (_is_hashkey($key, \%checks) <= 0);
         next if ($key =~ m/^(SSL|TLS)/);
-        printf("\t+%s\n\t    %s\n\n", $key, $checks{$key}->{txt});
+        _print_cmd($key, $checks{$key}->{txt});
     }
 } # printcommands
 
 sub printcmdintern() {
     my $key;
-    print "\n   Summary and internal command details\n";
+    _print_head('Command', ' alias for these commands');
     foreach $key (sort keys %cfg) {
-        next if ($key !~ m/^cmd-(.*)/);
         next if ($key eq 'cmd-intern'); # don't list myself
-        printf("%12s\t+%s\n", $1, join(" +", @{$cfg{$key}}));
+        next if ($key !~ m/^cmd-(.*)/);
+        _print_opt("cmd-" . $1, "    ", "+" . join(" +", @{$cfg{$key}}));
     }
 } # printcmdintern
 
@@ -3699,13 +3692,16 @@ sub printexts() {
     The string  @@  inside texts is used as placeholder.
     (Don't be confused about multiple  =  as they are part of  TEXT.)
     ";
+    _print_opt("=           key ", "=", " text");
+    _print_opt("=" . "-"x15, "+", "-"x60);
     foreach $key (sort keys %text) {
         next if (ref($text{$key}) ne ""); # skip except string
         $txt =  $text{$key};
         $txt =~ s/(\n)/\\n/g;
         $txt =~ s/(\r)/\\r/g;
         $txt =~ s/(\t)/\\t/g;
-        printf("%12s=%s\n", $key, $txt);
+        _print_opt($key, "=", $txt);
+        #printf("%12s=%s\n", $key, $txt);
     }
 } # printexts
 
@@ -3720,10 +3716,11 @@ sub printhelp($) {
     if ($label =~ m/^cmd$/i)            { print "# $mename commands:\t+"        . join(" +", @{$cfg{'commands'}}); exit; }
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
     if ($label =~ m/^compliance/i)      { print "# $mename compliance values:\n"; printf("%13s:\t%s\n", $_, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); exit; }
-    if ($label =~ m/^(checks|score)$/i) { printscoredata(lc($label)); exit; }
-    if ($label =~ m/^commands?/i)       { printcommands();  exit; }
+    if ($label =~ m/^(score)s?$/i)      { printscoreval();  exit; }
+    if ($label =~ m/^c(ommand|heck)s?/i){ printcommands();  exit; }
     if ($label =~ m/^intern?/i)         { printcmdintern(); exit; }
     if ($label =~ m/^text?/i)           { printexts();      exit; }
+    if ($label =~ m/^regex/i)           { printregex(),     exit; }
 
     # no special help, print full one
     if ($cfg{'verbose'} > 1) { printhist(); exit; }
@@ -3787,13 +3784,6 @@ sub printtodo() {
     }
 } # printtodo
 
-sub printabbr() {
-    #? print abbrevations, acronyms used in SSL world
-    printf "=%14s - %s\n", 'Abbrevation', 'Description';
-    printf "=" . '-'x15 . '+' . '-'x60 . "\n";
-    printf( "%15s - %s\n", do{(my $a=$_)=~s/ *$//;$a}, $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}});
-} # printabbr
-
 # scan options and arguments
 # -------------------------------------
 my $typ = 'host';
@@ -3851,7 +3841,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
     if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; } # ssltest.pl
     if ($arg eq  '--http_get')          { $cfg{'usehttp'}++;     next; } # ssltest.pl
-#   if ($arg eq  '--insecure')          { $cfg{'no_failed'} = 0; next; } # ToDo to be tested
     if ($arg eq  '--version')           { $arg = '+version';           }
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg eq  '--list')              { $arg = '+list';              } # no next!
@@ -3929,8 +3918,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'ctxt'; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'ctxt'; $arg = $1; } # no next
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
-    if ($arg =~ /^-(H|s|t|url|u|U|x)/)  { next; } # silently ignored
-    if ($arg =~ /^-(connect)/)          { next; } # silently ignored
+    if ($arg =~ /^-(H|r|s|t|url|u|U|x)/){ next; } #  "
+    if ($arg =~ /^-(connect)/)          { next; } #  "
+    if ($arg eq  '--insecure')          { next; } #  "
     #} +---------+----------------------+----------------------+----------------
     if ($arg =~ /^--cfg[_-](cmd-(?:[^=]*))=(.*)/){# set new list of commands
         $typ = $1;      # the command to set, i.e. cmd-http, cmd-sni, ...
@@ -4187,7 +4177,6 @@ if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {
 # first all commands which do not make a connection
 printversion(),    exit 0   if (_is_do('version'));
 printopenssl(),    exit 0   if (_is_do('libversion'));
-printregex(),      exit 0   if (_is_do('listregex'));
 printcipherlist(), exit 0   if (_is_do('list'));
 
 $legacy = $cfg{'legacy'};
@@ -4407,7 +4396,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         print_check($legacy, $scores{'checks'}->{txt}, $scores{'checks'}->{val});
         printruler();
         if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
-            printscoredata('score');
+            printscoreval();
             printruler();
         }
     }
@@ -4487,19 +4476,19 @@ Currently available tools suffer from some or all of following issues:
 
 =over
 
-=item - lack of tests of unusual ciphers
+=item * lack of tests of unusual ciphers
 
-=item - lack of tests of unusual SSL certificate configurations
+=item * lack of tests of unusual SSL certificate configurations
 
-=item - may return different results for the same checks on a given target
+=item * may return different results for the same checks on a given target
 
-=item - missing tests for modern SSL/TLS functionality
+=item * missing tests for modern SSL/TLS functionality
 
-=item - missing tests for specific, known SSL/TLS vulnerabilities
+=item * missing tests for specific, known SSL/TLS vulnerabilities
 
-=item - no support for newer, advanced, features e.g. CRL, OCSP, EV
+=item * no support for newer, advanced, features e.g. CRL, OCSP, EV
 
-=item - limited capability to create your own customised tests
+=item * limited capability to create your own customised tests
 
 =back
 
@@ -4632,10 +4621,6 @@ with other commands).
     details of the cipher and some internal details about the rating.
 
     Use "--v" option to show more details.
-
-=head3 +listregex
-
-    Show all ciphers  knwon by this tool.  This includes cryptogrphic
 
 =head3 +abbr +abk
 
@@ -4820,6 +4805,10 @@ the description is text provided by the user.
 =head3 --help=text
 
   Show internal texts.
+
+=head3 --help=regex
+
+  Show regular expressions used internally.
 
 =head3 --dns
 
@@ -5172,35 +5161,37 @@ options are ambigious.
 
 =over 4
 
-=item --hide_rejected_ciphers (sslyze)  same as I<--disabled>
+=item * --hide_rejected_ciphers (sslyze)   same as I<--disabled>
 
-=item --http_get        (ssldiagnos)    same as I<--http>
+=item * --http_get        (ssldiagnos)     same as I<--http>
 
-=for comment =item --insecure        (cnark.pl)
+=item * --no-failed       (sslscan)        same as I<--disabled>
 
-=item --no-failed       (sslscan)       same as I<--disabled>
+=item * --regular         (sslyze)         same as I<--http>
 
-=item --regular         (sslyze)        same as I<--http>
+=item * --reneg           (sslyze)         same as I<+renegotiation>
 
-=item --reneg           (sslyze)        same as I<+renegotiation>
+=item * --resum           (sslyze)         same as I<+resumtion>
 
-=item --resum           (sslyze)        same as I<+resumtion>
+=item * -h, -h=HOST       (various tools)  same as I<--host HOST>
 
-=for comment =item --timeout=SEC     (sslyze)
+=item * -p, -p=PORT       (various tools)  same as I<--port PORT>
 
-=item -h, -h=HOST       (various tools) same as I<--host HOST>
+=item * -noSSL                             same as I<--no-SSL>
 
-=item -p, -p=PORT       (various tools) same as I<--port PORT>
-
-=item  -noSSL                            same as I<--no-SSL>
-
-=item  -no_SSL                           same as I<--no-SSL>
+=item * -no_SSL                            same as I<--no-SSL>
 
   For defnition of  "SSL"  see  "--SSL"  and  "--no-SSL"  above.
 
-=item -connect --fips, --ism, -H, --pci -s, -t, --timeout, -u, -url, -U, -x
+=item * --insecure        (cnark.pl)       ignored
 
-  These options are silently ignored.
+=item * --ism, --pci -x   (ssltest.pl)     ignored
+
+=item * --timeout, --grep (ssltest.pl)     ignored
+
+=item * -r,  -s,  -t      (ssltest.pl)     ignored
+
+=item * -connect, --fips, -H, -u, -url, -U ignored
 
 =back
 
@@ -5278,15 +5269,15 @@ options are ambigious.
 
 =over 4
 
-=item --trace=1                          same as I<--trace>
+=item * --trace=1                          same as I<--trace>
 
-=item --trace=2                          same as I<--trace> I<--trace>
+=item * --trace=2                          same as I<--trace> I<--trace>
 
-=item --trace=arg                        same as I<--trace-arg>
+=item * --trace=arg                        same as I<--trace-arg>
 
-=item --trace=cmd                        same as I<--trace-cmd>
+=item * --trace=cmd                        same as I<--trace-cmd>
 
-=item --trace=key                        same as I<--trace-key>
+=item * --trace=key                        same as I<--trace-key>
 
 =back
 
@@ -5303,21 +5294,21 @@ silently taken as commands, means that  I<--THIS>  becomes  I<+THIS> .
 
 =over 4
 
-=item --help
+=item * --help
 
-=item --abbr
+=item * --abbr
 
-=item --todo
+=item * --todo
 
-=item --chain
+=item * --chain
 
-=item --default
+=item * --default
 
-=item --fingerprint
+=item * --fingerprint
 
-=item --list
+=item * --list
 
-=item --version
+=item * --version
 
 =back
 
@@ -5403,7 +5394,7 @@ TLSv1.2 checks are not yet implemented.
 
 Connection is vulnerable if target supports SSL-level compression.
 
-=head Lucky 13
+=head3 Lucky 13
 
 NOT YET IMPLEMENTED
 
@@ -5440,23 +5431,23 @@ The Certificate must provide:
 
 =over 4
 
-=item Organization name C</O=> in I<subject> field
+=item * Organization name C</O=> in I<subject> field
 
-=item Organization name must be less to 64 characters
+=item * Organization name must be less to 64 characters
 
-=item Business Category C</businessCategory=> in I<subject> field
+=item * Business Category C</businessCategory=> in I<subject> field
 
-=item Registration Number C</serialNumber=> in I<subject> field
+=item * Registration Number C</serialNumber=> in I<subject> field
 
-=item Address of Place of Business in I<subject> field
+=item * Address of Place of Business in I<subject> field
 
 Required are: C</C=>, C</ST=>, C</L=>
 
 Optional are: C</street=>, C</postalCode=>
 
-=item Domain name in I<commonName> or I<altname> field
+=item * Domain name in I<commonName> or I<altname> field
 
-=item Validation period does not exceed 27 month
+=item * Validation period does not exceed 27 month
 
 =back
 
@@ -5472,23 +5463,23 @@ requests again, if STS is not well implemented on the server.
 
 =over 4
 
-=item Request with http: should be redirected to https:
+=item * Request with http: should be redirected to https:
 
-=item Redirects should use status code 301 (even others will work)
+=item * Redirects should use status code 301 (even others will work)
 
-=item Redirect's Location header must contain schema https:
+=item * Redirect's Location header must contain schema https:
 
-=item Redirect's Location header must redirect to same FQDN
+=item * Redirect's Location header must redirect to same FQDN
 
-=item Redirect may use Refresh instead of Location header (not RFC6797)
+=item * Redirect may use Refresh instead of Location header (not RFC6797)
 
-=item Redirects from HTTP must not contain STS header
+=item * Redirects from HTTP must not contain STS header
 
-=item Answer from redirected page (HTTPS) must contain STS header
+=item * Answer from redirected page (HTTPS) must contain STS header
 
-=item STS header must contain includeSubDirectoy directive
+=item * STS header must contain includeSubDirectoy directive
 
-=item STS header max-age should be less than 1 month
+=item * STS header max-age should be less than 1 month
 
 =back
 
@@ -5607,18 +5598,18 @@ Following rules are used:
 
 =over 4
 
-=item Lines for formatting or header lines start with C<=>.
+=item * Lines for formatting or header lines start with C<=>.
 
-=item Lines for verbosity or tracing start with C<#>.
+=item * Lines for verbosity or tracing start with C<#>.
 
-=item Errors and warnings start with C<**>.
+=item * Errors and warnings start with C<**>.
 
-=item Empty lines are comments ;-)
+=item * Empty lines are comments ;-)
 
-=item Label and value for all checks are separated by  C<:>.
+=item * Label and value for all checks are separated by  C<:>.
 See  I<--sep=CHAR>  option also.
 
-=item Texts for additional information are enclosed in  C<<<>  and  ">>".
+=item * Texts for additional information are enclosed in  C<<<>  and  ">>".
 
 =back
 
@@ -5639,7 +5630,7 @@ The rc-file will be searched for in the working directory only.
 The name of the rc-file is the name of the program file prefixed by a
 C<.>,  for example:  C<.o-saft.pl>.
 
-=head DEBUG-File
+=head1 DEBUG-File
 
 All debugging functionality is defined in  o-saft-dbx.pm,  which will
 be searched for in the current working directory  or the installation
@@ -5685,7 +5676,7 @@ The rules for specifying cipher names are:
 [openssl] ... openssl 1.0.1
 
 If in any doubt, use  I<+list --v>  to get an idea about the mapping.
-And use  I<+listregex>  to see which regex are used to handle all these
+And use  I<--help=regex> to see which regex are used to handle all these
 variants herein.
 
 Mind the traps and dragons with cipher names and what number they are
@@ -5794,23 +5785,41 @@ C<--v>, C<--trace=cmd>, C<--trace>
 =head2 Commands
 
 Some commands cannot be used together with others, for example I<+list>,
-I<+listregex>, I<+libversion>, I<+version>, I<+check>, I<+help>.
+I<+libversion>, I<+version>, I<+check>, I<+help>.
  
 I<+quick>  should not be used together with other commands, it returns
 strange output then.
 
+I<+protocols>  requires  L<openssl(1)>  with support for "-nextprotoneg"
+option. Otherwise the value will be empty.
+
 =head2 Options
 
 The characters C<+> and C<=> cannot be used for I<--separator> option.
+
+Following strings should not be used in any value for options:
+  C<+check>, C<+info>, C<+quick>, C<--header>
+as they my trigger the  -I<--header>  option unintentional.
 
 Port as specified with I<--port> options is the same for all targets.
 
 The used  L<timeout(1)>  command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
-Following strings should not be used in any value for options:
-  C<+check>, C<+info>, C<+quick>, C<--header>
-as they my trigger the  -I<--header>  option unintentional.
+=head2 Performance Problems
+
+There are various reasons when the program responds slow, or seems to
+hang. Beside the problems described below performance issues are most
+likely a target-side problem.
+Try to use following options to narrow down the cause of the problem:
+
+=over 4
+
+=item I<--no-cert> I<--no-dns> I<--no-http> I<--no-openssl> I<--no-sni>
+
+Additionally I<--timeout=SEC>, I<--trace=cmd> and/or I<--no-cert> may help.
+
+=back
 
 =head2 Problems and Errors
 
@@ -6234,15 +6243,16 @@ Following formats are used:
 
 =head2 General
 
-    $0 +cipher example.tld
-    $0 +info   example.tld
-    $0 +check  example.tld
-    $0 +quick  example.tld
+    $0 +cipher some.tld
+    $0 +info   some.tld
+    $0 +check  some.tld
+    $0 +quick  some.tld
+    $0 +help=commands
     $0 +list
     $0 +list --v
-    $0 +certificate  example.tld
-    $0 +fingerprint  example.tld 444
-    $0 +after +dates example.tld
+    $0 +certificate  some.tld
+    $0 +fingerprint  some.tld 444
+    $0 +after +dates some.tld
 
 =head2 Some specials
 
@@ -6250,35 +6260,35 @@ Following formats are used:
 
 =item Get an idea how messages look like
 
-    $0 +check --cipher=tell-me example.tld
+    $0 +check --cipher=tell-me some.tld
 
 =item Check for Server Name Indication (SNI) usage only
 
-    $0 +sni example.tld
+    $0 +sni some.tld
 
 =item Check for SNI and print certificate's subject and altname
 
-    $0 +sni +cn +altname example.tld
+    $0 +sni +cn +altname some.tld
 
 =item Check for all SNI, certificate's subject and altname issues
 
-    $0 +sni_check example.tld
+    $0 +sni_check some.tld
 
 =item Only print supported ciphers:
 
-    $0 +cipher --enabled example.tld
+    $0 +cipher --enabled some.tld
 
 =item Only print unsupported ciphers:
 
-    $0 +cipher --disabled example.tld
+    $0 +cipher --disabled some.tld
 
 =item Test for a specific ciphers:
 
-    $0 +cipher --cipher=ADH-AES256-SHA example.tld
+    $0 +cipher --cipher=ADH-AES256-SHA some.tld
 
-=item Test all ciphers, even if not supported by local SSL implementation:
+=for comment =item Test all ciphers, even if not supported by local SSL implementation:
 
-    $0 +cipher --local example.tld
+=for comment     $0 +cipher --local some.tld
 
 =item Test using a private libssl.so, libcrypto.so and openssl:
 
@@ -6336,6 +6346,10 @@ Following formats are used:
 
     $0 +info some.tld --no-cert --no-cert --no-cert-text=Value-from-Certificate
 
+=item Avoid most performance and timeout problems
+
+    $0 +info some.tld --no-cert --no-dns --no-http --no-openssl --no-sni
+
 =back
 
 =for following lines may contain trailing space, which are requiered
@@ -6380,7 +6394,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.15
+@(#) 13.12.16
 
 =head1 AUTHOR
 
