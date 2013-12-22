@@ -370,6 +370,7 @@ sub _setcmd() {
     return if (defined $_timeout);  # lazy check
     `$Net::SSLinfo::timeout --version 2>&1` and $_timeout = "$Net::SSLinfo::timeout $Net::SSLinfo::timeout_sec"; # without leading \, lazy
     `$Net::SSLinfo::openssl version   2>&1` and $_openssl = $Net::SSLinfo::openssl;
+    $_timeout = "" if (!defined $_timeout);  # Mac OS X does not have timeout by default
     #dbx# print "#_setcmd using: " . `which openssl`;
     if ($^O !~ m/MSWin32/) {
         # Windows is too stupid for secure program calls
