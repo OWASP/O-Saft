@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.180 13/12/22 03:18:12";
+my  $SID    = "@(#) yeast.pl 1.182 13/12/22 15:57:38";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -68,6 +68,8 @@ if (! eval("require Net::SSLinfo;")) {
     require Net::SSLinfo;
 }
 
+sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_); }
+
 my $arg;
 my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 
@@ -75,7 +77,7 @@ my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 # -------------------------------------
 my @rc_argv = "";
 open(RC, '<', "./.$me") && do {
-    print "=== reading options from  ./.$me ===\n" if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @ARGV) > 0);
+    _print_read("options", "./.$me") if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @ARGV) > 0);
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
     @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
     @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
@@ -102,7 +104,7 @@ if ($#dbx >= 0) {
         # Note: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
     }
-    print "=== reading trace file $arg ===\n" if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @argv) > 0);
+    _print_read("trace file", $arg) if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @argv) > 0);
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
     require $arg;   # `our' variables are available there
 }
@@ -710,7 +712,7 @@ my %scores = (
 
 my %score_ssllabs = (
     # SSL Server Rating Guide:
-    #=========================================
+    #------------------+------------+---------------+-------------------------
     'check_prot'    => {'val' =>  0, 'score' => 0.3, 'txt' => "Protocol support"},        # 30%
     'check_keyx'    => {'val' =>  0, 'score' => 0.3, 'txt' => "Key exchange support"},    # 30%
     'check_ciph'    => {'val' =>  0, 'score' => 0.4, 'txt' => "Cipher strength support"}, # 40%
@@ -2124,6 +2126,7 @@ sub _setscore($) {
         _trace(" _setscore: read " . $score . "\n");
         my $line ="";
         open(FID, $score) && do {
+            _print_read("scoring", $score);
             while ($line = <FID>) {
                 #
                 # format of each line in file must be:
@@ -2133,6 +2136,7 @@ sub _setscore($) {
                 #       where white spaces are allowed arround =
                 chomp $line;
                 $line =~ s/\s*#.*$//;       # remove trailing comments
+                next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
                 next if ($line =~ m/^\s*$/);# ignore empty lines
                 _trace(" _setscore: set " . $line . "\n");
                 _setscore($line);
@@ -2143,7 +2147,7 @@ sub _setscore($) {
         warn("**WARNING: cannot open '$score': $! ; ignored");
         return;
     } # read file
-    if ($score !~ m/^[a-zA-Z0-9_?=\s-]*$/) {
+    if ($score !~ m/^[a-zA-Z0-9_?=\s+-]*$/) {
         warn("**WARNING: invalid score setting '$score'; ignored");
         return;
     }
@@ -2154,8 +2158,7 @@ sub _setscore($) {
         warn("**WARNING: invalid score value '$val'; ignored");
         return;
     }
-    # we try $key in all hashes, if they are not unique they are set all
-    # invalid keys are silently ignored
+    # invalid keys are silently ignored (perl is that clever:)
     $checks{$key}->{score} = $val if ($checks{$key});
 } # _setscore
 
@@ -4499,7 +4502,7 @@ In contrast to (all?) most other tools,  including openssl, it can be
 used to `ask simple questions' like `does target support STS' just by
 calling:
 
-    $0 +cipher +hsts example.tld
+    $0 +cipher +hsts_sts example.tld
 
 For more, please see B<EXAMPLES> below.
 
@@ -4529,7 +4532,7 @@ I<+info>  command.
     option below.
 
     The text for security qualifications are mainly those returned by
-    openssl (version 0.9.8): LOW, MEDIUM, HIGH and WEAK.
+    openssl (version 1.0.1): LOW, MEDIUM, HIGH and WEAK.
     The same texts but with all lower case characters are used if the
     qualification was adapted herein.
 
@@ -4658,12 +4661,14 @@ with other commands).
 
     Check the SSL connection for security issues. This is the same as
      "+info +cipher +sizes --sslv2 --sslv3 --tls1"
-    but also gives some kind of rating for security issues if any.
+    but also gives some kind of scoring for security issues if any.
+
+=begin comment
 
     The rating is mainly based on the information given in
         http://ssllabs.com/.....
 
-    Note that this command cannot be combined with other commands.
+=end comment
 
 =head3 +http
 
@@ -4672,6 +4677,8 @@ with other commands).
 =head3 +info
 
     Overview of most important details of the SSL connection.
+
+    Use "--v" option to show details also, which span multiple lines.
 
 =head3 +info--v
 
@@ -4753,7 +4760,7 @@ Please see:
 =head1 OPTIONS
 
 All options are written in lowercase. Words written in all capital in
-the description is text provided by the user.
+the description here is text provided by the user.
 
 =head2 General options
 
@@ -4765,7 +4772,7 @@ the description is text provided by the user.
 
   Note: The documentation is written  with perl's POD format and uses
         perl's POD module to print it.  Unfortunately  the first line
-        wriiten by  POD  is:
+        written by  POD  is:
             "User Contributed Perl Documentation"
         which may be a bit misleading, 'cause all descriptions of the
         documentation belong to this tool itself.
@@ -4804,7 +4811,8 @@ the description is text provided by the user.
 
 =head3 --help=text
 
-  Show internal texts.
+  Show texts used in various messages.
+  These texts can be changed with  "--cfg_text-KEY=TEXT".
 
 =head3 --help=regex
 
@@ -4822,11 +4830,11 @@ the description is text provided by the user.
 
 =head3 --host=HOST
 
-  Specify HOST as target to be checked.
+  Specify HOST as target to be checked. Legacy option.
 
 =head3 --port=PORT
 
-  Specify target's PORT to be used.
+  Specify target's PORT to be used. Legacy option.
 
 =head2 Options for SSL tool
 
@@ -4921,7 +4929,7 @@ the description is text provided by the user.
   silently ignored by default.
   With this option we try to use such ciphers also.
 
-  Option reserved for furure use ...
+  Option reserved for future use ...
 
 =head3 --SSL
 
@@ -4934,7 +4942,6 @@ the description is text provided by the user.
 
   ("--SSL" variants):    Test ciphers for this SSL/TLS version.
   ("--no-SSL" variants): Don't test ciphers for this SSL/TLS version.
-  Note that these options are discarded for  "+check"  command.
 
 =head3 --nullsslv2
 
@@ -5005,13 +5012,21 @@ Options used for  I<+check>  command:
 =head3 --set-score KEY=SCORE
 
   Set the score value  "SCORE"  for the check specified by  "KEY".
-  All score values are set to 10 by default. Values "0" .. "100"  are
+  Most score values are set to 10 by default. Values "0" .. "100" are
   allowed.
 
   If  "KEY=SCORE"  is a filename, values are read from that file.
   To generate a sample file, simply use:
 
     $0 --help=score
+
+  "KEY" for scoring is the same as for commands (without leading "+")
+  see "Commands for checks" section in:
+
+    $0 --help=commands
+
+  Scoring values can also be set in the  RC-FILE  file, but note that
+  then  --set-score=KEY=SCORE  must be used.
 
   For deatils how soring works, please see  SCORING  section.
 
@@ -5330,12 +5345,9 @@ and for compatibility with other programs.
 
     --port PORT
     --port=PORT
-    --p PORT
-    --p=PORT
-    -p PORT
-    -p=PORT
 
 This applies to most such options,  I<--port>  is just an example.
+When used in the RC-FILE, the I<--OPTION=VALUE> variant must be used.
 
 =for comment does not apply to --trace option
 
@@ -6274,35 +6286,50 @@ Following formats are used:
 
     $0 +sni_check some.tld
 
-=item Only print supported ciphers:
+=item Only print supported ciphers
 
     $0 +cipher --enabled some.tld
 
-=item Only print unsupported ciphers:
+=item Only print unsupported ciphers
 
     $0 +cipher --disabled some.tld
 
-=item Test for a specific ciphers:
+=item Test for a specific ciphers
 
     $0 +cipher --cipher=ADH-AES256-SHA some.tld
 
-=for comment =item Test all ciphers, even if not supported by local SSL implementation:
+=for comment =item Test all ciphers, even if not supported by local SSL implementation
 
 =for comment     $0 +cipher --local some.tld
 
-=item Test using a private libssl.so, libcrypto.so and openssl:
+=item Test using a private libssl.so, libcrypto.so and openssl
 
     $0 +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps some.tld
 
-=item Test using a private openssl:
+=item Test using a private openssl
 
     $0 +cipher --openssl=/foo/bar-1.42/openssl some.tld
 
-=item Test using a private openssl also for testing supported ciphers:
+=item Test using a private openssl also for testing supported ciphers
 
     $0 +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
 
-=item Just for curiosity:
+=item Show current score settings
+
+    $0 --help=score
+
+=item Change a single score setting
+
+    $0 --set-score=http_https=42   +check some.tld 
+    $0 --set-score http_https=42   +check some.tld 
+
+=item Use your private score settings from a file
+
+    $0 --help=score > magic.score
+    # edit as needed: magic.score
+    $0 --set-score    magic.score  +check some.tld
+
+=item Just for curiosity
 
     $0 some.tld +fingerprint --format=raw
     $0 some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
@@ -6394,7 +6421,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.16
+@(#) 13.12.16b
 
 =head1 AUTHOR
 
