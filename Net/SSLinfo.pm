@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.57 13/12/21 17:03:27',
+    SID         => '@(#) Net::SSLinfo.pm 1.58 13/12/22 03:09:23',
 };
 
 ######################################################## public documentation #
@@ -220,7 +220,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.16';
+    $VERSION   = '13.12.17';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -295,6 +295,7 @@ require Exporter;
         chain
         compression
         expansion
+        protocols
         krb5
         psk_hint
         psk_identity
@@ -370,7 +371,8 @@ sub _setcmd() {
     return if (defined $_timeout);  # lazy check
     `$Net::SSLinfo::timeout --version 2>&1` and $_timeout = "$Net::SSLinfo::timeout $Net::SSLinfo::timeout_sec"; # without leading \, lazy
     `$Net::SSLinfo::openssl version   2>&1` and $_openssl = $Net::SSLinfo::openssl;
-    $_timeout = "" if (!defined $_timeout);  # Mac OS X does not have timeout by default
+    $_timeout = "" if (!defined $_timeout);  # Mac OS X does not have timeout by default; can work without ...
+    $_openssl = "" if (!defined $_openssl);  # shit happens ...
     #dbx# print "#_setcmd using: " . `which openssl`;
     if ($^O !~ m/MSWin32/) {
         # Windows is too stupid for secure program calls
@@ -440,6 +442,7 @@ my %_SSLinfo = ( # our internal data structure
     'selfsigned'        => "",  # self-signed certificate
     'compression'       => "",  # compression supported
     'expansion'         => "",  # expansion supported
+    'protocols'         => "",  # Protocols advertised by server
     'krb5'              => "",  # Krb Principal
     'psk_hint'          => "",  # PSK identity hint
     'psk_identity'      => "",  # PSK identity
@@ -645,6 +648,10 @@ sub _openssl_MS($$$$) {
     return '' if ($^O !~ m/MSWin32/);
 
     _trace("_openssl_MS($mode, $host, $port)");
+    if ($_openssl eq '') {
+        _trace("_openssl_MS($mode): WARNING: no openssl");
+        return '#';
+    }
     $host .= ':' if ($port ne '');
     $text = '""' if (!defined $text);
     chomp $text;
@@ -688,7 +695,7 @@ sub _openssl_x509($$) {
     _trace("_openssl_x509($mode,...).");
     _setcmd();
     if ($_openssl eq '') {
-        _trace("_openssl_x509($mode): WARNING: no openssl") if ($trace > 1);
+        _trace("_openssl_x509($mode): WARNING: no openssl");
         return '#';
     }
 
@@ -987,7 +994,6 @@ sub do_ssl_open($$) {
         $_SSLinfo{'ocspid'}             = _openssl_x509($_SSLinfo{'PEM'}, '-ocspid');
         $_SSLinfo{'aux'}                = _openssl_x509($_SSLinfo{'PEM'}, 'aux');
         $_SSLinfo{'pubkey'}             = _openssl_x509($_SSLinfo{'PEM'}, 'pubkey');
-        $_SSLinfo{'protocols'}          = _openssl_x509($_SSLinfo{'PEM'}, 'protocols');
         $_SSLinfo{'extensions'}         = _openssl_x509($_SSLinfo{'PEM'}, 'extensions');
         $_SSLinfo{'signame'}            = _openssl_x509($_SSLinfo{'PEM'}, 'signame');
         $_SSLinfo{'sigdump'}            = _openssl_x509($_SSLinfo{'PEM'}, 'sigdump');
@@ -1192,27 +1198,40 @@ sub do_openssl($$$) {
     my $mode = shift;   # must be openssl command
     my $host = shift;
     my $port = shift;
-    my $data = shift || "";  # data is optional
+    my $pipe = shift || "";  # piped data is optional
+    my $data = "";
     _trace("do_openssl($mode,$host,$port...).");
     _setcmd();
     if ($_openssl eq '') {
-        _trace("do_openssl($mode): WARNING: no openssl") if ($trace > 1);
+        _trace("do_openssl($mode): WARNING: no openssl");
         return '#';
     }
     if ($mode =~ m/^-?(s_client)$/) {
-        $mode =  's_client -reconnect -connect';
         if ($Net::SSLinfo::use_sclient == 0) {
             _trace("do_openssl($mode): WARNING: no openssl s_client") if ($trace > 1);
             return '#';
         }
+        # pass -reconnect option to validate 'resumption' support later
+        # pass -nextprotoneg option to validate 'protocols' support later
+        # NOTE that openssl 1.x or later is required for -nextprotoneg
+        $mode =  's_client -nextprotoneg spdy/4a4,spdy/3.1,spdy/3,spdy/3,http/1.1 -reconnect -connect';
     }
     $host = $port = "" if ($mode =~ m/^-?(ciphers)/);
     _trace("echo '' | $_timeout $_openssl $mode $host$port 2>&1") ;
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
-        $data = `echo $data | $_timeout $_openssl $mode $host$port 2>&1`;
+        $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
+        if ($data =~ m/(\nusage:|unknown option)/s) { 
+            _trace("do_openssl($mode): WARNING: openssl does not support -nextprotoneg option");
+            $mode =  's_client -reconnect -connect';
+            $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
+        }
     } else {
         $data = _openssl_MS($mode, $host, $port, '');
+        if ($data =~ m/(\nusage:|unknown option)/s) { # we like performance penulties ...
+            _trace("do_openssl($mode): WARNING: openssl does not support -nextprotoneg option");
+            $data = _openssl_MS($mode, $host, $port, '');
+        }
     }
     chomp $data;
     $data =~ s/\s*$//;  # be sure ...
@@ -1346,6 +1365,10 @@ Get target's compression support.
 =head2 exapansion( )
 
 Get target's exapansion support.
+
+=head2 protocols( )
+
+Get protocols advertised by server,
 
 =head2 krb5
 
@@ -1559,6 +1582,7 @@ sub verify          { return _SSLinfo_get('verify',           $_[0], $_[1]); }
 sub chain           { return _SSLinfo_get('chain',            $_[0], $_[1]); }
 sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
 sub expansion       { return _SSLinfo_get('expansion',        $_[0], $_[1]); }
+sub protocols       { return _SSLinfo_get('protocols',        $_[0], $_[1]); }
 sub krb5            { return _SSLinfo_get('krb5',             $_[0], $_[1]); }
 sub psk_hint        { return _SSLinfo_get('psk_hint',         $_[0], $_[1]); }
 sub psk_identity    { return _SSLinfo_get('psk_identity',     $_[0], $_[1]); }
