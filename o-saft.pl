@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.183 13/12/22 18:20:31";
+my  $SID    = "@(#) yeast.pl 1.184 13/12/25 07:53:02";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -142,7 +142,7 @@ if ($me =~/\.cgi$/) {
 #!#   %ciphers        - our ciphers
 #!#   %cipher_names   - (hash)map of cipher constant-names to names
 #!#
-#!# All %check_*  contain a default 'score' value of 10, see --set-score
+#!# All %check_*  contain a default 'score' value of 10, see --cfg_score
 #!# option how to change that.
 
 # ToDo:
@@ -3902,8 +3902,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--legacy=(.*)/)       { $typ = 'legacy';  $arg = $1; } # no next
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'sep';          next; }
     if ($arg =~ /^--sep(?:arator)?=(.*)/){$typ = 'sep';     $arg = $1; } # no next
-    if ($arg =~ /^--set[_-]?score$/)    { $typ = 'score';        next; }
-    if ($arg =~ /^--set[_-]?score=(.*)/){ $typ = 'score';   $arg = $1; } # no next
     if ($arg =~ /^--timeout$/)          { $typ = 'timeout';      next; }
     if ($arg =~ /^--timeout=(.*)/)      { $typ = 'timeout'; $arg = $1; } # no next
     if ($arg eq  '-interval')           { $typ = 'timeout';      next; } # ssldiagnos
@@ -3914,6 +3912,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)/){ next; } #  "
     if ($arg =~ /^-(connect)/)          { next; } #  "
     if ($arg eq  '--insecure')          { next; } #  "
+    if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
+        warn("**WARNING: --set-score= obsolte, please use --cfg_score=*; ignored");
+        next;
+    }
     #} +---------+----------------------+----------------------+----------------
     if ($arg =~ /^--cfg[_-](cmd-(?:[^=]*))=(.*)/){# set new list of commands
         $typ = $1;      # the command to set, i.e. cmd-http, cmd-sni, ...
@@ -3927,6 +3929,13 @@ while ($#argv >= 0) {
             next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
             warn("**WARNING: unknown command '$key' for '$typ'; ignored");
         }
+        $typ = 'host';
+        next;
+    }
+    if ($arg =~ /^--cfg[_-]score-([^=]*)(?:=(.*))?/){   # set new score
+        $typ =  $1;     #
+        $arg =  $2 || "";
+        _setscore("$1=$arg");
         $typ = 'host';
         next;
     }
@@ -4005,7 +4014,6 @@ while ($#argv >= 0) {
     if ($typ eq 'sep')      { $text{'separator'} = $arg;    $typ = 'host'; next; }
     if ($typ eq 'timeout')  { $cfg{'timeout'} = $arg;       $typ = 'host'; next; }
     if ($typ eq 'cipher')   { $cfg{'cipher'}  = $arg;       $typ = 'host'; next; }
-    if ($typ eq 'score')    { _setscore($arg);              $typ = 'host'; next; }
     if ($typ eq 'ctxt')     { $cfg{'no_cert_txt'} = $arg;   $typ = 'host'; next; }
     if ($typ eq 'port')     { $cfg{'port'}    = $arg;       $typ = 'host'; next; }
     if ($typ eq 'host')     {
@@ -4790,10 +4798,10 @@ the description here is text provided by the user.
 =head3 --help=score
 
   Show score value for each check.
-  Value is printed in format to be used for  "--set-score KEY=VAL".
+  Value is printed in format to be used for  "--cfg_score-KEY=SCORE".
 
   Note that the  sequence  of options  is important.  Use the options
-  "--trace"  and/or  "--set-score KEY=VAL"  before  "--help=score".
+  "--trace"  and/or  "--cfg_score-KEY=SCORE"  before  "--help=score".
 
 =head3 --help=intern
 
@@ -4999,7 +5007,7 @@ Options used for  I<+check>  command:
   Currently only checks according CN, alternate names in the target's
   certificate compared to the given hostname are effected.
 
-=head3 --set-score KEY=SCORE
+=head3 --cfg_score-KEY=SCORE
 
   Set the score value  "SCORE"  for the check specified by  "KEY".
   Most score values are set to 10 by default. Values "0" .. "100" are
@@ -5016,7 +5024,7 @@ Options used for  I<+check>  command:
     $0 --help=commands
 
   Scoring values can also be set in the  RC-FILE  file, but note that
-  then  --set-score=KEY=SCORE  must be used.
+  then  --cfg_score=KEY=SCORE  must be used.
 
   For deatils how soring works, please see  SCORING  section.
 
@@ -6310,14 +6318,13 @@ Following formats are used:
 
 =item Change a single score setting
 
-    $0 --set-score=http_https=42   +check some.tld 
-    $0 --set-score http_https=42   +check some.tld 
+    $0 --cfg_score-http_https=42   +check some.tld 
 
 =item Use your private score settings from a file
 
     $0 --help=score > magic.score
     # edit as needed: magic.score
-    $0 --set-score    magic.score  +check some.tld
+    $0 --cfg_score    magic.score  +check some.tld
 
 =item Just for curiosity
 
@@ -6411,7 +6418,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.16c
+@(#) 13.12.17
 
 =head1 AUTHOR
 
