@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.182 13/12/22 15:57:38";
+my  $SID    = "@(#) yeast.pl 1.183 13/12/22 18:20:31";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -697,7 +697,7 @@ our %shorttexts = (
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
 my %scores = (
-    # keys starting with 'check_' are for total values printed in printscore()
+    # keys starting with 'check_' are for total values
     # all other keys are for individual score values
     #------------------+-------------+----------------------------------------
     'check_dest'    => {'val' => 100, 'txt' => "Target checks"},
@@ -3624,24 +3624,49 @@ sub _print_head($$) { printf("=%15s | %s\n", @_); printf("=%s+%s\n", '-'x16, '-'
 sub _print_opt($$$) { printf("%16s%s%s\n", @_); }
 sub _print_cmd($$)  { printf("     +%-14s\t%s\n", @_); }
 
-sub printscoreval() {
-    #? print all initial score values of all &check_* hashes
-    #print "# $mename " . $scores{'checks'}->{txt} . ":";
-    _print_head('key=SCORE', "\t# Description");
-    _print_opt($_, "=" . $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks);
-} # printscoreval
-
-sub printregex() {
-    #? print our regular expressions
-    _print_head('key', ' Regular Expressions used internally');
-    _print_opt($_, " => ", $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}});
-} # printregex
-
-sub printabbr() {
-    #? print abbrevations, acronyms used in SSL world
-    _print_head('Abbrevation', 'Description');
-    _print_opt(do{(my $a=$_)=~s/ *$//;$a}, " - ", $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}});
-} # printabbr
+sub printtable($) {
+    #? print data froam hash in tabular form, $typ denotes hash
+    my $typ = shift;
+    my %types = (
+        # typ        header left    separator  header right
+        #-----------+---------------+-------+-------------------------------
+        'score' => ["key=SCORE",     "=",    "\t# Description"],
+        'regex' => ["key",           " => ", " Regular Expressions used internally"],
+        'abbr'  => ["Abbrevation",   " - ",  "Description"],
+        'intern'=> ["Command",       "    ", " alias for this command"],
+        'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
+        'text'  => ["key", "=",   "text"],
+    );
+    my ($key, $txt);
+    my $sep = $types{$typ}->[1];
+    _print_head($types{$typ}->[0], $types{$typ}->[2]);
+    if ($typ eq 'abbr')  { _print_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}}); }
+    if ($typ eq 'regex') { _print_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
+    if ($typ eq 'compl') { _print_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
+    if ($typ eq 'score') { _print_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
+    if ($typ eq 'intern') {
+        foreach $key (sort keys %cfg) {
+            next if ($key eq 'cmd-intern'); # don't list myself
+            next if ($key !~ m/^cmd-(.*)/);
+            _print_opt("cmd-" . $1, $sep, "+" . join(" +", @{$cfg{$key}}));
+        }
+    }
+    if ($typ eq 'text') {
+    foreach $key (sort keys %text) {
+        next if (ref($text{$key}) ne ""); # skip except string
+        $txt =  $text{$key};
+        $txt =~ s/(\n)/\\n/g;
+        $txt =~ s/(\r)/\\r/g;
+        $txt =~ s/(\t)/\\t/g;
+        _print_opt($key, "=", $txt);
+    }
+    print "
+= Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
+= The string  @@  inside texts is used as placeholder.
+= (Don't be confused about multiple  =  as they are part of  TEXT.)
+    ";
+    }
+} # printtable
 
 sub printcommands() {
     #? print program's help about commands
@@ -3677,37 +3702,6 @@ sub printcommands() {
     }
 } # printcommands
 
-sub printcmdintern() {
-    my $key;
-    _print_head('Command', ' alias for these commands');
-    foreach $key (sort keys %cfg) {
-        next if ($key eq 'cmd-intern'); # don't list myself
-        next if ($key !~ m/^cmd-(.*)/);
-        _print_opt("cmd-" . $1, "    ", "+" . join(" +", @{$cfg{$key}}));
-    }
-} # printcmdintern
-
-sub printexts() {
-    my ($key, $txt);
-    print "\n   Summary of internal texts
-
-    Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
-    The string  @@  inside texts is used as placeholder.
-    (Don't be confused about multiple  =  as they are part of  TEXT.)
-    ";
-    _print_opt("=           key ", "=", " text");
-    _print_opt("=" . "-"x15, "+", "-"x60);
-    foreach $key (sort keys %text) {
-        next if (ref($text{$key}) ne ""); # skip except string
-        $txt =  $text{$key};
-        $txt =~ s/(\n)/\\n/g;
-        $txt =~ s/(\r)/\\r/g;
-        $txt =~ s/(\t)/\\t/g;
-        _print_opt($key, "=", $txt);
-        #printf("%12s=%s\n", $key, $txt);
-    }
-} # printexts
-
 sub printhelp($) {
     #? print program's help
     # if parameter is not empty, print brief list of specified label
@@ -3718,12 +3712,8 @@ sub printhelp($) {
     _v_print("help: $label");
     if ($label =~ m/^cmd$/i)            { print "# $mename commands:\t+"        . join(" +", @{$cfg{'commands'}}); exit; }
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
-    if ($label =~ m/^compliance/i)      { print "# $mename compliance values:\n"; printf("%13s:\t%s\n", $_, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); exit; }
-    if ($label =~ m/^(score)s?$/i)      { printscoreval();  exit; }
+    if ($label =~ m/^(abbr|compl|intern|regex|score|text)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
     if ($label =~ m/^c(ommand|heck)s?/i){ printcommands();  exit; }
-    if ($label =~ m/^intern?/i)         { printcmdintern(); exit; }
-    if ($label =~ m/^text?/i)           { printexts();      exit; }
-    if ($label =~ m/^regex/i)           { printregex(),     exit; }
 
     # no special help, print full one
     if ($cfg{'verbose'} > 1) { printhist(); exit; }
@@ -3827,8 +3817,8 @@ while ($#argv >= 0) {
     if ($arg =~ m/^--no[_-]?http$/)     { $cfg{'usehttp'}   = 0; next; }
     if ($arg =~ m/^--h(?:elp)?(?:=(.*))?$/) { printhelp($1);     exit 0; } # allow --h --help --h=*
     if ($arg =~ m/^\+help=?(.*)$/)          { printhelp($1);     exit 0; } # allow +help +help=*
-    if ($arg =~ m/^(--|\+)ab(?:br|k)=?$/)   { printabbr();       exit 0; }
-    if ($arg =~ m/^(--|\+)glossar$/)        { printabbr();       exit 0; }
+    if ($arg =~ m/^(--|\+)ab(?:br|k)=?$/)   { printtable('abbr');exit 0; }
+    if ($arg =~ m/^(--|\+)glossar$/)        { printtable('abbr');exit 0; }
     if ($arg =~ m/^(--|\+)todo=?$/i)        { printtodo();       exit 0; }
     # options for trace and debug
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();         exit 0; }
@@ -4399,7 +4389,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         print_check($legacy, $scores{'checks'}->{txt}, $scores{'checks'}->{val});
         printruler();
         if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
-            printscoreval();
+            printtable('score');
             printruler();
         }
     }
@@ -6421,7 +6411,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.16b
+@(#) 13.12.16c
 
 =head1 AUTHOR
 
