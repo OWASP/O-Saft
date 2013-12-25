@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.184 13/12/25 07:53:02";
+my  $SID    = "@(#) yeast.pl 1.185 13/12/25 09:56:00";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -3633,13 +3633,15 @@ sub printtable($) {
         'score' => ["key=SCORE",     "=",    "\t# Description"],
         'regex' => ["key",           " => ", " Regular Expressions used internally"],
         'abbr'  => ["Abbrevation",   " - ",  "Description"],
-        'intern'=> ["Command",       "    ", " alias for this command"],
+        'intern'=> ["Command",       "    ", " list of commands"],
         'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
-        'text'  => ["key", "=",   "text"],
+        'text'  => ["key", "  ",   "text"],
+        'cfg-text'=>["N/A", "=",   "N/A"],
+        'cfg-quot'=>["N/A", "=",   "N/A"],
     );
     my ($key, $txt);
     my $sep = $types{$typ}->[1];
-    _print_head($types{$typ}->[0], $types{$typ}->[2]);
+    _print_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
     if ($typ eq 'abbr')  { _print_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}}); }
     if ($typ eq 'regex') { _print_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
     if ($typ eq 'compl') { _print_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
@@ -3651,20 +3653,22 @@ sub printtable($) {
             _print_opt("cmd-" . $1, $sep, "+" . join(" +", @{$cfg{$key}}));
         }
     }
-    if ($typ eq 'text') {
+    if ($typ =~ m/(text|quot)/) {
     foreach $key (sort keys %text) {
         next if (ref($text{$key}) ne ""); # skip except string
         $txt =  $text{$key};
         $txt =~ s/(\n)/\\n/g;
         $txt =~ s/(\r)/\\r/g;
         $txt =~ s/(\t)/\\t/g;
-        _print_opt($key, "=", $txt);
+        $txt =  '"' . $txt . '"'     if ($typ eq 'cfg-quot');
+        $key =  '--cfg_text-' . $key if ($typ =~ m/^cfg/);
+        _print_opt($key, $sep, $txt);
     }
     print "
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
 = The string  @@  inside texts is used as placeholder.
 = (Don't be confused about multiple  =  as they are part of  TEXT.)
-    ";
+    " if ($typ !~ m/^cfg/);
     }
 } # printtable
 
@@ -3702,6 +3706,12 @@ sub printcommands() {
     }
 } # printcommands
 
+sub printhist() {
+    my $egg = join ("", @DATA);
+    $egg =~ s{.*?=begin\s+--v --v(.*?)=end\s+--v.*}{$1}ms;
+    print scalar reverse $egg;
+} # printhist
+
 sub printhelp($) {
     #? print program's help
     # if parameter is not empty, print brief list of specified label
@@ -3712,8 +3722,12 @@ sub printhelp($) {
     _v_print("help: $label");
     if ($label =~ m/^cmd$/i)            { print "# $mename commands:\t+"        . join(" +", @{$cfg{'commands'}}); exit; }
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
-    if ($label =~ m/^(abbr|compl|intern|regex|score|text)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
     if ($label =~ m/^c(ommand|heck)s?/i){ printcommands();  exit; }
+    if ($label =~ m/^(abbr|compl|intern|regex|score|text)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
+    if ($label =~ m/^((?:cfg[_-])?quot(?:[_-]cfg)?)e?s?$/i) { printtable('cfg-quot'); exit; }
+    if ($label =~ m/^((?:cfg[_-])?text(?:[_-]cfg)?)s?$/i)   { printtable('cfg-text'); exit; }
+        # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
+        # we can simply switch from  --help=text  and/or  --cfg_text-*
 
     # no special help, print full one
     if ($cfg{'verbose'} > 1) { printhist(); exit; }
@@ -3755,12 +3769,6 @@ sub printhelp($) {
         print $ident, $_;
     }
 } # printhelp
-
-sub printhist() {
-    my $egg = join ("", @DATA);
-    $egg =~ s{.*?=begin\s+--v --v(.*?)=end\s+--v.*}{$1}ms;
-    print scalar reverse $egg;
-} # printhist
 
 sub printtodo() {
     #? print program's ToDo
@@ -3821,7 +3829,7 @@ while ($#argv >= 0) {
     if ($arg =~ m/^(--|\+)glossar$/)        { printtable('abbr');exit 0; }
     if ($arg =~ m/^(--|\+)todo=?$/i)        { printtodo();       exit 0; }
     # options for trace and debug
-    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();         exit 0; }
+    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();         exit 0; } # debugging
    #if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++; $info = 1; next; }
     if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     next; }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
@@ -3913,13 +3921,13 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(connect)/)          { next; } #  "
     if ($arg eq  '--insecure')          { next; } #  "
     if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
-        warn("**WARNING: --set-score= obsolte, please use --cfg_score=*; ignored");
+        warn("**WARNING: --set-score=* obsolte, please use --cfg_score=*; ignored");
         next;
     }
     #} +---------+----------------------+----------------------+----------------
     if ($arg =~ /^--cfg[_-](cmd-(?:[^=]*))=(.*)/){# set new list of commands
-        $typ = $1;      # the command to set, i.e. cmd-http, cmd-sni, ...
-        $arg = $2;      # list of commands separated by whitespaces
+        $typ =  $1;     # the command to be set, i.e. cmd-http, cmd-sni, ...
+        $arg =  $2;     # list of commands separated by whitespaces
         @{$cfg{$typ}} = ();
         push(@{$cfg{$typ}}, split(/\s+/, $arg));
         foreach $key (@{$cfg{$typ}}) {  # check for mis-spelled commands
@@ -3940,7 +3948,12 @@ while ($#argv >= 0) {
         next;
     }
     if ($arg =~ /^--cfg[_-]text-([^=]*)=(.*)/){   # set new text
-        $text{$1} = $2;
+        $typ =  $1;     # the text to be set, i.e. out-target
+        $arg =  $2;     # new text
+        $arg =~ s/(\\n)/\n/g;
+        $arg =~ s/(\\r)/\r/g;
+        $arg =~ s/(\\t)/\t/g;
+        $text{$typ} = $arg;
         $typ = 'host';
         next;
     }
@@ -4812,6 +4825,11 @@ the description here is text provided by the user.
   Show texts used in various messages.
   These texts can be changed with  "--cfg_text-KEY=TEXT".
 
+=head3 --help=text-cfg
+
+  Show texts used in various messages ready for use in in  RC-FILE or
+  as option.
+
 =head3 --help=regex
 
   Show regular expressions used internally.
@@ -5165,6 +5183,13 @@ Options used for  I<+check>  command:
 =head3 --cfg_text-KEY=TEXT
 
   Replace text for  KEY  with TEXT.
+
+  Hint: use following to get text preconfigured for this option:
+
+      $0 --help=cfg_text
+
+  Note that \n, \r and \t are replaced by the corresponding character
+  when read from RC-FILE.
 
 =head2 Options for compatibility with other programs
 
@@ -6326,6 +6351,16 @@ Following formats are used:
     # edit as needed: magic.score
     $0 --cfg_score    magic.score  +check some.tld
 
+=item Use your private texts in output
+
+    $0 +check some.tld --cfg_text-desc="my special description"
+
+=item Use your private texts from RC-FILE
+
+    $0 --help=cfg_text >> .o-saft.pl
+    # edit as needed:     .o-saft.pl
+    $0 +check some.tld
+
 =item Just for curiosity
 
     $0 some.tld +fingerprint --format=raw
@@ -6418,7 +6453,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.17
+@(#) 13.12.17a
 
 =head1 AUTHOR
 
