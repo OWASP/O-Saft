@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.185 13/12/25 09:56:00";
+my  $SID    = "@(#) yeast.pl 1.186 13/12/26 11:57:05";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -68,7 +68,7 @@ if (! eval("require Net::SSLinfo;")) {
     require Net::SSLinfo;
 }
 
-sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_); }
+sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header)/i, @ARGV) <= 0); }
 
 my $arg;
 my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
@@ -77,7 +77,7 @@ my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 # -------------------------------------
 my @rc_argv = "";
 open(RC, '<', "./.$me") && do {
-    _print_read("options", "./.$me") if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @ARGV) > 0);
+    _print_read("options", "./.$me");
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
     @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
     @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
@@ -104,8 +104,8 @@ if ($#dbx >= 0) {
         # Note: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
     }
-    _print_read("trace file", $arg) if(grep(/(:?\+(check|info|quick|cipher)|--header)/, @argv) > 0);
-        # $cfg{'out_header'} not yet available, see LIMITATIONS also
+    _print_read("trace file", $arg) if(grep(/(:?--no.?header)/i, @argv) <= 0);
+        # allow --no-header in RC-FILE also
     require $arg;   # `our' variables are available there
 }
 
@@ -2126,7 +2126,7 @@ sub _setscore($) {
         _trace(" _setscore: read " . $score . "\n");
         my $line ="";
         open(FID, $score) && do {
-            _print_read("scoring", $score);
+            _print_read("scoring", $score) if($cfg{'out_header'} > 0);
             while ($line = <FID>) {
                 #
                 # format of each line in file must be:
@@ -6453,7 +6453,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.17a
+@(#) 13.12.17b
 
 =head1 AUTHOR
 
