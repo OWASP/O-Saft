@@ -14,6 +14,30 @@ require "o-saft-dbx.pm";
 
 Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
+=head2 Functions defined herein
+
+=over 4
+
+=item _yeast_init( )
+
+=item _yeast_exit( )
+
+=item _yeast_data( )
+
+=item _yeast_cipher( )
+
+=item _yeast( )
+
+=item _y_ARG( ), _y_CMD( )
+
+=item _vprintme( )
+
+=item _v_print( ), _v2print( ), _v3print( ), _v4print( )
+
+=item _trace( ), _trace_1key( ), _trace_1arr( )
+
+=back
+
 =head2 Variables which may be used herein
 
 They must be defined as `our' in L<o-saft.pl>:
@@ -30,6 +54,8 @@ They must be defined as `our' in L<o-saft.pl>:
 
 =item %checks
 
+=item %org
+
 =back
 
 Functions being used in L<o-saft.pl> shoudl be defined as empty stub there.
@@ -44,11 +70,11 @@ They don't need to be defined in L<o-saft.pl> if they are used only here.
 In that case simply call the function in C<_yeast_init> or C<_yeast_exit>
 they are called at beginning and end of L<o-saft.pl>.
 It's just important that  L<o-saft.pl>  was called with either the I<--v>
-or any I<--trace>  option, which then loads this file automatically.
+or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.3 13/12/12 01:16:28";
+my  $SID    = "@(#) o-saft-dbx.pm 1.4 13/12/27 23:31:28";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -60,9 +86,6 @@ sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; }
 sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); }
 sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
 sub _yeast_init() {
-    #
-    #_yeast_data();  # uncomment to get these informations
-
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
         _yeast("       verbose= $cfg{'verbose'}");
         _yeast("         trace= $cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
@@ -113,8 +136,8 @@ sub _yeast_data() {
 ";
     my ($key, $old, $label, $value);
     my @yeast = ();     # list of potential internal, private commands
-    printf("%20s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", " score");
-    printf("%20s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
+    printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
+    printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
     $old = "";
     foreach $key
             (sort {uc($a) cmp uc($b)}
@@ -131,22 +154,24 @@ sub _yeast_data() {
         }
         $cmd = " ";
 	$cmd = "+" if (_is_member($key, \@{$cfg{'commands'}}) > 0);     # command available as is
-        printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
+        printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
 	    $cmd,
             (_is_intern($key) > 0)      ?          "I"  : " ",
             (defined $data{$key})       ? __data( $key) : " ",
             (defined $shorttexts{$key}) ?          "*"  : " ",
             (defined $checks{$key})     ?          "*"  : " ",
+            (_is_member($key, \@{$org{'cmd-check'}}) > 0) ? "*"  : "!",
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
-    printf("%20s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
+    printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
     print '
     +  command (key) present
     I  command is an internal command or alias
     *  key present
        key not present
     ?  key in %data present but missing in $cfg{commands}
+    !  key in %cfg{cmd-check} present but missing in redefined %cfg{cmd-check}
 
     A shorttext should be available for each command and all data keys, except:
         cn_nosni, ext_*, valid-*
@@ -154,7 +179,7 @@ sub _yeast_data() {
     Please check following keys, they skipped in table above due to
     ';
     print "    internal or summary commands:\n        " . join(" ", @yeast);
-    print "";
+    print "\n";
 }
 
 sub _yeast_cipher() {
