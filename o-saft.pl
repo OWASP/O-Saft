@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.188 13/12/27 23:51:02";
+my  $SID    = "@(#) yeast.pl 1.189 13/12/28 00:33:19";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -54,6 +54,16 @@ use IO::Socket::INET;
 # README if any
 # -------------------------------------
 open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
+
+# CGI
+# -------------------------------------
+my $cgi    = 0;
+if ($me =~/\.cgi$/) {
+    # CGI mode is pretty simple: see {yeast,o-saft}.cgi
+    #   code removed here!
+    die "**ERROR: CGI mode requires strict settings" if ($cgi !~ /--cgi=?/);
+    $cgi = 1;
+}
 
 # quick&dirty checks
 # -------------------------------------
@@ -78,7 +88,7 @@ my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 # -------------------------------------
 my @rc_argv = "";
 open(RC, '<', "./.$me") && do {
-    _print_read("options", "./.$me");
+    _print_read("options", "./.$me") if ($cgi == 0);
     @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
     @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
     close(RC);
@@ -92,7 +102,7 @@ push(@argv, @ARGV);
 # read file with source for trace and verbose, if any
 # -------------------------------------
 my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # option can be in .rc-file, hence @argv
-if ($#dbx >= 0) {
+if (($#dbx >= 0) and ($cgi == 0)) {
     $arg =  "./o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # hidden option: --trace=./myfile.pl
@@ -107,14 +117,6 @@ if ($#dbx >= 0) {
     _print_read("trace file", $arg) if(grep(/(:?--no.?header)/i, @argv) <= 0);
         # allow --no-header in RC-FILE also
     require $arg;   # `our' variables are available there
-}
-
-# CGI
-# -------------------------------------
-my $cgi    = 0;
-if ($me =~/\.cgi$/) {
-    # CGI mode is pretty simple: see {yeast,o-saft}.cgi
-    die "**ERROR: CGI mode requires strict settings" if ($cgi !~ /--cgi=?/);
 }
 
 # initialize defaults
@@ -2131,6 +2133,10 @@ sub _cfg_set($$) {
     if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
+        if ($cgi == 0) {
+            warn("**WARNING: configuration files are not read in CGI mode; ignored");
+            return;
+        }
         _trace(" _cfg_set: read $arg \n");
         my $line ="";
         open(FID, $arg) && do {
@@ -6161,6 +6167,8 @@ the used modules like  L<Net::SSLeay>  will write some debug messages
 on STDERR instead STDOUT. Therefore multiple  I<--v> and/or  I<--trace>
 options behave slightly different.
 
+No additional external files like  B<RC-FILE> or B<DEBUG-FILE> are read
+in CGI mode; they are silently ignored.
 Some options are disabled in CGI mode  because they are dangerous  or
 don't make any sense.
 
@@ -6176,6 +6184,17 @@ The only code necessary for CGI mode is encapsulated at the beginning,
 see  C<if ($me =~/\.cgi$/){ ... }>.  Beside some minor additional regex
 matches (mainly removing trailing  C<=> and empty arguments) no other
 code is needed. 
+
+=head2 SECURITY
+
+This tool is designed to be used by people doing security or forensic
+analyses. Hence no malicious input is expected.
+There are no special security checks implemented. Some parameters are
+roughly sanatized according unwanted characters.  In particular there
+are no checks according any kind of code injection.
+
+Please see WARNING above if used in CGI mode. It's not recommended to
+run this tool in CGI mode. You have been warned!
 
 =head2 Program Code
 
@@ -6563,7 +6582,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.19
+@(#) 13.12.20
 
 =head1 AUTHOR
 
