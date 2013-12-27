@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.186 13/12/26 11:57:05";
+my  $SID    = "@(#) yeast.pl 1.187 13/12/27 16:22:38";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -69,6 +69,7 @@ if (! eval("require Net::SSLinfo;")) {
 }
 
 sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header)/i, @ARGV) <= 0); }
+        # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
 my $arg;
 my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
@@ -78,7 +79,6 @@ my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 my @rc_argv = "";
 open(RC, '<', "./.$me") && do {
     _print_read("options", "./.$me");
-        # $cfg{'out_header'} not yet available, see LIMITATIONS also
     @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
     @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
     close(RC);
@@ -2023,6 +2023,7 @@ our %org = (
     'cmd-check' => $cfg{'cmd-check'},
     'cmd-http'  => $cfg{'cmd-http'},
     'cmd-info'  => $cfg{'cmd-info'},
+    'cmd-quick' => $cfg{'cmd-quick'},
     #'text'      => { %text }, no need for 'glossar' here
 ); # %org
 
@@ -2115,52 +2116,94 @@ sub _getscore($$$)     {
     return $score;
 } # _getscore
 
-sub _setscore($) {
-    # set given value as 'score' in %check_* hash
+sub _cfg_set($$) {
+    # set value in configuration %checks, %text
+    # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
     # if given value is a file, read settings from that file
     # otherwise given value must be KEY=VALUE format;
-    my $score = shift;
-    no warnings qw(prototype); # avoid: main::_setscore() called too early to check prototype at ./yeast.pl line
-    #dbx# _dbx("_setscore($score)\n";
-    if (-f "$score") {  # got a valid file, read from that file
-        _trace(" _setscore: read " . $score . "\n");
+    my $typ = shift;    # type of config value to be set
+    my $arg = shift;    # KEY=VAL or filename
+    my ($key, $val);
+    no warnings qw(prototype); # avoid: main::_cfg_set() called too early to check prototype at ...
+    _trace(" _cfg_set($typ, ){");
+    if ($typ !~ m/^CFG-(cmd|checks?|data|text|scores?)$/) {
+        warn("**WARNING: unknown configuration key '$typ'; ignored");
+        goto _CFG_RETURN;
+    }
+    if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
+        # we're picky about valid filenames: only characters, digits and some
+        # special chars (this should work on all platforms)
+        _trace(" _cfg_set: read $arg \n");
         my $line ="";
-        open(FID, $score) && do {
-            _print_read("scoring", $score) if($cfg{'out_header'} > 0);
+        open(FID, $arg) && do {
+            _print_read("configuration", $arg) if($cfg{'out_header'} > 0);
             while ($line = <FID>) {
                 #
                 # format of each line in file must be:
+                #    Lines starting with  =  are comments and ignored.
                 #    Anthing following (and including) a hash is a comment
                 #    and ignored. Empty lines are ignored.
                 #    Settings must be in format:  key=value
                 #       where white spaces are allowed arround =
                 chomp $line;
-                $line =~ s/\s*#.*$//;       # remove trailing comments
+                $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
+                    # remove trailing comments, but CFG-text may contain #
                 next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
                 next if ($line =~ m/^\s*$/);# ignore empty lines
-                _trace(" _setscore: set " . $line . "\n");
-                _setscore($line);
+                _trace(" _cfg_set: set " . $line . "\n");
+                _cfg_set($typ, $line);
             }
             close(FID);
-            return;
+            goto _CFG_RETURN;
         };
-        warn("**WARNING: cannot open '$score': $! ; ignored");
+        warn("**WARNING: cannot open '$arg': $! ; ignored");
         return;
     } # read file
-    if ($score !~ m/^[a-zA-Z0-9_?=\s+-]*$/) {
-        warn("**WARNING: invalid score setting '$score'; ignored");
-        return;
+
+    ($key, $val) = split(/=/, $arg, 2); # left of first = is key
+    $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanatize key
+
+    if ($typ eq 'CFG-cmd') {            # set new list of commands $arg
+        $typ = 'cmd-' . $key ;# the command to be set, i.e. cmd-http, cmd-sni, ...
+        _trace(" _cfg_set(KEY=$key, CMD=$val)\n");
+        @{$cfg{$typ}} = ();
+        push(@{$cfg{$typ}}, split(/\s+/, $val));
+        foreach $key (@{$cfg{$typ}}) {  # check for mis-spelled commands
+            next if (_is_hashkey($key, \%checks) > 0);
+            next if (_is_hashkey($key, \%data) > 0);
+            next if (_is_intern( $key) > 0);
+            next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
+            warn("**WARNING: unknown command '$key' for '$typ'; ignored");
+        }
     }
-    $score =~ s/[^a-zA-Z0-9_?=-]*//g;
-    my ($key, $val) = split('=', $score);
-    _trace(" _setscore(key=" . $key . ", score=" . $val . ").\n");
-    if ($val !~ m/^(\d\d?|100)$/) { # allow 0 .. 100
-        warn("**WARNING: invalid score value '$val'; ignored");
-        return;
-    }
+
     # invalid keys are silently ignored (perl is that clever:)
-    $checks{$key}->{score} = $val if ($checks{$key});
-} # _setscore
+
+    if ($typ eq 'CFG-score') {          # set new score value
+        _trace(" _cfg_set(KEY=$key, SCORE=$val)\n");
+        if ($val !~ m/^(\d\d?|100)$/) { # allow 0 .. 100
+            warn("**WARNING: invalid score value '$val'; ignored");
+            goto _CFG_RETURN;
+        }
+        $checks{$key}->{score} = $val if ($checks{$key});
+    }
+
+    if ($typ =~ /^CFG-(checks?|data|scores|text)/) {
+        $val =~ s/(\\n)/\n/g;
+        $val =~ s/(\\r)/\r/g;
+        $val =~ s/(\\t)/\t/g;
+        _trace(" _cfg_set(KEY=$key, LABEL=$val).\n");
+        $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
+        $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
+        $text{$key}          = $val if ($typ =~ /^CFG-text/);
+        $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/);
+        $scores{$key}->{txt} = $val if ($key =~ m/^check_/); # contribution to lazy usage
+    }
+
+    _CFG_RETURN:
+    _trace(" _cfg_set }");
+    return;
+} # _cfg_set
 
 # check functions for array members and hash keys
 sub __SSLinfo($$$) {
@@ -3661,7 +3704,7 @@ sub printtable($) {
         $txt =~ s/(\r)/\\r/g;
         $txt =~ s/(\t)/\\t/g;
         $txt =  '"' . $txt . '"'     if ($typ eq 'cfg-quot');
-        $key =  '--cfg_text-' . $key if ($typ =~ m/^cfg/);
+        $key =  '--cfg_text=' . $key if ($typ =~ m/^cfg/);
         _print_opt($key, $sep, $txt);
     }
     print "
@@ -3727,7 +3770,7 @@ sub printhelp($) {
     if ($label =~ m/^((?:cfg[_-])?quot(?:[_-]cfg)?)e?s?$/i) { printtable('cfg-quot'); exit; }
     if ($label =~ m/^((?:cfg[_-])?text(?:[_-]cfg)?)s?$/i)   { printtable('cfg-text'); exit; }
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
-        # we can simply switch from  --help=text  and/or  --cfg_text-*
+        # we can simply switch from  --help=text  and/or  --cfg_text=*
 
     # no special help, print full one
     if ($cfg{'verbose'} > 1) { printhist(); exit; }
@@ -3916,6 +3959,13 @@ while ($#argv >= 0) {
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'openssl'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'ctxt'; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'ctxt'; $arg = $1; } # no next
+    if ($arg =~ /^--cfg[_-](cmd|score|text)-([^=]*)=(.*)/){              # warn if old syntax
+        $typ = 'CFG-'.$1; $arg = $2 . "=" . $3;   # convert to new syntax
+        print("**WARNING: old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files\n");
+        # no next;
+    }
+    if ($arg =~ /^--cfg[_-]([^=]*)$/)   { $typ = 'CFG-'.$1;      next; }
+    if ($arg =~ /^--cfg[_-]([^=]*)=(.*)/){$typ = 'CFG-'.$1; $arg = $2; } # no next
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)/){ next; } #  "
     if ($arg =~ /^-(connect)/)          { next; } #  "
@@ -3925,44 +3975,17 @@ while ($#argv >= 0) {
         next;
     }
     #} +---------+----------------------+----------------------+----------------
-    if ($arg =~ /^--cfg[_-](cmd-(?:[^=]*))=(.*)/){# set new list of commands
-        $typ =  $1;     # the command to be set, i.e. cmd-http, cmd-sni, ...
-        $arg =  $2;     # list of commands separated by whitespaces
-        @{$cfg{$typ}} = ();
-        push(@{$cfg{$typ}}, split(/\s+/, $arg));
-        foreach $key (@{$cfg{$typ}}) {  # check for mis-spelled commands
-            next if (_is_hashkey($key, \%checks) > 0);
-            next if (_is_hashkey($key, \%data) > 0);
-            next if (_is_intern( $key) > 0);
-            next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
-            warn("**WARNING: unknown command '$key' for '$typ'; ignored");
-        }
-        $typ = 'host';
-        next;
-    }
-    if ($arg =~ /^--cfg[_-]score-([^=]*)(?:=(.*))?/){   # set new score
-        $typ =  $1;     #
-        $arg =  $2 || "";
-        _setscore("$1=$arg");
-        $typ = 'host';
-        next;
-    }
-    if ($arg =~ /^--cfg[_-]text-([^=]*)=(.*)/){   # set new text
-        $typ =  $1;     # the text to be set, i.e. out-target
-        $arg =  $2;     # new text
-        $arg =~ s/(\\n)/\n/g;
-        $arg =~ s/(\\r)/\r/g;
-        $arg =~ s/(\\t)/\t/g;
-        $text{$typ} = $arg;
-        $typ = 'host';
-        next;
-    }
+
+    if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'host'; next; }
+        # option arguments for configuration must be checked first as $arg
+        # may contain strings matching in commands section right below
 
     #{ commands
     _y_ARG("command? $arg");
-    if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI ';   $arg = '+' . $1; } # no next
-    if ($arg =~ /^\+info/)  { $info  = 1; } # needed 'cause +info converts to list of commands
-    if ($arg =~ /^\+quick/) { $quick = 1; } #
+    if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI '; $arg = '+' . $1; } # no next
+        # in CGI mode commands need to be passed with --cmd=* option
+    if ($arg =~ /^\+info/)  { $info  = 1; } # needed 'cause +info and ..
+    if ($arg =~ /^\+quick/) { $quick = 1; } # .. +quick convert to list of commands
     if ($arg =~ /^\+check/) { $check = 1; $cfg{'out_score'} = 1; } #
     # You may read the lines as table with colums like:
     #  +---------+--------------------+-----------------------+-----------------
@@ -4059,7 +4082,7 @@ while ($#argv >= 0) {
             warn("**WARNING: unknown format '$arg'; ignored");
         }
     }
-    if ($typ eq 'trace')   {
+    if ($typ eq 'trace')    {
         $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
         $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
         $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
@@ -4575,15 +4598,15 @@ I<+info>  command.
 
 To make the output easily parsable by postprocessors, following rules
 are used.
-When used in  I<--legacy=full> or  I<--legacy=simple>  mode, the output
+When used in  I<--legacy=full> or I<--legacy=simple>  mode, the output
 may contain formatting lines for better (human) redability. These are
-either empty lines, or lines beginning with the equal sign  C<=>. These
+either empty lines, or lines beginning with the equal sign C<=>. These
 modes also use at least one tab character (0x09, TAB) to separate the
 label text from the text of the result. Example:
         Label of perfomed check:TABresult
 
-The acronym C<N/A> may appear in some results.  It means that no proper
-informations was or could be provided. Replace  C<N/A>  by whatever you
+The acronym C<N/A> may appear in some results. It means that no proper
+informations was or could be provided. Replace  C<N/A> by whatever you
 think is adequate:  Not available, Not applicable, No answer, ...
 
 =head1 COMMANDS
@@ -4808,22 +4831,21 @@ the description here is text provided by the user.
 
   Show available compliance checks.
 
-=head3 --help=score
-
-  Show score value for each check.
-  Value is printed in format to be used for  "--cfg_score-KEY=SCORE".
-
-  Note that the  sequence  of options  is important.  Use the options
-  "--trace"  and/or  "--cfg_score-KEY=SCORE"  before  "--help=score".
-
 =head3 --help=intern
 
   Show internal commands.
 
+=head3 --help=score
+
+  Show score value for each check.
+  Value is printed in format to be used for  "--cfg_score=KEY=SCORE".
+
+  Note that the  sequence  of options  is important.  Use the options
+  "--trace"  and/or  "--cfg_score=KEY=SCORE"  before  "--help=score".
+
 =head3 --help=text
 
   Show texts used in various messages.
-  These texts can be changed with  "--cfg_text-KEY=TEXT".
 
 =head3 --help=text-cfg
 
@@ -5025,27 +5047,6 @@ Options used for  I<+check>  command:
   Currently only checks according CN, alternate names in the target's
   certificate compared to the given hostname are effected.
 
-=head3 --cfg_score-KEY=SCORE
-
-  Set the score value  "SCORE"  for the check specified by  "KEY".
-  Most score values are set to 10 by default. Values "0" .. "100" are
-  allowed.
-
-  If  "KEY=SCORE"  is a filename, values are read from that file.
-  To generate a sample file, simply use:
-
-    $0 --help=score
-
-  "KEY" for scoring is the same as for commands (without leading "+")
-  see "Commands for checks" section in:
-
-    $0 --help=commands
-
-  Scoring values can also be set in the  RC-FILE  file, but note that
-  then  --cfg_score=KEY=SCORE  must be used.
-
-  For deatils how soring works, please see  SCORING  section.
-
 =head2 Options for output format
 
 =head3 --short
@@ -5167,30 +5168,6 @@ Options used for  I<+check>  command:
 
 =end comment
 
-=head3 --cfg_cmd-CMD=LIST
-
-  Redefine list of commands for command  CMD.
-  CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
-  Example:
-      --cfg_cmd-sni=sni hostname
-
-  To get a list of command an their settings, use:
-
-      $0 --help=intern
-
-  Main purpose is to reduce list of commands or print them sorted.
-
-=head3 --cfg_text-KEY=TEXT
-
-  Replace text for  KEY  with TEXT.
-
-  Hint: use following to get text preconfigured for this option:
-
-      $0 --help=cfg_text
-
-  Note that \n, \r and \t are replaced by the corresponding character
-  when read from RC-FILE.
-
 =head2 Options for compatibility with other programs
 
 Please see other programs for detailed description (if not obvious:).
@@ -5232,6 +5209,55 @@ options are ambigious.
 =item * -connect, --fips, -H, -u, -url, -U ignored
 
 =back
+
+=head2 Options for customization
+
+  For general descriptions please see  CUSTOMIZATION  section below.
+
+=head3 --cfg_cmd=CMD=LIST
+
+  Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.
+  CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
+  Example:
+      --cfg_cmd=sni=sni hostname
+
+  To get a list of commands and their settings, use:
+
+      $0 --help=intern
+
+  Main purpose is to reduce list of commands or print them sorted.
+
+=head3 --cfg_score=KEY=SCORE
+
+  Redefine value for scoring. Sets  %checks{KEY}{score}  to  SCORE.
+  Most score values are set to 10 by default. Values "0" .. "100" are
+  allowed.
+
+  To get a list of current score settings, use:
+
+      $0 --help=score
+
+  For deatils how soring works, please see  SCORING  section.
+
+  Use the  "--trace-key"  option for the  "+info"  and/or  "+check"
+  command to get the values for  KEY.
+
+=head3 --cfg_checks=KEY=TEXT --cfg_data=KEY=TEXT
+
+  Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
+  %checks{KEY}{txt}  to  TEXT.
+
+=head3 --cfg_text=KEY=TEXT
+
+  Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
+
+  To get a list of preconfigured texts, use:
+
+      $0 --help=cfg_text
+      $0 --help=cfg_quot
+
+  Note that \n, \r and \t are replaced by the corresponding character
+  when read from RC-FILE.
 
 =head2 Options for tracing and debugging
 
@@ -5648,14 +5674,122 @@ See  I<--sep=CHAR>  option also.
 
 =back
 
-=head1 RC-FILE
+=head1 CUSTOMIZATION
+
+This tools can be customized as follows:
+
+=over 4
+
+=item Using command line options
+
+    This is a simple way to refine a specific setting. Please see the
+    CONFIGURATION OPTIONS  below.
+
+=item Using Configuration file
+
+    A configuration file can contain multiple configuration settings.
+    Syntax is simply  KEY=VALUE. Please see CONFIGURATION FILE below.
+
+=item Using resource files
+
+    A resource file can contain multiple command line options. Syntax
+    is the same as for command line options iteself.  Each  directory
+    may contain its own resource file. Please see  RC-FILE  below.
+
+=item Using debugging files
+
+    These files are --nomen est omen-- used for debugging purpose.
+    However, they can be (mis-)used to redifine all settings too.
+    More descriptions comming soon. Please see  DEBUG-FILE  below.
+
+=back
+
+Customization is done by redefining values in internal data structure
+which are:  %cfg,  %data,  %checks,  %text,  %scores .
+Unless used in  DEBUG-FILEs,  there is no need to know these internal
+data structures or names of variables; the options will set the right
+values. Only the names of the keys need to be correct.  The key names
+are printed in output with the  I<--trace-key>  option.
+
+I.g. texts (values) of keys in  %data are those used in output of the
+"Informations" section. Texts of keys in  %checks are used for output
+in "Performed Checks" section.  And texts of keys in  %text  are used
+for additional information lines or texts (mainly beginning with C<=>).
+
+=head3 Configuration File vs. RC-FILE vs. DEBUG-FILE
+
+=over 4
+
+=item CONFIGURATION FILE
+
+    Configuration Files must be specified with one of the   "--cfg_*"
+    options. The specified file can be a valid path. Please note that
+    only the characters:  a-zA-Z_0-9,.\/()-  are allowed as pathname.
+    Syntax in configuration file is:  'KEY=VALUE'  where 'KEY' is any
+    key as used in internal data structure.
+    the keys in output).
+
+=item RC-FILE
+
+    Resource files are searched for and used automatically. They will
+    be seached for in the local (current working) directory only.
+    Syntax in resource file is: "--cfg_CFG=KEY=VALUE" as described in
+    B<OPTIONS>  section. 'CFG' is any of:   cmd,  check,  data,  text 
+    or  score. where  'KEY'  is any key from internal data structure.
+
+=item DEBUG-FILE
+
+    Debug files are searched for and used automatically. They will be
+    seached for in the installation directory only.
+    Syntax in these files is perl code.  Perl's  C<require>  directive
+    is used to include these files.
+
+=back
+
+=head2 CONFIGURATION OPTIONS
+
+Configuration options are used to redefine  texts and labels or score
+settings used in output. The options are:
+
+=over 4
+
+=item --cfg_cmd=KEY=LIST
+
+=item --cfg_score=KEY=SCORE
+
+=item --cfg_checks=KEY=TEXT
+
+=item --cfg_data=KEY=TEXT
+
+=item --cfg_text=KEY=TEXT
+
+=back
+
+Here  C<KEY> is the key used in the internal data structure and C<TEXT>
+is the value to be set for this key.  Note that  unknown keys will be
+ignored silently.
+
+If  C<KEY=TEXT>  is an exiting filename,  all lines from that file are
+read and set. For details see  B<CONFIGURATION FILES>  below.
+
+=head2 CONFIGURATION FILE
+
+Note that the file can contain  C<KEY=TEXT>  pairs for the kind of the
+configuration as given by the  I<--cfg_CONF>  option.
+For example when used  with  C<--cfg_text=file> only values for  %text
+will be set, when used  with  C<--cfg_data=file> only values for %data
+will be set, and so on.  C<KEY>  is not used when  C<KEY=TEXT>  is  an
+exiting filename. Though, it's recommended to use a non-existing key,
+for example: I<--cfg-text=my_file=some/path/to/private/file> .
+
+=head2 RC-FILE
 
 A  rc-file  can contain any of the commands and options valid for the
 tool itself. The syntax for them is the same as on command line. Each
 command or option must be in a single line. Any empty or comment line
-will be ignored. Comment lines start with a C<#>.
+will be ignored. Comment lines start with  C<#>  or  C<=>.
 
-Note that options with arguments must be used as  C<key=value>.
+Note that options with arguments must be used as  C<KEY=VALUE>.
 
 All commands and options given on command line will  overwrite  those
 found in the rc-file.
@@ -5665,7 +5799,7 @@ The rc-file will be searched for in the working directory only.
 The name of the rc-file is the name of the program file prefixed by a
 C<.>,  for example:  C<.o-saft.pl>.
 
-=head1 DEBUG-File
+=head2 DEBUG-FILE
 
 All debugging functionality is defined in  o-saft-dbx.pm,  which will
 be searched for in the current working directory  or the installation
@@ -5711,12 +5845,12 @@ The rules for specifying cipher names are:
 [openssl] ... openssl 1.0.1
 
 If in any doubt, use  I<+list --v>  to get an idea about the mapping.
-And use  I<--help=regex> to see which regex are used to handle all these
+Use  I<--help=regex>  to see which regex  are used to handle all these
 variants herein.
 
 Mind the traps and dragons with cipher names and what number they are
-actually mapped. In particular when  I<--lib>,  I<--exe>  or  I<--openssl>
-options are in use. Alway use these options with  I<+list>  command too.
+actually mapped. In particular when  I<--lib>, I<--exe> or I<--openssl>
+options are in use. Alway use these options with I<+list> command too.
 
 =head2 Name Rodeo
 
@@ -5725,7 +5859,7 @@ ciphers, but almost all tools use some kind of  human readable  texts
 for cipher names. 
 
 For example the cipher commonly known as C<DES-CBC3-SHA> is identified
-by  C<0x020701c0>  (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
+by C<0x020701c0> (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
 as constant name. A definition is missing in IANA, but there is 
 C<TLS_RSA_WITH_3DES_EDE_CBC_SHA> .
 It's each tool's responsibility to map the human readable cipher name
@@ -5745,7 +5879,7 @@ or  C<DHA>  or  <ANON_DH>.
 You think this is enough? Then have a look how many acronyms are used
 for  `Tripple DES'.
 
-Compared to above, the interchangeable use of  C<->  vs.  C<_>  in human
+Compared to above, the interchangeable use of  C<->  vs.  C<_> in human
 readable cipher names is just a very simple one. However, see openssl
 again what following means (returns):
     openssl ciphers -v RC4-MD5
@@ -5819,13 +5953,13 @@ C<--v>, C<--trace=cmd>, C<--trace>
 
 =head2 Commands
 
-Some commands cannot be used together with others, for example I<+list>,
-I<+libversion>, I<+version>, I<+check>, I<+help>.
+Some commands cannot be used together with others, for example:
+I<+list>,  I<+libversion>,  I<+version>,  I<+check>,  I<+help>.
  
 I<+quick>  should not be used together with other commands, it returns
 strange output then.
 
-I<+protocols>  requires  L<openssl(1)>  with support for "-nextprotoneg"
+I<+protocols>  requires  L<openssl(1)> with support for "-nextprotoneg"
 option. Otherwise the value will be empty.
 
 =head2 Options
@@ -5838,7 +5972,7 @@ as they my trigger the  -I<--header>  option unintentional.
 
 Port as specified with I<--port> options is the same for all targets.
 
-The used  L<timeout(1)>  command cannot be defined with a full path like
+The used L<timeout(1)> command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
 =head2 Performance Problems
@@ -5852,7 +5986,8 @@ Try to use following options to narrow down the cause of the problem:
 
 =item I<--no-cert> I<--no-dns> I<--no-http> I<--no-openssl> I<--no-sni>
 
-Additionally I<--timeout=SEC>, I<--trace=cmd> and/or I<--no-cert> may help.
+Additionally following options may help:
+I<--timeout=SEC>,  I<--trace=cmd>  and/or  I<--no-cert>
 
 =back
 
@@ -5875,8 +6010,8 @@ certificate.
 
 =head2 Poor Systems
 
-On Windows usage of  L<openssl(1)> is disabled by default due to various
-performance problems. It needs to be enabled with  I<--openssl>  option.
+Use of  L<openssl(1)> is disabled by default on Windows due to various
+performance problems. It needs to be enabled with I<--openssl> option.
 
 On Windows the usage of  "openssl s_client" needs to be enabled using
 I<--s_client> option.
@@ -6017,8 +6152,8 @@ if they support such an environment variable and the installed
 L<Net::SSLeay(1)>  and L<openssl(1)>  are linked using dynamic shared
 objects.
 
-Depending on the compile time settings and/or the location of the used
-tool or lib, a warning like follows my occour:
+Depending on  compile time settings  and/or  the location of the used
+tool or lib, a warning like following my occour:
 
   WARNING: can't open config file: /path/to-openssl/ssl/openssl.cnf
 
@@ -6048,7 +6183,7 @@ place the libs in the same directory as the  corresponding executable
 The script can be usesed as CGI application. Output is the same as in
 common CLI mode, using  'Content-Type:text/plain'.  Keep in mind that
 the used modules like  L<Net::SSLeay>  will write some debug messages
-on STDERR instead STDOUT. Therefore multiple  I<--v> and/or I<--trace>
+on STDERR instead STDOUT. Therefore multiple  I<--v> and/or  I<--trace>
 options behave slightly different.
 
 Some options are disabled in CGI mode  because they are dangerous  or
@@ -6200,8 +6335,8 @@ SSL connections and/or this tool. Note that some options can be given
 multiple times to increase amount of listed information. Also keep in
 mind that it's best to specify  I<--v>  as very first argument.
 
-Note that file  o-saft-dbx.pm  is required, if any  I<--trace*>  or  I<--v>
-option is used.
+Note that file  o-saft-dbx.pm  is required, if any  I<--trace*>  or
+I<--v>  option is used.
 
 =head3 Commands
 
@@ -6237,14 +6372,14 @@ option is used.
 
 =back
 
-Empty or undefined  strings are writtens as "<<undefined>>" in messages.
-Some parameters, in particular those of HTTP responses,  are written as
-"<<response>>".  Long parameter lists are abbrevated with  "...".
+Empty or undefined strings are writtens as  "<<undefined>>" in texts.
+Some parameters, in particular those of  HTTP responses,  are written
+as  "<<response>>".  Long parameter lists are abbrevated with  "...".
 
 
 =head3 Output
 
-When using  I<--v>  and/or  I<--trace>  options,  additional output will
+When using  I<--v>  and/or  I<--trace>  options, additional output will
 be prefixed with a  C<#>  (mainly as first, left-most character.
 Following formats are used:
 
@@ -6343,7 +6478,7 @@ Following formats are used:
 
 =item Change a single score setting
 
-    $0 --cfg_score-http_https=42   +check some.tld 
+    $0 --cfg_score=http_https=42   +check some.tld 
 
 =item Use your private score settings from a file
 
@@ -6353,7 +6488,7 @@ Following formats are used:
 
 =item Use your private texts in output
 
-    $0 +check some.tld --cfg_text-desc="my special description"
+    $0 +check some.tld --cfg_text=desc="my special description"
 
 =item Use your private texts from RC-FILE
 
@@ -6453,7 +6588,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.17b
+@(#) 13.12.18
 
 =head1 AUTHOR
 
