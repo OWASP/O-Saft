@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.187 13/12/27 16:22:38";
+my  $SID    = "@(#) yeast.pl 1.188 13/12/27 23:51:02";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -781,7 +781,6 @@ my %info_gnutls = ( # NOT YET USED
 ); # %info_gnutls
 
 our %cmd = (
-    'is_set'        => undef,   # undef indicates not yet initialized
     'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
     'openssl'       => "openssl",   # OpenSSL
     'libs'          => "",      # where to find libssl.so and libcrypto.so
@@ -908,8 +907,6 @@ our %cfg = (
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
-    'openssl'       => "ssleay",
-    'openssls'      => [qw(ssleay local x86_32 x86_64 x86Mac arch)],
     'legacy'        => "simple",
     'legacys'       => [qw(cnark simple sslaudit sslcipher ssldiagnos sslscan
                         ssltest ssltest-g sslyze testsslserver full compact)],
@@ -2037,6 +2034,7 @@ sub _dbx      { _dprint(@_); } # alias for _dprint
 # debug functions are defined in o-saft-dbx.pm and loaded on demand
 sub _yeast_init()  {}
 sub _yeast_exit()  {}
+sub _yeast_data()  {}
 sub _yeast($) {}
 sub _y_ARG    {}
 sub _y_CMD    {}
@@ -2300,29 +2298,6 @@ sub get_cipher_keyx($) { my $c=$_[0]; return $ciphers{$c}[6] || "" if (grep(/^$c
 sub get_cipher_score($){ my $c=$_[0]; return $ciphers{$c}[7] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
 sub get_cipher_tags($) { my $c=$_[0]; return $ciphers{$c}[8] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
 sub get_cipher_desc($) { my $c=$_[0]; my @c = @{$ciphers{$c}}; shift @c; return @c if (grep(/^$c/, %ciphers)>0); return ""; }
-
-sub _setcmd() {
-    # check for external commands and initialize %cmd if necessary
-    return if (defined $cmd{'is_set'});
-    my $_openssl = $cmd{'openssl'};        # just for better readability
-    my $_timeout = $cmd{'timeout'};
-    $cmd{'is_set'} = 1;
-    # check if we have timeout and openssl program
-    `$_timeout --version 2>&1` or $_timeout = "";   # without leading \, lazy
-    `$_openssl version   2>&1` or $_openssl = "";   # may fail on Windows :-(
-     $_timeout .= ' 1' if ($_timeout ne "");
-    if ($^O !~ m/MSWin32/) {
-        # Windows is too stupid for secure program calls
-        $_timeout = '\\' .  $_timeout if (($_timeout ne "") and ($_timeout !~ /\//));
-        $_openssl = '\\' .  $_openssl if (($_openssl ne "") and ($_openssl !~ /\//));
-        _trace("_setcmd MSWin32");
-    }
-    print "**WARNING: no timeout command found, expect some long network timeouts (>2 min)\n" if ($_timeout eq "");
-    $cmd{'openssl'} = $_openssl;
-    $cmd{'timeout'} = $_timeout;
-    _trace("_setcmd timeout: $_timeout");
-    _trace("_setcmd openssl: $_openssl");
-} # _setcmd
 
 # check functions
 # -------------------------------------
@@ -3830,7 +3805,7 @@ sub printtodo() {
 
 # scan options and arguments
 # -------------------------------------
-my $typ = 'host';
+my $typ = 'HOST';
 while ($#argv >= 0) {
     $arg = shift @argv;
     _y_ARG($arg);
@@ -3847,9 +3822,9 @@ while ($#argv >= 0) {
     # Options may have an argument, either as separate word or as part of the
     # option parameter itself: --opt=argument .
     # Such an argument is handled at end of loop using $typ,  the default  is
-    # $typ='host'  which means we expect a hostname argument. Any other value
+    # $typ='HOST'  which means we expect a hostname argument. Any other value
     # for  $typ will be set in the corresponding option after the argument is
-    # parsed (see $typ at end of loop), $typ will be reset to 'host' again.
+    # parsed (see $typ at end of loop), $typ will be reset to 'HOST' again.
     # Note: the sequence must be:
     #   1. check for options (as they may have arguments)
     #   2. check for commands (as they all start with '+' and we don't expect
@@ -3880,7 +3855,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace(--|[_-]?arg)/){ $cfg{'traceARG'}++;    next; } # special internal tracing
     if ($arg =~ /^--trace([_-]?cmd)/)   { $cfg{'traceCMD'}++;    next; } # ..
     if ($arg =~ /^--trace(@|[_-]?key)/) { $cfg{'traceKEY'}++;    next; } # ..
-    if ($arg =~ /^--trace=(.*)/)        { $typ = 'trace';   $arg = $1; } # no next
+    if ($arg =~ /^--trace=(.*)/)        { $typ = 'TRACE';   $arg = $1; } # no next
     # options form other programs for compatibility
     if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
     if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; } # ssltest.pl
@@ -3935,30 +3910,30 @@ while ($#argv >= 0) {
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1; next; }
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;    next; }
     if ($arg eq  '-printavailable')     { $cfg{'enabled'}   = 1; next; } # ssldiagnos
-    if ($arg =~ /^-?-h(?:ost)?$/)       { $typ = 'host';         next; } # --h already catched above
-    if ($arg =~ /^-?-h(?:ost)?=(.*)/)   { $typ = 'host';    $arg = $1; } # no next
-    if ($arg =~ /^-?-p(?:ort)?$/)       { $typ = 'port';         next; }
-    if ($arg =~ /^-?-p(?:ort)?=(.*)/)   { $typ = 'port';    $arg = $1; } # no next
-    if ($arg =~ /^--exe$/)              { $typ = 'exe';          next; }
-    if ($arg =~ /^--exe=(.*)/)          { $typ = 'exe';     $arg = $1; } # no next
-    if ($arg =~ /^--lib$/)              { $typ = 'lib';          next; }
-    if ($arg =~ /^--lib=(.*)/)          { $typ = 'lib';     $arg = $1; } # no next
-    if ($arg =~ /^--envlibvar$/)        { $typ = 'env';          next; }
-    if ($arg =~ /^--envlibvar=(.*)/)    { $typ = 'env';     $arg = $1; } # no next
-    if ($arg =~ /^--cipher$/)           { $typ = 'cipher';       next; }
-    if ($arg =~ /^--cipher=(.*)/)       { $typ = 'cipher';  $arg = $1; } # no next
-    if ($arg =~ /^--format$/)           { $typ = 'format';       next; }
-    if ($arg =~ /^--format=(.*)/)       { $typ = 'format';  $arg = $1; } # no next
-    if ($arg =~ /^--legacy$/)           { $typ = 'legacy';       next; }
-    if ($arg =~ /^--legacy=(.*)/)       { $typ = 'legacy';  $arg = $1; } # no next
-    if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'sep';          next; }
-    if ($arg =~ /^--sep(?:arator)?=(.*)/){$typ = 'sep';     $arg = $1; } # no next
-    if ($arg =~ /^--timeout$/)          { $typ = 'timeout';      next; }
-    if ($arg =~ /^--timeout=(.*)/)      { $typ = 'timeout'; $arg = $1; } # no next
-    if ($arg eq  '-interval')           { $typ = 'timeout';      next; } # ssldiagnos
-    if ($arg =~ /^--openssl=(.*)/)      { $typ = 'openssl'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
-    if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'ctxt'; next; }
-    if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'ctxt'; $arg = $1; } # no next
+    if ($arg =~ /^-?-h(?:ost)?$/)       { $typ = 'HOST';         next; } # --h already catched above
+    if ($arg =~ /^-?-h(?:ost)?=(.*)/)   { $typ = 'HOST';    $arg = $1; } # no next
+    if ($arg =~ /^-?-p(?:ort)?$/)       { $typ = 'PORT';         next; }
+    if ($arg =~ /^-?-p(?:ort)?=(.*)/)   { $typ = 'PORT';    $arg = $1; } # no next
+    if ($arg =~ /^--exe$/)              { $typ = 'EXE';          next; }
+    if ($arg =~ /^--exe=(.*)/)          { $typ = 'EXE';     $arg = $1; } # no next
+    if ($arg =~ /^--lib$/)              { $typ = 'LIB';          next; }
+    if ($arg =~ /^--lib=(.*)/)          { $typ = 'LIB';     $arg = $1; } # no next
+    if ($arg =~ /^--envlibvar$/)        { $typ = 'ENV';          next; }
+    if ($arg =~ /^--envlibvar=(.*)/)    { $typ = 'ENV';     $arg = $1; } # no next
+    if ($arg =~ /^--cipher$/)           { $typ = 'CIPHER';       next; }
+    if ($arg =~ /^--cipher=(.*)/)       { $typ = 'CIPHER';  $arg = $1; } # no next
+    if ($arg =~ /^--format$/)           { $typ = 'FORMAT';       next; }
+    if ($arg =~ /^--format=(.*)/)       { $typ = 'FORMAT';  $arg = $1; } # no next
+    if ($arg =~ /^--legacy$/)           { $typ = 'LEGACY';       next; }
+    if ($arg =~ /^--legacy=(.*)/)       { $typ = 'LEGACY';  $arg = $1; } # no next
+    if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';          next; }
+    if ($arg =~ /^--sep(?:arator)?=(.*)/){$typ = 'SEP';     $arg = $1; } # no next
+    if ($arg =~ /^--timeout$/)          { $typ = 'TIMEOUT';      next; }
+    if ($arg =~ /^--timeout=(.*)/)      { $typ = 'TIMEOUT'; $arg = $1; } # no next
+    if ($arg eq  '-interval')           { $typ = 'TIMEOUT';      next; } # ssldiagnos
+    if ($arg =~ /^--openssl=(.*)/)      { $typ = 'OPENSSL'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
+    if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'CTXT'; next; }
+    if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT'; $arg = $1; } # no next
     if ($arg =~ /^--cfg[_-](cmd|score|text)-([^=]*)=(.*)/){              # warn if old syntax
         $typ = 'CFG-'.$1; $arg = $2 . "=" . $3;   # convert to new syntax
         print("**WARNING: old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files\n");
@@ -3976,7 +3951,7 @@ while ($#argv >= 0) {
     }
     #} +---------+----------------------+----------------------+----------------
 
-    if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'host'; next; }
+    if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; next; }
         # option arguments for configuration must be checked first as $arg
         # may contain strings matching in commands section right below
 
@@ -4043,16 +4018,16 @@ while ($#argv >= 0) {
     #  +---------+----------+------------------------------+--------------------
     #   argument to process   what to do                    expect next argument
     #  +---------+----------+------------------------------+--------------------
-    if ($typ eq 'openssl')  { $cmd{'openssl'} = $arg;       $typ = 'host'; next; }
-    if ($typ eq 'exe')      { $cmd{'path'}    = $arg;       $typ = 'host'; next; }
-    if ($typ eq 'lib')      { $cmd{'libs'}    = $arg;       $typ = 'host'; next; }
-    if ($typ eq 'env')      { $cmd{'envlibvar'}  = $arg;    $typ = 'host'; next; }
-    if ($typ eq 'sep')      { $text{'separator'} = $arg;    $typ = 'host'; next; }
-    if ($typ eq 'timeout')  { $cfg{'timeout'} = $arg;       $typ = 'host'; next; }
-    if ($typ eq 'cipher')   { $cfg{'cipher'}  = $arg;       $typ = 'host'; next; }
-    if ($typ eq 'ctxt')     { $cfg{'no_cert_txt'} = $arg;   $typ = 'host'; next; }
-    if ($typ eq 'port')     { $cfg{'port'}    = $arg;       $typ = 'host'; next; }
-    if ($typ eq 'host')     {
+    if ($typ eq 'OPENSSL')  { $cmd{'openssl'} = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'EXE')      { $cmd{'path'}    = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'LIB')      { $cmd{'libs'}    = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'ENV')      { $cmd{'envlibvar'}  = $arg;    $typ = 'HOST'; next; }
+    if ($typ eq 'SEP')      { $text{'separator'} = $arg;    $typ = 'HOST'; next; }
+    if ($typ eq 'TIMEOUT')  { $cfg{'timeout'} = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'CIPHER')   { $cfg{'cipher'}  = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'CTXT')     { $cfg{'no_cert_txt'} = $arg;   $typ = 'HOST'; next; }
+    if ($typ eq 'PORT')     { $cfg{'port'}    = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'HOST')     {
         #  ------+----------+------------------------------+--------------------
         # allow URL   http://f.q.d.n:42/aa*foo=bar:23/
         $port = $arg;
@@ -4067,7 +4042,7 @@ while ($#argv >= 0) {
         push(@{$cfg{'hosts'}}, $arg);
         _yeast("host: $arg") if ($cfg{'trace'} > 0);
     }
-    if ($typ eq 'legacy')   {
+    if ($typ eq 'LEGACY')   {
         $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
         if (1 == grep(/^$arg$/, @{$cfg{'legacys'}})) {
             $cfg{'legacy'} = $arg;
@@ -4075,21 +4050,21 @@ while ($#argv >= 0) {
             warn("**WARNING: unknown legacy '$arg'; ignored");
         }
     }
-    if ($typ eq 'format')   {
+    if ($typ eq 'FORMAT')   {
         if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
             $cfg{'format'} = $arg;
         } else {
             warn("**WARNING: unknown format '$arg'; ignored");
         }
     }
-    if ($typ eq 'trace')    {
+    if ($typ eq 'TRACE')    {
         $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
         $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
         $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
         $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
     }
     _y_ARG("argument= $arg");
-    $typ = 'host';              # expect host as next argument
+    $typ = 'HOST';              # expect host as next argument
     #}
 
 } # while
@@ -6588,7 +6563,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.18
+@(#) 13.12.19
 
 =head1 AUTHOR
 
