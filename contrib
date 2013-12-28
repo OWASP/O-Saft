@@ -1,0 +1,84 @@
+#!/bin/cat
+
+#? NAME
+#?      contrib  - examples for usage of o-saft.pl
+#?
+#? DESCRIPTION
+#?      This file just contains examples for more sophisticated usage of
+#?      o-saft.pl.
+#?      All examples should work just by copy&paste.
+#?
+
+###############################################################################
+###
+### CSV convertions
+###
+
+### +info output: separate label and value, one per line
+
+o-saft.pl +info --legacy=quick localhost \
+| gawk -F'\t' 'BEGIN{print "<html><body><table>"}/^\s*$/{next}($1~/^[#=]/){next}{print $1","$2}END{}'
+
+o-saft.pl +info localhost --legacy=compact --no-header --sep=,
+
+
+###############################################################################
+###
+### HTML convertions
+###
+
+### +info output: label and value per line (full html)
+
+o-saft.pl +info --legacy=quick localhost \
+| gawk -F'\t' 'BEGIN{print "<html><body><table>"}(NF>0){gsub(/&/,"\\&amp;");gsub(/"/,"\\&quot;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{print " <tr><th>"$1"</th><td>"$2"</td></tr>"}END{print "</table></body></html>"}'
+
+### +info output: label and value per line (html table lines only)
+
+o-saft.pl +info --legacy=quick localhost \
+| gawk -F'\t' '/^\s*$/{next}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}($1~/^[#=]/){print "<! "$0" -->";next}{print " <tr><th>"$1"</th><td>"$2"</td></tr>"}'
+
+### +check output: label and value in table; header lines
+
+o-saft.pl +check --legacy=quick localhost \
+| gawk -F'\t' 'BEGIN{print "<html><body><table>"}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/ reading /){next;}($1~/^===/ && $NF~/===/){printf("</table><h2>%s</h2>\n<table>",$0);next}($1~/^== /){print "<tr><th colspan=2>"$0"</th></tr>";next;}($1~/^[#=]/){print "<! "$0" -->";next}{print " <tr><th>"$1"</th><td>"$2"</td></tr>"}END{print "</table></body></html>"}'
+
+
+###############################################################################
+###
+### JSON convertions
+###
+
+### +info output: label and value per line in JSON style array
+
+o-saft.pl +info --legacy=quick localhost \
+| gawk -F'\t' 'BEGIN{print "info=["}(NF>0){gsub(/\\/,"&&");gsub(/"/,"\\\"");}/^\s*$/{next}($1~/^[#=]/){print "// "$0;next}{printf(" \"%s\": \"%s\",\n",$1,$2)}END{print " dumm:\"dumm\"\n];"}'
+
+
+###############################################################################
+###
+### XML convertions
+###
+
+### +info output: label and value per line
+
+o-saft.pl +info --legacy=quick localhost \
+| gawk -F'\t' 'BEGIN{print "<infos xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"SSLResults.xsd\" >"}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{print " <info>\n  <label>"$1"</label>\n  <value>"$2"</value>\n </info>"}END{print "</info>"}'
+
+
+### +info output: one line per label and value
+
+o-saft.pl +info localhost \
+| gawk -F'\t' 'BEGIN{print "<infos xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"SSLResults.xsd\" >"}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{print " <info><label>"$1"</label><value>"$2"</value></info>"}END{print "</info>"}'
+
+# same as before a bit more compact
+
+o-saft.pl +info --legacy=quick localhost \
+| gawk -F'\t' 'BEGIN{print "<infos xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"SSLResults.xsd\" >"}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){next}{print "<info><label>"$1"</label><value>"$2"</value></info>"}END{print "</info>"}'
+
+
+### +info output: one line per label and value as attribute
+
+o-saft.pl +info --legacy=quick localhost \
+| gawk -F'\t' 'BEGIN{print "<infos xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"SSLResults.xsd\" >"}(NF>0){gsub(/&/,"\\&amp;");gsub(/"/,"\\&quot;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{i++;printf(" <info id=\"%s\" label=\"%s\" value=\"%s\" />\n",i,$1,$2);}END{print "</info>"}'
+
+
