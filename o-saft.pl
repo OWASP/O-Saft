@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.192 13/12/28 17:43:25";
+my  $SID    = "@(#) yeast.pl 1.193 13/12/28 18:26:59";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -3194,6 +3194,11 @@ sub print_data($$$) {
         $val   =~ s#[\n\r]#; #g;
         $label = $data{$label}->{txt};
         $label =~ s#[\n]##g;
+        printf("%s%s%s\n", $label, $text{'separator'}, $val);
+        return;
+    }
+    if ($legacy eq 'quick') {
+        $label = $data{$label}->{txt};
         printf("%s%s%s\n", $label, $text{'separator'}, $val);
         return;
     }
@@ -6617,7 +6622,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.23
+@(#) 13.12.24
 
 =head1 AUTHOR
 
