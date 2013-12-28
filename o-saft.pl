@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.190 13/12/28 10:46:33";
+my  $SID    = "@(#) yeast.pl 1.191 13/12/28 17:15:28";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -3953,6 +3953,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--legacy=(.*)/)       { $typ = 'LEGACY';  $arg = $1; } # no next
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';          next; }
     if ($arg =~ /^--sep(?:arator)?=(.*)/){$typ = 'SEP';     $arg = $1; } # no next
+    if ($arg =~ /^--tab$/)          { $text{'separator'} = "\t"; next; } # TAB character
     if ($arg =~ /^--timeout$/)          { $typ = 'TIMEOUT';      next; }
     if ($arg =~ /^--timeout=(.*)/)      { $typ = 'TIMEOUT'; $arg = $1; } # no next
     if ($arg eq  '-interval')           { $typ = 'TIMEOUT';      next; } # ssldiagnos
@@ -5154,6 +5155,11 @@ Options used for  I<+check>  command:
 
   CHAR      will be used as separator between  label and value of the
       the printed results. Default is  :
+
+=head3 --tab
+
+  TAB character (0x09, \t)  will be used  as separator between  label
+      and value of the printed results.
 
 =head3 --showhost
 
@@ -6605,7 +6611,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.21
+@(#) 13.12.22
 
 =head1 AUTHOR
 
