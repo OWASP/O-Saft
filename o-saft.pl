@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.189 13/12/28 00:33:19";
+my  $SID    = "@(#) yeast.pl 1.190 13/12/28 10:46:33";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -57,7 +57,7 @@ open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
 
 # CGI
 # -------------------------------------
-my $cgi    = 0;
+my $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here!
@@ -3644,9 +3644,16 @@ sub printcipherlist() {
     }
 } # printcipherlist
 
-sub _print_head($$) { printf("=%15s | %s\n", @_); printf("=%s+%s\n", '-'x16, '-'x60); }
+sub _print_head($$) { printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60); }
 sub _print_opt($$$) { printf("%16s%s%s\n", @_); }
 sub _print_cmd($$)  { printf("     +%-14s\t%s\n", @_); }
+sub _print_cfg($$$$){
+    # print line in configuration format
+    my ($typ, $key, $sep, $txt) = @_;
+    $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
+    $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
+    _print_opt($key, $sep, $txt);
+}
 
 sub printtable($) {
     #? print data froam hash in tabular form, $typ denotes hash
@@ -3654,14 +3661,17 @@ sub printtable($) {
     my %types = (
         # typ        header left    separator  header right
         #-----------+---------------+-------+-------------------------------
-        'score' => ["key=SCORE",     "=",    "\t# Description"],
+        'score' => ["key",           "=",    "SCORE\t# Description"],
         'regex' => ["key",           " => ", " Regular Expressions used internally"],
         'abbr'  => ["Abbrevation",   " - ",  "Description"],
         'intern'=> ["Command",       "    ", " list of commands"],
         'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
-        'text'  => ["key", "  ",   "text"],
-        'cfg-text'=>["N/A", "=",   "N/A"],
-        'cfg-quot'=>["N/A", "=",   "N/A"],
+        'data'  => ["key",    "=",   "text"],
+        'check' => ["key",    "=",   "text"],
+        'text'  => ["key",    "=",   "text"],
+        'cfg_check' =>["N/A", "=",   "N/A"],
+        'cfg_data'  =>["N/A", "=",   "N/A"],
+        'cfg_text'  =>["N/A", "=",   "N/A"],
     );
     my ($key, $txt);
     my $sep = $types{$typ}->[1];
@@ -3677,18 +3687,28 @@ sub printtable($) {
             _print_opt("cmd-" . $1, $sep, "+" . join(" +", @{$cfg{$key}}));
         }
     }
-    if ($typ =~ m/(text|quot)/) {
-    foreach $key (sort keys %text) {
-        next if (ref($text{$key}) ne ""); # skip except string
-        $txt =  $text{$key};
-        $txt =~ s/(\n)/\\n/g;
-        $txt =~ s/(\r)/\\r/g;
-        $txt =~ s/(\t)/\\t/g;
-        $txt =  '"' . $txt . '"'     if ($typ eq 'cfg-quot');
-        $key =  '--cfg_text=' . $key if ($typ =~ m/^cfg/);
-        _print_opt($key, $sep, $txt);
+    if ($typ =~ m/check/) {
+        foreach $key (sort keys %checks) {
+            $txt =  $checks{$key}->{txt};
+            _print_cfg($typ, $key, $sep, $txt);
+        }
     }
-    print "
+    if ($typ =~ m/data/) {
+        foreach $key (sort keys %data) {
+            $txt =  $data{$key}->{txt};
+            _print_cfg($typ, $key, $sep, $txt);
+        }
+    }
+    if ($typ =~ m/text/) {
+        foreach $key (sort keys %text) {
+            next if (ref($text{$key}) ne ""); # skip except string
+            $txt =  $text{$key};
+            $txt =~ s/(\n)/\\n/g;
+            $txt =~ s/(\r)/\\r/g;
+            $txt =~ s/(\t)/\\t/g;
+            _print_cfg($typ, $key, $sep, $txt);
+        }
+        print "
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
 = The string  @@  inside texts is used as placeholder.
 = (Don't be confused about multiple  =  as they are part of  TEXT.)
@@ -3746,10 +3766,9 @@ sub printhelp($) {
     _v_print("help: $label");
     if ($label =~ m/^cmd$/i)            { print "# $mename commands:\t+"        . join(" +", @{$cfg{'commands'}}); exit; }
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
-    if ($label =~ m/^c(ommand|heck)s?/i){ printcommands();  exit; }
-    if ($label =~ m/^(abbr|compl|intern|regex|score|text)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
-    if ($label =~ m/^((?:cfg[_-])?quot(?:[_-]cfg)?)e?s?$/i) { printtable('cfg-quot'); exit; }
-    if ($label =~ m/^((?:cfg[_-])?text(?:[_-]cfg)?)s?$/i)   { printtable('cfg-text'); exit; }
+    if ($label =~ m/^commands?/i){ printcommands();  exit; }
+    if ($label =~ m/^(abbr|compl|intern|regex|score|data|check|text)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
+    if ($label =~ m/^(?:cfg[_-])?(check|data|text)s?(?:[_-]cfg)?$/i) { printtable('cfg_'.lc($1)); exit; }
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
 
@@ -5228,6 +5247,11 @@ options are ambigious.
   Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
   %checks{KEY}{txt}  to  TEXT.
 
+  To get a list of preconfigured labels, use:
+
+      $0 --help=cfg_checks
+      $0 --help=cfg_data
+
 =head3 --cfg_text=KEY=TEXT
 
   Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
@@ -5235,7 +5259,6 @@ options are ambigious.
   To get a list of preconfigured texts, use:
 
       $0 --help=cfg_text
-      $0 --help=cfg_quot
 
   Note that \n, \r and \t are replaced by the corresponding character
   when read from RC-FILE.
@@ -6582,7 +6605,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.20
+@(#) 13.12.21
 
 =head1 AUTHOR
 
