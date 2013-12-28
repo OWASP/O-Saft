@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.191 13/12/28 17:15:28";
+my  $SID    = "@(#) yeast.pl 1.192 13/12/28 17:43:25";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -911,7 +911,7 @@ our %cfg = (
                                 #      results in a performance bottleneck, obviously
     'legacy'        => "simple",
     'legacys'       => [qw(cnark simple sslaudit sslcipher ssldiagnos sslscan
-                        ssltest ssltest-g sslyze testsslserver full compact)],
+                        ssltest ssltest-g sslyze testsslserver full compact quick)],
     'showhost'      => 0,       # 1: prefix printed line with hostname
    #------------------+---------+----------------------------------------------
     'regex' => {
@@ -3216,12 +3216,12 @@ sub print_data($$$) {
 sub print_check($$$) {
     #? print label and result of check
     my ($legacy, $label, $value) = @_;
-    if ( $legacy eq 'full')   {
+    if ($legacy eq 'full')   {
         printf("%s\n", $label . $text{'separator'});
         printf("\t%s\n", $value) if (defined $value);
         return;
     }
-    if ( $legacy eq 'compact')   {
+    if ($legacy =~ m/(compact|quick)/) {
         printf("%s", $label . $text{'separator'});
         printf("%s\n", $value) if (defined $value);
     } else {
@@ -3291,7 +3291,7 @@ sub print_cipherline($$$$) {
     }
         # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $cfg{'host'} . ":" . $cfg{'port'}, $sec, $cipher, $desc); } # 'C' needs to be checked first
-    if ($legacy eq 'quick')     { printf("    %-28s\t(%s)\t%s\n", $cipher, $bit, $sec); }
+    if ($legacy eq 'quick')     { printf("    %-28s\t(%s)\t%s\n", $cipher, $bit,   $sec); }
     if ($legacy eq 'simple')    { printf("    %-28s\t%s\t%s\n",   $cipher, $yesno, $sec); }
     if ($legacy eq 'compact')   { printf("%s %s %s\n",            $cipher, $yesno, $sec); }
     if ($legacy eq 'testsslserver') { printf("    %s\n", $cipher); }
@@ -3438,7 +3438,7 @@ sub printciphers($$$@) {
     my $count   = shift; # print title line if 0
     my @results = @_;
     local    $\ = "\n";
-    print_cipherhead( $legacy) if ($count  == 0);
+    print_cipherhead( $legacy) if (($cfg{'out_header'}>0) && ($count == 0));
     print_cipherdefault($legacy, $ssl, $host) if ($legacy eq 'sslaudit');
 
     if ($legacy ne 'sslyze') {
@@ -4172,6 +4172,8 @@ if ($quick == 1) {
     $cfg{'enabled'} = 1;
     $cfg{'shorttxt'}= 1;
 }
+$text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
+
 push(@{$cfg{'do'}}, 'pfs')    if (_is_do('http')); # FIXME: may produce duplicate output
 push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0); # command
 foreach $ssl (@{$cfg{'versions'}}) {
@@ -4605,6 +4607,9 @@ either empty lines, or lines beginning with the equal sign C<=>. These
 modes also use at least one tab character (0x09, TAB) to separate the
 label text from the text of the result. Example:
         Label of perfomed check:TABresult
+When used in I<--legacy=quick> mode, the label text and text result in
+the output are separated by just a single tab character. Example:
+        Label of perfomed checkTABresult
 
 The acronym C<N/A> may appear in some results. It means that no proper
 informations was or could be provided. Replace  C<N/A> by whatever you
@@ -4725,7 +4730,7 @@ with other commands).
 
 =head3 +quick
 
-    Quick overview of checks.
+    Quick overview of checks. Uses "--legacy=quick"  format.
 
 =head3 +sni
 
@@ -5091,6 +5096,7 @@ Options used for  I<+check>  command:
     full:         pretty print: each label in its  own line, followed
                   by data in next line prepended by tab character
                   (useful for "+info" only)
+    quick:        use tab as separator; print ciphers with bit length
     simple:       default format
 
 =head3 --format=FORM
@@ -6611,7 +6617,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.22
+@(#) 13.12.23
 
 =head1 AUTHOR
 
