@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.193 13/12/28 18:26:59";
+my  $SID    = "@(#) yeast.pl 1.194 13/12/29 14:17:33";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -81,8 +81,38 @@ if (! eval("require Net::SSLinfo;")) {
 sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header)/i, @ARGV) <= 0); }
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
-my $arg;
+my $arg = "";
+
+# read file with user source, if any
+# -------------------------------------
+my @usr = grep(/--(?:use?r)/, @ARGV);   # must have --usr option
+if (($#usr >= 0) and ($cgi == 0)) {
+    $arg =  "./o-saft-usr.pm";
+    if (! -e $arg) {
+        $arg = join("/", $mepath, $arg);# try to find it in installation directory
+    }
+}
+if (-e $arg) {
+    _print_read("user file", $arg) if(grep(/(:?--no.?header)/i, @ARGV) <= 0);
+    require $arg;
+} else {
+    sub usr_pre_file()  {}; # dummy stub, see o-saft-usr.pm
+    sub usr_pre_args()  {}; #  "
+    sub usr_pre_exec()  {}; #  "
+    sub usr_pre_main()  {}; #  "
+    sub usr_pre_host()  {}; #  "
+    sub usr_pre_cipher(){}; #  "
+    sub usr_pre_cmds()  {}; #  "
+    sub usr_pre_data()  {}; #  "
+    sub usr_pre_print() {}; #  "
+    sub usr_pre_next()  {}; #  "
+    sub usr_pre_exit()  {}; #  "
+}
+
+
 my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
+
+usr_pre_file();
 
 # read .rc-file if any
 # -------------------------------------
@@ -3833,6 +3863,8 @@ sub printtodo() {
     }
 } # printtodo
 
+usr_pre_args();
+
 # scan options and arguments
 # -------------------------------------
 my $typ = 'HOST';
@@ -3976,6 +4008,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)/){ next; } #  "
     if ($arg =~ /^-(connect)/)          { next; } #  "
     if ($arg eq  '--insecure')          { next; } #  "
+    if ($arg =~ /^--use?r$/)            { next; } # ignore, nothing to do
     if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
         warn("**WARNING: --set-score=* obsolte, please use --cfg_score=*; ignored");
         next;
@@ -4119,6 +4152,8 @@ _vprintme();
     $Net::SSLinfo::ignore_case = $cfg{'ignorecase'};
 }
 
+usr_pre_exec();
+
 # call with other libraries
 # -------------------------------------
 _y_ARG("exec? $cfg{'exec'}");
@@ -4217,6 +4252,8 @@ if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {
     _yeast_init();
 }
 
+usr_pre_main();
+
 # main: do the work
 # -------------------------------------
 # first all commands which do not make a connection
@@ -4237,6 +4274,7 @@ if (_is_do('ciphers')) {
 }
 
 # now commands which do make a connection
+usr_pre_host();
 
 # run the appropriate SSL tests for each host (ugly code down here):
 foreach $host (@{$cfg{'hosts'}}) {
@@ -4291,6 +4329,8 @@ foreach $host (@{$cfg{'hosts'}}) {
         }
     }
 
+    usr_pre_host();
+
     # check if SNI supported
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
@@ -4303,6 +4343,8 @@ foreach $host (@{$cfg{'hosts'}}) {
         $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     }
+
+    usr_pre_cipher();
 
     # Check if there is something listening on $host:$port
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
@@ -4338,6 +4380,8 @@ foreach $host (@{$cfg{'hosts'}}) {
         _yeast(" ciphers: $ciphers") if ($cfg{'trace'} > 0);
     }
 
+    usr_pre_cmds();
+
     if (_is_do('dump')) {
         _y_CMD("+dump");
         if ($cfg{'trace'} > 1) {   # requires: --v --trace --trace
@@ -4355,6 +4399,8 @@ foreach $host (@{$cfg{'hosts'}}) {
             checkciphers($ssl, $host, $port, $ciphers, \%ciphers);
         }
      }
+
+    usr_pre_data();
 
     # check ciphers manually (required for +check also)
     if (_is_do('cipher') or $check > 0) {
@@ -4394,6 +4440,8 @@ foreach $host (@{$cfg{'hosts'}}) {
     checksni(  $host, $port); #  "
     checksizes($host, $port); #  "
     checkdest( $host, $port);
+
+    usr_pre_print();
 
     if ($check > 0) {
         _y_CMD("+check");
@@ -4452,7 +4500,11 @@ foreach $host (@{$cfg{'hosts'}}) {
     _trace(" done: $host");
     $cfg{'done'}->{'hosts'}++;
 
+    usr_pre_next();
+
 } # foreach host
+
+usr_pre_exit();
 
 _yeast_exit();
 
@@ -5280,6 +5332,10 @@ options are ambigious.
   Note that \n, \r and \t are replaced by the corresponding character
   when read from RC-FILE.
 
+=head3 --usr
+
+  Execute functions defined in  o-saft-usr.pm.
+
 =head2 Options for tracing and debugging
 
 =head3 --n
@@ -5703,7 +5759,7 @@ This tools can be customized as follows:
 
 =item Using command line options
 
-    This is a simple way to refine a specific setting. Please see the
+    This is a simple way to redefine  specific settings.  Please  see
     CONFIGURATION OPTIONS  below.
 
 =item Using Configuration file
@@ -5721,15 +5777,21 @@ This tools can be customized as follows:
 
     These files are --nomen est omen-- used for debugging purpose.
     However, they can be (mis-)used to redifine all settings too.
-    More descriptions comming soon. Please see  DEBUG-FILE  below.
+    Please see  DEBUG-FILE  below.
+
+=item Using user specified code
+
+    This file contains  user specified  program code.  It can also be
+    (mis-)used to redifine all settings. Please see USER-FILE  below.
 
 =back
 
 Customization is done by redefining values in internal data structure
 which are:  %cfg,  %data,  %checks,  %text,  %scores .
-Unless used in  DEBUG-FILEs,  there is no need to know these internal
-data structures or names of variables; the options will set the right
-values. Only the names of the keys need to be correct.  The key names
+
+Unless used in  DEBUG-FILE  or  USER_FILE,  there is  no need to know
+these internal data structures or the names of variables; the options
+will set the proper values.  The key names beeing part of the option,
 are printed in output with the  I<--trace-key>  option.
 
 I.g. texts (values) of keys in  %data are those used in output of the
@@ -5761,9 +5823,15 @@ for additional information lines or texts (mainly beginning with C<=>).
 =item DEBUG-FILE
 
     Debug files are searched for and used automatically. They will be
-    seached for in the installation directory only.
-    Syntax in these files is perl code.  Perl's  C<require>  directive
+    seached for in the current working or the installation directory.
+    Syntax in these files is perl code.  Perl's  'require'  directive
     is used to include these files.
+
+=item USER-FILE
+
+    The user program file is included only if the  "--usr" option was
+    given. It will be be seached for in the current working directory
+    or the installation directory.
 
 =back
 
@@ -5822,9 +5890,16 @@ C<.>,  for example:  C<.o-saft.pl>.
 
 =head2 DEBUG-FILE
 
-All debugging functionality is defined in  o-saft-dbx.pm,  which will
+All debugging functionality is defined in L<o-saft-dbx.pm>, which will
 be searched for in the current working directory  or the installation
 directory of the tool. For Details see  L<DEBUG>  below.
+
+=head2 USER-FILE
+
+All functions defined in  L<o-saft-usr.pm>  are called when the option
+I<--usr>  was given. The functions are defined as empty stub, any code
+can be inserted as need.  Please see  L<perldoc o-saft-usr.pm>  to see
+when and how these functions are called.
 
 =head1 CIPHER NAMES
 
@@ -5996,6 +6071,12 @@ Port as specified with I<--port> options is the same for all targets.
 The used L<timeout(1)> command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
+=head2 User Provided Files
+
+Please note that there cannot be any guarantee that the code privided
+in the  DEBUG-FILE L<o-saft-usr.pm>  or  USER-FILE  L<o-saft-usr.pm> 
+will work flawless. Obviously this is the user's responsibility.
+
 =head2 Performance Problems
 
 There are various reasons when the program responds slow, or seems to
@@ -6072,6 +6153,19 @@ You have to fiddle around to find the proper one.
 
 =back
 
+=head2 Additional Files used if requested
+
+=over
+
+=item L<.o-saft.pl>
+
+=item L<o-saft-dbx.pm>
+
+=item L<o-saft-usr.pm>
+
+=item L<o-saft-README>
+
+=back
 
 =head1 SEE ALSO
 
@@ -6221,9 +6315,17 @@ don't make any sense.
 =begin comment
 
 The only code necessary for CGI mode is encapsulated at the beginning,
-see  C<if ($me =~/\.cgi$/){ ... }>.  Beside some minor additional regex
+see  C<if ($me =~/\.cgi$/){ ... }>. Beside some minor additional regex
 matches (mainly removing trailing  C<=> and empty arguments) no other
 code is needed. 
+
+=end comment
+
+=head2 Using user specified code
+
+There are some funnction called within the program flow, which can be
+filled with nny perl code.  Empty stubs of the functions are prepared
+in  L<o-saft-usr.pm>.  See also  B<USER-FILE>.
 
 =head2 SECURITY
 
@@ -6233,8 +6335,10 @@ There are no special security checks implemented. Some parameters are
 roughly sanatized according unwanted characters.  In particular there
 are no checks according any kind of code injection.
 
-Please see WARNING above if used in CGI mode. It's not recommended to
-run this tool in CGI mode. You have been warned!
+Please see  B<WARNING> above if used in CGI mode. It's not recommended
+to run this tool in CGI mode. You have been warned!
+
+=begin comment
 
 =head2 Program Code
 
@@ -6271,6 +6375,8 @@ section below for more details. Be prepared for a lot of output!
 
 =head3 Comments
 
+Following comments are used in the code:
+
 =over 4
 
 =item # ToDo:   - parts not working perfect, needs to be changed
@@ -6285,7 +6391,8 @@ Most functions use global variables (even if they are defined in main
 with `my'). These variables are mainly: @DATA, @results, %cmd, %data,
 %cfg, %checks, %ciphers, %text.
 
-Variables deined with `our' are can be used in  o-saft-dbx.pm .
+Variables defined with `our' are can be used in  L<o-saft-dbx.pm>  and
+L<o-saft-dbx.pm> .
 
 For a detailed description of the used variables, please refer to the
 text starting at the line  C<#!# set defaults>.
@@ -6350,10 +6457,10 @@ Following to get perl's variables for checks:
 
 Most functionality for trace, debug or verbose output is encapsulated
 in functions (see B<Sub Names> above). These functions are defined as
-empty stubs herein. The real definitions are found in  o-saft-dbx.pm,
+empty stubs herein.  The  real  definitions  are in  L<o-saft-dbx.pm>,
 which is loaded on demand when either any  I<--trace*>  or  I<--v>  option
 is specified. As long as these options are not used  o-saft.pl  works
-without  o-saft-dbx.pm.
+without  L<o-saft-dbx.pm>.
 
 Note: in contrast to the name of the RC-file, the name  o-saft-dbx.pm
 is hard-coded.
@@ -6369,7 +6476,7 @@ SSL connections and/or this tool. Note that some options can be given
 multiple times to increase amount of listed information. Also keep in
 mind that it's best to specify  I<--v>  as very first argument.
 
-Note that file  o-saft-dbx.pm  is required, if any  I<--trace*>  or
+Note that file  L<o-saft-dbx.pm>  is required, if any  I<--trace*>  or
 I<--v>  option is used.
 
 =head3 Commands
@@ -6530,6 +6637,13 @@ Following formats are used:
     # edit as needed:     .o-saft.pl
     $0 +check some.tld
 
+=item Generate simple parsable output
+
+    $0 --legacy=quick --no-header +info
+    $0 --legacy=quick --no-header +check
+    $0 --legacy=quick --no-header --trace-key +info
+    $0 --legacy=quick --no-header --trace-key +check
+
 =item Just for curiosity
 
     $0 some.tld +fingerprint --format=raw
@@ -6622,7 +6736,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.24
+@(#) 13.12.25
 
 =head1 AUTHOR
 
