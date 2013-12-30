@@ -34,7 +34,7 @@ Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
 =item _v_print( ), _v2print( ), _v3print( ), _v4print( )
 
-=item _trace( ), _trace_1key( ), _trace_1arr( )
+=item _trace( ), _trace_1arr( )
 
 =back
 
@@ -74,7 +74,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.5 13/12/27 23:47:05";
+my  $SID    = "@(#) o-saft-dbx.pm 1.6 13/12/30 00:12:09";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -116,7 +116,6 @@ sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbos
 sub _v4print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 4); }
 sub _trace($) { print "#" . $mename . "::" . $_[0] if ($cfg{'trace'} > 0); }
 # if --trace-arg given
-sub _trace_1key($) { printf("#[%-16s ",    join(" ",@_) . ']')  if ($cfg{'traceKEY'} > 0); }
 sub _trace_1arr($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceKEY'} > 0); }
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
