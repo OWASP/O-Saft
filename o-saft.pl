@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.194 13/12/29 14:17:33";
+my  $SID    = "@(#) yeast.pl 1.195 13/12/30 02:57:36";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -1096,8 +1096,9 @@ our %cfg = (
         'dbxfile'   => 0,
         'rc-file'   => 0,
         'initchecks'=> 0,
-        '_get_default'  => 0,
+         # all following need to be reset for each host
         'checkciphers'  => 0,   # not used, as it's called multiple times
+        'checkdefault'  => 0,
         'check02102'=> 0,
         'checkdates'=> 0,
         'checksizes'=> 0,
@@ -2077,21 +2078,12 @@ sub _v4print  {}
 sub _vprintme {}
 sub _trace($) {}
 # if --trace-arg given
-sub _trace_1key($) {}
 sub _trace_1arr($) {}
 
-sub _initchecks()  {
+sub _initscore()  {
     # set all default score values here
-    $cfg{'done'}->{'initchecks'}++;
-    _trace("_initchecks()");
-    $checks{$_}->{val}   = "" foreach (keys %checks); # but see below!
     $checks{$_}->{score} = 10 foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
-    $checks{'sts_maxage0d'}->{val} =        0;
-    $checks{'sts_maxage1d'}->{val} =    86400;  # day
-    $checks{'sts_maxage1m'}->{val} =  2592000;  # month
-    $checks{'sts_maxage1y'}->{val} = 31536000;  # year
-    $checks{'sts_maxagexy'}->{val} = 99999999;
     $checks{'sts_maxage0d'}->{score} =   0; # very weak
     $checks{'sts_maxage1d'}->{score} =  10; # weak
     $checks{'sts_maxage1m'}->{score} =  20; # low
@@ -2104,11 +2096,42 @@ sub _initchecks()  {
         $checks{$_}->{score} = 90 if (m/WEAK/i);
         $checks{$_}->{score} = 30 if (m/LOW/i);
         $checks{$_}->{score} = 10 if (m/MEDIUM/i);
+    }
+} # initscore
+
+sub _initchecks()  {
+    # set all default score values here
+    $cfg{'done'}->{'initchecks'}++;
+    $checks{$_}->{val}   = "" foreach (keys %checks); # but see below!
+    # some special values %checks{'sts_maxage*'}
+    $checks{'sts_maxage0d'}->{val} =        0;
+    $checks{'sts_maxage1d'}->{val} =    86400;  # day
+    $checks{'sts_maxage1m'}->{val} =  2592000;  # month
+    $checks{'sts_maxage1y'}->{val} = 31536000;  # year
+    $checks{'sts_maxagexy'}->{val} = 99999999;
+    foreach (keys %checks) {
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$_}->{val}   =  0 if (m/^(SSLv|TLSv)/i);
     }
 } # initchecks
-_initchecks();   # initialize defaults in %checks (score, val) in above hashes
+
+sub _init_all()  {
+    # set all default score values here
+    $cfg{'done'}->{'initchecks'}++;
+    _trace("_initchecks()");
+    _initscore();
+    _initchecks();
+} # _init_all
+_init_all();   # initialize defaults in %checks (score, val)
+
+sub _resetchecks() {
+    # reset values
+    foreach (keys %{$cfg{'done'}}) {
+        next if (!m/^check/);  # only reset check*
+        $cfg{'done'}->{$_} = 0;
+    }
+    _initchecks();
+}
 
 sub _find_cipher_name($) {
     # check if given cipher name is a known cipher
@@ -2478,7 +2501,7 @@ sub _useopenssl($$$$) {
 sub _get_default($$$) {
     # return default cipher from target (or local ssl if no target given)
     my $cipher = "";
-    $cfg{'done'}->{'_get_default'}++;
+    $cfg{'done'}->{'checkdefault'}++;
     _trace(" _get_default(" . ($_[0]||"") . "," . ($_[1]||"") . "," . ($_[2]||"") . ")");
     my $sslsocket = IO::Socket::SSL->new(
         PeerAddr        => $_[0],
@@ -3109,7 +3132,6 @@ sub checkssl($$) {
 # ToDo: folgende Checks implementieren
     if ($cfg{'verbose'} > 0) {
         foreach $key (qw(verify_hostname verify_altname verify dates fingerprint modulus_len sigkey_len)) {
-            #_trace_1key($key); # not necessary, done in print_data()
 # ToDo: nicht sinnvoll wenn $cfg{'no_cert'} > 0
         }
     }
@@ -3150,7 +3172,13 @@ sub scoring() {
 
 # print functions
 # -------------------------------------
-sub _printhost($) { printf("%s%s", $_[0], $text{'separator'}) if ($cfg{'showhost'} > 0); }
+sub print_host_key($$) {
+    #? print hostname if --showhost given; print key if --tracekey given
+    my ($host, $key) = @_;
+    printf("%s%s", $_[0], $text{'separator'}) if ($cfg{'showhost'} > 0);
+    printf("#[%-18s%s", join(" ", $key) . ']', $text{'separator'}) if ($cfg{'traceKEY'} > 0);
+}
+
 sub _dump($$) {
     my ($label, $value) = @_;
         $label =~ s/\n//g;
@@ -3189,8 +3217,7 @@ sub print_data($$$) {
         warn("**WARNING: unknown label '$label'; ignored"); # seems to be a programming error
         return;
     }
-    _trace_1key($label);
-    _printhost($host);
+    print_host_key($host, $label);
     my $val = $data{$label}->{val}($host) || "";
     # { always pretty print
         if ($label =~ m/X509$/) {
@@ -3248,27 +3275,45 @@ sub print_data($$$) {
     }
 } # print_data
 
-sub print_check($$$) {
+sub _print_line($$$) {
     #? print label and result of check
     my ($legacy, $label, $value) = @_;
     if ($legacy eq 'full')   {
         printf("%s\n", $label . $text{'separator'});
-        printf("\t%s\n", $value) if (defined $value);
+        printf("\t%s", $value) if (defined $value);
         return;
     }
     if ($legacy =~ m/(compact|quick)/) {
         printf("%s", $label . $text{'separator'});
-        printf("%s\n", $value) if (defined $value);
+        printf("%s", $value) if (defined $value);
     } else {
         printf("%-36s", $label . $text{'separator'});
-        printf("\t%s\n", $value) if (defined $value);
+        printf("\t%s", $value) if (defined $value);
     }
+    printf("\n");
+} # _print_line
+
+sub print_line($$$$$) {
+    #? print label and value
+    my ($legacy, $host, $key, $label, $value) = @_;
+    print_host_key($host, $key);
+    _print_line($legacy, $label, $value);
+} # print_line
+
+sub print_check($$$$) {
+    #? print label and result of check
+    my ($legacy, $host, $label, $value) = @_;
+    print_host_key($host, $label);
+    $value = $checks{$label}->{val} if (!defined $value);
+    $label = $checks{$label}->{txt};
+    _print_line($legacy, $label, $value);
 } # print_check
 
-sub print_cipherline($$$$) {
+sub print_cipherline($$$$$) {
     #? print cipher check result according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
+    my $host    = shift;
     my $cipher  = shift;
     my $support = shift;
     # variables for better (human) readability
@@ -3324,6 +3369,9 @@ sub print_cipherline($$$$) {
         my $tmp = $arr[2]; $arr[2] = $arr[3]; $arr[3] = $tmp;
         printf("   %s, %s (%s)\n",  $cipher, join (", ", @arr), $yesno);
     }
+    if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
+        print_host_key($host, 'cipher');
+    }
         # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $cfg{'host'} . ":" . $cfg{'port'}, $sec, $cipher, $desc); } # 'C' needs to be checked first
     if ($legacy eq 'quick')     { printf("    %-28s\t(%s)\t%s\n", $cipher, $bit,   $sec); }
@@ -3372,13 +3420,14 @@ sub print_cipherdefault($$$) {
     if ($legacy eq 'sslaudit')  {} # ToDo: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
-    print_cipherline($legacy, $ssl, $data{'default'}->{val}($host), $yesno);
+    print_cipherline($legacy, $ssl, $host, $data{'default'}->{val}($host), $yesno);
 } # print_cipherdefault
 
-sub print_ciphertotals($$) {
+sub print_ciphertotals($$$) {
     #? print total number of ciphers supported for SSL version according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
+    my $host    = shift;
     my ($key, $sec);
     if ($legacy eq 'ssldiagnos') {
         print "\n-= SUMMARY =-\n";
@@ -3391,11 +3440,9 @@ sub print_ciphertotals($$) {
         _trace_1arr('%checks');
         foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
             $key = $ssl . '-' . $sec;
-            _trace_1key($key);
-            print_check($legacy, $checks{$key}->{txt}, $checks{$key}->{val});
+            print_check($legacy, $host, $key, undef);
         }
-        _trace_1key($ssl);
-        print_check($legacy, $checks{$ssl}->{txt}, $checks{$ssl}->{val});
+        print_check($legacy, $host, $key, undef);
     }
 } # print_ciphertotals
 
@@ -3452,6 +3499,7 @@ sub _is_print($$$) {
 sub _print_results($$@) {
     #? print all ciphers from @results if match $ssl and $yesno
     my $ssl     = shift;
+    my $host    = shift;
     my $yesno   = shift; # only print these results, all if empty
     my @results = @_;
     my $print   = 0; # default: do not print
@@ -3461,7 +3509,7 @@ sub _print_results($$@) {
         next if  (${$c}[0] ne $ssl);
         next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
-        print_cipherline($cfg{'legacy'}, $ssl, ${$c}[1], ${$c}[2]) if ($print ==1);
+        print_cipherline($cfg{'legacy'}, $ssl, $host, ${$c}[1], ${$c}[2]) if ($print ==1);
     }
 } # _print_results
 
@@ -3477,33 +3525,32 @@ sub printciphers($$$@) {
     print_cipherdefault($legacy, $ssl, $host) if ($legacy eq 'sslaudit');
 
     if ($legacy ne 'sslyze') {
-        _print_results($ssl, "", @results);
+        _print_results($ssl, $host, "", @results);
         print_cipherruler() if ($legacy eq 'simple');
     } else {
         print "\n  * $ssl Cipher Suites :";
         print_cipherdefault($legacy, $ssl, $host);
         if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Accepted Cipher Suites:";
-            _print_results($ssl, "yes", @results);
+            _print_results($ssl, $host, "yes", @results);
         }
         if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Rejected Cipher Suites:";
-            _print_results($ssl, "no", @results);
+            _print_results($ssl, $host, "no", @results);
         }
     }
-    print_ciphertotals($legacy, $ssl);
-    print_check($legacy, $checks{'cnt_totals'}->{txt}, $#results) if ($cfg{'verbose'} > 0);
+    print_ciphertotals($legacy, $ssl, $host);
+    print_check($legacy, $host, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
 } # printciphers
 
-sub print_size($$) {
+sub print_size($$$) {
     #? print label and result for length, count, size, ...
-    my ($legacy, $label) = @_;
+    my ($legacy, $host, $label) = @_;
     my $value = "";
-    _trace_1key($label);
     $value = " bytes" if ($label =~ /^(len)/);
     $value = " bits"  if ($label =~ /^(len_publickey|len_sigdump)/);
-    print_check($legacy, $checks{$label}->{txt}, $checks{$label}->{val} . $value);
+    print_check($legacy, $host, $label, $checks{$label}->{val} . $value);
 } # print_size
 
 sub printdata($$) {
@@ -3538,7 +3585,7 @@ sub printdata($$) {
 } # printdata
 
 sub printchecks($$) {
-    #? print resukts stored in %checks
+    #? print results stored in %checks
     my ($legacy, $host) = @_;
     my $key  = "";
     local $\ = "\n";
@@ -3547,8 +3594,7 @@ sub printchecks($$) {
         _trace_1arr('@cfg{version}');
         foreach $key (@{$cfg{'versions'}}) {
             next if ($cfg{$key} == 0);  # this version not checked, see eval("Net::SSLeay::SSLv2_method()") above
-            _trace_1key($key);
-            print_check($legacy, $checks{'default'}->{txt} . $key, $checks{$key}->{val});
+            print_line($legacy, $host, 'default', $checks{'default'}->{txt} . $key, $checks{$key}->{val});
         }
     }
     _trace_1arr('%checks');
@@ -3561,15 +3607,14 @@ sub printchecks($$) {
         _y_CMD("(%checks) +" . $key);
         if ($key eq 'beast') {          # check is special
             if (! _is_do('cipher') && ($check <= 0)) {
-                print_check($legacy, $checks{$key}->{txt}, $text{'need-cipher'}) if ($cfg{'verbose'} > 0);
+                print_check($legacy, $host, $key, $text{'need-cipher'}) if ($cfg{'verbose'} > 0);
                 next;
             }
         }
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) { # sizes are special
-            print_size($legacy, $key) if ($cfg{'no_cert'} <= 0);
+            print_size($legacy, $host, $key) if ($cfg{'no_cert'} <= 0);
         } else {
-            _trace_1key($key);
-            print_check($legacy, $checks{$key}->{txt}, _setvalue($checks{$key}->{val}));
+            print_check($legacy, $host, $key, _setvalue($checks{$key}->{val}));
         }
     }
 } # printchecks
@@ -4280,6 +4325,7 @@ usr_pre_host();
 foreach $host (@{$cfg{'hosts'}}) {
     $port = ($cfg{'port'}||"");
     _y_CMD("host{ " . ($host||"") . ":" . $port);
+    _resetchecks();
     printheader(_subst($text{'out-target'}, "$host:$port"), "");
 
     # prepare DNS stuff
@@ -4319,11 +4365,11 @@ foreach $host (@{$cfg{'hosts'}}) {
         _y_CMD("+info || +check");
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
-            print_check($legacy, $text{'host-host'}, $host);
-            print_check($legacy, $text{'host-IP'}, $cfg{'IP'});
+            print_line($legacy, $host, 'host-host', $text{'host-host'}, $host);
+            print_line($legacy, $host, 'host-IP',   $text{'host-IP'}, $cfg{'IP'});
             if ($cfg{'usedns'} == 1) {
-                print_check($legacy, $text{'host-rhost'}, $cfg{'rhost'});
-                print_check($legacy, $text{'host-DNS'},   $cfg{'DNS'});
+                print_line($legacy, $host, 'host-rhost', $text{'host-rhost'}, $cfg{'rhost'});
+                print_line($legacy, $host, 'host-DNS',   $text{'host-DNS'},   $cfg{'DNS'});
             }
             printruler();
         }
@@ -4424,7 +4470,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         printruler() if ($quick == 0);
         printheader("\n" . _subst($text{'out-summary'}, ""), "");
         foreach $ssl (@{$cfg{'version'}}) {
-            print_check($legacy, $checks{$ssl}->{txt}, $checks{$ssl}->{val});
+            print_check($legacy, $host, $ssl, undef);
         }
         printruler() if ($quick == 0);
     }
@@ -4451,7 +4497,6 @@ foreach $host (@{$cfg{'hosts'}}) {
     # for debugging only
     if (_is_do('s_client')) { _y_CMD("+s_client"); print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}"; }
 
-    $cfg{'showhost'} = 0 if (($info == 1) and ($cfg{'showhost'} < 2)); # does not make sense for +info, but giving option twice ...
     _y_CMD("do=".join(" ",@{$cfg{'do'}}));
 
     # print all required data and checks
@@ -4482,11 +4527,9 @@ foreach $host (@{$cfg{'hosts'}}) {
         _trace_1arr('%scores');
         foreach $key (keys %scores) {
             next if ($key !~ m/^check_/); # print totals only
-            _trace_1key($key);
-            print_check($legacy, $scores{$key}->{txt}, $scores{$key}->{val});
+            print_line($legacy, $host, $key, $scores{$key}->{txt}, $scores{$key}->{val});
         }
-        _trace_1key('checks');
-        print_check($legacy, $scores{'checks'}->{txt}, $scores{'checks'}->{val});
+        print_line($legacy, $host, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
         printruler();
         if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
             printtable('score');
@@ -5227,9 +5270,6 @@ Options used for  I<+check>  command:
 =head3 --showhost
 
   Prefix each printed line with the given hostname (target).
-
-  Note that this option only applies to commands for information, but
-  not  +info  itself.
 
 =begin comment
 
@@ -6639,10 +6679,14 @@ Following formats are used:
 
 =item Generate simple parsable output
 
-    $0 --legacy=quick --no-header +info
-    $0 --legacy=quick --no-header +check
-    $0 --legacy=quick --no-header --trace-key +info
-    $0 --legacy=quick --no-header --trace-key +check
+    $0 --legacy=quick --no-header +info  some.tld
+    $0 --legacy=quick --no-header +check some.tld
+    $0 --legacy=quick --no-header --trace-key +info  some.tld
+    $0 --legacy=quick --no-header --trace-key +check some.tld
+
+=item Generate simple parsable output for multiple hosts
+
+    $0 --legacy=quick --no-header --trace-key --showhost +check some.tld other.tld
 
 =item Just for curiosity
 
@@ -6736,7 +6780,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.25
+@(#) 13.12.26
 
 =head1 AUTHOR
 
