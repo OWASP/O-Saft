@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.195 13/12/30 02:57:36";
+my  $SID    = "@(#) yeast.pl 1.196 14/01/01 22:05:11";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -266,6 +266,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
+    'chain_verify'  => {'val' => sub { Net::SSLinfo::chain_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification (trace)"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
     'verify_altname'=> {'val' => sub { Net::SSLinfo::verify_altname($_[0], $_[1])}, 'txt' => "Validity Alternate Names"},
     'verify_hostname'=>{'val' => sub { Net::SSLinfo::verify_hostname( $_[0],$_[1])},'txt' => "Validity Hostname"},
@@ -638,6 +639,7 @@ our %shorttexts = (
     'pkp_pins'      => "Public Key Pins",
     'selfsigned'    => "Validity (signature)",
     'chain'         => "Certificate Chain",
+    'chain_verify'  => "CA Chain trace",
     'verify'        => "Chain verified",
     'nonprint'      => "non-printables",
     'crnlnull'      => "CR, NL, NULL",
@@ -843,6 +845,13 @@ our %cfg = (
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrived
+    'ca_depth'      => undef,   # depth of peer certificate verification verification
+    'ca_crl'        => undef,   # URL where to find CRL file
+    'ca_file'       => undef,   # PEM format file with CAs
+    'ca_path'       => undef,   # path to directory with PEM files for CAs
+                                # see Net::SSLinfo why undef as default
+    'ca_paths'      => [qw(/etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL)],
+    'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
@@ -882,7 +891,7 @@ our %cfg = (
                        ],
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only 
-                       qw(certificate extensions pem pubkey sigdump text chain)
+                       qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
                        qw(
@@ -1653,7 +1662,7 @@ my %text = (
         'AEAD'      => "Authenticated Encryption with Additional Data",
         'AECDHE'    => "Anonymous Ephemeral ECDH",
         'AES'       => "Advanced Encryption Standard",
-        'AIA'       => "Authority Information Access",
+        'AIA'       => "Authority Information Access (certificate extension)",
         'AKID'      => "Authority Key IDentifier",
         'ARC4'      => "Alleged RC4 (see RC4)",
         'ARCFOUR'   => "alias for ARC4",
@@ -1693,7 +1702,7 @@ my %text = (
         'CMS'       => "Cryptographic Message Syntax",
         'CMVP'      => "Cryptographic Module Validation Program (NIST)",
         'CN'        => "Common Name",
-        'CP'        => "Certificate policy",
+        'CP'        => "Certificate Policy (certificate extension)",
         'CPD'       => "Certificate Policy Definitions",
         'CPS'       => "Certification Practice Statement",
         'CRC'       => "Cyclic Redundancy Check",
@@ -1827,6 +1836,7 @@ my %text = (
         'PACE'      => "Password Authenticated Connection Establishment",
         'PAKE'      => "Password Authenticated Key Exchange",
         'PBE'       => "Password Based Encryption",
+        'PC'        => "Policy Constraints (certificate extension)",
         'PCBC'      => "Propagating Cipher Block Chaining",
         'PEM'       => "Privacy Enhanced Mail",
         'PFS'       => "Perfect Forward Secrecy",
@@ -1842,6 +1852,7 @@ my %text = (
         'PKCS12'    => "PKCS #12: RSA Personal Information Exchange Syntax Standard (public + private key stored in files)",
         'PKI'       => "Public Key Infrastructure",
         'PKIX'      => "Internet Public Key Infrastructure Using X.509",
+        'PM'        => "Policy Mappings (certificate extension)",
         'PMAC'      => "Parallelizable MAC",
         'Poly1305-AES'  => "MAC (by D. Bernstein)",
         'POP'       => "Proof of Possession",
@@ -1889,8 +1900,10 @@ my %text = (
         'SHA1'      => "alias for SHA-1 (160 bit)",
         'SHA2'      => "alias for SHA-2 (224, 256, 384 or 512 bit)",
         'SHS'       => "Secure Hash Standard",
+        'SIA'       => "Subject Information Access (certificate extension)",
         'SIC'       => "Segmented Integer Counter (alias for CTR)",
         'Skein'     => "hash function",
+        'SKID'      => "subject key ID (certificate extension)",
         'Skipjack'  => "encryption algorithm specified as part of the Fortezza",
         'Snefu'     => "hash function",
         'SNI'       => "Server Name Indication",
@@ -4042,13 +4055,19 @@ while ($#argv >= 0) {
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'OPENSSL'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'CTXT'; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT'; $arg = $1; } # no next
-    if ($arg =~ /^--cfg[_-](cmd|score|text)-([^=]*)=(.*)/){              # warn if old syntax
+    if ($arg =~ /^--cfg[_-](cmd|score|text)-([^=]*)=(.*)/){              # warn if old syntax; must be first --cfg* check!
         $typ = 'CFG-'.$1; $arg = $2 . "=" . $3;   # convert to new syntax
         print("**WARNING: old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files\n");
         # no next;
     }
     if ($arg =~ /^--cfg[_-]([^=]*)$/)   { $typ = 'CFG-'.$1;      next; }
     if ($arg =~ /^--cfg[_-]([^=]*)=(.*)/){$typ = 'CFG-'.$1; $arg = $2; } # no next
+    if ($arg =~ /^--ca[_-]?depth/i)     { $typ = 'CADEPTH';      next; }
+    if ($arg =~ /^--ca[_-]?depth=(.*)/i){ $typ = 'CADEPTH'; $arg = $1; } # no next
+    if ($arg =~ /^--ca[_-]?(?:cert(?:ificate)?|file)$/i)    { $typ = 'CAFILE';       next; } # curl, openssl, wget, ...
+    if ($arg =~ /^--ca[_-]?(?:cert(?:ificate)?|file)=(.*)/i){ $typ = 'CAFILE';  $arg = $1; } # no next
+    if ($arg =~ /^--ca[_-]?(?:directory|path)$/i)           { $typ = 'CAPATH';       next; } # curl, openssl, wget, ...
+    if ($arg =~ /^--ca[_-]?(?:directory|path)=(.*)/i)       { $typ = 'CAPATH';  $arg = $1; } # no next
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)/){ next; } #  "
     if ($arg =~ /^-(connect)/)          { next; } #  "
@@ -4135,6 +4154,9 @@ while ($#argv >= 0) {
     if ($typ eq 'TIMEOUT')  { $cfg{'timeout'} = $arg;       $typ = 'HOST'; next; }
     if ($typ eq 'CIPHER')   { $cfg{'cipher'}  = $arg;       $typ = 'HOST'; next; }
     if ($typ eq 'CTXT')     { $cfg{'no_cert_txt'} = $arg;   $typ = 'HOST'; next; }
+    if ($typ eq 'CAFILE')   { $cfg{'ca_file'} = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'CAPATH')   { $cfg{'ca_path'} = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'CADEPTH')  { $cfg{'ca_depth'}= $arg;       $typ = 'HOST'; next; }
     if ($typ eq 'PORT')     { $cfg{'port'}    = $arg;       $typ = 'HOST'; next; }
     if ($typ eq 'HOST')     {
         #  ------+----------+------------------------------+--------------------
@@ -4195,6 +4217,10 @@ _vprintme();
     $Net::SSLinfo::no_cert     = $cfg{'no_cert'};
     $Net::SSLinfo::no_cert_txt = $cfg{'no_cert_txt'};
     $Net::SSLinfo::ignore_case = $cfg{'ignorecase'};
+    $Net::SSLinfo::ca_crl      = $cfg{'ca_crl'};
+    $Net::SSLinfo::ca_file     = $cfg{'ca_file'};
+    $Net::SSLinfo::ca_path     = $cfg{'ca_path'};
+    $Net::SSLinfo::ca_depth    = $cfg{'ca_depth'};
 }
 
 usr_pre_exec();
@@ -5131,6 +5157,18 @@ the description here is text provided by the user.
   Set  TEXT  to be returned from  "Net::SSLinfo.pm" if no certificate
   data is collected due to use of  "--no-cert".
 
+=head3 --ca-depth INT
+
+  Check certificate chain to depth  INT (like openssl's -verify).
+
+=head3 --ca-file FILE
+
+  Use  FILE  with bundle of CAs to verify target's certificate chain.
+
+=head3 --ca-path DIR
+
+  Use  DIR  where to find CA certificates in PEM format.
+
 =head2 Options for checks and results
 
 Options used for  I<+check>  command:
@@ -5284,6 +5322,18 @@ Note that only the long form options are accepted  as most short form
 options are ambigious.
 
 =over 4
+
+=item * --capath DIR      (curl)           same as I<--ca-path DIR>
+
+=item * --CApath=DIR      (openssl)        same as I<--ca-path DIR>
+
+=item * --ca-directory=DIR        (wget)   same as I<--ca-path DIR>
+
+=item * --cacert FILE     (curl)           same as I<--ca-file DIR>
+
+=item * --CAfile=FILE     (openssl)        same as I<--ca-file DIR>
+
+=item * --ca-certificate=FILE     (wget)   same as I<--ca-path DIR>
 
 =item * --hide_rejected_ciphers (sslyze)   same as I<--disabled>
 
@@ -6058,32 +6108,45 @@ very slow connection. Reason is a conncetion timeout.
 Try to use  I<--timout=SEC>  option.
 To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 
-=head2 "poor performance"
+=head2 Performance Problems
 
-Sometimes the program seems to hang and then returns strange results
-for some checks. Most common reasons are:
+There are various reasons when the program responds slow, or seems to
+hang. Beside the problems described below performance issues are most
+likely a target-side problem. Most common reasons are:
 
 =over 4
 
 =item a) DNS resolver problems
 
-Try with  C<--no-dns>
+Try with  I<--no-dns>
 
 =item b) target does not accept connections for https
 
-Try with  C<--no-http>
+Try with  I<--no-http>
 
 =item c) target's certificate is not valid
 
-Try with  C<--no-cert>
+Try with  I<--no-cert>
 
 =item d) target expects that the client provides a client certificate
+
+No option provided yet ...
+
+=item e) target does not handle Server Name Indication (SNI)
+
+Try with  I<--no-sni>
+
+Try to use following options to narrow down the cause of the problem:
+
+=item use of extnal openssl executable
+
+Use  I<--no-openssl> 
 
 =back
 
 Other options which may help to get closer to the problem's cause:
+I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>  
 
-C<--v>, C<--trace=cmd>, C<--trace>
 
 =head1 LIMITATIONS
 
@@ -6111,27 +6174,41 @@ Port as specified with I<--port> options is the same for all targets.
 The used L<timeout(1)> command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
+=head2 Target Certificate Chain Verification
+
+The systems default cpabilities, i.e. libssl.so, openssl, are used to
+verify the target's certificate chain.  Unfortunately various systems
+have implemented different  approaches and rules how identify and how
+to report a succsessfull verification. As a consequence this tool can
+only return the  same information about the chain verification as the
+used underlaying tools. If that information is trustworthy depends on
+how trustworthy the tools are.
+
+These limitations apply to following commands:
+
+=over 4
+
+=item I<+verify>
+
+=item I<+selfsigned>
+
+=back
+
+Following commands and options are useful to get more information:
+
+=over 4
+
+=item I<+chain_verify>, I<+verify>, I<+chain>, I<+s_client>
+
+=item I<--ca-file>, I<--ca-path>, I<--ca-depth>
+
+=back
+
 =head2 User Provided Files
 
 Please note that there cannot be any guarantee that the code privided
 in the  DEBUG-FILE L<o-saft-usr.pm>  or  USER-FILE  L<o-saft-usr.pm> 
 will work flawless. Obviously this is the user's responsibility.
-
-=head2 Performance Problems
-
-There are various reasons when the program responds slow, or seems to
-hang. Beside the problems described below performance issues are most
-likely a target-side problem.
-Try to use following options to narrow down the cause of the problem:
-
-=over 4
-
-=item I<--no-cert> I<--no-dns> I<--no-http> I<--no-openssl> I<--no-sni>
-
-Additionally following options may help:
-I<--timeout=SEC>,  I<--trace=cmd>  and/or  I<--no-cert>
-
-=back
 
 =head2 Problems and Errors
 
@@ -6732,6 +6809,10 @@ Following formats are used:
 
     $0 +info some.tld --no-cert --no-cert --no-cert-text=Value-from-Certificate
 
+=item Show certificate CA verifications
+
+    $0 some.tld +chain_verify +verify +chain
+
 =item Avoid most performance and timeout problems
 
     $0 +info some.tld --no-cert --no-dns --no-http --no-openssl --no-sni
@@ -6780,7 +6861,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.26
+@(#) 13.12.27
 
 =head1 AUTHOR
 
