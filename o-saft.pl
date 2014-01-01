@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.196 14/01/01 22:05:11";
+my  $SID    = "@(#) yeast.pl 1.197 14/01/01 22:58:17";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -448,24 +448,24 @@ my %check_size = (
     # collected and checked length and count data
     # counts and sizes are integer values, key mast have prefix (len|cnt)_
     #------------------+-----------------------------------------------------
-    'len_pembase64' => {'txt' => "Size: Certificate PEM (base64)"}, # <(2048/8*6)
-    'len_pembinary' => {'txt' => "Size: Certificate PEM (binary)"}, # < 2048
-    'len_subject'   => {'txt' => "Size: Certificate subject"},      # <  256
-    'len_issuer'    => {'txt' => "Size: Certificate subject"},      # <  256
-    'len_CPS'       => {'txt' => "Size: Certificate CPS"},          # <  256
-    'len_CRL'       => {'txt' => "Size: Certificate CRL"},          # <  256
-    'len_CRL_data'  => {'txt' => "Size: Certificate CRL data"},
-    'len_OCSP'      => {'txt' => "Size: Certificate OCSP"},         # <  256
-    'len_OIDs'      => {'txt' => "Size: Certificate OIDs"},
-    'len_publickey' => {'txt' => "Size: Certificate public key"},   # > 1024
-    'len_sigdump'   => {'txt' => "Size: Certificate signature key"},# > 1024
-    'len_altname'   => {'txt' => "Size: Certificate subject altname"},
-    'len_chain'     => {'txt' => "Size: Certificate Chain size"},   # < 2048
-    'len_sernumber' => {'txt' => "Size: Certificate Serial Number"},# <=  20 octets
-    'cnt_altname'   => {'txt' => "Count: Certificate subject altname"}, # == 0
-    'cnt_wildcard'  => {'txt' => "Count: Certificate wildcards"},   # == 0
-    'cnt_chaindepth'=> {'txt' => "Count: Certificate Chain Depth"}, # == 1
-    'cnt_ciphers'   => {'txt' => "Count: Offered Ciphers"},         # <> 0
+    'len_pembase64' => {'txt' => "Certificate PEM (base64) size"},  # <(2048/8*6)
+    'len_pembinary' => {'txt' => "Certificate PEM (binary) size"},  # < 2048
+    'len_subject'   => {'txt' => "Certificate subject size"},       # <  256
+    'len_issuer'    => {'txt' => "Certificate subject size"},       # <  256
+    'len_CPS'       => {'txt' => "Certificate CPS size"},           # <  256
+    'len_CRL'       => {'txt' => "Certificate CRL size"},           # <  256
+    'len_CRL_data'  => {'txt' => "Certificate CRL data size"},
+    'len_OCSP'      => {'txt' => "Certificate OCSP size"},          # <  256
+    'len_OIDs'      => {'txt' => "Certificate OIDs size"},
+    'len_publickey' => {'txt' => "Certificate public key size"},    # > 1024
+    'len_sigdump'   => {'txt' => "Certificate signature key size"} ,# > 1024
+    'len_altname'   => {'txt' => "Certificate subject altname size"},
+    'len_chain'     => {'txt' => "Certificate Chain size size"},    # < 2048
+    'len_sernumber' => {'txt' => "Certificate Serial Number size"}, # <=  20 octets
+    'cnt_altname'   => {'txt' => "Certificate subject altname count"}, # == 0
+    'cnt_wildcard'  => {'txt' => "Certificate wildcards count"},    # == 0
+    'cnt_chaindepth'=> {'txt' => "Certificate Chain Depth count"},  # == 1
+    'cnt_ciphers'   => {'txt' => "Number of offered ciphers"},      # <> 0
     'cnt_totals'    => {'txt' => "Total number of checked ciphers"},
     #------------------+-----------------------------------------------------
 # ToDo: cnt_ciphers, len_chain, cnt_chaindepth
@@ -6861,7 +6861,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.27
+@(#) 13.12.28
 
 =head1 AUTHOR
 
