@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.58 13/12/22 03:09:23',
+    SID         => '@(#) Net::SSLinfo.pm 1.59 14/01/01 22:37:09',
 };
 
 ######################################################## public documentation #
@@ -88,6 +88,32 @@ In trace messages empty or undefined strings are writtens as "<<undefined>>".
 Following variables are supported:
 
 =over
+
+=begin comment
+
+=item $Net::SSLinfo::ca_crl
+
+URL where to find CRL file; default: ''
+
+=end comment
+
+=item $Net::SSLinfo::ca_file
+
+File in PEM format file with all CAs;   default: ''
+
+Value will not be used at all is set C<undef>.
+
+=item $Net::SSLinfo::ca_path
+
+Directory with PEM files for all CAs;   default: ''
+
+Value will not be used at all is set C<undef>.
+
+=item $Net::SSLinfo::ca_depth
+
+Depth of peer certificate verification verification; default: 9
+
+Value will not be used at all is set C<undef>.
 
 =item $Net::SSLinfo::openssl
 
@@ -157,15 +183,48 @@ See SYNOPSIS above.
 
 =head1 LIMITATIONS
 
-This module is not thread-save as it only supports one internal object for
-socket handles. However, it will work if all threads use the same hostname.
+=head2 Collected data with openssl
 
 Some data is collected using an external openssl executable. The output of
 this executable is used to find proper information. Hence some data may be
 missing or detected wrong due to different output formats of openssl.
 If in doubt use "$Net::SSLinfo::use_openssl = 0" to disable openssl usage.
 
+=head2 Threads
+
+This module is not thread-save as it only supports one internal object for
+socket handles. However, it will work if all threads use the same hostname.
+
 =head1 KNOWN PROBLEMS
+
+=head2 Certificate Verification
+
+The verification of the target's certificate chain relies on the installed
+root CAs. As this tool uses  Net::SSLeay  which usually relies on  openssl
+and its libraries, the (default) settings in these libraries are effective
+for our certificate chain verification.
+
+I.g. the root CAs can be provided in a single combined PEM format file, or
+in a directory containing one file per CA with a proper link which name is
+the CA's hash value. Therfor the library uses the  CAPFILE  and/or  CAPATH
+environment variable. The tools, like openssl, have options to pass proper
+values for the file and path.
+
+We provide these settings in the variables:  I<$Net::SSLinfo::ca_file>,
+I<$Net::SSLinfo::ca_path>,  I<$Net::SSLinfo::ca_depth> .
+
+Please see  B<VARIABLES>  for details.
+
+Unfortunately the  default settings  for the libraries and tools differ on
+various platforms, so there is  no simple way to check if the verification
+was successfull as expected.
+
+In particular the behaviour is unpredictable if the  environment variables 
+are set and our internal variables (see above) too. Hence, we recommend to
+either ensure that  no environment variables are in use,  or our variables
+are set  C<undef>.
+
+=head2 Errors
 
 Net::SSLeay::X509_get_subject_name()   from version 1.49 sometimes crashes
 with segmentation fault.
@@ -220,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.17';
+    $VERSION   = '13.12.27';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -293,6 +352,7 @@ require Exporter;
         verify_alias
         verify
         chain
+        chain_verify
         compression
         expansion
         protocols
@@ -347,6 +407,13 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
+$Net::SSLinfo::ca_crl   = undef;# URL where to find CRL file
+$Net::SSLinfo::ca_file  = undef;# PEM format file with CAs
+$Net::SSLinfo::ca_path  = undef;# path to directory with PEM files for CAs
+$Net::SSLinfo::ca_depth = undef;# depth of peer certificate verification verification
+                                # 0=verification is off, returns always "Verify return code: 0 (ok)"
+                                # 9=complete verification (max. value, openssl's default)
+                                # undef= not used, means system default is used
 $Net::SSLinfo::trace       = 0; # 1=simple debugging Net::SSLinfo
                                 # 2=trace     including $Net::SSLeay::trace=2
                                 # 3=dump data including $Net::SSLeay::trace=3
@@ -435,8 +502,9 @@ my %_SSLinfo = ( # our internal data structure
     'fingerprint_md5'   => "",  # MD5  fingerprint (if available)
     'default'           => "",  # default cipher offered by server
     # all following need output from "openssl s_client ..."
-    'chain'             => "",  # certificate's CA chain
     'verify'            => "",  # certificate chain verification
+    'chain'             => "",  # certificate's CA chain
+    'chain_verify'      => "",  # certificate's CA chain verifacion trace
     'renegotiation'     => "",  # renegotiation supported
     'resumption'        => "",  # resumption supported
     'selfsigned'        => "",  # self-signed certificate
@@ -766,6 +834,8 @@ sub do_ssl_open($$) {
     my $err = "";    # error string from sub-system, if any
     my $ssl = undef;
     my $dum;         # used to avoid warnings with perl's -w
+    my $cafile  = "";
+    my $capath  = "";
 
 # ToDo: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
@@ -786,7 +856,12 @@ sub do_ssl_open($$) {
         ($ctx = Net::SSLeay::CTX_new()) or {$src = 'Net::SSLeay::CTX_new()'} and last;
             # ToDo: not sure if CTX_new() can fail
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer); # in client mode VERIFY_NONE
-            # ToDo: not sure if CTX_set_verify() can fail
+             # ToDo: setting verify options not yet tested
+# use constant SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+# use constant SSL_VERIFY_PEER => Net::SSLeay::VERIFY_PEER(); # 1
+# use constant SSL_VERIFY_FAIL_IF_NO_PEER_CERT => Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT(); # 2
+# use constant SSL_VERIFY_CLIENT_ONCE => Net::SSLeay::VERIFY_CLIENT_ONCE();
+            # SSL_verify_mode => # 0x00, 0x01 (verify peer), 0x02 (fails if no cert), 0x04 (verify client)
 ######
             # SSL_version     => 'SSLv2', 'SSLv3', or 'TLSv1'
             # SSL_cipher_list => ALL:NULL:eNULL:aNULL:LOW  COMPLEMENTOFALL
@@ -794,12 +869,38 @@ sub do_ssl_open($$) {
             # SSL_check_crl   => true (verify CRL in local SSL_ca_path)
             # SSL_honor_cipher_order  => true (cipher order provided by client)
 
-             # ToDo: setting verify options not yet tested
-# use constant SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-# use constant SSL_VERIFY_PEER => Net::SSLeay::VERIFY_PEER(); # 1
-# use constant SSL_VERIFY_FAIL_IF_NO_PEER_CERT => Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT(); # 2
-# use constant SSL_VERIFY_CLIENT_ONCE => Net::SSLeay::VERIFY_CLIENT_ONCE();
-            # SSL_verify_mode => # 0x00, 0x01 (verify peer), 0x02 (fails if no cert), 0x04 (verify client)
+        $src = "Net::SSLeay::CTX_load_verify_locations()";
+        $cafile = $Net::SSLinfo::ca_file || "";
+        if ($cafile !~ m#^([a-zA-Z0-9_,.\\/()-])*$#) {
+            $err = "invalid characters for " . '$Net::SSLinfo::ca_file; not used';
+            last;
+        }
+        $capath = $Net::SSLinfo::ca_path || "";
+        if ($capath !~ m#^([a-zA-Z0-9_,.\\/()-]*)$#) {
+            $err = "invalid characters for " . '$Net::SSLinfo::ca_path; not used';
+            last;
+        }
+        if (($capath . $cafile) ne "") { # CTX_load_verify_locations() fails if both are empty
+            Net::SSLeay::CTX_load_verify_locations($ctx, $cafile, $capath) or do {$err = $!} and last;
+            # CTX_load_verify_locations() sets SSLeay's error stack, which
+            # is roughly the same as $!
+        }
+
+        $src = "Net::SSLeay::CTX_set_verify_depth()";
+        if (defined $Net::SSLinfo::ca_depth) {
+            if ($Net::SSLinfo::ca_depth !~ m/^[0-9]$/) {
+                $err = "invalid value '$Net::SSLinfo::ca_depth' for " . '$Net::SSLinfo::ca_depth; not used';
+                last;
+            }
+            Net::SSLeay::CTX_set_verify_depth($ctx, $Net::SSLinfo::ca_depth);
+            #Net::SSLeay::set_verify_depth($ssl, $Net::SSLinfo::ca_depth); # ToDo: not sure what's the difference
+        }
+# Client-Cert see smtp_tls_cert.pl
+###
+###
+###             Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
+###             Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
+###
 
              # ToDo: setting more options not yet tested
         #Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_NO_SSLv3() | Net::SSLeay::OP_NO_TLSv1()));
@@ -812,13 +913,6 @@ sub do_ssl_open($$) {
         # return { error => "SSL context init failed: $!" } unless $ctx;
         # Net::SSLeay::CTX_set_options($ctx, $tls_options) # returns new options bitmask
         #         or return { error => "SSL context option set failed: $!" };
-    # 
-# fuer Client-Cert siehe smtp_tls_cert.pl
-######
-######
-                #Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
-                #Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
-######
 
         $src = 'Net::SSLeay::CTX_set_options()';
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
@@ -1134,6 +1228,12 @@ sub do_ssl_open($$) {
             #       Certificate chain
         $d = $data; $d =~ s/.*?Certificate chain[\r\n]+(.*?)[\r\n]+---[\r\n]+.*/$1/si;
         $_SSLinfo{'chain'}          = $d;
+        
+            # from s_client:
+            # $_SSLinfo{'s_client'} grep
+            #       depth=  ... ---
+        $d = $data; $d =~ s/.*?(depth=-?[0-9]+.*?)[\r\n]+---[\r\n]+.*/$1/si;
+        $_SSLinfo{'chain_verify'}   = $d;
 
         _trace("do_ssl_open() with openssl done.");
         print Net::SSLinfo::dump() if ($trace > 0);
@@ -1482,6 +1582,10 @@ Get certificate subject/issuer hash value (in hex).
 
 Get certificate's CA chain.
 
+=head2 chain_verify( )
+
+Get certificate's CA chain verification trace (for debugging only).
+
 =head2 selfsigned( )
 
 If certificate is self signed.
@@ -1580,6 +1684,7 @@ sub subject_hash    { return _SSLinfo_get('subject_hash',     $_[0], $_[1]); }
 sub issuer_hash     { return _SSLinfo_get('issuer_hash',      $_[0], $_[1]); }
 sub verify          { return _SSLinfo_get('verify',           $_[0], $_[1]); }
 sub chain           { return _SSLinfo_get('chain',            $_[0], $_[1]); }
+sub chain_verify    { return _SSLinfo_get('chain_verify',     $_[0], $_[1]); }
 sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
 sub expansion       { return _SSLinfo_get('expansion',        $_[0], $_[1]); }
 sub protocols       { return _SSLinfo_get('protocols',        $_[0], $_[1]); }
