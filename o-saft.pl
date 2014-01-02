@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.197 14/01/01 22:58:17";
+my  $SID    = "@(#) yeast.pl 1.198 14/01/02 12:30:34";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -912,7 +912,7 @@ our %cfg = (
                         beast beast-default crime export rc4 pfs crl
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
-    'cmd-ev'        => [qw(ev ev- ev+ ev-chars subject)], # commands for +ev
+    'cmd-ev'        => [qw(cn subject altname ev ev- ev+ ev-chars)], # commands for +ev
     'cmd-bsi'       => [qw(after dates crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
@@ -1601,6 +1601,8 @@ my %text = (
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'EV-miss'       => " <<missing @@>>",
     'EV-large'      => " <<too large @@>>",
+    'EV-subject-CN' => " <<missmatch: subject CN= and commonName>>",
+    'EV-subject-host'=>" <<missmatch: subject CN= and given hostname>>",
     'no-reneg'      => " <<secure renegotiation not supported>>",
     'cert-dates'    => " <<invalid certificate date>>",
     'cert-valid'    => " <<certificate validity to large @@>>",
@@ -1656,6 +1658,7 @@ my %text = (
 
     # short list of used terms and acronyms, always incomplete ...
     'glossar' => {
+        'AA'        => "Attribute Authority",
         'AAD'       => "additional authenticated data",
         'ADH'       => "Anonymous Diffie-Hellman",
         'Adler32'   => "hash function",
@@ -1680,7 +1683,7 @@ my %text = (
         'CAST-256'  => "Carlisle Adams and Stafford Tavares, block cipher",
         'CAST6'     => "alias for CAST-256",
         'cipher suite'  => "cipher suite is a named combination of authentication, encryption, and message authentication code algorithms",
-        'CA'        => "Certificate Authority",
+        'CA'        => "Certificate Authority (aka root CA)",
         'CBC'       => "Cyclic Block Chaining",
         'CBC '      => "Cipher Block Chaining (sometimes)",
         'CBC  '     => "Ciplier Block Chaining (sometimes)",
@@ -1829,7 +1832,7 @@ my %text = (
         'OCSP stapling' => "formerly known as: TLS Certificate Status Request",
         'OMAC'      => "One-Key CMAC, aka CBC-MAC",
         'OMAC1'     => "same as CMAC",
-        'OV'        => "Organisation Validation",
+        'OV'        => "Organisational Validation",
         'OV-SSL'    => "Organisational Validated Certificate",
         'P12'       => "see PKCS#12",
         'P7B'       => "see PKCS#7",
@@ -1858,7 +1861,7 @@ my %text = (
         'POP'       => "Proof of Possession",
         'PRF'       => "pseudo-random function",
         'PSK'       => "Pre-shared Key",
-        'RA'        => "Registration Authority",
+        'RA'        => "Registration Authority (aka Registration CA)",
         'Rabbit'    => "stream cipher algorithm",
         'RADIUS'    => "Remote Authentication Dial-In User Service",
         'Radix-64'  => "alias for Base-64",
@@ -1877,6 +1880,7 @@ my %text = (
         'RSA'       => "Rivest Sharmir Adelman (public key cryptographic algorithm)",
         'RSS-14'    => "Reduced Space Symbology, see GS1",
         'RTN'       => "Routing transit number",
+        'SA'        => "Subordinate Authority (aka Subordinate CA)",
         'SAFER'     => "Secure And Fast Encryption Routine, block cipher",
         'Salsa20'   => "stream cipher",
         'SAM'       => "syriac abbreviation mark",
@@ -1968,6 +1972,8 @@ my %text = (
     #           http://en.wikipedia.org/wiki/Perfect_forward_secrecy
     # RFC 2818: ? (Namenspruefung)
     # RFC 2712: TLSKRB: Addition of Kerberos Cipher Suites to Transport Layer Security (TLS)
+    # RFC 2986: PKCS#10
+    # RFC 5967: PKCS#10
     # RFC 3268:  TLSAES: Advanced Encryption Standard (AES) Ciphersuites for Transport Layer Security (TLS)
     # RFC 5081: TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication
     # RFC 4279:  TLSPSK: Pre-Shared Key Ciphersuites for Transport Layer Security (TLS)
@@ -2003,7 +2009,7 @@ my %text = (
     # RFC 6460: ?
     # RFC 6125: Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)
     # RFC 4210: X509 PKI Certificate Management Protocol (CMP)
-    # RFC 3739: x509 PKI Qualified Certificates Profile
+    # RFC 3739: x509 PKI Qualified Certificates Profile; EU Directive 1999/93/EC
     # RFC 4158: X509 PKI Certification Path Building
     # RFC 5055: Server-Based Certificate Validation Protocol (SCVP)
     # RFC 2560: Online Certificate Status Protocol (OCSP)
@@ -2766,6 +2772,15 @@ sub checkcert($$) {
         }
     }
 
+# ToDo: check: serialNumber: Positive number up to a maximum of 20 octets.
+# ToDo: check: Signature: Must be the same OID as that defined in SignatureAlgorithm below.
+# ToDo: check: Version
+# ToDo: check: validity (aka dates)
+# ToDo: check: Issuer
+#        Only CN=, C=, ST=, O=, OU= and serialNumber= must be supported the rest are optional 
+# ToDo: check: Subject
+#        The subject field can be empty in which case the entity being authenticated is defined in the subjectAltName.
+
 } # checkcert
 
 sub checksni($$) {
@@ -2915,6 +2930,17 @@ sub checkev($$) {
     my $alt     = $data{'altname'}->{val}($host);
     my $txt     = "";
     my $key     = "";
+
+       # following checks work like:
+       #   for each check add descriptive failture text (from %text)
+       #   to $checks{'ev+'}->{val} if check fails
+
+    # required CN=
+    # (but ther'se no rule that CN's value must match the hostname somehow)
+    if ($cn =~ m/^\s*$/) {
+        $checks{'ev+'}->{val} .= _subst($text{'EV-miss'}, "Common Name");
+    }
+
     # required OID
     foreach $oid (qw(
         1.3.6.1.4.1.311.60.2.1.1   1.3.6.1.4.1.311.60.2.1.3
@@ -2932,7 +2958,7 @@ sub checkev($$) {
         }
     }
     # lazy but required OID
-    $oid = '2.5.4.3'; # /CN= or commanName or subjectAltname
+    $oid = '2.5.4.3'; # /CN= or commonName or subjectAltname
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
         $txt = _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
@@ -2943,6 +2969,7 @@ sub checkev($$) {
             $checks{'ev-'}->{val} .= $txt;
             _v2print("EV: " . _subst($text{'EV-miss'}, $cfg{'regex'}->{$oid}) . "; optional\n");
         }
+# ToDo: now check if cn or alt matches hostname
     }
     $oid = '1.3.6.1.4.1.311.60.2.1.2'; # or /ST=
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
@@ -3273,16 +3300,16 @@ sub print_data($$$) {
         return;
     }
     if ($legacy eq 'full') {    # do some pretty printing
-        if ($label =~ m/(^altname)/) { $val =~ s#^ ##;   $val =~ s# #\n\t#g; }
-        if ($label =~ m/(subject)/)  { $val =~ s#/#, #g; $val =~ s#^, ##g;   }
-        if ($label =~ m/(issuer)/)   { $val =~ s#/#, #g; $val =~ s#^, ##g;   }
+        if ($label =~ m/(^altname)/) { $val =~ s#^ ##;     $val =~ s# #\n\t#g; }
+        if ($label =~ m/(subject)/)  { $val =~ s#/#\n\t#g; $val =~ s#^\n\t##m; }
+        if ($label =~ m/(issuer)/)   { $val =~ s#/#\n\t#g; $val =~ s#^\n\t##m; }
         if ($label =~ m/(serial|modulus|sigkey_value)/) {
-                                               $val =~ s#(..)#$1:#g; $val =~ s#:$##; }
+                                       $val =~ s#(..)#$1:#g; $val =~ s#:$##; }
         if ($label =~ m/(pubkey_algorithm|signame)/) {
             $val =~ s#(with)# $1 #ig;
             $val =~ s#(encryption)# $1 #ig;
          }
-        printf("\n%s%s\n\t%s%s\n", $data{$label}->{txt},  $text{'separator'}, $val); # comma!
+        printf("\n%s%s\n\t%s\n", $data{$label}->{txt},  $text{'separator'}, $val); # comma!
     } else {
         printf("%-32s\t%s\n",      $data{$label}->{txt} . $text{'separator'}, $val); # dot!
     }
@@ -3293,7 +3320,7 @@ sub _print_line($$$) {
     my ($legacy, $label, $value) = @_;
     if ($legacy eq 'full')   {
         printf("%s\n", $label . $text{'separator'});
-        printf("\t%s", $value) if (defined $value);
+        printf("\t%s\n", $value) if (defined $value);
         return;
     }
     if ($legacy =~ m/(compact|quick)/) {
@@ -4530,13 +4557,6 @@ foreach $host (@{$cfg{'hosts'}}) {
 # FIXME: don't print data and checks when only +cipher given
     }
     printdata(  $legacy, $host) if ($check == 0); # not for +check
-
-    if (_is_do('ev')) {
-        _y_CMD("+ev");
-        print $data{'subject'}->{txt} . ":";
-        print "        " . $_ foreach (split"/", $data{'subject'}->{val}($host));
-    }
-
     printchecks($legacy, $host) if ($info  == 0); # not for +info
 
     if ($cfg{'out_score'} > 0) { # no output for +info also
@@ -6861,7 +6881,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.28
+@(#) 13.12.29
 
 =head1 AUTHOR
 
