@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.198 14/01/02 12:30:34";
+my  $SID    = "@(#) yeast.pl 1.199 14/01/02 14:27:15";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -318,6 +318,7 @@ my %check_cert = (
     'wildcard'      => {'txt' => "Certificate does not contain wildcards"},
     'rootcert'      => {'txt' => "Certificate is not root CA"},
     'selfsigned'    => {'txt' => "Certificate is not self-signed"},
+    'dv'            => {'txt' => "Certificate Domain Validation (DV)"},
     'ev+'           => {'txt' => "Certificate strict Extended Validation (EV)"},
     'ev-'           => {'txt' => "Certificate lazy Extended Validation (EV)"},
     'ocsp'          => {'txt' => "Certificate has OCSP Responder URL"},
@@ -603,6 +604,7 @@ our %shorttexts = (
     'sgc'           => "SGC supported",
     'cps'           => "CPS supported",
     'crl'           => "CRL supported",
+    'dv'            => "DV supported",
     'ev+'           => "Strict EV supported",
     'ev-'           => "Lazy EV supported",
     'ev-chars'      => "NO invalid characters in extensions",
@@ -912,14 +914,14 @@ our %cfg = (
                         beast beast-default crime export rc4 pfs crl
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
-    'cmd-ev'        => [qw(cn subject altname ev ev- ev+ ev-chars)], # commands for +ev
+    'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
     'cmd-bsi'       => [qw(after dates crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'need_cipher'   => [        # list of commands which need +cipher
                        qw(check beast crime time breach pfs rc4 bsi default cipher)],
     'need_checkssl' => [        # list of commands which need checkssl()
-                       qw(check beast crime time breach pfs rc4 bsi default)],
+                       qw(check beast crime time breach pfs rc4 bsi default ev+ ev-)],
     'data_hex'      => [        # list of data values which are in hex values
                                 # used in conjunction with --format=hex
                        qw(
@@ -1046,6 +1048,7 @@ our %cfg = (
 
         'EV-chars'  => '[a-zA-Z0-9,./:= @?+\'()-]',         # valid characters in EV definitions
         'notEV-chars'=>'[^a-zA-Z0-9,./:= @?+\'()-]',        # not valid characters in EV definitions
+        'EV-empty'  => '^(?:n\/a|(?:in|not )valid)\s*$',    # empty string, or "invalid" or "not valid"
 
         # Regex for matching commands
         'cmd-http'  => '^h?(?:ttps?|sts)_',    # match keys for HTTP
@@ -1116,6 +1119,7 @@ our %cfg = (
         'checkhttp' => 0,
         'checksni'  => 0,
         'checkssl'  => 0,
+        'checkdv'   => 0,
         'checkev'   => 0,
     },
 ); # %cfg
@@ -2765,6 +2769,7 @@ sub checkcert($$) {
             $checks{'ev-chars'}->{val} .= $txt;
             $checks{'ev+'}->{val}      .= $txt;
             $checks{'ev-'}->{val}      .= $txt;
+            $checks{'dv'}->{val}       .= $txt;
              if ($cfg{'verbose'} > 0) {
                  $subject =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
                  _v2print("EV:  wrong characters in $label: $subject" . "\n");
@@ -2880,6 +2885,59 @@ sub check02102($$) {
 
 } # check02102
 
+sub checkdv($$) {
+    #? check if certificate is DV-SSL
+    my ($host, $port) = @_;
+    $cfg{'done'}->{'checkdv'}++;
+    return if ($cfg{'done'}->{'checkdv'} > 1);
+    #
+    # DV certificates must have:
+    #    CN= value in either the subject or subjectAltName
+    #    C=, ST=, L=, OU= or O= should be either blank or contain appropriate text such as "not valid".
+    # ToDo: reference missing
+
+    my $cn      = $data{'cn'}->{val}($host);
+    my $subject = $data{'subject'}->{val}($host);
+    my $altname = $data{'altname'}->{val}($host); # space-separated values
+    my $oid     = '2.5.4.3';                      # /CN= or commonName
+    my $txt     = "";
+
+       # following checks work like:
+       #   for each check add descriptive failture text (from %text)
+       #   to $checks{'dv'}->{val} if check fails
+
+    # required CN=
+    if ($cn =~ m/^\s*$/) {
+        $checks{'dv'}->{val} .= _subst($text{'EV-miss'}, "Common Name");
+        return; # .. as all other checks will fail too now
+    }
+
+    # CN= in subject or subjectAltname
+    if (($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#)
+    and ($altname !~ m#/$cfg{'regex'}->{$oid}=([^\s\n]*)#)) {
+        $checks{'dv'}->{val} .= _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
+        return; # .. as ..
+    }
+    $txt = $1;  # $1 is matched FQDN
+
+# ToDo: %data_oid not yet used
+    $data_oid{$oid}->{val} = $txt if ($txt !~ m/^\s*$/);
+    $data_oid{$oid}->{val} = $cn  if ($cn  !~ m/^\s*$/);
+
+    # there's no rule that CN's value must match the hostname, somehow ..
+    # we check at least if subject or subjectAltname match hostname
+    if ($txt ne $cn) {  # mismatch
+        $checks{'dv'}->{val} .= $text{'EV-subject-CN'};
+    }
+    if ($txt ne $host) {# mismatch
+        if (0 >= grep(/^DNS:$host$/, split(/[\s]/, $altname))) {
+            $checks{'dv'}->{val} .= $text{'EV-subject-host'};
+        }
+    }
+# ToDo: C=, ST=, L=, OU= or O= should match $cfg{'regex'}->{'EV-empty'}
+
+} # checkdv
+
 sub checkev($$) {
     #? check if certificate is EV-SSL
     my ($host, $port) = @_;
@@ -2935,11 +2993,8 @@ sub checkev($$) {
        #   for each check add descriptive failture text (from %text)
        #   to $checks{'ev+'}->{val} if check fails
 
-    # required CN=
-    # (but ther'se no rule that CN's value must match the hostname somehow)
-    if ($cn =~ m/^\s*$/) {
-        $checks{'ev+'}->{val} .= _subst($text{'EV-miss'}, "Common Name");
-    }
+    checkdv($host, $port);
+    $checks{'ev+'}->{val} = $checks{'dv'}->{val}; # wrong for DV then wrong for EV too
 
     # required OID
     foreach $oid (qw(
@@ -2956,20 +3011,6 @@ sub checkev($$) {
             $checks{'ev+'}->{val} .= $txt;
             $checks{'ev-'}->{val} .= $txt;
         }
-    }
-    # lazy but required OID
-    $oid = '2.5.4.3'; # /CN= or commonName or subjectAltname
-    if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
-        $txt = _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
-        $checks{'ev+'}->{val} .= $txt;
-        if (($cn =~ m/^\s*$/) and ($alt =~ m/^\s*$/)) {
-            $data_oid{$oid}->{val} = $alt if ($alt !~ m/^\s*$/);
-            $data_oid{$oid}->{val} = $cn  if ($cn  !~ m/^\s*$/);
-        } else {
-            $checks{'ev-'}->{val} .= $txt;
-            _v2print("EV: " . _subst($text{'EV-miss'}, $cfg{'regex'}->{$oid}) . "; optional\n");
-        }
-# ToDo: now check if cn or alt matches hostname
     }
     $oid = '1.3.6.1.4.1.311.60.2.1.2'; # or /ST=
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
@@ -3011,6 +3052,64 @@ sub checkev($$) {
     # ToDo: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
     # ToDo: Scoring: 100 EV+SGC; 80 EV; 70 EV-; 50 OV; 30 DV
 } # checkev
+
+sub checkroot($$) {
+    #? check if certificate is root CA
+    my ($host, $port) = @_;
+    $cfg{'done'}->{'checkroot'}++;
+    return if ($cfg{'done'}->{'checkroot'} > 1);
+
+# some texts from: http://www.zytrax.com/tech/survival/ssl.html
+# The term Certificate Authority is defined as being an entity which signs
+# certificates in which the following are true:
+#   * the issuer and subject fields are the same,
+#   * the KeyUsage field has keyCertSign set
+#   * and/or the basicConstraints field has the cA attribute set TRUE.
+# Typically, in chained certificates the root CA certificate is the topmost
+# in the chain but RFC 4210 defines a 'root CA' to be any issuer for which
+# the end-entity, for example, the browser has a certificate which was obtained
+# by a trusted out-of-band process. Since final authority for issuing any
+# certificate rest with this CA the terms and conditions of any intermediate
+# certificate may be modified by this entity.
+#
+# Subordinate Authority:
+# may be marked as CAs (the extension BasicContraints will be present and cA will be set True)
+#
+# Intermediate Authority (a.k.a. Intermediate CA):
+# Imprecise term occasionally used to define an entity which creates an
+# intermediate certificate and could thus encompass an RA or a subordinate CA.
+#
+# Cross certificates (a.k.a. Chain or Bridge certificate):
+# A cross-certificate is one in which the subject and the issuer are not the
+# same but in both cases they are CAs (BasicConstraints extension is present and has cA set True).
+#
+# Intermediate certificates (a.k.a. Chain certificates):
+# Imprecise term applied to any certificate which is not signed by a root CA.
+# The term chain in this context is meaningless (but sounds complicated and
+# expensive) and simply indicates that the certificate forms part of a chain.
+#
+# Qualified certificates: Defined in RFC 3739
+# the term Qualified certificates relates to personal certificates (rather than
+# server certificates) and references the European Directive on Electronic Signature (1999/93/EC)
+# see check02102() above
+#
+# Multi-host certificates (aka wildcard certificates)
+#
+# EV Certificates (a.k.a. Extended Certificates): Extended Validation (EV)
+# certificates are distinguished by the presence of the CertificatePolicies
+# extension containg a registered OID in the policyIdentifier field. 
+# see checkev() above
+#
+#
+
+# RFC 3280
+#  4.2.1.10  Basic Constraints
+#    X509v3 Basic Constraints:
+#        cA:FALSE
+#        pathLenConstraint  INTEGER (0..MAX) OPTIONAL }
+# RFC 4158
+
+} # checkroot
 
 sub checkdest($$) {
     #? check anything related to target and connection
@@ -3138,6 +3237,7 @@ sub checkssl($$) {
         # all checks based on certificate can't be done if there was no cert, obviously
         checkcert( $host, $port);   # SNI, wildcards and certificate
         checkdates($host, $port);   # check certificate dates (since, until, exired)
+        checkdv(   $host, $port);   # check for DV
         checkev(   $host, $port);   # check for EV
         check02102($host, $port);   # check for BSI TR-02102-2
         checksni(  $host, $port);   # check for SNI
@@ -3147,6 +3247,7 @@ sub checkssl($$) {
         $cfg{'done'}->{'checkdates'}++;# "
         $cfg{'done'}->{'checksizes'}++;# "
         $cfg{'done'}->{'check02102'}++;# "
+        $cfg{'done'}->{'checkdv'}++;   # "
         $cfg{'done'}->{'checkev'}++;   # "
         foreach $key (sort keys %checks) { # anything related to certs need special setting
             $checks{$key}->{val} = $cfg{'no_cert_txt'} if (_is_member($key, \@{$cfg{'check_cert'}}));
@@ -4538,6 +4639,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     checkhttp( $host, $port); # may be already done in checkssl()
     checksni(  $host, $port); #  "
     checksizes($host, $port); #  "
+    checkdv(   $host, $port); #  "
     checkdest( $host, $port);
 
     usr_pre_print();
@@ -6881,7 +6983,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.29
+@(#) 13.12.30
 
 =head1 AUTHOR
 
