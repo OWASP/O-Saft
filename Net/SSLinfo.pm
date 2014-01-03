@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.59 14/01/01 22:37:09',
+    SID         => '@(#) Net::SSLinfo.pm 1.60 14/01/03 16:55:56',
 };
 
 ######################################################## public documentation #
@@ -279,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.27';
+    $VERSION   = '13.12.28';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -390,9 +390,11 @@ require Exporter;
 
 use Socket;
 use Net::SSLeay;
+BEGIN {
     Net::SSLeay::load_error_strings();
     Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
     Net::SSLeay::randomize();
+}
 $Net::SSLinfo::timeout     = 'timeout'; # timeout executable
 $Net::SSLinfo::openssl     = 'openssl'; # openssl executable
 $Net::SSLinfo::use_openssl = 1; # 1 use installed openssl executable
