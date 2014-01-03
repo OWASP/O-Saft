@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.60 14/01/03 16:55:56',
+    SID         => '@(#) %M% %I% %E% %U%',
 };
 
 ######################################################## public documentation #
@@ -279,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.28';
+    $VERSION   = '13.12.29';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -930,14 +930,18 @@ sub do_ssl_open($$) {
             last;
         }
 
-#ah #ToDo: print "# SNI $Net::SSLinfo::use_SNI";
         if ($Net::SSLinfo::use_SNI == 1) {
             _trace("do_ssl_open: SNI");
-            # use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
-            # use constant TLSEXT_NAMETYPE_host_name    => 0
-            $src = 'Net::SSLeay::ctrl()';
-            Net::SSLeay::ctrl($ssl, 55, 0, $host)         or {$err = $!} and last;
-#ah #ToDo: above sometimes fails but does not return errors, reason yet unknown
+            if (1.45 <= $Net::SSLeay::VERSION) {
+                $src = 'Net::SSLeay::set_tlsext_host_name()';
+                Net::SSLeay::set_tlsext_host_name($ssl, $host) or {$err = $!} and last;
+            } else {
+                # use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
+                # use constant TLSEXT_NAMETYPE_host_name    => 0
+                $src = 'Net::SSLeay::ctrl()';
+                Net::SSLeay::ctrl($ssl, 55, 0, $host)     or {$err = $!} and last;
+                #ToDo: ctrl() sometimes fails but does not return errors, reason yet unknown
+            }
         }
         # following may call _check_peer()
         if (Net::SSLeay::connect($ssl) <= 0) {  # something failed
@@ -960,6 +964,7 @@ sub do_ssl_open($$) {
             # same as above:      Net::SSLeay::CIPHER_get_name(Net::SSLeay::get_current_cipher($ssl));
         #ok $_SSLinfo{'bits'}       = Net::SSLeay::CIPHER_get_bits(Net::SSLeay::get_current_cipher($ssl));
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
+#       $_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # ToDo: returns binary, hence see below
         $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
@@ -1081,6 +1086,7 @@ sub do_ssl_open($$) {
         $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
         $_SSLinfo{'issuer_hash'}        = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
         $_SSLinfo{'version'}            = _openssl_x509($_SSLinfo{'PEM'}, 'version');
+# $version = Net::SSLeay::version($ssl);
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
         $_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
@@ -1218,6 +1224,7 @@ sub do_ssl_open($$) {
         $_SSLinfo{'verify'}         = $d;
         # ToDo: $_SSLinfo{'verify_host'}= $ssl->verify_hostname($host, 'http');  # returns 0 or 1
         # scheme can be: ldap, pop3, imap, acap, nntp http, smtp
+# my $rv = Net::SSLeay::get_verify_result($ssl);
 
         $d =~ s/.*?(self signed.*)/$1/si;
         $_SSLinfo{'selfsigned'}     = $d;
