@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.199 14/01/02 14:27:15";
+my  $SID    = "@(#) yeast.pl 1.200 14/01/03 17:28:19";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -3317,7 +3317,7 @@ sub print_host_key($$) {
     #? print hostname if --showhost given; print key if --tracekey given
     my ($host, $key) = @_;
     printf("%s%s", $_[0], $text{'separator'}) if ($cfg{'showhost'} > 0);
-    printf("#[%-18s%s", join(" ", $key) . ']', $text{'separator'}) if ($cfg{'traceKEY'} > 0);
+    printf("#[%-18s", $key . ']' . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
 }
 
 sub _dump($$) {
@@ -6983,7 +6983,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.30
+@(#) 13.12.30a
 
 =head1 AUTHOR
 
