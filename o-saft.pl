@@ -4436,7 +4436,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
         } else {# eval failed ..
-            print "**WARNING: SSL version '$ssl' not supported by openssl; ignored"; # if ($verbose > 0);
+            print "**WARNING: SSL version '$ssl' not supported by openssl; ignored\n";
         }
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
         warn("**WARNING: unsupported SSL version '$ssl'; ignored");
