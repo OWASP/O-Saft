@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.200 14/01/03 17:28:19";
+my  $SID    = "@(#) yeast.pl 1.201 14/01/06 07:24:17";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -298,7 +298,7 @@ our %checks = (
     #
     # default for 'val' is "" (empty string), default for 'score' is 0
     # 'typ' is any of certificate, connection, destination, https, sizes
-    # both will be set in sub _initchecks(), please see below
+    # both will be set in sub _init_all(), please see below
 
     # the default value means "check = ok/yes", otherwise: "check =failed/no"
 
@@ -439,7 +439,7 @@ my %check_dest = (
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
-# ToDo: are following checks useful?
+    # following for information, checks not useful; see "# check target specials" in checkdest also
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
     #------------------+-----------------------------------------------------
@@ -1107,7 +1107,7 @@ our %cfg = (
         'hosts'     => 0,
         'dbxfile'   => 0,
         'rc-file'   => 0,
-        'initchecks'=> 0,
+        'init_all'  => 0,
          # all following need to be reset for each host
         'checkciphers'  => 0,   # not used, as it's called multiple times
         'checkdefault'  => 0,
@@ -2080,7 +2080,7 @@ our %org = (
     #'text'      => { %text }, no need for 'glossar' here
 ); # %org
 
-#_initchecks();  # call delayed to prevent warning of prototype check with -w
+#_init_all();   # call delayed to prevent warning of prototype check with -w
 
 # internal functions
 # -------------------------------------
@@ -2103,7 +2103,7 @@ sub _trace($) {}
 # if --trace-arg given
 sub _trace_1arr($) {}
 
-sub _initscore()  {
+sub _initchecks_score()  {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
@@ -2120,12 +2120,11 @@ sub _initscore()  {
         $checks{$_}->{score} = 30 if (m/LOW/i);
         $checks{$_}->{score} = 10 if (m/MEDIUM/i);
     }
-} # initscore
+} # _initchecks_score
 
-sub _initchecks()  {
+sub _initchecks_val()  {
     # set all default score values here
-    $cfg{'done'}->{'initchecks'}++;
-    $checks{$_}->{val}   = "" foreach (keys %checks); # but see below!
+    $checks{$_}->{val}   = "" foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
     $checks{'sts_maxage0d'}->{val} =        0;
     $checks{'sts_maxage1d'}->{val} =    86400;  # day
@@ -2136,14 +2135,14 @@ sub _initchecks()  {
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$_}->{val}   =  0 if (m/^(SSLv|TLSv)/i);
     }
-} # initchecks
+} # _initchecks_val
 
 sub _init_all()  {
     # set all default score values here
-    $cfg{'done'}->{'initchecks'}++;
-    _trace("_initchecks()");
-    _initscore();
-    _initchecks();
+    $cfg{'done'}->{'init_all'}++;
+    _trace("_init_all()");
+    _initchecks_score();
+    _initchecks_val();
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
 
@@ -2153,7 +2152,7 @@ sub _resetchecks() {
         next if (!m/^check/);  # only reset check*
         $cfg{'done'}->{$_} = 0;
     }
-    _initchecks();
+    _initchecks_val();
 }
 
 sub _find_cipher_name($) {
@@ -3159,7 +3158,7 @@ sub checkdest($$) {
     $checks{'resumption'}->{val}    = $value if ($value !~ m/^Reused/);
 
     # check target specials
-    foreach $key (qw(krb5 psk_hint psk_identity srp master_key session_id session_ticket)) {
+    foreach $key (qw(krb5 psk_hint psk_identity srp session_ticket)) { master_key session_id: see %check_dest above also
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
         # if supported we have a value
@@ -6983,7 +6982,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.30a
+@(#) 13.12.31
 
 =head1 AUTHOR
 
