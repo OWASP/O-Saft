@@ -739,14 +739,15 @@ my %scores = (
     # keys starting with 'check_' are for total values
     # all other keys are for individual score values
     #------------------+-------------+----------------------------------------
-    'check_dest'    => {'val' => 100, 'txt' => "Target checks"},
     'check_conn'    => {'val' => 100, 'txt' => "SSL connection checks"},
     'check_ciph'    => {'val' => 100, 'txt' => "Ciphers checks"},
     'check_cert'    => {'val' => 100, 'txt' => "Certificate checks"},
-    'check_size'    => {'val' => 100, 'txt' => "Certificate sizes checks"},
+    'check_dest'    => {'val' => 100, 'txt' => "Target checks"},
     'check_http'    => {'val' => 100, 'txt' => "HTTP(S) checks"},
+    'check_size'    => {'val' => 100, 'txt' => "Certificate sizes checks"},
     'checks'        => {'val' => 100, 'txt' => "Total scoring"},
     #------------------+-------------+----------------------------------------
+    # sorting according key name
 ); # %scores
 
 my %score_ssllabs = (
@@ -4674,7 +4675,7 @@ foreach $host (@{$cfg{'hosts'}}) {
             ) / 4 ) + 0.5);
         printheader($text{'out-scoring'}, $text{'desc-score'});
         _trace_1arr('%scores');
-        foreach $key (keys %scores) {
+        foreach $key (sort keys %scores) {
             next if ($key !~ m/^check_/); # print totals only
             print_line($legacy, $host, $key, $scores{$key}->{txt}, $scores{$key}->{val});
         }
