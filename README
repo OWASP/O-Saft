@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 13.12.11  )
+                                                          Version: 14.1.4    )
 	O-Saft  - OWASP SSL audit for testers                               (
                   OWASP SSL advanced forensic tool                           )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -47,6 +47,7 @@
  )  QUICK START
 (       o-saft.pl --help
  )      o-saft.pl +check your.tld
+(       o-saft.pl +info  your.tld
  )      o-saft.pl +quick your.tld
 (       more o-saft.pl
  )
@@ -61,5 +62,6 @@
 (
  )  VERSION
 (       The version of the tarball  o-saft.tgz  represents the version listed
- )      on top herein. All other files may be ahead of this version.
+ )      on top herein. All other files in the repository may be ahead of this
+(       (tarball) version.
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/

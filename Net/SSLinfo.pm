@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.63 14/01/06 20:49:57',
+    SID         => '@(#) Net::SSLinfo.pm 1.64 14/01/06 22:39:50',
 };
 
 ######################################################## public documentation #
@@ -279,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.1.3';
+    $VERSION   = '14.1.4';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1105,7 +1105,12 @@ sub do_ssl_open($$) {
         $_SSLinfo{'sigdump'}            = _openssl_x509($_SSLinfo{'PEM'}, 'sigdump');
        ($_SSLinfo{'sigkey_value'}       =  $_SSLinfo{'sigdump'}) =~ s/.*?\n//ms;
        ($_SSLinfo{'pubkey_algorithm'}   =  $_SSLinfo{'pubkey'})  =~ s/^.*?Algorithm: ([^\r\n]*).*/$1/si;
-       ($_SSLinfo{'pubkey_value'}       =  $_SSLinfo{'pubkey'})  =~ s/^.*?Modulus ([^\r\n]*)//si;
+       ($_SSLinfo{'pubkey_value'}       =  $_SSLinfo{'pubkey'})  =~ s/^.*?Modulus ?([^\r\n]*)//si;
+            # damn Windows: some versions behave like *NIX and return:
+            #                Modulus (2048 bit):
+            # but some versions return:
+            #                Modulus:
+            # which makes the regex dirty: space followed by question mark
         $_SSLinfo{'pubkey_value'}       =~ s/Exponent.*//si;
         $_SSLinfo{'modulus_exponent'}   =  $_SSLinfo{'pubkey'};
         $_SSLinfo{'modulus_exponent'}   =~ s/^.*?Exponent: (.*)$/$1/si;
@@ -1774,6 +1779,7 @@ sub verify_altname($$) {
     foreach my $alt (split(' ', $cname)) {
         my ($type, $name) = split(':', $alt);
 # ToDo: implement IP and URI
+#dbx print "# ($type, $name)";
         push(@{$_SSLinfo{'errors'}}, "verify_altname() $type not supported in SNA") if ($type !~ m/DNS/i);
         my $rex = $name;
         if ($Net::SSLinfo::ignore_case == 1) {

@@ -1,4 +1,130 @@
 
+Version: 14.1.4
+  BUGFIX
+    * bugfix: regex for pubkey_value on windows
+    * bugfix: empty len_public_key and len_sidump on windows corrected
+  UPDATE
+    * documentation improved
+
+Version: 14.1.3
+  BUGFIX
+    * bugfix: avoid perl warning for +cipher
+    * bugfix: avoid perl warning in Net::SSLinfo::do_openssl()
+
+Version: 14.1.2
+  BUGFIX
+    * bugfix: avoid perl warning in Net::SSLinfo::do_openssl()
+
+Version: 14.1.1
+  NEW
+    * option --win-CR implemented
+
+Version: 13.12.31
+  BUGFIX
+    * bugfix: separator in output for --trace-corrected
+    * bugfix: no checks for master_key and session_id to avoid perl warnings
+    * bugfix: initialization of check values corrected
+  UPDATE
+    * Net::SSLeay initialization inside BEGIN{}
+    * use Net::SSLeay::set_tlsext_host_name() for SNI
+
+Version: 13.12.30
+  BUGFIX
+    * check for +ev improved
+  NEW
+    * +dv command and checks added
+
+Version: 13.12.29
+  BUGFIX
+    * bugfix: missing \n added when printing checks with --legacy=full
+  UPDATE
+    * check for CN= in checkev()
+    * +ev improved
+    * special handling for +ev removed (use --legacy=full now)
+
+Version: 13.12.28
+  NEW
+    * +chain_verify command added
+    * documentation according +verify, +selsigned added
+
+Version: 13.12.27
+  NEW
+    * options --ca-file  --ca-path --ca-depth implemented
+
+Version: 13.12.26
+  BUGFIX
+    * print hostname correctly with --showhost
+    * reset checks when multiple hosts are given
+    * --tracekey and --showhost was missing for +check
+
+Version: 13.12.25
+  NEW
+    * --usr option for o-saft-usr.pm implemented
+    * new file o-saft-usr.pm
+
+Version: 13.12.24
+  NEW
+    * --tab option added
+    * contrib file
+
+Version: 13.12.21
+  UPDATE
+    * --help=cfg_{check,data,text} and --cfg_{check,data,text}= implemented the same way
+
+Version: 13.12.20
+  UPDATE
+    * don't read external files in CGI mode
+
+Version: 13.12.19
+  UPDATE
+    * formal changes
+    * --yeast implemented to call _yeast_data()
+    * _yeast_data() improved; documentation improved in o-saft-dbx.pl
+    * don't read external files in CGI mode
+
+Version: 13.12.18
+  UPDATE
+    * --cfg_* configuration options implemented
+    * CUSTOMIZATION description added
+
+Version: 13.12.17
+  UPDATE
+    * samples to redefine texts in Deutsch added in .o-saft.pl
+    * --cfg_text* implemented
+    * print internal data with --help=* simplified
+    * --set-score renamed to --cfg_score
+Version: 13.12.16
+Version: 13.12.15
+  BUGFIX
+    * (issue 16) define $_timeout variable when missing (Mac OS X problem)
+    * reading score values from files corrected; allow + in score settings
+  UPDATE
+    * get subject_hash and issuer_hash from Net::SSLeay
+    * commands issuer and issuer_hash added to --cfg_cmd-info in .o-saft.pl
+  NEW
+    * +chain to retrive Certificate Chain implemented
+    * +protocols to retrive supported protocols by target (requres openssl
+      with -nextprotoneg support)
+
+Version: 13.12.14
+  NEW
+    * Serial Number <= 20 octets (RFC5280, 4.1.2.2. Serial Number)
+    * new commands len_sernumber and sernumber added to --cfg_cmd-check in .o-saft.pl
+
+Version: 13.12.13
+  UPDATE
+    * documentation improved (better English)
+
+Version: 13.12.12
+  BUGFIX
+    * error handling for DNS corrected (if something failed)
+    * no scoring for +info (avoids some "unitialised" warnings too)
+    * avoid some warnings with --cmd-* in .o-saft.pl
+    * reverse hostname computation corrected
+    * --cfg_cmd-check withoud valid command in .o-saft.pl
+  NEW
+    * --cfg_cmd-quick added in .o-saft.pl
+
 Version: 13.12.11
   BUGFIX
     * STS check corrected
