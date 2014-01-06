@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.62 14/01/06 08:01:51',
+    SID         => '@(#) Net::SSLinfo.pm 1.63 14/01/06 20:49:57',
 };
 
 ######################################################## public documentation #
@@ -279,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.30';
+    $VERSION   = '14.1.3';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -967,6 +967,11 @@ sub do_ssl_open($$) {
         $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
+
+# ToDo: print Net::SSL::ExpireDate($sslsocket);
+# see: http://search.cpan.org/~mikem/Net-SSLeay-1.48/lib/Net/SSLeay.pod
+# see: http://search.cpan.org/~sullr/IO-Socket-SSL-1.76/SSL.pm
+
         $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
         $_SSLinfo{'issuer'}     = _ssleay_get('issuer',  $x509);
         $_SSLinfo{'before'}     = _ssleay_get('before',  $x509);
@@ -1305,7 +1310,7 @@ sub do_openssl($$$) {
     #? call external openssl executable to retrive more data
     my $mode = shift;   # must be openssl command
     my $host = shift;
-    my $port = shift;
+    my $port = shift || "";  # may be empty for some calls
     my $pipe = shift || "";  # piped data is optional
     my $data = "";
     _trace("do_openssl($mode,$host,$port...).");
