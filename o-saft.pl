@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.202 14/01/06 10:23:36";
+my  $SID    = "@(#) yeast.pl 1.203 14/01/06 10:56:57";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -4654,13 +4654,11 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     # for debugging only
     if (_is_do('s_client')) { _y_CMD("+s_client"); print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}"; }
-
     _y_CMD("do=".join(" ",@{$cfg{'do'}}));
 
+    goto CLOSE_SSL if (_is_do('cipher') > 0);
+
     # print all required data and checks
-    if (_is_do('cipher') <= 0) {
-# FIXME: don't print data and checks when only +cipher given
-    }
     printdata(  $legacy, $host) if ($check == 0); # not for +check
     printchecks($legacy, $host) if ($info  == 0); # not for +info
 
@@ -6990,7 +6988,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.1.1
+@(#) 14.1.2
 
 =head1 AUTHOR
 
