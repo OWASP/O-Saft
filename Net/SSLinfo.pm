@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) %M% %I% %E% %U%',
+    SID         => '@(#) Net::SSLinfo.pm 1.62 14/01/06 08:01:51',
 };
 
 ######################################################## public documentation #
@@ -279,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '13.12.29';
+    $VERSION   = '13.12.30';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -856,9 +856,9 @@ sub do_ssl_open($$) {
         # connection open, lets do SSL
         my $ctx;
         ($ctx = Net::SSLeay::CTX_new()) or {$src = 'Net::SSLeay::CTX_new()'} and last;
-            # ToDo: not sure if CTX_new() can fail
+            # CTX_new() returns an object, errors are on error stack
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer); # in client mode VERIFY_NONE
-             # ToDo: setting verify options not yet tested
+            # ToDo: setting verify options not yet tested
 # use constant SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
 # use constant SSL_VERIFY_PEER => Net::SSLeay::VERIFY_PEER(); # 1
 # use constant SSL_VERIFY_FAIL_IF_NO_PEER_CERT => Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT(); # 2
@@ -917,8 +917,7 @@ sub do_ssl_open($$) {
         #         or return { error => "SSL context option set failed: $!" };
 
         $src = 'Net::SSLeay::CTX_set_options()';
-                Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
-            # ToDo: not sure if CTX_set_options() can fail
+                Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
         $src = 'Net::SSLeay::new()';
         ($ssl=  Net::SSLeay::new($ctx))                   or {$err = $!} and last;
             # ToDo: not sure if new() can fail
