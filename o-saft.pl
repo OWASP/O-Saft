@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.201 14/01/06 07:24:17";
+my  $SID    = "@(#) yeast.pl 1.202 14/01/06 10:23:36";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -47,6 +47,9 @@ our $mepath = $0; $mepath =~ s#/[^/]*$##;
     $mepath = "./" if ($mepath eq $me);
 our $mename = "yeast  ";
     $mename = "O-Saft " if ($me !~ /yeast/);
+
+binmode(STDOUT, ":unix");
+binmode(STDERR, ":unix");
 
 use IO::Socket::SSL; #  qw(debug2);
 use IO::Socket::INET;
@@ -3158,7 +3161,7 @@ sub checkdest($$) {
     $checks{'resumption'}->{val}    = $value if ($value !~ m/^Reused/);
 
     # check target specials
-    foreach $key (qw(krb5 psk_hint psk_identity srp session_ticket)) { master_key session_id: see %check_dest above also
+    foreach $key (qw(krb5 psk_hint psk_identity srp session_ticket)) { # master_key session_id: see %check_dest above also
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
         # if supported we have a value
@@ -4195,6 +4198,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ca[_-]?(?:cert(?:ificate)?|file)=(.*)/i){ $typ = 'CAFILE';  $arg = $1; } # no next
     if ($arg =~ /^--ca[_-]?(?:directory|path)$/i)           { $typ = 'CAPATH';       next; } # curl, openssl, wget, ...
     if ($arg =~ /^--ca[_-]?(?:directory|path)=(.*)/i)       { $typ = 'CAPATH';  $arg = $1; } # no next
+    if ($arg =~ /^--win[_-]?CR/i)       { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); next; }
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)/){ next; } #  "
     if ($arg =~ /^-(connect)/)          { next; } #  "
@@ -5435,6 +5439,10 @@ Options used for  I<+check>  command:
   However, it applies partially if used twice for  +info.
 
 =end comment
+
+=head3 --win-CR
+
+  Print windows-Style with CR LF as end of line. Default is NL only.
 
 =head2 Options for compatibility with other programs
 
@@ -6982,7 +6990,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 13.12.31
+@(#) 14.1.1
 
 =head1 AUTHOR
 
