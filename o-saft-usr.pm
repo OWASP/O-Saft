@@ -32,6 +32,10 @@ configuration files specified witj  I<--cfg_*=>  option.
 
 All command line arguments are read. Right before executing myself.
 
+=item usr_pre_cipher( )
+
+Before getting list of ciphers.
+
 =item usr_pre_main( )
 
 Before executing commands.
@@ -40,9 +44,9 @@ Before executing commands.
 
 Before starting loop over all given hosts.
 
-=item usr_pre_cipher( )
+=item usr_pre_info( )
 
-DNS stuff and SNI connection checked. Before getting list of ciphers.
+DNS stuff and SNI connection checked. Before doing commands per host.
 
 =item usr_pre_cmds( )
 
@@ -95,7 +99,7 @@ For example:
 
 =cut
 
-my  $SID    = "@(#) o-saft-usr.pm 1.1 13/12/29 14:20:45";
+my  $SID    = "@(#) o-saft-usr.pm 1.2 14/01/12 22:19:46";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -118,6 +122,10 @@ sub usr_pre_exec()  {
     _dbx("usr_pre_exec ...");
 };
 
+sub usr_pre_cipher(){
+    _dbx("usr_pre_cipher ...");
+};
+
 sub usr_pre_main()  {
     _dbx("usr_pre_main ...");
 };
@@ -126,8 +134,8 @@ sub usr_pre_host()  {
     _dbx("usr_pre_host ...");
 };
 
-sub usr_pre_cipher() {
-    _dbx("usr_pre_cipher ...");
+sub usr_pre_info()  {
+    _dbx("usr_pre_info ...");
 };
 
 sub usr_pre_cmds()  {
