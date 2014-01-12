@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.205 14/01/06 22:44:42";
+my  $SID    = "@(#) yeast.pl 1.207 14/01/12 23:06:06";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -102,9 +102,10 @@ if (-e $arg) {
     sub usr_pre_file()  {}; # dummy stub, see o-saft-usr.pm
     sub usr_pre_args()  {}; #  "
     sub usr_pre_exec()  {}; #  "
+    sub usr_pre_cipher(){}; #  "
     sub usr_pre_main()  {}; #  "
     sub usr_pre_host()  {}; #  "
-    sub usr_pre_cipher(){}; #  "
+    sub usr_pre_info()  {}; #  "
     sub usr_pre_cmds()  {}; #  "
     sub usr_pre_data()  {}; #  "
     sub usr_pre_print() {}; #  "
@@ -870,7 +871,7 @@ our %cfg = (
     'DTLS10'        => 0,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => "yeast", # which ciphers to be used
-    'cipherlist'    => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
+    'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
                                 # ToDo: must be same as in Net::SSLinfo or used from there
     'do'            => [],      # the commands to be performed, any of commands
     'commands'      => [],      # contains all commands, constructed below
@@ -4258,18 +4259,18 @@ while ($#argv >= 0) {
     #  +---------+----------+------------------------------+--------------------
     #   argument to process   what to do                    expect next argument
     #  +---------+----------+------------------------------+--------------------
-    if ($typ eq 'OPENSSL')  { $cmd{'openssl'} = $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'EXE')      { $cmd{'path'}    = $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'LIB')      { $cmd{'libs'}    = $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'ENV')      { $cmd{'envlibvar'}  = $arg;    $typ = 'HOST'; next; }
-    if ($typ eq 'SEP')      { $text{'separator'} = $arg;    $typ = 'HOST'; next; }
-    if ($typ eq 'TIMEOUT')  { $cfg{'timeout'} = $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'CIPHER')   { $cfg{'cipher'}  = $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'CTXT')     { $cfg{'no_cert_txt'} = $arg;   $typ = 'HOST'; next; }
-    if ($typ eq 'CAFILE')   { $cfg{'ca_file'} = $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'CAPATH')   { $cfg{'ca_path'} = $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'CADEPTH')  { $cfg{'ca_depth'}= $arg;       $typ = 'HOST'; next; }
-    if ($typ eq 'PORT')     { $cfg{'port'}    = $arg;       $typ = 'HOST'; next; }
+    if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'EXE')      { $cmd{'path'}      = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'LIB')      { $cmd{'libs'}      = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'SEP')      { $text{'separator'}= $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'TIMEOUT')  { $cfg{'timeout'}   = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'CIPHER')   { $cfg{'cipher'}    = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'CTXT')     { $cfg{'no_cert_txt'}= $arg;    $typ = 'HOST'; next; }
+    if ($typ eq 'CAFILE')   { $cfg{'ca_file'}   = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'CAPATH')   { $cfg{'ca_path'}   = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'CADEPTH')  { $cfg{'ca_depth'}  = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'HOST')     {
         #  ------+----------+------------------------------+--------------------
         # allow URL   http://f.q.d.n:42/aa*foo=bar:23/
@@ -4361,29 +4362,6 @@ if ($cfg{'exec'} == 0) {
     }
 }
 
-# check given cipher names
-# -------------------------------------
-if ($cfg{'cipher'} ne "yeast") {
-    # "yeast" is the list of default ciphers
-    # anything else needs to be checked if a valid cipher name
-    _y_CMD("cipher-list");
-    my ($c, $new);
-    my $new_list = "";
-    foreach $c (split(" ", $cfg{'cipher'})) {
-        $new = _find_cipher_name($c);
-        if ($new =~ m/^\s*$/) {
-            if ($c !~ m/[A-Z0-9:+!-]+/) {
-                # does also not match any special key accepted by openssl
-# ToDo:
-                warn("**WARNING: unknown cipher name '$c'; ignored");
-                next;
-            }
-        }
-        $new_list = $new . " ";
-    }
-    $cfg{'cipher'} = $new_list;
-}
-
 # set additional defaults if missing
 # -------------------------------------
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
@@ -4435,6 +4413,57 @@ if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {
     _yeast_init();
 }
 
+usr_pre_cipher();
+
+# get list of ciphers
+my $ciphers = "";
+if (_need_cipher() > 0) {
+    _y_CMD("  get cipher list ..");
+    my $pattern = $cfg{'cipherpattern'};# default pattern
+       $pattern = $cfg{'cipher'} if ($cfg{'cipher'} ne 'yeast');# default setting: use all supported
+    _trace("cipher pattern= $pattern");
+    if ($cmd{'extciphers'} == 1) {
+        $ciphers = Net::SSLinfo::cipher_local($pattern);
+    } else {
+        $ciphers = Net::SSLinfo::cipher_list( $pattern);
+    }
+    if ($ciphers =~ /^\s*$/) {  # empty list, try openssl and local list
+        print "**WARNING: given pattern '$pattern' did not return cipher list";
+        _y_CMD("  get cipher list using openssl ..");
+        $ciphers = Net::SSLinfo::cipher_local($pattern);
+        if ($ciphers =~ /^\s*$/) {  # empty list, try openssl and local list
+            #if ($pattern =~ m/(NULL|COMP|DEF|HIG|MED|LOW|PORT|:|@|!|\+)/) {
+            #    _trace(" cipher match: $pattern");
+            #} else {
+            #    _trace(" cipher privat: $pattern");
+_dbx "\n########### fix this place (cipher<>yeast) ########\n";
+# ToDo: #10jan14: reimplement this check when %ciphers has a new structure
+            #10jan14    my ($c, $new);
+            #10jan14    my $new_list = "";
+            #10jan14    foreach $c (split(" ", $pattern)) {
+            #10jan14        $new = _find_cipher_name($c);
+            #10jan14        if ($new =~ m/^\s*$/) {
+            #10jan14            if ($c !~ m/[A-Z0-9:+!-]+/) {
+            #10jan14                # does also not match any special key accepted by openssl
+            #10jan14                warn("**WARNING: unknown cipher name '$c'; ignored");
+            #10jan14                next;
+            #10jan14            }
+            #10jan14        }
+            #10jan14        $new_list = $new . " ";
+            #10jan14    }
+            #10jan14    $ciphers = $new_list;
+            #}
+            #_yeast(" ciphers: $ciphers") if ($cfg{'trace'} > 0);
+        }
+    }
+    if ($ciphers =~ /^\s*$/) {
+        print "Errors: " . Net::SSLinfo::errors();
+        die("**ERROR: no ciphers found; may happen with openssl pre 1.0.0 according given pattern");
+    }
+    $ciphers =~ s/:/ /g;        # internal format are words separated by spaces
+}
+    _v_print("cipher list: $ciphers");
+
 usr_pre_main();
 
 # main: do the work
@@ -4445,16 +4474,6 @@ printopenssl(),    exit 0   if (_is_do('libversion'));
 printcipherlist(), exit 0   if (_is_do('list'));
 
 $legacy = $cfg{'legacy'};
-if (_is_do('ciphers')) {
-    _y_CMD("+cipher");
-    _v_print("cipher pattern: $cfg{'cipherlist'}");
-    # openssl's 'ciphers' command does not need -ssl2 option or alike,
-    # as our $cfg{'cipherlist'} should print anything
-    if ($cfg{'verbose'} >  0) {
-        print_data($legacy, 'ciphers_openssl', Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", ""));
-        # list separated by : doesn't matter, as it's show only
-    }
-}
 
 # now commands which do make a connection
 usr_pre_host();
@@ -4513,7 +4532,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         }
     }
 
-    usr_pre_host();
+    usr_pre_info();
 
     # check if SNI supported
         # to do this, we need a clean SSL connection with SNI disabled
@@ -4528,40 +4547,17 @@ foreach $host (@{$cfg{'hosts'}}) {
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     }
 
-    usr_pre_cipher();
-
     # Check if there is something listening on $host:$port
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
-        # as side effect we get the local cipher list
-    my $ciphers = Net::SSLinfo::ciphers($host, $port);
-       $ciphers = Net::SSLinfo::do_openssl("ciphers $cfg{'cipherlist'}", "", "") if ($cmd{'extciphers'} == 1);
-       $ciphers =~ s/:/ /g;     # internal format are words separated by spaces
-       #  above should be the same as: Net::SSLinfo::cipher_local()
-    my $err     = Net::SSLinfo::errors( $host, $port);
-    if ($err !~ /^\s*$/) {
-        _v_print($err);
-        warn("**WARNING: Can't make a connection to $host:$port; target ignored");
-        goto CLOSE_SSL;
-    }
-
-    if ($cfg{'cipher'} ne 'yeast') {  # default setting: use all supported
-        _y_CMD("  get cipher list ..");
-        if ($cfg{'cipher'} =~ m/(NULL|COMP|DEF|HIG|MED|LOW|PORT|:|@|!|\+)/) {
-            _trace(" cipher match: $cfg{'cipher'}");
-            Net::SSLinfo::do_ssl_close($host, $port); # close from previous call
-            # ToDo: Net::SSLinfo::set_cipher_list('SSLv3', $cfg{'cipher'});
-            #       $ciphers = Net::SSLinfo::ciphers($host, $port);
-            # ToDo: 'cause Net::SSLeay::set_cipher_list() returns Segmentation fault
-            # we need to use Net::SSLinfo::do_open_ssl(), see Net::SSLinfo.pm
-            Net::SSLinfo::do_ssl_open( $host, $port, $cfg{'cipher'});
-            $ciphers = Net::SSLinfo::cipher_local($host, $port);
-            Net::SSLinfo::do_ssl_close($host, $port);
-        } else {
-            _trace(" cipher privat: $cfg{'cipher'}");
-            $ciphers = $cfg{'cipher'};
+    if (!defined Net::SSLinfo::do_ssl_open($host, $port, $ciphers)) {
+#ToDo: list of ciphers not yet used, probably for 'honor cipher order'
+        my $err     = Net::SSLinfo::errors( $host, $port);
+        if ($err !~ /^\s*$/) {
+            _v_print($err);
+            warn("**WARNING: Can't make a connection to $host:$port; target ignored");
+            goto CLOSE_SSL;
         }
-        _yeast(" ciphers: $ciphers") if ($cfg{'trace'} > 0);
     }
 
     usr_pre_cmds();
@@ -5356,7 +5352,7 @@ Options used for  I<+check>  command:
 
 =head3 --header
 
-  Print formatting header.  Default for  "+check",  "+info",  "+quick".
+  Print formatting header.  Default for  "+check", "+info", "+quick".
   and  "+cipher"  only.
 
 =head3 --no-header
@@ -6987,7 +6983,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.1.4
+@(#) 14.01.11
 
 =head1 AUTHOR
 
@@ -7057,4 +7053,4 @@ TODO
 
 =end ToDo
 
-=cut
+not necessary
