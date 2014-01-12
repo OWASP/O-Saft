@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.64 14/01/06 22:39:50',
+    SID         => '@(#) Net::SSLinfo.pm 1.65 14/01/12 22:54:51',
 };
 
 ######################################################## public documentation #
@@ -279,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.1.4';
+    $VERSION   = '14.1.11';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -322,9 +322,9 @@ require Exporter;
         issuer
         subject
         default
-        ciphers
         cipher_list
         cipher_local
+        ciphers
         cn
         commonname
         altname
@@ -586,12 +586,9 @@ sub _SSLinfo_get($$$) {
     my ($key, $host, $port) = @_;
     _settrace();
     _trace("_SSLinfo_get('$key'," . ($host||'') . "," . ($port||'') . ")");
-    if ($key eq 'ciphers_openssl') { # always there, no need to connect target
-        _setcmd();
-        _trace("_SSLinfo_get: openssl ciphers $_SSLinfo{'cipherlist'}") if ($trace > 1);
-        $_SSLinfo{'ciphers_openssl'} = do_openssl("ciphers $_SSLinfo{'cipherlist'}", '', '');
-        chomp $_SSLinfo{'ciphers_openssl'};
-        return $_SSLinfo{'ciphers_openssl'};
+    if ($key eq 'ciphers_openssl') {
+        _trace("_SSLinfo_get($key): WARNING: function obsolete, please use cipher_local()");
+        return "";
     }
     if ($key eq 'errors') { # always there, no need to connect target
         #src = Net::SSLeay::ERR_peek_error;      # just returns number
@@ -827,7 +824,7 @@ sub do_ssl_open($$) {
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
 
     if ($cipher =~ m/^\s*$/) {
-        $cipher = $_SSLinfo{'cipherlist'} if ($cipher =~ /^\s*$/);
+        $cipher = $_SSLinfo{'cipherlist'};
     } else {
         $_SSLinfo{'cipherlist'} = $cipher;
     }
@@ -866,8 +863,6 @@ sub do_ssl_open($$) {
             # SSL_verify_mode => # 0x00, 0x01 (verify peer), 0x02 (fails if no cert), 0x04 (verify client)
 ######
             # SSL_version     => 'SSLv2', 'SSLv3', or 'TLSv1'
-            # SSL_cipher_list => ALL:NULL:eNULL:aNULL:LOW  COMPLEMENTOFALL
-#           # SSL_cipher_list => $_SSLinfo{'cipherlist'},
             # SSL_check_crl   => true (verify CRL in local SSL_ca_path)
             # SSL_honor_cipher_order  => true (cipher order provided by client)
 
@@ -956,6 +951,7 @@ sub do_ssl_open($$) {
         $_SSLinfo{'ctx'}        = $ctx;
         $_SSLinfo{'ssl'}        = $ssl;
         $_SSLinfo{'x509'}       = $x509;
+        # store actually used ciphers for this connection
         my $i   = 0;
         my $c   = '';
         push(@{$_SSLinfo{'ciphers'}}, $c) while ($c = Net::SSLeay::get_cipher_list($ssl, $i++));
@@ -1351,6 +1347,12 @@ sub do_openssl($$$) {
             $data = _openssl_MS($mode, $host, $port, '');
         }
     }
+    if ($mode =~ m/^-?(ciphers)/) { # check for errors in getting cipher list
+        if ($data =~ m/^\s*(?:Error|openssl)(?: |:)/i) {
+            push(@{$_SSLinfo{'errors'}}, "do_openssl($mode) failed: $data");
+            $data =  "";
+        }
+    }
     chomp $data;
     $data =~ s/\s*$//;  # be sure ...
     return $data;
@@ -1417,17 +1419,64 @@ Get subject of certificate.
 
 Get default cipher offered by server. Returns ciphers string.
 
-=head2 ciphers( ), cipher_list( )
+=head2 cipher_list($pattern)
 
 Get cipher list offered by local SSL implementation. Returns space-separated list of ciphers.
+Returns array if used in array context, a single string otherwise.
 
 Requires successful connection to target.
 
-=head2 cipher_local( )
+=head2 ciphers($pattern)
+
+Returns List of ciphers provided for current connection to target.
+
+=head2 cipher_local($pattern)
 
 Get cipher list offered by local openssl implementation. Returns colon-separated list of ciphers.
 
 Does not require connection to any target.
+
+=cut
+
+sub cipher_list {
+    my $pattern = shift || $_SSLinfo{'cipherlist'}; # use default if unset
+    my ($ctx, $ssl, $cipher);
+    my $priority = 0;
+    my @list;
+    _trace("cipher_list($pattern)");
+    TRY: { # defensive programming with simple error checks
+        # just getting local ciphers does not need sophisticated error handling
+        ($ctx = Net::SSLeay::CTX_new()) or last;
+        ($ssl=  Net::SSLeay::new($ctx)) or last;
+        Net::SSLeay::set_cipher_list($ssl, $pattern) or last;
+            # second parameter must not be empty; default see above
+        push(@list, $cipher) while ($cipher = Net::SSLeay::get_cipher_list($ssl, $priority++));
+    } # TRY
+    Net::SSLeay::free($ssl)     if (defined $ssl);
+    Net::SSLeay::CTX_free($ctx) if (defined $ctx);
+    return (wantarray) ? @list : join(' ', @list);
+} # cipher_list
+
+sub cipher_local {
+    my $pattern = shift || $_SSLinfo{'cipherlist'}; # use default if unset
+    my $list;
+    _trace("cipher_local($pattern)");
+    _setcmd();
+    _trace("_SSLinfo_get: openssl ciphers $pattern") if ($trace > 1);
+    $list = do_openssl("ciphers $pattern", '', '');
+    chomp  $list;
+    return $list;
+} # cipher_local
+
+sub ciphers {
+    return cipher_list( @_) if ($Net::SSLinfo::use_openssl == 0);
+    return cipher_local(@_);
+} # ciphers
+
+=pod
+
+All following functions have  $host and $port  parameter and return
+information according the the cennection, certificate for this connection.
 
 =head2 cn( ), commonname( )
 
@@ -1673,9 +1722,6 @@ sub dates           { return _SSLinfo_get('dates',            $_[0], $_[1]); }
 sub issuer          { return _SSLinfo_get('issuer',           $_[0], $_[1]); }
 sub subject         { return _SSLinfo_get('subject',          $_[0], $_[1]); }
 sub default         { return _SSLinfo_get('default',          $_[0], $_[1]); }
-sub ciphers         { return _SSLinfo_get('ciphers',          $_[0], $_[1]); }
-sub cipher_list     { return _SSLinfo_get('ciphers',          $_[0], $_[1]); } # alias for ciphers
-sub cipher_local    { return _SSLinfo_get('ciphers_openssl',  $_[0], $_[1]); }
 sub cn              { return _SSLinfo_get('cn',               $_[0], $_[1]); }
 sub commonname      { return _SSLinfo_get('cn',               $_[0], $_[1]); } # alias for cn
 sub altname         { return _SSLinfo_get('altname',          $_[0], $_[1]); }
