@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.207 14/01/12 23:06:06";
+my  $SID    = "@(#) yeast.pl 1.208 14/01/17 00:23:30";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -4609,7 +4609,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         printruler() if ($quick == 0);
     }
 
-    goto CLOSE_SSL if (_is_do('cipher') > 0);
+    goto CLOSE_SSL if ((_is_do('cipher') > 0) and ($quick == 0));
 
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ..");
@@ -6983,7 +6983,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.11
+@(#) 14.01.14
 
 =head1 AUTHOR
 
