@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.65 14/01/12 22:54:51',
+    SID         => '@(#) Net::SSLinfo.pm 1.66 14/01/18 02:49:32',
 };
 
 ######################################################## public documentation #
@@ -279,7 +279,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.1.11';
+    $VERSION   = '14.01.16';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1008,7 +1008,7 @@ sub do_ssl_open($$) {
         if ($Net::SSLinfo::use_http > 0) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x';
-            my $response = '';
+            my $response = "";
             my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
             $src = 'Net::SSLeay::write()';
 # $t1 = time();
@@ -1029,14 +1029,31 @@ sub do_ssl_open($$) {
             _trace("\n$response \n# do_ssl_open HTTPS }");
             _trace("do_ssl_open HTTP {");
             my %headers;
+            $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
             );
 # $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
-            # ToDo: not tested if following grep() catches multiple occourances
-            $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0] || ""};
-            $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0] || ""};
-            $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
+            if ($_SSLinfo{'http_status'} =~ m:^HTTP/... ([1234][0-9][0-9]|500) :) {
+                # ToDo: not tested if following grep() catches multiple occourances
+                $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0] || ""};
+                $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0] || ""};
+                $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
+            } else { # any status code > 500
+                #no print "**WARNING: http:// connection refused; consider using --no-http"; # no print here!
+                push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: " . $_SSLinfo{'http_status'});
+                if ($_SSLinfo{'http_status'} =~ m:^HTTP/... (50[12345]) :) {
+                    # If we get status 50x, there is most likely a (local)
+                    # proxy which is not able to connect to the target.
+                    # This could either be 'cause the target refuses the
+                    # connection (status 503 and 504) or 'cause the proxy
+                    # itself has a problem.
+                    # HTTP headers and response may contain more hints.
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: check HTTP gateway");
+                #} else { Net::SSLeay::get_http() most likely returns status 900
+                }
+                $response = ""; # avoid uninitialized value later
+            }
             _trace("\n$response \n# do_ssl_open HTTP }");
         }
         if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
