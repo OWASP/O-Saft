@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.208 14/01/17 00:23:30";
+my  $SID    = "@(#) yeast.pl 1.209 14/01/18 02:42:52";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -4033,6 +4033,8 @@ sub printtodo() {
     }
 } # printtodo
 
+# end sub
+
 usr_pre_args();
 
 # scan options and arguments
@@ -4334,6 +4336,9 @@ _vprintme();
     $Net::SSLinfo::ca_file     = $cfg{'ca_file'};
     $Net::SSLinfo::ca_path     = $cfg{'ca_path'};
     $Net::SSLinfo::ca_depth    = $cfg{'ca_depth'};
+}
+if ('cipher' eq join("", @{$cfg{'do'}})) {
+    $Net::SSLinfo::use_http    = 0; # if only +cipher given don't use http 'cause it may cause erros
 }
 
 usr_pre_exec();
@@ -6225,6 +6230,17 @@ very slow connection. Reason is a conncetion timeout.
 Try to use  I<--timout=SEC>  option.
 To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 
+=head2 Use of uninitialized value $headers in split ... do_httpx2.al)
+
+The warning message (like follows or similar):
+
+Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm
+(autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.
+
+occours if the target refused a connection on port 80. 
+This is considered a bug in L<Net::SSLeay>.
+Workaround to get rid of this message: use  I<--no-http>  option.
+
 =head2 Performance Problems
 
 There are various reasons when the program responds slow, or seems to
@@ -6983,7 +6999,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.14
+@(#) 14.01.16
 
 =head1 AUTHOR
 
@@ -6992,9 +7008,6 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 =begin ToDo # no POD syntax here!
 
 TODO
-
-  * bugs
-    ** --cipher=CIPHER  is buggy if no valid cipher given
 
   * missing checks
     ** SSL_honor_cipher_order => 1
@@ -7006,7 +7019,7 @@ TODO
   * verify CA chain:
     ** Net::SSLinfo.pm implement verify*
     ** implement +check_chain (see Net::SSLinfo.pm implement verify* also)
-    ** implement +ca = +verify +chain +rootcert +expired
+    ** implement +ca = +verify +chain +rootcert +expired +fingerprint
 
   * scoring
     ** implement score for PFS; lower score if not all ciphers support PFS
@@ -7021,17 +7034,12 @@ TODO
     ** Net::SSLinfo.pm Net::SSLeay::X509_get_serialNumber() returns strange result
     ** Net::SSLinfo.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
        return error message
-    ** Net::SSLinfo.pm Net::SSLeay::set_cipher_list() Segmentation fault
-       (with Net::SSLeay 1.49 and newer)
     ** Net::SSLeay::CTX_clear_options()
        Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
        SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
        see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
     ** use Net::SSLeay 1.42 as fallback, because 1.49 causes problems at
        some sites (connect() fails).
-
-  * Net::SSLinfo
-    ** Net::SSLinfo::cipher_local()  probably broken
 
   * Windows
     ** Unicode:
