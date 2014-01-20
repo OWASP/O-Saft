@@ -48,6 +48,10 @@ Before starting loop over all given hosts.
 
 DNS stuff and SNI connection checked. Before doing commands per host.
 
+=item usr_pre_open( )
+
+Before opening connection.
+
 =item usr_pre_cmds( )
 
 Before listing or checking anything.  SSL connection  is open and all
@@ -136,6 +140,16 @@ sub usr_pre_host()  {
 
 sub usr_pre_info()  {
     _dbx("usr_pre_info ...");
+};
+
+sub usr_pre_open()  {
+    _dbx("usr_pre_open ...");
+    ###
+    ### sample code for using your own socket
+    ###
+    #use IO::Socket;
+    #$Net::SSLinfo::socket = IO::Socket::INET->new(PeerHost=>'localhost', PeerPort=>443, Proto=>'tcp') 
+    #or die "**ERROR usr_pre_open socket(): $!\n";
 };
 
 sub usr_pre_cmds()  {
