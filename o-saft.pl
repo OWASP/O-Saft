@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.209 14/01/18 02:42:52";
+my  $SID    = "@(#) @(#) yeast.pl 1.209 14/01/18 02:42:52";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -106,6 +106,7 @@ if (-e $arg) {
     sub usr_pre_main()  {}; #  "
     sub usr_pre_host()  {}; #  "
     sub usr_pre_info()  {}; #  "
+    sub usr_pre_open()  {}; #  "
     sub usr_pre_cmds()  {}; #  "
     sub usr_pre_data()  {}; #  "
     sub usr_pre_print() {}; #  "
@@ -4441,7 +4442,7 @@ if (_need_cipher() > 0) {
             #    _trace(" cipher match: $pattern");
             #} else {
             #    _trace(" cipher privat: $pattern");
-_dbx "\n########### fix this place (cipher<>yeast) ########\n";
+_dbx "\n########### fix this place (empty cipher list) ########\n";
 # ToDo: #10jan14: reimplement this check when %ciphers has a new structure
             #10jan14    my ($c, $new);
             #10jan14    my $new_list = "";
@@ -4551,6 +4552,8 @@ foreach $host (@{$cfg{'hosts'}}) {
         $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     }
+
+    usr_pre_open();
 
     # Check if there is something listening on $host:$port
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
@@ -5152,7 +5155,7 @@ the description here is text provided by the user.
 
   This option forces to use  "openssl s_slient -connect CIPHER .." to
   check if a cipher is supported by the remote target. This is useful
-  if the  "-lib=LIB"  option doesn't work (for example due to changes
+  if the  "--lib=LIB" option doesn't work (for example due to changes
   of the API or other incompatibilities).
 
 =end comment
@@ -6999,7 +7002,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.16
+@(#) 14.01.21
 
 =head1 AUTHOR
 
