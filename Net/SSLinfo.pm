@@ -89,13 +89,9 @@ Following variables are supported:
 
 =over
 
-=begin comment
-
 =item $Net::SSLinfo::ca_crl
 
 URL where to find CRL file; default: ''
-
-=end comment
 
 =item $Net::SSLinfo::ca_file
 
@@ -114,6 +110,12 @@ Value will not be used at all is set C<undef>.
 Depth of peer certificate verification verification; default: 9
 
 Value will not be used at all is set C<undef>.
+
+=item $Net::SSLinfo::socket
+
+Socket to be used for connection.  This must be a file descriptor and
+it's assumed to be an AF_INET or AF_INET6 TCP STREAM type connection.
+Note: the calling application is responsible for closing the socket.
 
 =item $Net::SSLinfo::openssl
 
@@ -279,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.01.16';
+    $VERSION   = '14.01.21';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -409,6 +411,7 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
+$Net::SSLinfo::socket   = undef;# socket to be used for connection
 $Net::SSLinfo::ca_crl   = undef;# URL where to find CRL file
 $Net::SSLinfo::ca_file  = undef;# PEM format file with CAs
 $Net::SSLinfo::ca_path  = undef;# path to directory with PEM files for CAs
@@ -659,7 +662,7 @@ sub _ssleay_get($$) {
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if($key eq 'before');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if($key eq 'after');
     # constants like NID_CommonName from openssl/objects.h (1.0.0*)
-    return Net::SSLeay::X509_NAME_get_text_by_NID( Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
+    return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
 
     # ToDo: following most likely do not work
     #     Net::SSLeay::NID_key_usage             = 83
@@ -835,6 +838,7 @@ sub do_ssl_open($$) {
     my $dum;         # used to avoid warnings with perl's -w
     my $cafile  = "";
     my $capath  = "";
+    my $socket  = *FH;  # if we need it ...
 
 # ToDo: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
@@ -842,13 +846,18 @@ sub do_ssl_open($$) {
 ##
 
     TRY: {
-        $src = '_check_host(' . $host . ')'; if (!defined _check_host($host)) { last; }
-        $src = '_check_port(' . $port . ')'; if (!defined _check_port($port)) { last; }
-        $src = 'socket()';
-                socket( S, &AF_INET, &SOCK_STREAM, 0)     or {$err = $!} and last;
-        $src = 'connect()';
-        $dum=()=connect(S, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
-        select(S); $| = 1; select(STDOUT);  # Eliminate STDIO buffering
+        if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
+            $src = "_check_host($host)";  if (!defined _check_host($host)) { last; }
+            $src = "_check_port($port)";  if (!defined _check_port($port)) { last; }
+            $src = 'socket()';
+                    socket( $socket, &AF_INET, &SOCK_STREAM, 0) or {$err = $!} and last;
+            $src = 'connect()';
+            $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
+            select($socket); $| = 1; select(STDOUT);  # Eliminate STDIO buffering
+            $Net::SSLinfo::socket = $socket;
+        } else {
+            $socket = $Net::SSLinfo::socket;
+        }
 
         # connection open, lets do SSL
         my $ctx;
@@ -862,9 +871,12 @@ sub do_ssl_open($$) {
 # use constant SSL_VERIFY_CLIENT_ONCE => Net::SSLeay::VERIFY_CLIENT_ONCE();
             # SSL_verify_mode => # 0x00, 0x01 (verify peer), 0x02 (fails if no cert), 0x04 (verify client)
 ######
-            # SSL_version     => 'SSLv2', 'SSLv3', or 'TLSv1'
             # SSL_check_crl   => true (verify CRL in local SSL_ca_path)
             # SSL_honor_cipher_order  => true (cipher order provided by client)
+            # SSL_version     => 'SSLv2', 'SSLv3', or 'TLSv1'
+            # SSL_version     => 'SSLv23:!SSLv2:!SSLv3'
+            #$Net::SSLeay::ssl_version = 10; # Insist on TLSv1
+            #$Net::SSLeay::ssl_version =  3; # Insist on SSLv3
 
         $src = "Net::SSLeay::CTX_load_verify_locations()";
         $cafile = $Net::SSLinfo::ca_file || "";
@@ -914,15 +926,12 @@ sub do_ssl_open($$) {
         $src = 'Net::SSLeay::CTX_set_options()';
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
         $src = 'Net::SSLeay::new()';
-        ($ssl=  Net::SSLeay::new($ctx))                   or {$err = $!} and last;
+        ($ssl=  Net::SSLeay::new($ctx))                     or {$err = $!} and last;
             # ToDo: not sure if new() can fail
         $src = 'Net::SSLeay::set_fd()';
-                Net::SSLeay::set_fd($ssl, fileno(S))      or {$err = $!} and last;
-        if (!   Net::SSLeay::set_cipher_list($ssl, $cipher)) {
-            $err = $!;
-            $src = 'Net::SSLeay::set_cipher_list(' . $cipher . ')';
-            last;
-        }
+                Net::SSLeay::set_fd($ssl, fileno($socket))  or {$err = $!} and last;
+        $src = 'Net::SSLeay::set_cipher_list(' . $cipher . ')';
+                Net::SSLeay::set_cipher_list($ssl, $cipher) or {$err = $!} and last;
 
         if ($Net::SSLinfo::use_SNI == 1) {
             _trace("do_ssl_open: SNI");
@@ -938,9 +947,13 @@ sub do_ssl_open($$) {
             }
         }
         # following may call _check_peer()
-        if (Net::SSLeay::connect($ssl) <= 0) {  # something failed
-            $err = $!;
-            $src = 'Net::SSLeay::connect()';
+        my $ret;
+        $src = 'Net::SSLeay::connect() ';
+        $ret =  Net::SSLeay::connect($ssl);
+        if ($ret <= 0) {
+            $src .= " failed start"     if ($ret <  0);
+            $src .= " failed handshake" if ($ret == 0);
+            $err  = $!;
             last;
         }
 
@@ -1299,7 +1312,8 @@ sub do_ssl_close($$) {
     Net::SSLeay::free($_SSLinfo{'ssl'})     if (defined $_SSLinfo{'ssl'}); # or warn "**WARNING: Net::SSLeay::free(): $!";
     Net::SSLeay::CTX_free($_SSLinfo{'ctx'}) if (defined $_SSLinfo{'ctx'}); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
     _SSLinfo_reset();
-    close(S);
+    close($Net::SSLinfo::socket);
+    $Net::SSLinfo::socket = undef;
     return;
 } # do_ssl_close
 
