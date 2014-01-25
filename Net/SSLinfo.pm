@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.66 14/01/18 02:49:32',
+    SID         => '@(#) Net::SSLinfo.pm 1.68 14/01/25 23:30:26',
 };
 
 ######################################################## public documentation #
@@ -272,7 +272,7 @@ follow the rules describend above.
 ############################################################## initialization #
 
 # forward declarations
-sub do_ssl_open($$);
+sub do_ssl_open($$$);
 sub do_ssl_close($$);
 sub do_openssl($$$);
 
@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.01.21';
+    $VERSION   = '14.01.22';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -396,6 +396,7 @@ BEGIN {
     Net::SSLeay::load_error_strings();
     Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
     Net::SSLeay::randomize();
+    Net::SSLeay::initialize();
 }
 $Net::SSLinfo::timeout     = 'timeout'; # timeout executable
 $Net::SSLinfo::openssl     = 'openssl'; # openssl executable
@@ -456,7 +457,7 @@ sub _setcmd() {
 
 ##################################################### internal data structure #
 
-my %_SSLinfo = ( # our internal data structure
+my %_SSLinfo= ( # our internal data structure
     'key'       => 'value',     # description
     #-------------+-------------+---------------------------------------------
     'host'      => '',          # hostname (FQDN) or IP as given by user
@@ -598,7 +599,7 @@ sub _SSLinfo_get($$$) {
         #src = Net::SSLeay::ERR_peek_last_error; # should work since openssl 0.9.7
         return wantarray ? @{$_SSLinfo{$key}} : join("\n", @{$_SSLinfo{$key}});
     }
-    return '' if !defined do_ssl_open($host, $port);
+    return '' if !defined do_ssl_open($host, $port, '');
     if ($key eq 'ciphers') { # special handling
         return wantarray ? @{$_SSLinfo{$key}} : join(' ', @{$_SSLinfo{$key}});
         return wantarray ? @{$_SSLinfo{$key}} : join(':', @{$_SSLinfo{$key}}); # if we want `openssl ciphers' format
@@ -773,7 +774,7 @@ sub _openssl_x509($$) {
     #   # supported by openssl's x509 (0.9.8 and higher)
     #}
     if ($mode =~ m/^-?(version|pubkey|signame|sigdump|aux|extensions)$/) {
-        # openssl works the other way arround:
+        # openssl works the other way around:
         #   define as -certopt what should *not* be printed
         # hence we use a list with all those no_* options and remove that one
         # which should be printed
@@ -803,9 +804,12 @@ sub _openssl_x509($$) {
 
 =pod
 
-=head2 do_ssl_open( $host,$port[,$cipherlist])
+=head2 do_ssl_open( $host,$port,$sslversions[,$cipherlist])
 
 Opens new SSL connection with Net::SSLeay.
+If C<$sslversions> is space-separated list of SSL versions to be used. Following
+strings are allowed for versions: C<SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 DTLSv1>.
+If C<$sslversions> is empty, the system's default settings of versions are used.
 If C<$cipherlist> is missing or empty, default C<ALL:NULL:eNULL:aNULL:LOW> will be used.
 
 Returns array with $ssl object and $ctx object.
@@ -818,11 +822,11 @@ call it directly.
 sub _X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT () { 18 }
 sub _FLAGS_ALLOW_SELFSIGNED () { 0x00000001 }
 
-sub do_ssl_open($$) {
-    my ($host, $port, $cipher) = @_;
+sub do_ssl_open($$$) {
+    my ($host, $port, $sslversions, $cipher) = @_;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
     _settrace();
-    _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($cipher||'') . ")");
+    _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
 
@@ -832,8 +836,9 @@ sub do_ssl_open($$) {
         $_SSLinfo{'cipherlist'} = $cipher;
     }
     _trace("do_ssl_open cipherlist: $_SSLinfo{'cipherlist'}");
-    my $src;         # reason why something failed
-    my $err = "";    # error string from sub-system, if any
+    my $src;         # function where something failed
+    my $err = "";    # error string, if any, from sub-system $src
+    my $ctx = undef;
     my $ssl = undef;
     my $dum;         # used to avoid warnings with perl's -w
     my $cafile  = "";
@@ -860,19 +865,19 @@ sub do_ssl_open($$) {
         }
 
         # connection open, lets do SSL
-        my $ctx;
         ($ctx = Net::SSLeay::CTX_new()) or {$src = 'Net::SSLeay::CTX_new()'} and last;
             # CTX_new() returns an object, errors are on error stack
-        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer); # in client mode VERIFY_NONE
-            # ToDo: setting verify options not yet tested
-# use constant SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-# use constant SSL_VERIFY_PEER => Net::SSLeay::VERIFY_PEER(); # 1
-# use constant SSL_VERIFY_FAIL_IF_NO_PEER_CERT => Net::SSLeay::VERIFY_FAIL_IF_NO_PEER_CERT(); # 2
-# use constant SSL_VERIFY_CLIENT_ONCE => Net::SSLeay::VERIFY_CLIENT_ONCE();
-            # SSL_verify_mode => # 0x00, 0x01 (verify peer), 0x02 (fails if no cert), 0x04 (verify client)
+        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
+            # we're in client mode were only VERYFY_NONE or VERYFY_PEER is used
+            # as we want to get all informations, even if something went wrong,
+            # we use VERIFY_NONE so we can proceed collecting informations
+            # possible values:
+            #  0 = SSL_VERIFY_NONE
+            #  1 = SSL_VERIFY_PEER
+            #  2 = SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+            #  4 = SSL_VERIFY_CLIENT_ONCE
 ######
             # SSL_check_crl   => true (verify CRL in local SSL_ca_path)
-            # SSL_honor_cipher_order  => true (cipher order provided by client)
             # SSL_version     => 'SSLv2', 'SSLv3', or 'TLSv1'
             # SSL_version     => 'SSLv23:!SSLv2:!SSLv3'
             #$Net::SSLeay::ssl_version = 10; # Insist on TLSv1
@@ -911,23 +916,13 @@ sub do_ssl_open($$) {
 ###             Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
 ###
 
-             # ToDo: setting more options not yet tested
-        #Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_NO_SSLv3() | Net::SSLeay::OP_NO_TLSv1()));
-        #Net::SSLeay::OP_NO_TLSv1()) liefert unter Windows Speicherfehler
-
-        # my $tls_options = Net::SSLeay::OP_NO_SSLv2() | Net::SSLeay::OP_NO_SSLv3();
-        # 
-        # my $fileno = fileno($sock);
-        # my $ctx = Net::SSLeay::CTX_v23_new();
-        # return { error => "SSL context init failed: $!" } unless $ctx;
-        # Net::SSLeay::CTX_set_options($ctx, $tls_options) # returns new options bitmask
-        #         or return { error => "SSL context option set failed: $!" };
+            # ToDo: setting more options not yet tested
+            # SSL_honor_cipher_order  => true (cipher order provided by client)
 
         $src = 'Net::SSLeay::CTX_set_options()';
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
         $src = 'Net::SSLeay::new()';
         ($ssl=  Net::SSLeay::new($ctx))                     or {$err = $!} and last;
-            # ToDo: not sure if new() can fail
         $src = 'Net::SSLeay::set_fd()';
                 Net::SSLeay::set_fd($ssl, fileno($socket))  or {$err = $!} and last;
         $src = 'Net::SSLeay::set_cipher_list(' . $cipher . ')';
@@ -942,16 +937,16 @@ sub do_ssl_open($$) {
                 # use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
                 # use constant TLSEXT_NAMETYPE_host_name    => 0
                 $src = 'Net::SSLeay::ctrl()';
-                Net::SSLeay::ctrl($ssl, 55, 0, $host)     or {$err = $!} and last;
+                Net::SSLeay::ctrl($ssl, 55, 0, $host)       or {$err = $!} and last;
                 #ToDo: ctrl() sometimes fails but does not return errors, reason yet unknown
             }
         }
-        # following may call _check_peer()
+
         my $ret;
         $src = 'Net::SSLeay::connect() ';
-        $ret =  Net::SSLeay::connect($ssl);
+        $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
         if ($ret <= 0) {
-            $src .= " failed start"     if ($ret <  0);
+            $src .= " failed start"     if ($ret <  0); # i.e. no matching protocol
             $src .= " failed handshake" if ($ret == 0);
             $err  = $!;
             last;
@@ -977,10 +972,6 @@ sub do_ssl_open($$) {
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
 
-# ToDo: print Net::SSL::ExpireDate($sslsocket);
-# see: http://search.cpan.org/~mikem/Net-SSLeay-1.48/lib/Net/SSLeay.pod
-# see: http://search.cpan.org/~sullr/IO-Socket-SSL-1.76/SSL.pm
-
         $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
         $_SSLinfo{'issuer'}     = _ssleay_get('issuer',  $x509);
         $_SSLinfo{'before'}     = _ssleay_get('before',  $x509);
@@ -992,7 +983,7 @@ sub do_ssl_open($$) {
         }
         if (1.30 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL
             $_SSLinfo{'cn'}     = _ssleay_get('cn', $x509);
-            $_SSLinfo{'cn'}     =~ s{\0$}{};    # work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
+            $_SSLinfo{'cn'}     =~ s{\0$}{};# work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
         } else {
             warn "you need at least Net::SSLeay version 1.30 for getting commonName";
         }
@@ -1116,7 +1107,6 @@ sub do_ssl_open($$) {
         $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
         $_SSLinfo{'issuer_hash'}        = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
         $_SSLinfo{'version'}            = _openssl_x509($_SSLinfo{'PEM'}, 'version');
-# $version = Net::SSLeay::version($ssl);
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
         $_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
@@ -1174,7 +1164,8 @@ sub do_ssl_open($$) {
             #    Compression: zlib compression
             #    Expansion: zlib compression
         my %match_map = (
-            # %_SSLinfo key       string to match in s_client
+            # %_SSLinfo key       string to match in s_client output
+            #-------------------+-----------------------------------
             'session_id'       => "Session-ID:",
             'master_key'       => "Master-Key:",
             'krb5'             => "Krb5 Principal:",
@@ -1507,7 +1498,7 @@ sub ciphers {
 =pod
 
 All following functions have  $host and $port  parameter and return
-information according the the cennection, certificate for this connection.
+information according the the connection, certificate for this connection.
 
 =head2 cn( ), commonname( )
 
@@ -1827,7 +1818,7 @@ Verify if given hostname matches common name (CN) in certificate.
 ############ ToDo:  do_ssl_open  vorbereiten fuer verify_*
 sub verify_hostname {
     my ($host, $port) = @_;
-    return undef if !defined do_ssl_open($host, $port);
+    return undef if !defined do_ssl_open($host, $port, '');
     return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert != 0);
     my $cname = $_SSLinfo{'cn'};
     my $match = '';
@@ -1846,7 +1837,7 @@ Verify if given hostname matches alternate name (subjectAltNames) in certificate
 
 sub verify_altname($$) {
     my ($host, $port) = @_;
-    return undef if !defined do_ssl_open($host, $port);
+    return undef if !defined do_ssl_open($host, $port, '');
     return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert != 0);
     _trace("verify_altname($host)");
     my $match = 'does not match';
@@ -1903,7 +1894,7 @@ sub error($) {
 
 #dbx# if ($#ARGV >= 0) {
 #dbx#     $\="\n";
-#dbx#     do_ssl_open( shift, 443);
+#dbx#     do_ssl_open( shift, 443, '');
 #dbx#     print Net::SSLinfo::dump();
 #dbx# }
 
