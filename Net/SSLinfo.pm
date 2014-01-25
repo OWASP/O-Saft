@@ -33,7 +33,7 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.68 14/01/25 23:30:26',
+    SID         => '@(#) Net::SSLinfo.pm 1.69 14/01/26 00:03:11'
 };
 
 ######################################################## public documentation #
@@ -455,7 +455,48 @@ sub _setcmd() {
     }
 } # _setcmd
 
+# $Net::SSLinfo::trace  not available outside sub in modules
+# hence following debugging of constants needs to be enabled manually
+# ToDo: replace eval() by better perlish solution
+if (1==0) {
+    #no strict 'refs';
+    my ($op, $_op_sub);
+    foreach $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_DTLSv1)) {
+        $_op_sub = \&{"Net::SSLeay::$op"};
+        printf("#%s SSL version bitmask: %15s ", SSLINFO, $op);
+        if (eval "Net::SSLeay::$op") {
+            printf("0x%010x\n", &$_op_sub()); # &$_op_sub() same as &{"Net::SSLeay::$op"}() here
+        } else {
+            printf("<<undef>>\n");
+        }
+    }
+}
+
 ##################################################### internal data structure #
+
+my %_SSLmap = ( # map libssl's constants to speaking names
+    # SSL and openssl is a pain, for setting protocols it needs a bitmask
+    # and SSL itself returns a hex constant, which is different
+    #                 /----- returned by Net::SSLeay::version($ssl)
+    # key             v      bitmask used in Net::SSLeay::CTX_set_options()
+    #-------------+---------+---------------------------------------------
+    'SSLv2'     => [0x0002,  Net::SSLeay::OP_NO_SSLv2()  ], # 0x01000000
+    'SSLv3'     => [0x0300,  Net::SSLeay::OP_NO_SSLv3()  ], # 0x02000000
+    'TLSv1'     => [0x0301,  undef],                        # 0x04000000
+    'TLSv11'    => [0x0302,  undef],                        # 0x08000000
+    'TLSv12'    => [0x0303,  undef],                        # 0x10000000
+    'DTLSv1'    => [0xFEFF,  undef],                        # ??
+);
+# unfortunately not all openssl and/or Net::SSLeay versions have all constants,
+# hence we need to assign some values dynamically (avoid perl errors)
+$_SSLmap{'TLSv1'} [1] = Net::SSLeay::OP_NO_TLSv1()   if (eval "Net::SSLeay::OP_NO_TLSv1()");
+$_SSLmap{'TLSv11'}[1] = Net::SSLeay::OP_NO_TLSv1_1() if (eval "Net::SSLeay::OP_NO_TLSv1_1()");
+$_SSLmap{'TLSv12'}[1] = Net::SSLeay::OP_NO_TLSv1_2() if (eval "Net::SSLeay::OP_NO_TLSv1_2()");
+$_SSLmap{'DTLSv1'}[1] = Net::SSLeay::OP_NO_DTLSv1()  if (eval "Net::SSLeay::OP_NO_DTLSv1()");
+    # NOTE: we use the bitmask provided by the system
+    # NOTE: all checks are done now, we don't need to fiddle around that later
+    #       we just need to check for undef then
+my %_SSLhex = map { $_SSLmap{$_}[0] => $_ } keys %_SSLmap;  # reverse map
 
 my %_SSLinfo= ( # our internal data structure
     'key'       => 'value',     # description
@@ -665,6 +706,7 @@ sub _ssleay_get($$) {
     # constants like NID_CommonName from openssl/objects.h (1.0.0*)
     return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
 
+    my $ret = '';
     # ToDo: following most likely do not work
     #     Net::SSLeay::NID_key_usage             = 83
     #     Net::SSLeay::NID_basic_constraints     = 87
@@ -676,7 +718,6 @@ sub _ssleay_get($$) {
     # X509_get_subjectAltNames returns array of (type, string)
     # type: 1 = email, 2 = DNS, 6 = URI, 7 = IPADD, 0 = othername
     if ($key eq 'altname') {
-        my $ret = '';
         my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509);
         _trace("_ssleay_get: Altname: " . join(" ",@altnames));
         while (@altnames) {             # construct string like openssl
@@ -845,11 +886,6 @@ sub do_ssl_open($$$) {
     my $capath  = "";
     my $socket  = *FH;  # if we need it ...
 
-# ToDo: proxy settings work in HTTP mode only
-##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
-##print "#ERR: $!";
-##
-
     TRY: {
         if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
             $src = "_check_host($host)";  if (!defined _check_host($host)) { last; }
@@ -865,8 +901,10 @@ sub do_ssl_open($$$) {
         }
 
         # connection open, lets do SSL
-        ($ctx = Net::SSLeay::CTX_new()) or {$src = 'Net::SSLeay::CTX_new()'} and last;
-            # CTX_new() returns an object, errors are on error stack
+        ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
+            # CTX_v23_new() returns an object, errors are on error stack
+            # we use CTX_v23_new() 'cause of CTX_new() sets SSL_OP_NO_SSLv2
+
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
             # we're in client mode were only VERYFY_NONE or VERYFY_PEER is used
             # as we want to get all informations, even if something went wrong,
@@ -878,11 +916,6 @@ sub do_ssl_open($$$) {
             #  4 = SSL_VERIFY_CLIENT_ONCE
 ######
             # SSL_check_crl   => true (verify CRL in local SSL_ca_path)
-            # SSL_version     => 'SSLv2', 'SSLv3', or 'TLSv1'
-            # SSL_version     => 'SSLv23:!SSLv2:!SSLv3'
-            #$Net::SSLeay::ssl_version = 10; # Insist on TLSv1
-            #$Net::SSLeay::ssl_version =  3; # Insist on SSLv3
-
         $src = "Net::SSLeay::CTX_load_verify_locations()";
         $cafile = $Net::SSLinfo::ca_file || "";
         if ($cafile !~ m#^([a-zA-Z0-9_,.\\/()-])*$#) {
@@ -899,7 +932,6 @@ sub do_ssl_open($$$) {
             # CTX_load_verify_locations() sets SSLeay's error stack, which
             # is roughly the same as $!
         }
-
         $src = "Net::SSLeay::CTX_set_verify_depth()";
         if (defined $Net::SSLinfo::ca_depth) {
             if ($Net::SSLinfo::ca_depth !~ m/^[0-9]$/) {
@@ -907,8 +939,12 @@ sub do_ssl_open($$$) {
                 last;
             }
             Net::SSLeay::CTX_set_verify_depth($ctx, $Net::SSLinfo::ca_depth);
-            #Net::SSLeay::set_verify_depth($ssl, $Net::SSLinfo::ca_depth); # ToDo: not sure what's the difference
         }
+
+# ToDo: proxy settings work in HTTP mode only
+##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
+##print "#ERR: $!";
+##
 # Client-Cert see smtp_tls_cert.pl
 ###
 ###
@@ -921,6 +957,21 @@ sub do_ssl_open($$$) {
 
         $src = 'Net::SSLeay::CTX_set_options()';
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
+            # disable not specified SSL versions
+        foreach  $ssl (keys %_SSLmap) {
+            # $sslversions passes the version which should be supported, but
+            # openssl and hence Net::SSLeay, configures what should *not* be
+            # supported, so we skip all versions found in $sslversions
+            next if ($sslversions =~ m/^\s*$/); # no version given, leave default
+            next if (grep(/^$ssl$/, split(" ", $sslversions)));
+            if (defined $_SSLmap{$ssl}[1]) {    # if there is a bitmask, disable this version
+                print("### do_ssl_open: OP_NO_$ssl");
+                _trace("do_ssl_open: OP_NO_$ssl");   # NOTE: constant name *not* as in ssl.h
+                Net::SSLeay::CTX_set_options($ctx, $_SSLmap{$ssl}[1]) if(defined $_SSLmap{$ssl}[1]);
+            }
+        }
+        $ssl = undef;
+
         $src = 'Net::SSLeay::new()';
         ($ssl=  Net::SSLeay::new($ctx))                     or {$err = $!} and last;
         $src = 'Net::SSLeay::set_fd()';
@@ -951,6 +1002,8 @@ sub do_ssl_open($$$) {
             $err  = $!;
             last;
         }
+        #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
+        #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
 
         # SSL established, lets get informations
         # ToDo: starting from here implement error checks
