@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.211 14/01/25 22:39:35";
+my  $SID    = "@(#) yeast.pl 1.212 14/01/25 22:47:57";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -2843,6 +2843,7 @@ sub checksizes($$) {
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
     $value = $data{'sigkey_len'}->{val}($host);
     $checks{'len_sigdump'}->{val}   = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
+    $value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
     $checks{'sernumber'}->{val}     = " " if ($value > 20);
 } # checksizes
 
@@ -4428,6 +4429,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
         } else {# eval failed ..
             print "**WARNING: SSL version '$ssl' not supported by openssl; ignored\n";
         }
+        # ToDo: geht nicht: Net::SSLeay::SSLv23_method();
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
         warn("**WARNING: unsupported SSL version '$ssl'; ignored");
     }
