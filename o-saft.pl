@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) @(#) yeast.pl 1.209 14/01/18 02:42:52";
+my  $SID    = "@(#) yeast.pl 1.211 14/01/25 22:39:35";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -506,6 +506,29 @@ foreach $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt
 foreach $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
 
 our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
+        # ToDo: generate this table using Net::SSLeay functions like:
+        #   Net::SSLeay::OBJ_nid2ln(),  Net::SSLeay::OBJ_ln2nid()
+        #   Net::SSLeay::OBJ_nid2sn(),  Net::SSLeay::OBJ_sn2nid(),
+        #   Net::SSLeay::OBJ_nid2obj(), Net::SSLeay::OBJ_obj2nid(),
+        #   Net::SSLeay::OBJ_txt2obj(), Net::SSLeay::OBJ_txt2nid(),
+        #   Net::SSLeay::OBJ_obj2txt(),
+        # all constants and values are defined in openssl/crypto/objects/obj_dat.h
+        #   print "nid ". Net::SSLeay::OBJ_txt2nid("CN"); # --> 13
+        #   print "Nam ". Net::SSLeay::OBJ_obj2txt( Net::SSLeay::OBJ_txt2obj("1.3.6.1.5.5.7.3.3"), 0); # --> Code Signing
+        #   print "nam ". Net::SSLeay::OBJ_obj2txt( Net::SSLeay::OBJ_txt2obj("CN"), 0); # --> commonName
+        #   print "oid ". Net::SSLeay::OBJ_obj2txt( Net::SSLeay::OBJ_txt2obj("CN"), 1); # --> 2.5.4.3
+        #   print "OID ". Net::SSLeay::OBJ_obj2txt( Net::SSLeay::OBJ_nid2obj( 13 ), 1); # --> 2.5.4.3
+        # we should use NIDs to generate the hash, as all other strings are
+        # case sensitive. get NIDs with:
+        #   grep NID_ openssl/crypto/objects/objects.h | awk '{print $3}' | sort -n
+        # so we can loop from 0..180 (or 300 if checks are possible)
+        # see also: http://www.zytrax.com/books/ldap/apa/oid.html
+        #
+        # wir koennen dann einen Parser fuer OIDs bauen:
+        #   loop ueber OID und dabei immer .N vom Ende wegnehmen und rest mit OBJ_obj2txt() ausgeben
+        #   # 1.3.6.1.4 -->  "" . identified-organization . dot . iana . Private
+        #   # 2.5.29.32 -->  "" . directory services (X.500) . id-ce . X509v3 Certificate Policies
+
 #   '1.3.6.1'                   => {iso(1) org(3) dod(6) iana(1)}
     '1.3.6.1'                   => {'txt' => "Internet OID"},
     '1.3.6.1.5.5.7.1.1'         => {'txt' => "Authority Information Access"}, # authorityInfoAccess
@@ -565,7 +588,7 @@ our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
     '2.5.29.17'                 => {'txt' => "subject:subjectAlternateName"}, # Subject alternative name
     '2.5.29.19'                 => {'txt' => "subject:basicConstraints"},     # Basic constraints
     '2.5.29.31'                 => {'txt' => "subject:crlDistributionPoints"},# CRL distribution points
-    '2.5.29.32'                 => {'txt' => "subject:certificatePolicies"},  # Certificate policy
+    '2.5.29.32'                 => {'txt' => "subject:certificatePolicies"},  # Certificate Policies
     '2.16.840.1.113733.1.7.23.6'=> {'txt' => "<<undef>>"}, # Certificate Policy?
     '2.16.840.1.113733.1.7.48.1'=> {'txt' => "<<undef>>"}, # Certificate Policy?
     '2.16.840.1.113733.1.7.54'  => {'txt' => "<<undef>>"}, # Certificate Policy?
@@ -860,16 +883,17 @@ our %cfg = (
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
-    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11  TLSv12)],
-                                # Note: must be same string as used in %ciphers[ssl]
-                                # ToDo: DTLS09, DTLS10
+    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 DTLSv1)],
+                                # NOTE: must be same string as used in %ciphers[ssl]
+                                # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
+                                # ToDo: DTLSv0.9
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
     'TLSv1'         => 1,       # 1:   "
     'TLSv11'        => 0,       # 1:   "
     'TLSv12'        => 0,       # 1:   "
-    'DTLS09'        => 0,       # 1:   "
-    'DTLS10'        => 0,       # 1:   "
+    'DTLSv9'        => 0,       # 1:   "
+    'DTLSv1'        => 0,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => "yeast", # which ciphers to be used
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
@@ -1102,9 +1126,9 @@ our %cfg = (
         'SSLv2'     => "-ssl2",
         'SSLv3'     => "-ssl3",
         'TLSv1'     => "-tls1",
-        'TLSv12'    => "-tls1_1",
+        'TLSv11'    => "-tls1_1",
         'TLSv12'    => "-tls1_2",
-        'DTLS1'     => "-dtls1",
+        'DTLSv1'    => "-dtls1",
      },
     'done' => {                 # internal administration
         'hosts'     => 0,
@@ -1174,10 +1198,9 @@ my %ciphers_desc = (    # description of following %ciphers table
                             # Note: weak includes NONE (no security at all)
                             #
                             # all following informations as reported by openssl 0.9.8
-        'Protocol Version', # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12
+        'Protocol Version', # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, DTLS0.9, DTLS1.0
                             # Note: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
-                            # ToDo: DTLS0.9, DTLS1.0
         'Encryption Algorithm', # Nine, AES, DES, 3DES, RC4, RC2, SEED
         'Key Size',         # in bits
         'MAC Algorithm',    # MD5, SHA1
@@ -3862,7 +3885,7 @@ sub _print_cfg($$$$){
 }
 
 sub printtable($) {
-    #? print data froam hash in tabular form, $typ denotes hash
+    #? print data from hash in tabular form, $typ denotes hash
     my $typ = shift;
     my %types = (
         # typ        header left    separator  header right
@@ -4128,15 +4151,15 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1; next; } # ..
     if ($arg =~ /^--?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}    = 1; next; } # allow ._- separator
     if ($arg =~ /^--?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}    = 1; next; } # ..
-    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLS09'}    = 1; next; } # ..
-    if ($arg =~ /^--dtlsv?1[-_.]?0$/i)  { $cfg{'DTLS10'}    = 1; next; } # ..
+    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}    = 1; next; } # ..
+    if ($arg =~ /^--dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}    = 1; next; } # ..
     if ($arg =~ /^--no[_-]?sslv?2$/i)   { $cfg{'SSLv2'}     = 0; next; } # allow _- separator
     if ($arg =~ /^--no[_-]?sslv?3$/i)   { $cfg{'SSLv3'}     = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?1$/i)   { $cfg{'TLSv1'}     = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?11$/i)  { $cfg{'TLSv11'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?12$/i)  { $cfg{'TLSv12'}    = 0; next; } # ..
-    if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLS09'}    = 0; next; } # ..
-    if ($arg =~ /^--no[_-]?dtlsv?10$/i) { $cfg{'DTLS10'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLSv9'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtlsv?10?$/i){ $cfg{'DTLSv1'}    = 0; next; } # ..
     if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1; next; } # ..
     if ($arg =~ /^--no[_-]?dns/)        { $cfg{'usedns'}    = 0; next; }
     if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1; next; }
@@ -4211,7 +4234,7 @@ while ($#argv >= 0) {
     #   argument to check               aliased to (no next!) # traditional name
     #  +---------+--------------------+-----------------------+-----------------
     if ($arg =~ /^\+commonName/i)     { $arg = '+cn';      }
-    if ($arg =~ /^\+cert(ificate)?/i) { $arg = '+pem';     }  # PEM
+    if ($arg =~ /^\+cert(ificate)?$/i){ $arg = '+pem';     }  # PEM
     if ($arg =~ /^\+subjectX509/i)    { $arg = '+subject'; }  # subject
     if ($arg eq  '+owner')            { $arg = '+subject'; }  # subject
     if ($arg eq  '+authority')        { $arg = '+issuer';  }  # issuer
@@ -4386,11 +4409,14 @@ push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0); # command
 foreach $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);
     $cfg{$ssl} = 0; # reset to simplify further checks
-    # ToDo: DTLS09, DTLS10
-    if ($ssl =~ /^(SSLv2|SSLv3|TLSv1)$/) {
-        $typ = eval("Net::SSLeay::SSLv2_method()") if ($ssl eq 'SSLv2');
-        $typ = eval("Net::SSLeay::SSLv3_method()") if ($ssl eq 'SSLv3');
-        $typ = eval("Net::SSLeay::TLSv1_method()") if ($ssl eq 'TLSv1');
+    # ToDo: DTLSv9
+    if ($ssl =~ /^(SSLv2|SSLv3|D?TLSv1[012]?)$/) {
+        $typ = eval("Net::SSLeay::SSLv2_method()")   if ($ssl eq 'SSLv2');
+        $typ = eval("Net::SSLeay::SSLv3_method()")   if ($ssl eq 'SSLv3');
+        $typ = eval("Net::SSLeay::TLSv1_method()")   if ($ssl eq 'TLSv1');
+        $typ = eval("Net::SSLeay::TLSv1_1_method()") if ($ssl eq 'TLSv11');
+        $typ = eval("Net::SSLeay::TLSv1_2_method()") if ($ssl eq 'TLSv12');
+        $typ = eval("Net::SSLeay::DTLSv1_method()")  if ($ssl eq 'DTLSv1');
         # ugly eval, but that's the simplest (only?) way to check if required
         # functionality is available; we could try  Net::SSLeay::CTX_v2_new()
         # and similar calls also, but that requires eval too
@@ -4547,8 +4573,10 @@ foreach $host (@{$cfg{'hosts'}}) {
     if ($cfg{'usesni'} != 0) {      # useful with SNI only
         _trace(" cn_nosni: {");
         $Net::SSLinfo::use_SNI  = 0;
-        $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
-        Net::SSLinfo::do_ssl_close($host, $port);
+        if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), $ciphers)) {
+            $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
+            Net::SSLinfo::do_ssl_close($host, $port);
+        }
         $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     }
@@ -4558,7 +4586,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     # Check if there is something listening on $host:$port
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
-    if (!defined Net::SSLinfo::do_ssl_open($host, $port, $ciphers)) {
+    if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), $ciphers)) {
 #ToDo: list of ciphers not yet used, probably for 'honor cipher order'
         my $err     = Net::SSLinfo::errors( $host, $port);
         if ($err !~ /^\s*$/) {
@@ -7002,7 +7030,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.21
+@(#) 14.01.22
 
 =head1 AUTHOR
 
