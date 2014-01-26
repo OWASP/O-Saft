@@ -1152,13 +1152,14 @@ our %cfg = (
 ); # %cfg
 
 # construct list for special commands: 'cmd-*'
-sub _is_intern($);      # avoid: main::_is_member() called too early to check prototype
+sub _is_intern($);      # perl avoid: main::_is_member() called too early to check prototype
 sub _is_member($$);     #   "
 my $old = "";
+my $rex = join("|", @{$cfg{'versions'}});   # these are data only, not commands
 foreach $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
     next if ($key eq $old); # unique
     $old = $key;
-    push(@{$cfg{'commands'}},  $key);
+    push(@{$cfg{'commands'}},  $key) if ($key !~ m/^($rex)/);
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
 }
