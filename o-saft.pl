@@ -378,7 +378,7 @@ my %check_conn = (
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-    'default'       => {'txt' => "Default cipher for "},
+    #'default'       => {'txt' => "Default cipher for "},
      # counter for accepted ciphers, 0 if not supported
     'SSLv2'         => {'txt' => "Supported ciphers for SSLv2 (total)"},
     'SSLv3'         => {'txt' => "Supported ciphers for SSLv3 (total)"},
@@ -903,7 +903,7 @@ our %cfg = (
     'cmd-intern'    => [        # add internal commands (they have no key in %data and %checks)
                        qw(
                         check cipher dump check_sni exec help info info--v http
-                        quick default list libversion sizes s_client version
+                        quick list libversion sizes s_client version
                         sigkey bsi ev
                        ),
                     # add special commands for certificate extensions
