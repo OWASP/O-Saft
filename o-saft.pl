@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.212 14/01/25 22:47:57";
+my  $SID    = "@(#) yeast.pl 1.213 14/01/26 17:35:33";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -226,6 +226,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'modulus'       => {'val' => sub { Net::SSLinfo::modulus(       $_[0], $_[1])}, 'txt' => "Certificate Public Key Modulus"},
     'modulus_exponent'=>{'val'=> sub { Net::SSLinfo::modulus_exponent($_[0],$_[1])},'txt' => "Certificate Public Key Exponent"},
     'serial'        => {'val' => sub { Net::SSLinfo::serial(        $_[0], $_[1])}, 'txt' => "Certificate Serial Number"},
+    'certversion'   => {'val' => sub { Net::SSLinfo::version(       $_[0], $_[1])}, 'txt' => "Certificate Version"},
     'sigdump'       => {'val' => sub { Net::SSLinfo::sigdump(       $_[0], $_[1])}, 'txt' => "Certificate Signature (hexdump)"},
     'sigkey_len'    => {'val' => sub { Net::SSLinfo::sigkey_len(    $_[0], $_[1])}, 'txt' => "Certificate Signature Key Length"},
     'signame'       => {'val' => sub { Net::SSLinfo::signame(       $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
@@ -255,6 +256,8 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'fingerprint_sha1'=>{'val'=> sub { __SSLinfo('fingerprint_sha1',$_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA1"},
     'fingerprint_md5' =>{'val'=> sub { __SSLinfo('fingerprint_md5', $_[0], $_[1])}, 'txt' => "Certificate Fingerprint  MD5"},
     'fingerprint'   => {'val' => sub { __SSLinfo('fingerprint',     $_[0], $_[1])}, 'txt' => "Certificate Fingerprint"},
+    'cert_type'     => {'val' => sub { Net::SSLinfo::cert_type(     $_[0], $_[1])}, 'txt' => "Certificate Type (bitmask)"},
+    'sslversion'    => {'val' => sub { Net::SSLinfo::SSLversion(    $_[0], $_[1])}, 'txt' => "Selected SSL Protocol"},
     'resumption'    => {'val' => sub { Net::SSLinfo::resumption(    $_[0], $_[1])}, 'txt' => "Target supports resumption"},
     'renegotiation' => {'val' => sub { Net::SSLinfo::renegotiation( $_[0], $_[1])}, 'txt' => "Target supports renegotiation"},
     'compression'   => {'val' => sub { Net::SSLinfo::compression(   $_[0], $_[1])}, 'txt' => "Target supports compression"},
@@ -270,6 +273,8 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
     'chain_verify'  => {'val' => sub { Net::SSLinfo::chain_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification (trace)"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
+    'error_verify'  => {'val' => sub { Net::SSLinfo::error_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification error"},
+    'error_depth'   => {'val' => sub { Net::SSLinfo::error_depth(   $_[0], $_[1])}, 'txt' => "CA Chain Verification error in level"},
     'verify_altname'=> {'val' => sub { Net::SSLinfo::verify_altname($_[0], $_[1])}, 'txt' => "Validity Alternate Names"},
     'verify_hostname'=>{'val' => sub { Net::SSLinfo::verify_hostname( $_[0],$_[1])},'txt' => "Validity Hostname"},
     'https_status'  => {'val' => sub { Net::SSLinfo::https_status(  $_[0], $_[1])}, 'txt' => "HTTPS Status line"},
@@ -286,6 +291,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'http_refresh'  => {'val' => sub { Net::SSLinfo::http_refresh(  $_[0], $_[1])}, 'txt' => "HTTP Refresh header"},
     'http_sts'      => {'val' => sub { Net::SSLinfo::http_sts(      $_[0], $_[1])}, 'txt' => "HTTP STS header"},
     #------------------+---------------------------------------+-------------------------------------------------------
+    'options'       => {'val' => sub { Net::SSLinfo::options(       $_[0], $_[1])}, 'txt' => "<<internal>> used SSL options bitmask"},
     # following are used for checkdates() only, they must not be a command!
     # they are not printed with +info or +check; values are integer
     'valid-years'   => {'val' =>  0, 'txt' => "certificate validity in years"},
@@ -378,13 +384,14 @@ my %check_conn = (
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-    #'default'       => {'txt' => "Default cipher for "},
+    'default'       => {'txt' => "Default cipher for "},   # used for @cfg{version} only
      # counter for accepted ciphers, 0 if not supported
     'SSLv2'         => {'txt' => "Supported ciphers for SSLv2 (total)"},
     'SSLv3'         => {'txt' => "Supported ciphers for SSLv3 (total)"},
     'TLSv1'         => {'txt' => "Supported ciphers for TLSv1 (total)"},
     'TLSv11'        => {'txt' => "Supported ciphers for TLSv11 (total)"},
     'TLSv12'        => {'txt' => "Supported ciphers for TLSv12 (total)"},
+    'DTLSv1'        => {'txt' => "Supported ciphers for DTLSv1 (total)"},
     # counter for this type of cipher
     'SSLv2-LOW'     => {'txt' => "Supported   LOW   security ciphers"},
     'SSLv2-WEAK'    => {'txt' => "Supported  WEAK   security ciphers"},
@@ -411,6 +418,11 @@ my %check_conn = (
     'TLSv12-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
     'TLSv12-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
     'TLSv12--?-'    => {'txt' => "Supported unknown security ciphers"},
+    'DTLSv1-LOW'    => {'txt' => "Supported   LOW   security ciphers"},
+    'DTLSv1-WEAK'   => {'txt' => "Supported  WEAK   security ciphers"},
+    'DTLSv1-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
+    'DTLSv1-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
+    'DTLSv1--?-'    => {'txt' => "Supported unknown security ciphers"},
     #------------------+-----------------------------------------------------
 ); # %check_conn
 
@@ -606,6 +618,7 @@ our %shorttexts = (
     'TLSv1'         => "Ciphers (TLSv1)",
     'TLSv11'        => "Ciphers (TLSv11)",
     'TLSv12'        => "Ciphers (TLSv12)",
+    'DTLSv1'        => "Ciphers (DTLSv1)",
     #}
     'TLSv1-HIGH'    => "Ciphers HIGH",
     'ip'            => "IP for hostname",
@@ -668,6 +681,8 @@ our %shorttexts = (
     'chain'         => "Certificate chain",
     'chain_verify'  => "CA Chain trace",
     'verify'        => "Chain verified",
+    'error_verify'  => "CA Chain error",
+    'error_depth'   => "CA Chain error in level",
     'nonprint'      => "non-printables",
     'crnlnull'      => "CR, NL, NULL",
     'compression'   => "Compression",
@@ -723,6 +738,8 @@ our %shorttexts = (
     'modulus'       => "Public Key modulus",
     'modulus_exponent'  => "Public Key exponent",
     'serial'        => "Serial Number",
+    'certversion'   => "Certificate Version",
+    'sslversion'    => "SSL protocol",
     'signame'       => "Signature Algorithm",
     'sigdump'       => "Signature (hexdump)",
     'sigkey_len'    => "Signature key length",
@@ -799,6 +816,7 @@ my %score_ssllabs = (
     'TLSv1'         => {'val' =>  0, 'score' =>  90, 'txt' => "TLS 1.0"}, #  90%
     'TLSv11'        => {'val' =>  0, 'score' =>  95, 'txt' => "TLS 1.1"}, #  95%
     'TLSv12'        => {'val' =>  0, 'score' => 100, 'txt' => "TLS 1.2"}, # 100%
+    'DTLSv1'        => {'val' =>  0, 'score' => 100, 'txt' => "DTLS 1.0"},# 100%
     # 'txt' is not used here!
     #
     #    ( best protocol + worst protocol ) / 2
@@ -890,17 +908,18 @@ our %cfg = (
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
     'TLSv1'         => 1,       # 1:   "
-    'TLSv11'        => 0,       # 1:   "
-    'TLSv12'        => 0,       # 1:   "
-    'DTLSv9'        => 0,       # 1:   "
-    'DTLSv1'        => 0,       # 1:   "
+    'TLSv11'        => 1,       # 1:   "
+    'TLSv12'        => 1,       # 1:   "
+    'DTLSv9'        => 1,       # 1:   "
+    'DTLSv1'        => 1,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => "yeast", # which ciphers to be used
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
                                 # ToDo: must be same as in Net::SSLinfo or used from there
     'do'            => [],      # the commands to be performed, any of commands
     'commands'      => [],      # contains all commands, constructed below
-    'cmd-intern'    => [        # add internal commands (they have no key in %data and %checks)
+    'cmd-intern'    => [        # add internal commands
+                    # these have no key in %data or %checks
                        qw(
                         check cipher dump check_sni exec help info info--v http
                         quick list libversion sizes s_client version
@@ -915,6 +934,8 @@ our %cfg = (
                         ext_crl ext_crl_crl ext_keyusage ext_extkeyusage
                         ext_issuer
                        ),
+                    # internal (debugging or experimental) commands
+                      # qw(options cert_type),   # will bee seen with +info--v only
                     # keys not used as command
                        qw(cn_nosni valid-years valid-months valid-days)
                        ],
@@ -1082,6 +1103,9 @@ our %cfg = (
         'cmd-sizes' => '^(?:cnt|len)_',        # match keys for length, sizes etc.
         'cmd-intern'=> '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
 
+        # Regex for matching SSL protocol keys in %data and %checks
+        'SSLprot'   => '^(SSL|D?TLS)v[0-9]',   # match keys SSLv2, TLSv1-LOW, ...
+
     }, # regex
     'compliance' => {           # description of RegEx above for compliance checks
         'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
@@ -1164,10 +1188,10 @@ foreach $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-int
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
 }
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
-push(@{$cfg{'cmd-info--v'}}, 'dump');# more information
+push(@{$cfg{'cmd-info--v'}}, 'dump');       # more information
 foreach $key (keys %data) {
     push(@{$cfg{'cmd-info--v'}}, $key);
-    next if (_is_intern($key) > 0);  # ignore aliases
+    next if (_is_intern($key) > 0);         # ignore aliases
     next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
     next if ($key =~ m/^modulus$/    and $verbose == 0); # same values as 'pubkey_value'
     push(@{$cfg{'cmd-info'}},    $key);
@@ -1431,9 +1455,14 @@ my %ciphers = (
 
 ); # %ciphers
 
-# FIXME: following list not yet (09/2013) complete
-# i.e. DHE_RSA_WITH_AES_256_CBC_SHA is missing
 my %cipher_names = (
+    # ADH_DES_192_CBC_SHA      # alias: DH_anon_WITH_3DES_EDE_CBC_SHA
+    # ADH_DES_40_CBC_SHA       # alias: DH_anon_EXPORT_WITH_DES40_CBC_SHA
+    # ADH_DES_64_CBC_SHA       # alias: DH_anon_WITH_DES_CBC_SHA
+    # ADH_RC4_40_MD5           # alias: DH_anon_EXPORT_WITH_RC4_40_MD5
+    # DHE_RSA_WITH_AES_128_SHA # alias: DHE_RSA_WITH_AES_128_CBC_SHA
+    # DHE_RSA_WITH_AES_256_SHA # alias: DHE_RSA_WITH_AES_256_CBC_SHA
+    #
     # from openssl-1.0.1c (generated by openssl_h-to-perl_hash)
     #!#----------------------------------------+-------------+--------------------+
     #!# cipher suite value                  => [   constant   cipher names        ],
@@ -2141,6 +2170,7 @@ sub _initchecks_score()  {
     $checks{'TLSv1-HIGH'}  ->{score} =   0;
     $checks{'TLSv11-HIGH'} ->{score} =   0;
     $checks{'TLSv12-HIGH'} ->{score} =   0;
+    $checks{'DTLSv1-HIGH'} ->{score} =   0;
     foreach (keys %checks) {
         $checks{$_}->{score} = 90 if (m/WEAK/i);
         $checks{$_}->{score} = 30 if (m/LOW/i);
@@ -2159,7 +2189,7 @@ sub _initchecks_val()  {
     $checks{'sts_maxagexy'}->{val} = 99999999;
     foreach (keys %checks) {
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
-        $checks{$_}->{val}   =  0 if (m/^(SSLv|TLSv)/i);
+        $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'SSLprot'}/);
     }
 } # _initchecks_val
 
@@ -2413,7 +2443,7 @@ sub _setvalue($){ return ($_[0] eq "") ? 'yes' : 'no (' . $_[0] . ')'; }
 sub _isbeast($$){
     # return given cipher if vulnerable to BEAST attack, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(SSLv3|TLSv1)/); # SSLv2 and TLSv1.2 not vulnerable to BEAST
+    return ""      if ($ssl    !~ /(SSLv3|TLSv11?)/); # SSLv2 and TLSv1.2 not vulnerable to BEAST
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
     return "";
 } # _isbeast
@@ -2481,11 +2511,12 @@ sub _usesocket($$$$) {
         Timeout         => $cfg{'timeout'},
     #   SSL_hostname    => $host,# for SNI
         SSL_verify_mode => 0x0,  # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-        SSL_version     => $ssl,
-#        SSL_honor_cipher_order => 1,
+        SSL_ca_file     => undef,# see man IO::Socket::SSL
+        SSL_ca_path     => undef,#  "
+        SSL_version     => $ssl, # default is SSLv23
         SSL_cipher_list => $ciphers
     );
-    #dbx# _dbx " _usesocket: " . $sslsocket->opened(); # nok
+# ToDo: IO::Socket::SSL::get_cipher($sslsocket);  does not work
     if ($sslsocket) {  # connect failed, cipher not accepted
         $sslsocket->close(SSL_ctx_free => 1);
         return 1;
@@ -2748,7 +2779,7 @@ sub checkcert($$) {
             $value = $data{$label}->{val}($host);
             $checks{$label}->{val}   = $value if ($value eq "");
 
-# FIXME:
+# FIXME:  $data{'verify'} $data{'error_verify'} $data{'error_depth'}
 #   if (_is_do('verify')) {
 #       print "";
 #       print "Hostname validity:       "      . Net::SSLinfo::verify_hostname($host, $port);
@@ -3140,7 +3171,7 @@ sub checkdest($$) {
 
     # check default cipher
     foreach $ssl (@{$cfg{'versions'}}) {
-        next if ($cfg{$ssl} == 0); # see eval("Net::SSLeay::SSLv2_method()") above
+        next if ($cfg{$ssl} == 0);
         $value  = $checks{$ssl}->{val};
         $cipher = _get_default($host, $port, $ssl);
         if (($value == 0) && ($cipher eq "")) {
@@ -3314,6 +3345,7 @@ sub scoring($$) {
         $scores{'check_cert'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "certificate");
         $scores{'check_conn'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "connection");
         $scores{'check_dest'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "destination");
+#_dbx "$key " . $checks{$key}->{val} if($checks{$key}->{typ} eq "connection");
 #_dbx "score certificate $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_cert'}->{val} if($checks{$key}->{typ} eq "certificate");
 #_dbx "score connection  $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_conn'}->{val} if($checks{$key}->{typ} eq "connection");
 #_dbx "score destination $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_dest'}->{val} if($checks{$key}->{typ} eq "destination");
@@ -3754,7 +3786,8 @@ sub printchecks($$) {
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
-        next if ($key =~ m/^(SSL|TLS)v[0-9][1-9]?[_-]/); # these counters are already printed
+        next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
+        next if ($key eq 'default');    # used for @cfg{version} only
         _y_CMD("(%checks) +" . $key);
         if ($key eq 'beast') {          # check is special
             if (! _is_do('cipher') && ($check <= 0)) {
@@ -3976,7 +4009,7 @@ sub printcommands() {
     foreach $key (@{$cfg{'commands'}}) {
         next if (_is_intern($key) > 0);
         next if (_is_hashkey($key, \%checks) <= 0);
-        next if ($key =~ m/^(SSL|TLS)/);
+        next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
         _print_cmd($key, $checks{$key}->{txt});
     }
 } # printcommands
@@ -4406,13 +4439,21 @@ if ($quick == 1) {
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 
-push(@{$cfg{'do'}}, 'pfs')    if (_is_do('http')); # FIXME: may produce duplicate output
 push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0); # command
 foreach $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);
     $cfg{$ssl} = 0; # reset to simplify further checks
     # ToDo: DTLSv9
-    if ($ssl =~ /^(SSLv2|SSLv3|D?TLSv1[012]?)$/) {
+    if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
+        # { DISABLED-CHECK (starting with VERSION 14.01.23)
+            # some versions of Net::SSLeay seem not to support the methods for
+            # all SSL versions even the underlaying library supports it
+            # hence the check (see below) is disabled for now
+            push(@{$cfg{'version'}}, $ssl);
+            $cfg{$ssl} = 1;
+            next;
+        # DISABLED-CHECK }
+        # ToDO: enable checks again
         $typ = eval("Net::SSLeay::SSLv2_method()")   if ($ssl eq 'SSLv2');
         $typ = eval("Net::SSLeay::SSLv3_method()")   if ($ssl eq 'SSLv3');
         $typ = eval("Net::SSLeay::TLSv1_method()")   if ($ssl eq 'TLSv1');
@@ -4590,7 +4631,6 @@ foreach $host (@{$cfg{'hosts'}}) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
     if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), $ciphers)) {
-#ToDo: list of ciphers not yet used, probably for 'honor cipher order'
         my $err     = Net::SSLinfo::errors( $host, $port);
         if ($err !~ /^\s*$/) {
             _v_print($err);
@@ -6370,7 +6410,7 @@ Following commands and options are useful to get more information:
 
 =over 4
 
-=item I<+chain_verify>, I<+verify>, I<+chain>, I<+s_client>
+=item I<+chain_verify>, I<+verify>, I<+error_verify>, I<+chain>, I<+s_client>
 
 =item I<--ca-file>, I<--ca-path>, I<--ca-depth>
 
@@ -6983,7 +7023,7 @@ Following formats are used:
 
 =item Show certificate CA verifications
 
-    $0 some.tld +chain_verify +verify +chain
+    $0 some.tld +chain_verify +verify +error_verify +chain
 
 =item Avoid most performance and timeout problems
 
@@ -7033,7 +7073,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.22
+@(#) 14.01.23
 
 =head1 AUTHOR
 
@@ -7065,15 +7105,12 @@ TODO
     ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
   * Net::SSLeay
-    ** Net::SSLinfo.pm Net::SSLeay::X509_get_serialNumber() returns strange result
     ** Net::SSLinfo.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
        return error message
     ** Net::SSLeay::CTX_clear_options()
        Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
        SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
        see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
-    ** use Net::SSLeay 1.42 as fallback, because 1.49 causes problems at
-       some sites (connect() fails).
 
   * Windows
     ** Unicode:
