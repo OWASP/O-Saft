@@ -50,12 +50,12 @@
 ###
 ### redefine command +http 
 ###
---cfg_cmd=http=http_status http_location http_refresh http_sts https_status https_server https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy https_pins pkp_pins http
+--cfg_cmd=http=http_status http_location http_refresh http_sts https_status https_server https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy https_pins pkp_pins http pfs
 
 ###
 ### redefine command +info
 ###
---cfg_cmd=info=cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify expansion compression renegotiation resumption srp krb5 psk_identity psk_hint protocols master_key session_id session_ticket http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy https_pins pkp_pins info
+--cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify expansion compression renegotiation resumption srp krb5 psk_identity psk_hint protocols master_key session_id session_ticket sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy https_pins pkp_pins info
 ### useless for cmd-info: ('cause aliases) issuer issuer_hash
 ### included in cmd-info to be printed with --v :
 ###      certificate sigdump pubkey extensions ext_*
@@ -71,13 +71,13 @@
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=default cipher export rc4 pfs beast beast-default crime fingerprint_hash fp_not_md5 email serial subject dates verify expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
+--cfg_cmd=quick=default sslversion cipher export rc4 pfs beast beast-default crime fingerprint_hash fp_not_md5 email serial subject dates verify expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
 
 ###
 ### redefine texts
 ###
 #
-# all characters right to left-most = is the new string
+# the new string consist of: all characters right to left-most =
 # all \n, \r and \t will be replace by corresponding character
 #
 # NOTE that @@ is a placeholder and will be replaced with actual value
