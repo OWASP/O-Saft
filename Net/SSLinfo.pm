@@ -33,7 +33,8 @@ use strict;
 use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SID         => '@(#) Net::SSLinfo.pm 1.69 14/01/26 00:03:11'
+    SSLINFO_HASH=> '<<openssl>>',
+    SID         => '@(#) Net::SSLinfo.pm 1.70 14/01/26 17:25:45',
 };
 
 ######################################################## public documentation #
@@ -281,7 +282,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.01.22';
+    $VERSION   = '14.01.23';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -289,6 +290,7 @@ require Exporter;
         do_ssl_close
         do_openssl
         set_cipher_list
+        options
         errors
         PEM
         pem
@@ -299,6 +301,7 @@ require Exporter;
         fingerprint_type
         fingerprint_sha1
         fingerprint_md5
+        cert_type
         email
         serial
         modulus
@@ -333,6 +336,7 @@ require Exporter;
         authority
         owner
         certificate
+        SSLversion
         version
         keysize
         keyusage
@@ -353,6 +357,8 @@ require Exporter;
         verify_altname
         verify_alias
         verify
+        error_verify
+        error_depth
         chain
         chain_verify
         compression
@@ -507,11 +513,15 @@ my %_SSLinfo= ( # our internal data structure
     'port'      => 443,         # port as given by user (default 443)
     'ssl'       => undef,       # handle for Net::SSLeay
     'ctx'       => undef,       # handle for Net::SSLeay::CTX_new()
+    '_options'  => '',          # option bitmask used for connection
     'errors'    => [],          # stack for errors, if any
     'cipherlist'=> 'ALL:NULL:eNULL:aNULL:LOW', # we want to test really all ciphers available
-    # now store the data we get from above handles
-    'version'   => '',
     'verify_cnt'=> 0,           # Net::SSLeay::set_verify() call counter
+    # now store the data we get from above handles
+    'SSLversion'=> '',          # Net::SSLeay::version(); used protocol version
+    'version'   => '',          # certificate version
+    'error_verify'  => '',      # error string of certificate chain check
+    'error_depth'   => '',      # integer value of depth where certificate chain check failed
     'keysize'   => '',
     'keyusage'  => '',
     'altname'   => '',
@@ -522,6 +532,7 @@ my %_SSLinfo= ( # our internal data structure
     'after'     => '',
     'PEM'       => '',
     'text'      => '',
+    'cert_type' => '',          # X509 certificate type  EXPERIMENTAL
     'ciphers'           => [],  # list of ciphers offered by local SSL implementation
     # all following are available when calling  openssl only
     's_client'          => "",  # data we get from `openssl s_client -connect ...'
@@ -696,45 +707,40 @@ sub _ssleay_get($$) {
         return '';
     }
 
+    return Net::SSLeay::X509_get_version(        $x509) + 1     if ($key eq 'version');
     return Net::SSLeay::X509_get_fingerprint(    $x509,  'md5') if ($key eq 'md5');
     return Net::SSLeay::X509_get_fingerprint(    $x509, 'sha1') if ($key eq 'sha1');
-
     return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_subject_name($x509)) if($key eq 'subject');
     return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509)) if($key eq 'issuer');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if($key eq 'before');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if($key eq 'after');
-    # constants like NID_CommonName from openssl/objects.h (1.0.0*)
+    return Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509)) if($key eq 'serial');
     return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
+    return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_certificate_policies) if ($key eq 'policies');
 
-    my $ret = '';
-    # ToDo: following most likely do not work
-    #     Net::SSLeay::NID_key_usage             = 83
-    #     Net::SSLeay::NID_basic_constraints     = 87
-    #     Net::SSLeay::NID_certificate_policies  = 89
-    #     Net::SSLeay::NID_uniqueIdentifier      = 102
-    #     Net::SSLeay::NID_serialNumber          = 105
-    return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_serialNumber) if ($key eq 'policies');
-
-    # X509_get_subjectAltNames returns array of (type, string)
-    # type: 1 = email, 2 = DNS, 6 = URI, 7 = IPADD, 0 = othername
+    my $ret = "";
     if ($key eq 'altname') {
-        my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509);
-        _trace("_ssleay_get: Altname: " . join(" ",@altnames));
+        my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509); # returns array of (type, string)
+        _trace("_ssleay_get: Altname: " . join(" ", @altnames));
         while (@altnames) {             # construct string like openssl
             my ($type, $name) = splice(@altnames, 0, 2);
+            # ToDo: replace ugly code by %_SSLtypemap
             $type = 'DNS'           if ($type eq '2');
             $type = 'URI'           if ($type eq '6');
+            $type = 'X400'          if ($type eq '3');
+            $type = 'DIRNAME'       if ($type eq '4');
+            $type = 'EDIPARTY'      if ($type eq '5');
             $type = 'IPADD'         if ($type eq '7');
+            $type = 'RID'           if ($type eq '8');
+            $type = 'email'         if ($type eq '1');
             $name = '<<undefined>>' if(($type eq '0') && ($name!~/^/));
             $type = 'othername'     if ($type eq '0');
-            $type = 'email'         if ($type eq '1');
             # all other types are used as is, so we see what's missing
             $ret .= ' ' . join(':', $type, $name);
         }
-        return $ret;
     }
-    _trace("_ssleay_get '' .");  # or warn "**WARNING: wrong key '$key' given; ignored";
-    return '';
+    _trace("_ssleay_get: $ret.");  # or warn "**WARNING: wrong key '$key' given; ignored";
+    return $ret;
 } # _ssleay_get
 
 sub _header_get($$) {
@@ -762,7 +768,7 @@ sub _openssl_MS($$$$) {
     _trace("_openssl_MS($mode, $host, $port)");
     if ($_openssl eq '') {
         _trace("_openssl_MS($mode): WARNING: no openssl");
-        return '#';
+        return SSLINFO_HASH;
     }
     $host .= ':' if ($port ne '');
     $text = '""' if (!defined $text);
@@ -808,7 +814,7 @@ sub _openssl_x509($$) {
     _setcmd();
     if ($_openssl eq '') {
         _trace("_openssl_x509($mode): WARNING: no openssl");
-        return '#';
+        return SSLINFO_HASH;
     }
 
     #if ($mode =~ m/^-(text|email|modulus|serial|fingerprint|subject_hash|trustout)$/) {
@@ -834,6 +840,7 @@ sub _openssl_x509($$) {
     }
     chomp $data;
     $data =~ s/\s*$//;  # be sure ...
+    $data =~ s/\s*Version:\s*//i if (($mode =~ m/ -text /) && ($mode !~ m/version,/)); # ugly test for version
     #dbx# print "#3 $data \n#3";
     return $data;
 } # _openssl_x509
@@ -887,6 +894,7 @@ sub do_ssl_open($$$) {
     my $socket  = *FH;  # if we need it ...
 
     TRY: {
+        #1. open TCP connection
         if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
             $src = "_check_host($host)";  if (!defined _check_host($host)) { last; }
             $src = "_check_port($port)";  if (!defined _check_port($port)) { last; }
@@ -900,22 +908,21 @@ sub do_ssl_open($$$) {
             $socket = $Net::SSLinfo::socket;
         }
 
-        # connection open, lets do SSL
+        #2. prepare SSL's context object
         ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             # CTX_v23_new() returns an object, errors are on error stack
             # we use CTX_v23_new() 'cause of CTX_new() sets SSL_OP_NO_SSLv2
 
+        #2a. set certificate verification options
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
-            # we're in client mode were only VERYFY_NONE or VERYFY_PEER is used
-            # as we want to get all informations, even if something went wrong,
-            # we use VERIFY_NONE so we can proceed collecting informations
+            # we're in client mode where only  VERYFY_NONE  or  VERYFY_PEER  is
+            # used; as we want to get all informations,  even if something went
+            # wrong, we use VERIFY_NONE so we can proceed collecting data
             # possible values:
             #  0 = SSL_VERIFY_NONE
             #  1 = SSL_VERIFY_PEER
             #  2 = SSL_VERIFY_FAIL_IF_NO_PEER_CERT
             #  4 = SSL_VERIFY_CLIENT_ONCE
-######
-            # SSL_check_crl   => true (verify CRL in local SSL_ca_path)
         $src = "Net::SSLeay::CTX_load_verify_locations()";
         $cafile = $Net::SSLinfo::ca_file || "";
         if ($cafile !~ m#^([a-zA-Z0-9_,.\\/()-])*$#) {
@@ -929,8 +936,8 @@ sub do_ssl_open($$$) {
         }
         if (($capath . $cafile) ne "") { # CTX_load_verify_locations() fails if both are empty
             Net::SSLeay::CTX_load_verify_locations($ctx, $cafile, $capath) or do {$err = $!} and last;
-            # CTX_load_verify_locations() sets SSLeay's error stack, which
-            # is roughly the same as $!
+            # CTX_load_verify_locations()  sets SSLeay's error stack,  which is
+            # roughly the same as $!
         }
         $src = "Net::SSLeay::CTX_set_verify_depth()";
         if (defined $Net::SSLinfo::ca_depth) {
@@ -941,58 +948,65 @@ sub do_ssl_open($$$) {
             Net::SSLeay::CTX_set_verify_depth($ctx, $Net::SSLinfo::ca_depth);
         }
 
-# ToDo: proxy settings work in HTTP mode only
-##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
-##print "#ERR: $!";
-##
-# Client-Cert see smtp_tls_cert.pl
-###
-###
-###             Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
-###             Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
-###
-
-            # ToDo: setting more options not yet tested
-            # SSL_honor_cipher_order  => true (cipher order provided by client)
-
-        $src = 'Net::SSLeay::CTX_set_options()';
+        #2b. set protocol options
+        $src = "Net::SSLeay::CTX_set_ssl_version()";   # set default SSL protocol
+            $ssl = eval("Net::SSLeay::SSLv23_method()");
+            if (defined $ssl) {
+                Net::SSLeay::CTX_set_ssl_version($ctx, $ssl) or do {$err = $!} and last;
+                # allow all protocols for backward compatibility; user specific
+                # restrictions are done later with  CTX_set_options()
+            } else {
+                push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
+                # if we don't have  SSLv23_method(), we better use the system's
+                # default behaviour, because anything else  would stick  on the
+                # specified protocol version, like SSLv3_method()
+            }
+        $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
             # disable not specified SSL versions
         foreach  $ssl (keys %_SSLmap) {
-            # $sslversions passes the version which should be supported, but
-            # openssl and hence Net::SSLeay, configures what should *not* be
-            # supported, so we skip all versions found in $sslversions
+            # $sslversions  passes the version which should be supported,  but
+            # openssl and hence Net::SSLeay, configures what  should *not*  be
+            # supported, so we skip all versions found in  $sslversions
             next if ($sslversions =~ m/^\s*$/); # no version given, leave default
             next if (grep(/^$ssl$/, split(" ", $sslversions)));
             if (defined $_SSLmap{$ssl}[1]) {    # if there is a bitmask, disable this version
-                print("### do_ssl_open: OP_NO_$ssl");
-                _trace("do_ssl_open: OP_NO_$ssl");   # NOTE: constant name *not* as in ssl.h
+                _trace("do_ssl_open: OP_NO_$ssl"); # NOTE: constant name *not* as in ssl.h
                 Net::SSLeay::CTX_set_options($ctx, $_SSLmap{$ssl}[1]) if(defined $_SSLmap{$ssl}[1]);
             }
         }
         $ssl = undef;
 
+# ToDo:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
+# ToDo:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
+# ToDo: Client-Cert see smtp_tls_cert.pl
+# ToDo: proxy settings work in HTTP mode only
+##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
+##print "#ERR: $!";
+
+        #3. prepare SSL object
         $src = 'Net::SSLeay::new()';
         ($ssl=  Net::SSLeay::new($ctx))                     or {$err = $!} and last;
         $src = 'Net::SSLeay::set_fd()';
                 Net::SSLeay::set_fd($ssl, fileno($socket))  or {$err = $!} and last;
-        $src = 'Net::SSLeay::set_cipher_list(' . $cipher . ')';
+        $src = 'Net::SSLeay::set_cipher_list(' . $cipher .')';
                 Net::SSLeay::set_cipher_list($ssl, $cipher) or {$err = $!} and last;
-
         if ($Net::SSLinfo::use_SNI == 1) {
             _trace("do_ssl_open: SNI");
             if (1.45 <= $Net::SSLeay::VERSION) {
                 $src = 'Net::SSLeay::set_tlsext_host_name()';
                 Net::SSLeay::set_tlsext_host_name($ssl, $host) or {$err = $!} and last;
             } else {
-                # use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
-                # use constant TLSEXT_NAMETYPE_host_name    => 0
+                # quick&dirty instead of:
+                #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
+                #  use constant TLSEXT_NAMETYPE_host_name    => 0
                 $src = 'Net::SSLeay::ctrl()';
                 Net::SSLeay::ctrl($ssl, 55, 0, $host)       or {$err = $!} and last;
                 #ToDo: ctrl() sometimes fails but does not return errors, reason yet unknown
             }
         }
 
+        #4. connect SSL
         my $ret;
         $src = 'Net::SSLeay::connect() ';
         $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
@@ -1005,30 +1019,40 @@ sub do_ssl_open($$$) {
         #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
         #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
 
-        # SSL established, lets get informations
+        #5. SSL established, let's get informations
         # ToDo: starting from here implement error checks
         $src ='Net::SSLeay::get_peer_certificate()';
         my $x509= Net::SSLeay::get_peer_certificate($ssl);
+
+        #5a. get internal data
         $_SSLinfo{'ctx'}        = $ctx;
         $_SSLinfo{'ssl'}        = $ssl;
         $_SSLinfo{'x509'}       = $x509;
-        # store actually used ciphers for this connection
+        $_SSLinfo{'_options'}  .= sprintf("0x%016x", Net::SSLeay::CTX_get_options($ctx));
+        $_SSLinfo{'SSLversion'} = $_SSLhex{Net::SSLeay::version($ssl)};
+            # ToDo: Net::SSLeay's documentation also has:
+            #    get_version($ssl); get_cipher_version($ssl);
+            # but they are not implemented (up to 1.49)
+
+        #5b. store actually used ciphers for this connection
         my $i   = 0;
         my $c   = '';
         push(@{$_SSLinfo{'ciphers'}}, $c) while ($c = Net::SSLeay::get_cipher_list($ssl, $i++));
         $_SSLinfo{'default'}    = Net::SSLeay::get_cipher($ssl);
             # same as above:      Net::SSLeay::CIPHER_get_name(Net::SSLeay::get_current_cipher($ssl));
-        #ok $_SSLinfo{'bits'}       = Net::SSLeay::CIPHER_get_bits(Net::SSLeay::get_current_cipher($ssl));
+
+        #5c. store certificate informations
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
-#       $_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # ToDo: returns binary, hence see below
+        #$_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # ToDo: returns binary, hence see below
         $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
-
+        $_SSLinfo{'version'}    = _ssleay_get('version', $x509);
         $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
         $_SSLinfo{'issuer'}     = _ssleay_get('issuer',  $x509);
         $_SSLinfo{'before'}     = _ssleay_get('before',  $x509);
         $_SSLinfo{'after'}      = _ssleay_get('after',   $x509);
+        $_SSLinfo{'policies'}   = _ssleay_get('policies',$x509);
         if (1.33 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL,
             $_SSLinfo{'altname'}= _ssleay_get('altname', $x509);
         } else {
@@ -1040,16 +1064,6 @@ sub do_ssl_open($$$) {
         } else {
             warn "you need at least Net::SSLeay version 1.30 for getting commonName";
         }
-        
-        $_SSLinfo{'policies'}   = _ssleay_get('policies', $x509);
-
-        # used by IO::Socket::SSL, allow for compatibility and lazy user
-        #      owner commonName cn subject issuer authority subjectAltNames
-        #      alias: owner == subject, issuer == authority, commonName == cn
-        $_SSLinfo{'commonName'} = $_SSLinfo{'cn'};
-        $_SSLinfo{'authority'}  = $_SSLinfo{'issuer'};
-        $_SSLinfo{'owner'}      = $_SSLinfo{'subject'};
-
         if (1.45 <= $Net::SSLeay::VERSION) {
             $_SSLinfo{'fingerprint_md5'} = _ssleay_get('md5',  $x509);
             $_SSLinfo{'fingerprint_sha1'}= _ssleay_get('sha1', $x509);
@@ -1057,11 +1071,26 @@ sub do_ssl_open($$$) {
             $_SSLinfo{'fingerprint_md5'} = '';
             $_SSLinfo{'fingerprint_sha1'}= '';
         }
+        if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
+            #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
+                # ToDo: returns a structure, needs to be unpacked
+            $_SSLinfo{'error_verify'}   = Net::SSLeay::X509_verify_cert_error_string(Net::SSLeay::get_verify_result($ssl));
+            $_SSLinfo{'error_depth'}    = Net::SSLeay::X509_STORE_CTX_get_error_depth($x509);
+            $_SSLinfo{'serial'}         = _ssleay_get('serial', $x509);
+            $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", Net::SSLeay::X509_certificate_type($x509));
+            $_SSLinfo{'subject_hash'}   = sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509));
+            $_SSLinfo{'issuer_hash'}    = sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));
+                # previous two values are integers, need to be converted to
+                # hex, we omit a leading 0x so they can be used elswhere
+        }
+        $_SSLinfo{'commonName'} = $_SSLinfo{'cn'};
+        $_SSLinfo{'authority'}  = $_SSLinfo{'issuer'};
+        $_SSLinfo{'owner'}      = $_SSLinfo{'subject'};
+            # used by IO::Socket::SSL, allow for compatibility and lazy user
+            #   owner commonName cn subject issuer authority subjectAltNames
+            #   alias: owner == subject, issuer == authority, commonName == cn
 
-        # following not working
-        #$_SSLinfo{'signatureAl'}= $ssl->peer_certificate('SignatureAlgorithm') || '';
-        #$_SSLinfo{'NPN'}        = $ssl->next_proto_negotiated()             || '';
-
+        #5d. get data related to HTTP(S)
         if ($Net::SSLinfo::use_http > 0) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x';
@@ -1083,8 +1112,10 @@ sub do_ssl_open($$$) {
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
             $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'https_sts'} =~ m/includeSubDomains/i);
 # ToDo:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
+# ToDo: HTTP header:
+#    X-Firefox-Spdy: 3.1
             _trace("\n$response \n# do_ssl_open HTTPS }");
-            _trace("do_ssl_open HTTP {");
+            _trace("do_ssl_open HTTP {");   # HTTP uses its own connection ...
             my %headers;
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
@@ -1113,23 +1144,6 @@ sub do_ssl_open($$$) {
             }
             _trace("\n$response \n# do_ssl_open HTTP }");
         }
-        if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
-            # not available before Net-SSLeay-1.45
-            #$_SSLinfo{'version'}        = Net::SSLeay::X509_get_version($x509);
-                # ToDo: X509_get_version() returns different value than
-                #       openssl (see below); reason yet unknown
-            #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
-                # returns a structure, needs to be unpacked
-            #$_SSLinfo{'error-depth'}    = Net::SSLeay::X509_STORE_CTX_get_error_depth($x509);
-                # not yet implemented
-
-                # following values come as integer, need to be converted to hex
-            $_SSLinfo{'subject_hash'}   =  sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509));
-            $_SSLinfo{'issuer_hash'}    =  sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));
-            #$_SSLinfo{'serial'}         =  sprintf("%x", Net::SSLeay::X509_get_serialNumber($x509));
-                # ToDo: X509_get_serialNumber() returns different value than
-                #       openssl (see below); reason yet unknown
-        }
 
         if ($Net::SSLinfo::use_openssl == 0) {
             # calling external openssl is a performance penulty
@@ -1138,6 +1152,8 @@ sub do_ssl_open($$$) {
             _trace("do_ssl_open() without openssl done.");
             goto finished;
         }
+
+        #5e. get data from openssl, if required
         # NOTE: all following are only available when openssl is used
         #       those alredy set before will be overwritten
 
@@ -1303,7 +1319,6 @@ sub do_ssl_open($$$) {
         $_SSLinfo{'verify'}         = $d;
         # ToDo: $_SSLinfo{'verify_host'}= $ssl->verify_hostname($host, 'http');  # returns 0 or 1
         # scheme can be: ldap, pop3, imap, acap, nntp http, smtp
-# my $rv = Net::SSLeay::get_verify_result($ssl);
 
         $d =~ s/.*?(self signed.*)/$1/si;
         $_SSLinfo{'selfsigned'}     = $d;
@@ -1327,7 +1342,8 @@ sub do_ssl_open($$$) {
         print Net::SSLinfo::dump() if ($trace > 0);
         goto finished;
     } # TRY
-    # error handling
+
+    #6. error handling
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
     if ($trace > 1) {
         Net::SSLeay::print_errs(SSLINFO_ERR);
@@ -1379,7 +1395,7 @@ Examples for C<$command>:
 
 The value of C<$data>, if set, is piped to openssl.
 
-Returns retrieved data or '#' if openssl or s_client missing.
+Returns retrieved data or '<<openssl>>' if openssl or s_client missing.
 =cut
 
 sub do_openssl($$$) {
@@ -1393,12 +1409,12 @@ sub do_openssl($$$) {
     _setcmd();
     if ($_openssl eq '') {
         _trace("do_openssl($mode): WARNING: no openssl");
-        return '#';
+        return SSLINFO_HASH;
     }
     if ($mode =~ m/^-?(s_client)$/) {
         if ($Net::SSLinfo::use_sclient == 0) {
             _trace("do_openssl($mode): WARNING: no openssl s_client") if ($trace > 1);
-            return '#';
+            return SSLINFO_HASH;
         }
         # pass -reconnect option to validate 'resumption' support later
         # pass -nextprotoneg option to validate 'protocols' support later
@@ -1442,8 +1458,6 @@ Set cipher list for connection.
 Returns empty string on success, errors otherwise.
 =cut
 
-# ToDo: buggy, Net::SSLeay::set_cipher_list() returns  Segmentation fault
-#       (12/2012 for Net::SSLeay 1.49, OpenSSL 0.9.8o)
 sub set_cipher_list($$) {
     my $ssl    = shift;
     my $cipher = shift;
@@ -1461,6 +1475,11 @@ Dump data retrived from "openssl s_client ..." call. For debugging only.
 =head2 errors( )
 
 Get list of errors from C<$Net::SSLeay::*> calls.
+
+=head2 options( )
+
+Return hex value bitmask of (openssl) options used to establish connection.
+Useful for debugging and trouble shooting.
 
 =head2 PEM( ), pem( )
 
@@ -1572,11 +1591,15 @@ Get owner (subject) from certificate.
 =head2 certificate( )
 
 Get certificate (subject, issuer) from certificate.
-=cut
+
+=head2 SSLversion( )
+
+Get SSL protocol version used by connection.
 
 =head2 version( )
 
 Get version from certificate.
+=cut
 
 #=head2 keysize( )
 #
@@ -1585,7 +1608,6 @@ Get version from certificate.
 #=head2 keyusage( )
 #
 #Get certificate X509v3 Extended Key Usage (Version 3 and TLS only?)
-#=cut
 
 =pod
 
@@ -1720,6 +1742,18 @@ Get certificate signature value (hexdump).
 
 Get certificate subject/issuer hash value (in hex).
 
+=head2 verify( )
+
+Get result of certificate chain verification.
+
+=head2 error_verify( )
+
+Get error string of certificate chain verification, if any.
+
+=head2 error_depth( )
+
+Get depth where certificate chain verification failed.
+
 =head2 chain( )
 
 Get certificate's CA chain.
@@ -1788,6 +1822,7 @@ Get pins attribute of STS header.
 
 sub s_client        { return _SSLinfo_get('s_client',         $_[0], $_[1]); }
 sub errors          { return _SSLinfo_get('errors',           $_[0], $_[1]); }
+sub options         { return _SSLinfo_get('_options',         $_[0], $_[1]); }
 sub PEM             { return _SSLinfo_get('PEM',              $_[0], $_[1]); }
 sub pem             { return _SSLinfo_get('PEM',              $_[0], $_[1]); } # alias for PEM
 sub text            { return _SSLinfo_get('text',             $_[0], $_[1]); }
@@ -1803,7 +1838,8 @@ sub altname         { return _SSLinfo_get('altname',          $_[0], $_[1]); }
 sub authority       { return _SSLinfo_get('authority',        $_[0], $_[1]); }
 sub owner           { return _SSLinfo_get('owner',            $_[0], $_[1]); } # alias for subject
 sub certificate     { return _SSLinfo_get('certificate',      $_[0], $_[1]); }
-sub version         { return _SSLinfo_get('version',          $_[0], $_[1]); } # NOT IMPLEMENTED
+sub SSLversion      { return _SSLinfo_get('SSLversion',       $_[0], $_[1]); }
+sub version         { return _SSLinfo_get('version',          $_[0], $_[1]); }
 sub keysize         { return _SSLinfo_get('keysize',          $_[0], $_[1]); } # NOT IMPLEMENTED
 sub keyusage        { return _SSLinfo_get('keyusage',         $_[0], $_[1]); } # NOT IMPLEMENTED
 sub email           { return _SSLinfo_get('email',            $_[0], $_[1]); }
@@ -1822,6 +1858,8 @@ sub sigkey_len      { return _SSLinfo_get('sigkey_len',       $_[0], $_[1]); }
 sub subject_hash    { return _SSLinfo_get('subject_hash',     $_[0], $_[1]); }
 sub issuer_hash     { return _SSLinfo_get('issuer_hash',      $_[0], $_[1]); }
 sub verify          { return _SSLinfo_get('verify',           $_[0], $_[1]); }
+sub error_verify    { return _SSLinfo_get('error_verify',     $_[0], $_[1]); }
+sub error_depth     { return _SSLinfo_get('error_depth',      $_[0], $_[1]); }
 sub chain           { return _SSLinfo_get('chain',            $_[0], $_[1]); }
 sub chain_verify    { return _SSLinfo_get('chain_verify',     $_[0], $_[1]); }
 sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
@@ -1840,6 +1878,7 @@ sub fingerprint_type{ return _SSLinfo_get('fingerprint_type', $_[0], $_[1]); }
 sub fingerprint_sha1{ return _SSLinfo_get('fingerprint_sha1', $_[0], $_[1]); }
 sub fingerprint_md5 { return _SSLinfo_get('fingerprint_md5' , $_[0], $_[1]); }
 sub fingerprint     { return _SSLinfo_get('fingerprint',      $_[0], $_[1]); } # alias for fingerprint_text
+sub cert_type       { return _SSLinfo_get('cert_type',        $_[0], $_[1]); }
 sub modulus_len     { return _SSLinfo_get('modulus_len',      $_[0], $_[1]); }
 sub modulus_exponent{ return _SSLinfo_get('modulus_exponent', $_[0], $_[1]); }
 sub pubkey_algorithm{ return _SSLinfo_get('pubkey_algorithm', $_[0], $_[1]); }
