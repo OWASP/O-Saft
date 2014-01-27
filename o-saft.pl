@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.214 14/01/27 01:15:49";
+my  $SID    = "@(#) yeast.pl 1.215 14/01/27 08:52:19";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -4220,10 +4220,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^-?-h(?:ost)?=(.*)/)   { $typ = 'HOST';    $arg = $1; } # no next
     if ($arg =~ /^-?-p(?:ort)?$/)       { $typ = 'PORT';         next; }
     if ($arg =~ /^-?-p(?:ort)?=(.*)/)   { $typ = 'PORT';    $arg = $1; } # no next
-    if ($arg =~ /^--exe$/)              { $typ = 'EXE';          next; }
-    if ($arg =~ /^--exe=(.*)/)          { $typ = 'EXE';     $arg = $1; } # no next
-    if ($arg =~ /^--lib$/)              { $typ = 'LIB';          next; }
-    if ($arg =~ /^--lib=(.*)/)          { $typ = 'LIB';     $arg = $1; } # no next
+    if ($arg =~ /^--exe(?:[_-]?path)?$/){ $typ = 'EXE';          next; }
+    if ($arg =~ /^--exe(?:[_-]?path)?=(.*)/){ $typ = 'EXE'; $arg = $1; } # no next
+    if ($arg =~ /^--lib(?:[_-]?path)?$/){ $typ = 'LIB';          next; }
+    if ($arg =~ /^--lib(?:[_-]?path)?=(.*)/){ $typ = 'LIB'; $arg = $1; } # no next
     if ($arg =~ /^--envlibvar$/)        { $typ = 'ENV';          next; }
     if ($arg =~ /^--envlibvar=(.*)/)    { $typ = 'ENV';     $arg = $1; } # no next
     if ($arg =~ /^--cipher$/)           { $typ = 'CIPHER';       next; }
@@ -5245,16 +5245,16 @@ the description here is text provided by the user.
 
   This option forces to use  "openssl s_slient -connect CIPHER .." to
   check if a cipher is supported by the remote target. This is useful
-  if the  "--lib=LIB" option doesn't work (for example due to changes
+  if the "--lib=PATH" option doesn't work (for example due to changes
   of the API or other incompatibilities).
 
 =end comment
 
-=head3 --exe=PATH
+=head3 --exe-path=PATH --exe=PATH
 
   PATH      is a full path where to find openssl.
 
-=head3 --lib=PATH
+=head3 --lib-path=PATH --lib=PATH
 
   PATH      is a full path where to find libssl.so and libcrypto.so
 
