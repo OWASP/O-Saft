@@ -22,6 +22,8 @@ Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
 =item _yeast_exit( )
 
+=item _yeast_args( )
+
 =item _yeast_data( )
 
 =item _yeast_cipher( )
@@ -74,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.6 13/12/30 00:12:09";
+my  $SID    = "@(#) o-saft-dbx.pm 1.7 14/01/27 01:06:53";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -89,10 +91,19 @@ sub _yeast_init() {
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
         _yeast("       verbose= $cfg{'verbose'}");
         _yeast("         trace= $cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
+        _yeast("#----------------------------------------------------{");
+        _yeast("# " . join(", ", @dbxexe));
+        _yeast("          path= $cmd{'path'}");
+        _yeast("          libs= $cmd{'libs'}");
+        _yeast("     envlibvar= $cmd{'envlibvar'}");
         _yeast("  cmd->timeout= $cmd{'timeout'}");
         _yeast("  cmd->openssl= $cmd{'openssl'}");
         _yeast("   use_openssl= $cmd{'extopenssl'}");
         _yeast("openssl cipher= $cmd{'extciphers'}");
+        _yeast("#----------------------------------------------------}");
+        _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
+        _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
+        _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
         _yeast("       use_SNI= $Net::SSLinfo::use_SNI");
         _yeast("       targets= " . join(" ", @{$cfg{'hosts'}}));
         foreach $key (qw(port out_header format legacy cipher usehttp)) {
@@ -109,6 +120,15 @@ sub _yeast_exit() {
     _y_CMD("cfg'done'{");
     _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (keys %{$cfg{'done'}});
     _y_CMD("cfg'done'}");
+}
+sub _yeast_args() {
+    _y_ARG("#####{ summary of all arguments and options from command line");
+    _y_ARG("#####  and: "      . join(", ", @dbxfile));
+    _y_ARG("collected hosts= " . join(" ",  @{$cfg{'hosts'}}));
+    _y_ARG("processed  exec  arguments= ". join(" ", @dbxexe));
+    _y_ARG("processed normal arguments= ". join(" ", @dbxarg));
+    _y_ARG("processed config arguments= ". join(" ", map{"`".$_."'"} @dbxcfg)) if($cfg{'verbose'} > 0);
+    _y_ARG("#####}");
 }
 sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); }
 sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); } # must provide \n if wanted
