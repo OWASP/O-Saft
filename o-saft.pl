@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.213 14/01/26 17:35:33";
+my  $SID    = "@(#) yeast.pl 1.214 14/01/27 01:15:49";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -85,6 +85,11 @@ sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
 my $arg = "";
+# array to collect data fordebugging, they are global!
+our @dbxarg;    # normal options and arguments
+our @dbxcfg;    # config options and arguments
+our @dbxexe;    # executable, library, environment
+our @dbxfile;   # read files
 
 # read file with user source, if any
 # -------------------------------------
@@ -96,6 +101,7 @@ if (($#usr >= 0) and ($cgi == 0)) {
     }
 }
 if (-e $arg) {
+    push(@dbxfile, $arg);
     _print_read("user file", $arg) if(grep(/(:?--no.?header)/i, @ARGV) <= 0);
     require $arg;
 } else {
@@ -122,8 +128,10 @@ usr_pre_file();
 # read .rc-file if any
 # -------------------------------------
 my @rc_argv = "";
+$arg = "./.$me";
 open(RC, '<', "./.$me") && do {
-    _print_read("options", "./.$me") if ($cgi == 0);
+    push(@dbxfile, $arg);
+    _print_read("options", $arg) if ($cgi == 0);
     @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
     @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
     close(RC);
@@ -149,6 +157,7 @@ if (($#dbx >= 0) and ($cgi == 0)) {
         # Note: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
     }
+    push(@dbxfile, $arg);
     _print_read("trace file", $arg) if(grep(/(:?--no.?header)/i, @argv) <= 0);
         # allow --no-header in RC-FILE also
     require $arg;   # `our' variables are available there
@@ -863,8 +872,8 @@ my %info_gnutls = ( # NOT YET USED
 our %cmd = (
     'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
     'openssl'       => "openssl",   # OpenSSL
-    'libs'          => "",      # where to find libssl.so and libcrypto.so
-    'path'          => "",      # where to find openssl executable
+    'libs'          => [],      # where to find libssl.so and libcrypto.so
+    'path'          => [],      # where to find openssl executable
     'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
     'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
     'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check 
@@ -910,7 +919,7 @@ our %cfg = (
     'TLSv1'         => 1,       # 1:   "
     'TLSv11'        => 1,       # 1:   "
     'TLSv12'        => 1,       # 1:   "
-    'DTLSv9'        => 1,       # 1:   "
+    'DTLSv9'        => 0,       # 1:   "
     'DTLSv1'        => 1,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => "yeast", # which ciphers to be used
@@ -2145,6 +2154,7 @@ sub _dbx      { _dprint(@_); } # alias for _dprint
 # debug functions are defined in o-saft-dbx.pm and loaded on demand
 sub _yeast_init()  {}
 sub _yeast_exit()  {}
+sub _yeast_args()  {}
 sub _yeast_data()  {}
 sub _yeast($) {}
 sub _y_ARG    {}
@@ -2271,6 +2281,7 @@ sub _cfg_set($$) {
         _trace(" _cfg_set: read $arg \n");
         my $line ="";
         open(FID, $arg) && do {
+            push(@dbxfile, $arg);
             _print_read("configuration", $arg) if($cfg{'out_header'} > 0);
             while ($line = <FID>) {
                 #
@@ -4102,6 +4113,8 @@ my $typ = 'HOST';
 while ($#argv >= 0) {
     $arg = shift @argv;
     _y_ARG($arg);
+    push(@dbxarg, $arg) if (($arg !~ m/^--cfg_/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
+    push(@dbxcfg, $arg) if  ($arg =~ m/^--cfg_/);    # both aprox. match are sufficient for debugging
     # When used as CGI we need some special checks:
     #   - remove trailing = for all options except (see below)
     #   - ignore --cgi option
@@ -4317,12 +4330,13 @@ while ($#argv >= 0) {
 
     #{ option arguments
     _y_ARG("argument? $arg, typ= $typ");
+    push(@dbxexe, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
     #  +---------+----------+------------------------------+--------------------
     #   argument to process   what to do                    expect next argument
     #  +---------+----------+------------------------------+--------------------
     if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; next; }
-    if ($typ eq 'EXE')      { $cmd{'path'}      = $arg;     $typ = 'HOST'; next; }
-    if ($typ eq 'LIB')      { $cmd{'libs'}      = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; next; }
+    if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; next; }
     if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'SEP')      { $text{'separator'}= $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'TIMEOUT')  { $cfg{'timeout'}   = $arg;     $typ = 'HOST'; next; }
@@ -4375,6 +4389,7 @@ while ($#argv >= 0) {
 } # while
 $verbose = $cfg{'verbose'};
 
+_yeast_args();
 _vprintme();
 
 # set defaults for Net::SSLinfo
@@ -4408,20 +4423,24 @@ _y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
 if ($cfg{'exec'} == 0) {
     # as all shared libraries used by perl modules are already loaded when
-    # this program executes, we need to set PATH and LD_LIBRARY_PATH befor
+    # this program executes, we need to set PATH and LD_LIBRARY_PATH before
     # being called
     # so we call ourself with proper set environment variables again
-    if (($cmd{'path'} ne "") or ($cmd{'libs'} ne "")) {
+    if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) {
         _y_CMD("exec command " . join(" ", @{$cfg{'do'}}));
+        my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
+        my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
         local $\ = "\n";
-        $ENV{PATH} = $cmd{'path'} . ':' . $ENV{PATH};
-        $ENV{$cmd{envlibvar}} = $cmd{'libs'};
+        $ENV{PATH} = join($chr, @{$cmd{'path'}}, $ENV{PATH})  if ($#{$cmd{'path'}} >= 0);
+        $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0);
+        $ENV{$cmd{envlibvar}} .= $chr . $lib if ($lib);
         if ($verbose > 0) {
             _yeast("exec: envlibvar= $cmd{envlibvar}");
-            _yeast("exec: $cmd{envlibvar}= $ENV{$cmd{envlibvar}}");
+            _yeast("exec: $cmd{envlibvar}= " . ($ENV{$cmd{envlibvar}} || "")); # ENV may not exist
             _yeast("exec: PATH= $ENV{PATH}");
         }
         _yeast("exec: $0 +exec " . join(" ", @ARGV));
+        _yeast("################################################") if (($cfg{'traceARG'} + $cfg{'traceCMD'}) > 0);
         exec $0, '+exec', @ARGV;
     }
 }
@@ -4670,7 +4689,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         my $_printtitle = 0;    # count title lines
         foreach $ssl (@{$cfg{'version'}}) {
             # ToDo: single cipher check: grep for cipher in %{$ciphers}
-            #dbx# _dbx "$ssl # ", keys %{$ciphers} ; #sort keys %hash; # exit;
+            #dbx# _dbx "$ssl # ", keys %{$ciphers} ; #sort keys %hash;
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 printtitle($legacy, $ssl, join(":", $host, $port));
@@ -6315,6 +6334,15 @@ occours if the target refused a connection on port 80.
 This is considered a bug in L<Net::SSLeay>.
 Workaround to get rid of this message: use  I<--no-http>  option.
 
+=head2 invalid SSL_version specified at ....
+
+This error may occour on systems where SSL's DTLSv1 is not supported.
+The full message looks like:
+
+invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
+
+Workaround: use  I<--no-dtlsv1>  option.
+
 =head2 Performance Problems
 
 There are various reasons when the program responds slow, or seems to
@@ -6509,12 +6537,13 @@ L<IO::Socket::SSL(1)>, L<IO::Socket::INET(1)>
 =head2 Using private libssl.so and libcrypt.so
 
 For all  cryptographic functionality  the libraries  installed on the
-system will be used.  This is in particular perl's  Net:SSLeay module
-and the openssl executable.
+system will be used. This is in particular perl's  Net:SSLeay module,
+libssl.so and libcrypt.so and the openssl executable.
 
 It is possible to provide your own libraries, if the  perl module and
 the executable are  linked using  dynamic shared objects  (aka shared
 library, position independent code).
+The appropriate option is  I<--lib=PATH>  .
 
 On most systems these libraries are loaded at startup of the program.
 The runtime loader uses a preconfigured list of directories  where to
@@ -6525,7 +6554,28 @@ This is the default environment variable used herein.  If your system
 uses  another name it must be specified with the  I<--envlibvar=NAME>
 option, where  NAME  is the name of the environment variable.
 
-=head3 Caveats
+=head2 Understanding  I<--exe=PATH>, I<--lib=PATH>, I<--openssl=file>
+
+If any of  I<--exe=PATH>  or  I<--lib=PATH>  is provided, the pragramm
+calls (C<exec>) itself recursively with all given options, except the
+two option itself. The environment variables  C<LD_LIBRARY_PATH>  and
+C<PATH>  are set before executing as follows:
+
+=over 4
+
+=item prepend  C<PATH>  with all values given with  I<--exe=PATH> 
+
+=item prepend  C<LD_LIBRARY_PATH>  with all values given with  I<--lib=PATH> 
+
+=back
+
+This is exactly, what  L<Cumbersome Approach>  below describes.
+
+Note that I<--openssl=file> is a full path to the L<openssl> executable
+and will not be changed. However, if it is a relative path, it might
+be seached for using the previously set  C<PATH>  (see above).
+
+=head2 Caveats
 
 Depending on your system, and the used modules and executabes, it can
 be tricky to replace the configured shared libraries with own ones.
@@ -6538,11 +6588,11 @@ Reasons are:
 Only the first one a) can be circumvented.  The last one d) can often
 be ignored as it only prints a warning or error message.
 
-To circumvent the "name with verion number" problem try following:
+To circumvent the "name with version number" problem try following:
 
 =over
 
-=item 1. use ldd (or a similar tool) to get the names used by openssl:
+=item 1. use L<ldd> (or a similar tool) to get the names used by L<openssl>:
 
   ldd /usr/bin/openssl
 
@@ -7073,7 +7123,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.23
+@(#) 14.01.24
 
 =head1 AUTHOR
 
