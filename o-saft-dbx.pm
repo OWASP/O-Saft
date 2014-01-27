@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.7 14/01/27 01:06:53";
+my  $SID    = "@(#) o-saft-dbx.pm 1.8 14/01/27 08:54:39";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -93,8 +93,8 @@ sub _yeast_init() {
         _yeast("         trace= $cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
         _yeast("#----------------------------------------------------{");
         _yeast("# " . join(", ", @dbxexe));
-        _yeast("          path= $cmd{'path'}");
-        _yeast("          libs= $cmd{'libs'}");
+        _yeast("          path= " . join(" ", @{$cmd{'path'}}));
+        _yeast("          libs= " . join(" ", @{$cmd{'libs'}}));
         _yeast("     envlibvar= $cmd{'envlibvar'}");
         _yeast("  cmd->timeout= $cmd{'timeout'}");
         _yeast("  cmd->openssl= $cmd{'openssl'}");
