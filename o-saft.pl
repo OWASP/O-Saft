@@ -331,7 +331,7 @@ my %check_cert = (
     'dates'         => {'txt' => "Certificate is valid"},
     'expired'       => {'txt' => "Certificate is not expired"},
     'certfqdn'      => {'txt' => "Certificate is valid according given hostname"},
-    'wildhost'      => {'txt' => "Certificate's wilcard does not match hostname"},
+    'wildhost'      => {'txt' => "Certificate's wildcard does not match hostname"},
     'wildcard'      => {'txt' => "Certificate does not contain wildcards"},
     'rootcert'      => {'txt' => "Certificate is not root CA"},
     'selfsigned'    => {'txt' => "Certificate is not self-signed"},
@@ -899,7 +899,7 @@ our %cfg = (
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
-    'no_cert_txt'   => "",      # change default text if no data from cert retrived
+    'no_cert_txt'   => "",      # change default text if no data from cert retrieved
     'ca_depth'      => undef,   # depth of peer certificate verification verification
     'ca_crl'        => undef,   # URL where to find CRL file
     'ca_file'       => undef,   # PEM format file with CAs
@@ -998,7 +998,7 @@ our %cfg = (
     'hosts'         => [],
     'host'          => "",      # currently scanned host
     'ip'            => "",      # currently scanned host's IP
-    'IP'            => "",      # currently scanned host's IP (human redable, doted octed)
+    'IP'            => "",      # currently scanned host's IP (human readable, doted octed)
     'rhost'         => "",      # currently scanned host's reverse resolved name
     'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
     'port'          => 443,     # default port for connections
@@ -1035,7 +1035,7 @@ our %cfg = (
         'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
                        # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
         'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
-                       # FORTEZZA has abbrevations FZA and FRZ
+                       # FORTEZZA has abbreviations FZA and FRZ
                        # unsure about FORTEZZA_KEA
         'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
                        # Numerous protocol prefixes are in use:
@@ -1219,7 +1219,7 @@ foreach my $ssl (@{$cfg{'versions'}}) {
 
 my %ciphers_desc = (    # description of following %ciphers table
     'head'          => [qw(  sec  ssl   enc  bits mac  auth  keyx   score  tags)],
-                            # abbrevations used by openssl:
+                            # abbreviations used by openssl:
                             # SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2
                             # Kx=  key exchange (DH is diffie-hellman)
                             # Au=  authentication
@@ -1951,7 +1951,7 @@ my %text = (
         'SA'        => "Subordinate Authority (aka Subordinate CA)",
         'SAFER'     => "Secure And Fast Encryption Routine, block cipher",
         'Salsa20'   => "stream cipher",
-        'SAM'       => "syriac abbreviation mark",
+        'SAM'       => "syriac abbreviiation mark",
         'SAN'       => "Subject Alternate Name",
         'SBCS'      => "single-byte character set",
         'SCEP'      => "Simple Certificate Enrollment Protocol",
@@ -2355,7 +2355,7 @@ sub _cfg_set($$) {
 sub __SSLinfo($$$) {
     # wrapper for Net::SSLinfo::*() functions
     # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
-    # these values will be converted to o-saft's prefered format
+    # these values will be converted to o-saft's preferred format
     my $cmd = shift;
     my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
     $val =  Net::SSLinfo::fingerprint(      $_[0], $_[1]) if ($cmd eq 'fingerprint');
@@ -2631,7 +2631,7 @@ sub checkciphers($$$$$) {
     #no# return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace("checkciphers($ssl, .., $ciphers) {");
     my $verbose = $cfg{'verbose'};
-                    # verbose==2 : _v2print() print remotly checked ciphers
+                    # verbose==2 : _v2print() print remotely checked ciphers
                     # verbose==3 : _v3print() print processed ciphers
                     # verbose==4 : _v4print() print how cipher is processed
     local   $|  = 1;    # do not buffer (for verbosity)
@@ -2908,7 +2908,7 @@ sub check02102($$) {
     #! TR-02102-2 3.2.1 Empfohlene Cipher Suites
     #! TR-02102-2 3.2.2 Übergangsregelungen
     #! TR-02102-2 3.2.3 Mindestanforderungen für Interoperabilität
-    $checks{'bsi-tr-02102+'}->{val} = $checks{'tr-02102'}->{val}; # cipher checks are alreday done
+    $checks{'bsi-tr-02102+'}->{val} = $checks{'tr-02102'}->{val}; # cipher checks are already done
     $checks{'bsi-tr-02102-'}->{val} = $checks{'tr-02102'}->{val}; # .. for lazy check, ciphers are enough
 
     #! TR-02102-2 3.3 Session Renegotation
@@ -4466,7 +4466,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
     if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
         # { DISABLED-CHECK (starting with VERSION 14.01.23)
             # some versions of Net::SSLeay seem not to support the methods for
-            # all SSL versions even the underlaying library supports it
+            # all SSL versions even the underlying library supports it
             # hence the check (see below) is disabled for now
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
@@ -4883,7 +4883,7 @@ I<+info>  command.
 =head3 +cipher
 
     The cipher checks will return one line for each tested cipher. It
-    contains at least the cipher name,  "yes"  or  "no"  wether it is
+    contains at least the cipher name,  "yes"  or  "no"  whether it's
     supported or not, and a security qualification. It may look like:
         AES256-SHA       yes    HIGH
         NULL-SHA         no     weak
@@ -4903,20 +4903,20 @@ I<+info>  command.
     test result for it.  The  idea is to report  "yes"  if the result
     is considered "secure" and report the reason why it is considered
     insecure otherwise. Example of a check considered secure:
-        Label of perfomed check:                yes
+        Label of the performed check:           yes
     Example of a check considered insecure:
-        Label of perfomed check:                no (reason why)
+        Label of the performed check:           no (reason why)
 
-    Note that there are tests where  the reuslt sounds confusing when
+    Note that there are tests where the results appear confusing when
     first viewed, like for www.wi.ld:
         Certificate is valid according given hostname:  no (*.wi.ld)
-        Certificate's wilcard does not match hostname:  yes
-    This can for example occour with:
+        Certificate's wildcard does not match hostname: yes
+    This can for example occur with:
         Certificate Common Name:                *.wi.ld
         Certificate Subject's Alternate Names:  DNS:www.wi.ld
 
     Please check the result with the  "+info"  command also to verify
-    if the check sounds resonable.
+    if the check sounds reasonable.
 
 =head3 +info
 
@@ -4926,14 +4926,14 @@ I<+info>  command.
 To make the output easily parsable by postprocessors, following rules
 are used.
 When used in  I<--legacy=full> or I<--legacy=simple>  mode, the output
-may contain formatting lines for better (human) redability. These are
+may contain formatting lines for better (human) readability. These are
 either empty lines, or lines beginning with the equal sign C<=>. These
 modes also use at least one tab character (0x09, TAB) to separate the
 label text from the text of the result. Example:
-        Label of perfomed check:TABresult
+        Label of the performed check:TABresult
 When used in I<--legacy=quick> mode, the label text and text result in
 the output are separated by just a single tab character. Example:
-        Label of perfomed checkTABresult
+        Label of the performed checkTABresult
 
 The acronym C<N/A> may appear in some results. It means that no proper
 informations was or could be provided. Replace  C<N/A> by whatever you
@@ -4977,25 +4977,26 @@ with other commands).
 
 =head3 +ciphers
 
-    Show ciphers offerd by local SSL implentation and by target.
+    Show ciphers offerd by local SSL implementation and by target.
 
     Note that SSL requires a successful connection to the target.  If
     no target is given, we try to get the list using "openssl(1)".
 
 =head3 +list
 
-    Show all ciphers  knwon by this tool.  This includes cryptogrphic
+    Show all ciphers  known by this tool.  This includes cryptogrphic
     details of the cipher and some internal details about the rating.
 
     Use "--v" option to show more details.
 
 =head3 +abbr +abk
 
-    Show common abbrevation used in the world of security.
+    Show common abbreviations used in the world of security.
 
 =head3 +version
 
-    Show program's and used perl modules' version, then exit.
+    Show version information for both the program and the Perl modules
+    that it uses, then exit.
 
     Use "--v" option to show more details.
 
@@ -5016,7 +5017,7 @@ with other commands).
 
 =end comment
 
-    Following (summury, internal) commands  are simply a shortcut for
+    Following (summary, internal) commands  are simply a shortcut for
     a list of other commands. For details of the list use:
 
         $0 --help=intern
@@ -5049,7 +5050,7 @@ with other commands).
     Overview of all details of the SSL connection. This is a shortcut
     for all commands listed below but not including "+cipher".
 
-    This command is intended for debuuging  as it prints some details
+    This command is intended for debugging  as it prints some details
     from the used  Net::SSLinfo  module.
 
 =head3 +quick
@@ -5079,7 +5080,7 @@ with other commands).
 
 =head3 +s_client
 
-    Dump data retrived from  "openssl s_client ..."  call.  Should be
+    Dump data retrieved from  "openssl s_client ..."  call. Should be
     used for debugging only.
     It can be used just like openssl itself, for example:
         "openssl s_client -connect host:443 -no_sslv2"
@@ -5106,7 +5107,7 @@ with other commands).
     Check target for ciphers, either all ciphers or ciphers specified
     with "-cipher=*" option.
 
-    Note that ciphers not supported by the local SSL implentation are
+    Note that ciphers not supported by the local SSL implementation are
     not checked by default, use "--local" option for that.
 
 =head2 Commands to test SSL connection to target
@@ -5138,7 +5139,7 @@ the description here is text provided by the user.
         perl's POD module to print it.  Unfortunately  the first line
         written by  POD  is:
             "User Contributed Perl Documentation"
-        which may be a bit misleading, 'cause all descriptions of the
+        which may be a bit misleading because all descriptions of the
         documentation belong to this tool itself.
 
 =head3 --help=cmd
@@ -5273,13 +5274,13 @@ the description here is text provided by the user.
 
 =head3 --cipher=CIPHER
 
-  CIPHER    can be any string accpeted by openssl or following:
+  CIPHER    can be any string accepeted by openssl or following:
 
   yeast     use all ciphers from list defined herein, see "+list"
 
   Beside the cipher names accepted by openssl, CIPHER can be the name
   of the constant or the (hex) value as defined in openssl's files.
-  Currently supported are the names and constans of openssl 1.0.1c .
+  Currently supported are the names and constants of openssl 1.0.1c .
   Example:
       --cipher=DHE_DSS_WITH_RC4_128_SHA
       --cipher=0x03000066
@@ -5424,11 +5425,11 @@ Options used for  I<+check>  command:
   Please don't expect identical output as the TOOL, it's a best guess
   and should be parsable in a very similar way.
 
-  TOOL may also be one of follwoing internal formats:
+  TOOL may also be set to any of following internally defined values:
 
     compact:      mainly avoid tabs and spaces
                   format is as follows
-                    Some Label:<-- anthing right of colon is data
+                    Some Label:<-- anything right of colon is data
     full:         pretty print: each label in its  own line, followed
                   by data in next line prepended by tab character
                   (useful for "+info" only)
@@ -5477,7 +5478,7 @@ Options used for  I<+check>  command:
 
   TAB character (0x09, \t)  will be used  as separator between  label
       and value of the printed results.
-  As label and value are already separated  by a TAB charactere, this
+  As label and value are already separated by a  TAB  character, this
   options is only useful in conjunction with the   "--legacy=compact"
   option.
 
@@ -5500,7 +5501,7 @@ Options used for  I<+check>  command:
 
 Please see other programs for detailed description (if not obvious:).
 Note that only the long form options are accepted  as most short form
-options are ambigious.
+options are ambiguous.
 
 =over 4
 
@@ -5536,7 +5537,7 @@ options are ambigious.
 
 =item * -no_SSL                            same as I<--no-SSL>
 
-  For defnition of  "SSL"  see  "--SSL"  and  "--no-SSL"  above.
+  For definition of  "SSL"  see  "--SSL"  and  "--no-SSL"  above.
 
 =item * --insecure        (cnark.pl)       ignored
 
@@ -5578,7 +5579,7 @@ options are ambigious.
 
       $0 --help=score
 
-  For deatils how soring works, please see  SCORING  section.
+  For deatils how scoring works, please see  SCORING  section.
 
   Use the  "--trace-key"  option for the  "+info"  and/or  "+check"
   command to get the values for  KEY.
@@ -5626,11 +5627,11 @@ options are ambigious.
 
 =head3 --v --v
 
-  Print remotly checked ciphers.
+  Print remotely checked ciphers.
 
 =head3 --v --v --v
 
-  Print remotly checked ciphers one per line.
+  Print remotely checked ciphers one per line.
 
 =head3 --v --v --v --v
 
@@ -5702,7 +5703,7 @@ variable names and program flow.
 
 =head2 Options vs. Commands
 
-For comptibility with other programs and lazy users, some options are
+For compatibility with other programs and lazy users, some options are
 silently taken as commands, means that  I<--THIS>  becomes  I<+THIS> .
 
 =over 4
@@ -5770,8 +5771,8 @@ identify which port is used: last one wins.
 
 =head1 CHECKS
 
-All checks  according SSL  done by this tool will be descibed here in
-near future. Any help appreciated ...
+All SSL related check performed by the tool will be described here in
+the near future (Any help appreciated ...).
 
 =head2 General Checks
 
@@ -5840,7 +5841,7 @@ NOT YET IMPLEMENTED
 
 =head3 OCSP, CRL, CPS
 
-Certificate should containt URL for OCSP and CRL.
+Certificate should contain URL for OCSP and CRL.
 
 =head3 Sizes and Lengths of Certificate Settings
 
@@ -5980,7 +5981,7 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
     Certificate itself must be valid according dates if validity.
     Note that  the validity check relies on the years provided by the
-    certificate's  "before" and  "after"  values only. For eaxample a
+    certificate's  "before"  and  "after"  values only. For example a
     certificate valid  from Jan 2013 to Mar 2016  is considered valid
     even the validity is more than three years.
 
@@ -6032,7 +6033,7 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
 =head1 SCORING
 
-Comming soon ...
+Coming soon ...
 
 =head1 OUTPUT
 
@@ -6080,14 +6081,14 @@ This tools can be customized as follows:
 
 =item Using debugging files
 
-    These files are --nomen est omen-- used for debugging purpose.
-    However, they can be (mis-)used to redifine all settings too.
+    These files are --nomen est omen-- used for debugging purposes.
+    However, they can be (mis-)used to redefine all settings too.
     Please see  DEBUG-FILE  below.
 
 =item Using user specified code
 
     This file contains  user specified  program code.  It can also be
-    (mis-)used to redifine all settings. Please see USER-FILE  below.
+    (mis-)used to redefine all settings. Please see USER-FILE  below.
 
 =back
 
@@ -6096,7 +6097,7 @@ which are:  %cfg,  %data,  %checks,  %text,  %scores .
 
 Unless used in  DEBUG-FILE  or  USER_FILE,  there is  no need to know
 these internal data structures or the names of variables; the options
-will set the proper values.  The key names beeing part of the option,
+will set the  proper values.  The key names being part of the option,
 are printed in output with the  I<--trace-key>  option.
 
 I.g. texts (values) of keys in  %data are those used in output of the
@@ -6120,7 +6121,7 @@ for additional information lines or texts (mainly beginning with C<=>).
 =item RC-FILE
 
     Resource files are searched for and used automatically. They will
-    be seached for in the local (current working) directory only.
+    be searched for in the local (current working) directory only.
     Syntax in resource file is: "--cfg_CFG=KEY=VALUE" as described in
     B<OPTIONS>  section. 'CFG' is any of:   cmd,  check,  data,  text 
     or  score. where  'KEY'  is any key from internal data structure.
@@ -6128,14 +6129,14 @@ for additional information lines or texts (mainly beginning with C<=>).
 =item DEBUG-FILE
 
     Debug files are searched for and used automatically. They will be
-    seached for in the current working or the installation directory.
+    searched for in the current working or installation directory.
     Syntax in these files is perl code.  Perl's  'require'  directive
     is used to include these files.
 
 =item USER-FILE
 
     The user program file is included only if the  "--usr" option was
-    given. It will be be seached for in the current working directory
+    given. It will be be searched for in the current working directory
     or the installation directory.
 
 =back
@@ -6231,9 +6232,9 @@ The rules for specifying cipher names are:
 
 =item 3. C<->  and  C<_>  are treated the same
 
-=item 4. abbrevations are allowed, as long as they are unique
+=item 4. abbreviations are allowed, as long as they are unique
 
-=item 5. beside IANA, openssl's cipher names are prefered
+=item 5. beside IANA, openssl's cipher names are preferred
 
 =item 6. name variants are supported, as long as they are unique
 
@@ -6251,7 +6252,7 @@ variants herein.
 
 Mind the traps and dragons with cipher names and what number they are
 actually mapped. In particular when  I<--lib>, I<--exe> or I<--openssl>
-options are in use. Alway use these options with I<+list> command too.
+options are in use. Always use these options with I<+list> command too.
 
 =head2 Name Rodeo
 
@@ -6289,13 +6290,13 @@ again what following means (returns):
     openssl ciphers -v RC4:!MD5
     openssl ciphers -v RC4!MD5
 
-Looking at all these oddities, it would be nice to have a common uniq
-nameing scheme for cipher names. We have not. As the SSL/TLS protocol
+Looking at all these oddities, it would be nice to have a common unique
+nameng scheme for cipher names. We have not.  As the SSL/TLS protocol
 just uses a number, it would be natural to use the number as uniq key
 for all cipher names, at least as key in our internal sources.
 
-Unfortunatelly, the assignment of ciphers to numbers changed over the
-years, which means that the same number referes to a different cipher
+Unfortunately, the assignment of ciphers to numbers  changed over the
+years, which means that the same number refers to  a different cipher
 depending on the standard, and/or tool, or version of a tool you use.
 
 As a result, we cannot use human readable cipher names as  identifier
@@ -6313,13 +6314,13 @@ If so, the  I<--no-cert>  option may help.
 
 =head2 **WARNING: empty result from openssl; ignored at ...
 
-This most likely occours when the  provided cipher is not accepted by
+This most likely occurs when the  provided cipher is  not accepted by
 the server, or the server expects client certificates.
 
 =head2 **WARNING: unknown result from openssl; ignored at ...
 
-This most likely occours when the  openssl executable is used with a
-very slow connection. Reason is a conncetion timeout.
+This most likely occurs when the  openssl  executable is used with a
+very slow connection. Typically the reason is a connection timeout.
 Try to use  I<--timout=SEC>  option.
 To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 
@@ -6330,13 +6331,13 @@ The warning message (like follows or similar):
 Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm
 (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.
 
-occours if the target refused a connection on port 80. 
+occurs if the target refused a connection on port 80. 
 This is considered a bug in L<Net::SSLeay>.
 Workaround to get rid of this message: use  I<--no-http>  option.
 
 =head2 invalid SSL_version specified at ....
 
-This error may occour on systems where SSL's DTLSv1 is not supported.
+This error may occur on systems where SSL's DTLSv1 is not supported.
 The full message looks like:
 
 invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
@@ -6373,7 +6374,7 @@ Try with  I<--no-sni>
 
 Try to use following options to narrow down the cause of the problem:
 
-=item use of extnal openssl executable
+=item use of external openssl executable
 
 Use  I<--no-openssl> 
 
@@ -6416,12 +6417,12 @@ was not possible (firewall or whatever reason).
 
 =head2 Target Certificate Chain Verification
 
-The systems default cpabilities, i.e. libssl.so, openssl, are used to
+The systems default capabilities i.e. libssl.so, openssl, are used to
 verify the target's certificate chain.  Unfortunately various systems
 have implemented different  approaches and rules how identify and how
-to report a succsessfull verification. As a consequence this tool can
+to report a successful verification.  As a consequence  this tool can
 only return the  same information about the chain verification as the
-used underlaying tools. If that information is trustworthy depends on
+used underlying tools.  If that information is trustworthy depends on
 how trustworthy the tools are.
 
 These limitations apply to following commands:
@@ -6446,7 +6447,7 @@ Following commands and options are useful to get more information:
 
 =head2 User Provided Files
 
-Please note that there cannot be any guarantee that the code privided
+Please note that there cannot be any guarantee that the code provided
 in the  DEBUG-FILE L<o-saft-usr.pm>  or  USER-FILE  L<o-saft-usr.pm> 
 will work flawless. Obviously this is the user's responsibility.
 
@@ -6475,7 +6476,7 @@ performance problems. It needs to be enabled with I<--openssl> option.
 On Windows the usage of  "openssl s_client" needs to be enabled using
 I<--s_client> option.
 
-On Windows it's a pane to specify the path for I<--openssl=..> option.
+On Windows it's a pain to specify the path for I<--openssl=..> option.
 Variants are:
 
 =over 4
@@ -6556,7 +6557,7 @@ option, where  NAME  is the name of the environment variable.
 
 =head2 Understanding  I<--exe=PATH>, I<--lib=PATH>, I<--openssl=file>
 
-If any of  I<--exe=PATH>  or  I<--lib=PATH>  is provided, the pragramm
+If any of  I<--exe=PATH>  or  I<--lib=PATH>  is provided, the pragram
 calls (C<exec>) itself recursively with all given options, except the
 two option itself. The environment variables  C<LD_LIBRARY_PATH>  and
 C<PATH>  are set before executing as follows:
@@ -6573,11 +6574,11 @@ This is exactly, what  L<Cumbersome Approach>  below describes.
 
 Note that I<--openssl=file> is a full path to the L<openssl> executable
 and will not be changed. However, if it is a relative path, it might
-be seached for using the previously set  C<PATH>  (see above).
+be searched for using the previously set  C<PATH>  (see above).
 
 =head2 Caveats
 
-Depending on your system, and the used modules and executabes, it can
+Depending on your system and the used modules and executables, it can
 be tricky to replace the configured shared libraries with own ones.
 Reasons are:
   a) the linked library name contains a version number,
@@ -6647,7 +6648,7 @@ L<Net::SSLeay(1)>  and L<openssl(1)>  are linked using dynamic shared
 objects.
 
 Depending on  compile time settings  and/or  the location of the used
-tool or lib, a warning like following my occour:
+tool or lib, a warning like following my occur:
 
   WARNING: can't open config file: /path/to-openssl/ssl/openssl.cnf
 
@@ -6674,7 +6675,7 @@ place the libs in the same directory as the  corresponding executable
 
 =head2 Using CGI mode
 
-The script can be usesed as CGI application. Output is the same as in
+This script can be used as  CGI application. Output is the same as in
 common CLI mode, using  'Content-Type:text/plain'.  Keep in mind that
 the used modules like  L<Net::SSLeay>  will write some debug messages
 on STDERR instead STDOUT. Therefore multiple  I<--v> and/or  I<--trace>
@@ -6702,7 +6703,7 @@ code is needed.
 
 =head2 Using user specified code
 
-There are some funnction called within the program flow, which can be
+There are some functions called within the program flow, which can be
 filled with nny perl code.  Empty stubs of the functions are prepared
 in  L<o-saft-usr.pm>.  See also  B<USER-FILE>.
 
@@ -6711,7 +6712,7 @@ in  L<o-saft-usr.pm>.  See also  B<USER-FILE>.
 This tool is designed to be used by people doing security or forensic
 analyses. Hence no malicious input is expected.
 There are no special security checks implemented. Some parameters are
-roughly sanatized according unwanted characters.  In particular there
+roughly sanatised according unwanted characters.  In particular there
 are no checks according any kind of code injection.
 
 Please see  B<WARNING> above if used in CGI mode. It's not recommended
@@ -6723,7 +6724,7 @@ to run this tool in CGI mode. You have been warned!
 
 =head3 General
 
-Perl's  `die()'  is used whenever an unrecoverable error occours. The
+Perl's  `die()'  is used whenever an unrecoverable error occurs.  The
 message printed will always start with `**ERROR: '.
 Warnings are printed using perl's  `warn()'  function and the message
 always begins with `**WARNING: '.
@@ -6736,7 +6737,7 @@ The  code  mainly uses  'text enclosed in single quotes'  for program
 internal strings such as hash keys, and uses "double quoted" text for
 texts being printed. However, exceptions if obviously necessary ;-)
 Strings used for RegEx are always enclosed in single quotes.
-Reason is mainly to make seaching texts a bit easyer.
+Reason is mainly to make searching texts a bit easyer.
 
 The code flow mainly uses postfix conditions, means the if-conditions
 are written right of the command to be executed. This is done to make
@@ -6892,9 +6893,9 @@ I<--v>  option is used.
 
 =back
 
-Empty or undefined strings are writtens as  "<<undefined>>" in texts.
+Empty or undefined strings are written as  "<<undefined>>"  in texts.
 Some parameters, in particular those of  HTTP responses,  are written
-as  "<<response>>".  Long parameter lists are abbrevated with  "...".
+as  "<<response>>".  Long parameter lists are abbreviated with "...".
 
 
 =head3 Output
@@ -7123,7 +7124,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.24
+@(#) 14.01.24a
 
 =head1 AUTHOR
 
@@ -7169,7 +7170,7 @@ TODO
        or:  reg add hklm\system\currentcontrolset\control\nls\codepage -v oemcp -d 65001
 
   * internal
-    ** make a clear concept how to handle +CMD wether they report
+    ** make a clear concept how to handle +CMD whether they report
        checks or informations (aka %data vs. %check_*)
        currently (2013) each single command returns all values
     ** complete +http checks (see %checks also)
