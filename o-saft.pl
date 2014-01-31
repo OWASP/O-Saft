@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.215 14/01/27 08:52:19";
+my  $SID    = "@(#) yeast.pl 1.217 14/02/01 00:05:58";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -878,6 +878,8 @@ our %cmd = (
     'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
     'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check 
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
+    'call'          => [],      # list of special (internal) function calls
+                                # see --call=METHOD option in description below
 );
 
 our %cfg = (
@@ -925,6 +927,7 @@ our %cfg = (
     'cipher'        => "yeast", # which ciphers to be used
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
                                 # ToDo: must be same as in Net::SSLinfo or used from there
+    'ciphers'       => [],      # contains all ciphers to be tested
     'do'            => [],      # the commands to be performed, any of commands
     'commands'      => [],      # contains all commands, constructed below
     'cmd-intern'    => [        # add internal commands
@@ -995,13 +998,13 @@ our %cfg = (
     'lang'          => "de",    # output language
     'langs'         => [qw(de en)],
     'pass_options'  => "",      # options to be passeed thru to other programs
-    'hosts'         => [],
+    'hosts'         => [],      # list of hosts:port to be processed
     'host'          => "",      # currently scanned host
     'ip'            => "",      # currently scanned host's IP
     'IP'            => "",      # currently scanned host's IP (human readable, doted octed)
     'rhost'         => "",      # currently scanned host's reverse resolved name
     'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
-    'port'          => 443,     # default port for connections
+    'port'          => 443,     # port for currently used connections
     'timeout'       => 2,       # default timeout in seconds for connections
                                 # NOTE that some servers do not connect SSL within this time
                                 #      this may result in ciphers marked as  "not supported"
@@ -1951,7 +1954,7 @@ my %text = (
         'SA'        => "Subordinate Authority (aka Subordinate CA)",
         'SAFER'     => "Secure And Fast Encryption Routine, block cipher",
         'Salsa20'   => "stream cipher",
-        'SAM'       => "syriac abbreviiation mark",
+        'SAM'       => "syriac abbreviation mark",
         'SAN'       => "Subject Alternate Name",
         'SBCS'      => "single-byte character set",
         'SCEP'      => "Simple Certificate Enrollment Protocol",
@@ -2431,6 +2434,7 @@ sub _is_member($$)     { my $is=shift; return grep({lc($is) eq lc($_)}      @{$_
 sub _is_do($)          { my $is=shift; return _is_member($is, \@{$cfg{'do'}}); }
 sub _is_intern($)      { my $is=shift; return _is_member($is, \@{$cfg{'cmd-intern'}}); }
 sub _is_hexdata($)     { my $is=shift; return _is_member($is, \@{$cfg{'data_hex'}});   }
+sub _is_call($)        { my $is=shift; return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
 
 # some people prefer to use a getter function to get data from objects
@@ -2656,6 +2660,7 @@ sub checkciphers($$$$$) {
         #    #print_cipherline($cfg{'legacy'}, $c, 'not') if (!$cfg{'disabled'}); # print with --v only
         #    push(@results, [$ssl, $c, 'not']);
         #
+
         if (0 >= grep(/^$c$/, split(/[ :]/, $ciphers))) {
             # cipher not to be checked
             _v4print("skip\n");
@@ -2666,6 +2671,8 @@ sub checkciphers($$$$$) {
         _v4print("check\n");
         #dbx# _dbx "H: $host , $cfg{'host'} \n";
         my $supported = 0;
+
+        #if (1 == _is_call('cipher-socket')) {
         if (0 == $cmd{'extciphers'}) {
             $supported = _usesocket( $ssl, $host, $port, $c);
         } else { # force openssl
@@ -3503,13 +3510,9 @@ sub print_check($$$$) {
     _print_line($legacy, $label, $value);
 } # print_check
 
-sub print_cipherline($$$$$) {
+sub print_cipherline($$$$$$) {
     #? print cipher check result according given legacy format
-    my $legacy  = shift;
-    my $ssl     = shift;
-    my $host    = shift;
-    my $cipher  = shift;
-    my $support = shift;
+    my ($legacy, $ssl, $host, $port, $cipher, $support) = @_;
     # variables for better (human) readability
     my $bit  = get_cipher_bits($cipher);
     my $sec  = get_cipher_sec($cipher);
@@ -3567,7 +3570,7 @@ sub print_cipherline($$$$$) {
         print_host_key($host, 'cipher');
     }
         # compliant;host:port;protocol;cipher;description
-    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $cfg{'host'} . ":" . $cfg{'port'}, $sec, $cipher, $desc); } # 'C' needs to be checked first
+    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
     if ($legacy eq 'quick')     { printf("    %-28s\t(%s)\t%s\n", $cipher, $bit,   $sec); }
     if ($legacy eq 'simple')    { printf("    %-28s\t%s\t%s\n",   $cipher, $yesno, $sec); }
     if ($legacy eq 'compact')   { printf("%s %s %s\n",            $cipher, $yesno, $sec); }
@@ -3576,15 +3579,7 @@ sub print_cipherline($$$$$) {
         # host:port protocol    supported   cipher    compliant security    description
         $desc =  join("\t", get_cipher_desc($cipher));
         $desc =~ s/\s*:\s*$//;
-        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-            $cfg{'host'} . ':' . $cfg{'port'},
-            $ssl,
-            $yesno,
-            $cipher,
-            '-?-',
-            $sec,
-            $desc
-        );
+        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $host . ':' . $port, $ssl, $yesno, $cipher, '-?-', $sec, $desc);
     }
 } # print_cipherline
 
@@ -3604,24 +3599,20 @@ sub print_cipherhead($) {
     # all others are empty, no need to do anything
 } # print_cipherhead
 
-sub print_cipherdefault($$$) {
+sub print_cipherdefault($$$$) {
     #? print default cipher according given legacy format
-    my $legacy  = shift;
-    my $ssl     = shift;
-    my $host    = shift;
+    my ($legacy, $ssl, $host, $port) = @_;
     my $yesno   = 'yes';
     if ($legacy eq 'sslyze')    { print "\n\n      Preferred Cipher Suites:"; }
     if ($legacy eq 'sslaudit')  {} # ToDo: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
-    print_cipherline($legacy, $ssl, $host, $data{'default'}->{val}($host), $yesno);
+    print_cipherline($legacy, $ssl, $host, $port, $data{'default'}->{val}($host), $yesno);
 } # print_cipherdefault
 
-sub print_ciphertotals($$$) {
+sub print_ciphertotals($$$$) {
     #? print total number of ciphers supported for SSL version according given legacy format
-    my $legacy  = shift;
-    my $ssl     = shift;
-    my $host    = shift;
+    my ($legacy, $ssl, $host, $port) = @_;
     my ($key, $sec);
     if ($legacy eq 'ssldiagnos') {
         print "\n-= SUMMARY =-\n";
@@ -3640,11 +3631,9 @@ sub print_ciphertotals($$$) {
     }
 } # print_ciphertotals
 
-sub printtitle($$$) {
+sub printtitle($$$$) {
     #? print title according given legacy format
-    my $legacy  = shift;
-    my $ssl     = shift;
-    my $host    = shift;
+    my ($legacy, $ssl, $host, $port) = @_;
     my $txt     = _subst($text{'out-ciphers'}, $ssl);
     local    $\ = "\n";
     if ($legacy eq 'sslyze')    {
@@ -3659,7 +3648,7 @@ sub printtitle($$$) {
             "----------------TEST INFO---------------------------\n",
             "[*] Target IP: $cfg{'IP'}\n",
             "[*] Target Hostname: $host\n",
-            "[*] Target port: $cfg{'port'}\n",
+            "[*] Target port: $port\n",
             "----------------------------------------------------\n";
     }
     if ($legacy eq 'sslscan')   { $host =~ s/;/ on port /; print "Testing SSL server $host\n"; }
@@ -3690,10 +3679,11 @@ sub _is_print($$$) {
     return 0;
 } # _is_print
 
-sub _print_results($$@) {
+sub _print_results($$$@) {
     #? print all ciphers from @results if match $ssl and $yesno
     my $ssl     = shift;
     my $host    = shift;
+    my $port    = shift;
     my $yesno   = shift; # only print these results, all if empty
     my @results = @_;
     my $print   = 0; # default: do not print
@@ -3703,37 +3693,38 @@ sub _print_results($$@) {
         next if  (${$c}[0] ne $ssl);
         next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
-        print_cipherline($cfg{'legacy'}, $ssl, $host, ${$c}[1], ${$c}[2]) if ($print ==1);
+        print_cipherline($cfg{'legacy'}, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
     }
 } # _print_results
 
-sub printciphers($$$@) {
+sub printciphers($$$$$@) {
     #? print all cipher check results according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
+    my $port    = shift;
     my $count   = shift; # print title line if 0
     my @results = @_;
     local    $\ = "\n";
     print_cipherhead( $legacy) if (($cfg{'out_header'}>0) && ($count == 0));
-    print_cipherdefault($legacy, $ssl, $host) if ($legacy eq 'sslaudit');
+    print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
     if ($legacy ne 'sslyze') {
-        _print_results($ssl, $host, "", @results);
+        _print_results($ssl, $host, $port, "", @results);
         print_cipherruler() if ($legacy eq 'simple');
     } else {
         print "\n  * $ssl Cipher Suites :";
-        print_cipherdefault($legacy, $ssl, $host);
+        print_cipherdefault($legacy, $ssl, $host, $port);
         if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Accepted Cipher Suites:";
-            _print_results($ssl, $host, "yes", @results);
+            _print_results($ssl, $host, $port, "yes", @results);
         }
         if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Rejected Cipher Suites:";
-            _print_results($ssl, $host, "no", @results);
+            _print_results($ssl, $host, $port, "no", @results);
         }
     }
-    print_ciphertotals($legacy, $ssl, $host);
+    print_ciphertotals($legacy, $ssl, $host, $port);
     print_check($legacy, $host, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
 } # printciphers
@@ -4226,6 +4217,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--lib(?:[_-]?path)?=(.*)/){ $typ = 'LIB'; $arg = $1; } # no next
     if ($arg =~ /^--envlibvar$/)        { $typ = 'ENV';          next; }
     if ($arg =~ /^--envlibvar=(.*)/)    { $typ = 'ENV';     $arg = $1; } # no next
+    if ($arg =~ /^--call$/)             { $typ = 'CALL';         next; }
+    if ($arg =~ /^--call=(.*)/)         { $typ = 'CALL';    $arg = $1; } # no next
     if ($arg =~ /^--cipher$/)           { $typ = 'CIPHER';       next; }
     if ($arg =~ /^--cipher=(.*)/)       { $typ = 'CIPHER';  $arg = $1; } # no next
     if ($arg =~ /^--format$/)           { $typ = 'FORMAT';       next; }
@@ -4334,10 +4327,11 @@ while ($#argv >= 0) {
     #  +---------+----------+------------------------------+--------------------
     #   argument to process   what to do                    expect next argument
     #  +---------+----------+------------------------------+--------------------
+    if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; next; }
     if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; next; }
-    if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'CALL')     { push(@{$cmd{'call'}}, $arg);  $typ = 'HOST'; next; }
     if ($typ eq 'SEP')      { $text{'separator'}= $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'TIMEOUT')  { $cfg{'timeout'}   = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'CIPHER')   { $cfg{'cipher'}    = $arg;     $typ = 'HOST'; next; }
@@ -4350,15 +4344,16 @@ while ($#argv >= 0) {
         #  ------+----------+------------------------------+--------------------
         # allow URL   http://f.q.d.n:42/aa*foo=bar:23/
         $port = $arg;
-        if ($arg =~ m#.*?:\d+#) {                  # got a port too
+        if ($port =~ m#.*?:\d+#) {                 # got a port too
             $port =~ s#(?:[^/]+/+)?([^/]*).*#$1#;  # match host:port
             $port =~ s#[^:]*:(\d+).*#$1#;
-            $cfg{'port'} = $port;
-            _yeast("port: $port") if ($cfg{'trace'} > 0);
+            _y_ARG("port: $port");
+        } else { # use previous port
+            $port = $cfg{'port'};
         }
-        $arg =~ s#(?:[^/]+/+)?([^/]*).*#$1#;
+        $arg =~ s#(?:[^/]+/+)?([^/]*).*#$1#;       # extract host from URL
         $arg =~ s#:(\d+)##;
-        push(@{$cfg{'hosts'}}, $arg);
+        push(@{$cfg{'hosts'}}, $arg . ":" . $port);
         _yeast("host: $arg") if ($cfg{'trace'} > 0);
     }
     if ($typ eq 'LEGACY')   {
@@ -4556,6 +4551,7 @@ _dbx "\n########### fix this place (empty cipher list) ########\n";
         die("**ERROR: no ciphers found; may happen with openssl pre 1.0.0 according given pattern");
     }
     $ciphers =~ s/:/ /g;        # internal format are words separated by spaces
+    push(@{$cfg{'ciphers'}}, split(" ", $ciphers));  # NOT YET USED
 }
     _v_print("cipher list: $ciphers");
 
@@ -4574,8 +4570,13 @@ $legacy = $cfg{'legacy'};
 usr_pre_host();
 
 # run the appropriate SSL tests for each host (ugly code down here):
+$port = ($cfg{'port'}||"");     # defensive programming
 foreach $host (@{$cfg{'hosts'}}) {
-    $port = ($cfg{'port'}||"");
+    if ($host =~ m#.*?:\d+#) { 
+       ($host, $port) = split(":", $host);
+        $cfg{'port'}  = $port;  #
+        $cfg{'host'}  = $host;
+    }
     _y_CMD("host{ " . ($host||"") . ":" . $port);
     _resetchecks();
     printheader(_subst($text{'out-target'}, "$host:$port"), "");
@@ -4692,12 +4693,12 @@ foreach $host (@{$cfg{'hosts'}}) {
             #dbx# _dbx "$ssl # ", keys %{$ciphers} ; #sort keys %hash;
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
-                printtitle($legacy, $ssl, join(":", $host, $port));
+                printtitle($legacy, $ssl, $host, $port);
             }
-            printciphers($legacy, $ssl, $host, ($legacy eq "sslscan")?($_printtitle):0, @results);
+            printciphers($legacy, $ssl, $host, $port, ($legacy eq "sslscan")?($_printtitle):0, @results);
         }
         foreach $ssl (@{$cfg{'version'}}) {
-            print_cipherdefault($legacy, $ssl, $host) if ($legacy eq 'sslscan');
+            print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
         }
         printruler() if ($quick == 0);
         printheader("\n" . _subst($text{'out-summary'}, ""), "");
@@ -4991,7 +4992,7 @@ with other commands).
 
 =head3 +abbr +abk
 
-    Show common abbreviations used in the world of security.
+    Show common abbreviation used in the world of security.
 
 =head3 +version
 
@@ -5205,6 +5206,23 @@ the description here is text provided by the user.
 
   Specify target's PORT to be used. Legacy option.
 
+=head3 --host=HOST and --port=PORT and HOST:PORT and HOST
+
+  When giving more than one HOST argument,  the sequence of the given
+  HOST argument and the given  --port=PORT  and the given --host=HOST
+  options are important.
+  The rule how ports and hosts are mapped is as folollows:
+      HOST:PORT arguments are uses as is (connection to HOST on PORT)
+      only HOST is given, then previous specified --port=PORT is used
+  Note that URLs are treated as HOST:PORT, if they contain a port.
+  Example:
+      $0 +cmd host-1 --port 23 host-2 host-3:42 host-4
+  will connect to:
+      host-1:443
+      host-2:23
+      host-3:42
+      host-4:23
+
 =head2 Options for SSL tool
 
 =head3 --s_client
@@ -5269,6 +5287,47 @@ the description here is text provided by the user.
 
   Check your system for the proper name, i.e.:
       DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH .
+
+=head3 --call=METHOD
+
+  METHOD    method to be used for specific functionality
+
+  Available methods:
+      info-socket    use internal socket for retrieving informations
+      info-openssl   use external openssl for retrieving informations
+      info-user      use usr_getinfo() for retrieving informations
+      cipher-socket  use internal socket to ckeck for ciphers
+      cipher-openssl use external openssl to ckeck for ciphers
+      cipher-user    use usr_getciphers() to ckeck for ciphers
+  
+  Method names starting with
+      info-   are responsible for connecting to the target to retrieve
+              SSL connection and certificate informations  (i.g. what
+              is provided by  +info  command)
+      cipher- are responsible to connect to the target and test if it
+              supports the given ciphers  (i.g. what is needed for
+              +cipher  command)
+      check-  are responsible for performing the checks (i.e. what is
+              shown with  +check  command)
+      score-  are responsible for computing the score based on the
+              check results
+  
+  The second part of the name denotes which kind of metthod too call
+      socket    the internal functionality with sockets is used
+      openssl   the exteranl openssl executable is used
+      user      the external special function as specified in user's
+                o-saft-usr.pl  is used.
+
+  Just for curiosity, instead of using:
+
+      --call=info-user --call=cipher-user --call=check-user --call=score-user
+
+  consider to use your own script like:
+
+      #env perl
+      usr_getinfo(); usr_getciphers(); usr_checkciphers(); usr_score();
+
+  :-))
 
 =head2 Options for SSL connection to target
 
@@ -5604,6 +5663,10 @@ options are ambiguous.
 
   Note that \n, \r and \t are replaced by the corresponding character
   when read from RC-FILE.
+
+=head3 --call=METHOD
+
+  See  L<Options for SSL tool>
 
 =head3 --usr
 
@@ -6291,12 +6354,12 @@ again what following means (returns):
     openssl ciphers -v RC4!MD5
 
 Looking at all these oddities, it would be nice to have a common unique
-nameng scheme for cipher names. We have not.  As the SSL/TLS protocol
+naming scheme for cipher names. We have not.  As the SSL/TLS protocol
 just uses a number, it would be natural to use the number as uniq key
 for all cipher names, at least as key in our internal sources.
 
 Unfortunately, the assignment of ciphers to numbers  changed over the
-years, which means that the same number refers to  a different cipher
+years, which means that the same number refers to a  different cipher
 depending on the standard, and/or tool, or version of a tool you use.
 
 As a result, we cannot use human readable cipher names as  identifier
@@ -6404,8 +6467,6 @@ The characters C<+> and C<=> cannot be used for I<--separator> option.
 Following strings should not be used in any value for options:
   C<+check>, C<+info>, C<+quick>, C<--header>
 as they my trigger the  -I<--header>  option unintentional.
-
-Port as specified with I<--port> options is the same for all targets.
 
 The used L<timeout(1)> command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
@@ -7124,7 +7185,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.24a
+@(#) 14.01.26
 
 =head1 AUTHOR
 
