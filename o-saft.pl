@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.218 14/02/01 12:39:23";
+my  $SID    = "@(#) yeast.pl 1.219 14/02/01 22:31:28";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -2514,11 +2514,13 @@ sub _ispci($$)  {
 } # _ispci
 
 sub _usesocket($$$$) {
-    # return 1 if cipher accepted by SSL connection
+    # return cipher accepted by SSL connection
+    # should return the targets default cipher ig no ciphers passed in
     # note that this is used to check for supported ciphers only, hence no
     # need for sophisticated options in new()
     my ($ssl, $host, $port, $ciphers) = @_;
     _trace("_usesocket(..., $ciphers)");
+    my $cipher = "";
     my $sslsocket = IO::Socket::SSL->new(
         PeerAddr        => $host,
         PeerPort        => $port,
@@ -2533,22 +2535,31 @@ sub _usesocket($$$$) {
     );
 # ToDo: IO::Socket::SSL::get_cipher($sslsocket);  does not work
     if ($sslsocket) {  # connect failed, cipher not accepted
+        $cipher = $sslsocket->get_cipher();
         $sslsocket->close(SSL_ctx_free => 1);
-        return 1;
     }
-    return 0;
+    return $cipher;
 } # _usesocket
 
 sub _useopenssl($$$$) {
-    # return 1 if cipher accepted by SSL connection
+    # return cipher accepted by SSL connection
+    # should return the targets default cipher ig no ciphers passed in
     my ($ssl, $host, $port, $ciphers) = @_;
     _trace("_useopenssl($ssl, ..., $ciphers)");
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
     my $data = Net::SSLinfo::do_openssl("s_client $ssl -cipher $ciphers -connect", $host, $port);
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
+    # also possible would be Cipher line from:
+    #   SSL-Session:
+    #       Cipher    : DES-CBC3-SHA
     _trace("_useopenssl data #{ $data }") if ($cfg{'trace'} > 1);
-    return 1 if ($data =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#);
+    return "" if ($data =~ m#New,.*?Cipher is .?NONE#);
+    if ($data =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
+        $data =~ s#^.*[\r\n]+New,\s*##s;
+        $data =~ s#[A-Za-z0-9/.,-]+ Cipher is\s*([^\r\n]*).*#$1#s;
+        return $data;
+    }
     # grrrr, it's a pain that openssl changes error messages for each version
     # we may get any of following errors:
     #   TIME:error:140790E5:SSL routines:SSL23_WRITE:ssl handshake failure:.\ssl\s23_lib.c:177:
@@ -2562,8 +2573,7 @@ sub _useopenssl($$$$) {
     #   # unknown messages: 139693193549472:error:1407F0E5:SSL routines:SSL2_WRITE:ssl handshake failure:s2_pkt.c:429:
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
-    return 0 if ($data =~ m#New,.*?Cipher is .?NONE#);
-    return 0 if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
+    return "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
     if ($data =~ m#^\s*$#) {
         warn("**WARNING: empty result from openssl; ignored");
     } else {
@@ -2571,26 +2581,21 @@ sub _useopenssl($$$$) {
     }
     _trace("_useopenssl #{ $data }");
     print "**Hint: use options like: --v --trace --timeout=42";
-    return 0;
+    return "";
 } # _useopenssl
 
 sub _get_default($$$) {
-    # return default cipher from target (or local ssl if no target given)
+    # return default cipher from target
+    my ($ssl, $host, $port) = @_;
     my $cipher = "";
     $cfg{'done'}->{'checkdefault'}++;
-    _trace(" _get_default(" . ($_[0]||"") . "," . ($_[1]||"") . "," . ($_[2]||"") . ")");
-    my $sslsocket = IO::Socket::SSL->new(
-        PeerAddr        => $_[0],
-        PeerPort        => $_[1],
-        Proto           => "tcp",
-        Timeout         => $cfg{'timeout'},
-        SSL_version     => $_[2],
-        );
-    if ($sslsocket) {
-        $cipher = $sslsocket->get_cipher();
-        $sslsocket->close(SSL_ctx_free => 1);
-    } else {
-    }
+    _trace(" _get_default($ssl, $host, $port)");
+#        #if (1 == _is_call('cipher-socket')) {
+        if (0 == $cmd{'extciphers'}) {
+            $cipher = _usesocket( $ssl, $host, $port, "");
+        } else { # force openssl
+            $cipher = _useopenssl($ssl, $host, $port, "");
+        }
     return $cipher;
 } # _get_default
 
@@ -2670,7 +2675,7 @@ sub checkciphers($$$$$) {
         printf(" $c")     if ($verbose == 2); # don't want _v2print() here
         _v4print("check\n");
         #dbx# _dbx "H: $host , $cfg{'host'} \n";
-        my $supported = 0;
+        my $supported = "";
 
         #if (1 == _is_call('cipher-socket')) {
         if (0 == $cmd{'extciphers'}) {
@@ -2678,7 +2683,7 @@ sub checkciphers($$$$$) {
         } else { # force openssl
             $supported = _useopenssl($ssl, $host, $port, $c);
         }
-        if (0 == $supported) {
+        if ($supported =~ /^\s*$/) {
             #dbx# _dbx "\t$c\t$hash{$c}  -- $ssl  # connect failed, cipher unsupported";
             push(@results, [$ssl, $c, 'no']);
         } else {
@@ -3191,7 +3196,7 @@ sub checkdest($$) {
     foreach $ssl (@{$cfg{'versions'}}) {
         next if ($cfg{$ssl} == 0);
         $value  = $checks{$ssl}->{val};
-        $cipher = _get_default($host, $port, $ssl);
+        $cipher = _get_default($ssl, $host, $port);
         if (($value == 0) && ($cipher eq "")) {
             $value = $text{'protocol'};
             # _getscore() below fails for this (see with --trace) 'cause there
@@ -7216,7 +7221,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.27
+@(#) 14.01.28
 
 =head1 AUTHOR
 
