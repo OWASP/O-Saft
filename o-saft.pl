@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.217 14/02/01 00:05:58";
+my  $SID    = "@(#) yeast.pl 1.218 14/02/01 12:39:23";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -148,7 +148,7 @@ my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # option can be in .rc-file, hen
 if (($#dbx >= 0) and ($cgi == 0)) {
     $arg =  "./o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
-    $arg =~ s#[^=]+=##; # hidden option: --trace=./myfile.pl
+    $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     if (! -e $arg) {
         warn "**WARNING: '$arg' not found";
         $arg = join("/", $mepath, $arg);    # try to find it in installation directory
@@ -4267,9 +4267,9 @@ while ($#argv >= 0) {
     _y_ARG("command? $arg");
     if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI '; $arg = '+' . $1; } # no next
         # in CGI mode commands need to be passed with --cmd=* option
-    if ($arg =~ /^\+info/)  { $info  = 1; } # needed 'cause +info and ..
-    if ($arg =~ /^\+quick/) { $quick = 1; } # .. +quick convert to list of commands
-    if ($arg =~ /^\+check/) { $check = 1; $cfg{'out_score'} = 1; } #
+    if ($arg eq  '+info')   { $info  = 1; } # needed 'cause +info and ..
+    if ($arg eq  '+quick')  { $quick = 1; } # .. +quick convert to list of commands
+    if ($arg eq  '+check')  { $check = 1; $cfg{'out_score'} = 1; } #
     # You may read the lines as table with colums like:
     #  +---------+--------------------+-----------------------+-----------------
     #   argument to check               aliased to (no next!) # traditional name
@@ -4284,7 +4284,8 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')              { $arg = '+hsts';    }
     if ($arg eq  '+sigkey')           { $arg = '+sigdump'; }  # sigdump
     if ($arg eq  '+sigkey_algorithm') { $arg = '+signame'; }  # signame
-    if ($arg eq  '+sni_check')        { $arg = '+check_sni';}
+    if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';}
+    if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';}
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
@@ -4443,11 +4444,10 @@ if ($cfg{'exec'} == 0) {
 # set additional defaults if missing
 # -------------------------------------
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
-$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher$)/, @ARGV)); # see --header
+$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @ARGV)); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @ARGV)); # can be set in rc-file!
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
-    $cfg{'legacy'}  = "quick";
     $cfg{'enabled'} = 1;
     $cfg{'shorttxt'}= 1;
 }
@@ -4866,7 +4866,7 @@ calling:
 
     $0 +cipher +hsts_sts example.tld
 
-For more, please see B<EXAMPLES> below.
+For more, please see  B<EXAMPLES>  section below.
 
 =begin comment
 
@@ -4924,21 +4924,8 @@ I<+info>  command.
     The test result contains  detailed information.  The labels there
     are mainly the same as for the  "+check"  command.
 
-To make the output easily parsable by postprocessors, following rules
-are used.
-When used in  I<--legacy=full> or I<--legacy=simple>  mode, the output
-may contain formatting lines for better (human) readability. These are
-either empty lines, or lines beginning with the equal sign C<=>. These
-modes also use at least one tab character (0x09, TAB) to separate the
-label text from the text of the result. Example:
-        Label of the performed check:TABresult
-When used in I<--legacy=quick> mode, the label text and text result in
-the output are separated by just a single tab character. Example:
-        Label of the performed checkTABresult
-
-The acronym C<N/A> may appear in some results. It means that no proper
-informations was or could be provided. Replace  C<N/A> by whatever you
-think is adequate:  Not available, Not applicable, No answer, ...
+All output is designed to make it easily parsable by  postprocessors.
+Please see  B<OUTPUT>  section below for details.
 
 =head1 COMMANDS
 
@@ -5056,7 +5043,7 @@ with other commands).
 
 =head3 +quick
 
-    Quick overview of checks. Uses "--legacy=quick"  format.
+    Quick overview of checks. Implies "--enabled"  and  "--short".
 
 =head3 +sni
 
@@ -5064,7 +5051,7 @@ with other commands).
 
 =head3 +sni_check +check_sni
 
-    Check for Server Name Indication (SNI) usage and validity of all
+    Check for  Server Name Indication (SNI) usage and validity of all
     names (CN, subjectAltName, FQDN, etc.).
 
 =head3 +bsi
@@ -5108,8 +5095,8 @@ with other commands).
     Check target for ciphers, either all ciphers or ciphers specified
     with "-cipher=*" option.
 
-    Note that ciphers not supported by the local SSL implementation are
-    not checked by default, use "--local" option for that.
+    Note that ciphers  not supported  by the local SSL implementation
+    are not checked by default, use "--local" option for that.
 
 =head2 Commands to test SSL connection to target
 
@@ -5300,32 +5287,41 @@ the description here is text provided by the user.
       cipher-openssl use external openssl to ckeck for ciphers
       cipher-user    use usr_getciphers() to ckeck for ciphers
   
-  Method names starting with
-      info-   are responsible for connecting to the target to retrieve
-              SSL connection and certificate informations  (i.g. what
-              is provided by  +info  command)
+  Method names starting with:
+      info-   are responsible for retrieving  informations  about the
+              SSL connection and the target certificate (i.g. what is
+              provided by  +info  command)
       cipher- are responsible to connect to the target and test if it
-              supports the given ciphers  (i.g. what is needed for
+              supports the specified ciphers (i.g. what is needed for
               +cipher  command)
       check-  are responsible for performing the checks (i.e. what is
               shown with  +check  command)
-      score-  are responsible for computing the score based on the
-              check results
+      score-  are responsible to compute the score based on the check
+              results
   
-  The second part of the name denotes which kind of metthod too call
+  The second part of the name denotes which kind of method too call:
       socket    the internal functionality with sockets is used
       openssl   the exteranl openssl executable is used
-      user      the external special function as specified in user's
-                o-saft-usr.pl  is used.
+      user      the external special function, as specified in user's
+                o-saft-usr.pl,  is used.
+
+  Example:
+      --call=cipher-openssl
+  will use the external  openssl  executable to check  the target for
+  supported ciphers.
+
+  Default settings are:
+      --call=info-socket --call=cipher-socket --call=check-socket
 
   Just for curiosity, instead of using:
 
-      --call=info-user --call=cipher-user --call=check-user --call=score-user
+      $0 --call=info-user --call=cipher-user --call=check-user \
+         --call=score-user ...
 
   consider to use your own script like:
 
-      #env perl
-      usr_getinfo(); usr_getciphers(); usr_checkciphers(); usr_score();
+      #!/usr/bin/env perl
+      usr_getinfo();usr_getciphers();usr_checkciphers();usr_score();
 
   :-))
 
@@ -5758,16 +5754,21 @@ options are ambiguous.
 
 =back
 
+=head3 --trace=FILE
+
+  Use FILE instead of the default rc-file (.o-saft.pl, see RC-FILE).
+
 =head2 --trace vs. --v
 
-While  I<--v>  is used to print more data,  I<--trace> is used to print
-more information about internal data such as  procedure names  and/or
+While  I<--v>  is used to print more data, I<--trace> is used to print
+more information about internal data such as  procedure names and/or
 variable names and program flow.
 
 =head2 Options vs. Commands
 
-For compatibility with other programs and lazy users, some options are
-silently taken as commands, means that  I<--THIS>  becomes  I<+THIS> .
+For compatibility with other programs and lazy users, some arguments
+looking like options are silently taken as commands. This means that
+I<--THIS>  becomes  I<+THIS>  then. These options are:
 
 =over 4
 
@@ -5828,9 +5829,11 @@ Following syntax is supported also:
 
     $0 http://some.tld other.tld:3889/some/path?a=b
 
-Note that only the hostname and the port are used from an URL. When a
-port is given in an URL and a I<--port> option, the order of them will
-identify which port is used: last one wins.
+Note that only the hostname and the port are used from an URL.
+
+=head2 Options vs. Commands
+
+See  B<Options vs. Commands>  in  B<OPTIONS>  section above
 
 =head1 CHECKS
 
@@ -5863,7 +5866,7 @@ They are necessary to support Perfect Forward Secrecy (PFS).
 
 =head3 BEAST
 
-Currently (2013) only a simple check is used: only RC4 ciphers used.
+Currently (2014) only a simple check is used: only RC4 ciphers used.
 Which is any cipher with RC4, ARC4 or ARCFOUR.
 TLSv1.2 checks are not yet implemented.
 
@@ -5882,7 +5885,7 @@ They are assumed to be broken.
 
 =head3 PFS
 
-Currently (2013) only a simple check is used: only DHE ciphers used.
+Currently (2014) only a simple check is used: only DHE ciphers used.
 Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
 TLSv1.2 checks are not yet implemented.
 
@@ -6055,7 +6058,7 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
 =item 3.5 Domainparameter und Schlüssellängen
 
-**NOT YET IMPLEMENTED**
+    **NOT YET IMPLEMENTED**
 
 =begin comment
 
@@ -6113,12 +6116,31 @@ Following rules are used:
 
 =item * Empty lines are comments ;-)
 
-=item * Label and value for all checks are separated by  C<:>.
-See  I<--sep=CHAR>  option also.
+=item * Label texts end with a separation character; default is  C<:>.
+
+=item * Label and value for all checks are separated by  at least one  TAB
+character.
 
 =item * Texts for additional information are enclosed in  C<<<>  and  ">>".
 
+=item * C<N/A> is used when no proper informations was found or provided.
+
+    Replace  C<N/A> by whatever you think is adequate:  No answer,
+    Not available,  Not applicable,  ...
+
 =back
+
+When used in  I<--legacy=full>  or I<--legacy=simple>  mode, the output
+may contain formatting lines for better (human) readability.
+
+=head2 Postprocessing Output
+
+It is recommended to use the  I<--legacy=quick>  option, if the output
+should be postprocessed, as it omits the default separation character
+(C<:> , see above) and just uses on single tab character (0x09, \t  or
+TAB) to separate the label text from the text of the result. Example:
+        Label of the performed checkTABresult
+
 
 =head1 CUSTOMIZATION
 
@@ -6186,8 +6208,8 @@ for additional information lines or texts (mainly beginning with C<=>).
     Resource files are searched for and used automatically. They will
     be searched for in the local (current working) directory only.
     Syntax in resource file is: "--cfg_CFG=KEY=VALUE" as described in
-    B<OPTIONS>  section. 'CFG' is any of:   cmd,  check,  data,  text 
-    or  score. where  'KEY'  is any key from internal data structure.
+    OPTIONS  section. 'CFG' is any of:  cmd,  check,  data,  text  or
+    score. where  'KEY'  is any key from internal data structure.
 
 =item DEBUG-FILE
 
@@ -6199,7 +6221,7 @@ for additional information lines or texts (mainly beginning with C<=>).
 =item USER-FILE
 
     The user program file is included only if the  "--usr" option was
-    given. It will be be searched for in the current working directory
+    used. It will be be searched for in the current working directory
     or the installation directory.
 
 =back
@@ -6228,16 +6250,17 @@ is the value to be set for this key.  Note that  unknown keys will be
 ignored silently.
 
 If  C<KEY=TEXT>  is an exiting filename,  all lines from that file are
-read and set. For details see  B<CONFIGURATION FILES>  below.
+read and set. For details see  B<CONFIGURATION FILE>  below.
 
 =head2 CONFIGURATION FILE
 
 Note that the file can contain  C<KEY=TEXT>  pairs for the kind of the
 configuration as given by the  I<--cfg_CONF>  option.
+
 For example when used  with  C<--cfg_text=file> only values for  %text
 will be set, when used  with  C<--cfg_data=file> only values for %data
 will be set, and so on.  C<KEY>  is not used when  C<KEY=TEXT>  is  an
-exiting filename. Though, it's recommended to use a non-existing key,
+existing filename. Though, it's recommended to use a non-existing key,
 for example: I<--cfg-text=my_file=some/path/to/private/file> .
 
 =head2 RC-FILE
@@ -6363,9 +6386,9 @@ years, which means that the same number refers to a  different cipher
 depending on the standard, and/or tool, or version of a tool you use.
 
 As a result, we cannot use human readable cipher names as  identifier
-(aka uniq key), as there are to many aliases for the same cipher. And
-also the number cannot be used as uniq key as a key may have multiple
-ciphers assigned.
+(aka unique key), as there are  to many aliases  for the same cipher.
+And also the number  cannot be used  as unique key, as a key may have
+multiple ciphers assigned.
 
 =head1 KNOWN PROBLEMS
 
@@ -6600,7 +6623,7 @@ L<IO::Socket::SSL(1)>, L<IO::Socket::INET(1)>
 
 For all  cryptographic functionality  the libraries  installed on the
 system will be used. This is in particular perl's  Net:SSLeay module,
-libssl.so and libcrypt.so and the openssl executable.
+the system's  libssl.so and libcrypt.so  and the openssl executable.
 
 It is possible to provide your own libraries, if the  perl module and
 the executable are  linked using  dynamic shared objects  (aka shared
@@ -6616,12 +6639,12 @@ This is the default environment variable used herein.  If your system
 uses  another name it must be specified with the  I<--envlibvar=NAME>
 option, where  NAME  is the name of the environment variable.
 
-=head2 Understanding  I<--exe=PATH>, I<--lib=PATH>, I<--openssl=file>
+=head2 Understanding  I<--exe=PATH>, I<--lib=PATH>, I<--openssl=FILE>
 
-If any of  I<--exe=PATH>  or  I<--lib=PATH>  is provided, the pragram
-calls (C<exec>) itself recursively with all given options, except the
-two option itself. The environment variables  C<LD_LIBRARY_PATH>  and
-C<PATH>  are set before executing as follows:
+If any of I<--exe=PATH> or I<--lib=PATH> is provided, the pragram calls
+(C<exec>) itself recursively with all given options, except the option
+itself. The environment variables  C<LD_LIBRARY_PATH>  and C<PATH>  are
+set before executing as follows:
 
 =over 4
 
@@ -6631,11 +6654,15 @@ C<PATH>  are set before executing as follows:
 
 =back
 
-This is exactly, what  L<Cumbersome Approach>  below describes.
+This is exactly, what L<Cumbersome Approach> below describes. So these
+option simply provide a shortcut for that.
 
-Note that I<--openssl=file> is a full path to the L<openssl> executable
-and will not be changed. However, if it is a relative path, it might
+Note that I<--openssl=FILE> is a full path to the L<openssl> executable
+and will not be changed.  However, if it is a relative path, it might
 be searched for using the previously set  C<PATH>  (see above).
+
+Note that  C<LD_LIBRARY_PATH>  is the default.  It can be changed with
+the  I<--envlibvar=NAME>  option.
 
 =head2 Caveats
 
@@ -6765,19 +6792,22 @@ code is needed.
 =head2 Using user specified code
 
 There are some functions called within the program flow, which can be
-filled with nny perl code.  Empty stubs of the functions are prepared
+filled with any perl code.  Empty stubs of the functions are prepared
 in  L<o-saft-usr.pm>.  See also  B<USER-FILE>.
 
 =head2 SECURITY
 
 This tool is designed to be used by people doing security or forensic
 analyses. Hence no malicious input is expected.
+
 There are no special security checks implemented. Some parameters are
 roughly sanatised according unwanted characters.  In particular there
 are no checks according any kind of code injection.
 
 Please see  B<WARNING> above if used in CGI mode. It's not recommended
 to run this tool in CGI mode. You have been warned!
+
+=for comment Program Code below is not shown with +help
 
 =begin comment
 
@@ -6917,8 +6947,8 @@ SSL connections and/or this tool. Note that some options can be given
 multiple times to increase amount of listed information. Also keep in
 mind that it's best to specify  I<--v>  as very first argument.
 
-Note that file  L<o-saft-dbx.pm>  is required, if any  I<--trace*>  or
-I<--v>  option is used.
+Note that the file  L<o-saft-dbx.pm>  is required, if any  I<--trace*>
+or  I<--v>  option is used.
 
 =head3 Commands
 
@@ -7012,7 +7042,7 @@ Following formats are used:
 
 =item Get an idea how messages look like
 
-    $0 +check --cipher=tell-me some.tld
+    $0 +check --cipher=RC4 some.tld
 
 =item Check for Server Name Indication (SNI) usage only
 
@@ -7147,13 +7177,14 @@ Following formats are used:
 
 =begin --v --v
 
+
 .raw nerobeg
 sretset rof tidua LSS PSAWO  -  "tfaS-O"   
 retseT reuf tiduA LSS PSAWO  -  "tfaS-O"   
  nnawdnegri nnad sib ,elieW enie sad gnig oS
 ..wsu ,"haey-lss" ,"agoy-lss" :etsiL red fua dnats -reteaps reibssieW
-eretiew  raap nie-  nohcs se tnha rhi  ,ehcuS eid nnageb os ,nebegrev
- nohcs dnis nemaN ednessap eleiV  .guneg 'giffirg`  thcin reba sad raw
+eretiew  raap nie-  nohcs se tnha nam  ,ehcuS eid nnageb os ,nebegrev
+nohcs dnis nemaN ednessap eleiV  .guneg 'giffirg`  thcin reba sad raw
 gnuhciltneffeoreV enie reuF .noisrevsgnulkciwtnE red emaN red tsi saD
 . loot LSS rehtona tey -  "lp.tsaey"   :resseb nohcs tsi sad
 ,aha ,tsaey -- efeH -- reibssieW -- .thcin sad tgnilk srednoseb ,ajan
@@ -7161,7 +7192,7 @@ eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"
 :ehan gal se ,nedrew emaN 'regithcir` nie hcod nnad se etssum
 hcan dnu hcaN  .edruw nefforteg setsre sla "y" sad liew ,"lp.y" :eman
 -ietaD nie snetsednim  ,reh emaN nie etssum sE .slooT seseid pytotorP
-retsre nie nohcs hcua nnad dnatsne iebad ,tetsokeg reibssieW eleiv dnu
+retsre nie  nohcs hcua  dnatstne iebaD  .tetsokeg reibssieW eleiv dnu
 nednutS eginie nnad hcim tah esylanA eiD .)dnis hcon remmi dnu( neraw
 nedeihcsrev rhes esiewliet eis muraw ,nednifuzsuareh dnu nehetsrev uz
 )noitpO "*=ycagel--"  eheis( slooT-tseT-LSS reredna releiv essinbegrE
@@ -7185,7 +7216,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.26
+@(#) 14.01.27
 
 =head1 AUTHOR
 
@@ -7233,7 +7264,7 @@ TODO
   * internal
     ** make a clear concept how to handle +CMD whether they report
        checks or informations (aka %data vs. %check_*)
-       currently (2013) each single command returns all values
+       currently (2014) each single command returns all values
     ** complete +http checks (see %checks also)
        improve score for these checks
        make clear usage of score from %checks
