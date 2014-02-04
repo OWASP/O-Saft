@@ -34,7 +34,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.70 14/01/26 17:25:45',
+    SID         => '@(#) Net::SSLinfo.pm 1.71 14/02/04 18:07:24',
 };
 
 ######################################################## public documentation #
@@ -282,7 +282,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.01.23';
+    $VERSION   = '14.01.28';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1056,20 +1056,19 @@ sub do_ssl_open($$$) {
         if (1.33 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL,
             $_SSLinfo{'altname'}= _ssleay_get('altname', $x509);
         } else {
-            warn "you need at least Net::SSLeay version 1.33 for getting subjectAltNames";
+            warn "**WARNING: Net::SSLeay >= 1.33 required for getting subjectAltNames";
         }
         if (1.30 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL
             $_SSLinfo{'cn'}     = _ssleay_get('cn', $x509);
             $_SSLinfo{'cn'}     =~ s{\0$}{};# work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
         } else {
-            warn "you need at least Net::SSLeay version 1.30 for getting commonName";
+            warn "**WARNING: Net::SSLeay >= 1.30 required for getting commonName";
         }
         if (1.45 <= $Net::SSLeay::VERSION) {
             $_SSLinfo{'fingerprint_md5'} = _ssleay_get('md5',  $x509);
             $_SSLinfo{'fingerprint_sha1'}= _ssleay_get('sha1', $x509);
         } else {
-            $_SSLinfo{'fingerprint_md5'} = '';
-            $_SSLinfo{'fingerprint_sha1'}= '';
+            warn "**WARNING: Net::SSLeay >= 1.45 required for getting fingerprint_md5";
         }
         if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
             #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
@@ -1082,6 +1081,8 @@ sub do_ssl_open($$$) {
             $_SSLinfo{'issuer_hash'}    = sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));
                 # previous two values are integers, need to be converted to
                 # hex, we omit a leading 0x so they can be used elswhere
+        } else {
+            warn "**WARNING: Net::SSLeay >= 1.46 required for getting some certificate checks";
         }
         $_SSLinfo{'commonName'} = $_SSLinfo{'cn'};
         $_SSLinfo{'authority'}  = $_SSLinfo{'issuer'};
@@ -1372,8 +1373,13 @@ sub do_ssl_close($$) {
     Net::SSLeay::free($_SSLinfo{'ssl'})     if (defined $_SSLinfo{'ssl'}); # or warn "**WARNING: Net::SSLeay::free(): $!";
     Net::SSLeay::CTX_free($_SSLinfo{'ctx'}) if (defined $_SSLinfo{'ctx'}); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
     _SSLinfo_reset();
-    close($Net::SSLinfo::socket);
-    $Net::SSLinfo::socket = undef;
+    if (defined $Net::SSLinfo::socket) {
+        close($Net::SSLinfo::socket);
+        $Net::SSLinfo::socket = undef;
+    } else {
+        warn "**WARNING: undefined Net::SSLinfo::socket; connection cannot be closed";
+        # this is most likely a programming error, or usage of an old caller
+    }
     return;
 } # do_ssl_close
 
