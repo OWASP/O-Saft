@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.8 14/01/27 08:54:39";
+my  $SID    = "@(#) o-saft-dbx.pm 1.9 14/02/04 23:10:10";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -105,13 +105,14 @@ sub _yeast_init() {
         _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
         _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
         _yeast("       use_SNI= $Net::SSLinfo::use_SNI");
-        _yeast("       targets= " . join(" ", @{$cfg{'hosts'}}));
-        foreach $key (qw(port out_header format legacy cipher usehttp)) {
+        _yeast("       targets= @{$cfg{'hosts'}}");
+        foreach $key (qw(port out_header format legacy usehttp)) {
             printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
                # cannot use _yeast() 'cause of pretty printing
         }
-        _yeast("       version= " . join(" ", @{$cfg{'version'}}));
-        _yeast("      commands= " . join(" ", @{$cfg{'do'}}));
+        _yeast("       version= @{$cfg{'version'}}");
+        _yeast("      commands= @{$cfg{'do'}}");
+        _yeast("        cipher= @{$cfg{'cipher'}}");
         _yeast("");
     }
 }
