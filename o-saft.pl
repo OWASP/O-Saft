@@ -74,6 +74,17 @@ if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::S
     die "**ERROR: Net::SSLeay not found, useless use of yet another SSL tool";
     # ToDo: this is not really true, i.e. if we use openssl instead Net::SSLeay
 }
+if (1.49 > $Net::SSLeay::VERSION) {
+    # only check VERSION instead of requiring a specific version with perl's use
+    # this allows continueing to use this tool even if the version is too old
+    # but we shout out loud that the results are not reliable
+    print "
+**WARNING: ancient Net::SSLeay $Net::SSLeay::VERSION found
+**WARNING: $0 requires Net::SSLeay 1.49 or newer
+**WARNING: $0 may throw warnings and/or results may be missing
+
+";
+}
 
 if (! eval("require Net::SSLinfo;")) {
     # Net::SSLinfo may not be installed, try to find in program's directory
@@ -3821,19 +3832,19 @@ sub printversion() {
     print "    $0 $VERSION";
     print "    " . Net::SSLinfo::do_openssl('version', "", "", "");
     # get a quick overview also
-    print "Required (and used) Modules:";
+    print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
     print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
     print "    Net::SSLeay          $Net::SSLeay::VERSION";
     print "    Net::SSLinfo         $Net::SSLinfo::VERSION";
     my ($m, $d, %p);
     if ($cfg{'verbose'} > 0) {
-        print "\nLoaded Modules:";
+        print "\n= Loaded Modules =";
         foreach $m (sort keys %INC) {
             printf("    %-22s %6s\n", $m, $INC{$m});
             $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
         }
-        print "\nLoaded Module Versions:";
+        print "\n= Loaded Module Versions =";
         no strict 'refs';   # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
         foreach $m (sort keys %main:: ) {
             next if $m !~ /::/;
@@ -3844,7 +3855,7 @@ sub printversion() {
     }
     return if ($^O =~ m/MSWin32/); # not Windows
     if ($cfg{'verbose'} > 1) {
-        print "\nUsed Shared Objects:";
+        print "\n= Used Shared Objects =";
         # quick&dirty, don't want to use ::Find module
         foreach $d (sort keys %p) {
              next if ($d =~ m/^\s*$/);
@@ -7221,7 +7232,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.28
+@(#) 14.01.28a
 
 =head1 AUTHOR
 
