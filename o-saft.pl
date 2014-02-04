@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.220 14/02/04 22:53:53";
+my  $SID    = "@(#) yeast.pl 1.221 14/02/04 23:21:43";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -4165,10 +4165,9 @@ while ($#argv >= 0) {
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg eq  '--list')              { $arg = '+list';              } # no next!
     if ($arg eq  '--chain')             { $arg = '+chain';             } # as these
-    if ($arg eq  '--cipher')            { $arg = '+cipher';            } # should
-    if ($arg eq  '--default')           { $arg = '+default';           } # become
-    if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';       } # commands
-    if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';        } # ..
+    if ($arg eq  '--default')           { $arg = '+default';           } # should
+    if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';       } # become
+    if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';        } # commands
     if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';     } # ..
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1; next; }
@@ -7215,7 +7214,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.29
+@(#) 14.01.30
 
 =head1 AUTHOR
 
