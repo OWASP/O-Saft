@@ -34,7 +34,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.71 14/02/04 18:07:24',
+    SID         => '@(#) Net::SSLinfo.pm 1.72 14/02/04 22:57:18',
 };
 
 ######################################################## public documentation #
@@ -282,7 +282,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.01.28';
+    $VERSION   = '14.01.29';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1565,7 +1565,7 @@ sub cipher_local {
     _trace("_SSLinfo_get: openssl ciphers $pattern") if ($trace > 1);
     $list = do_openssl("ciphers $pattern", '', '');
     chomp  $list;
-    return $list;
+    return (wantarray) ? split(/[:\s]+/, $list) : $list;
 } # cipher_local
 
 sub ciphers {
