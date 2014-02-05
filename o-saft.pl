@@ -34,7 +34,7 @@
 
 use strict;
 
-my  $SID    = "@(#) yeast.pl 1.221 14/02/04 23:21:43";
+my  $SID    = "@(#) yeast.pl 1.222 14/02/05 01:12:57";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # perl is clever enough to extract it from itself ;-)
@@ -2621,7 +2621,7 @@ sub ciphers_get($$$$) {
     my $port    = shift;
     my @ciphers = @{$_[0]};# ciphers to be checked
 
-    _trace("ciphers_get($ssl, @ciphers) {");
+    _trace("ciphers_get($ssl, $host, $port, @ciphers) {");
     my @res     = ();      # return accepted ciphers
     foreach my $c (@ciphers) {
     #    _v_print("check cipher: $ssl:$c");
@@ -2666,47 +2666,43 @@ sub checkcipher($$) {
     $checks{$ssl . '-MEDIUM'}->{val}++  if ($risk =~ /MEDIUM/i);
 } # checkcipher
 
-sub checkciphers($$$@) {
-    #? test target if given ciphers are accepted, results stored in global @results
-    # NOTE that verbose output is printed directly (hence preceeds results)
-    my $ssl     = shift;
-    my $host    = shift;
-    my $port    = shift;
-    my @ciphers = @{$_[0]};# ciphers to be checked
+sub checkciphers($$) {
+    #? test target if given ciphers are accepted, results stored in global %checks
+    my ($host, $port) = @_;     # not yet used
 
     $cfg{'done'}->{'checkciphers'}++;
-    #no# return if ($cfg{'done'}->{'checkciphers'} > 1);
-    _trace("checkciphers($ssl, .., @ciphers) {");
-    _y_CMD("  checkciphers use socket ..")  if (0 == $cmd{'extciphers'});
-    _y_CMD("  checkciphers use openssl ..") if (1 == $cmd{'extciphers'});
+    return if ($cfg{'done'}->{'checkciphers'} > 1);
+    _trace(" checkciphers {");
 
-    my $hasecdsa= 0;    # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
-    my $hasrsa  = 0;    # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    my @supported = ciphers_get($ssl, $host, $port, \@ciphers);
-    foreach my $c (@ciphers) {  # might be done more perlish ;-)
-        if (grep(/^$c/, @supported)>0) {
-            $checks{$ssl}->{val}++; # cipher accepted
-            push(@results, [$ssl, $c, 'yes']);
-            checkcipher($ssl, $c);
-        } else {
-            push(@results, [$ssl, $c, 'no']);
+    my $ssl     = "";
+    my $cipher  = "";
+    my %hasecdsa= {};   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
+    my %hasrsa  = {};   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
+    foreach my $c (@results) {  # check all accepted ciphers
+        my $yn  = ${$c}[2];
+        $cipher = ${$c}[1];
+        $ssl    = ${$c}[0];
+        if ($yn =~ m/yes/i) {   # cipher accepted
+            $checks{$ssl}->{val}++ if ($yn =~ m/yes/i); # cipher accepted
+            checkcipher($ssl, $cipher);
         }
-        $hasrsa  = 1 if ($c =~ /$cfg{'regex'}->{'EC-RSA'}/);
-        $hasecdsa= 1 if ($c =~ /$cfg{'regex'}->{'EC-DSA'}/);
-    } # foreach @ciphers
-
-    $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
-    # TR-02102-2, see 3.2.3
-    if ($checks{$ssl}->{val} > 0) { # check do not make sense if there're no ciphers
-        $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa != 1);
-        $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa != 1);
+        $hasrsa{$ssl}  = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
+        $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
-    $checks{'cnt_totals'}->{val} +=
+    foreach $ssl (@{$cfg{'version'}}) { # check all SSL versions
+        # TR-02102-2, see 3.2.3
+        if ($checks{$ssl}->{val} > 0) { # check do not make sense if there're no ciphers
+            $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
+            $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
+        }
+        $checks{'cnt_totals'}->{val} +=
             $checks{$ssl . '--?-'}->{val}  +
             $checks{$ssl . '-LOW'}->{val}  +
             $checks{$ssl . '-WEAK'}->{val} +
             $checks{$ssl . '-HIGH'}->{val} +
             $checks{$ssl . '-MEDIUM'}->{val};
+    }
+    $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
     _trace(" checkciphers }");
 } # checkciphers
 
@@ -4658,11 +4654,17 @@ foreach $host (@{$cfg{'hosts'}}) {
 
     if (_need_cipher() > 0) {
         _y_CMD("  need_cipher ..");
+        _y_CMD("  use socket ..")  if (0 == $cmd{'extciphers'});
+        _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
         @results = ();          # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
         foreach $ssl (@{$cfg{'version'}}) {
-            checkciphers($ssl, $host, $port, \@{$cfg{'ciphers'}});
+            my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
+            foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
+                push(@results, [$ssl, $c, (grep(/^$c/, @supported)>0) ? "yes" : "no"]);
+            }
         }
+        checkciphers($host, $port);
      }
 
     usr_pre_data();
@@ -7214,7 +7216,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.30
+@(#) 14.01.31
 
 =head1 AUTHOR
 
