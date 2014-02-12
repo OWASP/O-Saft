@@ -3815,6 +3815,8 @@ sub printversion() {
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
     print "    $0 $VERSION";
     print "    " . Net::SSLinfo::do_openssl('version', "", "", "");
+    print "    int. openssl: " . Net::SSLeay::SSLeay_version();
+    print "    SSLeay:       0x" . Net::SSLeay::SSLeay() . "\n"; # 0x1000000f => openssl-1.0.0
     # get a quick overview also
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
@@ -7216,7 +7218,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.01.31
+@(#) 14.02.01
 
 =head1 AUTHOR
 
