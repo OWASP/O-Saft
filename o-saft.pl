@@ -2533,20 +2533,21 @@ sub _usesocket($$$$) {
     # need for sophisticated options in new()
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
+    my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher = "";
     my $sslsocket = IO::Socket::SSL->new(
         PeerAddr        => $host,
         PeerPort        => $port,
         Proto           => "tcp",
         Timeout         => $cfg{'timeout'},
-        SSL_hostname    => $host,   # for SNI
+        SSL_hostname    => $sni,    # for SNI
         SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
         SSL_ca_file     => undef,   # see man IO::Socket::SSL
         SSL_ca_path     => undef,   #  "
         SSL_version     => $ssl,    # default is SSLv23
         SSL_cipher_list => $ciphers
     );
-# ToDo: IO::Socket::SSL::get_cipher($sslsocket);  does not work
+    # SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
     if ($sslsocket) {  # connect failed, cipher not accepted
         $cipher = $sslsocket->get_cipher();
         $sslsocket->close(SSL_ctx_free => 1);
@@ -2560,9 +2561,10 @@ sub _useopenssl($$$$) {
     # should return the targets default cipher if no ciphers passed in
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
+    my $sni = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
     _trace("_useopenssl($ssl, $host, $port, $ciphers)");
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
-    my $data = Net::SSLinfo::do_openssl("s_client $ssl -cipher $ciphers -connect", $host, $port);
+    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni -cipher $ciphers -connect", $host, $port);
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
     # also possible would be Cipher line from:
@@ -3814,9 +3816,11 @@ sub printversion() {
     print '# Path = ' . $mepath if ($cfg{'verbose'} > 1);
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
     print "    $0 $VERSION";
-    print "    " . Net::SSLinfo::do_openssl('version', "", "", "");
+    print "    ext. openssl: " . Net::SSLinfo::do_openssl('version', "", "", "");
     print "    int. openssl: " . Net::SSLeay::SSLeay_version();
-    print "    SSLeay:       0x" . Net::SSLeay::SSLeay() . "\n"; # 0x1000000f => openssl-1.0.0
+    print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
+    print "    OPENSSL_VERSION_NUMBER() 0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER(); 
+    print "    SSLeay()                 0x" . Net::SSLeay::SSLeay();
     # get a quick overview also
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
@@ -7218,7 +7222,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.02.01a
+@(#) 14.02.01b
 
 =head1 AUTHOR
 
