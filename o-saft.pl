@@ -2539,7 +2539,7 @@ sub _usesocket($$$$) {
         PeerPort        => $port,
         Proto           => "tcp",
         Timeout         => $cfg{'timeout'},
-    #   SSL_hostname    => $host,   # for SNI
+        SSL_hostname    => $host,   # for SNI
         SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
         SSL_ca_file     => undef,   # see man IO::Socket::SSL
         SSL_ca_path     => undef,   #  "
@@ -7218,7 +7218,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.02.01
+@(#) 14.02.01a
 
 =head1 AUTHOR
 
