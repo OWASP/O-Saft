@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -w -I ./
 
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -33,11 +33,12 @@
 # ToDo please see  =begin ToDo  in POD section
 
 use strict;
+#use lib ("./lib"); # uncomment as needed
 
 my  $SID    = "@(#) yeast.pl 1.222 14/02/05 01:12:57";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
-{ # perl is clever enough to extract it from itself ;-)
+{ # (perl is clever enough to extract it from itself ;-)
     $VERSION= join ("", @DATA);
     $VERSION=~ s/.*?\n@\(#\)\s*([^\n]*).*/$1/ms;
 };
@@ -51,7 +52,7 @@ our $mename = "yeast  ";
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-use IO::Socket::SSL; #  qw(debug2);
+use IO::Socket::SSL 1.37; #  qw(debug2);
 use IO::Socket::INET;
 
 # README if any
@@ -910,6 +911,7 @@ our %cfg = (
     'usedns'        => 1,       # 1: make DNS reverse lookup
     'usehttp'       => 1,       # 1: make HTTP request
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
+    'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
@@ -1305,6 +1307,7 @@ my %ciphers = (
         'DES-CBC3-SHA'          => [qw(  HIGH SSLv3 3DES  168 SHA1 RSA   RSA        80 :)],
         'DES-CBC-MD5'           => [qw(   LOW SSLv2 DES    56 MD5  RSA   RSA        20 :)],
         'DES-CBC-SHA'           => [qw(   LOW SSLv3 DES    56 SHA1 RSA   RSA        20 :)],
+        'DES-CFB-M1'            => [qw(  weak SSLv2 DES    64 MD5  RSA   RSA        20 :)],
         'DH-DSS-AES128-SHA'     => [qw(  high -?-   AES   128 SHA1 DSS   DH         11 :)], #
         'DH-DSS-AES256-SHA'     => [qw(  high -?-   AES   256 SHA1 DSS   DH         11 :)], #
         'DH-RSA-AES128-SHA'     => [qw(  high -?-   AES   128 SHA1 RSA   DH         11 :)], #
@@ -1380,7 +1383,7 @@ my %ciphers = (
         'PSK-RC4-SHA'           => [qw(MEDIUM SSLv3 RC4   128 SHA  PSK   PSK         1 :)], #
         'RC2-CBC-MD5'           => [qw(MEDIUM SSLv2 RC2   128 MD5  RSA   RSA        11 :)],
         'RC2-MD5'               => [qw(MEDIUM SSLv2 RC2   128 MD5  RSA   RSA        80 :)],
-        'RC4-MD5'               => [qw(MEDIUM SSLv2 RC4   128 MD5  RSA   RSA        80 :)],
+        'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         0 :)],
        #'RC4-MD5'               => [qw(MEDIUM SSLv3 RC4   128 MD5  RSA   RSA        80 :)],
        #'RC4-SHA'               => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   RSA        80 :)],
         'RC4-MD5'               => [qw(  weak SSLv3 RC4   128 MD5  RSA   RSA        80 :)],
@@ -1416,9 +1419,6 @@ my %ciphers = (
         'SRP-RSA-AES-128-CBC-SHA'       => [qw(  HIGH SSLv3 AES    128 SHA1   RSA   SRP        11 :)],
         'SRP-RSA-AES-256-CBC-SHA'       => [qw(  HIGH SSLv3 AES    256 SHA1   RSA   SRP        11 :)],
         'SRP-3DES-EDE-CBC-SHA'          => [qw(   -?- SSLv3 3DES   168 SHA1   None  SRP        11 :)], # openssl: HIGH
-
-#       'AECDH-AES256-SHA'              => [qw(  weak SSLv3 AES   256 SHA1 None  ECDH       11 :)],
-
         'ADH-AES128-SHA256'             => [qw(  -?- TLSv12 AES    128 SHA256 None  DH         11 :)], # openssl: HIGH
         'ADH-AES128-GCM-SHA256'         => [qw(  -?- TLSv12 AESGCM 128 AEAD   None  DH         11 :)], # openssl: HIGH
         'ADH-AES256-GCM-SHA384'         => [qw(  -?- TLSv12 AESGCM 256 AEAD   None  DH         11 :)], # openssl: HIGH
@@ -2110,7 +2110,7 @@ my %text = (
     #        Strict-Transport-Security: max-age=16070400; includeSubDomains
     #        Apache config:
     #             Header set Strict-Transport-Security "max-age=16070400; includeSubDomains"
-    # SNI apache: http://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
+    # SNI apache: https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
     #        SSLStrictSNIVHostCheck, which controls whether to allow non SNI clients to access a name-based virtual host. 
     #        when client provided the hostname using SNI, the new environment variable SSL_TLS_SNI
     # TLS session resumption problem with session ticket
@@ -2542,8 +2542,8 @@ sub _usesocket($$$$) {
         Timeout         => $cfg{'timeout'},
         SSL_hostname    => $sni,    # for SNI
         SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-        SSL_ca_file     => undef,   # see man IO::Socket::SSL
-        SSL_ca_path     => undef,   #  "
+        SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
+        SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
         SSL_version     => $ssl,    # default is SSLv23
         SSL_cipher_list => $ciphers
     );
@@ -2652,6 +2652,7 @@ sub checkcipher($$) {
     $checks{'edh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
     $checks{'export'}->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
     $checks{'rc4'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+# ToDo: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
     $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
@@ -2678,8 +2679,8 @@ sub checkciphers($$) {
 
     my $ssl     = "";
     my $cipher  = "";
-    my %hasecdsa= {};   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
-    my %hasrsa  = {};   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
+    my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
+    my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     foreach my $c (@results) {  # check all accepted ciphers
         my $yn  = ${$c}[2];
         $cipher = ${$c}[1];
@@ -2692,6 +2693,8 @@ sub checkciphers($$) {
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
     foreach $ssl (@{$cfg{'version'}}) { # check all SSL versions
+        $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
+        $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
         # TR-02102-2, see 3.2.3
         if ($checks{$ssl}->{val} > 0) { # check do not make sense if there're no ciphers
             $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
@@ -3816,11 +3819,16 @@ sub printversion() {
     print '# Path = ' . $mepath if ($cfg{'verbose'} > 1);
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
     print "    $0 $VERSION";
-    print "    ext. openssl: " . Net::SSLinfo::do_openssl('version', "", "", "");
-    print "    int. openssl: " . Net::SSLeay::SSLeay_version();
+    print "    external openssl executable:   " . Net::SSLinfo::do_openssl('version', "", "", "");
+    print "    Net::SSLeay::SSLeay_version(): " . Net::SSLeay::SSLeay_version();
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
-    print "    OPENSSL_VERSION_NUMBER() 0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER(); 
-    print "    SSLeay()                 0x" . Net::SSLeay::SSLeay();
+    print "    OPENSSL_VERSION_NUMBER() 0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
+    print "    Net::SSLeay::SSLeay()    0x" . Net::SSLeay::SSLeay();
+
+# ToDo: i.g. OPENSSL_VERSION_NUMBER() returns same value as SSLeay()
+#       but when using libraries with LD_LIBRARY_PATH or alike, these
+#       versions differ
+
     # get a quick overview also
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
@@ -4173,13 +4181,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';     } # ..
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1; next; }
-    if ($arg =~ /^--force[_-]openssl/)  { $cmd{'extciphers'}= 1; next; }
+    if ($arg =~ /^--force[_-]?openssl/) { $cmd{'extciphers'}= 1; next; }
     if ($arg =~ /^--no[_-]?openssl/)    { $cmd{'extopenssl'}= 0; next; }
     if ($arg =~ /^--s_?client/)         { $cmd{'extsclient'}++;  next; }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;     next; } # sslyze
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1; next; }
+    if ($arg =~ /^--force[_-]?sni/)     { $cfg{'forcesni'}  = 1; next; }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1; next; }
     if ($arg =~ /^--no[_-]?sni/)        { $cfg{'usesni'}    = 0; next; }
     if ($arg =~ /^--no[_-]?cert$/)      { $cfg{'no_cert'}++;     next; }
@@ -4393,10 +4402,71 @@ $verbose = $cfg{'verbose'};
 _yeast_args();
 _vprintme();
 
+usr_pre_exec();
+
+# call with other libraries
+# -------------------------------------
+_y_ARG("exec? $cfg{'exec'}");
+# NOTE: this must be the very first action/command
+if ($cfg{'exec'} == 0) {
+    # as all shared libraries used by perl modules are already loaded when
+    # this program executes, we need to set PATH and LD_LIBRARY_PATH before
+    # being called
+    # so we call ourself with proper set environment variables again
+    # Note: --exe points to the directoy with the openssl executable
+    # while --lib points to the directoy with the libraries
+    # sometimes, when building new libraries or openssl, the libraries and the
+    # executable are located in the same directoy, so we add the directoy given
+    # with --lib to the PATH environment variable too, which should not harm
+    if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) {
+        _y_CMD("exec command " . join(" ", @{$cfg{'do'}}));
+        my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
+        my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
+        local $\ = "\n";
+        $ENV{PATH} = join($chr, @{$cmd{'path'}}, $ENV{PATH})  if ($#{$cmd{'path'}} >= 0);
+        $ENV{PATH} = join($chr, @{$cmd{'libs'}}, $ENV{PATH})  if ($#{$cmd{'libs'}} >= 0);
+        $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0);
+        $ENV{$cmd{envlibvar}} .= $chr . $lib if ($lib);
+        if ($verbose > 0) {
+            _yeast("exec: envlibvar= $cmd{envlibvar}");
+            _yeast("exec: $cmd{envlibvar}= " . ($ENV{$cmd{envlibvar}} || "")); # ENV may not exist
+            _yeast("exec: PATH= $ENV{PATH}");
+        }
+        _yeast("exec: $0 +exec " . join(" ", @ARGV));
+        _yeast("################################################") if (($cfg{'traceARG'} + $cfg{'traceCMD'}) > 0);
+        exec $0, '+exec', @ARGV;
+    }
+}
+
+local $\ = "\n";
+
+# check if used software supports SNI properly
+# -------------------------------------
+$typ  = "**WARNING: old version of ## detected which does not support SNI";
+$typ .= " or is known to be buggy; SNI disabled\n";
+$typ .= "**Hint: #opt# can be used to disables this check";
+if ($IO::Socket::SSL::VERSION < 1.90) {
+    if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
+        $cfg{'usesni'} = 0;
+        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/; $txt =~ s/#opt#/--force-openssl /;
+        print $txt;
+    }
+}
+if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
+    # same as  IO::Socket::SSL->can_client_sni()
+    # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
+    if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
+        $cfg{'usesni'} = 0;
+        my $txt = $typ; $txt =~ s/##/`openssl < 1.0.0'/; $txt =~ s/#opt#/--force-sni/;
+        print $txt;
+    }
+}
+_trace("use sni: $cfg{'usesni'}");
+
 # set defaults for Net::SSLinfo
 # -------------------------------------
 {
-    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ./yeast.pl line 
+    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at 
     $Net::SSLinfo::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLinfo::use_openssl = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient = $cmd{'extsclient'};
@@ -4414,36 +4484,6 @@ _vprintme();
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http    = 0; # if only +cipher given don't use http 'cause it may cause erros
-}
-
-usr_pre_exec();
-
-# call with other libraries
-# -------------------------------------
-_y_ARG("exec? $cfg{'exec'}");
-# NOTE: this must be the very first action/command
-if ($cfg{'exec'} == 0) {
-    # as all shared libraries used by perl modules are already loaded when
-    # this program executes, we need to set PATH and LD_LIBRARY_PATH before
-    # being called
-    # so we call ourself with proper set environment variables again
-    if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) {
-        _y_CMD("exec command " . join(" ", @{$cfg{'do'}}));
-        my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
-        my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
-        local $\ = "\n";
-        $ENV{PATH} = join($chr, @{$cmd{'path'}}, $ENV{PATH})  if ($#{$cmd{'path'}} >= 0);
-        $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0);
-        $ENV{$cmd{envlibvar}} .= $chr . $lib if ($lib);
-        if ($verbose > 0) {
-            _yeast("exec: envlibvar= $cmd{envlibvar}");
-            _yeast("exec: $cmd{envlibvar}= " . ($ENV{$cmd{envlibvar}} || "")); # ENV may not exist
-            _yeast("exec: PATH= $ENV{PATH}");
-        }
-        _yeast("exec: $0 +exec " . join(" ", @ARGV));
-        _yeast("################################################") if (($cfg{'traceARG'} + $cfg{'traceCMD'}) > 0);
-        exec $0, '+exec', @ARGV;
-    }
 }
 
 # set additional defaults if missing
@@ -4500,8 +4540,6 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
     foreach $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
-
-local $\ = "\n";
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
@@ -4628,6 +4666,7 @@ foreach $host (@{$cfg{'hosts'}}) {
         if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
             $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
             Net::SSLinfo::do_ssl_close($host, $port);
+# ToDo: we can check the default cipher for non-SNI capable clients here
         }
         $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
@@ -5388,6 +5427,15 @@ the description here is text provided by the user.
 =head3 --no-sni
 
   Do not make SSL connection in SNI mode (default: SNI mode).
+
+=head3 --force-sni
+
+  Do not check if SNI seems to be supported by Net::SSLeay.
+  Older versions of openssl and its libries do not support SNI or the
+  SNI support is implemented buggy. By default it's checked if SNI is
+  properly supported. With this option this check can be disabled.
+
+  Be warned that this may result in improper results.
 
 =head3 --no-cert
 
@@ -7222,7 +7270,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.02.01b
+@(#) 14.02.01c
 
 =head1 AUTHOR
 
