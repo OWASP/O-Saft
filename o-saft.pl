@@ -35,7 +35,7 @@
 use strict;
 #use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.222 14/02/05 01:12:57";
+my  $SID    = "@(#) yeast.pl 1.2 14/02/19 22:50:06";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -358,8 +358,8 @@ my %check_cert = (
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
-    'nonprint'      => {'txt' => "Certificate contains non-printable characters"},
-    'crnlnull'      => {'txt' => "Certificate contains CR, NL, NULL characters"},
+    'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
+    'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
     'ev-chars'      => {'txt' => "Certificate has no invalid characters in extensions"},
 # ToDo: SRP is a target feature but also named a `Certificate (TLS extension)'
 #    'srp'           => {'txt' => "Certificate has (TLS extension) authentication"},
@@ -704,8 +704,8 @@ our %shorttexts = (
     'verify'        => "Chain verified",
     'error_verify'  => "CA Chain error",
     'error_depth'   => "CA Chain error in level",
-    'nonprint'      => "non-printables",
-    'crnlnull'      => "CR, NL, NULL",
+    'nonprint'      => "No non-printables",
+    'crnlnull'      => "No CR, NL, NULL",
     'compression'   => "Compression",
     'expansion'     => "Expansion",
     'krb5'          => "Krb5 Principal",
@@ -969,13 +969,12 @@ our %cfg = (
                        qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
-                       qw(
-                        zlib lzo open_pgp nonprint crnlnull
-                        fallback closure order sgc time
-                       )],
+                       qw(zlib lzo open_pgp fallback closure order sgc time)
+                       ],
     'cmd-beast'     => [qw(beast beast-default)],       # commands for +beast
     'cmd-crime'     => [qw(crime)],                     # commands for +crime
     'cmd-http'      => [],      # commands for +http, computed below
+    'cmd-hsts'      => [],      # commands for +hsts, computed below
     'cmd-info'      => [],      # commands for +info, simply anything from %data
     'cmd-info--v'   => [],      # commands for +info --v
     'cmd-check'     => [],      # commands for +check, simply anything from %checks
@@ -1125,6 +1124,7 @@ our %cfg = (
 
         # Regex for matching commands
         'cmd-http'  => '^h?(?:ttps?|sts)_',    # match keys for HTTP
+        'cmd-hsts'  => '^h?sts',               # match keys for (H)STS
         'cmd-sizes' => '^(?:cnt|len)_',        # match keys for length, sizes etc.
         'cmd-intern'=> '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
 
@@ -1210,6 +1210,7 @@ foreach $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-int
     next if ($key eq $old); # unique
     $old = $key;
     push(@{$cfg{'commands'}},  $key) if ($key !~ m/^($rex)/);
+    push(@{$cfg{'cmd-hsts'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-hsts'}/i);
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
 }
@@ -2792,8 +2793,13 @@ sub checkcert($$) {
     # ToDo: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
-    #$checks{'nonprint'}      =
-    #$checks{'crnlnull'}      =
+    foreach $label (qw(cn subject issuer email aux ocsp_uri altname)) {
+        $value = $data{$label}->{val}($host);
+        if ($value ne "") {
+            $checks{'nonprint'}{val} .= " $label" if ($value =~ m/[\x00-\x1f\x7f-\xff]+/); # m/[:^print:]/);
+            $checks{'crnlnull'}{val} .= " $label" if ($value =~ m/[\r\n\t\v\0]+/);
+        }
+    }
 
     # certificate
     if ($cfg{'verbose'} > 0) { # ToDo
@@ -4303,13 +4309,14 @@ while ($#argv >= 0) {
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
+    # commands which cannot be combined with others
     if ($arg =~ /^--cgi=?/) { $arg = '# for CGI mode; ignore';       next; }
     if ($arg eq  '+info')   { @{$cfg{'do'}} = (@{$cfg{'cmd-info'}},    'info'); next; }
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
     if ($arg eq '+check_sni'){@{$cfg{'do'}} = @{$cfg{'cmd-sni--v'}}; $info = 1; next; }
-    if ($arg =~ /^\+(.*)/)  { # got a command
+    if ($arg =~ /^\+(.*)/)  { # all  other commands
         my $val = $1;
         _y_ARG("command= $val");
         next if ($arg =~ m/^\+\s*$/);  # ignore empty arguments; for CGI mode
@@ -4320,6 +4327,7 @@ while ($#argv >= 0) {
         if ($val =~ /^beast/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
         if ($val =~ /^crime/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); next; }
         if ($val =~ /^sizes/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
+        if ($val =~ /^hsts/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});  next; }
         if ($val =~ /^http/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
         if ($val =~ /^sni/i)  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sni'}});   next; }
         if ($val =~ /^ev$/i)  { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
@@ -5075,6 +5083,10 @@ with other commands).
 =head3 +quick
 
     Quick overview of checks. Implies "--enabled"  and  "--short".
+
+=head3 +sts +hsts
+
+    Various checks according STS HTTP header.
 
 =head3 +sni
 
@@ -7270,7 +7282,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.02.01c
+@(#) 14.02.18
 
 =head1 AUTHOR
 
