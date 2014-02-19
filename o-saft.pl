@@ -33,9 +33,9 @@
 # ToDo please see  =begin ToDo  in POD section
 
 use strict;
-#use lib ("./lib"); # uncomment as needed
+use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.2 14/02/19 22:50:06";
+my  $SID    = "@(#) yeast.pl 1.3 14/02/20 00:55:01";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4471,6 +4471,8 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
 }
 _trace("use sni: $cfg{'usesni'}");
 
+$cfg{'usehttp'}     = 1 if (0 => grep(/hsts/, @{$cfg{'do'}})); # STS makes no sence without http
+
 # set defaults for Net::SSLinfo
 # -------------------------------------
 {
@@ -5087,6 +5089,7 @@ with other commands).
 =head3 +sts +hsts
 
     Various checks according STS HTTP header.
+    This option implies  "--http",  means that  "--no-http" is ignored.
 
 =head3 +sni
 
