@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.3 14/02/20 00:55:01";
+my  $SID    = "@(#) yeast.pl 1.4 14/02/20 07:56:04";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -527,6 +527,7 @@ my %check_http = (
     'hsts_location' => {'txt' => "Target sends STS and no Location header"},
     'hsts_refresh'  => {'txt' => "Target sends STS and no Refresh header"},
     'hsts_redirect' => {'txt' => "Target redirects HTTP without STS header"},
+    'hsts_ip'       => {'txt' => "Target does not send STS header for IP"},
     'pkp_pins'      => {'txt' => "Target sends Public Key Pins header"},
     #------------------+-----------------------------------------------------
 ); # %check_http
@@ -690,6 +691,7 @@ our %shorttexts = (
     'hsts_sts'      => "STS header",
     'sts_maxage'    => "STS long max-age",
     'sts_subdom'    => "STS includeSubdomain",
+    'hsts_ip'       => "STS header not for IP",
     'hsts_location' => "STS and Location header",
     'hsts_refresh'  => "STS and no Refresh header",
     'hsts_redirect' => "Redirects without STS",
@@ -3260,9 +3262,10 @@ sub checkhttp($$) {
     if ($data{'https_sts'}->{val}($host) ne "") {
         $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host) if ($data{'https_location'}->{val}($host) ne "");
         $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host) if ($data{'https_refresh'} ->{val}($host) ne "");
+        $checks{'hsts_ip'}      ->{val} = $host        if ($host =~ m/\d+\.\d+\.\d+\.\d+/); # RFC6797 requirement
         $checks{'hsts_fqdn'}    ->{val} = $hsts_fqdn   if ($http_location !~ m|^https://$host|i);
-        $checks{'hsts_sts'}     ->{val} = $no if ($data{'https_sts'}  ->{val}($host) eq "");
-        $checks{'sts_subdom'}   ->{val} = $no if ($data{'hsts_subdom'}->{val}($host) eq "");
+        $checks{'hsts_sts'}     ->{val} = $no          if ($data{'https_sts'}  ->{val}($host) eq "");
+        $checks{'sts_subdom'}   ->{val} = $no          if ($data{'hsts_subdom'}->{val}($host) eq "");
         $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
@@ -6041,6 +6044,8 @@ requests again, if STS is not well implemented on the server.
 =item * Redirects from HTTP must not contain STS header
 
 =item * Answer from redirected page (HTTPS) must contain STS header
+
+=item * Answer from redirected page for IP must not contain STS header
 
 =item * STS header must contain includeSubDirectoy directive
 
