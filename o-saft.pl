@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.4 14/02/20 07:56:04";
+my  $SID    = "@(#) yeast.pl 1.5 14/03/05 01:09:50";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -868,6 +868,23 @@ my %score_ssllabs = (
     #    ( strongest cipher + weakest cipher ) / 2
     #
 ); # %score_ssllabs
+
+my %score_howsmyssl = (
+    # https://www.howsmyssl.com/
+    # https://www.howsmyssl.com/s/about.html
+    'good'          => {'txt' => "Good"},
+    'probably'      => {'txt' => "Probably Okay"},
+    'improvable'    => {'txt' => "Improvable"},
+        # if they do not support ephemeral key cipher suites,
+        # do not support session tickets, or are using TLS 1.1.
+    'bad'           => {'txt' => "Bad"},
+        # uses TLS 1.0 (instead of 1.1 or 1.2), or, worse, SSLv3 or earlier.
+        # supports known insecure cipher suites
+        # supports TLS compression (that is compression of the encryption
+        #     information used to secure your connection) which exposes it
+        #     to the CRIME attack.
+        # is susceptible to the BEAST attack
+); # %score_howsmyssl
 
 my %info_gnutls = ( # NOT YET USED
    # extracted from http://www.gnutls.org/manual/gnutls.html
@@ -2006,6 +2023,7 @@ my %text = (
         'SSLv3'     => "Secure Sockets Layer Version 3",
         'SSPI'      => "Security Support Provider Interface",
         'SST'       => "Serialized Certificate Store format",
+        'TACK'      => "Trust Assertions for Certificate Keys",
         'TCB'       => "Trusted Computing Base",
         'TDEA'      => "Tripple DEA",
         'TEA'       => "Tiny Encryption Algorithm",
@@ -2015,6 +2033,7 @@ my %text = (
 #        'TIME'      => "A Perfect CRIME? TIME Will Tell",
         'Threefish' => "hash function",
         'TR-02102'  => "Technische Richtlinie 02102 (des BSI)",
+        'TSK'       => "TACK signing key",
         'TSP'       => "trust-Management Service Provider",
         'TLS'       => "Transport Layer Security",
         'TLSA'      => "TLS Trus Anchors",
@@ -2129,6 +2148,8 @@ my %text = (
     #         all the frontend machines, without being written to any kind of
     #         persistent storage, and frequently rotated."
     #        see also https://www.imperialviolet.org/2013/06/27/botchingpfs.html
+    #
+    # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
 
     # just for information, some configuration options in Firefox
     'firefox' => { # NOT YET USED
@@ -6489,6 +6510,15 @@ The full message looks like:
 invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
 
 Workaround: use  I<--no-dtlsv1>  option.
+
+=head2 Use of uninitialized value $_[0] in length at (eval 4) line 1.
+
+This warning occours with IO::Socket::SSL 1.967, reason is unknown.
+It seems not to harm functionality, hence no workaround, just ignore.
+
+=head2 Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+
+Same as previous.
 
 =head2 Performance Problems
 
