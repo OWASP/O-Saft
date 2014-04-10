@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.5 14/03/05 01:09:50";
+my  $SID    = "@(#) yeast.pl 1.6 14/04/10 08:28:02";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -404,6 +404,7 @@ my %check_conn = (
     'breach'        => {'txt' => "Connection is safe against BREACH attack"},
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
     'time'          => {'txt' => "Connection is safe against TIME attack"},
+    'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'default'       => {'txt' => "Default cipher for "},   # used for @cfg{version} only
      # counter for accepted ciphers, 0 if not supported
@@ -673,6 +674,7 @@ our %shorttexts = (
     'breach'        => "Safe to BREACH",
     'crime'         => "Safe to CRIME",
     'time'          => "Safe to TIME",
+    'heartbleed'    => "Safe to heartbleed",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -1217,6 +1219,13 @@ our %cfg = (
         'checkssl'  => 0,
         'checkdv'   => 0,
         'checkev'   => 0,
+     },
+    'extension' => {            # TLS extensions
+        '00010'     => "elliptic curves",    # length=4
+        '00011'     => "EC point formats",   # length=2
+        '00015'     => "heartbeat",          # length=1
+        '00035'     => "session ticket",     # length=0
+        '65281'     => "renegotiation info", # length=1
     },
 ); # %cfg
 
@@ -1895,6 +1904,7 @@ my %text = (
         'HAS-V'     => "hash function",
         'HC128'     => "stream cipher",
         'HC256'     => "stream cipher",
+        'HEARTBLEED'=> "attack against TLS extension heartbeat",
         'HIBE'      => "hierarchical identity-based encryption",
         'HMAC'      => "keyed-Hash Message Authentication Code",
         'HMQV'      => "h? Menezes-Qu-Vanstone",
@@ -2549,6 +2559,111 @@ sub _ispci($$)  {
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'notPCI'}/);
     return "";
 } # _ispci
+sub _readframe($) {
+    #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
+    my $cl  = shift;
+    my $len = 5;
+    my $buf = '';
+    vec( my $rin = '',fileno($cl),1 ) = 1;
+    while ( length($buf)<$len ) {
+        select( my $rout = $rin,undef,undef,$cfg{'timeout'} ) or return;
+        sysread($cl,$buf,$len-length($buf),length($buf))  or return;
+        $len = unpack("x3n",$buf) + 5 if length($buf) == 5;
+    }
+    (my $type, my $ver,$buf) = unpack("Cnn/a*",$buf);
+    my @msg;
+    if ( $type == 22 ) {
+        while ( length($buf)>=4 ) {
+            my ($ht,$len) = unpack("Ca3",substr($buf,0,4,''));
+            $len = unpack("N","\0$len");
+            push @msg,[ $ht,substr($buf,0,$len,'') ];
+            _v_print sprintf("...ssl received type=%d ver=0x%x ht=0x%x size=%d", $type,$ver,$ht,length($msg[-1][1]));
+        }
+    } else {
+        @msg = $buf;
+        _v_print sprintf("...ssl received type=%d ver=%x size=%d", $type,$ver,length($buf));
+    }
+    return ($type,$ver,@msg);
+} # _readframe
+sub _isbleed($$) {
+    #? return "heartbleed" if target supports TLS extension 15 (heartbeat), empty string otherwise
+    # http://heartbleed.com/
+    # http://possible.lv/tools/hb/
+    # http://filippo.io/Heartbleed/
+    my ($host, $port) = @_;
+    my $heartbeats    = 1;
+    my $cl  = $Net::SSLinfo::socket;
+    my $ret = "";       # empty string as required in %checks
+    my ($type,$ver,$buf,@msg) = ("", "", "", ());
+
+    # all following code stolen from Steffen Ullrich:
+    #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
+    # code slightly adapted to our own variables: $host, $port, $cfg{'timeout'}
+    # also die() replaced by warn()
+
+        # open our own connection and close it at end
+# ToDo: does not work with socket from SSLinfo.pm
+    $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
+        #ORIG die "failed to connect: $!";
+        warn("**WARNING: failed to connect: '$!'");
+        return "failed to connect";
+    };
+    # client hello with heartbeat extension
+    # taken from http://s3.jspenguin.org/ssltest.py
+    print $cl pack("H*",join('',qw(
+                    16 03 02 00  dc 01 00 00 d8 03 02 53
+        43 5b 90 9d 9b 72 0b bc  0c bc 2b 92 a8 48 97 cf
+        bd 39 04 cc 16 0a 85 03  90 9f 77 04 33 d4 de 00
+        00 66 c0 14 c0 0a c0 22  c0 21 00 39 00 38 00 88
+        00 87 c0 0f c0 05 00 35  00 84 c0 12 c0 08 c0 1c
+        c0 1b 00 16 00 13 c0 0d  c0 03 00 0a c0 13 c0 09
+        c0 1f c0 1e 00 33 00 32  00 9a 00 99 00 45 00 44
+        c0 0e c0 04 00 2f 00 96  00 41 c0 11 c0 07 c0 0c
+        c0 02 00 05 00 04 00 15  00 12 00 09 00 14 00 11
+        00 08 00 06 00 03 00 ff  01 00 00 49 00 0b 00 04
+        03 00 01 02 00 0a 00 34  00 32 00 0e 00 0d 00 19
+        00 0b 00 0c 00 18 00 09  00 0a 00 16 00 17 00 08
+        00 06 00 07 00 14 00 15  00 04 00 05 00 12 00 13
+        00 01 00 02 00 03 00 0f  00 10 00 11 00 23 00 00
+        00 0f 00 01 01
+    )));
+    while (1) {
+        ($type,$ver,@msg) = _readframe($cl) or do {
+            #ORIG die "no reply";
+            warn("**WARNING: no reply: '$!'");
+            return "no reply";
+        };
+        last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
+    }
+    # heartbeat request with wrong size
+    for(1..$heartbeats) {
+        _v_print("...send heartbeat#$_");
+        print $cl pack("H*",join('',qw(18 03 02 00 03 01 40 00)));
+    }
+    if ( ($type,$ver,$buf) = _readframe($cl)) {
+        if ( $type == 21 ) {
+            _v_print("received alert (probably not vulnerable)");
+        } elsif ( $type != 24 ) {
+            _v_print("unexpected reply type $type");
+        } elsif ( length($buf)>3 ) {
+            $ret = "heartbleed";
+            _v_print("BAD! got ".length($buf)." bytes back instead of 3 (vulnerable)");
+            #show_data($buf) if $show;
+            #if ( $show_regex ) {
+            #    while ( $buf =~m{($show_regex)}g ) {
+            #        print STDERR $1."\n";
+            #    }
+            #}
+            # exit 1;
+        } else {
+            _v_print("GOOD proper heartbeat reply (not vulnerable)");
+        }
+    } else {
+        _v_print("no reply - probably not vulnerable");
+    }
+    close($cl);
+    return $ret;
+} # _isbleed
 
 sub _usesocket($$$$) {
     # return cipher accepted by SSL connection
@@ -2734,6 +2849,13 @@ sub checkciphers($$) {
     $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
     _trace(" checkciphers }");
 } # checkciphers
+
+sub checkbleed($$) {
+    #? check if target supports TLS extension 15 (hearbeat)
+    my ($host, $port) = @_;
+    $checks{'heartbleed'}->{val}  = _isbleed($host, $port);
+
+} # checkbleed
 
 sub checkdates($$) {
     # check validation of certificate's before and after date
@@ -4787,6 +4909,7 @@ foreach $host (@{$cfg{'hosts'}}) {
     checksizes($host, $port); #  "
     checkdv(   $host, $port); #  "
     checkdest( $host, $port);
+    checkbleed($host, $port); # vulnerable TLS heartbeat extentions
 
     usr_pre_print();
 
@@ -5952,6 +6075,11 @@ TLSv1.2 checks are not yet implemented.
 =head3 CRIME
 
 Connection is vulnerable if target supports SSL-level compression.
+
+=head3 HEARTBLEED
+
+Check if target is vulnerable to heartbleed attack, see CVE-2014-0160
+and http://heartbleed.com/ .
 
 =head3 Lucky 13
 
@@ -7320,7 +7448,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.02.18
+@(#) 14.04.09
 
 =head1 AUTHOR
 
