@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.6 14/04/10 08:28:02";
+my  $SID    = "@(#) yeast.pl 1.7 14/04/12 18:21:20";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -2590,11 +2590,14 @@ sub _isbleed($$) {
     # http://heartbleed.com/
     # http://possible.lv/tools/hb/
     # http://filippo.io/Heartbleed/
+    # https://github.com/proactiveRISK/Heartbleed
+    # https://www.cloudflarechallenge.com/heartbleed
     my ($host, $port) = @_;
     my $heartbeats    = 1;
     my $cl  = $Net::SSLinfo::socket;
     my $ret = "";       # empty string as required in %checks
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
+    undef $\;           # take care, must not be \n !!
 
     # all following code stolen from Steffen Ullrich:
     #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
@@ -4753,7 +4756,7 @@ usr_pre_host();
 
 # run the appropriate SSL tests for each host (ugly code down here):
 $port = ($cfg{'port'}||"");     # defensive programming
-foreach $host (@{$cfg{'hosts'}}) {
+foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($host =~ m#.*?:\d+#) { 
        ($host, $port) = split(":", $host);
         $cfg{'port'}  = $port;  #
@@ -7448,7 +7451,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.04.09
+@(#) 14.04.10
 
 =head1 AUTHOR
 
