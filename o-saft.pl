@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.8 14/04/25 00:22:03";
+my  $SID    = "@(#) yeast.pl 1.9 14/04/25 01:07:06";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -3745,7 +3745,8 @@ sub print_cipherline($$$$$$) {
         # host:port protocol    supported   cipher    compliant security    description
         $desc =  join("\t", get_cipher_desc($cipher));
         $desc =~ s/\s*:\s*$//;
-        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $host . ':' . $port, $ssl, $yesno, $cipher, '-?-', $sec, $desc);
+        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $port, $ssl, $yesno, $cipher, '-?-', $sec, $desc);
+            # host printed above in print_host_key(), so only port here
     }
 } # print_cipherline
 
@@ -7457,7 +7458,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.04.10
+@(#) 14.04.24
 
 =head1 AUTHOR
 
