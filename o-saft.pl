@@ -30,13 +30,12 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
-
 # ToDo please see  =begin ToDo  in POD section
 
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.7 14/04/12 18:21:20";
+my  $SID    = "@(#) yeast.pl 1.8 14/04/25 00:22:03";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -44,8 +43,8 @@ our $VERSION= "--is defined at end of this file, and I hate to write it twice--"
     $VERSION=~ s/.*?\n@\(#\)\s*([^\n]*).*/$1/ms;
 };
 
-our $me     = $0; $me     =~ s#.*/##;
-our $mepath = $0; $mepath =~ s#/[^/]*$##;
+our $me     = $0; $me     =~ s#.*[/\\]##;
+our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 our $mename = "yeast  ";
     $mename = "O-Saft " if ($me !~ /yeast/);
@@ -919,7 +918,6 @@ our %cmd = (
 our %cfg = (
    # config. key        default   description
    #------------------+---------+----------------------------------------------
-	#	#	#	#
     'try'           => 0,       # 1: do not execute openssl, just show
     'exec'          => 0,       # 1: if +exec command used
     'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
@@ -2117,11 +2115,12 @@ my %text = (
     # RFC 6066: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
     # RFC 6066: TLS Extensions: Extension Definitions
     #                PkiPath
+    # RFC 6066: TLS Extensions: Heartbeat https://tools.ietf.org/html/rfc6520
     # RFC 4749: TLS Compression Methods
     # RFC 5077: TLS session resumption
     # RFC 4347: DTLS Datagram TLS
-    # RFC 2246: TLS protocol version 1.0 http://tools.ietf.org/html/rfc2246,
-    # RFC 6101: SSL protocol version 3.0 http://tools.ietf.org/html/rfc6101,
+    # RFC 2246: TLS protocol version 1.0 http://tools.ietf.org/html/rfc2246
+    # RFC 6101: SSL protocol version 3.0 http://tools.ietf.org/html/rfc6101
     # RFC 6460: ?
     # RFC 6125: Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)
     # RFC 4210: X509 PKI Certificate Management Protocol (CMP)
@@ -2184,6 +2183,12 @@ $cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cfg{'done'}->{'dbxfile'}++ if ($#dbx > 0);
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
+if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
+    $arg =  `$cmd{'openssl'} version -d`;      # get something like: OPENSSLDIR: "/usr/local/openssl"
+    $arg =~ s#[^"]*"([^"]*)"#$1#;
+    push(@{$cfg{'ca_paths'}}, $arg);
+    $arg = "";
+}
 
 # save hardcoded settings (command lists, texts); used in o-saft-dbx.pm
 our %org = (
@@ -5496,7 +5501,7 @@ the description here is text provided by the user.
       score-  are responsible to compute the score based on the check
               results
   
-  The second part of the name denotes which kind of method too call:
+  The second part of the name denotes which kind of method to call:
       socket    the internal functionality with sockets is used
       openssl   the exteranl openssl executable is used
       user      the external special function, as specified in user's
