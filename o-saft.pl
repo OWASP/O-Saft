@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.9 14/04/25 01:07:06";
+my  $SID    = "@(#) yeast.pl 1.10 14/04/27 11:23:58";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -925,6 +925,11 @@ our %cfg = (
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
     'verbose'       => 0,       # used for --v
+    'proxyhost'     => "",      # FQDN or IP of proxy to be used
+    'proxyport'     => 0,       # port for proxy
+    'proxyauth'     => "",      # authentication string used for proxy
+    'proxyuser'     => "",      # username for proxy authentication (Basic or Digest Auth)
+    'proxypass'     => "",      # password for proxy authentication (Basic or Digest Auth)
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
@@ -4329,6 +4334,17 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?cmd)/)   { $cfg{'traceCMD'}++;    next; } # ..
     if ($arg =~ /^--trace(@|[_-]?key)/) { $cfg{'traceKEY'}++;    next; } # ..
     if ($arg =~ /^--trace=(.*)/)        { $typ = 'TRACE';   $arg = $1; } # no next
+    # proxy options
+    if ($arg =~  '--proxy(?:host)?$')   { $typ = 'PHOST';        next; }
+    if ($arg =~  '--proxy(?:host)?=(.*)'){$typ = 'PHOST';   $arg = $1; } # no next!
+    if ($arg =~  '--proxyport$')        { $typ = 'PPORT';        next; }
+    if ($arg =~  '--proxyport=(.*)')    { $typ = 'PPORT';   $arg = $1; } # no next!
+    if ($arg =~  '--proxyuser$')        { $typ = 'PUSER';        next; }
+    if ($arg =~  '--proxyuser=(.*)')    { $typ = 'PUSER';   $arg = $1; } # no next!
+    if ($arg =~  '--proxypass$')        { $typ = 'PPASS';        next; }
+    if ($arg =~  '--proxypass=(.*)')    { $typ = 'PPASS';   $arg = $1; } # no next!
+    if ($arg =~  '--proxyauth$')        { $typ = 'PAUTH';        next; }
+    if ($arg =~  '--proxyauth=(.*)')    { $typ = 'PAUTH';   $arg = $1; } # no next!
     # options form other programs for compatibility
     if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
     if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; } # ssltest.pl
@@ -4503,6 +4519,7 @@ while ($#argv >= 0) {
     #{ option arguments
     _y_ARG("argument? $arg, typ= $typ");
     push(@dbxexe, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
+    #  $typ = '????'; # expected next argument
     #  +---------+----------+------------------------------+--------------------
     #   argument to process   what to do                    expect next argument
     #  +---------+----------+------------------------------+--------------------
@@ -4518,6 +4535,28 @@ while ($#argv >= 0) {
     if ($typ eq 'CAFILE')   { $cfg{'ca_file'}   = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'CAPATH')   { $cfg{'ca_path'}   = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'CADEPTH')  { $cfg{'ca_depth'}  = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'PPORT')    { $cfg{'proxyport'} = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'PHOST')    {
+        # allow   user:pass@f.q.d.n:42
+        $cfg{'proxyhost'} = $arg;
+        if ($arg =~ m#([^@]*)@(.*)#) {             # got username:password
+            $arg =  $2;
+            if ($1 =~ m#([^:@]*?):([^@]*)#) {
+                $cfg{'proxyuser'} = $1;
+                $cfg{'proxypass'} = $2;
+            }
+        }
+        if ($arg =~ m#([^:]*):(\d+)#) {            # got a port too
+            $cfg{'proxyhost'} = $1;
+            $cfg{'proxyport'} = $2;
+        # else port must be given by --proxyport
+        }
+        $typ = 'HOST';
+        next;
+    }
     if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'HOST')     {
         #  ------+----------+------------------------------+--------------------
@@ -5401,7 +5440,7 @@ the description here is text provided by the user.
   When giving more than one HOST argument,  the sequence of the given
   HOST argument and the given  --port=PORT  and the given --host=HOST
   options are important.
-  The rule how ports and hosts are mapped is as folollows:
+  The rule how ports and hosts are mapped is as follows:
       HOST:PORT arguments are uses as is (connection to HOST on PORT)
       only HOST is given, then previous specified --port=PORT is used
   Note that URLs are treated as HOST:PORT, if they contain a port.
@@ -5412,6 +5451,24 @@ the description here is text provided by the user.
       host-2:23
       host-3:42
       host-4:23
+
+=head3 --proxyhost=PROXYHOST --proxy=PROXYHOST:PROXYPORT
+
+  Make all connection to target using PROXYHOST.
+
+  --proxy=PROXYUSER:PROXYPASS@PROXYHOST:PROXYPORT is also possible.
+
+=head3 --proxyport=PROXYPORT
+
+  Make all connection to target using PROXYHOST:PROXYPORT.
+
+=head3 --proxyuser=PROXYUSER
+
+  Specify username for proxy authentication.
+
+=head3 --proxypass=PROXYPASS
+
+  Specify password for proxy authentication.
 
 =head2 Options for SSL tool
 
@@ -7458,7 +7515,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.04.24
+@(#) 14.04.26
 
 =head1 AUTHOR
 
