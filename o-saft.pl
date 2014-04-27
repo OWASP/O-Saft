@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.10 14/04/27 11:23:58";
+my  $SID    = "@(#) yeast.pl 1.11 14/04/27 17:33:09";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1047,6 +1047,12 @@ our %cfg = (
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
+    'ssl' => {         # configurations for TCP SSL protocol
+        'timeout'   => 2,       # timeout to receive ssl-answer
+        'retry'     => 3,       # number of retry when timeout
+        'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV
+                                #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
+    },
     'legacy'        => "simple",
     'legacys'       => [qw(cnark simple sslaudit sslcipher ssldiagnos sslscan
                         ssltest ssltest-g sslyze testsslserver full compact quick)],
@@ -7515,7 +7521,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.04.26
+@(#) 14.04.27
 
 =head1 AUTHOR
 
