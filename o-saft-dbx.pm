@@ -36,7 +36,7 @@ Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
 =item _v_print( ), _v2print( ), _v3print( ), _v4print( )
 
-=item _trace( ), _trace_1arr( )
+=item _trace( ), _trace1( ), _trace2( ), _trace_1arr( )
 
 =back
 
@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.9 14/02/04 23:10:10";
+my  $SID    = "@(#) o-saft-dbx.pm 1.10 14/04/27 17:50:31";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -136,6 +136,11 @@ sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbos
 sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); }
 sub _v4print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 4); }
 sub _trace($) { print "#" . $mename . "::" . $_[0] if ($cfg{'trace'} > 0); }
+sub _trace0($){ print "#" . $mename . "::"                 if ($cfg{'trace'} > 0); }
+sub _trace1($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 1); }
+sub _trace2($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 2); }
+sub _trace3($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 3); }
+sub _trace_($){ local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); }
 # if --trace-arg given
 sub _trace_1arr($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceKEY'} > 0); }
 sub _vprintme {
