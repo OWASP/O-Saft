@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.11 14/04/27 17:33:09";
+my  $SID    = "@(#) yeast.pl 1.233 14/05/01 22:39:10";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -973,7 +973,7 @@ our %cfg = (
                        qw(
                         check cipher dump check_sni exec help info info--v http
                         quick list libversion sizes s_client version
-                        sigkey bsi ev
+                        sigkey bsi ev cipherall
                        ),
                     # add special commands for certificate extensions
                     # they are alredy part of extension (see above) and hence
@@ -1210,12 +1210,22 @@ our %cfg = (
         'TLSv12'    => "-tls1_2",
         'DTLSv1'    => "-dtls1",
      },
+    'openssl_version_map' => {  # map our internal option to openssl version (hex value)
+        'SSLv2'     => 0x0002,
+        'SSLv3'     => 0x0300,
+        'TLSv1'     => 0x0301,
+        'TLSv11'    => 0x0302,
+        'TLSv12'    => 0x0303,
+        'DTLSv1'    => 0xFEFF,
+        'SCSV'      => 0x03FF,
+     },
     'done' => {                 # internal administration
         'hosts'     => 0,
         'dbxfile'   => 0,
         'rc-file'   => 0,
         'init_all'  => 0,
          # all following need to be reset for each host
+        'ciphers_all'   => 0,
         'ciphers_get'   => 0,
         'checkciphers'  => 0,   # not used, as it's called multiple times
         'checkdefault'  => 0,
@@ -1273,7 +1283,7 @@ foreach my $ssl (@{$cfg{'versions'}}) {
     }
 }
 
-my %ciphers_desc = (    # description of following %ciphers table
+our %ciphers_desc = (   # description of following %ciphers table
     'head'          => [qw(  sec  ssl   enc  bits mac  auth  keyx   score  tags)],
                             # abbreviations used by openssl:
                             # SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2
@@ -1518,7 +1528,7 @@ my %ciphers = (
 
 ); # %ciphers
 
-my %cipher_names = (
+our %cipher_names = (
     # ADH_DES_192_CBC_SHA      # alias: DH_anon_WITH_3DES_EDE_CBC_SHA
     # ADH_DES_40_CBC_SHA       # alias: DH_anon_EXPORT_WITH_DES40_CBC_SHA
     # ADH_DES_64_CBC_SHA       # alias: DH_anon_WITH_DES_CBC_SHA
@@ -2284,6 +2294,7 @@ sub _resetchecks() {
         next if (!m/^check/);  # only reset check*
         $cfg{'done'}->{$_} = 0;
     }
+    $cfg{'done'}->{'ciphers_all'} = 0;
     $cfg{'done'}->{'ciphers_get'} = 0;
     _initchecks_val();
 }
@@ -4865,6 +4876,22 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
     }
 
+## ALPHA {
+    if (_is_do('cipherall')) {
+        _y_CMD("+cipherll");
+        my @all;
+        push(@all, @{$_}[0]) foreach (values %cipher_names);
+      require "./Net::SSLhello.pm";
+_dbx "GO";
+        foreach $ssl (@{$cfg{'version'}}) {
+            my @acceptedCipherArray = Net::SSLhello::checkSSLciphers ($host, $port, $cfg{'openssl_version_map'}->{$ssl}, @all);  # SSLV2-Ciphers werden übersprungen
+            _trace(" accepted ciphers: @acceptedCipherArray");
+            Net::SSLhello::printCipherStringArray ('compact', $host, $port, "$ssl ($cfg{'openssl_version_map'}->{$ssl}) Default-Ciphers", 0, @acceptedCipherArray);
+        }
+        next;
+    }
+## ALPHA }
+
     usr_pre_info();
 
     # check if SNI supported
@@ -5345,6 +5372,13 @@ with other commands).
 
     Note that ciphers  not supported  by the local SSL implementation
     are not checked by default, use "--local" option for that.
+
+=head2 +cipherall
+
+    Check target for all possible ciphers.
+    Does not depend on local SSL implementation.
+
+    WARNING: needs to be extensively tested (04/2014)
 
 =head2 Commands to test SSL connection to target
 
@@ -7521,7 +7555,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.04.27
+@(#) 14.04.28
 
 =head1 AUTHOR
 
