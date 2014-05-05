@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.234 14/05/05 22:38:30";
+my  $SID    = "@(#) %M% %I% %E% %U%";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -57,7 +57,7 @@ use IO::Socket::INET;
 
 our $warning= 1;    # print warnings; need this variable very early
 
-sub _warn { warn("**WARNING: ", join(" ", @_)) if ($main::warning > 0); }
+sub _warn { print("**WARNING: ", join(" ", @_)) if ($main::warning > 0); }
 
 # README if any
 # -------------------------------------
@@ -955,6 +955,7 @@ our %cfg = (
                                 # NOTE: must be same string as used in %ciphers[ssl]
                                 # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
                                 # ToDo: DTLSv0.9
+    'ssl_lazy'      => 0,       # 1: lazy check for available SSL protocol functionality
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
     'TLSv1'         => 1,       # 1:   "
@@ -4411,6 +4412,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?tlsv?12$/i)  { $cfg{'TLSv12'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLSv9'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?10?$/i){ $cfg{'DTLSv1'}    = 0; next; } # ..
+    if ($arg =~ /^--ssl[_-]?lazy$/)     { $cfg{'ssl_lazy'}  = 1; next; } # ..
+    if ($arg =~ /^--no[_-]?ssl[_-]?lazy$/){$cfg{'ssl_lazy'} = 0; next; } # ..
     if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1; next; } # ..
     if ($arg =~ /^--no[_-]?dns/)        { $cfg{'usedns'}    = 0; next; }
     if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1; next; }
@@ -4730,14 +4733,14 @@ foreach $ssl (@{$cfg{'versions'}}) {
     $cfg{$ssl} = 0; # reset to simplify further checks
     # ToDo: DTLSv9
     if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
-        # { DISABLED-CHECK (starting with VERSION 14.01.23)
+        if ($cfg{'ssl_lazy'}>0) {
             # some versions of Net::SSLeay seem not to support the methods for
-            # all SSL versions even the underlying library supports it
-            # hence the check (see below) is disabled for now
+            # all SSL versions even the underlying library supports it, hence
+            # the check (see below) is disabled
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
             next;
-        # DISABLED-CHECK }
+        }
         # ToDO: enable checks again
         $typ = eval("Net::SSLeay::SSLv2_method()")   if ($ssl eq 'SSLv2');
         $typ = eval("Net::SSLeay::SSLv3_method()")   if ($ssl eq 'SSLv3');
@@ -5578,6 +5581,21 @@ the description here is text provided by the user.
 
   Check your system for the proper name, i.e.:
       DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH .
+
+=head3 --ssl-lazy
+
+  if the "--lib=PATH" option doesn't work (for example due to changes
+  I.g. this tools tries to identify available functionality according
+  SSL versions from the underlaying libraries.  Unsupported  versions
+  are then disables and a warning is shown.
+  Unfortunately some libraries have  not implemented all functions to
+  check availability of a specific SSL version, which then results in
+  a compile error. 
+
+  This option disables the strict check of availability.
+  If the underlaying library doesn't support the required SSL version
+  at all, following error may occour:
+      Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
 
 =head3 --call=METHOD
 
@@ -7563,7 +7581,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.05
+@(#) 14.05.06
 
 =head1 AUTHOR
 
