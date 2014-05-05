@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.233 14/05/01 22:39:10";
+my  $SID    = "@(#) yeast.pl 1.234 14/05/05 22:38:30";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -54,6 +54,10 @@ binmode(STDERR, ":unix");
 
 use IO::Socket::SSL 1.37; #  qw(debug2);
 use IO::Socket::INET;
+
+our $warning= 1;    # print warnings; need this variable very early
+
+sub _warn { warn("**WARNING: ", join(" ", @_)) if ($main::warning > 0); }
 
 # README if any
 # -------------------------------------
@@ -79,12 +83,9 @@ if (1.49 > $Net::SSLeay::VERSION) {
     # only check VERSION instead of requiring a specific version with perl's use
     # this allows continueing to use this tool even if the version is too old
     # but we shout out loud that the results are not reliable
-    print "
-**WARNING: ancient Net::SSLeay $Net::SSLeay::VERSION found
-**WARNING: $0 requires Net::SSLeay 1.49 or newer
-**WARNING: $0 may throw warnings and/or results may be missing
-
-";
+    _warn("ancient Net::SSLeay $Net::SSLeay::VERSION found");
+    _warn("$0 requires Net::SSLeay 1.49 or newer");
+    _warn("$0 may throw warnings and/or results may be missing");
 }
 
 if (! eval("require Net::SSLinfo;")) {
@@ -132,7 +133,6 @@ if (-e $arg) {
     sub usr_pre_exit()  {}; #  "
 }
 
-
 my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 
 usr_pre_file();
@@ -162,7 +162,7 @@ if (($#dbx >= 0) and ($cgi == 0)) {
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     if (! -e $arg) {
-        warn "**WARNING: '$arg' not found";
+        _warn("'$arg' not found");
         $arg = join("/", $mepath, $arg);    # try to find it in installation directory
         die  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
         # no need to continue if required file does not exist
@@ -925,6 +925,7 @@ our %cfg = (
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
     'verbose'       => 0,       # used for --v
+    'warning'       => 1,       # 1: print warnings; 0: don't print warnings
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
     'proxyport'     => 0,       # port for proxy
     'proxyauth'     => "",      # authentication string used for proxy
@@ -2312,7 +2313,7 @@ sub _find_cipher_name($) {
     # nothing found yet, try more lazy match
     foreach (keys %cipher_names) {
         if ($_ =~ m/$cipher/) {
-            warn("**WARNING: partial match for cipher name found '$cipher'");
+            _warn("partial match for cipher name found '$cipher'");
             return $cipher_names{$_}[1];
         }
     }
@@ -2346,14 +2347,14 @@ sub _cfg_set($$) {
     no warnings qw(prototype); # avoid: main::_cfg_set() called too early to check prototype at ...
     _trace(" _cfg_set($typ, ){");
     if ($typ !~ m/^CFG-(cmd|checks?|data|text|scores?)$/) {
-        warn("**WARNING: unknown configuration key '$typ'; ignored");
+        _warn("unknown configuration key '$typ'; ignored");
         goto _CFG_RETURN;
     }
     if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
         if ($cgi == 0) {
-            warn("**WARNING: configuration files are not read in CGI mode; ignored");
+            _warn("configuration files are not read in CGI mode; ignored");
             return;
         }
         _trace(" _cfg_set: read $arg \n");
@@ -2380,7 +2381,7 @@ sub _cfg_set($$) {
             close(FID);
             goto _CFG_RETURN;
         };
-        warn("**WARNING: cannot open '$arg': $! ; ignored");
+        _warn("cannot open '$arg': $! ; ignored");
         return;
     } # read file
 
@@ -2397,7 +2398,7 @@ sub _cfg_set($$) {
             next if (_is_hashkey($key, \%data) > 0);
             next if (_is_intern( $key) > 0);
             next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
-            warn("**WARNING: unknown command '$key' for '$typ'; ignored");
+            _warn("unknown command '$key' for '$typ'; ignored");
         }
     }
 
@@ -2406,7 +2407,7 @@ sub _cfg_set($$) {
     if ($typ eq 'CFG-score') {          # set new score value
         _trace(" _cfg_set(KEY=$key, SCORE=$val)\n");
         if ($val !~ m/^(\d\d?|100)$/) { # allow 0 .. 100
-            warn("**WARNING: invalid score value '$val'; ignored");
+            _warn("invalid score value '$val'; ignored");
             goto _CFG_RETURN;
         }
         $checks{$key}->{score} = $val if ($checks{$key});
@@ -2622,7 +2623,7 @@ sub _isbleed($$) {
     # https://www.cloudflarechallenge.com/heartbleed
     my ($host, $port) = @_;
     my $heartbeats    = 1;
-    my $cl  = $Net::SSLinfo::socket;
+    my $cl  = undef; # ToDo: =$Net::SSLinfo::socket;
     my $ret = "";       # empty string as required in %checks
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
     undef $\;           # take care, must not be \n !!
@@ -2636,7 +2637,7 @@ sub _isbleed($$) {
 # ToDo: does not work with socket from SSLinfo.pm
     $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
         #ORIG die "failed to connect: $!";
-        warn("**WARNING: failed to connect: '$!'");
+        _warn("failed to connect: '$!'");
         return "failed to connect";
     };
     # client hello with heartbeat extension
@@ -2661,7 +2662,7 @@ sub _isbleed($$) {
     while (1) {
         ($type,$ver,@msg) = _readframe($cl) or do {
             #ORIG die "no reply";
-            warn("**WARNING: no reply: '$!'");
+            _warn("no reply: '$!'");
             return "no reply";
         };
         last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
@@ -2762,9 +2763,9 @@ sub _useopenssl($$$$) {
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
     return "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
     if ($data =~ m#^\s*$#) {
-        warn("**WARNING: empty result from openssl; ignored");
+        _warn("empty result from openssl; ignored");
     } else {
-        warn("**WARNING: unknown result from openssl; ignored");
+        _warn("unknown result from openssl; ignored");
     }
     _trace("_useopenssl #{ $data }");
     print "**Hint: use options like: --v --trace --timeout=42";
@@ -3603,7 +3604,7 @@ sub print_data($$$) {
     # print given label and text from %data according given legacy format
     my ($legacy, $label, $host, $port) = @_;   # port is optional
     if (_is_hashkey($label, \%data) < 1) {     # silently ignore unknown labels
-        warn("**WARNING: unknown label '$label'; ignored"); # seems to be a programming error
+        _warn("unknown label '$label'; ignored"); # seems to be a programming error
         return;
     }
     print_host_key($host, $label);
@@ -3972,7 +3973,7 @@ sub printchecks($$) {
         }
     }
     _trace_1arr('%checks');
-    print "**WARNING: can't print certificate sizes without a certificate (--no-cert)" if ($cfg{'no_cert'} > 0);
+    _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_hashkey($key, \%checks) < 1);
@@ -4345,6 +4346,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();         exit 0; } # debugging
    #if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++; $info = 1; next; }
     if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     next; }
+    if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;     next; }
+    if ($arg =~ m/^--no[_-]?warnings?$/){ $cfg{'warning'}   = 0; next; }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
     if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
     if ($arg =~ /^--trace(--|[_-]?arg)/){ $cfg{'traceARG'}++;    next; } # special internal tracing
@@ -4445,7 +4448,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT'; $arg = $1; } # no next
     if ($arg =~ /^--cfg[_-](cmd|score|text)-([^=]*)=(.*)/){              # warn if old syntax; must be first --cfg* check!
         $typ = 'CFG-'.$1; $arg = $2 . "=" . $3;   # convert to new syntax
-        print("**WARNING: old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files\n");
+        _warn("old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files");
         # no next;
     }
     if ($arg =~ /^--cfg[_-]([^=]*)$/)   { $typ = 'CFG-'.$1;      next; }
@@ -4463,7 +4466,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--insecure')          { next; } #  "
     if ($arg =~ /^--use?r$/)            { next; } # ignore, nothing to do
     if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
-        warn("**WARNING: --set-score=* obsolte, please use --cfg_score=*; ignored");
+        _warn("--set-score=* obsolte, please use --cfg_score=*; ignored");
         next;
     }
     #} +---------+----------------------+----------------------+----------------
@@ -4525,7 +4528,7 @@ while ($#argv >= 0) {
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
             push(@{$cfg{'do'}}, $val);
         } else {
-            warn("**WARNING: unknown command '$val' ignored");
+            _warn("unknown command '$val' ignored");
         }
         next;
     }
@@ -4596,14 +4599,14 @@ while ($#argv >= 0) {
         if (1 == grep(/^$arg$/, @{$cfg{'legacys'}})) {
             $cfg{'legacy'} = $arg;
         } else {
-            warn("**WARNING: unknown legacy '$arg'; ignored");
+            _warn("unknown legacy '$arg'; ignored");
         }
     }
     if ($typ eq 'FORMAT')   {
         if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
             $cfg{'format'} = $arg;
         } else {
-            warn("**WARNING: unknown format '$arg'; ignored");
+            _warn("unknown format '$arg'; ignored");
         }
     }
     if ($typ eq 'TRACE')    {
@@ -4618,6 +4621,7 @@ while ($#argv >= 0) {
 
 } # while
 $verbose = $cfg{'verbose'};
+$warning = $cfg{'warning'};
 
 _yeast_args();
 _vprintme();
@@ -4662,14 +4666,14 @@ local $\ = "\n";
 
 # check if used software supports SNI properly
 # -------------------------------------
-$typ  = "**WARNING: old version of ## detected which does not support SNI";
+$typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
 $typ .= "**Hint: #opt# can be used to disables this check";
 if ($IO::Socket::SSL::VERSION < 1.90) {
     if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
         $cfg{'usesni'} = 0;
         my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/; $txt =~ s/#opt#/--force-openssl /;
-        print $txt;
+        _warn($txt);
     }
 }
 if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
@@ -4678,7 +4682,7 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
     if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
         $cfg{'usesni'} = 0;
         my $txt = $typ; $txt =~ s/##/`openssl < 1.0.0'/; $txt =~ s/#opt#/--force-sni/;
-        print $txt;
+        _warn($txt);
     }
 }
 _trace("use sni: $cfg{'usesni'}");
@@ -4750,11 +4754,11 @@ foreach $ssl (@{$cfg{'versions'}}) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
         } else {# eval failed ..
-            print "**WARNING: SSL version '$ssl' not supported by openssl; ignored\n";
+            _warn("SSL version '$ssl' not supported by openssl; ignored");
         }
         # ToDo: geht nicht: Net::SSLeay::SSLv23_method();
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
-        warn("**WARNING: unsupported SSL version '$ssl'; ignored");
+        _warn("unsupported SSL version '$ssl'; ignored");
     }
 }
 
@@ -4783,7 +4787,7 @@ if (_need_cipher() > 0) {
     }
     _trace("got ciphers: @{$cfg{'ciphers'}}");
     if (@{$cfg{'ciphers'}} < 0) {  # empty list, try openssl and local list
-        print "**WARNING: given pattern '$pattern' did not return cipher list";
+        _warn("given pattern '$pattern' did not return cipher list");
         _y_CMD("  get cipher list using openssl ..");
         @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_local($pattern);
         if (@{$cfg{'ciphers'}} < 0) {   # empty list, try own list
@@ -4837,7 +4841,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     $cfg{'host'}        = $host;
     $cfg{'ip'}          = gethostbyname($host); # primary IP as identified by given hostname
     if (!defined $cfg{'ip'}) {
-        warn("**WARNING: Can't get IP for host '$host'; ignored");
+        _warn("Can't get IP for host '$host'; ignored");
         _y_CMD("host}");
         next; # otherwise all following fails
     }
@@ -4857,7 +4861,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
             #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
         }
-        warn("**WARNING: Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
+        _warn("Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
     }
     $? = 0;
 
@@ -4919,7 +4923,7 @@ _dbx "GO";
         my $err     = Net::SSLinfo::errors( $host, $port);
         if ($err !~ /^\s*$/) {
             _v_print($err);
-            warn("**WARNING: Can't make a connection to $host:$port; target ignored");
+            _warn("Can't make a connection to $host:$port; target ignored");
             goto CLOSE_SSL;
         }
     }
@@ -4997,7 +5001,7 @@ _dbx "GO";
 
     if ($check > 0) {
         _y_CMD("+check");
-        print "**WARNING: no openssl, some checks are missing" if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
+        _warn("no openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
     }
 
     # for debugging only
@@ -6072,6 +6076,10 @@ options are ambiguous.
 While  I<--v>  is used to print more data, I<--trace> is used to print
 more information about internal data such as  procedure names and/or
 variable names and program flow.
+
+=head3 --no-warning
+
+  Do not print warning messages (**WARNING:).
 
 =head2 Options vs. Commands
 
@@ -7555,7 +7563,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.04.28
+@(#) 14.05.05
 
 =head1 AUTHOR
 
