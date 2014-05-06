@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.236 14/05/06 21:22:25";
+my  $SID    = "@(#) yeast.pl 1.238 14/05/06 21:47:03";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1505,6 +1505,20 @@ my %ciphers = (
         'ECDH-RSA-AES256-SHA384'        => [qw( high TLSv12 AES    256 SHA384 ECDH  ECDH/ECDSA 11 :)],
         'NULL-SHA256'                   => [qw( weak TLSv12 None     0 SHA256 RSA   RSA         0 :)],
         #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
+        'KRB5-DES-CBC3-MD5'             => [qw(  HIGH SSLv3 3DES   168 MD5    KRB5  KRB5      100 :)],
+        'KRB5-DES-CBC3-SHA'             => [qw(  HIGH SSLv3 3DES   168 SHA1   KRB5  KRB5      100 :)],
+        'KRB5-IDEA-CBC-MD5'             => [qw(MEDIUM SSLv3 IDEA   128 MD5    KRB5  KRB5       80 :)],
+        'KRB5-IDEA-CBC-SHA'             => [qw(MEDIUM SSLv3 IDEA   128 SHA1   KRB5  KRB5       80 :)],
+        'KRB5-RC4-MD5'                  => [qw(  weak SSLv3 RC4    128 MD5    KRB5  KRB5        0 :)],
+        'KRB5-RC4-SHA'                  => [qw(  weak SSLv3 RC4    128 SHA1   KRB5  KRB5        0 :)],
+        'KRB5-DES-CBC-MD5'              => [qw(   LOW SSLv3 DES     56 MD5    KRB5  KRB5       20 :)],
+        'KRB5-DES-CBC-SHA'              => [qw(   LOW SSLv3 DES     56 SHA1   KRB5  KRB5       20 :)],
+        'EXP-KRB5-DES-CBC-MD5'          => [qw(  weak SSLv3 DES     40 MD5    KRB5  KRB5        0 export)],
+        'EXP-KRB5-DES-CBC-SHA'          => [qw(  weak SSLv3 DES     40 SHA1   KRB5  KRB5        0 export)],
+        'EXP-KRB5-RC2-CBC-MD5'          => [qw(  weak SSLv3 RC2     40 MD5    KRB5  KRB5        0 export)],
+        'EXP-KRB5-RC2-CBC-SHA'          => [qw(  weak SSLv3 RC2     40 SHA1   KRB5  KRB5        0 export)],
+        'EXP-KRB5-RC4-MD5'              => [qw(  weak SSLv3 RC4     40 MD5    KRB5  KRB5        0 export)],
+        'EXP-KRB5-RC4-SHA'              => [qw(  weak SSLv3 RC4     40 SHA1   KRB5  KRB5        0 export)],
 
     # === openssl ===
     # above table (roughly) generated with:
@@ -7621,7 +7635,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.07
+@(#) 14.05.08
 
 =head1 AUTHOR
 
