@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) %M% %I% %E% %U%";
+my  $SID    = "@(#) yeast.pl 1.236 14/05/06 21:22:25";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1226,6 +1226,7 @@ our %cfg = (
         'dbxfile'   => 0,
         'rc-file'   => 0,
         'init_all'  => 0,
+        'arg_cmds'  => [],      # contains all commands given as argument
          # all following need to be reset for each host
         'ciphers_all'   => 0,
         'ciphers_get'   => 0,
@@ -2526,7 +2527,16 @@ sub get_cipher_auth($) { my $c=$_[0]; return $ciphers{$c}[5] || "" if (grep(/^$c
 sub get_cipher_keyx($) { my $c=$_[0]; return $ciphers{$c}[6] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
 sub get_cipher_score($){ my $c=$_[0]; return $ciphers{$c}[7] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
 sub get_cipher_tags($) { my $c=$_[0]; return $ciphers{$c}[8] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_desc($) { my $c=$_[0]; my @c = @{$ciphers{$c}}; shift @c; return @c if (grep(/^$c/, %ciphers)>0); return ""; }
+sub get_cipher_desc($) { my $c=$_[0];
+    if (! defined $ciphers{$c}) {
+        _warn("undefined cipher description for '$c'"); # ToDo: correct %ciphers
+        return "<<undef>>";
+    }
+    my @c = @{$ciphers{$c}}; 
+    shift @c;
+    return @c if (grep(/^$c/, %ciphers)>0);
+    return "";
+}
 
 # check functions
 # -------------------------------------
@@ -3410,7 +3420,7 @@ sub checkdest($$) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
         # if supported we have a value
-	# ToDo: see ZLIB also (seems to be wrong currently)
+        # ToDo: see ZLIB also (seems to be wrong currently)
     }
 } # checkdest
 
@@ -4519,6 +4529,7 @@ while ($#argv >= 0) {
             $cfg{'exec'} = 1;
             next;
         }
+        push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val =~ /^beast/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
         if ($val =~ /^crime/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); next; }
         if ($val =~ /^sizes/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
@@ -4768,6 +4779,21 @@ foreach $ssl (@{$cfg{'versions'}}) {
 if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
     foreach $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
+}
+
+# defense, user-friendly programming
+if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
+    # +info does not allow additional commands
+    # see printchecks() call below
+    _warn("additional commands in conjuntion with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
+}
+if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
+    # +check does not allow additional commands of tpye "info"
+    foreach $key (@{$cfg{'done'}->{'arg_cmds'}}) {
+        if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
+            _warn("additional commands in conjuntion with '+check' are not supported; +'$key' ignored");
+        }
+    }
 }
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {
@@ -5025,7 +5051,8 @@ _dbx "GO";
             + $scores{'check_dest'}->{val}
             + $scores{'check_http'}->{val}
             ) / 4 ) + 0.5);
-        printheader($text{'out-scoring'}, $text{'desc-score'});
+        printheader($text{'out-scoring'}."\n", $text{'desc-score'});
+        print "\n";
         _trace_1arr('%scores');
         foreach $key (sort keys %scores) {
             next if ($key !~ m/^check_/); # print totals only
@@ -5033,6 +5060,7 @@ _dbx "GO";
         }
         print_line($legacy, $host, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
         printruler();
+        print "\n";
         if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
             printtable('score');
             printruler();
@@ -6752,6 +6780,18 @@ very slow connection. Typically the reason is a connection timeout.
 Try to use  I<--timout=SEC>  option.
 To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 
+=head2 **WARNING: undefined cipher description
+
+May occour if ciphers are checked, but no description is available for
+them herein. This results in printed cipher checks like:
+
+        EXP-KRB5-RC4-MD5                no
+
+instead of:
+
+        EXP-KRB5-RC4-MD5                no       weak
+
+
 =head2 Use of uninitialized value $headers in split ... do_httpx2.al)
 
 The warning message (like follows or similar):
@@ -7581,7 +7621,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.06
+@(#) 14.05.07
 
 =head1 AUTHOR
 
