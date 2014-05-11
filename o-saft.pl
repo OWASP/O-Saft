@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.239 14/05/11 10:57:43";
+my  $SID    = "@(#) yeast.pl 1.240 14/05/11 16:20:58";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4754,6 +4754,7 @@ if ($quick == 1) {
     $cfg{'shorttxt'}= 1;
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
+push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
 
 # set defaults for Net::SSLinfo
 # -------------------------------------
@@ -4877,9 +4878,8 @@ $legacy = $cfg{'legacy'};
   # could do these checks earlier (after seeting defaults), but we want
   # to keep all checks together for better maintenace
 printusage(),      exit 2   if ($#{$cfg{'hosts'}} < 0); # no target hosts, does not make any sense
-if ($#{$cfg{'do'}} < 0) {
+if (_is_do('cipher')) {
     printusage(),  exit 2   if ($#{$cfg{'done'}->{'arg_cmds'}} >= 0); # only unknown commands given, don't use default then
-    push(@{$cfg{'do'}}, 'cipher');
 }
 if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +info does not allow additional commands
@@ -7678,7 +7678,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.08
+@(#) 14.05.09
 
 =head1 AUTHOR
 
