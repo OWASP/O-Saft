@@ -34,7 +34,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.72 14/02/04 22:57:18',
+    SID         => '@(#) Net::SSLinfo.pm 1.73 14/05/11 21:19:28',
 };
 
 ######################################################## public documentation #
@@ -282,7 +282,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.01.29';
+    $VERSION   = '14.05.09';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -950,17 +950,17 @@ sub do_ssl_open($$$) {
 
         #2b. set protocol options
         $src = "Net::SSLeay::CTX_set_ssl_version()";   # set default SSL protocol
-            $ssl = eval("Net::SSLeay::SSLv23_method()");
-            if (defined $ssl) {
-                Net::SSLeay::CTX_set_ssl_version($ctx, $ssl) or do {$err = $!} and last;
-                # allow all protocols for backward compatibility; user specific
-                # restrictions are done later with  CTX_set_options()
-            } else {
-                push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
-                # if we don't have  SSLv23_method(), we better use the system's
-                # default behaviour, because anything else  would stick  on the
-                # specified protocol version, like SSLv3_method()
-            }
+        $ssl = eval("Net::SSLeay::SSLv23_method()");
+        if (defined $ssl) {
+            Net::SSLeay::CTX_set_ssl_version($ctx, $ssl) or do {$err = $!} and last;
+            # allow all protocols for backward compatibility; user specific
+            # restrictions are done later with  CTX_set_options()
+        } else {
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
+            # if we don't have  SSLv23_method(), we better use the system's
+            # default behaviour, because anything else  would stick  on the
+            # specified protocol version, like SSLv3_method()
+        }
         $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
             # disable not specified SSL versions
@@ -1007,6 +1007,7 @@ sub do_ssl_open($$$) {
         }
 
         #4. connect SSL
+        $SIG{PIPE} = 'IGNORE';              # Avoid "Broken Pipe"
         my $ret;
         $src = 'Net::SSLeay::connect() ';
         $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
