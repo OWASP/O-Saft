@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.238 14/05/06 21:47:03";
+my  $SID    = "@(#) yeast.pl 1.239 14/05/11 10:57:43";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -57,7 +57,8 @@ use IO::Socket::INET;
 
 our $warning= 1;    # print warnings; need this variable very early
 
-sub _warn { print("**WARNING: ", join(" ", @_)) if ($main::warning > 0); }
+sub _warn { local $\="\n"; print("**WARNING: ", join(" ", @_)) if ($main::warning > 0); }
+    # print warning if wanted
 
 # README if any
 # -------------------------------------
@@ -95,6 +96,7 @@ if (! eval("require Net::SSLinfo;")) {
 }
 
 sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header)/i, @ARGV) <= 0); }
+    # print information what will be read
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
 my $arg = "";
@@ -2282,7 +2284,7 @@ sub _initchecks_score()  {
 } # _initchecks_score
 
 sub _initchecks_val()  {
-    # set all default score values here
+    # set all default check values here
     $checks{$_}->{val}   = "" foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
     $checks{'sts_maxage0d'}->{val} =        0;
@@ -2297,7 +2299,7 @@ sub _initchecks_val()  {
 } # _initchecks_val
 
 sub _init_all()  {
-    # set all default score values here
+    # set all default values here
     $cfg{'done'}->{'init_all'}++;
     _trace("_init_all()");
     _initchecks_score();
@@ -2542,6 +2544,7 @@ sub get_cipher_keyx($) { my $c=$_[0]; return $ciphers{$c}[6] || "" if (grep(/^$c
 sub get_cipher_score($){ my $c=$_[0]; return $ciphers{$c}[7] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
 sub get_cipher_tags($) { my $c=$_[0]; return $ciphers{$c}[8] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
 sub get_cipher_desc($) { my $c=$_[0];
+    # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
         _warn("undefined cipher description for '$c'"); # ToDo: correct %ciphers
         return "<<undef>>";
@@ -2565,6 +2568,7 @@ sub _isbeast($$){
 } # _isbeast
 #sub _isbreach($)       { return "NOT YET IMPLEMEMNTED"; }
 sub _isbreach($){
+    # return 'yes' if vulnerable to BREACH
     return 0;
 # ToDo: checks
     # To be vulnerable, a web application must:
@@ -2614,7 +2618,7 @@ sub _ispci($$)  {
     return "";
 } # _ispci
 sub _readframe($) {
-    #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
+    # from https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
     my $cl  = shift;
     my $len = 5;
     my $buf = '';
@@ -3799,6 +3803,7 @@ sub print_cipherline($$$$$$) {
 } # print_cipherline
 
 sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); }
+    #? print header ruler line
 sub print_cipherhead($) {
     #? print header line according given legacy format
     my $legacy  = shift;
@@ -4241,6 +4246,7 @@ sub printcommands() {
 } # printcommands
 
 sub printhist() {
+    #? print
     my $egg = join ("", @DATA);
     $egg =~ s{.*?=begin\s+--v --v(.*?)=end\s+--v.*}{$1}ms;
     print scalar reverse $egg;
@@ -4302,6 +4308,17 @@ sub printhelp($) {
         print $ident, $_;
     }
 } # printhelp
+
+sub printusage() {
+    print "# $mename USAGE:
+# most common usage:
+  $mename +info   your.tld
+  $mename +check  your.tld
+  $mename +cipher your.tld
+# for more help use:
+  $mename --help
+    ";
+} # printusage
 
 sub printtodo() {
     #? print program's ToDo
@@ -4375,9 +4392,9 @@ while ($#argv >= 0) {
     if ($arg =~ m/^--no[_-]?warnings?$/){ $cfg{'warning'}   = 0; next; }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
     if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
-    if ($arg =~ /^--trace(--|[_-]?arg)/){ $cfg{'traceARG'}++;    next; } # special internal tracing
-    if ($arg =~ /^--trace([_-]?cmd)/)   { $cfg{'traceCMD'}++;    next; } # ..
-    if ($arg =~ /^--trace(@|[_-]?key)/) { $cfg{'traceKEY'}++;    next; } # ..
+    if ($arg =~ /^--trace(--|[_-]?arg)/i){$cfg{'traceARG'}++;    next; } # special internal tracing
+    if ($arg =~ /^--trace([_-]?cmd)/i)  { $cfg{'traceCMD'}++;    next; } # ..
+    if ($arg =~ /^--trace(@|[_-]?key)/i){ $cfg{'traceKEY'}++;    next; } # ..
     if ($arg =~ /^--trace=(.*)/)        { $typ = 'TRACE';   $arg = $1; } # no next
     # proxy options
     if ($arg =~  '--proxy(?:host)?$')   { $typ = 'PHOST';        next; }
@@ -4402,6 +4419,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';       } # become
     if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';        } # commands
     if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';     } # ..
+    if ($arg =~ /^--trace([_-]?sub)/i)  { $arg = '+traceSUB';          } # ..
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1; next; }
     if ($arg =~ /^--force[_-]?openssl/) { $cmd{'extciphers'}= 1; next; }
@@ -4535,6 +4553,15 @@ while ($#argv >= 0) {
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
     if ($arg eq '+check_sni'){@{$cfg{'do'}} = @{$cfg{'cmd-sni--v'}}; $info = 1; next; }
+    if ($arg eq '+traceSUB'){
+        print "# $mename  list of internal functions:\n";
+        my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
+          ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
+          ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
+        exec 'perl', '-lane', "$perlprog", $0; #  ,"o-saft-dbx.pm";
+        exit 0;
+	
+    }
     if ($arg =~ /^\+(.*)/)  { # all  other commands
         my $val = $1;
         _y_ARG("command= $val");
@@ -4713,14 +4740,25 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
         _warn($txt);
     }
 }
-_trace("use sni: $cfg{'usesni'}");
+_trace("cfg{usesni}: $cfg{'usesni'}");
 
-$cfg{'usehttp'}     = 1 if (0 => grep(/hsts/, @{$cfg{'do'}})); # STS makes no sence without http
+# set additional defaults if missing
+# -------------------------------------
+$cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
+$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @ARGV)); # see --header
+$cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @ARGV));   # can be set in rc-file!
+$cfg{'usehttp'}     = 1 if(0 => grep(/hsts/, @{$cfg{'do'}}));   # STS makes no sence without http
+$quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
+if ($quick == 1) {
+    $cfg{'enabled'} = 1;
+    $cfg{'shorttxt'}= 1;
+}
+$text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 
 # set defaults for Net::SSLinfo
 # -------------------------------------
 {
-    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at 
+    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
     $Net::SSLinfo::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLinfo::use_openssl = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient = $cmd{'extsclient'};
@@ -4740,19 +4778,8 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http    = 0; # if only +cipher given don't use http 'cause it may cause erros
 }
 
-# set additional defaults if missing
+# check for supported SSL versions
 # -------------------------------------
-$cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
-$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @ARGV)); # see --header
-$cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @ARGV)); # can be set in rc-file!
-$quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
-if ($quick == 1) {
-    $cfg{'enabled'} = 1;
-    $cfg{'shorttxt'}= 1;
-}
-$text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
-
-push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0); # command
 foreach $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);
     $cfg{$ssl} = 0; # reset to simplify further checks
@@ -4795,22 +4822,7 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
-# defense, user-friendly programming
-if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
-    # +info does not allow additional commands
-    # see printchecks() call below
-    _warn("additional commands in conjuntion with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
-}
-if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
-    # +check does not allow additional commands of tpye "info"
-    foreach $key (@{$cfg{'done'}->{'arg_cmds'}}) {
-        if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
-            _warn("additional commands in conjuntion with '+check' are not supported; +'$key' ignored");
-        }
-    }
-}
-
-if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {
+if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
     _yeast_init();
 }
@@ -4860,6 +4872,28 @@ printopenssl(),    exit 0   if (_is_do('libversion'));
 printcipherlist(), exit 0   if (_is_do('list'));
 
 $legacy = $cfg{'legacy'};
+
+# defense, user-friendly programming
+  # could do these checks earlier (after seeting defaults), but we want
+  # to keep all checks together for better maintenace
+printusage(),      exit 2   if ($#{$cfg{'hosts'}} < 0); # no target hosts, does not make any sense
+if ($#{$cfg{'do'}} < 0) {
+    printusage(),  exit 2   if ($#{$cfg{'done'}->{'arg_cmds'}} >= 0); # only unknown commands given, don't use default then
+    push(@{$cfg{'do'}}, 'cipher');
+}
+if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
+    # +info does not allow additional commands
+    # see printchecks() call below
+    _warn("additional commands in conjuntion with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
+}
+if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
+    # +check does not allow additional commands of type "info"
+    foreach $key (@{$cfg{'done'}->{'arg_cmds'}}) {
+        if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
+            _warn("additional commands in conjuntion with '+check' are not supported; +'$key' ignored");
+        }
+    }
+}
 
 # now commands which do make a connection
 usr_pre_host();
@@ -5151,6 +5185,8 @@ here are some examples of the most common use cases:
 
 For more specialised test cases, refer to the B<COMMANDS> and B<OPTIONS>
 sections below.
+
+If no command is given,  I<+cipher>  is used.
 
 =head1 WHY?
 
@@ -6131,6 +6167,11 @@ options are ambiguous.
 
   Use FILE instead of the default rc-file (.o-saft.pl, see RC-FILE).
 
+=head3 --trace-sub +traceSUB
+
+  Print formatted list of internal functions with their description.
+  Not to be intended in conjunction with any target check.
+
 =head2 --trace vs. --v
 
 While  I<--v>  is used to print more data, I<--trace> is used to print
@@ -6228,6 +6269,10 @@ Check which ciphers are supported by target. Please see B<RESULTS> for
 details of this check.
 
 =head2 SSL Connection
+
+=head3 heartbeat
+
+Check if connection is vulnerable to heartbleed attack.
 
 =head2 SSL Vulnerabilities
 
@@ -7232,6 +7277,9 @@ to run this tool in CGI mode. You have been warned!
 
 =head2 Program Code
 
+First of all: the main goal is to have a tool to be simple for users.
+It's not designed to be accademic code or simple for programmers.
+
 =head3 General
 
 Perl's  `die()'  is used whenever an unrecoverable error occurs.  The
@@ -7282,7 +7330,7 @@ with `my'). These variables are mainly: @DATA, @results, %cmd, %data,
 %cfg, %checks, %ciphers, %text.
 
 Variables defined with `our' are can be used in  L<o-saft-dbx.pm>  and
-L<o-saft-dbx.pm> .
+L<o-saft-usr.pm> .
 
 For a detailed description of the used variables, please refer to the
 text starting at the line  C<#!# set defaults>.
@@ -7330,12 +7378,7 @@ Examples to get an overview of perl functions (sub):
 
    egrep '^(sub|\s*#\?)' $0
 
-Same a little bit formatted:
-
-   perl -lane 'sub p($$){printf("%-24s\t%s\n",@_);} \
-     ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";}; \
-     ($F[0]=~/^sub/)&&do{p($s,"")if($s ne "");$s=$F[1];}' \
-     $0
+Same a little bit formatted, see  I<+traceSUB>  command.
 
 Following to get perl's variables for checks:
 
