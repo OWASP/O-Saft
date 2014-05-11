@@ -30,7 +30,7 @@ Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
 =item _yeast( )
 
-=item _y_ARG( ), _y_CMD( )
+=item _y_ARG( ), _y_CMD( ), _yline( )
 
 =item _vprintme( )
 
@@ -76,22 +76,68 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.10 14/04/27 17:50:31";
+my  $SID    = "@(#) o-saft-dbx.pm 1.11 14/05/11 10:52:29";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
-package main;   # ensure that main:: variables are used
+package main;   # ensure that main:: variables are used, if not defined herein
 
 # debug functions
 sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; }
 sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); }
 sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
+sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); }
+sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); }
+sub _yeast_trac($){
+    my $key  = shift;
+    _yTRAC($key, "<<null>>"), return if (! defined $cfg{$key});    # undef is special, avoid perl warnings
+    SWITCH: for (ref($cfg{$key})) {     # ugly but save use of $_ here
+        /CODE/  && do { _yTRAC($key, "<<code>>"); last SWITCH; };
+        /^$/    && do { _yTRAC($key, $cfg{$key}); last SWITCH; };
+        /SCALAR/&& do { _yTRAC($key, $cfg{$key}); last SWITCH; };
+        /ARRAY/ && do { _yTRAC($key, join(" ", "[", @{$cfg{$key}}, "]")); last SWITCH; };
+        /HASH/  && do { last SWITCH if ($cfg{'trace'} <= 2);            # print hashes for full trace only
+                        _yeast("# - - - - HASH: $key = {");
+                        foreach my $k (sort keys %{$cfg{$key}}) {
+                        # _yeast_trac($key); # FIXME: does not work 'cause of lazy global variable usage
+                        _yTRAC("    ".$key."->".$k, ""); # ToDo: ${$cfg{$key}}->{$k}) 
+                        };
+                        _yeast("# - - - - HASH: $key }");
+                        last SWITCH;
+                    };
+        # DEFAULT
+                        warn "**WARNING: user defined type '$_' skipped";
+    } # SWITCH
+
+} # _yeast_trac()
 sub _yeast_init() {
+    #? print important content of %cfg and %cmd hashes
+    #? more output if trace>1; full output if trace>2
+    my $key = "";
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
-        _yeast("       verbose= $cfg{'verbose'}");
-        _yeast("         trace= $cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
-        _yeast("#----------------------------------------------------{");
+        _yTRAC("_yeast_init::SID", $SID) if ($cfg{'trace'} > 2);
+        _yTRAC("verbose", $cfg{'verbose'});
+        _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
+        # more detailed trace first
+        if ($cfg{'trace'} > 1){
+            _yline(" %cmd {");
+            foreach $key (sort keys %cmd) {
+                _yTRAC($key, $cmd{$key}); # FIXME: use _yeast_trac()
+            }
+            _yline(" %cmd }");
+            _yline(" %cfg {");
+            foreach $key (sort keys %cfg) {
+                #dbx# print "# $key : " . ref ($cfg{$key});
+                if ($cfg{'trace'} <= 2){
+                    next if $key =~ /^cmd-/; # print internal list of command for full trace only
+                }
+                _yeast_trac($key);
+            }
+            _yline(" %cfg }");
+        }
+        # now user friendly informations
+        _yline(" cmd {");
         _yeast("# " . join(", ", @dbxexe));
         _yeast("          path= " . join(" ", @{$cmd{'path'}}));
         _yeast("          libs= " . join(" ", @{$cmd{'libs'}}));
@@ -100,20 +146,25 @@ sub _yeast_init() {
         _yeast("  cmd->openssl= $cmd{'openssl'}");
         _yeast("   use_openssl= $cmd{'extopenssl'}");
         _yeast("openssl cipher= $cmd{'extciphers'}");
-        _yeast("#----------------------------------------------------}");
+        _yline(" cmd }");
+        _yline(" cfg {");
         _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
         _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
         _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
-        _yeast("       use_SNI= $Net::SSLinfo::use_SNI");
+        _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}");
+        _yeast("  default port= $cfg{'port'} (last specified)");
         _yeast("       targets= @{$cfg{'hosts'}}");
-        foreach $key (qw(port out_header format legacy usehttp)) {
+        foreach $key (qw(out_header format legacy usehttp usedns)) {
             printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
                # cannot use _yeast() 'cause of pretty printing
         }
         _yeast("       version= @{$cfg{'version'}}");
+        _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
+        _yeast("given commands= @{$cfg{'done'}->{'arg_cmds'}}");
         _yeast("      commands= @{$cfg{'do'}}");
         _yeast("        cipher= @{$cfg{'cipher'}}");
-        _yeast("");
+        _yline(" cfg }");
+        _yeast("(more information with: --trace=2  or  --trace=3 )");
     }
 }
 sub _yeast_exit() {
@@ -166,21 +217,21 @@ sub _yeast_data() {
     $old = "";
     foreach $key
             (sort {uc($a) cmp uc($b)}
-		  @{$cfg{'commands'}}, keys %data, keys %shorttexts, keys %checks
+                @{$cfg{'commands'}}, keys %data, keys %shorttexts, keys %checks
             )
             # we use sort case-insensitively, hence the BLOCK for comparsion
             # it also avoids the warning: sort (...) interpreted as function
     {
         next if ($key eq $old); # unique
         $old = $key;
-	if ((! defined $checks{$key}) and (! defined $data{$key})) {
+        if ((! defined $checks{$key}) and (! defined $data{$key})) {
             push(@yeast, $key); # probaly internal command
             next;
         }
         $cmd = " ";
-	$cmd = "+" if (_is_member($key, \@{$cfg{'commands'}}) > 0);     # command available as is
+        $cmd = "+" if (_is_member($key, \@{$cfg{'commands'}}) > 0);     # command available as is
         printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
-	    $cmd,
+            $cmd,
             (_is_intern($key) > 0)      ?          "I"  : " ",
             (defined $data{$key})       ? __data( $key) : " ",
             (defined $shorttexts{$key}) ?          "*"  : " ",
