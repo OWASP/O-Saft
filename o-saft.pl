@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.241 14/05/12 17:00:32";
+my  $SID    = "@(#) yeast.pl 1.242 14/05/12 22:34:59";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1343,6 +1343,7 @@ my %ciphers = (
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
+# FIXME: perl hashes may not have multiple keys (have them for SSLv2 and SSLv3)
         'ADH-AES128-SHA'        => [qw(  weak SSLv3 AES   128 SHA1 None  DH          0 :)],
         'ADH-AES256-SHA'        => [qw(  weak SSLv3 AES   256 SHA1 None  DH          0 :)],
         'ADH-DES-CBC3-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 None  DH          0 :)],
@@ -1359,8 +1360,10 @@ my %ciphers = (
         'AES256-SHA'            => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   RSA       100 :)],
         'DES-CBC3-MD5'          => [qw(  HIGH SSLv2 3DES  168 MD5  RSA   RSA        80 :)],
         'DES-CBC3-SHA'          => [qw(  HIGH SSLv3 3DES  168 SHA1 RSA   RSA        80 :)],
+        'DES-CBC3-SHA'          => [qw(  HIGH SSLv2 3DES  168 SHA1 RSA   RSA        80 :)],
         'DES-CBC-MD5'           => [qw(   LOW SSLv2 DES    56 MD5  RSA   RSA        20 :)],
         'DES-CBC-SHA'           => [qw(   LOW SSLv3 DES    56 SHA1 RSA   RSA        20 :)],
+        'DES-CBC-SHA'           => [qw(   LOW SSLv2 DES    56 SHA1 RSA   RSA        20 :)],
         'DES-CFB-M1'            => [qw(  weak SSLv2 DES    64 MD5  RSA   RSA        20 :)],
         'DH-DSS-AES128-SHA'     => [qw(  high -?-   AES   128 SHA1 DSS   DH         11 :)], #
         'DH-DSS-AES256-SHA'     => [qw(  high -?-   AES   256 SHA1 DSS   DH         11 :)], #
@@ -1429,6 +1432,8 @@ my %ciphers = (
         'EXP1024-RC4-SHA'       => [qw(  weak SSLv3 RC4    56 SHA  RSA   -?-         2 :)], #
         'IDEA-CBC-MD5'          => [qw(MEDIUM SSLv2 IDEA  128 MD5  RSA   RSA        80 :)], #
         'IDEA-CBC-SHA'          => [qw(MEDIUM SSLv2 IDEA  128 SHA  RSA   RSA        80 :)], #
+        'NULL'                  => [qw(  WEAK SSLv2 None    0 -?-  None  -?-         0 :)], # openssl SSLeay testing
+        'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA         0 :)],
         'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA         0 :)],
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
         'PSK-3DES-EDE-CBC-SHA'  => [qw(  HIGH SSLv3 3DES  168 SHA  PSK   PSK         1 :)], #
@@ -1440,6 +1445,7 @@ my %ciphers = (
         'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         0 :)],
        #'RC4-MD5'               => [qw(MEDIUM SSLv3 RC4   128 MD5  RSA   RSA        80 :)],
        #'RC4-SHA'               => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   RSA        80 :)],
+        'RC4-MD5'               => [qw(  weak SSLv2 RC4   128 MD5  RSA   RSA        80 :)],
         'RC4-MD5'               => [qw(  weak SSLv3 RC4   128 MD5  RSA   RSA        80 :)],
         'RC4-SHA'               => [qw(  weak SSLv3 RC4   128 SHA1 RSA   RSA        80 :)],
         'SEED-SHA'              => [qw(MEDIUM SSLv3 SEED  128 SHA1 RSA   RSA        11 OSX)],
@@ -1507,6 +1513,7 @@ my %ciphers = (
         'ECDH-RSA-AES256-SHA384'        => [qw( high TLSv12 AES    256 SHA384 ECDH  ECDH/ECDSA 11 :)],
         'NULL-SHA256'                   => [qw( weak TLSv12 None     0 SHA256 RSA   RSA         0 :)],
         #-------------------------------------+------+-----+------+---+------+-----+--------+----+--------,
+        # from openssl-1.0.1g
         'KRB5-DES-CBC3-MD5'             => [qw(  HIGH SSLv3 3DES   168 MD5    KRB5  KRB5      100 :)],
         'KRB5-DES-CBC3-SHA'             => [qw(  HIGH SSLv3 3DES   168 SHA1   KRB5  KRB5      100 :)],
         'KRB5-IDEA-CBC-MD5'             => [qw(MEDIUM SSLv3 IDEA   128 MD5    KRB5  KRB5       80 :)],
@@ -1521,6 +1528,10 @@ my %ciphers = (
         'EXP-KRB5-RC2-CBC-SHA'          => [qw(  weak SSLv3 RC2     40 SHA1   KRB5  KRB5        0 export)],
         'EXP-KRB5-RC4-MD5'              => [qw(  weak SSLv3 RC4     40 MD5    KRB5  KRB5        0 export)],
         'EXP-KRB5-RC4-SHA'              => [qw(  weak SSLv3 RC4     40 SHA1   KRB5  KRB5        0 export)],
+        # from ssl/s3_lib.c
+        'FZA-NULL-SHA'                  => [qw(  WEAK SSLv3 FZA      0 SHA1   FZA   FZA         0 :)],
+        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   FZA   FZA        80 :)],
+        'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 FZA    128 SHA1   FZA   FZA         0 :)],
 
     # === openssl ===
     # above table (roughly) generated with:
@@ -2554,6 +2565,13 @@ sub get_cipher_desc($) { my $c=$_[0];
     return @c if (grep(/^$c/, %ciphers)>0);
     return "";
 }
+
+$\="\n";
+foreach $key (%ciphers) {
+print $key if (get_cipher_ssl($key) eq 'SSLv2');
+#print $key if (get_cipher_ssl($key) eq 'SSLv3');
+}
+exit;
 
 # check functions
 # -------------------------------------
@@ -4963,7 +4981,10 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("+cipherll");
         my @all;
         push(@all, @{$_}[0]) foreach (values %cipher_names);
-      require "./Net::SSLhello.pm";
+        if (! eval("require Net::SSLhello;")) {
+            push(@INC, $mepath);
+            require Net::SSLhello;
+        }
 _dbx "GO";
         foreach $ssl (@{$cfg{'version'}}) {
             my @acceptedCipherArray = Net::SSLhello::checkSSLciphers ($host, $port, $cfg{'openssl_version_map'}->{$ssl}, @all);  # SSLV2-Ciphers werden übersprungen
@@ -7679,7 +7700,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.10
+@(#) 14.05.11
 
 =head1 AUTHOR
 
