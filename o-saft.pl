@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.240 14/05/11 16:20:58";
+my  $SID    = "@(#) yeast.pl 1.241 14/05/12 17:00:32";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -3436,7 +3436,8 @@ sub checkdest($$) {
     # check target specials
     foreach $key (qw(krb5 psk_hint psk_identity srp session_ticket)) { # master_key session_id: see %check_dest above also
         $value = $data{$key}->{val}($host);
-        $checks{$key}->{val} = " " if ($value eq "");
+        $checks{$key}->{val} = " "    if ($value eq "");
+        $checks{$key}->{val} = "None" if ($value =~ m/^\s*None\s*$/i);
         # if supported we have a value
         # ToDo: see ZLIB also (seems to be wrong currently)
     }
@@ -7678,7 +7679,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.09
+@(#) 14.05.10
 
 =head1 AUTHOR
 
