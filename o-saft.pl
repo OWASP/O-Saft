@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.242 14/05/12 22:34:59";
+my  $SID    = "@(#) yeast.pl 1.243 14/05/12 22:38:53";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -2565,13 +2565,6 @@ sub get_cipher_desc($) { my $c=$_[0];
     return @c if (grep(/^$c/, %ciphers)>0);
     return "";
 }
-
-$\="\n";
-foreach $key (%ciphers) {
-print $key if (get_cipher_ssl($key) eq 'SSLv2');
-#print $key if (get_cipher_ssl($key) eq 'SSLv3');
-}
-exit;
 
 # check functions
 # -------------------------------------
@@ -7700,7 +7693,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.11
+@(#) 14.05.12
 
 =head1 AUTHOR
 
