@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.243 14/05/12 22:38:53";
+my  $SID    = "@(#) yeast.pl 1.244 14/05/12 23:56:53";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4978,11 +4978,42 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@INC, $mepath);
             require Net::SSLhello;
         }
-_dbx "GO";
+        #my @acceptedCipherArray = Net::SSLhello::checkSSLciphers();
+        # set defaults for Net::SSLhello
+        {
+            no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
+            $Net::SSLhello::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
+            $Net::SSLhello::usesni      = $cfg{'usesni'};
+            $Net::SSLhello::starttls    = 0;
+            $Net::SSLhello::timeout     = $cfg{'ssl'}->{'timeout'};
+            $Net::SSLhello::retry       = $cfg{'ssl'}->{'retry'};
+            $Net::SSLhello::usereneg    = $cfg{'usereneg'};
+            $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
+            $Net::SSLhello::proxyport   = $cfg{'proxyport'};
+            $Net::SSLhello::protect_double_reneg= 1; # FIXME: $cfg{'ssl'}->{'double_reneg'}
+        }
         foreach $ssl (@{$cfg{'version'}}) {
-            my @acceptedCipherArray = Net::SSLhello::checkSSLciphers ($host, $port, $cfg{'openssl_version_map'}->{$ssl}, @all);  # SSLV2-Ciphers werden übersprungen
-            _trace(" accepted ciphers: @acceptedCipherArray");
-            Net::SSLhello::printCipherStringArray ('compact', $host, $port, "$ssl ($cfg{'openssl_version_map'}->{$ssl}) Default-Ciphers", 0, @acceptedCipherArray);
+            push(@all, @{$_}[0]) foreach (values %cipher_names);
+            if ($ssl eq 'SSLv2') {
+                # quick&dirty ALPHA-hack (to avoid definition of an array)
+	        @all = qw(0x02000000 0x02010080 0x02020080 0x02030080 0x02040080
+                          0x02050080 0x02060040 0x02060140 0x020700C0 0x020701C0
+                          0x02FF0810 0x02FF0800 0x02FFFFFF 
+                          0x03000001 0x03000002 0x03000007 0x03000008 0x03000009
+                          0x0300000A 0x0300000B 0x0300000C 0x0300000D 0x0300000E
+                          0x0300000F 0x03000010 0x03000011 0x03000012 0x03000013
+                          0x03000014 0x03000015 0x03000016 0x03000017 0x03000018
+                          0x03000019 0x0300001A 0x0300001B 0x0300001C 0x0300001D
+                          0x0300001E 0x0300001F 0x03000020 0x03000021 0x03000022
+                          0x03000023 0x03000024 0x03000025 0x03000026 0x03000027
+                          0x03000028 0x03000029 0x0300002A 0x0300002B 0x030000FF
+                       );
+            }
+            printtitle($legacy, $ssl, $host, $port);
+            Net::SSLhello::printCipherStringArray(
+                'compact', $host, $port, $ssl, $cfg{'usesni'},
+                Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
+            );
         }
         next;
     }
