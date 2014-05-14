@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.245 14/05/14 22:14:52";
+my  $SID    = "@(#) yeast.pl 1.246 14/05/15 00:37:43";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1230,7 +1230,7 @@ our %cfg = (
         'TLSv1'     => 0x0301,
         'TLSv11'    => 0x0302,
         'TLSv12'    => 0x0303,
-        'TLSv13'    => 0x0303,
+        'TLSv13'    => 0x0304,
         'DTLSv1'    => 0xFEFF,
         'SCSV'      => 0x03FF,
      },
@@ -4400,19 +4400,19 @@ while ($#argv >= 0) {
     #!#--------+------------------------+----------------------+----------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+----------------------+----------------
-    if ($arg eq   '--http')             { $cfg{'usehttp'}++;     next; } # must be before --help
-    if ($arg =~ m/^--no[_-]?http$/)     { $cfg{'usehttp'}   = 0; next; }
-    if ($arg =~ m/^--h(?:elp)?(?:=(.*))?$/) { printhelp($1);     exit 0; } # allow --h --help --h=*
-    if ($arg =~ m/^\+help=?(.*)$/)          { printhelp($1);     exit 0; } # allow +help +help=*
-    if ($arg =~ m/^(--|\+)ab(?:br|k)=?$/)   { printtable('abbr');exit 0; }
-    if ($arg =~ m/^(--|\+)glossar$/)        { printtable('abbr');exit 0; }
-    if ($arg =~ m/^(--|\+)todo=?$/i)        { printtodo();       exit 0; }
+    if ($arg eq  '--http')              { $cfg{'usehttp'}++;     next; } # must be before --help
+    if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0; next; }
+    if ($arg =~ /^--h(?:elp)?(?:=(.*))?$/)  { printhelp($1);     exit 0; } # allow --h --help --h=*
+    if ($arg =~ /^\+help=?(.*)$/)           { printhelp($1);     exit 0; } # allow +help +help=*
+    if ($arg =~ /^(--|\+)ab(?:br|k)=?$/)    { printtable('abbr');exit 0; }
+    if ($arg =~ /^(--|\+)glossar$/)         { printtable('abbr');exit 0; }
+    if ($arg =~ /^(--|\+)todo=?$/i)         { printtodo();       exit 0; }
     # options for trace and debug
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();         exit 0; } # debugging
    #if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++; $info = 1; next; }
     if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     next; }
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;     next; }
-    if ($arg =~ m/^--no[_-]?warnings?$/){ $cfg{'warning'}   = 0; next; }
+    if ($arg =~ /^--no[_-]?warnings?$/) { $cfg{'warning'}   = 0; next; }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
     if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
     if ($arg =~ /^--trace(--|[_-]?arg)/i){$cfg{'traceARG'}++;    next; } # special internal tracing
@@ -4420,16 +4420,16 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace(@|[_-]?key)/i){ $cfg{'traceKEY'}++;    next; } # ..
     if ($arg =~ /^--trace=(.*)/)        { $typ = 'TRACE';   $arg = $1; } # no next
     # proxy options
-    if ($arg =~  '--proxy(?:host)?$')   { $typ = 'PHOST';        next; }
-    if ($arg =~  '--proxy(?:host)?=(.*)'){$typ = 'PHOST';   $arg = $1; } # no next!
-    if ($arg =~  '--proxyport$')        { $typ = 'PPORT';        next; }
-    if ($arg =~  '--proxyport=(.*)')    { $typ = 'PPORT';   $arg = $1; } # no next!
-    if ($arg =~  '--proxyuser$')        { $typ = 'PUSER';        next; }
-    if ($arg =~  '--proxyuser=(.*)')    { $typ = 'PUSER';   $arg = $1; } # no next!
-    if ($arg =~  '--proxypass$')        { $typ = 'PPASS';        next; }
-    if ($arg =~  '--proxypass=(.*)')    { $typ = 'PPASS';   $arg = $1; } # no next!
-    if ($arg =~  '--proxyauth$')        { $typ = 'PAUTH';        next; }
-    if ($arg =~  '--proxyauth=(.*)')    { $typ = 'PAUTH';   $arg = $1; } # no next!
+    if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';        next; }
+    if ($arg =~ /^--proxy(?:host)?=(.*)/){$typ = 'PHOST';   $arg = $1; } # no next!
+    if ($arg =~ /^--proxyport$/)        { $typ = 'PPORT';        next; }
+    if ($arg =~ /^--proxyport=(.*)/)    { $typ = 'PPORT';   $arg = $1; } # no next!
+    if ($arg =~ /^--proxyuser$/)        { $typ = 'PUSER';        next; }
+    if ($arg =~ /^--proxyuser=(.*)/)    { $typ = 'PUSER';   $arg = $1; } # no next!
+    if ($arg =~ /^--proxypass$/)        { $typ = 'PPASS';        next; }
+    if ($arg =~ /^--proxypass=(.*)/)    { $typ = 'PPASS';   $arg = $1; } # no next!
+    if ($arg =~ /^--proxyauth$/)        { $typ = 'PAUTH';        next; }
+    if ($arg =~ /^--proxyauth=(.*)/)    { $typ = 'PAUTH';   $arg = $1; } # no next!
     # options form other programs for compatibility
     if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
     if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0; next; } # ssltest.pl
@@ -4488,11 +4488,11 @@ while ($#argv >= 0) {
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1; next; }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1; next; }
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;    next; }
-    if ($arg eq  '-printavailable')     { $cfg{'enabled'}   = 1; next; } # ssldiagnos
-    if ($arg =~ /^-?-h(?:ost)?$/)       { $typ = 'HOST';         next; } # --h already catched above
-    if ($arg =~ /^-?-h(?:ost)?=(.*)/)   { $typ = 'HOST';    $arg = $1; } # no next
-    if ($arg =~ /^-?-p(?:ort)?$/)       { $typ = 'PORT';         next; }
-    if ($arg =~ /^-?-p(?:ort)?=(.*)/)   { $typ = 'PORT';    $arg = $1; } # no next
+    if ($arg =~ /^--?printavailable/)   { $cfg{'enabled'}   = 1; next; } # ssldiagnos
+    if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';         next; } # --h already catched above
+    if ($arg =~ /^--?h(?:ost)?=(.*)/)   { $typ = 'HOST';    $arg = $1; } # no next
+    if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';         next; }
+    if ($arg =~ /^--?p(?:ort)?=(.*)/)   { $typ = 'PORT';    $arg = $1; } # no next
     if ($arg =~ /^--exe(?:[_-]?path)?$/){ $typ = 'EXE';          next; }
     if ($arg =~ /^--exe(?:[_-]?path)?=(.*)/){ $typ = 'EXE'; $arg = $1; } # no next
     if ($arg =~ /^--lib(?:[_-]?path)?$/){ $typ = 'LIB';          next; }
@@ -4512,7 +4512,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tab$/)          { $text{'separator'} = "\t"; next; } # TAB character
     if ($arg =~ /^--timeout$/)          { $typ = 'TIMEOUT';      next; }
     if ($arg =~ /^--timeout=(.*)/)      { $typ = 'TIMEOUT'; $arg = $1; } # no next
-    if ($arg eq  '-interval')           { $typ = 'TIMEOUT';      next; } # ssldiagnos
+    if ($arg =~ /^--?interval/)         { $typ = 'TIMEOUT';      next; } # ssldiagnos
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'OPENSSL'; $arg = $1; $cmd{'extopenssl'}= 1; } # no next
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'CTXT'; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT'; $arg = $1; } # no next
@@ -4577,7 +4577,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
-    if ($arg eq '+check_sni'){@{$cfg{'do'}} = @{$cfg{'cmd-sni--v'}}; $info = 1; next; }
+    if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}}; $info = 1;next; }
     if ($arg eq '+traceSUB'){
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
@@ -4702,6 +4702,7 @@ while ($#argv >= 0) {
 } # while
 $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
+$legacy  = $cfg{'legacy'};
 
 _yeast_args();
 _vprintme();
@@ -4897,8 +4898,6 @@ usr_pre_main();
 printversion(),    exit 0   if (_is_do('version'));
 printopenssl(),    exit 0   if (_is_do('libversion'));
 printcipherlist(), exit 0   if (_is_do('list'));
-
-$legacy = $cfg{'legacy'};
 
 # defense, user-friendly programming
   # could do these checks earlier (after seeting defaults), but we want
