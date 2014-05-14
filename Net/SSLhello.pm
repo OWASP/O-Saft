@@ -45,7 +45,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-05-12';
+    $VERSION    = 'NET::SSLhello_2014-05-13';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -126,14 +126,14 @@ my %HANDSHAKE_TYPE = ( # RFC 5246
 	'255' => 255
 );
 
-# Protokoll-Version: pr�fen!!!
+# Protokoll-Version: prüfen!!!
 my %PROTOCOL_VERSION = (
 	'SSLv2' 	=> 0x0002,
 	'SSLv3' 	=> 0x0300,
 	'TLSv1' 	=> 0x0301,
 	'TLSv11' 	=> 0x0302, # adapted to o-saft.pl, was TLS1.1
 	'TLSv12' 	=> 0x0303, # adapted to o-saft.pl, was TLS1.2
-	'TLSv13' 	=> 0x0303, # adapted to o-saft.pl, was TLS1.3
+	'TLSv13' 	=> 0x0304, # adapted to o-saft.pl, was TLS1.3
 	'DTLSv1' 	=> 0xFEFF, # adapted to o-saft.pl, was missing
 	'SCSV'		=> 0x03FF  # adapted to o-saft.pl, was TLS1.FF
 );
@@ -499,7 +499,7 @@ my %SSL2_CIPHER_STRINGS = (
   '0x03000015'=> [qw(EDH_RSA_DES_64_CBC_SHA                   EDH-RSA-DES-CBC-SHA)],
   '0x0300001D'=> [qw(FZA_DMS_FZA_SHA                          FZA-FZA-CBC-SHA)],
   '0x0300001C'=> [qw(FZA_DMS_NULL_SHA                         FZA-NULL-SHA)],
-#  '0x0300001E'=> [qw(FZA_DMS_RC4_SHA                          FZA-RC4-SHA)], #doppelt => pr�fen
+#  '0x0300001E'=> [qw(FZA_DMS_RC4_SHA                          FZA-RC4-SHA)], #doppelt => prüfen
   '0x03000023'=> [qw(KRB5_DES_192_CBC3_MD5                    KRB5-DES-CBC3-MD5)],
   '0x0300001F'=> [qw(KRB5_DES_192_CBC3_SHA                    KRB5-DES-CBC3-SHA)],
   '0x03000029'=> [qw(KRB5_DES_40_CBC_MD5                      EXP-KRB5-DES-CBC-MD5)],
@@ -727,7 +727,7 @@ sub checkSSLciphers ($$$@) {
 				} else {
 					_trace1_ (" => no Cipher found\n");
 					@cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
-					if ( ($@ =~ /make a connection/ ) || ($@ =~ /open a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) || ($@ =~ /answer ignored/) ) {   #### L�sung!!!
+					if ( ($@ =~ /make a connection/ ) || ($@ =~ /open a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) || ($@ =~ /answer ignored/) ) {   #### Lösung!!!
 						_trace2 (">>> checkSSLciphers (1): '$@'\n"); 
 						warn ("**checkSSLciphers => Exit Loop");
 						last;
@@ -761,7 +761,7 @@ sub checkSSLciphers ($$$@) {
 			} else {
 				_trace1_ (" => no Cipher found\n");
 				@cipherSpecArray =(); # Server did not Accepty any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
-				if ( ($@ =~ /make a connection/ ) || ($@ =~ /open a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) || ($@ =~ /answer ignored/) ) {   #### L�sung!!!
+				if ( ($@ =~ /make a connection/ ) || ($@ =~ /open a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) || ($@ =~ /answer ignored/) ) {   #### Lösung!!!
 					warn ("**checkSSLciphers => Exit Loop (2)");
 				}
 				$@=""; # reset Error-Msg
@@ -1340,10 +1340,10 @@ sub compileClientHello  {
 		_trace4 ("compileClientHello:   -> Protocol: SSL3/TLS1.x\n");
 				
 			
-# ggf auch pr�fen, ob Host ein DNS-Name ist
+# ggf auch prüfen, ob Host ein DNS-Name ist
 		if ( ($Net::SSLhello::usesni) && ($record_version > $PROTOCOL_VERSION{'SSLv3'}) ) { # SNI ab TLS 1.0 benutzen
-		######## TBD: pr�fen, ab welchem Protokoll SNI eingef�hrt wurde (z.B. TLS1.0)!!! #####
-		######## SSL3 erh�lt bei SSLLABS folgende Fu�note: This site requires support for virtual SSL hosting, 
+		######## TBD: prüfen, ab welchem Protokoll SNI eingeführt wurde (z.B. TLS1.0)!!! #####
+		######## SSL3 erhält bei SSLLABS folgende Fußnote: This site requires support for virtual SSL hosting, 
 		########                                           but SSL 2.0 and SSL 3.0 do not support this feature.
 		
 			### Data for Extension 'Server Name Indication' in reverse order 
@@ -1509,7 +1509,7 @@ sub compileClientHello  {
 	return ($clientHello);
 }
 
-sub parseServerHello ($;$) { # Variable: String/Oktett, das das Server-Hello-Paket enthält  ; second (opional) variable: protocol-version, that the client uses
+sub parseServerHello ($;$) { # Variable: String/Oktett, das das Server-Hello-Paket enthÃ¤lt  ; second (opional) variable: protocol-version, that the client uses
 	my $buffer = shift; 
 	my $client_protocol = shift;  # optional
 	my $rest ="";
@@ -1600,9 +1600,9 @@ sub parseServerHello ($;$) { # Variable: String/Oktett, das das Server-Hello-Pak
 				_trace2_ (" ##   Record Type:    Alert (21)\n"); 
 				_trace2_ (sprintf(" ##   Record Version:  $serverHello{'record_version'} (0x%04X)\n",$serverHello{'record_version'}));
 				_trace2_ (sprintf(" ##   Record Len:      $serverHello{'record_len'}   (0x%04X)\n",$serverHello{'record_len'})); 
-			    $serverHello{'msg_type'} = 0;          # KEIN Handshake = löschen
-			    $serverHello{'msg_len_null_byte'} = 0; # KEIN Handshake = löschen
-			    $serverHello{'msg_len'} = 0;		   # KEIN Handshake = löschen
+			    $serverHello{'msg_type'} = 0;          # KEIN Handshake = lÃ¶schen
+			    $serverHello{'msg_len_null_byte'} = 0; # KEIN Handshake = lÃ¶schen
+			    $serverHello{'msg_len'} = 0;		   # KEIN Handshake = lÃ¶schen
 				($serverHello{'level'}, 	 # C
 				 $serverHello{'description'} # C
 				) = unpack("x5 C C", $buffer); # Workaroud, da oben zu viel gelesen wird 
@@ -1632,7 +1632,7 @@ sub parseServerHello ($;$) { # Variable: String/Oktett, das das Server-Hello-Pak
 }
 
 
-sub parseSSL2_ServerHello ($;$) { # Variable: String/Oktett, das den Rest des Server-Hello-Pakets enthält  
+sub parseSSL2_ServerHello ($;$) { # Variable: String/Oktett, das den Rest des Server-Hello-Pakets enthÃ¤lt  
 	my $buffer = shift; 
 	my $client_protocol = shift;  # optional
 	my $rest;
@@ -1727,7 +1727,7 @@ sub parseSSL2_ServerHello ($;$) { # Variable: String/Oktett, das den Rest des Se
 
 
 sub parseTLS_ServerHello {
-	# Variable: String/Oktett, das den Rest des Server-Hello-Pakets enthält, L�nge, optional: Client-Protokoll  
+	# Variable: String/Oktett, das den Rest des Server-Hello-Pakets enthÃ¤lt, Länge, optional: Client-Protokoll  
 	my $buffer = shift; 
 	my $len = shift; 
 	my $client_protocol = shift;  # optional
@@ -1810,11 +1810,11 @@ sub parseTLS_ServerHello {
 			$serverHello{'version'}
 		));
 		
-		####Temporär!!!
+		####TemporÃ¤r!!!
 		_trace4_ ( sprintf (
-			" ##        cipher_spec: (len=%2s) >%s<\n",		####Temporär!!!
-			length ($serverHello{'cipher_spec'}), 			####Temporär!!!
-			hexCodedTLSCipher($serverHello{'cipher_spec'})	####Temporär!!!
+			" ##        cipher_spec: (len=%2s) >%s<\n",		####TemporÃ¤r!!!
+			length ($serverHello{'cipher_spec'}), 			####TemporÃ¤r!!!
+			hexCodedTLSCipher($serverHello{'cipher_spec'})	####TemporÃ¤r!!!
 		));
 		
 		### Added to check if there is a Bug in getting the cipher_spec: cipher_spec_len = 2 ###
@@ -1857,7 +1857,7 @@ sub parseTLS_ServerHello {
 	}
 }
 
-sub parseTLS_Extension { # Variable: String/Oktett, das die Extension-Bytes enthält
+sub parseTLS_Extension { # Variable: String/Oktett, das die Extension-Bytes enthÃ¤lt
 	my $buffer = shift; 
 	my $len = shift; 
 	my $rest ="";
@@ -1896,7 +1896,7 @@ sub _timedOut {
 	warn "**WARNING: Receive Data Timed out to '$host:$port'\n";
 }
 
-sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
+sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
 	my $codedString= shift; 
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
@@ -1909,7 +1909,7 @@ sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt wer
 	return ($codedString);
 }
 
-sub hexCodedCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
+sub hexCodedCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
 	my $codedString= shift; 
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
@@ -1921,7 +1921,7 @@ sub hexCodedCipher { # Variable: String/Octet, der in HEX-Werten dargestellt wer
 	return ($codedString); #delete 'space' at the end
 }
 
-sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
+sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
 	my $codedString= shift;
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
@@ -1933,7 +1933,7 @@ sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt
 	return ($codedString); #delete 'space' at the end
 }
 
-sub hexCodedTLSCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
+sub hexCodedTLSCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
 	my $codedString= shift;
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
