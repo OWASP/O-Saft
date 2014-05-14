@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.244 14/05/12 23:56:53";
+my  $SID    = "@(#) yeast.pl 1.245 14/05/14 22:14:52";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -415,6 +415,7 @@ my %check_conn = (
     'TLSv1'         => {'txt' => "Supported ciphers for TLSv1 (total)"},
     'TLSv11'        => {'txt' => "Supported ciphers for TLSv11 (total)"},
     'TLSv12'        => {'txt' => "Supported ciphers for TLSv12 (total)"},
+    'TLSv13'        => {'txt' => "Supported ciphers for TLSv13 (total)"},
     'DTLSv1'        => {'txt' => "Supported ciphers for DTLSv1 (total)"},
     # counter for this type of cipher
     'SSLv2-LOW'     => {'txt' => "Supported   LOW   security ciphers"},
@@ -442,6 +443,11 @@ my %check_conn = (
     'TLSv12-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
     'TLSv12-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
     'TLSv12--?-'    => {'txt' => "Supported unknown security ciphers"},
+    'TLSv13-LOW'    => {'txt' => "Supported   LOW   security ciphers"},
+    'TLSv13-WEAK'   => {'txt' => "Supported  WEAK   security ciphers"},
+    'TLSv13-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
+    'TLSv13-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
+    'TLSv13--?-'    => {'txt' => "Supported unknown security ciphers"},
     'DTLSv1-LOW'    => {'txt' => "Supported   LOW   security ciphers"},
     'DTLSv1-WEAK'   => {'txt' => "Supported  WEAK   security ciphers"},
     'DTLSv1-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
@@ -643,9 +649,10 @@ our %shorttexts = (
     'TLSv1'         => "Ciphers (TLSv1)",
     'TLSv11'        => "Ciphers (TLSv11)",
     'TLSv12'        => "Ciphers (TLSv12)",
+    'TLSv13'        => "Ciphers (TLSv13)",
     'DTLSv1'        => "Ciphers (DTLSv1)",
     #}
-    'TLSv1-HIGH'    => "Ciphers HIGH",
+    'TLSv1-HIGH'    => "Ciphers HIGH",  # FIXME: is this needed (5/2014)
     'ip'            => "IP for hostname",
     'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
@@ -843,6 +850,7 @@ my %score_ssllabs = (
     'TLSv1'         => {'val' =>  0, 'score' =>  90, 'txt' => "TLS 1.0"}, #  90%
     'TLSv11'        => {'val' =>  0, 'score' =>  95, 'txt' => "TLS 1.1"}, #  95%
     'TLSv12'        => {'val' =>  0, 'score' => 100, 'txt' => "TLS 1.2"}, # 100%
+    'TLSv13'        => {'val' =>  0, 'score' => 100, 'txt' => "TLS 1.3"}, # 100%
     'DTLSv1'        => {'val' =>  0, 'score' => 100, 'txt' => "DTLS 1.0"},# 100%
     # 'txt' is not used here!
     #
@@ -953,7 +961,7 @@ our %cfg = (
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
-    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 DTLSv1)],
+    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv1)],
                                 # NOTE: must be same string as used in %ciphers[ssl]
                                 # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
                                 # ToDo: DTLSv0.9
@@ -963,6 +971,7 @@ our %cfg = (
     'TLSv1'         => 1,       # 1:   "
     'TLSv11'        => 1,       # 1:   "
     'TLSv12'        => 1,       # 1:   "
+    'TLSv13'        => 1,       # 1:   "
     'DTLSv9'        => 0,       # 1:   "
     'DTLSv1'        => 1,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
@@ -1212,6 +1221,7 @@ our %cfg = (
         'TLSv1'     => "-tls1",
         'TLSv11'    => "-tls1_1",
         'TLSv12'    => "-tls1_2",
+        'TLSv13'    => "-tls1_3",
         'DTLSv1'    => "-dtls1",
      },
     'openssl_version_map' => {  # map our internal option to openssl version (hex value)
@@ -1220,6 +1230,7 @@ our %cfg = (
         'TLSv1'     => 0x0301,
         'TLSv11'    => 0x0302,
         'TLSv12'    => 0x0303,
+        'TLSv13'    => 0x0303,
         'DTLSv1'    => 0xFEFF,
         'SCSV'      => 0x03FF,
      },
@@ -1303,7 +1314,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # Note: weak includes NONE (no security at all)
                             #
                             # all following informations as reported by openssl 0.9.8
-        'Protocol Version', # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, DTLS0.9, DTLS1.0
+        'Protocol Version', # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0
                             # Note: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
         'Encryption Algorithm', # Nine, AES, DES, 3DES, RC4, RC2, SEED
@@ -3576,7 +3587,7 @@ sub scoring($$) {
         next if ($key =~ m/^(ip|reversehost)/); # not scored
         next if ($key =~ m/^(sts_)/);           # needs special handlicg
         next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); # FIXME: not yet scored
-        next if ($key =~ m/^TLSv1[12]/);  # FIXME:
+        next if ($key =~ m/^TLSv1[123]/); # FIXME:
         $value = $checks{$key}->{val};
         # ToDo: go through @results
 #ToDo   foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
@@ -4457,6 +4468,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1; next; } # ..
     if ($arg =~ /^--?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}    = 1; next; } # allow ._- separator
     if ($arg =~ /^--?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}    = 1; next; } # ..
+    if ($arg =~ /^--?tlsv?1[-_.]?3$/i)  { $cfg{'TLSv13'}    = 1; next; } # ..
     if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}    = 1; next; } # ..
     if ($arg =~ /^--dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}    = 1; next; } # ..
     if ($arg =~ /^--no[_-]?sslv?2$/i)   { $cfg{'SSLv2'}     = 0; next; } # allow _- separator
@@ -4464,6 +4476,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?tlsv?1$/i)   { $cfg{'TLSv1'}     = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?11$/i)  { $cfg{'TLSv11'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?12$/i)  { $cfg{'TLSv12'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?tlsv?13$/i)  { $cfg{'TLSv13'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLSv9'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?10?$/i){ $cfg{'DTLSv1'}    = 0; next; } # ..
     if ($arg =~ /^--ssl[_-]?lazy$/)     { $cfg{'ssl_lazy'}  = 1; next; } # ..
@@ -4812,6 +4825,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
         $typ = eval("Net::SSLeay::TLSv1_method()")   if ($ssl eq 'TLSv1');
         $typ = eval("Net::SSLeay::TLSv1_1_method()") if ($ssl eq 'TLSv11');
         $typ = eval("Net::SSLeay::TLSv1_2_method()") if ($ssl eq 'TLSv12');
+        $typ = eval("Net::SSLeay::TLSv1_3_method()") if ($ssl eq 'TLSv13');
         $typ = eval("Net::SSLeay::DTLSv1_method()")  if ($ssl eq 'DTLSv1');
         # ugly eval, but that's the simplest (only?) way to check if required
         # functionality is available; we could try  Net::SSLeay::CTX_v2_new()
@@ -7724,7 +7738,7 @@ For re-writing some docs in proper English, thanks to Robb Watson.
 
 =head1 VERSION
 
-@(#) 14.05.12
+@(#) 14.05.13
 
 =head1 AUTHOR
 
