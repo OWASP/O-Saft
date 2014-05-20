@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.74 14/05/20 15:37:05',
+    SID         => '@(#) Net::SSLinfo.pm 1.75 14/05/20 22:43:30',
 };
 
 ######################################################## public documentation #
@@ -280,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.05.14';
+    $VERSION   = '14.05.15';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -409,6 +409,9 @@ $Net::SSLinfo::openssl     = 'openssl'; # openssl executable
 $Net::SSLinfo::use_openssl = 1; # 1 use installed openssl executable
 $Net::SSLinfo::use_sclient = 1; # 1 use openssl s_client ...
 $Net::SSLinfo::use_extdebug= 1; # 0 do not use openssl with -tlsextdebug option
+$Net::SSLinfo::use_nextprot= 1; # 0 do not use openssl with -nextprotoneg option
+$Net::SSLinfo::use_reconnect=1; # 0 do not use openssl with -reconnect option
+$Net::SSLinfo::sclient_opt =""; # option for openssl s_client command
 $Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target
 $Net::SSLinfo::use_http    = 1; # 1 make HTTP request and retrive additional data
 $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
@@ -417,6 +420,8 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl
+$Net::SSLinfo::protocols   = 'spdy/4a4,spdy/3.1,spdy/3,spdy/2,http/1.1';
+                                # next protocols not yet configurable
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
 $Net::SSLinfo::socket   = undef;# socket to be used for connection
@@ -1452,14 +1457,14 @@ sub do_openssl($$$) {
         # pass -reconnect option to validate 'resumption' support later
         # pass -tlsextdebug option to validate 'heartbeat' support later
         # NOTE that openssl 1.x or later is required for -nextprotoneg
-        $mode  = 's_client';
-        $mode .= ' -nextprotoneg spdy/4a4,spdy/3.1,spdy/3,spdy/3,http/1.1';
-        $mode .= ' -reconnect';
-        $mode .= ' -tlsextdebug' if ($Net::SSLinfo::use_extdebug == 1);
+        $mode  = 's_client' . $Net::SSLinfo::sclient_opt;
+        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protocols if ($Net::SSLinfo::use_nextprot == 1);
+        $mode .= ' -reconnect'   if ($Net::SSLinfo::use_reconnect == 1);
+        $mode .= ' -tlsextdebug' if ($Net::SSLinfo::use_extdebug  == 1);
         $mode .= ' -connect';
     }
     $host = $port = "" if ($mode =~ m/^-?(ciphers)/);
-    _trace("echo '' | $_timeout $_openssl $mode $host$port 2>&1") ;
+    _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1") ;
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
