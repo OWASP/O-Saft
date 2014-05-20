@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.248 14/05/20 15:45:43";
+my  $SID    = "@(#) yeast.pl 1.249 14/05/20 22:41:42";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -954,7 +954,10 @@ our %cfg = (
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
+    'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
+    'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
+    'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
     'ca_depth'      => undef,   # depth of peer certificate verification verification
@@ -1777,6 +1780,8 @@ my %text = (
     'no-cert'       => "<<N/A as --no-cert in use>>",
     'no-http'       => "<<N/A as --no-http in use>>",
     'no-tlsextdebug'=> "<<N/A as --no-tlsextdebug in use>>",
+    'no-nextprotoneg'=>"<<N/A as --no-nextprotoneg in use>>",
+    'no-resonnect'  => "<<N/A as --no-resonnect in use>>",
     'disabled'      => "<<test disabled>>",
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
@@ -4462,11 +4467,17 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?sub)/i)  { $arg = '+traceSUB';          } # ..
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1; next; }
-    if ($arg =~ /^--force[_-]?openssl/) { $cmd{'extciphers'}= 1; next; }
-    if ($arg =~ /^--no[_-]?openssl/)    { $cmd{'extopenssl'}= 0; next; }
-    if ($arg =~ /^--s_?client/)         { $cmd{'extsclient'}++;  next; }
-    if ($arg =~ /^--?tlsextdebug/)      { $cfg{'use_extdebug'}=1;next; }
+    if ($arg =~ /^--force[_-]?openssl$/){ $cmd{'extciphers'}= 1; next; }
+    if ($arg =~ /^--no[_-]?openssl$/)   { $cmd{'extopenssl'}= 0; next; }
+    if ($arg =~ /^--s_?client$/)        { $cmd{'extsclient'}++;  next; }
+    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use_nextprot'}=1;next; }
+    if ($arg =~ /^--no[_-]?nextprotoneg/){$cfg{'use_nextprot'}=0;next; }
+    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}=1;next; }
     if ($arg =~ /^--no[_-]?tlsextdebug/){ $cfg{'use_extdebug'}=0;next; }
+    if ($arg =~ /^--?reconnect$/)       {$cfg{'use_reconnect'}=1;next; }
+    if ($arg =~ /^--no[_-]?reconnect$/) {$cfg{'use_reconnect'}=0;next; }
+    if ($arg =~ /^--sclient[_-]?opt$/)  {     $typ = 'OPT';      next; }
+    if ($arg =~ /^--sclient[_-]?opt=(.*)/){   $typ = 'OPT'; $arg = $1; } # no next
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;     next; } # sslyze
@@ -4550,8 +4561,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ca[_-]?(?:directory|path)=(.*)/i)       { $typ = 'CAPATH';  $arg = $1; } # no next
     if ($arg =~ /^--win[_-]?CR/i)       { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); next; }
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
-    if ($arg =~ /^-(H|r|s|t|url|u|U|x)/){ next; } #  "
-    if ($arg =~ /^-(connect)/)          { next; } #  "
+    if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){next; } #  "
+    if ($arg =~ /^-connect$/)           { next; } #  "
     if ($arg eq  '--insecure')          { next; } #  "
     if ($arg =~ /^--use?r$/)            { next; } # ignore, nothing to do
     if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
@@ -4649,6 +4660,7 @@ while ($#argv >= 0) {
     if ($typ eq 'CALL')     { push(@{$cmd{'call'}}, $arg);  $typ = 'HOST'; next; }
     if ($typ eq 'CIPHER')   { push(@{$cfg{'cipher'}}, $arg);$typ = 'HOST'; next; }
     if ($typ eq 'SEP')      { $text{'separator'}= $arg;     $typ = 'HOST'; next; }
+    if ($typ eq 'OPT')      { $cfg{'sclient_opt'}.=" $arg"; $typ = 'HOST'; next; }
     if ($typ eq 'TIMEOUT')  { $cfg{'timeout'}   = $arg;     $typ = 'HOST'; next; }
     if ($typ eq 'CTXT')     { $cfg{'no_cert_txt'}= $arg;    $typ = 'HOST'; next; }
     if ($typ eq 'CAFILE')   { $cfg{'ca_file'}   = $arg;     $typ = 'HOST'; next; }
@@ -4811,7 +4823,10 @@ push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
     $Net::SSLinfo::openssl     = $cmd{'openssl'};
     $Net::SSLinfo::use_http    = $cfg{'usehttp'};
     $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
+    $Net::SSLinfo::use_nextprot= $cfg{'use_nextprot'};
     $Net::SSLinfo::use_extdebug= $cfg{'use_extdebug'};
+    $Net::SSLinfo::use_reconnect=$cfg{'use_reconnect'};
+    $Net::SSLinfo::sclient_opt = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec = $cfg{'timeout'};
     $Net::SSLinfo::no_cert     = $cfg{'no_cert'};
     $Net::SSLinfo::no_cert_txt = $cfg{'no_cert_txt'};
@@ -5911,9 +5926,21 @@ the description here is text provided by the user.
 
   Use  DIR  where to find CA certificates in PEM format.
 
+=head3 --no-nextprotoneg
+
+  Do not use  "-nextprotoneg"  option for openssl.
+
+=head3 --no-reconnect
+
+  Do not use  "-reconnect"  option for openssl.
+
 =head3 --no-tlsextdebug
 
   Do not use  "-tlsextdebug"  option for openssl.
+
+=head3 --sclient-opt=VALUE
+
+  Argument or option passed to openssl s_client command.
 
 =head2 Options for checks and results
 
@@ -7091,11 +7118,11 @@ visibale at all.
 Following table shows the openssl option and how to disbale it within
 o-saft:
 
--nextprotoneg       I<-no-nextproto>
+-nextprotoneg       I<--no-nextprotoneg>
 
--reconnect          I<-no-reconnect>
+-reconnect          I<--no-reconnect>
 
--tlsextdebug        I<-no-tlsextdebug>
+-tlsextdebug        I<--no-tlsextdebug>
 
 =head2 Poor Systems
 
@@ -7777,7 +7804,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.14
+@(#) 14.05.15
 
 =head1 AUTHOR
 
