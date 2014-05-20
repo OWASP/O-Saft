@@ -1,7 +1,5 @@
 #! /usr/bin/perl -w
 
-# Extension suchen: Authority Information Access
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -34,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.73 14/05/11 21:19:28',
+    SID         => '@(#) Net::SSLinfo.pm 1.74 14/05/20 15:37:05',
 };
 
 ######################################################## public documentation #
@@ -282,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.05.09';
+    $VERSION   = '14.05.14';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -318,6 +316,8 @@ require Exporter;
         sigkey_len
         sigkey_value
         extensions
+        tlsextdebug
+        heartbeat
         trustout
         ocsp_uri
         ocspid
@@ -408,6 +408,7 @@ $Net::SSLinfo::timeout     = 'timeout'; # timeout executable
 $Net::SSLinfo::openssl     = 'openssl'; # openssl executable
 $Net::SSLinfo::use_openssl = 1; # 1 use installed openssl executable
 $Net::SSLinfo::use_sclient = 1; # 1 use openssl s_client ...
+$Net::SSLinfo::use_extdebug= 1; # 0 do not use openssl with -tlsextdebug option
 $Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target
 $Net::SSLinfo::use_http    = 1; # 1 make HTTP request and retrive additional data
 $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
@@ -548,7 +549,9 @@ my %_SSLinfo= ( # our internal data structure
     'sigkey_len'        => "",  # bit length  of signature key
     'sigkey_value'      => "",  # value       of signature key
     'extensions'        => "",  #
+    'tlsextdebug'       => "",  # TLS extension visible with "openssl -tlsextdebug .."
     'email'             => "",  # the email address(es)
+    'heartbeat'         => "",  # heartbeat supported
     'serial'            => "",  # the serial number
     'modulus'           => "",  # the modulus of the public key
     'modulus_len'       => "",  # bit length  of the public key
@@ -986,11 +989,11 @@ sub do_ssl_open($$$) {
 
         #3. prepare SSL object
         $src = 'Net::SSLeay::new()';
-        ($ssl=  Net::SSLeay::new($ctx))                     or {$err = $!} and last;
+        ($ssl=  Net::SSLeay::new($ctx))                        or {$err = $!} and last;
         $src = 'Net::SSLeay::set_fd()';
-                Net::SSLeay::set_fd($ssl, fileno($socket))  or {$err = $!} and last;
+                Net::SSLeay::set_fd($ssl, fileno($socket))     or {$err = $!} and last;
         $src = 'Net::SSLeay::set_cipher_list(' . $cipher .')';
-                Net::SSLeay::set_cipher_list($ssl, $cipher) or {$err = $!} and last;
+                Net::SSLeay::set_cipher_list($ssl, $cipher)    or {$err = $!} and last;
         if ($Net::SSLinfo::use_SNI == 1) {
             _trace("do_ssl_open: SNI");
             if (1.45 <= $Net::SSLeay::VERSION) {
@@ -1001,7 +1004,7 @@ sub do_ssl_open($$$) {
                 #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
                 #  use constant TLSEXT_NAMETYPE_host_name    => 0
                 $src = 'Net::SSLeay::ctrl()';
-                Net::SSLeay::ctrl($ssl, 55, 0, $host)       or {$err = $!} and last;
+                Net::SSLeay::ctrl($ssl, 55, 0, $host)          or {$err = $!} and last;
                 #ToDo: ctrl() sometimes fails but does not return errors, reason yet unknown
             }
         }
@@ -1218,7 +1221,7 @@ sub do_ssl_open($$$) {
         # NO Certificate }
 
         $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port);
-        
+
             # from s_client: (if openssl supports -nextprotoneg)
             #    Protocols advertised by server: spdy/4a4, spdy/3.1, spdy/3, http/1.1
 
@@ -1263,6 +1266,8 @@ sub do_ssl_open($$$) {
             $_SSLinfo{$key} = $d if ($data =~ m/$regex/);
         }
 
+            # from s_client:
+            #   TLS server extension "session ticket" (id=35), len=0
         $d = $data; $d =~ s/.*?TLS session ticket:\s*[\n\r]+(.*?)\n\n.*/$1_/si;
         if ($data =~ m/TLS session ticket:/) {
             $d =~ s/\s*[0-9a-f]{4}\s*-\s*/_/gi;   # replace leading numbering with marker
@@ -1339,6 +1344,26 @@ sub do_ssl_open($$$) {
             #       depth=  ... ---
         $d = $data; $d =~ s/.*?(depth=-?[0-9]+.*?)[\r\n]+---[\r\n]+.*/$1/si;
         $_SSLinfo{'chain_verify'}   = $d;
+
+            # TLS server extension "renegotiation info" (id=65281), len=1
+            # TLS server extension "session ticket" (id=35), len=0
+            # TLS server extension "heartbeat" (id=15), len=1
+            # TLS server extension "EC point formats" (id=11), len=4
+            # TLS server extension "next protocol" (id=13172), len=25
+        my @ext;
+        foreach my $line (split(/[\r\n]+/, $data)) {
+            next if ($line !~ m/TLS server extension/);
+            my $rex =  $line;
+               $rex =~ s#([(/*)])#\\$1#g;
+            next if (grep(/$rex/, @ext) > 0);
+            push(@ext, $line);
+            $_SSLinfo{'heartbeat'}  = $line if ($line =~ m/extension\s*"heartbeat"/);
+            # following already done, see above, hence with --trace only
+            _trace("-tlsextdebug  $line") if ($line =~ m/extension\s*"session ticket"/);
+            _trace("-tlsextdebug  $line") if ($line =~ m/extension\s*"renegotiation info"/);
+        }
+        $_SSLinfo{'tlsextdebug'}= join("\n" ,@ext);
+        #dbx# print "tlsextdebug:\n" . $_SSLinfo{'tlsextdebug'};
 
         _trace("do_ssl_open() with openssl done.");
         print Net::SSLinfo::dump() if ($trace > 0);
@@ -1423,10 +1448,15 @@ sub do_openssl($$$) {
             _trace("do_openssl($mode): WARNING: no openssl s_client") if ($trace > 1);
             return SSLINFO_HASH;
         }
-        # pass -reconnect option to validate 'resumption' support later
         # pass -nextprotoneg option to validate 'protocols' support later
+        # pass -reconnect option to validate 'resumption' support later
+        # pass -tlsextdebug option to validate 'heartbeat' support later
         # NOTE that openssl 1.x or later is required for -nextprotoneg
-        $mode =  's_client -nextprotoneg spdy/4a4,spdy/3.1,spdy/3,spdy/3,http/1.1 -reconnect -connect';
+        $mode  = 's_client';
+        $mode .= ' -nextprotoneg spdy/4a4,spdy/3.1,spdy/3,spdy/3,http/1.1';
+        $mode .= ' -reconnect';
+        $mode .= ' -tlsextdebug' if ($Net::SSLinfo::use_extdebug == 1);
+        $mode .= ' -connect';
     }
     $host = $port = "" if ($mode =~ m/^-?(ciphers)/);
     _trace("echo '' | $_timeout $_openssl $mode $host$port 2>&1") ;
@@ -1854,6 +1884,8 @@ sub modulus         { return _SSLinfo_get('modulus',          $_[0], $_[1]); }
 sub serial          { return _SSLinfo_get('serial',           $_[0], $_[1]); }
 sub aux             { return _SSLinfo_get('aux',              $_[0], $_[1]); }
 sub extensions      { return _SSLinfo_get('extensions',       $_[0], $_[1]); }
+sub tlsextdebug     { return _SSLinfo_get('tlsextdebug',      $_[0], $_[1]); }
+sub heartbeat       { return _SSLinfo_get('heartbeat',        $_[0], $_[1]); }
 sub trustout        { return _SSLinfo_get('trustout',         $_[0], $_[1]); }
 sub ocsp_uri        { return _SSLinfo_get('ocsp_uri',         $_[0], $_[1]); }
 sub ocspid          { return _SSLinfo_get('ocspid',           $_[0], $_[1]); }
