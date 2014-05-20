@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.246 14/05/15 00:37:43";
+my  $SID    = "@(#) yeast.pl 1.247 14/05/20 15:32:07";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -255,6 +255,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'signame'       => {'val' => sub { Net::SSLinfo::signame(       $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
     'sigkey_value'  => {'val' => sub {    __SSLinfo('sigkey_value', $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
     'trustout'      => {'val' => sub { Net::SSLinfo::trustout(      $_[0], $_[1])}, 'txt' => "Certificate trusted"},
+    'tlsextdebug'   => {'val' => sub { __SSLinfo('tlsextdebug',     $_[0], $_[1])}, 'txt' => "Certificate extensions (advanced)"},
     'extensions'    => {'val' => sub { __SSLinfo('extensions',      $_[0], $_[1])}, 'txt' => "Certificate extensions"},
     'ext_authority' => {'val' => sub { __SSLinfo('ext_authority',   $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
     'ext_authorityid'=>{'val' => sub { __SSLinfo('ext_authorityid', $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
@@ -269,6 +270,8 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'ext_extkeyusage'=>{'val' => sub { __SSLinfo('ext_extkeyusage', $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
     'ext_certtype'  => {'val' => sub { __SSLinfo('ext_certtype',    $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
     'ext_issuer'    => {'val' => sub { __SSLinfo('ext_issuer',      $_[0], $_[1])}, 'txt' => "Certificate extensions Issuer Alternative Name"},
+    'ext_heartbeat' => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Certificate extensions heartbeat"},
+    'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Certificate extensions heartbeat"},
     'ocsp_uri'      => {'val' => sub { Net::SSLinfo::ocsp_uri(      $_[0], $_[1])}, 'txt' => "Certificate OCSP Responder URL"},
     'ocspid'        => {'val' => sub { Net::SSLinfo::ocspid(        $_[0], $_[1])}, 'txt' => "Certificate OCSP subject, public key hash"},
     'subject_hash'  => {'val' => sub { Net::SSLinfo::subject_hash(  $_[0], $_[1])}, 'txt' => "Certificate Subject Name hash"},
@@ -483,6 +486,7 @@ my %check_dest = (
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
+    'heartbeat'     => {'txt' => "Target does not support heartbeat extension"},
     # following for information, checks not useful; see "# check target specials" in checkdest also
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
@@ -762,7 +766,9 @@ our %shorttexts = (
     'dates'         => "Validity (date)",
     'before'        => "Valid since",
     'after'         => "Valid until",
+    'tlsextdebug'   => "Extensions (advanced)",
     'extensions'    => "Extensions",
+    'heartbeat'     => "Heartbeat",     # not realy a `key', but a extension
     'aux'           => "Trust",
     'email'         => "Email",
     'pubkey'        => "Public Key",
@@ -949,6 +955,7 @@ our %cfg = (
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
+    'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
     'ca_depth'      => undef,   # depth of peer certificate verification verification
@@ -1261,6 +1268,7 @@ our %cfg = (
         '00011'     => "EC point formats",   # length=2
         '00015'     => "heartbeat",          # length=1
         '00035'     => "session ticket",     # length=0
+        '13172'     => "next protocol",      # length=NNN
         '65281'     => "renegotiation info", # length=1
     },
 ); # %cfg
@@ -1769,6 +1777,7 @@ my %text = (
     'no-dns'        => "<<N/A as --no-dns in use>>",
     'no-cert'       => "<<N/A as --no-cert in use>>",
     'no-http'       => "<<N/A as --no-http in use>>",
+    'no-tlsextdebug'=> "<<N/A as --no-tlsextdebug in use>>",
     'disabled'      => "<<test disabled>>",
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
@@ -2483,9 +2492,11 @@ sub __SSLinfo($$$) {
     $val =  Net::SSLinfo::fingerprint_md5(  $_[0], $_[1]) if ($cmd eq 'fingerprint_md5');
     $val =  Net::SSLinfo::pubkey_value(     $_[0], $_[1]) if ($cmd eq 'pubkey_value');
     $val =  Net::SSLinfo::sigkey_value(     $_[0], $_[1]) if ($cmd eq 'sigkey_value');
-    $val =  Net::SSLinfo::extensions(       $_[0], $_[1]) if ($cmd =~ /ext(?:ensions|_)/);
+    $val =  Net::SSLinfo::heartbeat(        $_[0], $_[1]) if ($cmd eq 'heartbeat');
+    $val =  Net::SSLinfo::tlsextdebug(      $_[0], $_[1]) if ($cmd eq 'tlsextdebug');
+    $val =  Net::SSLinfo::extensions(       $_[0], $_[1]) if ($cmd =~ /^ext(?:ensions|_)/);
     if ($cmd =~ m/ext_/) {
-        # all following ar part of Net::SSLinfo::extensions(), now extract parts
+        # all following are part of Net::SSLinfo::extensions(), now extract parts
         # The extension section in the certificate starts with
         #    X509v3 extensions:
         # then each extension starts with a string prefixed by  X509v3
@@ -2512,6 +2523,8 @@ sub __SSLinfo($$$) {
 # ToDo: previous fails, reason unknown
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
     }
+    $val .= "\n" . Net::SSLinfo::tlsextdebug($_[0], $_[1]) if ($cmd eq 'extensions');
+           # \n required, as it may be removed later
     if ($cmd =~ /ext(?:ensions|_)/) {
         # grrr, formatting extensions is special, take care for traps ...
         if ($cfg{'format'} ne "raw") {
@@ -2679,7 +2692,7 @@ sub _isbleed($$) {
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
     undef $\;           # take care, must not be \n !!
 
-    # all following code stolen from Steffen Ullrich:
+    # all following code stolen from Steffen Ullrich (08. April 2014):
     #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
     # code slightly adapted to our own variables: $host, $port, $cfg{'timeout'}
     # also die() replaced by warn()
@@ -3463,6 +3476,11 @@ sub checkdest($$) {
         # if supported we have a value
         # ToDo: see ZLIB also (seems to be wrong currently)
     }
+    foreach $key (qw(heartbeat)) { # these are good if there is no value
+        $checks{$key}->{val} = $data{$key}->{val}($host);
+        $checks{$key}->{val} = ""     if ($checks{$key}->{val} =~ m/^\s*$/);
+    }
+    $checks{'heartbeat'}->{val} = $text{'no-tlsextdebug'} if ($cfg{'use_extdebug'} < 1);
 } # checkdest
 
 sub checkhttp($$) {
@@ -4448,6 +4466,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--force[_-]?openssl/) { $cmd{'extciphers'}= 1; next; }
     if ($arg =~ /^--no[_-]?openssl/)    { $cmd{'extopenssl'}= 0; next; }
     if ($arg =~ /^--s_?client/)         { $cmd{'extsclient'}++;  next; }
+    if ($arg =~ /^--?tlsextdebug/)      { $cfg{'use_extdebug'}=1;next; }
+    if ($arg =~ /^--no[_-]?tlsextdebug/){ $cfg{'use_extdebug'}=0;next; }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;     next; } # sslyze
@@ -4792,6 +4812,7 @@ push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
     $Net::SSLinfo::openssl     = $cmd{'openssl'};
     $Net::SSLinfo::use_http    = $cfg{'usehttp'};
     $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
+    $Net::SSLinfo::use_extdebug= $cfg{'use_extdebug'};
     $Net::SSLinfo::timeout_sec = $cfg{'timeout'};
     $Net::SSLinfo::no_cert     = $cfg{'no_cert'};
     $Net::SSLinfo::no_cert_txt = $cfg{'no_cert_txt'};
@@ -5891,6 +5912,10 @@ the description here is text provided by the user.
 
   Use  DIR  where to find CA certificates in PEM format.
 
+=head3 --no-tlsextdebug
+
+  Do not use  "-tlsextdebug"  option for openssl.
+
 =head2 Options for checks and results
 
 Options used for  I<+check>  command:
@@ -6331,7 +6356,7 @@ details of this check.
 
 =head3 heartbeat
 
-Check if connection is vulnerable to heartbleed attack.
+Check if heartbleed extension is supported by target.
 
 =head2 SSL Vulnerabilities
 
@@ -7061,6 +7086,18 @@ Workaround to get rid of this message: use  I<--no-dns>  option.
 All checks for EV are solely based on the information provided by the
 certificate.
 
+Some versions of openssl (< 1.x) may not support all required options
+which results in various error messages or --more worse--  may not be
+visibale at all.
+Following table shows the openssl option and how to disbale it within
+o-saft:
+
+-nextprotoneg       I<-no-nextproto>
+
+-reconnect          I<-no-reconnect>
+
+-tlsextdebug        I<-no-tlsextdebug>
+
 =head2 Poor Systems
 
 Use of  L<openssl(1)> is disabled by default on Windows due to various
@@ -7733,11 +7770,15 @@ O-Saft - OWASP SSL advanced forensic tool
 
 For re-writing some docs in proper English, thanks to Robb Watson.
 
+Code to check heartbleed vulnerability adapted from
+   Steffen Ullrich (08. April 2014):
+   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
+
 =for comment: VERSION string must start with @(#) at beginning of a line
 
 =head1 VERSION
 
-@(#) 14.05.13
+@(#) 14.05.14
 
 =head1 AUTHOR
 
