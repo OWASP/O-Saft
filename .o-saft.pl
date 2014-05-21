@@ -87,7 +87,7 @@
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=default cipher sslversion export rc4 pfs beast beast-default crime fingerprint_hash fp_not_md5 email serial subject dates verify expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
+--cfg_cmd=quick=default cipher sslversion export rc4 pfs beast beast-default crime heartbleed fingerprint_hash fp_not_md5 email serial subject dates verify heartbeat expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
 
 ###
 ### redefine texts
