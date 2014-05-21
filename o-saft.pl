@@ -5189,6 +5189,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     printchecks($legacy, $host) if ($info  == 0); # not for +info
 
     if ($cfg{'out_score'} > 0) { # no output for +info also
+        _y_CMD("scores");
         scoring($host, $port);
         # simple rounding in perl: $rounded = int($float + 0.5)
         $scores{'checks'}->{val} = int(
@@ -5209,9 +5210,11 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         printruler();
         print "\n";
         if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
+            _y_CMD("verbose score table");
             printtable('score');
             printruler();
         }
+        print "\n";
     }
 
     CLOSE_SSL:
@@ -7809,7 +7812,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.15a
+@(#) 14.05.15b
 
 =head1 AUTHOR
 
