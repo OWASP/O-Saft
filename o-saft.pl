@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.249 14/05/20 22:41:42";
+my  $SID    = "@(#) yeast.pl 1.249 14/05/21 21:41:42";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -3529,13 +3529,15 @@ sub checkhttp($$) {
     $checks{'pkp_pins'} ->{val} = $no if ($data{'https_pins'}->{val}($host) eq "");
 # ToDo: pins= ==> fingerprint des Zertifikats
 
+    $no = $text{'no-STS'};
+    $no = $text{'no-http'} if ($cfg{'usehttp'} < 1);
     # NOTE: following sequence is important!
     foreach $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
         if ($data{'https_sts'}->{val}($host) ne "") {
             $checks{'sts_maxage'}->{score} = $checks{$key}->{score} if ($hsts_maxage < $checks{$key}->{val});
             $checks{$key}->{val}    = ($hsts_maxage < $checks{$key}->{val}) ? "" : "> ".$checks{$key}->{val};
         } else {
-            $checks{$key}->{val}    = $text{'no-STS'};
+            $checks{$key}->{val}    = $no;
             $checks{$key}->{score}  = 0;
         }
     }
@@ -4804,7 +4806,10 @@ _trace("cfg{usesni}: $cfg{'usesni'}");
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @ARGV)); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @ARGV));   # can be set in rc-file!
-$cfg{'usehttp'}     = 1 if(0 => grep(/hsts/, @{$cfg{'do'}}));   # STS makes no sence without http
+if ($cfg{'usehttp'} == 0) {                # was explizitely set with --no-http 'cause default is 1
+    # STS makes no sence without http
+    _warn("STS $text{'no-http'}") if(0 => grep(/hsts/, @{$cfg{'do'}})); # check for any hsts*
+}
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
     $cfg{'enabled'} = 1;
@@ -7804,7 +7809,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.15
+@(#) 14.05.15a
 
 =head1 AUTHOR
 
