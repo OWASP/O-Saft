@@ -3714,7 +3714,9 @@ sub print_data($$$) {
     }
     $val = "\n" . $val if (_is_member($label, \@{$cfg{'cmd-NL'}}) > 0); # multiline data
     if ($legacy eq 'compact') {
-        $val   =~ s#[\n\r]#; #g;
+        $val   =~ s#:\n\s+#:#g; # join lines ending with :
+        $val   =~ s#\n\s+# #g;  # squeeze leading white spaces
+        $val   =~ s#[\n\r]#; #g;# join all lines
         $label = $data{$label}->{txt};
         $label =~ s#[\n]##g;
         printf("%s%s%s\n", $label, $text{'separator'}, $val);
@@ -7812,7 +7814,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.15b
+@(#) 14.05.16
 
 =head1 AUTHOR
 
