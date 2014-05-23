@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.75 14/05/20 22:43:30',
+    SID         => '@(#) Net::SSLinfo.pm 1.76 14/05/23 15:08:53',
 };
 
 ######################################################## public documentation #
@@ -280,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.05.15';
+    $VERSION   = '14.05.19';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1358,14 +1358,16 @@ sub do_ssl_open($$$) {
         my @ext;
         foreach my $line (split(/[\r\n]+/, $data)) {
             next if ($line !~ m/TLS server extension/);
-            my $rex =  $line;
+            $line =~ s/TLS server extension\s*"([^"]*)"/$1/;
+                # remove prefix text, but leave id= and len= for caller
+            my $rex =  $line;   # $line may contain regex meta characters, like ()
                $rex =~ s#([(/*)])#\\$1#g;
             next if (grep(/$rex/, @ext) > 0);
             push(@ext, $line);
-            $_SSLinfo{'heartbeat'}  = $line if ($line =~ m/extension\s*"heartbeat"/);
+            $_SSLinfo{'heartbeat'}  = $line if ($line =~ m/heartbeat/);
             # following already done, see above, hence with --trace only
-            _trace("-tlsextdebug  $line") if ($line =~ m/extension\s*"session ticket"/);
-            _trace("-tlsextdebug  $line") if ($line =~ m/extension\s*"renegotiation info"/);
+            _trace("-tlsextdebug  $line") if ($line =~ m/session ticket/);
+            _trace("-tlsextdebug  $line") if ($line =~ m/renegotiation info/);
         }
         $_SSLinfo{'tlsextdebug'}= join("\n" ,@ext);
         #dbx# print "tlsextdebug:\n" . $_SSLinfo{'tlsextdebug'};
