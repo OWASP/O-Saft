@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.251 14/05/23 14:56:49";
+my  $SID    = "@(#) yeast.pl 1.252 14/05/23 17:55:46";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -2490,6 +2490,7 @@ sub __SSLinfo($$$) {
     # these values will be converted to o-saft's preferred format
     my $cmd = shift;
     my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
+    my $ext = "";
     $val =  Net::SSLinfo::fingerprint(      $_[0], $_[1]) if ($cmd eq 'fingerprint');
     $val =  Net::SSLinfo::fingerprint_hash( $_[0], $_[1]) if ($cmd eq 'fingerprint_hash');
     $val =  Net::SSLinfo::fingerprint_sha1( $_[0], $_[1]) if ($cmd eq 'fingerprint_sha1');
@@ -2510,7 +2511,7 @@ sub __SSLinfo($$$) {
         # these are handled in regex below which matches next extension, if any.
         $val .= " X509";# add string to match last extenion also
         my $rex = '\s*(.*?)(?:X509|Authority|Netscape).*';
-        my $ext = $val;
+        $ext = $val;
         $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
         $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
         $val =~ s#.*?Basic Constraints:$rex#$1#ms               if ($cmd eq 'ext_constrains');
@@ -2527,7 +2528,10 @@ sub __SSLinfo($$$) {
 # ToDo: previous fails, reason unknown
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
     }
-    $val .= "\n" . Net::SSLinfo::tlsextdebug($_[0], $_[1]) if ($cmd eq 'extensions');
+    $ext  = Net::SSLinfo::tlsextdebug($_[0], $_[1]);
+    $ext =~ s/\([^)]*\),?\s+//g;         # remove additional informations
+    $ext =~ s/\s+len=\d+//g;             # ..
+    $val .= "\n" . $ext if ($cmd eq 'extensions');
            # \n required, as it may be removed later
     if ($cmd =~ /ext(?:ensions|_)/) {
         # grrr, formatting extensions is special, take care for traps ...
@@ -5546,6 +5550,8 @@ with other commands).
 
     Various checks according certificate's extended Validation (EV).
 
+    Hint: use option  --v --v  to get information about failed checks.
+
 =head3 +sizes
 
     Check length, size and count of some values in the certificate.
@@ -7837,7 +7843,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.18
+@(#) 14.05.19
 
 =head1 AUTHOR
 
