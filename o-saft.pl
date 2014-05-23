@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.250 14/05/23 11:51:32";
+my  $SID    = "@(#) yeast.pl 1.251 14/05/23 14:56:49";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4955,7 +4955,11 @@ printcipherlist(), exit 0   if (_is_do('list'));
   # to keep all checks together for better maintenace
 printusage(),      exit 2   if ($#{$cfg{'hosts'}} < 0); # no target hosts, does not make any sense
 if (_is_do('cipher')) {
-    printusage(),  exit 2   if ($#{$cfg{'done'}->{'arg_cmds'}} >= 0); # only unknown commands given, don't use default then
+    if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
+        _warn("additional commands in conjuntion with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
+        printusage();
+        exit 2;
+    }
 }
 if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +info does not allow additional commands
@@ -7833,7 +7837,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.17
+@(#) 14.05.18
 
 =head1 AUTHOR
 
