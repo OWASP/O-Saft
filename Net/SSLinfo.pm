@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.76 14/05/23 15:08:53',
+    SID         => '@(#) Net::SSLinfo.pm 1.77 14/05/24 23:46:30',
 };
 
 ######################################################## public documentation #
@@ -280,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.05.19';
+    $VERSION   = '14.05.20';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -317,6 +317,7 @@ require Exporter;
         sigkey_value
         extensions
         tlsextdebug
+        tlsextensions
         heartbeat
         trustout
         ocsp_uri
@@ -370,7 +371,11 @@ require Exporter;
         srp
         master_key
         session_id
+        session_lifetime
         session_ticket
+        session_ticket_hint
+        session_timeout
+        session_protocol
         renegotiation
         resumption
         selfsigned
@@ -555,6 +560,7 @@ my %_SSLinfo= ( # our internal data structure
     'sigkey_value'      => "",  # value       of signature key
     'extensions'        => "",  #
     'tlsextdebug'       => "",  # TLS extension visible with "openssl -tlsextdebug .."
+    'tlsextensions'     => "",  # TLS extension visible with "openssl -tlsextdebug .."
     'email'             => "",  # the email address(es)
     'heartbeat'         => "",  # heartbeat supported
     'serial'            => "",  # the serial number
@@ -583,7 +589,10 @@ my %_SSLinfo= ( # our internal data structure
     'srp'               => "",  # SRP username
     'master_key'        => "",  # Master-Key
     'session_id'        => "",  # Session-ID
+    'session_lifetime'  => "",  # TLS session ticket lifetime hint
     'session_ticket'    => "",  # TLS session ticket
+    'session_timeout'   => "",  # SSL-Session Timeout
+    'session_protocol'  => "",  # SSL-Session Protocol
     # following from HTTP(S) request
     'https_status'      => "",  # HTTPS response (aka status) line
     'https_server'      => "",  # HTTPS Server header
@@ -1240,6 +1249,8 @@ sub do_ssl_open($$$) {
             #    PSK identity: None
             #    PSK identity hint: None
             #    SRP username: None
+            #    Timeout   : 300 (sec)
+            #    TLS session ticket lifetime hint: 100800 (seconds)
             #    Compression: zlib compression
             #    Expansion: zlib compression
         my %match_map = (
@@ -1254,8 +1265,13 @@ sub do_ssl_open($$$) {
             'compression'      => "Compression:",
             'expansion'        => "Expansion:",
             'protocols'        => "Protocols advertised by server:",
+            'session_protocol' => "Protocol\\s+:",  # \s must be meta
+            'session_timeout'  => "Timeout\\s+:",   # \s must be meta
+            'session_lifetime' => "TLS session ticket lifetime hint:",
             #'session_ticket'   => "TLS session ticket:",
-            #'renegotiation'    => "Renegotiation".
+                # this is a multiline value, must be handled special, see below
+            #'renegotiation'    => "Renegotiation",
+                # Renegotiation comes with different values, see below
         );
         my $d    = "";
         my $data = $_SSLinfo{'s_client'};
@@ -1281,7 +1297,7 @@ sub do_ssl_open($$$) {
             $d =~ s/[^0-9a-f]//gi; # remove all none hex characters
             $_SSLinfo{'session_ticket'} = $d;
         }
-        
+
             # from s_client:
             #   Secure Renegotiation IS supported
             #   Secure Renegotiation IS NOT supported
@@ -1698,9 +1714,21 @@ Get target's SRP username.
 
 Get target's Master-Key.
 
+=head2 session_protocol
+
+Get target's announced SSL protocols.
+
 =head2 session_ticket
 
 Get target's TLS session ticket.
+
+=head2 session_ticket_hint, session_lifetime
+
+Get target's TLS session ticket lifetime hint.
+
+=head2 session_timeout
+
+Get target's SSL session timeout.
 
 =head2 fingerprint_hash( )
 
@@ -1918,6 +1946,10 @@ sub srp             { return _SSLinfo_get('srp',              $_[0], $_[1]); }
 sub master_key      { return _SSLinfo_get('master_key',       $_[0], $_[1]); }
 sub session_id      { return _SSLinfo_get('session_id',       $_[0], $_[1]); }
 sub session_ticket  { return _SSLinfo_get('session_ticket',   $_[0], $_[1]); }
+sub session_lifetime{ return _SSLinfo_get('session_lifetime', $_[0], $_[1]); }
+sub session_ticket_hint{return _SSLinfo_get('session_lifetime',$_[0],$_[1]); } # alias
+sub session_timeout { return _SSLinfo_get('session_timeout',  $_[0], $_[1]); }
+sub session_protocol{ return _SSLinfo_get('session_protocol', $_[0], $_[1]); }
 sub fingerprint_hash{ return _SSLinfo_get('fingerprint_hash', $_[0], $_[1]); }
 sub fingerprint_text{ return _SSLinfo_get('fingerprint_text', $_[0], $_[1]); }
 sub fingerprint_type{ return _SSLinfo_get('fingerprint_type', $_[0], $_[1]); }
