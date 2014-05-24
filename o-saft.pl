@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.252 14/05/23 17:55:46";
+my  $SID    = "@(#) yeast.pl 1.253 14/05/24 08:50:24";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -996,15 +996,6 @@ our %cfg = (
                         check cipher dump check_sni exec help info info--v http
                         quick list libversion sizes s_client version
                         sigkey bsi ev cipherall
-                       ),
-                    # add special commands for certificate extensions
-                    # they are alredy part of extension (see above) and hence
-                    # there'se no need to be part of +info or individual use
-                       qw(
-                        ext_authority ext_authorityid ext_constrains ext_certtype
-                        ext_cps ext_cps_policy ext_cps_cps ext_subjectkeyid 
-                        ext_crl ext_crl_crl ext_keyusage ext_extkeyusage
-                        ext_issuer
                        ),
                     # internal (debugging or experimental) commands
                       # qw(options cert_type),   # will bee seen with +info--v only
@@ -3079,7 +3070,7 @@ sub checkcert($$) {
     foreach $label (qw(cn subject altname extensions ext_crl ocsp_uri)) { # CRL
         # also (should already be part of others): CN, O, U
         $subject =  $data{$label}->{val}($host);
-        $subject =~ s#[\r\n]##g;         # CR and NL ar most likely added by openssl
+        $subject =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
         if ($subject =~ m#$cfg{'regex'}->{'notEV-chars'}#) {
             $txt = _subst($text{'cert-chars'}, $label);
             $checks{'ev-chars'}->{val} .= $txt;
@@ -4681,8 +4672,10 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')              { $arg = '+hsts';    }
     if ($arg eq  '+sigkey')           { $arg = '+sigdump'; }  # sigdump
     if ($arg eq  '+sigkey_algorithm') { $arg = '+signame'; }  # signame
-    if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';}
-    if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';}
+    if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';  }
+    if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';  }
+    if ($arg eq  '+extension')        { $arg = '+extensions'; }
+    if ($arg =~ /^\+ext_aia/i)        { $arg = '+ext_authority'; } # AIA is a common acronym ...
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
@@ -7843,7 +7836,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.19
+@(#) 14.05.20
 
 =head1 AUTHOR
 
