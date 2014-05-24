@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.253 14/05/24 08:50:24";
+my  $SID    = "@(#) yeast.pl 1.254 14/05/25 01:31:05";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -255,8 +255,9 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'signame'       => {'val' => sub { Net::SSLinfo::signame(       $_[0], $_[1])}, 'txt' => "Certificate Signature Algorithm"},
     'sigkey_value'  => {'val' => sub {    __SSLinfo('sigkey_value', $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
     'trustout'      => {'val' => sub { Net::SSLinfo::trustout(      $_[0], $_[1])}, 'txt' => "Certificate trusted"},
-    'tlsextdebug'   => {'val' => sub { __SSLinfo('tlsextdebug',     $_[0], $_[1])}, 'txt' => "Certificate extensions (advanced)"},
     'extensions'    => {'val' => sub { __SSLinfo('extensions',      $_[0], $_[1])}, 'txt' => "Certificate extensions"},
+    'tlsextdebug'   => {'val' => sub { __SSLinfo('tlsextdebug',     $_[0], $_[1])}, 'txt' => "SSL extensions (debug)"},
+    'tlsextensions' => {'val' => sub { __SSLinfo('tlsextensions',   $_[0], $_[1])}, 'txt' => "SSL extensions"},
     'ext_authority' => {'val' => sub { __SSLinfo('ext_authority',   $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
     'ext_authorityid'=>{'val' => sub { __SSLinfo('ext_authorityid', $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
     'ext_constrains'=> {'val' => sub { __SSLinfo('ext_constrains',  $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
@@ -765,7 +766,8 @@ our %shorttexts = (
     'dates'         => "Validity (date)",
     'before'        => "Valid since",
     'after'         => "Valid until",
-    'tlsextdebug'   => "Extensions (advanced)",
+    'tlsextdebug'   => "SSL Extensions (debug)",
+    'tlsextensions' => "SSL Extensions",
     'extensions'    => "Extensions",
     'heartbeat'     => "Heartbeat",     # not realy a `key', but a extension
     'aux'           => "Trust",
@@ -1393,17 +1395,17 @@ my %ciphers = (
         'ECDH-ECDSA-DES-CBC3-SHA'=>[qw(  HIGH SSLv3 3DES  168 SHA1 ECDSA ECDH/ECDSA 11 :)], # (from openssl-1.0.0d)
        #'ECDH-ECDSA-RC4-SHA'    => [qw(MEDIUM SSLv3 RC4   128 SHA1 ECDSA ECDH/ECDSA 81 :)], # (from openssl-1.0.0d)
         'ECDH-ECDSA-RC4-SHA'    => [qw(  weak SSLv3 RC4   128 SHA1 ECDSA ECDH/ECDSA 81 :)], # (from openssl-1.0.0d)
-        'ECDH-ECDSA-NULL-SHA'   => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH/ECDSA 11 :)], # (from openssl-1.0.0d)
+        'ECDH-ECDSA-NULL-SHA'   => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH/ECDSA  0 :)], # (from openssl-1.0.0d)
         'ECDH-RSA-AES128-SHA'   => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   ECDH       11 :)], #
         'ECDH-RSA-AES256-SHA'   => [qw(  HIGH SSLv3 AES   256 SHA1 RSA   ECDH       11 :)], #
         'ECDH-RSA-DES-CBC3-SHA' => [qw(  HIGH SSLv3 3DES  168 SHA1 RSA   ECDH       11 :)], #
        #'ECDH-RSA-RC4-SHA'      => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
         'ECDH-RSA-RC4-SHA'      => [qw(  weak SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
-        'ECDH-RSA-NULL-SHA'     => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH       11 :)], # (from openssl-1.0.0d)
+        'ECDH-RSA-NULL-SHA'     => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH        0 :)], # (from openssl-1.0.0d)
         'ECDHE-ECDSA-AES128-SHA'=> [qw(  high SSLv3 AES   128 SHA1 ECDSA ECDH       11 :)], #
         'ECDHE-ECDSA-AES256-SHA'=> [qw(  high SSLv3 AES   256 SHA1 ECDSA ECDH       11 :)], #
         'ECDHE-ECDSA-DES-CBC3-SHA'=> [qw(HIGH SSLv3 3DES  168 SHA1 ECDSA ECDH       11 :)], #
-        'ECDHE-ECDSA-NULL-SHA'  => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH       11 :)], #
+        'ECDHE-ECDSA-NULL-SHA'  => [qw(  weak SSLv3 None    0 SHA1 ECDSA ECDH        0 :)], #
        #'ECDHE-ECDSA-RC4-SHA'   => [qw(MEDIUM SSLv3 RC4   128 SHA1 ECDSA ECDH       81 :)], #
         'ECDHE-ECDSA-RC4-SHA'   => [qw(  weak SSLv3 RC4   128 SHA1 ECDSA ECDH       81 :)], #
         'ECDHE-RSA-AES128-SHA'  => [qw(  HIGH SSLv3 AES   128 SHA1 RSA   ECDH       11 :)], #
@@ -1411,7 +1413,7 @@ my %ciphers = (
         'ECDHE-RSA-DES-CBC3-SHA'=> [qw(  HIGH SSLv3 3DES  168 SHA1 RSA   ECDH       11 :)], #
        #'ECDHE-RSA-RC4-SHA'     => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
         'ECDHE-RSA-RC4-SHA'     => [qw(  weak SSLv3 RC4   128 SHA1 RSA   ECDH       81 :)], #
-        'ECDHE-RSA-NULL-SHA'    => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH       11 :)], #
+        'ECDHE-RSA-NULL-SHA'    => [qw(  weak SSLv3 None    0 SHA1 RSA   ECDH        0 :)], #
         'EDH-DSS-AES128-SHA'    => [qw(  high SSLv3 AES   128 SHA1 DSS   DHE        91 :)], # (from RSA BSAFE SSL-C) same as DHE-DSS-AES128-SHA?
         'EDH-DSS-AES256-SHA'    => [qw(  high SSLv3 AES   256 SHA1 DSS   DHE       100 :)], # (from RSA BSAFE SSL-C) same as DHE-DSS-AES256-SHA?
         'EDH-DSS-DES-CBC3-SHA'  => [qw(  HIGH SSLv3 3DES  168 SHA1 DSS   DH         80 :)],
@@ -1542,7 +1544,7 @@ my %ciphers = (
         'EXP-KRB5-RC4-SHA'              => [qw(  weak SSLv3 RC4     40 SHA1   KRB5  KRB5        0 export)],
         # from ssl/s3_lib.c
         'FZA-NULL-SHA'                  => [qw(  WEAK SSLv3 FZA      0 SHA1   FZA   FZA         0 :)],
-        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   FZA   FZA        80 :)],
+        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   FZA   FZA         0 :)],
         'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 FZA    128 SHA1   FZA   FZA         0 :)],
 
     # === openssl ===
@@ -2490,6 +2492,7 @@ sub __SSLinfo($$$) {
     $val =  Net::SSLinfo::sigkey_value(     $_[0], $_[1]) if ($cmd eq 'sigkey_value');
     $val =  Net::SSLinfo::heartbeat(        $_[0], $_[1]) if ($cmd eq 'heartbeat');
     $val =  Net::SSLinfo::tlsextdebug(      $_[0], $_[1]) if ($cmd eq 'tlsextdebug');
+    $val =  Net::SSLinfo::tlsextensions(    $_[0], $_[1]) if ($cmd eq 'tlsextensions');
     $val =  Net::SSLinfo::extensions(       $_[0], $_[1]) if ($cmd =~ /^ext(?:ensions|_)/);
     if ($cmd =~ m/ext_/) {
         # all following are part of Net::SSLinfo::extensions(), now extract parts
@@ -2519,12 +2522,8 @@ sub __SSLinfo($$$) {
 # ToDo: previous fails, reason unknown
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
     }
-    $ext  = Net::SSLinfo::tlsextdebug($_[0], $_[1]);
-    $ext =~ s/\([^)]*\),?\s+//g;         # remove additional informations
-    $ext =~ s/\s+len=\d+//g;             # ..
-    $val .= "\n" . $ext if ($cmd eq 'extensions');
-           # \n required, as it may be removed later
-    if ($cmd =~ /ext(?:ensions|_)/) {
+# ToDo: move code for formatting to print*()
+    if ($cmd =~ /ext(?:ensions|debug|_)/) {
         # grrr, formatting extensions is special, take care for traps ...
         if ($cfg{'format'} ne "raw") {
             $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
@@ -2541,6 +2540,7 @@ sub __SSLinfo($$$) {
         }
         return $val; # ready!
     }
+# ToDo: move code for formatting to print*()
     if ($cfg{'format'} ne "raw") {
         $val =  "" if (!defined $val);  # avoid warnings
         $val =~ s/\n\s+//g; # remove trailing spaces
@@ -7836,7 +7836,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.20
+@(#) 14.05.21
 
 =head1 AUTHOR
 
