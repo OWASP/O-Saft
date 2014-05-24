@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.77 14/05/24 23:46:30',
+    SID         => '@(#) Net::SSLinfo.pm 1.78 14/05/25 01:26:25',
 };
 
 ######################################################## public documentation #
@@ -280,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.05.20';
+    $VERSION   = '14.05.21';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1371,22 +1371,23 @@ sub do_ssl_open($$$) {
             # TLS server extension "heartbeat" (id=15), len=1
             # TLS server extension "EC point formats" (id=11), len=4
             # TLS server extension "next protocol" (id=13172), len=25
-        my @ext;
         foreach my $line (split(/[\r\n]+/, $data)) {
             next if ($line !~ m/TLS server extension/);
-            $line =~ s/TLS server extension\s*"([^"]*)"/$1/;
+            $d = $line;
+            $d =~ s/TLS server extension\s*"([^"]*)"/$1/;
                 # remove prefix text, but leave id= and len= for caller
-            my $rex =  $line;   # $line may contain regex meta characters, like ()
+            my $rex =  $d;  # $d may contain regex meta characters, like ()
                $rex =~ s#([(/*)])#\\$1#g;
-            next if (grep(/$rex/, @ext) > 0);
-            push(@ext, $line);
-            $_SSLinfo{'heartbeat'}  = $line if ($line =~ m/heartbeat/);
+            next if (grep(/$rex/, split(/\n/, $_SSLinfo{'tlsextensions'})) > 0);
+            $_SSLinfo{'tlsextdebug'}   .= "\n" . $line;
+            $_SSLinfo{'tlsextensions'} .= "\n" . $d;
+            $_SSLinfo{'heartbeat'}= $d if ($d =~ m/heartbeat/);
             # following already done, see above, hence with --trace only
-            _trace("-tlsextdebug  $line") if ($line =~ m/session ticket/);
-            _trace("-tlsextdebug  $line") if ($line =~ m/renegotiation info/);
+            _trace("-tlsextdebug  $d") if ($d =~ m/session ticket/);
+            _trace("-tlsextdebug  $d") if ($d =~ m/renegotiation info/);
         }
-        $_SSLinfo{'tlsextdebug'}= join("\n" ,@ext);
-        #dbx# print "tlsextdebug:\n" . $_SSLinfo{'tlsextdebug'};
+        $_SSLinfo{'tlsextensions'} =~ s/\([^)]*\),?\s+//g;  # remove additional informations
+        $_SSLinfo{'tlsextensions'} =~ s/\s+len=\d+//g;      # ...
 
         _trace("do_ssl_open() with openssl done.");
         print Net::SSLinfo::dump() if ($trace > 0);
@@ -1920,6 +1921,7 @@ sub serial          { return _SSLinfo_get('serial',           $_[0], $_[1]); }
 sub aux             { return _SSLinfo_get('aux',              $_[0], $_[1]); }
 sub extensions      { return _SSLinfo_get('extensions',       $_[0], $_[1]); }
 sub tlsextdebug     { return _SSLinfo_get('tlsextdebug',      $_[0], $_[1]); }
+sub tlsextensions   { return _SSLinfo_get('tlsextensions',    $_[0], $_[1]); }
 sub heartbeat       { return _SSLinfo_get('heartbeat',        $_[0], $_[1]); }
 sub trustout        { return _SSLinfo_get('trustout',         $_[0], $_[1]); }
 sub ocsp_uri        { return _SSLinfo_get('ocsp_uri',         $_[0], $_[1]); }
