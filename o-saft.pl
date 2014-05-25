@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.255 14/05/25 15:30:26";
+my  $SID    = "@(#) yeast.pl 1.256 14/05/25 17:09:14";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4440,6 +4440,17 @@ while ($#argv >= 0) {
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
+        if ($typ eq 'PROTOCOL') {
+            if ($arg =~ /^?sslv?2$/i)         { $cfg{'SSLv2'}   = 1; }
+            if ($arg =~ /^?sslv?3$/i)         { $cfg{'SSLv3'}   = 1; }
+            if ($arg =~ /^?tlsv?1$/i)         { $cfg{'TLSv1'}   = 1; }
+            if ($arg =~ /^?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}  = 1; }
+            if ($arg =~ /^?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}  = 1; }
+            if ($arg =~ /^?tlsv?1[-_.]?3$/i)  { $cfg{'TLSv13'}  = 1; }
+            if ($arg =~ /^dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}  = 1; }
+            if ($arg =~ /^dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}  = 1; }
+            $typ = 'HOST';
+        }
         if ($typ eq 'PHOST')    {
             # allow   user:pass@f.q.d.n:42
             $cfg{'proxyhost'} = $arg;
@@ -4543,6 +4554,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';           } # commands
     if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';        } # ..
     if ($arg =~ /^--trace([_-]?sub)/i)  { $arg = '+traceSUB';             } # ..
+    if ($arg eq  '--printavailable')    { $arg = '+ciphers';              } # ssldiagnose.exe
+    if ($arg eq  '--printcert')         { $arg = '+text';                 } # ..
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1;    next; }
     if ($arg =~ /^--force[_-]?openssl$/){ $cmd{'extciphers'}= 1;    next; }
@@ -4566,11 +4579,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?cert$/)      { $cfg{'no_cert'}++;        next; }
     if ($arg =~ /^--no[_-]?ignorecase$/){ $cfg{'ignorecase'}= 0;    next; }
     if ($arg =~ /^--ignorecase$/)       { $cfg{'ignorecase'}= 1;    next; }
-    if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1;    next; }
-    if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    next; }
-    if ($arg =~ /^--no[_-]?score$/)     { $cfg{'out_score'} = 0;    next; }
-    if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    next; }
-    if ($arg =~ /^--no[_-]?header$/)    { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); next; } # push() is ugly hack to preserve option even from rc-file
     if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    next; } # allow case insensitive
     if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    next; } # ..
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    next; } # ..
@@ -4595,8 +4603,14 @@ while ($#argv >= 0) {
     if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    next; }
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    next; }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    next; }
+    # our options
+    if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1;    next; }
+    if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    next; }
+    if ($arg =~ /^--no[_-]?score$/)     { $cfg{'out_score'} = 0;    next; }
+    if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    next; }
+    if ($arg =~ /^--no[_-]?header$/)    { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); next; } # push() is ugly hack to preserve option even from rc-file
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       next; }
-    if ($arg =~ /^--?printavailable/)   { $cfg{'enabled'}   = 1;    next; } # ssldiagnos
+    if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        next; } # ssldiagnose.exe
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            next; } # --h already catched above
     if ($arg =~ /^--?h(?:ost)?=(.*)/)   { $typ = 'HOST';    unshift(@argv, $1); next; }
     if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            next; }
@@ -4620,7 +4634,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tab$/)              { $text{'separator'} = "\t";next; } # TAB character
     if ($arg =~ /^--timeout$/)          { $typ = 'TIMEOUT';         next; }
     if ($arg =~ /^--timeout=(.*)/)      { $typ = 'TIMEOUT'; unshift(@argv, $1); next; }
-    if ($arg =~ /^--?interval/)         { $typ = 'TIMEOUT';         next; } # ssldiagnos
+    if ($arg =~ /^--?interval/)         { $typ = 'TIMEOUT';         next; } # ssldiagnos.exe
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'OPENSSL'; unshift(@argv, $1); $cmd{'extopenssl'}= 1; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'CTXT';    next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT';unshift(@argv, $1); next; }
@@ -4638,12 +4652,15 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ca[_-]?(?:cert(?:ificate)?|file)=(.*)/i){ $typ = 'CAFILE';  unshift(@argv, $1); next; }
     if ($arg =~ /^--ca[_-]?(?:directory|path)$/i)           { $typ = 'CAPATH';  next; } # curl, openssl, wget, ...
     if ($arg =~ /^--ca[_-]?(?:directory|path)=(.*)/i)       { $typ = 'CAPATH';  unshift(@argv, $1); next; }
+    if ($arg eq  '-c')                  { $typ = 'CAPATH'; unshift(@argv, $2); next; } # ssldiagnose.exe
     if ($arg =~ /^--win[_-]?CR/i)       { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); next; }
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){next; } #  "
     if ($arg =~ /^-connect$/)           { next; } #  "
     if ($arg eq  '--insecure')          { next; } #  "
     if ($arg =~ /^--use?r$/)            { next; } # ignore, nothing to do
+    if ($arg =~ /^--(ciscospeshul|nocolor|nopct|strictpcigrade|UDP)$/)    { next; } # ssldiagnos.exe
+    if ($arg =~ /^--server(cert|certkey|certpass|cipher|protocol|mode)$/) { next; } #  "
     #!#--------+------------------------+--------------------------+------------
     if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
         _warn("--set-score=* obsolte, please use --cfg_score=*; ignored");
@@ -5303,6 +5320,10 @@ here are some examples of the most common use cases:
 
     $0 +check example.tld
 
+=item List all available commands:
+
+    $0 --help=commands
+
 =back
 
 For more specialised test cases, refer to the B<COMMANDS> and B<OPTIONS>
@@ -5876,7 +5897,7 @@ the description here is text provided by the user.
 
   Option reserved for future use ...
 
-=head3 --SSL
+=head3 --SSL, -protocol SSL
 
 =head3 --no-SSL
 
@@ -6118,9 +6139,15 @@ options are ambiguous.
 
 =item * --ca-certificate=FILE     (wget)   same as I<--ca-path DIR>
 
+=item * -c PATH           (ssldiagnos)     same as I<--ca-path DIR>
+
 =item * --hide_rejected_ciphers (sslyze)   same as I<--disabled>
 
 =item * --http_get        (ssldiagnos)     same as I<--http>
+
+=item * --printcert       (ssldiagnos)     same as I<+ciphers>
+
+=item * --protocol SSL    (ssldiagnos)     same as I<--SSL>
 
 =item * --no-failed       (sslscan)        same as I<--disabled>
 
@@ -6134,6 +6161,8 @@ options are ambiguous.
 
 =item * -p, -p=PORT       (various tools)  same as I<--port PORT>
 
+=item * -t HOST           (ssldiagnos)     same as I<--host HOST>
+
 =item * -noSSL                             same as I<--no-SSL>
 
 =item * -no_SSL                            same as I<--no-SSL>
@@ -6141,6 +6170,8 @@ options are ambiguous.
   For definition of  "SSL"  see  "--SSL"  and  "--no-SSL"  above.
 
 =item * --insecure        (cnark.pl)       ignored
+
+=item * --nopct --nocolor (ssldiagnos)     ignored
 
 =item * --ism, --pci -x   (ssltest.pl)     ignored
 
@@ -7834,7 +7865,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.22a
+@(#) 14.05.22b
 
 =head1 AUTHOR
 
@@ -7844,12 +7875,19 @@ Code to check heartbleed vulnerability adapted from
 
 TODO
 
+  * new features
+    ** allow proxy
+    ** client certificate
+    ** support: SMTP, SIP, POP3, IMAP, LDAP, FTP
+    ** support: PCT protocol
+
   * missing checks
     ** SSL_honor_cipher_order => 1
     ** implement TLSv1.2 checks
     ** IP in CommonName or subjectAltname (RFC6125)
     ** checkcert(): KeyUsage, keyCertSign, BasicConstraints
     ** DV and EV miss some minor checks; see checkdv() and checkev()
+    ** some workaround in SSL protocol
 
   * verify CA chain:
     ** Net::SSLinfo.pm implement verify*
