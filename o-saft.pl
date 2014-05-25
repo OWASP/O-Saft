@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.258 14/05/25 20:17:22";
+my  $SID    = "@(#) yeast.pl 1.259 14/05/25 23:20:40";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -260,7 +260,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'tlsextensions' => {'val' => sub { __SSLinfo('tlsextensions',   $_[0], $_[1])}, 'txt' => "SSL extensions"},
     'ext_authority' => {'val' => sub { __SSLinfo('ext_authority',   $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
     'ext_authorityid'=>{'val' => sub { __SSLinfo('ext_authorityid', $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
-    'ext_constrains'=> {'val' => sub { __SSLinfo('ext_constrains',  $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
+    'ext_constraints'=>{'val' => sub { __SSLinfo('ext_constraints', $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
     'ext_cps'       => {'val' => sub { __SSLinfo('ext_cps',         $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies"},
     'ext_cps_policy'=> {'val' => sub { __SSLinfo('ext_cps_policy',  $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
     'ext_subjectkeyid'=>{'val'=> sub { __SSLinfo('ext_subjectkeyid',$_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
@@ -362,6 +362,7 @@ my %check_cert = (
     'lzo'           => {'txt' => "Certificate has (GnuTLS extension) compression"},
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
+    'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -688,6 +689,7 @@ our %shorttexts = (
     'crime'         => "Safe to CRIME",
     'time'          => "Safe to TIME",
     'heartbleed'    => "Safe to heartbleed",
+    'constraints'   => "Basic Constraints is false",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -1995,6 +1997,7 @@ my %text = (
         'Lucky 13'  => "Break SSL/TLS Protocol",
         'MARS'      => "",
         'MAC'       => "Message Authentication Code",
+        'MEE'       => "MAC-then-Encode-then-Encrypt",
         'MEK'       => "Message Encryption Key",
         'MD2'       => "Message Digest 2",
         'MD4'       => "Message Digest 4",
@@ -2512,7 +2515,7 @@ sub __SSLinfo($$$) {
         $ext = $val;
         $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
         $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
-        $val =~ s#.*?Basic Constraints:$rex#$1#ms               if ($cmd eq 'ext_constrains');
+        $val =~ s#.*?Basic Constraints:$rex#$1#ms               if ($cmd eq 'ext_constraints');
         $val =~ s#.*?Key Usage:$rex#$1#ms                       if ($cmd eq 'ext_keyusage');
         $val =~ s#.*?Subject Key Identifier:$rex#$1#ms          if ($cmd eq 'ext_subjectkeyid');
         $val =~ s#.*?Certificate Policies:$rex#$1#ms            if ($cmd =~ /ext_cps/);
@@ -2620,7 +2623,7 @@ sub _isbreach($){
 }
 sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? "" : $_[0] . " "; }
     # return compression if available, empty string otherwise
-sub _istime($)  { return 0; } # ToDo: checks
+sub _istime($)  { return 0; } # ToDo: checks; good: AES-GCM or AES-CCM
 sub _ispfs($$)  {
     # return given cipher if it does not support forward secret connections (PFS)
     my ($ssl, $cipher) = @_;
@@ -3034,6 +3037,9 @@ sub checkcert($$) {
     $checks{'ocsp'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host) eq "");
     $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host) eq "");
+    $value = $data{'ext_constraints'}->{val}($host);
+    $checks{'constraints'}->{val}   = " "    if ($value eq "");
+    $checks{'constraints'}->{val}   = $value if ($value !~ m/CA:FALSE/i);
     # ToDo: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
@@ -6517,6 +6523,12 @@ Certificate should not be self-signed.
 
 NOT YET IMPLEMENTED
 
+=head3 Basic Constraints
+
+Certificate extension Basic Constraints should be CA:FALSE.
+
+=for comment otherwise someone can generate an intermediate cert
+
 =head3 OCSP, CRL, CPS
 
 Certificate should contain URL for OCSP and CRL.
@@ -7882,7 +7894,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.22d
+@(#) 14.05.22e
 
 =head1 AUTHOR
 
