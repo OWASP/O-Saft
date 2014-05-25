@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.257 14/05/25 18:59:18";
+my  $SID    = "@(#) yeast.pl 1.258 14/05/25 20:17:22";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1069,8 +1069,10 @@ our %cfg = (
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
     },
     'legacy'        => "simple",
-    'legacys'       => [qw(cnark simple sslaudit sslcipher ssldiagnos sslscan
-                        ssltest ssltest-g sslyze testsslserver full compact quick)],
+    'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
+                        ssltest-g sslyze testsslserver thcsslcheck
+                        simple full compact quick)],
+                       # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
    #------------------+---------+----------------------------------------------
     'regex' => {
@@ -1827,6 +1829,8 @@ my %text = (
         'ssltest-g' => { 'not' => '-?-', 'yes' => "Enabled",     'no' => "Disabled"  },
         'sslyze'    => { 'not' => '-?-', 'yes' => "%s",          'no' => "SSL Alert" },
         'testsslserver'=>{'not'=> '-?-', 'yes' => "",            'no' => ""          },
+        'thcsslcheck'=>{ 'not' => '-?-', 'yes' => "supported",   'no' => "unsupported"   },
+
         #              #----------------+------------------------+---------------------
         #                -?- means "not implemented"
         # all other text used in headers titles, etc. are defined in the
@@ -3828,6 +3832,10 @@ sub print_cipherline($$$$$$) {
         my $tmp = $arr[2]; $arr[2] = $arr[3]; $arr[3] = $tmp;
         printf("   %s, %s (%s)\n",  $cipher, join (", ", @arr), $yesno);
     }
+    if ($legacy eq 'thcsslcheck') {
+        # AES256-SHA - 256 Bits -   supported
+        printf("%30s - %3s Bits - %11s\n", $cipher, $bit, $yesno);
+    }
     if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
         print_host_key($host, 'cipher');
     }
@@ -3919,6 +3927,7 @@ sub printtitle($$$$) {
     if ($legacy eq 'ssltest')   { print "Checking for Supported $ssl Ciphers on $host..."; }
     if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
+    if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
     if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
     if ($legacy eq 'quick')     { printheader($txt, ""); }
     if ($legacy eq 'simple')    { printheader($txt, ""); }
@@ -4470,8 +4479,8 @@ while ($#argv >= 0) {
         }
         if ($typ eq 'LEGACY')   {
             $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
-            if (1 == grep(/^$arg$/, @{$cfg{'legacys'}})) {
-                $cfg{'legacy'} = $arg;
+            if (1 == grep(/^$arg$/i, @{$cfg{'legacys'}})) {
+                $cfg{'legacy'} = lc($arg);
             } else {
                 _warn("unknown legacy '$arg'; ignored");
             }
@@ -5185,7 +5194,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         foreach $ssl (@{$cfg{'version'}}) {
             print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
         }
-        printruler() if ($quick == 0);
+        printruler() if (($quick == 0) and ($legacy ne 'thcsslcheck'));
         printheader("\n" . _subst($text{'out-summary'}, ""), "");
         foreach $ssl (@{$cfg{'version'}}) {
             print_check($legacy, $host, $ssl, undef);
@@ -6045,7 +6054,9 @@ Options used for  I<+check>  command:
     ssltest-g:    format of output similar to  ssltest -g
     sslyze:       format of output similar to  sslyze
     ssl-cipher-check:    same as sslcipher:
+    ssl-cert-check:  format of output similar to  ssl-cert-check
     testsslserver:format of output similar to  TestSSLServer.jar
+    thcsslcHeck:  format of output similar to  THCSSLCheck
 
   Note that these legacy formats only apply to  output of the checked
   ciphers. Other texts like headers and footers are adapted slightly.
@@ -7871,7 +7882,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.22c
+@(#) 14.05.22d
 
 =head1 AUTHOR
 
