@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.254 14/05/25 01:31:05";
+my  $SID    = "@(#) yeast.pl 1.255 14/05/25 15:30:26";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4946,6 +4946,7 @@ usr_pre_main();
 printversion(),    exit 0   if (_is_do('version'));
 printopenssl(),    exit 0   if (_is_do('libversion'));
 printcipherlist(), exit 0   if (_is_do('list'));
+print_data($legacy, 'ciphers', ""), exit 0 if (_is_do('ciphers'));
 
 # defense, user-friendly programming
   # could do these checks earlier (after seeting defaults), but we want
@@ -5441,10 +5442,7 @@ with other commands).
 
 =head3 +ciphers
 
-    Show ciphers offerd by local SSL implementation and by target.
-
-    Note that SSL requires a successful connection to the target.  If
-    no target is given, we try to get the list using "openssl(1)".
+    Show ciphers offerd by local SSL implementation.
 
 =head3 +list
 
@@ -7836,7 +7834,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.21
+@(#) 14.05.22a
 
 =head1 AUTHOR
 
