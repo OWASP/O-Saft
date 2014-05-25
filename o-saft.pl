@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.256 14/05/25 17:09:14";
+my  $SID    = "@(#) yeast.pl 1.257 14/05/25 18:59:18";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4556,6 +4556,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?sub)/i)  { $arg = '+traceSUB';             } # ..
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';              } # ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';                 } # ..
+    if ($arg eq  '-i')                  { $arg = '+issuer';               } # ssl-cert-check
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1;    next; }
     if ($arg =~ /^--force[_-]?openssl$/){ $cmd{'extciphers'}= 1;    next; }
@@ -4595,6 +4596,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?tlsv?13$/i)  { $cfg{'TLSv13'}    = 0;    next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLSv9'}    = 0;    next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?10?$/i){ $cfg{'DTLSv1'}    = 0;    next; } # ..
+    if ($arg eq  '-b')                  { $cfg{'out_header'}= 1;    next; } # ssl-cert-check
+    if ($arg eq  '-V')                  { $cfg{'out_header'}= 1;    next; } # ssl-cert-check
+#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        next; } # ssl-cert-check # FIXME: not supported
+    # our options
     if ($arg =~ /^--ssl[_-]?lazy$/)     { $cfg{'ssl_lazy'}  = 1;    next; } # ..
     if ($arg =~ /^--no[_-]?ssl[_-]?lazy$/){$cfg{'ssl_lazy'} = 0;    next; } # ..
     if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    next; } # ..
@@ -4603,7 +4608,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    next; }
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    next; }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    next; }
-    # our options
     if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1;    next; }
     if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    next; }
     if ($arg =~ /^--no[_-]?score$/)     { $cfg{'out_score'} = 0;    next; }
@@ -4655,12 +4659,14 @@ while ($#argv >= 0) {
     if ($arg eq  '-c')                  { $typ = 'CAPATH'; unshift(@argv, $2); next; } # ssldiagnose.exe
     if ($arg =~ /^--win[_-]?CR/i)       { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); next; }
     if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
-    if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){next; } #  "
     if ($arg =~ /^-connect$/)           { next; } #  "
     if ($arg eq  '--insecure')          { next; } #  "
     if ($arg =~ /^--use?r$/)            { next; } # ignore, nothing to do
     if ($arg =~ /^--(ciscospeshul|nocolor|nopct|strictpcigrade|UDP)$/)    { next; } # ssldiagnos.exe
     if ($arg =~ /^--server(cert|certkey|certpass|cipher|protocol|mode)$/) { next; } #  "
+    if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){next; } # silently ignored
+                # -s HOST   # ssl-cert-check: -s ignored hence HOST parsed as expected
+                # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
     #!#--------+------------------------+--------------------------+------------
     if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
         _warn("--set-score=* obsolte, please use --cfg_score=*; ignored");
@@ -7865,7 +7871,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.22b
+@(#) 14.05.22c
 
 =head1 AUTHOR
 
