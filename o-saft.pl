@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.259 14/05/25 23:20:40";
+my  $SID    = "@(#) yeast.pl 1.260 14/05/26 00:37:25";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1032,11 +1032,14 @@ our %cfg = (
     'cmd-bsi'       => [qw(after dates crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
-    'need_cipher'   => [        # list of commands which need +cipher
+                    # need_* lists used to improve performance
+    'need_cipher'   => [        # commands which need +cipher
                        qw(check beast crime time breach pfs rc4 bsi default cipher)],
-    'need_checkssl' => [        # list of commands which need checkssl()
+    'need_default'  => [        # commands which need default cipher
+                       qw(beast-default default cipher check pfs)],
+    'need_checkssl' => [        # commands which need checkssl()
                        qw(check beast crime time breach pfs rc4 bsi default ev+ ev-)],
-    'data_hex'      => [        # list of data values which are in hex values
+    'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
                        qw(
                         fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
@@ -2562,6 +2565,8 @@ sub _subst($$)         { my $is=shift; $is=~s/@@/$_[0]/;  return $is; }
     # return given text with '@@' replaced by given value
 sub _need_cipher()     { my $is=join("|", @{$cfg{'do'}}); return grep(/^($is)$/,  @{$cfg{'need_cipher'}}); }
     # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_cipher'}
+sub _need_default()    { my $is=join("|", @{$cfg{'do'}}); return grep(/^($is)$/,  @{$cfg{'need_default'}}); }
+    # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_default'}
 sub _need_checkssl()   { my $is=join("|", @{$cfg{'do'}}); return grep(/^($is)$/,  @{$cfg{'need_checkssl'}}); }
     # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_checkssl'}
 sub _is_hashkey($$)    { my $is=shift; return grep({lc($is) eq lc($_)} keys %{$_[0]}); }
@@ -2914,6 +2919,7 @@ sub checkciphers($$) {
     #? test target if given ciphers are accepted, results stored in global %checks
     my ($host, $port) = @_;     # not yet used
 
+    _y_CMD("checkciphers() ");
     $cfg{'done'}->{'checkciphers'}++;
     return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace(" checkciphers {");
@@ -2955,6 +2961,7 @@ sub checkciphers($$) {
 sub checkbleed($$) {
     #? check if target supports TLS extension 15 (hearbeat)
     my ($host, $port) = @_;
+    _y_CMD("checkbleed() ");
     $checks{'heartbleed'}->{val}  = _isbleed($host, $port);
 
 } # checkbleed
@@ -2962,6 +2969,7 @@ sub checkbleed($$) {
 sub checkdates($$) {
     # check validation of certificate's before and after date
     my ($host, $port) = @_;
+    _y_CMD("checkdates() " . $cfg{'done'}->{'checkdates'});
     $cfg{'done'}->{'checkdates'}++;
     return if ($cfg{'done'}->{'checkdates'} > 1);
        #
@@ -3023,6 +3031,7 @@ sub checkcert($$) {
     #? check certificate settings
     my ($host, $port) = @_;
     my ($value, $label, $subject, $txt);
+    _y_CMD("checkcert() " . $cfg{'done'}->{'checkcert'});
     $cfg{'done'}->{'checkcert'}++;
     return if ($cfg{'done'}->{'checkcert'} > 1);
 
@@ -3109,6 +3118,7 @@ sub checksni($$) {
     #? check if given FQDN needs to use SNI
     # sets $checks{'sni'}, $checks{'certfqdn'}
     my ($host, $port) = @_;
+    _y_CMD("checksni() "  . $cfg{'done'}->{'checksni'});
     $cfg{'done'}->{'checksni'}++;
     return if ($cfg{'done'}->{'checksni'} > 1);
     if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
@@ -3133,6 +3143,7 @@ sub checksizes($$) {
     # sets %checks
     my ($host, $port) = @_;
     my $value;
+    _y_CMD("checksizes() " . $cfg{'done'}->{'checksizes'});
     $cfg{'done'}->{'checksizes'}++;
     return if ($cfg{'done'}->{'checksizes'} > 1);
 
@@ -3207,6 +3218,7 @@ sub check02102($$) {
 sub checkdv($$) {
     #? check if certificate is DV-SSL
     my ($host, $port) = @_;
+    _y_CMD("checkdv() "   . $cfg{'done'}->{'checkdv'});
     $cfg{'done'}->{'checkdv'}++;
     return if ($cfg{'done'}->{'checkdv'} > 1);
     #
@@ -3260,6 +3272,7 @@ sub checkdv($$) {
 sub checkev($$) {
     #? check if certificate is EV-SSL
     my ($host, $port) = @_;
+    _y_CMD("checkev() "   . $cfg{'done'}->{'checkev'});
     $cfg{'done'}->{'checkev'}++;
     return if ($cfg{'done'}->{'checkev'} > 1);
     #
@@ -3435,6 +3448,7 @@ sub checkdest($$) {
     my ($host, $port) = @_;
     my $ciphers = shift;
     my ($key, $value, $ssl, $cipher);
+    _y_CMD("checkdest() " . $cfg{'done'}->{'checkdest'});
     $cfg{'done'}->{'checkdest'}++;
     return if ($cfg{'done'}->{'checkdest'} > 1);
 
@@ -3450,6 +3464,7 @@ sub checkdest($$) {
 
     # check default cipher
     foreach $ssl (@{$cfg{'versions'}}) {
+        next if (_need_default() <= 0); # avoid connection if default cipher not needed
         next if ($cfg{$ssl} == 0);
         $value  = $checks{$ssl}->{val};
         $cipher = _get_default($ssl, $host, $port);
@@ -3553,6 +3568,7 @@ sub checkssl($$) {
     my ($host, $port) = @_;
     my $ciphers = shift;
     my $key;
+    _y_CMD("checkssl() "  . $cfg{'done'}->{'checkssl'});
     $cfg{'done'}->{'checkssl'}++;
     return if ($cfg{'done'}->{'checkssl'} > 1);
 
@@ -4894,6 +4910,7 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 # check for supported SSL versions
 # -------------------------------------
 foreach $ssl (@{$cfg{'versions'}}) {
+    next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
     next if ($cfg{$ssl} == 0);
     $cfg{$ssl} = 0; # reset to simplify further checks
     # ToDo: DTLSv9
@@ -5100,7 +5117,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@all, @{$_}[0]) foreach (values %cipher_names);
             if ($ssl eq 'SSLv2') {
                 # quick&dirty ALPHA-hack (to avoid definition of an array)
-	        @all = qw(0x02000000 0x02010080 0x02020080 0x02030080 0x02040080
+                @all = qw(0x02000000 0x02010080 0x02020080 0x02030080 0x02040080
                           0x02050080 0x02060040 0x02060140 0x020700C0 0x020701C0
                           0x02FF0810 0x02FF0800 0x02FFFFFF 
                           0x03000001 0x03000002 0x03000007 0x03000008 0x03000009
@@ -7894,7 +7911,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.22e
+@(#) 14.05.23
 
 =head1 AUTHOR
 
