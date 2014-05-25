@@ -4910,6 +4910,7 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 # check for supported SSL versions
 # -------------------------------------
 foreach $ssl (@{$cfg{'versions'}}) {
+    push(@{$cfg{'version'}}, $ssl) if (_is_do('cipherall')); # FIXME ALPHA
     next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
     next if ($cfg{$ssl} == 0);
     $cfg{$ssl} = 0; # reset to simplify further checks
