@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.260 14/05/26 00:37:25";
+my  $SID    = "@(#) yeast.pl 1.261 14/05/28 00:38:28";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -958,6 +958,7 @@ our %cfg = (
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
+    'nomd5cipher'   => 0,       # 1: do not use *-MD5 ciphers except for SSLv2 with +cipher
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
@@ -2794,10 +2795,11 @@ sub _usesocket($$$$) {
         SSL_cipher_list => $ciphers
     );
     # SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
-    if ($sslsocket) {  # connect failed, cipher not accepted
+    if ($sslsocket) {
         $cipher = $sslsocket->get_cipher();
         $sslsocket->close(SSL_ctx_free => 1);
     }
+    # else  # connect failed, cipher not accepted
     _trace("_usesocket($host, $port, $ciphers)\t= $cipher");
     return $cipher;
 } # _usesocket
@@ -2876,6 +2878,11 @@ sub ciphers_get($$$$) {
         my $supported = "";
 #        if (1 == _is_call('cipher-socket')) {
         if (0 == $cmd{'extciphers'}) {
+            if (0 < $cfg{'nomd5cipher'}) {
+                # Net::SSLeay:SSL supports *MD5 for SSLv2 only
+                # detailled description see OPTION  --no-md5-cipher
+                next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
+            }
             $supported = _usesocket( $ssl, $host, $port, $c);
         } else { # force openssl
             $supported = _useopenssl($ssl, $host, $port, $c);
@@ -4644,6 +4651,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?score$/)     { $cfg{'out_score'} = 0;    next; }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    next; }
     if ($arg =~ /^--no[_-]?header$/)    { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); next; } # push() is ugly hack to preserve option even from rc-file
+    if ($arg =~ /^--no[_-]?md5[_-]?cipher$/){$cfg{'nomd5cipher'}=1; next; }
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       next; }
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        next; } # ssldiagnose.exe
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            next; } # --h already catched above
@@ -5094,8 +5102,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 ## ALPHA {
     if (_is_do('cipherall')) {
         _y_CMD("+cipherll");
-        my @all;
-        push(@all, @{$_}[0]) foreach (values %cipher_names);
         if (! eval("require Net::SSLhello;")) {
             push(@INC, $mepath);
             require Net::SSLhello;
@@ -5115,8 +5121,12 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::protect_double_reneg= 1; # FIXME: $cfg{'ssl'}->{'double_reneg'}
         }
         foreach $ssl (@{$cfg{'version'}}) {
-            push(@all, @{$_}[0]) foreach (values %cipher_names);
-            if ($ssl eq 'SSLv2') {
+            my @all;
+            if ($ssl ne 'SSLv2') {
+                push(@all, @{$_}[0]) foreach (values %cipher_names);
+				#foreach (0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF) { push(@all, sprintf("0x%x",$_)); }
+				# ToDo: funktioniert noch nicht
+            } else {
                 # quick&dirty ALPHA-hack (to avoid definition of an array)
                 @all = qw(0x02000000 0x02010080 0x02020080 0x02030080 0x02040080
                           0x02050080 0x02060040 0x02060140 0x020700C0 0x020701C0
@@ -5132,6 +5142,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
                        );
             }
             printtitle($legacy, $ssl, $host, $port);
+#_dbx "$ssl $#all";
+#_dbx join(" ",@all); next;
             Net::SSLhello::printCipherStringArray(
                 'compact', $host, $port, $ssl, $cfg{'usesni'},
                 Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
@@ -5927,6 +5939,27 @@ the description here is text provided by the user.
 
   Default is "ALL:NULL:eNULL:aNULL:LOW" as specified in Net::SSLinfo.
 
+=head3 --no-md5-cipher
+
+  Do not use *-MD5 ciphers for other protocols than SSLv2.
+  This option is only effective with  "+cipher"  command.
+
+  The purpose is to avoid warnings from  IO::Socket::SSL  like:
+      Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+  which occours with some versions of  IO::Socket::SSL  when a  *-MD5
+  ciphers will be used with other protocols than SSLv2.
+
+  Note that these ciphers will be checked for SSLv2 only.
+
+=begin comment
+
+# IO::Socket::SSL->new() does not return a proper error
+# see in IO::Socket::SSL.pm  Net::SSLeay::CTX_set_cipher_list() call
+
+=end comment
+
+=begin comment
+
 =head3 --local
 
   It does not make much sense trying a connection with a cipher which
@@ -5935,6 +5968,8 @@ the description here is text provided by the user.
   With this option we try to use such ciphers also.
 
   Option reserved for future use ...
+
+=end comment
 
 =head3 --SSL, -protocol SSL
 
@@ -7093,7 +7128,10 @@ It seems not to harm functionality, hence no workaround, just ignore.
 
 =head2 Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
 
-Same as previous.
+Some versions of  IO::Socket::SSL return this error message if  *-MD5
+ciphers are used with other protocols than SSLv2.
+
+Workaround: use  I<--no-md5-cipher>  option.
 
 =head2 Performance Problems
 
@@ -7161,6 +7199,15 @@ L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
 I<--cfg_text=file>  cannot be used to redefine the texts "yes" and "no"
 as used in the output for  I<+cipher>  command.
+
+=head2 Checks (general)
+
+=head3 +constraints
+
+This check is only done for the certificate provided by the target.
+All other certificate in the chain are not checked.
+
+This is currently (2014) a limitation in $0.
 
 =head2 Broken pipe
 
@@ -7912,7 +7959,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.23
+@(#) 14.05.24
 
 =head1 AUTHOR
 
@@ -7935,6 +7982,8 @@ TODO
     ** checkcert(): KeyUsage, keyCertSign, BasicConstraints
     ** DV and EV miss some minor checks; see checkdv() and checkev()
     ** some workaround in SSL protocol
+    ** +constraints does not check +constraints in the certificate of
+       the certificate chain.
 
   * verify CA chain:
     ** Net::SSLinfo.pm implement verify*
