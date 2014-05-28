@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.261 14/05/28 00:38:28";
+my  $SID    = "@(#) yeast.pl 1.262 14/05/28 16:01:03";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4850,6 +4850,7 @@ local $\ = "\n";
 
 # check if used software supports SNI properly
 # -------------------------------------
+if (! _is_do('cipherall')) { # FIXME ALPHA
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
 $typ .= "**Hint: #opt# can be used to disables this check";
@@ -4870,6 +4871,7 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
     }
 }
 _trace("cfg{usesni}: $cfg{'usesni'}");
+} # ALPHA
 
 # set additional defaults if missing
 # -------------------------------------
@@ -5100,8 +5102,9 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
 ## ALPHA {
+	# FIXME: ALPHA   check for more ALPHA herein before removing this line
     if (_is_do('cipherall')) {
-        _y_CMD("+cipherll");
+        _y_CMD("+cipherall");
         if (! eval("require Net::SSLhello;")) {
             push(@INC, $mepath);
             require Net::SSLhello;
@@ -7959,7 +7962,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.24
+@(#) 14.05.25
 
 =head1 AUTHOR
 
