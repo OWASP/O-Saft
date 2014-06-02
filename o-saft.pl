@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.263 14/06/03 00:16:52";
+my  $SID    = "@(#) yeast.pl 1.264 14/06/03 00:26:35";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5038,7 +5038,7 @@ usr_pre_cipher();
 if (_need_cipher() > 0) {
     _y_CMD("  get cipher list ..");
     my $pattern = $cfg{'cipherpattern'};# default pattern
-       $pattern = join(":", @{$cfg{'cipher'}}) if (length(@{$cfg{'cipher'}}) > 0);
+       $pattern = join(":", @{$cfg{'cipher'}}) if (scalar(@{$cfg{'cipher'}}) > 0);
     _trace("cipher pattern= $pattern");
     if ($cmd{'extciphers'} == 1) {
         @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_local($pattern);
@@ -8073,7 +8073,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.26
+@(#) 14.05.27
 
 =head1 AUTHOR
 
