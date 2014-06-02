@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.262 14/05/28 16:01:03";
+my  $SID    = "@(#) yeast.pl 1.263 14/06/03 00:16:52";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4334,6 +4334,68 @@ sub printhist() {
     print scalar reverse $egg;
 } # printhist
 
+sub printmediawiki() {
+    #? print documentation in mediawiki format
+    # ToDo: this is a simple approach!
+    # 1. generate wiki page header
+    print "
+==O-Saft==
+This is O-Saft's documentation as you get with:
+ o-saft.pl --help
+
+__TOC__
+<!-- position left is no good as the list is too big and then overlaps some texts
+{|align=right
+ |<div>__TOC__</div>
+ |}
+-->
+<headertabs /> 
+
+[[Category:OWASP Project]]  [[Category:OWASP_Builders]] [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]
+----
+";
+    # 2. generate wiki page content
+    #    extract from herein and convert POD syntax to mediawiki syntax
+    my $h = 1;
+    foreach (@DATA) {
+        next if/^=(pod|cut|over|back|for|encoding)/;
+        next if/^__DATA__/;
+        m/^=begin .*/&& do{$h=0;};              # star of comment
+        m/^=end /    && do{$h=1;next;};         # end of comment, don_t print
+        next if $h==0;
+        s/^=head1(.*)/====$1====/;              # header
+        s/^=head2(.*)/=====$1=====/;            # ..
+        s/^=head3(.*)/======$1======/;          # ..
+        s/^=item(?:\s\*)?(.*)/* $1/;            # list item
+        s/^(=[^\s=]*\s)//;                      # remove spaces
+        s/B<([^>]*)>/[[#$1|$1]]/g;              # markup references inside help
+        s#C<([^>]*)>#<code>$1</code>#g;         # markup examples
+        s/I<([^>]*)>/\'\'$1\'\'/g;              # markup commands and options
+        s/L<([^>]*)>/\'\'$1\'\'/g;              # markup other references
+        print, next if/^=/;                     # no more changes in header lines
+        s/"((?:\+|--)[^"]*)"/\'\'$1\'\'/g;      # markup commands and options
+        s#"([^"]*)"#<code>$1</code>#g;          # markup commands and options enclosed in quotes
+        s/^([^=*].*)/:$1/;                      # identent all lines for better readability
+        s/^:\s+\$0/    o-saft.pl/;              # replace myself with real name
+        s/^:( {9}[^ ])(.*)/$1$2/;               # exactly 9 spaces used to highlight line
+        s/^:\s+$/\n/;                           # remove empty lines
+        if (m/^:/) {                            # add internal wiki links; quick&dirty list here
+            s/((?:DEBUG|RC|USER)-FILE)/ [[#$1|$1]]/g;
+            s/(CONFIGURATION (?:FILE|OPTIONS))/ [[#$1|$1]]/g;
+            s/(SCORING)/ [[#$1|$1]]/g;
+        }
+        print;
+    }
+    print "
+----
+<small>
+Content of this wiki page generated with:
+ o-saft.pl --help=wiki
+</small>
+";
+
+} # printmediawiki
+
 sub printhelp($) {
     #? print program's help
     # if parameter is not empty, print brief list of specified label
@@ -4551,6 +4613,7 @@ while ($#argv >= 0) {
     #!#--------+------------------------+--------------------------+------------
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        next; } # must be before --help
     if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0;    next; }
+    if ($arg =~ /^--help=wiki$/)        {     printmediawiki();     exit 0; } #
     if ($arg =~ /^--h(?:elp)?(?:=(.*))?$/){   printhelp($1);        exit 0; } # allow --h --help --h=*
     if ($arg =~ /^\+help=?(.*)$/)       {     printhelp($1);        exit 0; } # allow +help +help=*
     if ($arg =~ /^(--|\+)ab(?:br|k)=?$/){     printtable('abbr');   exit 0; }
@@ -5317,13 +5380,18 @@ _yeast_exit();
 
 exit 0; # main
 
-__END__
-
 # all following is documentation in perl's doc format (perldoc), POD)
 # only minimal formatting is used,  if anything fails (+help command
 # or similar), following command can be used to extract text in raw
 # format:
 #    perl -lane '$h=1if/^__DATA__/;next if$h==0;next if/^=(pod|cut|begin|end|over|back|for)/;s/^(=[^\s]*\s)//;s/[BCIL]<([^>]*)>/"$1"/g;print' $0
+#
+# Special syntax:
+#    lines beginning with exactly 9 spaces are handled special in 
+#          printmediawiki()
+# FIXME: find proper POD syntax for this zgly hack
+
+__END__
 
 __DATA__
 
@@ -5438,8 +5506,8 @@ I<+info>  command.
     The cipher checks will return one line for each tested cipher. It
     contains at least the cipher name,  "yes"  or  "no"  whether it's
     supported or not, and a security qualification. It may look like:
-        AES256-SHA       yes    HIGH
-        NULL-SHA         no     weak
+         AES256-SHA       yes    HIGH
+         NULL-SHA         no     weak
 
     Depending on the used  "--legacy=*"  option the format may differ
     and also contain more information.  For details see  "--legacy=*"
@@ -5456,17 +5524,17 @@ I<+info>  command.
     test result for it.  The  idea is to report  "yes"  if the result
     is considered "secure" and report the reason why it is considered
     insecure otherwise. Example of a check considered secure:
-        Label of the performed check:           yes
+         Label of the performed check:           yes
     Example of a check considered insecure:
-        Label of the performed check:           no (reason why)
+         Label of the performed check:           no (reason why)
 
     Note that there are tests where the results appear confusing when
     first viewed, like for www.wi.ld:
-        Certificate is valid according given hostname:  no (*.wi.ld)
-        Certificate's wildcard does not match hostname: yes
+         Certificate is valid according given hostname:  no (*.wi.ld)
+         Certificate's wildcard does not match hostname: yes
     This can for example occur with:
-        Certificate Common Name:                *.wi.ld
-        Certificate Subject's Alternate Names:  DNS:www.wi.ld
+         Certificate Common Name:                *.wi.ld
+         Certificate Subject's Alternate Names:  DNS:www.wi.ld
 
     Please check the result with the  "+info"  command also to verify
     if the check sounds reasonable.
@@ -5488,7 +5556,7 @@ All commands are preceded by a  C<+>  to easily distinguish from other
 arguments and options. However, some  I<--OPT>  options are treated as
 commands for historical reason or compatibility to other programs.
 
-The Most important commands are (in alphabetical order):
+The most important commands are (in alphabetical order):
 
 =head3 +check +cipher +info +http +list +quick +sni +sni_check +version
 
@@ -5616,7 +5684,7 @@ with other commands).
 
     Various checks according certificate's extended Validation (EV).
 
-    Hint: use option  --v --v  to get information about failed checks.
+    Hint: use option "--v --v" to get information about failed checks.
 
 =head3 +sizes
 
@@ -5627,7 +5695,7 @@ with other commands).
     Dump data retrieved from  "openssl s_client ..."  call. Should be
     used for debugging only.
     It can be used just like openssl itself, for example:
-        "openssl s_client -connect host:443 -no_sslv2"
+         openssl s_client -connect host:443 -no_sslv2
 
 =head3 +dump
 
@@ -5649,12 +5717,12 @@ with other commands).
 =head3 +cipher
 
     Check target for ciphers, either all ciphers or ciphers specified
-    with "-cipher=*" option.
+    with "--cipher=*" option.
 
     Note that ciphers  not supported  by the local SSL implementation
     are not checked by default, use "--local" option for that.
 
-=head2 +cipherall
+=head3 +cipherall
 
     Check target for all possible ciphers.
     Does not depend on local SSL implementation.
@@ -5687,11 +5755,11 @@ the description here is text provided by the user.
   WYSIWYG
 
   Note: The documentation is written  with perl's POD format and uses
-        perl's POD module to print it.  Unfortunately  the first line
-        written by  POD  is:
-            "User Contributed Perl Documentation"
-        which may be a bit misleading because all descriptions of the
-        documentation belong to this tool itself.
+  perl's POD module to print it. Unfortunately the first line written
+  by  POD  is:
+         'User Contributed Perl Documentation'
+  which is a bit misleading  because all descriptions  belong to this
+  tool itself.
 
 =head3 --help=cmd
 
@@ -5737,6 +5805,10 @@ the description here is text provided by the user.
 =head3 --help=regex
 
   Show regular expressions used internally.
+
+=head3 --help=wiki
+
+  Show help text in mediawiki format.
 
 =head3 --dns
 
@@ -5799,8 +5871,8 @@ the description here is text provided by the user.
   the SSL connection.  This is disabled by default on Windows because
   of performance problems. Without this option following informations
   are missing on Windows:
-      compression, expansion, renegotiation, resumption,
-      selfsigned, verify, chain, protocols
+        compression, expansion, renegotiation, resumption,
+        selfsigned, verify, chain, protocols
   See "Net::SSLinfo" for details.
 
   If used together with "--trace", s_client data will also be printed
@@ -5820,11 +5892,13 @@ the description here is text provided by the user.
 
   ssleay:   use installed SSLeay library for perl
   local:    use installed openssl (found via PATH envrionment variable)
-            Note that this disables use of SSLeay
+                Note that this disables use of SSLeay
   x86_32:   use  ** NOT YET IMPLEMENTED **
   x86_64:   use  ** NOT YET IMPLEMENTED **
   x86Mac:   use  ** NOT YET IMPLEMENTED **
   arch:     use  ** NOT YET IMPLEMENTED **
+
+=end comment
 
 =head3 --force-openssl
 
@@ -5834,8 +5908,6 @@ the description here is text provided by the user.
   check if a cipher is supported by the remote target. This is useful
   if the "--lib=PATH" option doesn't work (for example due to changes
   of the API or other incompatibilities).
-
-=end comment
 
 =head3 --exe-path=PATH --exe=PATH
 
@@ -5933,9 +6005,9 @@ the description here is text provided by the user.
   of the constant or the (hex) value as defined in openssl's files.
   Currently supported are the names and constants of openssl 1.0.1c .
   Example:
-      --cipher=DHE_DSS_WITH_RC4_128_SHA
-      --cipher=0x03000066
-      --cipher=66
+         --cipher=DHE_DSS_WITH_RC4_128_SHA
+         --cipher=0x03000066
+         --cipher=66
   will be mapped to   DHE-DSS-RC4-SHA
 
   Note: if more than one cipher matches, just one will be selected.
@@ -5948,7 +6020,7 @@ the description here is text provided by the user.
   This option is only effective with  "+cipher"  command.
 
   The purpose is to avoid warnings from  IO::Socket::SSL  like:
-      Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+         Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
   which occours with some versions of  IO::Socket::SSL  when a  *-MD5
   ciphers will be used with other protocols than SSLv2.
 
@@ -6002,7 +6074,7 @@ the description here is text provided by the user.
   Make a HTTP request if cipher is supported.
 
   If used twice debugging will be enabled using  environment variable
-  HTTPS_DEBUG .
+  "HTTPS_DEBUG" .
 
 =head3 --no-http
 
@@ -6107,18 +6179,33 @@ Options used for  I<+check>  command:
 
   Following TOOLs are supported:
 
-    sslaudit:     format of output similar to  sslaudit
-    sslcipher:    format of output similar to  ssl-cipher-check
-    ssldiagnos:   format of output similar to  ssldiagnos
-    sslscan:      format of output similar to  sslscan
-    ssltest:      format of output similar to  ssltest
-    ssltestg:     format of output similar to  ssltest -g
-    ssltest-g:    format of output similar to  ssltest -g
-    sslyze:       format of output similar to  sslyze
-    ssl-cipher-check:    same as sslcipher:
-    ssl-cert-check:  format of output similar to  ssl-cert-check
-    testsslserver:format of output similar to  TestSSLServer.jar
-    thcsslcHeck:  format of output similar to  THCSSLCheck
+=over 4
+
+=item * sslaudit        format of output similar to  sslaudit
+
+=item * sslcipher       format of output similar to  ssl-cipher-check
+
+=item * ssldiagnos      format of output similar to  ssldiagnos
+
+=item * sslscan         format of output similar to  sslscan
+
+=item * ssltest         format of output similar to  ssltest
+
+=item * ssltestg        format of output similar to  ssltest -g
+
+=item * ssltest-g       format of output similar to  ssltest -g
+
+=item * sslyze          format of output similar to  sslyze
+
+=item * ssl-cipher-check      same as sslcipher
+
+=item * ssl-cert-check  format of output similar to  ssl-cert-check
+
+=item * testsslserver   format of output similar to  TestSSLServer.jar
+
+=item * thcsslcHeck     format of output similar to  THCSSLCheck
+
+=back
 
   Note that these legacy formats only apply to  output of the checked
   ciphers. Other texts like headers and footers are adapted slightly.
@@ -6128,27 +6215,48 @@ Options used for  I<+check>  command:
 
   TOOL may also be set to any of following internally defined values:
 
-    compact:      mainly avoid tabs and spaces
-                  format is as follows
-                    Some Label:<-- anything right of colon is data
-    full:         pretty print: each label in its  own line, followed
-                  by data in next line prepended by tab character
-                  (useful for "+info" only)
-    quick:        use tab as separator; print ciphers with bit length
-                  ("--tab" not necessary)
-    simple:       default format
+=over 4
+
+=item * compact
+
+    Mainly avoid tabs and spaces format is as follows
+         Some Label:<-- anything right of colon is data
+
+=item * full
+
+    Pretty print:  each label in its  own line,  followed by data in
+    next line prepended by tab character (useful for "+info" only).
+
+=item * quick
+
+    Use tab as separator; print ciphers with bit length ("--tab" not
+    necessary).
+
+=item * simple
+
+    Default format.
+
+=back
 
 =head3 --format=FORM
 
   FORM may be one of follwoing:
 
-    raw           print raw data as passed from Net::SSLinfo
-                  Note: all data is printed as is, without additional
-                  label or formatting.  It is recommended to use this
-                  option in conjunction with exactly one command.
-                  Otherwise the user needs to know how to `read'  the
-                  printed data.
-    hex           convert some data to hex: 2 bytes separated by :
+=over 4
+
+=item * raw
+
+    Print raw data as passed from Net::SSLinfo .
+    Note:  all data will be printed as is,  without additional label
+    or formatting. It's recommended to use the option in conjunction
+    with exactly one command.  Otherwise the user needs  to know how
+    to `read'  the printed data.
+
+=item * hex
+
+    Convert some data to hex: 2 bytes separated by ":".
+
+=back
 
 =head3 --header
 
@@ -6173,7 +6281,7 @@ Options used for  I<+check>  command:
 =head3 --sep=CHAR
 
   CHAR      will be used as separator between  label and value of the
-      printed results. Default is  :
+      printed results. Default is  ":".
 
 =head3 --tab
 
@@ -6389,10 +6497,10 @@ options are ambiguous.
   Print some internal variable names in output texts (labels).
   Variable names are prefixed to printed line and enclosed in  # .
   Example without --trace-key :
-      Certificate Serial Number:          deadbeef
+        Certificate Serial Number:          deadbeef
 
   Example with    --trace-key :
-      #serial#          Certificate Serial Number:          deadbeef
+        #serial#          Certificate Serial Number:          deadbeef
 
 =head3 --trace=VALUE
 
@@ -6821,7 +6929,10 @@ It is recommended to use the  I<--legacy=quick>  option, if the output
 should be postprocessed, as it omits the default separation character
 (C<:> , see above) and just uses on single tab character (0x09, \t  or
 TAB) to separate the label text from the text of the result. Example:
-        Label of the performed checkTABresult
+         Label of the performed checkTABresult
+
+More examples for postprocessing the output can be found here:
+    https://github.com/OWASP/O-Saft/blob/master/contrib
 
 
 =head1 CUSTOMIZATION
@@ -6862,7 +6973,7 @@ This tools can be customized as follows:
 Customization is done by redefining values in internal data structure
 which are:  %cfg,  %data,  %checks,  %text,  %scores .
 
-Unless used in  DEBUG-FILE  or  USER_FILE,  there is  no need to know
+Unless used in  DEBUG-FILE  or  USER-FILE,  there is  no need to know
 these internal data structures or the names of variables; the options
 will set the  proper values.  The key names being part of the option,
 are printed in output with the  I<--trace-key>  option.
@@ -6966,7 +7077,7 @@ C<.>,  for example:  C<.o-saft.pl>.
 
 All debugging functionality is defined in L<o-saft-dbx.pm>, which will
 be searched for in the current working directory  or the installation
-directory of the tool. For Details see  L<DEBUG>  below.
+directory of the tool. For details see  B<DEBUG>  below.
 
 =head2 USER-FILE
 
@@ -7044,7 +7155,7 @@ sources use both in cypher names but allow only  C<EDH> as shortcut in
 openssl's `ciphers'  command.
 
 Next example is  C<ADH>  which is also known as  C<DH_anon> or C<DHAnon>
-or  C<DHA>  or  <ANON_DH>. 
+or  C<DHA>  or  C<ANON_DH>. 
 
 You think this is enough? Then have a look how many acronyms are used
 for  `Tripple DES'.
@@ -7052,11 +7163,11 @@ for  `Tripple DES'.
 Compared to above, the interchangeable use of  C<->  vs.  C<_> in human
 readable cipher names is just a very simple one. However, see openssl
 again what following means (returns):
-    openssl ciphers -v RC4-MD5
-    openssl ciphers -v RC4+MD5
-    openssl ciphers -v RC4:-MD5
-    openssl ciphers -v RC4:!MD5
-    openssl ciphers -v RC4!MD5
+         openssl ciphers -v RC4-MD5
+         openssl ciphers -v RC4+MD5
+         openssl ciphers -v RC4:-MD5
+         openssl ciphers -v RC4:!MD5
+         openssl ciphers -v RC4!MD5
 
 Looking at all these oddities, it would be nice to have a common unique
 naming scheme for cipher names. We have not.  As the SSL/TLS protocol
@@ -7097,11 +7208,11 @@ To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 May occour if ciphers are checked, but no description is available for
 them herein. This results in printed cipher checks like:
 
-        EXP-KRB5-RC4-MD5                no
+         EXP-KRB5-RC4-MD5                no
 
 instead of:
 
-        EXP-KRB5-RC4-MD5                no       weak
+         EXP-KRB5-RC4-MD5                no       weak
 
 
 =head2 Use of uninitialized value $headers in split ... do_httpx2.al)
@@ -7120,7 +7231,7 @@ Workaround to get rid of this message: use  I<--no-http>  option.
 This error may occur on systems where SSL's DTLSv1 is not supported.
 The full message looks like:
 
-invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
+         invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
 
 Workaround: use  I<--no-dtlsv1>  option.
 
@@ -7962,7 +8073,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.25
+@(#) 14.05.26
 
 =head1 AUTHOR
 
@@ -8030,4 +8141,3 @@ TODO
 
 =end ToDo
 
-not necessary
