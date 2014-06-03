@@ -32,10 +32,19 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
+#!# ToDo:
+#!# Check is SNI-extension is supported by the Server, if 'usesni' is set
+
 package Net::SSLhello;
 
 use strict;
 use Socket;
+
+my $me      = $0; $me     =~ s#.*(?:/|\\)##;
+my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
+   $mepath  = "./" if ($mepath eq $me);
+my $mename  = "yeast::Net::SSLhello ";
+   $mename  = "O-Saft::Net::SSLhello " if ($me !~ /yeast/);
 
 our %cfg;  # FIXME: must be provided by caller
 our $host; # FIXME: used in _timeOut()
@@ -45,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-05-13';
+    $VERSION    = 'NET::SSLhello_2014-05-30';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -84,18 +93,19 @@ BEGIN {
     } ? 1 : 0;
 } # BEGIN
 
-$Net::SSLhello::trace       = 0;# 1=simple debugging Net::SSLhello
-$Net::SSLhello::usesni      = 0;# 1 use SNI to connect to target
-$Net::SSLhello::timeout     = 2;# time in seconds
-$Net::SSLhello::retry       = 3;# number of retry when timeout
-$Net::SSLhello::usereneg    = 0;#
-$Net::SSLhello::starttls    = 0;#
-$Net::SSLhello::protect_double_reneg    = 0;#
-$Net::SSLhello::proxyhost   = "";#
-$Net::SSLhello::proxyport   = "";#
+#defaults for global parameters
+$Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
+$Net::SSLhello::usesni       = 0;# 1 use SNI to connect to target
+$Net::SSLhello::timeout      = 2;# time in seconds
+$Net::SSLhello::retry        = 3;# number of retry when timeout
+$Net::SSLhello::usereneg     = 0;# secure renegotiation
+$Net::SSLhello::starttls     = 0;#
+$Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
+$Net::SSLhello::proxyhost    = "";#
+$Net::SSLhello::proxyport    = "";#
 
 use constant {
-	_MY_SSL3_MAX_CIPHERS =>        16, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are szupported by the Server
+	_MY_SSL3_MAX_CIPHERS =>        32, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are szupported by the Server
 	_MY_PRINT_CIPHERS_PER_LINE =>   8, # Nr of Ciphers printed in a trace
 	_PROXY_CONNECT_MESSAGE1 =>     "CONNECT ",
 	_PROXY_CONNECT_MESSAGE2 =>     " HTTP/1.1\n\n",
@@ -126,7 +136,6 @@ my %HANDSHAKE_TYPE = ( # RFC 5246
 	'255' => 255
 );
 
-# Protokoll-Version: prüfen!!!
 my %PROTOCOL_VERSION = (
 	'SSLv2' 	=> 0x0002,
 	'SSLv3' 	=> 0x0300,
@@ -138,6 +147,41 @@ my %PROTOCOL_VERSION = (
 	'SCSV'		=> 0x03FF  # adapted to o-saft.pl, was TLS1.FF
 );
 
+# http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv
+# Value,Description,DTLS-OK,Reference
+my %TLS_AlertDescription = (
+     0 => [qw(close_notify  Y  [RFC5246])],
+    10 => [qw(unexpected_message  Y  [RFC5246])],
+    20 => [qw(bad_record_mac  Y  [RFC5246])],
+    21 => [qw(decryption_failed  Y  [RFC5246])],
+    22 => [qw(record_overflow  Y  [RFC5246])],
+    30 => [qw(decompression_failure  Y  [RFC5246])],
+    40 => [qw(handshake_failure  Y  [RFC5246])],
+    41 => [qw(no_certificate_RESERVED  Y  [RFC5246])],
+    42 => [qw(bad_certificate  Y  [RFC5246])],
+    43 => [qw(unsupported_certificate  Y  [RFC5246])],
+    44 => [qw(certificate_revoked  Y  [RFC5246])],
+    45 => [qw(certificate_expired  Y  [RFC5246])],
+    46 => [qw(certificate_unknown  Y  [RFC5246])],
+    47 => [qw(illegal_parameter  Y  [RFC5246])],
+    48 => [qw(unknown_ca  Y  [RFC5246])],
+    49 => [qw(access_denied  Y  [RFC5246])],
+    50 => [qw(decode_error  Y  [RFC5246])],
+    51 => [qw(decrypt_error  Y  [RFC5246])],
+    60 => [qw(export_restriction_RESERVED  Y  [RFC5246])],
+    70 => [qw(protocol_version  Y  [RFC5246])],
+    71 => [qw(insufficient_security  Y  [RFC5246])],
+    80 => [qw(internal_error  Y  [RFC5246])],
+    90 => [qw(user_canceled  Y  [RFC5246])],
+    100 => [qw(no_renegotiation  Y  [RFC5246])],
+    110 => [qw(unsupported_extension  Y  [RFC5246])],
+    111 => [qw(certificate_unobtainable  Y  [RFC6066])],
+    112 => [qw(unrecognized_name  Y  [RFC6066])],
+    113 => [qw(bad_certificate_status_response  Y  [RFC6066])],
+    114 => [qw(bad_certificate_hash_value  Y  [RFC6066])],
+    115 => [qw(unknown_psk_identity  Y  [RFC4279])],
+);
+
 ##################################################################################
 # List of Functions
 ##################################################################################
@@ -146,19 +190,40 @@ sub printCipherStringArray ($$$$$@);
 sub _timedOut;
 sub _error;
 
+#ToDo: import/export of the trace-function from o-saft-dbx.pm;
+#this is a workaround to get trace running using parameter '$main::cfg{'trace'}'
 ## forward declarations
-sub _trace  {};
-sub _trace1 {};
-sub _trace2 {};
-sub _trace3 {};
+#sub _trace  {};
+#sub _trace1 {};
+#sub _trace2 {};
+#sub _trace3 {};
 ## Print Errors; Debugging
-sub _error    { local $\ = "\n"; print ">>>Net::SSLhello>>> ERROR: " . join(" ", @_); }
-sub _trace_   { _trace (@_); }
-sub _trace1_  { _trace1(@_); }
-sub _trace2_  { _trace2(@_); }
-sub _trace3_  { _trace3(@_); }
-sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace > 4); }
-sub _trace4_  { _trace4(@_); }
+#sub _error    { local $\ = "\n"; print ">>>Net::SSLhello>>> ERROR: " . join(" ", @_); }
+#sub _trace_   { _trace (@_); }
+#sub _trace1_  { _trace1(@_); }
+#sub _trace2_  { _trace2(@_); }
+#sub _trace3_  { _trace3(@_); }
+#sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
+#sub _trace4_  { _trace4(@_); }
+
+sub _trace($)  { print "#" . $mename . "::" . $_[0]                          if ($main::cfg{'trace'} > 0); }
+sub _trace0($) { print "#" . $mename . "::"                                  if ($main::cfg{'trace'} > 0); }
+sub _trace1($) { local $\ = "";   print "# " . $mename . "::" . join(" ", @_) if ($main::cfg{'trace'} > 1); }
+sub _trace2($) { local $\ = "";   print "# --> " . $mename . "::" . join(" ", @_) if ($main::cfg{'trace'} > 2); }
+sub _trace3($) { local $\ = "";   print "# --> " . $mename . "::" . join(" ", @_) if ($main::cfg{'trace'} == 3);}
+sub _trace4($) { local $\ = "";   print "#   ---> " . $mename . "::" . join(" ", @_) if ($main::cfg{'trace'} > 3); }
+sub _trace_($) { local $\ = "";   print " " . join(" ", @_)                 if ($main::cfg{'trace'} > 0); }
+sub _trace1_($){ local $\ = "";   print " " . join(" ", @_)                 if ($main::cfg{'trace'} > 1); }
+sub _trace2_($){ local $\ = "";   print join(" ", @_)                       if ($main::cfg{'trace'} > 2); }
+sub _trace3_($){ local $\ = "";   print join(" ", @_)                       if ($main::cfg{'trace'} == 3); }
+sub _trace4_($){ local $\ = "";   print join(" ", @_)                       if ($main::cfg{'trace'} > 3); }
+
+#if (! eval("require o-saft-dbx.pm;")) {
+#		# o-saft-dbx.pm may not be installed, try to find in program's directory
+#		push(@INC, $main::mepath);
+#		require "o-saft-dbx.pm";
+#}
+### end trace functions
 
 ###################################################################################
 
@@ -169,6 +234,7 @@ my $CHALLENGE = "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1
 ##################################################################################
 #http://www-archive.mozilla.org/projects/security/pki/nss/ssl/draft02.html
 ##################################################################################
+# Information: not all parameters are used within SSLhello.pm
 
 #C.1 Protocol Version Codes
 my $SSL_CLIENT_VERSION			= 0x0002;
@@ -528,6 +594,20 @@ my %SSL2_CIPHER_STRINGS = (
 ############################################################################################
 sub version { # Version of SSLhello
 	print "$VERSION\n";
+	_trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
+#   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
+#	print "\$main::cfg\{\'trace\'\}=$main::cfg{'trace'}\n";
+#	print "\$Net::SSLhello::trace=$Net::SSLhello::trace\n";
+#	_trace("_trace\n");
+#	_trace_("_trace_\n");
+#	_trace1("_trace1\n");
+#	_trace1_("_trace1_\n");
+#	_trace2("_trace2\n");
+#	_trace2_("_trace2_\n");
+#	_trace3("_trace3\n");
+#	_trace3_("_trace3_\n");
+#	_trace4("_trace4\n");
+#	_trace4_("_trace4_\n");
 }
 
 ### --------------------------------------------------------------------------------------------------------- ###
@@ -535,7 +615,7 @@ sub version { # Version of SSLhello
 ### ---------------------------------------------------------------------------------------------------------
 ### Aufruf mit printCipherStringArray ($cfg{'legacy'}, $host, $port, "TLS1.2 0x0303", $cfg{'usesni'}, @acceptedCipherArray);
 sub printCipherStringArray ($$$$$@) {
-	#? @cipherArray: String Representation of the Cipher Octetts, fe.g. 0x0300000A
+	#? @cipherArray: String Representation of the Cipher Octets, fe.g. 0x0300000A
 	#? The first two Ciphers are identical, if the Server has a preferred Order 
 	#
 
@@ -621,9 +701,9 @@ sub printCipherStringArray ($$$$$@) {
 
 
 sub checkSSLciphers ($$$@) {
-	#? Sumulate SSL Handshake to check any Ciphers by the HEX value
-	#? @cipher_str_array: String Representation of the Cipher Octetts, e.g. 0x0300000A
-	#? If the first 2 Ciphers are identical the Array is sorted by Prio of the Server
+	#? Simulate SSL Handshake to check any Ciphers by the HEX value
+	#? @cipher_str_array: String Representation of the Cipher Octets, e.g. 0x0300000A
+	#? If the first 2 Ciphers are identical the Array is sorted by Priority of the Server
 	#
 	my($host, $port, $ssl, @cipher_str_array) = @_;
 #	my $host		= shift; # hostname
@@ -688,9 +768,9 @@ sub checkSSLciphers ($$$@) {
 			_trace4 ("checkSSLciphers: Cipher-String: >$cipher_str< -> ");
 			if ($cipher_str !~ /0x02/) { # No SSL2-Cipher
 				($cipher_str) =~ s/(?:0x0[3-9a-fA-F]00|0x)? ?([a-fA-F0-9]{2}) ?/chr(hex $1)/eg; ## Str2hex	
-				_trace4_ (" >". hexCodedCipher($cipher_str)."<");	
+				_trace4_ ("  >". hexCodedCipher($cipher_str)."<");	
 			} else { 
-				_trace4_ (" SSL2-Cipher suppressed\n");
+				_trace4_ ("  SSL2-Cipher suppressed\n");
 				next; #nothing to do for this Cipher
 			}
 			_trace4_ ("\n");
@@ -704,9 +784,9 @@ sub checkSSLciphers ($$$@) {
 				if ($Net::SSLhello::trace > 1) { #Print Ciphers that are tested this round:
 					$i = 0;
 					if (($Net::SSLhello::starttls > 0)) {
-						_trace ("checkSSLciphers ($host, $port (STARTTLS), $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
+						_trace1 ("checkSSLciphers ($host, $port (STARTTLS), $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
 					} else {
-						_trace ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
+						_trace1 ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
 					}
 					_trace4_ ("\n");
 					foreach $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {	
@@ -719,17 +799,20 @@ sub checkSSLciphers ($$$@) {
 					_trace2_ ("\n");
 		        }
 				$acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec); # Test Ciphers and collect Accepted Ciphers
-				_trace2_ ("      ");
+				_trace2_ ("        ");
 				if ($acceptedCipher) { # received an accepted Cipher
-					_trace1_ (" => found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
+					_trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
 					@cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;	# delete accepted Cipher from ToDo-Array '@cipherSpecArray'
 					push (@acceptedCipherArray, $acceptedCipher); # add the Cipher to the List of accepted Ciphers 
 				} else {
-					_trace1_ (" => no Cipher found\n");
+					_trace1_ ("=> no Cipher found\n");
 					@cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
-					if ( ($@ =~ /make a connection/ ) || ($@ =~ /open a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) || ($@ =~ /answer ignored/) ) {   #### Lösung!!!
+					if ( ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) || ($@ =~ /answer ignored/) ) {   #### Lösung!!!
 						_trace2 (">>> checkSSLciphers (1): '$@'\n"); 
-						warn ("**checkSSLciphers => Exit Loop");
+						warn ("**WARNING: checkSSLciphers => Exit Loop (1)");
+						last;
+					} elsif ( ($@ =~ /answer ignored/) ) { # Just stop, no warning
+						_trace2 (">>> checkSSLciphers (2): '$@'\n"); 
 						last;
 					} else {
 						$@=""; # reset Error-Msg
@@ -843,7 +926,7 @@ sub checkSSLciphers ($$$@) {
 
 sub _doCheckSSLciphers ($$$$) {
 	#? Simulate SSL Handshake to check any Ciphers by the HEX value
-	#? $cipher_spec: RAW Octetts according to RFC
+	#? $cipher_spec: RAW Octets according to RFC
 	#
 	my $host		= shift; # hostname
 	my $port		= shift;
@@ -888,18 +971,18 @@ sub _doCheckSSLciphers ($$$$) {
 		$input3="";
 		alarm (0); # switch off alarm (e.g. for  next retry 
 		eval  {	
-			$SIG{ALRM}= "_timedOut"; 
-			alarm($Net::SSLhello::timeout); # set Alarm for Connect		
+			$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+			alarm($Net::SSLhello::timeout); # set Alarm for get-socket and set-socketoptions->timeout(s)
 			socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or die "Can't create a socket \'$!\' -> target $host:$port ignored ";
 			setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored";
 			setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored";
-			alarm (0); 			#Alarm abschalten
+			alarm (0); 			#clear alarm
 		}; # Do NOT forget the ;
 		
 		unless ($@) { # all OK
 			if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
 				eval {
-					$SIG{ALRM}= "_timedOut"; 
+					$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
 					alarm($Net::SSLhello::timeout); # set Alarm for Connect
 					$connect2ip = inet_aton($Net::SSLhello::proxyhost);
 					if (!defined ($connect2ip) ) {
@@ -909,28 +992,28 @@ sub _doCheckSSLciphers ($$$$) {
 					alarm (0);
 				}; # Do NOT forget the ;
 				if ($@) { # no Connect
-					close ($socket) or warn("**WARNING: $@; Can't close socket, too: $!");
-					warn ("*** WARNING: $@");
-					warn ("*** Fatal Error: No connection to the Proxy -> Exit");
+					close ($socket) or warn("**WARNING: _doCheckSSLciphers: $@; Can't close socket, too: $!");
+					warn ("*** WARNING: _doCheckSSLciphers: $@");
+					warn ("*** Fatal Error: _doCheckSSLciphers: No connection to the Proxy -> Exit");
 					sleep (1);
 					exit (1); # Exit with Error
 				}
 				eval {
 					$proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
 					_trace4 ("_doCheckSSLciphers## ProxyConnect-Message: >$proxyConnect<\n");
-					$SIG{ALRM}= "_timedOut"; 
+					$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
 					alarm($Net::SSLhello::timeout); # set Alarm for Connect
 					defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored ";
 					alarm (0);
 				}; # Do NOT forget the ;
 				if ($@) { # no Connect
-					warn "**WARNING >>> ... Could not send a CONNECT-Command to the Proxy: $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport\n"; 
-					close ($socket) or warn("**WARNING: $@; Can't close socket, too: $!");
+					warn "**WARNING: _doCheckSSLciphers: >>> ... Could not send a CONNECT-Command to the Proxy: $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport\n"; 
+					close ($socket) or warn("**WARNING: _doCheckSSLciphers: $@; Can't close socket, too: $!");
 					# next retry
 				} else { # CONNECT via Proxy
  					eval {
 						#Alarmfunktion: timedOut und Alarm setzen
-						$SIG{ALRM}= "_timedOut"; 
+						$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
 						alarm($Net::SSLhello::timeout);
 						unless (recv ($socket, $input, 32767, 0)) { # received NO Data or additional Data is still waiting; 'unless' is the opposite of 'if'
 							_trace4 ("_doCheckSSLciphers >>> ... Received Proxy-Connect (1): ".length($input)." Bytes\n          >".$input."<\n"); ###### temp
@@ -952,7 +1035,7 @@ sub _doCheckSSLciphers ($$$$) {
 								# next retry
 							}
 						}
-						#Alarm abschalten
+						#clear Alarm
 						alarm (0);
 					};
 				
@@ -976,7 +1059,7 @@ sub _doCheckSSLciphers ($$$$) {
 				}
 			} else { # no Proxy
 				eval {
-					$SIG{ALRM}= "_timedOut"; 
+					$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
 					alarm($Net::SSLhello::timeout); # set Alarm for Connect
 					$connect2ip = inet_aton($host);
 					if (!defined ($connect2ip) ) {
@@ -986,7 +1069,7 @@ sub _doCheckSSLciphers ($$$$) {
 					alarm (0);
 				}; # Do NOT forget the ;
 				if ($@) { # no Connect
-					close ($socket) or warn("**WARNING: $@; Can't close socket, too: $!");
+					close ($socket) or warn("**WARNING: _doCheckSSLciphers: $@; Can't close socket, too: $!");
 					# next retry
 				}
 			}
@@ -1012,21 +1095,21 @@ sub _doCheckSSLciphers ($$$$) {
 						}
 					} else { # did receive a Message with length = 0 ?!
 							$@ = "STARTTLS: Did receive a Server Ready Message with length 0 to SMTP Client Hello from $host:$port; target ignored.\n";
-							print "_doCheckSSLciphers ## STARTTLS: received 0 Bytes as a Server Ready Message; try to retry; $@\n";
+							print "_doCheckSSLciphers: STARTTLS: received 0 Bytes as a Server Ready Message; try to retry; $@\n";
 							# next retry
 					}
 				};
 				eval {
 					$firstMessage = "EHLO o-saft.localhost\r\n"; #### \n ->new: \r\n
-					_trace4 ("_doCheckSSLciphers ## STARTTLS:    first Client Message: >$firstMessage<\n");
-					$SIG{ALRM}= "_timedOut"; 
+					_trace4 ("_doCheckSSLciphers ## STARTTLS:  first Client Message: >$firstMessage<\n");
+					$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
 					alarm($Net::SSLhello::timeout); # set Alarm for Connect
 					defined(send($socket, $firstMessage, 0)) || die  "Could *NOT* send an ELHO message to $host:$port; target ignored\n";
 					alarm (0);
 				}; # Do NOT forget the ;
 				if ($@) { # no Connect
-					warn "**WARNING: STARTTLS: $@\n"; 
-					close ($socket) or warn("**WARNING: $@; Can't close socket, too: $!");
+					warn "**WARNING: _doCheckSSLciphers ## STARTTLS: $@\n"; 
+					close ($socket) or warn("**WARNING: _doCheckSSLciphers ## STARTTLS: $@; Can't close socket, too: $!");
 					# next retry
 				} else { # receive SMTP Hello Answer
 					eval {
@@ -1064,7 +1147,7 @@ sub _doCheckSSLciphers ($$$$) {
 					eval {
 						$secondMessage="STARTTLS\r\n";
 						_trace2 ("_doCheckSSLciphers: STARTTLS ## second Client Message: >$secondMessage<\n");
-						$SIG{ALRM}= "_timedOut"; 
+						$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
 						alarm($Net::SSLhello::timeout); # set Alarm for Connect
 						defined(send($socket, $secondMessage, 0)) || die "Could *NOT* send a STARTTLS message to $host:$port; target ignored\n";
 						alarm (0);
@@ -1131,7 +1214,7 @@ sub _doCheckSSLciphers ($$$$) {
 ##		$input3="";
 		eval { # check this for timeout, protect it against an unexpected Exit of the Program		
 			#Set alarm and timeout 
-			$SIG{ALRM}= "_timedOut"; 
+			$SIG{ALRM}= "Net::SSLhello::_timedOut"; 
 			alarm($Net::SSLhello::timeout);
 			unless (recv ($socket, $input, 32767, 0)) { # received *NO* Data or additional Data is still waiting; 'unless' is the opposite of 'if'
 				if (length ($input) >0) { # get additional data
@@ -1198,7 +1281,7 @@ sub _doCheckSSLciphers ($$$$) {
 			_trace3 ("##   ... Received Data (3) Length = ".length ($input).": Try to get a 2nd or 3rd Part of segmented Packet (pduLen=$pduLen)\n");
 			_trace4 ("##   ... Received Data (3) Length = ".length ($input).": Try to get a 2nd or 3rd Part of segmented Packet (pduLen=$pduLen)\n");
 			eval { 
-				$SIG{ALRM}= "_timedOut"; 			
+				$SIG{ALRM}= "Net::SSLhello::_timedOut"; 			
 				alarm($Net::SSLhello::timeout); # reset alarm #20140220 wieder eingebaut ###################
 				unless (recv ($socket, $input3, 32767, 0)) {
 					die "$host: no additional Data received"; # received new Data
@@ -1219,7 +1302,7 @@ sub _doCheckSSLciphers ($$$$) {
 				eval { 
 					_trace3 (">>> ... Received Data (4) Length = ".length ($input).": Try to get a 2nd or 3rd Part of segmented Packet (pduLen=$pduLen)\n");
 					_trace4 (">>> ... Received Data (4) Length = ".length ($input).": Try to get a 2nd or 3rd Part of segmented Packet (pduLen=$pduLen)\n");
-					$SIG{ALRM}= "_timedOut"; 		
+					$SIG{ALRM}= "Net::SSLhello::_timedOut"; 		
 					alarm($Net::SSLhello::timeout); # reset alarm 
 					unless (recv ($socket, $input3, 32767, 0)) {
 						die "$host: no additional Data received"; # received new Data 
@@ -1369,7 +1452,7 @@ sub compileClientHello  {
 		if ($Net::SSLhello::usereneg) { # use secure Renegotiation
 			my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
 			my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'}); 
-			unless ( ($Net::SSLhello::protect_double_reneg) && (grep(/\x00\xff/, @cipherTable)) ) { # Protection against double renegotiation info is active
+			unless ( ($Net::SSLhello::double_reneg == 0) && (grep(/\x00\xff/, @cipherTable)) ) { # Protection against double renegotiation info is active
 				# do *NOT* send a reneg_info Extension if the cipher_spec includes already Signaling Cipher Suite Value (SCSV) 
 				# "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
 				
@@ -1896,32 +1979,32 @@ sub _timedOut {
 	warn "**WARNING: Receive Data Timed out to '$host:$port'\n";
 }
 
-sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
+sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
 	my $codedString= shift; 
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
 			$prefix="";
 	}
 	$codedString =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eig; #Code all Octets as HEX values and seperate then with a 'space'
-	$codedString =~ s/((?:[0-9A-Fa-f]{2}\s){48})/"$1\n$prefix"/eig; # Add a new line each 48 HEX-Octetts (=144 Symbols incl. Spaces)
+	$codedString =~ s/((?:[0-9A-Fa-f]{2}\s){48})/"$1\n$prefix"/eig; # Add a new line each 48 HEX-Octets (=144 Symbols incl. Spaces)
 	chomp ($codedString); #delete CR at the end
 	chop ($codedString); #delete 'space' at the end
 	return ($codedString);
 }
 
-sub hexCodedCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
+sub hexCodedCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
 	my $codedString= shift; 
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
 			$prefix="";
 	}
 	$codedString =~ s/([\x00-\xFF])/sprintf("%02X", ord($1))/eig; #Code all Octets as HEX values and seperate then with a 'space'
-	$codedString =~ s/((?:[0-9A-Fa-f]{2}){64})/"$1\n$prefix"/eig; #  Add a new line each 64 HEX-Octetts (=128 Symbols incl. Spaces) 
+	$codedString =~ s/((?:[0-9A-Fa-f]{2}){64})/"$1\n$prefix"/eig; #  Add a new line each 64 HEX-Octets (=128 Symbols incl. Spaces) 
 	chomp ($codedString); #delete CR at the end
 	return ($codedString); #delete 'space' at the end
 }
 
-sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
+sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
 	my $codedString= shift;
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
@@ -1933,7 +2016,7 @@ sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt
 	return ($codedString); #delete 'space' at the end
 }
 
-sub hexCodedTLSCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
+sub hexCodedTLSCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
 	my $codedString= shift;
 	my $prefix= shift; # set an optional prefix after '\n' 
     if (!defined($prefix)) { # undefined -> ""
@@ -1956,8 +2039,8 @@ sub compileSSL2CipherArray ($) {
 
     _trace4 ("compileSSL2CipherArray ($anzahl) {\n");
 	for (my $i = 0; $i < $anzahl; $i++) {
-		_trace4_ ( sprintf ("              Cipher[%2d]: ", $i));
-		_trace4_ ( sprintf (">".hexCodedSSL2Cipher ($cipherTable[$i])."< -> "));
+		_trace4_ ( sprintf ("               Cipher[%2d]: ", $i));
+		_trace4_ ( sprintf (" >".hexCodedSSL2Cipher ($cipherTable[$i])."< -> "));
 		$firstByte = unpack ("C", $cipherTable[$i]);
 		_trace4_ ( sprintf ("1. Byte: %02X -> ", $firstByte));
 		if ($firstByte == 0x00) { # Version 3 Cipher 0x00xxxx
@@ -1966,10 +2049,10 @@ sub compileSSL2CipherArray ($) {
 			$protocolCipher = pack ("a4a*", "0x02", hexCodedCipher($cipherTable[$i]));
 		}
 		if ($Net::SSLhello::trace > 2) {
-			if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
-				printf "  %s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]; 	
+			if ($cipherHexHash {$protocolCipher} ) { # defined, no Null-String
+				printf "%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]; 	
 			} else {
-				print "  $protocolCipher"." -> NO-RFC-".$protocolCipher; 	
+				print "$protocolCipher"." -> NO-RFC-".$protocolCipher; 	
 			}
 			_trace4_ ("\n");
 		}	
@@ -1992,14 +2075,14 @@ sub compileTLSCipherArray ($) {
 	_trace4 ("compileTLSCipherArray ($anzahl):\n");
 	
 	for(my $i = 0; $i < $anzahl; $i++) {
-		_trace4_ (sprintf ("          Cipher[%2d]: ", $i));
-		_trace4_ (sprintf (">".hexCodedCipher ($cipherTable[$i])."< -> "));
+		_trace4_ (sprintf ("           Cipher[%2d]: ", $i));
+		_trace4_ (sprintf (" >".hexCodedCipher ($cipherTable[$i])."< -> "));
 		$protocolCipher = pack ("a6a*", "0x0300", hexCodedCipher($cipherTable[$i]));
 		if ($Net::SSLhello::trace > 2) {
 			if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
-				_trace4_ (sprintf ("  %s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0])); 	
+				_trace4_ (sprintf ("%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0])); 	
 			} else {
-				_trace4_ ("  $protocolCipher -> NO-RFC-".$protocolCipher); 	
+				_trace4_ ("$protocolCipher -> NO-RFC-".$protocolCipher); 	
 			}
 			_trace4_ ("\n");
 		}	
@@ -2022,8 +2105,8 @@ sub printSSL2CipherList ($) {
 		_trace4 ("printSSL2CipherList ($anzahl):\n");
 		for (my $i = 0; $i < $anzahl; $i++) {
 
-			_trace4_ ( sprintf ("          Cipher[%2d]: ", $i));
-			_trace4_ (">".hexCodedCipher ($cipherTable[$i])."< -> ");
+			_trace4_ ( sprintf ("           Cipher[%2d]: ", $i));
+			_trace4_ (" >".hexCodedCipher ($cipherTable[$i])."< -> ");
 			$firstByte = unpack ("C", $cipherTable[$i]);
 			_trace4_ (sprintf ("  1. Byte: %02X -> ", $firstByte));
 			if ($firstByte == 0x00) { # Version 3 Cipher 0x00xxxx
@@ -2032,9 +2115,9 @@ sub printSSL2CipherList ($) {
 				$protocolCipher = pack ("a4a*", "0x02", hexCodedCipher($cipherTable[$i]));
 			}
 			if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
-				_trace4_ (sprintf ("  %s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0])); 	
+				_trace4_ (sprintf ("%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0])); 	
 			} else {
-				_trace4_ ("  $protocolCipher -> NO-RFC-".$protocolCipher); 	
+				_trace4_ ("$protocolCipher -> NO-RFC-".$protocolCipher); 	
 			}
 			print "\n";
 		}	
@@ -2055,13 +2138,13 @@ sub printTLSCipherList ($) {
 
 		_trace4 ("printTLSCipherList ($anzahl):\n");
 		for(my $i = 0; $i < $anzahl; $i++) {
-			_trace4_ (sprintf("          Cipher[%2d]: ", $i));
-			_trace4_ (">".hexCodedCipher ($cipherTable[$i])."< -> ");
+			_trace4_ (sprintf("           Cipher[%2d]: ", $i));
+			_trace4_ (" >".hexCodedCipher ($cipherTable[$i])."< -> ");
 			$protocolCipher = pack ("a6a*", "0x0300", hexCodedCipher($cipherTable[$i]));
 			if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
-				printf "  %s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]; 	
+				printf "%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]; 	
 			} else {
-				print "  $protocolCipher -> NO-RFC-".$protocolCipher; 	
+				print "$protocolCipher -> NO-RFC-".$protocolCipher; 	
 			}
 			print "\n";
 		}	
