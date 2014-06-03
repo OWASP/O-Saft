@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.264 14/06/03 00:26:35";
+my  $SID    = "@(#) yeast.pl 1.265 14/06/03 10:10:24";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4126,12 +4126,18 @@ sub printversion() {
 #       but when using libraries with LD_LIBRARY_PATH or alike, these
 #       versions differ
 
+# ToDo: ALPHA   following eval used ALPHA +cipherall only
+    if (! eval("require Net::SSLhello;")) {
+        push(@INC, $mepath);
+        require Net::SSLhello;
+    }
     # get a quick overview also
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
     print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
     print "    Net::SSLeay          $Net::SSLeay::VERSION";
     print "    Net::SSLinfo         $Net::SSLinfo::VERSION";
+    print "    Net::SSLhello        $Net::SSLhello::VERSION";
     my ($m, $d, %p);
     if ($cfg{'verbose'} > 0) {
         print "\n= Loaded Modules =";
@@ -5172,6 +5178,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@INC, $mepath);
             require Net::SSLhello;
         }
+        _trace(" Net::SSLhello= $Net::SSLhello::VERSION"); # ToDo: alreday done in _yeast_init()
         #my @acceptedCipherArray = Net::SSLhello::checkSSLciphers();
         # set defaults for Net::SSLhello
         {
@@ -8073,7 +8080,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.27
+@(#) 14.05.28
 
 =head1 AUTHOR
 
