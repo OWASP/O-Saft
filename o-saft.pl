@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.265 14/06/03 10:10:24";
+my  $SID    = "@(#) yeast.pl 1.266 14/06/04 00:21:11";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5191,14 +5191,14 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::usereneg    = $cfg{'usereneg'};
             $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
             $Net::SSLhello::proxyport   = $cfg{'proxyport'};
-            $Net::SSLhello::protect_double_reneg= 1; # FIXME: $cfg{'ssl'}->{'double_reneg'}
+            $Net::SSLhello::double_reneg= 0; # FIXME: $cfg{'ssl'}->{'double_reneg'}
         }
         foreach $ssl (@{$cfg{'version'}}) {
             my @all;
             if ($ssl ne 'SSLv2') {
                 push(@all, @{$_}[0]) foreach (values %cipher_names);
-				#foreach (0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF) { push(@all, sprintf("0x%x",$_)); }
-				# ToDo: funktioniert noch nicht
+                #foreach (0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF) { push(@all, sprintf("0x%x",$_)); }
+                # ToDo: funktioniert noch nicht
             } else {
                 # quick&dirty ALPHA-hack (to avoid definition of an array)
                 @all = qw(0x02000000 0x02010080 0x02020080 0x02030080 0x02040080
@@ -8080,7 +8080,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.28
+@(#) 14.05.31
 
 =head1 AUTHOR
 
