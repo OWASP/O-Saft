@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-05-30';
+    $VERSION    = 'NET::SSLhello_2014-05-31';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -1345,7 +1345,8 @@ sub compileClientHello  {
 	my $clientHello_extensions="";
 	my $challenge = $CHALLENGE; #16-32 Bytes,
 	my $i; #counter
-	
+
+    _trace ("#dbx# double_reneg= $Net::SSLhello::double_reneg");
     _trace4 (sprintf("compileClientHello (%04X, %04X,\n          >%s<, %s) {\n", $record_version, $version, hexCodedString ($ciphers,"           "), $host) );
 	
 	$challenge= pack("Na[28]", time(), $challenge); #4 Bytes: uint32 gmt_unix_time;, 28 Byte random
