@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.11 14/05/11 10:52:29";
+my  $SID    = "@(#) o-saft-dbx.pm 1.12 14/06/03 10:12:31";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -116,7 +116,11 @@ sub _yeast_init() {
     #? more output if trace>1; full output if trace>2
     my $key = "";
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
+        _yline("");
+        _yTRAC("$0", $VERSION);
         _yTRAC("_yeast_init::SID", $SID) if ($cfg{'trace'} > 2);
+        _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
+        _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION); # ToDo: ALPHA defined check until Net::SSLhello fully integrated
         _yTRAC("verbose", $cfg{'verbose'});
         _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
         # more detailed trace first
