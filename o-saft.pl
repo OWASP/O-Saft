@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.267 14/06/05 15:54:59";
+my  $SID    = "@(#) yeast.pl 1.268 14/06/05 21:38:44";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5026,7 +5026,13 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 # check for supported SSL versions
 # -------------------------------------
 foreach $ssl (@{$cfg{'versions'}}) {
-    push(@{$cfg{'version'}}, $ssl) if (_is_do('cipherall')); # FIXME ALPHA
+    if (_is_do('cipherall')) { # FIXME ALPHA
+        if ($ssl eq 'DTLSv1') {
+            _warn("SSL version '$ssl' not supported by $mename; ignored");
+            next;
+        }
+        push(@{$cfg{'version'}}, $ssl);
+    }
     next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
     next if ($cfg{$ssl} == 0);
     $cfg{$ssl} = 0; # reset to simplify further checks
@@ -8121,7 +8127,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.01
+@(#) 14.06.02
 
 =head1 AUTHOR
 
