@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.270 14/06/06 00:19:23";
+my  $SID    = "@(#) yeast.pl 1.271 14/06/06 01:05:55";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -60,12 +60,12 @@ our $warning= 1;    # print warnings; need this variable very early
 sub _warn { local $\="\n"; print("**WARNING: ", join(" ", @_)) if ($main::warning > 0); }
     # print warning if wanted
 
-# README if any
-# -------------------------------------
+## README if any
+## -------------------------------------
 open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
 
-# CGI
-# -------------------------------------
+## CGI
+## -------------------------------------
 my $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
@@ -74,8 +74,8 @@ if ($me =~/\.cgi$/) {
     $cgi = 1;
 }
 
-# quick&dirty checks
-# -------------------------------------
+## quick&dirty checks
+## -------------------------------------
 if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
     die "**ERROR: Net::SSLeay not found, useless use of yet another SSL tool";
     # ToDo: this is not really true, i.e. if we use openssl instead Net::SSLeay
@@ -106,8 +106,8 @@ our @dbxcfg;    # config options and arguments
 our @dbxexe;    # executable, library, environment
 our @dbxfile;   # read files
 
-# read file with user source, if any
-# -------------------------------------
+## read file with user source, if any
+## -------------------------------------
 my @usr = grep(/--(?:use?r)/, @ARGV);   # must have --usr option
 if (($#usr >= 0) and ($cgi == 0)) {
     $arg =  "./o-saft-usr.pm";
@@ -139,8 +139,8 @@ my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
 
 usr_pre_file();
 
-# read .rc-file if any
-# -------------------------------------
+## read .rc-file if any
+## -------------------------------------
 my @rc_argv = "";
 $arg = "./.$me";
 open(RC, '<', "./.$me") && do {
@@ -156,8 +156,8 @@ open(RC, '<', "./.$me") && do {
 push(@argv, @ARGV);
 #dbx# _dbx "ARG: " . join(" ", @argv);
 
-# read file with source for trace and verbose, if any
-# -------------------------------------
+## read file with source for trace and verbose, if any
+## -------------------------------------
 my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # option can be in .rc-file, hence @argv
 if (($#dbx >= 0) and ($cgi == 0)) {
     $arg =  "./o-saft-dbx.pm";
@@ -177,7 +177,8 @@ if (($#dbx >= 0) and ($cgi == 0)) {
     require $arg;   # `our' variables are available there
 }
 
-# initialize defaults
+## initialize defaults
+## -------------------------------------
 #!# set defaults
 #!# -------------------------------------
 #!# To make (programmer's) life simple, we try to avoid complex data structure,
@@ -1310,8 +1311,8 @@ our %cfg = (
     },
 ); # %cfg
 
-# construct list for special commands: 'cmd-*'
-# -------------------------------------
+## construct list for special commands: 'cmd-*'
+## -------------------------------------
 sub _is_intern($);      # perl avoid: main::_is_member() called too early to check prototype
 sub _is_member($$);     #   "
 my $old = "";
@@ -2319,8 +2320,8 @@ our %org = (
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
 
-# internal functions
-# -------------------------------------
+## definitions: internal functions
+## -------------------------------------
 sub _dprint   { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
 sub _dbx      { _dprint(@_); } # alias for _dprint
 
@@ -2641,8 +2642,8 @@ sub get_cipher_desc($) { my $c=$_[0];
     return "";
 }
 
-# check functions
-# -------------------------------------
+## definitions: check functions
+## -------------------------------------
 sub _setvalue($){ return ($_[0] eq "") ? 'yes' : 'no (' . $_[0] . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
 sub _isbeast($$){
@@ -3703,8 +3704,8 @@ sub scoring($$) {
     }
 } # scoring
 
-# print functions
-# -------------------------------------
+## definitions: print functions
+## -------------------------------------
 sub print_host_key($$) {
     #? print hostname if --showhost given; print key if --tracekey given
     my ($host, $key) = @_;
@@ -4146,8 +4147,8 @@ sub printchecks($$) {
     }
 } # printchecks
 
-# print functions for help and information
-# -------------------------------------
+## definitions: print functions for help and information
+## -------------------------------------
 
 sub printversion() {
     #? print program and module versions
@@ -4235,8 +4236,8 @@ sub printcipherlist() {
             } else {
                 $have_cipher++;
             }
-## above not yet working proper 'cause grep() returns more than one match
-##
+# # above not yet working proper 'cause grep() returns more than one match
+# #
 # # convert array to a hash with the array elements as the hash keys and the values are simply 1
 #  my %hash = map {$_ => 1} @array;
 #
@@ -4528,8 +4529,8 @@ sub printtodo() {
 
 usr_pre_args();
 
-# scan options and arguments
-# -------------------------------------
+## scan options and arguments
+## -------------------------------------
 my $typ = 'HOST';
 push(@argv, "");        # need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
@@ -4932,8 +4933,8 @@ _vprintme();
 
 usr_pre_exec();
 
-# call with other libraries
-# -------------------------------------
+## call with other libraries
+## -------------------------------------
 _y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
 if ($cfg{'exec'} == 0) {
@@ -4968,8 +4969,8 @@ if ($cfg{'exec'} == 0) {
 
 local $\ = "\n";
 
-# check if used software supports SNI properly
-# -------------------------------------
+## check if used software supports SNI properly
+## -------------------------------------
 if (! _is_do('cipherall')) { # FIXME ALPHA
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
@@ -4993,8 +4994,8 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
 _trace("cfg{usesni}: $cfg{'usesni'}");
 } # ALPHA
 
-# set additional defaults if missing
-# -------------------------------------
+## set additional defaults if missing
+## -------------------------------------
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @ARGV)); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @ARGV));   # can be set in rc-file!
@@ -5010,8 +5011,8 @@ if ($quick == 1) {
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
 
-# set defaults for Net::SSLinfo
-# -------------------------------------
+## set defaults for Net::SSLinfo
+## -------------------------------------
 {
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
     $Net::SSLinfo::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
@@ -5037,8 +5038,8 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http    = 0; # if only +cipher given don't use http 'cause it may cause erros
 }
 
-# check for supported SSL versions
-# -------------------------------------
+## check for supported SSL versions
+## -------------------------------------
 foreach $ssl (@{$cfg{'versions'}}) {
     if (_is_do('cipherall')) { # FIXME ALPHA
         if ($ssl eq 'DTLSv1') {
@@ -5132,8 +5133,8 @@ _v_print("cipher list: @{$cfg{'ciphers'}}");
 
 usr_pre_main();
 
-# main: do the work
-# -------------------------------------
+## main: do the work
+## -------------------------------------
 # first all commands which do not make a connection
 printversion(),    exit 0   if (_is_do('version'));
 printopenssl(),    exit 0   if (_is_do('libversion'));
@@ -5428,6 +5429,8 @@ _yeast_exit();
 
 exit 0; # main
 
+## documentation
+## -------------------------------------
 # all following is documentation in perl's doc format (perldoc), POD)
 # only minimal formatting is used,  if anything fails (+help command
 # or similar), following command can be used to extract text in raw
@@ -5437,7 +5440,7 @@ exit 0; # main
 # Special syntax:
 #    lines beginning with exactly 9 spaces are handled special in 
 #          printmediawiki()
-# FIXME: find proper POD syntax for this zgly hack
+# FIXME: find proper POD syntax for this ugly hack
 
 __END__
 
@@ -7739,6 +7742,18 @@ to run this tool in CGI mode. You have been warned!
 First of all: the main goal is to have a tool to be simple for users.
 It's not designed to be accademic code or simple for programmers.
 
+=head3 Documentation
+
+All documentation of code details is  close to the corresponding code
+lines. Some special comment lines are used, see  B<Comments>  below.
+
+All documentation for the user is written in perl's POD format at end
+of the program code. See  C<## documentation>.
+
+Meanwhile, after 2 years of development, it seems that POD wasn't the
+best decission, as it makes extracting information from documentation
+is complicated, sometimes.
+
 =head3 General
 
 Perl's  `die()'  is used whenever an unrecoverable error occurs.  The
@@ -7779,6 +7794,12 @@ Following comments are used in the code:
 =item # ToDo:   - parts not working perfect, needs to be changed
 
 =item # FIXME:  - program code known to be buggy, needs to be fixed
+
+=item #!#       - comments not to be removed in compressed code
+
+=item #?        - description of sub
+
+=item ##        - code sections
 
 =back
 
@@ -7840,6 +7861,10 @@ Examples to get an overview of perl functions (sub):
    egrep '^(sub|\s*#\?)' $0
 
 Same a little bit formatted, see  I<+traceSUB>  command.
+
+Examples to get an overview of workflow:
+
+   egrep '^##\s' $0
 
 Following to get perl's variables for checks:
 
