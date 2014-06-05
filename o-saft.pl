@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.266 14/06/04 00:21:11";
+my  $SID    = "@(#) yeast.pl 1.267 14/06/05 15:54:59";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -993,6 +993,34 @@ our %cfg = (
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
                                 # ToDo: must be same as in Net::SSLinfo or used from there
     'ciphers'       => [],      # contains all ciphers to be tested
+    'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
+    'cipherranges'  => {        # constants for ciphers (Note: written as hex)
+        'yeast'     => [],      # internal list, computed later ...
+                                # push(@all, @{$_}[0]) foreach (values %cipher_names);
+        'rfc'       => [        # constants for ciphers defined in various RFCs
+                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                       ],
+        'long'      => [        # more lazy list of constants for cipher
+                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
+                       ],
+        'full'      => [        # full range of constants for cipher
+                        0x03000000 .. 0x0300FFFF,
+                       ],
+        'SSLv2'     => [        # constants for ciphers according RFC for SSLv2
+                        0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                        0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF, 
+                        0x03000001,   0x03000002, 0x03000007 .. 0x0300002C,
+                        0x030000FF,
+                       ],
+        'SSLv2_long'=> [        # more lazy list of constants for ciphers for SSLv2
+                        0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                        0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF, 
+                        0x03000000 .. 0x0300002F, 0x030000FF,
+                       ],
+    }, # cipherranges
     'do'            => [],      # the commands to be performed, any of commands
     'commands'      => [],      # contains all commands, constructed below
     'cmd-intern'    => [        # add internal commands
@@ -4589,6 +4617,13 @@ while ($#argv >= 0) {
                 _warn("unknown format '$arg'; ignored");
             }
         }
+        if ($typ eq 'CRANGE')    {
+            if (1 == grep(/^$arg$/, keys %{$cfg{'cipherranges'}})) {
+                $cfg{'cipherrange'} = $arg;
+            } else {
+                _warn("unknown cipher range '$arg'; ignored");
+            }
+        }
         if ($typ eq 'TRACE')    {
             $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
             $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
@@ -4737,6 +4772,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--call=(.*)/)         { $typ = 'CALL';    unshift(@argv, $1); next; }
     if ($arg =~ /^--cipher$/)           { $typ = 'CIPHER';          next; }
     if ($arg =~ /^--cipher=(.*)/)       { $typ = 'CIPHER';  unshift(@argv, $1); next; }
+    if ($arg =~ /^--(?:cipher)?range$/) { $typ = 'CRANGE';          next; }
+    if ($arg =~ /^--(?:cipher)?range=(.*)/){$typ='CRANGE';  unshift(@argv, $1); next; }
     if ($arg =~ /^--format$/)           { $typ = 'FORMAT';          next; }
     if ($arg =~ /^--format=(.*)/)       { $typ = 'FORMAT';  unshift(@argv, $1); next; }
     if ($arg =~ /^--legacy$/)           { $typ = 'LEGACY';          next; }
@@ -5193,30 +5230,14 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::proxyport   = $cfg{'proxyport'};
             $Net::SSLhello::double_reneg= 0; # FIXME: $cfg{'ssl'}->{'double_reneg'}
         }
+        _v_print("cipher range: $cfg{'cipherrange'}");
         foreach $ssl (@{$cfg{'version'}}) {
             my @all;
-            if ($ssl ne 'SSLv2') {
-                push(@all, @{$_}[0]) foreach (values %cipher_names);
-                #foreach (0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF) { push(@all, sprintf("0x%x",$_)); }
-                # ToDo: funktioniert noch nicht
-            } else {
-                # quick&dirty ALPHA-hack (to avoid definition of an array)
-                @all = qw(0x02000000 0x02010080 0x02020080 0x02030080 0x02040080
-                          0x02050080 0x02060040 0x02060140 0x020700C0 0x020701C0
-                          0x02FF0810 0x02FF0800 0x02FFFFFF 
-                          0x03000001 0x03000002 0x03000007 0x03000008 0x03000009
-                          0x0300000A 0x0300000B 0x0300000C 0x0300000D 0x0300000E
-                          0x0300000F 0x03000010 0x03000011 0x03000012 0x03000013
-                          0x03000014 0x03000015 0x03000016 0x03000017 0x03000018
-                          0x03000019 0x0300001A 0x0300001B 0x0300001C 0x0300001D
-                          0x0300001E 0x0300001F 0x03000020 0x03000021 0x03000022
-                          0x03000023 0x03000024 0x03000025 0x03000026 0x03000027
-                          0x03000028 0x03000029 0x0300002A 0x0300002B 0x030000FF
-                       );
-            }
+            my $range = $cfg{'cipherrange'};            # use specified range of constants
+               $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
+            push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
+            _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
-#_dbx "$ssl $#all";
-#_dbx join(" ",@all); next;
             Net::SSLhello::printCipherStringArray(
                 'compact', $host, $port, $ssl, $cfg{'usesni'},
                 Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
@@ -6039,6 +6060,26 @@ the description here is text provided by the user.
 # see in IO::Socket::SSL.pm  Net::SSLeay::CTX_set_cipher_list() call
 
 =end comment
+
+=head3 --cipherrange=RANGE, --range=RANGE 
+
+  Specify range of cipher constants to be tested by  "+cipherall" .
+  Following RANGEs are supported:
+
+=over 4
+
+=item * rfc             all ciphers defined in various RFCs
+
+=item * long            like C<rfc> but more lazy list of constants
+
+=item * full            all constants  0x03000000 .. 0x0300FFFF
+
+=item * SSLv2           all ciphers according RFC for SSLv2
+
+Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
+It does not make sense to use it for other protocols; however ...
+
+=back
 
 =begin comment
 
@@ -8080,7 +8121,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.05.31
+@(#) 14.06.01
 
 =head1 AUTHOR
 
