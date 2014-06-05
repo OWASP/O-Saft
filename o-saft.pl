@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.268 14/06/05 21:38:44";
+my  $SID    = "@(#) yeast.pl 1.269 14/06/05 23:29:11";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -488,6 +488,7 @@ my %check_dest = (
     'srp'           => {'txt' => "Target supports SRP"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
     'heartbeat'     => {'txt' => "Target does not support heartbeat extension"},
+    'scsv'          => {'txt' => "Target does not support SCSV"},
     # following for information, checks not useful; see "# check target specials" in checkdest also
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
@@ -689,6 +690,7 @@ our %shorttexts = (
     'crime'         => "Safe to CRIME",
     'time'          => "Safe to TIME",
     'heartbleed'    => "Safe to heartbleed",
+    'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
@@ -1040,7 +1042,7 @@ our %cfg = (
                        qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
-                       qw(zlib lzo open_pgp fallback closure order sgc time)
+                       qw(zlib lzo open_pgp fallback closure order sgc scsv time)
                        ],
     'cmd-beast'     => [qw(beast beast-default)],       # commands for +beast
     'cmd-crime'     => [qw(crime)],                     # commands for +crime
@@ -1271,6 +1273,7 @@ our %cfg = (
         'TLSv13'    => 0x0304,
         'DTLSv1'    => 0xFEFF,
         'SCSV'      => 0x03FF,
+        #'TLS_FALLBACK_SCSV' => 0x5600,
      },
     'done' => {                 # internal administration
         'hosts'     => 0,
@@ -1784,7 +1787,8 @@ our %cipher_names = (
     'RSA_WITH_CAMELLIA_256_CBC_SHA'         => [qw(0x03000084 CAMELLIA256-SHA)],
     'RSA_WITH_NULL_SHA256'                  => [qw(0x0300003B NULL-SHA256)],
     'RSA_WITH_SEED_SHA'                     => [qw(0x03000096 SEED-SHA)],
-#   'SCSV'                                  => [qw(0x030000FF )],
+#   'TLS_FALLBACK_SCSV'                     => [qw(0x00005600 SCSV)],    # FIXME:
+    'EMPTY_RENEGOTIATION_INFO_SCSV'         => [qw(0x030000FF SCSV)],
     'SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA'     => [qw(0x0300C01C SRP-DSS-3DES-EDE-CBC-SHA)],
     'SRP_SHA_DSS_WITH_AES_128_CBC_SHA'      => [qw(0x0300C01F SRP-DSS-AES-128-CBC-SHA)],
     'SRP_SHA_DSS_WITH_AES_256_CBC_SHA'      => [qw(0x0300C022 SRP-DSS-AES-256-CBC-SHA)],
@@ -2107,6 +2111,7 @@ my %text = (
         'SBCS'      => "single-byte character set",
         'SCEP'      => "Simple Certificate Enrollment Protocol",
         'SCSU'      => "Standard Compression Scheme for Unicode (compressed UTF-16)",
+        'SCSV'      => "Signaling Cipher Suite Value",
         'SCVP'      => "Server-Based Certificate Validation Protocol",
         'SDES'      => "Security Description Protokol",
         'SEED'      => "128-bit Symmetric Block Cipher",
@@ -2181,6 +2186,9 @@ my %text = (
         'description'=> "TLS Version _ key establishment algorithm _ digital signature algorithm _ WITH _ confidentility algorithm _ hash function",
         'explain'   => "TLS Version1 _ Ephemeral DH key agreement _ DSS which implies DSA _ WITH _ 3DES encryption in CBC mode _ SHA for HMAC"
     },
+    # RFC 2246:  TLS Version 1
+    # RFC 4346:  TLS Version 1.1
+    # RFC 5246:  TLS Version 1.2  http://tools.ietf.org/html/rfc5346
     # RFC 2412: OAKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')
     #           alle *DH* sind im Prinzip PFS.
     #           wird manchmal zusaetzlich mit DHE bezeichnet, wobei E für ephemeral
@@ -2201,12 +2209,9 @@ my %text = (
     # RFC 4492:  TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer Security (TLS)
     # RFC 3749: TLS Compression Method http://tools.ietf.org/html/rfc3749
     # RFC 3943: TLS Protocol Compression Using Lempel-Ziv-Stac (LZS) http://tools.ietf.org/html/rfc3943
-    # RFC 2246:  TLS Version 1
     # RFC 3268:  TLS Version 1 AES
     # RFC 4132:  TLS Version 1 Camellia
     # RFC 4162: TLS Version 1 SEED
-    # RFC 4346:  TLS Version 1.1
-    # RFC 5246:  TLS Version 1.2  http://tools.ietf.org/html/rfc5346
     # RFC 3546: TLS Extensions
     # RFC 4366: TLS Extensions
     #               AKID - authority key identifier
@@ -2267,6 +2272,8 @@ my %text = (
     #        see also https://www.imperialviolet.org/2013/06/27/botchingpfs.html
     #
     # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
+    #
+    # SCSV   https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
 
     # just for information, some configuration options in Firefox
     'firefox' => { # NOT YET USED
@@ -4881,6 +4888,9 @@ while ($#argv >= 0) {
         if ($val =~ /^ev$/i)  { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
         if ($val =~ /^(bsi|TR-?02102)/i)  { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}});   next; }
         $val = lc($val);               # be greedy to allow +BEAST, +CRIME, etc.
+        if (_is_member($val, \@{$cfg{'cmd-NOT_YET'}}) > 0) {
+            _warn("command not yet implemented '$val' may be ignored");
+        }
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
             push(@{$cfg{'do'}}, $val);
         } else {
@@ -8127,7 +8137,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.02
+@(#) 14.06.03
 
 =head1 AUTHOR
 
