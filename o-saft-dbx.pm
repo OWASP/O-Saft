@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.12 14/06/03 10:12:31";
+my  $SID    = "@(#) o-saft-dbx.pm 1.13 14/06/05 16:13:18";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -101,7 +101,7 @@ sub _yeast_trac($){
                         _yeast("# - - - - HASH: $key = {");
                         foreach my $k (sort keys %{$cfg{$key}}) {
                         # _yeast_trac($key); # FIXME: does not work 'cause of lazy global variable usage
-                        _yTRAC("    ".$key."->".$k, ""); # ToDo: ${$cfg{$key}}->{$k}) 
+                        _yTRAC("    ".$key."->".$k, ""); # ToDo: join("-", @{$cfg{$key}->{$k}}))
                         };
                         _yeast("# - - - - HASH: $key }");
                         last SWITCH;
@@ -158,7 +158,7 @@ sub _yeast_init() {
         _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}");
         _yeast("  default port= $cfg{'port'} (last specified)");
         _yeast("       targets= @{$cfg{'hosts'}}");
-        foreach $key (qw(out_header format legacy usehttp usedns)) {
+        foreach $key (qw(out_header format legacy usehttp usedns cipherrange)) {
             printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
                # cannot use _yeast() 'cause of pretty printing
         }
