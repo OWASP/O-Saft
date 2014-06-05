@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.269 14/06/05 23:29:11";
+my  $SID    = "@(#) yeast.pl 1.270 14/06/06 00:19:23";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -186,6 +186,9 @@ if (($#dbx >= 0) and ($cgi == 0)) {
 #!# Please see "Program Code" in the POD section too.
 #!#
 #!# Here's an overview of the used global variables:
+#!#   $me             - the program name or script name with path stripped off
+#!#   $mepath         - the path where program or script ($me) is located
+#!#   $mename         - my name pretty printed
 #!#   @results        - where we store the results as:  [SSL, cipher, "yes|no"]
 #!#   %data           - labels and correspondig value (from Net::SSLinfo)
 #!#   %checks         - collected and checked certificate data
@@ -1308,6 +1311,7 @@ our %cfg = (
 ); # %cfg
 
 # construct list for special commands: 'cmd-*'
+# -------------------------------------
 sub _is_intern($);      # perl avoid: main::_is_member() called too early to check prototype
 sub _is_member($$);     #   "
 my $old = "";
@@ -4497,11 +4501,11 @@ sub printhelp($) {
 sub printusage() {
     print "# $mename USAGE:
 # most common usage:
-  $mename +info   your.tld
-  $mename +check  your.tld
-  $mename +cipher your.tld
+  $me +info   your.tld
+  $me +check  your.tld
+  $me +cipher your.tld
 # for more help use:
-  $mename --help
+  $me --help
     ";
 } # printusage
 
@@ -7744,7 +7748,7 @@ always begins with `**WARNING: '.
 
 All C<print*()> functions write on STDOUT directly. They are slightly
 prepared for using texts from  the configuration (%cfg, %checks),  so
-these texts can be adapted easily (either with  OPTIONS  or in code).
+these texts can be adapted easily (either with  B<OPTIONS>  or in code).
 
 The  code  mainly uses  'text enclosed in single quotes'  for program
 internal strings such as hash keys, and uses "double quoted" text for
@@ -7763,7 +7767,7 @@ anyways.
 
 The code is most likely not thread-safe. Anyway, we don't use them.
 
-For debugging the code the  I<--trace>  option can be used.  See  DEBUG
+For debugging the code the  I<--trace>  option can be used.  See  B<DEBUG>
 section below for more details. Be prepared for a lot of output!
 
 =head3 Comments
@@ -7799,7 +7803,7 @@ Some rules used for function names:
 
 =item check*
 
-    Functions which perform some checks
+    Functions which perform some checks.
 
 =item print*
 
@@ -7811,7 +7815,7 @@ Some rules used for function names:
 
 =item _<function_name>
 
-    Some kind of helper functions .
+    Some kind of helper functions.
 
 =item _trace* _y*
 
@@ -7826,6 +7830,8 @@ Some rules used for function names:
 Function (sub) definitions are followed by a short description, which
 is just one line right after the  C<sub>  line. Such lines always start
 with  C<#?>  (see below how to get an overview).
+
+Subs are ordered to avoid forward declarations as much as possible.
 
 =head3 Code information
 
@@ -8137,7 +8143,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.03
+@(#) 14.06.04
 
 =head1 AUTHOR
 
