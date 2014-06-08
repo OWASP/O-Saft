@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.271 14/06/06 01:05:55";
+my  $SID    = "@(#) yeast.pl 1.272 14/06/08 12:39:48";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4156,11 +4156,20 @@ sub printversion() {
     print '# Path = ' . $mepath if ($cfg{'verbose'} > 1);
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
     print "    $0 $VERSION";
-    print "    external openssl executable:   " . Net::SSLinfo::do_openssl('version', "", "", "");
-    print "    Net::SSLeay::SSLeay_version(): " . Net::SSLeay::SSLeay_version();
+	#	#	#	#	#	#	$text{'separator'}
+    print "    openssl version (ext executable) " . Net::SSLinfo::do_openssl('version', "", "", "");
+    print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
-    print "    OPENSSL_VERSION_NUMBER() 0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
-    print "    Net::SSLeay::SSLeay()    0x" . Net::SSLeay::SSLeay();
+    print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
+    print "       ::SSLeay()                    0x" . Net::SSLeay::SSLeay();
+    if ($cfg{'verbose'} > 0) {
+        # ToDo: not all versions of Net::SSLeay have constants like 
+        # Net::SSLeay::SSLEAY_CFLAGS, hence we use hardcoded integers
+        print "       ::SSLEAY_DIR                  " . Net::SSLeay::SSLeay_version(5);
+        print "       ::SSLEAY_BUILD_ON             " . Net::SSLeay::SSLeay_version(3);
+        print "       ::SSLEAY_PLATFORM             " . Net::SSLeay::SSLeay_version(4);
+        print "       ::SSLEAY_CFLAGS               " . Net::SSLeay::SSLeay_version(2);
+    }
 
 # ToDo: i.g. OPENSSL_VERSION_NUMBER() returns same value as SSLeay()
 #       but when using libraries with LD_LIBRARY_PATH or alike, these
@@ -4175,9 +4184,9 @@ sub printversion() {
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
     print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
-    print "    Net::SSLeay          $Net::SSLeay::VERSION";
     print "    Net::SSLinfo         $Net::SSLinfo::VERSION";
     print "    Net::SSLhello        $Net::SSLhello::VERSION";
+    print "    Net::SSLeay          $Net::SSLeay::VERSION";
     my ($m, $d, %p);
     if ($cfg{'verbose'} > 0) {
         print "\n= Loaded Modules =";
@@ -8168,7 +8177,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.04
+@(#) 14.06.05
 
 =head1 AUTHOR
 
