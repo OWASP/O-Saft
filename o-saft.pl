@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.274 14/06/08 21:03:11";
+my  $SID    = "@(#) yeast.pl 1.275 14/06/08 21:42:27";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -143,15 +143,17 @@ usr_pre_file();
 ## -------------------------------------
 my @rc_argv = "";
 $arg = "./.$me";
-open(RC, '<', "./.$me") && do {
-    push(@dbxfile, $arg);
-    _print_read("options", $arg) if ($cgi == 0);
-    @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
-    @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
-    close(RC);
-    push(@argv, @rc_argv);
-    #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
-};
+if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibit
+    open(RC, '<', "./.$me") && do {
+        push(@dbxfile, $arg);
+        _print_read("options", $arg) if ($cgi == 0);
+        @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
+        @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
+        close(RC);
+        push(@argv, @rc_argv);
+        #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
+    };
+}
 
 push(@argv, @ARGV);
 #dbx# _dbx "ARG: " . join(" ", @argv);
@@ -4766,6 +4768,7 @@ while ($#argv >= 0) {
     if ($arg eq  '-V')                  { $cfg{'out_header'}= 1;    next; } # ssl-cert-check
 #   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        next; } # ssl-cert-check # FIXME: not supported
     # our options
+    if ($arg =~ /^--no[_-]?rc/)         { next;                           } # simply ignore
     if ($arg =~ /^--ssl[_-]?lazy$/)     { $cfg{'ssl_lazy'}  = 1;    next; } # ..
     if ($arg =~ /^--no[_-]?ssl[_-]?lazy$/){$cfg{'ssl_lazy'} = 0;    next; } # ..
     if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    next; } # ..
@@ -5895,6 +5898,10 @@ the description here is text provided by the user.
 =head3 --help=wiki
 
   Show help text in mediawiki format.
+
+=head3 --no-rc
+
+  Do not read  RC-FILE .
 
 =head3 --dns
 
@@ -8203,7 +8210,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.07
+@(#) 14.06.08
 
 =head1 AUTHOR
 
