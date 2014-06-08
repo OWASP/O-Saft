@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.13 14/06/05 16:13:18";
+my  $SID    = "@(#) o-saft-dbx.pm 1.14 14/06/09 01:47:36";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -89,6 +89,7 @@ sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) 
 sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
 sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); }
 sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); }
+sub _y_ARR(@) { return join(" ", "[", @_, "]"); }
 sub _yeast_trac($){
     my $key  = shift;
     _yTRAC($key, "<<null>>"), return if (! defined $cfg{$key});    # undef is special, avoid perl warnings
@@ -96,7 +97,7 @@ sub _yeast_trac($){
         /CODE/  && do { _yTRAC($key, "<<code>>"); last SWITCH; };
         /^$/    && do { _yTRAC($key, $cfg{$key}); last SWITCH; };
         /SCALAR/&& do { _yTRAC($key, $cfg{$key}); last SWITCH; };
-        /ARRAY/ && do { _yTRAC($key, join(" ", "[", @{$cfg{$key}}, "]")); last SWITCH; };
+        /ARRAY/ && do { _yTRAC($key, _y_ARR(@{$cfg{$key}})); last SWITCH; };
         /HASH/  && do { last SWITCH if ($cfg{'trace'} <= 2);            # print hashes for full trace only
                         _yeast("# - - - - HASH: $key = {");
                         foreach my $k (sort keys %{$cfg{$key}}) {
@@ -127,7 +128,12 @@ sub _yeast_init() {
         if ($cfg{'trace'} > 1){
             _yline(" %cmd {");
             foreach $key (sort keys %cmd) {
-                _yTRAC($key, $cmd{$key}); # FIXME: use _yeast_trac()
+                # FIXME: use _yeast_trac()
+                if (ref($cmd{$key}) eq 'ARRAY') {
+                    _yTRAC($key, _y_ARR(@{$cmd{$key}}));
+                } else {
+                    _yTRAC($key, $cmd{$key});
+                }
             }
             _yline(" %cmd }");
             _yline(" %cfg {");
@@ -143,8 +149,8 @@ sub _yeast_init() {
         # now user friendly informations
         _yline(" cmd {");
         _yeast("# " . join(", ", @dbxexe));
-        _yeast("          path= " . join(" ", @{$cmd{'path'}}));
-        _yeast("          libs= " . join(" ", @{$cmd{'libs'}}));
+        _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
+        _yeast("          libs= " . _y_ARR(@{$cmd{'libs'}}));
         _yeast("     envlibvar= $cmd{'envlibvar'}");
         _yeast("  cmd->timeout= $cmd{'timeout'}");
         _yeast("  cmd->openssl= $cmd{'openssl'}");
@@ -157,18 +163,17 @@ sub _yeast_init() {
         _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
         _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}");
         _yeast("  default port= $cfg{'port'} (last specified)");
-        _yeast("       targets= @{$cfg{'hosts'}}");
+        _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
         foreach $key (qw(out_header format legacy usehttp usedns cipherrange)) {
             printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
                # cannot use _yeast() 'cause of pretty printing
         }
-        _yeast("       version= @{$cfg{'version'}}");
         _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
-        _yeast("given commands= @{$cfg{'done'}->{'arg_cmds'}}");
-        _yeast("      commands= @{$cfg{'do'}}");
-        _yeast("        cipher= @{$cfg{'cipher'}}");
+        _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
+        _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
+        _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
         _yline(" cfg }");
-        _yeast("(more information with: --trace=2  or  --trace=3 )");
+        _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
     }
 }
 sub _yeast_exit() {
@@ -179,11 +184,11 @@ sub _yeast_exit() {
 }
 sub _yeast_args() {
     _y_ARG("#####{ summary of all arguments and options from command line");
-    _y_ARG("#####  and: "      . join(", ", @dbxfile));
-    _y_ARG("collected hosts= " . join(" ",  @{$cfg{'hosts'}}));
-    _y_ARG("processed  exec  arguments= ". join(" ", @dbxexe));
-    _y_ARG("processed normal arguments= ". join(" ", @dbxarg));
-    _y_ARG("processed config arguments= ". join(" ", map{"`".$_."'"} @dbxcfg)) if($cfg{'verbose'} > 0);
+    _y_ARG("#####  and:      " . _y_ARR(@dbxfile));
+    _y_ARG("collected hosts= " . _y_ARR(@{$cfg{'hosts'}}));
+    _y_ARG("processed  exec  arguments= ". _y_ARR(@dbxexe));
+    _y_ARG("processed normal arguments= ". _y_ARR(@dbxarg));
+    _y_ARG("processed config arguments= ". _y_ARR(map{"`".$_."'"} @dbxcfg)) if($cfg{'verbose'} > 0);
     _y_ARG("#####}");
 }
 sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); }
