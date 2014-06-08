@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.272 14/06/08 12:39:48";
+my  $SID    = "@(#) yeast.pl 1.273 14/06/08 15:16:54";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1034,7 +1034,7 @@ our %cfg = (
                        qw(
                         check cipher dump check_sni exec help info info--v http
                         quick list libversion sizes s_client version
-                        sigkey bsi ev cipherall
+                        sigkey bsi ev cipherraw
                        ),
                     # internal (debugging or experimental) commands
                       # qw(options cert_type),   # will bee seen with +info--v only
@@ -4175,7 +4175,7 @@ sub printversion() {
 #       but when using libraries with LD_LIBRARY_PATH or alike, these
 #       versions differ
 
-# ToDo: ALPHA   following eval used ALPHA +cipherall only
+# ToDo: ALPHA   following eval used ALPHA +cipherraw only
     if (! eval("require Net::SSLhello;")) {
         push(@INC, $mepath);
         require Net::SSLhello;
@@ -4865,6 +4865,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';  }
     if ($arg eq  '+extension')        { $arg = '+extensions'; }
     if ($arg =~ /^\+ext_aia/i)        { $arg = '+ext_authority'; } # AIA is a common acronym ...
+    if ($arg =~ /^\+(?:all|raw)ciphers?(?:all|raw)?$/){ $arg = '+cipherraw'; }
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
@@ -4980,7 +4981,7 @@ local $\ = "\n";
 
 ## check if used software supports SNI properly
 ## -------------------------------------
-if (! _is_do('cipherall')) { # FIXME ALPHA
+if (! _is_do('cipherraw')) { # FIXME ALPHA
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
 $typ .= "**Hint: #opt# can be used to disables this check";
@@ -5050,7 +5051,7 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 ## check for supported SSL versions
 ## -------------------------------------
 foreach $ssl (@{$cfg{'versions'}}) {
-    if (_is_do('cipherall')) { # FIXME ALPHA
+    if (_is_do('cipherraw')) { # FIXME ALPHA
         if ($ssl eq 'DTLSv1') {
             _warn("SSL version '$ssl' not supported by $mename; ignored");
             next;
@@ -5239,8 +5240,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 
 ## ALPHA {
 	# FIXME: ALPHA   check for more ALPHA herein before removing this line
-    if (_is_do('cipherall')) {
-        _y_CMD("+cipherall");
+    if (_is_do('cipherraw')) {
+        _y_CMD("+cipherraw");
         if (! eval("require Net::SSLhello;")) {
             push(@INC, $mepath);
             require Net::SSLhello;
@@ -5782,7 +5783,9 @@ with other commands).
     Note that ciphers  not supported  by the local SSL implementation
     are not checked by default, use "--local" option for that.
 
-=head3 +cipherall
+=for comment other names: +cipherall +allciohers +rawciphers
+
+=head3 +cipherraw
 
     Check target for all possible ciphers.
     Does not depend on local SSL implementation.
@@ -6095,7 +6098,7 @@ the description here is text provided by the user.
 
 =head3 --cipherrange=RANGE, --range=RANGE 
 
-  Specify range of cipher constants to be tested by  "+cipherall" .
+  Specify range of cipher constants to be tested by  "+cipherraw" .
   Following RANGEs are supported:
 
 =over 4
@@ -8177,7 +8180,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.05
+@(#) 14.06.07
 
 =head1 AUTHOR
 
