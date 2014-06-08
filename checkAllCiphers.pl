@@ -373,25 +373,20 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         my $range = $cfg{'cipherrange'};            # use specified range of constants
            $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
         push(@testing, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
-        if ($ssl eq 'SSLv2') {
+        if ($Net::SSLhello::usesni==1) { # always test without SNI
+            $Net::SSLhello::usesni=0;
             @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
             _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
             _trace("accepted ciphers: @accepted\n");
             Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
-        } else { # test all defined Ciphers
-            if ($Net::SSLhello::usesni==1) {
-                $Net::SSLhello::usesni=0; # try first without SNI
-                @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
-                _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
-                _trace("accepted ciphers: @accepted\n");
-                Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
-                $Net::SSLhello::usesni=1; # restore 'usesni'
-            }
+            $Net::SSLhello::usesni=1; # restore
+        }
+        next if ($Net::SSLhello::usesni==0);
+        next if ($ssl eq 'SSLv2');# SSLv2 has no SNI
             @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
             _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
             _trace("accepted ciphers: @accepted\n");
-            Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
-        }
+            Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 1, @accepted);
     }
     _trace("host}" . "\n");
 }
