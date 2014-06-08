@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.273 14/06/08 15:16:54";
+my  $SID    = "@(#) yeast.pl 1.274 14/06/08 21:03:11";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1087,8 +1087,6 @@ our %cfg = (
     'out_header'    => 0,       # print header lines in output
     'out_score'     => 0,       # print scoring; default for +check
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
-    'lang'          => "de",    # output language
-    'langs'         => [qw(de en)],
     'pass_options'  => "",      # options to be passeed thru to other programs
     'hosts'         => [],      # list of hosts:port to be processed
     'host'          => "",      # currently scanned host
@@ -1102,9 +1100,10 @@ our %cfg = (
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
-    'ssl' => {         # configurations for TCP SSL protocol
+    'sslhello' => {    # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 3,       # number of retry when timeout
+        'usereneg'  => 0,       # 1: secure renegotiation
         'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
     },
@@ -4592,6 +4591,10 @@ while ($#argv >= 0) {
         if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SSLRENEG') { $cfg{'sslhello'}->{'usereneg'}= $arg;     $typ = 'HOST'; }
+        if ($typ eq 'DOUBLE')   { $cfg{'sslhello'}->{'double_reneg'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
@@ -4807,7 +4810,16 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?interval/)         { $typ = 'TIMEOUT';         next; } # ssldiagnos.exe
     if ($arg =~ /^--openssl=(.*)/)      { $typ = 'OPENSSL'; unshift(@argv, $1); $cmd{'extopenssl'}= 1; next; }
     if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'CTXT';    next; }
-    if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT';unshift(@argv, $1); next; }
+    if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT';    unshift(@argv, $1); next; }
+    # options for Net::SSLhello
+    if ($arg =~ /^--ssl[_-]?retry$/)            { $typ = 'SSLRETRY';next; }
+    if ($arg =~ /^--ssl[_-]?retry=(.*)/)        { $typ = 'SSLRETRY';unshift(@argv, $1); next; }
+    if ($arg =~ /^--ssl[_-]?timeout[_-]?$/)     { $typ = 'SSLTOUT'; next; }
+    if ($arg =~ /^--ssl[_-]?timeout[_-]?=(.*)/) { $typ = 'SSLTOUT'; unshift(@argv, $1); next; }
+    if ($arg =~ /^--ssl[_-]?usereneg$/)         { $typ = 'SSLRENEG';next; }
+    if ($arg =~ /^--ssl[_-]?usereneg=(.*)/)     { $typ = 'SSLRENEG';unshift(@argv, $1); next; }
+    if ($arg =~ /^--ssl[_-]?double[_-]?reneg$/)    {$typ='DOUBLE';  next; }
+    if ($arg =~ /^--ssl[_-]?double[_-]?reneg=(.*)/){$typ='DOUBLE';  unshift(@argv, $1); next; }
     #!#--------+------------------------+--------------------------+------------
     if ($arg =~ /^--cfg[_-](cmd|score|text)-([^=]*)=(.*)/){              # warn if old syntax; must be first --cfg* check!
         $typ = 'CFG-'.$1; unshift(@argv, $2) . "=" . $3;   # convert to new syntax
@@ -5254,14 +5266,15 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
             $Net::SSLhello::usesni      = $cfg{'usesni'};
             $Net::SSLhello::starttls    = 0;
-            $Net::SSLhello::timeout     = $cfg{'ssl'}->{'timeout'};
-            $Net::SSLhello::retry       = $cfg{'ssl'}->{'retry'};
-            $Net::SSLhello::usereneg    = $cfg{'usereneg'};
+            $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
+            $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
+            $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
+            $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
             $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
             $Net::SSLhello::proxyport   = $cfg{'proxyport'};
-            $Net::SSLhello::double_reneg= 0; # FIXME: $cfg{'ssl'}->{'double_reneg'}
         }
         _v_print("cipher range: $cfg{'cipherrange'}");
+_dbx $cfg{'usesni'};
         foreach $ssl (@{$cfg{'version'}}) {
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
@@ -5269,10 +5282,20 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
-            Net::SSLhello::printCipherStringArray(
-                'compact', $host, $port, $ssl, $cfg{'usesni'},
-                Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
-            );
+            if ($Net::SSLhello::usesni == 1) { # always test without SNI
+                $Net::SSLhello::usesni = 0;
+                Net::SSLhello::printCipherStringArray(
+                    'compact', $host, $port, $ssl, 0,
+                    Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
+                );
+                $Net::SSLhello::usesni = 1;
+            }
+            next if ($Net::SSLhello::usesni == 0);
+            next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
+                Net::SSLhello::printCipherStringArray(
+                    'compact', $host, $port, $ssl, 1,
+                    Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
+                );
         }
         next;
     }
