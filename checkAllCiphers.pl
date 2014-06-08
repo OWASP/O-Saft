@@ -62,6 +62,14 @@ OPTIONS
                 available formarts: compact, simple, full
     --sni       test in SNI mode also (default)
     --no-sni    do not test in SNI mode
+    --ssl-retry=CNT
+                number of retries for connects, if timed-out
+    --ssl-timeout=SEC
+                timeout in seconds for connects
+    --ssl-usereneg
+                use secure renegotion
+    --ssl-doubel-reneg
+                use renegotion SSL Extension also for SCSV (double send)
     --proxyhost=PROXYHOST
                 make connection through proxy on PROXYHOST
     --proxyport=PROXYPORT
@@ -191,8 +199,6 @@ our %cfg = ( # from o-saft (only relevant parts)
                        ],
     }, # cipherranges
 
-    'format'        => "",      # empty means some slightly adapted values (no \s\n)
-    'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
     'out_header'    => 0,       # print header lines in output
     'hosts'         => [],      # list of hosts:port to be processed
     'host'          => "",      # currently scanned host
@@ -206,13 +212,14 @@ our %cfg = ( # from o-saft (only relevant parts)
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
-    'ssl' => {         # configurations for TCP SSL protocol
+    'sslhello' => {    # configurations for TCP SSL protocol
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 3,       # number of retry when timeout
-        'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV
+        'usereneg'  => 0,       # 0: do not send reneg_info Extension
+        'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV (be polite according RFC5746)
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
     },
-    'legacy'        => "simple",
+    'legacy'        => "compact", # FIXME: simple
     'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan
                         ssltest ssltest-g sslyze testsslserver tchsslcheck
                         simple full compact quick)],
@@ -237,17 +244,6 @@ our %cfg = ( # from o-saft (only relevant parts)
         'DTLSv1'    => 0xFEFF,
         'SCSV'      => 0x03FF,
      },
-
-################ added ########## muss noch angepasst werden
-    'legacy'        => "compact",
-        'timeout'   => 2,     ######### NEW: timeout to receive ssl-answer ########
-        'retry'     => 3,     ######### NEW: retry counter for Timeout     ########
-        'double_reneg'  => 1, # Do NOT send renect cipher AND reneg Extension at the same time (to be polite according RFC5746)
-        'proxyhost'     => "",######### NEW: Proxy: e.g. "192.168.1.1" ####
-        'proxyport'     => 3128,######### NEW: Proxy-Port: e.g. 3128    #####
-        'starttls'      => 0, ######### NEW: Do Starttls ########
-        #....
-#######################
 );
 
 my %text = (
@@ -321,10 +317,12 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; } # sslscan
     if ($arg =~ /^--range=(.*)/)        { $cfg{'cipherrange'}=$1;}
     if ($arg =~ /^--cipherrange=(.*)/)  { $cfg{'cipherrange'}=$1;}
-    if ($arg =~ /^--format=(.*)/)       { $cfg{'format'}   = $1; }
     if ($arg =~ /^--legacy=(.*)/)       { $cfg{'legacy'}   = $1; }
     if ($arg =~ /^--tab$/)          { $text{'separator'} = "\t"; } # TAB character
-    if ($arg =~ /^--timeout=(.*)/)  {$cfg{'ssl'}->{'timeout'}=$1;}
+    if ($arg =~ /^--ssl[_-]?retry=(.*)/){ $cfg{'sslhello'}->{'retry'}=$1;}
+    if ($arg =~ /^--ssl[_-]?timeout=(.*)/)  {$cfg{'sslhello'}->{'timeout'}=$1;}
+    if ($arg =~ /^--ssl[_-]?usereneg=(.*)/) {$cfg{'sslhello'}->{'usereneg'}=$1;}
+    if ($arg =~ /^--ssl[_-]?double[_-]?reneg/)  {$cfg{'sslhello'}->{'double_reneg'}=1;}
     #} +---------+----------------------+-------------------------
 
     next if ($arg =~ /^[+-]/); # quick&dirty
@@ -339,12 +337,12 @@ while ($#argv >= 0) {
     $Net::SSLhello::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLhello::usesni      = $cfg{'usesni'};
     $Net::SSLhello::starttls    = 0;
-    $Net::SSLhello::timeout     = $cfg{'ssl'}->{'timeout'};
-    $Net::SSLhello::retry       = $cfg{'ssl'}->{'retry'};
-    $Net::SSLhello::usereneg    = $cfg{'usereneg'};
+    $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
+    $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
+    $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
+    $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
     $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport   = $cfg{'proxyport'};
-    $Net::SSLhello::ouble_reneg = 1;
 }
 
 # check ssl protocols
@@ -354,13 +352,11 @@ foreach $ssl (@{$cfg{'versions'}}) {
     push(@{$cfg{'version'}}, $ssl);
 }
 
-unless ($cfg{'legacy'} eq 'compact') {
-    print "##############################################################################################\n";
-    print "# \'$me\' for OWASP-Project \'o-saft\', Version: $VERSION\n";
-    print "#                          ";
-    Net::SSLhello::version ();
-    print "##############################################################################################\n\n";
-}
+print "##############################################################################\n";
+print "# '$me' (part of OWASP project 'O-Saft'), Version: $VERSION\n";
+print "#                          ";
+Net::SSLhello::version();
+print "##############################################################################\n";
 
 foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($host =~ m#.*?:\d+#) { 
@@ -375,50 +371,29 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         my @accepted = (); # List of all Ciphers that are supported by the server with the tested Protocol
         my @testing  = ();
         my $range = $cfg{'cipherrange'};            # use specified range of constants
-           $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
+           $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
         push(@testing, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
-        if ($ssl eq 'SSLv2') { # test only SSL2 and SSL3 ciphers
-            @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);  # SSLV2+SSLV3-Ciphers
+        if ($ssl eq 'SSLv2') {
+            @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
             _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
             _trace("accepted ciphers: @accepted\n");
             Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
         } else { # test all defined Ciphers
-            if ($cfg{'usesni'}==1) {
-                $cfg{'usesni'}=0; # try first without SNI
-                @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);  # SSLV2-Ciphers werden übersprungen
+            if ($Net::SSLhello::usesni==1) {
+                $Net::SSLhello::usesni=0; # try first without SNI
+                @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
                 _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
                 _trace("accepted ciphers: @accepted\n");
-                Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $cfg{'usesni'}, @accepted);
-                $cfg{'usesni'}=1; # restore 'usesni'
+                Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
+                $Net::SSLhello::usesni=1; # restore 'usesni'
             }
-            @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);  # SSLV2-Ciphers werden übersprungen
+            @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
             _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
             _trace("accepted ciphers: @accepted\n");
-            Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $cfg{'usesni'}, @accepted);
+            Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
         }
     }
     _trace("host}" . "\n");
 }
-
-# ToDo: 06jun14
-#   Augabe vertauschen: --legacy=compact --legacy=full
-
-# ToDo: 06jun14
-#  mit --trace kommt:
-# Server has NO preferred order for Cipher Suites
-#
-#  ==> in Net::SSLhello anlegen:
-#      Net::SSLhello{order} = (
-#         'SSLv2' = [],
-#         'SSLv3' = [],
-#         'TLSv1' = [],
-#         ...
-#      )
-#      Net::SSLhello{honors_client_order} = (
-#         'SSLv2' = 0|1,
-#         'SSLv3' = 0|1,
-#         'TLSv1' = 0|1,
-#         ...
-#      )
 
 exit;
