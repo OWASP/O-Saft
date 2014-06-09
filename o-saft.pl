@@ -5327,7 +5327,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::proxyport   = $cfg{'proxyport'};
         }
         _v_print("cipher range: $cfg{'cipherrange'}");
-_dbx $cfg{'usesni'};
         foreach $ssl (@{$cfg{'version'}}) {
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
