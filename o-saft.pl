@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.277 14/06/09 12:38:36";
+my  $SID    = "@(#) yeast.pl 1.279 14/06/09 13:40:05";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4328,6 +4328,12 @@ sub printcipherlist() {
 sub _print_head($$) { printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60); }
 sub _print_opt($$$) { printf("%16s%s%s\n", @_); }
 sub _print_cmd($$)  { printf("     +%-14s\t%s\n", @_); }
+sub _print_arr($$$) {
+    my ($ssl, $sep, $dumm) = @_;
+    my @all = ();
+    push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$ssl}});
+    printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
+}
 sub _print_cfg($$$$){
     # print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
@@ -4347,6 +4353,7 @@ sub printtable($) {
         'abbr'  => ["Abbrevation",   " - ",  "Description"],
         'intern'=> ["Command",       "    ", " list of commands"],
         'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
+        'range' => ["range name",    " - ",  "hex values in this range"],
         'data'  => ["key",    "=",   "text"],
         'check' => ["key",    "=",   "text"],
         'text'  => ["key",    "=",   "text"],
@@ -4361,6 +4368,9 @@ sub printtable($) {
     if ($typ eq 'regex') { _print_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
     if ($typ eq 'compl') { _print_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
     if ($typ eq 'score') { _print_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
+   #if ($typ eq 'range') { _print_arr($_, $sep, $cfg{'cipherranges'}->{$_}) foreach (sort keys %{$cfg{'cipherranges'}}); }
+        # above prints > 65.000 hex values, not very usefull ...
+    if ($typ eq 'range') { print `\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0`; } # ToDo: quick&dirty backticks
     if ($typ eq 'intern') {
         foreach $key (sort keys %cfg) {
             next if ($key eq 'cmd-intern'); # don't list myself
@@ -4511,7 +4521,7 @@ sub printhelp($) {
     if ($label =~ m/^cmd$/i)            { print "# $mename commands:\t+"        . join(" +", @{$cfg{'commands'}}); exit; }
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
     if ($label =~ m/^commands?/i){ printcommands();  exit; }
-    if ($label =~ m/^(abbr|compl|intern|regex|score|data|check|text)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
+    if ($label =~ m/^(abbr|compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
     if ($label =~ m/^(?:cfg[_-])?(check|data|text)s?(?:[_-]cfg)?$/i) { printtable('cfg_'.lc($1)); exit; }
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
@@ -5926,6 +5936,10 @@ the description here is text provided by the user.
 =head3 --help=intern
 
   Show internal commands.
+
+=head3 --help=range
+
+  Show list of cipherranges (see "--cipherrange=RANG").
 
 =head3 --help=score
 
