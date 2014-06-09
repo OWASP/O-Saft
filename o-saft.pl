@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.276 14/06/09 02:03:49";
+my  $SID    = "@(#) yeast.pl 1.277 14/06/09 12:38:36";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4170,6 +4170,9 @@ sub printquit() {
     #    |tr '\012' ' ' \
     #    +quit +gibts_nicht
     #
+    # NOTE: This extracts all options, but does not use all variants these
+    #        options can be written. So just a rough test ...
+    #
     # NOTE: Above shell commands insist on proper definitons in POD format
     #       herein, in particular that all options are defined using POD's
     #       =head* keyword.
@@ -4185,7 +4188,7 @@ sub printquit() {
 
     if ($cfg{'trace'} + $cfg{'verbose'} <= 0) {
         #_warn(" +quit  command usefull with --v and/or --trace* option only");
-        _warn(" +quit  command should be used with  --trace=arg option");
+        _warn(" +quit  command should be used with  --trace=arg  option");
     }
     _v_print("\n# some information may appear multiple times\n#");
     $cfg{'verbose'} = 2;
@@ -4194,7 +4197,7 @@ sub printquit() {
     _yeast_init();
     _yeast_args();
     print "# TEST done.";
-} # printtest
+} # printquit
 
 sub printversion() {
     #? print program and module versions
@@ -4716,201 +4719,202 @@ while ($#argv >= 0) {
         $arg =~ s/=+$//;                    # remove trailing = (for CGI mode)
     }
 
-    # Following checks use exact matches with 'eq' or regex matches with '=~'
+    # first handle some old syntax for backward compatibility
+    if ($arg =~ /^--cfg(cmd|score|text)-([^=]*)=(.*)/){
+        $typ = 'CFG-'.$1; unshift(@argv, $2 . "=" . $3);   # convert to new syntax
+        _warn("old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files");
+        next; # no more normalisation!
+    }
+    if ($arg =~ /^--set[_-]?score=(.*)/){
+        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolte, please use --cfg_score=*; ignored");
+        next;
+    }
 
-    #{ options
-    #!# You may read the lines as table with colums like:
+    #{ handle help and related option and command
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        next; } # must be before --help
     if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0;    next; }
-    if ($arg =~ /^--help=wiki$/)        {     printmediawiki();     exit 0; } #
-    if ($arg =~ /^--h(?:elp)?(?:=(.*))?$/){   printhelp($1);        exit 0; } # allow --h --help --h=*
-    if ($arg =~ /^\+help=?(.*)$/)       {     printhelp($1);        exit 0; } # allow +help +help=*
-    if ($arg =~ /^(--|\+)ab(?:br|k)=?$/){     printtable('abbr');   exit 0; }
-    if ($arg =~ /^(--|\+)glossar$/)     {     printtable('abbr');   exit 0; }
-    if ($arg =~ /^(--|\+)todo=?$/i)     {     printtodo();          exit 0; }
+    if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
+    if ($arg =~ /^--cgi=?/)     { $arg = '# for CGI mode; ignore';  next; }
+    if ($arg =~ /^--help=wiki$/)        { printmediawiki();       exit 0; } #
+    if ($arg =~ /^--h(?:elp)?$/)        { printhelp($1);          exit 0; } # allow --h --help --h=*
+    if ($arg =~ /^(--|\+)help=?(.*)$/)  { printhelp($2);          exit 0; } # allow +help +help=*
+    if ($arg =~ /^(--|\+)ab(?:br|k)=?$/){ printtable('abbr');     exit 0; }
+    if ($arg =~ /^(--|\+)glossar$/)     { printtable('abbr');     exit 0; }
+    if ($arg =~ /^(--|\+)todo=?$/i)     { printtodo();            exit 0; }
+    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
+    if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
+        # in CGI mode commands need to be passed with --cmd=* option
+    #!#--------+------------------------+--------------------------+------------
+    #} handle help
+
+    # normalize options with arguments
+    #    --opt=name     --> --opt name
+    if ($arg =~ m/(^-[^=]*)=(.*)/) {
+        $arg = $1;
+        unshift(@argv, $2);
+        #_dbx("push to ARGV $2");
+    } # $arg now contains option only, no argument
+
+    # normalize option strings:
+    #    --opt-name     --> --optname
+    #    --opt_name     --> --optname
+    #    --opt.name     --> --optname
+    $arg =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g if ($arg =~ /^-/);
+    #_dbx("normalized= $arg");
+
+    # Following checks use exact matches with 'eq' or regex matches with '=~'
+
+    #{ options
+    #!# You may read the lines as table with colums like:
+    #!#--------+------------------------+----------------------------
+    #!#           argument to check       what to do
+    #!#--------+------------------------+----------------------------
     # options for trace and debug
-    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();            exit 0; } # debugging
-   #if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++; $info = 1; next; }
-    if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;        next; }
-    if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        next; }
-    if ($arg =~ /^--no[_-]?warnings?$/) { $cfg{'warning'}   = 0;    next; }
-    if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    next; }
-    if ($arg eq  '--trace')             { $cfg{'trace'}++;          next; }
-    if ($arg =~ /^--trace(--|[_-]?arg)/i){$cfg{'traceARG'}++;       next; } # special internal tracing
-    if ($arg =~ /^--trace([_-]?cmd)/i)  { $cfg{'traceCMD'}++;       next; } # ..
-    if ($arg =~ /^--trace(@|[_-]?key)/i){ $cfg{'traceKEY'}++;       next; } # ..
-    if ($arg =~ /^--trace=(.*)/)        { $typ = 'TRACE';   unshift(@argv, $1); next; }
-    if ($arg =~ /^(--|\+)quit$/)        { $arg = '+quit';                 }
+    if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;        }
+    if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
+    if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
+    if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
+    if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
+    if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
+    if ($arg =~ /^--trace(@|key)/i)     { $cfg{'traceKEY'}++;       } # ..
+    if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # ..
+    if ($arg eq  '--trace')             { $typ = 'TRACE';           }
+    if ($arg eq  '--quit')              { $arg = '+quit';           }
     # proxy options
-    if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';           next; }
-    if ($arg =~ /^--proxy(?:host)?=(.*)/){$typ = 'PHOST';   unshift(@argv, $1); next; }
-    if ($arg =~ /^--proxyport$/)        { $typ = 'PPORT';           next; }
-    if ($arg =~ /^--proxyport=(.*)/)    { $typ = 'PPORT';   unshift(@argv, $1); next; }
-    if ($arg =~ /^--proxyuser$/)        { $typ = 'PUSER';           next; }
-    if ($arg =~ /^--proxyuser=(.*)/)    { $typ = 'PUSER';   unshift(@argv, $1); next; }
-    if ($arg =~ /^--proxypass$/)        { $typ = 'PPASS';           next; }
-    if ($arg =~ /^--proxypass=(.*)/)    { $typ = 'PPASS';   unshift(@argv, $1); next; }
-    if ($arg =~ /^--proxyauth$/)        { $typ = 'PAUTH';           next; }
-    if ($arg =~ /^--proxyauth=(.*)/)    { $typ = 'PAUTH';   unshift(@argv, $1); next; }
+    if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';           }
+    if ($arg eq  '--proxyport')         { $typ = 'PPORT';           }
+    if ($arg eq  '--proxyuser')         { $typ = 'PUSER';           }
+    if ($arg eq  '--proxypass')         { $typ = 'PPASS';           }
+    if ($arg eq  '--proxyauth')         { $typ = 'PAUTH';           }
     # options form other programs for compatibility
-    if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0;    next; } # sslscan
-    if ($arg eq  '--hide_rejected_ciphers'){$cfg{'disabled'}= 0;    next; } # ssltest.pl
-    if ($arg eq  '--http_get')          { $cfg{'usehttp'}++;        next; } # ssltest.pl
-    if ($arg eq  '--version')           { $arg = '+version';              }
+    if ($arg =~ /^--?nofailed$/)        { $cfg{'enabled'}   = 0;    } # sslscan
+    if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
+    if ($arg eq  '--httpget')           { $cfg{'usehttp'}++;        } # ssltest.pl
+    if ($arg eq  '--version')           { $arg = '+version';        }
     # options form other programs which we treat as command; see Options vs. Commands also
-    if ($arg eq  '--list')              { $arg = '+list';                 } # no next!
-    if ($arg eq  '--chain')             { $arg = '+chain';                } # as these
-    if ($arg eq  '--default')           { $arg = '+default';              } # should
-    if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';          } # become
-    if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';           } # commands
-    if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';        } # ..
-    if ($arg =~ /^--trace([_-]?sub)/i)  { $arg = '+traceSUB';             } # ..
-    if ($arg eq  '--printavailable')    { $arg = '+ciphers';              } # ssldiagnose.exe
-    if ($arg eq  '--printcert')         { $arg = '+text';                 } # ..
-    if ($arg eq  '-i')                  { $arg = '+issuer';               } # ssl-cert-check
+    if ($arg eq  '--list')              { $arg = '+list';           } # no next!
+    if ($arg eq  '--chain')             { $arg = '+chain';          } # as these
+    if ($arg eq  '--default')           { $arg = '+default';        } # should
+    if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';    } # become
+    if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';     } # commands
+    if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';  } # ..
+    if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # ssldiagnose.exe
+    if ($arg eq  '--printcert')         { $arg = '+text';           } # ..
+    if ($arg eq  '-i')                  { $arg = '+issuer';         } # ssl-cert-check
     # options to handle external openssl
-    if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1;    next; }
-    if ($arg =~ /^--force[_-]?openssl$/){ $cmd{'extciphers'}= 1;    next; }
-    if ($arg =~ /^--no[_-]?openssl$/)   { $cmd{'extopenssl'}= 0;    next; }
-    if ($arg =~ /^--s_?client$/)        { $cmd{'extsclient'}++;     next; }
-    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use_nextprot'}=1;   next; }
-    if ($arg =~ /^--no[_-]?nextprotoneg/){$cfg{'use_nextprot'}=0;   next; }
-    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}=1;   next; }
-    if ($arg =~ /^--no[_-]?tlsextdebug/){ $cfg{'use_extdebug'}=0;   next; }
-    if ($arg =~ /^--?reconnect$/)       {$cfg{'use_reconnect'}=1;   next; }
-    if ($arg =~ /^--no[_-]?reconnect$/) {$cfg{'use_reconnect'}=0;   next; }
-    if ($arg =~ /^--sclient[_-]?opt$/)  {     $typ = 'OPT';         next; }
-    if ($arg =~ /^--sclient[_-]?opt=(.*)/){   $typ = 'OPT'; unshift(@argv, $1); next; }
+    if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1;    }
+    if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}= 0;    }
+    if ($arg eq  '--forceopenssl')      { $cmd{'extciphers'}= 1;    }
+    if ($arg =~ /^--s_?client$/)        { $cmd{'extsclient'}++;     }
+    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use_nextprot'}=1;   }
+    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'use_nextprot'}=0;   }
+    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}=1;   }
+    if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}=0;   }
+    if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'}=1;  }
+    if ($arg =~ /^--noreconnect$/)      { $cfg{'use_reconnect'}=0;  }
+    if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
-    if ($arg eq  '--regular')           { $cfg{'usehttp'}++;        next; } # sslyze
-    if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    next; }
-    if ($arg =~ /^--force[_-]?sni/)     { $cfg{'forcesni'}  = 1;    next; }
-    if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    next; }
-    if ($arg =~ /^--no[_-]?sni/)        { $cfg{'usesni'}    = 0;    next; }
-    if ($arg =~ /^--no[_-]?cert$/)      { $cfg{'no_cert'}++;        next; }
-    if ($arg =~ /^--no[_-]?ignorecase$/){ $cfg{'ignorecase'}= 0;    next; }
-    if ($arg =~ /^--ignorecase$/)       { $cfg{'ignorecase'}= 1;    next; }
-    if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    next; } # allow case insensitive
-    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    next; } # ..
-    if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    next; } # ..
-    if ($arg =~ /^--?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}    = 1;    next; } # allow ._- separator
-    if ($arg =~ /^--?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}    = 1;    next; } # ..
-    if ($arg =~ /^--?tlsv?1[-_.]?3$/i)  { $cfg{'TLSv13'}    = 1;    next; } # ..
-    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}    = 1;    next; } # ..
-    if ($arg =~ /^--dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}    = 1;    next; } # ..
-    if ($arg =~ /^--no[_-]?sslv?2$/i)   { $cfg{'SSLv2'}     = 0;    next; } # allow _- separator
-    if ($arg =~ /^--no[_-]?sslv?3$/i)   { $cfg{'SSLv3'}     = 0;    next; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?1$/i)   { $cfg{'TLSv1'}     = 0;    next; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?11$/i)  { $cfg{'TLSv11'}    = 0;    next; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?12$/i)  { $cfg{'TLSv12'}    = 0;    next; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?13$/i)  { $cfg{'TLSv13'}    = 0;    next; } # ..
-    if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLSv9'}    = 0;    next; } # ..
-    if ($arg =~ /^--no[_-]?dtlsv?10?$/i){ $cfg{'DTLSv1'}    = 0;    next; } # ..
-    if ($arg eq  '-b')                  { $cfg{'out_header'}= 1;    next; } # ssl-cert-check
-    if ($arg eq  '-V')                  { $cfg{'out_header'}= 1;    next; } # ssl-cert-check
-#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        next; } # ssl-cert-check # FIXME: not supported
+    if ($arg eq  '--regular')           { $cfg{'usehttp'}++;        } # sslyze
+    if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
+    if ($arg eq  '--forcesni')          { $cfg{'forcesni'}  = 1;    }
+    if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    }
+    if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
+    if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
+    if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
+    if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
+    if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    } # allow case insensitive
+    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    } # ..
+    if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    } # ..
+    if ($arg =~ /^--?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}    = 1;    } # allow ._- separator
+    if ($arg =~ /^--?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}    = 1;    } # ..
+    if ($arg =~ /^--?tlsv?1[-_.]?3$/i)  { $cfg{'TLSv13'}    = 1;    } # ..
+    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}    = 1;    } # ..
+    if ($arg =~ /^--dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}    = 1;    } # ..
+    if ($arg =~ /^--nosslv?2$/i)        { $cfg{'SSLv2'}     = 0;    } # allow _- separator
+    if ($arg =~ /^--nosslv?3$/i)        { $cfg{'SSLv3'}     = 0;    } # ..
+    if ($arg =~ /^--notlsv?1$/i)        { $cfg{'TLSv1'}     = 0;    } # ..
+    if ($arg =~ /^--notlsv?11$/i)       { $cfg{'TLSv11'}    = 0;    } # ..
+    if ($arg =~ /^--notlsv?12$/i)       { $cfg{'TLSv12'}    = 0;    } # ..
+    if ($arg =~ /^--notlsv?13$/i)       { $cfg{'TLSv13'}    = 0;    } # ..
+    if ($arg =~ /^--nodtlsv?09$/i)      { $cfg{'DTLSv9'}    = 0;    } # ..
+    if ($arg =~ /^--nodtlsv?10?$/i)     { $cfg{'DTLSv1'}    = 0;    } # ..
+    if ($arg eq  '-b')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
+    if ($arg eq  '-V')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
+#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # FIXME: not supported
     # our options
-    if ($arg =~ /^--no[_-]?rc/)         { next;                           } # simply ignore
-    if ($arg =~ /^--ssl[_-]?lazy$/)     { $cfg{'ssl_lazy'}  = 1;    next; } # ..
-    if ($arg =~ /^--no[_-]?ssl[_-]?lazy$/){$cfg{'ssl_lazy'} = 0;    next; } # ..
-    if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    next; } # ..
-    if ($arg =~ /^--no[_-]?dns/)        { $cfg{'usedns'}    = 0;    next; }
-    if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1;    next; }
-    if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    next; }
-    if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    next; }
-    if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    next; }
-    if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1;    next; }
-    if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    next; }
-    if ($arg =~ /^--no[_-]?score$/)     { $cfg{'out_score'} = 0;    next; }
-    if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    next; }
-    if ($arg =~ /^--no[_-]?header$/)    { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); next; } # push() is ugly hack to preserve option even from rc-file
-    if ($arg =~ /^--no[_-]?md5[_-]?cipher$/){$cfg{'nomd5cipher'}=1; next; }
-    if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       next; }
-    if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        next; } # ssldiagnose.exe
-    if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            next; } # --h already catched above
-    if ($arg =~ /^--?h(?:ost)?=(.*)/)   { $typ = 'HOST';    unshift(@argv, $1); next; }
-    if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            next; }
-    if ($arg =~ /^--?p(?:ort)?=(.*)/)   { $typ = 'PORT';    unshift(@argv, $1); next; }
-    if ($arg =~ /^--exe(?:[_-]?path)?$/){ $typ = 'EXE';             next; }
-    if ($arg =~ /^--exe(?:[_-]?path)?=(.*)/){ $typ ='EXE';  unshift(@argv, $1); next; }
-    if ($arg =~ /^--lib(?:[_-]?path)?$/){ $typ = 'LIB';             next; }
-    if ($arg =~ /^--lib(?:[_-]?path)?=(.*)/){ $typ ='LIB';  unshift(@argv, $1); next; }
-    if ($arg =~ /^--envlibvar$/)        { $typ = 'ENV';             next; }
-    if ($arg =~ /^--envlibvar=(.*)/)    { $typ = 'ENV';     unshift(@argv, $1); next; }
-    if ($arg =~ /^--call$/)             { $typ = 'CALL';            next; }
-    if ($arg =~ /^--call=(.*)/)         { $typ = 'CALL';    unshift(@argv, $1); next; }
-    if ($arg =~ /^--cipher$/)           { $typ = 'CIPHER';          next; }
-    if ($arg =~ /^--cipher=(.*)/)       { $typ = 'CIPHER';  unshift(@argv, $1); next; }
-    if ($arg =~ /^--(?:cipher)?range$/) { $typ = 'CRANGE';          next; }
-    if ($arg =~ /^--(?:cipher)?range=(.*)/){$typ='CRANGE';  unshift(@argv, $1); next; }
-    if ($arg =~ /^--format$/)           { $typ = 'FORMAT';          next; }
-    if ($arg =~ /^--format=(.*)/)       { $typ = 'FORMAT';  unshift(@argv, $1); next; }
-    if ($arg =~ /^--legacy$/)           { $typ = 'LEGACY';          next; }
-    if ($arg =~ /^--legacy=(.*)/)       { $typ = 'LEGACY';  unshift(@argv, $1); next; }
-    if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             next; }
-    if ($arg =~ /^--sep(?:arator)?=(.*)/){$typ = 'SEP';     unshift(@argv, $1); next; }
-    if ($arg =~ /^--tab$/)              { $text{'separator'} = "\t";next; } # TAB character
-    if ($arg =~ /^--timeout$/)          { $typ = 'TIMEOUT';         next; }
-    if ($arg =~ /^--timeout=(.*)/)      { $typ = 'TIMEOUT'; unshift(@argv, $1); next; }
-    if ($arg =~ /^--?interval/)         { $typ = 'TIMEOUT';         next; } # ssldiagnos.exe
-    if ($arg =~ /^--openssl=(.*)/)      { $typ = 'OPENSSL'; unshift(@argv, $1); $cmd{'extopenssl'}= 1; next; }
-    if ($arg =~ /^--no[_-]?cert[_-]?te?xt$/)    { $typ = 'CTXT';    next; }
-    if ($arg =~ /^--no[_-]?cert[_-]?te?xt=(.*)/){ $typ = 'CTXT';    unshift(@argv, $1); next; }
+    if ($arg eq  '--norc')              {                           } # simply ignore
+    if ($arg eq  '--ssllazy')           { $cfg{'ssl_lazy'}  = 1;    } # ..
+    if ($arg eq  '--nossllazy')         { $cfg{'ssl_lazy'}  = 0;    } # ..
+    if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    } # ..
+    if ($arg =~ /^--sslv?2null$/i)      { $cfg{'nullssl2'}  = 1;    } # ..
+    if ($arg eq  '--nodns')             { $cfg{'usedns'}    = 0;    }
+    if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1;    }
+    if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    }
+    if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    }
+    if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    }
+    if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1;    }
+    if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    }
+    if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
+    if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
+    if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); } # push() is ugly hack to preserve option even from rc-file
+    if ($arg eq  '--nomd5cipher')       { $cfg{'nomd5cipher'}=1;    }
+    if ($arg eq  '--tab')               { $text{'separator'} = "\t";} # TAB character
+    if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
+    if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
+    if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
+    if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            }
+    if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
+    if ($arg =~ /^--lib(?:path)?$/)     { $typ = 'LIB';             }
+    if ($arg eq  '--envlibvar')         { $typ = 'ENV';             }
+    if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       }
+    if ($arg eq  '--call')              { $typ = 'CALL';            }
+    if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
+    if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
+    if ($arg eq  '--range')             { $typ = 'CRANGE';          }
+    if ($arg eq  '--format')            { $typ = 'FORMAT';          }
+    if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
+    if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             }
+    if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
+    if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
+    if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     # options for Net::SSLhello
-    if ($arg =~ /^--ssl[_-]?retry$/)            { $typ = 'SSLRETRY';next; }
-    if ($arg =~ /^--ssl[_-]?retry=(.*)/)        { $typ = 'SSLRETRY';unshift(@argv, $1); next; }
-    if ($arg =~ /^--ssl[_-]?timeout[_-]?$/)     { $typ = 'SSLTOUT'; next; }
-    if ($arg =~ /^--ssl[_-]?timeout[_-]?=(.*)/) { $typ = 'SSLTOUT'; unshift(@argv, $1); next; }
-    if ($arg =~ /^--ssl[_-]?usereneg$/)         { $typ = 'SSLRENEG';next; }
-    if ($arg =~ /^--ssl[_-]?usereneg=(.*)/)     { $typ = 'SSLRENEG';unshift(@argv, $1); next; }
-    if ($arg =~ /^--ssl[_-]?double[_-]?reneg$/)    {$typ='DOUBLE';  next; }
-    if ($arg =~ /^--ssl[_-]?double[_-]?reneg=(.*)/){$typ='DOUBLE';  unshift(@argv, $1); next; }
-    #!#--------+------------------------+--------------------------+------------
-    if ($arg =~ /^--cfg[_-](cmd|score|text)-([^=]*)=(.*)/){              # warn if old syntax; must be first --cfg* check!
-        $typ = 'CFG-'.$1; unshift(@argv, $2) . "=" . $3;   # convert to new syntax
-        _warn("old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files");
-        next;
-    }
-    if ($arg =~ /^--cfg[_-]([^=]*)$/)   { $typ = 'CFG-'.$1;         next; }
-    if ($arg =~ /^--cfg[_-]([^=]*)=(.*)/){$typ = 'CFG-'.$1; unshift(@argv, $2); next; }
-    if ($arg =~ /^--ca[_-]?depth$/i)    { $typ = 'CADEPTH';         next; } # some tools use CAdepth
-    if ($arg =~ /^--ca[_-]?depth=(.*)/i){ $typ = 'CADEPTH'; unshift(@argv, $1); next; } # ..
-    if ($arg =~ /^--ca[_-]?(?:cert(?:ificate)?|file)$/i)    { $typ = 'CAFILE';  next; } # curl, openssl, wget, ...
-    if ($arg =~ /^--ca[_-]?(?:cert(?:ificate)?|file)=(.*)/i){ $typ = 'CAFILE';  unshift(@argv, $1); next; }
-    if ($arg =~ /^--ca[_-]?(?:directory|path)$/i)           { $typ = 'CAPATH';  next; } # curl, openssl, wget, ...
-    if ($arg =~ /^--ca[_-]?(?:directory|path)=(.*)/i)       { $typ = 'CAPATH';  unshift(@argv, $1); next; }
-    if ($arg eq  '-c')                  { $typ = 'CAPATH'; unshift(@argv, $2); next; } # ssldiagnose.exe
-    if ($arg =~ /^--win[_-]?CR/i)       { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); next; }
-    if ($arg =~ /^--(fips|ism|pci)$/i)  { next; } # silently ignored
-    if ($arg =~ /^-connect$/)           { next; } #  "
-    if ($arg eq  '--insecure')          { next; } #  "
-    if ($arg =~ /^--use?r$/)            { next; } # ignore, nothing to do
-    if ($arg =~ /^--(ciscospeshul|nocolor|nopct|strictpcigrade|UDP)$/)    { next; } # ssldiagnos.exe
-    if ($arg =~ /^--server(cert|certkey|certpass|cipher|protocol|mode)$/) { next; } #  "
-    if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){next; } # silently ignored
+    if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
+    if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
+    if ($arg eq  '--sslusereneg')       { $typ = 'SSLRENEG';        }
+    if ($arg eq  '--ssldoublereneg')    { $typ = 'DOUBLE';          }
+    #!#--------+------------------------+----------------------------
+    if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
+    if ($arg =~ /^--ca(?:cert(?:ificate)?|file)$/i){ $typ ='CAFILE';} # curl, openssl, wget, ...
+    if ($arg =~ /^--ca(?:directory|path)$/i)       { $typ ='CAPATH';} # curl, openssl, wget, ...
+    if ($arg eq  '-c')                  { $typ = 'CAPATH';          } # ssldiagnose.exe
+    if ($arg =~ /^--winCR/i)            { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); }
+    # ignored options
+    if ($arg =~ /^--(fips|ism|pci)$/i)  {}
+    if ($arg =~ /^-connect$/)           {}
+    if ($arg eq  '--insecure')          {}
+    if ($arg =~ /^--use?r$/)            {}
+    if ($arg =~ /^--(ciscospeshul|nocolor|nopct|strictpcigrade|UDP)$/)    {} # ssldiagnos.exe
+    if ($arg =~ /^--server(cert|certkey|certpass|cipher|protocol|mode)$/) {} #  "
+    if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){}
                 # -s HOST   # ssl-cert-check: -s ignored hence HOST parsed as expected
                 # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
-    #!#--------+------------------------+--------------------------+------------
-    if ($arg =~ /^--set[_-]?score=(.*)/){ # option used until 13.12.11
-        _warn("--set-score=* obsolte, please use --cfg_score=*; ignored");
-        next;
-    }
-    #} +---------+----------------------+----------------------+----------------
+    #!#--------+------------------------+----------------------------
+
+    next if ($arg =~ /^-/); # all options handled, remaining are ignored
+        # ToDo: means that targets starting with '-' are not possible
 
     #{ commands
     _y_ARG("command? $arg");
-    if ($arg =~ /^--cmd=\+?(.*)/){ $arg = '# CGI '; $arg = '+' . $1; } # no next
-        # in CGI mode commands need to be passed with --cmd=* option
     if ($arg eq  '+info')   { $info  = 1; } # needed 'cause +info and ..
     if ($arg eq  '+quick')  { $quick = 1; } # .. +quick convert to list of commands
     if ($arg eq  '+check')  { $check = 1; $cfg{'out_score'} = 1; } #
     # You may read the lines as table with colums like:
     #  +---------+--------------------+-----------------------+-----------------
-    #   argument to check               aliased to (no next!) # traditional name
+    #             argument to check     aliased to            # traditional name
     #  +---------+--------------------+-----------------------+-----------------
     if ($arg =~ /^\+commonName/i)     { $arg = '+cn';      }
     if ($arg =~ /^\+cert(ificate)?$/i){ $arg = '+pem';     }  # PEM
@@ -4922,16 +4926,15 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')              { $arg = '+hsts';    }
     if ($arg eq  '+sigkey')           { $arg = '+sigdump'; }  # sigdump
     if ($arg eq  '+sigkey_algorithm') { $arg = '+signame'; }  # signame
-    if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';  }
-    if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';  }
-    if ($arg eq  '+extension')        { $arg = '+extensions'; }
+    if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';   }
+    if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';   }
+    if ($arg eq  '+extension')        { $arg = '+extensions';  }
     if ($arg =~ /^\+ext_aia/i)        { $arg = '+ext_authority'; } # AIA is a common acronym ...
-    if ($arg =~ /^\+(?:all|raw)ciphers?(?:all|raw)?$/){ $arg = '+cipherraw'; }
+    if ($arg =~ /^\+(?:all|raw)?ciphers?(?:all|raw)?$/){ $arg = '+cipherraw'; }
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
     # commands which cannot be combined with others
-    if ($arg =~ /^--cgi=?/) { $arg = '# for CGI mode; ignore';       next; }
     if ($arg eq  '+info')   { @{$cfg{'do'}} = (@{$cfg{'cmd-info'}},    'info'); next; }
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
@@ -5163,7 +5166,6 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
 }
 
 printquit(), exit 0   if (_is_do('quit')); # internal test command
-print " (($cfg{'trace'} + $cfg{'verbose'})";
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
     _yeast_init();
@@ -7843,6 +7845,9 @@ lines. Some special comment lines are used, see  B<Comments>  below.
 
 All documentation for the user is written in perl's POD format at end
 of the program code. See  C<## documentation>.
+
+All options and commands should be documented using POD's  =head  key
+(see C<printquit()> how this can be used for testing).
 
 Meanwhile, after 2 years of development, it seems that POD wasn't the
 best decission, as it makes extracting information from documentation
