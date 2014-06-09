@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.275 14/06/08 21:42:27";
+my  $SID    = "@(#) yeast.pl 1.276 14/06/09 02:03:49";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -135,7 +135,7 @@ if (-e $arg) {
     sub usr_pre_exit()  {}; #  "
 }
 
-my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
+my @argv = grep(/--trace.?arg/i, @ARGV);# preserve --tracearg option
 
 usr_pre_file();
 
@@ -1035,7 +1035,7 @@ our %cfg = (
                     # these have no key in %data or %checks
                        qw(
                         check cipher dump check_sni exec help info info--v http
-                        quick list libversion sizes s_client version
+                        quick list libversion sizes s_client version quit
                         sigkey bsi ev cipherraw
                        ),
                     # internal (debugging or experimental) commands
@@ -2485,6 +2485,7 @@ sub _cfg_set($$) {
 
     ($key, $val) = split(/=/, $arg, 2); # left of first = is key
     $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanatize key
+    $val =  "" if (!defined $val);      # avoid warnings when not KEY=VALUE
 
     if ($typ eq 'CFG-cmd') {            # set new list of commands $arg
         $typ = 'cmd-' . $key ;# the command to be set, i.e. cmd-http, cmd-sni, ...
@@ -4151,6 +4152,50 @@ sub printchecks($$) {
 ## definitions: print functions for help and information
 ## -------------------------------------
 
+sub printquit() {
+    #? print internal data
+    # call this function with:
+    #    $0 `grep =head $0 \
+    #    |gawk '/--(help|trace-sub)/{next}/--h$/{next}/\+traceSUB/{next}($2~/^-/){$1="";print}'\
+    #    |tr ' ' '\012' \
+    #    |sort -u` \
+    #    |tr '\012' ' ' \
+    #    +quit +gibts_nicht
+    # and:
+    #    $0 `grep =head $0 \
+    #    |gawk '/--(help|trace-sub)/{next}/--h$/{next}/\+traceSUB/{next}($2~/^-/){$1="";print}'\
+    #    |tr ' ' '\012' \
+    #    |sort -u` \
+    #    |tr '=' ' \
+    #    |tr '\012' ' ' \
+    #    +quit +gibts_nicht
+    #
+    # NOTE: Above shell commands insist on proper definitons in POD format
+    #       herein, in particular that all options are defined using POD's
+    #       =head* keyword.
+    #       Some commands may have invalid arguments (i.e. --sep=CHAR ) or
+    #       the commands may be unknown. This results in  **WARNING  texts
+    #       for the correspoding commands, or the argument will be used as
+    #       target. We expect both; for example:
+    #           hosts= [ and:443 HOST:443 HOST:443 HOST:PORT:443 --no-SSL:443 -protocol:PORT SSL:PORT --SSL,:PORT vs.:PORT ]
+    # NOTE: We also expect that options with arguments, like --sep=CHAR ,
+    #       are described as:   =head3 --sep=CHAR
+    #       The second onliner above then converts  --sep=CHAR  to
+    #       --sep CHAR
+
+    if ($cfg{'trace'} + $cfg{'verbose'} <= 0) {
+        #_warn(" +quit  command usefull with --v and/or --trace* option only");
+        _warn(" +quit  command should be used with  --trace=arg option");
+    }
+    _v_print("\n# some information may appear multiple times\n#");
+    $cfg{'verbose'} = 2;
+    $cfg{'trace'}   = 2;
+    $cfg{'traceARG'}= 1; # for _yeast_args()
+    _yeast_init();
+    _yeast_args();
+    print "# TEST done.";
+} # printtest
+
 sub printversion() {
     #? print program and module versions
     local $\ = "\n";
@@ -4698,6 +4743,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?cmd)/i)  { $cfg{'traceCMD'}++;       next; } # ..
     if ($arg =~ /^--trace(@|[_-]?key)/i){ $cfg{'traceKEY'}++;       next; } # ..
     if ($arg =~ /^--trace=(.*)/)        { $typ = 'TRACE';   unshift(@argv, $1); next; }
+    if ($arg =~ /^(--|\+)quit$/)        { $arg = '+quit';                 }
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';           next; }
     if ($arg =~ /^--proxy(?:host)?=(.*)/){$typ = 'PHOST';   unshift(@argv, $1); next; }
@@ -5116,6 +5162,8 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
+printquit(), exit 0   if (_is_do('quit')); # internal test command
+print " (($cfg{'trace'} + $cfg{'verbose'})";
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
     _yeast_init();
@@ -5700,6 +5748,10 @@ with other commands).
 
     Show known problems and bugs.
 
+=head3 +quit
+
+    Show internal data, used for debugging only.
+
 =head2 Commands to check SSL details
 
 =begin comment wozu-dieser-text
@@ -6217,22 +6269,22 @@ It does not make sense to use it for other protocols; however ...
 =head3 --no-cert --no-cert
 
   Do not get data from target's certificate, return Net::SSLinfo.pm's
-  default string (see  "--no-cert-text TEXT"  option).
+  default string (see  "--no-cert-text=TEXT"  option).
 
-=head3 --no-cert-text TEXT
+=head3 --no-cert-text=TEXT
 
   Set  TEXT  to be returned from  "Net::SSLinfo.pm" if no certificate
   data is collected due to use of  "--no-cert".
 
-=head3 --ca-depth INT
+=head3 --ca-depth=INT
 
   Check certificate chain to depth  INT (like openssl's -verify).
 
-=head3 --ca-file FILE
+=head3 --ca-file=FILE
 
   Use  FILE  with bundle of CAs to verify target's certificate chain.
 
-=head3 --ca-path DIR
+=head3 --ca-path=DIR
 
   Use  DIR  where to find CA certificates in PEM format.
 
@@ -8210,7 +8262,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.08
+@(#) 14.06.09
 
 =head1 AUTHOR
 
