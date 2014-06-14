@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-06-06";
+my $VERSION = "2014-06-14";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -383,6 +383,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         next if ($Net::SSLhello::usesni==0);
         next if ($ssl eq 'SSLv2');# SSLv2 has no SNI
+        next if ($ssl eq 'SSLv3');# SSLv3 has originally no SNI
             @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
             _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
             _trace("accepted ciphers: @accepted\n");
