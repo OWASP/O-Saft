@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.281 14/06/14 22:18:09";
+my  $SID    = "@(#) yeast.pl 1.282 14/06/14 23:10:40";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5355,6 +5355,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             }
             next if ($Net::SSLhello::usesni == 0);
             next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
+            next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI 
+# ToDo: print warning for above
                 Net::SSLhello::printCipherStringArray(
                     'compact', $host, $port, $ssl, 1,
                     Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
