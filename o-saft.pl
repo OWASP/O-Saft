@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.279 14/06/09 13:40:05";
+my  $SID    = "@(#) yeast.pl 1.280 14/06/14 20:16:14";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5740,7 +5740,7 @@ with other commands).
 
     Use "--v" option to show more details.
 
-=head3 +abbr +abk
+=head3 +abbr, +abk
 
     Show common abbreviation used in the world of security.
 
@@ -5821,7 +5821,7 @@ with other commands).
 
     Check for Server Name Indication (SNI) usage.
 
-=head3 +sni_check +check_sni
+=head3 +sni_check, +check_sni
 
     Check for  Server Name Indication (SNI) usage and validity of all
     names (CN, subjectAltName, FQDN, etc.).
@@ -5927,7 +5927,7 @@ the description here is text provided by the user.
 
 =head3 --help=legacy
 
-  Show possible legacy formats (used as value in  "--legacy=KEY").
+  Show possible legacy formats (used as value in  "--legacy=TOOL").
 
 =head3 --help=compliance
 
@@ -5939,7 +5939,7 @@ the description here is text provided by the user.
 
 =head3 --help=range
 
-  Show list of cipherranges (see "--cipherrange=RANG").
+  Show list of cipherranges (see "--cipherrange=RANGE").
 
 =head3 --help=score
 
@@ -6658,9 +6658,7 @@ options are ambiguous.
 
   Print processing of all command line arguments.
 
-=head3 --trace--
-
-=head3 --trace-arg
+=head3 --trace-arg, --trace--
 
   Print command line argument processing.
 
@@ -6670,9 +6668,7 @@ options are ambiguous.
 
   Trace execution of command processing (those given as  +*).
 
-=head3 --trace@
-
-=head3 --trace-key
+=head3 --trace-key, --trace@
 
   Print some internal variable names in output texts (labels).
   Variable names are prefixed to printed line and enclosed in  # .
@@ -6702,7 +6698,7 @@ options are ambiguous.
 
   Use FILE instead of the default rc-file (.o-saft.pl, see RC-FILE).
 
-=head3 --trace-sub +traceSUB
+=head3 --trace-sub, +traceSUB
 
   Print formatted list of internal functions with their description.
   Not to be intended in conjunction with any target check.
