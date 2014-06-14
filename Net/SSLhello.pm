@@ -257,18 +257,18 @@ my $SSL_MT_CLIENT_CERTIFICATE   = 8;
 
 #C.3 Error Message Codes
 #The following values define the error codes used by the ERROR message.
-my $SSL_PE_NO_CIPHER                    = 0x0001;
-my $SSL_PE_NO_CERTIFICATE               = 0x0002;
-my $SSL_PE_BAD_CERTIFICATE              = 0x0004;
+my $SSL_PE_NO_CIPHER            = 0x0001;
+my $SSL_PE_NO_CERTIFICATE       = 0x0002;
+my $SSL_PE_BAD_CERTIFICATE      = 0x0004;
 my $SSL_PE_UNSUPPORTED_CERTIFICATE_TYPE = 0x0006;
 
 #C.5 Certificate Type Codes
 #The following values define the certificate type codes used in the SERVER-HELLO and CLIENT-CERTIFICATE messages.
-my $SSL_CT_X509_CERTIFICATE    = 0x01;
+my $SSL_CT_X509_CERTIFICATE     = 0x01;
  
 #C.6 Authentication Type Codes
 #The following values define the authentication type codes used in the REQUEST-CERTIFICATE message.
-my $SSL_AT_MD5_WITH_RSA_ENCRYPTION    = 0x01;
+my $SSL_AT_MD5_WITH_RSA_ENCRYPTION  = 0x01;
 
 #C.7 Upper/Lower Bounds
 #The following values define upper/lower bounds for various protocol parameters.
@@ -657,11 +657,11 @@ sub printCipherStringArray ($$$$$@) {
             printf "%20s%s%5s%s%-6s (0x%04X)%s%6s%s%-12s%s%10s%s\n",
                 $host, $sep,        # %20s%s
                 $port, $sep,        # %5s%s
-                $ssl,               # %-6s (
+                $ssl,                 # %-6s (
                 $protocol, $sep,    # 0x%04X)%s
-                $sni, $sep,         # %6s%s%
-                "", $sep,           # %-12s%s
-                "", $sep;           # %10s%s
+                $sni, $sep,             # %6s%s%
+                "", $sep,            # %-12s%s
+                  "", $sep;            # %10s%s
         }
     }
     
@@ -670,9 +670,9 @@ sub printCipherStringArray ($$$$$@) {
             printf "%20s%s%5s%s%-6s (0x%04X)%s%6s%s%-12s%s%10s%s",
                 $host, $sep,        # %20s%s
                 $port, $sep,        # %5s%s
-                $ssl,               # %-6s (
+                $ssl,                 # %-6s (
                 $protocol, $sep,    # 0x%04X)%s
-                $sni, $sep,           # %6s%s%
+                $sni, $sep,             # %6s%s%
                 $cipherOrder, $sep,    # %-12s%s
                   $protocolCipher, $sep;    # %10s%s
               if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
