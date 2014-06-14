@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.280 14/06/14 20:16:14";
+my  $SID    = "@(#) yeast.pl 1.281 14/06/14 22:18:09";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4940,7 +4940,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';   }
     if ($arg eq  '+extension')        { $arg = '+extensions';  }
     if ($arg =~ /^\+ext_aia/i)        { $arg = '+ext_authority'; } # AIA is a common acronym ...
-    if ($arg =~ /^\+(?:all|raw)?ciphers?(?:all|raw)?$/){ $arg = '+cipherraw'; }
+    if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw'; }
+    if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw'; }
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
@@ -5872,7 +5873,7 @@ with other commands).
     Note that ciphers  not supported  by the local SSL implementation
     are not checked by default, use "--local" option for that.
 
-=for comment other names: +cipherall +allciohers +rawciphers
+=for comment other names: +cipherall +allciphers +rawciphers
 
 =head3 +cipherraw
 
@@ -8276,7 +8277,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.09
+@(#) 14.06.10
 
 =head1 AUTHOR
 
