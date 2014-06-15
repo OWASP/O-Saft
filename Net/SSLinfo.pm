@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.78 14/05/25 01:26:25',
+    SID         => '@(#) Net::SSLinfo.pm 1.79 14/06/15 02:44:04',
 };
 
 ######################################################## public documentation #
@@ -280,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.05.21';
+    $VERSION   = '14.06.10';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1117,8 +1117,12 @@ sub do_ssl_open($$$) {
             my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
             $src = 'Net::SSLeay::write()';
 # $t1 = time();
+#               ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
+            $src = 'Net::SSLeay::read()';
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
-            $response = Net::SSLeay::read($ssl);
+            $response = Net::SSLeay::read($ssl) || "<<GET failed>>";
+# FIXME: if Net::SSLeay::read() fails most $_SSLinfo{'hsts_*'} and $_SSLinfo{'https_*'} are empty
+#        check with ancyssl.hboeck.de
 # $t2 = time(); set error = "<<timeout: Net::SSLeay::read()>>";
             $_SSLinfo{'https_status'}   =  $response;
             $_SSLinfo{'https_status'}   =~ s/[\r\n].*$//ms; # get very first line
