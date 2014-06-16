@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.282 14/06/14 23:10:40";
+my  $SID    = "@(#) yeast.pl 1.283 14/06/17 00:49:25";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -57,8 +57,12 @@ use IO::Socket::INET;
 
 our $warning= 1;    # print warnings; need this variable very early
 
-sub _warn { local $\="\n"; print("**WARNING: ", join(" ", @_)) if ($main::warning > 0); }
-    # print warning if wanted
+sub _warn {
+    #? print warning if wanted
+    return if ($main::warning > 0);
+    local $\="\n"; print("**WARNING: ", join(" ", @_));
+    # ToDo: in CGI mode warning must be avoided until HTTP header written
+}
 
 ## README if any
 ## -------------------------------------
@@ -95,7 +99,7 @@ if (! eval("require Net::SSLinfo;")) {
     require Net::SSLinfo;
 }
 
-sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header)/i, @ARGV) <= 0); }
+sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
     # print information what will be read
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
@@ -109,7 +113,7 @@ our @dbxfile;   # read files
 ## read file with user source, if any
 ## -------------------------------------
 my @usr = grep(/--(?:use?r)/, @ARGV);   # must have --usr option
-if (($#usr >= 0) and ($cgi == 0)) {
+if ($#usr >= 0) {
     $arg =  "./o-saft-usr.pm";
     if (! -e $arg) {
         $arg = join("/", $mepath, $arg);# try to find it in installation directory
@@ -1115,6 +1119,7 @@ our %cfg = (
                         simple full compact quick)],
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
+    'usr-args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
    #------------------+---------+----------------------------------------------
     'regex' => {
         # First some basic RegEx used later on, either in following RegEx or
@@ -2065,6 +2070,7 @@ my %text = (
         'OV-SSL'    => "Organisational Validated Certificate",
         'P12'       => "see PKCS#12",
         'P7B'       => "see PKCS#7",
+        'PCT'       => "Private Communications Transport",
         'PACE'      => "Password Authenticated Connection Establishment",
         'PAKE'      => "Password Authenticated Key Exchange",
         'PBE'       => "Password Based Encryption",
@@ -2148,6 +2154,7 @@ my %text = (
         'SSL'       => "Secure Sockets Layer",
         'SSLv2'     => "Secure Sockets Layer Version 2",
         'SSLv3'     => "Secure Sockets Layer Version 3",
+        'SSP'       => "Security Support Provider",
         'SSPI'      => "Security Support Provider Interface",
         'SST'       => "Serialized Certificate Store format",
         'TACK'      => "Trust Assertions for Certificate Keys",
@@ -2619,6 +2626,14 @@ sub _is_intern($)      { my $is=shift; return _is_member($is, \@{$cfg{'cmd-inter
 sub _is_hexdata($)     { my $is=shift; return _is_member($is, \@{$cfg{'data_hex'}});   }
 sub _is_call($)        { my $is=shift; return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
+sub get_usr_value($)   {
+    #? return value of argument $_[0] from @{$cfg{'usr-args'}}
+    my $key =  shift;
+       $key =~ s/^(?:--|\+)//;  # strip leading chars
+    my @arg =  "";              # key, value (Note that value is anything right to leftmost = )
+    map({@arg = split("=", $_, 2) if /^$key/} @{$cfg{'usr-args'}}); # does not allow multiple $key in 'usr-args'
+    return $arg[1];
+}
 
 # some people prefer to use a getter function to get data from objects
 # each function returns a spcific value (column) from the %cipher table
@@ -4740,6 +4755,14 @@ while ($#argv >= 0) {
         next;
     }
 
+    # all options starting with  --usr or --user  are not handled herein
+    # push them on $cfg{'usr-args'} so they can be accessd in o-saft-*.pm
+    if ($arg =~ /^--use?r/){
+        $arg =~ s/^(?:--|\+)//;  # strip leading chars
+        push(@{$cfg{'usr-args'}}, $arg);
+        next;
+}
+
     #{ handle help and related option and command
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
@@ -6615,6 +6638,11 @@ options are ambiguous.
 
   Execute functions defined in  o-saft-usr.pm.
 
+=head3 --usr-*, --user-*
+
+  Options ignored, but stored as is internal in  $cfg{'usr-args'} .
+  These options can be used in  o-saft-usr.pm  or  o-saft-dbx.pm.
+
 =head2 Options for tracing and debugging
 
 =head3 --n
@@ -8279,7 +8307,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.10
+@(#) 14.06.11
 
 =head1 AUTHOR
 
