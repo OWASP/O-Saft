@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-06-14a';
+    $VERSION    = 'NET::SSLhello_2014-06-16';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -109,6 +109,7 @@ use constant {
     _MY_PRINT_CIPHERS_PER_LINE =>  8, # Nr of Ciphers printed in a trace
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
+    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 3 # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
 };
 
 #our $LONG_PACKET = 1940; # try to get a 2nd or 3rd segment for long packets
@@ -953,13 +954,15 @@ sub _doCheckSSLciphers ($$$$) {
     my $input3="";
     my $pduLen=0;
     my $v2len=0;
+    my $v2type=0;
     my $v3len=0;
+    my $v3type=0;
+    my $v3version=0;
     my $acceptedCipher="";
     my $retryCnt = 0;
     my $firstMessage = "";
     my $secondMessage = "";
-    my $dummy=0;
-
+    my $segmentCnt=0;
     
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, >%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
     $@ ="";
@@ -1233,174 +1236,108 @@ sub _doCheckSSLciphers ($$$$) {
 
     ###### receive the answer (=ServerHello) 
     $retryCnt = 0;
+    $segmentCnt = 1;
     $input="";
     $input2="";
     do {{
         $@ ="";
-        $input="";
         $input2="";
-##        $input3="";
-        if ($retryCnt >0) { ##20140528
-            _trace1 ("_doCheckSSLciphers: $retryCnt. Retry to receive Data from '$host:$port'\n");
+        if ($retryCnt >0) {
+             _trace1 ("_doCheckSSLciphers: $retryCnt. Retry to receive $segmentCnt. TCP-segment-Data from '$host:$port' ");
+            if ($pduLen >0) {
+                _trace1_ ("(expecting $pduLen Bytes)\n");
+            } else {
+                _trace1_ ("\n");
+            }
         }
-        eval { # check this for timeout, protect it against an unexpected Exit of the Program        
+        eval { # check this for timeout, protect it against an unexpected Exit of the Program
             #Set alarm and timeout 
             $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
             alarm($Net::SSLhello::timeout);
-            unless (recv ($socket, $input, 32767, 0)) { # received *NO* Data or additional Data is still waiting; 'unless' is the opposite of 'if'
-                if (length ($input) >0) { # get additional data
-                    _trace3 ("_doCheckSSLciphers: ... Received Data (1): ".length($input)." Bytes\n      >".hexCodedString(substr($input,0,64),"        ")." ...<\n");
-                    _trace4 ("_doCheckSSLciphers: ... Received Data (1): ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n");
-                    if (($Net::SSLhello::starttls) && ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i) && ($retryCnt ==0)) { # STARTTLS: SMTP Code 554 Security failure
-                        _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure' (1): (Is the STARTTLS command issued within an existing TLS session?) -> input ignored\n");
-                        #retry to send clientHello
-                        $@="";
-                        $input=""; #reset input data
-                        defined(send($socket, $clientHello, 0)) || die "Could *NOT* send ClientHello to $host:$port (2); $! -> target ignored\n";
-                        recv ($socket, $input, 32767, 0); #try to receive SSL-answer
-                        if (length ($input) >0) { # get additional data
-                            _trace3 ("_doCheckSSLciphers: -> ... Received Data (1): ".length($input)." Bytes\n      >".hexCodedString(substr($input,0,64),"        ")." ...<\n");
-                            _trace4 ("_doCheckSSLciphers: -> ... Received Data (1): ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n");
-                            if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i) { # again '554 Security failure' -> perhaps this SSL/TLS-protocol is not supported 
-                                $@ = "**WARNING: _doCheckSSLciphers ## STARTTLS (1): received SMTP Reply Code '554 Security failure': assuming that the protocol is not suported. -> protocol ignored\n";
-                                warn ($@);
-                                $input="";
-                                _trace2 ("_doCheckSSLciphers: -> ... Received Data (1): reset to 0 Bytes\n");
-                                alarm (0);
-                                return"";
-                            }
-                        } else { # received NO Data 
-                            _trace2 ("_doCheckSSLciphers: -> ... Received Data (1): received NO Data\n");
-                        }
-                    }
-                    if (length ($input) >0) { # get additional data #second protection if input is now ""        
-                        ($v2len,     # n (V2Len, if > 0x8000) or C (record_type)  # x1 Octett     
-                        $dummy,    # C = x1
-                        $v3len) = unpack("n C n", $input); #n     
-                        unless ($v2len >= 0x8000) { #SSLv3
-                            $pduLen = $v3len + 5;
-                            _trace2 ("_doCheckSSLciphers: >>> ... Received Data (1): Expected SSLv3-PDU-Len of Server-Hello: $pduLen\n");
-                        } else { # SSLv2
-                            $pduLen = $v2len - 0x8000 + 2;
-                            _trace3 ("_doCheckSSLciphers: >>> ... Received Data (1): Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
-                            _trace4 ("_doCheckSSLciphers: >>> ... Received Data (1): Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
-                        }
-                    
-                        if(length ($input) < $pduLen) { # need additional data => Try to get a 2nd Part of the segmented Packet    
-                            unless (recv ($socket, $input2, 32767, 0)) { # did not receive a Message ## unless seems to work better than if!!
-                                _trace2 (">>> ... Received Data (2): received NO Data\n");
-                            } elsif (length ($input2) >0) { # got additional data in $input2
-                                _trace3 ("_doCheckSSLciphers: ... Received Data (2): ".length($input2)." Bytes\n      >".hexCodedString(substr($input2,0,64),"       ")." ...<\n");
-                                _trace4 ("_doCheckSSLciphers: ... Received Data (2): ".length($input2)." Bytes\n        >".hexCodedString($input2,"         ")."<\n");
-                                $input .= $input2;
-                
-                            } else {
-                                _trace2 ("_doCheckSSLciphers: >>> ... Received Data (2): received 0 Bytes Data\n");
-                            }
-                        }
-                    }
-                } else { # received NO Data 
-                    _trace2 ("_doCheckSSLciphers: >>> ... Received Data: received NO Data\n");
+            recv ($socket, $input2, 32767, 0); 
+            alarm (0); #clear alarm 
+        }; # end of eval recv
+        unless ($@) { # no timeout received
+           if (length ($input2) >0) { # got (additional) data 
+                _trace3 ("_doCheckSSLciphers: ... Received Data (1): ".length($input2)." Bytes ($segmentCnt. TCP-segment)\n      >".hexCodedString(substr($input2,0,64),"        ")." ...<\n");
+                _trace4 ("_doCheckSSLciphers: ... Received Data (1): ".length($input2)." Bytes ($segmentCnt. TCP-segment)\n        >".hexCodedString($input2,"        ")."<\n");
+                $input .= $input2;
+                $segmentCnt++;
+                if ($segmentCnt <= _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT) { # reset Retry-Count to 0 (in next loop)
+                    $retryCnt = -1;
                 }
-            } elsif (length ($input) >0) { # got data
-                _trace3 ("_doCheckSSLciphers: ... Received Data: ".length($input)." Bytes\n      >".hexCodedString(substr($input,0,64),"        ")." ...<\n");
-                _trace4 ("_doCheckSSLciphers: ... Received Data: ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n");
-                if (($Net::SSLhello::starttls) && ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i) && ($retryCnt ==0)) { # 554 Security failure
-                    _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure' (0): (Is the STARTTLS command issued within an existing TLS session?) -> input ignored\n");
+            } else {
+                _trace2 ("_doCheckSSLciphers: ... Received Data (2): received NO (new) Data ($segmentCnt. TCP-segment, $retryCnt. Retry)\n");
+                next;
+            }
+            
+            #### check for other protocols than ssl (when starttls is used) ####
+            if ($Net::SSLhello::starttls)  { 
+                if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i)  { # 554 Security failure
+                    _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignoredi and try to Retry\n");
                     #retry to send clientHello
                     $@="";
                     $input=""; #reset input data
-                    defined(send($socket, $clientHello, 0)) || die "Could *NOT* send ClientHello to $host:$port (2); $! -> target ignored\n";
-                    recv ($socket, $input, 32767, 0); #try to receive SSL-answer
-                    if (length ($input) >0) { # get additional data
-                        _trace3 ("_doCheckSSLciphers: -> ... Received Data: ".length($input)." Bytes\n      >".hexCodedString(substr($input,0,64),"        ")." ...<\n");
-                        _trace4 ("_doCheckSSLciphers: -> ... Received Data: ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n");
-                        if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i) { # again '554 Security failure' -> perhaps this SSL/TLS-protocol is not supported 
-                            $@ = "**WARNING: _doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': assuming that the protocol is not suported. -> protocol ignored\n";
-                            warn ($@);
-                            $input="";
-                            _trace2 ("_doCheckSSLciphers: -> ... Received Data: reset to 0 Bytes\n");
-                            alarm (0);
-                            return"";
-                        }
-                    } else { # received NO Data 
-                        _trace2 ("_doCheckSSLciphers: -> ... Received Data: received NO Data\n");
+                    $pduLen=0;
+                    eval { # check this for timeout, protect it against an unexpected Exit of the Program
+                        #Set alarm and timeout 
+                        $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                        alarm($Net::SSLhello::timeout);
+                        defined(send($socket, $clientHello, 0)) || die "**WARNING: _doCheckSSLciphers: Could *NOT* send ClientHello to $host:$port (2 =retry); $! -> target ignored\n";
+                        alarm (0);   # race condition protection 
+                    }; # end of eval recv
+                    if ($@) {
+		                 warn ($@);
+		                 return ("");
                     }
+                    alarm (0);   # race condition protection
+                    next;
+                }
+            } elsif ($input =~ /(?:^|\s)220(?:\s|-).*?$/)  { # service might need STARTTLS
+                 $@= "**WARNING: _doCheckSSLciphers: $host:$port looks like an SMTP-Service, probably the option '--starttls' is needed -> target ignored\n";
+                 warn ($@);
+                 return ("");
+            } 
+            if ( ($pduLen == 0) && (length ($input) >4) ){ #try to get the pdulen of the ssl pdu (=protocol aware length detection)
+                # Check PDUlen; Parse the first 5 Bytes to check the Len of the PDU (SSL3/TLS)
+                ($v3type,       #C (record_type)    
+                 $v3version,    #n (record_version)
+                 $v3len)        #n (record_len)
+                    = unpack("C n n", $input);
+
+                if ( ($v3type < 0x80) && (($v3version & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) ) { #SSLv3/TLS (no SSLv2)
+                    $pduLen = $v3len + 5; # Check PDUlen = v3len + size of record-header; 
+                    _trace2 ("_doCheckSSLciphers: ... Received Data: Expected SSLv3-PDU-Len of Server-Hello: $pduLen\n");
+                } else { # Check for SSLv2
+                    ($v2len,    # n (V2Len > 0x8000)
+                     $v2type)    # C = 0
+                        = unpack("n C", $input);
+                     if ($v2type == $SSL_MT_SERVER_HELLO) { # SSLv2 check
+                        $pduLen = $v2len - 0x8000 + 2;
+                        _trace2 ("_doCheckSSLciphers: ... Received Data: Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
+                     } else { 
+                         $@ = "**WARNING: _doCheckSSLciphers: $host:$port dosen't look like a SSL or a SMTP-Service -> Received Data ignored -> target ignored\n";
+                         warn ($@);
+                         _trace ("_doCheckSSLciphers: Ignored Data: ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n");
+                         $input="";
+                         $pduLen=0;
+                         return ("");
+                     }
                 }
             }
-            #clear Alarm
-            alarm (0);
-        };
+        } else { # timeout received -> Retry
+             _trace2 ("_doCheckSSLciphers: Timeoout received '$@'-> Retry\n");
+        }
         alarm (0);   # race condition protection
-    }} while ( ($@) && (length($input)==0) && ($retryCnt++ < $Net::SSLhello::retry) );
-    if ($@ && ((length($input)==0) || ($Net::SSLhello::trace > 2) )) {    
-        warn ("**WARNING: _doCheckSSLciphers: >>> ... Received Data: Got a timeout receiving Data from $host:$port (".length($input)." Bytes): Eval-Message: >$@<\n"); 
-    }
+    }} while ( ( (length($input) < $pduLen) || (length($input)==0) ) && ($retryCnt++ < $Net::SSLhello::retry) );
     alarm (0);   # race condition protection
-
-    if (!($@) && (length ($input) >0) ) { # No Error + some Input => try to get additional data
-        if (!($Net::SSLhello::starttls) && ($input =~ /(?:^|\s)220(?:\s|-).*?$/) ) { # service might need STARTTLS
-            warn ("**WARNING: _doCheckSSLciphers: $host:$port looks like an SMTP-Service, probably the option '--starttls' is needed\n");
-        }
-#        Try to get a 2nd or 3rd Part of the Answer Packet  #added 20140220
-
-#        Check PDUlen; Parse the first 5 Bytes to check the Len of the PDU
-        ($v2len,     # n (V2Len, if > 0x8000) or C (record_type)  # x1 Octett     
-        $dummy,    # C = x1
-        $v3len) = unpack("n C n", $input); #n     
-        unless ($v2len >= 0x8000) { #SSLv3
-            $pduLen = $v3len + 5;
-            _trace2 ("_doCheckSSLciphers: ... Received Data (3): Expected SSLv3-PDU-Len of Server-Hello: $pduLen\n");
-        } else { # SSLv2
-            $pduLen = $v2len - 0x8000 + 2;
-            _trace2 ("_doCheckSSLciphers: ... Received Data (3): Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
-        }
-        if (length ($input) < $pduLen) { # get additional data for long messages
-            $input3="";
-            _trace2 ("_doCheckSSLciphers: ... Received Data (3) Length = ".length ($input).": Try to get a 2nd or 3rd Part of segmented Packet (pduLen=$pduLen)\n");
-            eval { 
-                $SIG{ALRM}= "Net::SSLhello::_timedOut";             
-                alarm($Net::SSLhello::timeout); # reset alarm #20140220 wieder eingebaut ###################
-                unless (recv ($socket, $input3, 32767, 0)) {
-                    die "$host: no additional Data received"; # received new Data
-                } elsif (length ($input3) >0) { # got additional data
-                    _trace3 ("_doCheckSSLciphers: ... Received Data (3): ".length($input3)." Bytes\n       >".hexCodedString(substr($input3,0,64),"       ")." ...<\n");
-                    _trace4 ("_doCheckSSLciphers: ... Received Data (3): ".length($input3)." Bytes\n         >".hexCodedString($input3,"         ")."<\n)");
-                    $input .= $input3;
-                }
-    
-            };    
-            if ($@) {
-                _trace2 ("_doCheckSSLciphers: >>> ... no Data received Data (3): $@");
-            }
-            #clear alarm
-            alarm (0);
-            $@="";
-            if(length ($input) < $pduLen) { # need additional data
-                eval { 
-                    _trace2 ("_doCheckSSLciphers: >>> ... Received Data (4) Length = ".length ($input).": Try to get a 2nd or 3rd Part of segmented Packet (pduLen=$pduLen)\n");
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut";         
-                    alarm($Net::SSLhello::timeout); # reset alarm 
-                    unless (recv ($socket, $input3, 32767, 0)) {
-                        die "$host: no additional Data received"; # received new Data 
-                    } elsif (length ($input3) >0) { # got additional data
-                        _trace3 ("_doCheckSSLciphers: >>>  ... Received Data (5): ".length($input3)." Bytes\n#       >".hexCodedString(substr($input3,0,64),"        ")." ...<\n");
-                        _trace4 ("_doCheckSSLciphers: >>>  ... Received Data (5): ".length($input3)." Bytes\n#         >".hexCodedString($input3,"         ")."<\n");
-                        $input .= $input3;
-                    }
-                };                         
-                if ($@) {
-                    _trace2 (">>> ... no Data received Data (4): $@");
-                }
-            }
-        }
-        _trace3 ("_doCheckSSLciphers: ... Received Data: ".length($input)." Bytes\n   >".hexCodedString(substr($input,0,64),"    ")."< ...\n");
-        _trace4 ("_doCheckSSLciphers: ... Received Data: ".length($input)." Bytes\n     >".hexCodedString($input,"      ")."<\n");
-        $@ =""; # no error
-        alarm (0);   # race condition protection
+    if ( ($@) && ( (length($input)==0) || ($Net::SSLhello::trace > 2) )) {    
+        warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (".length($input)." Bytes): Eval-Message: >$@<\n"); 
+    }
+    if (length($input) >0) {
+		_trace2 ("_doCheckSSLciphers: Total Data Received:". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
         $acceptedCipher = parseServerHello ($input, $protocol);
     }
-
     unless ( close ($socket)  ) {
         warn("**WARNING: _doCheckSSLciphers: Can't close socket: $!");
     }
@@ -1449,14 +1386,14 @@ sub compileClientHello  {
         _trace2 ("compileClientHello: Protocol: SSL2\n");
 
         $clientHello_tmp = pack ("C n n n n a* a*",
-            $clientHello{'msg_type'},        #C
-               $clientHello{'version'},        #n
+            $clientHello{'msg_type'},       #C
+            $clientHello{'version'},        #n
             $clientHello{'cipher_spec_len'},#n
             $clientHello{'session_id_len'}, #n
-            $clientHello{'challenge_len'},    #n
+            $clientHello{'challenge_len'},  #n
             $clientHello{'cipher_spec'},    #A
-####           $clientHello{'session_id'}, # len = 0
-                $clientHello{'challenge'},        #A
+####           $clientHello{'session_id'},      # len = 0
+            $clientHello{'challenge'},      #A
         );
 
         $clientHello{'msg_len'} = length ($clientHello_tmp) | 0x8000;
@@ -1517,17 +1454,17 @@ sub compileClientHello  {
             $clientHello_extensions = pack ("n n n C n a[$clientHello{'extension_sni_len'}]",
 #                $clientHello{'extensions_total_len'},        #n    
                 $clientHello{'extension_type_server_name'}, #n
-                $clientHello{'extension_len'},                   #n    
+                $clientHello{'extension_len'},              #n    
                 $clientHello{'extension_sni_list_len'},     #n    
-                $clientHello{'extension_sni_type'},             #C
-                $clientHello{'extension_sni_len'},              #n        
-                $clientHello{'extension_sni_name'},            #a[$clientHello{'extension_sni_len'}]
+                $clientHello{'extension_sni_type'},         #C
+                $clientHello{'extension_sni_len'},          #n        
+                $clientHello{'extension_sni_name'},         #a[$clientHello{'extension_sni_len'}]
             );
             _trace2 ("compileClientHello: extension_sni_name Extension added\n");
         } elsif ($Net::SSLhello::usesni) { # && ($record_version <= $PROTOCOL_VERSION{'TLSv1'})  
-			$@ = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
-			print $@;
-		}
+            $@ = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
+            print $@;
+        }
         
         if ($Net::SSLhello::usereneg) { # use secure Renegotiation
             my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
@@ -1797,7 +1734,7 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
                             $@ = sprintf ("parseServerHello: received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server aborted!\n");
-							print $@;
+                            print $@;
                             return (""); 
                         } else {
                             warn ("**WARNING: parseServerHello: received SSL/TLS-Warning (1): Description: $description ($serverHello{'description'})\n");
@@ -1813,10 +1750,11 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
                     }
                 }
             } else { ################################ to get information about Record Types that are not parsed, yet #############################
+                _trace_ ("\n");
                 warn ("**WARNING: parseServerHello: Unknown SSL/TLS Record-Type received that is not (yet) defined in Net::SSLhello.pm:\n");
-                print "#        Record Type:     Unknown Value (".$serverHello{'record_type'}."), not (yet) defined in Net::SSLhello.pm\n"; 
-                print "#        Record Version:  $serverHello{'record_version'} (0x".hexCodedString ($serverHello{'record_version'}).")\n";
-                print "#        Record Len:      $serverHello{'record_len'} (0x".hexCodedString ($serverHello{'record_len'}).")\n"; 
+                warn ("#        Record Type:     Unknown Value (".$serverHello{'record_type'}."), not (yet) defined in Net::SSLhello.pm\n"); 
+                warn ("#        Record Version:  $serverHello{'record_version'} (0x".hexCodedString ($serverHello{'record_version'}).")\n");
+                warn ("#        Record Len:      $serverHello{'record_len'} (0x".hexCodedString ($serverHello{'record_len'}).")\n\n"); 
             }
             return ("");
         } #End SSL3/TLS
@@ -2050,6 +1988,7 @@ sub parseTLS_ServerHello {
 sub parseTLS_Extension { # Variable: String/Octet, das die Extension-Bytes enthÃ¤lt
     my $buffer = shift; 
     my $len = shift; 
+
     my $rest ="";
     my %serverHello;
     
@@ -2083,7 +2022,7 @@ sub parseTLS_Extension { # Variable: String/Octet, das die Extension-Bytes enth�
 
 
 sub _timedOut {
-    die "NET::SSLhello: Receive Data Timed out\n";
+    die "NET::SSLhello: Received Data Timed out\n";
 }
 
 sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
