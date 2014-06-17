@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.284 14/06/17 07:07:44";
+my  $SID    = "@(#) yeast.pl 1.285 14/06/17 09:31:35";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5149,15 +5149,15 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 ## check for supported SSL versions
 ## -------------------------------------
 foreach $ssl (@{$cfg{'versions'}}) {
-    if (_is_do('cipherraw')) { # FIXME ALPHA
+    next if ($cfg{$ssl} == 0);
+    if (_is_do('cipherraw')) { # +cipherraw does not depend on other libraries
         if ($ssl eq 'DTLSv1') {
-            _warn("SSL version '$ssl' not supported by $mename; ignored");
+            _warn("SSL version '$ssl' not supported by '$mename +cipherraw'; ignored");
             next;
         }
         push(@{$cfg{'version'}}, $ssl);
     }
     next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
-    next if ($cfg{$ssl} == 0);
     $cfg{$ssl} = 0; # reset to simplify further checks
     # ToDo: DTLSv9
     if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
@@ -5369,6 +5369,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         _v_print("cipher range: $cfg{'cipherrange'}");
         foreach $ssl (@{$cfg{'version'}}) {
+            next if ($cfg{$ssl} == 0);
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
                $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
@@ -8314,7 +8315,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.12
+@(#) 14.06.13
 
 =head1 AUTHOR
 
