@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.283 14/06/17 00:49:25";
+my  $SID    = "@(#) yeast.pl 1.284 14/06/17 07:07:44";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5302,9 +5302,15 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("host}");
         next; # otherwise all following fails
     }
+    # gethostbyaddr() is strange: returns $?==0 but an error message in $!
+    # hence just checking $? is not reliable, we do it additionally.
+    # iI gethostbyaddr() fails we use perl's  `or'  to assign our default text.
+    # This may happen when there're problems with the local name resolution.
+    # FIXME: when gethostbyaddr() fails, the connection to the target most
+    # likely fails also, which produces more perl warnings later.
     $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
     if ($cfg{'usedns'} == 1) {  # following settings only with --dns
-        $cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET);
+       ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
         $cfg{'rhost'}   = $fail if ($? != 0);
     }
     $? = 0;
@@ -5312,8 +5318,9 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
         my $i = 0;
         foreach my $ip (@ips) {
+            $! = 0;
             $? = 0;
-            $rhost  = gethostbyaddr($ip, AF_INET);
+           ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
             $rhost  = $fail if ($? != 0);
             $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
             #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
@@ -8307,7 +8314,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.11
+@(#) 14.06.12
 
 =head1 AUTHOR
 
