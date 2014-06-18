@@ -4788,7 +4788,6 @@ while ($#argv >= 0) {
         next;
 }
 
-_dbx $arg;
     #{ handle help and related option and command
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
