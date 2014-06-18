@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.285 14/06/17 09:31:35";
+my  $SID    = "@(#) yeast.pl 1.286 14/06/18 13:06:02";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -73,7 +73,7 @@ open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
 my $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
-    #   code removed here!
+    #   code removed here! hence it always fails
     die "**ERROR: CGI mode requires strict settings" if ($cgi !~ /--cgi=?/);
     $cgi = 1;
 }
@@ -100,7 +100,9 @@ if (! eval("require Net::SSLinfo;")) {
 }
 
 sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
+sub _print_fail($$) { printf("=== reading: %s %s ===\n", @_)      if(grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
     # print information what will be read
+        # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
 my $arg = "";
@@ -112,7 +114,7 @@ our @dbxfile;   # read files
 
 ## read file with user source, if any
 ## -------------------------------------
-my @usr = grep(/--(?:use?r)/, @ARGV);   # must have --usr option
+my @usr = grep(/--(?:use?r)/, @ARGV);   # must have any --usr option
 if ($#usr >= 0) {
     $arg =  "./o-saft-usr.pm";
     if (! -e $arg) {
@@ -121,9 +123,10 @@ if ($#usr >= 0) {
 }
 if (-e $arg) {
     push(@dbxfile, $arg);
-    _print_read("user file", $arg) if(grep(/(:?--no.?header)/i, @ARGV) <= 0);
+    _print_read("user file", $arg);
     require $arg;
 } else {
+    _print_fail($arg, $!) if ($arg ne "");
     sub usr_pre_file()  {}; # dummy stub, see o-saft-usr.pm
     sub usr_pre_args()  {}; #  "
     sub usr_pre_exec()  {}; #  "
@@ -148,15 +151,17 @@ usr_pre_file();
 my @rc_argv = "";
 $arg = "./.$me";
 if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibit
-    open(RC, '<', "./.$me") && do {
+    if (open(RC, '<', "./.$me")) {
         push(@dbxfile, $arg);
-        _print_read("options", $arg) if ($cgi == 0);
+        _print_read("options", $arg);
         @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
         @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
         close(RC);
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
-    };
+    } else {
+        _print_fail("./.$me", $!);
+    }
 }
 
 push(@argv, @ARGV);
@@ -173,7 +178,7 @@ if (($#dbx >= 0) and ($cgi == 0)) {
         _warn("'$arg' not found");
         $arg = join("/", $mepath, $arg);    # try to find it in installation directory
         die  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
-        # no need to continue if required file does not exist
+        # no need to continue if file with debug functions does not exist
         # Note: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
     }
@@ -212,7 +217,7 @@ if (($#dbx >= 0) and ($cgi == 0)) {
 #!#   %ciphers        - our ciphers
 #!#   %cipher_names   - (hash)map of cipher constant-names to names
 #!#
-#!# All %check_*  contain a default 'score' value of 10, see --cfg_score
+#!# All %check_*  contain a default 'score' value of 10, see --cfg-score
 #!# option how to change that.
 
 # Note: all keys in data and check_* must be unique 'cause of shorttexts!!
@@ -2466,7 +2471,7 @@ sub _cfg_set($$) {
         my $line ="";
         open(FID, $arg) && do {
             push(@dbxfile, $arg);
-            _print_read("configuration", $arg) if($cfg{'out_header'} > 0);
+            _print_read("configuration", $arg) if ($cfg{'out_header'} > 0);
             while ($line = <FID>) {
                 #
                 # format of each line in file must be:
@@ -4537,7 +4542,8 @@ sub printhelp($) {
     if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
     if ($label =~ m/^commands?/i){ printcommands();  exit; }
     if ($label =~ m/^(abbr|compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
-    if ($label =~ m/^(?:cfg[_-])?(check|data|text)s?(?:[_-]cfg)?$/i) { printtable('cfg_'.lc($1)); exit; }
+    if ($label =~ m/^cfg[_-]?(check|data|text)s?$/i) { printtable('cfg_'.lc($1)); exit; }
+    if ($label =~ m/^(check|data|text)s?[_-]?cfg$/i) { printtable('cfg_'.lc($1)); exit; }
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
 
@@ -4619,8 +4625,8 @@ push(@argv, "");        # need one more argument otherwise last --KEY=VALUE will
 while ($#argv >= 0) {
     $arg = shift @argv;
     _y_ARG($arg);
-    push(@dbxarg, $arg) if (($arg !~ m/^--cfg_/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
-    push(@dbxcfg, $arg) if  ($arg =~ m/^--cfg_/);    # both aprox. match are sufficient for debugging
+    push(@dbxarg, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
+    push(@dbxcfg, $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
 
     # First check for arguments of options.
     # Options may have an argument, either as separate word or as part of the
@@ -4723,15 +4729,34 @@ while ($#argv >= 0) {
                 _warn("unknown cipher range '$arg'; ignored");
             }
         }
+        _y_ARG("argument= $arg");
+        #
+        # --trace is special for historical reason, we allow:
+        #   --traceARG
+        #   --tracearg
+        #   --trace=arg
+        #   --trace arg
+        #   --trace=2
+        #   --trace 2
+        # proble is that we historicall allow also
+        #   --trace
+        # which ahs no argument, hence following checks for valid arguments
+        # and passes it to further examination if it not matches
         if ($typ eq 'TRACE')    {
+            $typ = 'HOST';          # expect host as next argument
             $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
             $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
             $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
             $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
+            # now magic starts ...
+            next if ($arg =~ m#^(arg|cmd|key|\d+)$#i); # matched before
+            # if we reach here, argument did not match valid value for --trace,
+            # then simply increment trace level and process argument below
+            $cfg{'trace'}++;
+        } else { # $typ handled before if-condition
+            $typ = 'HOST';          # expect host as next argument
+            next;
         }
-        _y_ARG("argument= $arg");
-        $typ = 'HOST';              # expect host as next argument
-        next;
     } # ne 'HOST'
 
     # When used as CGI we need some special checks:
@@ -4747,11 +4772,11 @@ while ($#argv >= 0) {
     # first handle some old syntax for backward compatibility
     if ($arg =~ /^--cfg(cmd|score|text)-([^=]*)=(.*)/){
         $typ = 'CFG-'.$1; unshift(@argv, $2 . "=" . $3);   # convert to new syntax
-        _warn("old (pre 13.12.12) syntax '--cfg_$1-$2'; converted to '--cfg_$1=$2'; please consider changing your files");
+        _warn("old (pre 13.12.12) syntax '--cfg-$1-$2'; converted to '--cfg-$1=$2'; please consider changing your files");
         next; # no more normalisation!
     }
     if ($arg =~ /^--set[_-]?score=(.*)/){
-        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolte, please use --cfg_score=*; ignored");
+        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolte, please use --cfg-score=*; ignored");
         next;
     }
 
@@ -4763,6 +4788,7 @@ while ($#argv >= 0) {
         next;
 }
 
+_dbx $arg;
     #{ handle help and related option and command
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
@@ -4770,7 +4796,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        next; } # must be before --help
     if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0;    next; }
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
-    if ($arg =~ /^--cgi=?/)     { $arg = '# for CGI mode; ignore';  next; }
+    if ($arg =~ /^--cgi.*/)             { $arg = '# for CGI mode';  next; } # for CGI mode; ignore
     if ($arg =~ /^--help=wiki$/)        { printmediawiki();       exit 0; } #
     if ($arg =~ /^--h(?:elp)?$/)        { printhelp($1);          exit 0; } # allow --h --help --h=*
     if ($arg =~ /^(--|\+)help=?(.*)$/)  { printhelp($2);          exit 0; } # allow +help +help=*
@@ -4850,7 +4876,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--noreconnect$/)      { $cfg{'use_reconnect'}=0;  }
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # some options are for compatibility with other programs
-    #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11
+    #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;        } # sslyze
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
     if ($arg eq  '--forcesni')          { $cfg{'forcesni'}  = 1;    }
@@ -4860,21 +4886,21 @@ while ($#argv >= 0) {
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
     if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    } # allow case insensitive
-    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    } # ..
-    if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    } # ..
-    if ($arg =~ /^--?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}    = 1;    } # allow ._- separator
-    if ($arg =~ /^--?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}    = 1;    } # ..
-    if ($arg =~ /^--?tlsv?1[-_.]?3$/i)  { $cfg{'TLSv13'}    = 1;    } # ..
-    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}    = 1;    } # ..
-    if ($arg =~ /^--dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}    = 1;    } # ..
-    if ($arg =~ /^--nosslv?2$/i)        { $cfg{'SSLv2'}     = 0;    } # allow _- separator
-    if ($arg =~ /^--nosslv?3$/i)        { $cfg{'SSLv3'}     = 0;    } # ..
-    if ($arg =~ /^--notlsv?1$/i)        { $cfg{'TLSv1'}     = 0;    } # ..
-    if ($arg =~ /^--notlsv?11$/i)       { $cfg{'TLSv11'}    = 0;    } # ..
-    if ($arg =~ /^--notlsv?12$/i)       { $cfg{'TLSv12'}    = 0;    } # ..
-    if ($arg =~ /^--notlsv?13$/i)       { $cfg{'TLSv13'}    = 0;    } # ..
-    if ($arg =~ /^--nodtlsv?09$/i)      { $cfg{'DTLSv9'}    = 0;    } # ..
-    if ($arg =~ /^--nodtlsv?10?$/i)     { $cfg{'DTLSv1'}    = 0;    } # ..
+    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    }
+    if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    }
+    if ($arg =~ /^--?tlsv?11$/i)        { $cfg{'TLSv11'}    = 1;    }
+    if ($arg =~ /^--?tlsv?12$/i)        { $cfg{'TLSv12'}    = 1;    }
+    if ($arg =~ /^--?tlsv?13$/i)        { $cfg{'TLSv13'}    = 1;    }
+    if ($arg =~ /^--dtlsv?09$/i)        { $cfg{'DTLSv9'}    = 1;    }
+    if ($arg =~ /^--dtlsv?10?$/i)       { $cfg{'DTLSv1'}    = 1;    }
+    if ($arg =~ /^--nosslv?2$/i)        { $cfg{'SSLv2'}     = 0;    }
+    if ($arg =~ /^--nosslv?3$/i)        { $cfg{'SSLv3'}     = 0;    }
+    if ($arg =~ /^--notlsv?1$/i)        { $cfg{'TLSv1'}     = 0;    }
+    if ($arg =~ /^--notlsv?11$/i)       { $cfg{'TLSv11'}    = 0;    }
+    if ($arg =~ /^--notlsv?12$/i)       { $cfg{'TLSv12'}    = 0;    }
+    if ($arg =~ /^--notlsv?13$/i)       { $cfg{'TLSv13'}    = 0;    }
+    if ($arg =~ /^--nodtlsv?09$/i)      { $cfg{'DTLSv9'}    = 0;    }
+    if ($arg =~ /^--nodtlsv?10?$/i)     { $cfg{'DTLSv1'}    = 0;    }
     if ($arg eq  '-b')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
     if ($arg eq  '-V')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
 #   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # FIXME: not supported
@@ -4983,10 +5009,11 @@ while ($#argv >= 0) {
         exit 0;
 	
     }
+    next if ($arg =~ /^\s*$/);# ignore empty arguments; for CGI mode
     if ($arg =~ /^\+(.*)/)  { # all  other commands
         my $val = $1;
         _y_ARG("command= $val");
-        next if ($arg =~ m/^\+\s*$/);  # ignore empty arguments; for CGI mode
+        next if ($val =~ m/^\+\s*$/);  # ignore empty arguments; for CGI mode
         if ($val =~ m/^exec$/i) {      # +exec is special
             $cfg{'exec'} = 1;
             next;
@@ -5012,8 +5039,6 @@ while ($#argv >= 0) {
         next;
     }
     #} +---------+----------+----------------------------------+----------------
-
-    next if ($arg =~ /^\s*$/);  # ignore empty arguments; for CGI mode
 
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
         # allow URL   http://f.q.d.n:42/aa*foo=bar:23/
@@ -5978,19 +6003,33 @@ the description here is text provided by the user.
 =head3 --help=score
 
   Show score value for each check.
-  Value is printed in format to be used for  "--cfg_score=KEY=SCORE".
+  Value is printed in format to be used for  "--cfg-score=KEY=SCORE".
 
   Note that the  sequence  of options  is important.  Use the options
-  "--trace"  and/or  "--cfg_score=KEY=SCORE"  before  "--help=score".
+  "--trace"  and/or  "--cfg-score=KEY=SCORE"  before  "--help=score".
 
 =head3 --help=text
 
   Show texts used in various messages.
 
+=head3 --help=cfg-check
+
+  Show texts used as labels in output for checks (see "+check") ready
+  for use in  RC-FILE  or as option.
+
+=head3 --help=cfg-data
+
+  Show texts used as labels in output for  data  (see "+info")  ready
+  for use in  RC-FILE  or as option.
+
+=head3 --help=cfg-text
+
+  Show texts used in various messages ready for use in  RC-FILE  or
+  as option.
+
 =head3 --help=text-cfg
 
-  Show texts used in various messages ready for use in in  RC-FILE or
-  as option.
+  See "--help=cfg-text" .
 
 =head3 --help=regex
 
@@ -6056,6 +6095,10 @@ the description here is text provided by the user.
 =head3 --proxypass=PROXYPASS
 
   Specify password for proxy authentication.
+
+=head3 --cgi, --cgi-exec
+
+  Internal use for CGI mode only.
 
 =head2 Options for SSL tool
 
@@ -6588,13 +6631,13 @@ options are ambiguous.
 
   For general descriptions please see  CUSTOMIZATION  section below.
 
-=head3 --cfg_cmd=CMD=LIST
+=head3 --cfg-cmd=CMD=LIST
 
   Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
   are written without the leading  "+".
   CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
   Example:
-      --cfg_cmd=sni=sni hostname
+      --cfg-cmd=sni=sni hostname
 
   To get a list of commands and their settings, use:
 
@@ -6602,7 +6645,7 @@ options are ambiguous.
 
   Main purpose is to reduce list of commands or print them sorted.
 
-=head3 --cfg_score=KEY=SCORE
+=head3 --cfg-score=KEY=SCORE
 
   Redefine value for scoring. Sets  %checks{KEY}{score}  to  SCORE.
   Most score values are set to 10 by default. Values "0" .. "100" are
@@ -6617,23 +6660,23 @@ options are ambiguous.
   Use the  "--trace-key"  option for the  "+info"  and/or  "+check"
   command to get the values for  KEY.
 
-=head3 --cfg_checks=KEY=TEXT --cfg_data=KEY=TEXT
+=head3 --cfg-checks=KEY=TEXT --cfg-data=KEY=TEXT
 
   Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
   %checks{KEY}{txt}  to  TEXT.
 
   To get a list of preconfigured labels, use:
 
-      $0 --help=cfg_checks
-      $0 --help=cfg_data
+      $0 --help=cfg-checks
+      $0 --help=cfg-data
 
-=head3 --cfg_text=KEY=TEXT
+=head3 --cfg-text=KEY=TEXT
 
   Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
 
   To get a list of preconfigured texts, use:
 
-      $0 --help=cfg_text
+      $0 --help=cfg-text
 
   Note that \n, \r and \t are replaced by the corresponding character
   when read from RC-FILE.
@@ -6804,7 +6847,9 @@ When used in the RC-FILE, the I<--OPTION=VALUE> variant must be used.
 
 =head2 Option Names
 
-Dash  C<->  and/or  underscore  C<_>  in option names are optional.
+Dash  C<->,  dot  C<.>  and/or  underscore  C<_>  in option names are
+optional, all following are the same:
+    --no.dns
     --no-dns
     --no_dns
     --nodns
@@ -6842,7 +6887,7 @@ details of this check.
 
 =head3 heartbeat
 
-Check if heartbleed extension is supported by target.
+Check if heartbeat extension is supported by target.
 
 =head2 SSL Vulnerabilities
 
@@ -7204,7 +7249,7 @@ for additional information lines or texts (mainly beginning with C<=>).
 
 =item CONFIGURATION FILE
 
-    Configuration Files must be specified with one of the   "--cfg_*"
+    Configuration Files must be specified with one of the   "--cfg-*"
     options. The specified file can be a valid path. Please note that
     only the characters:  a-zA-Z_0-9,.\/()-  are allowed as pathname.
     Syntax in configuration file is:  'KEY=VALUE'  where 'KEY' is any
@@ -7215,7 +7260,7 @@ for additional information lines or texts (mainly beginning with C<=>).
 
     Resource files are searched for and used automatically. They will
     be searched for in the local (current working) directory only.
-    Syntax in resource file is: "--cfg_CFG=KEY=VALUE" as described in
+    Syntax in resource file is: "--cfg-CFG=KEY=VALUE" as described in
     OPTIONS  section. 'CFG' is any of:  cmd,  check,  data,  text  or
     score. where  'KEY'  is any key from internal data structure.
 
@@ -7241,15 +7286,15 @@ settings used in output. The options are:
 
 =over 4
 
-=item --cfg_cmd=KEY=LIST
+=item --cfg-cmd=KEY=LIST
 
-=item --cfg_score=KEY=SCORE
+=item --cfg-score=KEY=SCORE
 
-=item --cfg_checks=KEY=TEXT
+=item --cfg-checks=KEY=TEXT
 
-=item --cfg_data=KEY=TEXT
+=item --cfg-data=KEY=TEXT
 
-=item --cfg_text=KEY=TEXT
+=item --cfg-text=KEY=TEXT
 
 =back
 
@@ -7263,10 +7308,10 @@ read and set. For details see  B<CONFIGURATION FILE>  below.
 =head2 CONFIGURATION FILE
 
 Note that the file can contain  C<KEY=TEXT>  pairs for the kind of the
-configuration as given by the  I<--cfg_CFG>  option.
+configuration as given by the  I<--cfg-CFG>  option.
 
-For example when used  with  I<--cfg_text=file> only values for  %text
-will be set, when used  with  I<--cfg_data=file> only values for %data
+For example when used  with  I<--cfg-text=file> only values for  %text
+will be set, when used  with  I<--cfg-data=file> only values for %data
 will be set, and so on.  C<KEY>  is not used when  C<KEY=TEXT>  is  an
 existing filename. Though, it's recommended to use a non-existing key,
 for example: I<--cfg-text=my_file=some/path/to/private/file> .
@@ -7526,7 +7571,7 @@ as they my trigger the  -I<--header>  option unintentional.
 The used L<timeout(1)> command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
-I<--cfg_text=file>  cannot be used to redefine the texts "yes" and "no"
+I<--cfg-text=file>  cannot be used to redefine the texts "yes" and "no"
 as used in the output for  I<+cipher>  command.
 
 =head2 Checks (general)
@@ -7853,7 +7898,7 @@ don't make any sense.
 =begin comment
 
 The only code necessary for CGI mode is encapsulated at the beginning,
-see  C<if ($me =~/\.cgi$/){ ... }>. Beside some minor additional regex
+see  C<if ($me =~/\.cgi/){ ... }>.  Beside some minor additional regex
 matches (mainly removing trailing  C<=> and empty arguments) no other
 code is needed. 
 
@@ -8185,21 +8230,21 @@ Following formats are used:
 
 =item Change a single score setting
 
-    $0 --cfg_score=http_https=42   +check some.tld 
+    $0 --cfg-score=http_https=42   +check some.tld 
 
 =item Use your private score settings from a file
 
     $0 --help=score > magic.score
     # edit as needed: magic.score
-    $0 --cfg_score    magic.score  +check some.tld
+    $0 --cfg-score    magic.score  +check some.tld
 
 =item Use your private texts in output
 
-    $0 +check some.tld --cfg_text=desc="my special description"
+    $0 +check some.tld --cfg-text=desc="my special description"
 
 =item Use your private texts from RC-FILE
 
-    $0 --help=cfg_text >> .o-saft.pl
+    $0 --help=cfg-text >> .o-saft.pl
     # edit as needed:     .o-saft.pl
     $0 +check some.tld
 
