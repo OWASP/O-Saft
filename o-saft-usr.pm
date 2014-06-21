@@ -101,9 +101,13 @@ For example:
 
     sub usr_pre_args() {}
 
+=head1 VERSION
+
+14.06.08
+
 =cut
 
-my  $SID    = "@(#) o-saft-usr.pm 1.2 14/01/12 22:19:46";
+my  $SID    = "@(#) o-saft-usr.pm 1.4 14/06/21 18:25:31";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -114,6 +118,8 @@ sub _dbx { _trace(join(" ", @_)); } # requires --v
 
 # user functions
 # -------------------------------------
+# These functions are called in o-saft.pl
+
 sub usr_pre_file()  {
     _dbx("usr_pre_file ...");
 };
@@ -124,6 +130,23 @@ sub usr_pre_args()  {
 
 sub usr_pre_exec()  {
     _dbx("usr_pre_exec ...");
+    # All arguments and options are parsed.
+    # Unknown commands are not available with _is_do() but can be
+    # searched for in cfg{'done'}->{'arg_cmds'} which allows users
+    # to "create" and use their own commands without changing 
+    # o-saft.pl itself. However, o-saft.pl will print a WARNING then.
+
+    if (_is_member('htmlhelp', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
+        # Usage:  $0 --user +html
+        usr_printhelp();
+        exit 0;
+    }
+
+    if (_is_member('htmlcgi', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
+        # Usage:  $0 --user +html
+        usr_printcgi();
+        exit 0;
+    }
 };
 
 sub usr_pre_cipher(){
@@ -170,6 +193,197 @@ sub usr_pre_next()  {
 
 sub usr_pre_exit()  {
     _dbx("usr_pre_exit ...");
+};
+
+# local functions
+# -------------------------------------
+sub _http_head()  {
+    print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
+    print "Content-type: text/plain; charset=utf-8\r\n";
+    print "\r\n";
+}
+sub _html_head()  {
+    print << "EoHTML";
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title> . :  O - S a f t  &#151;  OWASP SSL audit for testers : . </title>
+<script>
+function d(id){return document.getElementById(id).style;}
+function t(id){id.display=(id.display=='none')?'block':'none';}
+</script>
+<style>
+ .r{float:right;}
+ .c{!font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
+ p{margin-left:2em;margin-top:0;}
+ h2, h3, h4, h5{margin-bottom:0.2em;}
+ h2{margin-top:-0.5em;padding:1em;height:1.5em;background-color:black;color:white;}
+ li{margin-left:2em;}
+ div{padding:0.5em;border:1px solid green;}
+ form{padding:1em;}
+ span{font-size:8pt;border:1px solid green;}
+</style>
+</head>
+<body>
+ <h2>O - S a f t &#160; &#151; &#160; OWASP SSL advanced forensic tool</h2><!-- hides unwanted text before <body> tag -->
+EoHTML
+}
+sub _html_foot()  {
+    print << "EoHTML";
+ <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
+ <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar ><button value="" />Download (stable)</button></a><br>
+ <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
+ <hr><p><span>&copy; sic[!]sec GmbH, 2012 - 2014</span></p>
+</body></html>
+EoHTML
+}
+
+sub _html_chck($) {
+    #? same as _html_cbox() but without lable and only if passed parameter start with - or +
+    my $n = shift || "";
+    return "" if ($n !~ m/^(-|\+)+/);
+    return sprintf("<input type=checkbox name='%s' value='' >&#160;", scalar((split(/\s+/,$n))[0]));
+}
+sub _name_ankor($){
+    my $n = shift;
+    $n =~ s/,//g;  # remove comma
+    #$n =~ s/\s/_/g;# replace spaces
+    return $n;
+}
+sub _html_ankor($){
+    #? print ankor tag for each word in given parameter
+    my $n = shift;
+    my $a = "";
+    return sprintf("<a name=\"a%s\"></a>", $n) if ($n !~ m/^(-|\+)+/);
+    #foreach $n (split(/\s+/,$n)) {
+    #    $n = _name_ankor($n);
+    #    $a .= sprintf("<a name='a%s'></a>", $n);
+    #}
+    return sprintf("<a name=\"a%s\"></a>", $n);
+    return $a;
+}
+sub _html_cbox($) { return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $_[0], '"--' . $_[0] . '"'); }
+sub _html_text($) { return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", $_[0], '"--' . $_[0] . '"'); }
+sub _html_span($) { return sprintf("%8s<span>%s</span><br>\n", "", join(", ", @{$cfg{$_[0]}})); }
+sub _html_cmd($)  { return sprintf("%9s+%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $_[0] . '"'); }
+
+sub _html_br()    { return sprintf("        <br>\n"); }
+
+sub _get_html($$) {
+    my $anf = shift; # pattern where to start extraction
+    my $end = shift; # pattern where to stop extraction
+    my $cmd = "";
+    my $h = 0; $c = 0;
+    if (open(FID, $0)) {
+    while (<FID>) {
+        next if/^=(pod|cut|over|back|for|encoding)/;
+        $h=1 if/$anf/;
+        $h=0 if/$end/;
+        next if/^__DATA__/;
+        m/^=begin .*/&& do{$c=1;};              # start of comment
+        m/^=end /    && do{$c=0;next;};         # end of comment, don't print
+        next if $c==1;                          # ignore comments
+        next if $h==0;                          # ignore "out of scope"
+        next if m/^\s*$/;                       # ignore empty lines
+        m/^=head1\s*(.*)/ && do { printf("\n<h1>%s %s</h1>\n",_html_ankor($1),$1);next;};
+        m/^=head([23])\s*(.*)/ && do { $i=$1;$i+=1;printf("%s\n<h%s>%s %s</h%s><p onclick='t(this);return false;'>\n",_html_ankor($2),$i,_html_chck($2),$2,$i);next;};
+        #s#B<([^>]*)>#<u>$1</u>#g;              # markup references inside help
+        s#C<([^>]*)>#<span class=c >$1</span>#g;# markup examples
+        s#L<([^>]*)>#"$1"#g;                    # markup other references
+        s![BI]<([^>]*)>! <a href="#a$1">$1</a>!g; # markup commands and options
+        s#\$0#o-saftp.pl#g;                     # my name
+        m/^=item(?:\s\*)?(.*)/ && do { print "<li>$1</li>\n";next;};
+        s!\s((?:\+|--)[^,\s"]*)[,\s]! <a href="#a$1">$1</a> !; # markup references inside help
+        s!\s"((?:\+|--)[^"]*)"! <a href="#a$1">$1</a>!g;    # markup references inside help
+        #s#^=item(?:\s\*)?(.*)#<li> $1#;    
+        print;
+    }
+    close(FID);
+    }
+}
+
+sub usr_printhelp() {
+    #? print complete HTML page for o-saft.pl +help
+    _dbx("usr_printhtml ...");
+    _http_head() if (grep(/^usr-cgi/, @{$cfg{'usr-args'}}) > 0);
+    _html_head();
+    _get_html('^__DATA__', '^TODO');
+    _html_foot();
+} # usr_printhelp
+
+sub usr_printcgi() {
+    #? print complete HTML page for o-saft.pl used as CGI
+    #? recommended usage:   $0 --no-header --usr +html 
+    #?    o-saft.cgi?--cgi=&--usr&--no-header=&--cmd=html
+    _dbx("usr_printcgi ...");
+    my $cgi = get_usr_value('user-action') || get_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
+    my $key = "";
+    _http_head() if (grep(/^usr-cgi/, @{$cfg{'usr-args'}}) > 0);
+    _html_head();
+print << "EoHTML";
+ <a href="$cgi?--cgi&--help" target=_help ><button value="" />help</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help=command" target=_help ><button value="" />commands</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help=checks"  target=_help ><button value="" />checks</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help=score"   target=_help ><button value="" />score</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help=regex"   target=_help ><button value="" />regex</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--abbr" target=_help ><button value="" />Glossar</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--todo" target=_help ><button value="" />ToDo</button></a><br>
+ <form action="$cgi" method=GET >
+  <input  type=hidden name="--cgi" value="" >
+  <fieldset>
+EoHTML
+
+    print _html_text('host');
+    print _html_text('port');
+print << "EoHTML";
+    <div id=a style="display:block;">
+        <button class=r onclick="t(d('a'));t(d('b'));return false;">Full GUI</button><br>
+EoHTML
+    foreach $key (qw(cmd cmd cmd cmd)) { print _html_cmd($key); }
+    print _html_br();
+    print _html_span('cmd-intern');
+    foreach $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
+                     no-sni sni no-http http BR
+                     no-dns dns no-cert BR
+                     no-openssl openssl force-openssl  BR
+                     no-header  header  short showhost BR
+                     enabled disabled BR
+                     v v trace trace traceCMD traceKEY BR
+                 )) {
+        if ($key eq 'BR') { print _html_br(); next; }
+        print _html_cbox($key);
+    }
+    foreach $key (qw(separator timeout legacy)) { print _html_text($key); }
+    print _html_br();
+    print _html_span('legacys');
+    print _html_text("format");
+    print _html_span('formats');
+
+## cmd-intern:
+## cipher check dump check_sni exec help info info--v http quick list libversion sizes s_client version quit sigkey bsi ev cipherraw cn_nosni valid-years valid-months valid-days
+## 
+## aus POD:
+## cipher check dump check_sni exec      info info--v http quick list libversion sizes s_client version quit        bsi ev cipherraw
+## 
+## +sni +sni_check todo abbr +abk sts +hsts sni constraints
+
+    print << "EoHTML";
+	<br>
+    </div>
+    <div id=b style="display:none;">
+        <button class=r onclick="d('a').display='block';d('b').display='none';return false;">Simple GUI</button><br>
+        <input type=text     name=--cmds size=55 />&#160;
+EoHTML
+
+    _get_html("^=head1\\s*COMMANDS", '^=head1\\s*LAZY');
+    print << "EoHTML";
+</p>
+    </div>
+	<input type=submit value="go" />
+  </fieldset>
+ </form>
+EoHTML
+    _html_foot();
 };
 
 1;
