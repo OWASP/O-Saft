@@ -31,6 +31,11 @@ configuration files specified witj  I<--cfg_*=>  option.
 =item usr_pre_exec( )
 
 All command line arguments are read. Right before executing myself.
+This function also handles following commands and then exits:
+
+  +htmlcgi      - print HTML page to start o-saft.cgi
+  +htmlhelp     - print documentation in HTML format
+  +wikihelp     - print documentation in mediawiki format
 
 =item usr_pre_cipher( )
 
@@ -107,7 +112,7 @@ For example:
 
 =cut
 
-my  $SID    = "@(#) o-saft-usr.pm 1.4 14/06/21 18:25:31";
+my  $SID    = "@(#) o-saft-usr.pm 1.5 14/06/21 19:12:29";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -136,15 +141,21 @@ sub usr_pre_exec()  {
     # to "create" and use their own commands without changing 
     # o-saft.pl itself. However, o-saft.pl will print a WARNING then.
 
-    if (_is_member('htmlhelp', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
-        # Usage:  $0 --user +html
+    if (_is_member('gen-help', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
+        # Usage:  $0 --user +gen-html
         usr_printhelp();
         exit 0;
     }
 
-    if (_is_member('htmlcgi', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
-        # Usage:  $0 --user +html
+    if (_is_member('gen-cgi', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
+        # Usage:  $0 --user +gen-cgi
         usr_printcgi();
+        exit 0;
+    }
+
+    if (_is_member('gen-wiki', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
+        # Usage:  $0 --user +gen-wiki
+        usr_printwiki();
         exit 0;
     }
 };
@@ -303,7 +314,8 @@ sub _get_html($$) {
 }
 
 sub usr_printhelp() {
-    #? print complete HTML page for o-saft.pl +help
+    #? print complete HTML page for o-saft.pl +gen-html
+    #? recommended usage:   $0 --no-header --usr +gen-html
     _dbx("usr_printhtml ...");
     _http_head() if (grep(/^usr-cgi/, @{$cfg{'usr-args'}}) > 0);
     _html_head();
@@ -313,7 +325,7 @@ sub usr_printhelp() {
 
 sub usr_printcgi() {
     #? print complete HTML page for o-saft.pl used as CGI
-    #? recommended usage:   $0 --no-header --usr +html 
+    #? recommended usage:   $0 --no-header --usr +gen-cgi
     #?    o-saft.cgi?--cgi=&--usr&--no-header=&--cmd=html
     _dbx("usr_printcgi ...");
     my $cgi = get_usr_value('user-action') || get_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
@@ -384,6 +396,75 @@ EoHTML
  </form>
 EoHTML
     _html_foot();
-};
+} # usr_printcgi
+
+sub usr_printwiki() {
+    #? print documentation for o-saft.pl in mediawiki format (to be used at owasp.org)
+    #? recommended usage:   $0 --no-header --usr +gen-wiki
+    # ToDo: this is a simple approach!
+    _dbx("usr_printwiki ...");
+    my $key = "";
+    # 1. generate wiki page header
+    print "
+==O-Saft==
+This is O-Saft's documentation as you get with:
+ o-saft.pl --help
+
+__TOC__
+<!-- position left is no good as the list is too big and then overlaps some texts
+{|align=right
+ |<div>__TOC__</div>
+ |}
+-->
+<headertabs /> 
+
+[[Category:OWASP Project]]  [[Category:OWASP_Builders]] [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]
+----
+";
+    # 2. generate wiki page content
+    #    extract from herein and convert POD syntax to mediawiki syntax
+    my $h = 0;
+    if (open(FID, $0)) {
+    while (<FID>) {
+        # following matches should be similar to those in _get_html()
+        $h=1 if/^__DATA__/;
+        next if/^__DATA__/;
+        next if/^=(pod|cut|over|back|for|encoding)/;
+        m/^=begin .*/&& do{$h=0;};              # star of comment
+        m/^=end /    && do{$h=1;next;};         # end of comment, don_t print
+        next if $h==0;
+        s/^=head1(.*)/====$1====/;              # header
+        s/^=head2(.*)/=====$1=====/;            # ..
+        s/^=head3(.*)/======$1======/;          # ..
+        s/^=item(?:\s\*)?(.*)/* $1/;            # list item
+        s/^(=[^\s=]*\s)//;                      # remove spaces
+        s/B<([^>]*)>/[[#$1|$1]]/g;              # markup references inside help
+        s#C<([^>]*)>#<code>$1</code>#g;         # markup examples
+        s/I<([^>]*)>/\'\'$1\'\'/g;              # markup commands and options
+        s/L<([^>]*)>/\'\'$1\'\'/g;              # markup other references
+        print, next if/^=/;                     # no more changes in header lines
+        s/"((?:\+|--)[^"]*)"/\'\'$1\'\'/g;      # markup commands and options
+        s#"([^"]*)"#<code>$1</code>#g;          # markup commands and options enclosed in quotes
+        s/^([^=*].*)/:$1/;                      # identent all lines for better readability
+        s/^:\s+\$0/    o-saft.pl/;              # replace myself with real name
+        s/^:( {9}[^ ])(.*)/$1$2/;               # exactly 9 spaces used to highlight line
+        s/^:\s+$/\n/;                           # remove empty lines
+        if (m/^:/) {                            # add internal wiki links; quick&dirty list here
+            s/((?:DEBUG|RC|USER)-FILE)/ [[#$1|$1]]/g;
+            s/(CONFIGURATION (?:FILE|OPTIONS))/ [[#$1|$1]]/g;
+            s/(SCORING)/ [[#$1|$1]]/g;
+        }
+        print;
+    }
+}
+    # 2. generate wiki page footer
+    print "
+----
+<small>
+Content of this wiki page generated with:
+ o-saft.pl --help=wiki
+</small>
+";
+} # usr_printwiki
 
 1;
