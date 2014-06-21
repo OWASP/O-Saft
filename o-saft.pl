@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.286 14/06/18 13:06:02";
+my  $SID    = "@(#) yeast.pl 1.288 14/06/21 19:14:04";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -4468,68 +4468,6 @@ sub printhist() {
     print scalar reverse $egg;
 } # printhist
 
-sub printmediawiki() {
-    #? print documentation in mediawiki format
-    # ToDo: this is a simple approach!
-    # 1. generate wiki page header
-    print "
-==O-Saft==
-This is O-Saft's documentation as you get with:
- o-saft.pl --help
-
-__TOC__
-<!-- position left is no good as the list is too big and then overlaps some texts
-{|align=right
- |<div>__TOC__</div>
- |}
--->
-<headertabs /> 
-
-[[Category:OWASP Project]]  [[Category:OWASP_Builders]] [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]
-----
-";
-    # 2. generate wiki page content
-    #    extract from herein and convert POD syntax to mediawiki syntax
-    my $h = 1;
-    foreach (@DATA) {
-        next if/^=(pod|cut|over|back|for|encoding)/;
-        next if/^__DATA__/;
-        m/^=begin .*/&& do{$h=0;};              # star of comment
-        m/^=end /    && do{$h=1;next;};         # end of comment, don_t print
-        next if $h==0;
-        s/^=head1(.*)/====$1====/;              # header
-        s/^=head2(.*)/=====$1=====/;            # ..
-        s/^=head3(.*)/======$1======/;          # ..
-        s/^=item(?:\s\*)?(.*)/* $1/;            # list item
-        s/^(=[^\s=]*\s)//;                      # remove spaces
-        s/B<([^>]*)>/[[#$1|$1]]/g;              # markup references inside help
-        s#C<([^>]*)>#<code>$1</code>#g;         # markup examples
-        s/I<([^>]*)>/\'\'$1\'\'/g;              # markup commands and options
-        s/L<([^>]*)>/\'\'$1\'\'/g;              # markup other references
-        print, next if/^=/;                     # no more changes in header lines
-        s/"((?:\+|--)[^"]*)"/\'\'$1\'\'/g;      # markup commands and options
-        s#"([^"]*)"#<code>$1</code>#g;          # markup commands and options enclosed in quotes
-        s/^([^=*].*)/:$1/;                      # identent all lines for better readability
-        s/^:\s+\$0/    o-saft.pl/;              # replace myself with real name
-        s/^:( {9}[^ ])(.*)/$1$2/;               # exactly 9 spaces used to highlight line
-        s/^:\s+$/\n/;                           # remove empty lines
-        if (m/^:/) {                            # add internal wiki links; quick&dirty list here
-            s/((?:DEBUG|RC|USER)-FILE)/ [[#$1|$1]]/g;
-            s/(CONFIGURATION (?:FILE|OPTIONS))/ [[#$1|$1]]/g;
-            s/(SCORING)/ [[#$1|$1]]/g;
-        }
-        print;
-    }
-    print "
-----
-<small>
-Content of this wiki page generated with:
- o-saft.pl --help=wiki
-</small>
-";
-
-} # printmediawiki
-
 sub printhelp($) {
     #? print program's help
     # if parameter is not empty, print brief list of specified label
@@ -4788,6 +4726,7 @@ while ($#argv >= 0) {
         next;
 }
 
+#_dbx $arg;
     #{ handle help and related option and command
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
@@ -4796,7 +4735,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0;    next; }
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
     if ($arg =~ /^--cgi.*/)             { $arg = '# for CGI mode';  next; } # for CGI mode; ignore
-    if ($arg =~ /^--help=wiki$/)        { printmediawiki();       exit 0; } #
     if ($arg =~ /^--h(?:elp)?$/)        { printhelp($1);          exit 0; } # allow --h --help --h=*
     if ($arg =~ /^(--|\+)help=?(.*)$/)  { printhelp($2);          exit 0; } # allow +help +help=*
     if ($arg =~ /^(--|\+)ab(?:br|k)=?$/){ printtable('abbr');     exit 0; }
@@ -5592,7 +5530,7 @@ exit 0; # main
 #
 # Special syntax:
 #    lines beginning with exactly 9 spaces are handled special in 
-#          printmediawiki()
+#          usr_printwiki() see o-saft-usr.pm
 # FIXME: find proper POD syntax for this ugly hack
 
 __END__
@@ -5797,6 +5735,14 @@ with other commands).
     details of the cipher and some internal details about the rating.
 
     Use "--v" option to show more details.
+
+=head3 +gen-html +gen-wiki
+
+  Print documentation in various formats, see o-saft-usr.pm .
+
+=head3 +gen-cgi
+
+   See o-saft-usr.pm .
 
 =head3 +abbr, +abk
 
@@ -6033,10 +5979,6 @@ the description here is text provided by the user.
 =head3 --help=regex
 
   Show regular expressions used internally.
-
-=head3 --help=wiki
-
-  Show help text in mediawiki format.
 
 =head3 --no-rc
 
@@ -8359,11 +8301,22 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.13
+@(#) 14.06.14
 
 =head1 AUTHOR
 
 31. July 2012 Achim Hoffmann (at) sicsec de
+
+=begin comment
+
+* nur protokolle testen (wie testssl.sh)
+* openssl (nicht bei 0.9.8, bei 1.0.1*) -legacy_renegotiation
+* "Minimal encryption strength:     weak encryption (40-bit) (wie TestSSLServer.jar)
+* "Checking fallback from TLS 1.1 to... TLS 1.0" (wie ssl-cipher-check.pl)
+* SSLCertScanner.exe http://www.xenarmor.com/network-ssl-certificate-scanner.php ansehen
+* ssl-cert-check -p 443 -s mail.google.com -i -V
+
+=end comment
 
 =begin ToDo # no POD syntax here!
 
