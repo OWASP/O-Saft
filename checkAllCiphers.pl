@@ -336,7 +336,7 @@ while ($#argv >= 0) {
     no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
     $Net::SSLhello::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLhello::usesni      = $cfg{'usesni'};
-    $Net::SSLhello::starttls    = 0;
+    $Net::SSLhello::starttls    = $cfg{'starttls'};
     $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
     $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
     $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
