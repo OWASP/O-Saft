@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-06-16';
+    $VERSION    = 'NET::SSLhello_2014-06-27';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -65,6 +65,7 @@ BEGIN {
         hexCodedSSL2Cipher
         hexCodedString
         hexCodedTLSCipher
+        openTcpSSLconnection 
         parseServerHello
         parseSSL2_ServerHello
         parseTLS_Extension
@@ -109,7 +110,8 @@ use constant {
     _MY_PRINT_CIPHERS_PER_LINE =>  8, # Nr of Ciphers printed in a trace
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
-    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 3 # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
+    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 3, # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
+    _SLEEP_B4_2ND_READ         => 2.25 # Sleep before second read (STARTTLS and Proxy)
 };
 
 #our $LONG_PACKET = 1940; # try to get a 2nd or 3rd segment for long packets
@@ -786,7 +788,7 @@ sub checkSSLciphers ($$$@) {
                 
                 if ($Net::SSLhello::trace > 1) { #Print Ciphers that are tested this round:
                     $i = 0;
-                    if (($Net::SSLhello::starttls > 0)) {
+                    if ($Net::SSLhello::starttls) {
                         _trace1 ("checkSSLciphers ($host, $port (STARTTLS), $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
                     } else {
                         _trace1 ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
@@ -848,9 +850,9 @@ sub checkSSLciphers ($$$@) {
                 _trace1_ ("=> no Cipher found\n");
                 @cipherSpecArray =(); # Server did not Accepty any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                 if ( ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Warning -> Stop this Host
-                    warn ("**WARNING: checkSSLciphers => Exit Loop (2)\n");
+                    warn ("**WARNING: checkSSLciphers => Exit Loop (2)");
                 } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                    _trace1 ("**checkSSLciphers => Exit Loop (3)\n"); 
+                    _trace1 ("**checkSSLciphers => Exit Loop (3)"); 
                 }
                 $@=""; # reset Error-Msg
                 last; # no more Ciphers to Test
@@ -937,6 +939,333 @@ sub checkSSLciphers ($$$@) {
        }
 }
 
+sub openTcpSSLconnection ($$) {
+    #? open a TCP connection to a Server and Port and send STARTTLS if requested
+    #? This SSL connection could be made via a http Proxy 
+    my $host        = shift; # hostname
+    my $port        = shift;
+    my $socket;
+    my $connect2ip;
+    my $proxyConnect="";
+    my $clientHello="";
+    my $input="";
+    my $input2="";
+    my $retryCnt = 0;
+    my $firstMessage = "";
+    my $secondMessage = "";
+    
+    my @starttls_matrix = 
+        ( ["SMTP", 
+           sprintf ("(?:^|\\s)220\\s"),    # Phase1: receive '220 smtp.server.com Simple Mail Transfer Service Ready'
+           "EHLO o-saft.localhost\r\n",    # Phase2: send    'EHLO o-saft.localhost\r\n'         
+           "(?:^|\\s)250(?:\\s|-)",        # Phase3: receive '250-smtp.server.com Hello o-saft.localhost'
+           "STARTTLS\r\n",                 # Phase4: send    'STARTTLS'
+           "(?:^|\\s)220(?:\\s|-)"         # Phase5: receive '220' 
+          ],
+        );
+
+    my $starttlsType=0; # now: only SMTP ### TBD: Support more STARTTLS protocols 
+
+    $@ ="";
+
+    if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
+        _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
+    } else {
+        _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port\n");
+    }    
+    $retryCnt = 0;
+    do {{ # connect to #server:port (via proxy) and open a ssl connection (use STARTTLS if activated)
+        $@ ="";
+        $input="";
+        $input2="";
+        alarm (0); # switch off alarm (e.g. for  next retry 
+        if ($retryCnt >0) { # Retry 
+            if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
+                _trace1_ ("\n") if ($retryCnt == 1);
+                _trace1 ("doCheckSSLciphers: $retryCnt. Retry to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
+            } else {
+                _trace1 ("doCheckSSLciphers: $retryCnt. Retry to connect and open a SSL connection to $host:$port\n");
+            } 
+        }
+        eval  {
+            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            alarm($Net::SSLhello::timeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
+            socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or die "Can't create a socket \'$!\' -> target $host:$port ignored ";
+            setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
+            setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
+            alarm (0);             #clear alarm
+        }; # Do NOT forget the ;
+        next if ($@); # Error -> next retry
+
+        ######## Connection via a Proxy ########
+        if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
+            eval {
+                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                $connect2ip = inet_aton($Net::SSLhello::proxyhost);
+                if (!defined ($connect2ip) ) {
+                    $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
+                    die "Can't get the IP-Address of the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+                }
+                connect($socket, pack_sockaddr_in($Net::SSLhello::proxyport, $connect2ip) ) or die "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+                alarm (0);
+            }; # Do NOT forget the ;
+            if ($@) { # no Connect
+                close ($socket) or warn("**WARNING: doCheckSSLciphers: $@; Can't close socket, too: $!");
+                warn ("*** WARNING: doCheckSSLciphers: $@");
+                warn ("*** Fatal Error: doCheckSSLciphers: No connection to the Proxy -> Exit");
+                sleep (1);
+                return (undef);
+                # exit (1); # Exit with Error
+            }
+            eval {
+                $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
+                _trace4 ("doCheckSSLciphers: ## ProxyConnect-Message: >$proxyConnect<\n");
+                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored ";
+                alarm (0);
+            }; # Do NOT forget the ;
+            if ($@) { # no Connect
+                warn "**WARNING: openTcpSSLconnection: ... Could not send a CONNECT-Command to the Proxy: $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport\n"; 
+                close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
+                next; # retry
+            } 
+            alarm (0);
+            # CONNECT via Proxy
+            eval {
+                $input="";
+                _trace2 ("openTcpSSLconnection ## CONNECT via Proxy: try to receive the Connected-Message from the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                alarm($Net::SSLhello::timeout);
+                recv ($socket, $input, 32767, 0); 
+                if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
+                    _trace4 ("openTcpSSLconnection: ... Received Connected-Message from Proxy (1a): received NO Data\n");
+                    sleep(1) if ($retryCnt > 0);
+                    # Sleep for 250 milliseconds
+                    select(undef, undef, undef, _SLEEP_B4_2ND_READ); 
+                    recv ($socket, $input, 32767, 0); # 2nd try 
+                }
+                alarm (0);
+            };
+            next if ($@); # Error -> next retry
+            alarm (0);
+            if (length ($input) >0) { # got Data
+                _trace3 ("openTcpSSLconnection: ... Received Data via Proxy: ".length($input)." Bytes\n          >".substr(_chomp_r($input),0,64)."< ...\n");
+                _trace4 ("openTcpSSLconnection: ... Received Data via Proxy: ".length($input)." Bytes\n          >"._chomp_r($input)."<\n"); 
+                if ($input =~ /(?:^|\s)200\s/) { # HTTP/1.0 200 Connection established\r\nProxy-agent: ... \r\n\r\n
+                    $@ =""; # Connection established 
+                    _trace2 ("openTcpSSLconnection: Connection established to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
+                } else {
+                    unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
+                        $input =~ /^((?:.+?\n|$){1,4})/; #maximal 4 lines
+                        $input = _chomp_r($1);
+                    }
+                    $@ = "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored. Proxy-Error: ".$input; #error-message received from the proxy
+                    trace_2 ("openTcpSSLconnection: $@\n");
+                    next;
+                }
+            }
+        } else { #### no Proxy ####
+            eval {
+                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                $connect2ip = inet_aton($host);
+                if (!defined ($connect2ip) ) {
+                    $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
+                    die "Can't get the IP-Address of $host -> target $host:$port ignored";
+                }
+                connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or  die  "Can't make a connection to $host:$port; target ignored ";
+                alarm (0);
+            }; # Do NOT forget the ;
+            if ($@) { # no Connect
+                close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
+                next; # next retry
+            } else {
+                _trace2 ("openTcpSSLconnection: Connected to Server $host:$port\n");
+            }
+            alarm (0);
+        }
+
+        if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
+            ### STARTTLS_Phase1 (receive)
+            if ($starttls_matrix[$starttlsType][1]) { 
+                eval {
+                    $input="";
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port, Retry = $retryCnt\n");
+                    select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($Net::SSLhello::timeout);
+                    recv ($socket, $input, 32767, 0); #|| die "openTcpSSLconnection: STARTTLS (Phase 1aa): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port\n"; # did not receive a Message ## unless seems to work better than if!!
+                    if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
+                        _trace4 ("openTcpSSLconnection: STARTTLS (Phase 1a): Did *NOT* get a ".$starttls_matrix[$starttlsType][0]."-Ready-Message from $host:$port\n");
+                        sleep(1) if ($retryCnt > 0);
+                        # Sleep for 250 milliseconds
+                        select(undef, undef, undef, _SLEEP_B4_2ND_READ); 
+                        recv ($socket, $input, 32767, 0); # 2nd try 
+                    }
+                    alarm (0);
+                };
+                next if ($@); # Error -> next retry
+                alarm (0);
+                if (length ($input) >0) { # received Data => 220 smtp.server.com Simple Mail Transfer Service Ready?
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1):  ... Received ".$starttls_matrix[$starttlsType][0]."-Message (1): ".length($input)." Bytes: >"._chomp_r($input)."<\n"); 
+                    if ($input =~ /$starttls_matrix[$starttlsType][1]/) { # e.g. SMTP: 220 smtp.server.com Simple Mail Transfer Service Ready
+                        $@ ="";     # Server is Ready 
+                    } else {
+                        unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
+                            $input =~ /^(.+?)\r?\n|$/; #maximal 1 line  of error message
+                            $input = $1;
+                            # if (($startType == x) || () ....) { $input = hexString ($input) } #
+                        }
+                        $@ = "STARTTLS (Phase 1): Did *NOT* get a ".$starttls_matrix[$starttlsType][0]." Server Ready Message from $host:$port; target ignored. Server-Error: >$input<"; #error-message received from the Server
+                        _trace2 ("openTcpSSLconnection: $@\n");
+                         close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                         next;   # next retry
+                    }
+                } else {
+                    $@ = ("STARTTLS (Phase 1): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port");
+                    _trace2 ("openTcpSSLconnection: $@\n");
+                    close ($socket) or warn("**WARNING: openTcpSSLconnection: STARTTLS: $@; Can't close socket, too: $!");
+                    next;
+                }
+            } # endi-if $starttls_matrix[$starttlsType][1] 
+
+            ### STARTTLS_Phase2 (send) #####
+            if ($starttls_matrix[$starttlsType][2]) { 
+                eval {
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): send $starttls_matrix[$starttlsType][0] Message: >"._chomp_r($starttls_matrix[$starttlsType][2])."<");
+                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                    defined(send($socket, $starttls_matrix[$starttlsType][2], 0)) || die  "Could *NOT* send $starttls_matrix[$starttlsType][0] message '$starttls_matrix[$starttlsType][2]' to $host:$port; target ignored\n";
+                    alarm (0);
+                }; # Do NOT forget the ;
+                if ($@) { # no Connect
+                    _trace2 ("openTcpSSLconnection: $@\n"); 
+                    close ($socket) or warn("**WARNING: openTcpSSLconnection: ## STARTTLS (Phase 2): $@; Can't close socket, too: $!");
+                    next; # next retry
+                } 
+            } # endi-if $starttls_matrix[$starttlsType][2] 
+
+            ### STARTTLS_Phase3: receive (SMTP) Hello Answer
+            if ($starttls_matrix[$starttlsType][3]) { 
+                eval {
+                    $input="";
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n"); 
+                    select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($Net::SSLhello::timeout);
+                    recv ($socket, $input, 32767, 0); 
+                    if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
+                        _trace4 ("openTcpSSLconnection: STARTTLS (Phase 3a): Did *NOT* get any Answer to $starttls_matrix[$starttlsType][0] Client Hello from $host:$port\n");
+                        sleep(1) if ($retryCnt > 0);
+                        # Sleep for 250 milliseconds
+                        select(undef, undef, undef, _SLEEP_B4_2ND_READ);
+                        recv ($socket, $input, 32767, 0); # 2nd try
+                    }
+                    alarm (0);
+                };
+                next if ($@); # Error -> next retry
+                alarm (0);
+                if (length ($input) >0) { # received Data => 250-smtp.server.com Hello o-saft.localhost?
+                    _trace3 ("openTcpSSLconnection: ## STARTTLS (Phase 3): ... Received  $starttls_matrix[$starttlsType][0]-Hello: ".length($input)." Bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
+                    _trace4 ("openTcpSSLconnection: ## STARTTLS (Phase 3):  ... Received  $starttls_matrix[$starttlsType][0]-Hello: ".length($input)." Bytes\n      >"._chomp_r($input)."<\n");
+                    if ($input =~ /$starttls_matrix[$starttlsType][3]/) { # e.g. SMTP: 250-smtp.server.com Hello o-saft.localhost
+                        $@ ="";     # Server is Ready 
+                        _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): received a $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port: >"._chomp_r($input)."<\n");
+                    } else {
+                        unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
+                            $input =~ /^(.+?)\r?\n|$/; #maximal 1 error line
+                            $input = $1;
+                            # if (($startType == x) || () ....) { $input = hexString ($input) } #
+                        }
+                        $@ = "STARTTLS (Phase 3): Did *NOT* get a $starttls_matrix[$starttlsType][0] Server Hello Answer from $host:$port; target ignored. Server-Error: $input"; #error-message received from the SMTP-Server
+                        _trace2 ("openTcpSSLconnection: $@; try to retry\n"); 
+                        close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                        next;
+                    }
+                } else { # did receive a Message with length = 0 ?!
+                     $@ = "STARTTLS (Phase 3): Did *NOT* get any Answer to $starttls_matrix[$starttlsType][0] Client Hello from $host:$port; target ignored.";
+                     _trace2  ("openTcpSSLconnection: $@; try to retry;\n");
+                     close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                     next; # next retry
+                }
+            } # endi-if $starttls_matrix[$starttlsType][3] 
+ 
+            #### STARTTLS_Phase4: Do STARTTLS    
+            if ($starttls_matrix[$starttlsType][4]) { 
+                eval {
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): $starttls_matrix[$starttlsType][0] Do STARTTLS Message: >"._chomp_r($starttls_matrix[$starttlsType][4])."<\n");
+                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                    defined(send($socket, $starttls_matrix[$starttlsType][4], 0)) || die "Could *NOT* send a STARTTLS message to $host:$port; target ignored\n";
+                    alarm (0);
+                }; # Do NOT forget the ;
+                if ($@) { # no Connect
+                    _trace2 ("openTcpSSLconnection: $@"); 
+                    close ($socket) or warn("**WARNING: openTcpSSLconnection: ## $@; Can't close socket, too: $!");
+                    next; # next return
+                }
+             } # endi-if $starttls_matrix[$starttlsType][4]
+
+            #### STARTTLS_Phase 5: receive STARTTLS Answer
+            if ($starttls_matrix[$starttlsType][5]) { 
+                eval {
+                    $input="";
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 5): try to receive the $starttls_matrix[$starttlsType][0] STARTTLS Answer from the Server $host:$port\n");
+                    select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($Net::SSLhello::timeout);
+                    recv ($socket, $input, 32767, 0);
+                    if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
+                        _trace4  ("STARTTLS (Phase 5a): Did *NOT* get any Answer to $starttls_matrix[$starttlsType][0] STARTTLS Request from $host:$port\n");
+                        sleep(1) if ($retryCnt > 0);
+                        # Sleep for 250 milliseconds
+                        select(undef, undef, undef, _SLEEP_B4_2ND_READ);
+                        recv ($socket, $input, 32767, 0); # 2nd try 
+                    } 
+                    alarm (0);
+                };
+                next if ($@); # Error -> next retry
+                alarm (0);
+                if (length ($input) >0)  { # received Data => 220 
+                    _trace3 ("openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: ".length($input)." Bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
+                    _trace4 ("openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: ".length($input)." Bytes\n      >"._chomp_r($input)."<\n"); 
+                    if ($input =~ /$starttls_matrix[$starttlsType][5]/) { # e.g. SMTP: 220
+                        $@ ="";     # Server is Ready to do SSL/TLS
+                        _trace2 ("openTcpSSLconnection: ## STARTTLS: Server is ready to do SSL/TLS\n");
+                    } else {
+                        unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
+                            $input =~ /^(.+?)\r?\n|$/; #maximal 1 line
+                            $input = $1;
+                        }
+                        $@ = "STARTTLS: Did *NOT* get a Server SSL/TLS confirmation from $host:$port (retry: $retryCnt); target ignored. Server-Error: ".$input; #error-message received from the SMTP-Server
+                        _trace2 ("openTcpSSLconnection: ## $@; try to retry;\n");;
+                        close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                        _trace2 ("Exit openTcpSSLconnection: }\n");
+                        return (undef); # fatal Error => Exit
+                    }    
+                } else { # did not receive a Message
+                    $@ = "STARTTLS (Phase 5): Did *NOT* get any Answer to $starttls_matrix[$starttlsType][0] STARTTLS Request from $host:$port; target ignored.";
+                    _trace2 ("openTcpSSLconnection: ## $@; try to retry;\n");
+                    close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                    next; # next retry
+                }
+            } # endi-if $starttls_matrix[$starttlsType][5] 
+        } ###############    End STARTTLS Support  ##################
+    }} while ( ($@) && ($retryCnt++ < $Net::SSLhello::retry) );
+    if ($@) { #Error
+        warn ("**WARNING: openTcpSSLconnection: $@\n"); 
+        _trace2 ("openTcpSSLconnection: Exit openTcpSSLconnection }\n");
+        return (undef);
+    }
+    alarm (0);   # race condition protection
+    _trace2 ("openTcpSSLconnection: Connected to '$host:$port'\n");
+    return ($socket);
+}
+
+
 sub _doCheckSSLciphers ($$$$) {
     #? Simulate SSL Handshake to check any Ciphers by the HEX value
     #? $cipher_spec: RAW Octets according to RFC
@@ -951,7 +1280,6 @@ sub _doCheckSSLciphers ($$$$) {
     my $clientHello="";
     my $input="";
     my $input2="";
-    my $input3="";
     my $pduLen=0;
     my $v2len=0;
     my $v2type=0;
@@ -965,265 +1293,26 @@ sub _doCheckSSLciphers ($$$$) {
     my $segmentCnt=0;
     
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, >%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
-    $@ ="";
+    $@ =""; # reset Errori-String
+
+    #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
+    $socket=openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
+
+    if ( (!defined ($socket)) || ($@) ) { # No SSL Connection 
+        $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection" unless ($@); #generic Error Message
+        warn ("**WARNING: _doCheckSSLciphers: $@\n"); 
+        _trace2 ("_doCheckSSLciphers: Fatal Exit _doCheckSSLciphers }\n");
+        return ("");
+    }
+
+    #### Compile ClietHello   
     $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host); 
     if ($@) { #Error
-        _trace2 (">>> Exit _doCheckSSLciphers }\n"); 
+        _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
         return ("");
     }
-    _trace4 ("_doCheckSSLciphers: clientHello:\n          >".hexCodedString ($clientHello,"           ")."<\n");
 
-    if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
-        _trace2 ("_doCheckSSLciphers: Try to connect to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
-    } else {
-        _trace2 ("_doCheckSSLciphers: Try to connect to $host:$port\n");
-    }    
-    $retryCnt = 0;
-    do {{
-        $@ ="";
-        $input="";
-        $input2="";
-        $input3="";
-        alarm (0); # switch off alarm (e.g. for  next retry 
-        if ($retryCnt >0) { ##20140528
-            _trace1 ("_doCheckSSLciphers: $retryCnt. Retry to connect to '$host:$port'\n");
-        }
-        eval  {    
-            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-            alarm($Net::SSLhello::timeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
-            socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or die "Can't create a socket \'$!\' -> target $host:$port ignored ";
-            setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
-            setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
-            alarm (0);             #clear alarm
-        }; # Do NOT forget the ;
-        
-        unless ($@) { # all OK
-            if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
-                eval {
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout); # set Alarm for Connect
-                    $connect2ip = inet_aton($Net::SSLhello::proxyhost);
-                    if (!defined ($connect2ip) ) {
-                        $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
-                        die "Can't get the IP-Address of the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
-                    }
-                    connect($socket, pack_sockaddr_in($Net::SSLhello::proxyport, $connect2ip) ) or die "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
-                    alarm (0);
-                }; # Do NOT forget the ;
-                if ($@) { # no Connect
-                    close ($socket) or warn("**WARNING: _doCheckSSLciphers: $@; Can't close socket, too: $!");
-                    warn ("*** WARNING: _doCheckSSLciphers: $@");
-                    warn ("*** Fatal Error: _doCheckSSLciphers: No connection to the Proxy -> Exit");
-                    sleep (1);
-                    exit (1); # Exit with Error
-                }
-                eval {
-                    $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
-                    _trace4 ("_doCheckSSLciphers## ProxyConnect-Message: >$proxyConnect<\n");
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout); # set Alarm for Connect
-                    defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored ";
-                    alarm (0);
-                }; # Do NOT forget the ;
-                if ($@) { # no Connect
-                    warn "**WARNING: _doCheckSSLciphers: >>> ... Could not send a CONNECT-Command to the Proxy: $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport\n"; 
-                    close ($socket) or warn("**WARNING: _doCheckSSLciphers: $@; Can't close socket, too: $!");
-                    # next retry
-                } else { # CONNECT via Proxy
-                     eval {
-                        #Alarm: Set alarm function _timedOut and activate alarm with timeout Alarm
-                        $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                        alarm($Net::SSLhello::timeout);
-                        unless (recv ($socket, $input, 32767, 0)) { # received NO Data or additional Data is still waiting; 'unless' is the opposite of 'if'
-                            _trace4 ("_doCheckSSLciphers >>> ... Received Proxy-Connect (1): ".length($input)." Bytes\n          >".$input."<\n"); ###### temp
-                            if (length ($input) >0) { # get additional data
-                                _trace3 ("_doCheckSSLciphers ... Received Proxy-Connect (1): ".length($input)." Bytes\n        >".substr($input,0,64)." ...<\n");
-                                _trace4 ("_doCheckSSLciphers ... Received Proxy-Connect (1): ".length($input)." Bytes\n          >".$input."<\n"); 
-#                                    alarm($Net::SSLhello::timeout); # reset alarm
-####                            tried while {} and do{} until here, but did not work #### 
-                                unless (recv ($socket, $input2, 32767, 0)) { # received NO Data or additional Data is still waiting; unless is the opposite of 'if'
-                                    if (length ($input2) >0) { # got additional data
-                                        _trace3 ("_doCheckSSLciphers ... Received Proxy-Connect (2): ".length($input2)." Bytes\n        >".substr($input2,0,64)." ...<\n");
-                                        _trace4 ("_doCheckSSLciphers ... Received Proxy-Connect (2): ".length($input2)." Bytes\n          >".$input2."<\n");
-                                        $input .= $input2;
-                                    }
-                                }
-
-                            } else { # received NO Data 
-                                _trace2 ("_doCheckSSLciphers ... Received Connected-Message from Proxy: received NO Data\n");
-                                # next retry
-                            }
-                        }
-                        #clear Alarm
-                        alarm (0);
-                    };
-                
-                    if (length ($input) >0) { # got Data
-                        _trace3 ("_doCheckSSLciphers ... Received Data via Proxy: ".length($input)." Bytes\n          >".substr($input,0,64)."< ...\n");
-                        _trace4 ("_doCheckSSLciphers ... Received Data via Proxy: ".length($input)." Bytes\n          >".$input."<\n"); 
-                        
-                        if ($input =~ /(?:^|\s)200\s/) { # HTTP/1.0 200 Connection established\r\nProxy-agent: ... \r\n\r\n
-                            $@ ="";     # Connection established 
-                            _trace2 ("_doCheckSSLciphers: Connection established to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
-                        } else {
-                            unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                                $input =~ /^((?:.+?\n){1,4})/; #maximal 4 lines
-                                $input = $1;
-                            }
-
-                            $@ = "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored.\nProxy-Error: ".$input; #error-message received from the proxy
-                            # next retry
-                        }
-                    }
-                }
-            } else { # no Proxy
-                eval {
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout); # set Alarm for Connect
-                    $connect2ip = inet_aton($host);
-                    if (!defined ($connect2ip) ) {
-                        $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
-                        die "Can't get the IP-Address of $host -> target $host:$port ignored";
-                    }
-                    connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or  die  "Can't make a connection to $host:$port; target ignored ";
-                    alarm (0);
-                }; # Do NOT forget the ;
-                if ($@) { # no Connect
-                    close ($socket) or warn("**WARNING: _doCheckSSLciphers: $@; Can't close socket, too: $!");
-                    # next retry
-                }
-            }
-################ Begin STARTTLS Support
-            if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls
-                eval {
-                    _trace2 ("_doCheckSSLciphers ## STARTTLS: try to receive the SMTP Ready Message from the Server $host:$port, Retry = $retryCnt\n"); 
-                    alarm($Net::SSLhello::timeout);
-                    unless (recv ($socket, $input, 32767, 0) ) { # did not receive a Message ## unless seems to work better than if!!
-                        $@ = "STARTTLS: Did *NOT* get any Message from $host:$port; target ignored.\n";
-                        # next retry
-                    } elsif (length ($input) >0) { # received Data => 220 smtp.server.com Simple Mail Transfer Service Ready?
-                        _trace4 ("_doCheckSSLciphers ## STARTTLS:  ... Received  SMTP-Message (1): ".length($input)." Bytes\n      >".$input."<\n"); 
-                        if ($input =~ /(?:^|\s)220\s/) { # 220 smtp.server.com Simple Mail Transfer Service Ready
-                            $@ ="";     # Server is Ready 
-                        } else {
-                            unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                                $input =~ /^((?:.+?\n))/; #maximal 1 line
-                                $input = $1;
-                            }
-                            $@ = "STARTTLS: Did *NOT* get a Server Ready Message from $host:$port; target ignored.\nServer-Error: ".$input; #error-message received from the SMTP-Server
-                            # next retry
-                        }
-                    } else { # did receive a Message with length = 0 ?!
-                            $@ = "STARTTLS: Did receive a Server Ready Message with length 0 to SMTP Client Hello from $host:$port; target ignored.\n";
-                            print "_doCheckSSLciphers: STARTTLS: received 0 Bytes as a Server Ready Message; try to retry; $@\n";
-                            # next retry
-                    }
-                };
-                eval {
-                    $firstMessage = "EHLO o-saft.localhost\r\n"; #### \n ->new: \r\n
-                    _trace4 ("_doCheckSSLciphers ## STARTTLS:  first Client Message: >$firstMessage<\n");
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout); # set Alarm for Connect
-                    defined(send($socket, $firstMessage, 0)) || die  "Could *NOT* send an ELHO message to $host:$port; target ignored\n";
-                    alarm (0);
-                }; # Do NOT forget the ;
-                if ($@) { # no Connect
-                    warn "**WARNING: _doCheckSSLciphers ## STARTTLS: $@\n"; 
-                    close ($socket) or warn("**WARNING: _doCheckSSLciphers ## STARTTLS: $@; Can't close socket, too: $!");
-                    # next retry
-                } else { # receive SMTP Hello Answer
-                    eval {
-                        _trace2 ("_doCheckSSLciphers ## STARTTLS: try to receive the SMTP Hello Answer from the Server $host:$port\n"); 
-                        alarm($Net::SSLhello::timeout);
-                        unless (recv ($socket, $input, 32767, 0) ) { # did not receive a Message ## unless seems to work better than if!!
-                            $@ = "STARTTLS: Did *NOT* get any Answer to SMTP Client Hello from $host:$port; target ignored.\n";
-                            print "_doCheckSSLciphers ($host:$port): STARTTLS: received no Answer; try to retry; $@\n";
-                            # next retry
-                        } elsif (length ($input) >0) { # received Data => 250-smtp.server.com Hello o-saft.localhost?
-                            _trace3 ("_doCheckSSLciphers ## STARTTLS: ... Received  SMTP-Hello: ".length($input)." Bytes\n      >".substr($input,0,64)." ...<\n");
-                            _trace4 ("_doCheckSSLciphers ## STARTTLS:  ... Received  SMTP-Hello: ".length($input)." Bytes\n      >".$input."<\n");                             
-                            if ($input =~ /(?:^|\s)250(?:\s|-)/) { # 250-smtp.server.com Hello o-saft.localhost
-                                $@ ="";     # Server is Ready 
-                            } else {
-                                unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                                    $input =~ /^((?:.+?\n))/; #maximal 1 line
-                                    $input = $1;
-                                }
-                                $@ = "STARTTLS: Did *NOT* get a Server Hello Answer from $host:$port; target ignored.\nServer-Error: ".$input; #error-message received from the SMTP-Server
-                                die $@;
-                            }
-                        } else { # did receive a Message with length = 0 ?!
-                            $@ = "STARTTLS: Did receive an Answer with length 0 to SMTP Client Hello from $host:$port; target ignored.\n";
-                            print "_doCheckSSLciphers '$host:$port' STARTTLS: received 0 Bytes as Answer to SMTP Client Hello; try to retry; $@\n";
-                            # next retry
-                        }
-                        alarm (0);
-                    };
-                }
-                if ($@) { # no Server Hello Answer
-                    warn "**WARNING: STARTTLS: $@\n"; 
-                    close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
-                    # next retry
-                } else { # Do STARTTLS    
-                    eval {
-                        $secondMessage="STARTTLS\r\n";
-                        _trace2 ("_doCheckSSLciphers ## STARTTLS: second Client Message: >$secondMessage<\n");
-                        $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                        alarm($Net::SSLhello::timeout); # set Alarm for Connect
-                        defined(send($socket, $secondMessage, 0)) || die "Could *NOT* send a STARTTLS message to $host:$port; target ignored\n";
-                        alarm (0);
-                    }; # Do NOT forget the ;
-                }
-                if ($@) { # no Connect
-                    warn "**WARNING: _doCheckSSLciphers ## $@\n"; 
-                    close ($socket) or warn("**WARNING: _doCheckSSLciphers ## $@; Can't close socket, too: $!");
-                    # next return
-                } else { # receive STARTTLS Answer
-                    eval {
-                        _trace2 ("_doCheckSSLciphers ## STARTTLS: try to receive the SMTP STARTTLS Answer from the Server $host:$port\n"); 
-                        alarm($Net::SSLhello::timeout);
-                        unless (recv ($socket, $input, 32767, 0) ) { # did not receive a Message ## unless seems to work better than if!!
-                            $@ = "STARTTLS: Did *NOT* get any Answer to STARTTLS Request from $host:$port; target ignored.\n";
-                            _trace2 ("_doCheckSSLciphers ## STARTTLS: received no Answer to STARTTLS-Request; try to retry; $@\n");
-                            # next retry
-                        } elsif    (length ($input) >0)  { # received Data => 220 
-                            _trace3 ("_doCheckSSLciphers ## STARTTLS: ... Received STARTTLS-Answer: ".length($input)." Bytes\n      >".substr($input,0,64)." ...<\n");
-                            _trace4 ("_doCheckSSLciphers ## STARTTLS:  ... Received STARTTLS-Answer: ".length($input)." Bytes\n      >".$input."<\n"); 
-                            if ($input =~ /(?:^|\s)220(?:\s|-)/) { # 220
-                                $@ ="";     # Server is Ready to do SSL/TLS
-                                _trace2 ("_doCheckSSLciphers ## STARTTLS: Server is ready to do SSL/TLS\n");
-                            } else {
-                                unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                                    $input =~ /^((?:.+?\n))/; #maximal 1 line
-                                    $input = $1;
-                                }
-                                $@ = "STARTTLS: Did *NOT* get a Server SSL/TLS confirmation from $host:$port (retry: $retryCnt); target ignored.\nServer-Error: ".$input; #error-message received from the SMTP-Server
-                                _trace2 ("Exit _doCheckSSLciphers }\n");
-                                warn ($@);
-                                die $@;
-#                                return (""); # fatal Error => Exit
-                            }
-                        } else { # did not receive a Message
-                            $@ = "STARTTLS: Did *NOT* get an Answer with length 0 to STARTTLS Request from $host:$port; target ignored.\n";
-                            _trace2 ("_doCheckSSLciphers ## STARTTLS: received 0 Bytes as Answer to STARTTLS-Request; try to retry; $@\n");
-                            # next retry
-                        }
-                        alarm (0);
-                    };
-                }
-            } 
-###############    End STARTTLS Support        
-        }
-###        alarm (0);   # race condition protection
-    }} while ( ($@) && ($retryCnt++ < $Net::SSLhello::retry) );
-    
-    if ($@) { #Error
-        warn ("**WARNING: _doCheckSSLciphers: $@\n"); 
-        _trace2 ("_doCheckSSLciphers: Exit _doCheckSSLciphers }\n");
-        return ("");
-    }
-    
-    _trace2 ("_doCheckSSLciphers: Connected to '$host:$port'\n");
+    #### Send ClietHello
     _trace3 ("_doCheckSSLciphers: sending Client_Hello\n      >".hexCodedString(substr($clientHello,0,64),"        ")." ...< (".length($clientHello)." Bytes)\n\n");
     _trace4 ("_doCheckSSLciphers: sending Client_Hello\n          >".hexCodedString ($clientHello,"           ")."< (".length($clientHello)." Bytes)\n\n");
 
@@ -1273,7 +1362,7 @@ sub _doCheckSSLciphers ($$$$) {
             
             #### check for other protocols than ssl (when starttls is used) ####
             if ($Net::SSLhello::starttls)  { 
-                if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i)  { # 554 Security failure
+                if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i)  { # 554 Security failure; TBD: perhaps more general in the future
                     _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignoredi and try to Retry\n");
                     #retry to send clientHello
                     $@="";
@@ -1287,8 +1376,8 @@ sub _doCheckSSLciphers ($$$$) {
                         alarm (0);   # race condition protection 
                     }; # end of eval recv
                     if ($@) {
-		                 warn ($@);
-		                 return ("");
+                         warn ($@);
+                         return ("");
                     }
                     alarm (0);   # race condition protection
                     next;
@@ -1312,13 +1401,14 @@ sub _doCheckSSLciphers ($$$$) {
                     ($v2len,    # n (V2Len > 0x8000)
                      $v2type)    # C = 0
                         = unpack("n C", $input);
-                     if ($v2type == $SSL_MT_SERVER_HELLO) { # SSLv2 check
+                     if (($v2type == $SSL_MT_SERVER_HELLO) || ($v2type == $SSL_MT_ERROR)){ # SSLv2 check
                         $pduLen = $v2len - 0x8000 + 2;
                         _trace2 ("_doCheckSSLciphers: ... Received Data: Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
                      } else { 
-                         $@ = "**WARNING: _doCheckSSLciphers: $host:$port dosen't look like a SSL or a SMTP-Service -> Received Data ignored -> target ignored\n";
+                         $@ = "**WARNING: _doCheckSSLciphers: $host:$port dosen't look like a SSL or a SMTP-Service (1) -> Received Data ignored -> target ignored\n";
                          warn ($@);
-                         _trace ("_doCheckSSLciphers: Ignored Data: ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n");
+                         _trace_ ("\n") if ($retryCnt <=1);
+                         _trace ("_doCheckSSLciphers: Ignored Data: ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n        >"._chomp_r($input)."<\n");
                          $input="";
                          $pduLen=0;
                          return ("");
@@ -1335,7 +1425,7 @@ sub _doCheckSSLciphers ($$$$) {
         warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (".length($input)." Bytes): Eval-Message: >$@<\n"); 
     }
     if (length($input) >0) {
-		_trace2 ("_doCheckSSLciphers: Total Data Received:". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
+        _trace2 ("_doCheckSSLciphers: Total Data Received:". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
         $acceptedCipher = parseServerHello ($input, $protocol);
     }
     unless ( close ($socket)  ) {
@@ -1638,7 +1728,6 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
         _trace4 (sprintf ("parseServerHello: 1. Byte:  %02X\n\n", $firstByte) );
         if ($firstByte >= 0x80) { #SSL2 with 2Byte Length
             _trace2_ ("# -->SSL: Message-Type SSL2-Msg"); 
-            _trace4_ ("#        --->    Record len 2 Byte Header:\n"); 
             ($serverHello{'msg_len'},         # n
              $serverHello{'msg_type'},        # C
              $rest) = unpack("n C a*", $buffer); 
@@ -1658,8 +1747,17 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
                 _trace4 ("    Handshake Protocol: SSL2 Server Hello\n"); 
                 _trace4 ("        Message Type: (Server Hello (2)\n"); 
                 return (parseSSL2_ServerHello ($rest,$client_protocol)); # cipher_spec-Liste
+            } elsif ($serverHello{'msg_type'} == $SSL_MT_ERROR) { #TBD Error-Handling for ssl2
+                ($serverHello{'err_code'}        # n
+                 ) = unpack("n", $rest); 
+
+                _trace2 ("parseServerHello: received a SSLv2-Error-Message, Code: >0x".hexCodedString ($serverHello{'err_code'})."<\n");
+                unless ($serverHello{'err_code'} == 0x0001) { # SSLV2_No_Cipher
+                    warn ("**WARNING: parseServerHello: received a SSLv2-Error_Message: , Code: >0x".hexCodedString ($serverHello{'err_code'})." -> Target Ignored\n");
+                }
+                return ("");
             } else { # if ($serverHello{'msg_type'} == 0 => NOT supported Protocol (?!)
-                print "    Unknown SSLv2-Message Type (Dez): ".$serverHello{'msg_type'}.", Msg: >".hexCodedString ($buffer)."<\n"; }
+                $@= "    Unknown SSLv2-Message Type (Dez): ".$serverHello{'msg_type'}.", Msg: >".hexCodedString ($buffer)."< -> Target Ignored\n"; }
                 return ("");
         } else { #TLS-Record
             _trace2_("# -->TLS Record Layer:\n"); 
@@ -2022,7 +2120,16 @@ sub parseTLS_Extension { # Variable: String/Octet, das die Extension-Bytes enth√
 
 
 sub _timedOut {
-    die "NET::SSLhello: Received Data Timed out\n";
+    die "NET::SSLhello: Received Data Timed out -> protocol ignored";
+}
+
+sub _chomp_r { # chomp \r\n
+    my $string = shift; 
+    if (!defined($string)) { # undefined -> ""
+            $string="";
+    }
+    $string =~ s/(.*?)\r?\n?$/$1/g; 
+    return ($string);
 }
 
 sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zur√ºck 
@@ -2206,7 +2313,7 @@ sub printTLSCipherList ($) {
 
 =head1 NAME
 
-Net::SSLhello - perl extension for SSL to simulate SSLhello packets to check SSL parameters
+Net::SSLhello - perl extension for SSL to simulate SSLhello packets to check SSL parameters (especially ciphers)
 
 =head1 SYNOPSIS
 
@@ -2214,7 +2321,11 @@ Net::SSLhello - perl extension for SSL to simulate SSLhello packets to check SSL
 
 =head1 DESCRIPTION
 
-TBD comming soon ...
+TBD comming soon ... for now:
+Export Functions:
+$socket = openTcpSSLconnection ($host; $port); # Open a TCP/IP connection to a Host on a Port (via Proxy) and doing STARTTLS if requesteA
+@accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing); # Check a list if Ciphers (@testing), output: @accepted Ciphers (if the first 2 ciphers are equal the server has an order)
+Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni, @accepted); # print the List of Ciphers (@accepted Ciphers)
 
 =head1 EXAMPLES
 
@@ -2232,7 +2343,7 @@ L<IO::Socket(1)>
 
 =head1 AUTHOR
 
-10-may-14 Torsten Gigler
+27-june-2014 Torsten Gigler
 
 =cut
 
