@@ -111,7 +111,7 @@ use constant {
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
     _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 3, # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
-    _SLEEP_B4_2ND_READ         => 2.25 # Sleep before second read (STARTTLS and Proxy)
+    _SLEEP_B4_2ND_READ         => 0.25 # Sleep before second read (STARTTLS and Proxy)
 };
 
 #our $LONG_PACKET = 1940; # try to get a 2nd or 3rd segment for long packets
@@ -1305,14 +1305,14 @@ sub _doCheckSSLciphers ($$$$) {
         return ("");
     }
 
-    #### Compile ClietHello   
+    #### Compile ClientHello   
     $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host); 
     if ($@) { #Error
         _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
         return ("");
     }
 
-    #### Send ClietHello
+    #### Send ClientHello
     _trace3 ("_doCheckSSLciphers: sending Client_Hello\n      >".hexCodedString(substr($clientHello,0,64),"        ")." ...< (".length($clientHello)." Bytes)\n\n");
     _trace4 ("_doCheckSSLciphers: sending Client_Hello\n          >".hexCodedString ($clientHello,"           ")."< (".length($clientHello)." Bytes)\n\n");
 
