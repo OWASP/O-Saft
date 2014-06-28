@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.79 14/06/15 02:44:04',
+    SID         => '@(#) Net::SSLinfo.pm 1.81 14/06/29 01:45:43',
 };
 
 ######################################################## public documentation #
@@ -280,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.06.10';
+    $VERSION   = '14.06.15';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -424,9 +424,10 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 #   return empty string
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
-$Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl
-$Net::SSLinfo::protocols   = 'spdy/4a4,spdy/3.1,spdy/3,spdy/2,http/1.1';
+$Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
+$Net::SSLinfo::protocols   = 'spdy/4a4,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1';
                                 # next protocols not yet configurable
+                                # protocols may have prefix `exp' which should not be checked by server
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
 $Net::SSLinfo::socket   = undef;# socket to be used for connection
