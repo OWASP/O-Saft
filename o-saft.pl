@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.288 14/06/21 19:14:04";
+my  $SID    = "@(#) yeast.pl 1.289 14/06/29 01:42:04";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -307,7 +307,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
     'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Target supports heartbeat"},
-    'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target supported protocols"},
+    'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target supported protocols (ALPN, NPN)"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
@@ -491,6 +491,7 @@ my %check_dest = (
     'ism'           => {'txt' => "Target supports ISM compliant ciphers"},
     'pci'           => {'txt' => "Target supports PCI compliant ciphers"},
     'fips'          => {'txt' => "Target supports FIPS-140 compliant ciphers"},
+#   'nsab'          => {'txt' => "Target supports NSA Suite B compliant ciphers"},
     'tr-02102'      => {'txt' => "Target supports TR-02102-2 compliant ciphers"},
     'bsi-tr-02102+' => {'txt' => "Target is strict BSI TR-02102-2 compliant"},
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
@@ -717,6 +718,7 @@ our %shorttexts = (
     'pci'           => "PCI compliant",
     'pfs'           => "PFS supported",
     'fips'          => "FIPS-140 compliant",
+#   'nsab'          => "NSA Suite B compliant",
     'tr-02102'      => "TR-02102-2 compliant",
     'bsi-tr-02102+' => "Strict BSI TR-02102-2 compliant",
     'bsi-tr-02102-' => "Lazy BSI TR-02102-2 compliant",
@@ -995,7 +997,7 @@ our %cfg = (
     'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv1)],
                                 # NOTE: must be same string as used in %ciphers[ssl]
                                 # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
-                                # ToDo: DTLSv0.9
+                                # ToDo: DTLSv0.9, DTLSv1.2
     'ssl_lazy'      => 0,       # 1: lazy check for available SSL protocol functionality
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
@@ -1021,15 +1023,25 @@ our %cfg = (
         'long'      => [        # more lazy list of constants for cipher
                         0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
                        ],
-        'full'      => [        # full range of constants for cipher
+        'huge'      => [        # huge range of constants for cipher
                         0x03000000 .. 0x0300FFFF,
                        ],
+        'safe'      => [        # safe full range of constants for cipher
+                                # because some network stack (NIC) will crash for 0x033xxxxx
+                        0x03000000 .. 0x032FFFFF,
+                       ],
+        'full'      => [        # full range of constants for cipher
+                        0x03000000 .. 0x03FFFFFF,
+                       ],
+# ToDo:                 0x03000000,   0x03FFFFFF,  # used as return by microsoft testserver and also by SSL-honeypot (US)
         'SSLv2'     => [        # constants for ciphers according RFC for SSLv2
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF, 
                         0x03000001,   0x03000002, 0x03000007 .. 0x0300002C,
                         0x030000FF,
+# ToDo:                 0x02000000,   0x02FFFFFF, # increment even only
+# ToDo:                 0x03000000,   0x03FFFFFF, # increment  odd only
                        ],
         'SSLv2_long'=> [        # more lazy list of constants for ciphers for SSLv2
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
@@ -1187,6 +1199,7 @@ our %cfg = (
         'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
                        # if PFS not possible, see TR-02102-2 3.2.1
         '1.3.6.1.5.5.7.1.1'  =>  '(?:1\.3\.6\.1\.5\.5\.7\.1\.1|authorityInfoAccess)',
+        'NSA-B'     =>'(?:ECD(?:H|SA).*?AES.*?GCM.*?SHA(?:256|384|512))',
 
         # Regex containing pattern for compliance checks
         # The following RegEx define what is "not compliant":
@@ -1269,6 +1282,7 @@ our %cfg = (
         #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
         #
         # NIST SP800-57 recommendations for key management (part 1):
+        'NSA-B'     => "must be AES with CTR or GCM; ECDSA or ECDH and SHA256 or SHA512",
     },
     'openssl_option_map' => {   # map our internal option to openssl option
         'SSLv2'     => "-ssl2",
@@ -1904,8 +1918,10 @@ my %text = (
         'AES'       => "Advanced Encryption Standard",
         'AIA'       => "Authority Information Access (certificate extension)",
         'AKID'      => "Authority Key IDentifier",
+        'ALPN'      => "Application Layer Protocol Negotiation",
         'ARC4'      => "Alleged RC4 (see RC4)",
         'ARCFOUR'   => "alias for ARC4",
+        'ARIA'      => "128-bit Symmetric Block Cipher",
         'ASN'       => "Autonomous System Number",
         'ASN.1'     => "Abstract Syntax Notation One",
         'BDH'       => "Bilinear Diffie-Hellman",
@@ -2061,6 +2077,7 @@ my %text = (
         'Neokeon'   => "symmetric block cipher algorithm",
         'NSS'       => "Network Security Services",
         'NULL'      => "no encryption",
+        'NUMS'      => "nothing up my sleeve numbers",
         'OAEP'      => "Optimal Asymmetric Encryption Padding",
         'OFB'       => "Output Feedback",
         'OCB'       => "Offset Codebook Mode (block cipher mode of operation)",
@@ -2152,7 +2169,8 @@ my %text = (
         'Skipjack'  => "encryption algorithm specified as part of the Fortezza",
         'Snefu'     => "hash function",
         'SNI'       => "Server Name Indication",
-        'SPDY'      => "Google's application-layer protocol an top of SSL",
+        'SPDY'      => "Google's application-layer protocol on top of SSL",
+        'SPN'       => "Substitution-Permutation Network",
         'Square'    => "block cipher",
         'SRP'       => "Secure Remote Password protocol",
         'SRTP'      => "Secure RTP",
@@ -2171,6 +2189,7 @@ my %text = (
         'TIME'      => "Timing Info-leak Made Easy (Exploit SSL/TLS)",
 #        'TIME'      => "A Perfect CRIME? TIME Will Tell",
         'Threefish' => "hash function",
+        'TOFU'      => "Trust on First Use",
         'TR-02102'  => "Technische Richtlinie 02102 (des BSI)",
         'TSK'       => "TACK signing key",
         'TSP'       => "trust-Management Service Provider",
@@ -2267,6 +2286,12 @@ my %text = (
     # OCSP : http://ocsp.startssl.com/sub/class4/server/ca
     # cat some.crl | openssl crl -text -inform der -noout
     # OCSP response "3" (TLS 1.3) ==> certifcate gueltig
+    # SPDY - SPDY Protocol : http://www.chromium.org/spdy/spdy-protocol
+    # False Start: https://www.imperialviolet.org/2012/04/11/falsestart.html
+    #              https://technotes.googlecode.com/git/falsestart.html
+    # ALPN : http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
+    # ALPN, NPN: https://www.imperialviolet.org/2013/03/20/alpn.html
+    # NPN  : https://technotes.googlecode.com/git/nextprotoneg.html
     # HSTS : http://tools.ietf.org/html/draft-hodges-strict-transport-sec-02
     #        https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
     #        Strict-Transport-Security: max-age=16070400; includeSubDomains
@@ -2718,6 +2743,10 @@ sub _isfips($$) {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'FIPS-140'}/);
     return "";
 } # _isfips
+sub _isnsab($$)  {
+    # return given cipher if it is not NSA Suite B compliant, empty string otherwise
+# ToDo:
+} # _isnsab
 sub _ispci($$)  {
     # return given cipher if it is not PCI compliant, empty string otherwise
 # ToDo: DH 1024+ is PCI compliant
@@ -4430,6 +4459,8 @@ sub printtable($) {
 sub printcommands() {
     #? print program's help about commands
     # we do not use POD, as most texts are already in %data and %checks
+    # NOTE: unfortunately we cannot print alias commands, as they are not part
+    # of %data or %checks but are acceped dynamically in the argument parser
     my $key;
     print "\n   Summary and internal commands";
     foreach $key (@{$cfg{'commands'}}) {
@@ -4928,6 +4959,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+ext_aia/i)        { $arg = '+ext_authority'; } # AIA is a common acronym ...
     if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw'; }
     if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw'; }
+    if ($arg =~ /^\+npn/i)            { $arg = '+protocols';   } # NPN; ToDo: may be changed in future
+    if ($arg =~ /^\+alpn/i)           { $arg = '+protocols';   } # ALPN; ToDo: may be changed in future
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
@@ -6214,7 +6247,7 @@ the description here is text provided by the user.
 =head3 --cipherrange=RANGE, --range=RANGE 
 
   Specify range of cipher constants to be tested by  "+cipherraw" .
-  Following RANGEs are supported:
+  Following RANGEs are supported (see also: "--cipherrange=RANGE"):
 
 =over 4
 
@@ -6222,7 +6255,11 @@ the description here is text provided by the user.
 
 =item * long            like C<rfc> but more lazy list of constants
 
-=item * full            all constants  0x03000000 .. 0x0300FFFF
+=item * huge            all constants  0x03000000 .. 0x0300FFFF
+
+=item * safe            all constants  0x03000000 .. 0x032FFFFF
+
+=item * full            all constants  0x03000000 .. 0x03FFFFFF
 
 =item * SSLv2           all ciphers according RFC for SSLv2
 
@@ -6874,6 +6911,19 @@ TLSv1.2 checks are not yet implemented.
 
 =head2 Target (server) Configuration and Support
 
+=head3 BEAST, BREACH, CRIME
+
+See above.
+
+=head3 Renegotiation
+
+Check if the server allows client-side initiated renegotiation.
+
+=head3 Version rollback attacks
+
+NOT YET IMPLEMENTED
+Check if the server allows changing the protocol.
+
 =head2 Target (server) Certificate
 
 =head3 Root CA
@@ -6997,6 +7047,8 @@ TBD - to be described ...
 =head3 PCI
 
 =head3 BSI TR-02102
+
+=for comment head3 NSA Suite B
 
 Checks if connection and ciphers are compliant according TR-02102-2,
 see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
@@ -8301,7 +8353,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.14
+@(#) 14.06.15
 
 =head1 AUTHOR
 
@@ -8325,8 +8377,9 @@ TODO
   * new features
     ** allow proxy
     ** client certificate
-    ** support: SMTP, SIP, POP3, IMAP, LDAP, FTP
     ** support: PCT protocol
+    ** support: SMTP, SIP, POP3, IMAP, LDAP, FTP
+    ** some STRATTLS need : HELP STARTTLS HELP  # output of HELPs are different
 
   * missing checks
     ** SSL_honor_cipher_order => 1
