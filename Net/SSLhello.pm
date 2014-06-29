@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-06-27';
+    $VERSION    = 'NET::SSLhello_2014-06-29';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -100,7 +100,8 @@ $Net::SSLhello::usesni       = 0;# 1 use SNI to connect to target
 $Net::SSLhello::timeout      = 2;# time in seconds
 $Net::SSLhello::retry        = 3;# number of retry when timeout
 $Net::SSLhello::usereneg     = 0;# secure renegotiation 
-$Net::SSLhello::starttls     = 0;#
+$Net::SSLhello::starttls     = 0;# 1= do STARTTLS
+$Net::SSLhello::starttlsType = 0;# SMTP
 $Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
 $Net::SSLhello::proxyhost    = "";#
 $Net::SSLhello::proxyport    = "";#
@@ -953,19 +954,73 @@ sub openTcpSSLconnection ($$) {
     my $retryCnt = 0;
     my $firstMessage = "";
     my $secondMessage = "";
-    
+    my $starttlsType=0; # SMTP 
+#    $starttlsType= $Net::SSLhello::starttlsType if ($Net::SSLhello::starttlsType <=7);  #8 Types defined: 0:SMTP, 1:IMAP, 2:IMAP2, 3:POP3, 4:FTPS, 5:LDAP, 6:RDP, 7:XMPP
+
     my @starttls_matrix = 
         ( ["SMTP", 
-           sprintf ("(?:^|\\s)220\\s"),    # Phase1: receive '220 smtp.server.com Simple Mail Transfer Service Ready'
-           "EHLO o-saft.localhost\r\n",    # Phase2: send    'EHLO o-saft.localhost\r\n'         
-           "(?:^|\\s)250(?:\\s|-)",        # Phase3: receive '250-smtp.server.com Hello o-saft.localhost'
-           "STARTTLS\r\n",                 # Phase4: send    'STARTTLS'
-           "(?:^|\\s)220(?:\\s|-)"         # Phase5: receive '220' 
+            "(?:^|\\s)220\\s",                  # Phase1: receive '220 smtp.server.com Simple Mail Transfer Service Ready'
+            "EHLO o-saft.localhost\r\n",        # Phase2: send    'EHLO o-saft.localhost\r\n'         
+            "(?:^|\\s)250(?:\\s|-)",            # Phase3: receive '250-smtp.server.com Hello o-saft.localhost'
+            "STARTTLS\r\n",                     # Phase4: send    'STARTTLS'
+            "(?:^|\\s)220(?:\\s|-)"             # Phase5: receive '220' 
+          ],
+          ["IMAP",                              # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            "(?:^|\\s)\\*\\s*OK.*?IMAP\\s|\\d", # Phase1: receive '* OK IMAP'
+            "a001 CAPABILITY\r\n",              # Phase2: send    view CAPABILITY (optional) 
+            "(?:^|\\s)\\*\\s*CAPABILITY",       # Phase3: receive CAPABILITY-List should include STARTTLS
+            "a002 STARTTLS\r\n",                # Phase4: send    'STARTTLS'
+            "(?:^|\\s)(?:\\*|a002)\\s*OK\\s"    # Phase5: receive 'OK completed' 
+          ],
+          ["IMAP2",                             # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+            "(?:^|\\s)* OK IMAP\\s|\\d",        # Phase1: receive '* OK IMAP'$
+            "",                                 # Phase2: send    -unused-$
+            "",                                 # Phase3: receive -unused-'$
+            ". STARTTLS\r\n",                   # Phase4: send    'STARTTLS'$
+            "(?:^|\\s). OK\\s"                  # Phase5: receive '. OK completed' $
+          ],
+          ["POP3",                              # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            "(?:^|\\s)\\+\\s*OK.*?ready",       # Phase1: receive '* OK...ready.'
+            "CAPA\r\n",                         # Phase2: send view CAPABILITY (optional) 
+            "(?:^|\\s)\\+\\s*OK",               # Phase3: receive List of should include STLS
+            "STLS\r\n",                         # Phase4: send    'STLS' (-> STARTTLS)'
+            "(?:^|\\s)\\+\\s*OK\\s+Begin\\s+TLS"  # Phase5: receive '. OK completed' 
+          ],
+          ["FTPS",                              # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            "(?:^|\\s)220\\s",                  # Phase1: receive '220 ProFTPD 1.3.2rc4 Server (TJ's FTPS Server) [127.0.0.1]'
+            "",                                 # Phase2: send view CAPABILITY (optional) 
+            "",                                 # Phase3: receive List of should include STLS
+            "AUTH TLS\r\n",                     # Phase4: send    'AUTH TLS' (-> STARTTLS)'
+            "(?:^|\\s)234\\s+AUTH\\s+TLS"       # Phase5: receive '234 AUTH TLS successful' 
+          ],
+          ["LDAP",                              # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+            "",                                 # Phase1: receive -unused-$
+            "",                                 # Phase2: send    -unused-$
+            "",                                 # Phase3: receive -unused-$
+            "0\x1d\x02\x01\x01w\x18\x80\x161.3.6.1.4.1.1466.20037", # Phase4: send    'STARTTLS'$
+            "(?:^|\\s)Start\\s+TLS\\s+request\\s+accepted"  # Phase5: receive 'Start TLS request accepted.' $
+          ],
+          ["RDP",                               # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+            "",                                 # Phase1: receive -unused-$
+            "",                                 # Phase2: send    -unused-$
+            "",                                 # Phase3: receive -unused-$
+            "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x03\x00\x00\x00", # Phase4: send    'STARTTLS'$
+            "(?:^|\\s)Start\\s+TLS\\s+request\\s+accepted"  # Phase5: receive 'Start TLS request accepted.' $
+          ],
+          ["XMPP",                              # according rfc3920; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+            "",                                                     # Phase1: receive -unused-$
+            "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'".
+             " to='".$host."' xml:lang='en' version='1.0'>",        # Phase2: send  Client initiates stream to server (no from to try to avoid to get blocked due to too much connects!)
+##             " from='osaft\@im.owasp.org' to='".$host."' xml:lang='en' version='1.0'>", # Phase2: send  Client initiates stream to server 
+###          " xmlns:tls='http://www.ietf.org/rfc/rfc2595.txt' to='".$host."' xml:lang='en' version='1.0'>", # Phase2: send  Client initiates stream to server
+            "<stream:stream.*?>",                                   # Phase3: receive response steam header 
+            "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>",  # Phase4: send    'STARTTLS'$
+            "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"    # Phase5: receive 'Start TLS request accepted.' 
+                                                                    # Errors: text xmlns='urn:ietf:params:xml:ns:xmpp-streams'>You exceeded the number of connections/logins allowed in 60 seconds, good bye.</text>
           ],
         );
 
-    my $starttlsType=0; # now: only SMTP ### TBD: Support more STARTTLS protocols 
-
+    my %startTlsTypeHash;
     $@ ="";
 
     if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
@@ -1089,11 +1144,27 @@ sub openTcpSSLconnection ($$) {
         }
 
         if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
+
+            $startTlsTypeHash{$starttls_matrix[$_][0]} = $_ for 0 .. scalar(@starttls_matrix) - 1;
+            _trace3 ("openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
+
+            if (defined($startTlsTypeHash{$Net::SSLhello::starttlsType})) {
+                $starttlsType=$startTlsTypeHash{$Net::SSLhello::starttlsType}; 
+                _trace3 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
+                _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! (please send feedback)\n") if ( grep(/$starttlsType/,('1', '2','3','7') ));
+                warn ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please send feedback!\n") if ( grep(/$starttlsType/,('4','5','6')));
+            
+            } else {
+                $starttlsType=0;
+                warn ("openTcpSSLconnection: WARNING Undefined StarttlsType, use $starttls_matrix[$starttlsType][0] instead");
+            }
+
+            _trace2 ("openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]."-Protocol for Server $host:$port, Retry = $retryCnt\n");
             ### STARTTLS_Phase1 (receive)
             if ($starttls_matrix[$starttlsType][1]) { 
                 eval {
                     $input="";
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port, Retry = $retryCnt\n");
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port\n");
                     select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($Net::SSLhello::timeout);
@@ -1135,7 +1206,7 @@ sub openTcpSSLconnection ($$) {
             ### STARTTLS_Phase2 (send) #####
             if ($starttls_matrix[$starttlsType][2]) { 
                 eval {
-                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): send $starttls_matrix[$starttlsType][0] Message: >"._chomp_r($starttls_matrix[$starttlsType][2])."<");
+                    _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): send $starttls_matrix[$starttlsType][0] Message: >"._chomp_r($starttls_matrix[$starttlsType][2])."<\n");
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($Net::SSLhello::timeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][2], 0)) || die  "Could *NOT* send $starttls_matrix[$starttlsType][0] message '$starttls_matrix[$starttlsType][2]' to $host:$port; target ignored\n";
@@ -2314,6 +2385,7 @@ sub printTLSCipherList ($) {
 =head1 NAME
 
 Net::SSLhello - perl extension for SSL to simulate SSLhello packets to check SSL parameters (especially ciphers)
+Connections via Proxy and using STARTTLS (SMTP and experimental: IMAP, POP3, FTPS, LDAP, RDP, XMPP) are supported
 
 =head1 SYNOPSIS
 
@@ -2343,7 +2415,7 @@ L<IO::Socket(1)>
 
 =head1 AUTHOR
 
-27-june-2014 Torsten Gigler
+29-june-2014 Torsten Gigler
 
 =cut
 
