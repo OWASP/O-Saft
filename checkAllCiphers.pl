@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-06-14";
+my $VERSION = "2014-06-29";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -78,6 +78,12 @@ OPTIONS
                 user to authenticate at PROXYHOST
     --proxypass=PROXYPASS
                 passowrd to authenticate at PROXYUSER
+    --starttls  Use STARTTLS to start a TLS connection via SMTP
+    --starttls=STARTTLS_TYPE
+                *EXPERIMENTAL* Use STARTTLS to start TLS. 
+                STARTTLS_TYPE is any of SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+                (Note: IMAP2 is a second way to use IMAP)
+                Please take care! Please give us feedback (especially for FTPS, LDAP, RDP)
 
 DESCRIPTION
     This is just a very simple wrapper for the Net::SSLhello module to test
@@ -286,7 +292,9 @@ while ($#argv >= 0) {
     if ($arg =~  '--proxyuser=(.*)')    { $cfg{'proxyuser'}= $1; }
     if ($arg =~  '--proxypass=(.*)')    { $cfg{'proxypass'}= $1; }
     if ($arg =~  '--proxyauth=(.*)')    { $cfg{'proxyauth'}= $1; }
-    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; } # starttls
+    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=0; }  # starttls, starttlsType=SMTP(=0)
+    if ($arg =~ /^--?starttls=(\w+)$/i)  { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); } # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
+                                                                                            # 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
     # options
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1; }
     if ($arg =~ /^--no[_-]?sni/)        { $cfg{'usesni'}    = 0; }
@@ -337,6 +345,7 @@ while ($#argv >= 0) {
     $Net::SSLhello::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLhello::usesni      = $cfg{'usesni'};
     $Net::SSLhello::starttls    = $cfg{'starttls'};
+    $Net::SSLhello::starttlsType= $cfg{'starttlsType'}; #EXPERIMENTAL
     $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
     $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
     $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
