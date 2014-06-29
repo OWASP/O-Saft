@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.289 14/06/29 01:42:04";
+my  $SID    = "@(#) yeast.pl 1.290 14/06/29 02:07:11";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -59,7 +59,7 @@ our $warning= 1;    # print warnings; need this variable very early
 
 sub _warn {
     #? print warning if wanted
-    return if ($main::warning > 0);
+    return if ($main::warning <= 0);
     local $\="\n"; print("**WARNING: ", join(" ", @_));
     # ToDo: in CGI mode warning must be avoided until HTTP header written
 }
@@ -8353,7 +8353,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.15
+@(#) 14.06.16
 
 =head1 AUTHOR
 
