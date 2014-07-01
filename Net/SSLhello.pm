@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-06-29';
+    $VERSION    = 'NET::SSLhello_2014-07-01';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -526,6 +526,12 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+  
+# CipherSuite TLS_RSA_WITH_CAMELLIA_128_CBC_SHA256      = { 0x00,0xBA };
+# CipherSuite TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA256   = { 0x00,0xBB };
+# CipherSuite TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA256   = { 0x00,0xBC };
+# CipherSuite TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA256  = { 0x00,0xBD };
+# CipherSuite TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256  = { 0x00,0xBE };
+# CipherSuite TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256  = { 0x00,0xBF };
   '0x030000BA'=> [qw(RSA_WITH_CAMELLIA_128_CBC_SHA256     RSA-CAMELLIA128-SHA256)],
   '0x030000BB'=> [qw(DH_DSS_WITH_CAMELLIA_128_CBC_SHA256  DH-DSS-CAMELLIA128-SHA256)],
   '0x030000BC'=> [qw(DH_RSA_WITH_CAMELLIA_128_CBC_SHA256  DH-RSA-CAMELLIA128-SHA256)],
@@ -533,6 +539,13 @@ my %cipherHexHash = (
   '0x030000BE'=> [qw(DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256 DHE-RSA-CAMELLIA128-SHA256)],
   '0x030000BF'=> [qw(ADH_WITH_CAMELLIA_128_CBC_SHA256     ADH-CAMELLIA128-SHA256)],
 
+
+# CipherSuite TLS_RSA_WITH_CAMELLIA_256_CBC_SHA256      = { 0x00,0xC0 };
+# CipherSuite TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA256   = { 0x00,0xC1 };
+# CipherSuite TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA256   = { 0x00,0xC2 };
+# CipherSuite TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256  = { 0x00,0xC3 };
+# CipherSuite TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256  = { 0x00,0xC4 };
+# CipherSuite TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA256  = { 0x00,0xC5 };
   '0x030000C0'=> [qw(RSA_WITH_CAMELLIA_256_CBC_SHA256     RSA-CAMELLIA256-SHA256)],
   '0x030000C1'=> [qw(DH_DSS_WITH_CAMELLIA_256_CBC_SHA256  DH-DSS-CAMELLIA256-SHA256)],
   '0x030000C2'=> [qw(DH_RSA_WITH_CAMELLIA_256_CBC_SHA256  DH-RSA-CAMELLIA256-SHA256)],
@@ -542,12 +555,10 @@ my %cipherHexHash = (
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol:  http://tools.ietf.org/html/rfcrfc6367
-#!# added manually 2014:  Camellia Cipher Suites for TLS => TBD!
+#!# added manually 20140701:  Camellia Cipher Suites for TLS
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+  
-  '0x0300C072'=> [qw(ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256 ECDHE-ECDSA-CAMELLIA128-SHA256)],
-  '0x0300C073'=> [qw(ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384 ECDHE-ECDSA-CAMELLIA256-SHA384)],
 # CipherSuite TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256 = {0xC0,0x72};
 # CipherSuite TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384 = {0xC0,0x73};
 # CipherSuite TLS_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256  = {0xC0,0x74};
@@ -556,19 +567,41 @@ my %cipherHexHash = (
 # CipherSuite TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384   = {0xC0,0x77};
 # CipherSuite TLS_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256    = {0xC0,0x78};
 # CipherSuite TLS_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384    = {0xC0,0x79};
-#
+  '0x0300C072'=> [qw(ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256   ECDHE-ECDSA-CAMELLIA128-SHA256)],
+  '0x0300C073'=> [qw(ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384   ECDHE-ECDSA-CAMELLIA256-SHA384)],
+  '0x0300C074'=> [qw(ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256    ECDH-ECDSA-CAMELLIA128-SHA256)],
+  '0x0300C075'=> [qw(ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384    ECDH-ECDSA-CAMELLIA256-SHA384)],
+  '0x0300C076'=> [qw(ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256     ECDHE-RSA-CAMELLIA128-SHA256)],
+  '0x0300C077'=> [qw(ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384     ECDHE-RSA-CAMELLIA256-SHA384)],
+  '0x0300C078'=> [qw(ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256      ECDH-RSA-CAMELLIA128-SHA256)],
+  '0x0300C079'=> [qw(ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384      ECDH-RSA-CAMELLIA256-SHA384)],
+
 # CipherSuite TLS_RSA_WITH_CAMELLIA_128_GCM_SHA256          = {0xC0,0x7A};
 # CipherSuite TLS_RSA_WITH_CAMELLIA_256_GCM_SHA384          = {0xC0,0x7B};
 # CipherSuite TLS_DHE_RSA_WITH_CAMELLIA_128_GCM_SHA256      = {0xC0,0x7C};
 # CipherSuite TLS_DHE_RSA_WITH_CAMELLIA_256_GCM_SHA384      = {0xC0,0x7D};
 # CipherSuite TLS_DH_RSA_WITH_CAMELLIA_128_GCM_SHA256       = {0xC0,0x7E};
 # CipherSuite TLS_DH_RSA_WITH_CAMELLIA_256_GCM_SHA384       = {0xC0,0x7F};
+  '0x0300C07A'=> [qw(RSA_WITH_CAMELLIA_128_GCM_SHA256           RSA-CAMELLIA128-GCM-SHA256)],
+  '0x0300C07B'=> [qw(RSA_WITH_CAMELLIA_256_GCM_SHA384           RSA-CAMELLIA256-GCM-SHA384)],
+  '0x0300C07C'=> [qw(DHE_RSA_WITH_CAMELLIA_128_GCM_SHA256       DHE-RSA-CAMELLIA128-GCM-SHA256)],
+  '0x0300C07D'=> [qw(DHE_RSA_WITH_CAMELLIA_256_GCM_SHA384       DHE-RSA-CAMELLIA256-GCM-SHA384)],
+  '0x0300C07E'=> [qw(DH_RSA_WITH_CAMELLIA_128_GCM_SHA256        DH-RSA-CAMELLIA128-GCM-SHA256)],
+  '0x0300C07F'=> [qw(DH_RSA_WITH_CAMELLIA_256_GCM_SHA384        DH-RSA-CAMELLIA256-GCM-SHA384)],
+
 # CipherSuite TLS_DHE_DSS_WITH_CAMELLIA_128_GCM_SHA256      = {0xC0,0x80};
 # CipherSuite TLS_DHE_DSS_WITH_CAMELLIA_256_GCM_SHA384      = {0xC0,0x81};
 # CipherSuite TLS_DH_DSS_WITH_CAMELLIA_128_GCM_SHA256       = {0xC0,0x82};
 # CipherSuite TLS_DH_DSS_WITH_CAMELLIA_256_GCM_SHA384       = {0xC0,0x83};
 # CipherSuite TLS_DH_anon_WITH_CAMELLIA_128_GCM_SHA256      = {0xC0,0x84};
 # CipherSuite TLS_DH_anon_WITH_CAMELLIA_256_GCM_SHA384      = {0xC0,0x85};
+  '0x0300C080'=> [qw(DHE_DSS_WITH_CAMELLIA_128_GCM_SHA256       DHE-DSS-CAMELLIA128-GCM-SHA256)],
+  '0x0300C081'=> [qw(DHE_DSS_WITH_CAMELLIA_256_GCM_SHA384       DHE-DSS-CAMELLIA256-GCM-SHA384)],
+  '0x0300C082'=> [qw(DH_DSS_WITH_CAMELLIA_128_GCM_SHA256        DH-DSS-CAMELLIA128-GCM-SHA256)],
+  '0x0300C083'=> [qw(DH_DSS_WITH_CAMELLIA_256_GCM_SHA384        DH-DSS-CAMELLIA256-GCM-SHA384)],
+  '0x0300C084'=> [qw(ADH_DSS_WITH_CAMELLIA_128_GCM_SHA256       ADH-DSS-CAMELLIA128-GCM-SHA256)],
+  '0x0300C085'=> [qw(ADH_DSS_WITH_CAMELLIA_256_GCM_SHA384       ADH-DSS-CAMELLIA256-GCM-SHA384)],
+
 # CipherSuite TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_GCM_SHA256  = {0xC0,0x86};
 # CipherSuite TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_GCM_SHA384  = {0xC0,0x87};
 # CipherSuite TLS_ECDH_ECDSA_WITH_CAMELLIA_128_GCM_SHA256   = {0xC0,0x88};
@@ -577,22 +610,45 @@ my %cipherHexHash = (
 # CipherSuite TLS_ECDHE_RSA_WITH_CAMELLIA_256_GCM_SHA384    = {0xC0,0x8B};
 # CipherSuite TLS_ECDH_RSA_WITH_CAMELLIA_128_GCM_SHA256     = {0xC0,0x8C};
 # CipherSuite TLS_ECDH_RSA_WITH_CAMELLIA_256_GCM_SHA384     = {0xC0,0x8D};
-#
-# CipherSuite TLS_PSK_WITH_CAMELLIA_128_GCM_SHA256        = {0xC0,0x8D};
+  '0x0300C086'=> [qw(ECDHE_ECDSA_WITH_CAMELLIA_128_GCM_SHA256   ECDHE-ECDSA-CAMELLIA128-GCM-SHA256)],
+  '0x0300C087'=> [qw(ECDHE_ECDSA_WITH_CAMELLIA_256_GCM_SHA384   ECDHE-ECDSA-CAMELLIA256-GCM-SHA384)],
+  '0x0300C088'=> [qw(ECDH_ECDSA_WITH_CAMELLIA_128_GCM_SHA256    ECDH-ECDSA-CAMELLIA128-GCM-SHA256)],
+  '0x0300C089'=> [qw(ECDH_ECDSA_WITH_CAMELLIA_256_GCM_SHA384    ECDH-ECDSA-CAMELLIA256-GCM-SHA384)],
+  '0x0300C08A'=> [qw(ECDHE_RSA_WITH_CAMELLIA_128_GCM_SHA256     ECDHE-RSA-CAMELLIA128-GCM-SHA256)],
+  '0x0300C08B'=> [qw(ECDHE_RSA_WITH_CAMELLIA_256_GCM_SHA384     ECDHE-RSA-CAMELLIA256-GCM-SHA384)],
+  '0x0300C08C'=> [qw(ECDH_RSA_WITH_CAMELLIA_128_GCM_SHA256      ECDH-RSA-CAMELLIA128-GCM-SHA256)],
+  '0x0300C08D'=> [qw(ECDH_RSA_WITH_CAMELLIA_256_GCM_SHA384      ECDH-RSA-CAMELLIA256-GCM-SHA384)],
+
+# CipherSuite TLS_PSK_WITH_CAMELLIA_128_GCM_SHA256        = {0xC0,0x8E}; ##BUG in RFC6376##
 # CipherSuite TLS_PSK_WITH_CAMELLIA_256_GCM_SHA384        = {0xC0,0x8F};
 # CipherSuite TLS_DHE_PSK_WITH_CAMELLIA_128_GCM_SHA256    = {0xC0,0x90};
 # CipherSuite TLS_DHE_PSK_WITH_CAMELLIA_256_GCM_SHA384    = {0xC0,0x91};
 # CipherSuite TLS_RSA_PSK_WITH_CAMELLIA_128_GCM_SHA256    = {0xC0,0x92};
 # CipherSuite TLS_RSA_PSK_WITH_CAMELLIA_256_GCM_SHA384    = {0xC0,0x93};
+  '0x0300C08E'=> [qw(PSK_WITH_CAMELLIA_128_GCM_SHA256           PSK-CAMELLIA128-GCM-SHA256)],
+  '0x0300C08F'=> [qw(PSK_WITH_CAMELLIA_256_GCM_SHA384           PSK-CAMELLIA256-GCM-SHA384)],
+  '0x0300C090'=> [qw(DHE_PSK_WITH_CAMELLIA_128_GCM_SHA256       DHE-PSK-CAMELLIA128-GCM-SHA256)],
+  '0x0300C091'=> [qw(DHE_PSK_WITH_CAMELLIA_256_GCM_SHA384       DHE-PSK-CAMELLIA256-GCM-SHA384)],
+  '0x0300C092'=> [qw(RSA_PSK_WITH_CAMELLIA_128_GCM_SHA256       RSA-PSK-CAMELLIA128-GCM-SHA256)],
+  '0x0300C093'=> [qw(RSA_PSK_WITH_CAMELLIA_256_GCM_SHA384       RSA-PSK-CAMELLIA256-GCM-SHA384)],
+
 # CipherSuite TLS_PSK_WITH_CAMELLIA_128_CBC_SHA256        = {0xC0,0x94};
 # CipherSuite TLS_PSK_WITH_CAMELLIA_256_CBC_SHA384        = {0xC0,0x95};
 # CipherSuite TLS_DHE_PSK_WITH_CAMELLIA_128_CBC_SHA256    = {0xC0,0x96};
 # CipherSuite TLS_DHE_PSK_WITH_CAMELLIA_256_CBC_SHA384    = {0xC0,0x97};
 # CipherSuite TLS_RSA_PSK_WITH_CAMELLIA_128_CBC_SHA256    = {0xC0,0x98};
 # CipherSuite TLS_RSA_PSK_WITH_CAMELLIA_256_CBC_SHA384    = {0xC0,0x99};
+  '0x0300C094'=> [qw(PSK_WITH_CAMELLIA_128_CBC_SHA256           PSK-CAMELLIA128-SHA256)],
+  '0x0300C095'=> [qw(PSK_WITH_CAMELLIA_256_CBC_SHA384           PSK-CAMELLIA256-SHA384)],
+  '0x0300C096'=> [qw(DHE_PSK_WITH_CAMELLIA_128_CBC_SHA256       DHE-PSK-CAMELLIA128-SHA256)],
+  '0x0300C097'=> [qw(DHE_PSK_WITH_CAMELLIA_256_CBC_SHA384       DHE-PSK-CAMELLIA256-SHA384)],
+  '0x0300C098'=> [qw(RSA_PSK_WITH_CAMELLIA_128_CBC_SHA256       RSA-PSK-CAMELLIA128-SHA256)],
+  '0x0300C099'=> [qw(RSA_PSK_WITH_CAMELLIA_256_CBC_SHA384       RSA-PSK-CAMELLIA256-SHA384)],
+
 # CipherSuite TLS_ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256  = {0xC0,0x9A};
 # CipherSuite TLS_ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384  = {0xC0,0x9B};
-
+  '0x0300C09A'=> [qw(ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256     ECDHE-PSK-CAMELLIA128-SHA256)],
+  '0x0300C09B'=> [qw(ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384     ECDHE-PSK-CAMELLIA256-SHA384)],
 #!#----------------------------------------+-------------+--------------------+
 ); # cipherHexHash
 
@@ -605,19 +661,19 @@ my $TLS_SERVER_HELLO    = 2;
 my $input="";
 
 my %SSL2_CIPHER_STRINGS = (
-  '0x020700C0'=> [qw(DES_192_EDE3_CBC_WITH_MD5                DES-CBC3-MD5        SSL_CK_DES_192_EDE3_CBC_WITH_MD5)],
+  '0x020700C0'=> [qw(DES_192_EDE3_CBC_WITH_MD5                DES-CBC3-MD5       SSL_CK_DES_192_EDE3_CBC_WITH_MD5)],
   '0x020701C0'=> [qw(DES_192_EDE3_CBC_WITH_SHA                DES-CBC3-SHA)],
   '0x02060040'=> [qw(DES_64_CBC_WITH_MD5                      DES-CBC-MD5        SSL_CK_DES_64_CBC_WITH_MD5)],
   '0x02060140'=> [qw(DES_64_CBC_WITH_SHA                      DES-CBC-SHA)],
   '0x02FF0800'=> [qw(DES_64_CFB64_WITH_MD5_1                  DES-CFB-M1)],
-  '0x02050080'=> [qw(IDEA_128_CBC_WITH_MD5                    IDEA-CBC-MD5        SSL_CK_IDEA_128_CBC_WITH_MD5)],
+  '0x02050080'=> [qw(IDEA_128_CBC_WITH_MD5                    IDEA-CBC-MD5       SSL_CK_IDEA_128_CBC_WITH_MD5)],
   '0x02FF0810'=> [qw(NULL                                     NULL)],
   '0x02000000'=> [qw(NULL_WITH_MD5                            NULL-MD5)],
   '0x02040080'=> [qw(RC2_128_CBC_EXPORT40_WITH_MD5            EXP-RC2-CBC-MD5    SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5)],
   '0x02030080'=> [qw(RC2_128_CBC_WITH_MD5                     RC2-CBC-MD5        SSL_CK_RC2_128_CBC_WITH_MD5)],
   '0x02020080'=> [qw(RC4_128_EXPORT40_WITH_MD5                EXP-RC4-MD5        SSL_CK_RC4_128_EXPORT40_WITH_MD5)],
   '0x02010080'=> [qw(RC4_128_WITH_MD5                         RC4-MD5            SSL_CK_RC4_128_WITH_MD5)],
-  '0x02FFFFFF'=> [qw(SSL2_UNFFINED_CIPHER_0x02FFFFFF           SSL2_UNFFINED_CIPHER_0x02FFFFFF             SSL2_UNFFINED_CIPHER_0x02FFFFFF)],
+  '0x02FFFFFF'=> [qw(SSL2_UNFFINED_CIPHER_0x02FFFFFF          SSL2_UNFFINED_CIPHER_0x02FFFFFF             SSL2_UNFFINED_CIPHER_0x02FFFFFF)],
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol: SSL3 (invented)
 #!#----------------------------------------+-------------+--------------------+
@@ -1026,7 +1082,7 @@ sub openTcpSSLconnection ($$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $starttlsType=0; # SMTP 
-#    $starttlsType= $Net::SSLhello::starttlsType if ($Net::SSLhello::starttlsType <=7);  #8 Types defined: 0:SMTP, 1:IMAP, 2:IMAP2, 3:POP3, 4:FTPS, 5:LDAP, 6:RDP, 7:XMPP
+#   9 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_2, 3:POP3, 4:FTPS, 5:LDAP, 6:RDP, 7:RDP_SSL, 8:XMPP
 
     my @starttls_matrix = 
         ( ["SMTP", 
@@ -1043,7 +1099,7 @@ sub openTcpSSLconnection ($$) {
             "a002 STARTTLS\r\n",                # Phase4: send    'STARTTLS'
             "(?:^|\\s)(?:\\*|a002)\\s*OK\\s"    # Phase5: receive 'OK completed' 
           ],
-          ["IMAP2",                             # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+          ["IMAP_2",                            # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             "(?:^|\\s)* OK IMAP\\s|\\d",        # Phase1: receive '* OK IMAP'$
             "",                                 # Phase2: send    -unused-$
             "",                                 # Phase3: receive -unused-'$
@@ -1075,7 +1131,15 @@ sub openTcpSSLconnection ($$) {
             "",                                 # Phase1: receive -unused-$
             "",                                 # Phase2: send    -unused-$
             "",                                 # Phase3: receive -unused-$
-            "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x03\x00\x00\x00", # Phase4: send    'STARTTLS'
+            "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x0B\x00\x00\x00", # Phase4: send    'STARTTLS'; http://msdn.microsoft.com/en-us/library/cc240500.aspx
+            "\\x03\\x00\\x00\\x13\\x0E\\xD0.....\\x02.\\x08\\x00[\\x01\\x02\\x08]\\x00\\x00\\x00", # Phase5: receive 'Start TLS request accepted' = [PROTOCOL_SSL, PROTOCOL_HYBRID, PROTOCOL_HYBRID_EX] http://msdn.microsoft.com/en-us/library/cc240506.aspx
+          ], #  Typical ErrorMsg if STARTLS is *not* supported:  ---> O-Saft::Net::SSLhello ::openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: 19 Bytes
+             #   >0x03 0x00 0x00 0x13 0x0E 0xD0 0x00 0x00 0x12 0x34 0x00 0x03 0x00 0x08 0x00 0x02 0x00 0x00 0x00 <  #### SSL_NOT_ALLOWED_BY_SERVER; http://msdn.microsoft.com/en-us/library/cc240507.aspx
+          ["RDP_SSL",                           # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            "",                                 # Phase1: receive -unused-$
+            "",                                 # Phase2: send    -unused-$
+            "",                                 # Phase3: receive -unused-$
+            "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x01\x00\x00\x00", # Phase4: send    'STARTTLS' for latency RDP not supporting HYBRID modes
             "\\x03\\x00\\x00\\x13\\x0E\\xD0.....\\x02.\\x08\\x00[\\x01\\x02\\x08]\\x00\\x00\\x00", # Phase5: receive 'Start TLS request accepted' = [PROTOCOL_SSL, PROTOCOL_HYBRID, PROTOCOL_HYBRID_EX]
           ],
           ["XMPP",                              # according rfc3920; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
@@ -1185,7 +1249,7 @@ sub openTcpSSLconnection ($$) {
                     _trace2 ("openTcpSSLconnection: Connection established to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
                 } else {
                     unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                        $input =~ /^((?:.+?\n|$){1,4})/; #maximal 4 lines
+                        $input =~ /^((?:.+?(?:\r?\n|$)){1,4})/; #maximal 4 lines
                         $input = _chomp_r($1);
                     }
                     $@ = "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored. Proxy-Error: ".$input; #error-message received from the proxy
@@ -1217,13 +1281,13 @@ sub openTcpSSLconnection ($$) {
         if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
 
             $startTlsTypeHash{$starttls_matrix[$_][0]} = $_ for 0 .. scalar(@starttls_matrix) - 1;
-            _trace3 ("openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
+            _trace4 ("openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
 
             if (defined($startTlsTypeHash{$Net::SSLhello::starttlsType})) {
                 $starttlsType=$startTlsTypeHash{$Net::SSLhello::starttlsType}; 
-                _trace3 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-                _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! (please send feedback)\n") if ( grep(/$starttlsType/,('1', '2','3','7') ));
-                warn ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please send feedback!\n") if ( grep(/$starttlsType/,('4','5','6')));
+                _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
+                _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! (please send feedback)\n") if ( grep(/$starttlsType/,('1', '2','3','5','6','7','8') ));
+                warn ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please send feedback!\n") if ( grep(/$starttlsType/,('4')));
             
             } else {
                 $starttlsType=0;
@@ -1257,7 +1321,7 @@ sub openTcpSSLconnection ($$) {
                         $@ ="";     # Server is Ready 
                     } else {
                         unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                            $input =~ /^(.+?)\r?\n|$/; #maximal 1 line  of error message
+                            $input =~ /^(.+?)(?:\r?\n|$)/; #maximal 1 line  of error message
                             $input = $1;
                             # if (($startType == x) || () ....) { $input = hexString ($input) } #
                         }
@@ -1272,7 +1336,9 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: openTcpSSLconnection: STARTTLS: $@; Can't close socket, too: $!");
                     next;
                 }
-            } # endi-if $starttls_matrix[$starttlsType][1] 
+            } else {
+                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+            } # end-if $starttls_matrix[$starttlsType][1] 
 
             ### STARTTLS_Phase2 (send) #####
             if ($starttls_matrix[$starttlsType][2]) { 
@@ -1288,7 +1354,9 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: openTcpSSLconnection: ## STARTTLS (Phase 2): $@; Can't close socket, too: $!");
                     next; # next retry
                 } 
-            } # endi-if $starttls_matrix[$starttlsType][2] 
+            } else {
+                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+            } # end-if $starttls_matrix[$starttlsType][2] 
 
             ### STARTTLS_Phase3: receive (SMTP) Hello Answer
             if ($starttls_matrix[$starttlsType][3]) { 
@@ -1318,7 +1386,7 @@ sub openTcpSSLconnection ($$) {
                         _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): received a $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port: >"._chomp_r($input)."<\n");
                     } else {
                         unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                            $input =~ /^(.+?)\r?\n|$/; #maximal 1 error line
+                            $input =~ /^(.+?)(?:\r?\n|$)/; #maximal 1 error line
                             $input = $1;
                             # if (($startType == x) || () ....) { $input = hexString ($input) } #
                         }
@@ -1333,7 +1401,9 @@ sub openTcpSSLconnection ($$) {
                      close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
                      next; # next retry
                 }
-            } # endi-if $starttls_matrix[$starttlsType][3] 
+            } else {
+                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+            } # end-if $starttls_matrix[$starttlsType][3] 
  
             #### STARTTLS_Phase4: Do STARTTLS    
             if ($starttls_matrix[$starttlsType][4]) { 
@@ -1349,6 +1419,8 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: openTcpSSLconnection: ## $@; Can't close socket, too: $!");
                     next; # next return
                 }
+             } else {
+                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
              } # endi-if $starttls_matrix[$starttlsType][4]
 
             #### STARTTLS_Phase 5: receive STARTTLS Answer
@@ -1379,7 +1451,7 @@ sub openTcpSSLconnection ($$) {
                         _trace2 ("openTcpSSLconnection: ## STARTTLS: Server is ready to do SSL/TLS\n");
                     } else {
                         unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                            $input =~ /^(.+?)\r?\n|$/; #maximal 1 line
+                            $input =~ /^(.+?)(?:\r?\n|$)/; #maximal 1 line
                             $input = $1;
                         }
                         $@ = "STARTTLS: Did *NOT* get a Server SSL/TLS confirmation from $host:$port (retry: $retryCnt); target ignored. Server-Error: >"._chomp_r($input)."<"; #error-message received from the SMTP-Server
@@ -1394,7 +1466,9 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
                     next; # next retry
                 }
-            } # endi-if $starttls_matrix[$starttlsType][5] 
+            } else {
+                _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 5): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
+            } # end-if $starttls_matrix[$starttlsType][5] 
         } ###############    End STARTTLS Support  ##################
     }} while ( ($@) && ($retryCnt++ < $Net::SSLhello::retry) );
     if ($@) { #Error
@@ -2272,7 +2346,7 @@ sub _chomp_r { # chomp \r\n
     }
     $string =~ s/(.*?)\r?\n?$/$1/g;
     if ($string =~ /[^\x20-\x7E\t\r\n]/) { # non printable charachers in string 
-        $string =~ s/([\x00-\xFF])/sprintf("0x%02X ", ord($1))/eig; #Code all Octets as HEX values and seperate then with a 'space'
+        $string =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eig; #Code all Octets as HEX values and seperate then with a 'space'
     }
     return ($string);
 }
@@ -2489,7 +2563,7 @@ L<IO::Socket(1)>
 
 =head1 AUTHOR
 
-29-june-2014 Torsten Gigler
+01-July-2014 Torsten Gigler
 
 =cut
 
