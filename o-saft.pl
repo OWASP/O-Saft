@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.292 14/07/02 08:48:27";
+my  $SID    = "@(#) yeast.pl 1.293 14/07/02 09:46:22";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -1130,6 +1130,7 @@ our %cfg = (
     'sslhello' => {    # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 3,       # number of retry when timeout
+        'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
         'usereneg'  => 0,       # 1: secure renegotiation
         'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
@@ -4648,6 +4649,7 @@ while ($#argv >= 0) {
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLRENEG') { $cfg{'sslhello'}->{'usereneg'}= $arg;     $typ = 'HOST'; }
+        if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
         if ($typ eq 'DOUBLE')   { $cfg{'sslhello'}->{'double_reneg'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
@@ -4919,10 +4921,12 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     # options for Net::SSLhello
+# FIXME: following options not yet documented
     if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
     if ($arg eq  '--sslusereneg')       { $typ = 'SSLRENEG';        }
     if ($arg eq  '--ssldoublereneg')    { $typ = 'DOUBLE';          }
+    if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
     #!#--------+------------------------+----------------------------
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
     if ($arg =~ /^--ca(?:cert(?:ificate)?|file)$/i){ $typ ='CAFILE';} # curl, openssl, wget, ...
@@ -5369,6 +5373,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::starttlsType= $cfg{'starttls'};
             $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
             $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
+            $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
             $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
             $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
             $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
