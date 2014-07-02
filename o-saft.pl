@@ -972,6 +972,7 @@ our %cfg = (
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
+    'experimental'  => 0,       # 1: use experimental functionality
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
@@ -4810,6 +4811,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # ..
     if ($arg eq  '--trace')             { $typ = 'TRACE';           }
     if ($arg eq  '--quit')              { $arg = '+quit';           }
+    if ($arg =~ /^--exp(erimental)?$/)  { $cfg{'experimental'} = 1; }
+    if ($arg =~ /^--noexp(erimental)?$/){ $cfg{'experimental'} = 0; }
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';           }
     if ($arg eq  '--proxyport')         { $typ = 'PPORT';           }
@@ -5354,6 +5357,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         {
             no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
             $Net::SSLhello::trace       = $cfg{'trace'};
+            $Net::SSLhello::experimental= $cfg{'experimental'};
             $Net::SSLhello::usesni      = $cfg{'usesni'};
             $Net::SSLhello::starttls    = 0;
             $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
@@ -6672,6 +6676,12 @@ options are ambiguous.
 
   Options ignored, but stored as is internal in  $cfg{'usr-args'} .
   These options can be used in  o-saft-usr.pm  or  o-saft-dbx.pm.
+
+=head3 --experimental
+
+  Use experimental functionality.
+  Some functionality of this tool is  under development and only used
+  when this option is given.
 
 =head2 Options for tracing and debugging
 
