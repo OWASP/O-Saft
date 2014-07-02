@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.293 14/07/02 09:46:22";
+my  $SID    = "@(#) yeast.pl 1.294 14/07/03 00:35:16";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -5686,6 +5686,61 @@ Or, if written in perl, they mainly use L<Net::SSLeay(1)> or
 L<IO::Socket::SSL(1)> which lacks CRL and OCSP and EV checkings.
 
 =end comment
+
+=head1 TECHNICAL INFORMATION
+
+It is important to understand, which provided information is based on
+data returned by underlaying (used) libraries and the information 
+computed directly.
+
+In general the tool uses perl's  L<Net::SSLeay(1)> module which itself
+is based on libssl and/or libssleay library of the operating system.
+It's possible to use other versions of these libraries, see options:
+
+=over 4
+
+=item * --exe-path=PATH --exe=PATH
+
+=item * --lib-path=PATH --lib=PATH
+
+=item * --envlibvar=NAME
+
+=back
+
+The external  L<openssl(1)> is called to extract some information from
+its output.  The version of openssl can be controlled  with following
+options:
+
+=over 4
+
+=item * --openssl=TOOL
+
+=item * --no-openssl
+
+=item * --force-openssl
+
+=item * --exe-path=PATH --exe=PATH
+
+=back
+
+All checks according the validity of the certificate chain  are based
+on the root CAs installed on the system.  NOTE that  L<Net::SSLeay(1)>
+and  L<openssl(1)>  may have their own rules how and where to find the
+root CAs.  Please refer to the documentation on your system for these
+tools. However, there are folloing options to tweak these rules:
+
+=over 4
+
+=item * --ca-file=FILE
+
+=item * --ca-path=DIR
+
+=item * --ca-depth=INT
+
+=back
+
+Above applies to all commands except I<+cipherall> which uses no other
+libraries.
 
 =head1 RESULTS
 
