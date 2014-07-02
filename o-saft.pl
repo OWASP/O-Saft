@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.290 14/06/29 02:07:11";
+my  $SID    = "@(#) yeast.pl 1.291 14/07/02 06:47:46";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -972,12 +972,12 @@ our %cfg = (
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
-    'usedns'        => 1,       # 1: make DNS reverse lookup
-    'usehttp'       => 1,       # 1: make HTTP request
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
-    'nomd5cipher'   => 0,       # 1: do not use *-MD5 ciphers except for SSLv2 with +cipher
+    'usedns'        => 1,       # 1: make DNS reverse lookup
+    'usehttp'       => 1,       # 1: make HTTP request
+    'use_md5cipher' => 1,       # 0: do not use *-MD5 ciphers except for SSLv2 with +cipher
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
@@ -2969,7 +2969,7 @@ sub ciphers_get($$$$) {
         my $supported = "";
 #        if (1 == _is_call('cipher-socket')) {
         if (0 == $cmd{'extciphers'}) {
-            if (0 < $cfg{'nomd5cipher'}) {
+            if (0 >= $cfg{'use_md5cipher'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
                 # detailled description see OPTION  --no-md5-cipher
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
@@ -4888,7 +4888,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); } # push() is ugly hack to preserve option even from rc-file
-    if ($arg eq  '--nomd5cipher')       { $cfg{'nomd5cipher'}=1;    }
+    if ($arg eq  '--nomd5cipher')       { $cfg{'use_md5cipher'}=0;  }
+    if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'}=1;  }
     if ($arg eq  '--tab')               { $text{'separator'} = "\t";} # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
@@ -5352,7 +5353,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         # set defaults for Net::SSLhello
         {
             no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
-            $Net::SSLhello::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
+            $Net::SSLhello::trace       = $cfg{'trace'};
             $Net::SSLhello::usesni      = $cfg{'usesni'};
             $Net::SSLhello::starttls    = 0;
             $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
