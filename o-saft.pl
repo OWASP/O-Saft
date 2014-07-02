@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.291 14/07/02 06:47:46";
+my  $SID    = "@(#) yeast.pl 1.292 14/07/02 08:48:27";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -969,6 +969,9 @@ our %cfg = (
     'proxyauth'     => "",      # authentication string used for proxy
     'proxyuser'     => "",      # username for proxy authentication (Basic or Digest Auth)
     'proxypass'     => "",      # password for proxy authentication (Basic or Digest Auth)
+    'starttls'      => "",      # use STARTTLS if not empty
+                                # protocol to be used with STARTTLS; default: SMTP
+                                # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
@@ -4646,6 +4649,7 @@ while ($#argv >= 0) {
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLRENEG') { $cfg{'sslhello'}->{'usereneg'}= $arg;     $typ = 'HOST'; }
         if ($typ eq 'DOUBLE')   { $cfg{'sslhello'}->{'double_reneg'} = $arg;$typ = 'HOST'; }
+        if ($typ eq 'STARTTLS') { $cfg{'starttls'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
@@ -4766,6 +4770,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        next; } # must be before --help
     if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0;    next; }
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
+    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $arg = '# for CGI mode';  next; } # for CGI mode; ignore
     if ($arg =~ /^--h(?:elp)?$/)        { printhelp($1);          exit 0; } # allow --h --help --h=*
     if ($arg =~ /^(--|\+)help=?(.*)$/)  { printhelp($2);          exit 0; } # allow +help +help=*
@@ -4819,6 +4824,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--proxyuser')         { $typ = 'PUSER';           }
     if ($arg eq  '--proxypass')         { $typ = 'PPASS';           }
     if ($arg eq  '--proxyauth')         { $typ = 'PAUTH';           }
+    if ($arg =~ /^--?starttls$/i)       { $typ = 'STARTTLS';        }
     # options form other programs for compatibility
     if ($arg =~ /^--?nofailed$/)        { $cfg{'enabled'}   = 0;    } # sslscan
     if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
@@ -5359,7 +5365,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::trace       = $cfg{'trace'};
             $Net::SSLhello::experimental= $cfg{'experimental'};
             $Net::SSLhello::usesni      = $cfg{'usesni'};
-            $Net::SSLhello::starttls    = 0;
+            $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
+            $Net::SSLhello::starttlsType= $cfg{'starttls'};
             $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
             $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
             $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
@@ -6074,6 +6081,20 @@ the description here is text provided by the user.
 =head3 --proxypass=PROXYPASS
 
   Specify password for proxy authentication.
+
+=head3 --starttls
+
+  Use STARTTLS command to start a TLS connection via SMTP.
+  This option is a shortcut for  --starttls=SMTP .
+
+=head3 --starttls=PROT
+
+  Use STARTTLS command to start a TLS connection via protocol.
+  PROT  may be any of:  SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+
+  *EXPERIMENTAL* option; works for  +cipherall  only.
+
+  *EXPERIMENTAL* option; please use  --experimental to enable it.
 
 =head3 --cgi, --cgi-exec
 
@@ -8364,7 +8385,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.16
+@(#) 14.06.30
 
 =head1 AUTHOR
 
