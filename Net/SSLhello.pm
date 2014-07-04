@@ -1325,12 +1325,14 @@ sub openTcpSSLconnection ($$) {
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($Net::SSLhello::timeout);
                     recv ($socket, $input, 32767, 0); #|| die "openTcpSSLconnection: STARTTLS (Phase 1aa): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port\n"; # did not receive a Message ## unless seems to work better than if!!
-                    if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
+                    if  ( (length ($input)==0) || ($input !~ /$starttls_matrix[$starttlsType][1]/) ) { # did not receive a Message or not the expected answer 
                         _trace4 ("openTcpSSLconnection: STARTTLS (Phase 1a): Did *NOT* get a ".$starttls_matrix[$starttlsType][0]."-Ready-Message from $host:$port\n");
+                        $input2="";
                         sleep(1) if ($retryCnt > 0);
                         # Sleep for 250 milliseconds
                         select(undef, undef, undef, _SLEEP_B4_2ND_READ); 
-                        recv ($socket, $input, 32767, 0); # 2nd try 
+                        recv ($socket, $input2, 32767, 0); # 2nd try 
+                        $input .= $input2;
                     }
                     alarm (0);
                 };
@@ -1388,12 +1390,14 @@ sub openTcpSSLconnection ($$) {
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($Net::SSLhello::timeout);
                     recv ($socket, $input, 32767, 0); 
-                    if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
-                        _trace4 ("openTcpSSLconnection: STARTTLS (Phase 3a): Did *NOT* get any Answer to $starttls_matrix[$starttlsType][0] Client Hello from $host:$port\n");
+                    if ( (length ($input)==0) || ($input !~ /$starttls_matrix[$starttlsType][3]/) ) { # did not receive a Message or not the expected answer 
+                        _trace4 ("openTcpSSLconnection: STARTTLS (Phase 3a): Did *NOT* get any Answer to $starttls_matrix[$starttlsType][0] Client Hello from $host:$port\n"); 
+                        $input2="";
                         sleep(1) if ($retryCnt > 0);
                         # Sleep for 250 milliseconds
                         select(undef, undef, undef, _SLEEP_B4_2ND_READ);
-                        recv ($socket, $input, 32767, 0); # 2nd try
+                        recv ($socket, $input2, 32767, 0); # 2nd trya
+                        $input .= $input2;
                     }
                     alarm (0);
                 };
@@ -1453,12 +1457,14 @@ sub openTcpSSLconnection ($$) {
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($Net::SSLhello::timeout);
                     recv ($socket, $input, 32767, 0);
-                    if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
+                    if ( (length ($input)==0) || ($input !~ /$starttls_matrix[$starttlsType][5]/) ) { # did not receive a Message or not the expected answer 
                         _trace4  ("STARTTLS (Phase 5a): Did *NOT* get any Answer to $starttls_matrix[$starttlsType][0] STARTTLS Request from $host:$port\n");
+                        $input2="";
                         sleep(1) if ($retryCnt > 0);
                         # Sleep for 250 milliseconds
                         select(undef, undef, undef, _SLEEP_B4_2ND_READ);
-                        recv ($socket, $input, 32767, 0); # 2nd try 
+                        recv ($socket, $input2, 32767, 0); # 2nd try 
+                        $input .= $input2;
                     } 
                     alarm (0);
                 };
