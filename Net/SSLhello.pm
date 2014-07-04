@@ -101,7 +101,7 @@ $Net::SSLhello::timeout      = 2;# time in seconds
 $Net::SSLhello::retry        = 3;# number of retry when timeout
 $Net::SSLhello::usereneg     = 0;# secure renegotiation 
 $Net::SSLhello::starttls     = 0;# 1= do STARTTLS
-$Net::SSLhello::starttlsType = 0;# SMTP
+$Net::SSLhello::starttlsType = "SMTP";# default: SMTP
 $Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
 $Net::SSLhello::proxyhost    = "";#
 $Net::SSLhello::proxyport    = "";#
@@ -1295,8 +1295,8 @@ sub openTcpSSLconnection ($$) {
             $startTlsTypeHash{$starttls_matrix[$_][0]} = $_ for 0 .. scalar(@starttls_matrix) - 1;
             _trace4 ("openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
 
-            if (defined($startTlsTypeHash{$Net::SSLhello::starttlsType})) {
-                $starttlsType = $startTlsTypeHash{$Net::SSLhello::starttlsType}; 
+            if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
+                $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
                 _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
                 if  ($Net::SSLhello::experimental >0) { # experimental functionis are  activated
                     _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback, please\n") if ( grep(/$starttlsType/,('1', '2','3','4','5','6','7','8') ));

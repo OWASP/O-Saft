@@ -295,7 +295,7 @@ while ($#argv >= 0) {
     if ($arg =~  '--proxyuser=(.*)')    { $cfg{'proxyuser'}= $1; }
     if ($arg =~  '--proxypass=(.*)')    { $cfg{'proxypass'}= $1; }
     if ($arg =~  '--proxyauth=(.*)')    { $cfg{'proxyauth'}= $1; }
-    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=0; }  # starttls, starttlsType=SMTP(=0)
+    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--?starttls=(\w+)$/i)  { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); } # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                                                             # 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
     # options
