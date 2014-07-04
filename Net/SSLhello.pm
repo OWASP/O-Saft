@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-07-01';
+    $VERSION    = 'NET::SSLhello_2014-07-04';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -105,6 +105,7 @@ $Net::SSLhello::starttlsType = 0;# SMTP
 $Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
 $Net::SSLhello::proxyhost    = "";#
 $Net::SSLhello::proxyport    = "";#
+$Net::SSLhello::experimental = 0;# 0: experimental functions are protected (=not active)
 
 use constant {
     _MY_SSL3_MAX_CIPHERS       => 32, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are szupported by the Server
@@ -730,7 +731,18 @@ sub version { # Version of SSLhello
     _trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
 #   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
 #    print "\$main::cfg\{\'trace\'\}=$main::cfg{'trace'}\n";
-#    print "\$Net::SSLhello::trace=$Net::SSLhello::trace\n";
+     _trace4 ("retry=$Net::SSLhello::retry\n");
+     _trace4 ("timeout=$Net::SSLhello::timeout\n");
+     _trace4 ("trace=$Net::SSLhello::trace\n");
+     _trace4 ("usereneg=$Net::SSLhello::usereneg\n");
+     _trace4 ("double_reneg=$Net::SSLhello::double_reneg\n");
+     _trace4 ("usesni=$Net::SSLhello::usesni\n");
+     _trace4 ("starttls=$Net::SSLhello::starttls\n");
+     _trace4 ("starttlsType=$Net::SSLhello::starttlsType\n");
+     _trace4 ("experimental=$Net::SSLhello::experimental\n");
+     _trace4 ("proxyhost=$Net::SSLhello::proxyhost\n");
+     _trace4 ("proxyport=$Net::SSLhello::proxyport\n");
+     _trace4_("------------------------------------------------------------------------------------\n");
 #    _trace("_trace\n");
 #    _trace_("_trace_\n");
 #    _trace1("_trace1\n");
@@ -1253,7 +1265,7 @@ sub openTcpSSLconnection ($$) {
                         $input = _chomp_r($1);
                     }
                     $@ = "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored. Proxy-Error: ".$input; #error-message received from the proxy
-                    trace_2 ("openTcpSSLconnection: $@\n");
+                    _trace2 ("openTcpSSLconnection: $@\n");
                     next;
                 }
             }
@@ -1284,11 +1296,20 @@ sub openTcpSSLconnection ($$) {
             _trace4 ("openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
 
             if (defined($startTlsTypeHash{$Net::SSLhello::starttlsType})) {
-                $starttlsType=$startTlsTypeHash{$Net::SSLhello::starttlsType}; 
+                $starttlsType = $startTlsTypeHash{$Net::SSLhello::starttlsType}; 
                 _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-                _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! (please send feedback)\n") if ( grep(/$starttlsType/,('1', '2','3','5','6','7','8') ));
-                warn ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please send feedback!\n") if ( grep(/$starttlsType/,('4')));
-            
+                if  ($Net::SSLhello::experimental >0) { # experimental functionis are  activated
+                    _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback, please\n") if ( grep(/$starttlsType/,('1', '2','3','4','5','6','7','8') ));
+                } else {
+                    if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8') )) {
+                        $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback\n" if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8') ));
+                    #   $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it and send us feedback, please!
+                        #$retryCnt = $Net::SSLhello::retry; #No more retries
+                        #last;
+                        warn ($@);
+                        exit (1); #stop program
+                    }
+                }
             } else {
                 $starttlsType=0;
                 warn ("openTcpSSLconnection: WARNING Undefined StarttlsType, use $starttls_matrix[$starttlsType][0] instead");
@@ -1472,6 +1493,7 @@ sub openTcpSSLconnection ($$) {
         } ###############    End STARTTLS Support  ##################
     }} while ( ($@) && ($retryCnt++ < $Net::SSLhello::retry) );
     if ($@) { #Error
+        chomp($@);
         warn ("**WARNING: openTcpSSLconnection: $@\n"); 
         _trace2 ("openTcpSSLconnection: Exit openTcpSSLconnection }\n");
         return (undef);
@@ -2563,7 +2585,7 @@ L<IO::Socket(1)>
 
 =head1 AUTHOR
 
-01-July-2014 Torsten Gigler
+04-July-2014 Torsten Gigler
 
 =cut
 

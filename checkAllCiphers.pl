@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-06-29";
+my $VERSION = "2014-07-02";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -84,6 +84,8 @@ OPTIONS
                 STARTTLS_TYPE is any of SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
                 (Note: IMAP2 is a second way to use IMAP)
                 Please take care! Please give us feedback (especially for FTPS, LDAP, RDP)
+    --experimental
+                to use experimental functions
 
 DESCRIPTION
     This is just a very simple wrapper for the Net::SSLhello module to test
@@ -148,6 +150,7 @@ our %cfg = ( # from o-saft (only relevant parts)
    #------------------+---------+----------------------------------------------
     'try'           => 0,       # 1: do not execute openssl, just show
     'exec'          => 0,       # 1: if +exec command used
+    'experimental'  => 0,       # 1: if experimental functions should be used
     'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLhello also
     'traceARG'      => 0,       # 1: trace yeast's argument processing
     'traceCMD'      => 0,       # 1: trace command processing
@@ -331,6 +334,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ssl[_-]?timeout=(.*)/)  {$cfg{'sslhello'}->{'timeout'}=$1;}
     if ($arg =~ /^--ssl[_-]?usereneg=(.*)/) {$cfg{'sslhello'}->{'usereneg'}=$1;}
     if ($arg =~ /^--ssl[_-]?double[_-]?reneg/)  {$cfg{'sslhello'}->{'double_reneg'}=1;}
+    if ($arg =~ /^--?experimental$/i)   { $cfg{'experimental'} = 1; }
     #} +---------+----------------------+-------------------------
 
     next if ($arg =~ /^[+-]/); # quick&dirty
@@ -352,6 +356,7 @@ while ($#argv >= 0) {
     $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
     $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport   = $cfg{'proxyport'};
+    $Net::SSLhello::experimental= $cfg{'experimental'};
 }
 
 # check ssl protocols
