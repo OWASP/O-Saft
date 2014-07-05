@@ -757,17 +757,17 @@ sub version { # Version of SSLhello
     _trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
 #   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
 #    print "\$main::cfg\{\'trace\'\}=$main::cfg{'trace'}\n";
-     _trace4 ("retry=$Net::SSLhello::retry\n");
-     _trace4 ("timeout=$Net::SSLhello::timeout\n");
-     _trace4 ("trace=$Net::SSLhello::trace\n");
-     _trace4 ("usereneg=$Net::SSLhello::usereneg\n");
-     _trace4 ("double_reneg=$Net::SSLhello::double_reneg\n");
-     _trace4 ("usesni=$Net::SSLhello::usesni\n");
-     _trace4 ("starttls=$Net::SSLhello::starttls\n");
-     _trace4 ("starttlsType=$Net::SSLhello::starttlsType\n");
-     _trace4 ("experimental=$Net::SSLhello::experimental\n");
-     _trace4 ("proxyhost=$Net::SSLhello::proxyhost\n");
-     _trace4 ("proxyport=$Net::SSLhello::proxyport\n");
+     _trace4 ("retry=$Net::SSLhello::retry\n") if (defined(Net::SSLhello::retry));
+     _trace4 ("timeout=$Net::SSLhello::timeout\n") if (defined(Net::SSLhello::timeout));
+     _trace4 ("trace=$Net::SSLhello::trace\n") if (defined(Net::SSLhello::trace));
+     _trace4 ("usereneg=$Net::SSLhello::usereneg\n") if (defined(Net::SSLhello::usereneg));
+     _trace4 ("double_reneg=$Net::SSLhello::double_reneg\n") if (defined(Net::SSLhello::double_reneg));
+     _trace4 ("usesni=$Net::SSLhello::usesni\n") if (defined(Net::SSLhello::usesni));
+     _trace4 ("starttls=$Net::SSLhello::starttls\n") if (defined(Net::SSLhello::starttls));
+     _trace4 ("starttlsType=$Net::SSLhello::starttlsType\n") if (defined(Net::SSLhello::starttlsType));
+     _trace4 ("experimental=$Net::SSLhello::experimental\n") if (defined(Net::SSLhello::experimental));
+     _trace4 ("proxyhost=$Net::SSLhello::proxyhost\n") if (defined(Net::SSLhello::proxyhost));
+     _trace4 ("proxyport=$Net::SSLhello::proxyport\n") if (defined(Net::SSLhello::proxyport));
      _trace4_("------------------------------------------------------------------------------------\n");
 #    _trace("_trace\n");
 #    _trace_("_trace_\n");
