@@ -1124,63 +1124,77 @@ sub openTcpSSLconnection ($$) {
 
     my @starttls_matrix = 
         ( ["SMTP", 
-            "(?:^|\\s)220\\s",                  # Phase1: receive '220 smtp.server.com Simple Mail Transfer Service Ready'
-            "EHLO o-saft.localhost\r\n",        # Phase2: send    'EHLO o-saft.localhost\r\n'         
-            "(?:^|\\s)250(?:\\s|-)",            # Phase3: receive '250-smtp.server.com Hello o-saft.localhost'
-            "STARTTLS\r\n",                     # Phase4: send    'STARTTLS'
-            "(?:^|\\s)220(?:\\s|-)"             # Phase5: receive '220' 
+            ".*?(?:^|\n)220\\s",                    # Phase1: receive '220 smtp.server.com Simple Mail Transfer Service Ready'
+            "EHLO o-saft.localhost\r\n",            # Phase2: send    'EHLO o-saft.localhost\r\n'         
+            "(?:^|\\s)250(?:\\s|-)",                # Phase3: receive '250-smtp.server.com Hello o-saft.localhost'
+            "STARTTLS\r\n",                         # Phase4: send    'STARTTLS'
+            ".*?(?:^|\n)220(?:\\s|-)"               # Phase5: receive '220' 
           ],
-          ["IMAP",                              # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
-            "(?:^|\\s)\\*\\s*OK.*?IMAP\\s|\\d", # Phase1: receive '* OK IMAP'
-            "a001 CAPABILITY\r\n",              # Phase2: send    view CAPABILITY (optional) 
-            "(?:^|\\s)\\*\\s*CAPABILITY",       # Phase3: receive CAPABILITY-List should include STARTTLS
-            "a002 STARTTLS\r\n",                # Phase4: send    'STARTTLS'
-            "(?:^|\\s)(?:\\*|a002)\\s*OK\\s"    # Phase5: receive 'OK completed' 
+          ["IMAP",                                  # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            ".*?(?:^|\n)\\*\\s*OK.*?IMAP\\s|\\d",   # Phase1: receive '* OK IMAP'
+            "",                                     # Phase2: send    -unused-
+            "",                                     # Phase2: send    -unused-
+            "a001 STARTTLS\r\n",                    # Phase4: send    'STARTTLS'
+            ".*?(?:^|\n)(?:\\*|a001)\\s*OK\\s"      # Phase5: receive 'OK completed' 
           ],
-          ["IMAP_2",                            # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
-            "(?:^|\\s)* OK IMAP\\s|\\d",        # Phase1: receive '* OK IMAP'$
-            "",                                 # Phase2: send    -unused-$
-            "",                                 # Phase3: receive -unused-'$
-            ". STARTTLS\r\n",                   # Phase4: send    'STARTTLS'$
-            "(?:^|\\s). OK\\s"                  # Phase5: receive '. OK completed' $
+          ["IMAP_CAPACITY",                         # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            ".*?(?:^|\n)\\*\\s*OK.*?IMAP\\s|\\d",   # Phase1: receive '* OK IMAP'
+            "a001 CAPABILITY\r\n",                  # Phase2: send    view CAPABILITY (optional) 
+            ".*?(?:^|\n)\\*\\s*CAPABILITY",         # Phase3: receive CAPABILITY-List should include STARTTLS
+            "a002 STARTTLS\r\n",                    # Phase4: send    'STARTTLS'
+            ".*?(?:^|\n)(?:\\*|a002)\\s*OK\\s"      # Phase5: receive 'OK completed' 
           ],
-          ["POP3",                              # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
-            "(?:^|\\s)\\+\\s*OK.*?ready",       # Phase1: receive '* OK...ready.'
-            "CAPA\r\n",                         # Phase2: send view CAPABILITY (optional) 
-            "(?:^|\\s)\\+\\s*OK",               # Phase3: receive List of should include STLS
-            "STLS\r\n",                         # Phase4: send    'STLS' (-> STARTTLS)'
-            "(?:^|\\s)\\+\\s*OK\\s+Begin\\s+TLS"  # Phase5: receive '. OK completed' 
+          ["IMAP_2",                                # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            ".*?(?:^|\n)\\*\\sOK.*?IMAP\\s|\\d",    # Phase1: receive '* OK IMAP'$
+            "",                                     # Phase2: send    -unused-$
+            "",                                     # Phase3: receive -unused-'$
+            ". STARTTLS\r\n",                       # Phase4: send    'STARTTLS'$
+            ".*?(?:^|\n). OK\\s"                    # Phase5: receive '. OK completed' $
           ],
-          ["FTPS",                              # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
-            "(?:^|\\s)220\\s",                  # Phase1: receive '220 ProFTPD 1.3.2rc4 Server (TJ's FTPS Server) [127.0.0.1]'
-            "",                                 # Phase2: send view CAPABILITY (optional) 
-            "",                                 # Phase3: receive List of should include STLS
-            "AUTH TLS\r\n",                     # Phase4: send    'AUTH TLS' (-> STARTTLS)'
-            "(?:^|\\s)234\\s+AUTH\\s+TLS"       # Phase5: receive '234 AUTH TLS successful' 
+          ["POP3",                                  # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            ".*?(?:^|\n)\\+\\s*OK.*?ready",         # Phase1: receive '* OK...ready.'
+            "",                                     # Phase2: send    -unused-$
+            "",                                     # Phase3: receive -unused-'$
+            "STLS\r\n",                             # Phase4: send    'STLS' (-> STARTTLS)'
+            ".*?(?:^|\n)\\+\\s*OK\\s+Begin\\s+TLS"  # Phase5: receive '. OK completed' 
           ],
-          ["LDAP",                              # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
-            "",                                 # Phase1: receive -unused-$
-            "",                                 # Phase2: send    -unused-$
-            "",                                 # Phase3: receive -unused-$
+          ["POP3_CAPACITY",                         # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            ".*?(?:^|\n)\\+\\s*OK.*?ready",         # Phase1: receive '* OK...ready.'
+            "CAPA\r\n",                             # Phase2: send view CAPABILITY (optional) 
+            ".*?(?:^|\n)\\+\\s*OK",                 # Phase3: receive List of should include STLS
+            "STLS\r\n",                             # Phase4: send    'STLS' (-> STARTTLS)'
+            ".*?(?:^|\n)\\+\\s*OK\\s+Begin\\s+TLS"  # Phase5: receive '. OK completed' 
+          ],
+          ["FTPS",                                  # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            ".*?(?:^|\n)220\\s",                    # Phase1: receive '220 ProFTPD 1.3.2rc4 Server (TJ's FTPS Server) [127.0.0.1]'
+            "",                                     # Phase2: send view CAPABILITY (optional) 
+            "",                                     # Phase3: receive List of should include STLS
+            "AUTH TLS\r\n",                         # Phase4: send    'AUTH TLS' (-> STARTTLS)'
+            ".*?(?:^|\n)234\\s+AUTH\\s+TLS"         # Phase5: receive '234 AUTH TLS successful' 
+          ],
+          ["LDAP",                                  # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+            "",                                     # Phase1: receive -unused-$
+            "",                                     # Phase2: send    -unused-$
+            "",                                     # Phase3: receive -unused-$
             "0\x1d\x02\x01\x01w\x18\x80\x161.3.6.1.4.1.1466.20037", # Phase4: send    'STARTTLS'
             "0\\x24\\x02\\x01\\x01\\x78\\x1F\\x0A\\x01\\x00\\x04\\x00\\x04\\x00\\x8A\\x161\\.3\\.6\\.1\\.4\\.1\\.1466\\.20037"  # Phase5: receive 'Start TLS request accepted.'
           ],
-          ["RDP",                               # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
-            "",                                 # Phase1: receive -unused-$
-            "",                                 # Phase2: send    -unused-$
-            "",                                 # Phase3: receive -unused-$
+          ["RDP",                                   # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+            "",                                     # Phase1: receive -unused-$
+            "",                                     # Phase2: send    -unused-$
+            "",                                     # Phase3: receive -unused-$
             "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x0B\x00\x00\x00", # Phase4: send    'STARTTLS'; http://msdn.microsoft.com/en-us/library/cc240500.aspx
             "\\x03\\x00\\x00\\x13\\x0E\\xD0.....\\x02.\\x08\\x00[\\x01\\x02\\x08]\\x00\\x00\\x00", # Phase5: receive 'Start TLS request accepted' = [PROTOCOL_SSL, PROTOCOL_HYBRID, PROTOCOL_HYBRID_EX] http://msdn.microsoft.com/en-us/library/cc240506.aspx
           ], #  Typical ErrorMsg if STARTLS is *not* supported:  ---> O-Saft::Net::SSLhello ::openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: 19 Bytes
              #   >0x03 0x00 0x00 0x13 0x0E 0xD0 0x00 0x00 0x12 0x34 0x00 0x03 0x00 0x08 0x00 0x02 0x00 0x00 0x00 <  #### SSL_NOT_ALLOWED_BY_SERVER; http://msdn.microsoft.com/en-us/library/cc240507.aspx
-          ["RDP_SSL",                           # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
-            "",                                 # Phase1: receive -unused-$
-            "",                                 # Phase2: send    -unused-$
-            "",                                 # Phase3: receive -unused-$
+          ["RDP_SSL",                               # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
+            "",                                     # Phase1: receive -unused-$
+            "",                                     # Phase2: send    -unused-$
+            "",                                     # Phase3: receive -unused-$
             "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x01\x00\x00\x00", # Phase4: send    'STARTTLS' for latency RDP not supporting HYBRID modes
             "\\x03\\x00\\x00\\x13\\x0E\\xD0.....\\x02.\\x08\\x00[\\x01\\x02\\x08]\\x00\\x00\\x00", # Phase5: receive 'Start TLS request accepted' = [PROTOCOL_SSL, PROTOCOL_HYBRID, PROTOCOL_HYBRID_EX]
           ],
-          ["XMPP",                              # according rfc3920; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
+          ["XMPP",                                  # according rfc3920; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
             "",                                                     # Phase1: receive -unused-$
             "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'".
              " to='".$host."' xml:lang='en' version='1.0'>",        # Phase2: send  Client initiates stream to server (no from to try to avoid to get blocked due to too much connects!)
@@ -1325,10 +1339,10 @@ sub openTcpSSLconnection ($$) {
                 $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
                 _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
                 if  ($Net::SSLhello::experimental >0) { # experimental functionis are  activated
-                    _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback, please\n") if ( grep(/$starttlsType/,('1', '2','3','4','5','6','7','8') ));
+                    _trace ("openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback, please\n") if ( grep(/$starttlsType/,('1', '2','3','4','5','6','7','8','9','10') ));
                 } else {
-                    if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8') )) {
-                        $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback\n" if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8') ));
+                    if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8','9','10') )) {
+                        $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback\n" if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8','9','10') ));
                     #   $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it and send us feedback, please!
                         #$retryCnt = $Net::SSLhello::retry; #No more retries
                         #last;
