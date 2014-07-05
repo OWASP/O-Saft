@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-07-02";
+my $VERSION = "2014-07-05";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -52,8 +52,8 @@ OPTIONS
     --help      nice option
     --host=HOST add HOST to list of hosts to be checked
     -h=HOST     dito.
-    --port=PORT use PORT for following hosts
-    -h=PORT     dito.
+    --port=PORT use PORT for following hosts (default is 443)
+    -p=PORT     dito.
     --SSL       test for this SSL version
                 SSL is any of: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13
     --no-SSL    do not test for this SSL version
@@ -81,9 +81,10 @@ OPTIONS
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
                 *EXPERIMENTAL* Use STARTTLS to start TLS. 
-                STARTTLS_TYPE is any of SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
-                (Note: IMAP2 is a second way to use IMAP)
+                STARTTLS_TYPE is any of SMTP, ACAP, IMAP (IMAP_2), POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
+                (Note: IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP)
                 Please take care! Please give us feedback (especially for FTPS, LDAP, RDP)
+                All STARTTLS_TYPES besides SMTP need the '--experimental' option
     --experimental
                 to use experimental functions
 
