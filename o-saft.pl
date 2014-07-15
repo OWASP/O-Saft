@@ -2345,8 +2345,9 @@ $cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cfg{'done'}->{'dbxfile'}++ if ($#dbx > 0);
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
+# FIXME: following check needs to be done after parsing options
 if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
-    $arg =  `$cmd{'openssl'} version -d`;      # get something like: OPENSSLDIR: "/usr/local/openssl"
+    $arg =  qx($cmd{'openssl'} version -d);    # get something like: OPENSSLDIR: "/usr/local/openssl"
     $arg =~ s#[^"]*"([^"]*)"#$1#;
     push(@{$cfg{'ca_paths'}}, $arg);
     $arg = "";
@@ -4313,7 +4314,7 @@ sub printversion() {
         foreach $d (sort keys %p) {
              next if ($d =~ m/^\s*$/);
              print "# find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*";
-             print   `find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*`;
+             print qx(find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*);
         }
     }
 } # printversion
@@ -4424,7 +4425,7 @@ sub printtable($) {
     if ($typ eq 'score') { _print_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
    #if ($typ eq 'range') { _print_arr($_, $sep, $cfg{'cipherranges'}->{$_}) foreach (sort keys %{$cfg{'cipherranges'}}); }
         # above prints > 65.000 hex values, not very usefull ...
-    if ($typ eq 'range') { print `\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0`; } # ToDo: quick&dirty backticks
+    if ($typ eq 'range') { print qx(\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0); } # ToDo: quick&dirty backticks
     if ($typ eq 'intern') {
         foreach $key (sort keys %cfg) {
             next if ($key eq 'cmd-intern'); # don't list myself
@@ -4528,7 +4529,7 @@ sub printhelp($) {
             # pod2usage( -verbose => 1 )
             exit( Pod::Perldoc->run(args=>[$0]) );
         }
-        if (`perldoc -V`) {
+        if (qx(perldoc -V)) {
             # may return:  You need to install the perl-doc package to use this program.
             exec "perldoc $0"; # scary ...
         }
@@ -8445,7 +8446,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.06.30
+@(#) 14.07.07
 
 =head1 AUTHOR
 
