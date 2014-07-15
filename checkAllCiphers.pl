@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-06-29";
+my $VERSION = "2014-07-05";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -52,8 +52,8 @@ OPTIONS
     --help      nice option
     --host=HOST add HOST to list of hosts to be checked
     -h=HOST     dito.
-    --port=PORT use PORT for following hosts
-    -h=PORT     dito.
+    --port=PORT use PORT for following hosts (default is 443)
+    -p=PORT     dito.
     --SSL       test for this SSL version
                 SSL is any of: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13
     --no-SSL    do not test for this SSL version
@@ -81,9 +81,12 @@ OPTIONS
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
                 *EXPERIMENTAL* Use STARTTLS to start TLS. 
-                STARTTLS_TYPE is any of SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
-                (Note: IMAP2 is a second way to use IMAP)
+                STARTTLS_TYPE is any of SMTP, ACAP, IMAP (IMAP_2), POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
+                (Note: IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP)
                 Please take care! Please give us feedback (especially for FTPS, LDAP, RDP)
+                All STARTTLS_TYPES besides SMTP need the '--experimental' option
+    --experimental
+                to use experimental functions
 
 DESCRIPTION
     This is just a very simple wrapper for the Net::SSLhello module to test
@@ -148,6 +151,7 @@ our %cfg = ( # from o-saft (only relevant parts)
    #------------------+---------+----------------------------------------------
     'try'           => 0,       # 1: do not execute openssl, just show
     'exec'          => 0,       # 1: if +exec command used
+    'experimental'  => 0,       # 1: if experimental functions should be used
     'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLhello also
     'traceARG'      => 0,       # 1: trace yeast's argument processing
     'traceCMD'      => 0,       # 1: trace command processing
@@ -292,7 +296,7 @@ while ($#argv >= 0) {
     if ($arg =~  '--proxyuser=(.*)')    { $cfg{'proxyuser'}= $1; }
     if ($arg =~  '--proxypass=(.*)')    { $cfg{'proxypass'}= $1; }
     if ($arg =~  '--proxyauth=(.*)')    { $cfg{'proxyauth'}= $1; }
-    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=0; }  # starttls, starttlsType=SMTP(=0)
+    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--?starttls=(\w+)$/i)  { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); } # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                                                             # 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
     # options
@@ -331,6 +335,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ssl[_-]?timeout=(.*)/)  {$cfg{'sslhello'}->{'timeout'}=$1;}
     if ($arg =~ /^--ssl[_-]?usereneg=(.*)/) {$cfg{'sslhello'}->{'usereneg'}=$1;}
     if ($arg =~ /^--ssl[_-]?double[_-]?reneg/)  {$cfg{'sslhello'}->{'double_reneg'}=1;}
+    if ($arg =~ /^--?experimental$/i)   { $cfg{'experimental'} = 1; }
     #} +---------+----------------------+-------------------------
 
     next if ($arg =~ /^[+-]/); # quick&dirty
@@ -352,6 +357,7 @@ while ($#argv >= 0) {
     $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
     $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport   = $cfg{'proxyport'};
+    $Net::SSLhello::experimental= $cfg{'experimental'};
 }
 
 # check ssl protocols
