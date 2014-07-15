@@ -2348,8 +2348,31 @@ $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 # FIXME: following check needs to be done after parsing options
 if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
     $arg =  qx($cmd{'openssl'} version -d);    # get something like: OPENSSLDIR: "/usr/local/openssl"
-    $arg =~ s#[^"]*"([^"]*)"#$1#;
-    push(@{$cfg{'ca_paths'}}, $arg);
+    my $status = $?;
+    my $error  = $!;
+    if (($error ne "") && ($status != 0)) {    # we ignore error messages for status==0
+        # When there is a status and an error message, external call failed.
+        # Print error message and disable external openssl.
+        # In rare cases (i.e. VM with low memory) external call fails due to
+        # malloc() problems, in this case print an additional warning.
+        # Note that low memory affects external calls only *but not* further
+        # control flow herein as perl already managed to load the script.
+        print "**WARNING: perl returned error: '$error'\n";
+        if ($error =~ m/allocate memory/) {
+            print "**WARNING: using external programs disabled.\n";
+            print "**WARNING: data provided by external openssl may be shown as:  <<openssl>>\n";
+        }
+        $cmd{'extopenssl'} = 0;
+        $cmd{'extsclient'} = 0;
+        $status = 0;  # avoid following warning
+    } else {
+        # process only if no errors to avoid "Use of uninitialized value"
+        $arg =~ s#[^"]*"([^"]*)"#$1#;
+        push(@{$cfg{'ca_paths'}}, $arg);
+    }
+    if ($status != 0) {
+        print "**WARNING: perl returned status: '$status' ('" . ($status>>8) . "')\n";
+    }
     $arg = "";
 }
 
@@ -8446,7 +8469,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.07
+@(#) 14.07.08
 
 =head1 AUTHOR
 
