@@ -4483,9 +4483,9 @@ sub printcipherlist() {
         print "Supported Ciphers:        ", $have_cipher;
         print "Unsupported Ciphers:      ", $miss_cipher;
         print "Testable Ciphers:         ", scalar @{[split(":", $ciphers)]}; # @{[...]} to avoid Use of implicit split to @_ is deprecated at 
-        print "Ciphers missing in $mename:", $#miss, "  ", join(" ", @miss);
+        print "Ciphers missing in $mename:", $#miss, "  ", join(" ", @miss) if ($#miss > 0);
         print "Ciphers (from local ssl): ", $ciphers;
-            # ToDo: there may be more "Testable" than "Supported" ciphers
+            # FIXME: there may be more "Testable" than "Supported" ciphers
     }
 } # printcipherlist
 
@@ -8576,7 +8576,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.14
+@(#) 14.07.15
 
 =head1 AUTHOR
 
