@@ -1140,7 +1140,7 @@ our %cfg = (
     },
     'legacy'        => "simple",
     'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
-                        ssltest-g sslyze testsslserver thcsslcheck
+                        ssltest-g sslyze testsslserver thcsslcheck openssl
                         simple full compact quick)],
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
@@ -1518,7 +1518,7 @@ our %ciphers = (
         'IDEA-CBC-SHA'          => [qw(MEDIUM SSLv2 IDEA  128 SHA1 RSA   RSA        80 :)],
         'NULL'                  => [qw(  weak SSLv2 None    0 -?-  None  -?-         0 :)], # openssl SSLeay testing
         'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA(512)    0 :)],
-        'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA(512)    0 :)],
+        'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA(512)    0 export)], # FIXME: same hash key as before
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
         'PSK-3DES-EDE-CBC-SHA'  => [qw(  HIGH SSLv3 3DES  168 SHA1 PSK   PSK         1 :)],
         'PSK-AES128-CBC-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 PSK   PSK         1 :)],
@@ -1540,10 +1540,10 @@ our %ciphers = (
         'DHE-DSS-CAMELLIA256-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  256 SHA1 DSS   DH    100 :)],
         'DHE-RSA-CAMELLIA128-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  128 SHA1 RSA   DH     80 :)],
         'DHE-RSA-CAMELLIA256-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  256 SHA1 RSA   DH    100 :)],
-        'GOST94-GOST89-GOST89'  => [qw(  -?-  SSLv3 -?-   -?- -?-  -?-   -?-         1 :)],
-        'GOST2001-GOST89-GOST89'=> [qw(  -?-  SSLv3 -?-   -?- -?-  -?-   -?-         1 :)],
-        'GOST94-NULL-GOST94'    => [qw(  -?-  SSLv3 -?-   -?- -?-  -?-   -?-         1 :)],
-        'GOST2001-NULL-GOST94'  => [qw(  -?-  SSLv3 -?-   -?- -?-  -?-   -?-         1 :)],
+        'GOST94-GOST89-GOST89'  => [qw(  -?-  SSLv3 GOST89 256 GOST89  GOST94 VKO    1 :)],
+        'GOST2001-GOST89-GOST89'=> [qw(  -?-  SSLv3 GOST89 256 GOST89  GOST01 VKO    1 :)],
+        'GOST94-NULL-GOST94'    => [qw(  -?-  SSLv3 None     0 GOST94  GOST94 VKO    1 :)],
+        'GOST2001-NULL-GOST94'  => [qw(  -?-  SSLv3 None     0 GOST94  GOST01 VKO    1 :)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
 
         # from openssl-1.0.1c
@@ -1600,8 +1600,6 @@ our %ciphers = (
         'DHE-RSA-AES256-CCM'            => [qw( high TLSv12 AESCCM 256 AEAD   RSA   DH         91 :)],
         'PSK-RSA-AES128-CCM'            => [qw( high TLSv12 AESCCM 128 AEAD   PSK   PSK        91 :)],
         'PSK-RSA-AES256-CCM'            => [qw( high TLSv12 AESCCM 256 AEAD   PSK   PSK        91 :)],
-        'DHE-PSK-RSA-AES128-CCM'        => [qw( high TLSv12 AESCCM 128 AEAD   PSK   DH         91 :)],
-        'DHE-PSK-RSA-AES256-CCM'        => [qw( high TLSv12 AESCCM 256 AEAD   PSK   DH         91 :)],
         'ECDHE-RSA-AES128-CCM'          => [qw( high TLSv12 AESCCM 128 AEAD   ECDSA ECDH       91 :)],
         'ECDHE-RSA-AES256-CCM'          => [qw( high TLSv12 AESCCM 256 AEAD   ECDSA ECDH       91 :)],
         'RSA-AES128-CCM-8'              => [qw( high TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
@@ -1646,9 +1644,9 @@ our %ciphers = (
         'EXP-KRB5-RC4-MD5'              => [qw(  WEAK SSLv3 RC4     40 MD5    KRB5  KRB5        0 export)],
         'EXP-KRB5-RC4-SHA'              => [qw(  WEAK SSLv3 RC4     40 SHA1   KRB5  KRB5        0 export)],
         # from ssl/s3_lib.c
-        'FZA-NULL-SHA'                  => [qw(  weak SSLv3 FZA      0 SHA1   FZA   FZA        11 :)],
-        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   FZA   FZA        81 :)],
-        'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 FZA    128 SHA1   FZA   FZA        11 :)],
+        'FZA-NULL-SHA'                  => [qw(  weak SSLv3 None     0 SHA1   KEA   FZA        11 :)],
+        'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   KEA   FZA        81 :)],
+        'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 RC4    128 SHA1   KEA   FZA        11 :)],
         'RSA-FIPS-3DES-EDE-SHA'         => [qw(  high SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS  99 :)],
         'RSA-FIPS-3DES-EDE-SHA'         => [qw(  high SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS  99 :)],
         'RSA-FIPS-DES-CBC-SHA'          => [qw(   low SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS  20 :)],
@@ -1657,6 +1655,54 @@ our %ciphers = (
         'DHE-RSA-CHACHA20-POLY1305'     => [qw(   -?- -?-   ChaCha20-Poly1305 -?- RSA   -?- DH    1 :)],
         'ECDHE-RSA-CHACHA20-POLY1305'   => [qw(   -?- -?-   ChaCha20-Poly1305 -?- RSA   -?- ECDH  1 :)],
         'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw(   -?- -?-   ChaCha20-Poly1305 -?- ECDSA -?- ECDH  1 :)],
+
+        # FIXME: all following
+        'EXP-DH-DSS-DES-CBC-SHA'        => [qw( weak  SSLv3 DES    40 SHA1    DSS   DH(512)    0 export)],
+        'EXP-DH-RSA-DES-CBC-SHA'        => [qw( weak  SSLv3 DES    40 SHA1    RSA   DH(512)    0 export)],
+        'DH-DSS-DES-CBC-SHA'            => [qw(  low  SSLv3 DES    56 SHA1    DSS   DH         20 :)],
+        'DH-RSA-DES-CBC-SHA'            => [qw(  low  SSLv3 DES    56 SHA1    RSA   DH         20 :)],
+        'DH-DSS-DES-CBC3-SHA'           => [qw( high  SSLv3 3DES   168 SHA1   DSS   DH         80 :)],
+        'DH-RSA-DES-CBC3-SHA'           => [qw( high  SSLv3 3DES   168 SHA1   RSA   DH         80 :)],
+        'DH-DSS-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 DSS   DH         91 :)],
+        'DH-RSA-AES128-SHA256'          => [qw( high TLSv12 AES    128 SHA256 RSA   DH         91 :)],
+        'DH-DSS-CAMELLIA128-SHA'        => [qw( high  SSLv3 CAMELLIA 128 SHA1 DSS   DH         81 :)],
+        'DH-RSA-CAMELLIA128-SHA'        => [qw( high  SSLv3 CAMELLIA 128 SHA1 DSS   DH         81 :)],
+        'DH-DSS-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 DSS   DH         91 :)],
+        'DH-RSA-AES256-SHA256'          => [qw( high TLSv12 AES    256 SHA256 RSA   DH         91 :)],
+        'DH-DSS-CAMELLIA256-SHA'        => [qw( high  SSLv3 CAMELLIA 256 SHA1 DSS   DH         91 :)],
+        'DH-RSA-CAMELLIA256-SHA'        => [qw( high  SSLv3 CAMELLIA 256 SHA1 RSA   DH         91 :)],
+        'DH-DSS-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   DSS   DH         81 :)],
+        'DH-RSA-SEED-SHA'               => [qw(medium SSLv3 SEED   128 SHA1   RSA   DH         81 :)],
+        'DH-RSA-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   RSA   DH         91 :)],
+        'DH-RSA-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   RSA   DH         91 :)],
+        'DH-DSS-AES128-GCM-SHA256'      => [qw( high TLSv12 AESGCM 128 AEAD   DSS   DH         91 :)],
+        'DH-DSS-AES256-GCM-SHA384'      => [qw( high TLSv12 AESGCM 256 AEAD   DSS   DH         91 :)],
+        'DHE-PSK-SHA'                   => [qw(   -?- -?-   -?-    -?- SHA1   PSK   DHE         1 :)],
+        'RSA-PSK-SHA'                   => [qw(   -?- -?-   -?-    -?- SHA1   PSK   RSA         1 :)],
+        'DHE-PSK-RC4-SHA'               => [qw(   -?- -?-   RC4    -?- SHA1   PSK   PSK         1 :)],
+        'DHE-PSK-3DES-SHA'              => [qw(   -?- -?-   3DES   -?- SHA1   PSK   PSK         1 :)],
+        'DHE-PSK-AES128-SHA'            => [qw(   -?- -?-   AES    128 SHA1   PSK   PSK         1 :)],
+        'DHE-PSK-AES256-SHA'            => [qw(   -?- -?-   AES    256 SHA1   PSK   PSK         1 :)],
+        'RSA-PSK-RC4-SHA'               => [qw(   -?- -?-   RC4    -?- SHA1   PSK   PSK         1 :)],
+        'RSA-PSK-3DES-SHA'              => [qw(   -?- -?-   3DES   -?- SHA1   PSK   PSK         1 :)],
+        'RSA-PSK-AES128-SHA'            => [qw(   -?- -?-   AES    128 SHA1   PSK   PSK         1 :)],
+        'RSA-PSK-AES256-SHA'            => [qw(   -?- -?-   AES    256 SHA1   PSK   PSK         1 :)],
+        'DHE-PSK-AES128-GCM-SHA256'     => [qw(   -?- -?-   AES    128 SHA256 PSK   PSK         1 :)],
+        'DHE-PSK-AES256-GCM-SHA384'     => [qw(   -?- -?-   AES    256 SHA384 PSK   PSK         1 :)],
+        'RSA-PSK-AES128-GCM-SHA256'     => [qw(   -?- -?-   AES    128 SHA256 PSK   PSK         1 :)],
+        'RSA-PSK-AES256-GCM-SHA384'     => [qw(   -?- -?-   AES    256 SHA384 PSK   PSK         1 :)],
+        'PSK-AES128-SHA256'             => [qw(   -?- -?-   AES    128 SHA256 PSK   PSK         1 :)],
+        'PSK-AES256-SHA384'             => [qw(   -?- -?-   AES    256 SHA384 PSK   PSK         1 :)],
+        'PSK-SHA256'                    => [qw(   -?- -?-   AES    -?- SHA256 PSK   PSK         1 :)],
+        'PSK-SHA384'                    => [qw(   -?- -?-   AES    -?- SHA384 PSK   PSK         1 :)],
+        'DHE-PSK-AES128-SHA256'         => [qw(   -?- -?-   AES    128 SHA256 PSK   PSK         1 :)],
+        'DHE-PSK-AES256-SHA384'         => [qw(   -?- -?-   AES    256 SHA384 PSK   PSK         1 :)],
+        'DHE-PSK-SHA256'                => [qw(   -?- -?-   AES    -?- SHA256 PSK   PSK         1 :)],
+        'DHE-PSK-SHA384'                => [qw(   -?- -?-   AES    -?- SHA384 PSK   PSK         1 :)],
+        'RSA-PSK-AES128-SHA256'         => [qw(   -?- -?-   AES    128 SHA256 PSK   PSK         1 :)],
+        'RSA-PSK-AES256-SHA384'         => [qw(   -?- -?-   AES    256 SHA384 PSK   PSK         1 :)],
+        'RSA-PSK-SHA256'                => [qw(   -?- -?-   AES    -?- SHA256 PSK   PSK         1 :)],
+        'RSA-PSK-SHA384'                => [qw(   -?- -?-   AES    -?- SHA384 PSK   PSK         1 :)],
 
     # === openssl ===
     # above table (roughly) generated with:
@@ -1670,16 +1716,6 @@ our %ciphers = (
     #
     # Note: some openssl (0.9.8o on Ubuntu 11.10) fail to list ciphers with
     #    openssl ciphers -ssl2 -v
-
-    # === openssl-x86_64 1.0.0d ===
-    # *CAMELLIA*, PSK*
-    # different results:
-    #   ECDH-ECDSA-AES128-SHA   SSLv3 Kx=ECDH/ECDSA Au=ECDH Enc=AES(128)  Mac=SHA1
-    #   ECDH-ECDSA-AES256-SHA   SSLv3 Kx=ECDH/ECDSA Au=ECDH Enc=AES(256)  Mac=SHA1
-    #   ECDH-ECDSA-DES-CBC3-SHA SSLv3 Kx=ECDH/ECDSA Au=ECDH Enc=3DES(168) Mac=SHA1
-    #   ECDH-ECDSA-RC4-SHA      SSLv3 Kx=ECDH/ECDSA Au=ECDH Enc=RC4(128)  Mac=SHA1
-    #   ECDH-RSA-NULL-SHA       SSLv3 Kx=ECDH/RSA   Au=ECDH Enc=None      Mac=SHA1
-    #   ECDH-ECDSA-NULL-SHA     SSLv3 Kx=ECDH/ECDSA Au=ECDH Enc=None      Mac=SHA1
 
 ); # %ciphers
 
@@ -1808,9 +1844,9 @@ our %cipher_names = (
     '0x03000016' => [qw(EDH-RSA-DES-CBC3-SHA            EDH_RSA_DES_192_CBC3_SHA)],
     '0x03000014' => [qw(EXP-EDH-RSA-DES-CBC-SHA         EDH_RSA_DES_40_CBC_SHA)],
     '0x03000015' => [qw(EDH-RSA-DES-CBC-SHA             EDH_RSA_DES_64_CBC_SHA)],
-    '0x0300001D' => [qw(FZA-FZA-CBC-SHA                 FZA_DMS_FZA_SHA)],
-    '0x0300001C' => [qw(FZA-NULL-SHA                    FZA_DMS_NULL_SHA)],
-    '0x0300001E' => [qw(FZA-RC4-SHA                     FZA_DMS_RC4_SHA)],
+    '0x0300001D' => [qw(FZA-FZA-SHA                     FZA_DMS_FZA_SHA)],     # FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA
+    '0x0300001C' => [qw(FZA-NULL-SHA                    FZA_DMS_NULL_SHA)],    # FORTEZZA_KEA_WITH_NULL_SHA
+    '0x0300001e' => [qw(FZA-RC4-SHA                     FZA_DMS_RC4_SHA)],     # <== 1e so that it is its own hash entry in crontrast to 1E (duplicate constant definition in openssl)
     '0x02050080' => [qw(IDEA-CBC-MD5                    IDEA_128_CBC_WITH_MD5)],
     '0x03000023' => [qw(KRB5-DES-CBC3-MD5               KRB5_DES_192_CBC3_MD5)],
     '0x0300001F' => [qw(KRB5-DES-CBC3-SHA               KRB5_DES_192_CBC3_SHA)],
@@ -1828,6 +1864,7 @@ our %cipher_names = (
     '0x03000028' => [qw(EXP-KRB5-RC4-SHA                KRB5_RC4_40_SHA)],
     '0x02ff0810' => [qw(NULL                            NULL)],
     '0x02000000' => [qw(NULL-MD5                        NULL_WITH_MD5)],
+    '0x03000000' => [qw(NULL-MD5                        NULL_WITH_NULL_NULL)],
     '0x0300008B' => [qw(PSK-3DES-EDE-CBC-SHA            PSK_WITH_3DES_EDE_CBC_SHA)],
     '0x0300008C' => [qw(PSK-AES128-CBC-SHA              PSK_WITH_AES_128_CBC_SHA)],
     '0x0300008D' => [qw(PSK-AES256-CBC-SHA              PSK_WITH_AES_256_CBC_SHA)],
@@ -1861,14 +1898,41 @@ our %cipher_names = (
     '0x03000084' => [qw(CAMELLIA256-SHA                 RSA_WITH_CAMELLIA_256_CBC_SHA)],
     '0x0300003B' => [qw(NULL-SHA256                     RSA_WITH_NULL_SHA256)],
     '0x03000096' => [qw(SEED-SHA                        RSA_WITH_SEED_SHA)],
+
+    '0x0300002C' => [qw(PSK-SHA                         PSK_WITH_NULL_SHA)],
+    '0x0300002D' => [qw(DHE-PSK-SHA                     DHE_PSK_WITH_NULL_SHA)],
+    '0x0300002E' => [qw(RSA-PSK-SHA                     RSA_PSK_WITH_NULL_SHA)],
+    '0x0300008E' => [qw(DHE-PSK-RC4-SHA                 DHE_PSK_WITH_RC4_128_SHA)],
+    '0x0300008F' => [qw(DHE-PSK-3DES-SHA                DHE_PSK_WITH_3DES_EDE_CBC_SHA)],
+    '0x03000090' => [qw(DHE-PSK-AES128-SHA              DHE_PSK_WITH_AES_128_CBC_SHA)],
+    '0x03000091' => [qw(DHE-PSK-AES256-SHA              DHE_PSK_WITH_AES_256_CBC_SHA)],
+    '0x03000092' => [qw(RSA-PSK-RC4-SHA                 RSA_PSK_WITH_RC4_128_SHA)],
+    '0x03000093' => [qw(RSA-PSK-3DES-SHA                RSA_PSK_WITH_3DES_EDE_CBC_SHA)],
+    '0x03000094' => [qw(RSA-PSK-AES128-SHA              RSA_PSK_WITH_AES_128_CBC_SHA)],
+    '0x03000095' => [qw(RSA-PSK-AES256-SHA              RSA_PSK_WITH_AES_256_CBC_SHA)],
+    '0x030000AA' => [qw(DHE-PSK-AES128-GCM-SHA256       DHE_PSK_WITH_AES_128_GCM_SHA256)],
+    '0x030000AB' => [qw(DHE-PSK-AES256-GCM-SHA384       DHE_PSK_WITH_AES_256_GCM_SHA384)],
+    '0x030000AC' => [qw(RSA-PSK-AES128-GCM-SHA256       RSA_PSK_WITH_AES_128_GCM_SHA256)],
+    '0x030000AD' => [qw(RSA-PSK-AES256-GCM-SHA384       RSA_PSK_WITH_AES_256_GCM_SHA384)],
+    '0x030000AE' => [qw(PSK-AES128-SHA256               PSK_WITH_AES_128_CBC_SHA256)],
+    '0x030000AF' => [qw(PSK-AES256-SHA384               PSK_WITH_AES_256_CBC_SHA384)],
+    '0x030000B0' => [qw(PSK-SHA256                      PSK_WITH_NULL_SHA256)],
+    '0x030000B1' => [qw(PSK-SHA384                      PSK_WITH_NULL_SHA384)],
+    '0x030000B2' => [qw(DHE-PSK-AES128-SHA256           DHE_PSK_WITH_AES_256_CBC_SHA256)],
+    '0x030000B3' => [qw(DHE-PSK-AES256-SHA384           DHE_PSK_WITH_AES_256_CBC_SHA384)],
+    '0x030000B4' => [qw(DHE-PSK-SHA256                  DHE_PSK_WITH_NULL_SHA256)],
+    '0x030000B5' => [qw(DHE-PSK-SHA384                  DHE_PSK_WITH_NULL_SHA384)],
+    '0x030000B6' => [qw(RSA-PSK-AES128-SHA256           RSA_PSK_WITH_AES_256_CBC_SHA256)],
+    '0x030000B7' => [qw(RSA-PSK-AES256-SHA384           RSA_PSK_WITH_AES_256_CBC_SHA384)],
+    '0x030000B8' => [qw(RSA-PSK-SHA256                  RSA_PSK_WITH_NULL_SHA256)],
+    '0x030000B9' => [qw(RSA-PSK-SHA384                  RSA_PSK_WITH_NULL_SHA384)],
+
     '0x0300C09C' => [qw(RSA-AES128-CCM                  RSA_WITH_AES_128_CCM)],
     '0x0300C09D' => [qw(RSA-AES256-CCM                  RSA_WITH_AES_256_CCM)],
     '0x0300C09E' => [qw(DHE-RSA-AES128-CCM              DHE_RSA_WITH_AES_128_CCM)],
     '0x0300C09F' => [qw(DHE-RSA-AES256-CCM              DHE_RSA_WITH_AES_256_CCM)],
     '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM              PSK_WITH_AES_128_CCM)],
     '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM              PSK_WITH_AES_256_CCM)],
-    '0x0300C0A4' => [qw(DHE-PSK-RSA-AES128-CCM          DHE_PSK_WITH_AES_128_CCM)],
-    '0x0300C0A5' => [qw(DHE-PSK-RSA-AES256-CCM          DHE_PSK_WITH_AES_256_CCM)],
     '0x0300C0AC' => [qw(ECDHE-RSA-AES128-CCM            ECDHE_ECDSA_WITH_AES_128_CCM)],
     '0x0300C0AD' => [qw(ECDHE-RSA-AES256-CCM            ECDHE_ECDSA_WITH_AES_256_CCM)],
     '0x0300C0A0' => [qw(RSA-AES128-CCM-8                RSA_WITH_AES_128_CCM_8)],
@@ -1894,6 +1958,12 @@ our %cipher_names = (
     '0x0300FEE1' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],
     '0x0300FEFE' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],
     '0x0300FEFF' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],
+    '0x03000080' => [qw(GOST94-GOST89-GOST89            GOSTR341094_WITH_28147_CNT_IMIT)],
+    '0x03000081' => [qw(GOST2001-GOST89-GOST89          GOSTR341001_WITH_28147_CNT_IMIT)],
+    '0x0300FF00' => [qw(GOST-MD5             -?-)],  # ??
+    '0x0300FF01' => [qw(GOST-GOST94          -?-)],  # ??
+    '0x0300FF00' => [qw(GOST94-NULL-GOST94   -?-)],  # ??
+    '0x0300FF01' => [qw(GOST2001-NULL-GOST94 -?-)],  # ??
 # TODO:  following PCT...
     '0x00800001' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509)],
     '0x00800003' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509_CHAIN)],
@@ -1912,8 +1982,10 @@ our %cipher_alias = ( # TODO: list not yet used
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name alias        # comment (where found)
     #!#----------+-------------------------------------+--------------------------+
+    '0x02030080' => [qw(RC2-MD5)],                     # 
     '0x02040080' => [qw(EXP-RC2-MD5)],                 # from sslaudit.ini
     '0x03000012' => [qw(EDH-DSS-CBC-SHA)],             # from sslaudit.ini and mozilla
+    '0x0300001D' => [qw(FZA-FZA-CBC-SHA)],
     '0x03000032' => [qw(EDH-DSS-AES128-SHA)],          # from RSA BSAFE SSL-C
     '0x03000033' => [qw(EDH-RSA-AES128-SHA)],          # from RSA BSAFE SSL-C
     '0x03000038' => [qw(EDH-DSS-AES256-SHA)],          # from RSA BSAFE SSL-C
@@ -1921,7 +1993,9 @@ our %cipher_alias = ( # TODO: list not yet used
     '0x03000062' => [qw(EXP-DES-56-SHA)],              # from RSA BSAFE SSL-C
     '0x03000063' => [qw(EXP-EDH-DSS-DES-56-SHA)],      # from RSA BSAFE SSL-C
     '0x03000064' => [qw(EXP-RC4-56-SHA)],              # from RSA BSAFE SSL-C
+    '0x03000065' => [qw(EXP-EDH-DSS-RC4-56-SHA)],
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
+    '0x0300009B' => [qw(DHanon-SEED-SHA)],
     #!#----------+-------------------------------------+--------------------------+
 ); # %cipher_alias
 
@@ -8614,7 +8688,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.16
+@(#) 14.07.17
 
 =head1 AUTHOR
 
