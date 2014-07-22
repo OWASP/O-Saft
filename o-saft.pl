@@ -1054,6 +1054,8 @@ our %cfg = (
                         0x03000000 .. 0x0300002F, 0x030000FF,
                        ],
     }, # cipherranges
+    'ciphers-v'     => 0,       # as: openssl ciphers -v
+    'ciphers-V'     => 0,       # as: openssl ciphers -V
     'do'            => [],      # the commands to be performed, any of commands
     'commands'      => [],      # contains all commands, constructed below
     'cmd-intern'    => [        # add internal commands
@@ -1108,7 +1110,8 @@ our %cfg = (
                         serial sigkey_value pubkey_value modulus
                         master_key session_id session_ticket extension
                        )],      # fingerprint is special, see _ishexdata()
-
+    'opt-v'         => 0,       # 1 when option -v was given
+    'opt-V'         => 0,       # 1 when option -V was given
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
     'out_header'    => 0,       # print header lines in output
@@ -4369,7 +4372,6 @@ sub printversion() {
     print '# Path = ' . $mepath if ($cfg{'verbose'} > 1);
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
     print "    $0 $VERSION";
-	#	#	#	#	#	#	$text{'separator'}
     print "    openssl version (ext executable) " . Net::SSLinfo::do_openssl('version', "", "", "");
     print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
@@ -4942,6 +4944,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
     if ($arg eq  '--httpget')           { $cfg{'usehttp'}++;        } # ssltest.pl
     if ($arg eq  '--version')           { $arg = '+version';        }
+    if ($arg eq  '-v')                  { $cfg{'opt-v'}     = 1;    } # openssl, sets ciphers-v, see below
+    if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # openssl, sets ciphers-V, see below
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg eq  '--list')              { $arg = '+list';           } # no next!
     if ($arg eq  '--chain')             { $arg = '+chain';          } # as these
@@ -4991,8 +4995,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--nodtlsv?09$/i)      { $cfg{'DTLSv9'}    = 0;    }
     if ($arg =~ /^--nodtlsv?10?$/i)     { $cfg{'DTLSv1'}    = 0;    }
     if ($arg eq  '-b')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
-    if ($arg eq  '-V')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
-#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # FIXME: not supported
+    if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out_header, see below
+#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
     # our options
     if ($arg eq  '--norc')              {                           } # simply ignore
     if ($arg eq  '--ssllazy')           { $cfg{'ssl_lazy'}  = 1;    } # ..
@@ -5154,6 +5158,23 @@ while ($#argv >= 0) {
 $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
+if (_is_do('ciphers')) {
+    # +ciphers command is special:
+    #   simulates openssl's ciphers command and accepts -v or -V option
+    $cfg{'out_header'}  = 0 if (grep(/--header/, @ARGV) <= 0);
+    $cfg{'ciphers-v'}   = $cfg{'opt-v'};
+    $cfg{'ciphers-V'}   = $cfg{'opt-V'};
+    $cfg{'legacy'}      = "openssl";
+    $text{'separator'}  = " " if (grep(/--(?:tab|sep(?:arator)?)/, @ARGV) <= 0); # space if not set
+} else {
+    # not +ciphers command, then  -V  is for compatibility
+    $cfg{'out_header'}  = $cfg{'opt-V'} if ($cfg{'out_header'} <= 0);
+}
+if (_is_do('list')) {
+    # our own command to list ciphers: uses header and TAB as separator
+    $cfg{'out_header'}  = 1 if (grep(/--no.?header/, @ARGV) <= 0);
+    $text{'separator'}  = "\t" if (grep(/--(?:tab|sep(?:arator)?)/, @ARGV) <= 0); # tab if not set
+}
 
 _yeast_args();
 _vprintme();
@@ -6413,6 +6434,16 @@ the description here is text provided by the user.
 
   :-))
 
+=head3 -v
+
+  Print list of ciphers in style like: `openssl ciphers -v'.
+  Option used with  "+ciphers"  command only.
+
+=head3 -V
+
+  Print list of ciphers in style like: `openssl ciphers -V'.
+  Option used with  "+ciphers"  command only.
+
 =head2 Options for SSL connection to target
 
 =head3 --cipher=CIPHER
@@ -6902,6 +6933,8 @@ options are ambiguous.
 
   Note that this option should be first otherwise some debug messages
   are missing.
+
+  Note that  --v  is different from  -v  (see above).
 
 =head3 --v --v
 
@@ -8576,7 +8609,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.15
+@(#) 14.07.16
 
 =head1 AUTHOR
 
