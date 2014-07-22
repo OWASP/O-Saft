@@ -4441,6 +4441,15 @@ sub printquit() {
     print "# TEST done.";
 } # printquit
 
+sub printversionmismatch() {
+    #? check if openssl and compiled SSLeay are of same version
+    my $o = Net::SSLeay::OPENSSL_VERSION_NUMBER();
+    my $s = Net::SSLeay::SSLeay();
+    if ($0 ne $s) {
+        _warn("used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
+    }
+} # printversionmismatch
+
 sub printversion() {
     #? print program and module versions
     local $\ = "\n";
@@ -4460,6 +4469,7 @@ sub printversion() {
         print "       ::SSLEAY_PLATFORM             " . Net::SSLeay::SSLeay_version(4);
         print "       ::SSLEAY_CFLAGS               " . Net::SSLeay::SSLeay_version(2);
     }
+    printversionmismatch();
 
 # ToDo: i.g. OPENSSL_VERSION_NUMBER() returns same value as SSLeay()
 #       but when using libraries with LD_LIBRARY_PATH or alike, these
@@ -4508,6 +4518,7 @@ sub printversion() {
 sub printopenssl() {
     #? print openssl version
     print Net::SSLinfo::do_openssl('version', "", "", "");
+    printversionmismatch();
 } # printopenssl
 
 sub printcipherlist() {
