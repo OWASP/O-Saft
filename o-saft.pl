@@ -4563,17 +4563,21 @@ sub printcipherlist() {
     printf("=%s%s\n", ("-" x 30), ("+-------" x 9));
     if ($cfg{'verbose'} > 0) {
         my @miss = ();
+        my @test = ();
+        my $dupl = ""; # need to identify duplicates as we don't have List::MoreUtils
         foreach $cipher (split(':', $ciphers)) {
+            next if ($cipher eq $dupl);
+            push(@test, $cipher) if (  defined $ciphers{$cipher});
             push(@miss, $cipher) if (! defined $ciphers{$cipher});
+            $dupl = $cipher;
         }
         print "\n# Ciphers marked with # above are not supported by local SSL implementation.\n";
         print "Ciphers in $mename:        ", join(":", keys %ciphers);
-        print "Supported Ciphers:        ", $have_cipher;
-        print "Unsupported Ciphers:      ", $miss_cipher;
-        print "Testable Ciphers:         ", scalar @{[split(":", $ciphers)]}; # @{[...]} to avoid Use of implicit split to @_ is deprecated at 
-        print "Ciphers missing in $mename:", $#miss, "  ", join(" ", @miss) if ($#miss > 0);
-        print "Ciphers (from local ssl): ", $ciphers;
-            # FIXME: there may be more "Testable" than "Supported" ciphers
+        print "Supported Ciphers:        ",  $have_cipher;
+        print "Unsupported Ciphers:      ",  $miss_cipher;
+        print "Testable Ciphers:         ",  scalar(@test);
+        print "Ciphers missing in $mename:", scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
+        print "Ciphers (from local ssl): ",  $ciphers;
     }
 } # printcipherlist
 
