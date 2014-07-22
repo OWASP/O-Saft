@@ -5218,6 +5218,13 @@ if ($cfg{'exec'} == 0) {
 
 local $\ = "\n";
 
+## first: all commands which do not make a connection
+## -------------------------------------
+#printversion() # want to see WARNINGS for +version also
+printopenssl(),     exit 0   if (_is_do('libversion'));
+printcipherlist(),  exit 0   if (_is_do('list'));
+print_data($legacy, 'ciphers', ""), exit 0 if (_is_do('ciphers'));
+
 ## check if used software supports SNI properly
 ## -------------------------------------
 if (! _is_do('cipherraw')) { # FIXME ALPHA
@@ -5242,6 +5249,8 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
 }
 _trace("cfg{usesni}: $cfg{'usesni'}");
 } # ALPHA
+
+printversion(),     exit 0   if (_is_do('version')); # like first: above
 
 ## set additional defaults if missing
 ## -------------------------------------
@@ -5385,11 +5394,6 @@ usr_pre_main();
 
 ## main: do the work
 ## -------------------------------------
-# first all commands which do not make a connection
-printversion(),    exit 0   if (_is_do('version'));
-printopenssl(),    exit 0   if (_is_do('libversion'));
-printcipherlist(), exit 0   if (_is_do('list'));
-print_data($legacy, 'ciphers', ""), exit 0 if (_is_do('ciphers'));
 
 # defense, user-friendly programming
   # could do these checks earlier (after seeting defaults), but we want
