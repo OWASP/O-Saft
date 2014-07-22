@@ -1394,7 +1394,8 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # Note: weak includes NONE (no security at all)
                             #
                             # all following informations as reported by openssl 0.9.8 .. 1.0.1h
-        'Protocol Version', # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0
+        'SSL/TLS',          # Protocol Version:
+                            # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0
                             # Note: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
         'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED
@@ -1420,7 +1421,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # :    (colon) is empty marker (need for other tools
         ],
 ); # %ciphers_desc
-my %ciphers = (
+our %ciphers = (
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #'head'                 => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
@@ -1924,8 +1925,8 @@ our %cipher_alias = ( # TODO: list not yet used
     #!#----------+-------------------------------------+--------------------------+
 ); # %cipher_alias
 
-my %text = (
-    'separator' => ":",# separator character between label and value
+our %text = (
+    'separator'     => ":",# separator character between label and value
     # texts may be redefined
     'undef'         => "<<undefined>>",
     'response'      => "<<response>>",
@@ -4208,7 +4209,7 @@ sub _print_results($$$@) {
     }
 } # _print_results
 
-sub printciphers($$$$$@) {
+sub printciphercheck($$$$$@) {
     #? print all cipher check results according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
@@ -4238,7 +4239,7 @@ sub printciphers($$$$$@) {
     print_ciphertotals($legacy, $ssl, $host, $port);
     print_check($legacy, $host, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
-} # printciphers
+} # printciphercheck
 
 sub print_size($$$) {
     #? print label and result for length, count, size, ...
@@ -5612,7 +5613,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 printtitle($legacy, $ssl, $host, $port);
             }
-            printciphers($legacy, $ssl, $host, $port, ($legacy eq "sslscan")?($_printtitle):0, @results);
+            printciphercheck($legacy, $ssl, $host, $port, ($legacy eq "sslscan")?($_printtitle):0, @results);
         }
         foreach $ssl (@{$cfg{'version'}}) {
             print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
@@ -8542,11 +8543,11 @@ Following formats are used:
 
 =item List checked ciphers one per line
 
-    $0 +cipher some.tld --v --v -v
+    $0 +cipher some.tld --v --v --v
 
 =item Show processing of ciphers
 
-    $0 +cipher some.tld --v --v --v -v
+    $0 +cipher some.tld --v --v --v --v
 
 =item Show values retrieved from target certificate directly
 
