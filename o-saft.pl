@@ -35,7 +35,7 @@
 use strict;
 use lib ("./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.295 14/07/15 15:57:44";
+my  $SID    = "@(#) yeast.pl 1.298 14/07/23 16:12:14";
 my  @DATA   = <DATA>;
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 { # (perl is clever enough to extract it from itself ;-)
@@ -2628,26 +2628,6 @@ sub _resetchecks() {
     _initchecks_val();
 }
 
-sub _find_cipher_name($) {
-    # check if given cipher name is a known cipher
-    # checks in %cipher_names if nof found in %ciphers
-    my $cipher  = shift;
-    return $cipher if (grep(/^$cipher/, %ciphers)>0);
-    _trace("_find_cipher_name: search $cipher");
-    foreach (keys %cipher_names) {
-        return $cipher_names{$_}[0] if ($cipher =~ m/$cipher_names{$_}[0]/);
-        return $cipher_names{$_}[0] if ($cipher_names{$_}[1] =~ /$cipher/);
-    }
-    # nothing found yet, try more lazy match
-    foreach (keys %cipher_names) {
-        if ($cipher_names{$_}[0] =~ m/$cipher/) {
-            _warn("partial match for cipher name found '$cipher'");
-            return $cipher_names{$_}[0];
-        }
-    }
-    return "";
-} # _find_cipher_name
-
 sub _prot_cipher($$)   { return " " . join(":", @_); }
     # return string consisting of given parameters separated by : and prefixed with a space
     # (mainly used to concatenate SSL Version and cipher suite name)
@@ -2881,6 +2861,39 @@ sub get_cipher_desc($) { my $c=$_[0];
     return @c if (grep(/^$c/, %ciphers)>0);
     return "";
 }
+
+sub get_cipher_hex($)  {
+    # find hex key for cipher in %cipher_names or %cipher_alias
+    my $c = shift;
+    my $k = "";
+    foreach $k (keys %cipher_names) { # database up to VERSION 14.07.14
+        return $k if (($cipher_names{$k}[0] eq $c) or ($cipher_names{$k}[1] eq $c));
+    }
+    foreach $k (keys %cipher_alias) { # not yet found, check for alias
+        return $k if ($cipher_alias{$k}[0] eq $c);
+    }
+    return "";
+} # get_cipher_hex
+
+sub get_cipher_name($)  {
+    # check if given cipher name is a known cipher
+    # checks in %cipher_names if nof found in %ciphers
+    my $cipher  = shift;
+    return $cipher if (grep(/^$cipher/, %ciphers)>0);
+    _trace("get_cipher_name: search $cipher");
+    foreach (keys %cipher_names) {
+        return $cipher_names{$_}[0] if ($cipher =~ m/$cipher_names{$_}[0]/);
+        return $cipher_names{$_}[0] if ($cipher_names{$_}[1] =~ /$cipher/);
+    }
+    # nothing found yet, try more lazy match
+    foreach (keys %cipher_names) {
+        if ($cipher_names{$_}[0] =~ m/$cipher/) {
+            _warn("partial match for cipher name found '$cipher'");
+            return $cipher_names{$_}[0];
+        }
+    }
+    return "";
+} # get_cipher_name
 
 ## definitions: check functions
 ## -------------------------------------
@@ -3978,7 +3991,7 @@ sub printdump($$$) {
     foreach $key (keys %checks) { _dump($checks{$key}->{txt}, $checks{$key}->{val}); }
 } # printdump
 sub printruler()  { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); }
-sub printheader   {
+sub printheader($$){
     #? print title line and table haeder line if second argument given
     my ($txt, $desc, $rest) = @_;
     return if ($cfg{'out_header'} <= 0);
@@ -4521,65 +4534,154 @@ sub printopenssl() {
     printversionmismatch();
 } # printopenssl
 
-sub printcipherlist() {
-    #? print all our ciphers
+sub _hex_like_openssl($) {
+    # convert full hex constant to format used by openssl's output
+    my $c = shift;
+    $c =~ s/0x(..)(..)(..)(..)/0x$2,0x$3,0x$4 - /; # 0x0300C029 ==> 0x00,0xC0,0x29
+    $c =~ s/^0x00,// if ($c ne "0x00,0x00,0x00");  # first byte omitted if 0x00
+    return sprintf("%22s", $c);
+} # _hex_like_openssl
+
+sub printciphers() {
+    #? print cipher descriptions from internal database
+    # uses settings from --legacy= and --format= options to select output format
+    # implemented in VERSION 14.07.14
+
+    #                                         # output looks like: openssl ciphers 
+    if ((($cfg{'ciphers-v'} + $cfg{'ciphers-V'}) <= 0)
+     and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
+        # ToDo: filter ciphers not supported by openssl
+        _trace(" +ciphers");
+        print join(":", (keys %ciphers));
+        return;
+    }
+
+    # anything else prints user-specified formats
     _trace(" +list");
+    my $c = "";
+    my $sep = $text{'separator'};
+    my ($hex,  $ssl,  $tag,  $bit,  $aut,  $enc,  $key,  $mac);
+        $hex = $ssl = $tag = $bit = $aut = $enc = $key = $mac = "";
+    _v_print("command: " . join(" ", @{$cfg{'do'}}));
+    _v_print("database version: $VERSION");
+    _v_print("options: --legacy=$cfg{'legacy'} , --format=$cfg{'format'} , --header=$cfg{'out_header'}");
+    _v_print("options: --v=$cfg{'verbose'}, -v=$cfg{'ciphers-v'} , -V=$cfg{'ciphers-V'}");
     my $have_cipher = 0;
     my $miss_cipher = 0;
     my $ciphers     = "";
        $ciphers     = Net::SSLinfo::cipher_local() if ($cfg{'verbose'} > 0);
-    my $cipher      = "";
+
     printheader(_subst($text{'out-list'}, $0), "");
-    printheader("= Cipher\t" . join("\t", @{$ciphers_desc{'text'}}) . "\n", "");
-    printf("%-31s %s\n", "= cipher", join("\t", @{$ciphers_desc{'head'}}));
-    printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
-    foreach $cipher (sort keys %ciphers) {
-### ToDo {
-        my $can = " ";
-        if ($cfg{'verbose'} > 0) {
-            #my $can = (1 == grep(/^$cipher$/, split(":", $ciphers))) ? " " : "-";
-            #my @g = scalar grep({$_ eq $cipher} split(':', $ciphers));
-            #print "G: $cipher " . join",",@g ."\n";
-            if (0 >= grep({$_ eq $cipher} split(":", $ciphers))) {
-                $can = "#";
-                $miss_cipher++;
-            } else {
-                $have_cipher++;
+    # all following headers printed directly instead of using printheader()
+
+    if ($cfg{'legacy'} eq "ssltest") {        # output looks like: ssltest --list
+        _warn("not all ciphers listed");
+        foreach $ssl (qw(SSLv2 SSLv3 TLSv1)) {# SSLv3 and TLSv1 are the same, hence search both
+          print "SSLv2 Ciphers Supported..."       if ($ssl eq 'SSLv2');
+          print "SSLv3/TLSv1 Ciphers Supported..." if ($ssl eq 'SSLv3');
+          foreach $c (sort keys %ciphers) {
+            next if ($ssl ne get_cipher_ssl($c));
+            # FIXME: sprintf below gives warning if $bits == 0
+            $bit =  get_cipher_bits($c); $bit =  sprintf("%03d", $bit) if ($bit ne '-?-');
+            $aut =  get_cipher_auth($c); $aut =  "No" if ($aut =~ /none/i);
+            $key =  get_cipher_keyx($c); $key =~ s/[()]//g;
+            $mac =  get_cipher_mac($c);
+            $enc =  get_cipher_enc($c);
+            printf("   %s, %s %s bits, %s Auth, %s MAC, %s Kx\n",
+                $c, $enc, $bit, $aut, $mac, $key,
+            );
+          }
+        }
+    }
+
+    if ($cfg{'legacy'} eq "openssl") {        # output looks like: openssl ciphers -[v|V]
+        foreach $c (sort keys %ciphers) {
+            $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'ciphers-V'} > 0); # -V
+            $ssl =  get_cipher_ssl($c);  $ssl =~ s/^(TLSv1)(\d)$/$1.$2/;   # openssl has a .
+            $bit =  get_cipher_bits($c); $bit =  "($bit)" if ($bit ne ""); # avoid single :
+            $tag =  get_cipher_tags($c); $tag =~ s/^\s*:\s*$//;            # avoid single :
+            $aut =  get_cipher_auth($c);
+            $key =  get_cipher_keyx($c);
+            $mac =  get_cipher_mac($c);
+            $enc =  get_cipher_enc($c);
+            if ($sep eq " ") {
+                # spaces are the default separator in openssl's output
+                # spaces are the default separator for --legacy=openssl too if
+                # not explicitely specified with  --sep=
+                # if we use spaces, additonal formatting needs to be spaces too
+                $ssl = sprintf("%-5s", $ssl);
+                $aut = sprintf("%-4s", $aut);
+                $key = sprintf("%-8s", $key);
+                $mac = sprintf("%-4s", $mac);
             }
-# # above not yet working proper 'cause grep() returns more than one match
-# #
-# # convert array to a hash with the array elements as the hash keys and the values are simply 1
-#  my %hash = map {$_ => 1} @array;
-#
-#  # check if the hash contains $match
-#  if (defined $hash{$match}) {
-#      print "found it\n";
-#  }
-#
-### ToDo }
+            printf("%s%-23s%s%s%sKx=%s%sAu=%s%sEnc=%s%s%sMac=%s%s%s\n",
+                $hex, $c, $sep, $ssl, $sep, $key, $sep, $aut, $sep,
+                $enc, $bit, $sep, $mac, $sep, $tag,
+            );
         }
-        printf("%s %-29s %s\n", $can, $cipher, join("\t", @{$ciphers{$cipher}}));
     }
-    printf("=%s%s\n", ("-" x 30), ("+-------" x 9));
-    if ($cfg{'verbose'} > 0) {
-        my @miss = ();
-        my @test = ();
-        my $dupl = ""; # need to identify duplicates as we don't have List::MoreUtils
-        foreach $cipher (split(':', $ciphers)) {
-            next if ($cipher eq $dupl);
-            push(@test, $cipher) if (  defined $ciphers{$cipher});
-            push(@miss, $cipher) if (! defined $ciphers{$cipher});
-            $dupl = $cipher;
+
+    if ($cfg{'legacy'} eq "simple") { # this format like for +list up to VERSION 14.07.14
+        $sep = "\t";
+        if ($cfg{'out_header'} > 0) {
+            printf("= %-30s %s\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
+            printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
-        print "\n# Ciphers marked with # above are not supported by local SSL implementation.\n";
-        print "Ciphers in $mename:        ", join(":", keys %ciphers);
-        print "Supported Ciphers:        ",  $have_cipher;
-        print "Unsupported Ciphers:      ",  $miss_cipher;
-        print "Testable Ciphers:         ",  scalar(@test);
-        print "Ciphers missing in $mename:", scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
-        print "Ciphers (from local ssl): ",  $ciphers;
+        foreach $c (sort keys %ciphers) {
+            printf(" %-30s %s\n", $c, join($sep, @{$ciphers{$c}}));
+        }
+        if ($cfg{'out_header'} > 0) {
+            printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
+        }
     }
-} # printcipherlist
+
+    if ($cfg{'legacy'} eq "full") {
+        $sep = $text{'separator'};
+        if ($cfg{'out_header'} > 0) {
+            printf("= Constant$sep%s%-20s${sep}Aliases\n",   "Cipher", join($sep, @{$ciphers_desc{'text'}}));
+            printf("= constant$sep%-30s$sep%s${sep}alias\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
+            printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
+        }
+        foreach $c (sort keys %ciphers) {
+            my $can = " "; # FIXME
+            if ($cfg{'verbose'} > 0) {
+                if (0 >= grep({$_ eq $c} split(":", $ciphers))) {
+                    $can = "#";
+                    $miss_cipher++;
+                } else {
+                    $have_cipher++;
+                }
+            }
+            $hex = get_cipher_hex($c);
+            my $alias = "";
+               $alias = join(" ", @{$cipher_alias{$hex}}) if (defined $cipher_alias{$hex});
+            $hex = sprintf("%s$sep", ($hex || "    -?-"));
+            printf("%s %s%-30s$sep%s$sep%s\n", $can, $hex, $c, join($sep, @{$ciphers{$c}}), $alias);
+        }
+        if ($cfg{'out_header'} > 0) {
+            printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
+        }
+        if ($cfg{'verbose'} > 0) {
+            my @miss = ();
+            my @test = ();
+            my $dupl = ""; # need to identify duplicates as we don't have List::MoreUtils
+            foreach $c (split(':', $ciphers)) {
+                next if ($c eq $dupl);
+                push(@test, $c) if (  defined $ciphers{$c});
+                push(@miss, $c) if (! defined $ciphers{$c});
+                $dupl = $c;
+            }
+            # no customizable texts from %text, as it's for --v only
+            print "\n# Ciphers marked with # above are not supported by local SSL implementation.\n";
+            print "Supported Ciphers:        ",  $have_cipher;
+            print "Unsupported Ciphers:      ",  $miss_cipher;
+            print "Testable Ciphers:         ",  scalar(@test);
+            print "Ciphers missing in $mename:", scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
+            print "Ciphers in alias list:    ",  scalar(keys %cipher_alias); # FIXME: need to count values
+        }
+    }
+
+} # printciphers
 
 sub _print_head($$) { printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60); }
 sub _print_opt($$$) { printf("%16s%s%s\n", @_); }
@@ -4964,9 +5066,8 @@ while ($#argv >= 0) {
         $arg =~ s/^(?:--|\+)//;  # strip leading chars
         push(@{$cfg{'usr-args'}}, $arg);
         next;
-}
+    }
 
-#_dbx $arg;
     #{ handle help and related option and command
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
@@ -5230,6 +5331,7 @@ while ($#argv >= 0) {
 
     if ($arg =~ /(ciphers|s_client|version)/) {    # handle openssl commands special
         _warn("host-like argument '$arg' treated as command '+$arg'");
+        _warn("**Hint: please use '+$arg' instead");
         push(@{$cfg{'do'}}, $arg);
         next;
     }
@@ -5264,11 +5366,15 @@ if (_is_do('ciphers')) {
     $text{'separator'}  = " " if (grep(/--(?:tab|sep(?:arator)?)/, @ARGV) <= 0); # space if not set
 } else {
     # not +ciphers command, then  -V  is for compatibility
-    $cfg{'out_header'}  = $cfg{'opt-V'} if ($cfg{'out_header'} <= 0);
+    if (! _is_do('list')) {
+        $cfg{'out_header'}  = $cfg{'opt-V'} if ($cfg{'out_header'} <= 0);
+    }
 }
 if (_is_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
     $cfg{'out_header'}  = 1 if (grep(/--no.?header/, @ARGV) <= 0);
+    $cfg{'ciphers-v'}   = $cfg{'opt-v'};
+    $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $text{'separator'}  = "\t" if (grep(/--(?:tab|sep(?:arator)?)/, @ARGV) <= 0); # tab if not set
 }
 
@@ -5317,8 +5423,8 @@ local $\ = "\n";
 ## -------------------------------------
 #printversion() # want to see WARNINGS for +version also
 printopenssl(),     exit 0   if (_is_do('libversion'));
-printcipherlist(),  exit 0   if (_is_do('list'));
-print_data($legacy, 'ciphers', ""), exit 0 if (_is_do('ciphers'));
+printciphers(),     exit 0   if (_is_do('list'));
+printciphers(),     exit 0   if (_is_do('ciphers'));
 
 ## check if used software supports SNI properly
 ## -------------------------------------
@@ -5475,7 +5581,7 @@ if (_need_cipher() > 0) {
             #    _trace(" cipher privat: $pattern");
 _dbx "\n########### fix this place (empty cipher list) ########\n";
 # ToDo: #10jan14: reimplement this check when %ciphers has a new structure
-            #10jan14        $new = _find_cipher_name($c);
+            #10jan14        $new = get_cipher_name($c);
         }
     }
     if (@{$cfg{'ciphers'}} < 0) {
@@ -6078,10 +6184,24 @@ with other commands).
 
     Show ciphers offerd by local SSL implementation.
 
+    This commands prints the ciphers in format like `openssl ciphers'
+    does. It also accepts the  "-v"  and  "-V"  option.
+    Use  "+list"  command for more information according ciphers.
+
 =head3 +list
 
     Show all ciphers  known by this tool.  This includes cryptogrphic
     details of the cipher and some internal details about the rating.
+
+    In contrast to  "+ciphers"  command  "+list"  uses TAB characters
+    instead of spaces to seperate columns.  By default it also prints
+    table header lines. 
+
+    Different output formats are used for the  "--legacy"  option:
+         --legacy=simple        - tabular output of cipher values
+         --legacy=full          - as "--legacy=simple" but more data
+         --legacy=openssl       - output like with "+ciphers" command
+         --legacy=ssltest       - output like `ssltest --list'
 
     Use "--v" option to show more details.
 
@@ -7167,6 +7287,8 @@ Following strings are treated as a command instead of target names:
     version
 
 A warning will be printed.
+
+=head2 Options
 
 We support following options, which are all identical, for lazy users
 and for compatibility with other programs.
@@ -8719,7 +8841,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.17
+@(#) 14.07.18
 
 =head1 AUTHOR
 
