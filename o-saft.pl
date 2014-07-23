@@ -5228,6 +5228,12 @@ while ($#argv >= 0) {
     }
     #} +---------+----------+----------------------------------+----------------
 
+    if ($arg =~ /(ciphers|s_client|version)/) {    # handle openssl commands special
+        _warn("host-like argument '$arg' treated as command '+$arg'");
+        push(@{$cfg{'do'}}, $arg);
+        next;
+    }
+
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
         # allow URL   http://f.q.d.n:42/aa*foo=bar:23/
         $port = $arg;
@@ -7152,10 +7158,20 @@ conflicts with those options and commands which actually exist, like:
 
 =head1 LAZY SYNOPSIS
 
+=head2 Commands
+
+Following strings are treated as a command instead of target names:
+
+    ciphers
+    s_client
+    version
+
+A warning will be printed.
+
 We support following options, which are all identical, for lazy users
 and for compatibility with other programs.
 
-=head2 Option Variants
+=head3 Option Variants
 
     --port PORT
     --port=PORT
@@ -7165,7 +7181,7 @@ When used in the RC-FILE, the I<--OPTION=VALUE> variant must be used.
 
 =for comment does not apply to --trace option
 
-=head2 Option Names
+=head3 Option Names
 
 Dash  C<->,  dot  C<.>  and/or  underscore  C<_>  in option names are
 optional, all following are the same:
