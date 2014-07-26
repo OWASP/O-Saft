@@ -1395,7 +1395,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             #
                             # all following informations as reported by openssl 0.9.8 .. 1.0.1h
         'SSL/TLS',          # Protocol Version:
-                            # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0
+                            # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
                             # Note: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
         'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED
@@ -1943,7 +1943,7 @@ our %cipher_names = (
     '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8            PSK_WITH_AES_256_CCM_8)],
     '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8          ECDHE_ECDSA_WITH_AES_128_CCM_8)],
     '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8          ECDHE_ECDSA_WITH_AES_256_CCM_8)],
-#   '0x00005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME
+    '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME according http://tools.ietf.org/html/draft-bmoeller-tls-downgrade-scsv-01
     '0x030000FF' => [qw(SCSV                            EMPTY_RENEGOTIATION_INFO_SCSV)],
     '0x0300C01C' => [qw(SRP-DSS-3DES-EDE-CBC-SHA        SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA)],
     '0x0300C01F' => [qw(SRP-DSS-AES-128-CBC-SHA         SRP_SHA_DSS_WITH_AES_128_CBC_SHA)],
@@ -6218,6 +6218,10 @@ with other commands).
 =head3 +abbr, +abk
 
     Show common abbreviation used in the world of security.
+
+=head3 +VERSION
+
+    Just show version and exit.
 
 =head3 +version
 
