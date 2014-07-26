@@ -5084,6 +5084,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^(--|\+)todo=?$/i)     { printtodo();            exit 0; }
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
+    if ($arg eq  '--VERSION')           { print "$VERSION\n";     exit 0; }
+    if ($arg eq  '+VERSION')            { print "$VERSION\n";     exit 0; }
         # in CGI mode commands need to be passed with --cmd=* option
     #!#--------+------------------------+--------------------------+------------
     #} handle help
