@@ -33,11 +33,24 @@
 # ToDo please see  =begin ToDo  in POD section
 
 use strict;
-use lib (".", "./lib"); # uncomment as needed
 
-my  $SID    = "@(#) yeast.pl 1.298 14/07/23 16:12:14";
-my  @DATA   = <DATA>;
+BEGIN {
+    # Loading `require'd  files and modules as well as parsing the command line
+    # in this scope  would increase persormance and lower the memory foot print
+    # for some commands.
+    # Unfortunately perl's BEGIN has following limits and restrictions:
+    #   - sub can be defined herein and used later
+    #   - variables can not be defined herein and used later
+    #   - some file handles (like <DATA>) are not yet available
+    #   - strict sequence of definitions and usage (even for variables in subs)
+    # To make the program work as needed,  these limitations would force to use
+    # some dirty code hacks and split the flow of processing in different parts
+    # of the source. Therefore this scope is not used. Performance penalty :-/
+} # BEGIN
+
+my  $SID    = "@(#) yeast.pl 1.299 14/07/27 16:22:43";
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
+my  @DATA   = <DATA>;
 { # (perl is clever enough to extract it from itself ;-)
     $VERSION= join ("", @DATA);
     $VERSION=~ s/.*?\n@\(#\)\s*([^\n]*).*/$1/ms;
@@ -49,20 +62,22 @@ our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
 our $mename = "yeast  ";
     $mename = "O-Saft " if ($me !~ /yeast/);
 
-binmode(STDOUT, ":unix");
-binmode(STDERR, ":unix");
+# now set @INC
+# NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
+unshift(@INC, "./", "./lib", "$mepath", "$mepath/lib");
+#_dbx "INC: ".join(" ",@INC) . "\n";
 
-use IO::Socket::SSL 1.37; #  qw(debug2);
-use IO::Socket::INET;
-
+my  $arg    = "";
+my  @argv   = ();
+# arrays to collect data for debugging, they are global!
+our @dbxarg;        # normal options and arguments
+our @dbxcfg;        # config options and arguments
+our @dbxexe;        # executable, library, environment
+our @dbxfile;       # read files
 our $warning= 1;    # print warnings; need this variable very early
 
-sub _warn {
-    #? print warning if wanted
-    return if ($main::warning <= 0);
-    local $\="\n"; print("**WARNING: ", join(" ", @_));
-    # ToDo: in CGI mode warning must be avoided until HTTP header written
-}
+binmode(STDOUT, ":unix");
+binmode(STDERR, ":unix");
 
 ## README if any
 ## -------------------------------------
@@ -74,119 +89,129 @@ my $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
-    die "**ERROR: CGI mode requires strict settings" if ($cgi !~ /--cgi=?/);
+    die "**ERROR: CGI mode requires strict settings" if (grep(/--cgi=?/, @ARGV) <= 0);
     $cgi = 1;
-}
+} # CGI
 
-## quick&dirty checks
+## functions used very early in main
 ## -------------------------------------
-if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
-    die "**ERROR: Net::SSLeay not found, useless use of yet another SSL tool";
-    # ToDo: this is not really true, i.e. if we use openssl instead Net::SSLeay
+sub _dprint { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
+sub _dbx    { _dprint(@_); } # alias for _dprint
+sub _warn   {
+    #? print warning if wanted
+    return if ($main::warning <= 0);
+    local $\ = "\n"; print("**WARNING: ", join(" ", @_));
+    # ToDo: in CGI mode warning must be avoided until HTTP header written
 }
-if (1.49 > $Net::SSLeay::VERSION) {
-    # only check VERSION instead of requiring a specific version with perl's use
-    # this allows continueing to use this tool even if the version is too old
-    # but we shout out loud that the results are not reliable
-    _warn("ancient Net::SSLeay $Net::SSLeay::VERSION found");
-    _warn("$0 requires Net::SSLeay 1.49 or newer");
-    _warn("$0 may throw warnings and/or results may be missing");
-}
-
-if (! eval("require Net::SSLinfo;")) {
-    # Net::SSLinfo may not be installed, try to find in program's directory
-    push(@INC, $mepath);
-    require Net::SSLinfo;
-}
-
-sub _print_read($$) { printf("=== reading %s from  %s ===\n", @_) if(grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
-sub _print_fail($$) { printf("=== reading: %s %s ===\n", @_)      if(grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
+sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
-my $arg = "";
-# array to collect data fordebugging, they are global!
-our @dbxarg;    # normal options and arguments
-our @dbxcfg;    # config options and arguments
-our @dbxexe;    # executable, library, environment
-our @dbxfile;   # read files
-
-## read file with user source, if any
-## -------------------------------------
-my @usr = grep(/--(?:use?r)/, @ARGV);   # must have any --usr option
-if ($#usr >= 0) {
-    $arg =  "./o-saft-usr.pm";
-    if (! -e $arg) {
-        $arg = join("/", $mepath, $arg);# try to find it in installation directory
+sub _load_file($$) {
+    # load file with perl's require using the paths in @INV
+    # use `$0 +version --v'  to see which files are loaded
+    my $fil = shift;
+    my $txt = shift;
+    my $err = "";
+    eval("require '$fil';"); # need eval to catch "Can't locate ... in @INC ..."
+    $err = $!;
+    if ($err eq "") {
+        $txt = "$txt done";
+        $INC{$fil} = "." . $INC{$fil} if ("/$fil" eq $INC{$fil}); # fix ugly %INC
+        # FIXME: above fix fails for NET::SSL* and absolute path like --trace=/file
+        $fil = $INC{$fil};
+    } else {
+        $txt = $err;
+        $fil = "<<no $fil>>";
     }
-}
-if (-e $arg) {
-    push(@dbxfile, $arg);
-    _print_read("user file", $arg);
-    require $arg;
-} else {
-    _print_fail($arg, $!) if ($arg ne "");
-    sub usr_pre_file()  {}; # dummy stub, see o-saft-usr.pm
-    sub usr_pre_args()  {}; #  "
-    sub usr_pre_exec()  {}; #  "
-    sub usr_pre_cipher(){}; #  "
-    sub usr_pre_main()  {}; #  "
-    sub usr_pre_host()  {}; #  "
-    sub usr_pre_info()  {}; #  "
-    sub usr_pre_open()  {}; #  "
-    sub usr_pre_cmds()  {}; #  "
-    sub usr_pre_data()  {}; #  "
-    sub usr_pre_print() {}; #  "
-    sub usr_pre_next()  {}; #  "
-    sub usr_pre_exit()  {}; #  "
-}
+    push(@dbxfile, $fil);
+    _print_read($fil, $txt);
+    return $err;
+} # _load_file
+sub _is_intern($);  # perl avoid: main::_is_member() called too early to check prototype
+sub _is_member($$); #   "
 
-my @argv = grep(/--trace.?arg/i, @ARGV);# preserve --tracearg option
-
-usr_pre_file();
-
-## read .rc-file if any
+## read RC-FILE if any
 ## -------------------------------------
 my @rc_argv = "";
-$arg = "./.$me";
-if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibit
-    if (open(RC, '<', "./.$me")) {
+$arg = "./.$me";    # check in pwd only
+if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
+    if (open(RC, '<', "$arg")) {
         push(@dbxfile, $arg);
-        _print_read("options", $arg);
+        _print_read($arg, "options done");
         @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
         @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
         close(RC);
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
     } else {
-        _print_fail("./.$me", $!);
+        _print_read($arg, $!);
     }
 }
 
-push(@argv, @ARGV);
+push(@argv, @ARGV); # all options, including those from RC-FILE in @argv now
+push(@ARGV, "--no-header") if grep(/--no-?header/, @argv); # if defined in RC-FILE, needed in _warn()
 #dbx# _dbx "ARG: " . join(" ", @argv);
 
-## read file with source for trace and verbose, if any
+## read DEBUG-FILE, if any (source for trace and verbose)
 ## -------------------------------------
-my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # option can be in .rc-file, hence @argv
-if (($#dbx >= 0) and ($cgi == 0)) {
-    $arg =  "./o-saft-dbx.pm";
+my $err = "";
+my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # may have --trace=./file
+if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
+    $arg =  "o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
-    if (! -e $arg) {
-        _warn("'$arg' not found");
-        $arg = join("/", $mepath, $arg);    # try to find it in installation directory
+    $err = _load_file($arg, "trace file");
+    if ($err ne "") {
         die  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # Note: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
     }
-    push(@dbxfile, $arg);
-    _print_read("trace file", $arg) if(grep(/(:?--no.?header)/i, @argv) <= 0);
-        # allow --no-header in RC-FILE also
-    require $arg;   # `our' variables are available there
+} else {
+    # debug functions are defined in o-saft-dbx.pm and loaded on demand
+    # they must be defined always as they are used wheter requested or not
+    sub _yeast_init() {}
+    sub _yeast_exit() {}
+    sub _yeast_args() {}
+    sub _yeast_data() {}
+    sub _yeast($)     {}
+    sub _y_ARG        {}
+    sub _y_CMD        {}
+    sub _v_print      {}
+    sub _v2print      {}
+    sub _v3print      {}
+    sub _v4print      {}
+    sub _vprintme     {}
+    sub _trace($)     {}
+    sub _trace_1arr($){} # if --trace-arg given
 }
+
+## read USER-FILE, if any (source with user-specified code)
+## -------------------------------------
+if (grep(/--(?:use?r)/, @argv) > 0) { # must have any --usr option
+    $err = _load_file("o-saft-usr.pm", "user file");
+    if ($err ne "") {
+        sub usr_version()   { return ""; }; # dummy stub, see o-saft-usr.pm
+        sub usr_pre_init()  {}; #  "
+        sub usr_pre_file()  {}; #  "
+        sub usr_pre_args()  {}; #  "
+        sub usr_pre_exec()  {}; #  "
+        sub usr_pre_cipher(){}; #  "
+        sub usr_pre_main()  {}; #  "
+        sub usr_pre_host()  {}; #  "
+        sub usr_pre_info()  {}; #  "
+        sub usr_pre_open()  {}; #  "
+        sub usr_pre_cmds()  {}; #  "
+        sub usr_pre_data()  {}; #  "
+        sub usr_pre_print() {}; #  "
+        sub usr_pre_next()  {}; #  "
+        sub usr_pre_exit()  {}; #  "
+    }
+}
+
+usr_pre_init();
 
 ## initialize defaults
 ## -------------------------------------
@@ -1346,8 +1371,6 @@ our %cfg = (
 
 ## construct list for special commands: 'cmd-*'
 ## -------------------------------------
-sub _is_intern($);      # perl avoid: main::_is_member() called too early to check prototype
-sub _is_member($$);     #   "
 my $old = "";
 my $rex = join("|", @{$cfg{'versions'}});   # these are data only, not commands
 foreach $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
@@ -1943,7 +1966,7 @@ our %cipher_names = (
     '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8            PSK_WITH_AES_256_CCM_8)],
     '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8          ECDHE_ECDSA_WITH_AES_128_CCM_8)],
     '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8          ECDHE_ECDSA_WITH_AES_256_CCM_8)],
-    '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME according http://tools.ietf.org/html/draft-bmoeller-tls-downgrade-scsv-01
+    '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME: according http://tools.ietf.org/html/draft-bmoeller-tls-downgrade-scsv-01
     '0x030000FF' => [qw(SCSV                            EMPTY_RENEGOTIATION_INFO_SCSV)],
     '0x0300C01C' => [qw(SRP-DSS-3DES-EDE-CBC-SHA        SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA)],
     '0x0300C01F' => [qw(SRP-DSS-AES-128-CBC-SHA         SRP_SHA_DSS_WITH_AES_128_CBC_SHA)],
@@ -2507,7 +2530,6 @@ our %text = (
 
 $cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
-$cfg{'done'}->{'dbxfile'}++ if ($#dbx > 0);
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 # FIXME: following check needs to be done after parsing options
 if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
@@ -2551,28 +2573,10 @@ our %org = (
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
 
+usr_pre_file();
+
 ## definitions: internal functions
 ## -------------------------------------
-sub _dprint   { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
-sub _dbx      { _dprint(@_); } # alias for _dprint
-
-# debug functions are defined in o-saft-dbx.pm and loaded on demand
-sub _yeast_init()  {}
-sub _yeast_exit()  {}
-sub _yeast_args()  {}
-sub _yeast_data()  {}
-sub _yeast($) {}
-sub _y_ARG    {}
-sub _y_CMD    {}
-sub _v_print  {}
-sub _v2print  {}
-sub _v3print  {}
-sub _v4print  {}
-sub _vprintme {}
-sub _trace($) {}
-# if --trace-arg given
-sub _trace_1arr($) {}
-
 sub _initchecks_score()  {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
@@ -2669,7 +2673,7 @@ sub _cfg_set($$) {
         my $line ="";
         open(FID, $arg) && do {
             push(@dbxfile, $arg);
-            _print_read("configuration", $arg) if ($cfg{'out_header'} > 0);
+            _print_read($arg, "configuration file done") if ($cfg{'out_header'} > 0);
             while ($line = <FID>) {
                 #
                 # format of each line in file must be:
@@ -4488,11 +4492,6 @@ sub printversion() {
 #       but when using libraries with LD_LIBRARY_PATH or alike, these
 #       versions differ
 
-# ToDo: ALPHA   following eval used ALPHA +cipherraw only
-    if (! eval("require Net::SSLhello;")) {
-        push(@INC, $mepath);
-        require Net::SSLhello;
-    }
     # get a quick overview also
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
@@ -5205,7 +5204,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    }
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
-    if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); } # push() is ugly hack to preserve option even from rc-file
+    if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
     if ($arg eq  '--nomd5cipher')       { $cfg{'use_md5cipher'}=0;  }
     if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'}=1;  }
     if ($arg eq  '--tab')               { $text{'separator'} = "\t";} # TAB character
@@ -5296,7 +5295,7 @@ while ($#argv >= 0) {
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
           ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
           ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
-        exec 'perl', '-lane', "$perlprog", $0; #  ,"o-saft-dbx.pm";
+        exec 'perl', '-lane', "$perlprog", $0;
         exit 0;
 	
     }
@@ -5361,11 +5360,11 @@ $legacy  = $cfg{'legacy'};
 if (_is_do('ciphers')) {
     # +ciphers command is special:
     #   simulates openssl's ciphers command and accepts -v or -V option
-    $cfg{'out_header'}  = 0 if (grep(/--header/, @ARGV) <= 0);
+    $cfg{'out_header'}  = 0 if (grep(/--header/, @argv) <= 0);
     $cfg{'ciphers-v'}   = $cfg{'opt-v'};
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $cfg{'legacy'}      = "openssl";
-    $text{'separator'}  = " " if (grep(/--(?:tab|sep(?:arator)?)/, @ARGV) <= 0); # space if not set
+    $text{'separator'}  = " " if (grep(/--(?:tab|sep(?:arator)?)/, @argv) <= 0); # space if not set
 } else {
     # not +ciphers command, then  -V  is for compatibility
     if (! _is_do('list')) {
@@ -5374,10 +5373,10 @@ if (_is_do('ciphers')) {
 }
 if (_is_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
-    $cfg{'out_header'}  = 1 if (grep(/--no.?header/, @ARGV) <= 0);
+    $cfg{'out_header'}  = 1 if (grep(/--no.?header/, @argv) <= 0);
     $cfg{'ciphers-v'}   = $cfg{'opt-v'};
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
-    $text{'separator'}  = "\t" if (grep(/--(?:tab|sep(?:arator)?)/, @ARGV) <= 0); # tab if not set
+    $text{'separator'}  = "\t" if (grep(/--(?:tab|sep(?:arator)?)/, @argv) <= 0); # tab if not set
 }
 
 _yeast_args();
@@ -5421,12 +5420,22 @@ if ($cfg{'exec'} == 0) {
 
 local $\ = "\n";
 
+## include common and private modules
+## -------------------------------------
+# Unfortunately `use autouse' is not possible as to much functions need to
+# be declared for that pragma then.
+use     IO::Socket::SSL 1.37; #  qw(debug2);
+use     IO::Socket::INET;
+
+require Net::SSLhello if (_is_do('cipherraw') or _is_do('version'));
+require Net::SSLinfo;
+
 ## first: all commands which do not make a connection
 ## -------------------------------------
-#printversion() # want to see WARNINGS for +version also
-printopenssl(),     exit 0   if (_is_do('libversion'));
-printciphers(),     exit 0   if (_is_do('list'));
-printciphers(),     exit 0   if (_is_do('ciphers'));
+printciphers(),     exit 0  if (_is_do('list'));
+printciphers(),     exit 0  if (_is_do('ciphers'));
+printversion(),     exit 0  if (_is_do('version'));
+printopenssl(),     exit 0  if (_is_do('libversion'));
 
 ## check if used software supports SNI properly
 ## -------------------------------------
@@ -5453,13 +5462,26 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
 _trace("cfg{usesni}: $cfg{'usesni'}");
 } # ALPHA
 
-printversion(),     exit 0   if (_is_do('version')); # like first: above
+## check if Net::SSLeay is usable
+## -------------------------------------
+if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
+    die "**ERROR: Net::SSLeay not found, useless use of yet another SSL tool";
+    # ToDo: this is not really true, i.e. if we use openssl instead Net::SSLeay
+}
+if (1.49 > $Net::SSLeay::VERSION) {
+    # only check VERSION instead of requiring a specific version with perl's use
+    # this allows continueing to use this tool even if the version is too old
+    # but we shout out loud that the results are not reliable
+    _warn("ancient Net::SSLeay $Net::SSLeay::VERSION found");
+    _warn("$0 requires Net::SSLeay 1.49 or newer");
+    _warn("$0 may throw warnings and/or results may be missing");
+}
 
 ## set additional defaults if missing
 ## -------------------------------------
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
-$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @ARGV)); # see --header
-$cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @ARGV));   # can be set in rc-file!
+$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @argv)); # see --header
+$cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @argv));
 if ($cfg{'usehttp'} == 0) {                # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("STS $text{'no-http'}") if(0 => grep(/hsts/, @{$cfg{'do'}})); # check for any hsts*
@@ -5696,10 +5718,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 	# FIXME: ALPHA   check for more ALPHA herein before removing this line
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
-        if (! eval("require Net::SSLhello;")) {
-            push(@INC, $mepath);
-            require Net::SSLhello;
-        }
         _trace(" Net::SSLhello= $Net::SSLhello::VERSION"); # ToDo: alreday done in _yeast_init()
         #my @acceptedCipherArray = Net::SSLhello::checkSSLciphers();
         # set defaults for Net::SSLhello
@@ -6969,6 +6987,8 @@ Options used for  I<+check>  command:
   Do not print formatting header.
   Usefull if raw output should be passed to other programs.
 
+  Note: must be used on command line to inhibit all header lines.
+
 =head3 --score
 
   Print scoring results. Default for  "+check".
@@ -7737,24 +7757,18 @@ for additional information lines or texts (mainly beginning with C<=>).
 
 =item RC-FILE
 
-    Resource files are searched for and used automatically. They will
-    be searched for in the local (current working) directory only.
-    Syntax in resource file is: "--cfg-CFG=KEY=VALUE" as described in
-    OPTIONS  section. 'CFG' is any of:  cmd,  check,  data,  text  or
-    score. where  'KEY'  is any key from internal data structure.
+    Resource files are searched for and used automatically.
+    For details see  RC-FILE  below.
 
 =item DEBUG-FILE
 
-    Debug files are searched for and used automatically. They will be
-    searched for in the current working or installation directory.
-    Syntax in these files is perl code.  Perl's  'require'  directive
-    is used to include these files.
+    Debug files are searched for and used automatically.
+    For details see  DEBUG-FILE  below.
 
 =item USER-FILE
 
     The user program file is included only if the  "--usr" option was
-    used. It will be be searched for in the current working directory
-    or the installation directory.
+    used. For details see  USER-FILE  below.
 
 =back
 
@@ -7797,28 +7811,39 @@ for example: I<--cfg-text=my_file=some/path/to/private/file> .
 
 =head2 RC-FILE
 
+The rc-file will be searched for in the working directory only.
+
+The name of the rc-file is the name of the program file prefixed by a
+C<.>  (dot),  for example:  C<.o-saft.pl>.
+
 A  rc-file  can contain any of the commands and options valid for the
 tool itself. The syntax for them is the same as on command line. Each
 command or option must be in a single line. Any empty or comment line
 will be ignored. Comment lines start with  C<#>  or  C<=>.
 
-Note that options with arguments must be used as  C<KEY=VALUE>.
+Note that options with arguments must be used as  C<KEY=VALUE>  instead
+of  C<KEY VALUE>.
+
+Configurations options must be written like C<--cfg-CFG=KEY=VALUE>
+where "CFG" is any of:  cmd, check, data, text  or  score  and "KEY is
+any key from internal data structure (see above).
 
 All commands and options given on command line will  overwrite  those
 found in the rc-file.
 
-The rc-file will be searched for in the working directory only.
-
-The name of the rc-file is the name of the program file prefixed by a
-C<.>,  for example:  C<.o-saft.pl>.
-
 =head2 DEBUG-FILE
 
 All debugging functionality is defined in L<o-saft-dbx.pm>, which will
-be searched for in the current working directory  or the installation
-directory of the tool. For details see  B<DEBUG>  below.
+be searched for using paths available in perl's  C<@INC>  variable.
+
+Syntax in this file is perl code.  For details see  B<DEBUG>  below.
 
 =head2 USER-FILE
+
+All user functionality is defined in  L<o-saft-dbx.pm>,  which will be
+searched for using paths available in perl's  C<@INC>  variable.
+
+Syntax in this file is perl code.
 
 All functions defined in  L<o-saft-usr.pm>  are called when the option
 I<--usr>  was given. The functions are defined as empty stub, any code
@@ -8167,6 +8192,30 @@ You have to fiddle around to find the proper one.
 
 =head1 DEPENDENCIES
 
+All perl modules and all  private moduels and files  will be searched
+for using paths available in perl's  C<@INC>  variable.  C<@INC>  will
+be prepended by following paths:
+
+=over 4
+
+=item .
+
+=item ./lib
+
+=item INSTALL_PATH
+
+=item INSTALL_PATH/lib
+
+=back
+
+Where  C<INSTALL_PATH>  is the path where the tool is installed.
+To see which files have been included use:
+
+  $0 +version --v --user
+
+
+=head2 Perl Modules
+
 =over
 
 =item L<IO::Socket::SSL(1)>
@@ -8176,6 +8225,8 @@ You have to fiddle around to find the proper one.
 =item L<Net::SSLeay(1)>
 
 =item L<Net::SSLinfo(1)>
+
+=item L<Net::SSLhello(1)>
 
 =back
 
@@ -8847,7 +8898,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.18
+@(#) 14.07.25
 
 =head1 AUTHOR
 
@@ -8872,7 +8923,6 @@ TODO
     ** allow proxy
     ** client certificate
     ** support: PCT protocol
-    ** support: SMTP, SIP, POP3, IMAP, LDAP, FTP
     ** some STRATTLS need : HELP STARTTLS HELP  # output of HELPs are different
 
   * missing checks
