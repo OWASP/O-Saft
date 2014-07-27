@@ -1,0 +1,54 @@
+#!/bin/sh
+#?
+#? NAME
+#?      o-saft_bench  - simple time and memory test program for o-saft.pl
+#?
+
+SID="@(#) o-saft_bench 1.1 14/07/27 20:58:46"
+
+yeast=o-saft.pl
+yeast=./yeast.pl
+ time=/usr/bin/time
+  out=./o-saft_time-tests
+
+
+(echo
+ echo -n "# " && date
+ echo -n "# o-saft.pl +VERSION: " && $yeast +VERSION --norc
+ echo -n "# System (uname -a):  " && uname -a
+ echo -n "# Perl   (perl -v):   " && perl -v|grep This
+ echo    "#"
+) | tee -a $out
+echo -n "# prepare ... "
+$yeast +check localhost --trace --user >/dev/null 2>&1 # dummy to load modules and alovate memory
+echo "done."
+t="%U  %S  %E  %P  %Kk   %M"
+line="#-------------------------------------+----+------+-------+----+----+-------------"
+(
+echo "#                                     |      time         |    |   memory       |"
+echo "#            command                   user system    real  CPU  av.  max"
+echo    $line
+) >> $out
+echo -n "o-saft.pl +VERSION           --norc    " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +VERSION           --norc    >/dev/null && echo ""
+echo -n "o-saft.pl +version                     " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +version                     >/dev/null && echo ""
+echo -n "o-saft.pl +version --v --usr           " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +version --v --usr           >/dev/null && echo ""
+echo -n "o-saft.pl +version           --norc    " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +version           --norc    >/dev/null && echo ""
+echo -n "o-saft.pl +version --v       --norc    " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +version --v       --norc    >/dev/null && echo ""
+echo -n "o-saft.pl +libversion                  " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +libversion                  >/dev/null && echo ""
+echo -n "o-saft.pl +libversion        --norc    " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +libversion        --norc    >/dev/null && echo ""
+echo -n "o-saft.pl +ciphers                     " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +ciphers                     >/dev/null && echo ""
+echo -n "o-saft.pl +ciphers -V                  " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +ciphers -V                  >/dev/null && echo ""
+echo -n "o-saft.pl +list                        " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +list                        >/dev/null && echo ""
+echo -n "o-saft.pl --v +help                    " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast --v +help                    >/dev/null && echo ""
+echo -n "o-saft.pl +gen-wiki                    " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +gen-wiki                    >/dev/null && echo ""
+echo -n "o-saft.pl +gen-wiki    --usr           " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +gen-wiki    --usr           >/dev/null && echo ""
+echo -n "o-saft.pl +cipher            localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +cipher            localhost >/dev/null && echo ""
+echo -n "o-saft.pl +cipherall         localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +cipherall         localhost >/dev/null && echo ""
+echo -n "o-saft.pl +info              localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +info              localhost >/dev/null && echo ""
+echo -n "o-saft.pl +info  --noopenssl localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +info  --noopenssl localhost >/dev/null && echo ""
+echo -n "o-saft.pl +quick             localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +quick             localhost >/dev/null && echo ""
+echo -n "o-saft.pl +quick --noopenssl localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +quick --noopenssl localhost >/dev/null && echo ""
+echo -n "o-saft.pl +check             localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +check             localhost >/dev/null && echo ""
+echo -n "o-saft.pl +check --noopenssl localhost " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast +check --noopenssl localhost >/dev/null && echo ""
+echo    $line  >> $out
+tail -25 $out
