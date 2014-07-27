@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w -I ./
+#!/usr/bin/perl -w
 
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -33,7 +33,7 @@
 # ToDo please see  =begin ToDo  in POD section
 
 use strict;
-use lib ("./lib"); # uncomment as needed
+use lib (".", "./lib"); # uncomment as needed
 
 my  $SID    = "@(#) yeast.pl 1.298 14/07/23 16:12:14";
 my  @DATA   = <DATA>;
