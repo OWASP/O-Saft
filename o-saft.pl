@@ -8888,6 +8888,8 @@ Based on ideas (in alphabetical order) of:
 O-Saft - OWASP SSL advanced forensic tool
    Thanks to Gregor Kuznik for this title.
 
++cipherall and some proxy functionality implemented by Torsten Gigler.
+
 For re-writing some docs in proper English, thanks to Robb Watson.
 
 Code to check heartbleed vulnerability adapted from
