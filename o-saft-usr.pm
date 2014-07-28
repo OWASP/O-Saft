@@ -122,7 +122,7 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.6 14/07/27 16:30:50";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.7 14/07/29 01:26:29";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -135,7 +135,7 @@ sub _usr_dbx { _trace(join(" ", @_)); } # requires --v
 # -------------------------------------
 # These functions are called in o-saft.pl
 
-sub usr_version()   { return "14.07.25"; }
+sub usr_version()   { return "14.07.26"; }
 
 sub usr_pre_init()  {
     _usr_dbx("usr_pre_init ...");
@@ -158,7 +158,7 @@ sub usr_pre_exec()  {
     # o-saft.pl itself. However, o-saft.pl will print a WARNING then.
 
     if (_is_member('gen-help', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
-        # Usage:  $0 --user +gen-html
+        # Usage:  $0 --user +gen-help
         usr_printhelp();
         exit 0;
     }
@@ -478,7 +478,7 @@ __TOC__
 ----
 <small>
 Content of this wiki page generated with:
- o-saft.pl --help=wiki
+ o-saft.pl --usr +gen-wiki
 </small>
 ";
 } # usr_printwiki
