@@ -122,7 +122,7 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.7 14/07/29 01:26:29";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.8 14/07/30 08:00:41";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -157,7 +157,8 @@ sub usr_pre_exec()  {
     # to "create" and use their own commands without changing 
     # o-saft.pl itself. However, o-saft.pl will print a WARNING then.
 
-    if (_is_member('gen-help', \@{$cfg{'done'}->{'arg_cmds'}}) > 0) {
+    if ((_is_member('gen-help', \@{$cfg{'done'}->{'arg_cmds'}}) > 0)
+    or  (_is_member('gen-html', \@{$cfg{'done'}->{'arg_cmds'}}) > 0)) {
         # Usage:  $0 --user +gen-help
         usr_printhelp();
         exit 0;
