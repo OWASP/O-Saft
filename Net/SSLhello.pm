@@ -1120,7 +1120,7 @@ sub openTcpSSLconnection ($$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $starttlsType=0; # SMTP 
-#   11 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP:
+#   11 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP
 
     my @starttls_matrix = 
         ( ["SMTP", 
@@ -1170,7 +1170,7 @@ sub openTcpSSLconnection ($$) {
             "",                                         # Phase2: send view CAPABILITY (optional) 
             "",                                         # Phase3: receive List of should include STLS
             "AUTH TLS\r\n",                             # Phase4: send    'AUTH TLS' (-> STARTTLS)'
-            ".*?(?:^|\n)234\\s+AUTH\\s+TLS"             # Phase5: receive '234 AUTH TLS successful' 
+            ".*?(?:^|\n)234\\s+"                        # Phase5: receive '234 AUTH TLS successful' 
           ],
           ["LDAP",                                      # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
             "",                                         # Phase1: receive -unused-$
@@ -1346,13 +1346,13 @@ sub openTcpSSLconnection ($$) {
                 $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
                 _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
                 if  ($Net::SSLhello::experimental >0) { # experimental functionis are  activated
-                    _trace ("\nopenTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback, please\n") if ( grep(/$starttlsType/,('1', '2','3','4','5','6','7','8','9','10','11') ));
+                    _trace ("\nopenTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n") if ( grep(/$starttlsType/,('11') ));
                 } else {
-                    if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8','9','10','11') )) {
-                        if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8','9','10') )) {
-                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback\n";
-                        } else { 
-                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback\n";
+                    if ( grep(/$starttlsType/,('11') )) { # ('11', '12', ...)
+                        if ( grep(/$starttlsType/,('11') )) { # experimental and untested 
+                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
+                        } else { # tested, but still experimental # experimental but tested 
+                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                         }
                         #$retryCnt = $Net::SSLhello::retry; #No more retries
                         #last;
