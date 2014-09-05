@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-08-26';
+    $VERSION    = 'NET::SSLhello_2014-09-05';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -96,7 +96,7 @@ BEGIN {
 
 
 use constant {
-    _MY_SSL3_MAX_CIPHERS       => 128, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 64,...
+    _MY_SSL3_MAX_CIPHERS       => 128, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 48, 64, 128, ...
     _MY_PRINT_CIPHERS_PER_LINE =>  8, # Nr of Ciphers printed in a trace
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
@@ -1102,17 +1102,32 @@ sub checkSSLciphers ($$$@) {
             $@=""; # reset Error-Msg
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str); # collect Accepted Ciphers by Priority
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
-            if ($@) { 
-                _trace2 (">>> checkSSLciphers (3): '$@'\n"); 
+            if ($@) {
+                _trace2 (">>> checkSSLciphers (3): '$@'\n");
+                # list untested Ciphers
+                $i = 0;
+                my $str=""; #output string with list of ciphers
+                foreach $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
+                    if (($i++) == 0) { #  1st element
+                        $str .= ">" . $cipher_str . "<";
+                    } elsif (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0) { #  'print' up to '_MY_PRINT_CIPHERS_PER_LINE' Ciphers per line
+                        $str .= "\n   >" . $cipher_str . "<";
+                    } else {
+                        $str .= " >" . $cipher_str . "<";
+                    }
+                }
+                # End: list untested ciphers
                 if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {
-                    _trace2 (">>> checkSSLciphers (3.1): '$@'\n"); 
-                    warn ("**WARNING: => Unexpected Loss of Connection while checking the priority of the ciphers: Exit Loop (3.1)");
+                    _trace1 ("checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'");
                     $@=""; # reset Error-Msg
                     last;
                 } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                    _trace1 (">>> checkSSLciphers (3.2): '$@'\n"); 
+                    _trace1 ("checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit Loop. Reason: '$@'");
+                    $@=""; # reset Error-Msg
                     last;
-                } 
+                }
             }
             if ($acceptedCipher) { # received an accepted Cipher
                 push (@acceptedCipherSortedArray, $acceptedCipher); # add found Cipher to sorted List
@@ -1138,16 +1153,28 @@ sub checkSSLciphers ($$$@) {
                 $cipher_str = join ("",@acceptedCipherArray); # Check Prio for next Ciphers
             } else { # nothing received => Lost Connection
                 _trace2 (">>> checkSSLciphers (6): '$@'\n");
+                # list untested Ciphers
+                $i = 0;
+                my $str=""; #output string with list of ciphers
+                foreach $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
+                    if (($i++) == 0) { #  1st element
+                        $str .= ">" . $cipher_str . "<";
+                    } elsif (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0) { #  'print' up to '_MY_PRINT_CIPHERS_PER_LINE' Ciphers per line
+                        $str .= "\n   >" . $cipher_str . "<";
+                    } else {
+                        $str .= " >" . $cipher_str . "<";
+                    }
+                }
+                # End: list untested ciphers
                 if (  ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {
-                    _trace1 ("checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers -> Exit Loop. Reason: '$@'\n");
-                    warn ("**WARNING: checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers -> Exit Loop. Reason: '$@'");
+                    _trace1 ("checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'");
                     $@=""; # reset Error-Msg
                     last;
-                 } elsif ($@) { #any other Error like: #} elsif ( ( $@ =~ /\-> Received NO Data/) || ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?abo     rted/) ) {$
-
-                    _trace1 ("checkSSLciphers (6.2): => Unexpected Lack od Data or unexpected Answer while checking the priority of the ciphers -> Exit Loop. Reason: '$@'\n");
-                    warn ("**WARNING: checkSSLciphers (6.2): => Unexpected Lack od Data or unexpected Answer while checking the priority of the ciphers -> Exit Loop. Reason: '$@'");
-                    $@=""; # reset Error-Msg                    
+                 } elsif ($@) { #any other Error like: #} elsif ( ( $@ =~ /\-> Received NO Data/) || ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) {$
+                    _trace1 ("checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit Loop. Reason: '$@'");
+                    $@=""; # reset Error-Msg
                     last;
                 } 
             }
@@ -1646,9 +1673,15 @@ sub _doCheckSSLciphers ($$$$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $segmentCnt=0;
-    
-    _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, >%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
-    $@ =""; # reset Errori-String
+
+    my %rhash = reverse %PROTOCOL_VERSION;
+    my $ssl = $rhash{$protocol};
+    if (! defined $ssl) {
+        $ssl ="--unknown Protocol--";
+    }
+
+    _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
+    $@ =""; # reset Error-String
 
     #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
     $socket=openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
@@ -1779,10 +1812,10 @@ sub _doCheckSSLciphers ($$$$) {
     alarm (0);   # race condition protection
     chomp ($@);
     if ( ($@) && ( ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) || ($Net::SSLhello::trace > 2) )) {
-         _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (".length($input)." Bytes): Eval-Message: >$@<\n");
-         warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (".length($input)." Bytes): Eval-Message: >$@<\n"); 
+         _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n");
+         warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n"); 
     } elsif (length($input) ==0) { # len == 0 without any timeout
-         $@= "... Received NO Data from $host:$port (Protocol: $protocol) after $Net::SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
+         $@= "... Received NO Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).") after $Net::SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
          _trace2 ("_doCheckSSLciphers: $@\n"); 
     }
     if (length($input) >0) {
