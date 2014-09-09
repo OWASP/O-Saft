@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-07-05";
+my $VERSION = "2014-09-09";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -91,7 +91,7 @@ OPTIONS
 DESCRIPTION
     This is just a very simple wrapper for the Net::SSLhello module to test
     a target for all available ciphers. It is a shortcut for
-	o-saft.pl +cipherraw YOUR-HOST
+    o-saft.pl +cipherraw YOUR-HOST
 
 EoT
 } # printhelp
@@ -388,21 +388,20 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         my $range = $cfg{'cipherrange'};            # use specified range of constants
            $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
         push(@testing, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
-        if ($Net::SSLhello::usesni==1) { # always test without SNI
+        if ($Net::SSLhello::usesni==1) { # always test first without SNI
             $Net::SSLhello::usesni=0;
             @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
             _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
             _trace("accepted ciphers: @accepted\n");
             Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
             $Net::SSLhello::usesni=1; # restore
+            next if ($ssl eq 'SSLv2');# SSLv2 has no SNI
+            next if ($ssl eq 'SSLv3');# SSLv3 has originally no SNI
         }
-        next if ($Net::SSLhello::usesni==0);
-        next if ($ssl eq 'SSLv2');# SSLv2 has no SNI
-        next if ($ssl eq 'SSLv3');# SSLv3 has originally no SNI
-            @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
-            _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
-            _trace("accepted ciphers: @accepted\n");
-            Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 1, @accepted);
+        @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
+        _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . scalar(@accepted) . "\n");
+        _trace("accepted ciphers: @accepted\n");
+        Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
     }
     _trace("host}" . "\n");
 }
