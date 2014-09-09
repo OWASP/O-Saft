@@ -392,6 +392,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::usesni=0;
             @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
             _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+            _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
             _trace("accepted ciphers: @accepted\n");
             Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
             $Net::SSLhello::usesni=1; # restore
@@ -400,6 +401,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
         _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+        _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
         _trace("accepted ciphers: @accepted\n");
         Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
     }
