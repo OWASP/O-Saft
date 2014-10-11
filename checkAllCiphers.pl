@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-09-09";
+my $VERSION = "2014-10-11";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -66,6 +66,11 @@ OPTIONS
                 number of retries for connects, if timed-out
     --ssl-timeout=SEC
                 timeout in seconds for connects
+    --cipherrange=RANGE, --range=RANGE
+                RANGE is any of rfc, long, huge, safe, full, SSLv2, shifted (rfc, shifted by 64 bytes to the right)
+                (see o-saft.pl --help)
+    --maxciphers=CNT
+                maximal number of ciphers sent in a sslhello (default is 64)
     --ssl-usereneg
                 use secure renegotion
     --ssl-doubel-reneg
@@ -80,11 +85,11 @@ OPTIONS
                 passowrd to authenticate at PROXYUSER
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
-                *EXPERIMENTAL* Use STARTTLS to start TLS. 
+                Use STARTTLS to start TLS. 
                 STARTTLS_TYPE is any of SMTP, ACAP, IMAP (IMAP_2), POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
                 (Note: IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP)
-                Please take care! Please give us feedback (especially for FTPS, LDAP, RDP)
-                All STARTTLS_TYPES besides SMTP need the '--experimental' option
+                Please give us feedback (especially for FTPS, LDAP, RDP)
+                The STARTTLS_TYPE ACAP needs the '--experimental' option, and plaese take care!
     --experimental
                 to use experimental functions
 
@@ -188,6 +193,10 @@ our %cfg = ( # from o-saft (only relevant parts)
                         0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
                         0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
                        ],
+        'shifted'   => [        # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
+                        0x03000100 .. 0x0300013F, 0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                       ],
         'long'      => [        # more lazy list of constants for cipher
                         0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
                        ],
@@ -225,6 +234,7 @@ our %cfg = ( # from o-saft (only relevant parts)
     'sslhello' => {    # configurations for TCP SSL protocol
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 3,       # number of retry when timeout
+        'maxciphers'=> 64,      # number of ciphers sent in SSL3/TLS Client-Hello
         'usereneg'  => 0,       # 0: do not send reneg_info Extension
         'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV (be polite according RFC5746)
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
@@ -334,6 +344,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ssl[_-]?retry=(.*)/){ $cfg{'sslhello'}->{'retry'}=$1;}
     if ($arg =~ /^--ssl[_-]?timeout=(.*)/)  {$cfg{'sslhello'}->{'timeout'}=$1;}
     if ($arg =~ /^--ssl[_-]?usereneg=(.*)/) {$cfg{'sslhello'}->{'usereneg'}=$1;}
+    if ($arg =~ /^--ssl[_-]?maxciphers=(\d+)/)  {$cfg{'sslhello'}->{'maxciphers'}=$1;}
     if ($arg =~ /^--ssl[_-]?double[_-]?reneg/)  {$cfg{'sslhello'}->{'double_reneg'}=1;}
     if ($arg =~ /^--?experimental$/i)   { $cfg{'experimental'} = 1; }
     #} +---------+----------------------+-------------------------
@@ -357,6 +368,8 @@ while ($#argv >= 0) {
     $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
     $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport   = $cfg{'proxyport'};
+    $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
+    $Net::SSLhello::cipherrange = $cfg{'cipherrange'};
     $Net::SSLhello::experimental= $cfg{'experimental'};
 }
 
