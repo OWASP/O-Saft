@@ -3,7 +3,7 @@
 #!#############################################################################
 #!#                    Copyright (c) Torsten Gigler 
 #!#             This module is part of the OWASP-Project 'o-saft'
-#!# It simulaes the SSLhello packets to check SSL parameters like the ciphers
+#!# It simulates the SSLhello packets to check SSL parameters like the ciphers
 #!#         indepenantly from any SSL library like Openssl or gnutls.
 #!#----------------------------------------------------------------------------
 #!#       THIS Software is in ALPHA state, please give us feed back via
@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-09-05';
+    $VERSION    = 'NET::SSLhello_2014-10-11';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -96,7 +96,7 @@ BEGIN {
 
 
 use constant {
-    _MY_SSL3_MAX_CIPHERS       => 128, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 48, 64, 128, ...
+    _MY_SSL3_MAX_CIPHERS       => 64, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 48, 64, 128, ...
     _MY_PRINT_CIPHERS_PER_LINE =>  8, # Nr of Ciphers printed in a trace
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
@@ -120,7 +120,7 @@ $Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation inf
 $Net::SSLhello::proxyhost    = "";#
 $Net::SSLhello::proxyport    = "";#
 $Net::SSLhello::experimental = 0;# 0: experimental functions are protected (=not active)
-$Net::SSLhello::ssl3_maxCiphers = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
+$Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
 $Net::SSLhello::noDataEqNoCipher = 1; # 1= For some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher' supported -> Do NOT abort to test next Ciphers
 
 my %RECORD_TYPE = ( # RFC 5246
@@ -763,19 +763,19 @@ sub version { # Version of SSLhello
     _trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
 #   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
 #    print "\$main::cfg\{\'trace\'\}=$main::cfg{'trace'}\n";
-     _trace4 ("retry=$Net::SSLhello::retry\n") if (defined($Net::SSLhello::retry));
-     _trace4 ("timeout=$Net::SSLhello::timeout\n") if (defined($Net::SSLhello::timeout));
-     _trace4 ("trace=$Net::SSLhello::trace\n") if (defined($Net::SSLhello::trace));
-     _trace4 ("usereneg=$Net::SSLhello::usereneg\n") if (defined($Net::SSLhello::usereneg));
-     _trace4 ("double_reneg=$Net::SSLhello::double_reneg\n") if (defined($Net::SSLhello::double_reneg));
-     _trace4 ("usesni=$Net::SSLhello::usesni\n") if (defined($Net::SSLhello::usesni));
-     _trace4 ("starttls=$Net::SSLhello::starttls\n") if (defined($Net::SSLhello::starttls));
-     _trace4 ("starttlsType=$Net::SSLhello::starttlsType\n") if (defined($Net::SSLhello::starttlsType));
-     _trace4 ("experimental=$Net::SSLhello::experimental\n") if (defined($Net::SSLhello::experimental));
-     _trace4 ("proxyhost=$Net::SSLhello::proxyhost\n") if (defined($Net::SSLhello::proxyhost));
-     _trace4 ("proxyport=$Net::SSLhello::proxyport\n") if (defined($Net::SSLhello::proxyport));
-     _trace4 ("ssl3_maxCiphers=$Net::SSLhello::ssl3_maxCiphers\n") if (defined($Net::SSLhello::ssl3_maxCiphers));
-     _trace4_("------------------------------------------------------------------------------------\n");
+     _trace2 ("retry=$Net::SSLhello::retry\n") if (defined($Net::SSLhello::retry));
+     _trace2 ("timeout=$Net::SSLhello::timeout\n") if (defined($Net::SSLhello::timeout));
+     _trace2 ("trace=$Net::SSLhello::trace\n") if (defined($Net::SSLhello::trace));
+     _trace2 ("usereneg=$Net::SSLhello::usereneg\n") if (defined($Net::SSLhello::usereneg));
+     _trace2 ("double_reneg=$Net::SSLhello::double_reneg\n") if (defined($Net::SSLhello::double_reneg));
+     _trace2 ("usesni=$Net::SSLhello::usesni\n") if (defined($Net::SSLhello::usesni));
+     _trace2 ("starttls=$Net::SSLhello::starttls\n") if (defined($Net::SSLhello::starttls));
+     _trace2 ("starttlsType=$Net::SSLhello::starttlsType\n") if (defined($Net::SSLhello::starttlsType));
+     _trace2 ("experimental=$Net::SSLhello::experimental\n") if (defined($Net::SSLhello::experimental));
+     _trace2 ("proxyhost=$Net::SSLhello::proxyhost\n") if (defined($Net::SSLhello::proxyhost));
+     _trace2 ("proxyport=$Net::SSLhello::proxyport\n") if (defined($Net::SSLhello::proxyport));
+     _trace2 ("max_ciphers=$Net::SSLhello::max_ciphers\n") if (defined($Net::SSLhello::max_ciphers));
+     _trace2_("------------------------------------------------------------------------------------\n");
 #    _trace("_trace\n");
 #    _trace_("_trace_\n");
 #    _trace1("_trace1\n");
@@ -899,7 +899,7 @@ sub checkSSLciphers ($$$@) {
     my $i=0;
     my $anzahl = 0;
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
-    my $maxCiphers = $Net::SSLhello::ssl3_maxCiphers;
+    my $maxCiphers = $Net::SSLhello::max_ciphers;
 
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
@@ -956,7 +956,7 @@ sub checkSSLciphers ($$$@) {
             
             push (@cipherSpecArray, $cipher_str); # add Cipher to next Test
             $arrayLen = @cipherSpecArray;
-            if ( $arrayLen >= $maxCiphers) { # test up to ... Ciphers ($Net::SSLhello::ssl3_maxCiphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
+            if ( $arrayLen >= $maxCiphers) { # test up to ... Ciphers ($Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
                 $@=""; # reset Error-Msg
                 $cipher_spec = join ("",@cipherSpecArray); # All Ciphers to test in this round
                 
@@ -1266,7 +1266,7 @@ sub openTcpSSLconnection ($$) {
             "",                                         # Phase3: receive -unused-$
             "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x0B\x00\x00\x00", # Phase4: send    'STARTTLS'; http://msdn.microsoft.com/en-us/library/cc240500.aspx
             "\\x03\\x00\\x00\\x13\\x0E\\xD0.....\\x02.\\x08\\x00[\\x01\\x02\\x08]\\x00\\x00\\x00", # Phase5: receive 'Start TLS request accepted' = [PROTOCOL_SSL, PROTOCOL_HYBRID, PROTOCOL_HYBRID_EX] http://msdn.microsoft.com/en-us/library/cc240506.aspx
-          ], #  Typical ErrorMsg if STARTLS is *not* supported:  ---> O-Saft::Net::SSLhello ::openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: 19 Bytes
+          ], #  Typical ErrorMsg if STARTTLS is *not* supported:  ---> O-Saft::Net::SSLhello ::openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: 19 Bytes
              #   >0x03 0x00 0x00 0x13 0x0E 0xD0 0x00 0x00 0x12 0x34 0x00 0x03 0x00 0x08 0x00 0x02 0x00 0x00 0x00 <  #### SSL_NOT_ALLOWED_BY_SERVER; http://msdn.microsoft.com/en-us/library/cc240507.aspx
           ["RDP_SSL",                                   # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             "",                                         # Phase1: receive -unused-$
@@ -1434,13 +1434,13 @@ sub openTcpSSLconnection ($$) {
                 $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
                 _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
                 if  ($Net::SSLhello::experimental >0) { # experimental functionis are  activated
-                    _trace ("\nopenTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n") if ( grep(/$starttlsType/,('11') ));
+                    _trace ("\nopenTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n") if ( grep(/$starttlsType/,('11') ));
                 } else {
                     if ( grep(/$starttlsType/,('11') )) { # ('11', '12', ...)
                         if ( grep(/$starttlsType/,('11') )) { # experimental and untested 
-                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
+                            $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                         } else { # tested, but still experimental # experimental but tested 
-                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
+                            $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                         }
                         #$retryCnt = $Net::SSLhello::retry; #No more retries
                         #last;
@@ -2485,7 +2485,7 @@ sub parseTLS_ServerHello {
         }
 
         _trace2_ ( sprintf ( 
-            "# -->       compression_method:     >%02X<\n",
+            "\n# -->       compression_method:     >%02X<\n",
             $serverHello{'compression_method'}
         ));
         if ( $serverHello{'extensions_len'} !~ /(?:^$|[\x00]+)/) { # extensions_len > 0
@@ -2757,15 +2757,19 @@ Connections via Proxy and using STARTTLS (SMTP, IMAP, POP3, FTPS, LDAP, RDP, XMP
 
 =head1 DESCRIPTION
 
-TBD comming soon ... for now:
+SSLhello.pm is a Perl Module that is part of the OWASP-Project 'o-saft'. 
+It checks some basic SSL/TLS configuration of a server, like Ciphers and Extensions (planned) of the SSL/TLS-protocol. These checks work independantly from any SSL library like openSSL or gnutls. It does this by simulating the first packets of a SSL/TLS connection. It sends a ClientHello message and analyzes the ServerHello packet that is answered by the server. It gives you a wide range of options for this, so you can even check Ciphers that are not yet defined, reserved or obsole, by their 2-octett-values (see http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-4).
+
+As it simulates only the first part of the SSL/TLS handshake, it is really fast! Another advantage of this is that it can even analyze SSL/TLS ciphers of servers that verify client certificates without any need to provide one. (This is normally done later in the SSL/TLS handshake).
+
 Export Functions:
-$socket = openTcpSSLconnection ($host; $port); # Open a TCP/IP connection to a Host on a Port (via Proxy) and doing STARTTLS if requesteA
+$socket = openTcpSSLconnection ($host; $port); # Open a TCP/IP connection to a Host on a Port (via Proxy) and doing STARTTLS if requested
 @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing); # Check a list if Ciphers (@testing), output: @accepted Ciphers (if the first 2 ciphers are equal the server has an order)
 Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni, @accepted); # print the List of Ciphers (@accepted Ciphers)
 
 =head1 EXAMPLES
 
-See SYNOPSIS above.
+See DESCRIPTION above.
 
 =head1 LIMITATIONS
 
@@ -2779,7 +2783,7 @@ L<IO::Socket(1)>
 
 =head1 AUTHOR
 
-26-August-2014 Torsten Gigler
+11-October-2014 Torsten Gigler
 
 =cut
 
