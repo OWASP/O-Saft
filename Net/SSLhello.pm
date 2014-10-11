@@ -681,7 +681,18 @@ my %cipherHexHash = (
   '0x0300C0A9'=> [qw(PSK_WITH_AES_256_CCM_8      PSK-AES256-CCM8)],
   '0x0300C0AA'=> [qw(PSK_DHE_WITH_AES_128_CCM_8  PSK-DHE-AES128-CCM8)],
   '0x0300C0AB'=> [qw(PSK_DHE_WITH_AES_256_CCM_8  PSK-DHE-AES256-CCM8)],
-#
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: http://www-archive.mozilla.org/projects/security/pki/nss/ssl/fips-ssl-ciphersuites.html
+#!# added manually 20141011:
+#!# Netscape: FIPS SSL CipherSuite Numbers (OBSOLETE)
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+  '0x0300FEE0'=> [qw(RSA-FIPS-3DES-EDE-SHA       RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],
+  '0x0300FEE1'=> [qw(RSA-FIPS-DES-CBC-SHA        RSA_FIPS_WITH_DES_CBC_SHA)],
+  '0x0300FEFE'=> [qw(RSA-FIPS-DES-CBC-SHA        RSA_FIPS_WITH_DES_CBC_SHA)],
+  '0x0300FEFF'=> [qw(RSA-FIPS-3DES-EDE-SHA       RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],
 #!#----------------------------------------+-------------+--------------------+
 ); # cipherHexHash
 
