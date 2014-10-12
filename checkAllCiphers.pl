@@ -69,7 +69,7 @@ OPTIONS
     --cipherrange=RANGE, --range=RANGE
                 RANGE is any of rfc, long, huge, safe, full, SSLv2, shifted (rfc, shifted by 64 bytes to the right)
                 (see o-saft.pl --help)
-    --maxciphers=CNT
+    --ssl-maxciphers=CNT
                 maximal number of ciphers sent in a sslhello (default is 64)
     --ssl-usereneg
                 use secure renegotion
