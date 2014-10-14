@@ -2271,6 +2271,7 @@ our %text = (
         'NPN'       => "Next Protocol Negotiation",
         'Neokeon'   => "symmetric block cipher algorithm",
         'NSS'       => "Network Security Services",
+        'nonce'     => "(arbitrary) number used only once",
         'NULL'      => "no encryption",
         'NUMS'      => "nothing up my sleeve numbers",
         'OAEP'      => "Optimal Asymmetric Encryption Padding",
@@ -2456,7 +2457,7 @@ our %text = (
     #               Error Alerts
     # RFC 5764: TLS Extensions SRTP
     # RFC 4366: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
-    # RFC 6066: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
+    # RFC 6066: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling) TLS Certificate Status Request
     # RFC 6066: TLS Extensions: Extension Definitions
     #                PkiPath
     # RFC 6066: TLS Extensions: Heartbeat https://tools.ietf.org/html/rfc6520
@@ -3394,6 +3395,8 @@ sub checkcert($$) {
     }
     $checks{'selfsigned'}->{val} = $data{'selfsigned'}->{val}($host);
     $checks{'fp_not_md5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+
+# ToDo: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
     # valid characters (most likely only relevant for EV)
     #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
@@ -6205,7 +6208,7 @@ with other commands).
 
 =head3 +ciphers
 
-    Show ciphers offerd by local SSL implementation.
+    Show ciphers offered by local SSL implementation.
 
     This commands prints the ciphers in format like `openssl ciphers'
     does. It also accepts the  "-v"  and  "-V"  option.
@@ -8903,7 +8906,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.26
+@(#) 14.07.27
 
 =head1 AUTHOR
 
