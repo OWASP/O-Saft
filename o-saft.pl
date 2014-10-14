@@ -1052,6 +1052,11 @@ our %cfg = (
                         0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
                         0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
                        ],
+        'shifted'   => [        # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
+                        0x03000100 .. 0x0300013F,
+                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                       ],
         'long'      => [        # more lazy list of constants for cipher
                         0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
                        ],
@@ -6743,6 +6748,8 @@ the description here is text provided by the user.
 
 =item * rfc             all ciphers defined in various RFCs
 
+=item * shifted         rfc, shifted by 64 bytes to the right
+
 =item * long            like C<rfc> but more lazy list of constants
 
 =item * huge            all constants  0x03000000 .. 0x0300FFFF
@@ -6757,6 +6764,10 @@ Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
 It does not make sense to use it for other protocols; however ...
 
 =back
+
+=head3 --ssl-maxciphers=CNT 
+
+  Maximal number of ciphers sent in a sslhello (default is 32).
 
 =begin comment
 
@@ -8906,7 +8917,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.27
+@(#) 14.10.12
 
 =head1 AUTHOR
 
