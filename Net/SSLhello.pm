@@ -3,7 +3,7 @@
 #!#############################################################################
 #!#                    Copyright (c) Torsten Gigler 
 #!#             This module is part of the OWASP-Project 'o-saft'
-#!# It simulaes the SSLhello packets to check SSL parameters like the ciphers
+#!# It simulates the SSLhello packets to check SSL parameters like the ciphers
 #!#         indepenantly from any SSL library like Openssl or gnutls.
 #!#----------------------------------------------------------------------------
 #!#       THIS Software is in ALPHA state, please give us feed back via
@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = 'NET::SSLhello_2014-07-05';
+    $VERSION    = 'NET::SSLhello_2014-10-11';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -94,21 +94,9 @@ BEGIN {
     } ? 1 : 0;
 } # BEGIN
 
-#defaults for global parameters
-$Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
-$Net::SSLhello::usesni       = 0;# 1 use SNI to connect to target
-$Net::SSLhello::timeout      = 2;# time in seconds
-$Net::SSLhello::retry        = 3;# number of retry when timeout
-$Net::SSLhello::usereneg     = 0;# secure renegotiation 
-$Net::SSLhello::starttls     = 0;# 1= do STARTTLS
-$Net::SSLhello::starttlsType = "SMTP";# default: SMTP
-$Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
-$Net::SSLhello::proxyhost    = "";#
-$Net::SSLhello::proxyport    = "";#
-$Net::SSLhello::experimental = 0;# 0: experimental functions are protected (=not active)
 
 use constant {
-    _MY_SSL3_MAX_CIPHERS       => 32, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are szupported by the Server
+    _MY_SSL3_MAX_CIPHERS       => 64, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 48, 64, 128, ...
     _MY_PRINT_CIPHERS_PER_LINE =>  8, # Nr of Ciphers printed in a trace
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
@@ -117,6 +105,23 @@ use constant {
 };
 
 #our $LONG_PACKET = 1940; # try to get a 2nd or 3rd segment for long packets
+#
+#
+#defaults for global parameters
+$Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
+$Net::SSLhello::usesni       = 0;# 1 use SNI to connect to target
+$Net::SSLhello::timeout      = 1;# time in seconds
+$Net::SSLhello::retry        = 2;# number of retry when timeout
+$Net::SSLhello::usereneg     = 0;# secure renegotiation 
+$Net::SSLhello::useecc       = 1;# use Supported Elliptic Curves and ec_point_formats Extension
+$Net::SSLhello::starttls     = 0;# 1= do STARTTLS
+$Net::SSLhello::starttlsType = "SMTP";# default: SMTP
+$Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
+$Net::SSLhello::proxyhost    = "";#
+$Net::SSLhello::proxyport    = "";#
+$Net::SSLhello::experimental = 0;# 0: experimental functions are protected (=not active)
+$Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
+$Net::SSLhello::noDataEqNoCipher = 1; # 1= For some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher' supported -> Do NOT abort to test next Ciphers
 
 my %RECORD_TYPE = ( # RFC 5246
     'change_cipher_spec'    => 20, 
@@ -187,6 +192,7 @@ my %TLS_AlertDescription = (
     114 => [qw(bad_certificate_hash_value  Y  [RFC6066])],
     115 => [qw(unknown_psk_identity  Y  [RFC4279])],
 );
+
 
 ##################################################################################
 # List of Functions
@@ -312,51 +318,52 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-  '0x0300001B'=> [qw(ADH_DES_192_CBC_SHA                      ADH-DES-CBC3-SHA)],
-  '0x03000019'=> [qw(ADH_DES_40_CBC_SHA                       EXP-ADH-DES-CBC-SHA)],
-  '0x0300001A'=> [qw(ADH_DES_64_CBC_SHA                       ADH-DES-CBC-SHA)],
-  '0x03000018'=> [qw(ADH_RC4_128_MD5                          ADH-RC4-MD5)],
-  '0x03000017'=> [qw(ADH_RC4_40_MD5                           EXP-ADH-RC4-MD5)],
-  '0x0300000D'=> [qw(DH_DSS_DES_192_CBC3_SHA                  DH-DSS-DES-CBC3-SHA)],
-  '0x0300000B'=> [qw(DH_DSS_DES_40_CBC_SHA                    EXP-DH-DSS-DES-CBC-SHA)],
-  '0x0300000C'=> [qw(DH_DSS_DES_64_CBC_SHA                    DH-DSS-DES-CBC-SHA)],
-  '0x03000010'=> [qw(DH_RSA_DES_192_CBC3_SHA                  DH-RSA-DES-CBC3-SHA)],
-  '0x0300000E'=> [qw(DH_RSA_DES_40_CBC_SHA                    EXP-DH-RSA-DES-CBC-SHA)],
-  '0x0300000F'=> [qw(DH_RSA_DES_64_CBC_SHA                    DH-RSA-DES-CBC-SHA)],
-  '0x03000013'=> [qw(EDH_DSS_DES_192_CBC3_SHA                 EDH-DSS-DES-CBC3-SHA)],
-  '0x03000011'=> [qw(EDH_DSS_DES_40_CBC_SHA                   EXP-EDH-DSS-DES-CBC-SHA)],
-  '0x03000012'=> [qw(EDH_DSS_DES_64_CBC_SHA                   EDH-DSS-DES-CBC-SHA)],
-  '0x03000016'=> [qw(EDH_RSA_DES_192_CBC3_SHA                 EDH-RSA-DES-CBC3-SHA)],
-  '0x03000014'=> [qw(EDH_RSA_DES_40_CBC_SHA                   EXP-EDH-RSA-DES-CBC-SHA)],
-  '0x03000015'=> [qw(EDH_RSA_DES_64_CBC_SHA                   EDH-RSA-DES-CBC-SHA)],
+  '0x0300001B'=> [qw(ADH_WITH_DES_192_CBC3_SHA                ADH-DES-CBC3-SHA)],
+  '0x03000019'=> [qw(ADH_WITH_DES_40_CBC_SHA                  EXP-ADH-DES-CBC-SHA)],
+  '0x0300001A'=> [qw(ADH_WITH_DES_64_CBC_SHA                  ADH-DES-CBC-SHA)],
+  '0x03000018'=> [qw(ADH_WITH_RC4_128_MD5                     ADH-RC4-MD5)],
+  '0x03000017'=> [qw(ADH_WITH_RC4_40_MD5                      EXP-ADH-RC4-MD5)],
+  '0x0300000D'=> [qw(DH_DSS_WITH_DES_192_CBC3_SHA             DH-DSS-DES-CBC3-SHA)],
+  '0x0300000B'=> [qw(DH_DSS_WITH_DES_40_CBC_SHA               EXP-DH-DSS-DES-CBC-SHA)],
+  '0x0300000C'=> [qw(DH_DSS_WITH_DES_64_CBC_SHA               DH-DSS-DES-CBC-SHA)],
+  '0x03000010'=> [qw(DH_RSA_WITH_DES_192_CBC3_SHA             DH-RSA-DES-CBC3-SHA)],
+  '0x0300000E'=> [qw(DH_RSA_WITH_DES_40_CBC_SHA               EXP-DH-RSA-DES-CBC-SHA)],
+  '0x0300000F'=> [qw(DH_RSA_WITH_DES_64_CBC_SHA               DH-RSA-DES-CBC-SHA)],
+  '0x03000013'=> [qw(EDH_DSS_WITH_DES_192_CBC3_SHA            EDH-DSS-DES-CBC3-SHA)],
+  '0x03000011'=> [qw(EDH_DSS_WITH_DES_40_CBC_SHA              EXP-EDH-DSS-DES-CBC-SHA)],
+  '0x03000012'=> [qw(EDH_DSS_WITH_DES_64_CBC_SHA              EDH-DSS-DES-CBC-SHA)],
+  '0x03000016'=> [qw(EDH_RSA_WITH_DES_192_CBC3_SHA            EDH-RSA-DES-CBC3-SHA)],
+  '0x03000014'=> [qw(EDH_RSA_WITH_DES_40_CBC_SHA              EXP-EDH-RSA-DES-CBC-SHA)],
+  '0x03000015'=> [qw(EDH_RSA_WITH_DES_64_CBC_SHA              EDH-RSA-DES-CBC-SHA)],
   '0x0300001D'=> [qw(FZA_DMS_FZA_SHA                          FZA-FZA-CBC-SHA)],
   '0x0300001C'=> [qw(FZA_DMS_NULL_SHA                         FZA-NULL-SHA)],
   '0x0300001E'=> [qw(FZA_DMS_RC4_SHA                          FZA-RC4-SHA)],
-  '0x03000023'=> [qw(KRB5_DES_192_CBC3_MD5                    KRB5-DES-CBC3-MD5)],
-  '0x0300001F'=> [qw(KRB5_DES_192_CBC3_SHA                    KRB5-DES-CBC3-SHA)],
-  '0x03000029'=> [qw(KRB5_DES_40_CBC_MD5                      EXP-KRB5-DES-CBC-MD5)],
-  '0x03000026'=> [qw(KRB5_DES_40_CBC_SHA                      EXP-KRB5-DES-CBC-SHA)],
-  '0x03000022'=> [qw(KRB5_DES_64_CBC_MD5                      KRB5-DES-CBC-MD5)],
-  '0x0300001E'=> [qw(KRB5_DES_64_CBC_SHA                      KRB5-DES-CBC-SHA)],
-  '0x03000025'=> [qw(KRB5_IDEA_128_CBC_MD5                    KRB5-IDEA-CBC-MD5)],
-  '0x03000021'=> [qw(KRB5_IDEA_128_CBC_SHA                    KRB5-IDEA-CBC-SHA)],
-  '0x0300002A'=> [qw(KRB5_RC2_40_CBC_MD5                      EXP-KRB5-RC2-CBC-MD5)],
-  '0x03000027'=> [qw(KRB5_RC2_40_CBC_SHA                      EXP-KRB5-RC2-CBC-SHA)],
-  '0x03000024'=> [qw(KRB5_RC4_128_MD5                         KRB5-RC4-MD5)],
-  '0x03000020'=> [qw(KRB5_RC4_128_SHA                         KRB5-RC4-SHA)],
-  '0x0300002B'=> [qw(KRB5_RC4_40_MD5                          EXP-KRB5-RC4-MD5)],
-  '0x03000028'=> [qw(KRB5_RC4_40_SHA                          EXP-KRB5-RC4-SHA)],
-  '0x0300000A'=> [qw(RSA_DES_192_CBC3_SHA                     DES-CBC3-SHA)],
-  '0x03000008'=> [qw(RSA_DES_40_CBC_SHA                       EXP-DES-CBC-SHA)],
-  '0x03000009'=> [qw(RSA_DES_64_CBC_SHA                       DES-CBC-SHA)],
-  '0x03000007'=> [qw(RSA_IDEA_128_SHA                         IDEA-CBC-SHA)],
-  '0x03000001'=> [qw(RSA_NULL_MD5                             NULL-MD5)],
-  '0x03000002'=> [qw(RSA_NULL_SHA                             NULL-SHA)],
-  '0x03000006'=> [qw(RSA_RC2_40_MD5                           EXP-RC2-CBC-MD5)],
-  '0x03000004'=> [qw(RSA_RC4_128_MD5                          RC4-MD5)],
-  '0x03000005'=> [qw(RSA_RC4_128_SHA                          RC4-SHA)],
-  '0x03000003'=> [qw(RSA_RC4_40_MD5                           EXP-RC4-MD5)],
-  '0x030000FF'=> [qw(EMPTY_RENEGOTIATION_INFO_SCSV            SCSV)], #activated 'Signaling Cipher Suite Value'
+  '0x03000023'=> [qw(KRB5_WITH_DES_192_CBC3_MD5               KRB5-DES-CBC3-MD5)],
+  '0x0300001F'=> [qw(KRB5_WITH_DES_192_CBC3_SHA               KRB5-DES-CBC3-SHA)],
+  '0x03000029'=> [qw(KRB5_WITH_DES_40_CBC_MD5                 EXP-KRB5-DES-CBC-MD5)],
+  '0x03000026'=> [qw(KRB5_WITH_DES_40_CBC_SHA                 EXP-KRB5-DES-CBC-SHA)],
+  '0x03000022'=> [qw(KRB5_WITH_DES_64_CBC_MD5                 KRB5-DES-CBC-MD5)],
+  '0x0300001E'=> [qw(KRB5_WITH_DES_64_CBC_SHA                 KRB5-DES-CBC-SHA)],
+  '0x03000025'=> [qw(KRB5_WITH_IDEA_128_CBC_MD5               KRB5-IDEA-CBC-MD5)],
+  '0x03000021'=> [qw(KRB5_WITH_IDEA_128_CBC_SHA               KRB5-IDEA-CBC-SHA)],
+  '0x0300002A'=> [qw(KRB5_WITH_RC2_40_CBC_MD5                 EXP-KRB5-RC2-CBC-MD5)],
+  '0x03000027'=> [qw(KRB5_WITH_RC2_40_CBC_SHA                 EXP-KRB5-RC2-CBC-SHA)],
+  '0x03000024'=> [qw(KRB5_WITH_RC4_128_MD5                    KRB5-RC4-MD5)],
+  '0x03000020'=> [qw(KRB5_WITH_RC4_128_SHA                    KRB5-RC4-SHA)],
+  '0x0300002B'=> [qw(KRB5_WITH_RC4_40_MD5                     EXP-KRB5-RC4-MD5)],
+  '0x03000028'=> [qw(KRB5_WITH_RC4_40_SHA                     EXP-KRB5-RC4-SHA)],
+  '0x0300000A'=> [qw(RSA_WITH_DES_192_CBC3_SHA                DES-CBC3-SHA)],
+  '0x03000008'=> [qw(RSA_WITH_DES_40_CBC_SHA                  EXP-DES-CBC-SHA)],
+  '0x03000009'=> [qw(RSA_WITH_DES_64_CBC_SHA                  DES-CBC-SHA)],
+  '0x03000007'=> [qw(RSA_WITH_IDEA_128_SHA                    IDEA-CBC-SHA)],
+  '0x03000000'=> [qw(NULL_WITH_NULL_NULL                      NULL-NULL)],
+  '0x03000001'=> [qw(RSA_WITH_NULL_MD5                        NULL-MD5)],
+  '0x03000002'=> [qw(RSA_WITH_NULL_SHA                        NULL-SHA)],
+  '0x03000006'=> [qw(RSA_WITH_RC2_40_MD5                      EXP-RC2-CBC-MD5)],
+  '0x03000004'=> [qw(RSA_WITH_RC4_128_MD5                     RC4-MD5)],
+  '0x03000005'=> [qw(RSA_WITH_RC4_128_SHA                     RC4-SHA)],
+  '0x03000003'=> [qw(RSA_WITH_RC4_40_MD5                      EXP-RC4-MD5)],
+  '0x030000FF'=> [qw(EMPTY_RENEGOTIATION_INFO_SCSV            SCSV-RENEG)], #activated 'Signaling Cipher Suite Value'
   '0x03005600'=> [qw(FALLBACK_SCSV_DRAFT                      SCSV-FALLBACK-DRAFT)], ### added according 'https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1'
 
 #!#----------------------------------------+-------------+--------------------+
@@ -675,7 +682,208 @@ my %cipherHexHash = (
   '0x0300C0A9'=> [qw(PSK_WITH_AES_256_CCM_8      PSK-AES256-CCM8)],
   '0x0300C0AA'=> [qw(PSK_DHE_WITH_AES_128_CCM_8  PSK-DHE-AES128-CCM8)],
   '0x0300C0AB'=> [qw(PSK_DHE_WITH_AES_256_CCM_8  PSK-DHE-AES256-CCM8)],
-#
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: http://www-archive.mozilla.org/projects/security/pki/nss/ssl/fips-ssl-ciphersuites.html
+#!# added manually 20141011:
+#!# Netscape: FIPS SSL CipherSuite Numbers (OBSOLETE)
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+  '0x0300FEE0'=> [qw(RSA_FIPS_WITH_3DES_EDE_CBC_SHA      RSA-FIPS-3DES-EDE-SHA)],
+  '0x0300FEE1'=> [qw(RSA_FIPS_WITH_DES_CBC_SHA           RSA-FIPS-DES-CBC-SHA)],
+  '0x0300FEFE'=> [qw(RSA_FIPS_WITH_DES_CBC_SHA           RSA-FIPS-DES-CBC-SHA)],
+  '0x0300FEFF'=> [qw(RSA_FIPS_WITH_3DES_EDE_CBC_SHA      RSA-FIPS-3DES-EDE-SHA)],
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: some  PSK and CCM Ciphers (from o-saft.pl, nane1 <-> name2) 
+#!# added manually 20141012
+#!# 
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+   '0x0300002C' => [qw(PSK_WITH_NULL_SHA                 PSK-SHA)],
+   '0x0300002D' => [qw(DHE_PSK_WITH_NULL_SHA             DHE-PSK-SHA)],
+   '0x0300002E' => [qw(RSA_PSK_WITH_NULL_SHA             RSA-PSK-SHA)],
+   '0x0300008E' => [qw(DHE_PSK_WITH_RC4_128_SHA          DHE-PSK-RC4-SHA)],
+   '0x0300008F' => [qw(DHE_PSK_WITH_3DES_EDE_CBC_SHA     DHE-PSK-3DES-SHA)],
+   '0x03000090' => [qw(DHE_PSK_WITH_AES_128_CBC_SHA      DHE-PSK-AES128-SHA)],
+   '0x03000091' => [qw(DHE_PSK_WITH_AES_256_CBC_SHA      DHE-PSK-AES256-SHA)],
+   '0x03000092' => [qw(RSA_PSK_WITH_RC4_128_SHA          RSA-PSK-RC4-SHA)],
+   '0x03000093' => [qw(RSA_PSK_WITH_3DES_EDE_CBC_SHA     RSA-PSK-3DES-SHA)],
+   '0x03000094' => [qw(RSA_PSK_WITH_AES_128_CBC_SHA      RSA-PSK-AES128-SHA)],
+   '0x03000095' => [qw(RSA_PSK_WITH_AES_256_CBC_SHA      RSA-PSK-AES256-SHA)],
+
+   '0x030000AA' => [qw(DHE_PSK_WITH_AES_128_GCM_SHA256   DHE-PSK-AES128-GCM-SHA256)],
+   '0x030000AB' => [qw(DHE_PSK_WITH_AES_256_GCM_SHA384   DHE-PSK-AES256-GCM-SHA384)],
+   '0x030000AC' => [qw(RSA_PSK_WITH_AES_128_GCM_SHA256   RSA-PSK-AES128-GCM-SHA256)],
+   '0x030000AD' => [qw(RSA_PSK_WITH_AES_256_GCM_SHA384   RSA-PSK-AES256-GCM-SHA384)],
+   '0x030000AE' => [qw(PSK_WITH_AES_128_CBC_SHA256       PSK-AES128-SHA256)],
+   '0x030000AF' => [qw(PSK_WITH_AES_256_CBC_SHA384       PSK-AES256-SHA384)],
+   '0x030000B0' => [qw(PSK_WITH_NULL_SHA256              PSK-SHA256)],
+   '0x030000B1' => [qw(PSK_WITH_NULL_SHA384              PSK-SHA384)],
+   '0x030000B2' => [qw(DHE_PSK_WITH_AES_256_CBC_SHA256   DHE-PSK-AES128-SHA256)],
+   '0x030000B3' => [qw(DHE_PSK_WITH_AES_256_CBC_SHA384   DHE-PSK-AES256-SHA384)],
+   '0x030000B4' => [qw(DHE_PSK_WITH_NULL_SHA256          DHE-PSK-SHA256)],
+   '0x030000B5' => [qw(DHE_PSK_WITH_NULL_SHA384          DHE-PSK-SHA384)],
+   '0x030000B6' => [qw(RSA_PSK_WITH_AES_256_CBC_SHA256   RSA-PSK-AES128-SHA256)],
+   '0x030000B7' => [qw(RSA_PSK_WITH_AES_256_CBC_SHA384   RSA-PSK-AES256-SHA384)],
+   '0x030000B8' => [qw(RSA_PSK_WITH_NULL_SHA256          RSA-PSK-SHA256)],
+   '0x030000B9' => [qw(RSA_PSK_WITH_NULL_SHA384          RSA-PSK-SHA384)],
+
+   '0x0300C0AC' => [qw(ECDHE_ECDSA_WITH_AES_128_CCM      ECDHE-RSA-AES128-CCM)],
+   '0x0300C0AD' => [qw(ECDHE_ECDSA_WITH_AES_256_CCM      ECDHE-RSA-AES256-CCM)],
+   '0x0300C0AE' => [qw(ECDHE_ECDSA_WITH_AES_128_CCM_8    ECDHE-RSA-AES128-CCM-8)],
+   '0x0300C0AF' => [qw(ECDHE_ECDSA_WITH_AES_256_CCM_8    ECDHE-RSA-AES256-CCM-8)],
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: some PSK Ciphers 
+#!# added manually 20141012
+#!# 
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+# RFC 5487: http://tools.ietf.org/html/rfc5487
+# CipherSuite TLS_PSK_WITH_AES_128_GCM_SHA256        = {0x00,0xA8};
+# CipherSuite TLS_PSK_WITH_AES_256_GCM_SHA384        = {0x00,0xA9};
+   '0x030000A8' => [qw(PSK_WITH_AES_128_GCM_SHA256       PSK-AES128-GCM-SHA256)],
+   '0x030000A9' => [qw(PSK_WITH_AES_256_GCM_SHA384       PSK-AES256-GCM-SHA384)],
+
+# RFC 5489: http://tools.ietf.org/html/rfc5489
+# CipherSuite TLS_ECDHE_PSK_WITH_RC4_128_SHA          = {0xC0,0x33};
+# CipherSuite TLS_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA     = {0xC0,0x34};
+# CipherSuite TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA      = {0xC0,0x35};
+# CipherSuite TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA      = {0xC0,0x36};
+# CipherSuite TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256   = {0xC0,0x37};
+# CipherSuite TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384   = {0xC0,0x38};
+# CipherSuite TLS_ECDHE_PSK_WITH_NULL_SHA             = {0xC0,0x39};
+# CipherSuite TLS_ECDHE_PSK_WITH_NULL_SHA256          = {0xC0,0x3A};
+# CipherSuite TLS_ECDHE_PSK_WITH_NULL_SHA384          = {0xC0,0x3B};
+   '0x0300C033' => [qw(ECDHE_PSK_WITH_RC4_128_SHA          ECDHE-PSK-RC4-SHA)],
+   '0x0300C034' => [qw(ECDHE_PSK_WITH_3DES_EDE_CBC_SHA     ECDHE-PSK-3DES-SHA)],
+   '0x0300C035' => [qw(ECDHE_PSK_WITH_AES_128_CBC_SHA      ECDHE-PSK-AES128-SHA)],
+   '0x0300C036' => [qw(ECDHE_PSK_WITH_AES_256_CBC_SHA      ECDHE-PSK-AES256-SHA)],
+   '0x0300C037' => [qw(ECDHE_PSK_WITH_AES_128_CBC_SHA256   ECDHE-PSK-AES128-SHA256)],
+   '0x0300C038' => [qw(ECDHE_PSK_WITH_AES_256_CBC_SHA384   ECDHE-PSK-AES256-SHA384)],
+   '0x0300C039' => [qw(ECDHE_PSK_WITH_NULL_SHA             ECDHE-PSK-SHA)],
+   '0x0300C03A' => [qw(ECDHE_PSK_WITH_NULL_SHA256          ECDHE-PSK-SHA256)],
+   '0x0300C03B' => [qw(ECDHE_PSK_WITH_NULL_SHA384          ECDHE-PSK-SHA384)],
+
+# RFC 6209 (To be done)
+# CipherSuite TLS_RSA_WITH_ARIA_128_CBC_SHA256         = { 0xC0,0x3C };
+# CipherSuite TLS_RSA_WITH_ARIA_256_CBC_SHA384         = { 0xC0,0x3D };
+# CipherSuite TLS_DH_DSS_WITH_ARIA_128_CBC_SHA256      = { 0xC0,0x3E };
+# CipherSuite TLS_DH_DSS_WITH_ARIA_256_CBC_SHA384      = { 0xC0,0x3F };
+# CipherSuite TLS_DH_RSA_WITH_ARIA_128_CBC_SHA256      = { 0xC0,0x40 };
+# CipherSuite TLS_DH_RSA_WITH_ARIA_256_CBC_SHA384      = { 0xC0,0x41 };
+# CipherSuite TLS_DHE_DSS_WITH_ARIA_128_CBC_SHA256     = { 0xC0,0x42 };
+# CipherSuite TLS_DHE_DSS_WITH_ARIA_256_CBC_SHA384     = { 0xC0,0x43 };
+# CipherSuite TLS_DHE_RSA_WITH_ARIA_128_CBC_SHA256     = { 0xC0,0x44 };
+   '0x0300C03C'=>[qw(RSA_WITH_ARIA_128_CBC_SHA256          RSA-ARIA128-SHA256)],
+   '0x0300C03D'=>[qw(RSA_WITH_ARIA_256_CBC_SHA384          RSA-ARIA256-SHA384)],
+   '0x0300C03E'=>[qw(DH_DSS_WITH_ARIA_128_CBC_SHA256       DH-DSS-ARIA128-SHA256)],
+   '0x0300C03F'=>[qw(DH_DSS_WITH_ARIA_256_CBC_SHA384       DH-DSS-ARIA256-SHA384)],
+   '0x0300C040'=>[qw(DH_RSA_WITH_ARIA_128_CBC_SHA256       DH-RSA-ARIA128-SHA256)],
+   '0x0300C041'=>[qw(DH_RSA_WITH_ARIA_256_CBC_SHA384       DH-RSA-ARIA256-SHA384)],
+   '0x0300C042'=>[qw(DHE_DSS_WITH_ARIA_128_CBC_SHA256      DHE-DSS-ARIA128-SHA256)],
+   '0x0300C043'=>[qw(DHE_DSS_WITH_ARIA_256_CBC_SHA384      DHE-DSS-ARIA256-SHA384)],
+   '0x0300C044'=>[qw(DHE_RSA_WITH_ARIA_128_CBC_SHA256      DHE-RSA-ARIA128-SHA256)],
+
+# CipherSuite TLS_DHE_RSA_WITH_ARIA_256_CBC_SHA384     = { 0xC0,0x45 };
+# CipherSuite TLS_DH_anon_WITH_ARIA_128_CBC_SHA256     = { 0xC0,0x46 };
+# CipherSuite TLS_DH_anon_WITH_ARIA_256_CBC_SHA384     = { 0xC0,0x47 };
+   '0x0300C045'=>[qw(DHE_RSA_WITH_ARIA_256_CBC_SHA384      DHE-RSA-ARIA256-SHA384)],
+   '0x0300C046'=>[qw(DH_anon_WITH_ARIA_128_CBC_SHA256      ADH-ARIA128-SHA256)],
+   '0x0300C047'=>[qw(DH_anon_WITH_ARIA_256_CBC_SHA384      ADH-ARIA256-SHA384)],
+
+# CipherSuite TLS_ECDHE_ECDSA_WITH_ARIA_128_CBC_SHA256 = { 0xC0,0x48 };
+# CipherSuite TLS_ECDHE_ECDSA_WITH_ARIA_256_CBC_SHA384 = { 0xC0,0x49 };
+# CipherSuite TLS_ECDH_ECDSA_WITH_ARIA_128_CBC_SHA256  = { 0xC0,0x4A };
+# CipherSuite TLS_ECDH_ECDSA_WITH_ARIA_256_CBC_SHA384  = { 0xC0,0x4B };
+# CipherSuite TLS_ECDHE_RSA_WITH_ARIA_128_CBC_SHA256   = { 0xC0,0x4C };
+# CipherSuite TLS_ECDHE_RSA_WITH_ARIA_256_CBC_SHA384   = { 0xC0,0x4D };
+# CipherSuite TLS_ECDH_RSA_WITH_ARIA_128_CBC_SHA256    = { 0xC0,0x4E };
+# CipherSuite TLS_ECDH_RSA_WITH_ARIA_256_CBC_SHA384    = { 0xC0,0x4F };
+   '0x0300C048'=>[qw(ECDHE_ECDSA_WITH_ARIA_128_CBC_SHA256  ECDHE-ECDSA-ARIA128-SHA256)],
+   '0x0300C049'=>[qw(ECDHE_ECDSA_WITH_ARIA_256_CBC_SHA384  ECDHE-ECDSA-ARIA256-SHA384)],
+   '0x0300C04A'=>[qw(ECDH_ECDSA_WITH_ARIA_128_CBC_SHA256   ECDH-ECDSA-ARIA128-SHA256)],
+   '0x0300C04B'=>[qw(ECDH_ECDSA_WITH_ARIA_256_CBC_SHA384   ECDH-ECDSA-ARIA256-SHA384)],
+   '0x0300C04C'=>[qw(ECDHE_RSA_WITH_ARIA_128_CBC_SHA256    ECDHE-RSA-ARIA128-SHA256)],
+   '0x0300C04D'=>[qw(ECDHE_RSA_WITH_ARIA_256_CBC_SHA384    ECDHE-RSA-ARIA256-SHA384)],
+   '0x0300C04E'=>[qw(ECDH_RSA_WITH_ARIA_128_CBC_SHA256     ECDH-RSA-ARIA128-SHA256)],
+   '0x0300C04F'=>[qw(ECDH_RSA_WITH_ARIA_256_CBC_SHA384     ECDH-RSA-ARIA256-SHA384)],
+
+# CipherSuite TLS_RSA_WITH_ARIA_128_GCM_SHA256         = { 0xC0,0x50 };
+# CipherSuite TLS_RSA_WITH_ARIA_256_GCM_SHA384         = { 0xC0,0x51 };
+# CipherSuite TLS_DHE_RSA_WITH_ARIA_128_GCM_SHA256     = { 0xC0,0x52 };
+# CipherSuite TLS_DHE_RSA_WITH_ARIA_256_GCM_SHA384     = { 0xC0,0x53 };
+# CipherSuite TLS_DH_RSA_WITH_ARIA_128_GCM_SHA256      = { 0xC0,0x54 };
+# CipherSuite TLS_DH_RSA_WITH_ARIA_256_GCM_SHA384      = { 0xC0,0x55 };
+# CipherSuite TLS_DHE_DSS_WITH_ARIA_128_GCM_SHA256     = { 0xC0,0x56 };
+# CipherSuite TLS_DHE_DSS_WITH_ARIA_256_GCM_SHA384     = { 0xC0,0x57 };
+# CipherSuite TLS_DH_DSS_WITH_ARIA_128_GCM_SHA256      = { 0xC0,0x58 };
+# CipherSuite TLS_DH_DSS_WITH_ARIA_256_GCM_SHA384      = { 0xC0,0x59 };
+# CipherSuite TLS_DH_anon_WITH_ARIA_128_GCM_SHA256     = { 0xC0,0x5A };
+# CipherSuite TLS_DH_anon_WITH_ARIA_256_GCM_SHA384     = { 0xC0,0x5B };
+   '0x0300C050'=>[qw(RSA_WITH_ARIA_128_GCM_SHA256          RSA-ARIA128-GCM-SHA256)],
+   '0x0300C051'=>[qw(RSA_WITH_ARIA_256_GCM_SHA384          RSA-ARIA256-GCM-SHA384)],
+   '0x0300C052'=>[qw(DHE_RSA_WITH_ARIA_128_GCM_SHA256      DHE-RSA-ARIA128-GCM-SHA256)],
+   '0x0300C053'=>[qw(DHE_RSA_WITH_ARIA_256_GCM_SHA384      DHE-RSA-ARIA256-GCM-SHA384)],
+   '0x0300C054'=>[qw(DH_RSA_WITH_ARIA_128_GCM_SHA256       DH-RSA-ARIA128-GCM-SHA256)],
+   '0x0300C055'=>[qw(DH_RSA_WITH_ARIA_256_GCM_SHA384       DH-RSA-ARIA256-GCM-SHA384)],
+   '0x0300C056'=>[qw(DHE_DSS_WITH_ARIA_128_GCM_SHA256      DHE-DSS-ARIA128-GCM-SHA256)],
+   '0x0300C057'=>[qw(DHE_DSS_WITH_ARIA_256_GCM_SHA384      DHE-DSS-ARIA256-GCM-SHA384)],
+   '0x0300C058'=>[qw(DH_DSS_WITH_ARIA_128_GCM_SHA256       DH-DSS-ARIA128-GCM-SHA256)],
+   '0x0300C059'=>[qw(DH_DSS_WITH_ARIA_256_GCM_SHA384       DH-DSS-ARIA256-GCM-SHA384)],
+   '0x0300C05A'=>[qw(DH_anon_WITH_ARIA_128_GCM_SHA256      ADH-ARIA128-GCM-SHA256)],
+   '0x0300C05B'=>[qw(DH_anon_WITH_ARIA_256_GCM_SHA384      ADH-ARIA256-GCM-SHA384)],
+
+# CipherSuite TLS_ECDHE_ECDSA_WITH_ARIA_128_GCM_SHA256 = { 0xC0,0x5C };
+# CipherSuite TLS_ECDHE_ECDSA_WITH_ARIA_256_GCM_SHA384 = { 0xC0,0x5D };
+# CipherSuite TLS_ECDH_ECDSA_WITH_ARIA_128_GCM_SHA256  = { 0xC0,0x5E };
+# CipherSuite TLS_ECDH_ECDSA_WITH_ARIA_256_GCM_SHA384  = { 0xC0,0x5F };
+# CipherSuite TLS_ECDHE_RSA_WITH_ARIA_128_GCM_SHA256   = { 0xC0,0x60 };
+# CipherSuite TLS_ECDHE_RSA_WITH_ARIA_256_GCM_SHA384   = { 0xC0,0x61 };
+# CipherSuite TLS_ECDH_RSA_WITH_ARIA_128_GCM_SHA256    = { 0xC0,0x62 };
+# CipherSuite TLS_ECDH_RSA_WITH_ARIA_256_GCM_SHA384    = { 0xC0,0x63 };
+   '0x0300C05C'=>[qw(ECDHE_ECDSA_WITH_ARIA_128_GCM_SHA256  ECDHE-ECDSA-ARIA128-GCM-SHA256)],
+   '0x0300C05D'=>[qw(ECDHE_ECDSA_WITH_ARIA_256_GCM_SHA384  ECDHE-ECDSA-ARIA256-GCM-SHA384)],
+   '0x0300C05E'=>[qw(ECDH_ECDSA_WITH_ARIA_128_GCM_SHA256   ECDH-ECDSA-ARIA128-GCM-SHA256)],
+   '0x0300C05F'=>[qw(ECDH_ECDSA_WITH_ARIA_256_GCM_SHA384   ECDH-ECDSA-ARIA256-GCM-SHA384)],
+   '0x0300C060'=>[qw(ECDHE_RSA_WITH_ARIA_128_GCM_SHA256    ECDHE-RSA-ARIA128-GCM-SHA256)],
+   '0x0300C061'=>[qw(ECDHE_RSA_WITH_ARIA_256_GCM_SHA384    ECDHE-RSA-ARIA256-GCM-SHA384)],
+   '0x0300C062'=>[qw(ECDH_RSA_WITH_ARIA_128_GCM_SHA256     ECDH-RSA-ARIA128-GCM-SHA256)],
+   '0x0300C063'=>[qw(ECDH_RSA_WITH_ARIA_256_GCM_SHA384     ECDH-RSA-ARIA256-GCM-SHA384)],
+
+# CipherSuite TLS_PSK_WITH_ARIA_128_CBC_SHA256         = { 0xC0,0x64 };
+# CipherSuite TLS_PSK_WITH_ARIA_256_CBC_SHA384         = { 0xC0,0x65 };
+# CipherSuite TLS_DHE_PSK_WITH_ARIA_128_CBC_SHA256     = { 0xC0,0x66 };
+# CipherSuite TLS_DHE_PSK_WITH_ARIA_256_CBC_SHA384     = { 0xC0,0x67 };
+# CipherSuite TLS_RSA_PSK_WITH_ARIA_128_CBC_SHA256     = { 0xC0,0x68 };
+# CipherSuite TLS_RSA_PSK_WITH_ARIA_256_CBC_SHA384     = { 0xC0,0x69 };
+# CipherSuite TLS_PSK_WITH_ARIA_128_GCM_SHA256         = { 0xC0,0x6A };
+# CipherSuite TLS_PSK_WITH_ARIA_256_GCM_SHA384         = { 0xC0,0x6B };
+# CipherSuite TLS_DHE_PSK_WITH_ARIA_128_GCM_SHA256     = { 0xC0,0x6C };
+# CipherSuite TLS_DHE_PSK_WITH_ARIA_256_GCM_SHA384     = { 0xC0,0x6D };
+# CipherSuite TLS_RSA_PSK_WITH_ARIA_128_GCM_SHA256     = { 0xC0,0x6E };
+# CipherSuite TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384     = { 0xC0,0x6F };
+# CipherSuite TLS_ECDHE_PSK_WITH_ARIA_128_CBC_SHA256   = { 0xC0,0x70 };
+# CipherSuite TLS_ECDHE_PSK_WITH_ARIA_256_CBC_SHA384   = { 0xC0,0x71 };
+   '0x0300C064'=>[qw(PSK_WITH_ARIA_128_CBC_SHA256          PSK-ARIA128-SHA-56)],
+   '0x0300C065'=>[qw(PSK_WITH_ARIA_256_CBC_SHA384          PSK-ARIA256-SHA384)],
+   '0x0300C066'=>[qw(DHE_PSK_WITH_ARIA_128_CBC_SHA256      DHE-PSK-ARIA128-SHA256)],
+   '0x0300C067'=>[qw(DHE_PSK_WITH_ARIA_256_CBC_SHA384      DHE-PSK-ARIA256-SHA384)],
+   '0x0300C068'=>[qw(RSA_PSK_WITH_ARIA_128_CBC_SHA256      RSA-PSK-ARIA128-SHA256)],
+   '0x0300C069'=>[qw(RSA_PSK_WITH_ARIA_256_CBC_SHA384      RSA-PSK-ARIA256-SHA384)],
+   '0x0300C06A'=>[qw(PSK_WITH_ARIA_128_GCM_SHA256          PSK-ARIA128-GCM-SHA256)],
+   '0x0300C06B'=>[qw(PSK_WITH_ARIA_256_GCM_SHA384          PSK-ARIA256-GCM-SHA384)],
+   '0x0300C06C'=>[qw(DHE_PSK_WITH_ARIA_128_GCM_SHA256      DHE-PSK-ARIA128-GCM-SHA256)],
+   '0x0300C06D'=>[qw(DHE_PSK_WITH_ARIA_256_GCM_SHA384      DHE-PSK-ARIA256-GCM-SHA384)],
+   '0x0300C06E'=>[qw(RSA_PSK_WITH_ARIA_128_GCM_SHA256      RSA-PSK-ARIA128-GCM-SHA256)],
+   '0x0300C06F'=>[qw(RSA_PSK_WITH_ARIA_256_GCM_SHA384      RSA-PSK-ARIA256-GCM-SHA384)],
+   '0x0300C070'=>[qw(ECDHE_PSK_WITH_ARIA_128_CBC_SHA256    ECDHE-PSK-ARIA128-SHA256)],
+   '0x0300C071'=>[qw(ECDHE_PSK_WITH_ARIA_256_CBC_SHA384    ECDHE-PSK-ARIA256-SHA384)],
+
 #!#----------------------------------------+-------------+--------------------+
 ); # cipherHexHash
 
@@ -706,47 +914,48 @@ my %SSL2_CIPHER_STRINGS = (
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+
-  '0x0300001B'=> [qw(ADH_DES_192_CBC_SHA                      ADH-DES-CBC3-SHA)],
-  '0x03000019'=> [qw(ADH_DES_40_CBC_SHA                       EXP-ADH-DES-CBC-SHA)],
-  '0x0300001A'=> [qw(ADH_DES_64_CBC_SHA                       ADH-DES-CBC-SHA)],
-  '0x03000018'=> [qw(ADH_RC4_128_MD5                          ADH-RC4-MD5)],
-  '0x03000017'=> [qw(ADH_RC4_40_MD5                           EXP-ADH-RC4-MD5)],
-  '0x0300000D'=> [qw(DH_DSS_DES_192_CBC3_SHA                  DH-DSS-DES-CBC3-SHA)],
-  '0x0300000B'=> [qw(DH_DSS_DES_40_CBC_SHA                    EXP-DH-DSS-DES-CBC-SHA)],
-  '0x0300000C'=> [qw(DH_DSS_DES_64_CBC_SHA                    DH-DSS-DES-CBC-SHA)],
-  '0x03000010'=> [qw(DH_RSA_DES_192_CBC3_SHA                  DH-RSA-DES-CBC3-SHA)],
-  '0x0300000E'=> [qw(DH_RSA_DES_40_CBC_SHA                    EXP-DH-RSA-DES-CBC-SHA)],
-  '0x0300000F'=> [qw(DH_RSA_DES_64_CBC_SHA                    DH-RSA-DES-CBC-SHA)],
-  '0x03000013'=> [qw(EDH_DSS_DES_192_CBC3_SHA                 EDH-DSS-DES-CBC3-SHA)],
-  '0x03000011'=> [qw(EDH_DSS_DES_40_CBC_SHA                   EXP-EDH-DSS-DES-CBC-SHA)],
-  '0x03000012'=> [qw(EDH_DSS_DES_64_CBC_SHA                   EDH-DSS-DES-CBC-SHA)],
-  '0x03000016'=> [qw(EDH_RSA_DES_192_CBC3_SHA                 EDH-RSA-DES-CBC3-SHA)],
-  '0x03000014'=> [qw(EDH_RSA_DES_40_CBC_SHA                   EXP-EDH-RSA-DES-CBC-SHA)],
-  '0x03000015'=> [qw(EDH_RSA_DES_64_CBC_SHA                   EDH-RSA-DES-CBC-SHA)],
+  '0x0300001B'=> [qw(ADH_WITH_DES_192_CBC_SHA                 ADH-DES-CBC3-SHA)],
+  '0x03000019'=> [qw(ADH_WITH_DES_40_CBC_SHA                  EXP-ADH-DES-CBC-SHA)],
+  '0x0300001A'=> [qw(ADH_WITH_DES_64_CBC_SHA                  ADH-DES-CBC-SHA)],
+  '0x03000018'=> [qw(ADH_WITH_RC4_128_MD5                     ADH-RC4-MD5)],
+  '0x03000017'=> [qw(ADH_WITH_RC4_40_MD5                      EXP-ADH-RC4-MD5)],
+  '0x0300000D'=> [qw(DH_DSS_WITH_DES_192_CBC3_SHA             DH-DSS-DES-CBC3-SHA)],
+  '0x0300000B'=> [qw(DH_DSS_WITH_DES_40_CBC_SHA               EXP-DH-DSS-DES-CBC-SHA)],
+  '0x0300000C'=> [qw(DH_DSS_WITH_DES_64_CBC_SHA               DH-DSS-DES-CBC-SHA)],
+  '0x03000010'=> [qw(DH_RSA_WITH_DES_192_CBC3_SHA             DH-RSA-DES-CBC3-SHA)],
+  '0x0300000E'=> [qw(DH_RSA_WITH_DES_40_CBC_SHA               EXP-DH-RSA-DES-CBC-SHA)],
+  '0x0300000F'=> [qw(DH_RSA_WITH_DES_64_CBC_SHA               DH-RSA-DES-CBC-SHA)],
+  '0x03000013'=> [qw(EDH_DSS_WITH_DES_192_CBC3_SHA            EDH-DSS-DES-CBC3-SHA)],
+  '0x03000011'=> [qw(EDH_DSS_WITH_DES_40_CBC_SHA              EXP-EDH-DSS-DES-CBC-SHA)],
+  '0x03000012'=> [qw(EDH_DSS_WITH_DES_64_CBC_SHA              EDH-DSS-DES-CBC-SHA)],
+  '0x03000016'=> [qw(EDH_RSA_WITH_DES_192_CBC3_SHA            EDH-RSA-DES-CBC3-SHA)],
+  '0x03000014'=> [qw(EDH_RSA_WITH_DES_40_CBC_SHA              EXP-EDH-RSA-DES-CBC-SHA)],
+  '0x03000015'=> [qw(EDH_RSA_WITH_DES_64_CBC_SHA              EDH-RSA-DES-CBC-SHA)],
   '0x0300001D'=> [qw(FZA_DMS_FZA_SHA                          FZA-FZA-CBC-SHA)],
   '0x0300001C'=> [qw(FZA_DMS_NULL_SHA                         FZA-NULL-SHA)],
 #  '0x0300001E'=> [qw(FZA_DMS_RC4_SHA                          FZA-RC4-SHA)], #doppelt => prÃ¼fen
-  '0x03000023'=> [qw(KRB5_DES_192_CBC3_MD5                    KRB5-DES-CBC3-MD5)],
-  '0x0300001F'=> [qw(KRB5_DES_192_CBC3_SHA                    KRB5-DES-CBC3-SHA)],
-  '0x03000029'=> [qw(KRB5_DES_40_CBC_MD5                      EXP-KRB5-DES-CBC-MD5)],
-  '0x03000026'=> [qw(KRB5_DES_40_CBC_SHA                      EXP-KRB5-DES-CBC-SHA)],
-  '0x03000022'=> [qw(KRB5_DES_64_CBC_MD5                      KRB5-DES-CBC-MD5)],
-  '0x0300001E'=> [qw(KRB5_DES_64_CBC_SHA                      KRB5-DES-CBC-SHA)],
-  '0x03000025'=> [qw(KRB5_IDEA_128_CBC_MD5                    KRB5-IDEA-CBC-MD5)],
-  '0x03000021'=> [qw(KRB5_IDEA_128_CBC_SHA                    KRB5-IDEA-CBC-SHA)],
-  '0x0300002A'=> [qw(KRB5_RC2_40_CBC_MD5                      EXP-KRB5-RC2-CBC-MD5)],
-  '0x03000027'=> [qw(KRB5_RC2_40_CBC_SHA                      EXP-KRB5-RC2-CBC-SHA)],
-  '0x03000024'=> [qw(KRB5_RC4_128_MD5                         KRB5-RC4-MD5)],
-  '0x03000020'=> [qw(KRB5_RC4_128_SHA                         KRB5-RC4-SHA)],
-  '0x0300002B'=> [qw(KRB5_RC4_40_MD5                          EXP-KRB5-RC4-MD5)],
-  '0x03000028'=> [qw(KRB5_RC4_40_SHA                          EXP-KRB5-RC4-SHA)],
-  '0x0300000A'=> [qw(RSA_DES_192_CBC3_SHA                     DES-CBC3-SHA)],
-  '0x03000008'=> [qw(RSA_DES_40_CBC_SHA                       EXP-DES-CBC-SHA)],
-  '0x03000009'=> [qw(RSA_DES_64_CBC_SHA                       DES-CBC-SHA)],
-  '0x03000007'=> [qw(RSA_IDEA_128_SHA                         IDEA-CBC-SHA)],
-  '0x03000001'=> [qw(RSA_NULL_MD5                             NULL-MD5)],
-  '0x03000002'=> [qw(RSA_NULL_SHA                             NULL-SHA)],
-  '0x030000FF'=> [qw(EMPTY_RENEGOTIATION_INFO_SCSV            SCSV)],
+  '0x03000023'=> [qw(KRB5_WITH_DES_192_CBC3_MD5               KRB5-DES-CBC3-MD5)],
+  '0x0300001F'=> [qw(KRB5_WITH_DES_192_CBC3_SHA               KRB5-DES-CBC3-SHA)],
+  '0x03000029'=> [qw(KRB5_WITH_DES_40_CBC_MD5                 EXP-KRB5-DES-CBC-MD5)],
+  '0x03000026'=> [qw(KRB5_WITH_DES_40_CBC_SHA                 EXP-KRB5-DES-CBC-SHA)],
+  '0x03000022'=> [qw(KRB5_WITH_DES_64_CBC_MD5                 KRB5-DES-CBC-MD5)],
+  '0x0300001E'=> [qw(KRB5_WITH_DES_64_CBC_SHA                 KRB5-DES-CBC-SHA)],
+  '0x03000025'=> [qw(KRB5_WITH_IDEA_128_CBC_MD5               KRB5-IDEA-CBC-MD5)],
+  '0x03000021'=> [qw(KRB5_WITH_IDEA_128_CBC_SHA               KRB5-IDEA-CBC-SHA)],
+  '0x0300002A'=> [qw(KRB5_WITH_RC2_40_CBC_MD5                 EXP-KRB5-RC2-CBC-MD5)],
+  '0x03000027'=> [qw(KRB5_WITH_RC2_40_CBC_SHA                 EXP-KRB5-RC2-CBC-SHA)],
+  '0x03000024'=> [qw(KRB5_WITH_RC4_128_MD5                    KRB5-RC4-MD5)],
+  '0x03000020'=> [qw(KRB5_WITH_RC4_128_SHA                    KRB5-RC4-SHA)],
+  '0x0300002B'=> [qw(KRB5_WITH_RC4_40_MD5                     EXP-KRB5-RC4-MD5)],
+  '0x03000028'=> [qw(KRB5_WITH_RC4_40_SHA                     EXP-KRB5-RC4-SHA)],
+  '0x0300000A'=> [qw(RSA_WITH_DES_192_CBC3_SHA                DES-CBC3-SHA)],
+  '0x03000008'=> [qw(RSA_WITH_DES_40_CBC_SHA                  EXP-DES-CBC-SHA)],
+  '0x03000009'=> [qw(RSA_WITH_DES_64_CBC_SHA                  DES-CBC-SHA)],
+  '0x03000007'=> [qw(RSA_WITH_IDEA_128_SHA                    IDEA-CBC-SHA)],
+  '0x03000000'=> [qw(NULL_WITH_NULL_NULL                      NULL-NULL)],
+  '0x03000001'=> [qw(RSA_WITH_NULL_MD5                        NULL-MD5)],
+  '0x03000002'=> [qw(RSA_WITH_NULL_SHA                        NULL-SHA)],
+  '0x030000FF'=> [qw(EMPTY_RENEGOTIATION_INFO_SCSV            SCSV-RENEG)],
 );
 
 
@@ -757,18 +966,19 @@ sub version { # Version of SSLhello
     _trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
 #   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
 #    print "\$main::cfg\{\'trace\'\}=$main::cfg{'trace'}\n";
-     _trace4 ("retry=$Net::SSLhello::retry\n") if (defined($Net::SSLhello::retry));
-     _trace4 ("timeout=$Net::SSLhello::timeout\n") if (defined($Net::SSLhello::timeout));
-     _trace4 ("trace=$Net::SSLhello::trace\n") if (defined($Net::SSLhello::trace));
-     _trace4 ("usereneg=$Net::SSLhello::usereneg\n") if (defined($Net::SSLhello::usereneg));
-     _trace4 ("double_reneg=$Net::SSLhello::double_reneg\n") if (defined($Net::SSLhello::double_reneg));
-     _trace4 ("usesni=$Net::SSLhello::usesni\n") if (defined($Net::SSLhello::usesni));
-     _trace4 ("starttls=$Net::SSLhello::starttls\n") if (defined($Net::SSLhello::starttls));
-     _trace4 ("starttlsType=$Net::SSLhello::starttlsType\n") if (defined($Net::SSLhello::starttlsType));
-     _trace4 ("experimental=$Net::SSLhello::experimental\n") if (defined($Net::SSLhello::experimental));
-     _trace4 ("proxyhost=$Net::SSLhello::proxyhost\n") if (defined($Net::SSLhello::proxyhost));
-     _trace4 ("proxyport=$Net::SSLhello::proxyport\n") if (defined($Net::SSLhello::proxyport));
-     _trace4_("------------------------------------------------------------------------------------\n");
+     _trace2 ("retry=$Net::SSLhello::retry\n") if (defined($Net::SSLhello::retry));
+     _trace2 ("timeout=$Net::SSLhello::timeout\n") if (defined($Net::SSLhello::timeout));
+     _trace2 ("trace=$Net::SSLhello::trace\n") if (defined($Net::SSLhello::trace));
+     _trace2 ("usereneg=$Net::SSLhello::usereneg\n") if (defined($Net::SSLhello::usereneg));
+     _trace2 ("double_reneg=$Net::SSLhello::double_reneg\n") if (defined($Net::SSLhello::double_reneg));
+     _trace2 ("usesni=$Net::SSLhello::usesni\n") if (defined($Net::SSLhello::usesni));
+     _trace2 ("starttls=$Net::SSLhello::starttls\n") if (defined($Net::SSLhello::starttls));
+     _trace2 ("starttlsType=$Net::SSLhello::starttlsType\n") if (defined($Net::SSLhello::starttlsType));
+     _trace2 ("experimental=$Net::SSLhello::experimental\n") if (defined($Net::SSLhello::experimental));
+     _trace2 ("proxyhost=$Net::SSLhello::proxyhost\n") if (defined($Net::SSLhello::proxyhost));
+     _trace2 ("proxyport=$Net::SSLhello::proxyport\n") if (defined($Net::SSLhello::proxyport));
+     _trace2 ("max_ciphers=$Net::SSLhello::max_ciphers\n") if (defined($Net::SSLhello::max_ciphers));
+     _trace2_("------------------------------------------------------------------------------------\n");
 #    _trace("_trace\n");
 #    _trace_("_trace_\n");
 #    _trace1("_trace1\n");
@@ -892,7 +1102,8 @@ sub checkSSLciphers ($$$@) {
     my $i=0;
     my $anzahl = 0;
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
-        
+    my $maxCiphers = $Net::SSLhello::max_ciphers;
+
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
            foreach $cipher_str (@cipher_str_array) {    
@@ -904,7 +1115,7 @@ sub checkSSLciphers ($$$@) {
         }
         _trace_(") {\n");
         $cipher_str="";
-    }    
+    }
 
     if ($protocol == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
         _trace4_ ("\n");
@@ -946,9 +1157,9 @@ sub checkSSLciphers ($$$@) {
             }
             _trace4_ ("\n");
             
-            push (@cipherSpecArray , $cipher_str); # add Cipher to next Test
+            push (@cipherSpecArray, $cipher_str); # add Cipher to next Test
             $arrayLen = @cipherSpecArray;
-            if ( $arrayLen >= _MY_SSL3_MAX_CIPHERS) { # test up to _MY_SSL3_MAX_CIPHERS with 1 doCheckSSLciphers (=> Client Hello)
+            if ( $arrayLen >= $maxCiphers) { # test up to ... Ciphers ($Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
                 $@=""; # reset Error-Msg
                 $cipher_spec = join ("",@cipherSpecArray); # All Ciphers to test in this round
                 
@@ -975,24 +1186,44 @@ sub checkSSLciphers ($$$@) {
                     _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
                     @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted Cipher from ToDo-Array '@cipherSpecArray'
                     push (@acceptedCipherArray, $acceptedCipher); # add the Cipher to the List of accepted Ciphers 
-                } else {
+                } else { # no Ciphers accepted
                     _trace1_ ("=> no Cipher found\n");
-                    @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
-                    if ( ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Errors -> Useless to check more ciphers
-                        _trace2 (">>> checkSSLciphers (1): '$@'\n"); 
-                        warn ("**WARNING: checkSSLciphers => Exit Loop (1)");
+                    if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
+                        _trace2 (">>> checkSSLciphers (1.1): '$@'\n"); 
+                        warn ("**WARNING: checkSSLciphers => Exit Loop (1.1)");
+                        @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                         last;
                     } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                        _trace1 (">>> checkSSLciphers (2): '$@'\n"); 
+                        _trace1 (">>> checkSSLciphers (1.2): '$@'\n"); 
+                        @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                         last;
-                    } else {
+                    } elsif ( ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Errors -> Useless to check more ciphers
+                        _trace2 (">>> checkSSLciphers (1.3): '$@'\n"); 
+                        warn ("**WARNING: checkSSLciphers => Exit Loop (1.3)");
+                        @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
+                        last;
+                    } elsif ( $@ =~ /\-> Received NO Data/) { # Some Servers 'Respond' by closing the TCP connection => Check each Cipher individually
+                        if ($Net::SSLhello::noDataEqNoCipher == 1) { # Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported
+                            _trace1 (">>> checkSSLciphers (1.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
+                            @cipherSpecArray =(); # => Empty @cipherSpecArray
+                            $@=""; # reset Error-Msg
+                            next;
+                        } else { # noDataEqNoCipher == 0
+                            _trace2 (">>> checkSSLciphers (1.5): '$@', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
+                            warn ("**WARNING: checkSSLciphers (1.5): '$@', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported."); 
+                        }
+                    } elsif ($@) { # Error found
+                         _trace2 (">>> checkSSLciphers (1.6): Unexpected Error Messagege ignored: '$@'\n");
+                         warn (">>> checkSSLciphers (1.6): Unexpected Error Messagege ignored: '$@'\n"); 
                         $@=""; # reset Error-Msg
-                    }
-                }    
-            }
-        }
+                    } # else: no Cipher accepted but no Error
+                    @cipherSpecArray =(); # => Empty @cipherSpecArray
+                } # end: if 'no ciphers accepted'
+            } # end: Test Ciphers
+        } # end: foreach $cipher_str...
+
         while ( (@cipherSpecArray > 0) && (!$@) ) { # there are still ciphers to test in this last round
-            $cipher_spec = join ("",@cipherSpecArray); # All Ciphers to test in this round
+            $cipher_spec = join ("",@cipherSpecArray); # All Ciphers to test in this round;
             if ($Net::SSLhello::trace > 1) { #Print Ciphers that are tested this round:
                 $i = 0;
                 _trace ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (2):");
@@ -1012,18 +1243,40 @@ sub checkSSLciphers ($$$@) {
                 _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
                 @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted Cipher from ToDo-Array '@cipherSpecArray'
                 push (@acceptedCipherArray, $acceptedCipher); # add the Cipher to the List of accepted Ciphers 
-            } else {
+            } else { # no Cipher acepted
                 _trace1_ ("=> no Cipher found\n");
-                @cipherSpecArray =(); # Server did not Accepty any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
-                if ( ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Warning -> Stop this Host
-                    warn ("**WARNING: checkSSLciphers => Exit Loop (2)");
+                if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
+                    _trace2 (">>> checkSSLciphers (2.1): '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers => Exit Loop (2.1)");
+                    @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
+                    last;
                 } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                    _trace1 ("**checkSSLciphers => Exit Loop (3)"); 
+                    _trace1 ("**checkSSLciphers => Exit Loop (2.2)"); 
+                    @cipherSpecArray =(); # Server did not Accepty any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
+                    last; # no more Ciphers to Test
+                } elsif ( ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Errors -> Useless to check more ciphers
+                    _trace2 (">>> checkSSLciphers (2.3): '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers => Exit Loop (2.3)");
+                    @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
+                    last;
+                } elsif ( $@ =~ /\-> Received NO Data/) { # Some Servers 'Respond' by closing the TCP connection => Check each Cipher individually
+                    if ($Net::SSLhello::noDataEqNoCipher == 1) { # Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported
+                        _trace1 (">>> checkSSLciphers (2.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
+                        @cipherSpecArray =(); # => Empty @cipherSpecArray
+                        $@="";
+                        next;  # here: eq last 
+                    } else { # noDataEqNoCipher == 0
+                        _trace2 (">>> checkSSLciphers (2.5): '$@', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n"); 
+                        warn ("**WARNING: checkSSLciphers (2.5): '$@', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported."); 
+                    }
+                } elsif ($@) { # Error found
+                    _trace2 (">>> checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$@'\n");
+                    warn (">>> checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$@'\n"); 
+                    $@=""; # reset Error-Msg
                 }
-                $@=""; # reset Error-Msg
-                last; # no more Ciphers to Test
-            }    
-        }
+                @cipherSpecArray =(); # => Empty @cipherSpecArray
+            }
+        } # end while ...
 
         if ($Net::SSLhello::trace > 0) { #about: _trace
             $i = 0;
@@ -1052,16 +1305,32 @@ sub checkSSLciphers ($$$@) {
             $@=""; # reset Error-Msg
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str); # collect Accepted Ciphers by Priority
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
-            if ($@) { 
-                _trace2 (">>> checkSSLciphers (4): '$@'\n"); 
-                if ( ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {
-                    warn ("**WARNING: => Unexpected Loss of Connection while checking the priority of the ciphers: Exit Loop (1)");
+            if ($@) {
+                _trace2 (">>> checkSSLciphers (3): '$@'\n");
+                # list untested Ciphers
+                $i = 0;
+                my $str=""; #output string with list of ciphers
+                foreach $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
+                    if (($i++) == 0) { #  1st element
+                        $str .= ">" . $cipher_str . "<";
+                    } elsif (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0) { #  'print' up to '_MY_PRINT_CIPHERS_PER_LINE' Ciphers per line
+                        $str .= "\n   >" . $cipher_str . "<";
+                    } else {
+                        $str .= " >" . $cipher_str . "<";
+                    }
+                }
+                # End: list untested ciphers
+                if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {
+                    _trace1 ("checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (3.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'");
                     $@=""; # reset Error-Msg
                     last;
                 } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                    _trace1 (">>> checkSSLciphers (5): '$@'\n"); 
+                    _trace1 ("checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit Loop. Reason: '$@'");
+                    $@=""; # reset Error-Msg
                     last;
-                } 
+                }
             }
             if ($acceptedCipher) { # received an accepted Cipher
                 push (@acceptedCipherSortedArray, $acceptedCipher); # add found Cipher to sorted List
@@ -1087,22 +1356,37 @@ sub checkSSLciphers ($$$@) {
                 $cipher_str = join ("",@acceptedCipherArray); # Check Prio for next Ciphers
             } else { # nothing received => Lost Connection
                 _trace2 (">>> checkSSLciphers (6): '$@'\n");
-                if ( ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {
-                    warn ("**WARNING: => Unexpected Loss of Connection while checking the priority of the ciphers: Exit Loop (2)");
+                # list untested Ciphers
+                $i = 0;
+                my $str=""; #output string with list of ciphers
+                foreach $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
+                    if (($i++) == 0) { #  1st element
+                        $str .= ">" . $cipher_str . "<";
+                    } elsif (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0) { #  'print' up to '_MY_PRINT_CIPHERS_PER_LINE' Ciphers per line
+                        $str .= "\n   >" . $cipher_str . "<";
+                    } else {
+                        $str .= " >" . $cipher_str . "<";
+                    }
+                }
+                # End: list untested ciphers
+                if (  ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) || ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {
+                    _trace1 ("checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (6.1): => Unexpected Loss of Connection while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'");
                     $@=""; # reset Error-Msg
                     last;
-                } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                    _trace1 (">>> checkSSLciphers (7): '$@'\n");
-                    $@=""; # reset Error-Msg                    
+                 } elsif ($@) { #any other Error like: #} elsif ( ( $@ =~ /\-> Received NO Data/) || ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) {$
+                    _trace1 ("checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
+                    warn ("**WARNING: checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit Loop. Reason: '$@'");
+                    $@=""; # reset Error-Msg
                     last;
                 } 
             }
         } # end while-Loop
-        _trace4 ("#   Accepted (sorted) Ciphers [cipher1 = cipher 2 => sorted by Server]:\n");
-### TBD: _trace4: print all Ciphers?!!
+    ###      _trace4 ("#   Accepted (sorted) Ciphers [cipher1 = cipher 2 => sorted by Server]:\n");
+    ### TBD: _trace4: print all Ciphers?!!
         _trace(" checkSSLciphers: }\n\n");
         return (compileTLSCipherArray (join ("",@acceptedCipherSortedArray))); 
-       }
+    }
 }
 
 sub openTcpSSLconnection ($$) {
@@ -1120,7 +1404,7 @@ sub openTcpSSLconnection ($$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $starttlsType=0; # SMTP 
-#   11 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP:
+#   11 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP
 
     my @starttls_matrix = 
         ( ["SMTP", 
@@ -1170,7 +1454,7 @@ sub openTcpSSLconnection ($$) {
             "",                                         # Phase2: send view CAPABILITY (optional) 
             "",                                         # Phase3: receive List of should include STLS
             "AUTH TLS\r\n",                             # Phase4: send    'AUTH TLS' (-> STARTTLS)'
-            ".*?(?:^|\n)234\\s+AUTH\\s+TLS"             # Phase5: receive '234 AUTH TLS successful' 
+            ".*?(?:^|\n)234\\s+"                        # Phase5: receive '234 AUTH TLS successful' 
           ],
           ["LDAP",                                      # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'$
             "",                                         # Phase1: receive -unused-$
@@ -1185,7 +1469,7 @@ sub openTcpSSLconnection ($$) {
             "",                                         # Phase3: receive -unused-$
             "\x03\x00\x00\x13\x0E\xE0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x0B\x00\x00\x00", # Phase4: send    'STARTTLS'; http://msdn.microsoft.com/en-us/library/cc240500.aspx
             "\\x03\\x00\\x00\\x13\\x0E\\xD0.....\\x02.\\x08\\x00[\\x01\\x02\\x08]\\x00\\x00\\x00", # Phase5: receive 'Start TLS request accepted' = [PROTOCOL_SSL, PROTOCOL_HYBRID, PROTOCOL_HYBRID_EX] http://msdn.microsoft.com/en-us/library/cc240506.aspx
-          ], #  Typical ErrorMsg if STARTLS is *not* supported:  ---> O-Saft::Net::SSLhello ::openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: 19 Bytes
+          ], #  Typical ErrorMsg if STARTTLS is *not* supported:  ---> O-Saft::Net::SSLhello ::openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: 19 Bytes
              #   >0x03 0x00 0x00 0x13 0x0E 0xD0 0x00 0x00 0x12 0x34 0x00 0x03 0x00 0x08 0x00 0x02 0x00 0x00 0x00 <  #### SSL_NOT_ALLOWED_BY_SERVER; http://msdn.microsoft.com/en-us/library/cc240507.aspx
           ["RDP_SSL",                                   # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             "",                                         # Phase1: receive -unused-$
@@ -1231,9 +1515,9 @@ sub openTcpSSLconnection ($$) {
         if ($retryCnt >0) { # Retry 
             if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
                 _trace1_ ("\n") if ($retryCnt == 1);
-                _trace1 ("doCheckSSLciphers: $retryCnt. Retry to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
+                _trace1 ("openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
             } else {
-                _trace1 ("doCheckSSLciphers: $retryCnt. Retry to connect and open a SSL connection to $host:$port\n");
+                _trace1 ("openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port\n");
             } 
         }
         eval  {
@@ -1260,19 +1544,19 @@ sub openTcpSSLconnection ($$) {
                 alarm (0);
             }; # Do NOT forget the ;
             if ($@) { # no Connect
-                close ($socket) or warn("**WARNING: doCheckSSLciphers: $@; Can't close socket, too: $!");
-                warn ("*** WARNING: doCheckSSLciphers: $@");
-                warn ("*** Fatal Error: doCheckSSLciphers: No connection to the Proxy -> Exit");
+                close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
+                $@ .= "-> No connection to the Proxy -> Fatal Exit in openTcpSSLconnection";
+                warn ("*** WARNING: openTcpSSLconnection: $@");
                 sleep (1);
                 return (undef);
                 # exit (1); # Exit with Error
             }
             eval {
                 $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
-                _trace4 ("doCheckSSLciphers: ## ProxyConnect-Message: >$proxyConnect<\n");
+                _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
                 $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                 alarm($Net::SSLhello::timeout); # set Alarm for Connect
-                defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored ";
+                defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
                 alarm (0);
             }; # Do NOT forget the ;
             if ($@) { # no Connect
@@ -1323,12 +1607,19 @@ sub openTcpSSLconnection ($$) {
                 $connect2ip = inet_aton($host);
                 if (!defined ($connect2ip) ) {
                     $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
-                    die "Can't get the IP-Address of $host -> target $host:$port ignored";
+                     $@ = "Can't get the IP-Address of $host -> target $host:$port ignored";
+                     die "Can't get the IP-Address of $host -> target $host:$port ignored";
                 }
-                connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or  die  "Can't make a connection to $host:$port; target ignored ";
+                connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or  die  "Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ";
                 alarm (0);
             }; # Do NOT forget the ;
             if ($@) { # no Connect
+                if (defined ($connect2ip) ) {
+                    $@ .= " -> No connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> Fatal Exit in openTcpSSLconnection";
+                } else {
+                    $@ .= " -> No connection to $host:$port; -> Fatal Exit in openTcpSSLconnection";
+                }
+                _trace2 ("openTcpSSLconnection: $@\n");
                 close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
                 next; # next retry
             } else {
@@ -1346,13 +1637,13 @@ sub openTcpSSLconnection ($$) {
                 $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
                 _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
                 if  ($Net::SSLhello::experimental >0) { # experimental functionis are  activated
-                    _trace ("\nopenTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback, please\n") if ( grep(/$starttlsType/,('1', '2','3','4','5','6','7','8','9','10','11') ));
+                    _trace ("\nopenTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n") if ( grep(/$starttlsType/,('11') ));
                 } else {
-                    if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8','9','10','11') )) {
-                        if ( grep(/$starttlsType/,('1','2','3','4','5','6','7','8','9','10') )) {
-                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback\n";
-                        } else { 
-                            $@ = "openTcpSSLconnection: WARNING: use of STARTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback\n";
+                    if ( grep(/$starttlsType/,('11') )) { # ('11', '12', ...)
+                        if ( grep(/$starttlsType/,('11') )) { # experimental and untested 
+                            $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
+                        } else { # tested, but still experimental # experimental but tested 
+                            $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                         }
                         #$retryCnt = $Net::SSLhello::retry; #No more retries
                         #last;
@@ -1585,15 +1876,21 @@ sub _doCheckSSLciphers ($$$$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $segmentCnt=0;
-    
-    _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, >%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
-    $@ =""; # reset Errori-String
+
+    my %rhash = reverse %PROTOCOL_VERSION;
+    my $ssl = $rhash{$protocol};
+    if (! defined $ssl) {
+        $ssl ="--unknown Protocol--";
+    }
+
+    _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
+    $@ =""; # reset Error-String
 
     #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
     $socket=openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
 
     if ( (!defined ($socket)) || ($@) ) { # No SSL Connection 
-        $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection" unless ($@); #generic Error Message
+        $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); #generic Error Message
         warn ("**WARNING: _doCheckSSLciphers: $@\n"); 
         _trace2 ("_doCheckSSLciphers: Fatal Exit _doCheckSSLciphers }\n");
         return ("");
@@ -1602,6 +1899,7 @@ sub _doCheckSSLciphers ($$$$) {
     #### Compile ClientHello   
     $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host); 
     if ($@) { #Error
+        $@ .= " -> Fatal Exit of openTcpSSLconnection";
         _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
         return ("");
     }
@@ -1657,7 +1955,7 @@ sub _doCheckSSLciphers ($$$$) {
             #### check for other protocols than ssl (when starttls is used) ####
             if ($Net::SSLhello::starttls)  { 
                 if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i)  { # 554 Security failure; TBD: perhaps more general in the future
-                    _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignoredi and try to Retry\n");
+                    _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignored and try to Retry\n");
                     #retry to send clientHello
                     $@="";
                     $input=""; #reset input data
@@ -1715,8 +2013,13 @@ sub _doCheckSSLciphers ($$$$) {
         alarm (0);   # race condition protection
     }} while ( ( (length($input) < $pduLen) || (length($input)==0) ) && ($retryCnt++ < $Net::SSLhello::retry) );
     alarm (0);   # race condition protection
-    if ( ($@) && ( (length($input)==0) || ($Net::SSLhello::trace > 2) )) {    
-        warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (".length($input)." Bytes): Eval-Message: >$@<\n"); 
+    chomp ($@);
+    if ( ($@) && ( ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) || ($Net::SSLhello::trace > 2) )) {
+         _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n");
+         warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n"); 
+    } elsif (length($input) ==0) { # len == 0 without any timeout
+         $@= "... Received NO Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).") after $Net::SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
+         _trace2 ("_doCheckSSLciphers: $@\n"); 
     }
     if (length($input) >0) {
         _trace2 ("_doCheckSSLciphers: Total Data Received:". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
@@ -1870,6 +2173,44 @@ sub compileClientHello  {
                 _trace2 ("compileClientHello: reneg_info Extension added\n");
             } else {
                 _trace2 ("compileClientHello: *NOT* sent a reneg_info Extension as the cipher_spec includes already the Signalling Cipher Suite Value (TLS_EMPTY_RENEGOTIATION_INFO_SCSV {0x00, 0xFF})\n");
+            }
+        }
+
+        if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
+            my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
+            my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
+            if ( grep(/\xc0./, @cipherTable) ) { # found Cipher C0xx
+                ### Data for Extension 'elliptic_curves' (in reverse order)
+                $clientHello{'extension_ecc_list'}                
+                    = "\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08"
+                     ."\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00\x10"
+                     ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18"
+                     ."\x00\x19\x00\x1a\x00\x1b\x00\x1c";   # ALL defined ECCs; Tbd: hier, oder zentrale Definition?!
+                $clientHello{'extension_ecc_list_len'}            = length($clientHello{'extension_ecc_list'}); # len of ECC List  
+                $clientHello{'extension_elliptic_curves_len'}     = $clientHello{'extension_ecc_list_len'}+2;   # len of ECC Extension
+                $clientHello{'extension_type_elliptic_curves'}    = 0x000a; # Tbd: hier, oder zentrale Definition?!
+
+                $clientHello_extensions .= pack ("n n n a[$clientHello{'extension_ecc_list_len'}]",
+                  $clientHello{'extension_type_elliptic_curves'},         #n    = 0x000a
+                  $clientHello{'extension_elliptic_curves_len'},          #n    = 0x00xz
+                  $clientHello{'extension_ecc_list_len'},                 #n    = 0x00xy
+                  $clientHello{'extension_ecc_list'},                     #a[$clientHello{'extension_ecc_list_len'}] = 0x00....
+                );
+                _trace2 ("compileClientHello: elliptic_curves Extension added\n");
+
+                ### Data for Extension 'ec_point_formats'
+                $clientHello{'extension_type_ec_point_formats'}   = 0x000b; # Tbd: hier, oder zentrale Definition?!
+                $clientHello{'extension_ec_point_formats_len'}    = 0x0002; # Tbd: hier, oder zentrale Definition?!
+                $clientHello{'extension_ec_point_formats_list_ele'} = 0x01; # Tbd: hier, oder zentrale Definition?!
+                $clientHello{'extension_ec_point_formats_list'}   = "\x00";   # Tbd: hier, oder zentrale Definition?!
+
+                $clientHello_extensions .= pack ("n n C a[$clientHello{'extension_ec_point_formats_list_ele'}]",
+                  $clientHello{'extension_type_ec_point_formats'},        #n    = 0x000b
+                  $clientHello{'extension_ec_point_formats_len'},         #n    = 0x00xz
+                  $clientHello{'extension_ec_point_formats_list_ele'},    #C    = 0xxy
+                  $clientHello{'extension_ec_point_formats_list'},        #a[$clientHello{'extension_ec_point_formats_list_ele'}] = 0x00....
+                );
+                _trace2 ("compileClientHello: ec_point_formats Extension added\n");
             }
         }
 
@@ -2347,7 +2688,7 @@ sub parseTLS_ServerHello {
         }
 
         _trace2_ ( sprintf ( 
-            "# -->       compression_method:     >%02X<\n",
+            "\n# -->       compression_method:     >%02X<\n",
             $serverHello{'compression_method'}
         ));
         if ( $serverHello{'extensions_len'} !~ /(?:^$|[\x00]+)/) { # extensions_len > 0
@@ -2414,7 +2755,7 @@ sub parseTLS_Extension { # Variable: String/Octet, das die Extension-Bytes enthÃ
 
 
 sub _timedOut {
-    die "NET::SSLhello: Received Data Timed out -> protocol ignored";
+    die "NET::SSLhello: Received Data Timed out -> Received NO Data (Timeout)";
 }
 
 sub _chomp_r { # chomp \r\n
@@ -2611,7 +2952,7 @@ sub printTLSCipherList ($) {
 =head1 NAME
 
 Net::SSLhello - perl extension for SSL to simulate SSLhello packets to check SSL parameters (especially ciphers)
-Connections via Proxy and using STARTTLS (SMTP and experimental: ACAP, IMAP, POP3, FTPS, LDAP, RDP, XMPP) are supported
+Connections via Proxy and using STARTTLS (SMTP, IMAP, POP3, FTPS, LDAP, RDP, XMPP and experimental: ACAP) are supported
 
 =head1 SYNOPSIS
 
@@ -2619,15 +2960,19 @@ Connections via Proxy and using STARTTLS (SMTP and experimental: ACAP, IMAP, POP
 
 =head1 DESCRIPTION
 
-TBD comming soon ... for now:
+SSLhello.pm is a Perl Module that is part of the OWASP-Project 'o-saft'. 
+It checks some basic SSL/TLS configuration of a server, like Ciphers and Extensions (planned) of the SSL/TLS-protocol. These checks work independantly from any SSL library like openSSL or gnutls. It does this by simulating the first packets of a SSL/TLS connection. It sends a ClientHello message and analyzes the ServerHello packet that is answered by the server. It gives you a wide range of options for this, so you can even check Ciphers that are not yet defined, reserved or obsole, by their 2-octett-values (see http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-4).
+
+As it simulates only the first part of the SSL/TLS handshake, it is really fast! Another advantage of this is that it can even analyze SSL/TLS ciphers of servers that verify client certificates without any need to provide one. (This is normally done later in the SSL/TLS handshake).
+
 Export Functions:
-$socket = openTcpSSLconnection ($host; $port); # Open a TCP/IP connection to a Host on a Port (via Proxy) and doing STARTTLS if requesteA
+$socket = openTcpSSLconnection ($host; $port); # Open a TCP/IP connection to a Host on a Port (via Proxy) and doing STARTTLS if requested
 @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing); # Check a list if Ciphers (@testing), output: @accepted Ciphers (if the first 2 ciphers are equal the server has an order)
 Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni, @accepted); # print the List of Ciphers (@accepted Ciphers)
 
 =head1 EXAMPLES
 
-See SYNOPSIS above.
+See DESCRIPTION above.
 
 =head1 LIMITATIONS
 
@@ -2641,7 +2986,7 @@ L<IO::Socket(1)>
 
 =head1 AUTHOR
 
-05-July-2014 Torsten Gigler
+11-October-2014 Torsten Gigler
 
 =cut
 
