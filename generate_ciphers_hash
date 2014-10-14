@@ -103,18 +103,18 @@
 
 # -------------------------------------------------------- initialization
 BEGIN {
-  $SID='@(#) generate_ciphers_hash 1.3 14/07/25 09:53:59';
-  $currentfile="--undef--";
-  $currentline=0; # line per file
-  $exe='/usr/local/bin/openssl';
-  $t12=":" . `$exe ciphers TLSv1.2`;      chomp $t12; $t12.= ":";
-  $low=":" . `$exe ciphers LOW`;          chomp $low; $low.= ":";
-  $med=":" . `$exe ciphers MEDIUM`;       chomp $med; $med.= ":";
-  $hig=":" . `$exe ciphers HIGH`;         chomp $hig; $hig.= ":";
-  $exp=":" . `$exe ciphers EXPORT`;       chomp $exp; $exp.= ":";
-  $nul=":" . `$exe ciphers NULL:aNULL`;   chomp $nul; $nul.= ":";
+  $SID = '@(#) %M% %I% %E% %U%';
+  $currentfile = "--undef--";
+  $currentline = 0; # line per file
+  $exe = '/usr/local/bin/openssl';
+  $t12 = ":" . `$exe ciphers TLSv1.2`;      chomp $t12; $t12 .= ":";
+  $low = ":" . `$exe ciphers LOW`;          chomp $low; $low .= ":";
+  $med = ":" . `$exe ciphers MEDIUM`;       chomp $med; $med .= ":";
+  $hig = ":" . `$exe ciphers HIGH`;         chomp $hig; $hig .= ":";
+  $exp = ":" . `$exe ciphers EXPORT`;       chomp $exp; $exp .= ":";
+  $nul = ":" . `$exe ciphers NULL:aNULL`;   chomp $nul; $nul .= ":";
   # enclose lists in : which is used as start and stop marker in match 
-  %d = (
+  %data = (
     'cipher.txt'=> { 'cnt' => 0,  'src' => "", },
     'iana.csv'  => { 'cnt' => 0,  'src' => "http://www.iana.org/assignments/tls-parameters/tls-parameters-4.csv", },
     'iana.txt'  => { 'cnt' => 0,  'src' => "http://www.iana.org/assignments/tls-parameters/tls-parameters.txt", },
@@ -129,47 +129,47 @@ BEGIN {
   );
 
   # check for command line options
-  $try="";
-  $try="echo " if (grep(/(:?--?(:?n|try))/, @ARGV) > 0);
+  $try = "";
+  $try = "echo " if (grep(/(:?--?(:?n|try))/, @ARGV) > 0);
   if (grep(/(:?--auto)/, @ARGV) > 0) {
     print "# fetching data ...\n";
-    $inc="/usr/local/include/openssl";
-    $d{'cipher.txt'}{'dat'} = "";
-    $d{'iana.csv'}  {'dat'} = `$try curl -s $d{'iana.csv'}->{'src'}`;
-    $d{'iana.txt'}  {'dat'} = `$try curl -s $d{'iana.txt'}->{'src'}` ;
-    $d{'gnutls.txt'}{'dat'} = `$try curl -s $d{'gnutls.txt'}->{'src'}` ;
-    $d{'openssl.h'} {'dat'} = `$try cat $inc/ssl2.h $inc/ssl3.h $inc/tls1.h`;
-    $d{'openssl'}   {'dat'} = `$try $exe ciphers -v ALL:NULL:aNULL:EXP:LOW`;
-    $d{'o-saft.txt'}{'dat'} = `$try cat o-saft_ciphers.txt`;
-    $d{'polarssl'}  {'dat'} = `$try curl -s $d{'polarssl'}->{'src'}`;
-    $d{'schannel'}  {'dat'} = `$try curl -s $d{'schannel'}->{'src'}`;
+    $inc = "/usr/local/include/openssl";
+    $data{'cipher.txt'}{'dat'} = "";
+    $data{'iana.csv'}  {'dat'} = `$try curl -s $data{'iana.csv'}->{'src'}`;
+    $data{'iana.txt'}  {'dat'} = `$try curl -s $data{'iana.txt'}->{'src'}` ;
+    $data{'gnutls.txt'}{'dat'} = `$try curl -s $data{'gnutls.txt'}->{'src'}` ;
+    $data{'openssl.h'} {'dat'} = `$try cat $inc/ssl2.h $inc/ssl3.h $inc/tls1.h`;
+    $data{'openssl'}   {'dat'} = `$try $exe ciphers -v ALL:NULL:aNULL:EXP:LOW`;
+    $data{'o-saft.txt'}{'dat'} = `$try cat o-saft_ciphers.txt`;
+    $data{'polarssl'}  {'dat'} = `$try curl -s $data{'polarssl'}->{'src'}`;
+    $data{'schannel'}  {'dat'} = `$try curl -s $data{'schannel'}->{'src'}`;
   # ToDo: use of above data not yet implemented
   }
   if (grep(/(:?--?try)/, @ARGV) > 0) {
-    print "# $_ :\n$d{$_}{'dat'}\n" foreach (keys %d);
+    print "# $_ :\n$data{$_}{'dat'}\n" foreach (keys %data);
   }
-  $arg=join(" ", @ARGV);
+  $arg = join(" ", @ARGV);
 } # BEGIN
 
 # -------------------------------------------------------- functions
-sub warn_version($$$$$$){printf STDERR "# **WARNING %s: %s: %-6s     version mismatch: openssl/*.h %s ne %s; ignored (%s)\n", @_; }
+sub warn_version($$$$$$){printf STDERR "# **WARNING %s: %s: %-6s from openssl/*.h ne %s %s; ignored (%s)\n", @_; }
 sub warn_value($$$$$$) { printf STDERR "# **WARNING %s: %s: %-6s value mismatch: computed '%-7s ne manual setting '%-7s; %s\n", $_[0], $_[1], $_[2], $_[3]."'", $_[4]."'", $_[5]; }
 sub warn_other($$$$$$) { printf STDERR "# **WARNING %s: %s: %-6s missing value for '%-7s set to '%-7s ; (%s)\n", $_[0], $_[1], $_[2], $_[3]."'", $_[4]."'", $_[5]; }
 sub _dbx { print STDERR "#dbx# ", join(" ", @_); }
 sub dups {
   my ($src, $file, $nr, $line, $hex) = @_;
   print "### **WARNING: '$src:' duplicate hex constant $hex; ignore second\n";
-  my $dup='d-' . $src;
-  my $cnt=$d{$dup}->{cnt};
-  $d{$dup}->{$cnt}->{ctx}=$src;         # remember current context
-  $d{$dup}->{$cnt}->{src}="$nr $file";  # remember line number and file
-  $d{$dup}->{$cnt}->{dat}=$line;
-  $d{$dup}->{$cnt}->{hex}=$hex;
-  $d{$src}->{dup}++;
+  my $dup = 'd-' . $src;
+  my $cnt = $data{$dup}->{cnt};
+  $data{$dup}->{$cnt}->{ctx} = $src;       # remember current context
+  $data{$dup}->{$cnt}->{src} = "$nr $file";# remember line number and file
+  $data{$dup}->{$cnt}->{dat} = $line;
+  $data{$dup}->{$cnt}->{hex} = $hex;
+  $data{$src}->{dup}++;
 }
 sub set_osaft_data($$$) {
-  # check if vakue is set in $y and copy to $d if unset there
-  # warn if $d is already set
+  # check if vakue is set in $yeast_pl and copy to $data if unset there
+  # warn if $data is already set
   my $key = shift;
   my $hex = shift;
   my $cst = shift;
@@ -188,29 +188,29 @@ sub set_osaft_data($$$) {
     'tag'   => "Tag ",
     'score' => "Score",
   );
-#  return if (($d{$hex}{$key} == $y{$cst}{$key}) && ($d{$hex}{$key} ne $n));
-#_dbx "$hex $key - $d{$hex}{$key}\n";
-#_dbx "$d{$hex}{$key} = $y{$cst}{$key}\n" if $key eq 'tag';
-  if (($y{$cst}{$key} ne "") && ($d{$hex}{$key} ne $y{$cst}{$key})) {
+#  return if (($data{$hex}{$key} == $yeast_pl{$cst}{$key}) && ($data{$hex}{$key} ne $n));
+#_dbx "$hex $key - $data{$hex}{$key}\n";
+#_dbx "$data{$hex}{$key} = $yeast_pl{$cst}{$key}\n" if $key eq 'tag';
+  if (($yeast_pl{$cst}{$key} ne "") && ($data{$hex}{$key} ne $yeast_pl{$cst}{$key})) {
      # O-Saft has a value and is different to rest of collected data
-     if(($d{$hex}{$key} ne "") && ($d{$hex}{$key} ne $n)) {
+     if(($data{$hex}{$key} ne "") && ($data{$hex}{$key} ne $n)) {
           # data already there, warn but don't change
           if ($key eq 'sec') {
-              warn_value("009", $hex, $warn_text{$key}, $d{$hex}{$key}, $y{$cst}{$key}, "overwriting ($cst)");
-              $d{$hex}{$key} = $y{$cst}{$key};
+              warn_value("009", $hex, $warn_text{$key}, $data{$hex}{$key}, $yeast_pl{$cst}{$key}, "overwriting ($cst)");
+              $data{$hex}{$key} = $yeast_pl{$cst}{$key};
           } else {
-              warn_value("008", $hex, $warn_text{$key}, $d{$hex}{$key}, $y{$cst}{$key}, "2nd ignored ($cst)");
+              warn_value("008", $hex, $warn_text{$key}, $data{$hex}{$key}, $yeast_pl{$cst}{$key}, "2nd ignored ($cst)");
           }
      } else {
-          $d{$hex}{$key} = $y{$cst}{$key};
+          $data{$hex}{$key} = $yeast_pl{$cst}{$key};
      }
   }
 } # set_osaft_data
 
 # -------------------------------------------------------- main
 if ($currentfile ne $ARGV) { # new file, reset counter
-   $currentfile=$ARGV;
-   $currentline=0;
+   $currentfile = $ARGV;
+   $currentline = 0;
 }
 $currentline++;
 s/\r$//;                     # if we get DOS files
@@ -225,37 +225,37 @@ m/(0x..,\s*0x..)\s+(TLS_)/&&do{    # ------------- IANA tls-parameter.txt
   # curl -s http://www.iana.org/assignments/tls-parameters/tls-parameters.txt \
   #  | awk '/0x.* TLS_/{ print $1":","\""$2"\","}' | sed -e 's/,0x//' -e 's/0x/0x0300/'
 
-  $src='iana.txt';
-  $hex=$F[0]; $hex=~s/,0x//; $hex=~s/0x/0x0300/; # only have SSLv3 and TLSv1.x
-  $cst=$F[1]; $cst=~s/^TLS_//;
-  $dtl=$F[2];
-  $rfc=$F[3]; $rfc=~s/\]/,/g; $rfc=~s/[RFCrf c\[\]]//g; chomp $rfc;
-  if (grep(/^$hex$/, @{$d{$src}{hex}})>0) {
+  $src = 'iana.txt';
+  $hex = $F[0]; $hex =~ s/,0x//; $hex =~ s/0x/0x0300/; # only have SSLv3 and TLSv1.x
+  $cst = $F[1]; $cst =~ s/^TLS_//;
+  $dtl = $F[2];
+  $rfc = $F[3]; $rfc =~ s/\]/,/g; $rfc =~ s/[RFCrf c\[\]]//g; chomp $rfc;
+  if (grep(/^$hex$/, @{$data{$src}{hex}})>0) {
      dups($src, $ARGV, $currentline, "@F", $hex);
      next;
   }
-  push(@{$d{$src}{hex}}, $hex);
-  $d{$hex}{cst}[1]=$cst;
-# $d{$hex}{ssl}=""; # version
-  $d{$hex}{dtl}=$dtl;
-  $d{$hex}{rfc}=$rfc;
-  if ($cst=~m/NULL_WITH_NULL_NULL/) { # mismatch of constants in SSLv2 and SSLv3
-     $hex="0x02ff0810";
-     #push(@{$d{$src}{hex}}, $hex);
-     $d{$hex}{cst}[1]=$cst;
-     $d{$hex}{dtl}=$dtl;
-     $d{$hex}{rfc}=$rfc;
-     $d{$hex}{txt}="additional key for SSLv2 added";
+  push(@{$data{$src}{hex}}, $hex);
+  $data{$hex}{cst}[1] = $cst;
+# $data{$hex}{ssl} = ""; # version
+  $data{$hex}{dtl} = $dtl;
+  $data{$hex}{rfc} = $rfc;
+  if ($cst =~ m/NULL_WITH_NULL_NULL/) { # mismatch of constants in SSLv2 and SSLv3
+     $hex = "0x02ff0810";
+     #push(@{$data{$src}{hex}}, $hex);
+     $data{$hex}{cst}[1] = $cst;
+     $data{$hex}{dtl} = $dtl;
+     $data{$hex}{rfc} = $rfc;
+     $data{$hex}{txt} = "additional key for SSLv2 added";
   }
-  if ($cst=~m/EMPTY_RENEGOTIATION_INFO_SCSV/) {  # additional "dummy" key added
-     $hex="0x03005600";
-     #push(@{$d{$src}{hex}}, $hex);
-     $d{$hex}{cst}[1]=$cst;
-     $d{$hex}{dtl}=$dtl;
-     $d{$hex}{rfc}=$rfc;
-     $d{$hex}{txt}="additional 'dummy' key added";
+  if ($cst =~ m/EMPTY_RENEGOTIATION_INFO_SCSV/) {  # additional "dummy" key added
+     $hex = "0x03005600";
+     #push(@{$data{$src}{hex}}, $hex);
+     $data{$hex}{cst}[1] = $cst;
+     $data{$hex}{dtl} = $dtl;
+     $data{$hex}{rfc} = $rfc;
+     $data{$hex}{txt} = "additional 'dummy' key added";
   }
-  $d{$src}{cnt}++;
+  $data{$src}{cnt}++;
   next;
 };
 
@@ -266,39 +266,39 @@ m/"(0x..,\s*0x[^"]*)",(.*)/&&do{   # ------------- IANA tls-parameter-4.csv
   # "0xC0,0xAC-FF",Unassigned,, 
   # "0xC1-FD,*",Unassigned,, 
 
-  $src='iana.csv';
+  $src = 'iana.csv';
   next if (length($1)!=9);  # skip reserved for now
-  $cst=$2;
-  $hex=$1;    $hex=~s/,0x//; $hex=~s/0x/0x0300/; # only have SSLv3 and TLSv1.x
+  $cst = $2;
+  $hex = $1;   $hex =~ s/,0x//; $hex =~ s/0x/0x0300/; # only have SSLv3 and TLSv1.x
  ($cst, $dtl, $rfc) = split(",",$cst);
-  $cst=~s/^TLS_//;
-  $rfc=~s/\]/,/g; $rfc=~s/[RFCrfc \[\]]//g; chomp $rfc;
-  if (grep(/^$hex$/, @{$d{$src}{hex}})>0) {
+  $cst =~ s/^TLS_//;
+  $rfc =~ s/\]/,/g; $rfc =~ s/[RFCrfc \[\]]//g; chomp $rfc;
+  if (grep(/^$hex$/, @{$data{$src}{hex}})>0) {
      dups($src, $ARGV, $currentline, "@F", $hex);
      next;
   }
-  push(@{$d{$src}{hex}}, $hex);
-  $d{$hex}{cst}[1]=$cst;
-# $d{$hex}{ssl}=""; # version
-  $d{$hex}{dtl}=$dtl;
-  $d{$hex}{rfc}=$rfc;
-  if ($cst=~m/NULL_WITH_NULL_NULL/) { # mismatch of constants in SSLv2 and SSLv3
-     $hex="0x02ff0810";
-     #push(@{$d{$src}{hex}}, $hex);
-     $d{$hex}{cst}[1]=$cst;
-     $d{$hex}{dtl}=$dtl;
-     $d{$hex}{rfc}=$rfc;
-     $d{$hex}{txt}="additional key for SSLv2 added";
+  push(@{$data{$src}{hex}}, $hex);
+  $data{$hex}{cst}[1] = $cst;
+# $data{$hex}{ssl} = ""; # version
+  $data{$hex}{dtl} = $dtl;
+  $data{$hex}{rfc} = $rfc;
+  if ($cst =~ m/NULL_WITH_NULL_NULL/) { # mismatch of constants in SSLv2 and SSLv3
+     $hex = "0x02ff0810";
+     #push(@{$data{$src}{hex}}, $hex);
+     $data{$hex}{cst}[1] = $cst;
+     $data{$hex}{dtl} = $dtl;
+     $data{$hex}{rfc} = $rfc;
+     $data{$hex}{txt} = "additional key for SSLv2 added";
   }
-  if ($cst=~m/EMPTY_RENEGOTIATION_INFO_SCSV/) {  # additional "dummy" key added
-     $hex="0x03005600";
-     #push(@{$d{$src}{hex}}, $hex);
-     $d{$hex}{cst}[1]=$cst;
-     $d{$hex}{dtl}=$dtl;
-     $d{$hex}{rfc}=$rfc;
-     $d{$hex}{txt}="additional 'dummy' key added";
+  if ($cst =~ m/EMPTY_RENEGOTIATION_INFO_SCSV/) {  # additional "dummy" key added
+     $hex = "0x03005600";
+     #push(@{$data{$src}{hex}}, $hex);
+     $data{$hex}{cst}[1] = $cst;
+     $data{$hex}{dtl} = $dtl;
+     $data{$hex}{rfc} = $rfc;
+     $data{$hex}{txt} = "additional 'dummy' key added";
   }
-  $d{$src}{cnt}++;
+  $data{$src}{cnt}++;
   next;
 };
 
@@ -311,64 +311,64 @@ m/(SSL2|SSL3|TLS1)_(CK|TXT)/&&do{  # ------------- openssl/ssl/*.h
   # must be stored in private hash because various lines from the file
   # are merged using the constant name
 
-  $src="openssl.h";
-  $ssl=$1; $ssl=~s/(.)$/v$1/;
-  $ssl=~s/[.]//;
-  $ssl=~s/^TLSv?1$/TLSv10/;
-  $idx=1;
-  $idx=0 if ($F[1]=~/^...._CK/);
-  $cst=$F[1];
-  $cst=~s/^...._(CK|TXT)_//;
-  $txt=$F[2];
-  $txt=~s/["']//g; # feed stupid editors '"
+  $src = "openssl.h";
+  $ssl = $1; $ssl =~ s/(.)$/v$1/;
+  $ssl =~ s/[.]//;
+  $ssl =~ s/^TLSv?1$/TLSv10/;
+  $idx = 1;
+  $idx = 0 if ($F[1] =~ /^...._CK/);
+  $cst = $F[1];
+  $cst =~ s/^...._(CK|TXT)_//;
+  $txt = $F[2];
+  $txt =~ s/["']//g; # feed stupid editors '"
   if (m/FZA_DMS_RC4_SHA/) {                     # duplicate definition, still present in ssl3.h but encapsulated in #if 0
      # #define SSL3_CK_FZA_DMS_RC4_SHA   "0x0300001E"
      # #define SSL3_TXT_FZA_DMS_RC4_SHA	 "FZA-RC4-SHA"
      print STDERR "# **WARNING 001: $txt: duplicate value (in ssl*h) '$txt' changed to '0x0300001e' ($cst)'\n";
      print if m/0x0300001e/;
-     $txt=~s/0300001E/0300001e/;                # we use lowercase e so that there are two perl hash entries
+     $txt =~ s/0300001E/0300001e/;              # we use lowercase e so that there are two perl hash entries
   }
   if ($idx == 0) { # _CK_
-     $hex=$txt;
-     $o{$cst}{hex}=$hex;
-     if (grep(/^$hex$/, @{$d{$src}{hex}})>0) {
+     $hex = $txt;
+     $opensslh{$cst}{hex} = $hex;
+     if (grep(/^$hex$/, @{$data{$src}{hex}})>0) {
         dups($src, $ARGV, $currentline, "@F", $hex);
         next;
      }
-     push(@{$d{$src}{hex}}, $hex);
-     $d{$hex}{cst}[0]=$cst;
+     push(@{$data{$src}{hex}}, $hex);
+     $data{$hex}{cst}[0] = $cst;
   }
   if ($idx == 1) { # _TXT_
      # need to use private hash, as index is the constant name
-     $ssl="TLSv12"  if ($t12=~m/:$txt:/);
-     $o{$cst}{ssl}=$ssl;
-     $o{$cst}{txt}=$txt;
-     $sec="<<?>>";  # undefined
-     $sec="HIGH"    if ($hig=~m/:$txt:/);
-     $sec="MEDIUM"  if ($med=~m/:$txt:/);
-     $sec="LOW"     if ($low=~m/:$txt:/);
-     $o{$cst}{SEC}=$sec;
-     $sec="WEAK"    if ($txt=~m/EXP/);          # all EXPORT are weak
-     $sec="weak"    if ($txt=~m/NULL/);         # anything with NULL encryption or Auth is weak
-     $sec="weak"    if ($txt=~m/ADH|DH_anon/);  # anything with anon is weak
+     $ssl = "TLSv12"  if ($t12 =~ m/:$txt:/);
+     $opensslh{$cst}{ssl} = $ssl;
+     $opensslh{$cst}{txt} = $txt;
+     $sec = "<<?>>";  # undefined
+     $sec = "HIGH"      if ($hig =~ m/:$txt:/);
+     $sec = "MEDIUM"    if ($med =~ m/:$txt:/);
+     $sec = "LOW"       if ($low =~ m/:$txt:/);
+     $opensslh{$cst}{SEC} = $sec;
+     $sec = "WEAK"      if ($txt =~ m/EXP/);            # all EXPORT are weak
+     $sec = "weak"      if ($txt =~ m/NULL/);           # anything with NULL encryption or Auth is weak
+     $sec = "weak"      if ($txt =~ m/ADH|DH_anon/);    # anything with anon is weak
      if ($sec eq "_") { # no match so far
-        $sec="low"  if ($txt=~m/CBC-/);         # DES considered low
-        $sec="medium" if ($txt=~m/DH-...-SEED-SHA/); #  according DHE-*-SEED-SHA
-        $sec="high" if ($txt=~m/3DES|CBC3/);    # anything 3DES considered high
-        $sec="high" if ($txt=~m/AES(128|256)/); # any AES* considered high
-        $sec="high" if ($txt=~m/CAMELLIA/);     # any CAMELLIA* considered high
-        $sec="weak" if ($txt=~m/[_-]RC4[_-]/);  # all RC4 since November 2013
-       #$sec="high" if ($txt=~m/RC4-SHA/);      # 
+        $sec = "low"    if ($txt =~ m/CBC-/);           # DES considered low
+        $sec = "medium" if ($txt =~ m/DH-...-SEED-SHA/);#  according DHE-*-SEED-SHA
+        $sec = "high"   if ($txt =~ m/3DES|CBC3/);      # anything 3DES considered high
+        $sec = "high"   if ($txt =~ m/AES(128|256)/);   # any AES* considered high
+        $sec = "high"   if ($txt =~ m/CAMELLIA/);       # any CAMELLIA* considered high
+        $sec = "weak"   if ($txt =~ m/[_-]RC4[_-]/);    # all RC4 since November 2013
+       #$sec = "high"   if ($txt =~ m/RC4-SHA/);        # 
      }
-     $o{$cst}{sec}=$sec;
+     $opensslh{$cst}{sec} = $sec;
   }
-  $d{$src}{cnt}++;
+  $data{$src}{cnt}++;
   next;
 };
 
 
 m/^[A-Z][A-Z0-9-]+/&&do{           # ------------- openssl ciphers -v
-  $src="openssl";
+  $src = "openssl";
   #% /opt/tools/openssl/1.0.1f/apps/openssl ciphers -v :ALL:NULL
   # DHE-RSA-AES256-SHA256   TLSv1.2 Kx=DH       Au=RSA  Enc=AES(256)  Mac=SHA256
   # EXP-RC2-CBC-MD5         SSLv3 Kx=RSA(512)   Au=RSA  Enc=RC2(40)   Mac=MD5  export
@@ -381,28 +381,28 @@ m/^[A-Z][A-Z0-9-]+/&&do{           # ------------- openssl ciphers -v
   #next if(...); # no next here as GnuTLS has the same line format
   if ($mac ne "") { # line from 'openssl ciphers -v'
      ($enc, $bit) = split(/\(/,$enc);
-     $ssl=~s/[.]//;
-     $enc=~s/^([^=]*=)//;
-     $mac=~s/^([^=]*=)//;
-     $aut=~s/^([^=]*=)//;
-     $key=~s/^([^=]*=)//;
-     $bit=~s/[)]//g;
-     $bit="0" if ($enc=~m/None/);
-     $d{$src}{cnt}++;
-     $p{$cst}{ssl}=$ssl;
-     $p{$cst}{enc}=$enc;
-     $p{$cst}{bit}=$bit;
-     $p{$cst}{mac}=$mac;
-     $p{$cst}{key}=$key;
-     $p{$cst}{aut}=$aut;
-     $p{$cst}{tag}=$tag;
+     $ssl =~ s/[.]//;
+     $enc =~ s/^([^=]*=)//;
+     $mac =~ s/^([^=]*=)//;
+     $aut =~ s/^([^=]*=)//;
+     $key =~ s/^([^=]*=)//;
+     $bit =~ s/[)]//g;
+     $bit = "0" if ($enc =~ m/None/);
+     $data{$src}{cnt}++;
+     $opensslv{$cst}{ssl} = $ssl;
+     $opensslv{$cst}{enc} = $enc;
+     $opensslv{$cst}{bit} = $bit;
+     $opensslv{$cst}{mac} = $mac;
+     $opensslv{$cst}{key} = $key;
+     $opensslv{$cst}{aut} = $aut;
+     $opensslv{$cst}{tag} = $tag;
      next;
   }
 };
 
 
 m/^\s+'[A-Z][A-Z0-9-]+'/&&do{      # ------------- O-Saft
-  $src="o-saft.txt";
+  $src = "o-saft.txt";
   # data structure as used in O-Saft until version 14.1.14
   #  'DHE-RSA-AES256-GCM'    => [qw( high TLSv12 AESGCM 256 AEAD RSA   DH         11 :)],
   #  #(array fields)#  0     1  2       3   4       5    6   7    8     9         10  11
@@ -413,45 +413,45 @@ m/^\s+'[A-Z][A-Z0-9-]+'/&&do{      # ------------- O-Saft
   # merge will be done at END{}
 
   #next if(...); # no next here as GnuTLS has the same line format
-  $txt="@F";
-  $txt=~s/(-\?-)/<<?>>/g;   # replace old by new text for "unknown"
-  $txt=~s/'=>/' =>/g;       # add missing space
-  $txt=~s/>\[/> [/g;        # add missing space
-  $txt=~s/qw\(([^\s])/qw( $1/g; # add missing space ;) 
-  @f=split(/\s+/,$txt);
-  $cst=$f[0]; $cst=~s/'//g; # remove '
+  $txt = "@F";
+  $txt =~ s/(-\?-)/<<?>>/g;    # replace old by new text for "unknown"
+  $txt =~ s/'=>/' =>/g;        # add missing space
+  $txt =~ s/>\[/> [/g;         # add missing space
+  $txt =~ s/qw\(([^\s])/qw( $1/g; # add missing space ;) 
+  @f = split(/\s+/,$txt);
+  $cst = $f[0]; $cst =~ s/'//g; # remove '
   if ($#f > 9) { # line from 'o-saft.pl'
-     $ssl=$f[4]; $ssl=~s/[.]//;
-     $tag=$f[11];
-     $tag=~s/:?[)\]\s*,]//g;
-     $bit="0" if ($enc=~m/None/);
-     $d{$src}{cnt}++;
-     $y{$cst}{ssl}=$ssl;
-     $y{$cst}{sec}=$f[3];
-     $y{$cst}{enc}=$f[5];
-     $y{$cst}{bit}=$f[6];
-     $y{$cst}{mac}=$f[7];
-     $y{$cst}{aut}=$f[8];
-     $y{$cst}{key}=$f[9];
-     $y{$cst}{score}=$f[10];
-     $y{$cst}{tag}=$tag;
+     $ssl = $f[4]; $ssl =~ s/[.]//;
+     $tag = $f[11];
+     $tag =~ s/:?[)\]\s*,]//g;
+     $bit = "0" if ($enc =~ m/None/);
+     $data{$src}{cnt}++;
+     $opensslh{$cst}{ssl} = $ssl;
+     $yeast_pl{$cst}{sec} = $f[3];
+     $yeast_pl{$cst}{enc} = $f[5];
+     $yeast_pl{$cst}{bit} = $f[6];
+     $yeast_pl{$cst}{mac} = $f[7];
+     $yeast_pl{$cst}{aut} = $f[8];
+     $yeast_pl{$cst}{key} = $f[9];
+     $yeast_pl{$cst}{score} = $f[10];
+     $yeast_pl{$cst}{tag} = $tag;
      next;
   }
 };
 
 
 m/^\s+'(0x[A-Fa-f0-9-]+)'\s*=>\s*\[qw.([^\s]+).*/&&do{ # O-Saft cipher_names
-  $hex=$1;
-  $cst=$2;
-  print STDERR "# **WARNING 007: $hex: O-Saft.txt '$hex' alreday set\n" if ($y{$cst}{hex} ne "");
-  $x{$hex}=$cst;
-  $z{$cst}=$hex;
-  $y{$cst}{hex}=$hex;
+  $hex = $1;
+  $cst = $2;
+  print STDERR "# **WARNING 007: $hex: O-Saft.txt '$hex' alreday set\n" if ($yeast_pl{$cst}{hex} ne "");
+  $x{$hex} = $cst;
+  $z{$cst} = $hex;
+  $yeast_pl{$cst}{hex} = $hex;
 # ToDo:
 #_dbx "$hex  = $cst\n";
-##  if (${$d{$hex}{cst}}[0] eq "") {
+##  if (${$data{$hex}{cst}}[0] eq "") {
 ##_dbx "$hex  = $cst\n";
-##    ${$d{$hex}{cst}}[0] = $cst;
+##    ${$data{$hex}{cst}}[0] = $cst;
 ##  }
   next;
 };
@@ -462,39 +462,43 @@ m/^\s*(SSL|TLS)_/&&do{             # ------------- GnuTLS-ciphersuites.txt
   # TLS_RSA_NULL_MD5    0x0001  SSL3.0
   # TLS_DHE_DSS_AES_256_GCM_SHA384     0x00A3   TLS1.2
 
-  $src="gnutls.txt";
+  $src = "gnutls.txt";
  ($cst, $hex, $ssl) = split(/\s+/);
-  $cst=~s/^(TLS|SSL)_//;
-  next if ($hex!~m/^0x/);  # avoid match in other files
+  $cst =~ s/^(TLS|SSL)_//;
+  next if ($hex!~m/^0x/);      # avoid match in other files
   next if ($ssl!~m/^(SSL|TLS)/);  # ''
-  $hex=~s/0x/0x0300/;      # only have SSLv3 and TLSv1.x
-  $ssl=~s/SSL2(.*)/SSLv2/;
-  $ssl=~s/SSL3(.*)/SSLv3/;
-  $ssl=~s/TLS1(.*)/TLSv1$1/;
-  $ssl=~s/[.]//;
-  if (grep(/^$hex$/, @{$d{$src}{hex}})>0) {
+  $hex =~ s/0x/0x0300/;        # only have SSLv3 and TLSv1.x
+  $ssl =~ s/SSL2(.*)/SSLv2/;
+  $ssl =~ s/SSL3(.*)/SSLv3/;
+  $ssl =~ s/TLS1(.*)/TLSv1$1/;
+  $ssl =~ s/[.]//;
+  if (grep(/^$hex$/, @{$data{$src}{hex}})>0) {
       dups($src, $ARGV, $currentline, "@F", $hex);
       next;
   }
-  push(@{$d{$src}{hex}}, $hex);
-  $d{$hex}{cst}[2]=$cst;
-  $d{$hex}{ssl}=$ssl;
-  $d{$src}{cnt}++;
+  push(@{$data{$src}{hex}}, $hex);
+  $data{$hex}{cst}[3] = $cst;
+  $data{$hex}{ssl} = $ssl;
+  $data{$src}{cnt}++;
   next;
 };
-#print "$hex $src ". join(" ",@{$d{'gnutls.txt'}{hex}}) ."\n";
-$src='-undef-';
+#print "$hex $src ". join(" ",@{$data{'gnutls.txt'}{hex}}) ."\n";
+$src = '-undef-';
 
 
 m/^\s*<td>([^<]*)<\td>\s*$/&&do{   # ------------- PolarSSL-ciphersuites.html
   #  <td>TLS-RSA-WITH-AES-128-CBC-SHA</td>
   #  <td>AES128-SHA</td>
   #  <td>{0x00,0x2F}</td>
+  $src = "polarssl";
+# $data{$hex}{cst}[4] = $cst;
 };
 
 
 m/^\s*(SSL_CK|TLS)_/&&do{          # ------------- Schannel-cipherSuite.csv
   # TLS_RSA_WITH_AES_128_CBC_SHA256 ,Yes ,TLS-1.2 ,RSA ,AES ,SHA256
+  $src = "schannel";
+# $data{$hex}{cst}[5] = $cst;
 };
 
 
@@ -503,7 +507,7 @@ END {
   ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
   $mon++; $year+=1900 if ($year > 99);
   print "# ", "="x77, "{\n";
-  print "# generated by generate_ciphers_hash 1.3, $mday.$mon.$year $h:$m\n";
+  print "# generated by %M% %I%, $mday.$mon.$year $h:$m\n";
   print "#    $arg \n\n";
   print <<'EoT';
 our %ciphers_desc   = ( # description of following %ciphers table
@@ -551,61 +555,61 @@ our %ciphers_desc   = ( # description of following %ciphers table
 ); # %ciphers_desc
 
 EoT
-  $l="#!#---------------+-------+-------+-------+-------+-----+-------+-------+----------+----+-----+-----+";
-  $h="#!#  hex ID => [   version openssl o-saft  enc     bits  mac     auth    keyx       DTLS score tags ],";
+  $l = "#!#---------------+-------+-------+-------+-------+-----+-------+-------+----------+----+-----+-----+";
+  $h = "#!#  hex ID => [   version o-saft  openssl enc     bits  mac     auth    keyx       DTLS score tags ],";
   print <<EoT;
 our %ciphers = (
     $l
     $h
     $l
 EoT
-  $n="<<?>>";
+  $n = "<<?>>";
   foreach $hex (sort keys %x) { 
-     #dbx just a check# print "$hex = $x{$hex}   -- $d{$hex}{cst}[0]\n";
-#_dbx "$hex exists\n" if defined $d{$hex};
+     #dbx just a check# print "$hex = $x{$hex}   -- $data{$hex}{cst}[0]\n";
+#_dbx "$hex exists\n" if defined $data{$hex};
     $cst = $x{$hex};
-    if (defined $d{$hex}) {
-#print STDERR join(" ", %{$d{$hex}}) . "\n";
-# ToDo   _dbx "$hex $cst exists $d{$hex}{cst}[0].\n";
+    if (defined $data{$hex}) {
+#print STDERR join(" ", %{$data{$hex}}) . "\n";
+# ToDo   _dbx "$hex $cst exists $data{$hex}{cst}[0].\n";
     } else {
-# ToDo   _dbx "$hex $cst does not exists in \$d\n";
+# ToDo   _dbx "$hex $cst does not exists in \$data\n";
     }
   }
-  foreach $hex (sort keys %d) { 
+  foreach $hex (sort keys %data) { 
      next if ($hex!~m/^0x/);
-     foreach $c (@{$d{$hex}{cst}}) {  # find data from openssl and merge
-         next if ($o{$c}{hex} ne $hex);
+     foreach $c (@{$data{$hex}{cst}}) {  # find data from openssl and merge
+         next if ($opensslh{$c}{hex} ne $hex);
          # data from openssl/*.h is index by constant name
-         $d{$hex}{sec} = $o{$c}{sec};
-         $d{$hex}{SEC} = $o{$c}{SEC};
-         $d{$hex}{txt} = $o{$c}{txt};
+         $data{$hex}{sec} = $opensslh{$c}{sec};
+         $data{$hex}{SEC} = $opensslh{$c}{SEC};
+         $data{$hex}{txt} = $opensslh{$c}{txt};
          # data from 'openssl ciphers' is index by suite name
-         $t=$o{$c}{txt};
-         $d{$hex}{bit} = $p{$t}{bit};
-         $d{$hex}{enc} = $p{$t}{enc};
-         $d{$hex}{mac} = $p{$t}{mac};
-         $d{$hex}{key} = $p{$t}{key};
-         $d{$hex}{aut} = $p{$t}{aut};
-         $d{$hex}{tag} = $p{$t}{tag};
-         $p{$t}{done}=1;
-         if (defined $o{$c}{ssl}) {
-            if ($d{$hex}{ssl} ne "") {
+         $t = $opensslh{$c}{txt};
+         $data{$hex}{bit} = $opensslv{$t}{bit};
+         $data{$hex}{enc} = $opensslv{$t}{enc};
+         $data{$hex}{mac} = $opensslv{$t}{mac};
+         $data{$hex}{key} = $opensslv{$t}{key};
+         $data{$hex}{aut} = $opensslv{$t}{aut};
+         $data{$hex}{tag} = $opensslv{$t}{tag};
+         $opensslv{$t}{done} = 1;
+         if (defined $opensslh{$c}{ssl}) {
+            if ($data{$hex}{ssl} ne "") {
                # lazy check: SSLv3 and TLSv1.0 are the same
-               warn_version("006", $hex, $o{$c}{ssl}, "IANA $d{$hex}{ssl}", "", $c) if (($d{$hex}{ssl} ne $o{$c}{ssl}) and ($d{$hex}{ssl} ne "SSLv3"));
+               warn_version("006", $hex, $opensslh{$c}{ssl}, "IANA $data{$hex}{ssl}", "", $c) if (($data{$hex}{ssl} ne $opensslh{$c}{ssl}) and ($data{$hex}{ssl} ne "SSLv3"));
             } else {
-               $d{$hex}{ssl} = $o{$c}{ssl};
+               $data{$hex}{ssl} = $opensslh{$c}{ssl};
             }
-            if (defined $p{$t}{ssl}) {
-               warn_version("005", $hex, $o{$c}{ssl}, "openssl ciphers $p{$t}{ssl}", "", $c) if (($o{$c}{ssl} ne $p{$t}{ssl}) and ($p{$t}{ssl} ne "SSLv3"));
+            if (defined $opensslv{$t}{ssl}) {
+               warn_version("005", $hex, $opensslh{$c}{ssl}, "openssl ciphers $opensslv{$t}{ssl}", "", $c) if (($opensslh{$c}{ssl} ne $opensslv{$t}{ssl}) and ($opensslv{$t}{ssl} ne "SSLv3"));
             }
          }
-         $d{$hex}{tag} .= "," . $p{$t}{tag} if (($d{$hex}{tag} ne "") && ($p{$t}{tag} !~ m/$d{$hex}{tag}/));
+         $data{$hex}{tag} .= "," . $opensslv{$t}{tag} if (($data{$hex}{tag} ne "") && ($opensslv{$t}{tag} !~ m/$data{$hex}{tag}/));
          # data from old O-Saft
-         if (($y{$t}{enc} ne "") && ($d{$hex}{enc} !~ m/$y{$t}{enc}/i)) {
-             if(($d{$hex}{enc} ne "") && ($d{$hex}{enc} ne $n)) {
-                 warn_value("004", $hex, "Enc ",  $d{$hex}{enc}, $y{$t}{enc}, "ignored ($c)");
+         if (($yeast_pl{$t}{enc} ne "") && ($data{$hex}{enc} !~ m/$yeast_pl{$t}{enc}/i)) {
+             if(($data{$hex}{enc} ne "") && ($data{$hex}{enc} ne $n)) {
+                 warn_value("004", $hex, "Enc ",  $data{$hex}{enc}, $yeast_pl{$t}{enc}, "ignored ($c)");
              } else {
-                 $d{$hex}{enc} = $y{$t}{enc};
+                 $data{$hex}{enc} = $yeast_pl{$t}{enc};
              }
          }
          #set_osaft_data('enc',   $hex, $t);
@@ -617,45 +621,45 @@ EoT
          set_osaft_data('key',   $hex, $t);
          set_osaft_data('tag',   $hex, $t);
          set_osaft_data('score', $hex, $t);
-         $y{$t}{done} = 1;
+         $yeast_pl{$t}{done} = 1;
          # cleanup
-         if ($d{$hex}{dtl} !~ /[YN]/) {
-             warn_other("003", $hex, $d{$hex}{ssl}, "DTLS", "n", $d{$hex}{txt});
-             $d{$hex}{dtl}="n";
+         if ($data{$hex}{dtl} !~ /[YN]/) {
+             warn_other("003", $hex, $data{$hex}{ssl}, "DTLS", "n", $data{$hex}{txt});
+             $data{$hex}{dtl} = "n";
          }
 
      }
      if ($hex =~ m/030000(00|FF)$/) { # *00 and *FF aka SSL3_CK_SCSV is not a cipher, just a marker
-        $d{$hex}{ssl}="-";
-        $d{$hex}{sec}="-";
-        $d{$hex}{SEC}="-";
-        $d{$hex}{enc}="-";
-        $d{$hex}{bit}="0";
-        $d{$hex}{mac}="-";
-        $d{$hex}{aut}="-";
-        $d{$hex}{key}="-";
-        $d{$hex}{score}="99";
-        $d{$hex}{tag}=""; # Signaling Cipher Suite Value
+        $data{$hex}{ssl} = "-";
+        $data{$hex}{sec} = "-";
+        $data{$hex}{SEC} = "-";
+        $data{$hex}{enc} = "-";
+        $data{$hex}{bit} = "0";
+        $data{$hex}{mac} = "-";
+        $data{$hex}{aut} = "-";
+        $data{$hex}{key} = "-";
+        $data{$hex}{score} = "99";
+        $data{$hex}{tag} = ""; # Signaling Cipher Suite Value
      }
 # ToDo: hier  0x03000000 mit Werten von 0x02ff0810 fuellen
          # adjust security
-         if ($d{$hex}{sec} eq $n) {
-             $d{$hex}{sec}="HIGH"   if ($d{$hex}{bit} > 167);
-             $d{$hex}{sec}="MEDIUM" if ($d{$hex}{bit} < 168);
-             $d{$hex}{sec}="LOW"    if ($d{$hex}{bit} < 128);
-             $d{$hex}{sec}="WEAK"   if ($d{$hex}{bit} <  56);
+         if ($data{$hex}{sec} eq $n) {
+             $data{$hex}{sec} = "HIGH"   if ($data{$hex}{bit} > 167);
+             $data{$hex}{sec} = "MEDIUM" if ($data{$hex}{bit} < 168);
+             $data{$hex}{sec} = "LOW"    if ($data{$hex}{bit} < 128);
+             $data{$hex}{sec} = "WEAK"   if ($data{$hex}{bit} <  56);
          }
      printf"   '%s' => [qw(%-7s %-7s %-7s %-8s %4s %-7s %-7s %-10s %4s %4s %s)], # %s\n", $hex,
-         $d{$hex}{ssl}||$n,$d{$hex}{SEC}||$n,$d{$hex}{sec}||$n,
-         $d{$hex}{enc}||$n,$d{$hex}{bit}||0 ,$d{$hex}{mac}||$n,
-         $d{$hex}{aut}||$n,$d{$hex}{key}||$n,$d{$hex}{dtl}||$n,
-         $d{$hex}{score}||"0",$d{$hex}{tag}||":", $d{$hex}{txt};
-    $d{'hex'}->{cnt}++;
+         $data{$hex}{ssl}||$n,$data{$hex}{sec}||$n,$data{$hex}{SEC}||$n,
+         $data{$hex}{enc}||$n,$data{$hex}{bit}||0 ,$data{$hex}{mac}||$n,
+         $data{$hex}{aut}||$n,$data{$hex}{key}||$n,$data{$hex}{dtl}||$n,
+         $data{$hex}{score}||"0",$data{$hex}{tag}||":", $data{$hex}{txt};
+    $data{'hex'}->{cnt}++;
   }
   foreach $cst (sort keys %y) { 
-# _dbx " y= $cst\n" if $y{$cst}{done} != 1;
-    next if $y{$cst}{done} == 1;
-# _dbx " z= $z{$cst}\n" if $y{$cst}{done} != 1;
+# _dbx " y= $cst\n" if $yeast_pl{$cst}{done} != 1;
+    next if $yeast_pl{$cst}{done} == 1;
+# _dbx " z= $z{$cst}\n" if $yeast_pl{$cst}{done} != 1;
 if (0 == 1) {
          set_osaft_data('ssl',   $hex, $t);
          set_osaft_data('sec',   $hex, $t);
@@ -668,9 +672,9 @@ if (0 == 1) {
 }
   }
 
-  print "    $l\n   #cipher hex  = $d{'hex'}{cnt}\n); # %ciphers\n\n";
+  print "    $l\n   #cipher hex  = $data{'hex'}{cnt}\n); # %ciphers\n\n";
 
-#  $d{'cipher name'}->{cnt}++;
+#  $data{'cipher name'}->{cnt}++;
 
   print <<'EoT';
 # each function returns a spcific value (column) from the %cipher table
@@ -707,7 +711,7 @@ our %cipher_names = (
     # NOTE: all prefixes SSL2_, SSL3_, TLS1_, TLS_ have been removed from contstant names
     # this is a generated list, please use 'o-saft.pl +list-names' for pretty printing
 EoT
-  $n="openssl, IANA, GnuTLS";
+  $n = "openssl, IANA, GnuTLS, Schannel, PolarSSL";
   if ($pretty_print) {
       printf"    #!#------------+%s+%s+\n","-"x31,"-"x50;
       printf"    #!#  hex ID => [%-31s %s ],\n","(openssl) cipher suite name,","(constant names) $n, RFCs";
@@ -715,19 +719,19 @@ EoT
   } else {
       print "    #!#  hex ID => [(openssl) cipher suite name, (constant names) $n, RFCs]\n";
   }
-  foreach $hex (sort keys %d) {
+  foreach $hex (sort keys %data) {
      next if ($hex!~m/^0x/);
-     my $i=0;
-     $d{$hex}{cst}[$i++] = '"' . $_ . '"' foreach (@{$d{$hex}{cst}}); # enclose in double quotes
-     $d{$hex}{rfc} =~ s/[, ]$//g; # remove trailing chars
-     $n='"' . $d{$hex}{txt} . '"';
+     my $i = 0;
+     $data{$hex}{cst}[$i++] = '"' . $_ . '"' foreach (@{$data{$hex}{cst}}); # enclose in double quotes
+     $data{$hex}{rfc} =~ s/[, ]$//g; # remove trailing chars
+     $n = '"' . $data{$hex}{txt} . '"';
      if ($pretty_print) {
        printf"   '%s' => [%-32s", $hex,"$n,";
-       printf"%-40s", "$_," foreach (@{$d{$hex}{cst}}); # same as before but pretty printed
+       printf"%-40s", "$_," foreach (@{$data{$hex}{cst}}); # same as before but pretty printed
      } else {
        printf"   '%s'=>[%s", $hex,"$n,";
-       printf"%s,", $d{$hex}{cst}[$_] foreach (0..2); # perl is clever enough for trailing , in array
-       printf'"%s",', $d{$hex}{rfc};
+       printf"%s,", $data{$hex}{cst}[$_] foreach (0..2); # perl is clever enough for trailing , in array
+       printf'"%s",', $data{$hex}{rfc};
      }
      printf"],\n";
   }
@@ -736,24 +740,24 @@ EoT
 
   print <<'EoT';
 sub get_cipher_suitename($)     { return $cipher_names{$h}[0]; } # i.g. openssl
-sub get_cipher_cst_openssl($)   { return $cipher_names{$h}[1]; }
+sub get_cipher_cst_openssl($)   { return $cipher_names{$h}[1]; } # i.g. openssl.h
 sub get_cipher_cst_iana($)      { return $cipher_names{$h}[2]; }
 sub get_cipher_cst_gnutls($)    { return $cipher_names{$h}[3]; }
-sub get_cipher_cst_polarssl($)  { return $cipher_names{$h}[4]; }
-sub get_cipher_cst_schannel($)  { return $cipher_names{$h}[5]; }
+sub get_cipher_cst_schannel($)  { return $cipher_names{$h}[4]; }
+sub get_cipher_cst_polarssl($)  { return $cipher_names{$h}[5]; }
 sub get_cipher_cst_rfc($)       { return $cipher_names{$h}[6]; }
 EoT
 
   print "# found data:\n";
-  foreach $c (sort keys %d) {
-      next if ($c=~m/^0x/);
-      print "#   $c\t= $d{$c}{cnt}\n";
+  foreach $c (sort keys %data) {
+      next if ($c =~ m/^0x/);
+      print "#   $c\t= $data{$c}{cnt}\n";
   }
-  print "# **WARNING: missung IANA       data; expect data from: $d{'iana.txt'}->{src}\n"   if (0==$d{'iana.txt'}->{cnt});
-  print "# **WARNING: missung openssl.h  data; expect data from: $d{'openssl.h'}->{src}\n"  if (0==$d{'openssl.h'}->{cnt});
-  print "# **WARNING: missung openssl    data; expect data from: $d{'openssl'}->{src}\n"    if (0==$d{'openssl'}->{cnt});
-  print "# **WARNING: missung old O-Saft data; expect data from: $d{'o-saft.txt'}->{src}\n" if (0==$d{'o-saft.txt'}->{cnt});
-  print "# **WARNING: missung GnuTLS     data; expect data from: $d{'gnutls.txt'}->{src}\n" if (0==$d{'gnutls.txt'}->{cnt});
+  print "# **WARNING: missung IANA       data; expect data from: $data{'iana.txt'}->{src}\n"   if (0==$data{'iana.txt'}->{cnt});
+  print "# **WARNING: missung openssl.h  data; expect data from: $data{'openssl.h'}->{src}\n"  if (0==$data{'openssl.h'}->{cnt});
+  print "# **WARNING: missung openssl    data; expect data from: $data{'openssl'}->{src}\n"    if (0==$data{'openssl'}->{cnt});
+  print "# **WARNING: missung old O-Saft data; expect data from: $data{'o-saft.txt'}->{src}\n" if (0==$data{'o-saft.txt'}->{cnt});
+  print "# **WARNING: missung GnuTLS     data; expect data from: $data{'gnutls.txt'}->{src}\n" if (0==$data{'gnutls.txt'}->{cnt});
   print "# ", "="x77, "}\n";
 } # END
 
