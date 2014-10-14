@@ -36,7 +36,7 @@ use strict;
 
 BEGIN {
     # Loading `require'd  files and modules as well as parsing the command line
-    # in this scope  would increase persormance and lower the memory foot print
+    # in this scope  would increase performance and lower the memory foot print
     # for some commands.
     # Unfortunately perl's BEGIN has following limits and restrictions:
     #   - sub can be defined herein and used later
@@ -46,6 +46,9 @@ BEGIN {
     # To make the program work as needed,  these limitations would force to use
     # some dirty code hacks and split the flow of processing in different parts
     # of the source. Therefore this scope is not used. Performance penalty :-/
+
+    # we support some local lib directories
+    unshift(@INC, "./", "./lib");
 } # BEGIN
 
 my  $SID    = "@(#) yeast.pl 1.299 14/07/27 16:22:43";
@@ -64,7 +67,7 @@ our $mename = "yeast  ";
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
-unshift(@INC, "./", "./lib", "$mepath", "$mepath/lib");
+unshift(@INC, "$mepath", "$mepath/lib");
 #_dbx "INC: ".join(" ",@INC) . "\n";
 
 my  $arg    = "";
@@ -8900,7 +8903,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.07.25
+@(#) 14.07.26
 
 =head1 AUTHOR
 
