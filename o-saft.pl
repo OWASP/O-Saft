@@ -454,6 +454,7 @@ my %check_conn = (
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
+    'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'default'       => {'txt' => "Default cipher for "},   # used for @cfg{version} only
      # counter for accepted ciphers, 0 if not supported
@@ -507,8 +508,9 @@ my %check_dest = (
     # collected and checked target (connection) data
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
-    'hasSSLv2'      => {'txt' => "Target supports only safe protocols (no SSL 2.0)"},
     'edh'           => {'txt' => "Target supports EDH ciphers"},
+    'hasSSLv2'      => {'txt' => "Target supports only safe protocols (no SSL 2.0)"},
+    'hasSSLv3'      => {'txt' => "Target does not supports SSLv3"},     # Poodle
     'adh'           => {'txt' => "Target does not accepts ADH ciphers"},
     'null'          => {'txt' => "Target does not accepts NULL ciphers"},
     'export'        => {'txt' => "Target does not accepts EXPORT ciphers"},
@@ -715,7 +717,8 @@ our %shorttexts = (
     'sernumber'     => "Serial Number size (RFC5280)",
     'rootcert'      => "Not root CA",
     'ocsp'          => "OCSP supported",
-    'hasSSLv2'      => "No SSL 2.0",
+    'hasSSLv2'      => "No SSLv2",
+    'hasSSLv3'      => "No SSLv3",
     'adh'           => "No ADH ciphers",
     'edh'           => "EDH ciphers",
     'null'          => "No NULL ciphers",
@@ -734,6 +737,7 @@ our %shorttexts = (
     'crime'         => "Safe to CRIME",
     'time'          => "Safe to TIME",
     'heartbleed'    => "Safe to heartbleed",
+    'poodle'        => "Safe to Poodle",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'closure'       => "TLS closure alerts",
@@ -1122,7 +1126,7 @@ our %cfg = (
                        qw(
                         default cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast beast-default crime export rc4 pfs crl
+                        beast beast-default crime export rc4 pfs crl hasSSLv3 poodle
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
@@ -2317,6 +2321,7 @@ our %text = (
         'PMAC'      => "Parallelizable MAC",
         'Poly1305-AES'  => "MAC (by D. Bernstein)",
         'POP'       => "Proof of Possession",
+        'Poodle'    => "Padding Oracle On Downgraded Legacy Encryption",
         'PRF'       => "pseudo-random function",
         'PSK'       => "Pre-shared Key",
         'RA'        => "Registration Authority (aka Registration CA)",
@@ -3778,8 +3783,9 @@ sub checkdest($$) {
     if ($cfg{'SSLv2'} == 0) {
         $checks{'hasSSLv2'}->{val}  = $text{'disabled'} if ($cfg{'SSLv2'} == 0);
     } else {
-        $checks{'hasSSLv2'}->{val}  = '!' if ($cfg{'nullssl2'} == 1); # SSLv2 enabled, but no ciphers
+        $checks{'hasSSLv2'}->{val}  = '!' if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
     }
+    $checks{'hasSSLv3'}->{val}      = "SSLv3" if ($cfg{'SSLv3'} != 0);  # Poodle if SSLv3
 
     # check default cipher
     foreach $ssl (@{$cfg{'versions'}}) {
@@ -3801,6 +3807,7 @@ sub checkdest($$) {
 
     # vulnerabilities
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
+    $checks{'poodle'}->{val}= "SSLv3" if ($cfg{'SSLv3'} != 0);
     foreach $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
@@ -7391,6 +7398,10 @@ details of this check.
 
 Check if heartbeat extension is supported by target.
 
+=head3 poodle
+
+Check if target is vulnerable to Poodle attack.
+
 =head2 SSL Vulnerabilities
 
 =head3 ADH
@@ -7433,9 +7444,14 @@ Currently (2014) only a simple check is used: only DHE ciphers used.
 Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
 TLSv1.2 checks are not yet implemented.
 
+=head3 Poodle
+
+Check if target is vulnerable to poodle attack (just check if  SSLv3
+is enabled).
+
 =head2 Target (server) Configuration and Support
 
-=head3 BEAST, BREACH, CRIME
+=head3 BEAST, BREACH, CRIME, Poodle
 
 See above.
 
