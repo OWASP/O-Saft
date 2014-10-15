@@ -3864,6 +3864,7 @@ sub checkhttp($$) {
             $checks{$key}->{val}    = $text{'no-STS'};
         }
     }
+# ToDo: invalid certs are not allowed for HSTS
     $checks{'hsts_fqdn'}->{val} = "<<N/A>>" if ($http_location eq "");   # useless if no redirect
     $checks{'pkp_pins'} ->{val} = $no if ($data{'https_pins'}->{val}($host) eq "");
 # ToDo: pins= ==> fingerprint des Zertifikats
@@ -3978,11 +3979,11 @@ sub scoring($$) {
 
 ## definitions: print functions
 ## -------------------------------------
-sub print_host_key($$) {
+sub print_host_key($$$) {
     #? print hostname if --showhost given; print key if --tracekey given
-    my ($host, $key) = @_;
-    printf("%s%s", $_[0], $text{'separator'}) if ($cfg{'showhost'} > 0);
-    printf("#[%-18s", $key . ']' . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
+    my ($host, $port, $key) = @_;
+    printf("%s:%s%s", $host, $port, $text{'separator'}) if ($cfg{'showhost'} > 0);
+    printf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
 }
 
 sub _dump($$) {
@@ -4016,14 +4017,14 @@ sub printheader($$){
     printruler();
 } # printheader
 
-sub print_data($$$) {
+sub print_data($$$$) {
     # print given label and text from %data according given legacy format
-    my ($legacy, $label, $host, $port) = @_;   # port is optional
+    my ($legacy, $label, $host, $port) = @_;
     if (_is_hashkey($label, \%data) < 1) {     # silently ignore unknown labels
         _warn("unknown label '$label'; ignored"); # seems to be a programming error
         return;
     }
-    print_host_key($host, $label);
+    print_host_key($host, $port, $label);
     my $val = $data{$label}->{val}($host) || "";
     # { always pretty print
         if ($label =~ m/X509$/) {
@@ -4101,17 +4102,17 @@ sub _print_line($$$) {
     printf("\n");
 } # _print_line
 
-sub print_line($$$$$) {
+sub print_line($$$$$$) {
     #? print label and value
-    my ($legacy, $host, $key, $label, $value) = @_;
-    print_host_key($host, $key);
+    my ($legacy, $host, $port, $key, $label, $value) = @_;
+    print_host_key($host, $port, $key);
     _print_line($legacy, $label, $value);
 } # print_line
 
-sub print_check($$$$) {
+sub print_check($$$$$) {
     #? print label and result of check
-    my ($legacy, $host, $label, $value) = @_;
-    print_host_key($host, $label);
+    my ($legacy, $host, $port, $label, $value) = @_;
+    print_host_key($host, $port, $label);
     $value = $checks{$label}->{val} if (!defined $value);
     $label = $checks{$label}->{txt};
     _print_line($legacy, $label, $value);
@@ -4178,7 +4179,7 @@ sub print_cipherline($$$$$$) {
         printf("%30s - %3s Bits - %11s\n", $cipher, $bit, $yesno);
     }
     if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
-        print_host_key($host, 'cipher');
+        print_host_key($host, $port, 'cipher');
     }
         # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
@@ -4238,9 +4239,9 @@ sub print_ciphertotals($$$$) {
         _trace_1arr('%checks');
         foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
             $key = $ssl . '-' . $sec;
-            print_check($legacy, $host, $key, undef);
+            print_check($legacy, $host, $port, $key, undef);
         }
-        print_check($legacy, $host, $key, undef);
+        print_check($legacy, $host, $port, $key, undef);
     }
 } # print_ciphertotals
 
@@ -4339,22 +4340,22 @@ sub printciphercheck($$$$$@) {
         }
     }
     print_ciphertotals($legacy, $ssl, $host, $port);
-    print_check($legacy, $host, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
+    print_check($legacy, $host, $port, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
 } # printciphercheck
 
-sub print_size($$$) {
+sub print_size($$$$) {
     #? print label and result for length, count, size, ...
-    my ($legacy, $host, $label) = @_;
+    my ($legacy, $host, $port, $label) = @_;
     my $value = "";
     $value = " bytes" if ($label =~ /^(len)/);
     $value = " bits"  if ($label =~ /^(len_publickey|len_sigdump)/);
-    print_check($legacy, $host, $label, $checks{$label}->{val} . $value);
+    print_check($legacy, $host, $port, $label, $checks{$label}->{val} . $value);
 } # print_size
 
-sub printdata($$) {
+sub printdata($$$) {
     #? print information stored in %data
-    my ($legacy, $host) = @_;
+    my ($legacy, $host, $port) = @_;
     my $key  = "";
     local $\ = "\n";
     printheader($text{'out-infos'}, $text{'desc-info'});
@@ -4378,14 +4379,14 @@ sub printdata($$) {
         if ($cfg{'format'} eq "raw") {  # should be the only place where format=raw counts
             print $data{$key}->{val}($host);;
         } else {
-            print_data($legacy, $key, $host);
+            print_data($legacy, $key, $host, $port);
         }
     }
 } # printdata
 
-sub printchecks($$) {
+sub printchecks($$$) {
     #? print results stored in %checks
-    my ($legacy, $host) = @_;
+    my ($legacy, $host, $port) = @_;
     my $key  = "";
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
@@ -4393,7 +4394,7 @@ sub printchecks($$) {
         _trace_1arr('@cfg{version}');
         foreach $key (@{$cfg{'versions'}}) {
             next if ($cfg{$key} == 0);  # this version not checked, see eval("Net::SSLeay::SSLv2_method()") above
-            print_line($legacy, $host, 'default', $checks{'default'}->{txt} . $key, $checks{$key}->{val});
+            print_line($legacy, $host, $port, 'default', $checks{'default'}->{txt} . $key, $checks{$key}->{val});
         }
     }
     _trace_1arr('%checks');
@@ -4407,14 +4408,14 @@ sub printchecks($$) {
         _y_CMD("(%checks) +" . $key);
         if ($key eq 'beast') {          # check is special
             if (! _is_do('cipher') && ($check <= 0)) {
-                print_check($legacy, $host, $key, $text{'need-cipher'}) if ($cfg{'verbose'} > 0);
+                print_check($legacy, $host, $port, $key, $text{'need-cipher'}) if ($cfg{'verbose'} > 0);
                 next;
             }
         }
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) { # sizes are special
-            print_size($legacy, $host, $key) if ($cfg{'no_cert'} <= 0);
+            print_size($legacy, $host, $port, $key) if ($cfg{'no_cert'} <= 0);
         } else {
-            print_check($legacy, $host, $key, _setvalue($checks{$key}->{val}));
+            print_check($legacy, $host, $port, $key, _setvalue($checks{$key}->{val}));
         }
     }
 } # printchecks
@@ -5715,11 +5716,11 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("+info || +check");
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
-            print_line($legacy, $host, 'host-host', $text{'host-host'}, $host);
-            print_line($legacy, $host, 'host-IP',   $text{'host-IP'}, $cfg{'IP'});
+            print_line($legacy, $host, $port, 'host-host', $text{'host-host'}, $host);
+            print_line($legacy, $host, $port, 'host-IP',   $text{'host-IP'}, $cfg{'IP'});
             if ($cfg{'usedns'} == 1) {
-                print_line($legacy, $host, 'host-rhost', $text{'host-rhost'}, $cfg{'rhost'});
-                print_line($legacy, $host, 'host-DNS',   $text{'host-DNS'},   $cfg{'DNS'});
+                print_line($legacy, $host, $port, 'host-rhost', $text{'host-rhost'}, $cfg{'rhost'});
+                print_line($legacy, $host, $port, 'host-DNS',   $text{'host-DNS'},   $cfg{'DNS'});
             }
             printruler();
         }
@@ -5857,7 +5858,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         printruler() if (($quick == 0) and ($legacy ne 'thcsslcheck'));
         printheader("\n" . _subst($text{'out-summary'}, ""), "");
         foreach $ssl (@{$cfg{'version'}}) {
-            print_check($legacy, $host, $ssl, undef);
+            print_check($legacy, $host, $port, $ssl, undef);
         }
         printruler() if ($quick == 0);
     }
@@ -5890,8 +5891,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     _y_CMD("do=".join(" ",@{$cfg{'do'}}));
 
     # print all required data and checks
-    printdata(  $legacy, $host) if ($check == 0); # not for +check
-    printchecks($legacy, $host) if ($info  == 0); # not for +info
+    printdata(  $legacy, $host, $port) if ($check == 0); # not for +check
+    printchecks($legacy, $host, $port) if ($info  == 0); # not for +info
 
     if ($cfg{'out_score'} > 0) { # no output for +info also
         _y_CMD("scores");
@@ -5909,9 +5910,9 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _trace_1arr('%scores');
         foreach $key (sort keys %scores) {
             next if ($key !~ m/^check_/); # print totals only
-            print_line($legacy, $host, $key, $scores{$key}->{txt}, $scores{$key}->{val});
+            print_line($legacy, $host, $port, $key, $scores{$key}->{txt}, $scores{$key}->{val});
         }
-        print_line($legacy, $host, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
+        print_line($legacy, $host, $port, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
         printruler();
         print "\n";
         if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
@@ -8917,7 +8918,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.10.12
+@(#) 14.10.13
 
 =head1 AUTHOR
 
