@@ -509,7 +509,7 @@ my %check_dest = (
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'edh'           => {'txt' => "Target supports EDH ciphers"},
-    'hasSSLv2'      => {'txt' => "Target supports only safe protocols (no SSL 2.0)"},
+    'hasSSLv2'      => {'txt' => "Target does not supports SSLv2"},
     'hasSSLv3'      => {'txt' => "Target does not supports SSLv3"},     # Poodle
     'adh'           => {'txt' => "Target does not accepts ADH ciphers"},
     'null'          => {'txt' => "Target does not accepts NULL ciphers"},
@@ -2064,7 +2064,7 @@ our %text = (
     'out-target'    => "\n==== Target: @@ ====\n",
     'out-ciphers'   => "\n=== Ciphers: Checking @@ ===",
     'out-infos'     => "\n=== Informations ===",
-    'out-scoring'   => "\n=== Scoring Results ===",
+    'out-scoring'   => "\n=== Scoring Results EXPERIMENTAL ===",
     'out-checks'    => "\n=== Performed Checks ===",
     'out-list'      => "=== List @@ Ciphers ===",
     'out-summary'   => "== Ciphers: Summary @@ ==",
@@ -5764,22 +5764,21 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
-            if ($Net::SSLhello::usesni == 1) { # always test without SNI
+            if ($Net::SSLhello::usesni == 1) { # always test first without SNI
                 $Net::SSLhello::usesni = 0;
                 Net::SSLhello::printCipherStringArray(
                     'compact', $host, $port, $ssl, 0,
                     Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
                 );
                 $Net::SSLhello::usesni = 1;
+                next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
+                next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI 
             }
             next if ($Net::SSLhello::usesni == 0);
-            next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
-            next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI 
-# ToDo: print warning for above
-                Net::SSLhello::printCipherStringArray(
-                    'compact', $host, $port, $ssl, 1,
-                    Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
-                );
+            Net::SSLhello::printCipherStringArray(
+                'compact', $host, $port, $ssl, 1,
+                Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
+            );
         }
         next;
     }
@@ -5911,7 +5910,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             + $scores{'check_conn'}->{val}
             + $scores{'check_dest'}->{val}
             + $scores{'check_http'}->{val}
-            ) / 4 ) + 0.5);
+            + $scores{'check_size'}->{val}
+            ) / 5 ) + 0.5);
         printheader($text{'out-scoring'}."\n", $text{'desc-score'});
         print "\n";
         _trace_1arr('%scores');
