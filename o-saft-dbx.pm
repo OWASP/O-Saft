@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.14 14/06/09 01:47:36";
+my  $SID    = "@(#) o-saft-dbx.pm 1.15 14/10/26 10:46:41";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -168,6 +168,12 @@ sub _yeast_init() {
             printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
                # cannot use _yeast() 'cause of pretty printing
         }
+        _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
+        printf("#%s: %14s= %s", $mename, "SSL versions", "[ ");
+        foreach $key (@{$cfg{'versions'}}) {
+            printf("%s=%s ", $key, $cfg{$key});
+        }
+        printf("]\n");
         _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
         _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
         _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
