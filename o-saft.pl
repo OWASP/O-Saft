@@ -249,6 +249,8 @@ usr_pre_init();
 #!# option how to change that.
 
 # Note: all keys in data and check_* must be unique 'cause of shorttexts!!
+# Note: all keys in check_* and checks  must be in lower case letters!!
+#       'cause generic conversion of +commands to keys
 
 #
 # Note according perlish programming style:
@@ -457,6 +459,8 @@ my %check_conn = (
     'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'default'       => {'txt' => "Default cipher for "},   # used for @cfg{version} only
+     # Note: following keys use mixed case letters, that's ok 'cause these
+     #       checks are not called by their own commands; ugly hack ...
      # counter for accepted ciphers, 0 if not supported
     'SSLv2'         => {'txt' => "Supported ciphers for SSLv2 (total)"},
     'SSLv3'         => {'txt' => "Supported ciphers for SSLv3 (total)"},
@@ -509,8 +513,8 @@ my %check_dest = (
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'edh'           => {'txt' => "Target supports EDH ciphers"},
-    'hasSSLv2'      => {'txt' => "Target does not supports SSLv2"},
-    'hasSSLv3'      => {'txt' => "Target does not supports SSLv3"},     # Poodle
+    'hassslv2'      => {'txt' => "Target does not supports SSLv2"},
+    'hassslv3'      => {'txt' => "Target does not supports SSLv3"},     # Poodle
     'adh'           => {'txt' => "Target does not accepts ADH ciphers"},
     'null'          => {'txt' => "Target does not accepts NULL ciphers"},
     'export'        => {'txt' => "Target does not accepts EXPORT ciphers"},
@@ -549,11 +553,11 @@ my %check_size = (
     'len_pembinary' => {'txt' => "Certificate PEM (binary) size"},  # < 2048
     'len_subject'   => {'txt' => "Certificate Subject size"},       # <  256
     'len_issuer'    => {'txt' => "Certificate Issuer size"},        # <  256
-    'len_CPS'       => {'txt' => "Certificate CPS size"},           # <  256
-    'len_CRL'       => {'txt' => "Certificate CRL size"},           # <  256
-    'len_CRL_data'  => {'txt' => "Certificate CRL data size"},
-    'len_OCSP'      => {'txt' => "Certificate OCSP size"},          # <  256
-    'len_OIDs'      => {'txt' => "Certificate OIDs size"},
+    'len_cps'       => {'txt' => "Certificate CPS size"},           # <  256
+    'len_crl'       => {'txt' => "Certificate CRL size"},           # <  256
+    'len_crl_data'  => {'txt' => "Certificate CRL data size"},
+    'len_ocsp'      => {'txt' => "Certificate OCSP size"},          # <  256
+    'len_oids'      => {'txt' => "Certificate OIDs size"},
     'len_publickey' => {'txt' => "Certificate Public Key size"},    # > 1024
     'len_sigdump'   => {'txt' => "Certificate Signature Key size"} ,# > 1024
     'len_altname'   => {'txt' => "Certificate Subject Altname size"},
@@ -717,8 +721,8 @@ our %shorttexts = (
     'sernumber'     => "Serial Number size (RFC5280)",
     'rootcert'      => "Not root CA",
     'ocsp'          => "OCSP supported",
-    'hasSSLv2'      => "No SSLv2",
-    'hasSSLv3'      => "No SSLv3",
+    'hassslv2'      => "No SSLv2",
+    'hassslv3'      => "No SSLv3",
     'adh'           => "No ADH ciphers",
     'edh'           => "EDH ciphers",
     'null'          => "No NULL ciphers",
@@ -790,11 +794,11 @@ our %shorttexts = (
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
     'len_issuer'    => "Size issuer",
-    'len_CPS'       => "Size CPS",
-    'len_CRL'       => "Size CRL",
-    'len_CRL_data'  => "Size CRL data",
-    'len_OCSP'      => "Size OCSP",
-    'len_OIDs'      => "Size OIDs",
+    'len_cps'       => "Size CPS",
+    'len_crl'       => "Size CRL",
+    'len_crl_data'  => "Size CRL data",
+    'len_ocsp'      => "Size OCSP",
+    'len_oids'      => "Size OIDs",
     'len_altname'   => "Size altname",
     'len_publickey' => "Size pubkey",
     'len_sigdump'   => "Size signature key",
@@ -1126,7 +1130,7 @@ our %cfg = (
                        qw(
                         default cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast beast-default crime export rc4 pfs crl hasSSLv2 hasSSLv3 poodle
+                        beast beast-default crime export rc4 pfs crl hassslv2 hassslv3 poodle
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
@@ -3480,11 +3484,11 @@ sub checksizes($$) {
     $checks{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
     $checks{'len_subject'}->{val}   = length($data{'subject'}->{val}($host));
     $checks{'len_issuer'}->{val}    = length($data{'issuer'}->{val}($host));
-    $checks{'len_CPS'}->{val}       = length($data{'ext_cps'}->{val}($host));
-    $checks{'len_CRL'}->{val}       = length($data{'ext_crl'}->{val}($host));
-    #$checks{'len_CRL_data'}->{val}  = length($data{'crl'}->{val}($host));
-    $checks{'len_OCSP'}->{val}      = length($data{'ocsp_uri'}->{val}($host));
-    #$checks{'len_OIDs'}->{val}      = length($data{'OIDs'}->{val}($host));
+    $checks{'len_cps'}->{val}       = length($data{'ext_cps'}->{val}($host));
+    $checks{'len_crl'}->{val}       = length($data{'ext_crl'}->{val}($host));
+    #$checks{'len_crl_data'}->{val}  = length($data{'crl'}->{val}($host));
+    $checks{'len_ocsp'}->{val}      = length($data{'ocsp_uri'}->{val}($host));
+    #$checks{'len_oids'}->{val}      = length($data{'oids'}->{val}($host));
     $checks{'len_sernumber'}->{val} = int(length($data{'serial'}->{val}($host)) / 2); # value are hex octets
     $value = $data{'modulus_len'}->{val}($host);
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
@@ -3789,14 +3793,14 @@ sub checkprot($$) {
             $accepted = _get_default($ssl, $host, $port);
         }
         if ($accepted eq "") {  # protocol not checked
-            $checks{'hasSSLv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
-            $checks{'hasSSLv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
+            $checks{'hassslv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
+            $checks{'hassslv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
             $checks{'poodle'}->{val}        = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
         } else {
             if ($cfg{$ssl} eq 'SSLv2') {
-                $checks{'hasSSLv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
+                $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
             } else {
-                $checks{'hasSSLv3'}->{val}  = " ";  # Poodle if SSLv3
+                $checks{'hassslv3'}->{val}  = " ";  # Poodle if SSLv3
                 $checks{'poodle'}->{val}    = "SSLv3";
             }
         }
