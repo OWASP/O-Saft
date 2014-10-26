@@ -1126,7 +1126,7 @@ our %cfg = (
                        qw(
                         default cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast beast-default crime export rc4 pfs crl hasSSLv3 poodle
+                        beast beast-default crime export rc4 pfs crl hasSSLv2 hasSSLv3 poodle
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
@@ -2048,7 +2048,7 @@ our %text = (
     'no-tlsextdebug'=> "<<N/A as --no-tlsextdebug in use>>",
     'no-nextprotoneg'=>"<<N/A as --no-nextprotoneg in use>>",
     'no-resonnect'  => "<<N/A as --no-resonnect in use>>",
-    'disabled'      => "<<test disabled>>",
+    'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'EV-miss'       => " <<missing @@>>",
@@ -3781,11 +3781,15 @@ sub checkdest($$) {
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
     if ($cfg{'SSLv2'} == 0) {
-        $checks{'hasSSLv2'}->{val}  = $text{'disabled'} if ($cfg{'SSLv2'} == 0);
+        $checks{'hasSSLv2'}->{val}  = _subst($text{'disabled'}, "--no-SSLv2");
     } else {
-        $checks{'hasSSLv2'}->{val}  = '!' if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
+        $checks{'hasSSLv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
     }
-    $checks{'hasSSLv3'}->{val}      = "SSLv3" if ($cfg{'SSLv3'} != 0);  # Poodle if SSLv3
+    if ($cfg{'SSLv3'} == 0) {
+        $checks{'hasSSLv3'}->{val}  = _subst($text{'disabled'}, "--no-SSLv3");
+    } else {
+        $checks{'hasSSLv3'}->{val}  = " ";  # Poodle if SSLv3
+    }
 
     # check default cipher
     foreach $ssl (@{$cfg{'versions'}}) {
@@ -3807,7 +3811,11 @@ sub checkdest($$) {
 
     # vulnerabilities
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
-    $checks{'poodle'}->{val}= "SSLv3" if ($cfg{'SSLv3'} != 0);
+    if ($cfg{'SSLv3'} == 0) {
+        $checks{'poodle'}->{val}    = _subst($text{'disabled'}, "--no-SSLv3");
+    } else {
+        $checks{'poodle'}->{val}    = "SSLv3";
+    }
     foreach $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
@@ -6052,7 +6060,7 @@ In contrast to (all?) most other tools,  including openssl, it can be
 used to `ask simple questions' like `does target support STS' just by
 calling:
 
-    $0 +cipher +hsts_sts example.tld
+    $0 +hsts_sts example.tld
 
 For more, please see  B<EXAMPLES>  section below.
 
@@ -6115,7 +6123,7 @@ tools. However, there are folloing options to tweak these rules:
 
 =back
 
-Above applies to all commands except I<+cipherall> which uses no other
+Above applies to all commands except I<+cipherraw> which uses no other
 libraries.
 
 =head1 RESULTS
@@ -6296,7 +6304,7 @@ with other commands).
 =head3 +check
 
     Check the SSL connection for security issues. This is the same as
-     "+info +cipher +sizes --sslv2 --sslv3 --tls1"
+     "+info +cipher +sizes --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12"
     but also gives some kind of scoring for security issues if any.
 
 =begin comment
@@ -6386,7 +6394,7 @@ with other commands).
     with "--cipher=*" option.
 
     Note that ciphers  not supported  by the local SSL implementation
-    are not checked by default, use "--local" option for that.
+    are not checked by default, use "+cipherraw" command for that.
 
 =for comment other names: +cipherall +allciphers +rawciphers
 
@@ -6559,7 +6567,7 @@ the description here is text provided by the user.
   Use STARTTLS command to start a TLS connection via protocol.
   PROT  may be any of:  SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
 
-  *EXPERIMENTAL* option; works for  +cipherall  only.
+  *EXPERIMENTAL* option; works for  +cipherraw  only.
 
   *EXPERIMENTAL* option; please use  --experimental to enable it.
 
@@ -8094,7 +8102,7 @@ I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>
 =head2 Commands
 
 Some commands cannot be used together with others, for example:
-I<+list>,  I<+libversion>,  I<+version>,  I<+check>,  I<+help>.
+I<+cipher>,  I<+ciphers>,  I<+list>,  I<+libversion>,  I<+version>,  I<+check>,  I<+help>.
  
 I<+quick>  should not be used together with other commands, it returns
 strange output then.
@@ -8780,9 +8788,9 @@ Following formats are used:
 
     $0 +cipher --cipher=ADH-AES256-SHA some.tld
 
-=for comment =item Test all ciphers, even if not supported by local SSL implementation
+=item Test all ciphers, even if not supported by local SSL implementation
 
-=for comment     $0 +cipher --local some.tld
+    $0 +cipherraw some.tld
 
 =item Test using a private libssl.so, libcrypto.so and openssl
 
@@ -8922,7 +8930,7 @@ Based on ideas (in alphabetical order) of:
 O-Saft - OWASP SSL advanced forensic tool
    Thanks to Gregor Kuznik for this title.
 
-+cipherall and some proxy functionality implemented by Torsten Gigler.
++cipherraw and some proxy functionality implemented by Torsten Gigler.
 
 For re-writing some docs in proper English, thanks to Robb Watson.
 
