@@ -1364,6 +1364,7 @@ our %cfg = (
         'checkdates'=> 0,
         'checksizes'=> 0,
         'checkcert' => 0,
+        'checkprot' => 0,
         'checkdest' => 0,
         'checkhttp' => 0,
         'checksni'  => 0,
@@ -3265,7 +3266,7 @@ sub checkciphers($$) {
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
         # TR-02102-2, see 3.2.3
-        if ($checks{$ssl}->{val} > 0) { # check do not make sense if there're no ciphers
+        if ($checks{$ssl}->{val} > 0) { # checks do not make sense if there're no ciphers
             $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
             $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
         }
@@ -3767,6 +3768,41 @@ sub checkroot($$) {
 
 } # checkroot
 
+sub checkprot($$) {
+    #? check anything related to SSL protocol versions
+    my ($host, $port) = @_;
+    my $ssl;
+    _y_CMD("checkprot() " . $cfg{'done'}->{'checkprot'});
+    $cfg{'done'}->{'checkprot'}++;
+    return if ($cfg{'done'}->{'checkprot'} > 1);
+    # check SSL version support
+    foreach $ssl (qw(SSLv2 SSLv3)) {
+        # For +check command, SSL versions are already detected, for single
+        # commands,  i.e. +hasSSLv3 , SSL versions may not yet checked.  We
+        # use the counter for ciphers per SSL version to check if this  SSL
+        # protocol is supported. If the counter equals 0,  we need to check
+        # if that protocol is supported using _get_default(), which returns
+        # the default cipher for that protocol.
+        my $accepted = $checks{$ssl}->{val};
+	if (! $checks{$ssl}->{val}) {       # avoid check if already done 
+	    # FIXME: lazy type check 'cause integer or string, see FIXME in checkdest()
+            $accepted = _get_default($ssl, $host, $port);
+        }
+        if ($accepted eq "") {  # protocol not checked
+            $checks{'hasSSLv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
+            $checks{'hasSSLv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
+            $checks{'poodle'}->{val}        = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
+        } else {
+            if ($cfg{$ssl} eq 'SSLv2') {
+                $checks{'hasSSLv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
+            } else {
+                $checks{'hasSSLv3'}->{val}  = " ";  # Poodle if SSLv3
+                $checks{'poodle'}->{val}    = "SSLv3";
+            }
+        }
+    }
+} # checkprot
+
 sub checkdest($$) {
     #? check anything related to target and connection
     my ($host, $port) = @_;
@@ -3780,16 +3816,6 @@ sub checkdest($$) {
     $checks{'reversehost'}->{val}   = $host . " <> " . $cfg{'rhost'} if ($cfg{'rhost'} ne $host);
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
-    if ($cfg{'SSLv2'} == 0) {
-        $checks{'hasSSLv2'}->{val}  = _subst($text{'disabled'}, "--no-SSLv2");
-    } else {
-        $checks{'hasSSLv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
-    }
-    if ($cfg{'SSLv3'} == 0) {
-        $checks{'hasSSLv3'}->{val}  = _subst($text{'disabled'}, "--no-SSLv3");
-    } else {
-        $checks{'hasSSLv3'}->{val}  = " ";  # Poodle if SSLv3
-    }
 
     # check default cipher
     foreach $ssl (@{$cfg{'versions'}}) {
@@ -3804,18 +3830,16 @@ sub checkdest($$) {
         } else {
             $value = $cipher . " " . get_cipher_sec($cipher);
         }
+        # FIXME: $checks{$ssl}->{val} contains a counter; now we assign a string
+        #        should use own key for default cipher string
         $checks{$ssl}->{val} = $value;
         $checks{'beast-default'}->{val} .= _prot_cipher($ssl, $cipher) if ("" ne _isbeast($ssl, $cipher));
         $checks{'pfs'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
+    checkprot($host, $port);
 
     # vulnerabilities
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
-    if ($cfg{'SSLv3'} == 0) {
-        $checks{'poodle'}->{val}    = _subst($text{'disabled'}, "--no-SSLv3");
-    } else {
-        $checks{'poodle'}->{val}    = "SSLv3";
-    }
     foreach $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
@@ -5886,11 +5910,13 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _trace(" checkssl }");
      }
 
+    # following sequence important!
     checkhttp( $host, $port); # may be already done in checkssl()
     checksni(  $host, $port); #  "
     checksizes($host, $port); #  "
     checkdv(   $host, $port); #  "
     checkdest( $host, $port);
+    checkprot( $host, $port);
     checkbleed($host, $port); # vulnerable TLS heartbeat extentions
 
     usr_pre_print();
