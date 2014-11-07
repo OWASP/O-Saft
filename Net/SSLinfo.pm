@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.81 14/06/29 01:45:43',
+    SID         => '@(#) Net::SSLinfo.pm 1.82 14/11/07 15:24:18',
 };
 
 ######################################################## public documentation #
@@ -1140,11 +1140,25 @@ sub do_ssl_open($$$) {
 #    X-Firefox-Spdy: 3.1
             _trace("\n$response \n# do_ssl_open HTTPS }");
             _trace("do_ssl_open HTTP {");   # HTTP uses its own connection ...
+# FIXME: use @headers instead of %headers so we get *all* headers returned
             my %headers;
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
             );
+                # Net::SSLeay 1.58 (and before)
+                # Net::SSLeay::get_http() may return:
+                # Read error: Connection reset by peer (,199725) at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/tcp_read_all.al) line 535.
+                # Read error: Die Verbindung wurde vom Kommunikationspartner zurückgesetzt (,199725) at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/tcp_read_all.al) line 535.
+                #
+                # Unfortunately in this case  Net::SSLeay::ERR_get_error is 0
+                # and  Net::SSLeay::print_errs()  returns nothing even the error
+		# is present as string (according current locale) in $!.
+                # It still may return a response and a status, hence there is
+                # need to handle it special as the check for the status below
+                # already does the work.
+		# The error is printed by Net/SSLeay, and cannot be omitted.
+
 # $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
             if ($_SSLinfo{'http_status'} =~ m:^HTTP/... ([1234][0-9][0-9]|500) :) {
                 # ToDo: not tested if following grep() catches multiple occourances
