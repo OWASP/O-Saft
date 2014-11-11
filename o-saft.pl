@@ -34,10 +34,15 @@
 
 use strict;
 
-sub _y_ts() { return join(":", (localtime)[2,1,0]); }
+sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
+    # need to check @ARGV directly as this is called before any options are parsed
+    if (grep(/(:?--trace.*time)/i, @ARGV) > 0) {
+        printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @_);
+    }
+}
 
 BEGIN {
-    printf("#o-saft.pl %8s CMD: BEGIN{\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
+    _y_TIME("BEGIN{");
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands.
@@ -53,7 +58,7 @@ BEGIN {
     # we support some local lib directories
     unshift(@INC, "./", "./lib");
 } # BEGIN
-    printf("#o-saft.pl %8s CMD: BEGIN}\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
+    _y_TIME("BEGIN}");
 
 my  $SID    = "@(#) yeast.pl 1.299 14/07/27 16:22:43";
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
@@ -106,7 +111,8 @@ sub _dprint { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
 sub _dbx    { _dprint(@_); } # alias for _dprint
 sub _warn   {
     #? print warning if wanted
-    return if ($main::warning <= 0);
+    #return if ($warning <= 0);
+    return if (grep(/(:?--no.?warn)/i, @ARGV) > 0);     # ugly hack 'cause we won't pass $warning
     local $\ = "\n"; print("**WARNING: ", join(" ", @_));
     # ToDo: in CGI mode warning must be avoided until HTTP header written
 }
@@ -116,7 +122,7 @@ sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
 
 sub _load_file($$) {
-    # load file with perl's require using the paths in @INV
+    # load file with perl's require using the paths in @INC
     # use `$0 +version --v'  to see which files are loaded
     my $fil = shift;
     my $txt = shift;
@@ -141,6 +147,7 @@ sub _is_member($$); #   "
 
 ## read RC-FILE if any
 ## -------------------------------------
+_y_TIME("cfg{");
 my @rc_argv = "";
 $arg = "./.$me";    # check in pwd only
 if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
@@ -1423,7 +1430,7 @@ foreach my $ssl (@{$cfg{'versions'}}) {
         $shorttexts{$ssl . '-' . $sec} = $sec . " (total)";
     }
 }
-printf("#o-saft.pl %8s CMD: cfg\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
+_y_TIME("cfg}");
 
 our %ciphers_desc = (   # description of following %ciphers table
     'head'          => [qw(  sec  ssl   enc  bits mac  auth  keyx   score  tags)],
@@ -5480,7 +5487,7 @@ if ($cfg{'exec'} == 0) {
         exec $0, '+exec', @ARGV;
     }
 }
-printf("#o-saft.pl %8s CMD: inc{\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
+_y_TIME("inc{");
 
 local $\ = "\n";
 
@@ -5493,7 +5500,7 @@ use     IO::Socket::INET;
 
 require Net::SSLhello if (_is_do('cipherraw') or _is_do('version'));
 require Net::SSLinfo;
-printf("#o-saft.pl %8s CMD: inc}\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
+_y_TIME("inc}");
 
 ## first: all commands which do not make a connection
 ## -------------------------------------
@@ -8913,6 +8920,14 @@ Following formats are used:
 
     $0 +info some.tld --trace-key
 
+=item Show internal argument processeing
+
+    $0 +info --trace-arg some.tld
+
+=item Show internal control flow and timing
+
+    $0 +info some.tld --trace-cmd --trace-time
+
 =item List checked ciphers
 
     $0 +cipher some.tld --v --v
@@ -8933,7 +8948,7 @@ Following formats are used:
 
     $0 some.tld +chain_verify +verify +error_verify +chain
 
-=item Avoid most performance and timeout problems
+=item Avoid most performance and timeout problems (don't use  --v)
 
     $0 +info some.tld --no-cert --no-dns --no-http --no-openssl --no-sni
 
