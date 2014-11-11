@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.15 14/10/26 10:46:41";
+my  $SID    = "@(#) o-saft-dbx.pm 1.16 14/11/11 00:58:21";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -84,9 +84,10 @@ no warnings 'redefine';
 package main;   # ensure that main:: variables are used, if not defined herein
 
 # debug functions
+sub _y_ts     { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
 sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; }
 sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); }
-sub _y_CMD    { local $\ = "\n"; print "#" . $mename . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
+sub _y_CMD    { local $\ = "\n"; print "#" . $mename . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
 sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); }
 sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); }
 sub _y_ARR(@) { return join(" ", "[", @_, "]"); }
