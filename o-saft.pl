@@ -34,7 +34,10 @@
 
 use strict;
 
+sub _y_ts() { return join(":", (localtime)[2,1,0]); }
+
 BEGIN {
+    printf("#o-saft.pl %8s CMD: BEGIN{\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands.
@@ -50,6 +53,7 @@ BEGIN {
     # we support some local lib directories
     unshift(@INC, "./", "./lib");
 } # BEGIN
+    printf("#o-saft.pl %8s CMD: BEGIN}\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
 
 my  $SID    = "@(#) yeast.pl 1.299 14/07/27 16:22:43";
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
@@ -998,6 +1002,7 @@ our %cfg = (
     'traceARG'      => 0,       # 1: trace yeast's argument processing
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
+    'traceTIME'     => 0,       # 1: (trace) print additiona time for benchmarking
     'verbose'       => 0,       # used for --v
     'warning'       => 1,       # 1: print warnings; 0: don't print warnings
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
@@ -1418,6 +1423,7 @@ foreach my $ssl (@{$cfg{'versions'}}) {
         $shorttexts{$ssl . '-' . $sec} = $sec . " (total)";
     }
 }
+printf("#o-saft.pl %8s CMD: cfg\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
 
 our %ciphers_desc = (   # description of following %ciphers table
     'head'          => [qw(  sec  ssl   enc  bits mac  auth  keyx   score  tags)],
@@ -5072,15 +5078,16 @@ while ($#argv >= 0) {
         #   --trace arg
         #   --trace=2
         #   --trace 2
-        # proble is that we historicall allow also
+        # problem is that we historically allow also
         #   --trace
-        # which ahs no argument, hence following checks for valid arguments
-        # and passes it to further examination if it not matches
+        # which has no argument, hence following checks for valid arguments
+        # and pass it to further examination if it not matches
         if ($typ eq 'TRACE')    {
             $typ = 'HOST';          # expect host as next argument
             $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
             $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
             $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
+            $cfg{'traceTIME'}++  if ($arg =~ m#time#i);
             $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
             # now magic starts ...
             next if ($arg =~ m#^(arg|cmd|key|\d+)$#i); # matched before
@@ -5174,6 +5181,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
     if ($arg =~ /^--trace(@|key)/i)     { $cfg{'traceKEY'}++;       } # ..
+    if ($arg =~ /^--tracetime/i)        { $cfg{'traceTIME'}++;      } # ..
     if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # ..
     if ($arg eq  '--trace')             { $typ = 'TRACE';           }
     if ($arg eq  '--quit')              { $arg = '+quit';           }
@@ -5472,6 +5480,7 @@ if ($cfg{'exec'} == 0) {
         exec $0, '+exec', @ARGV;
     }
 }
+printf("#o-saft.pl %8s CMD: inc{\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
 
 local $\ = "\n";
 
@@ -5484,6 +5493,7 @@ use     IO::Socket::INET;
 
 require Net::SSLhello if (_is_do('cipherraw') or _is_do('version'));
 require Net::SSLinfo;
+printf("#o-saft.pl %8s CMD: inc}\n",_y_ts()) if (grep(/(:?--trace.*time)/i, @ARGV) > 0); # _y_CMD()
 
 ## first: all commands which do not make a connection
 ## -------------------------------------
@@ -6806,6 +6816,8 @@ the description here is text provided by the user.
 
 =item * SSLv2           all ciphers according RFC for SSLv2
 
+=item * SSLv2_long      more lazy list of constants for SSLv2 ciphers
+
 Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
 It does not make sense to use it for other protocols; however ...
 
@@ -7310,6 +7322,10 @@ options are ambiguous.
 =item * --trace=key                        same as I<--trace-key>
 
 =back
+
+=head3 --trace-time
+
+  Prints timestamp in trace output (--trace-cmd only).
 
 =head3 --trace=FILE
 
