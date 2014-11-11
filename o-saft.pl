@@ -105,8 +105,9 @@ if ($me =~/\.cgi$/) {
     $cgi = 1;
 } # CGI
 
-## functions used very early in main
+## functions and variables used very early in main
 ## -------------------------------------
+our %cfg =  ('trace' => 0 ); # used in usr_pre_init(); avoid: Use of uninitialized value ...
 sub _dprint { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
 sub _dbx    { _dprint(@_); } # alias for _dprint
 sub _warn   {
@@ -1000,7 +1001,8 @@ our %cmd = (
                                 # see --call=METHOD option in description below
 );
 
-our %cfg = (
+#our %cfg = # already defined above (just some values, complete setting here)
+%cfg = (
    # config. key        default   description
    #------------------+---------+----------------------------------------------
     'try'           => 0,       # 1: do not execute openssl, just show
