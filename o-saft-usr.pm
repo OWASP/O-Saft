@@ -122,14 +122,14 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.9 14/11/11 22:15:24";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.10 14/11/11 23:56:06";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 package main;   # ensure that main:: variables are used
 
-sub _usr_dbx { _trace(join(" ", @_)); } # requires --v
+sub _usr_dbx { _trace(join(" ", @_, "\n")); } # requires --v
 
 # user functions
 # -------------------------------------
