@@ -122,7 +122,7 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.8 14/07/30 08:00:41";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.9 14/11/11 22:15:24";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -427,13 +427,12 @@ sub usr_printwiki() {
 This is O-Saft's documentation as you get with:
  o-saft.pl --help
 
-__TOC__
+__TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing MediaWiki:Common.css -->
 <!-- position left is no good as the list is too big and then overlaps some texts
 {|align=right
  |<div>__TOC__</div>
  |}
 -->
-<headertabs /> 
 
 [[Category:OWASP Project]]  [[Category:OWASP_Builders]] [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]
 ----
@@ -479,7 +478,7 @@ __TOC__
 ----
 <small>
 Content of this wiki page generated with:
- o-saft.pl --usr +gen-wiki
+ o-saft.pl --no-warning --no-header --usr +gen-wiki
 </small>
 ";
 } # usr_printwiki
