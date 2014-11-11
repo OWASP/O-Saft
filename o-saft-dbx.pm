@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.16 14/11/11 00:58:21";
+my  $SID    = "@(#) o-saft-dbx.pm 1.17 14/11/11 23:57:12";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -202,7 +202,7 @@ sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbos
 sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); } # must provide \n if wanted
 sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); }
 sub _v4print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 4); }
-sub _trace($) { print "#" . $mename . "::" . $_[0] if ($cfg{'trace'} > 0); }
+sub _trace($) { print "#" . $mename . "::" . $_[0]         if ($cfg{'trace'} > 0); }
 sub _trace0($){ print "#" . $mename . "::"                 if ($cfg{'trace'} > 0); }
 sub _trace1($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 1); }
 sub _trace2($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 2); }
