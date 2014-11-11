@@ -4,9 +4,10 @@
 #?      o-saft_bench  - simple time and memory test program for o-saft.pl
 #?
 
-SID="@(#) o-saft_bench 1.2 14/07/27 22:12:13"
+SID="@(#) o-saft_bench 1.3 14/11/12 00:03:22"
 
 yeast=o-saft.pl
+yeast=./yeast.pl
  host=localhost
  time=/usr/bin/time
   out=./o-saft_time-tests
@@ -31,6 +32,7 @@ echo $line
 ) >> $out
 while read -r cmd ; do
 	[ -z "$cmd" ] && continue  # skip final emtpy line
+	#dbx# echo    "o-saft.pl $cmd "
 	echo -n "o-saft.pl $cmd " | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast $cmd >/dev/null && echo ""
         cnt=`expr $cnt + 1`
 done << EoT
@@ -46,15 +48,18 @@ done << EoT
 	+list                        \ 
 	--v +help                    \ 
 	+gen-wiki                    \ 
-	+gen-wiki    --usr           \ 
-	+cipher            $host \ 
-	+cipherall         localhost \ 
-	+info              localhost \ 
-	+info  --noopenssl localhost \ 
-	+quick             localhost \ 
-	+quick --noopenssl localhost \ 
-	+check             localhost \ 
-	+check --noopenssl localhost \ 
+	+gen-wiki --usr --no-header  \ 
+	+cipher                $host \ 
+	+cipherall             $host \ 
+	+info                  $host \ 
+	+info  --noopenssl     $host \ 
+	+quick                 $host \ 
+	+quick --noopenssl     $host \ 
+	+check                 $host \ 
+	+check --noopenssl     $host \ 
+	+sizes                 $host \ 
+	+sizes --trace-cmd --trace-time $host \ 
+	+quit  --trace-cmd --trace-time \ 
 
 EoT
 # tricky here document:
