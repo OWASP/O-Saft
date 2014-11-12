@@ -1192,6 +1192,7 @@ our %cmd = (
         'usereneg'  => 0,       # 1: secure renegotiation
         'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
+        'nodatanocipher'=> 1,   # 1: do not abort testing next cipher for some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher'
     },
     'legacy'        => "simple",
     'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
@@ -1391,12 +1392,14 @@ our %cmd = (
         'checkev'   => 0,
      },
     'extension' => {            # TLS extensions
-        '00010'     => "elliptic curves",    # length=4
-        '00011'     => "EC point formats",   # length=2
-        '00015'     => "heartbeat",          # length=1
-        '00035'     => "session ticket",     # length=0
-        '13172'     => "next protocol",      # length=NNN
-        '65281'     => "renegotiation info", # length=1
+        '00000'     => "renegotiation info length",     # 0x0000 ??
+        '00001'     => "renegotiation length",          # 0x0001 ??
+        '00010'     => "elliptic curves",    # 0x000a length=4
+        '00011'     => "EC point formats",   # 0x000b length=2
+        '00015'     => "heartbeat",          # 0x000f length=1
+        '00035'     => "session ticket",     # 0x0023 length=0
+        '13172'     => "next protocol",      # 0x3374 length=NNN
+        '65281'     => "renegotiation info", # 0xff01 length=1
     },
 ); # %cfg
 
@@ -5305,6 +5308,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--sslusereneg')       { $typ = 'SSLRENEG';        }
     if ($arg eq  '--ssldoublereneg')    { $typ = 'DOUBLE';          }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
+    if ($arg eq  '--sslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
+    if ($arg eq  '--sslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 0; }
+    if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
     #!#--------+------------------------+----------------------------
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
     if ($arg =~ /^--ca(?:cert(?:ificate)?|file)$/i){ $typ ='CAFILE';} # curl, openssl, wget, ...
@@ -5808,8 +5814,10 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
             $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
             $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
+            $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
             $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
             $Net::SSLhello::proxyport   = $cfg{'proxyport'};
+            $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
         }
         _v_print("cipher range: $cfg{'cipherrange'}");
         foreach $ssl (@{$cfg{'version'}}) {
