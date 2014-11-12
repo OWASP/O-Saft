@@ -5099,7 +5099,7 @@ while ($#argv >= 0) {
             $cfg{'traceTIME'}++  if ($arg =~ m#time#i);
             $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
             # now magic starts ...
-            next if ($arg =~ m#^(arg|cmd|key|\d+)$#i); # matched before
+            next if ($arg =~ m#^(arg|cmd|key|time|\d+)$#i); # matched before
             # if we reach here, argument did not match valid value for --trace,
             # then simply increment trace level and process argument below
             $cfg{'trace'}++;
@@ -5426,6 +5426,7 @@ while ($#argv >= 0) {
     }
 
 } # while
+$cfg{'traceCMD'}++ if ($cfg{'traceTIME'} > 0);
 $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
@@ -5990,7 +5991,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     CLOSE_SSL:
     _y_CMD("host}");
     Net::SSLinfo::do_ssl_close($host, $port);
-    _trace(" done: $host");
+    _trace(" done: $host\n");
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
@@ -7334,7 +7335,7 @@ options are ambiguous.
 
 =head3 --trace-time
 
-  Prints timestamp in trace output (--trace-cmd only).
+  Prints timestamp in trace output (implies --trace-cmd).
 
 =head3 --trace=FILE
 
@@ -8928,7 +8929,7 @@ Following formats are used:
 
 =item Show internal control flow and timing
 
-    $0 +info some.tld --trace-cmd --trace-time
+    $0 +info some.tld --trace-time
 
 =item List checked ciphers
 
