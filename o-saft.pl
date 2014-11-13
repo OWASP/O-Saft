@@ -247,7 +247,7 @@ usr_pre_init();
 #!#                     collected and checked target (connection) data
 #!#                     collected and checked connection data
 #!#                     collected and checked length and count data
-#!#                     HTTP vs HTTPS checks
+#!#                     HTTP vs. HTTPS checks
 #!#   %shorttexts     - same as %checks, but short texts
 #!#   %cmd            - configuration for external commands
 #!#   %cfg            - configuration for commands and options
@@ -585,7 +585,7 @@ my %check_size = (
 ); # %check_size
 
 my %check_http = (
-    # HTTP vs HTTPS checks
+    # HTTP vs. HTTPS checks
     # score are absolute values here, they are set to 100 if attribute is found
     # key must have prefix (hsts|sts); see $cfg{'regex'}->{'cmd-http'}
     #------------------+-----------------------------------------------------
@@ -1187,10 +1187,11 @@ our %cmd = (
                                 #      results in a performance bottleneck, obviously
     'sslhello' => {    # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
         'timeout'   => 2,       # timeout to receive ssl-answer
-        'retry'     => 3,       # number of retry when timeout
+        'retry'     => 2,       # number of retry when timeout
         'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
+        'useecc'    => 1,       # 1: use supported elliptic curves and ec_point_formats extension
         'usereneg'  => 0,       # 1: secure renegotiation
-        'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV
+        'double_reneg'  => 0,   # 0: do not send reneg_info extension if the cipher_spec already includes SCSV
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
         'nodatanocipher'=> 1,   # 1: do not abort testing next cipher for some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher'
     },
@@ -5024,9 +5025,7 @@ while ($#argv >= 0) {
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SSLRENEG') { $cfg{'sslhello'}->{'usereneg'}= $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
-        if ($typ eq 'DOUBLE')   { $cfg{'sslhello'}->{'double_reneg'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
@@ -5302,15 +5301,23 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     # options for Net::SSLhello
-# FIXME: following options not yet documented
     if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
-    if ($arg eq  '--sslusereneg')       { $typ = 'SSLRENEG';        }
-    if ($arg eq  '--ssldoublereneg')    { $typ = 'DOUBLE';          }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
+    if ($arg eq  '--nossluseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; } # alias ...
+    if ($arg eq  '--sslnouseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; }
+    if ($arg eq  '--ssluseecc')         { $cfg{'sslhello'}->{'useecc'}   = 1; }
+    if ($arg eq  '--nosslusereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; } # alias ...
+    if ($arg eq  '--sslnousereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; }
+    if ($arg eq  '--sslusereneg')       { $cfg{'sslhello'}->{'usereneg'} = 1; }
+    if ($arg eq  '--nossldoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; } # alias ...
+    if ($arg eq  '--sslnodoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; }
+    if ($arg eq  '--ssldoublereneg')    { $cfg{'sslhello'}->{'double_reneg'}   = 1; }
+    if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 0; } # alias ...
     if ($arg eq  '--sslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
     if ($arg eq  '--sslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 0; }
-    if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
+    if ($arg eq  '--ssldataeqnocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 1; }
+    if ($arg eq  '--ssldatanocipher')   { $cfg{'sslhello'}->{'nodatanocipher'} = 1; } # alias
     #!#--------+------------------------+----------------------------
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
     if ($arg =~ /^--ca(?:cert(?:ificate)?|file)$/i){ $typ ='CAFILE';} # curl, openssl, wget, ...
@@ -6461,7 +6468,9 @@ with other commands).
     Check target for all possible ciphers.
     Does not depend on local SSL implementation.
 
-    WARNING: needs to be extensively tested (04/2014)
+    In contrast to  "+cipher"  this command has some options to tweak
+    the cipher tests, connection results, and some strange behaviours
+    of the target. See "Options for +cipherraw command" for details.
 
 =head2 Commands to test SSL connection to target
 
@@ -6813,38 +6822,6 @@ the description here is text provided by the user.
 
 =end comment
 
-=head3 --cipherrange=RANGE, --range=RANGE 
-
-  Specify range of cipher constants to be tested by  "+cipherraw" .
-  Following RANGEs are supported (see also: "--cipherrange=RANGE"):
-
-=over 4
-
-=item * rfc             all ciphers defined in various RFCs
-
-=item * shifted         rfc, shifted by 64 bytes to the right
-
-=item * long            like C<rfc> but more lazy list of constants
-
-=item * huge            all constants  0x03000000 .. 0x0300FFFF
-
-=item * safe            all constants  0x03000000 .. 0x032FFFFF
-
-=item * full            all constants  0x03000000 .. 0x03FFFFFF
-
-=item * SSLv2           all ciphers according RFC for SSLv2
-
-=item * SSLv2_long      more lazy list of constants for SSLv2 ciphers
-
-Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
-It does not make sense to use it for other protocols; however ...
-
-=back
-
-=head3 --ssl-maxciphers=CNT 
-
-  Maximal number of ciphers sent in a sslhello (default is 32).
-
 =begin comment
 
 =head3 --local
@@ -6950,6 +6927,72 @@ It does not make sense to use it for other protocols; however ...
 =head3 --sclient-opt=VALUE
 
   Argument or option passed to openssl s_client command.
+
+=head2 Options for I<+cipherraw>  command:
+
+=head3 --cipherrange=RANGE, --range=RANGE 
+
+  Specify range of cipher constants to be tested by  "+cipherraw" .
+  Following RANGEs are supported (see also: "--cipherrange=RANGE"):
+
+=over 4
+
+=item * rfc             all ciphers defined in various RFCs
+
+=item * shifted         rfc, shifted by 64 bytes to the right
+
+=item * long            like C<rfc> but more lazy list of constants
+
+=item * huge            all constants  0x03000000 .. 0x0300FFFF
+
+=item * safe            all constants  0x03000000 .. 0x032FFFFF
+
+=item * full            all constants  0x03000000 .. 0x03FFFFFF
+
+=item * SSLv2           all ciphers according RFC for SSLv2
+
+=item * SSLv2_long      more lazy list of constants for SSLv2 ciphers
+
+Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
+It does not make sense to use it for other protocols; however ...
+
+=back
+
+=head3 --ssl-maxciphers=CNT 
+
+  Maximal number of ciphers sent in a sslhello (default: 32).
+
+=head3 --ssl-double-reneg
+
+  Send SSL extension  "reneg_info"  even if list of ciphers includes
+  TLS_EMPTY_RENEGOTIATION_INFO_SCSV (default: do not include)
+
+=head3 --ssl-nodata-nocipher
+
+  Do not abort testing for next cipher when the target  responds with
+  "NoData" times out. Useful for TLS intolerant servers.
+  By default testing for ciphers is aborted  when the target responds
+  with "noData message.
+
+=for comment alias: --sslnodataeqnocipher --nodataeqnocipher
+
+=head3 --ssl-use-ecc
+
+  Use supported elliptic curves and TLS "ec_point_formats" extension.
+  Default on.
+
+=head3 --ssl-use-reneg
+
+  Test for ciphers with "secure renegotiation" flag set.
+  Default: don't set "secure renegotiation" flag.
+
+=head3 --ssl-retry=CNT
+
+  Number of retries when connection timed-out (default: 2).
+
+=head3 --ssl-timeout=SEC
+
+  Number of seconds to wait until connection is qualified as timeout.
 
 =head2 Options for checks and results
 
