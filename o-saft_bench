@@ -4,13 +4,14 @@
 #?      o-saft_bench  - simple time and memory test program for o-saft.pl
 #?
 
-SID="@(#) o-saft_bench 1.3 14/11/12 00:03:22"
+  SID="@(#) o-saft_bench 1.4 14/11/15 19:45:27"
 
+  ich=${0##*/}
 yeast=o-saft.pl
 yeast=./yeast.pl
  host=localhost
  time=/usr/bin/time
-  out=./o-saft_time-tests
+  out=./${ich}.times
   cnt=4   # additional 4 lines which are the table header and footer line
 
 (echo
@@ -49,17 +50,17 @@ done << EoT
 	--v +help                    \ 
 	+gen-wiki                    \ 
 	+gen-wiki --usr --no-header  \ 
-	+cipher                $host \ 
-	+cipherall             $host \ 
-	+info                  $host \ 
-	+info  --noopenssl     $host \ 
-	+quick                 $host \ 
-	+quick --noopenssl     $host \ 
-	+check                 $host \ 
-	+check --noopenssl     $host \ 
-	+sizes                 $host \ 
-	+sizes --trace-cmd --trace-time $host \ 
+	+cipher               $host \ 
+	+cipherall            $host \ 
+	+info                 $host \ 
+	+info  --noopenssl    $host \ 
+	+quick                $host \ 
+	+quick --noopenssl    $host \ 
+	+check                $host \ 
+	+check --noopenssl    $host \ 
 	+quit  --trace-cmd --trace-time \ 
+	+sizes                $host \ 
+	+sizes --trace-cmd --trace-time $host \ 
 
 EoT
 # tricky here document:
