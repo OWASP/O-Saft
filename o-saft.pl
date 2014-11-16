@@ -5046,7 +5046,11 @@ while ($#argv >= 0) {
         #  +---------+----------+------------------------------+--------------------
         #   argument to process   what to do                    expect next argument
         #  +---------+----------+------------------------------+--------------------
-        if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; }
+        if ($typ =~ m/^CFG/)    { _cfg_set($typ, lc($arg));     $typ = 'HOST'; }
+           # lc($arg) is contribution to old keys (pre 14.10.13) where keys in
+           # our internal hashes %check etc. where case sensitive
+           # we don'z want to force users to rewrite their existing .o-saft.pl
+           # hence we simply convert anything to lower case
         if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; }
@@ -5448,7 +5452,7 @@ while ($#argv >= 0) {
             _warn("command not yet implemented '$val' may be ignored");
         }
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
-            push(@{$cfg{'do'}}, $val);
+            push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
         } else {
             _warn("unknown command '$val' ignored");
         }
@@ -6360,11 +6364,11 @@ with other commands).
 
 =head3 +gen-html +gen-wiki
 
-  Print documentation in various formats, see o-saft-usr.pm .
+    Print documentation in various formats, see o-saft-usr.pm .
 
 =head3 +gen-cgi
 
-   See o-saft-usr.pm .
+    See o-saft-usr.pm .
 
 =head3 +abbr, +abk
 
