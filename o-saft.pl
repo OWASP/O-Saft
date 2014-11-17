@@ -291,7 +291,7 @@ our %data   = (     # values from Net::SSLinfo, will be processed in print_data(
     'subject'       => {'val' => sub { Net::SSLinfo::subject(       $_[0], $_[1])}, 'txt' => "Certificate Subject"},
     'issuer'        => {'val' => sub { Net::SSLinfo::issuer(        $_[0], $_[1])}, 'txt' => "Certificate Issuer"},
     'altname'       => {'val' => sub { Net::SSLinfo::altname(       $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
-    'default'       => {'val' => sub { Net::SSLinfo::default(       $_[0], $_[1])}, 'txt' => "Default Cipher"},
+    'selected'      => {'val' => sub { Net::SSLinfo::selected(      $_[0], $_[1])}, 'txt' => "Selected Cipher"},
     'ciphers_openssl'=>{'val' => sub { $_[0] },                                     'txt' => "OpenSSL Ciphers"},
     'ciphers'       => {'val' => sub { join(" ",  Net::SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
     'dates'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
@@ -470,7 +470,7 @@ my %check_conn = (
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
     'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-    'default'       => {'txt' => "Default cipher for "},   # used for @cfg{version} only
+    'selected'      => {'txt' => "Selected cipher by server for "},# used for @cfg{version} only
      # Note: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
      # counter for accepted ciphers, 0 if not supported
@@ -830,7 +830,7 @@ our %shorttexts = (
     'issuer'        => "Issuer",
     'altname'       => "Subject AltNames",
     'ciphers'       => "Client Ciphers",
-    'default'       => "Default Cipher",
+    'selected'      => "Selected Cipher",
     'ciphers_openssl'   => "OpenSSL Ciphers",
     'dates'         => "Validity (date)",
     'before'        => "Valid since",
@@ -2790,6 +2790,11 @@ sub _cfg_set($$) {
             next if (_is_hashkey($key, \%data) > 0);
             next if (_is_intern( $key) > 0);
             next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
+            if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
+                push(@{$cfg{$typ}}, 'selected');
+                _warn("please use 'selected' instead of '$key'; ignored");
+                next;
+            }
             _warn("unknown command '$key' for '$typ'; ignored");
         }
     }
@@ -4324,7 +4329,7 @@ sub print_cipherdefault($$$$) {
     if ($legacy eq 'sslaudit')  {} # ToDo: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
-    print_cipherline($legacy, $ssl, $host, $port, $data{'default'}->{val}($host), $yesno);
+    print_cipherline($legacy, $ssl, $host, $port, $data{'selected'}->{val}($host), $yesno);
 } # print_cipherdefault
 
 sub print_ciphertotals($$$$) {
@@ -4493,11 +4498,11 @@ sub printchecks($$$) {
     my $key  = "";
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
-    if (_is_do('default')) {            # values are special
+    if (_is_do('selected')) {            # values are special
         _trace_1arr('@cfg{version}');
         foreach $key (@{$cfg{'versions'}}) {
             next if ($cfg{$key} == 0);  # this version not checked, see eval("Net::SSLeay::SSLv2_method()") above
-            print_line($legacy, $host, $port, 'default', $checks{'default'}->{txt} . $key, $checks{$key}->{val});
+            print_line($legacy, $host, $port, 'selected', $checks{'selected'}->{txt} . $key, $checks{$key}->{val});
         }
     }
     _trace_1arr('%checks');
@@ -4507,7 +4512,7 @@ sub printchecks($$$) {
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
-        next if ($key eq 'default');    # used for @cfg{version} only
+        next if ($key eq 'selected');    # used for @cfg{version} only
         _y_CMD("(%checks) +" . $key);
         if ($key eq 'beast') {          # check is special
             if (! _is_do('cipher') && ($check <= 0)) {
