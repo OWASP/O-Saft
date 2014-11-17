@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.82 14/11/07 15:24:18',
+    SID         => '@(#) Net::SSLinfo.pm 1.83 14/11/17 12:47:01',
 };
 
 ######################################################## public documentation #
@@ -280,7 +280,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.06.15';
+    $VERSION   = '14.11.14';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -573,7 +573,7 @@ my %_SSLinfo= ( # our internal data structure
     'fingerprint_hash'  => "",  # the fingerprint hash value
     'fingerprint_sha1'  => "",  # SHA1 fingerprint (if available)
     'fingerprint_md5'   => "",  # MD5  fingerprint (if available)
-    'default'           => "",  # default cipher offered by server
+    'selected'          => "",  # cipher selected for session by server
     # all following need output from "openssl s_client ..."
     'verify'            => "",  # certificate chain verification
     'chain'             => "",  # certificate's CA chain
@@ -1057,7 +1057,7 @@ sub do_ssl_open($$$) {
         my $i   = 0;
         my $c   = '';
         push(@{$_SSLinfo{'ciphers'}}, $c) while ($c = Net::SSLeay::get_cipher_list($ssl, $i++));
-        $_SSLinfo{'default'}    = Net::SSLeay::get_cipher($ssl);
+        $_SSLinfo{'selected'}   = Net::SSLeay::get_cipher($ssl);
             # same as above:      Net::SSLeay::CIPHER_get_name(Net::SSLeay::get_current_cipher($ssl));
 
         #5c. store certificate informations
@@ -1923,7 +1923,8 @@ sub after           { return _SSLinfo_get('after',            $_[0], $_[1]); }
 sub dates           { return _SSLinfo_get('dates',            $_[0], $_[1]); }
 sub issuer          { return _SSLinfo_get('issuer',           $_[0], $_[1]); }
 sub subject         { return _SSLinfo_get('subject',          $_[0], $_[1]); }
-sub default         { return _SSLinfo_get('default',          $_[0], $_[1]); }
+sub default         { return _SSLinfo_get('selected',         $_[0], $_[1]); } # alias; used in VERSION < 14.11.14
+sub selected        { return _SSLinfo_get('default',          $_[0], $_[1]); }
 sub cn              { return _SSLinfo_get('cn',               $_[0], $_[1]); }
 sub commonname      { return _SSLinfo_get('cn',               $_[0], $_[1]); } # alias for cn
 sub altname         { return _SSLinfo_get('altname',          $_[0], $_[1]); }
