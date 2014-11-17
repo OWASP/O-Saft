@@ -1,4 +1,354 @@
 
+Version: 14.11.14
+  NEW
+    * check for Poodle attack
+    * --trace-time implemented
+    * o-saft-dbx.pm: trace command prints timestamp for --trace-time
+    * options for +cipherraw command documented
+  BUGFIX
+    * --showhost  print host:port
+    * keys in internal hashes in lower case letters
+    * .o-saft.pl: duplicate commands in -cfg_cmd=check removed
+  CHANGES
+    * _yeast_init() prints SSL versions to be checked with --v
+    * .o-saft.pl: list of commands for +quick improved
+
+Version: 14.10.12
+  NEW
+    * --cipherrange=shifted
+
+Version: 14.07.27
+  CHANGES
+    * formal changes
+
+Version: 14.07.26
+  BUGFIX
+    * @INC set in BEGIN{}
+
+Version: 14.07.25
+  CHANGES
+    * using (require) modules and files simplified; documentation improved
+    * warnings unified and improved
+    * o-saft-usr.pl: usr_version() and usr_pre_init() added; formal (name) changes
+  NEW
+    * +TLS_FALLBACK_SCSV added
+    * +VERSION implemented
+
+Version: 14.07.18
+  CHANGES
+    * +ciphers and +list command improved (handle different output formats)
+
+Version: 14.07.17
+  BUGFIX
+    * corrected output (counts) for command  +list --v
+  CHANGES
+    * cipher descriptions improved; missing descriptions added
+    * print version mismatch (openssl vs. Net::SSLeay)
+    * lazy commands added
+
+Version: 14.07.16
+  BUGFIX
+    * avoid uninitialized value and WARNING messages for some commands
+  CHANGES
+    * options -v and -V improved
+    * formal changes
+
+Version: 14.07.15
+  BUGFIX
+    * avoid uninitialized value in +list command
+
+Version: 14.07.14
+  CHANGES
+    * cipher descriptions improved; security and score qualification adapted 
+
+Version: 14.07.07
+  CHANGES
+    * check for low memory
+    * backticks replaced by qx()
+
+Version: 14.06.30
+  CHANGES
+    * TECHNICAL INFORMATION added
+  NEW
+    * --starttls=PROT added (experimental)
+    * --ssl-maxciphers added
+
+Version: 14.06.16
+  BUGFIX
+    * printing warnings enabled
+  CHANGES
+    * --experimental option added
+
+Version: 14.06.15
+  CHANGES
+    * formal changes
+
+Version: 14.06.14
+  BUGFIX
+  CHANGES
+    * printmediawiki() moved to o-saft-usr.pm::usr_printwiki()
+    * commands unified: +gen-html +gen-wiki +gen-cgi
+
+Version: 14.06.13
+  BUGFIX
+    * bugfix: parsing --trace (without argument) corrected (bug since 14.06.08)
+    * honor --noSSL options for +cipherraw command
+  CHANGES
+    * improvements for CGI usage; internal option --cgi-exec
+    * formal changes in documentation
+
+Version: 14.06.12
+  CHANGES
+    * avoid error messages when gethostbyaddr() fails
+
+Version: 14.06.11
+  CHANGES
+    * store all --usr* options and arguments in $cfg{'usr-args'}
+
+Version: 14.06.10
+  BUGFIX
+    * avoid perl's uninitalized value after GET request
+    * +cipher and cipherraw (commnad line parsing) corrected
+    * no SNI for SSLv3 with +cipherraw
+
+Version: 14.06.08
+  CHANGES
+    * --no-rc option added
+    * scanning options and arguments from command line simplified and improved
+  NEW
+    * --help=range implemented
+    * +quit command implemented
+
+Version: 14.06.07
+  CHANGES
+    * -ssl-* options for +cipherraw command added; check with and without SNI for +checkraw
+
+Version: 14.06.05
+  CHANGES
+    * +version improved (print more informations about Net::SSLeay)
+
+Version: 14.06.04
+  BUGFIX
+    * bugfix: print usage with correct script name
+
+Version: 14.06.01
+  NEW
+    * --cipherrange=RANGE implemented; +cipherall supports full range
+
+Version: 14.05.31
+  CHANGES
+    * print $Net::SSLhello::VERSION with --trace and --version
+
+Version: 14.05.27
+  BUGFIX
+    * using scalar() instead of length() for array
+
+Version: 14.05.26
+  NEW
+    * --help=wiki implemented
+
+Version: 14.05.25
+  CHANGES
+    * avoid some check warnings for +cipherall
+
+Version: 14.05.24
+  NEW
+    * --no-md5-cipher implemented (avoids some error messages)
+
+Version: 14.05.23
+  BUGFIX
+    * avoid some checks and connections if not required by given command
+
+Version: 14.05.22
+  CHANGES
+    * better compatibility to ssldiagnose.exe
+    * compatibility ssl-cert-check, THCSSLCheck
+  NEW
+    * +constraints check implemented
+    * --protocol SSL implemented; better compatibility to ssldiagnose.exe
+    * --printavailable as alias for +ciphers
+
+Version: 14.05.21
+  BUGFIX
+    * +ciphers command re-enabled
+
+Version: 14.05.21
+  NEW
+    * +tlsextensions implemented
+
+Version: 14.05.20
+  CHANGES
+    * +ext_* commands enabled
+    * more TLS extensions added
+
+Version: 14.05.17
+  BUGFIX
+    * parsing command line argunents improved
+
+Version: 14.05.16
+  CHANGES
+    * output for --legacy=compact improved
+
+Version: 14.05.15
+  CHANGES
+    * output for --tracecmd improved
+    * output for --no-http improved
+    * passing options and arguments to openssl improved
+
+Version: 14.05.14
+  CHANGES
+    * detect more TLS extensions; +heartbeat and --no-tlsextdebug implemented
+
+Version: 14.05.13
+  NEW
+    * prepared for TLSv1.3
+
+Version: 14.05.12
+  NEW
+    * +cipherall implemented with Net/SSLhello.pm; ALPHA version!
+    * Net/SSLhello.pm
+
+Version: 14.05.11
+  CHANGES
+    * some missing cipher descriptions added 
+
+Version: 14.05.10
+  BUGFIX
+    * "None" values are mainly treated as "no" for checks
+
+Version: 14.05.09
+  BUGFIX
+    * setting default +cipher command corrected if no command given
+    * bugfix: avoid "Broken Pipe" if connection fails
+
+Version: 14.05.08
+  BUGFIX
+    *
+  CHANGES
+    * o-saft-dbx.pm: _yeast_init() improved
+
+Version: 14.05.07
+  BUGFIX
+    * missing descriptions for KRB5* ciphers added
+
+Version: 14.05.07
+  CHANGES
+    * print warning for invalid command combinations (defense, user-friendly programming)
+
+Version: 14.05.06
+  NEW
+    * --ssl-lazy option implemented 
+
+Version: 14.05.05
+  NEW
+    * --no-warning implemented
+
+Version: 14.04.28
+  NEW
+    * +cipherall ALPHA version implemented
+
+Version: 14.04.27
+  CHANGES
+    * more _trace*() functions added
+
+Version: 14.04.26
+  NEW
+    * --proxy* options added (but no functionality)
+
+Version: 14.04.24
+  BUGFIX
+    * output corrected for  --showhost --legacy=full
+  CHANGES
+    * improved path settings for windows
+
+Version: 14.04.10
+  NEW
+    * +heartbleed implemented
+
+Version: 14.02.17
+  BUGFIX
+    * +sts implies --http
+    * +sts command re-implemented
+
+Version: 14.02.01
+  BUGFIX
+    * use SNI if possible for cipher checks (+cipher command)
+  CHANGES
+    * +version improved
+  NEW
+    * --force-sni added
+
+Version: 14.1.31
+  CHANGES
+    * code cleanup
+
+Version: 14.1.30
+  CHANGES
+    * --cipher no longer alias for +cipher so we can support "--cipher CIPHER" option
+
+Version: 14.1.29
+  CHANGES
+    * code cleanup for checkciphers()
+    * check Net::SSLeay::cipher_local() can return array
+    * check Net::SSLeay::VERSION < 1.49
+
+Version: 14.1.28
+  CHANGES
+    * +default can get cipher using openssl
+
+Version: 14.1.27
+  BUGFIX
+    * parsing options and commands improved
+  CHANGES
+    * documentation improved
+    * +quick command uses common output format (instead of --legacy=quick)
+
+Version: 14.1.26
+  CHANGES
+    * typos documentation corrected
+  NEW
+    * --call=METHOD implemented
+
+Version: 14.1.25
+  CHANGES
+    * allow --exe-path=PATH and --lib-path=PATH
+    * --lib= and --exe= can be used multiple times
+    * debugging improved; _yeast_args() added; _yeast_init() improved
+
+Version: 14.1.24
+  CHANGES
+    * allow --exe-path=PATH and --lib-path=PATH
+    * --lib= and --exe= can be used multiple times
+    * debugging improved; _yeast_args() added; _yeast_init() improved
+
+Version: 14.1.23
+  BUGFIX
+    * +pfs command enabled
+  CHANGES
+    * SSL protocol options (SSL version, cipher list) improved
+    * collecting SSL information improved
+  NEW
+    * commands +options +sslversion +cert_type +error_verify +error_depth
+
+Version: 14.1.22
+  BUGFIX
+    * +default command enabled
+    * avoid uninitialized value
+  CHANGES
+    * set SSL protocol version for connections
+    * Net::SSLinfo::do_ssl_close() with version list parameter
+
+Version: 14.1.21
+  NEW
+    * existing socket for connection can be provided with $Net::SSLinfo::socket
+    * usr_pre_open() added
+
+Version: 14.1.12
+  UPDATE
+    * get list of ciphers improved: cipher_list() uses Net::SSLeay::new() to get list of ciphers
+  NEW
+    * new sub usr_pre_info() in o-saft-usr.pm
+
 Version: 14.1.4
   BUGFIX
     * bugfix: regex for pubkey_value on windows
