@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.83 14/11/17 12:47:01',
+    SID         => '@(#) Net::SSLinfo.pm 1.84 14/11/17 12:52:18',
 };
 
 ######################################################## public documentation #
@@ -52,7 +52,7 @@ Net::SSLinfo -- perl extension for SSL certificates
     print join("\n",
         PEM("www.example.com",443),
         dates(),
-        default()
+        selected()
         ciphers()
         );
     do_ssl_close("www.example.com",443);
@@ -328,6 +328,7 @@ require Exporter;
         issuer
         subject
         default
+        selected
         cipher_list
         cipher_local
         ciphers
@@ -1589,9 +1590,9 @@ Get issuer of certificate.
  
 Get subject of certificate.
 
-=head2 default( )
+=head2 selected( )
 
-Get default cipher offered by server. Returns ciphers string.
+Get cipher selected by server for current session. Returns ciphers string.
 
 =head2 cipher_list($pattern)
 
