@@ -60,7 +60,7 @@ BEGIN {
 } # BEGIN
     _y_TIME("BEGIN}");
 
-my  $SID    = "@(#) yeast.pl 1.302 14/11/18 19:48:38";
+my  $SID    = "@(#) yeast.pl 1.303 14/11/19 22:27:26";
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 my  @DATA   = <DATA>;
 { # (perl is clever enough to extract it from itself ;-)
@@ -462,7 +462,6 @@ my %check_conn = (
     'ip'            => {'txt' => "IP for given hostname "},
     'reversehost'   => {'txt' => "Given hostname is same as reverse resolved hostname"},
     'hostname'      => {'txt' => "Connected hostname matches certificate's subject"},
-    'beast-default' => {'txt' => "Connection is safe against BEAST attack (default cipher)"},
     'beast'         => {'txt' => "Connection is safe against BEAST attack (any cipher)"},
     'breach'        => {'txt' => "Connection is safe against BREACH attack"},
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
@@ -747,7 +746,6 @@ our %shorttexts = (
     'ev+'           => "Strict EV supported",
     'ev-'           => "Lazy EV supported",
     'ev-chars'      => "NO invalid characters in extensions",
-    'beast-default' => "Default cipher safe to BEAST",
     'beast'         => "Supported cipher safe to BEAST",
     'breach'        => "Safe to BREACH",
     'crime'         => "Safe to CRIME",
@@ -1092,15 +1090,15 @@ our %cmd = (
         'full'      => [        # full range of constants for cipher
                         0x03000000 .. 0x03FFFFFF,
                        ],
-# ToDo:                 0x03000000,   0x03FFFFFF,  # used as return by microsoft testserver and also by SSL-honeypot (US)
+# ToDo:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
         'SSLv2'     => [        # constants for ciphers according RFC for SSLv2
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF, 
                         0x03000001,   0x03000002, 0x03000007 .. 0x0300002C,
                         0x030000FF,
-# ToDo:                 0x02000000,   0x02FFFFFF, # increment even only
-# ToDo:                 0x03000000,   0x03FFFFFF, # increment  odd only
+# ToDo:                 0x02000000,   0x02FFFFFF,   # increment even only
+# ToDo:                 0x03000000,   0x03FFFFFF,   # increment  odd only
                        ],
         'SSLv2_long'=> [        # more lazy list of constants for ciphers for SSLv2
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
@@ -1121,7 +1119,7 @@ our %cmd = (
                         sigkey bsi ev cipherraw
                        ),
                     # internal (debugging or experimental) commands
-                      # qw(options cert_type),   # will bee seen with +info--v only
+                      # qw(options cert_type),  # will bee seen with +info--v only
                     # keys not used as command
                        qw(cn_nosni valid-years valid-months valid-days)
                        ],
@@ -1132,8 +1130,8 @@ our %cmd = (
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
                        qw(zlib lzo open_pgp fallback closure order sgc scsv time)
                        ],
-    'cmd-beast'     => [qw(beast beast-default)],       # commands for +beast
-    'cmd-crime'     => [qw(crime)],                     # commands for +crime
+    'cmd-beast'     => [qw(beast)],                 # commands for +beast
+    'cmd-crime'     => [qw(crime)],                 # commands for +crime
     'cmd-http'      => [],      # commands for +http, computed below
     'cmd-hsts'      => [],      # commands for +hsts, computed below
     'cmd-info'      => [],      # commands for +info, simply anything from %data
@@ -1142,9 +1140,9 @@ our %cmd = (
     'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
                        qw(
-                        default cipher fingerprint_hash fp_not_md5 email serial
+                        selected cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast beast-default crime export rc4 pfs crl hassslv2 hassslv3 poodle
+                        beast crime export rc4 pfs crl hassslv2 hassslv3 poodle
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
@@ -1153,11 +1151,11 @@ our %cmd = (
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                       qw(check beast crime time breach pfs rc4 bsi default cipher)],
-    'need_default'  => [        # commands which need default cipher
-                       qw(beast-default default cipher check pfs)],
+                       qw(check beast crime time breach pfs rc4 bsi selected cipher)],
+    'need_default'  => [        # commands which need selected cipher
+                       qw(selected cipher check pfs)],
     'need_checkssl' => [        # commands which need checkssl()
-                       qw(check beast crime time breach pfs rc4 bsi default ev+ ev-)],
+                       qw(check beast crime time breach pfs rc4 bsi selected ev+ ev-)],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
                        qw(
@@ -3927,6 +3925,7 @@ sub checkprot($$) {
         # protocol is supported. If the counter equals 0,  we need to check
         # if that protocol is supported using _get_default(), which returns
         # the default cipher for that protocol.
+# FIXME: "default" check do no longer (> 14.11.14) make sense; needs to be replaced by "selected" if possible
         my $accepted = $checks{$ssl}->{val};
 	if (! $checks{$ssl}->{val}) {       # avoid check if already done 
 	    # FIXME: lazy type check 'cause integer or string, see FIXME in checkdest()
@@ -3977,7 +3976,6 @@ sub checkdest($$) {
         # FIXME: $checks{$ssl}->{val} contains a counter; now we assign a string
         #        should use own key for default cipher string
         $checks{$ssl}->{val} = $value;
-        $checks{'beast-default'}->{val} .= _prot_cipher($ssl, $cipher) if ("" ne _isbeast($ssl, $cipher));
         $checks{'pfs'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
     checkprot($host, $port);
@@ -4573,7 +4571,7 @@ sub printchecks($$$) {
     my $key  = "";
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
-    if (_is_do('selected')) {            # values are special
+    if (_is_do('selected')) {           # values are special
         _trace_1arr('@cfg{version}');
         foreach $key (@{$cfg{'versions'}}) {
             next if ($cfg{$key} == 0);  # this version not checked, see eval("Net::SSLeay::SSLv2_method()") above
@@ -4587,7 +4585,7 @@ sub printchecks($$$) {
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
-        next if ($key eq 'selected');    # used for @cfg{version} only
+        next if ($key eq 'selected');   # used for @cfg{version} only
         _y_CMD("(%checks) +" . $key);
         if ($key eq 'beast') {          # check is special
             if (! _is_do('cipher') && ($check <= 0)) {
@@ -6031,7 +6029,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
             $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
             Net::SSLinfo::do_ssl_close($host, $port);
-# ToDo: we can check the default cipher for non-SNI capable clients here
         }
         $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
@@ -9229,7 +9226,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.11.15
+@(#) 14.11.16
 
 =head1 AUTHOR
 
