@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-10-11";
+my $VERSION = "2014-11-19";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -90,6 +90,10 @@ OPTIONS
                 (Note: IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP)
                 Please give us feedback (especially for FTPS, LDAP, RDP)
                 The STARTTLS_TYPE ACAP needs the '--experimental' option, and plaese take care!
+    --starttls_delay=SEC
+                seconds to pause before sending a packet, to slow down the starttls-requests (default = 0).
+                This may prevent a blockade of the server due to to much/to fast connections.
+                (Info: In this case there is an automatic suspension and retry with a longer delay)
     --experimental
                 to use experimental functions
 
@@ -231,9 +235,10 @@ our %cfg = ( # from o-saft (only relevant parts)
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
+    'starttlsDelay' => 0,       # STARTTLS: time to wait in Seconds (to slow down the requests)
     'sslhello' => {    # configurations for TCP SSL protocol
         'timeout'   => 2,       # timeout to receive ssl-answer
-        'retry'     => 3,       # number of retry when timeout
+        'retry'     => 2,       # number of retry when timeout
         'maxciphers'=> 64,      # number of ciphers sent in SSL3/TLS Client-Hello
         'usereneg'  => 0,       # 0: do not send reneg_info Extension
         'double_reneg'  => 0,   # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV (be polite according RFC5746)
@@ -309,6 +314,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--?starttls=(\w+)$/i)  { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); } # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                                                             # 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+    if ($arg =~ /^--?starttls[_-]?delay=(.*)/)  {$cfg{'starttlsDelay'}=$1;}
     # options
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1; }
     if ($arg =~ /^--no[_-]?sni/)        { $cfg{'usesni'}    = 0; }
@@ -361,7 +367,8 @@ while ($#argv >= 0) {
     $Net::SSLhello::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLhello::usesni      = $cfg{'usesni'};
     $Net::SSLhello::starttls    = $cfg{'starttls'};
-    $Net::SSLhello::starttlsType= $cfg{'starttlsType'}; #EXPERIMENTAL
+    $Net::SSLhello::starttlsType= $cfg{'starttlsType'}; 
+    $Net::SSLhello::starttlsDelay = $cfg{'starttlsDelay'}; #reset to original value for each host (same as some lines later to prevent 'used only once' warning) 
     $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
     $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
     $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
@@ -395,6 +402,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     _trace("host{ " . ($host||"") . ":" . $port . "\n");
     $? = 0;
     $cfg{'host'} = $host;
+    $Net::SSLhello::starttlsDelay = $cfg{'starttlsDelay'}; #reset to original value for each host 
     foreach $ssl (@{$cfg{'version'}}) {
         my @accepted = (); # List of all Ciphers that are supported by the server with the tested Protocol
         my @testing  = ();
