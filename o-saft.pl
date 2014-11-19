@@ -60,7 +60,7 @@ BEGIN {
 } # BEGIN
     _y_TIME("BEGIN}");
 
-my  $SID    = "@(#) yeast.pl 1.299 14/07/27 16:22:43";
+my  $SID    = "@(#) yeast.pl 1.302 14/11/18 19:48:38";
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 my  @DATA   = <DATA>;
 { # (perl is clever enough to extract it from itself ;-)
@@ -3158,6 +3158,81 @@ sub _isbleed($$) {
     return $ret;
 } # _isbleed
 
+sub _isccs($$$) {
+    #? return "ccs" if target is vulnerable to CCS Injection, empty string otherwise
+    # parameter $ssl must be provided as binary value: 0x00, 0x01, 0x02, 0x03 or 0x04
+    # http://ccsinjection.lepidum.co.jp/
+    # inspired by http://blog.chris007.de/?p=238
+    my ($host, $port, $ssl) = @_;
+    my $heartbeats    = 1;
+    my $cl  = undef; # ToDo: =$Net::SSLinfo::socket;
+    my $ret = "";       # empty string as required in %checks
+    my ($type,$ver,$buf,@msg) = ("", "", "", ());
+    undef $\;           # take care, must not be \n !!
+
+        # open our own connection and close it at end
+# ToDo: does not work with socket from SSLinfo.pm
+    $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
+        _warn("failed to connect: '$!'");
+        return "failed to connect";
+    };
+#################
+# $ccs = _isccs($host, $port, $ssl);
+#    'openssl_version_map' => {  # map our internal option to openssl version (hex value)
+#        'SSLv2'=> 0x0002, 'SSLv3'=> 0x0300, 'TLSv1'=> 0x0301, 'TLSv11'=> 0x0302, 'TLSv12'=> 0x0303, 'TLSv13'=> 0x0304,
+#################
+#\x14\x03\tls_version\x00\x01\x01    sed 's/tls_version/'"$2"'/g'
+#\x01    # ist TLSv1
+# 14 03 01 00 01 01
+    # client hello with CCS
+    #   00..00  # random 32 byte (i.e. Unix time)
+    #   00      # Session ID length
+    #   00 68   # Cipher suites length
+    print $cl pack("H*",join('',qw(
+        53 9c b2 cb 4b 42 f9 2d  0b e5 9c 21 f5 a3 89 ca
+        7a d9 b4 ab 3f d3 22 21  5e c4 65 0d 1e ce ed c2
+        00
+        00 68
+        c0 13 c0 12 c0 11 c0 10  c0 0f c0 0e c0 0d c0 0c
+        c0 0b c0 0a c0 09 c0 08  c0 07 c0 06 c0 05 c0 04
+        c0 03 c0 02 c0 01 00 39  00 38 00 37 00 36 00 35
+        00 34 00 33 00 32 00 31  00 30 00 2f 00 16 00 15
+        00 14 00 13 00 12 00 11  00 10 00 0f 00 0e 00 0d
+        00 0c 00 0b 00 0a 00 09  00 08 00 07 00 06 00 05
+        00 04 00 03 00 02 00 01  01 00
+    )));
+    while (1) {
+        ($type,$ver,@msg) = _readframe($cl) or do {
+            _warn("no reply: '$!'");
+            return "no reply";
+        };
+        last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
+    }
+    if ( ($type,$ver,$buf) = _readframe($cl)) {
+        if ( $type == 21 ) {
+            _v_print("received alert (probably not vulnerable)");
+        } elsif ( $type != 24 ) {
+            _v_print("unexpected reply type $type");
+        } elsif ( length($buf)>3 ) {
+            $ret = "heartbleed";
+            _v_print("BAD! got ".length($buf)." bytes back instead of 3 (vulnerable)");
+            #show_data($buf) if $show;
+            #if ( $show_regex ) {
+            #    while ( $buf =~m{($show_regex)}g ) {
+            #        print STDERR $1."\n";
+            #    }
+            #}
+            # exit 1;
+        } else {
+            _v_print("GOOD proper heartbeat reply (not vulnerable)");
+        }
+    } else {
+        _v_print("no reply - probably not vulnerable");
+    }
+    close($cl);
+    return $ret;
+} # _isccs
+
 sub _usesocket($$$$) {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers passed in
@@ -3484,7 +3559,7 @@ sub checkcert($$) {
         # also (should already be part of others): CN, O, U
         $subject =  $data{$label}->{val}($host);
         $subject =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
-        if ($subject =~ m#$cfg{'regex'}->{'notEV-chars'}#) {
+        if ($subject =~ m!$cfg{'regex'}->{'notEV-chars'}!) {
             $txt = _subst($text{'cert-chars'}, $label);
             $checks{'ev-chars'}->{val} .= $txt;
             $checks{'ev+'}->{val}      .= $txt;
@@ -4920,6 +4995,36 @@ sub printcommands() {
     }
 } # printcommands
 
+sub printopt() {
+    #? print program's help about options
+    local $\; undef $\;
+    local $/; undef $/;
+    my $skip = 1;
+    my $data = "";
+    foreach $data (@DATA) {    # parsing is mor easy to read tha regex
+        $skip = 0 if ($data =~ m/=head.\s*OPTIONS/);
+        next if ($skip > 0);
+        last if ($data =~ m/=head.\s*LAZY/);
+        if ($data =~ m/^=head.\s+/) {
+            $data =~ s/^=head.\s*//;
+            print $data;
+        }
+    }
+} # printopt
+
+sub printoptions() {
+    #? print program's help about options
+    local $/;
+    undef $/;
+    my $data = join("",@DATA);
+    $data =~ s/.*head1 (OPTIONS.*)=head1 LAZY.*/$1/ms;
+    $data =~ s/=head.\s*//g;
+    $data =~ s/\n=[^\n]*\n//g;
+    $data =~ s/=item\s*/    /g;
+    $data =~ s/I<([^>]*)>/"$1"/g;
+    print $data;
+} # printoptions
+
 sub printhist() {
     #? print
     my $egg = join ("", @DATA);
@@ -4936,8 +5041,10 @@ sub printhelp($) {
     _vprintme();
     _v_print("help: $label");
     if ($label =~ m/^cmd$/i)            { print "# $mename commands:\t+"        . join(" +", @{$cfg{'commands'}}); exit; }
-    if ($label =~ m/^(legacy)s?/i)      { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
-    if ($label =~ m/^commands?/i){ printcommands();  exit; }
+    if ($label =~ m/^legacy/i)          { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
+    if ($label =~ m/^options?/i)        { printoptions();   exit; }
+    if ($label =~ m/^opts?/i)           { printopt();       exit; }
+    if ($label =~ m/^commands?/i)       { printcommands();  exit; }
     if ($label =~ m/^(abbr|compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
     if ($label =~ m/^cfg[_-]?(check|data|text)s?$/i) { printtable('cfg_'.lc($1)); exit; }
     if ($label =~ m/^(check|data|text)s?[_-]?cfg$/i) { printtable('cfg_'.lc($1)); exit; }
@@ -5493,6 +5600,13 @@ $cfg{'traceCMD'}++ if ($cfg{'traceTIME'} > 0);
 $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
+if ((_is_do('cipher')) and ($#{$cfg{'do'}} == 0)) {
+    # FIXME: +cipher may appear in list which is bug in parsing commands above
+    # +cipher does not need DNS and HTTP, may improve perfromance
+    # HTTP may also cause errors i.e. for STARTTLS
+    $cfg{'usehttp'}     = 0;
+    $cfg{'usedns'}      = 0;
+}
 if (_is_do('ciphers')) {
     # +ciphers command is special:
     #   simulates openssl's ciphers command and accepts -v or -V option
@@ -5619,7 +5733,7 @@ if (1.49 > $Net::SSLeay::VERSION) {
 ## -------------------------------------
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @argv)); # see --header
-$cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @argv));
+$cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @argv));   # command line option overwrites defaults above
 if ($cfg{'usehttp'} == 0) {                # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("STS $text{'no-http'}") if(0 => grep(/hsts/, @{$cfg{'do'}})); # check for any hsts*
@@ -6561,6 +6675,14 @@ the description here is text provided by the user.
 =head3 --help=commands
 
   Show available commands with short description.
+
+=head3 --help=opt
+
+  Show available options.
+
+=head3 --help=options
+
+  Show available options with their description.
 
 =head3 --help=checks
 
@@ -9107,7 +9229,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.10.13
+@(#) 14.11.15
 
 =head1 AUTHOR
 
