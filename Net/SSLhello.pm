@@ -973,7 +973,7 @@ sub version { # Version of SSLhello
      _trace2 ("        retry=$Net::SSLhello::retry\n")         if (defined($Net::SSLhello::retry));
      _trace2 ("      timeout=$Net::SSLhello::timeout\n")       if (defined($Net::SSLhello::timeout));
      _trace2 ("        trace=$Net::SSLhello::trace\n")         if (defined($Net::SSLhello::trace));
-     _trace2 ("    traceTIME=$Net::SSLhello::traceTIME\n")     if (defined($Net::SSLhello::traceTIME));
+     _trace2 ("    traceTIME=$main::traceTIME\n")              if (defined($main::traceTIME));
      _trace2 ("     usereneg=$Net::SSLhello::usereneg\n")      if (defined($Net::SSLhello::usereneg));
      _trace2 (" double_reneg=$Net::SSLhello::double_reneg\n")  if (defined($Net::SSLhello::double_reneg));
      _trace2 ("       usesni=$Net::SSLhello::usesni\n")        if (defined($Net::SSLhello::usesni));
@@ -1405,7 +1405,7 @@ sub openTcpSSLconnection ($$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $starttlsType=0; # SMTP 
-#   11 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP
+#   14 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP, 12:IRC, 13: IRC_CAPACITY
 
     my @starttls_matrix = 
         ( ["SMTP", 
@@ -1533,6 +1533,28 @@ sub openTcpSSLconnection ($$) {
             "",                                         # Error2: This SSL/TLS-Protocol is not supported 
             "",                                         # Error3: fatal Error/STARTTLS not supported
           ],
+          ["IRC",                                               # according https://github.com/ircv3/ircv3-specifications/blob/master/extensions/tls-3.1 and
+                                                                #           https://gist.github.com/grawity/f661adc10fb2d7a580ea
+            ".*?NOTICE.*?",                                     # Phase1: receive ':<Server> NOTICE AUTH :*** No ident response; username prefixed with ~'
+            "",                                                 # Phase2: send    -unused-
+            "",                                                 # Phase2: receive -unused-
+            "STARTTLS\r\n",                                     # Phase4: send    'STARTTLS'
+            ".*?(?:^|\n)\\:.*?\\s670\\s+\\:STARTTLS\\s",        # Phase5: receive ':<Server> 670  :STARTTLS successful, go ahead with TLS handshake'
+            ".*?(?:^|\n)ERROR\\s.*?too.*?(?:fast|much|many)",   # Error1: temporary unreachable (too many connections);
+            "",                                                 # Error2: This SSL/TLS-Protocol is not supported 
+            ".*?(?:^|\\n)421\\s",                               # Error3: fatal Error/STARTTLS not supported: '421 ERR_UNKNOWNCOMMAND "<command> :Unknown command"'
+          ],
+          ["IRC_CAPACITY",                                      # according https://github.com/ircv3/ircv3-specifications/blob/master/extensions/tls-3.1 and
+                                                                #           https://gist.github.com/grawity/f661adc10fb2d7a580ea
+            ".*?NOTICE.*?",                                     # Phase1: receive ':<Server> NOTICE AUTH :*** No ident response; username prefixed with ~'
+            "CAP LS\r\n",                                       # Phase2: send    view CAPABILITY (optional) 
+            ".*?(?:^|\n)\\:.*?\\sCAP\\s.*?\\:.*tls(?:\\s|$|\r\n)",    # Phase3: receive :<Server> CAP * LS :account-notify away-notify multi-prefix tls us     erhost-in-names
+            "STARTTLS\r\n",                                     # Phase4: send    'STARTTLS'
+            ".*?(?:^|\n)\\:.*?\\s670\\s+\\:STARTTLS\\s",        # Phase5: receive ':<Server> 670  :STARTTLS successful, go ahead with TLS handshake'
+            ".*?(?:^|\n)ERROR\\s.*?too.*?(?:fast|much|many)",   # Error1: temporary unreachable (too many connections);
+            "",                                                 # Error2: This SSL/TLS-Protocol is not supported 
+            ".*?(?:^|\\n)421\\s",                               # Error3: fatal Error/STARTTLS not supported: '421 ERR_UNKNOWNCOMMAND "<command> :Unknown command"'
+          ],
         );
 
     my %startTlsTypeHash;
@@ -1550,12 +1572,12 @@ sub openTcpSSLconnection ($$) {
         if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
             _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-            if ( grep(/^$starttlsType$/,('11') )) { # ('11', '12', ...) -> Use of an experimental starttls-Type
+            if ( grep(/^$starttlsType$/,('11', '12', '13') )) { # ('11', '12', ...) -> Use of an experimental starttls-Type
                 if  ($Net::SSLhello::experimental >0) { # experimental function is are  activated
                     _trace_("\n");
                     _trace ("openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
                 } else { # use of experimental functions is not permitted (option is not activated)
-                    if ( grep(/^$starttlsType$/,('11') )) { # experimental and untested
+                    if ( grep(/^$starttlsType$/,('11', '12', '13') )) { # experimental and untested
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                     } else { # tested, but still experimental # experimental but tested 
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
@@ -1704,6 +1726,8 @@ sub openTcpSSLconnection ($$) {
 
         if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
             _trace2 ("openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]."-Protocol for Server $host:$port, Retry = $retryCnt\n");
+            select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+            select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
             ### STARTTLS_Phase1 (receive)
             if ($starttls_matrix[$starttlsType][1]) { 
                 eval {
@@ -1788,6 +1812,10 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: openTcpSSLconnection: ## STARTTLS (Phase 2): $@; Can't close socket, too: $!");
                     next; # next retry
                 } 
+                # wait before next read
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+            ### STARTTLS_Phase1 (receive)
             } else {
                 _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
             } # end-if $starttls_matrix[$starttlsType][2] 
@@ -1879,6 +1907,9 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: openTcpSSLconnection: ## $@; Can't close socket, too: $!");
                     next; # next return
                 }
+                # wait before next read
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
              } else {
                 _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
              } # endi-if $starttls_matrix[$starttlsType][4]
@@ -1942,8 +1973,7 @@ sub openTcpSSLconnection ($$) {
                             $@ = "STARTTLS (Phase 5): Did *NOT* get a Server SSL/TLS confirmation from $host:$port (retry: $retryCnt); target ignored. Server-Error: >"._chomp_r($input)."<"; #error-message received from the SMTP-Server
                             _trace2 ("openTcpSSLconnection: ## $@; try to retry;\n");;
                             close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
-                            _trace2 ("Exit openTcpSSLconnection: }\n");
-                            return (undef); # fatal Error => Exit
+                            next;
                         }
                     }
                 } else { # did not receive a Message
