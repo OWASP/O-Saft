@@ -92,10 +92,16 @@ OPTIONS
                 The STARTTLS_TYPE ACAP needs the '--experimental' option, and plaese take care!
     --starttls_delay=SEC
                 seconds to pause before sending a packet, to slow down the starttls-requests (default = 0).
-                This may prevent a blockade of the server due to to much/to fast connections.
+                This may prevent a blockade of requests due to too much/too fast connections.
                 (Info: In this case there is an automatic suspension and retry with a longer delay)
     --experimental
                 to use experimental functions
+    --trace     
+                Print debugging messages
+    --trace=<VALUE>
+                Print more debugging messages (VALUE=1..4)
+    --trace-time
+                prints additional timestamps in trace output for benchmarking and debugging
 
 DESCRIPTION
     This is just a very simple wrapper for the Net::SSLhello module to test
@@ -165,6 +171,7 @@ our %cfg = ( # from o-saft (only relevant parts)
     'traceARG'      => 0,       # 1: trace yeast's argument processing
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
+    'traceTIME'     => 0,       # 1: (trace) print additional time for benchmarking
     'verbose'       => 0,       # used for --v
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
     'proxyport'     => 0,       # port for proxy
@@ -303,6 +310,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?cmd)/)   { $cfg{'traceCMD'}++;    } # ..
     if ($arg =~ /^--trace(@|[_-]?key)/) { $cfg{'traceKEY'}++;    } # ..
     if ($arg =~ /^--trace=(.*)/)        { $cfg{'trace'}    = $1; }
+    if ($arg =~ /^--trace([_-]?time)/)  { $cfg{'traceTIME'}++;   } # Timestamp on
     if ($arg =~ /^--?p(?:ort)?=(.*)/)   { $cfg{'port'}     = $1; }
     if ($arg =~ /^--?h(?:ost)?=(.*)/)   { push(@{$cfg{'hosts'}}, $1 . ":" . ($cfg{'port'}||443)); }     
     # proxy optionms
