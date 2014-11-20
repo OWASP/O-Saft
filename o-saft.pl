@@ -60,7 +60,7 @@ BEGIN {
 } # BEGIN
     _y_TIME("BEGIN}");
 
-my  $SID    = "@(#) yeast.pl 1.303 14/11/19 22:27:26";
+my  $SID    = "@(#) yeast.pl 1.304 14/11/20 08:00:19";
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 my  @DATA   = <DATA>;
 { # (perl is clever enough to extract it from itself ;-)
@@ -4655,7 +4655,7 @@ sub printversionmismatch() {
     #? check if openssl and compiled SSLeay are of same version
     my $o = Net::SSLeay::OPENSSL_VERSION_NUMBER();
     my $s = Net::SSLeay::SSLeay();
-    if ($0 ne $s) {
+    if ($o ne $s) {
         _warn("used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
     }
 } # printversionmismatch
@@ -9226,7 +9226,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.11.16
+@(#) 14.11.17
 
 =head1 AUTHOR
 
