@@ -86,10 +86,10 @@ OPTIONS
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
                 Use STARTTLS to start TLS. 
-                STARTTLS_TYPE is any of SMTP, ACAP, IMAP (IMAP_2), POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
+                STARTTLS_TYPE is any of SMTP, ACAP, IMAP (IMAP_2), IRC, POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
                 (Note: IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP)
                 Please give us feedback (especially for FTPS, LDAP, RDP)
-                The STARTTLS_TYPE ACAP needs the '--experimental' option, and plaese take care!
+                The STARTTLS_TYPEs ACAP and IRC need the '--experimental' option, and plaese take care!
     --starttls_delay=SEC
                 seconds to pause before sending a packet, to slow down the starttls-requests (default = 0).
                 This may prevent a blockade of requests due to too much/too fast connections.
