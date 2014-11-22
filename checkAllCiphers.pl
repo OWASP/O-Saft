@@ -299,73 +299,77 @@ while ($#argv >= 0) {
     #!#--------+------------------------+-------------------------
     #!#           argument to check       value to be set
     #!#--------+------------------------+-------------------------
-    if ($arg eq   '--http')             { $cfg{'usehttp'}++;     } # must be before --h
-    if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0; }
-    if ($arg =~ /^--h(?:elp)?(?:=(.*))?$/)  { printhelp(); exit 0; } # allow --h --help --h=*
-    if ($arg =~ /^\+help=?(.*)$/)           { printhelp(); exit 0; } # allow +help +help=*
-    if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     }
-    if ($arg eq  '--n')                 { $cfg{'try'}       = 1; }
-    if ($arg eq  '--trace')             { $cfg{'trace'}++;       }
-    if ($arg =~ /^--trace(--|[_-]?arg)/){ $cfg{'traceARG'}++;    } # special internal tracing
-    if ($arg =~ /^--trace([_-]?cmd)/)   { $cfg{'traceCMD'}++;    } # ..
-    if ($arg =~ /^--trace(@|[_-]?key)/) { $cfg{'traceKEY'}++;    } # ..
-    if ($arg =~ /^--trace=(.*)/)        { $cfg{'trace'}    = $1; }
-    if ($arg =~ /^--trace([_-]?time)/)  { $cfg{'traceTIME'}++;   } # Timestamp on
-    if ($arg =~ /^--?p(?:ort)?=(.*)/)   { $cfg{'port'}     = $1; }
-    if ($arg =~ /^--?h(?:ost)?=(.*)/)   { push(@{$cfg{'hosts'}}, $1 . ":" . ($cfg{'port'}||443)); }     
+    if ($arg eq   '--http')             { $cfg{'usehttp'}++;     next; } # must be before --h
+    if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0; next; }
+    if ($arg =~ /^--h(?:elp)?(?:=(.*))?$/)  { printhelp(); exit 0; next; } # allow --h --help --h=*
+    if ($arg =~ /^\+help=?(.*)$/)           { printhelp(); exit 0; next; } # allow +help +help=*
+    if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;     next; }
+    if ($arg eq  '--n')                 { $cfg{'try'}       = 1; next; }
+    if ($arg eq  '--trace')             { $cfg{'trace'}++;       next; }
+    if ($arg =~ /^--trace(--|[_-]?arg)/){ $cfg{'traceARG'}++;    next; } # special internal tracing
+    if ($arg =~ /^--trace([_-]?cmd)/)   { $cfg{'traceCMD'}++;    next; } # ..
+    if ($arg =~ /^--trace(@|[_-]?key)/) { $cfg{'traceKEY'}++;    next; } # ..
+    if ($arg =~ /^--trace=(.*)/)        { $cfg{'trace'}    = $1; next; }
+    if ($arg =~ /^--trace([_-]?time)/)  { $cfg{'traceTIME'}++;   next; } # Timestamp on
+    if ($arg =~ /^--?p(?:ort)?=(.*)/)   { $cfg{'port'}     = $1; next; }
+    if ($arg =~ /^--?h(?:ost)?=(.*)/)   { push(@{$cfg{'hosts'}}, $1 . ":" . ($cfg{'port'}||443)); next; }     
     # proxy optionms
-    if ($arg =~  '--proxyhost=(.*)')    { $cfg{'proxyhost'}= $1; }
-    if ($arg =~  '--proxyport=(.*)')    { $cfg{'proxyport'}= $1; }
-    if ($arg =~  '--proxyuser=(.*)')    { $cfg{'proxyuser'}= $1; }
-    if ($arg =~  '--proxypass=(.*)')    { $cfg{'proxypass'}= $1; }
-    if ($arg =~  '--proxyauth=(.*)')    { $cfg{'proxyauth'}= $1; }
-    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; }  # starttls, starttlsType=SMTP(=0)
-    if ($arg =~ /^--?starttls=(\w+)$/i)  { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); } # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
+    if ($arg =~  '--proxyhost=(.*)')    { $cfg{'proxyhost'}= $1; next; }
+    if ($arg =~  '--proxyport=(.*)')    { $cfg{'proxyport'}= $1; next; }
+    if ($arg =~  '--proxyuser=(.*)')    { $cfg{'proxyuser'}= $1; next; }
+    if ($arg =~  '--proxypass=(.*)')    { $cfg{'proxypass'}= $1; next; }
+    if ($arg =~  '--proxyauth=(.*)')    { $cfg{'proxyauth'}= $1; next; }
+    if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; next; }  # starttls, starttlsType=SMTP(=0)
+    if ($arg =~ /^--?starttls=(\w+)$/i) { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); next;} # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                                                             # 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
-    if ($arg =~ /^--?starttls[_-]?delay=(.*)/)  {$cfg{'starttlsDelay'}=$1;}
+    if ($arg =~ /^--?starttls[_-]?delay=(.*)/)  {$cfg{'starttlsDelay'}=$1; next; }
     # options
-    if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1; }
-    if ($arg =~ /^--no[_-]?sni/)        { $cfg{'usesni'}    = 0; }
-    if ($arg eq  '--header')            { $cfg{'out_header'}= 1; }
+    if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1; next; }
+    if ($arg =~ /^--no[_-]?sni/)        { $cfg{'usesni'}    = 0; next; }
+    if ($arg eq  '--header')            { $cfg{'out_header'}= 1; next; }
     if ($arg =~ /^--no[_-]?header$/)    { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); next; } # push() is ugly hack to preserve option even from rc-file
-    if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1; } # allow case insensitive
-    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1; } # ..
-    if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1; } # ..
-    if ($arg =~ /^--?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}    = 1; } # allow ._- separator
-    if ($arg =~ /^--?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}    = 1; } # ..
-    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}    = 1; } # ..
-    if ($arg =~ /^--dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}    = 1; } # ..
-    if ($arg =~ /^--no[_-]?sslv?2$/i)   { $cfg{'SSLv2'}     = 0; } # allow _- separator
-    if ($arg =~ /^--no[_-]?sslv?3$/i)   { $cfg{'SSLv3'}     = 0; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?1$/i)   { $cfg{'TLSv1'}     = 0; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?11$/i)  { $cfg{'TLSv11'}    = 0; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?12$/i)  { $cfg{'TLSv12'}    = 0; } # ..
-    if ($arg =~ /^--no[_-]?tlsv?13$/i)  { $cfg{'TLSv13'}    = 0; } # ..
-    if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLSv9'}    = 0; } # ..
-    if ($arg =~ /^--no[_-]?dtlsv?10?$/i){ $cfg{'DTLSv1'}    = 0; } # ..
-    if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1; } # ..
-    if ($arg =~ /^--no[_-]?dns/)        { $cfg{'usedns'}    = 0; }
-    if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1; }
-    if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1; }
-    if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1; }
-    if ($arg eq  '-printavailable')     { $cfg{'enabled'}   = 1; } # ssldiagnos
-    if ($arg eq  '--showhost')          { $cfg{'showhost'}  = 1; }
-    if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; } # sslscan
-    if ($arg =~ /^--range=(.*)/)        { $cfg{'cipherrange'}=$1;}
-    if ($arg =~ /^--cipherrange=(.*)/)  { $cfg{'cipherrange'}=$1;}
-    if ($arg =~ /^--legacy=(.*)/)       { $cfg{'legacy'}   = $1; }
-    if ($arg =~ /^--tab$/)          { $text{'separator'} = "\t"; } # TAB character
-    if ($arg =~ /^--ssl[_-]?retry=(.*)/){ $cfg{'sslhello'}->{'retry'}=$1;}
-    if ($arg =~ /^--ssl[_-]?timeout=(.*)/)  {$cfg{'sslhello'}->{'timeout'}=$1;}
-    if ($arg =~ /^--ssl[_-]?usereneg=(.*)/) {$cfg{'sslhello'}->{'usereneg'}=$1;}
-    if ($arg =~ /^--ssl[_-]?maxciphers=(\d+)/)  {$cfg{'sslhello'}->{'maxciphers'}=$1;}
-    if ($arg =~ /^--ssl[_-]?double[_-]?reneg/)  {$cfg{'sslhello'}->{'double_reneg'}=1;}
-    if ($arg =~ /^--?experimental$/i)   { $cfg{'experimental'} = 1; }
+    if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1; next; } # allow case insensitive
+    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1; next; } # ..
+    if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1; next; } # ..
+    if ($arg =~ /^--?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}    = 1; next; } # allow ._- separator
+    if ($arg =~ /^--?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}    = 1; next; } # ..
+    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}    = 1; next; } # ..
+    if ($arg =~ /^--dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}    = 1; next; } # ..
+    if ($arg =~ /^--no[_-]?sslv?2$/i)   { $cfg{'SSLv2'}     = 0; next; } # allow _- separator
+    if ($arg =~ /^--no[_-]?sslv?3$/i)   { $cfg{'SSLv3'}     = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?tlsv?1$/i)   { $cfg{'TLSv1'}     = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?tlsv?11$/i)  { $cfg{'TLSv11'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?tlsv?12$/i)  { $cfg{'TLSv12'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?tlsv?13$/i)  { $cfg{'TLSv13'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtlsv?09$/i) { $cfg{'DTLSv9'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtlsv?10?$/i){ $cfg{'DTLSv1'}    = 0; next; } # ..
+    if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1; next; } # ..
+    if ($arg =~ /^--no[_-]?dns/)        { $cfg{'usedns'}    = 0; next; }
+    if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1; next; }
+    if ($arg =~ /^--?no[_-]?(?:dns[_-]?)?mx/i){ $cfg{'usemx'}=0; next; }
+    if ($arg =~ /^--?(?:dns[_-]?)?mx/i) { $cfg{'usemx'}     = 1; use Net::DNS; next; }
+    if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1; next; }
+    if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1; next; }
+    if ($arg eq  '-printavailable')     { $cfg{'enabled'}   = 1; next; } # ssldiagnos
+    if ($arg eq  '--showhost')          { $cfg{'showhost'}  = 1; next; }
+    if ($arg =~ /^--?no[_-]failed$/)    { $cfg{'enabled'}   = 0; next; } # sslscan
+    if ($arg =~ /^--range=(.*)/)        { $cfg{'cipherrange'}=$1;next; }
+    if ($arg =~ /^--cipherrange=(.*)/)  { $cfg{'cipherrange'}=$1;next; }
+    if ($arg =~ /^--legacy=(.*)/)       { $cfg{'legacy'}   = $1; next; }
+    if ($arg =~ /^--tab$/)          { $text{'separator'} = "\t"; next; } # TAB character
+    if ($arg =~ /^--ssl[_-]?retry=(.*)/){ $cfg{'sslhello'}->{'retry'}=$1; next; }
+    if ($arg =~ /^--ssl[_-]?timeout=(.*)/)  {$cfg{'sslhello'}->{'timeout'}=$1; next; }
+    if ($arg =~ /^--ssl[_-]?usereneg=(.*)/) {$cfg{'sslhello'}->{'usereneg'}=$1; next; }
+    if ($arg =~ /^--ssl[_-]?maxciphers=(\d+)/)  {$cfg{'sslhello'}->{'maxciphers'}=$1; next; }
+    if ($arg =~ /^--ssl[_-]?double[_-]?reneg/)  {$cfg{'sslhello'}->{'double_reneg'}=1; next; }
+    if ($arg =~ /^--?experimental$/i)   { $cfg{'experimental'} = 1;  next; }
     #} +---------+----------------------+-------------------------
 
-    next if ($arg =~ /^[+-]/); # quick&dirty
-    push(@{$cfg{'hosts'}}, $arg . ":" . ($cfg{'port'}||443));     
-
+    if ($arg =~ /^[+-]/) {
+        warn "**WARNING: unknown command or option '$arg' ignored. Try '$me --help' to get more information!";
+        next;
+    }
+    push(@{$cfg{'hosts'}}, $arg . ":" . ($cfg{'port'}||443));
 } # while
 
 # set defaults for Net::SSLhello
