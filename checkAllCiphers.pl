@@ -46,7 +46,7 @@ NAME
     $me - simple wrapper for Net::SSLhello to test for all ciphers
 
 SYNOPSIS
-    $me [OPTIONS] hostname
+    $me [OPTIONS] hostname[:port] | mx-domain-name[:port]
 
 OPTIONS
     --help      nice option
@@ -54,6 +54,8 @@ OPTIONS
     -h=HOST     dito.
     --port=PORT use PORT for following hosts (default is 443)
     -p=PORT     dito.
+    --mx        make a MX-Record DNS lookup for the mx-domain-name
+                (makes sense together with --STARTTLS=SMTP)
     --SSL       test for this SSL version
                 SSL is any of: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13
     --no-SSL    do not test for this SSL version
@@ -87,9 +89,10 @@ OPTIONS
     --starttls=STARTTLS_TYPE
                 Use STARTTLS to start TLS. 
                 STARTTLS_TYPE is any of SMTP, ACAP, IMAP (IMAP_2), IRC, POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
-                (Note: IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP)
+                (Notes: * IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP
+                        * SMTP: use '--mx' for checking a mail-domain instead of a host)
                 Please give us feedback (especially for FTPS, LDAP, RDP)
-                The STARTTLS_TYPEs ACAP and IRC need the '--experimental' option, and plaese take care!
+                The STARTTLS_TYPEs ACAP and IRC need the '--experimental' option, and please take care!
     --starttls_delay=SEC
                 seconds to pause before sending a packet, to slow down the starttls-requests (default = 0).
                 This may prevent a blockade of requests due to too much/too fast connections.
@@ -107,6 +110,15 @@ DESCRIPTION
     This is just a very simple wrapper for the Net::SSLhello module to test
     a target for all available ciphers. It is a shortcut for
     o-saft.pl +cipherraw YOUR-HOST
+
+INSTALLATION
+    checkAllCiphers.pl requires following Perl modules:
+                IO::Socket::INET     (preferred >= 1.31)
+                Net::DNS             (if option '--mx' is used)
+
+                Module Net::SSLhello is part of O-Saft and should be
+                installed in ./Net .
+                All dependencies for these modules must also be installed.
 
 EoT
 } # printhelp
@@ -182,6 +194,7 @@ our %cfg = ( # from o-saft (only relevant parts)
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
     'usedns'        => 1,       # 1: make DNS reverse lookup
+    'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttp'       => 1,       # 1: make HTTP request
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
@@ -230,6 +243,7 @@ our %cfg = ( # from o-saft (only relevant parts)
     }, # cipherranges
 
     'out_header'    => 0,       # print header lines in output
+    'mx_domains'    => [],      # list of mx-domains:port to be processed
     'hosts'         => [],      # list of hosts:port to be processed
     'host'          => "",      # currently scanned host
     'ip'            => "",      # currently scanned host's IP
@@ -404,6 +418,48 @@ print "# '$me' (part of OWASP project 'O-Saft'), Version: $VERSION\n";
 print "#                          ";
 Net::SSLhello::version();
 print "##############################################################################\n";
+
+if ($cfg{'usemx'}) { # get mx-records
+    _trace2 (" \$cfg{'usemx'} = $cfg{'usemx'}\n");
+    print "\n# get MX-Records:\n";
+    @{$cfg{'mx_domains'}} = @{$cfg{'hosts'}}; #we have got mx domains no hosts, yet
+    $cfg{'hosts'} = [];
+
+    my $mx_domain;
+
+    foreach $mx_domain (@{$cfg{'mx_domains'}}) {  # loop domains
+        if ($mx_domain =~ m#.*?:\d+#) { 
+            ($mx_domain, $port) = split(":", $mx_domain); 
+        }
+        _trace3 (" get MX-Records for '$mx_domain'\n");
+        my $dns = new Net::DNS::Resolver;
+        my $mx = $dns->query($mx_domain, 'MX');
+        my $sep =", ";
+
+        if (defined ($mx) && defined($mx->answer)) {
+            foreach my $mxRecord ($mx->answer) {
+                _trace3 (" => ". $mxRecord->exchange. ' ('. $mxRecord->preference. ")\n");
+                push(@{$cfg{'hosts'}}, $mxRecord->exchange . ":" . ($port||25));
+                printf "%16s%s%5s%s%-6s%s%32s%-6s%s%-4s%s\n",
+                    $mx_domain, $sep,           # %16s%s
+                    ($port||25), $sep,          # %5s%s
+                    "MX", $sep,                 # %-6s%s
+                    $mxRecord->exchange, $sep,  # %32s%s
+                    "Prio", $sep,               # %-6s%s
+                    $mxRecord->preference, $sep;# %-4s%s
+            }
+        } else {
+            printf "%16s%s%5s%s%-6s%s%32s%-6s%s%-4s%s\n",
+                $mx_domain, $sep,   # %16s%s
+                ($port||25), $sep,  # %5s%s
+                "MX", $sep,         # %-6s%s
+                "", $sep,           # %32s%s
+                "Prio", $sep,       # %-6s%s
+                "", $sep;           # %-4s%s
+        }
+    }
+    print "------------------------------------------------------------------------------\n";
+}
 
 foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($host =~ m#.*?:\d+#) { 
