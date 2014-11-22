@@ -1416,7 +1416,7 @@ sub openTcpSSLconnection ($$) {
             ".*?(?:^|\\n)220\\s",                       # Phase5: receive '220'
             ".*?(?:^|\\n)421\\s",                       # Error1: temporary unreachable (too many connections); +454?
             ".*?(?:^|\\n)4[57]4\\s",                    # Error2: This SSL/TLS-Protocol is not supported 454 or 474
-            ".*?(?:^|\\n)(?:451|50[02])\\s",            # Error3: fatal Error/STARTTLS not supported: '500 Syntax error, command unrecognized', '502 Command not implemented' ...
+            ".*?(?:^|\\n)(?:451|50[023]|554)\\s",       # Error3: fatal Error/STARTTLS not supported: '500 Syntax error, command unrecognized', '502 Command not implemented', '503 TLS is not allowed',  554 PTR lookup failure ...
           ],
           ["IMAP",                                      # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             ".*?(?:^|\\n)\\*\\s*OK.*?IMAP(?:\\s|\\d)",  # Phase1: receive '* OK IMAP'
