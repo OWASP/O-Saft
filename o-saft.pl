@@ -60,7 +60,7 @@ BEGIN {
 } # BEGIN
     _y_TIME("BEGIN}");
 
-my  $SID    = "@(#) yeast.pl 1.304 14/11/20 08:00:19";
+my  $SID    = "@(#) yeast.pl 1.305 14/11/23 23:16:44";
 our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
 my  @DATA   = <DATA>;
 { # (perl is clever enough to extract it from itself ;-)
@@ -4999,7 +4999,7 @@ sub printopt() {
     local $/; undef $/;
     my $skip = 1;
     my $data = "";
-    foreach $data (@DATA) {    # parsing is mor easy to read tha regex
+    foreach $data (@DATA) {    # parsing is more easy to read than regex
         $skip = 0 if ($data =~ m/=head.\s*OPTIONS/);
         next if ($skip > 0);
         last if ($data =~ m/=head.\s*LAZY/);
@@ -5019,7 +5019,7 @@ sub printoptions() {
     $data =~ s/=head.\s*//g;
     $data =~ s/\n=[^\n]*\n//g;
     $data =~ s/=item\s*/    /g;
-    $data =~ s/I<([^>]*)>/"$1"/g;
+    $data =~ s/[BCIL]<([^>]*)>/"$1"/g;
     print $data;
 } # printoptions
 
@@ -6218,8 +6218,8 @@ Note:  Throughout this description  C<$0>  is used as an alias for the
 
 $0 [COMMANDS ..] [OPTIONS ..] target [target target ...]
 
-Where  [COMMANDS]  and  [OPTIONS]  are described below  and  C<target>
-is a hostname either as full qualified domain name or as IP address.
+Where  [COMMANDS]  and  [OPTIONS]  are described below and  target is
+a hostname either as full qualified domain name or as IP address.
 Multiple commands and targets may be combined.
 
 All  commands  and  options  can also be specified in a  rc-file, see
@@ -6361,7 +6361,7 @@ I<+info>  command.
 =head3 +cipher
 
     The cipher checks will return one line for each tested cipher. It
-    contains at least the cipher name,  "yes"  or  "no"  whether it's
+    contains at least the cipher name,  'yes'  or  'no'  whether it's
     supported or not, and a security qualification. It may look like:
          AES256-SHA       yes    HIGH
          NULL-SHA         no     weak
@@ -6376,14 +6376,14 @@ I<+info>  command.
     qualification was adapted herein.  Following rules  for adjusting
     the qualification were used:
 
-         "weak":
+         weak:
              * all *NULL* ciphers
              * all *RC4*  ciphers
              * all *EXPORT*  ciphers
              * all *anon* (aka ADH aka DHA) ciphers
-         "low":
+         low:
              * all *CBC*  ciphers
-         "high":
+         high:
              * all *CBC3* (aka 3DES) ciphers
              * all *AES(128|256)* ciphers
              * all *CAMELLIA* ciphers
@@ -6391,8 +6391,8 @@ I<+info>  command.
 =head3 +check
 
     These tests return a line with a label describing the test  and a
-    test result for it.  The  idea is to report  "yes"  if the result
-    is considered "secure" and report the reason why it is considered
+    test result for it.  The  idea is to report  'yes'  if the result
+    is considered `secure' and report the reason why it is considered
     insecure otherwise. Example of a check considered secure:
          Label of the performed check:           yes
     Example of a check considered insecure:
@@ -6430,13 +6430,13 @@ The most important commands are (in alphabetical order):
 
 =head3 +check +cipher +info +http +list +quick +sni +sni_check +version
 
-A list of all available commands will be printed with
+A list of all available commands will be printed with:
 
     $0 --help=cmd
 
 The summary and internal commands return requested information or the
 results of checks. These are described below.
-The description of all other commands will be printed with
+The description of all other commands will be printed with:
 
     $0 --help=commands
 
@@ -6592,7 +6592,7 @@ with other commands).
 
 =head3 +s_client
 
-    Dump data retrieved from  "openssl s_client ..."  call. Should be
+    Dump data retrieved from  `openssl s_client ...'  call. Should be
     used for debugging only.
     It can be used just like openssl itself, for example:
          openssl s_client -connect host:443 -no_sslv2
@@ -6752,11 +6752,11 @@ the description here is text provided by the user.
 
 =head3 --host=HOST
 
-  Specify HOST as target to be checked. Legacy option.
+  Specify  C<HOST>  as target to be checked. Legacy option.
 
 =head3 --port=PORT
 
-  Specify target's PORT to be used. Legacy option.
+  Specify target's  C<PORT>  to be used. Legacy option.
 
 =head3 --host=HOST and --port=PORT and HOST:PORT and HOST
 
@@ -6779,7 +6779,7 @@ the description here is text provided by the user.
 
   Make all connection to target using PROXYHOST.
 
-  --proxy=PROXYUSER:PROXYPASS@PROXYHOST:PROXYPORT is also possible.
+  Also possible is: --proxy=PROXYUSER:PROXYPASS@PROXYHOST:PROXYPORT
 
 =head3 --proxyport=PROXYPORT
 
@@ -6795,12 +6795,12 @@ the description here is text provided by the user.
 
 =head3 --starttls
 
-  Use STARTTLS command to start a TLS connection via SMTP.
+  Use 'STARTTLS' command to start a TLS connection via SMTP.
   This option is a shortcut for  --starttls=SMTP .
 
 =head3 --starttls=PROT
 
-  Use STARTTLS command to start a TLS connection via protocol.
+  Use 'STARTTLS' command to start a TLS connection via protocol.
   PROT  may be any of:  SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
 
   *EXPERIMENTAL* option; works for  +cipherraw  only.
@@ -6815,7 +6815,7 @@ the description here is text provided by the user.
 
 =head3 --s_client
 
-  Use  "openssl s_slient ..." call to retrieve more informations from
+  Use  `openssl s_slient ...'  call to retrieve more information from
   the SSL connection.  This is disabled by default on Windows because
   of performance problems. Without this option following informations
   are missing on Windows:
@@ -6828,13 +6828,13 @@ the description here is text provided by the user.
 
 =head3 --no-openssl
 
-  Do not use external "openssl" tool to retrieve informations. Use of
-  "openssl" is disabled by default on Windows.
+  Do not use external `openssl'  tool to retrieve information. Use of
+  `openssl' is disabled by default on Windows.
   Note that this results in some missing informations.
 
 =head3 --openssl=TOOL
 
-  TOOL      can be a path to openssl executable;  default: openssl
+  C<TOOL>      can be a path to openssl executable;  default: openssl
 
 =begin comment
 
@@ -6852,18 +6852,18 @@ the description here is text provided by the user.
 
   Use openssl to check for supported ciphers;  default: IO::Socket
 
-  This option forces to use  "openssl s_slient -connect CIPHER .." to
+  This option forces to use  `openssl s_slient -connect CIPHER ..' to
   check if a cipher is supported by the remote target. This is useful
   if the "--lib=PATH" option doesn't work (for example due to changes
   of the API or other incompatibilities).
 
 =head3 --exe-path=PATH --exe=PATH
 
-  PATH      is a full path where to find openssl.
+  C<PATH>      is a full path where to find openssl.
 
 =head3 --lib-path=PATH --lib=PATH
 
-  PATH      is a full path where to find libssl.so and libcrypto.so
+  C<PATH>      is a full path where to find libssl.so and libcrypto.so
 
   See "HACKER's INFO" below for a detailed description how it works.
 
@@ -6893,23 +6893,23 @@ the description here is text provided by the user.
 
 =head3 --call=METHOD
 
-  METHOD    method to be used for specific functionality
+  C<METHOD>    method to be used for specific functionality
 
   Available methods:
-      info-socket    use internal socket for retrieving informations
-      info-openssl   use external openssl for retrieving informations
-      info-user      use usr_getinfo() for retrieving informations
+      info-socket    use internal socket to retrieve information
+      info-openssl   use external openssl to retrieve information
+      info-user      use usr_getinfo() to retrieve information
       cipher-socket  use internal socket to ckeck for ciphers
       cipher-openssl use external openssl to ckeck for ciphers
       cipher-user    use usr_getciphers() to ckeck for ciphers
   
   Method names starting with:
-      info-   are responsible for retrieving  informations  about the
-              SSL connection and the target certificate (i.g. what is
-              provided by  +info  command)
+      info-   are responsible to retrieve  information  about the SSL
+              connection  and the target certificate  (i.g. what the
+              +info  command provides)
       cipher- are responsible to connect to the target and test if it
-              supports the specified ciphers (i.g. what is needed for
-              +cipher  command)
+              it supports the specified ciphers  (i.g. what +cipher
+              command provides)
       check-  are responsible for performing the checks (i.e. what is
               shown with  +check  command)
       score-  are responsible to compute the score based on the check
@@ -6970,7 +6970,7 @@ the description here is text provided by the user.
 
   Note: if more than one cipher matches, just one will be selected.
 
-  Default is "ALL:NULL:eNULL:aNULL:LOW" as specified in Net::SSLinfo.
+  Default is 'ALL:NULL:eNULL:aNULL:LOW' as specified in Net::SSLinfo.
 
 =head3 --no-md5-cipher
 
@@ -7032,7 +7032,7 @@ the description here is text provided by the user.
   Make a HTTP request if cipher is supported.
 
   If used twice debugging will be enabled using  environment variable
-  "HTTPS_DEBUG" .
+  'HTTPS_DEBUG' .
 
 =head3 --no-http
 
@@ -7066,36 +7066,36 @@ the description here is text provided by the user.
 
 =head3 --no-cert-text=TEXT
 
-  Set  TEXT  to be returned from  "Net::SSLinfo.pm" if no certificate
+  Set  C<TEXT>  to be returned from  "Net::SSLinfo.pm" if no certificate
   data is collected due to use of  "--no-cert".
 
 =head3 --ca-depth=INT
 
-  Check certificate chain to depth  INT (like openssl's -verify).
+  Check certificate chain to depth  C<INT>  (like openssl's -verify).
 
 =head3 --ca-file=FILE
 
-  Use  FILE  with bundle of CAs to verify target's certificate chain.
+  Use  C<FILE>  with bundle of CAs to verify target's certificate chain.
 
 =head3 --ca-path=DIR
 
-  Use  DIR  where to find CA certificates in PEM format.
+  Use  C<DIR>  where to find CA certificates in PEM format.
 
 =head3 --no-nextprotoneg
 
-  Do not use  "-nextprotoneg"  option for openssl.
+  Do not use  -nextprotoneg  option for openssl.
 
 =head3 --no-reconnect
 
-  Do not use  "-reconnect"  option for openssl.
+  Do not use  -reconnect  option for openssl.
 
 =head3 --no-tlsextdebug
 
-  Do not use  "-tlsextdebug"  option for openssl.
+  Do not use  -tlsextdebug  option for openssl.
 
 =head3 --sclient-opt=VALUE
 
-  Argument or option passed to openssl s_client command.
+  Argument or option passed to openssl's s_client command.
 
 =head2 Options for I<+cipherraw>  command:
 
@@ -7133,27 +7133,26 @@ It does not make sense to use it for other protocols; however ...
 
 =head3 --ssl-double-reneg
 
-  Send SSL extension  "reneg_info"  even if list of ciphers includes
+  Send SSL extension  'reneg_info'  even if list of ciphers includes
   TLS_EMPTY_RENEGOTIATION_INFO_SCSV (default: do not include)
 
+=for comment alias: --sslnodataeqnocipher --nodataeqnocipher
 =head3 --ssl-nodata-nocipher
 
   Do not abort testing for next cipher when the target  responds with
-  "NoData" times out. Useful for TLS intolerant servers.
+  `NoData' times out. Useful for TLS intolerant servers.
   By default testing for ciphers is aborted  when the target responds
-  with "noData message.
-
-=for comment alias: --sslnodataeqnocipher --nodataeqnocipher
+  with `NoData' message.
 
 =head3 --ssl-use-ecc
 
-  Use supported elliptic curves and TLS "ec_point_formats" extension.
+  Use supported elliptic curves and TLS 'ec_point_formats' extension.
   Default on.
 
 =head3 --ssl-use-reneg
 
-  Test for ciphers with "secure renegotiation" flag set.
-  Default: don't set "secure renegotiation" flag.
+  Test for ciphers with `secure renegotiation' flag set.
+  Default: don't set `secure renegotiation' flag.
 
 =head3 --ssl-retry=CNT
 
@@ -7237,7 +7236,7 @@ Options used for  I<+check>  command:
   Please don't expect identical output as the TOOL, it's a best guess
   and should be parsable in a very similar way.
 
-  TOOL may also be set to any of following internally defined values:
+  C<TOOL>  may also be any of following internally defined values:
 
 =over 4
 
@@ -7264,7 +7263,7 @@ Options used for  I<+check>  command:
 
 =head3 --format=FORM
 
-  FORM may be one of follwoing:
+  C<FORM>  may be one of following:
 
 =over 4
 
@@ -7858,7 +7857,7 @@ requests again, if STS is not well implemented on the server.
 
 =back
 
-=head3 Publix Key Pins header
+=head3 Public Key Pins header
 
 TBD - to be described ...
 
@@ -7902,14 +7901,14 @@ see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 
 =item 3.4 Zertifikate und Zertifikatsverifikation
 
-    Must have "CRLDistributionPoint" or "AuthorityInfoAccess".
+    Must have 'CRLDistributionPoint' or 'AuthorityInfoAccess'.
 
-    MUST have "OCSP URL".
+    MUST have 'OCSP URL'.
 
-    "PrivateKeyUsage" must not exceed three years for certificate and
+    'PrivateKeyUsage' must not exceed three years for certificate and
     must not exceed five years for CA certificates.
 
-    "Subject",  "CommonName"  and  "SubjectAltName"  must not contain
+    'Subject',  'CommonName'  and  'SubjectAltName'  must not contain
     a wildcard.
 
     Certificate itself must be valid according dates if validity.
@@ -8056,8 +8055,8 @@ will set the  proper values.  The key names being part of the option,
 are printed in output with the  I<--trace-key>  option.
 
 I.g. texts (values) of keys in  %data are those used in output of the
-"Informations" section. Texts of keys in  %checks are used for output
-in "Performed Checks" section.  And texts of keys in  %text  are used
+`Information' section. Texts of keys in  %checks  are used for output
+in `Performed Checks' section.  And texts of keys in  %text  are used
 for additional information lines or texts (mainly beginning with C<=>).
 
 =head3 Configuration File vs. RC-FILE vs. DEBUG-FILE
@@ -8071,7 +8070,6 @@ for additional information lines or texts (mainly beginning with C<=>).
     only the characters:  a-zA-Z_0-9,.\/()-  are allowed as pathname.
     Syntax in configuration file is:  'KEY=VALUE'  where 'KEY' is any
     key as used in internal data structure.
-    the keys in output).
 
 =item RC-FILE
 
@@ -8143,7 +8141,7 @@ Note that options with arguments must be used as  C<KEY=VALUE>  instead
 of  C<KEY VALUE>.
 
 Configurations options must be written like C<--cfg-CFG=KEY=VALUE>
-where "CFG" is any of:  cmd, check, data, text  or  score  and "KEY is
+where C<CFG> is any of:  cmd, check, data, text  or score and C<KEY> is
 any key from internal data structure (see above).
 
 All commands and options given on command line will  overwrite  those
@@ -8231,7 +8229,7 @@ to the correct (hex, integer) identifier.
 For example Firefox uses  C<dhe_dss_des_ede3_sha>,  which is what?
 
 Furthermore, there are different acronyms for the same thing in use.
-For example  C<DHE>  and  C<EDH>  both mean C<Ephemeral Diffie-Hellman>.
+For example  C<DHE>  and  C<EDH>  both mean `Ephemeral Diffie-Hellman'.
 Comments in the openssl sources mention this. And for curiosity these
 sources use both in cypher names but allow only  C<EDH> as shortcut in
 openssl's `ciphers'  command. Wonder about (at least up to 1.0.1h):
@@ -8273,7 +8271,7 @@ multiple ciphers assigned.
 
 =head2 Segmentation fault
 
-Sometimes  the program terminates with a  `Segmentation fault'.  This
+Sometimes  the program terminates with a  'Segmentation fault'.  This
 mainly happens if the target does not return certificate information.
 If so, the  I<--no-cert>  option may help.
 
@@ -8361,9 +8359,7 @@ No option provided yet ...
 
 Try with  I<--no-sni>
 
-Try to use following options to narrow down the cause of the problem:
-
-=item use of external openssl executable
+=item f) use of external openssl executable
 
 Use  I<--no-openssl> 
 
@@ -8383,7 +8379,7 @@ I<+cipher>,  I<+ciphers>,  I<+list>,  I<+libversion>,  I<+version>,  I<+check>, 
 I<+quick>  should not be used together with other commands, it returns
 strange output then.
 
-I<+protocols>  requires  L<openssl(1)> with support for "-nextprotoneg"
+I<+protocols>  requires  L<openssl(1)> with support for '-nextprotoneg'
 option. Otherwise the value will be empty.
 
 =head2 Options
@@ -8397,7 +8393,7 @@ as they my trigger the  -I<--header>  option unintentional.
 The used L<timeout(1)> command cannot be defined with a full path like
 L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
 
-I<--cfg-text=file>  cannot be used to redefine the texts "yes" and "no"
+I<--cfg-text=file>  cannot be used to redefine the texts 'yes' and 'no'
 as used in the output for  I<+cipher>  command.
 
 =head2 Checks (general)
@@ -8412,7 +8408,7 @@ This is currently (2014) a limitation in $0.
 =head2 Broken pipe
 
 This error message most likely means that the connection to specified
-was not possible (firewall or whatever reason).
+target was not possible (firewall or whatever reason).
 
 =head2 Target Certificate Chain Verification
 
@@ -8644,7 +8640,7 @@ Reasons are:
 Only the first one a) can be circumvented.  The last one d) can often
 be ignored as it only prints a warning or error message.
 
-To circumvent the "name with version number" problem try following:
+To circumvent the `name with version number' problem try following:
 
 =over
 
@@ -8662,7 +8658,7 @@ which returns something like:
   /lib64/ld-linux-x86-64.so.2 (0x00007f940cdea000)
 
 Here only the first two libraries are important.  Both,  libcrypto.so
-and libssl.so  need to be version "0.9.8" (in this example).
+and libssl.so  need to be version '0.9.8' (in this example).
 
 =item 2. create a directory for your libraries, i.e.:
 
@@ -8801,9 +8797,9 @@ complicated, sometimes.
 =head3 General
 
 Perl's  `die()'  is used whenever an unrecoverable error occurs.  The
-message printed will always start with `**ERROR: '.
+message printed will always start with '**ERROR: '.
 Warnings are printed using perl's  `warn()'  function and the message
-always begins with `**WARNING: '.
+always begins with '**WARNING: '.
 
 All C<print*()> functions write on STDOUT directly. They are slightly
 prepared for using texts from  the configuration (%cfg, %checks),  so
@@ -8854,10 +8850,10 @@ Following comments are used in the code:
 =head3 Variables
 
 Most functions use global variables (even if they are defined in main
-with `my'). These variables are mainly: @DATA, @results, %cmd, %data,
+with 'my'). These variables are mainly: @DATA, @results, %cmd, %data,
 %cfg, %checks, %ciphers, %text.
 
-Variables defined with `our' can be used in  L<o-saft-dbx.pm>  and
+Variables defined with 'our' can be used in  L<o-saft-dbx.pm>  and
 L<o-saft-usr.pm> .
 
 For a detailed description of the used variables, please refer to the
@@ -8980,9 +8976,9 @@ or  I<--v>  option is used.
 
 =back
 
-Empty or undefined strings are written as  "<<undefined>>"  in texts.
+Empty or undefined strings are written as  '<<undefined>>'  in texts.
 Some parameters, in particular those of  HTTP responses,  are written
-as  "<<response>>".  Long parameter lists are abbreviated with "...".
+as  '<<response>>'.  Long parameter lists are abbreviated with '...'.
 
 
 =head3 Output
@@ -9011,7 +9007,7 @@ Following formats are used:
 
     Trace information from  "NET::SSLinfo"  for  "--trace"  options.
     These are data lines in the format:   #{ variable name : value #}
-    Note that  `value'  here can span multiple lines and ends with #}
+    Note that  'value'  here can span multiple lines and ends with #}
 
 =back
 
@@ -9226,7 +9222,7 @@ Code to check heartbleed vulnerability adapted from
 
 =head1 VERSION
 
-@(#) 14.11.17
+@(#) 14.11.18
 
 =head1 AUTHOR
 
