@@ -28,9 +28,11 @@
 (   INSTALLATION
  )       o-saft.pl requires following Perl modules:
 (          Net::SSLeay          (prefered >= 1.51)
- )          IO::Socket::SSL      (prefered >= 1.37)
+ )         IO::Socket::SSL      (prefered >= 1.37)
 (          IO::Socket::INET     (prefered >= 1.31)
  )
+(       There are no dependencies for checkAllCiphers.pl, so the test of all
+ )      ciphers (aka +cipherall) will work with it.
 (       Module Net::SSLinfo and Net::SSLhello are part of O-Saft and should be
  )      installed in ./Net .
 (       All dependencies for these modules must also be installed.
@@ -38,7 +40,9 @@
 (       Following files are optional:
  )          .o-saft.pl           (private user configuration)
 (           o-saft-dbx.pm        (for debugging, tracing)
- )          o-saft-usr.pm        (private functions, some kind of API)
+ )          o-saft-man.pm        (documentation and generation functions)
+(           o-saft-usr.pm        (private functions, some kind of API)
+ )          checkAllCiphers.pl   (simple script for +cipherall option)
 (
  )      .o-saft.pl is delivered as .o-saft.pl.sample to avoid destroying user
 (       configurations. It needs to be renamed before used.
