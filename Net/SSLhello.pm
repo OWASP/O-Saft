@@ -109,6 +109,7 @@ use constant {
 #
 #defaults for global parameters
 $Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
+$Net::SSLhello::traceTIME    = 0;# 1=trace prints timestamp
 $Net::SSLhello::usesni       = 0;# 1 use SNI to connect to target
 $Net::SSLhello::timeout      = 1;# time in seconds
 $Net::SSLhello::retry        = 2;# number of retry when timeout
@@ -219,17 +220,19 @@ sub _error;
 #sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
 #sub _trace4_  { _trace4(@_); }
 
-sub _trace($)  { local $\ = ""; print "#" . $mename . "::" . $_[0]                  if ($main::cfg{'trace'} > 0); }
-sub _trace0($) { local $\ = ""; print "#" . $mename . "::"                          if ($main::cfg{'trace'} > 0); }
-sub _trace1($) { local $\ = ""; print "# " . $mename . "::" . join(" ", @_)         if ($main::cfg{'trace'} > 1); }
-sub _trace2($) { local $\ = ""; print "# --> " . $mename . "::" . join(" ", @_)     if ($main::cfg{'trace'} > 2); }
-sub _trace3($) { local $\ = ""; print "# --> " . $mename . "::" . join(" ", @_)     if ($main::cfg{'trace'} ==3); }
-sub _trace4($) { local $\ = ""; print "#   ---> " . $mename . "::" . join(" ", @_)  if ($main::cfg{'trace'} > 3); }
-sub _trace_($) { local $\ = ""; print " " . join(" ", @_)                           if ($main::cfg{'trace'} > 0); }
-sub _trace1_($){ local $\ = ""; print " " . join(" ", @_)                           if ($main::cfg{'trace'} > 1); }
-sub _trace2_($){ local $\ = ""; print join(" ", @_)                                 if ($main::cfg{'trace'} > 2); }
-sub _trace3_($){ local $\ = ""; print join(" ", @_)                                 if ($main::cfg{'trace'} ==3); }
-sub _trace4_($){ local $\ = ""; print join(" ", @_)                                 if ($main::cfg{'trace'} > 3); }
+sub _y_ts      { if ($main::cfg{'traceTIME'} <= 0)  { return ""; }   return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]); }
+
+sub _trace($)  { local $\ = ""; print "#" . _y_ts() . $mename . "::" . $_[0]                    if ($main::cfg{'trace'} > 0); }
+sub _trace0($) { local $\ = ""; print "#" . _y_ts() . $mename . "::"                            if ($main::cfg{'trace'} > 0); }
+sub _trace1($) { local $\ = ""; print "# " . _y_ts() . $mename . "::" . join(" ", @_)           if ($main::cfg{'trace'} > 1); }
+sub _trace2($) { local $\ = ""; print "# --> " . _y_ts() . $mename . "::" . join(" ", @_)       if ($main::cfg{'trace'} > 2); }
+sub _trace3($) { local $\ = ""; print "# --> " . _y_ts() . $mename . "::" . join(" ", @_)       if ($main::cfg{'trace'} ==3); }
+sub _trace4($) { local $\ = ""; print "#   ---> " . _y_ts() . $mename . "::" . join(" ", @_)    if ($main::cfg{'trace'} > 3); }
+sub _trace_($) { local $\ = ""; print " " . join(" ", @_)                                       if ($main::cfg{'trace'} > 0); }
+sub _trace1_($){ local $\ = ""; print " " . join(" ", @_)                                       if ($main::cfg{'trace'} > 1); }
+sub _trace2_($){ local $\ = ""; print join(" ", @_)                                             if ($main::cfg{'trace'} > 2); }
+sub _trace3_($){ local $\ = ""; print join(" ", @_)                                             if ($main::cfg{'trace'} ==3); }
+sub _trace4_($){ local $\ = ""; print join(" ", @_)                                             if ($main::cfg{'trace'} > 3); }
 
 #if (! eval("require o-saft-dbx.pm;")) {
 #        # o-saft-dbx.pm may not be installed, try to find in program's directory
@@ -970,6 +973,7 @@ sub version { # Version of SSLhello
      _trace2 ("        retry=$Net::SSLhello::retry\n")         if (defined($Net::SSLhello::retry));
      _trace2 ("      timeout=$Net::SSLhello::timeout\n")       if (defined($Net::SSLhello::timeout));
      _trace2 ("        trace=$Net::SSLhello::trace\n")         if (defined($Net::SSLhello::trace));
+     _trace2 ("    traceTIME=$main::traceTIME\n")              if (defined($main::traceTIME));
      _trace2 ("     usereneg=$Net::SSLhello::usereneg\n")      if (defined($Net::SSLhello::usereneg));
      _trace2 (" double_reneg=$Net::SSLhello::double_reneg\n")  if (defined($Net::SSLhello::double_reneg));
      _trace2 ("       usesni=$Net::SSLhello::usesni\n")        if (defined($Net::SSLhello::usesni));
@@ -1182,36 +1186,36 @@ sub checkSSLciphers ($$$@) {
                 } else { # no Ciphers accepted
                     _trace1_ ("=> no Cipher found\n");
                     if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
-                        _trace2 (">>> checkSSLciphers (1.1): '$@'\n"); 
+                        _trace2 ("checkSSLciphers (1.1): '$@'\n"); 
                         warn ("**WARNING: checkSSLciphers => Exit Loop (1.1)");
                         @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                         last;
                     } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                        _trace1 (">>> checkSSLciphers (1.2): '$@'\n"); 
+                        _trace1 ("checkSSLciphers (1.2): '$@'\n"); 
                         @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                         last;
                     } elsif ( ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Errors -> Useless to check more ciphers
-                        _trace2 (">>> checkSSLciphers (1.3): \'$@\'\n"); 
+                        _trace2 ("checkSSLciphers (1.3): \'$@\'\n"); 
                         warn ("**WARNING: checkSSLciphers => Exit Loop (1.3)");
                         @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                         last;
                     } elsif ( $@ =~ /\-> Received NO Data/) { # Some Servers 'Respond' by closing the TCP connection => Check each Cipher individually
                         if ($Net::SSLhello::noDataEqNoCipher == 1) { # Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported
-                            _trace1 (">>> checkSSLciphers (1.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
+                            _trace1 ("checkSSLciphers (1.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
                             @cipherSpecArray =(); # => Empty @cipherSpecArray
                             $@=""; # reset Error-Msg
                             next;
                         } else { # noDataEqNoCipher == 0
-                            _trace2 (">>> checkSSLciphers (1.5): \'$@\', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
+                            _trace2 ("checkSSLciphers (1.5): \'$@\', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
                             warn ("**WARNING: checkSSLciphers (1.5): \'$@\', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported."); 
                         }
                     } elsif ($@ =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
-                        _trace2 (">>> checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
+                        _trace2 ("checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                         warn ("**WARNING: checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                         next;
                     } elsif ($@) { # Error found
-                         _trace2 (">>> checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n");
-                         warn (">>> checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n"); 
+                         _trace2 ("checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n");
+                         warn ("checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n"); 
                         $@=""; # reset Error-Msg
                     } # else: no Cipher accepted but no Error
                     @cipherSpecArray =(); # => Empty @cipherSpecArray
@@ -1240,7 +1244,7 @@ sub checkSSLciphers ($$$@) {
             } else { # no Cipher acepted
                 _trace1_ ("=> no Cipher found\n");
                 if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
-                    _trace2 (">>> checkSSLciphers (2.1): '$@'\n"); 
+                    _trace2 ("checkSSLciphers (2.1): '$@'\n"); 
                     warn ("**WARNING: checkSSLciphers => Exit Loop (2.1)");
                     @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                     last;
@@ -1249,27 +1253,27 @@ sub checkSSLciphers ($$$@) {
                     @cipherSpecArray =(); # Server did not Accepty any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                     last; # no more Ciphers to Test
                 } elsif ( ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Errors -> Useless to check more ciphers
-                    _trace2 (">>> checkSSLciphers (2.3): '$@'\n"); 
+                    _trace2 ("checkSSLciphers (2.3): '$@'\n"); 
                     warn ("**WARNING: checkSSLciphers => Exit Loop (2.3)");
                     @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                     last;
                 } elsif ( $@ =~ /\-> Received NO Data/) { # Some Servers 'Respond' by closing the TCP connection => Check each Cipher individually
                     if ($Net::SSLhello::noDataEqNoCipher == 1) { # Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported
-                        _trace1 (">>> checkSSLciphers (2.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
+                        _trace1 ("checkSSLciphers (2.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
                         @cipherSpecArray =(); # => Empty @cipherSpecArray
                         $@="";
                         next;  # here: eq last 
                     } else { # noDataEqNoCipher == 0
-                        _trace2 (">>> checkSSLciphers (2.5): '$@', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n"); 
+                        _trace2 ("checkSSLciphers (2.5): '$@', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n"); 
                         warn ("**WARNING: checkSSLciphers (2.5): '$@', => Please use the option \'--noDataEqNoCipher\' for Servers not answering if none of the requested Ciphers are supported."); 
                     }
                 } elsif ($@ =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
-                    _trace2 (">>> checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
+                    _trace2 ("checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                     warn ("**WARNING: checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                     next;
                 } elsif ($@) { # Error found
-                    _trace2 (">>> checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$@'\n");
-                    warn (">>> checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$@'\n"); 
+                    _trace2 ("checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$@'\n");
+                    warn ("checkSSLciphers (2.6): Unexpected Error Messagege ignored: '$@'\n"); 
                     $@=""; # reset Error-Msg
                 }
                 @cipherSpecArray =(); # => Empty @cipherSpecArray
@@ -1301,7 +1305,7 @@ sub checkSSLciphers ($$$@) {
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str); # collect Accepted Ciphers by Priority
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
             if ($@) {
-                _trace2 (">>> checkSSLciphers (3): '$@'\n");
+                _trace2 ("checkSSLciphers (3): '$@'\n");
                 # list untested Ciphers
                 $i = 0;
                 my $str=""; #output string with list of ciphers
@@ -1348,7 +1352,7 @@ sub checkSSLciphers ($$$@) {
                 @acceptedCipherArray = grep { $_ ne $acceptedCipher } @acceptedCipherArray;    # delete accepted Cipher in ToDo-Array '@acceptedCipherArray'
                 $cipher_str = join ("",@acceptedCipherArray); # Check Prio for next Ciphers
             } else { # nothing received => Lost Connection
-                _trace2 (">>> checkSSLciphers (6): '$@'\n");
+                _trace2 ("checkSSLciphers (6): '$@'\n");
                 # list untested Ciphers
                 $i = 0;
                 my $str=""; #output string with list of ciphers
@@ -1366,7 +1370,7 @@ sub checkSSLciphers ($$$@) {
                     $@=""; # reset Error-Msg
                     last;
                 } elsif ($@ =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
-                    _trace2 (">>> checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
+                    _trace2 ("checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                     warn ("**WARNING: checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                     next;
                 } elsif ($@) { #any other Error like: #} elsif ( ( $@ =~ /\-> Received NO Data/) || ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) {
@@ -1401,7 +1405,7 @@ sub openTcpSSLconnection ($$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $starttlsType=0; # SMTP 
-#   11 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP
+#   14 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP, 12:IRC, 13: IRC_CAPACITY
 
     my @starttls_matrix = 
         ( ["SMTP", 
@@ -1412,7 +1416,7 @@ sub openTcpSSLconnection ($$) {
             ".*?(?:^|\\n)220\\s",                       # Phase5: receive '220'
             ".*?(?:^|\\n)421\\s",                       # Error1: temporary unreachable (too many connections); +454?
             ".*?(?:^|\\n)4[57]4\\s",                    # Error2: This SSL/TLS-Protocol is not supported 454 or 474
-            ".*?(?:^|\\n)(?:451|50[02])\\s",            # Error3: fatal Error/STARTTLS not supported: '500 Syntax error, command unrecognized', '502 Command not implemented' ...
+            ".*?(?:^|\\n)(?:451|50[023]|554)\\s",       # Error3: fatal Error/STARTTLS not supported: '500 Syntax error, command unrecognized', '502 Command not implemented', '503 TLS is not allowed',  554 PTR lookup failure ...
           ],
           ["IMAP",                                      # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             ".*?(?:^|\\n)\\*\\s*OK.*?IMAP(?:\\s|\\d)",  # Phase1: receive '* OK IMAP'
@@ -1529,11 +1533,32 @@ sub openTcpSSLconnection ($$) {
             "",                                         # Error2: This SSL/TLS-Protocol is not supported 
             "",                                         # Error3: fatal Error/STARTTLS not supported
           ],
+          ["IRC",                                               # according https://github.com/ircv3/ircv3-specifications/blob/master/extensions/tls-3.1 and
+                                                                #           https://gist.github.com/grawity/f661adc10fb2d7a580ea
+            ".*?NOTICE.*?",                                     # Phase1: receive ':<Server> NOTICE AUTH :*** No ident response; username prefixed with ~'
+            "",                                                 # Phase2: send    -unused-
+            "",                                                 # Phase2: receive -unused-
+            "STARTTLS\r\n",                                     # Phase4: send    'STARTTLS'
+            ".*?(?:^|\n)\\:.*?\\s670\\s+\\:STARTTLS\\s",        # Phase5: receive ':<Server> 670  :STARTTLS successful, go ahead with TLS handshake'
+            ".*?(?:^|\n)ERROR\\s.*?too.*?(?:fast|much|many)",   # Error1: temporary unreachable (too many connections);
+            "",                                                 # Error2: This SSL/TLS-Protocol is not supported 
+            ".*?(?:^|\\n)421\\s",                               # Error3: fatal Error/STARTTLS not supported: '421 ERR_UNKNOWNCOMMAND "<command> :Unknown command"'
+          ],
+          ["IRC_CAPACITY",                                      # according https://github.com/ircv3/ircv3-specifications/blob/master/extensions/tls-3.1 and
+                                                                #           https://gist.github.com/grawity/f661adc10fb2d7a580ea
+            ".*?NOTICE.*?",                                     # Phase1: receive ':<Server> NOTICE AUTH :*** No ident response; username prefixed with ~'
+            "CAP LS\r\n",                                       # Phase2: send    view CAPABILITY (optional) 
+            ".*?(?:^|\n)\\:.*?\\sCAP\\s.*?\\:.*tls(?:\\s|$|\r\n)",    # Phase3: receive :<Server> CAP * LS :account-notify away-notify multi-prefix tls us     erhost-in-names
+            "STARTTLS\r\n",                                     # Phase4: send    'STARTTLS'
+            ".*?(?:^|\n)\\:.*?\\s670\\s+\\:STARTTLS\\s",        # Phase5: receive ':<Server> 670  :STARTTLS successful, go ahead with TLS handshake'
+            ".*?(?:^|\n)ERROR\\s.*?too.*?(?:fast|much|many)",   # Error1: temporary unreachable (too many connections);
+            "",                                                 # Error2: This SSL/TLS-Protocol is not supported 
+            ".*?(?:^|\\n)421\\s",                               # Error3: fatal Error/STARTTLS not supported: '421 ERR_UNKNOWNCOMMAND "<command> :Unknown command"'
+          ],
         );
 
     my %startTlsTypeHash;
     $@ ="";
-
     if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
         _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
     } else {
@@ -1547,12 +1572,12 @@ sub openTcpSSLconnection ($$) {
         if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
             _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-            if ( grep(/^$starttlsType$/,('11') )) { # ('11', '12', ...) -> Use of an experimental starttls-Type
+            if ( grep(/^$starttlsType$/,('11', '12', '13') )) { # ('11', '12', ...) -> Use of an experimental starttls-Type
                 if  ($Net::SSLhello::experimental >0) { # experimental function is are  activated
                     _trace_("\n");
                     _trace ("openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
                 } else { # use of experimental functions is not permitted (option is not activated)
-                    if ( grep(/^$starttlsType$/,('11') )) { # experimental and untested
+                    if ( grep(/^$starttlsType$/,('11', '12', '13') )) { # experimental and untested
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                     } else { # tested, but still experimental # experimental but tested 
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
@@ -1574,8 +1599,8 @@ sub openTcpSSLconnection ($$) {
         $input2="";
         alarm (0); # switch off alarm (e.g. for  next retry )
         if ($retryCnt >0) { # Retry 
+            _trace1_ ("\n") if (($retryCnt == 1) && ($main::cfg{'trace'} < 3)); # to catch up '\n' if 1st retry and trace-level is 2 (1 < trace-level < 3)
             if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
-                _trace1_ ("\n") if ($retryCnt == 1);
                 _trace1 ("openTcpSSLconnection: $retryCnt. Retry to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport);
                 if ($retryCnt > $Net::SSLhello::retry) {
                     _trace1_ (" (this is an additional retry after suspension)");
@@ -1701,6 +1726,8 @@ sub openTcpSSLconnection ($$) {
 
         if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
             _trace2 ("openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]."-Protocol for Server $host:$port, Retry = $retryCnt\n");
+            select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+            select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
             ### STARTTLS_Phase1 (receive)
             if ($starttls_matrix[$starttlsType][1]) { 
                 eval {
@@ -1785,6 +1812,10 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: openTcpSSLconnection: ## STARTTLS (Phase 2): $@; Can't close socket, too: $!");
                     next; # next retry
                 } 
+                # wait before next read
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+            ### STARTTLS_Phase1 (receive)
             } else {
                 _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
             } # end-if $starttls_matrix[$starttlsType][2] 
@@ -1876,6 +1907,9 @@ sub openTcpSSLconnection ($$) {
                     close ($socket) or warn("**WARNING: openTcpSSLconnection: ## $@; Can't close socket, too: $!");
                     next; # next return
                 }
+                # wait before next read
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
              } else {
                 _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
              } # endi-if $starttls_matrix[$starttlsType][4]
@@ -1939,8 +1973,7 @@ sub openTcpSSLconnection ($$) {
                             $@ = "STARTTLS (Phase 5): Did *NOT* get a Server SSL/TLS confirmation from $host:$port (retry: $retryCnt); target ignored. Server-Error: >"._chomp_r($input)."<"; #error-message received from the SMTP-Server
                             _trace2 ("openTcpSSLconnection: ## $@; try to retry;\n");;
                             close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
-                            _trace2 ("Exit openTcpSSLconnection: }\n");
-                            return (undef); # fatal Error => Exit
+                            next;
                         }
                     }
                 } else { # did not receive a Message
@@ -2039,7 +2072,8 @@ sub _doCheckSSLciphers ($$$$) {
         $@ ="";
         $input2="";
         if ($retryCnt >0) {
-             _trace1 ("_doCheckSSLciphers: $retryCnt. Retry to receive $segmentCnt. TCP-segment-Data from '$host:$port' ");
+            _trace1_ ("\n") if (($retryCnt == 1) && ($main::cfg{'trace'} < 3)); # to catch up '\n' if 1st retry and trace-level is 2 (1 < trace-level < 3)
+            _trace1 ("_doCheckSSLciphers: $retryCnt. Retry to receive $segmentCnt. TCP-segment-Data from '$host:$port' ");
             if ($pduLen >0) {
                 _trace1_ ("(expecting $pduLen Bytes)\n");
             } else {
@@ -2748,8 +2782,8 @@ sub parseTLS_ServerHello {
                 if (! defined $ssl_server) {
                     $ssl_server ="--unknown Protocol--";
                 } 
-                $@ = sprintf ("parseTLS_ServerHello: Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> answer ignored!\n", $serverHello{'version'}, $client_protocol);
-                _trace2($@); 
+                $@ = sprintf ("parseTLS_ServerHello: Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> answer ignored!", $serverHello{'version'}, $client_protocol);
+                _trace2("$@\n"); 
                 return ("");
             }    
         } else {
