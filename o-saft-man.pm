@@ -7,11 +7,13 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.1 14/11/27 01:36:56";
-our $parent = (caller(0))[1];# get filename of parent
+my  $man_SID= "@(#) o-saft-man.pm 1.2 14/11/29 10:35:29";
+our $parent = (caller(0))[1] || "O-Saft"; # filename of parent, O-Saft if no parent
+    $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];# tricky to get filename of myself when called from BEGIN
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes its empty :-((
     $ich    =~ s:.*/::;
+our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
 my  $skip   = 1;
 our @DATA;
 if (open(DATA, $ich)) {
@@ -24,6 +26,7 @@ if (open(DATA, $ich)) {
     while (<DATA>) {
         $skip = 0, next if (/^__DATA__/);
         next if ($skip ne 0);
+        s#\$VERSION#$version#g;                 # my name
         push(@DATA, $_);
     }
     close(DATA);
@@ -34,7 +37,7 @@ our $\ = "";
 ## -------------------------------------
 sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @ARGV)>0); }
     # When called from within parent's BEGIN{} section, options are not yet
-    # parsed, hence not available in %cfg.  Hence we use @ARGV to check for
+    # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
 sub _man_http_head(){
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
@@ -136,7 +139,7 @@ sub _man_html($$) {
         m/^ +\*( .*)/     && do { print "<li>$1</li>\n";next;}; # type=disc
         m/^ {11}([^ ].*)/ && do { print "<li 11>$1</li>\n";next;};
         if (!m/\s*$parent/) { # no markup in example lines
-        s!\s((?:\+|--)[^,\s"]*)[,\s"]! <a href="#a$1">$1</a> !; # markup references inside help
+            s!\s((?:\+|--)[^,\s"]*)[,\s"]! <a href="#a$1">$1</a> !; # markup references inside help
         }
         s!\s"((?:\+|--)[^"]*)"! <a href="#a$1">$1</a>!g;    # markup references inside help
         print;
@@ -535,8 +538,8 @@ __DATA__
 
 NAME
 
-        o-saft.pl - OWASP SSL audit for testers
-                    OWASP SSL advanced forensic tool
+        O-Saft - OWASP SSL audit for testers
+                 OWASP SSL advanced forensic tool
 
 
 DESCRIPTION
@@ -3105,7 +3108,7 @@ ATTRIBUTION
 # VERSION string must start with @(#) at beginning of a line
 VERSION
 
-        (#) 14.11.19
+        (#) $VERSION
 
 AUTHOR
 
