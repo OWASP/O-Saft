@@ -43,9 +43,10 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
+    sub _VERSION() { return "14.11.20"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
-    # for some commands.
+    # for some commands (see o-saft-man.pm also).
     # Unfortunately perl's BEGIN has following limits and restrictions:
     #   - sub can be defined herein and used later
     #   - variables can not be defined herein and used later
@@ -53,7 +54,7 @@ BEGIN {
     #   - strict sequence of definitions and usage (even for variables in subs)
     # To make the program work as needed,  these limitations would force to use
     # some dirty code hacks and split the flow of processing in different parts
-    # of the source. Therefore this scope is not used. Performance penalty :-/
+    # of the source. Therefore this scope is used for --help=* options only.
 
     unshift(@INC, "./", "./lib");   # we support some local lib directories
 
@@ -71,13 +72,14 @@ BEGIN {
 } # BEGIN
     _y_TIME("BEGIN}");
 
-our $VERSION= "14.11.19";
-my  $SID    = "@(#) yeast.pl 1.307 14/11/27 01:50:05";
+our $VERSION= _VERSION();
+my  $SID    = "@(#) yeast.pl 1.308 14/11/29 10:36:05";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 our $mename = "yeast  ";
     $mename = "O-Saft " if ($me !~ /yeast/);
+
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -5085,9 +5087,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $arg = '# for CGI mode';  next; } # for CGI mode; ignore
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
+    if ($arg =~ /^(?:--|\+)VERSION/)    { print "$VERSION\n";     exit 0; }
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
-    if ($arg eq  '--VERSION')           { print "$VERSION\n";     exit 0; }
-    if ($arg eq  '+VERSION')            { print "$VERSION\n";     exit 0; }
         # in CGI mode commands need to be passed with --cmd=* option
     #!#--------+------------------------+--------------------------+------------
     #} specials
