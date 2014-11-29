@@ -7,14 +7,16 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.2 14/11/29 10:35:29";
-our $parent = (caller(0))[1] || "O-Saft"; # filename of parent, O-Saft if no parent
+my  $man_SID= "@(#) o-saft-man.pm 1.3 14/11/29 22:29:48";
+our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
-our $ich    = (caller(1))[1];# tricky to get filename of myself when called from BEGIN
+our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes its empty :-((
     $ich    =~ s:.*/::;
+			    $parent = "o-saft.pl";
 our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
 my  $skip   = 1;
+our $egg    = "";
 our @DATA;
 if (open(DATA, $ich)) {
     # If this module is used in parent's BEGIN{} section, we don't have any
@@ -24,9 +26,14 @@ if (open(DATA, $ich)) {
     # functions, but using a simple loop is more readable.
     #@DATA= <DATA>;
     while (<DATA>) {
+        $skip = 2, next if (/^#begin/);
+        $skip = 0, next if (/^#end/);
         $skip = 0, next if (/^__DATA__/);
+        $egg .= $_,next if ($skip eq 2);
         next if ($skip ne 0);
-        s#\$VERSION#$version#g;                 # my name
+        next if (/^#/);                 # remove comments
+        s#\$VERSION#$version#g;         # add current VERSION
+        s# \$0# $parent#g;              # my name
         push(@DATA, $_);
     }
     close(DATA);
@@ -114,25 +121,20 @@ sub _man_html_br()    { return sprintf("        <br>\n"); }
 sub _man_html($$) {
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
-    my $h = 0; my $c = 0;
+    my $h = 0;
     _man_dbx("_man_html($anf, $end) ...");
     while ($_ = shift @DATA) {
         last if/^TODO/;
         $h=1 if/^$anf/;
         $h=0 if/^$end/;
-        m/^#begin/        && do{$c=1;};         # start of comment
-        m/^#end/          && do{$c=0;next;};    # end of comment, don't print
-        next if $c==1;                          # ignore comments
         next if $h==0;                          # ignore "out of scope"
         next if m/^\s*$/;                       # ignore empty lines
-        next if m/^#/;                          # ignore comments
         m/^([A-Z].*)/     && do { printf("\n<h1>%s %s</h1>\n",_man_html_ankor($1),$1);next;};
         m/^ {4}([^ ].*)/  && do { printf("%s\n<h3>%s %s</h3><p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
         m/^ {6}([^ ].*)/  && do { printf("%s\n<h4>%s %s</h4><p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
         s#C<([^>]*)>#<span class=c >$1</span>#g;# markup examples
         s#L<([^>]*)>#"$1"#g;                    # markup other references
         s![BI]<([^>]*)>! <a href="#a$1">$1</a>!g; # markup commands and options
-        s#\$0#$parent#g;                        # my name
         m/^ +([0-9].*)/   && do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^ +([a-z]\).*)/ && do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^ +\*\*( .*)/   && do { print "<li type=square>$1</li>\n";next;};
@@ -378,14 +380,9 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
 ";
     # 2.  enerate wiki page content
     #    extract from herein and convert POD syntax to mediawiki syntax
-    my $h = 1;
     while ($_ = shift @DATA) {
         # following matches should be similar to those in _man_html()
         last if/^TODO/;
-        m/^#begin .*/&& do{$h=0;};          # start of comment
-        m/^#end /    && do{$h=1;next;};     # end of comment, don_t print
-        next if $h==0;
-        next if m/^#/;                      # ignore comments
         s/^([A-Z].*)/====$1====/;
         s/^ {4}([^ ].*)/=====$1=====/;
         s/^ {6}([^ ].*)/======$1======/;
@@ -402,10 +399,10 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
         s/"((?:\+|--)[^"]*)"/\'\'$1\'\'/g;  # markup commands and options
         s#"([^"]*)"#<code>$1</code>#g;      # markup commands and options enclosed in quotes
         s/^([^=*].*)/:$1/;                  # identent all lines for better readability
-        s/^:( {14}[^ ].*)/$1/;              # exactly 15 spaces used to highlight line
+        s/^:( {14}[^ ].*)/$1/;              # exactly 14 spaces used to highlight line
         s/^: {8}([^ ])/:$1/;                # remove leftmost 8 spaces (they are useless in wiki)
-        s/^: {10}([^ ])/:$1/;               # remove leftmost 8 spaces (they are useless in wiki)
-        s/^:?\s*\$0/    $parent/;           # replace myself with real name
+        s/^: {10}([^ ])/:$1/;               # remove leftmost 10 spaces (they are useless in wiki)
+        s/^:?\s*($parent)/  $1/;            # myself becomes wiki code line
         s/^:\s+$/\n/;                       # remove empty lines
         if (m/^:/) {                        # add internal wiki links; quick&dirty list here
             s/((?:DEBUG|RC|USER)-FILE)/ [[#$1|$1]]/g;
@@ -433,18 +430,13 @@ sub man_help($) {
     # no special help, print full one or parts of it
     my $txt = join ("", @DATA);
     if (grep(/^--v/, @ARGV) > 1){ # with --v --v
-        $txt =~ s{.*?#begin\s+--v --v(.*?)#end\s+--v.*}{$1}ms;
-        $txt =~ s/\n/        \n/msg;
-        print scalar reverse "\n$txt";
+        print scalar reverse "\n\n$egg";
         return;
     }
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     $txt =~ s{.*?\n($anf.*?)\n$end.*}{$1}xms;# grep all data
-    $txt =~ s/\n#begin\s+--v.*?#end[^\n]*\n//ms;   # remove secret
-    $txt =~ s/(\n#[^\n]*)//msg;             # remove comments
     $txt =~ s/I<([^>]*)>/"$1"/g;            # sanatize perldoc
     $txt =~ s/[BLIC]<([^>]*)>/"$1"/g;       # sanatize perldoc
-    $txt =~ s/\$0(?![>"])/$parent/g;        # negative lookahead: keep "$0" and C<$0>
     print $txt;
     if ($label =~ m/^todo/i)    {
         #$\   =  "\n";
