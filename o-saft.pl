@@ -30,8 +30,6 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
-# ToDo please see  =begin ToDo  in POD section
-
 use strict;
 
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -43,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "14.11.20"; }
+    sub _VERSION() { return "14.11.21"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -73,7 +71,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.308 14/11/29 10:36:05";
+my  $SID    = "@(#) yeast.pl 1.309 14/11/30 14:17:17";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -5465,7 +5463,7 @@ printopenssl(),     exit 0  if (_is_do('libversion'));
 
 ## check if used software supports SNI properly
 ## -------------------------------------
-if (! _is_do('cipherraw')) { # FIXME ALPHA
+if (! _is_do('cipherraw')) { # +cipherraw does not need these checks
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
 $typ .= "**Hint: #opt# can be used to disables this check";
@@ -5486,7 +5484,6 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
     }
 }
 _trace("cfg{usesni}: $cfg{'usesni'}");
-} # ALPHA
 
 ## check if Net::SSLeay is usable
 ## -------------------------------------
@@ -5502,6 +5499,7 @@ if (1.49 > $Net::SSLeay::VERSION) {
     _warn("$0 requires Net::SSLeay 1.49 or newer");
     _warn("$0 may throw warnings and/or results may be missing");
 }
+} # ! +cipherraw
 
 ## set additional defaults if missing
 ## -------------------------------------
@@ -5740,16 +5738,14 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
     }
 
-## ALPHA {
-	# FIXME: ALPHA   check for more ALPHA herein before removing this line
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
         _trace(" Net::SSLhello= $Net::SSLhello::VERSION"); # ToDo: alreday done in _yeast_init()
-        #my @acceptedCipherArray = Net::SSLhello::checkSSLciphers();
         # set defaults for Net::SSLhello
         {
             no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
             $Net::SSLhello::trace       = $cfg{'trace'};
+            $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
             $Net::SSLhello::experimental= $cfg{'experimental'};
             $Net::SSLhello::usesni      = $cfg{'usesni'};
             $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
@@ -5758,6 +5754,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
             $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
             $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
+            $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
             $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
             $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
             $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
@@ -5791,7 +5788,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         next;
     }
-## ALPHA }
 
     usr_pre_info();
 
