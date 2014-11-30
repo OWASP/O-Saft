@@ -71,7 +71,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.309 14/11/30 14:17:17";
+my  $SID    = "@(#) yeast.pl 1.310 14/11/30 14:25:41";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1192,7 +1192,8 @@ our %cmd = (
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 2,       # number of retry when timeout
         'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
-        'useecc'    => 1,       # 1: use supported elliptic curves and ec_point_formats extension
+        'useecc'    => 1,       # 1: use supported elliptic curves
+        'useecpoint'=> 1,       # 1: use ec_point_formats extension
         'usereneg'  => 0,       # 1: secure renegotiation
         'double_reneg'  => 0,   # 0: do not send reneg_info extension if the cipher_spec already includes SCSV
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
@@ -5236,6 +5237,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--nossluseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; } # alias ...
     if ($arg eq  '--sslnouseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; }
     if ($arg eq  '--ssluseecc')         { $cfg{'sslhello'}->{'useecc'}   = 1; }
+    if ($arg eq  '--nossluseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; } # alias ...
+    if ($arg eq  '--sslnouseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; }
+    if ($arg eq  '--ssluseecpoint')     { $cfg{'sslhello'}->{'useecpoint'} = 1; }
     if ($arg eq  '--nosslusereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; } # alias ...
     if ($arg eq  '--sslnousereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; }
     if ($arg eq  '--sslusereneg')       { $cfg{'sslhello'}->{'usereneg'} = 1; }
@@ -5755,6 +5759,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
             $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
             $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
+            $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
             $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
             $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
             $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
