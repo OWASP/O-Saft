@@ -63,15 +63,16 @@ BEGIN {
     if (defined $arg) {
         $arg =~ s/^(?:--|\+)//;     # remove option prefix
         $arg =~ s/^help=?//;        # remove option but keep its argument
+        $arg =~ s/^h$//;            # --h is same as --help
         require "o-saft-man.pm";    # must be found with %INC
-        printhelp($arg);
+        printhelp($arg);            # empty $arg for full help text
         exit 0;
     }
 } # BEGIN
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.310 14/11/30 14:25:41";
+my  $SID    = "@(#) yeast.pl 1.311 14/11/30 15:07:26";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
