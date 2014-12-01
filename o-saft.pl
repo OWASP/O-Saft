@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "14.11.21"; }
+    sub _VERSION() { return "14.11.22"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.312 14/12/01 22:19:45";
+my  $SID    = "@(#) yeast.pl 1.313 14/12/01 23:00:08";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -426,6 +426,7 @@ my %check_cert = (
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
+    'sha2signature' => {'txt' => "Certificate private key signature SHA2"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -736,6 +737,7 @@ our %shorttexts = (
     'wildcard'      => "No wildcards",
     'sni'           => "Not SNI based",
     'sernumber'     => "Serial Number size (RFC5280)",
+    'sha2signature' => "Signature is SHA2",
     'rootcert'      => "Not root CA",
     'ocsp'          => "OCSP supported",
     'hassslv2'      => "No SSLv2",
@@ -3545,8 +3547,10 @@ sub checkcert($$) {
 #   }
         }
     }
-    $checks{'selfsigned'}->{val} = $data{'selfsigned'}->{val}($host);
-    $checks{'fp_not_md5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+    $checks{'selfsigned'}->{val}    = $data{'selfsigned'}->{val}($host);
+    $checks{'fp_not_md5'}->{val}    = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+    $value = $data{'signame'}->{val}($host);
+    $checks{'sha2signature'}->{val} = $value if ($value !~ m/^sha(2|224|256|384|512)/); # just sha2 is too lazy
 
 # ToDo: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
@@ -5292,6 +5296,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')              { $arg = '+hsts';    }
     if ($arg eq  '+sigkey')           { $arg = '+sigdump'; }  # sigdump
     if ($arg eq  '+sigkey_algorithm') { $arg = '+signame'; }  # signame
+    if ($arg =~ /^\+sha2sig(nature)?$/){$arg = '+sha2signature'; }
     if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';   }
     if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';   }
     if ($arg eq  '+extension')        { $arg = '+extensions';  }
