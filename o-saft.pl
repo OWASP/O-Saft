@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.311 14/11/30 15:07:26";
+my  $SID    = "@(#) yeast.pl 1.312 14/12/01 22:19:45";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -4254,7 +4254,7 @@ sub print_data($$$$) {
         if ($label =~ m/(issuer)/)   { $val =~ s#/#\n\t#g; $val =~ s#^\n\t##m; }
         if ($label =~ m/(serial|modulus|sigkey_value)/) {
                                        $val =~ s#(..)#$1:#g; $val =~ s#:$##; }
-        if ($label =~ m/(pubkey_algorithm|signame)/) {
+        if ($label =~ m/((?:pubkey|sigkey)_algorithm|signame)/) {
             $val =~ s#(with)# $1 #ig;
             $val =~ s#(encryption)# $1 #ig;
          }
