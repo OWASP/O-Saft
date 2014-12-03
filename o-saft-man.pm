@@ -7,13 +7,12 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.3 14/11/29 22:29:48";
+my  $man_SID= "@(#) o-saft-man.pm 1.4 14/12/04 00:37:32";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
-    $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes its empty :-((
+    $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
-			    $parent = "o-saft.pl";
 our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
 my  $skip   = 1;
 our $egg    = "";
@@ -24,7 +23,11 @@ if (open(DATA, $ich)) {
     # to read the file --this one-- manually, and strip off anything before
     # __DATA__. Stripping could be done using perl's  grep, join and splice
     # functions, but using a simple loop is more readable.
-    #@DATA= <DATA>;
+    # Preformat plain text with markup for further simple substitutions. We
+    # use a modified (& instead of < >) POD markup as it is easy to parse.
+    # &  was choosen 'cause it rarely appears in texts and is not a meta
+    # character in any of the supported  output formats (text, wiki, html),
+    # and also causes no problems inside regex.
     while (<DATA>) {
         $skip = 2, next if (/^#begin/);
         $skip = 0, next if (/^#end/);
@@ -32,6 +35,28 @@ if (open(DATA, $ich)) {
         $egg .= $_,next if ($skip eq 2);
         next if ($skip ne 0);
         next if (/^#/);                 # remove comments
+        next if (/^\s*#.*#$/);          # remove formatting lines
+        s/^([A-Z].*)/=head1 $1/;
+        s/^ {4}([^ ].*)/=head2 $1/;
+        s/^ {6}([^ ].*)/=head3 $1/;
+        # for =item keep spaces as they are needed in man_help()
+        s/^( +[a-z0-9]+\).*)/=item * $1/;# list item, starts with letter or digit and )
+        s/^( +\*\* .*)/=item $1/;       # list item, second level
+        s/^( +\* .*)/=item $1/;         # list item, first level
+        s/^( {11})([^ ].*)/=item * $1$2/;# list item
+        s/^( {14})([^ ].*)/S&$1$2&/;    # exactly 14 spaces used to highlight line
+        if (!m/^(?:=|S&|\s+\$0)/) { # no markup in example lines and already marked lines
+            s!(\s)((?:\+|--)[^,\s).]*)([,\s).])!$1I&$2&$3!g; # markup commands and options
+                # FIXME: fails for something like:  --opt="foo bar"
+        }
+        s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d\))/L&$1&/g;
+        s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
+        if (m/^ /) {                    # add internal links; quick&dirty list here
+            s/ ((?:DEBUG|RC|USER)-FILE)/ X&$1&/g;
+            s/ (CONFIGURATION (?:FILE|OPTIONS))/ X&$1&/g;
+            s/ (COMMANDS|OPTIONS|RESULTS|CHECKS|OUTPUT) / X&$1& /g;
+            s/ (CUSTOMIZATION|SCORING|LIMITATIONS|DEBUG|EXAMPLES) / X&$1& /g;
+        }
         s#\$VERSION#$version#g;         # add current VERSION
         s# \$0# $parent#g;              # my name
         push(@DATA, $_);
@@ -69,8 +94,9 @@ function t(id){id.display=(id.display=='none')?'block':'none';}
  h2{margin-top:-0.5em;padding:1em;height:1.5em;background-color:black;color:white;}
  li{margin-left:2em;}
  div{padding:0.5em;border:1px solid green;}
+ div[class=c]{padding:0pm;padding:0.1em;margin-left:4em;border:0px solid green;}
  form{padding:1em;}
- span{font-size:8pt;border:1px solid green;}
+ span{font-size:120%;border:1px solid green;}
 </style>
 </head>
 <body>
@@ -82,7 +108,7 @@ sub _man_html_foot(){
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar ><button value="" />Download (stable)</button></a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
- <hr><p><span>&copy; sic[!]sec GmbH, 2012 - 2014</span></p>
+ <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2014</span></p>
 </body></html>
 EoHTML
 }
@@ -103,12 +129,10 @@ sub _man_html_ankor($){
     #? print ankor tag for each word in given parameter
     my $n = shift;
     my $a = "";
-    return sprintf("<a name=\"a%s\"></a>", $n) if ($n !~ m/^(-|\+)+/);
-    #foreach $n (split(/\s+/,$n)) {
-    #    $n = _man_name_ankor($n);
-    #    $a .= sprintf("<a name='a%s'></a>", $n);
-    #}
-    return sprintf("<a name=\"a%s\"></a>", $n);
+    return sprintf('<a name="a%s"></a>', $n) if ($n !~ m/^[-\+]+/);
+    foreach $n (split(/[\s,]+/,$n)) {
+        $a .= sprintf("<a name='a%s'></a>", _man_name_ankor($n));
+    }
     return $a;
 }
 sub _man_html_cbox($) { return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $_[0], '"--' . $_[0] . '"'); }
@@ -125,25 +149,23 @@ sub _man_html($$) {
     _man_dbx("_man_html($anf, $end) ...");
     while ($_ = shift @DATA) {
         last if/^TODO/;
-        $h=1 if/^$anf/;
-        $h=0 if/^$end/;
-        next if $h==0;                          # ignore "out of scope"
-        next if m/^\s*$/;                       # ignore empty lines
-        m/^([A-Z].*)/     && do { printf("\n<h1>%s %s</h1>\n",_man_html_ankor($1),$1);next;};
-        m/^ {4}([^ ].*)/  && do { printf("%s\n<h3>%s %s</h3><p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
-        m/^ {6}([^ ].*)/  && do { printf("%s\n<h4>%s %s</h4><p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
-        s#C<([^>]*)>#<span class=c >$1</span>#g;# markup examples
-        s#L<([^>]*)>#"$1"#g;                    # markup other references
-        s![BI]<([^>]*)>! <a href="#a$1">$1</a>!g; # markup commands and options
-        m/^ +([0-9].*)/   && do { print "<li>$1</li>\n";next;}; # very lazy ...
-        m/^ +([a-z]\).*)/ && do { print "<li>$1</li>\n";next;}; # very lazy ...
-        m/^ +\*\*( .*)/   && do { print "<li type=square>$1</li>\n";next;};
-        m/^ +\*( .*)/     && do { print "<li>$1</li>\n";next;}; # type=disc
-        m/^ {11}([^ ].*)/ && do { print "<li 11>$1</li>\n";next;};
-        if (!m/\s*$parent/) { # no markup in example lines
-            s!\s((?:\+|--)[^,\s"]*)[,\s"]! <a href="#a$1">$1</a> !; # markup references inside help
-        }
-        s!\s"((?:\+|--)[^"]*)"! <a href="#a$1">$1</a>!g;    # markup references inside help
+        $h=1 if/^=head1 $anf/;
+        $h=0 if/^=head1 $end/;
+        next if $h==0;                              # ignore "out of scope"
+        m/^=head1 (.*)/   && do { printf("\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);next;};
+        m/^=head2 (.*)/   && do { printf("%s\n<h3>%s %s </h3> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
+        m/^=head3 (.*)/   && do { printf("%s\n<h4>%s %s </h4> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
+        m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
+        s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
+        s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
+        s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
+        s!I&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup commands and options
+        s!X&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup references inside help
+        s!^\s+($parent .*)!<div class=c >$1</div>!; # example line
+        m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
+        m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
+        s/^(=[^ ]+ )//;                             # remove remaining markup
+        s/^\s*$/<p>/;                               # add paragraph for formatting
         print;
     }
 } # _man_html
@@ -381,34 +403,23 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
     # 2.  enerate wiki page content
     #    extract from herein and convert POD syntax to mediawiki syntax
     while ($_ = shift @DATA) {
-        # following matches should be similar to those in _man_html()
-        last if/^TODO/;
-        s/^([A-Z].*)/====$1====/;
-        s/^ {4}([^ ].*)/=====$1=====/;
-        s/^ {6}([^ ].*)/======$1======/;
-        s/^ +([0-9].*)/* $1/;               # list item, starts with digit
-        s/^ +([a-z]\).*)/* $1/;             # list item, starts with letter and )
-        s/^ +\*\*( .*)/** $1/;              # list item, second level
-        s/^ +\*( .*)/* $1/;                 # list item, first level
-        s/^ {11}([^ ].*)/* $1/;             # list item
-        s/B<([^>]*)>/[[#$1|$1]]/g;          # markup references inside help
-        s/I<([^>]*)>/\'\'$1\'\'/g;          # markup commands and options
-        s/L<([^>]*)>/\'\'$1\'\'/g;          # markup other references
-        s#C<([^>]*)>#<code>$1</code>#g;     # markup examples (must be after B,I,L to avoid double chages)
-        print, next if/^=/;                 # no more changes in header lines
-        s/"((?:\+|--)[^"]*)"/\'\'$1\'\'/g;  # markup commands and options
-        s#"([^"]*)"#<code>$1</code>#g;      # markup commands and options enclosed in quotes
-        s/^([^=*].*)/:$1/;                  # identent all lines for better readability
-        s/^:( {14}[^ ].*)/$1/;              # exactly 14 spaces used to highlight line
-        s/^: {8}([^ ])/:$1/;                # remove leftmost 8 spaces (they are useless in wiki)
-        s/^: {10}([^ ])/:$1/;               # remove leftmost 10 spaces (they are useless in wiki)
-        s/^:?\s*($parent)/  $1/;            # myself becomes wiki code line
-        s/^:\s+$/\n/;                       # remove empty lines
-        if (m/^:/) {                        # add internal wiki links; quick&dirty list here
-            s/((?:DEBUG|RC|USER)-FILE)/ [[#$1|$1]]/g;
-            s/(CONFIGURATION (?:FILE|OPTIONS))/ [[#$1|$1]]/g;
-            s/(CUSTOMIZATION|SCORING)/ [[#$1|$1]]/g;
-        }
+        last if/^=head1 TODO/;
+        s/^=head1 (.*)/====$1====/;
+        s/^=head2 (.*)/=====$1=====/;
+        s/^=head3 (.*)/======$1======/;
+        s/^=item (\*\* .*)/$1/;         # list item, second level
+        s/^=item (\* .*)/$1/;           # list item, first level
+        s/^=[^= ]+ *//;                 # remove remaining markup and leading spaces
+        print, next if/^=/;             # no more changes in header lines
+        s!'([^']*)'!<code>$1</code>!g;  # markup examples
+        s/^S&([^&]*)&/  $1/ && do { print; next; }; # code or example line; no more changes
+        s/X&([^&]*)&/[[#$1|$1]]/g;      # markup references inside help
+        s/L&([^&]*)&/\'\'$1\'\'/g;      # markup other references
+        s/I&([^&]*)&/\'\'$1\'\'/g;      # markup commands and options
+        s/^ +//;                        # remove leftmost spaces (they are useless in wiki)
+        s/^([^=*].*)/:$1/;              # ident all lines for better readability
+        s/^:?\s*($parent)/  $1/;        # myself becomes wiki code line
+        s/^:\s+$/\n/;                   # remove empty lines
         print;
     }
     # 2. generate wiki page footer
@@ -423,20 +434,28 @@ Content of this wiki page generated with:
 
 sub man_help($) {
     #? print program's help
-    my $label   = lc(shift) || ""; # || to avoid uninitialized value
+    my $label   = lc(shift) || "";      # || to avoid uninitialized value
     my $anf     = uc($label);
     my $end     = "[A-Z]";
     _man_dbx("man_help($anf, $end) ...");
     # no special help, print full one or parts of it
     my $txt = join ("", @DATA);
-    if (grep(/^--v/, @ARGV) > 1){ # with --v --v
+    if (grep(/^--v/, @ARGV) > 1){       # with --v --v
         print scalar reverse "\n\n$egg";
         return;
     }
     if ($label =~ m/^name/i)    { $end = "TODO";  }
-    $txt =~ s{.*?\n($anf.*?)\n$end.*}{$1}xms;# grep all data
-    $txt =~ s/I<([^>]*)>/"$1"/g;            # sanatize perldoc
-    $txt =~ s/[BLIC]<([^>]*)>/"$1"/g;       # sanatize perldoc
+    #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
+        # above terrible performance and unreliable, hence in peaces below
+    $txt =~ s/.*?\n=head1 $anf//ms;
+    $txt =~ s/\n=head1 $end.*//ms;      # grep all data
+    $txt = "\n=head1 $anf" . $txt;
+    $txt =~ s/\n=head2 ([^\n]*)/\n    $1/msg;
+    $txt =~ s/\n=head3 ([^\n]*)/\n      $1/msg;
+    $txt =~ s/\n=(?:[^ ]+ (?:\* )?)([^\n]*)/\n$1/msg;# remove inserted markup
+    $txt =~ s/\nS&([^&]*)&/\n$1/g;
+    $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
+    $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
     print $txt;
     if ($label =~ m/^todo/i)    {
         #$\   =  "\n";
@@ -462,7 +481,7 @@ sub printhelp($) {
         # causes some   Use of uninitialized value within %cfg 
         # when called as  gen-CGI  it will not be called from within
         # BEGIN amd hence %cfg is defined and will not result in warnings
-    # anything below rewuires data defined in parent
+    # anything below requires data defined in parent
     man_commands(),             return if ($hlp =~ /^commands?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/);
     man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i);
@@ -471,22 +490,24 @@ sub printhelp($) {
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
     if ($hlp =~ /^cmds?$/i)     { # print program's commands
-        print "# $mename commands:\t+"     . join(" +", @{$cfg{'commands'}});
+        print "# $parent commands:\t+"     . join(" +", @{$cfg{'commands'}});
         return;
     }
     if ($hlp =~ /^legacys?$/i)  { # print program's legacy options
-        print "# $mename legacy values:\t" . join(" ",  @{$cfg{'legacys'}});
+        print "# $parent legacy values:\t" . join(" ",  @{$cfg{'legacys'}});
         return;
     }
 
     if ($hlp =~ m/^opts?$/i)    { # print program's options
-        my @txt  = grep(/^ {4}(General|Option|  --)/, @DATA);   # grep options only
-        my($end) = grep{$txt[$_] =~ /^\s+Options vs./} 0..$#txt;# find end of OPTIONS section
-        print join("", "OPTIONS\n", splice(@txt, 0, $end));       # print anything before end
+        my @txt  = grep(/^=head. (General|Option|--)/, @DATA);  # grep options only
+        map({$_ =~ s/^=head. *//} @txt);                        # remove leading markup
+        my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
+        print join("", "OPTIONS\n", splice(@txt, 0, $end));     # print anything before end
         return;
     }
+    # nothing matched so far, try to find special section and only print that
     _man_dbx("printhelp: " . uc($hlp));
-    man_help(uc($hlp)); # nothing matched so far, try to find special section and only print that
+    man_help(uc($hlp));
     return;
 } # printhelp
 1;
@@ -496,13 +517,9 @@ sub printhelp($) {
 # All documentation is in plain ASCII format.
 # Following notations / markups are used:
 #   "text in double quotes"
-#       References to options and commands in this help
+#       References to text elswhere
 #   'text in single quotes'
-#       References to verbatim text elswhere
-#   `text in backtick`
-#       References to external resource
-#   `text starting with backtick and ending with single quote'
-#       Something like a quote
+#       References to verbatim text elswhere used as printed
 #   * list item
 #     force list item in generated markup
 #
@@ -513,6 +530,7 @@ sub printhelp($) {
 #   * perldoc is not available on all platforms by default
 #   * POD is picky when text lines start with a whitespace
 #   * programatically extracting data from POD requires additional substitutes
+#   * POD is slow
 #
 # Changing POD to plain ASCII
 #   equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm
@@ -539,8 +557,8 @@ DESCRIPTION
         This tools lists  information  about remote target's  SSL certificate
         and tests the remote target according given list of ciphers.
 
-        Note: Throughout this description  C<$0>  is used as an alias for the
-        program name  C<o-saft.pl> .
+        Note:  Throughout this description  '$0'  is used as an alias for the
+        program name  'o-saft.pl'.
 
 
 SYNOPSIS
@@ -552,7 +570,7 @@ SYNOPSIS
         Multiple commands and targets may be combined.
 
         All  commands  and  options  can also be specified in a  rc-file, see
-        B<RC-FILE>  below.
+        RC-FILE  below.
 
 
 QUICKSTART
@@ -572,10 +590,10 @@ QUICKSTART
         * List all available commands:
           $0 --help=commands
 
-        For more specialised test cases, refer to the B<COMMANDS> and B<OPTIONS>
+        For more specialised test cases, refer to the  COMMANDS  and  OPTIONS
         sections below.
 
-        If no command is given,  I<+cipher>  is used.
+        If no command is given,  +cipher  is used.
 
 
 WHY?
@@ -594,15 +612,15 @@ WHY?
         Other  reasons or problems  are that they are either binary and hence
         not portable to other (newer) platforms.
 
-        In contrast to (all?) most other tools,  including openssl, it can be
-        used to `ask simple questions' like `does target support STS' just by
-        calling:
+        In contrast to (all?) most other tools, including  openssl(1), it can
+        be used to "ask simple questions" like "does target support STS" just
+        by calling:
           $0 +hsts_sts example.tld
 
-        For more, please see  B<EXAMPLES>  section below.
+        For more, please see  EXAMPLES  section below.
 #
-#       or, if written in perl, they mainly use L<Net::SSLeay(1)> or 
-#       L<IO::Socket::SSL(1)> which lacks CRL and OCSP and EV checkings.
+#       or, if written in perl, they mainly use  Net::SSLeay(1)  or 
+#       IO::Socket::SSL(1)  which lacks CRL and OCSP and EV checkings.
 
 
 TECHNICAL INFORMATION
@@ -611,14 +629,14 @@ TECHNICAL INFORMATION
         data returned by underlaying (used) libraries and the information 
         computed directly.
 
-        In general the tool uses perl's  L<Net::SSLeay(1)> module which itself
+        In general the tool uses perl's  Net::SSLeay(1)  module  which itself
         is based on libssl and/or libssleay library of the operating system.
         It's possible to use other versions of these libraries, see options:
           * --exe-path=PATH --exe=PATH
           * --lib-path=PATH --lib=PATH
           * --envlibvar=NAME
 
-        The external  L<openssl(1)> is called to extract some information from
+        The external  openssl(1)  is called to extract  some information from
         its output.  The version of openssl can be controlled  with following
         options:
           * --openssl=TOOL
@@ -627,41 +645,41 @@ TECHNICAL INFORMATION
           * --exe-path=PATH --exe=PATH
 
         All checks according the validity of the certificate chain  are based
-        on the root CAs installed on the system.  NOTE that  L<Net::SSLeay(1)>
-        and  L<openssl(1)>  may have their own rules how and where to find the
-        root CAs.  Please refer to the documentation on your system for these
-        tools. However, there are folloing options to tweak these rules:
+        on the root CAs installed on the system. NOTE that Net::SSLeay(1) and
+        openssl(1)  may have their own rules where to find the root CAs.
+        Please refer to the documentation on your system for these tools.
+        However, there are folloing options to tweak these rules:
           * --ca-file=FILE
           * --ca-path=DIR
           * --ca-depth=INT
 
-        Above applies to all commands except I<+cipherraw> which uses no other
+        Above applies to all commands except  +cipherraw  which uses no other
         libraries.
 
 
 RESULTS
 
-        For the results,  we have to distinguish those returned by  I<+cipher>
-        command  and those from all other tests and checks like  I<+check>  or
-        I<+info>  command.
+        For the results,  we have to distinguish  those  returned by  +cipher
+        command  and those from  all other tests and checks like   +check  or
+        +info  command.
 
       +cipher
 
           The cipher checks will return  one line for each  tested cipher. It
-          contains at least the cipher name,  'yes'  or  'no'  whether it's
+          contains at least the cipher name,  'yes'  or  'no'  whether  it is
           supported or not, and a security qualification. It may look like:
               AES256-SHA       yes    HIGH
               NULL-SHA         no     weak
 
-          Depending on the used  "--legacy=*"  option the format may differ
-          and also contain more information.  For details see  "--legacy=*"
-          option below.
+          Depending on the used  --legacy=*  option the format may differ and
+          also contain more information.  For details see  --legacy=*  option
+          below.
 
-          The text for security qualifications are mainly those returned by
+          The text for security qualifications are (mainly) those returned by
           openssl (version 1.0.1): LOW, MEDIUM, HIGH and WEAK.
-          The same texts but with all lower case characters are used if the
-          qualification was adapted herein.  Following rules  for adjusting
-          the qualification were used:
+          The same texts, but with all lower case characters, are used if the
+          qualification was adapted herein. Following rules for adjusting the
+          qualification were used:
 
             * weak:
               ** all *NULL* ciphers
@@ -677,16 +695,16 @@ RESULTS
 
       +check
 
-          These tests return a line with a label describing the test  and a
-          test result for it.  The  idea is to report  'yes'  if the result
-          is considered `secure' and report the reason why it is considered
-          insecure otherwise. Example of a check considered secure:
+          These tests return a line with  a label  describing the test  and a
+          test result for it. The  idea is to report  'yes'  if the result is
+          considered "secure"  otherwise report  'no'  followed by the reason
+          why it's considered insecure. Example of a check considered secure:
               Label of the performed check:           yes
 
           Example of a check considered insecure:
               Label of the performed check:           no (reason why)
 
-          Note that there are tests where the results appear confusing when
+          Note  that there are tests where the results  appear confusing when
           first viewed, like for www.wi.ld:
               Certificate is valid according given hostname:  no (*.wi.ld)
               Certificate's wildcard does not match hostname: yes
@@ -695,16 +713,16 @@ RESULTS
               Certificate Common Name:                *.wi.ld
               Certificate Subject's Alternate Names:  DNS:www.wi.ld
 
-          Please check the result with the  "+info"  command also to verify
-          if the check sounds reasonable.
+          Please check the result with the  +info  command also to  verify if
+          the check sounds reasonable.
 
       +info
 
-          The test result contains  detailed information.  The labels there
-          are mainly the same as for the  "+check"  command.
+          The test result contains detailed information. The labels there are
+          mainly the same as for the  +check  command.
 
-          All output is designed to make it easily parsable by  postprocessors.
-          Please see  B<OUTPUT>  section below for details.
+          All output is designed to be easily parsed by postprocessors.
+          Please see  OUTPUT  section below for details.
 
 
 COMMANDS
@@ -712,8 +730,8 @@ COMMANDS
         There are commands for various tests according the  SSL connection to
         the target, the targets certificate and the used ciphers.
 
-        All commands are preceded by a  C<+>  to easily distinguish from other
-        arguments and options. However, some  I<--OPT>  options are treated as
+        All commands are preceded by a  '+'  to easily distinguish from other
+        arguments and options. However, some --OPTIONS options are treated as
         commands for historical reason or compatibility to other programs.
 
         The most important commands are (in alphabetical order):
@@ -736,34 +754,34 @@ COMMANDS
 
           Show ciphers offered by local SSL implementation.
 
-          This commands prints the ciphers in format like `openssl ciphers'
-          does. It also accepts the  "-v"  and  "-V"  option.
-          Use  "+list"  command for more information according ciphers.
+          This commands prints the ciphers in a format like "openssl ciphers"
+          does. It also accepts the  -v  and  -V  option.
+          Use  +list  command for more information according ciphers.
 
       +list
 
-          Show all ciphers  known by this tool.  This includes cryptogrphic
+          Show all ciphers supported by this tool. This includes cryptogrphic
           details of the cipher and some internal details about the rating.
 
-          In contrast to  "+ciphers"  command  "+list"  uses TAB characters
-          instead of spaces to seperate columns.  By default it also prints
-          table header lines. 
+          In contrast to the  +ciphers  command,  +list  uses  TAB characters
+          instead of spaces to seperate columns.  It also prints table header
+          lines by default.
 
-          Different output formats are used for the  "--legacy"  option:
+          Different output formats are used for the  --legacy  option:
             * --legacy=simple   tabular output of cipher values
-            * --legacy=full     as "--legacy=simple" but more data
-            * --legacy=openssl  output like with "+ciphers" command
-            * --legacy=ssltest  output like `ssltest --list'
+            * --legacy=full     as --legacy=simple but more data
+            * --legacy=openssl  output like with +ciphers command
+            * --legacy=ssltest  output like "ssltest --list"
 
-          Use "--v" option to show more details.
+          Use  --v  option to show more details.
 
       +gen-html +gen-wiki
 
-          Print documentation in various formats, see o-saft-usr.pm .
+          Print documentation in various formats, see o-saft-usr.pm.
 
       +gen-cgi
 
-          See o-saft-usr.pm .
+          See o-saft-usr.pm.
 
       +abbr, +abk
 
@@ -775,10 +793,10 @@ COMMANDS
 
       +version
 
-          Show version information for both the program and the Perl modules
+          Show version information for both the program and the  Perl modules
           that it uses, then exit.
 
-          Use "--v" option to show more details.
+          Use  --v  option to show more details.
 
       +libversion
 
@@ -797,15 +815,14 @@ COMMANDS
 #       Check for SSL connection in  SNI mode and if given  FQDN  matches
 #       certificate's subject.
 
-        Following (summary, internal) commands  are simply a shortcut for
-        a list of other commands. For details of the list use:
-
+        Following (summary and internal) commands are simply a shortcut for a
+        list of other commands. For details of the list use:
           $0 --help=intern
 
       +check
 
-          Check the SSL connection for security issues. This is the same as
-            +info +cipher +sizes --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12
+          Check the SSL connection for security issues. This is the same as:
+              +info +cipher +sizes --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12
           but also gives some kind of scoring for security issues if any.
 #
 #         The rating is mainly based on the information given in
@@ -819,24 +836,24 @@ COMMANDS
 
           Overview of most important details of the SSL connection.
 
-          Use "--v" option to show details also, which span multiple lines.
+          Use  --v  option to show details also, which span multiple lines.
 
       +info--v
 
           Overview of all details of the SSL connection. It is a shortcut for
-          all commands listed below but not including "+cipher".
+          all commands listed below but not including  +cipher.
 
           This command is intended for debugging as it prints some details of
-          the used  L<Net::SSLinfo>  module.
+          the used  Net::SSLinfo  module.
 
       +quick
 
-          Quick overview of checks. Implies "--enabled"  and  "--short".
+          Quick overview of checks. Implies  --enabled  and  --short.
 
       +sts +hsts
 
           Various checks according STS HTTP header.
-          This option implies  "--http",  means that  "--no-http" is ignored.
+          This option implies  --http,  means that  --no-http is ignored.
 
       +sni
 
@@ -855,7 +872,7 @@ COMMANDS
 
           Various checks according certificate's extended Validation (EV).
 
-          Hint: use option "--v --v" to get information about failed checks.
+          Hint: use option  --v --v  to get information about failed checks.
 
       +sizes
 
@@ -863,19 +880,19 @@ COMMANDS
 
       +s_client
 
-          Dump data retrieved from  `openssl s_client ...'  call. Should be
-          used for debugging only.
+          Dump data retrieved from  "openssl s_client ..."  call. This should
+          be used for debugging only.
           It can be used just like openssl itself, for example:
               openssl s_client -connect host:443 -no_sslv2
 
       +dump
 
-          Dumps internal data for SSL connection and target certificate.
-          This is mainly for debugging and should not be used together with
-          other commands (except "+cipher").
-          Each key-value pair is enclosed in "#{" and "#}" .
+          Dumps internal data for SSL connection and target certificate. This
+          is mainly for debugging and  should not be used together with other
+          commands (except +cipher).
+          Each key-value pair is enclosed in  #{  and  #} .
 
-          Using "--trace --trace" dumps data of  L<Net::SSLinfo>  too.
+          Using  --trace --trace  dumps data of  Net::SSLinfo  too.
 
       +exec
 
@@ -887,11 +904,11 @@ COMMANDS
 
       +cipher
 
-          Check target for ciphers, either all ciphers or ciphers specified
-          with "--cipher=*" option.
+          Check target for ciphers,  either all ciphers, or ciphers specified
+          with  --cipher=*  option.
 
-          Note that ciphers  not supported  by the local SSL implementation
-          are not checked by default, use "+cipherraw" command for that.
+          Note that ciphers not supported by the local SSL implementation are
+          not checked by default, use  +cipherraw  command for that.
 
 # other names: +cipherall +allciphers +rawciphers
       +cipherraw
@@ -899,9 +916,9 @@ COMMANDS
           Check target for all possible ciphers.
           Does not depend on local SSL implementation.
 
-          In contrast to  "+cipher"  this command has some options to tweak
-          the cipher tests, connection results, and some strange behaviours
-          of the target. See B<Options for +cipherraw command> for details.
+          In contrast to  +cipher  this command has some options to tweak the
+          cipher tests, connection results and some strange behaviours of the
+          target. See  X&Options for  cipherraw  command&  for details.
 
     Commands to test SSL connection to target
 
@@ -949,7 +966,7 @@ OPTIONS
 
       --help=legacy
 
-          Show possible legacy formats (used as value in  "--legacy=TOOL").
+          Show possible legacy formats (used as value in  --legacy=TOOL).
 
       --help=compliance
 
@@ -961,15 +978,15 @@ OPTIONS
 
       --help=range
 
-          Show list of cipherranges (see "--cipherrange=RANGE").
+          Show list of cipherranges (see  --cipherrange=RANGE).
 
       --help=score
 
           Show score value for each check.
-          Value is printed in format to be used for  "--cfg-score=KEY=SCORE".
+          Value is printed in format to be used for  --cfg-score=KEY=SCORE.
 
           Note that the  sequence  of options  is important.  Use the options
-          "--trace"  and/or  "--cfg-score=KEY=SCORE"  before  "--help=score".
+          --trace  and/or  --cfg-score=KEY=SCORE  before  --help=score.
 
       --help=text
 
@@ -977,12 +994,12 @@ OPTIONS
 
       --help=cfg-check
 
-          Show texts used as labels in output for checks (see "+check") ready
+          Show texts used as labels in output for checks (see  +check)  ready
           for use in  RC-FILE  or as option.
 
       --help=cfg-data
 
-          Show texts used as labels in output for  data  (see "+info")  ready
+          Show texts used  as labels in output for  data  (see  +info)  ready
           for use in  RC-FILE  or as option.
 
       --help=cfg-text
@@ -992,7 +1009,7 @@ OPTIONS
 
       --help=text-cfg
 
-          See "--help=cfg-text" .
+          See  --help=cfg-text.
 
       --help=regex
 
@@ -1000,7 +1017,7 @@ OPTIONS
 
       --no-rc
 
-          Do not read  RC-FILE .
+          Do not read  RC-FILE.
 
       --dns
 
@@ -1014,11 +1031,11 @@ OPTIONS
 
       --host=HOST
 
-          Specify  C<HOST>  as target to be checked. Legacy option.
+          Specify  'HOST'  as target to be checked. Legacy option.
 
       --port=PORT
 
-          Specify target's  C<PORT>  to be used. Legacy option.
+          Specify  'PORT'  of target to be used. Legacy option.
 
       --host=HOST and --port=PORT and HOST:PORT and HOST
 
@@ -1027,10 +1044,10 @@ OPTIONS
           options are important.
           The rule how ports and hosts are mapped is as follows:
             HOST:PORT arguments are used as is (connection to HOST on PORT)
-            only HOST is given, then previous specified "--port=PORT" is used
+            only HOST is given, then previous specified  --port=PORT  is used
           Note that URLs are treated as HOST:PORT, if they contain a port.
           Example:
-            $0 +cmd host-1 --port 23 host-2 host-3:42 host-4
+              $0 +cmd host-1 --port 23 host-2 host-3:42 host-4
           will connect to:
             * host-1:443
             * host-2:23
@@ -1058,12 +1075,12 @@ OPTIONS
       --starttls
 
           Use 'STARTTLS' command to start a TLS connection via SMTP.
-          This option is a shortcut for  --starttls=SMTP .
+          This option is a shortcut for  --starttls=SMTP.
 
       --starttls=PROT
 
           Use 'STARTTLS' command to start a TLS connection via protocol.
-          PROT  may be any of:  SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+          PROT  may be any of: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
 
           *EXPERIMENTAL* option; works for  +cipherraw  only.
 
@@ -1077,29 +1094,27 @@ OPTIONS
 
       --s_client
 
-          Use  `openssl s_slient ...'  call to retrieve more information from
+          Use  "openssl s_slient ..."  call to retrieve more information from
           the SSL connection.  This is disabled by default on Windows because
           of performance problems. Without this option following informations
           are missing on Windows:
               compression, expansion, renegotiation, resumption,
               selfsigned, verify, chain, protocols
-          See L<Net::SSLinfo> for details.
+          See  Net::SSLinfo  for details.
 
-          If used together with "--trace", s_client data will also be printed
-          in debug output of C<Net::SSLinfo>.
+          If used together with  --trace, s_client  data will also be printed
+          in debug output of  Net::SSLinfo.
 
       --no-openssl
 
-          Do not use external `openssl'  tool to retrieve information. Use of
-          `openssl' is disabled by default on Windows.
+          Do not use external "openssl"  tool to retrieve information. Use of
+          "openssl" is disabled by default on Windows.
           Note that this results in some missing informations.
 
       --openssl=TOOL
 
-          C<TOOL>         can be a path to openssl executable;  default: openssl
-#         * ssleay:     use installed SSLeay library for perl
-#         * local:      use installed openssl (found via PATH envrionment variable)
-#                       Note that this disables use of SSLeay
+          'TOOL'        can be a path to openssl executable; default: openssl
+#         * ssleay:     use installed Net::SSLeay library for perl
 #         * x86_32:     use  ** NOT YET IMPLEMENTED **
 #         * x86_64:     use  ** NOT YET IMPLEMENTED **
 #         * x86Mac:     use  ** NOT YET IMPLEMENTED **
@@ -1107,35 +1122,35 @@ OPTIONS
 
       --force-openssl
 
-          Use openssl to check for supported ciphers;  default: IO::Socket
+          Use openssl to check for supported ciphers;  default: IO::Socket(1)
 
-          This option forces to use  `openssl s_slient -connect CIPHER ..' to
+          This option forces to use  "openssl s_slient -connect CIPHER .." to
           check if a cipher is supported by the remote target. This is useful
-          if the "--lib=PATH" option doesn't work (for example due to changes
+          if the  --lib=PATH  option doesn't work (for example due to changes
           of the API or other incompatibilities).
 
       --exe-path=PATH --exe=PATH
 
-          C<PATH>         is a full path where to find openssl.
+          'PATH'        is a full path where to find openssl.
 
       --lib-path=PATH --lib=PATH
 
-          C<PATH>         is a full path where to find libssl.so and libcrypto.so
+          'PATH'        is a full path where to find libssl.so and libcrypto.so
 
-          See B<HACKER's INFO> below for a detailed description how it works.
+          See X&HACKER's INFO& below for a detailed description how it works.
 
       --envlibvar=NAME
 
           NAME  is the name of the environment variable containing additional
           paths for searching dynamic shared libraries.
-          Default is LD_LIBRARY_PATH .
+          Default is LD_LIBRARY_PATH.
 
           Check your system for the proper name, i.e.:
-              DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH .
+              DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH.
 
       --ssl-lazy
 
-          if the "--lib=PATH" option doesn't work (for example due to changes
+          If the  --lib=PATH  option doesn't work (for example due to changes
           I.g. this tools tries to identify available functionality according
           SSL versions from the underlaying libraries.  Unsupported  versions
           are then disables and a warning is shown.
@@ -1150,7 +1165,7 @@ OPTIONS
 
       --call=METHOD
 
-          C<METHOD>      method to be used for specific functionality
+          'METHOD'      method to be used for specific functionality
 
           Available methods:
           * info-socket         use internal socket to retrieve information
@@ -1176,12 +1191,12 @@ OPTIONS
           * socket      the internal functionality with sockets is used
           * openssl     the exteranl openssl executable is used
           * user        the external special function, as specified in user's
-                        o-saft-usr.pl,  is used.
+                        o-saft-usr.pm,  is used.
 
           Example:
               --call=cipher-openssl
 
-          will use the external  openssl  executable to check  the target for
+          will use the external openssl(1) executable to check the target for
           supported ciphers.
 
           Default settings are:
@@ -1198,24 +1213,24 @@ OPTIONS
 
       -v
 
-          Print list of ciphers in style like: `openssl ciphers -v'.
-          Option used with  "+ciphers"  command only.
+          Print list of ciphers in style like: "openssl ciphers -v".
+          Option used with  +ciphers  command only.
 
       -V
 
-          Print list of ciphers in style like: `openssl ciphers -V'.
-          Option used with  "+ciphers"  command only.
+          Print list of ciphers in style like: "openssl ciphers -V".
+          Option used with  +ciphers  command only.
 
     Options for SSL connection to target
 
       --cipher=CIPHER
 
-          * C<CIPHER>    can be any string accepeted by openssl or following:
-          * C<yeast>     use all ciphers from list defined herein, see "+list"
+          * 'CIPHER'    can be any string accepeted by openssl or following:
+          * 'yeast'     use all ciphers from list defined herein, see  +list
 
           Beside the cipher names accepted by openssl, CIPHER can be the name
           of the constant or the (hex) value as defined in openssl's files.
-          Currently supported are the names and constants of openssl 1.0.1c .
+          Currently supported are the names and constants of openssl 1.0.1c.
           Example:
             * --cipher=DHE_DSS_WITH_RC4_128_SHA
             * --cipher=0x03000066
@@ -1229,18 +1244,18 @@ OPTIONS
       --no-md5-cipher
 
           Do not use *-MD5 ciphers for other protocols than SSLv2.
-          This option is only effective with  "+cipher"  command.
+          This option is only effective with  +cipher  command.
 
-          The purpose is to avoid warnings from  IO::Socket::SSL  like:
+          The purpose is to avoid warnings from  IO::Socket::SSL(1)  like:
               Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
-          which occours with some versions of  IO::Socket::SSL  when a  *-MD5
+          which occours with some versions of IO::Socket::SSL(1) when a *-MD5
           ciphers will be used with other protocols than SSLv2.
 
           Note that these ciphers will be checked for SSLv2 only.
 
 #
 #         IO::Socket::SSL->new() does not return a proper error
-#         see in IO::Socket::SSL.pm  Net::SSLeay::CTX_set_cipher_list() call
+#         see in IO::Socket::SSL.pm  Net::SSLeay::CTX_set_cipher_list()  call
 #
 #     --local
 #
@@ -1260,10 +1275,10 @@ OPTIONS
                         ssl, ssl2, ssl3, sslv2, sslv3, tls1, tls1, tls11,
                         tls1.1, tls1-1, tlsv1, tlsv11, tlsv1.1, tlsv1-1
                         (and similar variants for tlsv1.2).
-          For example  "--tls1"  "--tlsv1"  "--tlsv1_1"  are all the same.
+          For example:  --tls1  --tlsv1  --tlsv1_1  are all the same.
 
-          ("--SSL" variants):    Test ciphers for this SSL/TLS version.
-          ("--no-SSL" variants): Don't test ciphers for this SSL/TLS version.
+          (--SSL variants):    Test ciphers for this SSL/TLS version.
+          (--no-SSL variants): Don't test ciphers for this SSL/TLS version.
 
       --nullsslv2
 
@@ -1281,7 +1296,7 @@ OPTIONS
           Make a HTTP request if cipher is supported.
 
           If used twice debugging will be enabled using  environment variable
-          'HTTPS_DEBUG' .
+          'HTTPS_DEBUG'.
 
       --no-http
 
@@ -1297,7 +1312,7 @@ OPTIONS
 
       --force-sni
 
-          Do not check if SNI seems to be supported by Net::SSLeay.
+          Do not check if SNI seems to be supported by  Net::SSLeay(1).
           Older versions of openssl and its libries do not support SNI or the
           SNI support is implemented buggy. By default it's checked if SNI is
           properly supported. With this option this check can be disabled.
@@ -1310,25 +1325,25 @@ OPTIONS
 
       --no-cert --no-cert
 
-          Do not get data from target's certificate, return Net::SSLinfo.pm's
-          default string (see  "--no-cert-text=TEXT"  option).
+          Do not get data from  target's certificate,  return  default string
+          of Net::SSLinfo (see  --no-cert-text=TEXT  option).
 
       --no-cert-text=TEXT
 
-          Set  C<TEXT>  to be returned from  L<Net::SSLinfo.pm> if no certificate
-          data is collected due to use of  "--no-cert".
+          Set  'TEXT'  to be returned from  Net::SSLinfo if no certificate data
+          is collected due to use of  --no-cert.
 
       --ca-depth=INT
 
-          Check certificate chain to depth  C<INT>  (like openssl's -verify).
+          Check certificate chain to depth  'INT'  (like openssl's -verify).
 
       --ca-file=FILE
 
-          Use  C<FILE>  with bundle of CAs to verify target's certificate chain.
+          Use  'FILE'  with bundle of CAs to verify target's certificate chain.
 
       --ca-path=DIR
 
-          Use  C<DIR>  where to find CA certificates in PEM format.
+          Use  'DIR'  where to find CA certificates in PEM format.
 
       --no-nextprotoneg
 
@@ -1346,22 +1361,23 @@ OPTIONS
 
           Argument or option passed to openssl's  s_client  command.
 
-    Options for I<+cipherraw>  command:
+    Options for  cipherraw  command:
 
-      --cipherrange=RANGE, --range=RANGE 
+      --range=RANGE 
+      --cipherrange=RANGE
 
-          Specify range of cipher constants to be tested by  "+cipherraw" .
-          Following RANGEs are supported (see also: "--cipherrange=RANGE"):
+          Specify range of cipher constants to be tested by  +cipherraw.
+          Following 'RANGE's are supported (see also:  --cipherrange=RANGE):
           * rfc                 all ciphers defined in various RFCs
-          * shifted             rfc, shifted by 64 bytes to the right
-          * long                like C<rfc> but more lazy list of constants
+          * shifted             'rfc', shifted by 64 bytes to the right
+          * long                like 'rfc' but more lazy list of constants
           * huge                all constants  0x03000000 .. 0x0300FFFF
           * safe                all constants  0x03000000 .. 0x032FFFFF
           * full                all constants  0x03000000 .. 0x03FFFFFF
           * SSLv2               all ciphers according RFC for SSLv2
           * SSLv2_long          more lazy list of constants for SSLv2 ciphers
 
-          Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
+          Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
 
       --ssl-maxciphers=CNT 
@@ -1377,20 +1393,22 @@ OPTIONS
       --ssl-nodata-nocipher
 
           Do not abort testing for next cipher when the target  responds with
-          `NoData' times out. Useful for TLS intolerant servers.
+          'NoData' times out. Useful for TLS intolerant servers.
           By default testing for ciphers is aborted  when the target responds
-          with `NoData' message.
-
+          with 'NoData' message.
 
       --ssl-use-ecc
 
-          Use supported elliptic curves and TLS 'ec_point_formats' extension.
-          Default on.
+          Use supported elliptic curves.  Default on.
+
+      --ssl-use-ec-point
+
+          Use TLS 'ec_point_formats' extension.  Default on.
 
       --ssl-use-reneg
 
-          Test for ciphers with `secure renegotiation' flag set.
-          Default: don't set `secure renegotiation' flag.
+          Test for ciphers with "secure renegotiation" flag set.
+          Default: don't set "secure renegotiation" flag.
 
       --ssl-retry=CNT
 
@@ -1402,7 +1420,7 @@ OPTIONS
 
     Options for checks and results
 
-        Options used for  I<+check>  command:
+        Options used for  +check  command:
 
       --enabled
 
@@ -1426,16 +1444,16 @@ OPTIONS
 
       --short
 
-          Use short less descriptive text labels for  "+check"   and  "+info"
+          Use short, less descriptive, text labels for  +check  and  +info
           command.
 
       --legacy=TOOL
 
           For compatibility with other tools,  the output format used for the
-          result of the "+cipher" command can be adjusted to mimic the format
+          result of the  +cipher  command can be adjusted to mimic the format
           of other SSL testing tools.
 
-          The argument to the "--legacy=TOOL"  option is the name of the tool
+          The argument to the  --legacy=TOOL  option  is the name of the tool
           to be simulated.
 
           Following TOOLs are supported:
@@ -1455,39 +1473,45 @@ OPTIONS
           Note that these legacy formats only apply to  output of the checked
           ciphers. Other texts like headers and footers are adapted slightly.
 
-          Please don't expect identical output as the TOOL, it's a best guess
-          and should be parsable in a very similar way.
+          Please do not expect identical output as the TOOL  when using these
+          options, it's a best guess and should be parsable in a very similar
+          way.
 
-          C<TOOL>  may also be any of following internally defined values:
+      --legacy=compact
 
-          * C<compact>   mainly avoid tabs and spaces format is as follows
+          Internal format: mainly avoid tabs and spaces format is as follows:
                 Some Label:<-- anything right of colon is data
 
-          * C<full>      Pretty print: each label in its own line, followed by
-                        data in text line prepended by tab character  (useful
-                        for "+info" only).
+      --legacy=full
 
-          * C<quick>     Use tab as separator;  print ciphers with  bit length
-                        ("--tab" not necessary).
+          Internal format: pretty print each label in its own line,  followed
+          by data prepended by tab character (useful for  +info  only).
 
-          * C<simple>    Default format.
+      --legacy=quick
+
+          Internal format: use tab as separator; ciphers are printed with bit
+          length (implies --tab).
+
+      --legacy=simple
+
+          Internal default format.
 
       --format=FORM
 
-          C<FORM>  may be one of following:
+          'FORM'  may be one of following:
 
-          * C<raw>       Print raw data as passed from L<Net::SSLinfo>.
-            Note:  all data will be printed as is,  without additional label
-            or formatting. It's recommended to use the option in conjunction
-            with exactly one command.  Otherwise the user needs  to know how
-            to `read'  the printed data.
+          * 'raw'       Print raw data as passed from  Net::SSLinfo.
+            Note:  all data will be printed as is,  without  additional label
+            or formatting. It's recommended to use the  option in conjunction
+            with exactly one command.  Otherwise the user needs  to know  how
+            to "read"  the printed data.
 
-          * C<hex>       Convert some data to hex: 2 bytes separated by ":".
+          * 'hex'       Convert some data to hex: 2 bytes separated by ':'.
 
       --header
 
-          Print formatting header.  Default for  "+check", "+info", "+quick".
-          and  "+cipher"  only.
+          Print formatting header.  Default for  +check,  +info,  +quick  and
+          and  +cipher  only.
 
       --no-header
 
@@ -1498,7 +1522,7 @@ OPTIONS
 
       --score
 
-          Print scoring results. Default for  "+check".
+          Print scoring results. Default for  +check.
 
       --no-score
 
@@ -1507,15 +1531,15 @@ OPTIONS
       --separator=CHAR
       --sep=CHAR
 
-          C<CHAR>    will be used as separator between  label and value of the
-                     printed results. Default is  ":".
+          'CHAR'    will be used as separator between  label and value of the
+                    printed results. Default is  ':'.
 
       --tab
 
-          C<TAB> character (0x09, \t)  will be used  as separator between label
+          'TAB' character (0x09, \t)  will be used as separator between label
           and value of the printed results.
           As label and value are already separated by a  TAB  character, this
-          options is only useful in conjunction with the   "--legacy=compact"
+          options is only useful in conjunction with the  --legacy=compact
           option.
 
       --showhost
@@ -1535,37 +1559,36 @@ OPTIONS
         Note that only the long form options are accepted  as most short form
         options are ambiguous.
 
-            Tool's Option       (Tool)          $0's Option
-          ---------------------+---------------+-----------------------------
-          * --capath DIR        (curl)          same as I<--ca-path DIR>
-          * --CApath=DIR        (openssl)       same as I<--ca-path DIR>
-          * --ca-directory=DIR  (wget)          same as I<--ca-path DIR>
-          * --cacert FILE       (curl)          same as I<--ca-file DIR>
-          * --CAfile=FILE       (openssl)       same as I<--ca-file DIR>
-          * --ca-certificate=FILE (wget)        same as I<--ca-path DIR>
-          * -c PATH             (ssldiagnos)    same as I<--ca-path DIR>
-          * --hide_rejected_ciphers (sslyze)    same as I<--disabled>
-          * --http_get          (ssldiagnos)    same as I<--http>
-          * --printcert         (ssldiagnos)    same as I<+ciphers>
-          * --protocol SSL      (ssldiagnos)    same as I<--SSL>
-          * --no-failed         (sslscan)       same as I<--disabled>
-          * --regular           (sslyze)        same as I<--http>
-          * --reneg             (sslyze)        same as I<+renegotiation>
-          * --resum             (sslyze)        same as I<+resumtion>
-          * -h, -h=HOST         (various tools) same as I<--host HOST>
-          * -p, -p=PORT         (various tools) same as I<--port PORT>
-          * -t HOST             (ssldiagnos)    same as I<--host HOST>
-          * -noSSL                              same as I<--no-SSL>
-          * -no_SSL                             same as I<--no-SSL>
+            Tool's Option       (Tool)          $0 Option
+          #--------------------+---------------+----------------------------#
+          * --capath DIR        (curl)          same as  --ca-path DIR
+          * --CApath=DIR        (openssl)       same as  --ca-path DIR
+          * --ca-directory=DIR  (wget)          same as  --ca-path DIR
+          * --cacert FILE       (curl)          same as  --ca-file DIR
+          * --CAfile=FILE       (openssl)       same as  --ca-file DIR
+          * --ca-certificate=FILE (wget)        same as  --ca-path DIR
+          * -c PATH             (ssldiagnos)    same as  --ca-path DIR
+          * --hide_rejected_ciphers (sslyze)    same as  --disabled
+          * --http_get          (ssldiagnos)    same as  --http
+          * --printcert         (ssldiagnos)    same as  +ciphers
+          * --protocol SSL      (ssldiagnos)    same as  --SSL
+          * --no-failed         (sslscan)       same as  --disabled
+          * --regular           (sslyze)        same as  --http
+          * --reneg             (sslyze)        same as  +renegotiation
+          * --resum             (sslyze)        same as  +resumtion
+          * -h, -h=HOST         (various tools) same as  --host HOST
+          * -p, -p=PORT         (various tools) same as  --port PORT
+          * -t HOST             (ssldiagnos)    same as  --host HOST
+          * --insecure          (cnark.pl)      ignored
+          * --nopct --nocolor   (ssldiagnos)    ignored
+          * --ism, --pci -x     (ssltest.pl)    ignored
+          * --timeout, --grep   (ssltest.pl)    ignored
+          * -r,  -s,  -t        (ssltest.pl)    ignored
+          * -connect, --fips, -H, -u, -url, -U  ignored
+          * -noSSL                              same as  --no-SSL
+          * -no_SSL                             same as  --no-SSL
 
-        For definition of  C<SSL>  see  "--SSL"  and  "--no-SSL"  above.
-
-          * --insecure          (cnark.pl)       ignored
-          * --nopct --nocolor   (ssldiagnos)     ignored
-          * --ism, --pci -x     (ssltest.pl)     ignored
-          * --timeout, --grep   (ssltest.pl)     ignored
-          * -r,  -s,  -t        (ssltest.pl)     ignored
-          * -connect, --fips, -H, -u, -url, -U   ignored
+        For definition of  'SSL'  see  --SSL  and  --no-SSL  above.
 
     Options for customization
 
@@ -1574,7 +1597,7 @@ OPTIONS
       --cfg-cmd=CMD=LIST
 
           Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
-          are written without the leading  "+".
+          are written without the leading  '+'.
           CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
           Example:  --cfg-cmd=sni="sni hostname"
 
@@ -1586,7 +1609,7 @@ OPTIONS
       --cfg-score=KEY=SCORE
 
           Redefine value for scoring. Sets  %checks{KEY}{score}  to  SCORE.
-          Most score values are set to 10 by default. Values "0" .. "100" are
+          Most score values are set to 10 by default. Values '0' .. '100' are
           allowed.
 
           To get a list of current score settings, use:
@@ -1594,8 +1617,8 @@ OPTIONS
 
           For deatils how scoring works, please see  SCORING  section.
 
-          Use the  "--trace-key"  option for the  "+info"  and/or  "+check"
-          command to get the values for  KEY.
+          Use the  --trace-key  option for the  +info  and/or  +check command
+          to get the values for  KEY.
 
       --cfg-checks=KEY=TEXT --cfg-data=KEY=TEXT
 
@@ -1618,7 +1641,7 @@ OPTIONS
 
       --call=METHOD
 
-          See  L<Options for SSL tool>
+          See  X&Options for SSL tool&.
 
       --usr
 
@@ -1626,7 +1649,7 @@ OPTIONS
 
       --usr-*, --user-*
 
-          Options ignored, but stored as is internal in  $cfg{'usr-args'} .
+          Options ignored, but stored as is internal in  $cfg{usr-args} .
           These options can be used in  o-saft-usr.pm  or  o-saft-dbx.pm.
 
       --experimental
@@ -1671,12 +1694,12 @@ OPTIONS
 
       --trace --trace
 
-          Print more debugging messages and pass "trace=2" to Net::SSLeay and
+          Print more debugging messages and pass 'trace=2' to Net::SSLeay and
           Net::SSLinfo.
 
       --trace --trace --trace
 
-          Print more debugging messages and pass "trace=3" to Net::SSLeay and
+          Print more debugging messages and pass 'trace=3' to Net::SSLeay and
           Net::SSLinfo.
 
       --trace --trace --trace --trace
@@ -1705,11 +1728,13 @@ OPTIONS
 
       --trace=VALUE
 
-          * --trace=1           same as I<--trace>
-          * --trace=2           same as I<--trace> I<--trace>
-          * --trace=arg         same as I<--trace-arg>
-          * --trace=cmd         same as I<--trace-cmd>
-          * --trace=key         same as I<--trace-key>
+            Trace Option        Alias Option
+          #--------------------+----------------------------#
+          * --trace=1           same as  --trace
+          * --trace=2           same as  --trace --trace
+          * --trace=arg         same as  --trace-arg
+          * --trace=cmd         same as  --trace-cmd
+          * --trace=key         same as  --trace-key
 
       --trace-time
 
@@ -1726,8 +1751,8 @@ OPTIONS
 
       --trace vs. --v
 
-          While  I<--v>  is used to print more data, I<--trace> is used to print
-          more information about internal data such as  procedure names and/or
+          While  --v  is used to print more data,  --trace  is used to  print
+          more information about internal data such as procedure names and/or
           variable names and program flow.
 
       --no-warning
@@ -1736,9 +1761,9 @@ OPTIONS
 
     Options vs. Commands
 
-        For compatibility with other programs and lazy users, some arguments
-        looking like options are silently taken as commands. This means that
-        I<--THIS>  becomes  I<+THIS>  then. These options are:
+        For compatibility with other programs and lazy users,  some arguments
+        looking like options are silently taken as commands.  This means that
+        --THIS  becomes  +THIS  then. These options are:
           * --help
           * --abbr
           * --todo
@@ -1775,20 +1800,20 @@ LAZY SYNOPSIS
           * --port PORT
           * --port=PORT
 
-        This applies to most such options,  I<--port>  is just an example.
-        When used in the RC-FILE, the I<--OPTION=VALUE> variant must be used.
+        This applies to most such options,  --port  is just an example.  When
+        used in the RC-FILE, the  --OPTION=VALUE  variant must be used.
 # does not apply to --trace option
 
       Option Names
 
-        Dash  C<->,  dot  C<.>  and/or  underscore  C<_>  in option names are
-        optional, all following are the same:
+        Dash '-', dot '.' and/or underscore '_' in option names are optional,
+        all following are the same:
           * --no.dns
           * --no-dns
           * --no_dns
           * --nodns
 
-        This applies to all such options, I<--no-dns> is just an example.
+        This applies to all such options,  --no-dns  is just an example.
 
     Targets
 
@@ -1799,7 +1824,7 @@ LAZY SYNOPSIS
 
     Options vs. Commands
 
-        See  B<Options vs. Commands>  in  B<OPTIONS>  section above
+        See  X&Options vs. Commands&  in  OPTIONS  section above
 
 CHECKS
 
@@ -1813,7 +1838,7 @@ CHECKS
 
     SSL Ciphers
 
-        Check which ciphers are supported by target. Please see B<RESULTS> for
+        Check which ciphers are supported by target. Please see  RESULTS  for
         details of this check.
 
     SSL Connection
@@ -1830,12 +1855,12 @@ CHECKS
 
       ADH
 
-        Check if ciphers for anonymous key exchange are supported: ADH|DHA .
+        Check if ciphers for anonymous key exchange are supported: ADH|DHA.
         Such key exchanges can be sniffed.
 
       EDH
 
-        Check if ephemeral ciphers are supported: DHE|EDH .
+        Check if ephemeral ciphers are supported: DHE|EDH.
         They are necessary to support Perfect Forward Secrecy (PFS).
 
       BEAST
@@ -1890,6 +1915,11 @@ CHECKS
 
     Target (server) Certificate
 
+      Certificate Hashes
+
+        Check that fingerprint is not MD5.
+        Check that certificate private key signature is SHA2 or better.
+
       Root CA
 
         Provided certificate by target should not be a Root CA.
@@ -1920,9 +1950,9 @@ CHECKS
       DV-SSL - Domain Validation Certificate
 
         The Certificate must provide:
-          * Common Name C</CN=> field
-          * Common Name C</CN=> in C<subject>  or C<subjectAltname> field
-          * Domain name in C<commonName> or C<altname> field
+          * Common Name '/CN=' field
+          * Common Name '/CN=' in 'subject' or 'subjectAltname' field
+          * Domain name in 'commonName' or 'altname' field
 
       EV-SSL - Extended Validation Certificate
 
@@ -1930,15 +1960,15 @@ CHECKS
         Browser Forum  https://www.cabforum.org/contents.html .
         The certificate must provide:
           * DV - Domain Validation Certificate (see above)
-          * Organization name C</O=> Cn I<subject> field
+          * Organization name '/O=' or 'subject' field
           * Organization name must be less to 64 characters
-          * Business Category C</businessCategory=> in C<subject> field
-          * Registration Number C</serialNumber=> in C<subject> field
-          * Address of Place of Business in C<subject> field
+          * Business Category '/businessCategory=' in 'subject' field
+          * Registration Number '/serialNumber=' in 'subject' field
+          * Address of Place of Business in 'subject' field
 
-        Required are: C</C=>, C</ST=>, C</L=>
+        Required are: '/C=', '/ST=', '/L='
 
-        Optional are: C</street=>, C</postalCode=>
+        Optional are: '/street=', '/postalCode='
 
           * Validation period does not exceed 27 month
 
@@ -2008,9 +2038,9 @@ CHECKS
 
           Certificate itself must be valid according dates if validity.
           Note that  the validity check relies on the years provided by the
-          certificate's  "before"  and  "after"  values only. For example a
-          certificate valid  from Jan 2013 to Mar 2016  is considered valid
-          even the validity is more than three years.
+          'before' and 'after'  values of the certificate only. For example
+          a certificate having  "from Jan 2013 to Mar 2016"  is  considered
+          valid even the validity is more than three years.
 
           All certificates in the chain must be valid.
           **NOT YET IMPLEMENTED**
@@ -2062,26 +2092,26 @@ OUTPUT
 
         All output is designed to make it  easily parsable by postprocessors.
         Following rules are used:
-          * Lines for formatting or header lines start with C<=>.
-          * Lines for verbosity or tracing start with C<#>.
-          * Errors and warnings start with C<**>.
+          * Lines for formatting or header lines start with  '='.
+          * Lines for verbosity or tracing start with  '#'.
+          * Errors and warnings start with  '**'.
           * Empty lines are comments ;-)
-          * Label texts end with a separation character; default is  C<:>.
+          * Label texts end with a separation character; default is  ':'.
           * Label and value for all checks are separated by at least one  TAB
             character.
-          * Texts for additional information are enclosed in  C<<<>  and  ">>".
-          * C<N/A> is used when no proper informations was found or provided.
-            Replace  C<N/A> by whatever you think is adequate:  No answer,
-            Not available,  Not applicable,  ...
+          * Texts for additional information are enclosed in '<<'  and  '>>'.
+          * 'N/A'  is used when no proper informations was found or provided.
+            Replace  'N/A'  by whatever you think is adequate:  "No answer",
+            "Not available",  "Not applicable",  ...
 
-        When used in  I<--legacy=full>  or  I<--legacy=simple>  mode, the output
-        may contain formatting lines for better (human) readability.
+        When used in  --legacy=full  or --legacy=simple  mode, the output may
+        contain formatting lines for better (human) readability.
 
     Postprocessing Output
 
-        It is recommended to use the  I<--legacy=quick>  option, if the output
+        It is recommended to use the   --legacy=quick   option, if the output
         should be postprocessed, as it omits the default separation character
-        (C<:> , see above) and just uses on single tab character (0x09, \t  or
+        (':' , see above) and just uses on single tab character (0x09, \t  or
         TAB) to separate the label text from the text of the result. Example:
               Label of the performed checkTABresult
 
@@ -2111,7 +2141,7 @@ CUSTOMIZATION
 
         * Using debugging files
 
-            These files are --nomen est omen-- used for debugging purposes.
+            These files are - nomen est omen - used for debugging purposes.
             However, they can be (mis-)used to redefine all settings too.
             Please see  DEBUG-FILE  below.
 
@@ -2121,23 +2151,23 @@ CUSTOMIZATION
             (mis-)used to redefine all settings. Please see USER-FILE  below.
 
         Customization is done by redefining values in internal data structure
-        which are:  %cfg,  %data,  %checks,  %text,  %scores .
+        which are:  %cfg,  %data,  %checks,  %text,  %scores.
 
         Unless used in  DEBUG-FILE  or  USER-FILE,  there is  no need to know
         these internal data structures or the names of variables; the options
         will set the  proper values.  The key names being part of the option,
-        are printed in output with the  I<--trace-key>  option.
+        are printed in output with the  --trace-key  option.
 
         I.g. texts (values) of keys in  %data are those used in output of the
-        `Information' section. Texts of keys in  %checks  are used for output
-        in `Performed Checks' section.  And texts of keys in  %text  are used
-        for additional information lines or texts (mainly beginning with C<=>).
+        "Information" section. Texts of keys in  %checks  are used for output
+        in "Performed Checks" section.  And texts of keys in  %text  are used
+        for additional information lines or texts (mainly beginning with '=').
 
       Configuration File vs. RC-FILE vs. DEBUG-FILE
 
         * CONFIGURATION FILE
 
-            Configuration Files must be specified with one of the   "--cfg-*"
+            Configuration files must be specified with one of the  --cfg-*
             options. The specified file can be a valid path. Please note that
             only the characters:  a-zA-Z_0-9,.\/()-  are allowed as pathname.
             Syntax in configuration file is:  'KEY=VALUE'  where 'KEY' is any
@@ -2155,7 +2185,7 @@ CUSTOMIZATION
 
         * USER-FILE
 
-            The user program file is included only if the  "--usr" option was
+            The user program file is included only  if the  --usr  option was
             used. For details see  USER-FILE  below.
 
 
@@ -2169,41 +2199,41 @@ CUSTOMIZATION
           * --cfg-data=KEY=TEXT
           * --cfg-text=KEY=TEXT
 
-        Here  C<KEY> is the key used in the internal data structure and C<TEXT>
+        Here  'KEY' is the key used in the internal data structure and 'TEXT'
         is the value to be set for this key.  Note that  unknown keys will be
         ignored silently.
 
-        If  C<KEY=TEXT>  is an exiting filename,  all lines from that file are
-        read and set. For details see  B<CONFIGURATION FILE>  below.
+        If  'KEY=TEXT'  is an exiting filename,  all lines from that file are
+        read and set. For details see  CONFIGURATION FILE  below.
 
     CONFIGURATION FILE
 
-        Note that the file can contain  C<KEY=TEXT>  pairs for the kind of the
-        configuration as given by the  I<--cfg-CFG>  option.
+        Note that the file can contain  'KEY=TEXT'  pairs for the kind of the
+        configuration as given by the  --cfg-CFG  option.
 
-        For example when used  with  I<--cfg-text=file> only values for  %text
-        will be set, when used  with  I<--cfg-data=file> only values for %data
-        will be set, and so on.  C<KEY>  is not used when  C<KEY=TEXT>  is  an
+        For example  when used with  --cfg-text=file  only values for  %text
+        will be set, when used with  --cfg-data=file  only values for  %data
+        will be set, and so on.  'KEY'  is not used  when  'KEY=TEXT'  is  an
         existing filename. Though, it's recommended to use a non-existing key,
-        for example: I<--cfg-text=my_file=some/path/to/private/file> .
+        for example:  --cfg-text=my_file=some/path/to/private/file .
 
     RC-FILE
 
         The rc-file will be searched for in the working directory only.
 
         The name of the rc-file is the name of the program file prefixed by a
-        C<.>  (dot),  for example:  C<.o-saft.pl>.
+        '.'  (dot),  for example:  '.o-saft.pl'.
 
         A  rc-file  can contain any of the commands and options valid for the
         tool itself. The syntax for them is the same as on command line. Each
         command or option must be in a single line. Any empty or comment line
-        will be ignored. Comment lines start with  C<#>  or  C<=>.
+        will be ignored. Comment lines start with  '#'  or  '='.
 
-        Note that options with arguments must be used as  C<KEY=VALUE>  instead
-        of  C<KEY VALUE>.
+        Note that options with arguments must be used as  'KEY=VALUE' instead
+        of  'KEY VALUE'.
 
-        Configurations options must be written like C<--cfg-CFG=KEY=VALUE>
-        where C<CFG> is any of:  cmd, check, data, text  or score and C<KEY> is
+        Configurations options must be written like '--cfg-CFG=KEY=VALUE'.
+        Where 'CFG' is any of:  cmd, check, data, text  or score and 'KEY' is
         any key from internal data structure (see above).
 
         All commands and options given on command line will  overwrite  those
@@ -2211,28 +2241,28 @@ CUSTOMIZATION
 
     DEBUG-FILE
 
-        All debugging functionality is defined in L<o-saft-dbx.pm>, which will
-        be searched for using paths available in perl's  C<@INC>  variable.
+        All debugging functionality is defined in  o-saft-dbx.pm , which will
+        be searched for using paths available in  '@INC'  variable.
 
-        Syntax in this file is perl code.  For details see  B<DEBUG>  below.
+        Syntax in this file is perl code.  For details see  DEBUG  below.
 
     USER-FILE
 
-        All user functionality is defined in  L<o-saft-dbx.pm>,  which will be
-        searched for using paths available in perl's  C<@INC>  variable.
+        All user functionality is defined in   o-saft-dbx.pm ,  which will be
+        searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is perl code.
 
-        All functions defined in  L<o-saft-usr.pm>  are called when the option
-        I<--usr>  was given. The functions are defined as empty stub, any code
-        can be inserted as need.  Please see  L<perldoc o-saft-usr.pm>  to see
+        All functions defined in   o-saft-usr.pm   are called when the option
+        --usr  was given.  The functions are defined as empty stub,  any code
+        can be inserted as need.  Please see   perldoc o-saft-usr.pm   to see
         when and how these functions are called.
 
 
 CIPHER NAMES
 
         While the SSL/TLS protocol uses integer numbers to identify  ciphers,
-        almost all tools use some kind of  `human readable'  texts for cipher
+        almost all tools use some kind of  "human readable"  texts for cipher
         names. 
 
         These numbers (which are most likely written  as hex values in source
@@ -2242,28 +2272,28 @@ CIPHER NAMES
         As such integer or hex numbers are difficult to handle by humans,  we
         decided to use human readable texts. Unfortunately no common standard
         exists how to construct the names and map them to the correct number.
-        Some, but by far not all, oddities are described in B<Name Rodeo>.
+        Some, but by far not all, oddities are described in  X&Name Rodeo&.
 
         The rules for specifying cipher names are:
-          1. textual names as defined by IANA (see [IANA])
-          2. mapping of names and numbers as defined by IANA (see [IANA])
-          3. C<->  and  C<_>  are treated the same
-          4. abbreviations are allowed, as long as they are unique
-          5. beside IANA, openssl's cipher names are preferred
-          6. name variants are supported, as long as they are unique
-          7. hex numbers can be used
+          1) textual names as defined by IANA (see [IANA])
+          2) mapping of names and numbers as defined by IANA (see [IANA])
+          3) '-'  and  '_'  are treated the same
+          4) abbreviations are allowed, as long as they are unique
+          5) beside IANA, openssl's cipher names are preferred
+          6) name variants are supported, as long as they are unique
+          7) hex numbers can be used
 
         [IANA]    http://www.iana.org/assignments/tls-parameters/tls-parameters.txt September 2013
 
         [openssl] ... openssl 1.0.1
 
-        If in any doubt, use  I<+list --v>  to get an idea about the mapping.
-        Use  I<--help=regex>  to see which regex  are used to handle all these
-        variants herein.
+        If in any doubt, use  +list --v  to get an idea about the mapping.
+        Use  --help=regex  to see which regex are used to handle all variants
+        herein.
 
         Mind the traps and dragons with cipher names and what number they are
-        actually mapped. In particular when  I<--lib>, I<--exe> or I<--openssl>
-        options are in use. Always use these options with I<+list> command too.
+        actually mapped. In particular when  --lib,  --exe  or  --openssl 
+        options are in use. Always use these options with  +list command too.
 
     Name Rodeo
 
@@ -2271,32 +2301,32 @@ CIPHER NAMES
         ciphers, but almost all tools use some kind of  human readable  texts
         for cipher names. 
 
-        For example the cipher commonly known as C<DES-CBC3-SHA> is identified
-        by C<0x020701c0> (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
+        For example the cipher commonly known as 'DES-CBC3-SHA' is identified
+        by '0x020701c0' (in openssl) and has 'SSL2_DES_192_EDE3_CBC_WITH_SHA'
         as constant name. A definition is missing in IANA, but there is 
-        C<TLS_RSA_WITH_3DES_EDE_CBC_SHA> .
-        It's each tool's responsibility to map the human readable cipher name
-        to the correct (hex, integer) identifier.
+        'TLS_RSA_WITH_3DES_EDE_CBC_SHA'.
+        It's the responsibility of each tool to map the human readable cipher
+        name to the correct (hex, integer) identifier.
 
-        For example Firefox uses  C<dhe_dss_des_ede3_sha>,  which is what?
+        For example Firefox uses  'dhe_dss_des_ede3_sha',  which is what?
 
         Furthermore, there are different acronyms for the same thing in use.
-        For example  C<DHE>  and  C<EDH>  both mean `Ephemeral Diffie-Hellman'.
-        Comments in the openssl sources mention this. And for curiosity these
-        sources use both in cypher names but allow only  C<EDH> as shortcut in
-        openssl's `ciphers'  command. Wonder about (at least up to 1.0.1h):
+        For example  'DHE'  and  'EDH'  both mean "Ephemeral Diffie-Hellman".
+        Comments in the  openssl(1)  sources mention this.  And for curiosity
+        these sources use both in cypher names, but allow  'EDH'  as shortcut
+        only in openssl's "ciphers"  command. Wonder about (up to 1.0.1h):
               openssl ciphers -V EDH
               openssl ciphers -V DHE
               openssl ciphers -V EECDH
               openssl ciphers -V ECDHE
 
-        Next example is  C<ADH>  which is also known as  C<DH_anon> or C<DHAnon>
-        or  C<DHA>  or  C<ANON_DH>. 
+        Next example is  'ADH'  which is also known as  'DH_anon' or 'DHAnon'
+        or  'DHA'  or  'ANON_DH'. 
 
         You think this is enough? Then have a look how many acronyms are used
-        for  `Tripple DES'.
+        for  "Tripple DES".
 
-        Compared to above, the interchangeable use of  C<->  vs.  C<_> in human
+        Compared to above, the interchangeable use of  '-'  vs.  '_' in human
         readable cipher names is just a very simple one. However, see openssl
         again what following means (returns):
               openssl ciphers -v RC4-MD5
@@ -2326,7 +2356,7 @@ KNOWN PROBLEMS
 
         Sometimes  the program terminates with a  'Segmentation fault'.  This
         mainly happens if the target does not return certificate information.
-        If so, the  I<--no-cert>  option may help.
+        If so, the  --no-cert  option may help.
 
     **WARNING: empty result from openssl; ignored at ...
 
@@ -2335,10 +2365,10 @@ KNOWN PROBLEMS
 
     **WARNING: unknown result from openssl; ignored at ...
 
-        This most likely occurs when the  openssl  executable is used  with a
+        This most likely occurs when the openssl(1) executable is used with a
         very slow connection. Typically the reason is a connection timeout.
-        Try to use  I<--timout=SEC>  option.
-        To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
+        Try to use  --timeout=SEC  option.
+        To get more information, use  --v --v  and/or  --trace  also.
 
     **WARNING: undefined cipher description
 
@@ -2357,9 +2387,9 @@ KNOWN PROBLEMS
               Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm
               (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.
 
-        occurs if the target refused a connection on port 80. 
-        This is considered a bug in L<Net::SSLeay>.
-        Workaround to get rid of this message: use  I<--no-http>  option.
+        occurs if the target refused a connection on port 80.
+        This is considered a bug in  Net::SSLeay(1).
+        Workaround to get rid of this message: use  --no-http  option.
 
     invalid SSL_version specified at ....
 
@@ -2367,7 +2397,7 @@ KNOWN PROBLEMS
         The full message looks like:
               invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
 
-        Workaround: use  I<--no-dtlsv1>  option.
+        Workaround: use  --no-dtlsv1  option.
 
     Use of uninitialized value $_[0] in length at (eval 4) line 1.
 
@@ -2379,7 +2409,7 @@ KNOWN PROBLEMS
         Some versions of  IO::Socket::SSL return this error message if  *-MD5
         ciphers are used with other protocols than SSLv2.
 
-        Workaround: use  I<--no-md5-cipher>  option.
+        Workaround: use  --no-md5-cipher  option.
 
     Performance Problems
 
@@ -2388,25 +2418,25 @@ KNOWN PROBLEMS
         likely a target-side problem. Most common reasons are:
 
           a) DNS resolver problems
-             Try with  I<--no-dns>
+             Try with  --no-dns
 
           b) target does not accept connections for https
-             Try with  I<--no-http>
+             Try with  --no-http
 
           c) target's certificate is not valid
-             Try with  I<--no-cert>
+             Try with  --no-cert
 
           d) target expects that the client provides a client certificate
              No option provided yet ...
 
           e) target does not handle Server Name Indication (SNI)
-             Try with  I<--no-sni>
+             Try with  --no-sni
 
-          f) use of external openssl executable
-             Use  I<--no-openssl> 
+          f) use of external openssl(1) executable
+             Use  --no-openssl
 
         Other options which may help to get closer to the problem's cause:
-        I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>  
+        --timeout=SEC,  --trace,  --trace=cmd
 
 
 LIMITATIONS
@@ -2414,27 +2444,27 @@ LIMITATIONS
     Commands
 
         Some commands cannot be used together with others, for example:
-        I<+cipher>,  I<+ciphers>,  I<+list>,  I<+libversion>,  I<+version>,  I<+check>,  I<+help>.
+        +cipher,  +ciphers,  +list,  +libversion,  +version,  +check,  +help.
  
-        I<+quick>  should not be used together with other commands, it returns
+        +quick  should not be used together with other commands, it returns
         strange output then.
 
-        I<+protocols>  requires  L<openssl(1)> with support for '-nextprotoneg'
+        +protocols  requires  openssl(1)  with support for  '-nextprotoneg'
         option. Otherwise the value will be empty.
 
     Options
 
-        The characters C<+> and C<=> cannot be used for I<--separator> option.
+        The characters  '+' and '='  cannot be used for  --separator  option.
 
         Following strings should not be used in any value for options:
-          C<+check>, C<+info>, C<+quick>, C<--header>
-        as they my trigger the  -I<--header>  option unintentional.
+          '+check', '+info', '+quick', '--header'
+        as they my trigger the  --header   option unintentional.
 
-        The used L<timeout(1)> command cannot be defined with a full path like
-        L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
+        The used  timeout(1)  command cannot be defined with a full path like
+        openssl(1)  can with the  --openssl=path/to/openssl .
 
-        I<--cfg-text=file>  cannot be used to redefine the texts 'yes' and 'no'
-        as used in the output for  I<+cipher>  command.
+        --cfg-text=file  cannot be used to redefine the texts  'yes' and 'no'
+        as used in the output for  +cipher  command.
 
     Checks (general)
 
@@ -2471,28 +2501,28 @@ LIMITATIONS
     User Provided Files
 
         Please note that there cannot be any guarantee that the code provided
-        in the  DEBUG-FILE L<o-saft-usr.pm>  or  USER-FILE  L<o-saft-usr.pm> 
+        in the  DEBUG-FILE  o-saft-dbx.pm   or  USER-FILE   o-saft-usr.pm  
         will work flawless. Obviously this is the user's responsibility.
 
     Problems and Errors
 
         Checking the target for supported ciphers may return that a cipher is
         not supported by the server  misleadingly.  Reason is most likely  an
-        improper timeout for the connection. See  I<--timeout=SEC>  option.
+        improper timeout for the connection. See  --timeout=SEC  option.
 
         If the specified targets accepts connections but does not speak  SSL,
         the connection will be closed after the system's TCP/IP-timeout. This
         script will hang (about 2-3 minutes).
 
         If reverse DNS lookup fails, an error message is returned as hostname,
-        like:  C<<<gethostbyaddr() failed>>>.
-        Workaround to get rid of this message: use  I<--no-dns>  option.
+        like:  '<<gethostbyaddr() failed>>'.
+        Workaround to get rid of this message: use  --no-dns  option.
 
         All checks for EV are solely based on the information provided by the
         certificate.
 
         Some versions of openssl (< 1.x) may not support all required options
-        which results in various error messages or --more worse--  may not be
+        which results in various error messages,  or  more worse,  may not be
         visibale at all.
         Following table shows the openssl option and how to disbale it within
         o-saft:
@@ -2502,13 +2532,13 @@ LIMITATIONS
 
     Poor Systems
 
-        Use of  L<openssl(1)> is disabled by default on Windows due to various
-        performance problems. It needs to be enabled with I<--openssl> option.
+        Use of  openssl(1)  is disabled by default on  Windows due to various
+        performance problems. It needs to be enabled with  --openssl  option.
 
-        On Windows the usage of  `openssl s_client' needs to be enabled using
-        I<--s_client> option.
+        On Windows the usage of  "openssl s_client" needs to be enabled using
+        --s_client  option.
 
-        On Windows it's a pain to specify the path for I<--openssl=..> option.
+        On Windows it's a pain to specify the path for  --openssl=..  option.
         Variants are:
           * --openssl=/path/to/openssl.exe
           * --openssl=X:/path/to/openssl.exe
@@ -2523,39 +2553,40 @@ LIMITATIONS
 DEPENDENCIES
 
         All perl modules and all  private moduels and files  will be searched
-        for using paths available in perl's  C<@INC>  variable.  C<@INC>  will
-        be prepended by following paths:
+        for using paths  available in the  '@INC'  variable.  '@INC'  will be
+        prepended by following paths:
 
           * .
           * ./lib
           * INSTALL_PATH
           * INSTALL_PATH/lib
 
-        Where  C<INSTALL_PATH>  is the path where the tool is installed.
+        Where  'INSTALL_PATH'  is the path where the tool is installed.
         To see which files have been included use:
           $0 +version --v --user
 
     Perl Modules
 
-        * L<IO::Socket::SSL(1)>
-        * L<IO::Socket::INET(1)>
-        * L<Net::SSLeay(1)>
-        * L<Net::SSLinfo(1)>
-        * L<Net::SSLhello(1)>
+        * IO::Socket::SSL(1)
+        * IO::Socket::INET(1)
+        * Net::SSLeay(1)
+        * Net::SSLinfo
+        * Net::SSLhello
 
     Additional files used if requested
 
-        * L<.o-saft.pl>
-        * L<o-saft-dbx.pm>
-        * L<o-saft-usr.pm>
-        * L<o-saft-README>
+        * .o-saft.pl
+        * o-saft-dbx.pm
+        * o-saft-man.pm
+        * o-saft-usr.pm
+        * o-saft-README
 
 
 SEE ALSO
 
-        * L<openssl(1)>, L<Net::SSLeay(1)>, L<Net::SSLinfo(1)>, L<timeout(1)>
+        * openssl(1), Net::SSLeay(1), Net::SSLhello, Net::SSLinfo, timeout(1)
         * http://www.openssl.org/docs/apps/ciphers.html
-        * L<IO::Socket::SSL(1)>, L<IO::Socket::INET(1)>
+        * IO::Socket::SSL(1), IO::Socket::INET(1)
 
 
 HACKER's INFO
@@ -2563,13 +2594,13 @@ HACKER's INFO
     Using private libssl.so and libcrypt.so
 
         For all  cryptographic functionality  the libraries  installed on the
-        system will be used. This is in particular perl's  Net:SSLeay module,
-        the system's  libssl.so and libcrypt.so  and the openssl executable.
+        system will be used. In particular perl's Net::SSLeay(1)  module, the
+        system's  libssl.so and libcrypt.so  and the  openssl(1)  executable.
 
         It is possible to provide your own libraries, if the  perl module and
         the executable are  linked using  dynamic shared objects  (aka shared
         library, position independent code).
-        The appropriate option is  I<--lib=PATH>  .
+        The appropriate option is  --lib=PATH.
 
         On most systems these libraries are loaded at startup of the program.
         The runtime loader uses a preconfigured list of directories  where to
@@ -2577,30 +2608,30 @@ HACKER's INFO
         variable to specify  additional paths  to directories where to search
         for libraries, for example the  LD_LIBRARY_PATH environment variable.
         This is the default environment variable used herein.  If your system
-        uses  another name it must be specified with the  I<--envlibvar=NAME>
+        uses  another name it must be specified with the  --envlibvar=NAME 
         option, where  NAME  is the name of the environment variable.
 
-    Understanding  I<--exe=PATH>, I<--lib=PATH>, I<--openssl=FILE>
+    Understanding  --exe=PATH, --lib=PATH, --openssl=FILE
 
-        If any of I<--exe=PATH> or I<--lib=PATH> is provided, the pragram calls
-        (C<exec>) itself recursively with all given options, except the option
-        itself. The environment variables  C<LD_LIBRARY_PATH>  and C<PATH>  are
+        If any of  --exe=PATH  or  --lib=PATH  is provided, the pragram calls
+        ('exec') itself recursively with all given options, except the option
+        itself. The environment variables  'LD_LIBRARY_PATH'  and 'PATH'  are
         set before executing as follows:
-          * prepend  C<PATH>  with all values given with  I<--exe=PATH> 
-          * prepend  C<LD_LIBRARY_PATH>  with all values given with  I<--lib=PATH> 
+          * prepend  'PATH'  with all values given with  --exe=PATH
+          * prepend  'LD_LIBRARY_PATH'  with all values given with --lib=PATH
 
 
-        This is exactly, what L<Cumbersome Approach> below describes. So these
+        This is exactly, what X&Cumbersome Approach& below describes. So these
         option simply provide a shortcut for that.
 
-        Note that I<--openssl=FILE> is a full path to the L<openssl> executable
+        Note that  --openssl=FILE  is a full path to the  openssl  executable
         and will not be changed.  However, if it is a relative path, it might
-        be searched for using the previously set  C<PATH>  (see above).
+        be searched for using the previously set  'PATH'  (see above).
 
-        Note that  C<LD_LIBRARY_PATH>  is the default.  It can be changed with
-        the  I<--envlibvar=NAME>  option.
+        Note that  'LD_LIBRARY_PATH'  is the default.  It can be changed with
+        the  --envlibvar=NAME  option.
 
-        While  I<--exe>  mainly impacts the openssl executable,  I<--lib>  also
+        While  --exe  mainly impacts the  openssl(1) executable,  --lib  also
         impacts o-saft.pl itself, as it loads other shared libraries if found.
 
         Bear in mind that  all these options  can affect the behaviour of the
@@ -2627,9 +2658,9 @@ HACKER's INFO
         Only the first one a) can be circumvented.  The last one d) can often
         be ignored as it only prints a warning or error message.
 
-        To circumvent the `name with version number' problem try following:
+        To circumvent the "name with version number" problem try following:
 
-        1. use L<ldd> (or a similar tool) to get the names used by L<openssl>:
+        1) use  ldd(1)  (or a similar tool) to get the names used by openssl:
 
           ldd /usr/bin/openssl
 
@@ -2643,23 +2674,23 @@ HACKER's INFO
           /lib64/ld-linux-x86-64.so.2 (0x00007f940cdea000)
 
         Here only the first two libraries are important.  Both,  libcrypto.so
-        and libssl.so  need to be version '0.9.8' (in this example).
+        and libssl.so  need to be version "0.9.8" (in this example).
 
-        2. create a directory for your libraries, i.e.:
+        2) create a directory for your libraries, i.e.:
 
           mkdir /tmp/dada
 
-        3. place your libraries there, assuming they are:
+        3) place your libraries there, assuming they are:
 
           /tmp/dada/libssl.so.1.42
           /tmp/dada/libcrypto.so.1.42
 
-        4. create symbolic links in that directory:
+        4) create symbolic links in that directory:
 
           ln -s libssl.so.1.42    libssl.so.0.9.8
           ln -s libcrypto.so.1.42 libcrypto.so.0.9.8
 
-        5. test program with following option:
+        5) test program with following option:
 
           $0 +libversion --lib=/tmp/dada
           $0 +list --v   --lib=/tmp/dada
@@ -2669,16 +2700,16 @@ HACKER's INFO
           $0 +libversion --lib=/tmp/dada -exe=/path/to-openssl
           $0 +list --v   --lib=/tmp/dada -exe=/path/to-openssl
 
-        6. start program with your options, i.e.:
+        6) start program with your options, i.e.:
 
           $0 --lib=/tmp/dada +ciphers
 
-        This works if L<openssl(1)> uses the same shared libraries as
-        L<Net:SSLeay(1)>, which most likely is the case.
+        This works if  openssl(1)  uses the same shared libraries as
+        Net::SSLeay(1),  which most likely is the case.
 
         It's tested with Unix/Linux only. It may work on other platforms also
         if they support such an environment variable and the installed
-        L<Net::SSLeay(1)>  and L<openssl(1)>  are linked using dynamic shared
+        Net::SSLeay(1)  and  openssl(1)  are linked using dynamic shared
         objects.
 
         Depending on  compile time settings  and/or  the location of the used
@@ -2710,11 +2741,11 @@ HACKER's INFO
 
         This script can be used as  CGI application. Output is the same as in
         common CLI mode, using  'Content-Type:text/plain'.  Keep in mind that
-        the used modules like  L<Net::SSLeay>  will write some debug messages
-        on STDERR instead STDOUT. Therefore multiple  I<--v> and/or  I<--trace>
+        the used modules like  Net::SSLeay(1)  will write some debug messages
+        on  STDERR instead  STDOUT.  Therefore multiple  --v  and/or  --trace 
         options behave slightly different.
 
-        No additional external files like  B<RC-FILE> or B<DEBUG-FILE> are read
+        No additional external files like  RC-FILE  or  DEBUG-FILE  are read
         in CGI mode; they are silently ignored.
         Some options are disabled in CGI mode  because they are dangerous  or
         don't make any sense.
@@ -2726,8 +2757,8 @@ HACKER's INFO
           More advanced checks must be done outside before calling this tool.
 
 #       The only code necessary for CGI mode is encapsulated at the beginning,
-#       see  C<if ($me =~/\.cgi/){ ... }>.  Beside some minor additional regex
-#       matches (mainly removing trailing  C<=> and empty arguments) no other
+#       see  'if ($me =~/\.cgi/){ ... }'.  Beside some minor additional regex
+#       matches (mainly removing trailing   '=' and empty arguments) no other
 #       code is needed. 
 #
 
@@ -2735,7 +2766,7 @@ HACKER's INFO
 
         There are some functions called within the program flow, which can be
         filled with any perl code.  Empty stubs of the functions are prepared
-        in  L<o-saft-usr.pm>.  See also  B<USER-FILE>.
+        in  o-saft-usr.pm.  See also  USER-FILE.
 
     SECURITY
 
@@ -2746,7 +2777,7 @@ HACKER's INFO
         roughly sanatised according unwanted characters.  In particular there
         are no checks according any kind of code injection.
 
-        Please see  B<WARNING> above if used in CGI mode. It's not recommended
+        Please see  WARNING  above if used in CGI mode. It is not recommended
         to run this tool in CGI mode. You have been warned!
 
 # Program Code below is not shown with +help
@@ -2759,51 +2790,48 @@ HACKER's INFO
 #      Documentation
 #
 #        All documentation of code details is  close to the corresponding code
-#        lines. Some special comment lines are used, see  B<Comments>  below.
+#        lines. Some special comment lines are used, see  X&Comments&  below.
 #
-#        All documentation for the user is written in perl's POD format at end
-#        if the program code. See  C<## documentation>.
+#        All documentation for the user is written in  plain ASCII text format
+#        at end of this file
 #
-##TODO        All options and commands should be documented using POD's  =head  key
-##TODO        see C<printquit()> how this can be used for testing).
-#
-#        Weanwhile, after 2 years of development, it seems that POD wasn't the
-#        best decission, as it makes extracting information from documentation
-#        complicated, sometimes.
+#        All documentation was initially written in perl's POD format. After 2
+#        years of development, it seems that POD wasn't the best decission, as
+#        it makes extracting information from documentation complicated, some-
+#        times. It's also a huge performance penulty on all platforms.
 #
 #      General
 #
-#        Perl's  `die()'  is used whenever an unrecoverable error occurs.  The
+#        Perl's  "die()"  is used whenever an unrecoverable error occurs.  The
 #        message printed will always start with '**ERROR: '.
-#        warnings are printed using perl's  `warn()'  function and the message
+#        warnings are printed using perl's  "warn()"  function and the message
 #        always begins with '**WARNING: '.
 #
-#        All C<print*()> functions write on STDOUT directly. They are slightly
+#        All 'print*()' functions write on STDOUT directly.  They are slightly
 #        prepared for using texts from  the configuration (%cfg, %checks),  so
-#        these texts can be adapted easily (either with  B<OPTIONS>  or in code).
+#        these texts can be adapted easily (either with  OPTIONS  or in code).
 #
 #        The  code  mainly uses  'text enclosed in single quotes'  for program
-#        internal strings such as hash keys, and uses `double quoted' text for
+#        internal strings such as hash keys, and uses "double quoted text" for
 #        texts being printed. However, exceptions if obviously necessary ;-)
 #        strings used for RegEx are always enclosed in single quotes.
 #        reason is mainly to make searching texts a bit easyer.
 #
-#        Calling external programs uses  C<qx()>  rather than backticks or perl's
-#        L<system()>  function. Also not that is uses braces insted of slashes to
+#        Calling external programs uses 'qx()' rather than backticks or perl's
+#        system()  function. Also not that is uses braces insted of slashes to
 #        avoid confusion with RegEx.
 #
 #        The code flow mainly uses postfix conditions, means the if-conditions
 #        are written right of the command to be executed. This is done to make
 #        the code better readable (not disturbed by conditions).
 #
-#        While  Net::SSLinfo  uses  L<Net::SSLeay(1)>,  o-saft.pl  itself uses
-#        only  L<IO::Socket::SSL(1)>. This is done 'cause we need some special
-#        features here. However,  L<IO::Socket::SSL(1)>  uses  L<Net::SSLeay(1)>  
-#        anyways.
+#        While  Net::SSLinfo  uses  Net::SSLeay(1), o-saft.pl itself uses only
+#        IO::Socket::SSL(1). This is done 'cause we need some special features
+#        here. However,  IO::Socket::SSL(1)  uses  Net::SSLeay(1)  anyways.
 #
 #        The code is most likely not thread-safe. Anyway, we don't use them.
 #
-#        For debugging the code the  I<--trace>  option can be used.  See  B<DEBUG>
+#        For debugging the code the  --trace  option can be used.  See  DEBUG
 #        section below for more details. Be prepared for a lot of output!
 #
 #      Comments
@@ -2822,11 +2850,11 @@ HACKER's INFO
 #        with 'my'). These variables are mainly: @DATA, @results, %cmd, %data,
 #        %cfg, %checks, %ciphers, %text.
 #
-#        Variables defined with 'our' can be used in  L<o-saft-dbx.pm>  and
-#        C<o-saft-usr.pm> .
+#        Variables defined with 'our' can be used in   o-saft-dbx.pm   and
+#        o-saft-usr.pm.
 #
 #        For a detailed description of the used variables, please refer to the
-#        text starting at the line  C<#!# set defaults>.
+#        text starting at the line  '#!# set defaults'.
 #
 #      Sub Names
 #
@@ -2837,12 +2865,12 @@ HACKER's INFO
 #          get_*         Functions to get a value from internal ciphers structure.
 #          _<function_name>    Some kind of helper functions.
 #          _trace*
-#          _y*           Print information when  "--trace"  is in use.
-#          _v*print      Print information when  "--v"  is in use.
+#          _y*           Print information when  --trace  is in use.
+#          _v*print      Print information when  --v  is in use.
 #
 #        Function (sub) definitions are followed by a short description, which
-#        is just one line right after the  C<sub>  line. Such lines always start
-#        with  C<#?>  (see below how to get an overview).
+#        is just one line right after the 'sub' line. Such lines always start
+#        with  '#?'  (see below how to get an overview).
 #
 #        Subs are ordered to avoid forward declarations as much as possible.
 #
@@ -2851,7 +2879,7 @@ HACKER's INFO
 #        Examples to get an overview of perl functions (sub):
 #          egrep '^(sub|\s*#\?)' $0
 #
-#        Same a little bit formatted, see  I<+traceSUB>  command.
+#        Same a little bit formatted, see  +traceSUB  command.
 #
 #        Examples to get an overview of workflow:
 #          egrep '^##\s' $0
@@ -2864,11 +2892,11 @@ HACKER's INFO
 #      Debugging, Tracing
 #
 #        Most functionality for trace, debug or verbose output is encapsulated
-#        in functions (see B<Sub Names> above). These functions are defined as
-#        empty stubs herein.  The  real  definitions  are in  L<o-saft-dbx.pm>,
-#        which is loaded on demand when either any  I<--trace*>  or  I<--v>  option
-#        is specified. As long as these options are not used  o-saft.pl  works
-#        without  L<o-saft-dbx.pm>.
+#        in functions (see X&Sub Names& above). These functions are defined as
+#        empty stubs herein. The real definitions are in  o-saft-dbx.pm, which
+#        is loaded on demand when any  --trace*  or  --v  option is specified.
+#        As long as these options are not used  o-saft.pl  works without
+#        o-saft-dbx.pm.
 #
 #        Note: in contrast to the name of the RC-file, the name  o-saft-dbx.pm
 #        is hard-coded.
@@ -2881,10 +2909,10 @@ DEBUG
         Following  options and commands  are useful for hunting problems with
         SSL connections and/or this tool. Note that some options can be given
         multiple times to increase amount of listed information. Also keep in
-        mind that it's best to specify  I<--v>  as very first argument.
+        mind that it's best to specify  --v  as very first argument.
 
-        Note that the file  L<o-saft-dbx.pm>  is required, if any  I<--trace*>
-        or  I<--v>  option is used.
+        Note that the file  o-saft-dbx.pm  is required,  if any  --trace*  or
+        --v   option is used.
 
       Commands
 
@@ -2909,22 +2937,22 @@ DEBUG
 
       Output
 
-        When using  I<--v>  and/or  I<--trace>  options, additional output will
-        be prefixed with a  C<#>  (mainly as first, left-most character.
+        When using  --v  and/or  --trace  options,  additional output will be
+        prefixed with a  '#'  (mainly as first, left-most character.
         Following formats are used:
 
            #<space>
-                Addition text for verbosity ("--v" options).
+                Addition text for verbosity (--v options).
 
            #[variable name]<TAB>
-                Internal variable name ("--trace-key" options).
+                Internal variable name (--trace-key options).
 
            #o-saft.pl::
            #Net::SSLinfo::
-                Trace information for "--trace"  options.
+                Trace information for --trace  options.
 
            #{
-                Trace information from  NET::SSLinfo  for  "--trace" options.
+                Trace information from  NET::SSLinfo  for  --trace  options.
                 these are data lines in the format:
                     #{ variable name : value #}
                 Note that 'value'  here can span multiple lines and ends with
@@ -3013,8 +3041,7 @@ EXAMPLES
 
         * Just for curiosity
           $0 some.tld +fingerprint --format=raw
-          $0 some.tld +certificate --format=raw \ 
-           | openssl x509 -noout -fingerprint
+          $0 some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
 
     Special for hunting problems with connections etc.
 
@@ -3062,12 +3089,12 @@ retseT reuf tiduA LSS PSAWO  -  "tfaS-O"
 :nnawdnegri nnad sib ,elieW enie sad gnig oS
 ..wsu ,"haey-lss" ,"agoy-lss" :etsiL red fua dnats -reteaps reibssieW
 eretiew  raap nie-  nohcs se tnha nam  ,ehcuS eid nnageb os ,nebegrev
-nohcs dnis nemaN ednessap eleiV  .guneg 'giffirg`  thcin reba sad raw
+nohcs dnis nemaN ednessap eleiV  .guneg "giffirg"  thcin reba sad raw
 gnuhciltneffeoreV enie reuF .noisrevsgnulkciwtnE red emaN red tsi saD
 . loot LSS rehtona tey -  "lp.tsaey"   :resseb nohcs tsi sad
 ,aha ,tsaey -- efeH -- reibssieW -- .thcin sad tgnilk srednoseb ,ajan
 eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"   
-:ehan gal se ,nedrew emaN 'regithcir` nie hcod nnad se etssum
+:ehan gal se ,nedrew emaN "regithcir" nie hcod nnad se etssum
 hcan dnu hcaN  .edruw nefforteg setsre sla "y" sad liew ,"lp.y" :eman
 -ietaD nie snetsednim  ,reh emaN nie etssum sE .slooT seseid pytotorP
 retsre nie  nohcs hcua  dnatstne iebaD  .tetsokeg reibssieW eleiv dnu
@@ -3112,7 +3139,7 @@ TODO
 
 #        nur protokolle testen (wie testssl.sh)
 #        openssl (nicht bei 0.9.8, bei 1.0.1*) -legacy_renegotiation
-#        "Minimal encryption strength:     weak encryption (40-bit) (wie TestSSLServer.jar)
+#        Minimal encryption strength:     weak encryption (40-bit) (wie TestSSLServer.jar)
 #        "Checking fallback from TLS 1.1 to... TLS 1.0" (wie ssl-cipher-check.pl)
 #        SSLCertScanner.exe http://www.xenarmor.com/network-ssl-certificate-scanner.php ansehen
 #        ssl-cert-check -p 443 -s mail.google.com -i -V
