@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.4 14/12/04 00:37:32";
+my  $man_SID= "@(#) o-saft-man.pm 1.5 14/12/04 01:13:58";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -64,6 +64,461 @@ if (open(DATA, $ich)) {
     close(DATA);
 }
 our $\ = "";
+
+## definitions: more documentations as data
+## -------------------------------------
+our %man_text = (
+    # short list of used terms and acronyms, always incomplete ...
+    'glossar' => {
+        'AA'        => "Attribute Authority",
+        'AAD'       => "additional authenticated data",
+        'ADH'       => "Anonymous Diffie-Hellman",
+        'Adler32'   => "hash function",
+        'AEAD'      => "Authenticated Encryption with Additional Data",
+        'AECDHE'    => "Anonymous Ephemeral ECDH",
+        'AEM'       => "Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3",
+        'AES'       => "Advanced Encryption Standard",
+        'AIA'       => "Authority Information Access (certificate extension)",
+        'AKC'       => "Agreement with Key Confirmation",
+        'AKID'      => "Authority Key IDentifier",
+        'ALPN'      => "Application Layer Protocol Negotiation",
+        'ARC4'      => "Alleged RC4 (see RC4)",
+        'ARCFOUR'   => "alias for ARC4",
+        'ARIA'      => "128-bit Symmetric Block Cipher",
+        'ASN'       => "Autonomous System Number",
+        'ASN.1'     => "Abstract Syntax Notation One",
+        'BDH'       => "Bilinear Diffie-Hellman",
+        'BEAST'     => "Browser Exploit Against SSL/TLS",
+        'BER'       => "Basic Encoding Rules",
+        'Blowfish'  => "symmetric block cipher",
+        'BREACH'    => "Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)",
+                    #   http://www.breachattack.com/
+        'CAMELLIA'  => "Encryption algorithm 128 bit (by Mitsubishi and NTT)",
+        'CAST-128'  => "Carlisle Adams and Stafford Tavares, block cipher",
+        'CAST5'     => "alias for CAST-128",
+        'CAST-256'  => "Carlisle Adams and Stafford Tavares, block cipher",
+        'CAST6'     => "alias for CAST-256",
+        'cipher suite'  => "cipher suite is a named combination of authentication, encryption, and message authentication code algorithms",
+        'CA'        => "Certificate Authority (aka root CA)",
+        'CBC'       => "Cyclic Block Chaining",
+        'CBC '      => "Cipher Block Chaining (sometimes)",
+        'CBC  '     => "Ciplier Block Chaining (sometimes)",
+        #   ^^-- spaces to make key unique
+        'CBC-MAC'   => "Cipher Block Chaining - Message Authentication Code",
+        'CBC-MAC-ELB'   => "Cipher Block Chaining - Message Authentication Code - Encrypt Last Block",
+        'CCM'       => "CBC-MAC Mode",
+        'CCS'       => "Change Cipher Spec (protocol)",
+        'CDH'       => "?  Diffie-Hellman",
+        'CDP'       => "CRL Distribution Points",
+        'CEK'       => "Content Encryption Key",
+        'CFB'       => "Cipher Feedback",
+        'CFB3'      => "Cipher Feedback",
+        'CFBx'      => "Cipher Feedback x bit mode",
+        'CHAP'      => "Challenge Handshake Authentication Protocol",
+        'CKA'       => "", # PKCS#11
+        'CKK'       => "", # PKCS#11
+        'CKM'       => "", # PKCS#11
+        'CMAC'      => "Cipher-based MAC",
+        'CMP'       => "X509 Certificate Management Protocol",
+        'CMS'       => "Cryptographic Message Syntax",
+        'CMVP'      => "Cryptographic Module Validation Program (NIST)",
+        'CN'        => "Common Name",
+        'CP'        => "Certificate Policy (certificate extension)",
+        'CPD'       => "Certificate Policy Definitions",
+        'CPS'       => "Certification Practice Statement",
+        'CRC'       => "Cyclic Redundancy Check",
+        'CRIME'     => "Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)",
+        'CRL'       => "Certificate Revocation List",
+        'CSP'       => "Certificate Service Provider",
+        'CSP '      => "Critical Security Parameter (used in FIPS 140-2)",
+        'CSR'       => "Certificate Signing Request",
+        'CP'        => "Certificate Transparency",
+        'CTL'       => "Certificate Trust Line",
+        'CTR'       => "Counter Mode (sometimes: CM; block cipher mode)",
+        'CTS'       => "Cipher Text Stealing",
+        'CWC'       => "CWC Mode (Carter-Wegman + CTR mode; block cipher mode)",
+        'DAA'       => "Data Authentication Algorithm",
+        'DAC'       => "Data Authentication Code",
+        'DEK'       => "Data Encryption Key",
+        'DER'       => "Distinguished Encoding Rules",
+        'DES'       => "Data Encryption Standard",
+        'DESede'    => "alias for 3DES ?java only?",
+        'DESX'      => "extended DES",
+        '3DES'      => "Tripple DES (168 bits)",
+        '3DES-EDE'  => "alias for 3DES",
+        '3TDEA'     => "Three-key  Tripple DEA (sometimes: Tripple DES; 168 bits)",
+        '2TDEA'     => "Double-key Tripple DEA (sometimes: Double DES; 112 bits)",
+        'D5'        => "Verhoeff's Dihedral Group D5 Check",
+        'DANE'      => "DNS-based Authentication of Named Entities",
+        'DDH'       => "Decisional Diffie-Hellman (Problem)",
+        'DEA'       => "Data Encryption Algorithm (sometimes a synonym for DES)",
+        'DECIPHER'  => "synonym for decryption",
+        'DER'       => "Distinguished Encoding Rules",
+        'DH'        => "Diffie-Hellman",
+        'DHE'       => "Diffie-Hellman ephemeral", # historic acronym, often used, mainly in openssl
+        'DLIES'     => "Discrete Logarithm Integrated Encryption Scheme",
+        'DN'        => "Distinguished Name",
+        'DPA'       => "Dynamic Passcode Authentication (see CAP)",
+        'DRBG'      => "Deterministic Random Bit Generator",
+        'DSA'       => "Digital Signature Algorithm",
+        'DSS'       => "Digital Signature Standard",
+        'DTLS'      => "Datagram TLS",
+        'DTLSv1'    => "Datagram TLS 1.0",
+        'DV'        => "Domain Validation",
+        'DV-SSL'    => "Domain Validated Certificate",
+        'EAP'       => "Extensible Authentication Protocol",
+        'EAP-PSK'   => "Extensible Authentication Protocol using a Pre-Shared Key",
+        'EAX'       => "EAX Mode (block cipher mode)",
+        'EAXprime'  => "alias for EAX Mode",
+        'EC'        => "Elliptic Curve",
+        'ECB'       => "Electronic Code Book mode",
+        'ECC'       => "Elliptic Curve Cryptography",
+        'ECDH'      => "Elliptic Curve Diffie-Hellman",
+        'ECDHE'     => "Ephemeral ECDH",
+        'ECDSA'     => "Elliptic Curve Digital Signature Algorithm",
+        'ECGDSA'    => "Elliptic Curve ??? DSA",
+        'ECIES'     => "Elliptic Curve Integrated Encryption Scheme",
+        'ECKA'      => "Elliptic Curve Key Agreement",
+        'ECKA-EG'   => "Elliptic Curve Key Agreement of ElGamal Type",
+        'ECKDSA'    => "Elliptic Curve ??? DSA",
+        'ECMQV'     => "Elliptic Curve Menezes-Qu-Vanstone",
+        'ECOH'      => "Elliptic Curve only hash",
+        'EDE'       => "Encryption-Decryption-Encryption",
+        'EDH'       => "Ephemeral Diffie-Hellman", # official acronym
+        'EGB'       => "Entropy Gathering Daemon",
+        'ELB'       => "Encrypt Last Block",
+        'ElGamal'   => "asymmetric block cipher",
+        'ENCIPHER'  => "synonym for encryption",
+        'EME'       => "Encoding Method for Encryption",
+        'ESP'       => "Encapsulating Security Payload",
+        'EV'        => "Extended Validation",
+        'EV-SSL'    => "Extended Validation Certificate",
+        'FEAL'      => "Fast Data Encryption Algorithm",
+        'FFC'       => "Finite Field Cryptography",
+        'FIPS'      => "Federal Information Processing Standard",
+        'FIPS46-2'  => "FIPS Data Encryption Standard (DES)",
+        'FIPS73'    => "FIPS Guidelines for Security of Computer Applications",
+        'FIPS140-2' => "FIPS Security Requirements for Cryptographic Modules",
+        'FIPS140-3' => "proposed revision of FIPS 140-2",
+        'FIPS180-3' => "FIPS Secure Hash Standard",
+        'FIPS186-3' => "FIPS Digital Signature Standard (DSS)",
+        'FIPS197'   => "FIPS Advanced Encryption Standard (AES)",
+        'FIPS198-1' => "FIPS The Keyed-Hash Message Authentication Code (HMAC)",
+        'FQDN'      => "Fully-qualified Domain Name",
+        'FSB'       => "Fast Syndrome Based Hash",
+        'FSM'       => "Finite State Machine",
+        'FZA'       => "FORTEZZA",
+        'G-DES'     => "??? DES",
+        'GCM'       => "Galois/Counter Mode (block cipher mode)",
+        'GHASH'     => "Hash funtion used in GCM",
+        'GMAC'      => "MAC for GCM",
+        'GOST'      => "Gossudarstwenny Standard (block cipher)",
+        'Grainv1'   => "stream cipher (64-bit IV)",
+        'Grainv128' => "stream cipher (96-bit IV)",
+        'hash127'   => "fast hash function (by Dan Bernstein)",
+        'HAVAL'     => "one-way hashing",
+        'HAS-160'   => "hash function",
+        'HAS-V'     => "hash function",
+        'HC128'     => "stream cipher",
+        'HC256'     => "stream cipher",
+        'HEARTBLEED'=> "attack against TLS extension heartbeat",
+        'HIBE'      => "hierarchical identity-based encryption",
+        'HMAC'      => "keyed-Hash Message Authentication Code",
+        'HMQV'      => "h? Menezes-Qu-Vanstone",
+        'HSM'       => "Hardware Security Module",
+        'HSTS'      => "HTTP Strict Transport Security",
+        'HTOP'      => "HMAC-Based One-Time Password",
+        'IAPM'      => "Integrity Aware Parallelizable Mode (block cipher mode of operation)",
+        'ICM'       => "Integer Counter Mode (alias for CTR)",
+        'IDEA'      => "International Data Encryption Algorithm (by James Massey and Xuejia Lai)",
+        'IFC'       => "Integer Factorization Cryptography",
+        'ISAKMP'    => "Internet Security Association and Key Management Protocol",
+        'IV'        => "Initialization Vector",
+        'JSSE'      => "Java Secure Socket Extension",
+        'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
+        'KEK'       => "Key Encryption Key",
+        'KSK'       => "Key Signing Key", # DNSSEC
+        'LM hash'   => "LAN Manager hash aka LanMan hash",
+        'LFSR'      => "Linear Feedback Shift Register",
+        'Lucky 13'  => "Break SSL/TLS Protocol",
+        'MARS'      => "",
+        'MAC'       => "Message Authentication Code",
+        'MCF'       => "Modular Crypt Format",
+        'MEE'       => "MAC-then-Encode-then-Encrypt",
+        'MEK'       => "Message Encryption Key",
+        'MDC2'      => "Modification Detection Code 2 aka Meyer-Schilling",
+        'MDC-2'     => "same as MDC2",
+        'MD2'       => "Message Digest 2",
+        'MD4'       => "Message Digest 4",
+        'MD5'       => "Message Digest 5",
+        'MGF'       => "Mask Generation Function",
+        'MISTY1'    => "block cipher algorithm",
+        'MQV'       => "Menezes-Qu-Vanstone (authentecated key agreement",
+        'NTLM'      => "NT Lan Manager. Microsoft Windows challenge-response authentication method.",
+        'NPN'       => "Next Protocol Negotiation",
+        'Neokeon'   => "symmetric block cipher algorithm",
+        'NSS'       => "Network Security Services",
+        'nonce'     => "(arbitrary) number used only once",
+        'NULL'      => "no encryption",
+        'NUMS'      => "nothing up my sleeve numbers",
+        'OAEP'      => "Optimal Asymmetric Encryption Padding",
+        'OFB'       => "Output Feedback",
+        'OCB'       => "Offset Codebook Mode (block cipher mode of operation)",
+        'OCB1'      => "same as OCB",
+        'OCB2'      => "improved OCB aka AEM",
+        'OCB3'      => "improved OCB2",
+        'OFBx'      => "Output Feedback x bit mode",
+        'OID'       => "Object Identifier",
+        'OTP'       => "One Time Pad",
+        'OCSP'      => "Online Certificate Status Protocol",
+        'OCSP stapling' => "formerly known as: TLS Certificate Status Request",
+        'OMAC'      => "One-Key CMAC, aka CBC-MAC",
+        'OMAC1'     => "same as CMAC",
+        'OMAC2'     => "same as OMAC",
+        'OV'        => "Organisational Validation",
+        'OV-SSL'    => "Organisational Validated Certificate",
+        'P12'       => "see PKCS#12",
+        'P7B'       => "see PKCS#7",
+        'PCT'       => "Private Communications Transport",
+        'PACE'      => "Password Authenticated Connection Establishment",
+        'PAKE'      => "Password Authenticated Key Exchange",
+        'PBE'       => "Password Based Encryption",
+        'PBKDF2'    => "Password Based Key Derivation Function",
+        'PC'        => "Policy Constraints (certificate extension)",
+        'PCBC'      => "Propagating Cipher Block Chaining",
+        'PCFB'      => "Periodic Cipher Feedback Mode",
+        'PEM'       => "Privacy Enhanced Mail",
+        'PES'       => "Proposed Encryption Standard",
+        'PFS'       => "Perfect Forward Secrecy",
+        'PFX'       => "see PKCS#12",
+#       'PFX'       => "Personal Information Exchange", # just for info
+        'PGP'       => "Pretty Good Privacy",
+        'PII'       => "Personally Identifiable Information",
+        'PKCS'      => "Public Key Cryptography Standards",
+        'PKCS1'     => "PKCS #1: RSA Encryption Standard",
+        'PKCS3'     => "PKCS #3: RSA Encryption Standard on how to implement the Diffie-Hellman key exchange protocol",
+        'PKCS5'     => "PKCS #5: RSA Encryption Standard on how to derive cryptographic keys from a password",
+        'PKCS6'     => "PKCS #6: RSA Extended Certificate Syntax Standard",
+        'PKCS7'     => "PKCS #7: RSA Cryptographic Message Syntax Standard",
+        'PKCS8'     => "PKCS #8: RSA Private-Key Information Syntax Standard",
+        'PKCS10'    => "PKCS #10: Describes a standard syntax for certification requests",
+        'PKCS11'    => "PKCS #11: RSA Cryptographic Token Interface Standard (keys in hardware devices, cards)",
+        'PKCS12'    => "PKCS #12: RSA Personal Information Exchange Syntax Standard (public + private key stored in files)",
+        'PKI'       => "Public Key Infrastructure",
+        'PKIX'      => "Internet Public Key Infrastructure Using X.509",
+        'PM'        => "Policy Mappings (certificate extension)",
+        'PMAC'      => "Parallelizable MAC (by Phillip Rogaway)",
+        'Poly1305-AES'  => "MAC (by D. Bernstein)",
+        'POP'       => "Proof of Possession",
+        'Poodle'    => "Padding Oracle On Downgraded Legacy Encryption",
+        'PRF'       => "pseudo-random function",
+        'PRNG'      => "pseudo-random number generator",
+        'PSK'       => "Pre-shared Key",
+        'RA'        => "Registration Authority (aka Registration CA)",
+        'Rabbit'    => "stream cipher algorithm",
+        'RADIUS'    => "Remote Authentication Dial-In User Service",
+        'Radix-64'  => "alias for Base-64",
+        'RBG'       => "Random Bit Generator",
+        'RC2'       => "Rivest Cipher 2, block cipher by Ron Rivest (64-bit blocks)",
+        'RC4'       => "Rivest Cipher 4, stream cipher (aka Ron's Code)",
+        'RC5'       => "Rivest Cipher 5, block cipher (32-bit word)",
+        'RC5-64'    => "Rivest Cipher 5, block cipher (64-bit word)",
+        'RC6'       => "Rivest Cipher 6",
+        'RCSU'      => "Reuters' Compression Scheme for Unicode (aka SCSU)",
+        'Rijndael'  => "symmetric block cipher algorithm",
+        'RIPEMD'    => "RACE Integrity Primitives Evaluation Message Digest",
+        'RMAC'      => "block cipher authentication mode",
+        'RNG'       => "Random Number Generator",
+        'ROT-13'    => "see XOR",
+        'RTP'       => "Real-time Transport Protocol",
+        'RSA'       => "Rivest Sharmir Adelman (public key cryptographic algorithm)",
+        'RSS-14'    => "Reduced Space Symbology, see GS1",
+        'RTN'       => "Routing transit number",
+        'SA'        => "Subordinate Authority (aka Subordinate CA)",
+        'SAFER'     => "Secure And Fast Encryption Routine, block cipher",
+        'Salsa20'   => "stream cipher",
+        'SAM'       => "syriac abbreviation mark",
+        'SAN'       => "Subject Alternate Name",
+        'SBCS'      => "single-byte character set",
+        'SCEP'      => "Simple Certificate Enrollment Protocol",
+        'SCSU'      => "Standard Compression Scheme for Unicode (compressed UTF-16)",
+        'SCSV'      => "Signaling Cipher Suite Value",
+        'SCVP'      => "Server-Based Certificate Validation Protocol",
+        'SDES'      => "Security Description Protokol",
+        'SEED'      => "128-bit Symmetric Block Cipher",
+        'Serpent'   => "symmetric key block cipher (128 bit)",
+        'SGC'       => "Server-Gated Cryptography",
+        'SHA'       => "Secure Hash Algorithm",
+        'SHA-0'     => "Secure Hash Algorithm (insecure version before 1995)",
+        'SHA-1'     => "Secure Hash Algorithm (since 1995)",
+        'SHA-2'     => "Secure Hash Algorithm (since 2002)",
+        'SHA-224'   => "Secure Hash Algorithm (224 bit)",
+        'SHA-256'   => "Secure Hash Algorithm (256 bit)",
+        'SHA-384'   => "Secure Hash Algorithm (384 bit)",
+        'SHA-512'   => "Secure Hash Algorithm (512 bit)",
+        'SHA1'      => "alias for SHA-1 (160 bit)",
+        'SHA2'      => "alias for SHA-2 (224, 256, 384 or 512 bit)",
+        'SHS'       => "Secure Hash Standard",
+        'SIA'       => "Subject Information Access (certificate extension)",
+        'SIC'       => "Segmented Integer Counter (alias for CTR)",
+        'Skein'     => "hash function",
+        'SKID'      => "subject key ID (certificate extension)",
+        'Skipjack'  => "block cipher encryption algorithm specified as part of the Fortezza",
+        'Snefu'     => "hash function",
+        'SNI'       => "Server Name Indication",
+        'SNOW'      => "word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )",
+        'SPDY'      => "Google's application-layer protocol on top of SSL",
+        'SPN'       => "Substitution-Permutation Network",
+        'Square'    => "block cipher",
+        'SRP'       => "Secure Remote Password protocol",
+        'SRTP'      => "Secure RTP",
+        'SSL'       => "Secure Sockets Layer",
+        'SSLv2'     => "Secure Sockets Layer Version 2",
+        'SSLv3'     => "Secure Sockets Layer Version 3",
+        'SSP'       => "Security Support Provider",
+        'SSPI'      => "Security Support Provider Interface",
+        'SST'       => "Serialized Certificate Store format",
+        'STS'       => "Strict Transport Security",
+        'STS '      => "Station-to-Station protocol",
+        'TACK'      => "Trust Assertions for Certificate Keys",
+        'TCB'       => "Trusted Computing Base",
+        'TDEA'      => "Tripple DEA",
+        'TEA'       => "Tiny Encryption Algorithm",
+        'TEK'       => "Traffic Encryption Key",
+        'Tiger'     => "hash function",
+        'TIME'      => "Timing Info-leak Made Easy (Exploit SSL/TLS)",
+#        'TIME'      => "A Perfect CRIME? TIME Will Tell",
+        'Threefish' => "hash function",
+        'TMAC'      => "Two-Key CMAC, variant of CBC-MAC",
+        'TOCTOU'    => "Time-of-check, time-of-use",
+        'TOFU'      => "Trust on First Use",
+        'TR-02102'  => "Technische Richtlinie 02102 (des BSI)",
+        'TSK'       => "TACK signing key",
+        'TSP'       => "trust-Management Service Provider",
+        'TLS'       => "Transport Layer Security",
+        'TLSA'      => "TLS Trus Anchors",
+        'TLSv1'     => "Transport Layer Security version 1",
+        'TSK'       => "Transmission Security Key",
+        'TTP'       => "trusted Third Party",
+        'Twofish'   => "symmetric key block cipher (128 bit)",
+        'UC'        => "Unified Communications (SSL Certificate using SAN)",
+        'UCC'       => "Unified Communications Certificate (rarley used)",
+        'UMAC'      => "Universal hashing MAC; optimized for 32-bit architectures",
+        'VMAC'      => "Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)",
+        'VMPC'      => "stream cipher",
+        'WHIRLPOOL' => "hash function",
+        'X.680'     => "X.680: ASN.1",
+        'X.509'     => "X.509: The Directory - Authentication Framework",
+        'X680'      => "X.680: ASN.1",
+        'X509'      => "X.509: The Directory - Authentication Framework",
+        'XCBC'      => "variant of CMAC",
+        'XCBC-MAC'  => "same as XCBC",
+        'XKMS'      => "XML Key Management Specification",
+        'XMACC'     => "counter-based XOR-MAC",
+        'XMACR'     => "radomized XOR-MAC",
+        'XMLSIG'    => "XML-Signature Syntax and Processing",
+        'XTEA'      => "extended Tiny Encryption Algorithm",
+        'XUDA'      => "Xcert Universal Database API",
+        'XXTEA'     => "enhanced/corrected Tiny Encryption Algorithm",
+        'ZLIB'      => "Lossless compression file format",
+        'ZSK'       => "Zone Signing Key", # DNSSEC
+    },
+
+    # RFC 2246:  TLS Version 1
+    # RFC 4346:  TLS Version 1.1
+    # RFC 5246:  TLS Version 1.2  http://tools.ietf.org/html/rfc5346
+    # RFC 2412: OAKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')
+    #           alle *DH* sind im Prinzip PFS.
+    #           wird manchmal zusaetzlich mit DHE bezeichnet, wobei E für ephemeral
+    #           also flüchtige, vergängliche Schlüssel steht
+    #           D.H. ECDHE_* und DHE_* an den Anfang der Cipherliste stellen, z.B.
+    #                TLS_ECDHE_RSA_WITH_RC4_128_SHA
+    #                TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+    #                TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+    #                TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA 
+    #           http://en.wikipedia.org/wiki/Perfect_forward_secrecy
+    # RFC 2818: ? (Namenspruefung)
+    # RFC 2712: TLSKRB: Addition of Kerberos Cipher Suites to Transport Layer Security (TLS)
+    # RFC 2986: PKCS#10
+    # RFC 5967: PKCS#10
+    # RFC 3268:  TLSAES: Advanced Encryption Standard (AES) Ciphersuites for Transport Layer Security (TLS)
+    # RFC 5081: TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication
+    # RFC 4279:  TLSPSK: Pre-Shared Key Ciphersuites for Transport Layer Security (TLS)
+    # RFC 4492:  TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer Security (TLS)
+    # RFC 3749: TLS Compression Method http://tools.ietf.org/html/rfc3749
+    # RFC 3943: TLS Protocol Compression Using Lempel-Ziv-Stac (LZS) http://tools.ietf.org/html/rfc3943
+    # RFC 3268:  TLS Version 1 AES
+    # RFC 4132:  TLS Version 1 Camellia
+    # RFC 4162: TLS Version 1 SEED
+    # RFC 3546: TLS Extensions
+    # RFC 4366: TLS Extensions
+    #               AKID - authority key identifier
+    #               Server name Indication (SNI): server_name
+    #               Maximum Fragment Length Negotiation: max_fragment_length
+    #               Client Certificate URLs: client_certificate_url
+    #               Trusted CA Indication: trusted_ca_keys
+    #               Truncated HMAC: truncated_hmac
+    #               Certificate Status Request (i.e. OCSP stapling): status_request
+    #               Error Alerts
+    # RFC 5764: TLS Extensions SRTP
+    # RFC 4366: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
+    # RFC 6066: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling) TLS Certificate Status Request
+    # RFC 6066: TLS Extensions: Extension Definitions
+    #                PkiPath
+    # RFC 6066: TLS Extensions: Heartbeat https://tools.ietf.org/html/rfc6520
+    # RFC 4749: TLS Compression Methods
+    # RFC 5077: TLS session resumption
+    # RFC 4347: DTLS Datagram TLS
+    # RFC 2246: TLS protocol version 1.0 http://tools.ietf.org/html/rfc2246
+    # RFC 6101: SSL protocol version 3.0 http://tools.ietf.org/html/rfc6101
+    # RFC 6460: ?
+    # RFC 6125: Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)
+    # RFC 4210: X509 PKI Certificate Management Protocol (CMP)
+    # RFC 3739: x509 PKI Qualified Certificates Profile; EU Directive 1999/93/EC
+    # RFC 4158: X509 PKI Certification Path Building
+    # RFC 5055: Server-Based Certificate Validation Protocol (SCVP)
+    # RFC 2560: Online Certificate Status Protocol (OCSP)
+    # RFC 5019: simplified RFC 2560
+    # RFC 4387: X509 PKI Operational Protocols: Certificate Store Access via HTTP
+    # RFC 5746: TLS Renegotiation Indication Extension http://tools.ietf.org/html/rfc5746,
+
+    # AIA  : {http://www.startssl.com/certs/sub.class4.server.ca.crt}
+    # CDP  : {http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl}
+    # OCSP : http://ocsp.startssl.com/sub/class4/server/ca
+    # cat some.crl | openssl crl -text -inform der -noout
+    # OCSP response "3" (TLS 1.3) ==> certifcate gueltig
+    # SPDY - SPDY Protocol : http://www.chromium.org/spdy/spdy-protocol
+    # False Start: https://www.imperialviolet.org/2012/04/11/falsestart.html
+    #              https://technotes.googlecode.com/git/falsestart.html
+    # ALPN : http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
+    # ALPN, NPN: https://www.imperialviolet.org/2013/03/20/alpn.html
+    # NPN  : https://technotes.googlecode.com/git/nextprotoneg.html
+    # HSTS : http://tools.ietf.org/html/draft-hodges-strict-transport-sec-02
+    #        https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
+    #        Strict-Transport-Security: max-age=16070400; includeSubDomains
+    #        Apache config:
+    #             Header set Strict-Transport-Security "max-age=16070400; includeSubDomains"
+    # SNI apache: https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
+    #        SSLStrictSNIVHostCheck, which controls whether to allow non SNI clients to access a name-based virtual host. 
+    #        when client provided the hostname using SNI, the new environment variable SSL_TLS_SNI
+    # TLS session resumption problem with session ticket
+    #        see https://www.imperialviolet.org/2011/11/22/forwardsecret.html
+    #        "Since the session ticket contains the state of the session, and
+    #         thus keys that can decrypt the session, it too must be protected
+    #         by ephemeral keys. But, in order for session resumption to be
+    #         effective, the keys protecting the session ticket have to be kept
+    #         around for a certain amount of time: the idea of session resumption
+    #         is that you can resume the session in the future, and you can't
+    #         do that if the server can't decrypt the ticket!
+    #         So the ephemeral, session ticket keys have to be distributed to
+    #         all the frontend machines, without being written to any kind of
+    #         persistent storage, and frequently rotated."
+    #        see also https://www.imperialviolet.org/2013/06/27/botchingpfs.html
+    #
+    # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
+    #
+    # SCSV   https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
+); # %man_text
 
 ## definitions: internal functions
 ## -------------------------------------
@@ -222,7 +677,7 @@ sub man_table($) {
     my $sep = $types{$typ}->[1];
     _man_dbx("man_table($typ) ...");
     _man_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
-    if ($typ eq 'abbr')  { _man_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}}); }
+    if ($typ eq 'abbr')  { _man_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $man_text{'glossar'}->{$_}) foreach (sort keys %{$man_text{'glossar'}}); }
     if ($typ eq 'regex') { _man_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
     if ($typ eq 'score') { _man_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
