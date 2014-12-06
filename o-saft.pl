@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.317 14/12/06 14:26:49";
+my  $SID    = "@(#) yeast.pl 1.318 14/12/06 22:55:12";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1043,7 +1043,8 @@ our %cmd = (
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
-    'sni_name'      => "",      # name to be used for SNI mode connection; hostname if empty
+    'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
+                                # Note: default=1 as this is behaviour for Net::SSLinfo < 1.85
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
@@ -5099,7 +5100,7 @@ push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
     $Net::SSLinfo::use_sclient = $cmd{'extsclient'};
     $Net::SSLinfo::openssl     = $cmd{'openssl'};
     $Net::SSLinfo::use_http    = $cfg{'usehttp'};
-    $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
+    $Net::SSLinfo::use_SNI     = $cfg{'sni_name'};
     $Net::SSLinfo::use_nextprot= $cfg{'use_nextprot'};
     $Net::SSLinfo::use_extdebug= $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect=$cfg{'use_reconnect'};
@@ -5296,7 +5297,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     $? = 0;
 
     # print DNS stuff
-    if (($info + $check) > 0) {
+#    if (($info + $check) > 0) {
         _y_CMD("+info || +check");
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
@@ -5308,7 +5309,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             }
             printruler();
         }
-    }
+#    }
 
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
@@ -5378,7 +5379,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
             Net::SSLinfo::do_ssl_close($host, $port);
         }
-        $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
+        $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     }
 
