@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.315 14/12/06 10:06:05";
+my  $SID    = "@(#) yeast.pl 1.316 14/12/06 12:55:35";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1028,6 +1028,7 @@ our %cmd = (
     'starttls'      => "",      # use STARTTLS if not empty
                                 # protocol to be used with STARTTLS; default: SMTP
                                 # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+    'starttlsDelay' => 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
@@ -4509,6 +4510,7 @@ while ($#argv >= 0) {
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}  = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'TLSDELAY') { $cfg{'starttlsDelay'} = $arg; $typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
@@ -4669,7 +4671,7 @@ while ($#argv >= 0) {
     # Following checks use exact matches with 'eq' or regex matches with '=~'
 
     #{ options
-    #!# You may read the lines as table with colums like:
+    #!# You may read the lines as table with columns like:
     #!#--------+------------------------+----------------------------
     #!#           argument to check       what to do
     #!#--------+------------------------+----------------------------
@@ -4694,6 +4696,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--proxypass')         { $typ = 'PPASS';           }
     if ($arg eq  '--proxyauth')         { $typ = 'PAUTH';           }
     if ($arg =~ /^--?starttls$/i)       { $typ = 'STARTTLS';        }
+    if ($arg =~ /^--starttlsdelay$/i)   { $typ = 'TLSDELAY';        }
     # options form other programs for compatibility
     if ($arg =~ /^--?nofailed$/)        { $cfg{'enabled'}   = 0;    } # sslscan
     if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
@@ -4770,7 +4773,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
     if ($arg eq  '--nomd5cipher')       { $cfg{'use_md5cipher'}=0;  }
     if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'}=1;  }
-    if ($arg eq  '--tab')               { $text{'separator'} = "\t";} # TAB character
+    if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
@@ -4778,7 +4781,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
     if ($arg =~ /^--lib(?:path)?$/)     { $typ = 'LIB';             }
     if ($arg eq  '--envlibvar')         { $typ = 'ENV';             }
-    if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       }
+    if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
     if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
@@ -4790,8 +4793,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     # options for Net::SSLhello
-    if ($arg ~= /^--no(?:dns)?mx/)      { $cfg{'usemx'}    = 0;     }
-    if ($arg ~= /^--(?:dns)?mx/)        { $cfg{'usemx'}    = 1;     }
+    if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
+    if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
     if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
@@ -5317,6 +5320,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::usemx       = $cfg{'usemx'};
             $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
             $Net::SSLhello::starttlsType= $cfg{'starttls'};
+            $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
             $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
             $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
             $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
