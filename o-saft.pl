@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.316 14/12/06 12:55:35";
+my  $SID    = "@(#) yeast.pl 1.317 14/12/06 14:26:49";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1033,7 +1033,7 @@ our %cmd = (
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
     'experimental'  => 0,       # 1: use experimental functionality
-    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
+    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
     'usedns'        => 1,       # 1: make DNS reverse lookup
@@ -1043,6 +1043,7 @@ our %cmd = (
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
+    'sni_name'      => "",      # name to be used for SNI mode connection; hostname if empty
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
@@ -4506,6 +4507,7 @@ while ($#argv >= 0) {
         if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
@@ -4792,6 +4794,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
+    if ($arg eq  '--sniname')           { $typ = 'SNINAME';         }
     # options for Net::SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
@@ -5318,6 +5321,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::experimental= $cfg{'experimental'};
             $Net::SSLhello::usesni      = $cfg{'usesni'};
             $Net::SSLhello::usemx       = $cfg{'usemx'};
+            $Net::SSLhello::sni_name    = $cfg{'sni_name'};
             $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
             $Net::SSLhello::starttlsType= $cfg{'starttls'};
             $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
