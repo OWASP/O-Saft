@@ -5297,7 +5297,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     $? = 0;
 
     # print DNS stuff
-#    if (($info + $check) > 0) {
+    if (($info + $check) > 0) {
         _y_CMD("+info || +check");
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
@@ -5309,7 +5309,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             }
             printruler();
         }
-#    }
+    }
 
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
