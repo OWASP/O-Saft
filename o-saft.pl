@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.314 14/12/04 01:11:46";
+my  $SID    = "@(#) yeast.pl 1.315 14/12/06 10:06:05";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1036,6 +1036,7 @@ our %cmd = (
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
     'usedns'        => 1,       # 1: make DNS reverse lookup
+    'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttp'       => 1,       # 1: make HTTP request
     'use_md5cipher' => 1,       # 0: do not use *-MD5 ciphers except for SSLv2 with +cipher
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
@@ -1179,7 +1180,8 @@ our %cmd = (
     'out_score'     => 0,       # print scoring; default for +check
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'pass_options'  => "",      # options to be passeed thru to other programs
-    'hosts'         => [],      # list of hosts:port to be processed
+    'mx_domains'    => [],      # list of mx-domain:port to be processed
+    'hosts'         => [],      # list of host:port to be processed
     'host'          => "",      # currently scanned host
     'ip'            => "",      # currently scanned host's IP
     'IP'            => "",      # currently scanned host's IP (human readable, doted octed)
@@ -4788,6 +4790,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     # options for Net::SSLhello
+    if ($arg ~= /^--no(?:dns)?mx/)      { $cfg{'usemx'}    = 0;     }
+    if ($arg ~= /^--(?:dns)?mx/)        { $cfg{'usemx'}    = 1;     }
     if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
@@ -5310,6 +5314,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
             $Net::SSLhello::experimental= $cfg{'experimental'};
             $Net::SSLhello::usesni      = $cfg{'usesni'};
+            $Net::SSLhello::usemx       = $cfg{'usemx'};
             $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
             $Net::SSLhello::starttlsType= $cfg{'starttls'};
             $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
