@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.84 14/11/17 12:52:18',
+    SID         => '@(#) Net::SSLinfo.pm 1.85 14/12/06 22:52:22',
 };
 
 ######################################################## public documentation #
@@ -143,10 +143,11 @@ If disabled, the values returned will be: #
 
 =item $Net::SSLinfo::use_SNI
 
-If set to "1", the specified hostname will be used for SNI. This is needed
-if there're multiple SSL hostnames on the same IP address.  If no hostname 
-given, the hostname from PeerAddr will be used.  This will fail if only an 
-IP was given.
+The specified string will be used as hostname for SNI.  If set to "1", the
+given hostname will be used for SNI.  This is needed if there are multiple
+SSL hostnames on the same IP address. If empty string  or set to  "0", the
+hostname from  PeerAddr  will be used.  The latter will fail if only an IP
+was given.
 If set to "0" no SNI will be used. This can be used to check if the target
 supports SNI; default: 1
 
@@ -418,7 +419,7 @@ $Net::SSLinfo::use_extdebug= 1; # 0 do not use openssl with -tlsextdebug option
 $Net::SSLinfo::use_nextprot= 1; # 0 do not use openssl with -nextprotoneg option
 $Net::SSLinfo::use_reconnect=1; # 0 do not use openssl with -reconnect option
 $Net::SSLinfo::sclient_opt =""; # option for openssl s_client command
-$Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target
+$Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target; 0: do not use SNI; string: use this as hostname for SNI
 $Net::SSLinfo::use_http    = 1; # 1 make HTTP request and retrive additional data
 $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 1 don't collect data from target's certificate
@@ -989,8 +990,8 @@ sub do_ssl_open($$$) {
             # supported, so we skip all versions found in  $sslversions
             next if ($sslversions =~ m/^\s*$/); # no version given, leave default
             next if (grep(/^$ssl$/, split(" ", $sslversions)));
-            if (defined $_SSLmap{$ssl}[1]) {    # if there is a bitmask, disable this version
-                _trace("do_ssl_open: OP_NO_$ssl"); # NOTE: constant name *not* as in ssl.h
+            if (defined $_SSLmap{$ssl}[1]) {        # if there is a bitmask, disable this version
+                _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
                 Net::SSLeay::CTX_set_options($ctx, $_SSLmap{$ssl}[1]) if(defined $_SSLmap{$ssl}[1]);
             }
         }
@@ -1010,17 +1011,20 @@ sub do_ssl_open($$$) {
                 Net::SSLeay::set_fd($ssl, fileno($socket))     or {$err = $!} and last;
         $src = 'Net::SSLeay::set_cipher_list(' . $cipher .')';
                 Net::SSLeay::set_cipher_list($ssl, $cipher)    or {$err = $!} and last;
-        if ($Net::SSLinfo::use_SNI == 1) {
+        $Net::SSLinfo::use_SNI =~ s/\s//g;  # ensure no spaces
+        if ($Net::SSLinfo::use_SNI !~ m/^0?$/) {    # no SNI if 0 or empty string
             _trace("do_ssl_open: SNI");
+            my $name = $Net::SSLinfo::use_SNI;
+               $name = $host if ($Net::SSLinfo::use_SNI =~ m/^1$/); # old style, Net::SSLinfo < 1.85
             if (1.45 <= $Net::SSLeay::VERSION) {
                 $src = 'Net::SSLeay::set_tlsext_host_name()';
-                Net::SSLeay::set_tlsext_host_name($ssl, $host) or {$err = $!} and last;
+                Net::SSLeay::set_tlsext_host_name($ssl, $name) or {$err = $!} and last;
             } else {
                 # quick&dirty instead of:
                 #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
                 #  use constant TLSEXT_NAMETYPE_host_name    => 0
                 $src = 'Net::SSLeay::ctrl()';
-                Net::SSLeay::ctrl($ssl, 55, 0, $host)          or {$err = $!} and last;
+                Net::SSLeay::ctrl($ssl, 55, 0, $name)          or {$err = $!} and last;
                 #ToDo: ctrl() sometimes fails but does not return errors, reason yet unknown
             }
         }
