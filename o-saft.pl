@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.318 14/12/06 22:55:12";
+my  $SID    = "@(#) yeast.pl 1.319 14/12/06 23:31:05";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -282,9 +282,10 @@ my $legacy  = "";   # the legacy mode used in main
 my $verbose = 0;    # verbose mode used in main
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
-my $info    = 0;    # set to 1 if +info  or +sni_check was used
+my $info    = 0;    # set to 1 if +info
 my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
+my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
 our @results= ();   # list of checked ciphers: [SSL, ciper suite name, yes|no]
 our %data   = (     # values from Net::SSLinfo, will be processed in print_data()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
@@ -4845,6 +4846,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+info')   { $info  = 1; } # needed 'cause +info and ..
     if ($arg eq  '+quick')  { $quick = 1; } # .. +quick convert to list of commands
     if ($arg eq  '+check')  { $check = 1; $cfg{'out_score'} = 1; } #
+    if ($arg =~ /^\+sni/)   { $cmdsni= 1; }
     # You may read the lines as table with colums like:
     #  +---------+--------------------+-----------------------+-----------------
     #             argument to check     aliased to            # traditional name
@@ -4876,7 +4878,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
-    if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}}; $info = 1;next; }
+    if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+traceSUB'){
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
@@ -5297,8 +5299,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     $? = 0;
 
     # print DNS stuff
-    if (($info + $check) > 0) {
-        _y_CMD("+info || +check");
+    if (($info + $check + $cmdsni) > 0) {
+        _y_CMD("+info || +check || +sni*");
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
             print_line($legacy, $host, $port, 'host-host', $text{'host-host'}, $host);
