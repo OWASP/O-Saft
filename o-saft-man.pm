@@ -51,6 +51,8 @@ if (open(DATA, $ich)) {
         }
         s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d\))/L&$1&/g;
         s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
+        s/  (L&[^&]*&)/ $1/g;           # squeeze leading double space (pretty print)
+        s/(L&[^&]*&)  /$1 /g;           # squeeze trailing double space (pretty print)
         if (m/^ /) {                    # add internal links; quick&dirty list here
             s/ ((?:DEBUG|RC|USER)-FILE)/ X&$1&/g;
             s/ (CONFIGURATION (?:FILE|OPTIONS))/ X&$1&/g;
