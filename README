@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 14.11.14  )
+                                                          Version: 14.12.07  )
 	O-Saft  - OWASP SSL audit for testers                               (
                   OWASP SSL advanced forensic tool                           )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -30,6 +30,8 @@
 (          Net::SSLeay          (prefered >= 1.51)
  )         IO::Socket::SSL      (prefered >= 1.37)
 (          IO::Socket::INET     (prefered >= 1.31)
+ )         Net::DNS             (for --mx option only)
+(
  )
 (       There are no dependencies for checkAllCiphers.pl, so the test of all
  )      ciphers (aka +cipherall) will work with it.
@@ -57,7 +59,7 @@
  )      o-saft.pl +quick your.tld
 (       o-saft.pl +cipher    your.tld
  )      o-saft.pl +cipherall your.tld
-(       o-saft.pl +help=commands
+(       o-saft.pl --help=commands
  )
 (       Project home is https://www.owasp.org/index.php/Projects/O-Saft
  )      Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
