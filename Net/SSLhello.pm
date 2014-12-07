@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '14.11.19';
+    $VERSION    = '14.12.07';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -1405,7 +1405,7 @@ sub openTcpSSLconnection ($$) {
     my $firstMessage = "";
     my $secondMessage = "";
     my $starttlsType=0; # SMTP 
-#   14 Types defined: 0:SMTP, 1:IMAP, 2:IMAP_CAPACITY, 3:IMAP_2, 4:POP3, 5:POP3_CAPACITY, 6:FTPS, 7:LDAP, 8:RDP, 9:RDP_SSL, 10:XMPP, 11:ACAP, 12:IRC, 13: IRC_CAPACITY
+#   15 Types defined: 0:SMTP, 1:SMTP_2, 2:IMAP, 3:IMAP_CAPACITY, 4:IMAP_2, 5:POP3, 6:POP3_CAPACITY, 7:FTPS, 8:LDAP, 9:RDP, 10:RDP_SSL, 11:XMPP, 12:ACAP, 13:IRC, 14:IRC_CAPACITY
 
     my @starttls_matrix = 
         ( ["SMTP", 
@@ -1414,9 +1414,20 @@ sub openTcpSSLconnection ($$) {
             ".*?(?:^|\\n)250\\s",                       # Phase3: receive '250 smtp.server.com Hello o-saft.localhost'
             "STARTTLS\r\n",                             # Phase4: send    'STARTTLS'
             ".*?(?:^|\\n)220\\s",                       # Phase5: receive '220'
-            ".*?(?:^|\\n)421\\s",                       # Error1: temporary unreachable (too many connections); +454?
+            ".*?(?:^|\\n)(?:421|450)\\s",               # Error1: temporary unreachable (too many connections); 450 Traffic is being throttled (connects per ip limit: ...), +454?
             ".*?(?:^|\\n)4[57]4\\s",                    # Error2: This SSL/TLS-Protocol is not supported 454 or 474
             ".*?(?:^|\\n)(?:451|50[023]|554)\\s",       # Error3: fatal Error/STARTTLS not supported: '500 Syntax error, command unrecognized', '502 Command not implemented', '503 TLS is not allowed',  554 PTR lookup failure ...
+          ],
+          ["SMTP_2",                                    # for Servers that do *NOT* respond compliantly to RFC 821, or are too slow to get the last line:
+                                                        # 'three-digit code' <SPACE> one line of text <CRLF> (at least the last line needs a Space after the numer, according to the RFC)
+            ".*?(?:^|\\n)220",                          # Phase1: receive '220-smtp.server.com Simple Mail Transfer Service Ready' or '220 smtp.server.com ....'
+            "EHLO o-saft.localhost\r\n",                # Phase2: send    'EHLO o-saft.localhost\r\n'         
+            ".*?(?:^|\\n)250",                          # Phase3: receive '250-smtp.server.com Hello o-saft.localhost'
+            "STARTTLS\r\n",                             # Phase4: send    'STARTTLS'
+            ".*?(?:^|\\n)220",                          # Phase5: receive '220-'
+            ".*?(?:^|\\n)(?:421|450)",                  # Error1: temporary unreachable (too many connections); 450-Traffic is being throttled (connects per ip limit: ...), +454?
+            ".*?(?:^|\\n)4[57]4",                       # Error2: This SSL/TLS-Protocol is not supported 454-or 474-
+            ".*?(?:^|\\n)(?:451|50[023]|554)",          # Error3: fatal Error/STARTTLS not supported: '500-Syntax error, command unrecognized', '502-Command not implemented', '503-TLS is not allowed',  554-PTR lookup failure ...
           ],
           ["IMAP",                                      # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             ".*?(?:^|\\n)\\*\\s*OK.*?IMAP(?:\\s|\\d)",  # Phase1: receive '* OK IMAP'
@@ -1426,7 +1437,7 @@ sub openTcpSSLconnection ($$) {
             ".*?(?:^|\\n)(?:\\*|a001)\\s*OK\\s",        # Phase5: receive 'OK completed'  
             "",                                         # Error1: temporary unreachable (too many connections);
             "",                                         # Error2: This SSL/TLS-Protocol is not supported 
-            ".*?(?:^|\\n)(?:\\*|a00\\d)\\s*(?:BAD|NO)\\s.*?(?:invalid command|TLS.*?(?:isn\\'t|not)|\\s+no\\s+.*?(?:SSL|TLS)|authoriz)", # Error3: fatal Error/STARTTLS not supported
+            ".*?(?:^|\\n)(?:\\*|a00\\d)\\s*(?:BAD|NO)\\s.*?(?:invalid.+?command|unrecognized.+?command|TLS.*?(?:isn\\'t|not)|\\s+no\\s+.*?(?:SSL|TLS)|authoriz)", # Error3: fatal Error/STARTTLS not supported
           ],
           ["IMAP_CAPACITY",                             # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             ".*?(?:^|\\n)\\*\\s*OK.*?IMAP(?:\\s|\\d)",  # Phase1: receive '* OK IMAP'
@@ -1436,7 +1447,7 @@ sub openTcpSSLconnection ($$) {
             ".*?(?:^|\\n)(?:\\*|a002)\\s*OK\\s",        # Phase5: receive 'OK completed' 
             "",                                         # Error1: temporary unreachable (too many connections);
             "",                                         # Error2: This SSL/TLS-Protocol is not supported 
-            ".*?(?:^|\\n)(?:\\*|a00\\d)\\s*(?:BAD|NO)\\s.*?(?:invalid command|TLS.*?(?:isn\\'t|not)|\\s+no\\s+.*?(?:SSL|TLS)|authoriz)", # Error3: fatal Error/STARTTLS not supported
+            ".*?(?:^|\\n)(?:\\*|a00\\d)\\s*(?:BAD|NO)\\s.*?(?:invalid.+?command|unrecognized.+?command|TLS.*?(?:isn\\'t|not)|\\s+no\\s+.*?(?:SSL|TLS)|authoriz)", # Error3: fatal Error/STARTTLS not supported
           ],
           ["IMAP_2",                                    # found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             ".*?(?:^|\\n)\\*\\sOK.*?IMAP(?:\\s|\\d)",   # Phase1: receive '* OK IMAP'
@@ -1446,7 +1457,7 @@ sub openTcpSSLconnection ($$) {
             ".*?(?:^|\\n). OK\\s",                      # Phase5: receive '. OK completed'
             "",                                         # Error1: temporary unreachable (too many connections);
             "",                                         # Error2: This SSL/TLS-Protocol is not supported 
-            ".*?(?:^|\\n)(?:\\*|a00\\d)\\s*(?:BAD|NO)\\s.*?(?:invalid command|TLS.*?(?:isn\\'t|not)|\\s+no\\s+.*?(?:SSL|TLS)|authoriz)", # Error3: fatal Error/STARTTLS not supported
+             ".*?(?:^|\\n)(?:\\*|a00\\d)\\s*(?:BAD|NO)\\s.*?(?:invalid.+?command|unrecognized.+?command|TLS.*?(?:isn\\'t|not)|\\s+no\\s+.*?(?:SSL|TLS)|authoriz)", # Error3: fatal Error/STARTTLS not supported
           ],
           ["POP3",                                      # according RFC2595; found good hints at 'https://github.com/iSECPartners/sslyze/blob/master/utils/SSLyzeSSLConnection.py'
             ".*?(?:^|\\n)\\+\\s*OK(?:\\s+|.*?ready|\\r|\\n)",   # Phase1: receive '+ OK...ready.'
@@ -1572,12 +1583,12 @@ sub openTcpSSLconnection ($$) {
         if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
             _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-            if ( grep(/^$starttlsType$/,('11', '12', '13') )) { # ('11', '12', ...) -> Use of an experimental starttls-Type
+            if ( grep(/^$starttlsType$/,('12', '13', '14') )) { # ('12', '13', ...) -> Use of an experimental starttls-Type
                 if  ($Net::SSLhello::experimental >0) { # experimental function is are  activated
                     _trace_("\n");
                     _trace ("openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
                 } else { # use of experimental functions is not permitted (option is not activated)
-                    if ( grep(/^$starttlsType$/,('11', '12', '13') )) { # experimental and untested
+                    if ( grep(/^$starttlsType$/,('12', '13', '14') )) { # experimental and untested
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                     } else { # tested, but still experimental # experimental but tested 
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
