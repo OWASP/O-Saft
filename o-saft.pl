@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.321 14/12/07 20:25:21";
+my  $SID    = "@(#) yeast.pl 1.322 14/12/07 22:34:47";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1108,8 +1108,7 @@ our %cmd = (
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
-                        0x03000001,   0x03000002, 0x03000007 .. 0x0300002C,
-                        0x030000FF,
+                        0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
 # TODO:                 0x02000000,   0x02FFFFFF,   # increment even only
 # TODO:                 0x03000000,   0x03FFFFFF,   # increment  odd only
