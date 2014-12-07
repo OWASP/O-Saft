@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-11-19";
+my $VERSION = "2014-12-07";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -54,6 +54,16 @@ OPTIONS
     -h=HOST     dito.
     --port=PORT use PORT for following hosts (default is 443)
     -p=PORT     dito.
+    --proxy=PROXYHOST:PROXYPORT
+                make connection through proxy on PROXYHOST:PROXYPORT
+    --proxyhost=PROXYHOST
+                make connection through proxy on PROXYHOST
+    --proxyport=PROXYPORT
+                make connection through proxy on PROXYHOST:PROXYPORT
+    --proxyuser=PROXYUSER (not yet implemented)
+                user to authenticate at PROXYHOST
+    --proxypass=PROXYPAS (not yet implemented)S
+                passowrd to authenticate at PROXYUSER
     --mx        make a MX-Record DNS lookup for the mx-domain-name
                 (makes sense together with --STARTTLS=SMTP)
     --SSL       test for this SSL version
@@ -73,23 +83,22 @@ OPTIONS
                 (see o-saft.pl --help)
     --ssl-maxciphers=CNT
                 maximal number of ciphers sent in a sslhello (default is 64)
+    --ssl-nodataeqnocipher
+                some servers do not answer if none of the ciphers is supported
+                This handling is by default on. Use '--no-ssl-nodataeqnocipher' to switch it off
+    --ssl-use-ecc
+                use supported elliptic curves. Default on.
+    --ssl-use-ec-point
+                use TLS 'ec_point_formats' extension. Default on.
     --ssl-usereneg
                 use secure renegotion
     --ssl-doubel-reneg
                 use renegotion SSL Extension also for SCSV (double send)
-    --proxyhost=PROXYHOST
-                make connection through proxy on PROXYHOST
-    --proxyport=PROXYPORT
-                make connection through proxy on PROXYHOST:PROXYPORT
-    --proxyuser=PROXYUSER
-                user to authenticate at PROXYHOST
-    --proxypass=PROXYPASS
-                passowrd to authenticate at PROXYUSER
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
                 Use STARTTLS to start TLS. 
-                STARTTLS_TYPE is any of SMTP, ACAP, IMAP (IMAP_2), IRC, POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
-                (Notes: * IMAP_2 is a second way to use IMAP, like RDP_SSL for RDP
+                STARTTLS_TYPE is any of SMTP (SMTP_2), ACAP, IMAP (IMAP_2), IRC, POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
+                (Notes: * SMTP_2 and IMAP_2 are second ways to use SMTP/IMAP, like RDP_SSL for RDP
                         * SMTP: use '--mx' for checking a mail-domain instead of a host)
                 Please give us feedback (especially for FTPS, LDAP, RDP)
                 The STARTTLS_TYPEs ACAP and IRC need the '--experimental' option, and please take care!
@@ -109,7 +118,7 @@ OPTIONS
 DESCRIPTION
     This is just a very simple wrapper for the Net::SSLhello module to test
     a target for all available ciphers. It is a shortcut for
-    o-saft.pl +cipherraw YOUR-HOST
+    o-saft.pl +cipherall YOUR-HOST
 
 INSTALLATION
     checkAllCiphers.pl requires following Perl modules:
