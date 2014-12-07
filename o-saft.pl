@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.319 14/12/06 23:31:05";
+my  $SID    = "@(#) yeast.pl 1.320 14/12/07 14:03:20";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -3162,8 +3162,13 @@ sub checksni($$) {
         $checks{'hostname'}->{val}  = "";
     } else {
         $checks{'certfqdn'}->{val}  = $data{'cn_nosni'}->{val} . " <> " . $host;
-        $checks{'hostname'}->{val}  = $host . " <> " . $data{'cn_nosni'}->{val};
+        $checks{'hostname'}->{val}  = $host . " <> " . $data{'cn'}->{val}($host);
     }
+    #dbx# _dbx "host:\t\t"           . $host;
+    #dbx# _dbx "data{cn}:\t\t"       . $data{'cn'}->{val}($host);
+    #dbx# _dbx "data{cn_nosni}:\t"   . $data{'cn_nosni'}->{val};
+    #dbx# _dbx "checks{hostname}:\t" . $checks{'hostname'}->{val};
+    #dbx# _dbx "checks{certfqdn}:\t" . $checks{'certfqdn'}->{val};
 } # checksni
 
 sub checksizes($$) {
