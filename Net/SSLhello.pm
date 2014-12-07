@@ -111,10 +111,12 @@ use constant {
 $Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
 $Net::SSLhello::traceTIME    = 0;# 1=trace prints timestamp
 $Net::SSLhello::usesni       = 0;# 1 use SNI to connect to target
+$Net::SSLhello::sni_name     = "";# name to be used for SNI mode connection; hostname if empty
 $Net::SSLhello::timeout      = 1;# time in seconds
 $Net::SSLhello::retry        = 2;# number of retry when timeout
 $Net::SSLhello::usereneg     = 0;# secure renegotiation 
-$Net::SSLhello::useecc       = 1;# use Supported Elliptic Curves and ec_point_formats Extension
+$Net::SSLhello::useecc       = 1;# use 'Supported Elliptic' Curves Extension
+$Net::SSLhello::useecpoint   = 1;# use 'ec_point_formats' Extension
 $Net::SSLhello::starttls     = 0;# 1= do STARTTLS
 $Net::SSLhello::starttlsType = "SMTP";# default: SMTP
 $Net::SSLhello::starttlsDelay= 0;# STARTTLS: time to wait in Seconds (to slow down the requests)
@@ -123,6 +125,7 @@ $Net::SSLhello::proxyhost    = "";#
 $Net::SSLhello::proxyport    = "";#
 $Net::SSLhello::experimental = 0;# 0: experimental functions are protected (=not active)
 $Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
+$Net::SSLhello::max_sslHelloLen = 16388; # According RFC: 16383+5 Bytes; Max len of sslHello Messages (some implementations had issues with packets longer than 256 Bytes)
 $Net::SSLhello::noDataEqNoCipher = 1; # 1= For some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher' supported -> Do NOT abort to test next Ciphers
 
 my %RECORD_TYPE = ( # RFC 5246
@@ -970,20 +973,24 @@ sub version { # Version of SSLhello
     _trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
 #   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
 #    print "\$main::cfg\{\'trace\'\}=$main::cfg{'trace'}\n";
-     _trace2 ("        retry=$Net::SSLhello::retry\n")         if (defined($Net::SSLhello::retry));
-     _trace2 ("      timeout=$Net::SSLhello::timeout\n")       if (defined($Net::SSLhello::timeout));
-     _trace2 ("        trace=$Net::SSLhello::trace\n")         if (defined($Net::SSLhello::trace));
-     _trace2 ("    traceTIME=$main::traceTIME\n")              if (defined($main::traceTIME));
-     _trace2 ("     usereneg=$Net::SSLhello::usereneg\n")      if (defined($Net::SSLhello::usereneg));
-     _trace2 (" double_reneg=$Net::SSLhello::double_reneg\n")  if (defined($Net::SSLhello::double_reneg));
-     _trace2 ("       usesni=$Net::SSLhello::usesni\n")        if (defined($Net::SSLhello::usesni));
-     _trace2 ("     starttls=$Net::SSLhello::starttls\n")      if (defined($Net::SSLhello::starttls));
-     _trace2 (" starttlsType=$Net::SSLhello::starttlsType\n")  if (defined($Net::SSLhello::starttlsType));
-     _trace2 ("starttlsDelay=$Net::SSLhello::starttlsDelay\n") if (defined($Net::SSLhello::starttlsDelay));
-     _trace2 (" experimental=$Net::SSLhello::experimental\n")  if (defined($Net::SSLhello::experimental));
-     _trace2 ("    proxyhost=$Net::SSLhello::proxyhost\n")     if (defined($Net::SSLhello::proxyhost));
-     _trace2 ("    proxyport=$Net::SSLhello::proxyport\n")     if (defined($Net::SSLhello::proxyport));
-     _trace2 ("  max_ciphers=$Net::SSLhello::max_ciphers\n")   if (defined($Net::SSLhello::max_ciphers));
+     _trace2 ("          retry=$Net::SSLhello::retry\n")           if (defined($Net::SSLhello::retry));
+     _trace2 ("        timeout=$Net::SSLhello::timeout\n")         if (defined($Net::SSLhello::timeout));
+     _trace2 ("          trace=$Net::SSLhello::trace\n")           if (defined($Net::SSLhello::trace));
+     _trace2 ("      traceTIME=$main::traceTIME\n")                if (defined($main::traceTIME));
+     _trace2 ("       usereneg=$Net::SSLhello::usereneg\n")        if (defined($Net::SSLhello::usereneg));
+     _trace2 ("   double_reneg=$Net::SSLhello::double_reneg\n")    if (defined($Net::SSLhello::double_reneg));
+     _trace2 ("         usesni=$Net::SSLhello::usesni\n")          if (defined($Net::SSLhello::usesni));
+     _trace2 ("       sni_name=$Net::SSLhello::sni_name\n")        if (defined($Net::SSLhello::sni_name));
+     _trace2 ("         useecc=$Net::SSLhello::useecc\n")          if (defined($Net::SSLhello::useecc));
+     _trace2 ("     useecpoint=$Net::SSLhello::useecpoint\n")      if (defined($Net::SSLhello::useecpoint));
+     _trace2 ("       starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
+     _trace2 ("   starttlsType=$Net::SSLhello::starttlsType\n")    if (defined($Net::SSLhello::starttlsType));
+     _trace2 ("  starttlsDelay=$Net::SSLhello::starttlsDelay\n")   if (defined($Net::SSLhello::starttlsDelay));
+     _trace2 ("   experimental=$Net::SSLhello::experimental\n")    if (defined($Net::SSLhello::experimental));
+     _trace2 ("      proxyhost=$Net::SSLhello::proxyhost\n")       if (defined($Net::SSLhello::proxyhost));
+     _trace2 ("      proxyport=$Net::SSLhello::proxyport\n")       if (defined($Net::SSLhello::proxyport));
+     _trace2 ("    max_ciphers=$Net::SSLhello::max_ciphers\n")     if (defined($Net::SSLhello::max_ciphers));
+     _trace2 ("max_sslHelloLen=$Net::SSLhello::max_sslHelloLen\n") if (defined($Net::SSLhello::max_sslHelloLen));
      _trace2_("------------------------------------------------------------------------------------\n");
 #    _trace("_trace\n");
 #    _trace_("_trace_\n");
@@ -1025,6 +1032,7 @@ sub printCipherStringArray ($$$$$@) {
     
     if ($usesni) {
         $sni = "SNI";
+        $sni .= " ($Net::SSLhello::sni_name)" if ($Net::SSLhello::sni_name);
     } else {
         $sni = "no SNI";
     }
@@ -2288,10 +2296,15 @@ sub compileClientHello  {
         ######## TBD: prüfen, ab welchem Protokoll SNI eingeführt wurde (z.B. TLS1.0)!!! #####
         ######## SSL3 erhält bei SSLLABS folgende Fußnote: This site requires support for virtual SSL hosting, 
         ########                                           but SSL 2.0 and SSL 3.0 do not support this feature.
-        
+
             ### Data for Extension 'Server Name Indication' in reverse order 
-            $clientHello{'extension_sni_name'}         = $host;                                      # Server Name, should be a Nmae no IP
-            $clientHello{'extension_sni_len'}          = length($clientHello{'extension_sni_name'}); # len of Server Name        
+            $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/g;  # delete Spaces, \r and \n
+            unless ($Net::SSLhello::sni_name) { # any sni-name is not set
+                $clientHello{'extension_sni_name'}     = $host;                                      # Server Name, should be a Name no IP
+            } else {
+                $clientHello{'extension_sni_name'}     = $Net::SSLhello::sni_name;                   # Server Name, should be a Name no IP
+            }
+            $clientHello{'extension_sni_len'}          = length($clientHello{'extension_sni_name'}); # len of Server Name
             $clientHello{'extension_sni_type'}         = 0x00;                                       # 0x00= host_name
             $clientHello{'extension_sni_list_len'}     = $clientHello{'extension_sni_len'} + 3;      # len of Server Name + 3 Bytes (sni_len, sni_type)
             $clientHello{'extension_len'}              = $clientHello{'extension_sni_list_len'} + 2; # len of this extension = sni_list_len + 2 Bytes (sni_list_len)
@@ -2336,10 +2349,10 @@ sub compileClientHello  {
             }
         }
 
-        if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
-            my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
-            my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
-            if ( grep(/\xc0./, @cipherTable) ) { # found Cipher C0xx
+        my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
+        my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
+        if ( grep(/\xc0./, @cipherTable) ) { # found Cipher C0xx, Lazy Check; ### TBD: Check with a range of ECC-Ciphers ###
+            if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
                 ### Data for Extension 'elliptic_curves' (in reverse order)
                 $clientHello{'extension_ecc_list'}                
                     = "\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08"
@@ -2357,7 +2370,9 @@ sub compileClientHello  {
                   $clientHello{'extension_ecc_list'},                     #a[$clientHello{'extension_ecc_list_len'}] = 0x00....
                 );
                 _trace2 ("compileClientHello: elliptic_curves Extension added\n");
+            }
 
+            if ($Net::SSLhello::useecpoint ) { # use Elliptic Point Formats Extension
                 ### Data for Extension 'ec_point_formats'
                 $clientHello{'extension_type_ec_point_formats'}   = 0x000b; # Tbd: hier, oder zentrale Definition?!
                 $clientHello{'extension_ec_point_formats_len'}    = 0x0002; # Tbd: hier, oder zentrale Definition?!
