@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2014-12-07";
+my $VERSION = "2015-01-12";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -223,37 +223,47 @@ our %cfg = ( # from o-saft (only relevant parts)
     'DTLSv1'        => 1,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
-    'cipherranges'  => {        # constants for ciphers (Note: written as hex)
-        'yeast'     => [],      # internal list, computed later ...
+    'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
+                                # Technical (perl) note for definition of these ranges:
+                                # Each range is defined as a string like  key=>"2..5, c..f"
+                                # instead of an array like  key=>[2..5, c..f]  which would
+                                # result in  key=>[2 3 4 5 c d e f].
+                                # This expansion of the range is done at compile time  and
+                                # so will consume a huge amount of memory at runtime.
+                                # Using a string instead of the expanded array reduces the
+                                # memory footprint,  but requires use of  eval()  when the
+                                # range is needed:  eval($cfg{cipherranges}->{rfc})
+                                # Each string must be syntax for perl's range definition.
+        'yeast'     => "",      # internal list, computed later ...
                                 # push(@all, @{$_}[0]) foreach (values %cipher_names);
-        'rfc'       => [        # constants for ciphers defined in various RFCs
-                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+        'rfc'       =>          # constants for ciphers defined in various RFCs
+                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
                         0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-                       ],
-        'shifted'   => [        # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
-                        0x03000100 .. 0x0300013F, 0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                       ",
+        'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
+                       "0x03000100 .. 0x0300013F, 0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
                         0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-                       ],
-        'long'      => [        # more lazy list of constants for cipher
-                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
-                       ],
-        'full'      => [        # full range of constants for cipher
-                        0x03000000 .. 0x0300FFFF,
-                       ],
-        'SSLv2'     => [        # constants for ciphers according RFC for SSLv2
-                        0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                       ",
+        'long'      =>          # more lazy list of constants for cipher
+                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
+                       ",
+        'full'      =>          # full range of constants for cipher
+                       "0x03000000 .. 0x0300FFFF,
+                       ",
+        'SSLv2'     =>          # constants for ciphers according RFC for SSLv2
+                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,             # obsolete SSLv2 Ciphers
                         0x03000000 .. 0x0300002C, 0x030000FF,             # old SSLv3 Cuiphers
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS Ciphers
-                       ],
-        'SSLv2_long'=> [        # more lazy list of constants for ciphers for SSLv2
-                        0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                       ",
+        'SSLv2_long'=>          # more lazy list of constants for ciphers for SSLv2
+                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,             # obsolete SSLv2 Ciphers
                         0x03000000 .. 0x0300002F, 0x030000FF,             # old SSLv3 Cuiphers 
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS Ciphers
-                       ],
+                       ",
     }, # cipherranges
 
     'out_header'    => 0,       # print header lines in output
@@ -521,7 +531,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         my @testing  = ();
         my $range = $cfg{'cipherrange'};            # use specified range of constants
            $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
-        push(@testing, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
+        push(@testing, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
         if ($Net::SSLhello::usesni==1) { # always test first without SNI
             $Net::SSLhello::usesni=0;
             @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
