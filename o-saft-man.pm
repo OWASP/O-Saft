@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.5 14/12/04 01:13:58";
+my  $man_SID= "@(#) o-saft-man.pm 1.6 14/12/07 22:32:25";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -51,8 +51,11 @@ if (open(DATA, $ich)) {
         }
         s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d\))/L&$1&/g;
         s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
-        s/  (L&[^&]*&)/ $1/g;           # squeeze leading double space (pretty print)
-        s/(L&[^&]*&)  /$1 /g;           # squeeze trailing double space (pretty print)
+        s/  (L&[^&]*&)/ $1/g;
+        s/(L&[^&]*&)  /$1 /g;
+            # If external references are enclosed in double spaces, we squesze
+            # leading and trailing spaces 'cause additional characters will be
+            # added later (i.e. in man_help()). Just pretty printing ...
         if (m/^ /) {                    # add internal links; quick&dirty list here
             s/ ((?:DEBUG|RC|USER)-FILE)/ X&$1&/g;
             s/ (CONFIGURATION (?:FILE|OPTIONS))/ X&$1&/g;
@@ -973,12 +976,26 @@ sub printhelp($) {
 ## -------------------------------------
 # All documentation is in plain ASCII format.
 # Following notations / markups are used:
+#   TITEL
+#       Titles start at beginning of a line, i.g. all upper case characters
+#     SUB-Title
+#       Sub-titles start at beginning of a line preceeded by 4 or 6 spaces.
+#     code
+#       Code lines start at beginning of a line preceeded by 14 spaces.
 #   "text in double quotes"
-#       References to text elswhere
+#       References to text or cite
 #   'text in single quotes'
-#       References to verbatim text elswhere used as printed
+#       References to verbatim text elswhere or constant string in description
 #   * list item
 #     force list item in generated markup
+#   ** list item
+#     force list item (second level) in generated markup
+#   d) list item
+#     force list item in generated markup (d may be a digit or character)
+#   $VERSION
+#     will be replaced by current version string (as defined in caller)
+#   $0
+#     will be replaced by caller's name (i.g. o-saft.pl)
 #
 # Initilly the documentation was done using perl's doc format (perldoc, POD).
 # The advantage having a well formated output available on various platforms,
@@ -1232,18 +1249,6 @@ COMMANDS
 
           Use  --v  option to show more details.
 
-      +gen-html +gen-wiki
-
-          Print documentation in various formats, see o-saft-usr.pm.
-
-      +gen-cgi
-
-          See o-saft-usr.pm.
-
-      +abbr, +abk
-
-          Show common abbreviation used in the world of security.
-
       +VERSION
 
           Just show version and exit.
@@ -1258,10 +1263,6 @@ COMMANDS
       +libversion
 
           Show version of openssl.
-
-      +todo
-
-          Show known problems and bugs.
 
       +quit
 
@@ -1403,7 +1404,7 @@ OPTIONS
 
       --help=cmd
 
-          Show available commands.
+          Show available commands; short form.
 
       --help=commands
 
@@ -1411,7 +1412,7 @@ OPTIONS
 
       --help=opt
 
-          Show available options.
+          Show available options; short form.
 
       --help=options
 
@@ -1466,11 +1467,27 @@ OPTIONS
 
       --help=text-cfg
 
-          See  --help=cfg-text.
+          See --help=cfg-text.
 
       --help=regex
 
           Show regular expressions used internally.
+
+      --help=gen-html --help=gen-wiki
+
+          Print documentation in various formats, see o-saft-man.pm.
+
+      --help=gen-cgi
+
+          See o-saft-man.pm.
+
+      --help=glossar
+
+          Show common abbreviation used in the world of security.
+
+      --help=todo
+
+          Show known problems and bugs.
 
       --no-rc
 
@@ -1513,13 +1530,13 @@ OPTIONS
 
       --proxyhost=PROXYHOST --proxy=PROXYHOST:PROXYPORT
 
-          Make all connection to target using PROXYHOST.
+          Make all connection to target using 'PROXYHOST'.
 
           Also possible is: --proxy=PROXYUSER:PROXYPASS@PROXYHOST:PROXYPORT
 
       --proxyport=PROXYPORT
 
-          Make all connection to target using PROXYHOST:PROXYPORT.
+          Make all connection to target using 'PROXYHOST:PROXYPORT'.
 
       --proxyuser=PROXYUSER
 
@@ -1539,9 +1556,17 @@ OPTIONS
           Use 'STARTTLS' command to start a TLS connection via protocol.
           PROT  may be any of: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
 
-          *EXPERIMENTAL* option; works for  +cipherraw  only.
+          For  --starttls=SMTP, see  --dns-mx  also to use MX records instead
+          of host
 
-          *EXPERIMENTAL* option; please use  --experimental to enable it.
+      --starttls-delay=SEC
+
+          Number of seconds to wait before sending a packet, to slow down the
+          'STARTTLS' requests. Default is 0.
+          This may prevent blocking of requests by the target due to too much
+          or too fast connections.
+          Note:  In this case there is an automatic suspension and retry with
+          a longer delay.
 
       --cgi, --cgi-exec
 
@@ -1776,6 +1801,21 @@ OPTIONS
 
           Be warned that this may result in improper results.
 
+      --sni-name=NAME
+
+          Use  'NAME'  instead of given hostname to connect to  target in SNI
+          mode. By  default,  'NAME'  is automatically set to the given FQDN.
+          This is insufficient, when an IP instead of a FQDN was given,  then
+          the connection needs to specify the correct hostname (i.g. a FQDN).
+
+          For historical reason, the value '1' is the same as if the the real
+          FQDN (given hostname) has been used.  If the value is empty, or the
+          value '0' is given, no SNI name will be used.
+
+          Note: i.g. there is no need to use this option,  as a correct value
+          for the SNI name will be choosen automatically (except for IPs).
+          However, it's kind of fuzzing ...
+
       --no-cert
 
           Do not get data from target's certificate, return empty string.
@@ -1874,6 +1914,11 @@ OPTIONS
       --ssl-timeout=SEC
 
           Number of seconds to wait until connection is qualified as timeout.
+
+      --dns-mx, --mx
+
+          Get DNS MX records for given target and check the returned targets.
+          (only useful with  --STARTTLS=SMTP)
 
     Options for checks and results
 
