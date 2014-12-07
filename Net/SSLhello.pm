@@ -2183,7 +2183,7 @@ sub _doCheckSSLciphers ($$$$) {
     }
     if (length($input) >0) {
         _trace2 ("_doCheckSSLciphers: Total Data Received:". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
-        $acceptedCipher = parseServerHello ($input, $protocol);
+        $acceptedCipher = parseServerHello ($host, $port, $input, $protocol);
     }
     unless ( close ($socket)  ) {
         warn("**WARNING: _doCheckSSLciphers: Can't close socket: $!");
@@ -2499,10 +2499,26 @@ sub compileClientHello  {
         $@ = "**WARNING: compileClientHello: Protocol version $ssl (0x". sprintf("%04X", $record_version) .") not (yet) defined in Net::SSLhello.pm -> protocol ignored";
         warn($@);
     }
+    if ( ($Net::SSLhello::max_sslHelloLen > 0) && (length($clientHello) > $Net::SSLhello::max_sslHelloLen) ) { # According RFC: 16383+5 Bytes; handshake messages between 256 and 511 bytes in length caused sometimes virtual servers to stall, cf.: https://code.google.com/p/chromium/issues/detail?id=245500
+        my %rhash = reverse %PROTOCOL_VERSION;
+        my $ssl = $rhash{$record_version};
+        if (! defined $ssl) {
+            $ssl ="--unknown Protocol--";
+        }
+        if  ($Net::SSLhello::experimental >0) { # experimental function is are activated
+            _trace_("\n");
+            _trace ("openTcpSSLconnection: WARNING: Server $host (Protocol: $ssl): use of ClintHellos > $Net::SSLhello::max_sslHelloLen Bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
+        } else { # use of experimental functions is not permitted (option is not activated)
+            $@ = "**WARNING: compileClientHello: Server $host: the ClientHello is longer than $Net::SSLhello::max_sslHelloLen Bytes, this caused sometimes virtual servers to stall, e.g. 256 Bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
+            warn ($@);
+        }
+    }
     return ($clientHello);
 }
 
-sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Paket enthält  ; second (opional) variable: protocol-version, that the client uses
+sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-Paket enthält  ; second (opional) variable: protocol-version, that the client uses
+    my $host = shift; #for warn- and trace-messages
+    my $port = shift; #for warn- and trace-messages
     my $buffer = shift; 
     my $client_protocol = shift;  # optional
     my $rest ="";
@@ -2516,11 +2532,11 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
         my $firstByte = unpack ("C", $buffer);
 
         if (defined $client_protocol) {
-            _trace2("parseServerHello (expected Protocol= >".sprintf ("%04X", $client_protocol)."<,\n      >".hexCodedString (substr($buffer,0,48),"       ")."< ...)\n");
+            _trace2("parseServerHello: Server '$host:$port': (expected Protocol= >".sprintf ("%04X", $client_protocol)."<,\n      >".hexCodedString (substr($buffer,0,48),"       ")."< ...)\n");
         } else {
-            _trace2("parseServerHello (any Protocol,\n Data=".hexCodedString (substr($buffer,0,48),"       ").")... \n");
+            _trace2("parseServerHello: Server '$host:$port': (any Protocol,\n Data=".hexCodedString (substr($buffer,0,48),"       ").")... \n");
         }
-        _trace4 (sprintf ("parseServerHello: 1. Byte:  %02X\n\n", $firstByte) );
+        _trace4 (sprintf ("parseServerHello: Server '$host:$port': 1. Byte:  %02X\n\n", $firstByte) );
         if ($firstByte >= 0x80) { #SSL2 with 2Byte Length
             _trace2_ ("# -->SSL: Message-Type SSL2-Msg"); 
             ($serverHello{'msg_len'},         # n
@@ -2536,19 +2552,19 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
                 $serverHello{'msg_len'},
                 $serverHello{'msg_type'}
             ));
-            _trace4 ("parseServerHello: Rest: >".hexCodedString ($rest)."<\n"); 
+            _trace4 ("parseServerHello: Server '$host:$port': Rest: >".hexCodedString ($rest)."<\n"); 
 
             if ($serverHello{'msg_type'} == $SSL_MT_SERVER_HELLO) { 
                 _trace4 ("    Handshake Protocol: SSL2 Server Hello\n"); 
                 _trace4 ("        Message Type: (Server Hello (2)\n"); 
-                return (parseSSL2_ServerHello ($rest,$client_protocol)); # cipher_spec-Liste
+                return (parseSSL2_ServerHello ($host, $port, $rest,$client_protocol)); # cipher_spec-Liste
             } elsif ($serverHello{'msg_type'} == $SSL_MT_ERROR) { #TBD Error-Handling for ssl2
                 ($serverHello{'err_code'}        # n
                  ) = unpack("n", $rest); 
 
-                _trace2 ("parseServerHello: received a SSLv2-Error-Message, Code: >0x".hexCodedString ($serverHello{'err_code'})."<\n");
+                _trace2 ("parseServerHello: Server '$host:$port': received a SSLv2-Error-Message, Code: >0x".hexCodedString ($serverHello{'err_code'})."<\n");
                 unless ($serverHello{'err_code'} == 0x0001) { # SSLV2_No_Cipher
-                    warn ("**WARNING: parseServerHello: received a SSLv2-Error_Message: , Code: >0x".hexCodedString ($serverHello{'err_code'})." -> Target Ignored\n");
+                    warn ("**WARNING: parseServerHello: Server '$host:$port': received a SSLv2-Error_Message: , Code: >0x".hexCodedString ($serverHello{'err_code'})." -> Target Ignored\n");
                 }
                 return ("");
             } else { # if ($serverHello{'msg_type'} == 0 => NOT supported Protocol (?!)
@@ -2594,9 +2610,9 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
                     _trace4_ ("# --->    Handshake Type:    Server Hello (22)\n"); 
 
                     if ($serverHello{'msg_len_null_byte'} != 0x00)  { 
-                            _error (">>> WARNING (parseServerHello): 1st Msg-Len-Byte is *NOT* 0x00/n"); 
+                            _error (">>> WARNING (parseServerHello): Server '$host:$port': 1st Msg-Len-Byte is *NOT* 0x00/n"); 
                     }
-                    return (parseTLS_ServerHello ($message, $serverHello{'msg_len'},$client_protocol));    
+                    return (parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol));    
                 }
             } elsif    ($serverHello{'record_type'} == $RECORD_TYPE {'alert'}) { 
                 _trace2_ ("# -->  Record Type:    Alert (21)\n"); 
@@ -2626,25 +2642,27 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
                         ) ) {
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
-                            $@ = sprintf ("parseServerHello: received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server aborted!\n");
+                            my $sni_name = "";
+                            $sni_name .= " '$Net::SSLhello::sni_name'" if ($Net::SSLhello::sni_name);
+                            $@ = sprintf ("parseServerHello: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server $sni_name aborted!\n");
                             print $@;
                             return (""); 
                         } else {
-                            warn ("**WARNING: parseServerHello: received SSL/TLS-Warning (1): Description: $description ($serverHello{'description'})\n");
+                            warn ("**WARNING: parseServerHello: Server '$host:$port': received SSL/TLS-Warning (1): Description: $description ($serverHello{'description'})\n");
                         }
                     } elsif ($serverHello{'level'} == 2) { # fatal
                         if ($serverHello{'description'} == 70) { # protocol_version(70): (old) protocol recognized but not supported, is suppressed
-                            $@ = sprintf ("parseServerHello: received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> protocol_version recognized but not supported!\n");
+                            $@ = sprintf ("parseServerHello: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> protocol_version recognized but not supported!\n");
                         } else {
-                            warn ("**WARNING: parseServerHello: received fatal SSL/TLS-Error (2): Description: $description ($serverHello{'description'})\n");
+                            warn ("**WARNING: parseServerHello: Server '$host:$port': received fatal SSL/TLS-Error (2): Description: $description ($serverHello{'description'})\n");
                         }
                     } else { # unknown
-                        warn ("**WARNING: parseServerHello: received unknown SSL/TLS-Error-Level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
+                        warn ("**WARNING: parseServerHello: Server '$host:$port': received unknown SSL/TLS-Error-Level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
                     }
                 }
             } else { ################################ to get information about Record Types that are not parsed, yet #############################
                 _trace_ ("\n");
-                warn ("**WARNING: parseServerHello: Unknown SSL/TLS Record-Type received that is not (yet) defined in Net::SSLhello.pm:\n");
+                warn ("**WARNING: parseServerHello: Server '$host:$port': Unknown SSL/TLS Record-Type received that is not (yet) defined in Net::SSLhello.pm:\n");
                 warn ("#        Record Type:     Unknown Value (".$serverHello{'record_type'}."), not (yet) defined in Net::SSLhello.pm\n"); 
                 warn ("#        Record Version:  $serverHello{'record_version'} (0x".hexCodedString ($serverHello{'record_version'}).")\n");
                 warn ("#        Record Len:      $serverHello{'record_len'} (0x".hexCodedString ($serverHello{'record_len'}).")\n\n"); 
@@ -2652,12 +2670,14 @@ sub parseServerHello ($;$) { # Variable: String/Octet, dass das Server-Hello-Pak
             return ("");
         } #End SSL3/TLS
     } else {
-        _trace2("parseServerHello (no Data)\n");
+        _trace2("parseServerHello Server '$host:$port': (no Data)\n");
     }    
 }
 
 
-sub parseSSL2_ServerHello ($;$) { # Variable: String/Octet, das den Rest des Server-Hello-Pakets enthält  
+sub parseSSL2_ServerHello ($$$;$) { # Variable: String/Octet, das den Rest des Server-Hello-Pakets enthält  
+    my $host = shift; #for warn- and trace-messages
+    my $port = shift; #for warn- and trace-messages
     my $buffer = shift; 
     my $client_protocol = shift;  # optional
     my $rest;
@@ -2666,9 +2686,9 @@ sub parseSSL2_ServerHello ($;$) { # Variable: String/Octet, das den Rest des Ser
     $serverHello{'cipher_spec'} = "";
 
     if (defined $client_protocol) {
-        _trace3("parseSSL2_ServerHello:  (expected Protocol=".sprintf ("%04X", $client_protocol).", Data=".hexCodedString (substr($buffer,0,48),"       ")."...)\n");
+        _trace3("parseSSL2_ServerHello: Server '$host:$port': (expected Protocol=".sprintf ("%04X", $client_protocol).", Data=".hexCodedString (substr($buffer,0,48),"       ")."...)\n");
     } else {
-        _trace4("parseSSL2_ServerHello:  (any Protocol, Data=".hexCodedString (substr($buffer,0,48),"         ")."...)\n");
+        _trace4("parseSSL2_ServerHello: Server '$host:$port': (any Protocol, Data=".hexCodedString (substr($buffer,0,48),"         ")."...)\n");
     }
 
     ($serverHello{'session_id_hit'},        # C
@@ -2697,14 +2717,14 @@ sub parseSSL2_ServerHello ($;$) { # Variable: String/Octet, das den Rest des Ser
            $serverHello{'connection_id_len'}
     ));
     
-    _trace4  ("Rest: >".hexCodedString ($rest)."<\n");
+    _trace4  ("Rest: Server '$host:$port': >".hexCodedString ($rest)."<\n");
 
     ( $serverHello{'certificate'},    # n
       $serverHello{'cipher_spec'},    # n
       $serverHello{'connection_id'}    # n
     ) = unpack("a[$serverHello{'certificate_len'}] a[$serverHello{'cipher_spec_len'}] a[$serverHello{'connection_id_len'}]", $rest);
 
-    _trace4 ("parseServerHello(2):\n"); 
+    _trace4 ("parseServerHello(2): Server '$host:$port':\n"); 
     
     _trace2_ ( sprintf ( 
             "# -->       certificate:          >%s<\n".    # n
@@ -2717,14 +2737,14 @@ sub parseSSL2_ServerHello ($;$) { # Variable: String/Octet, das den Rest des Ser
     ));
 
     if ($Net::SSLhello::trace >= 3) { #trace3+4: added to check the supported Version
-        printf "## Server accepts the following Ciphers with SSL-Version: >%04X<\n", 
+        printf "## Server Server '$host:$port': accepts the following Ciphers with SSL-Version: >%04X<\n", 
                $serverHello{'version'};
         printSSL2CipherList($serverHello{'cipher_spec'});
         print "\n";
     }
     ### Added to check if there is a Bug in getting the cipher_spec 
     if (length ($serverHello{'cipher_spec'}) != int ($serverHello{'cipher_spec_len'}) ) { # did not get all ciphers?
-            warn("**WARNING: parseSSL2_ServerHello: Can't get all Ciphers from Server-Hello (String-Len: ".length ($serverHello{'cipher_spec'})." != cipher_spec_len: ".$serverHello{'cipher_spec_len'}."): >". hexCodedSSL2Cipher ($serverHello{'cipher_spec'})."<");
+            warn("**WARNING: parseSSL2_ServerHello: Server '$host:$port': Can't get all Ciphers from Server-Hello (String-Len: ".length ($serverHello{'cipher_spec'})." != cipher_spec_len: ".$serverHello{'cipher_spec_len'}."): >". hexCodedSSL2Cipher ($serverHello{'cipher_spec'})."<");
             printf "#                       => SSL2: ServerHello (%02X):\n".
                 "#         session_id_hit:         >%02X<\n".
                 "#         certificate_type:       >%02X<\n".
@@ -2753,6 +2773,8 @@ sub parseSSL2_ServerHello ($;$) { # Variable: String/Octet, das den Rest des Ser
 
 sub parseTLS_ServerHello {
     # Variable: String/Octet, dass den Rest des Server-Hello-Pakets enthält, Länge, optional: Client-Protokoll  
+    my $host = shift; #for warn- and trace-messages
+    my $port = shift; #for warn- and trace-messages
     my $buffer = shift; 
     my $len = shift; 
     my $client_protocol = shift;  # optional
@@ -2765,9 +2787,9 @@ sub parseTLS_ServerHello {
     $serverHello{'extensions_len'} = 0;
     
     if (defined $client_protocol) {
-        _trace3("parseTLS_ServerHello:  (expected Protocol=".sprintf ("%04X", $client_protocol).",\n     ".hexCodedString (substr($buffer,0,48),"       ")."...)\n");
+        _trace3("parseTLS_ServerHello: Server '$host:$port': (expected Protocol=".sprintf ("%04X", $client_protocol).",\n     ".hexCodedString (substr($buffer,0,48),"       ")."...)\n");
     } else {
-        _trace4("parseTLS_ServerHello:  (any Protocol, Data=".hexCodedString (substr($buffer,0,48),"         ")."...)\n");
+        _trace4("parseTLS_ServerHello: Server '$host:$port': (any Protocol, Data=".hexCodedString (substr($buffer,0,48),"         ")."...)\n");
     }
         
     if (length($buffer) || $len >= 35) { 
@@ -2793,12 +2815,12 @@ sub parseTLS_ServerHello {
                 if (! defined $ssl_server) {
                     $ssl_server ="--unknown Protocol--";
                 } 
-                $@ = sprintf ("parseTLS_ServerHello: Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> answer ignored!", $serverHello{'version'}, $client_protocol);
+                $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> answer ignored!", $serverHello{'version'}, $client_protocol);
                 _trace2("$@\n"); 
                 return ("");
             }    
         } else {
-            warn ("**WARNING: parseTLS_ServerHello: internal error: All Server Versions are accepted, because there is no information provided which version the client has requested.\n");
+            warn ("**WARNING: parseTLS_ServerHello: Server '$host:$port': internal error: All Server Versions are accepted, because there is no information provided which version the client has requested.\n");
         }
         
         _trace2_ ( sprintf (  
@@ -2835,11 +2857,11 @@ sub parseTLS_ServerHello {
         
         ### Added to check if there is a Bug in getting the cipher_spec: cipher_spec_len = 2 ###
         if (length ($serverHello{'cipher_spec'}) !=  2 ) { # did not get the 2-Octet-Cipher?
-            warn("**WARNING: parseTLS_ServerHello: Can't get the Cipher from Server-Hello (String-Len: ".length ($serverHello{'cipher_spec'})." != cipher_spec_len: 2): >". hexCodedString ($serverHello{'cipher_spec'})."<");
+            warn("**WARNING: parseTLS_ServerHello: Server '$host:$port': Can't get the Cipher from Server-Hello (String-Len: ".length ($serverHello{'cipher_spec'})." != cipher_spec_len: 2): >". hexCodedString ($serverHello{'cipher_spec'})."<");
         }
         _trace2_ ( sprintf ( 
             #added to check the supported Version
-            "# -->       The Server accepts the following Cipher(s) with SSL3/TLS-Version: >%04X<: ", 
+            "# -->       The Server Server '$host:$port': accepts the following Cipher(s) with SSL3/TLS-Version: >%04X<: ", 
             $serverHello{'version'}
         ));
 
@@ -2869,7 +2891,7 @@ sub parseTLS_ServerHello {
             parseTLS_Extension ($serverHello{'extensions'}, $serverHello{'extensions_len'}); 
 
             if  (length($rest) > 0) { # should be 0
-                _trace2 ( sprintf ("\n\n## parseTLSServerHello did not parse the whole message (rest): >".hexCodedString ($rest)."< To Be Done\n")); 
+                _trace2 ( sprintf ("\n\n## parseTLSServerHello Server '$host:$port': did not parse the whole message (rest): >".hexCodedString ($rest)."< To Be Done\n")); 
             }
         }
         return ($serverHello{'cipher_spec'});
