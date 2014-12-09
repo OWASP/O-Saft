@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.17 14/11/11 23:57:12";
+my  $SID    = "@(#) o-saft-dbx.pm 1.18 14/12/06 14:42:15";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -124,7 +124,7 @@ sub _yeast_init() {
         _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
         _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION); # ToDo: ALPHA defined check until Net::SSLhello fully integrated
         _yTRAC("verbose", $cfg{'verbose'});
-        _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}");
+        _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
         # more detailed trace first
         if ($cfg{'trace'} > 1){
             _yline(" %cmd {");
@@ -137,7 +137,7 @@ sub _yeast_init() {
                 }
             }
             _yline(" %cmd }");
-            _yline(" %cfg {");
+            _yline(" complete %cfg {");
             foreach $key (sort keys %cfg) {
                 #dbx# print "# $key : " . ref ($cfg{$key});
                 if ($cfg{'trace'} <= 2){
@@ -158,14 +158,14 @@ sub _yeast_init() {
         _yeast("   use_openssl= $cmd{'extopenssl'}");
         _yeast("openssl cipher= $cmd{'extciphers'}");
         _yline(" cmd }");
-        _yline(" cfg {");
+        _yline(" user-friendly cfg {");
         _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
         _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
         _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
-        _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}");
+        _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$cfg{'sni_name'}");
         _yeast("  default port= $cfg{'port'} (last specified)");
         _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
-        foreach $key (qw(out_header format legacy usehttp usedns cipherrange)) {
+        foreach $key (qw(out_header format legacy usehttp usedns usemx starttls starttlsDelay cipherrange)) {
             printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
                # cannot use _yeast() 'cause of pretty printing
         }
@@ -179,7 +179,7 @@ sub _yeast_init() {
         _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
         _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
         _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
-        _yline(" cfg }");
+        _yline(" user-friendly cfg }");
         _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
     }
 }

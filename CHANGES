@@ -1,4 +1,62 @@
 
+Version: 14.12.07
+    * new tarball
+
+Version: 14.11.23
+  BUGFIX
+    * text for checks{hostname} corrected (check was ok, but proided text not accurate)
+  CHANGES
+    * cipherrange vor SSLv2 improved
+  NEW
+    * pass --mx option to SSLhello
+    * pass --starttls-delay=SEC option to SSLhello
+    * Net::SSLinfo hostname for SNI can be specified in $Net::SSLinfo::use_SNI
+    * --sni-name=NAME added
+
+Version: 14.11.22
+  BUGFIX
+  CHANGES
+    * o-saft-man.pm: generating various formats improved
+  NEW
+    * new check: Certificate private key signature is SHA2
+    * .o-saft.pl new check sha2signature added to +check and +quick
+
+Version: 14.11.21
+  BUGFIX
+    * missing useecc parameter passed to Net::SSLhello
+    * --h same as --help
+    * better handling of results for +sigkey_algorithm
+  NEW
+    * --use-ec-point option passed to Net::SSLhello
+
+Version: 14.11.20
+  CHANGES
+    * get VERSION for --help from caller
+  NEW
+    * o-saft-man.pm
+
+Version: 14.11.19
+  CHANGES
+    * documentation improved
+  NEW
+    * o-saft-man.pm
+
+Version: 14.11.18
+  CHANGES
+    * markup in documentation improved
+
+Version: 14.11.17
+  BUGFIX
+    * check version mismatch
+
+Version: 14.11.16
+  CHANGES
+    * beast-default removed 
+
+Version: 14.11.15
+  NEW
+    * --help=opt and --help=options implemented
+
 Version: 14.11.14
   NEW
     * check for Poodle attack

@@ -28,9 +28,7 @@
 #!# WARNING:
 #!# This is no "academically" certified code,  but written to be understood and
 #!# modified by humans (you:) easily.  Please see the documentation  in section
-#!# "Program Code" at the end of this file if you want to improve the program.
-
-# ToDo please see  =begin ToDo  in POD section
+#!# "Program Code" in  o-saft-man.pm  if you want to improve the program.
 
 use strict;
 
@@ -43,9 +41,10 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
+    sub _VERSION() { return "14.12.07"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
-    # for some commands.
+    # for some commands (see o-saft-man.pm also).
     # Unfortunately perl's BEGIN has following limits and restrictions:
     #   - sub can be defined herein and used later
     #   - variables can not be defined herein and used later
@@ -53,26 +52,33 @@ BEGIN {
     #   - strict sequence of definitions and usage (even for variables in subs)
     # To make the program work as needed,  these limitations would force to use
     # some dirty code hacks and split the flow of processing in different parts
-    # of the source. Therefore this scope is not used. Performance penalty :-/
+    # of the source. Therefore this scope is used for --help=* options only.
 
-    # we support some local lib directories
-    unshift(@INC, "./", "./lib");
+    unshift(@INC, "./", "./lib");   # we support some local lib directories
+
+    # handle simple help very quickly
+    # get first matching argument
+    my ($arg) = grep(/^(?:--h(?:elp)?|(?:--|\+)help=?(?:gen-)?(?:opts?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
+        # we allow:  --h  or  --help  or  +help  or  +help=SOMETHING
+    if (defined $arg) {
+        $arg =~ s/^(?:--|\+)//;     # remove option prefix
+        $arg =~ s/^help=?//;        # remove option but keep its argument
+        $arg =~ s/^h$//;            # --h is same as --help
+        require "o-saft-man.pm";    # must be found with %INC
+        printhelp($arg);            # empty $arg for full help text
+        exit 0;
+    }
 } # BEGIN
     _y_TIME("BEGIN}");
 
-my  $SID    = "@(#) yeast.pl 1.303 14/11/19 22:27:26";
-our $VERSION= "--is defined at end of this file, and I hate to write it twice--";
-my  @DATA   = <DATA>;
-{ # (perl is clever enough to extract it from itself ;-)
-    $VERSION= join ("", @DATA);
-    $VERSION=~ s/.*?\n@\(#\)\s*([^\n]*).*/$1/ms;
-};
-
+our $VERSION= _VERSION();
+my  $SID    = "@(#) yeast.pl 1.323 14/12/07 23:31:49";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 our $mename = "yeast  ";
     $mename = "O-Saft " if ($me !~ /yeast/);
+
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -80,7 +86,8 @@ unshift(@INC, "$mepath", "$mepath/lib");
 #_dbx "INC: ".join(" ",@INC) . "\n";
 
 my  $arg    = "";
-my  @argv   = ();
+my  @argv   = ();   # all options, including those from RC-FILE
+                    # will be used when ever possible instead of @ARGV
 # arrays to collect data for debugging, they are global!
 our @dbxarg;        # normal options and arguments
 our @dbxcfg;        # config options and arguments
@@ -115,7 +122,7 @@ sub _warn   {
     #return if ($warning <= 0);
     return if (grep(/(:?--no.?warn)/i, @ARGV) > 0);     # ugly hack 'cause we won't pass $warning
     local $\ = "\n"; print("**WARNING: ", join(" ", @_));
-    # ToDo: in CGI mode warning must be avoided until HTTP header written
+    # TODO: in CGI mode warning must be avoided until HTTP header written
 }
 sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
     # print information what will be read
@@ -165,7 +172,7 @@ if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
     }
 }
 
-push(@argv, @ARGV); # all options, including those from RC-FILE in @argv now
+push(@argv, @ARGV); # got all now
 push(@ARGV, "--no-header") if grep(/--no-?header/, @argv); # if defined in RC-FILE, needed in _warn()
 #dbx# _dbx "ARG: " . join(" ", @argv);
 
@@ -181,7 +188,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
     if ($err ne "") {
         die  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
-        # Note: if $mepath or $0 is a symbolic link, above checks fail
+        # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
     }
 } else {
@@ -235,7 +242,7 @@ usr_pre_init();
 #!# To make (programmer's) life simple, we try to avoid complex data structure,
 #!# which are error-prone, by using a couple of global variables.
 #!# As there are no plans to run this tool in threaded mode, this should be ok.
-#!# Please see "Program Code" in the POD section too.
+#!# Please see "Program Code" in o-saft-man.pm too.
 #!#
 #!# Here's an overview of the used global variables:
 #!#   $me             - the program name or script name with path stripped off
@@ -250,7 +257,7 @@ usr_pre_init();
 #!#                     HTTP vs. HTTPS checks
 #!#   %shorttexts     - same as %checks, but short texts
 #!#   %cmd            - configuration for external commands
-#!#   %cfg            - configuration for commands and options
+#!#   %cfg            - configuration for commands and options herein
 #!#   %text           - configuration for message texts
 #!#   %scores         - scoring values
 #!#   %ciphers_desc   - description of %ciphers data structure
@@ -260,8 +267,8 @@ usr_pre_init();
 #!# All %check_*  contain a default 'score' value of 10, see --cfg-score
 #!# option how to change that.
 
-# Note: all keys in data and check_* must be unique 'cause of shorttexts!!
-# Note: all keys in check_* and checks  must be in lower case letters!!
+# NOTE: all keys in data and check_* must be unique 'cause of shorttexts!!
+# NOTE: all keys in check_* and checks  must be in lower case letters!!
 #       'cause generic conversion of +commands to keys
 
 #
@@ -276,9 +283,10 @@ my $legacy  = "";   # the legacy mode used in main
 my $verbose = 0;    # verbose mode used in main
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
-my $info    = 0;    # set to 1 if +info  or +sni_check was used
+my $info    = 0;    # set to 1 if +info
 my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
+my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
 our @results= ();   # list of checked ciphers: [SSL, ciper suite name, yes|no]
 our %data   = (     # values from Net::SSLinfo, will be processed in print_data()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
@@ -420,11 +428,12 @@ my %check_cert = (
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
+    'sha2signature' => {'txt' => "Certificate private key signature SHA2"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
     'ev-chars'      => {'txt' => "Certificate has no invalid characters in extensions"},
-# ToDo: SRP is a target feature but also named a `Certificate (TLS extension)'
+# TODO: SRP is a target feature but also named a `Certificate (TLS extension)'
 #    'srp'           => {'txt' => "Certificate has (TLS extension) authentication"},
     #------------------+-----------------------------------------------------
     # extensions:
@@ -453,7 +462,7 @@ my %check_cert = (
     #   - chain too long (depth)
     #   - chain size too big
     #   - contains illegal characters
-    # ToDo: wee need an option to specify the the local certificate storage!
+    # TODO: wee need an option to specify the the local certificate storage!
 ); # %check_cert
 
 my %check_conn = (
@@ -470,7 +479,7 @@ my %check_conn = (
     'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'selected'      => {'txt' => "Selected cipher by server for "},# used for @cfg{version} only
-     # Note: following keys use mixed case letters, that's ok 'cause these
+     # NOTE: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
      # counter for accepted ciphers, 0 if not supported
     'SSLv2'         => {'txt' => "Supported ciphers for SSLv2 (total)"},
@@ -580,7 +589,7 @@ my %check_size = (
     'cnt_ciphers'   => {'txt' => "Number of offered ciphers"},      # <> 0
     'cnt_totals'    => {'txt' => "Total number of checked ciphers"},
     #------------------+-----------------------------------------------------
-# ToDo: cnt_ciphers, len_chain, cnt_chaindepth
+# TODO: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
 
 my %check_http = (
@@ -615,8 +624,8 @@ foreach $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt
 foreach $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
 foreach $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
 
-our %data_oid = ( # ToDo: nothing YET IMPLEMENTED except for EV
-        # ToDo: generate this table using Net::SSLeay functions like:
+our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
+        # TODO: generate this table using Net::SSLeay functions like:
         #   Net::SSLeay::OBJ_nid2ln(),  Net::SSLeay::OBJ_ln2nid()
         #   Net::SSLeay::OBJ_nid2sn(),  Net::SSLeay::OBJ_sn2nid(),
         #   Net::SSLeay::OBJ_nid2obj(), Net::SSLeay::OBJ_obj2nid(),
@@ -710,7 +719,7 @@ our %shorttexts = (
     #------------------+------------------------------------------------------
     # %check +check     short label text
     #------------------+------------------------------------------------------
-    # Note: key must be same string as used in %ciphers[ssl] {
+    # NOTE: key must be same string as used in %ciphers[ssl] {
     'SSLv2'         => "Ciphers (SSLv2)",
     'SSLv3'         => "Ciphers (SSLv3)",
     'TLSv1'         => "Ciphers (TLSv1)",
@@ -730,6 +739,7 @@ our %shorttexts = (
     'wildcard'      => "No wildcards",
     'sni'           => "Not SNI based",
     'sernumber'     => "Serial Number size (RFC5280)",
+    'sha2signature' => "Signature is SHA2",
     'rootcert'      => "Not root CA",
     'ocsp'          => "OCSP supported",
     'hassslv2'      => "No SSLv2",
@@ -1020,19 +1030,23 @@ our %cmd = (
     'starttls'      => "",      # use STARTTLS if not empty
                                 # protocol to be used with STARTTLS; default: SMTP
                                 # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+    'starttlsDelay' => 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
     'experimental'  => 0,       # 1: use experimental functionality
-    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # ToDo: NOT YET IMPLEMENTED
+    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
     'usedns'        => 1,       # 1: make DNS reverse lookup
+    'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttp'       => 1,       # 1: make HTTP request
     'use_md5cipher' => 1,       # 0: do not use *-MD5 ciphers except for SSLv2 with +cipher
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
+    'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
+                                # NOTE: default=1 as this is behaviour for Net::SSLinfo < 1.85
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
@@ -1049,7 +1063,7 @@ our %cmd = (
     'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv1)],
                                 # NOTE: must be same string as used in %ciphers[ssl]
                                 # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
-                                # ToDo: DTLSv0.9, DTLSv1.2
+                                # TODO: DTLSv0.9, DTLSv1.2
     'ssl_lazy'      => 0,       # 1: lazy check for available SSL protocol functionality
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
@@ -1062,10 +1076,10 @@ our %cmd = (
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => [],      # ciphers we got with --cipher=
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
-                                # ToDo: must be same as in Net::SSLinfo or used from there
+                                # TODO: must be same as in Net::SSLinfo or used from there
     'ciphers'       => [],      # contains all ciphers to be tested
     'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
-    'cipherranges'  => {        # constants for ciphers (Note: written as hex)
+    'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
         'yeast'     => [],      # internal list, computed later ...
                                 # push(@all, @{$_}[0]) foreach (values %cipher_names);
         'rfc'       => [        # constants for ciphers defined in various RFCs
@@ -1090,21 +1104,22 @@ our %cmd = (
         'full'      => [        # full range of constants for cipher
                         0x03000000 .. 0x03FFFFFF,
                        ],
-# ToDo:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
+# TODO:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
         'SSLv2'     => [        # constants for ciphers according RFC for SSLv2
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF, 
-                        0x03000001,   0x03000002, 0x03000007 .. 0x0300002C,
-                        0x030000FF,
-# ToDo:                 0x02000000,   0x02FFFFFF,   # increment even only
-# ToDo:                 0x03000000,   0x03FFFFFF,   # increment  odd only
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
+                        0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,
+                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
+# TODO:                 0x02000000,   0x02FFFFFF,   # increment even only
+# TODO:                 0x03000000,   0x03FFFFFF,   # increment  odd only
                        ],
         'SSLv2_long'=> [        # more lazy list of constants for ciphers for SSLv2
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF, 
-                        0x03000000 .. 0x0300002F, 0x030000FF,
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,
+                        0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
+                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
                        ],
     }, # cipherranges
     'ciphers-v'     => 0,       # as: openssl ciphers -v
@@ -1171,7 +1186,8 @@ our %cmd = (
     'out_score'     => 0,       # print scoring; default for +check
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'pass_options'  => "",      # options to be passeed thru to other programs
-    'hosts'         => [],      # list of hosts:port to be processed
+    'mx_domains'    => [],      # list of mx-domain:port to be processed
+    'hosts'         => [],      # list of host:port to be processed
     'host'          => "",      # currently scanned host
     'ip'            => "",      # currently scanned host's IP
     'IP'            => "",      # currently scanned host's IP (human readable, doted octed)
@@ -1187,7 +1203,8 @@ our %cmd = (
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 2,       # number of retry when timeout
         'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
-        'useecc'    => 1,       # 1: use supported elliptic curves and ec_point_formats extension
+        'useecc'    => 1,       # 1: use supported elliptic curves
+        'useecpoint'=> 1,       # 1: use ec_point_formats extension
         'usereneg'  => 0,       # 1: secure renegotiation
         'double_reneg'  => 0,   # 0: do not send reneg_info extension if the cipher_spec already includes SCSV
                                 #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
@@ -1280,7 +1297,7 @@ our %cmd = (
         '2.5.4.5'   => '(?:2\.5\.4\.5|serialNumber)',
         '2.5.4.6'   => '(?:2\.5\.4\.6|countryName|C)',
         '2.5.4.7'   => '(?:2\.5\.4\.7|localityName|L)',
-        '2.5.4.8'   => '(?:2\.5\.4\.8|stateOrProvinceName|SP|ST)', # ToDo: is ST a bug?
+        '2.5.4.8'   => '(?:2\.5\.4\.8|stateOrProvinceName|SP|ST)', # TODO: is ST a bug?
         '2.5.4.9'   => '(?:2\.5\.4\.9|street(?:Address)?)', # '/street=' is very lazy
         '2.5.4.17'  => '(?:2\.5\.4\.17|postalCode)',
 #       '?.?.?.?'   => '(?:?\.?\.?\.?|domainComponent|DC)',
@@ -1312,7 +1329,7 @@ our %cmd = (
         'ISM'       => "no NULL cipher, no Anonymous Auth, no single DES, no MD5, no RC ciphers",
         'PCI'       => "no NULL cipher, no Anonymous Auth, no single DES, no Export encryption, DH > 1023",
         'FIPS-140'  => "must be TLSv1 or 3DES or AES, no IDEA, no RC4, no MD5",
-        'FIPS-140-2'=> "-- NOT YET IMPLEMENTED --",      # ToDo:
+        'FIPS-140-2'=> "-- NOT YET IMPLEMENTED --",      # TODO:
         #
         # NIST SP800-52 recommendations for clients (best first):
         #   TLS_DHE_DSS_WITH_AES_256_CBC_SHA
@@ -1448,12 +1465,12 @@ our %ciphers_desc = (   # description of following %ciphers table
         'Security',         # LOW, MEDIUM, HIGH as reported by openssl 0.9.8 .. 1.0.1h
                             # WEAK as reported by openssl 0.9.8 as EXPORT
                             # weak unqualified by openssl or know vulnerable
-                            # Note: weak includes NONE (no security at all)
+                            # NOTE: weak includes NONE (no security at all)
                             #
                             # all following informations as reported by openssl 0.9.8 .. 1.0.1h
         'SSL/TLS',          # Protocol Version:
                             # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
-                            # Note: all SSLv3 are also TLSv1, TLSv11, TLSv12
+                            # NOTE: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
         'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED
         'Key Size',         # in bits
@@ -1771,7 +1788,7 @@ our %ciphers = (
     # above table (roughly) generated with:
     #   openssl ciphers -v ALL:eNULL:aNULL | sort
     #
-    # Note: some openssl (0.9.8o on Ubuntu 11.10) fail to list ciphers with
+    # NOTE: some openssl (0.9.8o on Ubuntu 11.10) fail to list ciphers with
     #    openssl ciphers -ssl2 -v
 
 ); # %ciphers
@@ -2130,462 +2147,13 @@ our %text = (
         # corresponding print functions:
         #     printtitle, print_cipherhead, printfooter, print_cipherdefault, print_ciphertotals
     },
-    # Note: all other legacy texts are hardcoded, as there is no need to change them!
+    # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
 
-    # short list of used terms and acronyms, always incomplete ...
-    'glossar' => {
-        'AA'        => "Attribute Authority",
-        'AAD'       => "additional authenticated data",
-        'ADH'       => "Anonymous Diffie-Hellman",
-        'Adler32'   => "hash function",
-        'AEAD'      => "Authenticated Encryption with Additional Data",
-        'AECDHE'    => "Anonymous Ephemeral ECDH",
-        'AEM'       => "Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3",
-        'AES'       => "Advanced Encryption Standard",
-        'AIA'       => "Authority Information Access (certificate extension)",
-        'AKC'       => "Agreement with Key Confirmation",
-        'AKID'      => "Authority Key IDentifier",
-        'ALPN'      => "Application Layer Protocol Negotiation",
-        'ARC4'      => "Alleged RC4 (see RC4)",
-        'ARCFOUR'   => "alias for ARC4",
-        'ARIA'      => "128-bit Symmetric Block Cipher",
-        'ASN'       => "Autonomous System Number",
-        'ASN.1'     => "Abstract Syntax Notation One",
-        'BDH'       => "Bilinear Diffie-Hellman",
-        'BEAST'     => "Browser Exploit Against SSL/TLS",
-        'BER'       => "Basic Encoding Rules",
-        'Blowfish'  => "symmetric block cipher",
-        'BREACH'    => "Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)",
-                    #   http://www.breachattack.com/
-        'CAMELLIA'  => "Encryption algorithm 128 bit (by Mitsubishi and NTT)",
-        'CAST-128'  => "Carlisle Adams and Stafford Tavares, block cipher",
-        'CAST5'     => "alias for CAST-128",
-        'CAST-256'  => "Carlisle Adams and Stafford Tavares, block cipher",
-        'CAST6'     => "alias for CAST-256",
-        'cipher suite'  => "cipher suite is a named combination of authentication, encryption, and message authentication code algorithms",
-        'CA'        => "Certificate Authority (aka root CA)",
-        'CBC'       => "Cyclic Block Chaining",
-        'CBC '      => "Cipher Block Chaining (sometimes)",
-        'CBC  '     => "Ciplier Block Chaining (sometimes)",
-        #   ^^-- spaces to make key unique
-        'CBC-MAC'   => "Cipher Block Chaining - Message Authentication Code",
-        'CBC-MAC-ELB'   => "Cipher Block Chaining - Message Authentication Code - Encrypt Last Block",
-        'CCM'       => "CBC-MAC Mode",
-        'CCS'       => "Change Cipher Spec (protocol)",
-        'CDH'       => "?  Diffie-Hellman",
-        'CDP'       => "CRL Distribution Points",
-        'CEK'       => "Content Encryption Key",
-        'CFB'       => "Cipher Feedback",
-        'CFB3'      => "Cipher Feedback",
-        'CFBx'      => "Cipher Feedback x bit mode",
-        'CHAP'      => "Challenge Handshake Authentication Protocol",
-        'CKA'       => "", # PKCS#11
-        'CKK'       => "", # PKCS#11
-        'CKM'       => "", # PKCS#11
-        'CMAC'      => "Cipher-based MAC",
-        'CMP'       => "X509 Certificate Management Protocol",
-        'CMS'       => "Cryptographic Message Syntax",
-        'CMVP'      => "Cryptographic Module Validation Program (NIST)",
-        'CN'        => "Common Name",
-        'CP'        => "Certificate Policy (certificate extension)",
-        'CPD'       => "Certificate Policy Definitions",
-        'CPS'       => "Certification Practice Statement",
-        'CRC'       => "Cyclic Redundancy Check",
-        'CRIME'     => "Compression Ratio Info-leak Made Easy (Exploit SSL/TLS)",
-        'CRL'       => "Certificate Revocation List",
-        'CSP'       => "Certificate Service Provider",
-        'CSP '      => "Critical Security Parameter (used in FIPS 140-2)",
-        'CSR'       => "Certificate Signing Request",
-        'CP'        => "Certificate Transparency",
-        'CTL'       => "Certificate Trust Line",
-        'CTR'       => "Counter Mode (sometimes: CM; block cipher mode)",
-        'CTS'       => "Cipher Text Stealing",
-        'CWC'       => "CWC Mode (Carter-Wegman + CTR mode; block cipher mode)",
-        'DAA'       => "Data Authentication Algorithm",
-        'DAC'       => "Data Authentication Code",
-        'DEK'       => "Data Encryption Key",
-        'DER'       => "Distinguished Encoding Rules",
-        'DES'       => "Data Encryption Standard",
-        'DESede'    => "alias for 3DES ?java only?",
-        'DESX'      => "extended DES",
-        '3DES'      => "Tripple DES (168 bits)",
-        '3DES-EDE'  => "alias for 3DES",
-        '3TDEA'     => "Three-key  Tripple DEA (sometimes: Tripple DES; 168 bits)",
-        '2TDEA'     => "Double-key Tripple DEA (sometimes: Double DES; 112 bits)",
-        'D5'        => "Verhoeff's Dihedral Group D5 Check",
-        'DANE'      => "DNS-based Authentication of Named Entities",
-        'DDH'       => "Decisional Diffie-Hellman (Problem)",
-        'DEA'       => "Data Encryption Algorithm (sometimes a synonym for DES)",
-        'DECIPHER'  => "synonym for decryption",
-        'DER'       => "Distinguished Encoding Rules",
-        'DH'        => "Diffie-Hellman",
-        'DHE'       => "Diffie-Hellman ephemeral", # historic acronym, often used, mainly in openssl
-        'DLIES'     => "Discrete Logarithm Integrated Encryption Scheme",
-        'DN'        => "Distinguished Name",
-        'DPA'       => "Dynamic Passcode Authentication (see CAP)",
-        'DRBG'      => "Deterministic Random Bit Generator",
-        'DSA'       => "Digital Signature Algorithm",
-        'DSS'       => "Digital Signature Standard",
-        'DTLS'      => "Datagram TLS",
-        'DTLSv1'    => "Datagram TLS 1.0",
-        'DV'        => "Domain Validation",
-        'DV-SSL'    => "Domain Validated Certificate",
-        'EAP'       => "Extensible Authentication Protocol",
-        'EAP-PSK'   => "Extensible Authentication Protocol using a Pre-Shared Key",
-        'EAX'       => "EAX Mode (block cipher mode)",
-        'EAXprime'  => "alias for EAX Mode",
-        'EC'        => "Elliptic Curve",
-        'ECB'       => "Electronic Code Book mode",
-        'ECC'       => "Elliptic Curve Cryptography",
-        'ECDH'      => "Elliptic Curve Diffie-Hellman",
-        'ECDHE'     => "Ephemeral ECDH",
-        'ECDSA'     => "Elliptic Curve Digital Signature Algorithm",
-        'ECGDSA'    => "Elliptic Curve ??? DSA",
-        'ECIES'     => "Elliptic Curve Integrated Encryption Scheme",
-        'ECKA'      => "Elliptic Curve Key Agreement",
-        'ECKA-EG'   => "Elliptic Curve Key Agreement of ElGamal Type",
-        'ECKDSA'    => "Elliptic Curve ??? DSA",
-        'ECMQV'     => "Elliptic Curve Menezes-Qu-Vanstone",
-        'ECOH'      => "Elliptic Curve only hash",
-        'EDE'       => "Encryption-Decryption-Encryption",
-        'EDH'       => "Ephemeral Diffie-Hellman", # official acronym
-        'EGB'       => "Entropy Gathering Daemon",
-        'ELB'       => "Encrypt Last Block",
-        'ElGamal'   => "asymmetric block cipher",
-        'ENCIPHER'  => "synonym for encryption",
-        'EME'       => "Encoding Method for Encryption",
-        'ESP'       => "Encapsulating Security Payload",
-        'EV'        => "Extended Validation",
-        'EV-SSL'    => "Extended Validation Certificate",
-        'FEAL'      => "Fast Data Encryption Algorithm",
-        'FFC'       => "Finite Field Cryptography",
-        'FIPS'      => "Federal Information Processing Standard",
-        'FIPS46-2'  => "FIPS Data Encryption Standard (DES)",
-        'FIPS73'    => "FIPS Guidelines for Security of Computer Applications",
-        'FIPS140-2' => "FIPS Security Requirements for Cryptographic Modules",
-        'FIPS140-3' => "proposed revision of FIPS 140-2",
-        'FIPS180-3' => "FIPS Secure Hash Standard",
-        'FIPS186-3' => "FIPS Digital Signature Standard (DSS)",
-        'FIPS197'   => "FIPS Advanced Encryption Standard (AES)",
-        'FIPS198-1' => "FIPS The Keyed-Hash Message Authentication Code (HMAC)",
-        'FQDN'      => "Fully-qualified Domain Name",
-        'FSB'       => "Fast Syndrome Based Hash",
-        'FSM'       => "Finite State Machine",
-        'FZA'       => "FORTEZZA",
-        'G-DES'     => "??? DES",
-        'GCM'       => "Galois/Counter Mode (block cipher mode)",
-        'GHASH'     => "Hash funtion used in GCM",
-        'GMAC'      => "MAC for GCM",
-        'GOST'      => "Gossudarstwenny Standard (block cipher)",
-        'Grainv1'   => "stream cipher (64-bit IV)",
-        'Grainv128' => "stream cipher (96-bit IV)",
-        'hash127'   => "fast hash function (by Dan Bernstein)",
-        'HAVAL'     => "one-way hashing",
-        'HAS-160'   => "hash function",
-        'HAS-V'     => "hash function",
-        'HC128'     => "stream cipher",
-        'HC256'     => "stream cipher",
-        'HEARTBLEED'=> "attack against TLS extension heartbeat",
-        'HIBE'      => "hierarchical identity-based encryption",
-        'HMAC'      => "keyed-Hash Message Authentication Code",
-        'HMQV'      => "h? Menezes-Qu-Vanstone",
-        'HSM'       => "Hardware Security Module",
-        'HSTS'      => "HTTP Strict Transport Security",
-        'HTOP'      => "HMAC-Based One-Time Password",
-        'IAPM'      => "Integrity Aware Parallelizable Mode (block cipher mode of operation)",
-        'ICM'       => "Integer Counter Mode (alias for CTR)",
-        'IDEA'      => "International Data Encryption Algorithm (by James Massey and Xuejia Lai)",
-        'IFC'       => "Integer Factorization Cryptography",
-        'ISAKMP'    => "Internet Security Association and Key Management Protocol",
-        'IV'        => "Initialization Vector",
-        'JSSE'      => "Java Secure Socket Extension",
-        'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
-        'KEK'       => "Key Encryption Key",
-        'KSK'       => "Key Signing Key", # DNSSEC
-        'LM hash'   => "LAN Manager hash aka LanMan hash",
-        'LFSR'      => "Linear Feedback Shift Register",
-        'Lucky 13'  => "Break SSL/TLS Protocol",
-        'MARS'      => "",
-        'MAC'       => "Message Authentication Code",
-        'MCF'       => "Modular Crypt Format",
-        'MEE'       => "MAC-then-Encode-then-Encrypt",
-        'MEK'       => "Message Encryption Key",
-        'MDC2'      => "Modification Detection Code 2 aka Meyer-Schilling",
-        'MDC-2'     => "same as MDC2",
-        'MD2'       => "Message Digest 2",
-        'MD4'       => "Message Digest 4",
-        'MD5'       => "Message Digest 5",
-        'MGF'       => "Mask Generation Function",
-        'MISTY1'    => "block cipher algorithm",
-        'MQV'       => "Menezes-Qu-Vanstone (authentecated key agreement",
-        'NTLM'      => "NT Lan Manager. Microsoft Windows challenge-response authentication method.",
-        'NPN'       => "Next Protocol Negotiation",
-        'Neokeon'   => "symmetric block cipher algorithm",
-        'NSS'       => "Network Security Services",
-        'nonce'     => "(arbitrary) number used only once",
-        'NULL'      => "no encryption",
-        'NUMS'      => "nothing up my sleeve numbers",
-        'OAEP'      => "Optimal Asymmetric Encryption Padding",
-        'OFB'       => "Output Feedback",
-        'OCB'       => "Offset Codebook Mode (block cipher mode of operation)",
-        'OCB1'      => "same as OCB",
-        'OCB2'      => "improved OCB aka AEM",
-        'OCB3'      => "improved OCB2",
-        'OFBx'      => "Output Feedback x bit mode",
-        'OID'       => "Object Identifier",
-        'OTP'       => "One Time Pad",
-        'OCSP'      => "Online Certificate Status Protocol",
-        'OCSP stapling' => "formerly known as: TLS Certificate Status Request",
-        'OMAC'      => "One-Key CMAC, aka CBC-MAC",
-        'OMAC1'     => "same as CMAC",
-        'OMAC2'     => "same as OMAC",
-        'OV'        => "Organisational Validation",
-        'OV-SSL'    => "Organisational Validated Certificate",
-        'P12'       => "see PKCS#12",
-        'P7B'       => "see PKCS#7",
-        'PCT'       => "Private Communications Transport",
-        'PACE'      => "Password Authenticated Connection Establishment",
-        'PAKE'      => "Password Authenticated Key Exchange",
-        'PBE'       => "Password Based Encryption",
-        'PBKDF2'    => "Password Based Key Derivation Function",
-        'PC'        => "Policy Constraints (certificate extension)",
-        'PCBC'      => "Propagating Cipher Block Chaining",
-        'PCFB'      => "Periodic Cipher Feedback Mode",
-        'PEM'       => "Privacy Enhanced Mail",
-        'PES'       => "Proposed Encryption Standard",
-        'PFS'       => "Perfect Forward Secrecy",
-        'PFX'       => "see PKCS#12",
-#       'PFX'       => "Personal Information Exchange", # just for info
-        'PGP'       => "Pretty Good Privacy",
-        'PII'       => "Personally Identifiable Information",
-        'PKCS'      => "Public Key Cryptography Standards",
-        'PKCS1'     => "PKCS #1: RSA Encryption Standard",
-        'PKCS3'     => "PKCS #3: RSA Encryption Standard on how to implement the Diffie-Hellman key exchange protocol",
-        'PKCS5'     => "PKCS #5: RSA Encryption Standard on how to derive cryptographic keys from a password",
-        'PKCS6'     => "PKCS #6: RSA Extended Certificate Syntax Standard",
-        'PKCS7'     => "PKCS #7: RSA Cryptographic Message Syntax Standard",
-        'PKCS8'     => "PKCS #8: RSA Private-Key Information Syntax Standard",
-        'PKCS10'    => "PKCS #10: Describes a standard syntax for certification requests",
-        'PKCS11'    => "PKCS #11: RSA Cryptographic Token Interface Standard (keys in hardware devices, cards)",
-        'PKCS12'    => "PKCS #12: RSA Personal Information Exchange Syntax Standard (public + private key stored in files)",
-        'PKI'       => "Public Key Infrastructure",
-        'PKIX'      => "Internet Public Key Infrastructure Using X.509",
-        'PM'        => "Policy Mappings (certificate extension)",
-        'PMAC'      => "Parallelizable MAC (by Phillip Rogaway)",
-        'Poly1305-AES'  => "MAC (by D. Bernstein)",
-        'POP'       => "Proof of Possession",
-        'Poodle'    => "Padding Oracle On Downgraded Legacy Encryption",
-        'PRF'       => "pseudo-random function",
-        'PRNG'      => "pseudo-random number generator",
-        'PSK'       => "Pre-shared Key",
-        'RA'        => "Registration Authority (aka Registration CA)",
-        'Rabbit'    => "stream cipher algorithm",
-        'RADIUS'    => "Remote Authentication Dial-In User Service",
-        'Radix-64'  => "alias for Base-64",
-        'RBG'       => "Random Bit Generator",
-        'RC2'       => "Rivest Cipher 2, block cipher by Ron Rivest (64-bit blocks)",
-        'RC4'       => "Rivest Cipher 4, stream cipher (aka Ron's Code)",
-        'RC5'       => "Rivest Cipher 5, block cipher (32-bit word)",
-        'RC5-64'    => "Rivest Cipher 5, block cipher (64-bit word)",
-        'RC6'       => "Rivest Cipher 6",
-        'RCSU'      => "Reuters' Compression Scheme for Unicode (aka SCSU)",
-        'Rijndael'  => "symmetric block cipher algorithm",
-        'RIPEMD'    => "RACE Integrity Primitives Evaluation Message Digest",
-        'RMAC'      => "block cipher authentication mode",
-        'RNG'       => "Random Number Generator",
-        'ROT-13'    => "see XOR",
-        'RTP'       => "Real-time Transport Protocol",
-        'RSA'       => "Rivest Sharmir Adelman (public key cryptographic algorithm)",
-        'RSS-14'    => "Reduced Space Symbology, see GS1",
-        'RTN'       => "Routing transit number",
-        'SA'        => "Subordinate Authority (aka Subordinate CA)",
-        'SAFER'     => "Secure And Fast Encryption Routine, block cipher",
-        'Salsa20'   => "stream cipher",
-        'SAM'       => "syriac abbreviation mark",
-        'SAN'       => "Subject Alternate Name",
-        'SBCS'      => "single-byte character set",
-        'SCEP'      => "Simple Certificate Enrollment Protocol",
-        'SCSU'      => "Standard Compression Scheme for Unicode (compressed UTF-16)",
-        'SCSV'      => "Signaling Cipher Suite Value",
-        'SCVP'      => "Server-Based Certificate Validation Protocol",
-        'SDES'      => "Security Description Protokol",
-        'SEED'      => "128-bit Symmetric Block Cipher",
-        'Serpent'   => "symmetric key block cipher (128 bit)",
-        'SGC'       => "Server-Gated Cryptography",
-        'SHA'       => "Secure Hash Algorithm",
-        'SHA-0'     => "Secure Hash Algorithm (insecure version before 1995)",
-        'SHA-1'     => "Secure Hash Algorithm (since 1995)",
-        'SHA-2'     => "Secure Hash Algorithm (since 2002)",
-        'SHA-224'   => "Secure Hash Algorithm (224 bit)",
-        'SHA-256'   => "Secure Hash Algorithm (256 bit)",
-        'SHA-384'   => "Secure Hash Algorithm (384 bit)",
-        'SHA-512'   => "Secure Hash Algorithm (512 bit)",
-        'SHA1'      => "alias for SHA-1 (160 bit)",
-        'SHA2'      => "alias for SHA-2 (224, 256, 384 or 512 bit)",
-        'SHS'       => "Secure Hash Standard",
-        'SIA'       => "Subject Information Access (certificate extension)",
-        'SIC'       => "Segmented Integer Counter (alias for CTR)",
-        'Skein'     => "hash function",
-        'SKID'      => "subject key ID (certificate extension)",
-        'Skipjack'  => "block cipher encryption algorithm specified as part of the Fortezza",
-        'Snefu'     => "hash function",
-        'SNI'       => "Server Name Indication",
-        'SNOW'      => "word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )",
-        'SPDY'      => "Google's application-layer protocol on top of SSL",
-        'SPN'       => "Substitution-Permutation Network",
-        'Square'    => "block cipher",
-        'SRP'       => "Secure Remote Password protocol",
-        'SRTP'      => "Secure RTP",
-        'SSL'       => "Secure Sockets Layer",
-        'SSLv2'     => "Secure Sockets Layer Version 2",
-        'SSLv3'     => "Secure Sockets Layer Version 3",
-        'SSP'       => "Security Support Provider",
-        'SSPI'      => "Security Support Provider Interface",
-        'SST'       => "Serialized Certificate Store format",
-        'STS'       => "Strict Transport Security",
-        'STS '      => "Station-to-Station protocol",
-        'TACK'      => "Trust Assertions for Certificate Keys",
-        'TCB'       => "Trusted Computing Base",
-        'TDEA'      => "Tripple DEA",
-        'TEA'       => "Tiny Encryption Algorithm",
-        'TEK'       => "Traffic Encryption Key",
-        'Tiger'     => "hash function",
-        'TIME'      => "Timing Info-leak Made Easy (Exploit SSL/TLS)",
-#        'TIME'      => "A Perfect CRIME? TIME Will Tell",
-        'Threefish' => "hash function",
-        'TMAC'      => "Two-Key CMAC, variant of CBC-MAC",
-        'TOCTOU'    => "Time-of-check, time-of-use",
-        'TOFU'      => "Trust on First Use",
-        'TR-02102'  => "Technische Richtlinie 02102 (des BSI)",
-        'TSK'       => "TACK signing key",
-        'TSP'       => "trust-Management Service Provider",
-        'TLS'       => "Transport Layer Security",
-        'TLSA'      => "TLS Trus Anchors",
-        'TLSv1'     => "Transport Layer Security version 1",
-        'TSK'       => "Transmission Security Key",
-        'TTP'       => "trusted Third Party",
-        'Twofish'   => "symmetric key block cipher (128 bit)",
-        'UC'        => "Unified Communications (SSL Certificate using SAN)",
-        'UCC'       => "Unified Communications Certificate (rarley used)",
-        'UMAC'      => "Universal hashing MAC; optimized for 32-bit architectures",
-        'VMAC'      => "Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)",
-        'VMPC'      => "stream cipher",
-        'WHIRLPOOL' => "hash function",
-        'X.680'     => "X.680: ASN.1",
-        'X.509'     => "X.509: The Directory - Authentication Framework",
-        'X680'      => "X.680: ASN.1",
-        'X509'      => "X.509: The Directory - Authentication Framework",
-        'XCBC'      => "variant of CMAC",
-        'XCBC-MAC'  => "same as XCBC",
-        'XKMS'      => "XML Key Management Specification",
-        'XMACC'     => "counter-based XOR-MAC",
-        'XMACR'     => "radomized XOR-MAC",
-        'XMLSIG'    => "XML-Signature Syntax and Processing",
-        'XTEA'      => "extended Tiny Encryption Algorithm",
-        'XUDA'      => "Xcert Universal Database API",
-        'XXTEA'     => "enhanced/corrected Tiny Encryption Algorithm",
-        'ZLIB'      => "Lossless compression file format",
-        'ZSK'       => "Zone Signing Key", # DNSSEC
-    },
     'mnemonic'      => { # NOT YET USED
         'example'   => "TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA",
         'description'=> "TLS Version _ key establishment algorithm _ digital signature algorithm _ WITH _ confidentility algorithm _ hash function",
         'explain'   => "TLS Version1 _ Ephemeral DH key agreement _ DSS which implies DSA _ WITH _ 3DES encryption in CBC mode _ SHA for HMAC"
     },
-    # RFC 2246:  TLS Version 1
-    # RFC 4346:  TLS Version 1.1
-    # RFC 5246:  TLS Version 1.2  http://tools.ietf.org/html/rfc5346
-    # RFC 2412: OAKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')
-    #           alle *DH* sind im Prinzip PFS.
-    #           wird manchmal zusaetzlich mit DHE bezeichnet, wobei E für ephemeral
-    #           also flüchtige, vergängliche Schlüssel steht
-    #           D.H. ECDHE_* und DHE_* an den Anfang der Cipherliste stellen, z.B.
-    #                TLS_ECDHE_RSA_WITH_RC4_128_SHA
-    #                TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-    #                TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
-    #                TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA 
-    #           http://en.wikipedia.org/wiki/Perfect_forward_secrecy
-    # RFC 2818: ? (Namenspruefung)
-    # RFC 2712: TLSKRB: Addition of Kerberos Cipher Suites to Transport Layer Security (TLS)
-    # RFC 2986: PKCS#10
-    # RFC 5967: PKCS#10
-    # RFC 3268:  TLSAES: Advanced Encryption Standard (AES) Ciphersuites for Transport Layer Security (TLS)
-    # RFC 5081: TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication
-    # RFC 4279:  TLSPSK: Pre-Shared Key Ciphersuites for Transport Layer Security (TLS)
-    # RFC 4492:  TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer Security (TLS)
-    # RFC 3749: TLS Compression Method http://tools.ietf.org/html/rfc3749
-    # RFC 3943: TLS Protocol Compression Using Lempel-Ziv-Stac (LZS) http://tools.ietf.org/html/rfc3943
-    # RFC 3268:  TLS Version 1 AES
-    # RFC 4132:  TLS Version 1 Camellia
-    # RFC 4162: TLS Version 1 SEED
-    # RFC 3546: TLS Extensions
-    # RFC 4366: TLS Extensions
-    #               AKID - authority key identifier
-    #               Server name Indication (SNI): server_name
-    #               Maximum Fragment Length Negotiation: max_fragment_length
-    #               Client Certificate URLs: client_certificate_url
-    #               Trusted CA Indication: trusted_ca_keys
-    #               Truncated HMAC: truncated_hmac
-    #               Certificate Status Request (i.e. OCSP stapling): status_request
-    #               Error Alerts
-    # RFC 5764: TLS Extensions SRTP
-    # RFC 4366: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
-    # RFC 6066: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling) TLS Certificate Status Request
-    # RFC 6066: TLS Extensions: Extension Definitions
-    #                PkiPath
-    # RFC 6066: TLS Extensions: Heartbeat https://tools.ietf.org/html/rfc6520
-    # RFC 4749: TLS Compression Methods
-    # RFC 5077: TLS session resumption
-    # RFC 4347: DTLS Datagram TLS
-    # RFC 2246: TLS protocol version 1.0 http://tools.ietf.org/html/rfc2246
-    # RFC 6101: SSL protocol version 3.0 http://tools.ietf.org/html/rfc6101
-    # RFC 6460: ?
-    # RFC 6125: Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)
-    # RFC 4210: X509 PKI Certificate Management Protocol (CMP)
-    # RFC 3739: x509 PKI Qualified Certificates Profile; EU Directive 1999/93/EC
-    # RFC 4158: X509 PKI Certification Path Building
-    # RFC 5055: Server-Based Certificate Validation Protocol (SCVP)
-    # RFC 2560: Online Certificate Status Protocol (OCSP)
-    # RFC 5019: simplified RFC 2560
-    # RFC 4387: X509 PKI Operational Protocols: Certificate Store Access via HTTP
-    # RFC 5746: TLS Renegotiation Indication Extension http://tools.ietf.org/html/rfc5746,
-
-    # AIA  : {http://www.startssl.com/certs/sub.class4.server.ca.crt}
-    # CDP  : {http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl}
-    # OCSP : http://ocsp.startssl.com/sub/class4/server/ca
-    # cat some.crl | openssl crl -text -inform der -noout
-    # OCSP response "3" (TLS 1.3) ==> certifcate gueltig
-    # SPDY - SPDY Protocol : http://www.chromium.org/spdy/spdy-protocol
-    # False Start: https://www.imperialviolet.org/2012/04/11/falsestart.html
-    #              https://technotes.googlecode.com/git/falsestart.html
-    # ALPN : http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
-    # ALPN, NPN: https://www.imperialviolet.org/2013/03/20/alpn.html
-    # NPN  : https://technotes.googlecode.com/git/nextprotoneg.html
-    # HSTS : http://tools.ietf.org/html/draft-hodges-strict-transport-sec-02
-    #        https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
-    #        Strict-Transport-Security: max-age=16070400; includeSubDomains
-    #        Apache config:
-    #             Header set Strict-Transport-Security "max-age=16070400; includeSubDomains"
-    # SNI apache: https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
-    #        SSLStrictSNIVHostCheck, which controls whether to allow non SNI clients to access a name-based virtual host. 
-    #        when client provided the hostname using SNI, the new environment variable SSL_TLS_SNI
-    # TLS session resumption problem with session ticket
-    #        see https://www.imperialviolet.org/2011/11/22/forwardsecret.html
-    #        "Since the session ticket contains the state of the session, and
-    #         thus keys that can decrypt the session, it too must be protected
-    #         by ephemeral keys. But, in order for session resumption to be
-    #         effective, the keys protecting the session ticket have to be kept
-    #         around for a certain amount of time: the idea of session resumption
-    #         is that you can resume the session in the future, and you can't
-    #         do that if the server can't decrypt the ticket!
-    #         So the ephemeral, session ticket keys have to be distributed to
-    #         all the frontend machines, without being written to any kind of
-    #         persistent storage, and frequently rotated."
-    #        see also https://www.imperialviolet.org/2013/06/27/botchingpfs.html
-    #
-    # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
-    #
-    # SCSV   https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
 
     # just for information, some configuration options in Firefox
     'firefox' => { # NOT YET USED
@@ -2602,6 +2170,8 @@ our %text = (
     'IE' => { # NOT YET USED
         'HKLM\\...' => "sequence of ciphers", #
         },
+
+    # for more informations about definitions and RFC, see o-saft-man.pm
 
 ); # %text
 
@@ -2645,7 +2215,6 @@ our %org = (
     'cmd-http'  => $cfg{'cmd-http'},
     'cmd-info'  => $cfg{'cmd-info'},
     'cmd-quick' => $cfg{'cmd-quick'},
-    #'text'      => { %text }, no need for 'glossar' here
 ); # %org
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
@@ -2868,10 +2437,10 @@ sub __SSLinfo($$$) {
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
         #$val =~ s#.*?(URI\s*:.*)#$1#ms                          if ($cmd eq 'ext_crl_crl');
-# ToDo: previous fails, reason unknown
+# TODO: previous fails, reason unknown
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
     }
-# ToDo: move code for formatting to print*()
+# TODO: move code for formatting to print*()
     if ($cmd =~ /ext(?:ensions|debug|_)/) {
         # grrr, formatting extensions is special, take care for traps ...
         if ($cfg{'format'} ne "raw") {
@@ -2889,7 +2458,7 @@ sub __SSLinfo($$$) {
         }
         return $val; # ready!
     }
-# ToDo: move code for formatting to print*()
+# TODO: move code for formatting to print*()
     if ($cfg{'format'} ne "raw") {
         $val =  "" if (!defined $val);  # avoid warnings
         $val =~ s/\n\s+//g; # remove trailing spaces
@@ -2915,14 +2484,6 @@ sub _is_intern($)      { my $is=shift; return _is_member($is, \@{$cfg{'cmd-inter
 sub _is_hexdata($)     { my $is=shift; return _is_member($is, \@{$cfg{'data_hex'}});   }
 sub _is_call($)        { my $is=shift; return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
-sub get_usr_value($)   {
-    #? return value of argument $_[0] from @{$cfg{'usr-args'}}
-    my $key =  shift;
-       $key =~ s/^(?:--|\+)//;  # strip leading chars
-    my @arg =  "";              # key, value (Note that value is anything right to leftmost = )
-    map({@arg = split("=", $_, 2) if /^$key/} @{$cfg{'usr-args'}}); # does not allow multiple $key in 'usr-args'
-    return $arg[1];
-}
 
 # some people prefer to use a getter function to get data from objects
 # each function returns a spcific value (column) from the %cipher table
@@ -2939,7 +2500,7 @@ sub get_cipher_tags($) { my $c=$_[0]; return $ciphers{$c}[8] || "" if (grep(/^$c
 sub get_cipher_desc($) { my $c=$_[0];
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
-        _warn("undefined cipher description for '$c'"); # ToDo: correct %ciphers
+        _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
         return "<<undef>>";
     }
     my @c = @{$ciphers{$c}}; 
@@ -2996,7 +2557,7 @@ sub _isbeast($$){
 sub _isbreach($){
     # return 'yes' if vulnerable to BREACH
     return 0;
-# ToDo: checks
+# TODO: checks
     # To be vulnerable, a web application must:
     #      Be served from a server that uses HTTP-level compression
     #      Reflect user-input in HTTP response bodies
@@ -3008,7 +2569,7 @@ sub _isbreach($){
 }
 sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? "" : $_[0] . " "; }
     # return compression if available, empty string otherwise
-sub _istime($)  { return 0; } # ToDo: checks; good: AES-GCM or AES-CCM
+sub _istime($)  { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
 sub _ispfs($$)  {
     # return given cipher if it does not support forward secret connections (PFS)
     my ($ssl, $cipher) = @_;
@@ -3037,11 +2598,11 @@ sub _isfips($$) {
 } # _isfips
 sub _isnsab($$)  {
     # return given cipher if it is not NSA Suite B compliant, empty string otherwise
-# ToDo:
+# TODO:
 } # _isnsab
 sub _ispci($$)  {
     # return given cipher if it is not PCI compliant, empty string otherwise
-# ToDo: DH 1024+ is PCI compliant
+# TODO: DH 1024+ is PCI compliant
     my ($ssl, $cipher) = @_;
     return $cipher if ($ssl    eq "SSLv2"); # SSLv2 is not PCI compliant
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'notPCI'}/);
@@ -3082,7 +2643,7 @@ sub _isbleed($$) {
     # https://www.cloudflarechallenge.com/heartbleed
     my ($host, $port) = @_;
     my $heartbeats    = 1;
-    my $cl  = undef; # ToDo: =$Net::SSLinfo::socket;
+    my $cl  = undef; # TODO: =$Net::SSLinfo::socket;
     my $ret = "";       # empty string as required in %checks
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
     undef $\;           # take care, must not be \n !!
@@ -3093,7 +2654,7 @@ sub _isbleed($$) {
     # also die() replaced by warn()
 
         # open our own connection and close it at end
-# ToDo: does not work with socket from SSLinfo.pm
+# TODO: does not work with socket from SSLinfo.pm
     $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
         #ORIG die "failed to connect: $!";
         _warn("failed to connect: '$!'");
@@ -3163,13 +2724,13 @@ sub _isccs($$$) {
     # inspired by http://blog.chris007.de/?p=238
     my ($host, $port, $ssl) = @_;
     my $heartbeats    = 1;
-    my $cl  = undef; # ToDo: =$Net::SSLinfo::socket;
+    my $cl  = undef; # TODO: =$Net::SSLinfo::socket;
     my $ret = "";       # empty string as required in %checks
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
     undef $\;           # take care, must not be \n !!
 
         # open our own connection and close it at end
-# ToDo: does not work with socket from SSLinfo.pm
+# TODO: does not work with socket from SSLinfo.pm
     $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
         _warn("failed to connect: '$!'");
         return "failed to connect";
@@ -3318,7 +2879,7 @@ sub _get_default($$$) {
     } else { # force openssl
         $cipher = _useopenssl($ssl, $host, $port, "");
     }
-    _trace(" _get_default($ssl, $host, $port) = $cipher"); # ToDo: trace a bit late
+    _trace(" _get_default($ssl, $host, $port) = $cipher"); # TODO: trace a bit late
     return $cipher;
 } # _get_default
 
@@ -3363,7 +2924,7 @@ sub checkcipher($$) {
     $checks{'edh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
     $checks{'export'}->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
     $checks{'rc4'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
-# ToDo: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
+# TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
     $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
@@ -3514,7 +3075,7 @@ sub checkcert($$) {
     $value = $data{'ext_constraints'}->{val}($host);
     $checks{'constraints'}->{val}   = " "    if ($value eq "");
     $checks{'constraints'}->{val}   = $value if ($value !~ m/CA:FALSE/i);
-    # ToDo: more checks necessary:
+    # TODO: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
     foreach $label (qw(cn subject issuer email aux ocsp_uri altname)) {
@@ -3526,7 +3087,7 @@ sub checkcert($$) {
     }
 
     # certificate
-    if ($cfg{'verbose'} > 0) { # ToDo
+    if ($cfg{'verbose'} > 0) { # TODO
         foreach $label (qw(verify selfsigned)) {
             #dbx# _dbx "$label : $value #";
             $value = $data{$label}->{val}($host);
@@ -3546,10 +3107,12 @@ sub checkcert($$) {
 #   }
         }
     }
-    $checks{'selfsigned'}->{val} = $data{'selfsigned'}->{val}($host);
-    $checks{'fp_not_md5'}->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+    $checks{'selfsigned'}->{val}    = $data{'selfsigned'}->{val}($host);
+    $checks{'fp_not_md5'}->{val}    = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+    $value = $data{'signame'}->{val}($host);
+    $checks{'sha2signature'}->{val} = $value if ($value !~ m/^sha(2|224|256|384|512)/); # just sha2 is too lazy
 
-# ToDo: ocsp_uri pruefen; Soft-Fail, Hard-Fail
+# TODO: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
     # valid characters (most likely only relevant for EV)
     #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
@@ -3570,13 +3133,13 @@ sub checkcert($$) {
         }
     }
 
-# ToDo: check: serialNumber: Positive number up to a maximum of 20 octets.
-# ToDo: check: Signature: Must be the same OID as that defined in SignatureAlgorithm below.
-# ToDo: check: Version
-# ToDo: check: validity (aka dates)
-# ToDo: check: Issuer
+# TODO: check: serialNumber: Positive number up to a maximum of 20 octets.
+# TODO: check: Signature: Must be the same OID as that defined in SignatureAlgorithm below.
+# TODO: check: Version
+# TODO: check: validity (aka dates)
+# TODO: check: Issuer
 #        Only CN=, C=, ST=, O=, OU= and serialNumber= must be supported the rest are optional 
-# ToDo: check: Subject
+# TODO: check: Subject
 #        The subject field can be empty in which case the entity being authenticated is defined in the subjectAltName.
 
 } # checkcert
@@ -3601,8 +3164,13 @@ sub checksni($$) {
         $checks{'hostname'}->{val}  = "";
     } else {
         $checks{'certfqdn'}->{val}  = $data{'cn_nosni'}->{val} . " <> " . $host;
-        $checks{'hostname'}->{val}  = $host . " <> " . $data{'cn_nosni'}->{val};
+        $checks{'hostname'}->{val}  = $host . " <> " . $data{'cn'}->{val}($host);
     }
+    #dbx# _dbx "host:\t\t"           . $host;
+    #dbx# _dbx "data{cn}:\t\t"       . $data{'cn'}->{val}($host);
+    #dbx# _dbx "data{cn_nosni}:\t"   . $data{'cn_nosni'}->{val};
+    #dbx# _dbx "checks{hostname}:\t" . $checks{'hostname'}->{val};
+    #dbx# _dbx "checks{certfqdn}:\t" . $checks{'certfqdn'}->{val};
 } # checksni
 
 sub checksizes($$) {
@@ -3678,7 +3246,7 @@ sub check02102($$) {
         # these checks are not possible from remote
 
     # FIXME: certificate (chain) validation check
-    # ToDo: cipher bit length check
+    # TODO: cipher bit length check
 
 } # check02102
 
@@ -3692,8 +3260,8 @@ sub checkdv($$) {
     # DV certificates must have:
     #    CN= value in either the subject or subjectAltName
     #    C=, ST=, L=, OU= or O= should be either blank or contain appropriate
-    #        text such as "not valid".  # ToDo: match $cfg{'regex'}->{'EV-empty'}
-    # ToDo: reference missing
+    #        text such as "not valid".  # TODO: match $cfg{'regex'}->{'EV-empty'}
+    # TODO: reference missing
 
     my $cn      = $data{'cn'}->{val}($host);
     my $subject = $data{'subject'}->{val}($host);
@@ -3719,7 +3287,7 @@ sub checkdv($$) {
     }
     $txt = $1;  # $1 is matched FQDN
 
-# ToDo: %data_oid not yet used
+# TODO: %data_oid not yet used
     $data_oid{$oid}->{val} = $txt if ($txt !~ m/^\s*$/);
     $data_oid{$oid}->{val} = $cn  if ($cn  !~ m/^\s*$/);
 
@@ -3846,10 +3414,10 @@ sub checkev($$) {
     }
     # valid characters already don in checkcert()
 
-    # ToDo: wildcard no, SAN yes
-    # ToDo: cipher 2048 bit?
-    # ToDo: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
-    # ToDo: Scoring: 100 EV+SGC; 80 EV; 70 EV-; 50 OV; 30 DV
+    # TODO: wildcard no, SAN yes
+    # TODO: cipher 2048 bit?
+    # TODO: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
+    # TODO: Scoring: 100 EV+SGC; 80 EV; 70 EV-; 50 OV; 30 DV
 } # checkev
 
 sub checkroot($$) {
@@ -3998,7 +3566,7 @@ sub checkdest($$) {
         $checks{$key}->{val} = " "    if ($value eq "");
         $checks{$key}->{val} = "None" if ($value =~ m/^\s*None\s*$/i);
         # if supported we have a value
-        # ToDo: see ZLIB also (seems to be wrong currently)
+        # TODO: see ZLIB also (seems to be wrong currently)
     }
     foreach $key (qw(heartbeat)) { # these are good if there is no value
         $checks{$key}->{val} = $data{$key}->{val}($host);
@@ -4045,10 +3613,10 @@ sub checkhttp($$) {
             $checks{$key}->{val}    = $text{'no-STS'};
         }
     }
-# ToDo: invalid certs are not allowed for HSTS
+# TODO: invalid certs are not allowed for HSTS
     $checks{'hsts_fqdn'}->{val} = "<<N/A>>" if ($http_location eq "");   # useless if no redirect
     $checks{'pkp_pins'} ->{val} = $no if ($data{'https_pins'}->{val}($host) eq "");
-# ToDo: pins= ==> fingerprint des Zertifikats
+# TODO: pins= ==> fingerprint des Zertifikats
 
     $no = $text{'no-STS'};
     $no = $text{'no-http'} if ($cfg{'usehttp'} < 1);
@@ -4111,9 +3679,9 @@ sub checkssl($$) {
     # now do remaining for %checks
     checkdest( $host, $port);
 
-# ToDo: folgende Checks implementieren
+# TODO: folgende Checks implementieren
     foreach $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
-# ToDo: nicht sinnvoll wenn $cfg{'no_cert'} > 0
+# TODO: nicht sinnvoll wenn $cfg{'no_cert'} > 0
     }
 
 } # checkssl
@@ -4135,15 +3703,15 @@ sub scoring($$) {
         next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); # FIXME: not yet scored
         next if ($key =~ m/^TLSv1[123]/); # FIXME:
         $value = $checks{$key}->{val};
-        # ToDo: go through @results
-#ToDo   foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
-#ToDo       # keys in %checks look like 'SSLv2-LOW', 'TLSv11-HIGH', etc.
-#ToDo       $key = $ssl . '-' . $sec;
-#ToDo       if ($checks{$key}->{val} != 0) {    # if set, decrement score
-#ToDo           $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
-#ToDo printf "%20s: %4s %s\n", $key, $scores{'check_ciph'}->{val}, _getscore($key, 'egal', \%checks);
-#ToDo       }
-#ToDo   }
+        # TODO: go through @results
+# TODO   foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
+# TODO       # keys in %checks look like 'SSLv2-LOW', 'TLSv11-HIGH', etc.
+# TODO       $key = $ssl . '-' . $sec;
+# TODO       if ($checks{$key}->{val} != 0) {    # if set, decrement score
+# TODO           $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
+# TODO printf "%20s: %4s %s\n", $key, $scores{'check_ciph'}->{val}, _getscore($key, 'egal', \%checks);
+# TODO       }
+# TODO   }
         $scores{'check_size'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "sizes");
 #       $scores{'check_ciph'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "cipher");
         $scores{'check_http'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "https"); # done above
@@ -4255,7 +3823,7 @@ sub print_data($$$$) {
         if ($label =~ m/(issuer)/)   { $val =~ s#/#\n\t#g; $val =~ s#^\n\t##m; }
         if ($label =~ m/(serial|modulus|sigkey_value)/) {
                                        $val =~ s#(..)#$1:#g; $val =~ s#:$##; }
-        if ($label =~ m/(pubkey_algorithm|signame)/) {
+        if ($label =~ m/((?:pubkey|sigkey)_algorithm|signame)/) {
             $val =~ s#(with)# $1 #ig;
             $val =~ s#(encryption)# $1 #ig;
          }
@@ -4399,7 +3967,7 @@ sub print_cipherdefault($$$$) {
     my ($legacy, $ssl, $host, $port) = @_;
     my $yesno   = 'yes';
     if ($legacy eq 'sslyze')    { print "\n\n      Preferred Cipher Suites:"; }
-    if ($legacy eq 'sslaudit')  {} # ToDo: cipher name should be DEFAULT
+    if ($legacy eq 'sslaudit')  {} # TODO: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
     print_cipherline($legacy, $ssl, $host, $port, $data{'selected'}->{val}($host), $yesno);
@@ -4607,36 +4175,22 @@ sub printchecks($$$) {
 sub printquit() {
     #? print internal data
     # call this function with:
-    #    $0 `grep =head $0 \
-    #    |gawk '/--(help|trace-sub)/{next}/--h$/{next}/\+traceSUB/{next}($2~/^-/){$1="";print}'\
-    #    |tr ' ' '\012' \
-    #    |sort -u` \
-    #    |tr '\012' ' ' \
-    #    +quit +gibts_nicht
-    # and:
-    #    $0 `grep =head $0 \
-    #    |gawk '/--(help|trace-sub)/{next}/--h$/{next}/\+traceSUB/{next}($2~/^-/){$1="";print}'\
-    #    |tr ' ' '\012' \
-    #    |sort -u` \
-    #    |tr '=' ' \
-    #    |tr '\012' ' ' \
-    #    +quit +gibts_nicht
+    #    $0 `\
+    #      gawk '/--(help|trace-sub)/{next}/--h$/{next}/\+traceSUB/{next}($2~/^-/){$1="";print}' o-saft-man.pm\
+    #      |tr ' ' '\012' \
+    #      |sort -u \
+    #      |egrep '^(--|\+)' \
+    #      |egrep -v '^--[v-]-' \
+    #      |egrep -v '--user-*' \
+    #     ` \
+    #     +quit --trace-key
     #
     # NOTE: This extracts all options, but does not use all variants these
     #        options can be written. So just a rough test ...
     #
-    # NOTE: Above shell commands insist on proper definitons in POD format
-    #       herein, in particular that all options are defined using POD's
-    #       =head* keyword.
-    #       Some commands may have invalid arguments (i.e. --sep=CHAR ) or
+    # NOTE: Some commands may have invalid arguments (i.e. --sep=CHAR ) or
     #       the commands may be unknown. This results in  **WARNING  texts
-    #       for the correspoding commands, or the argument will be used as
-    #       target. We expect both; for example:
-    #           hosts= [ and:443 HOST:443 HOST:443 HOST:PORT:443 --no-SSL:443 -protocol:PORT SSL:PORT --SSL,:PORT vs.:PORT ]
-    # NOTE: We also expect that options with arguments, like --sep=CHAR ,
-    #       are described as:   =head3 --sep=CHAR
-    #       The second onliner above then converts  --sep=CHAR  to
-    #       --sep CHAR
+    #       for the correspoding commands.
 
     if ($cfg{'trace'} + $cfg{'verbose'} <= 0) {
         #_warn(" +quit  command usefull with --v and/or --trace* option only");
@@ -4655,7 +4209,7 @@ sub printversionmismatch() {
     #? check if openssl and compiled SSLeay are of same version
     my $o = Net::SSLeay::OPENSSL_VERSION_NUMBER();
     my $s = Net::SSLeay::SSLeay();
-    if ($0 ne $s) {
+    if ($o ne $s) {
         _warn("used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
     }
 } # printversionmismatch
@@ -4672,7 +4226,7 @@ sub printversion() {
     print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
     print "       ::SSLeay()                    0x" . Net::SSLeay::SSLeay();
     if ($cfg{'verbose'} > 0) {
-        # ToDo: not all versions of Net::SSLeay have constants like 
+        # TODO: not all versions of Net::SSLeay have constants like 
         # Net::SSLeay::SSLEAY_CFLAGS, hence we use hardcoded integers
         print "       ::SSLEAY_DIR                  " . Net::SSLeay::SSLeay_version(5);
         print "       ::SSLEAY_BUILD_ON             " . Net::SSLeay::SSLeay_version(3);
@@ -4681,7 +4235,7 @@ sub printversion() {
     }
     printversionmismatch();
 
-# ToDo: i.g. OPENSSL_VERSION_NUMBER() returns same value as SSLeay()
+# TODO: i.g. OPENSSL_VERSION_NUMBER() returns same value as SSLeay()
 #       but when using libraries with LD_LIBRARY_PATH or alike, these
 #       versions differ
 
@@ -4742,7 +4296,7 @@ sub printciphers() {
     #                                         # output looks like: openssl ciphers 
     if ((($cfg{'ciphers-v'} + $cfg{'ciphers-V'}) <= 0)
      and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
-        # ToDo: filter ciphers not supported by openssl
+        # TODO: filter ciphers not supported by openssl
         _trace(" +ciphers");
         print join(":", (keys %ciphers));
         return;
@@ -4875,221 +4429,6 @@ sub printciphers() {
 
 } # printciphers
 
-sub _print_head($$) { printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60); }
-sub _print_opt($$$) { printf("%16s%s%s\n", @_); }
-sub _print_cmd($$)  { printf("     +%-14s\t%s\n", @_); }
-sub _print_arr($$$) {
-    my ($ssl, $sep, $dumm) = @_;
-    my @all = ();
-    push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$ssl}});
-    printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
-}
-sub _print_cfg($$$$){
-    # print line in configuration format
-    my ($typ, $key, $sep, $txt) = @_;
-    $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
-    $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
-    _print_opt($key, $sep, $txt);
-}
-
-sub printtable($) {
-    #? print data from hash in tabular form, $typ denotes hash
-    my $typ = shift;
-    my %types = (
-        # typ        header left    separator  header right
-        #-----------+---------------+-------+-------------------------------
-        'score' => ["key",           "=",    "SCORE\t# Description"],
-        'regex' => ["key",           " => ", " Regular Expressions used internally"],
-        'abbr'  => ["Abbrevation",   " - ",  "Description"],
-        'intern'=> ["Command",       "    ", " list of commands"],
-        'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
-        'range' => ["range name",    " - ",  "hex values in this range"],
-        'data'  => ["key",    "=",   "text"],
-        'check' => ["key",    "=",   "text"],
-        'text'  => ["key",    "=",   "text"],
-        'cfg_check' =>["N/A", "=",   "N/A"],
-        'cfg_data'  =>["N/A", "=",   "N/A"],
-        'cfg_text'  =>["N/A", "=",   "N/A"],
-    );
-    my ($key, $txt);
-    my $sep = $types{$typ}->[1];
-    _print_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
-    if ($typ eq 'abbr')  { _print_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $text{'glossar'}->{$_}) foreach (sort keys %{$text{'glossar'}}); }
-    if ($typ eq 'regex') { _print_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
-    if ($typ eq 'compl') { _print_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
-    if ($typ eq 'score') { _print_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
-   #if ($typ eq 'range') { _print_arr($_, $sep, $cfg{'cipherranges'}->{$_}) foreach (sort keys %{$cfg{'cipherranges'}}); }
-        # above prints > 65.000 hex values, not very usefull ...
-    if ($typ eq 'range') { print qx(\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0); } # ToDo: quick&dirty backticks
-    if ($typ eq 'intern') {
-        foreach $key (sort keys %cfg) {
-            next if ($key eq 'cmd-intern'); # don't list myself
-            next if ($key !~ m/^cmd-(.*)/);
-            _print_opt("cmd-" . $1, $sep, "+" . join(" +", @{$cfg{$key}}));
-        }
-    }
-    if ($typ =~ m/check/) {
-        foreach $key (sort keys %checks) {
-            $txt =  $checks{$key}->{txt};
-            _print_cfg($typ, $key, $sep, $txt);
-        }
-    }
-    if ($typ =~ m/data/) {
-        foreach $key (sort keys %data) {
-            $txt =  $data{$key}->{txt};
-            _print_cfg($typ, $key, $sep, $txt);
-        }
-    }
-    if ($typ =~ m/text/) {
-        foreach $key (sort keys %text) {
-            next if (ref($text{$key}) ne ""); # skip except string
-            $txt =  $text{$key};
-            $txt =~ s/(\n)/\\n/g;
-            $txt =~ s/(\r)/\\r/g;
-            $txt =~ s/(\t)/\\t/g;
-            _print_cfg($typ, $key, $sep, $txt);
-        }
-        print "
-= Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
-= The string  @@  inside texts is used as placeholder.
-= (Don't be confused about multiple  =  as they are part of  TEXT.)
-    " if ($typ !~ m/^cfg/);
-    }
-} # printtable
-
-sub printcommands() {
-    #? print program's help about commands
-    # we do not use POD, as most texts are already in %data and %checks
-    # NOTE: unfortunately we cannot print alias commands, as they are not part
-    # of %data or %checks but are acceped dynamically in the argument parser
-    my $key;
-    print "\n   Summary and internal commands";
-    foreach $key (@{$cfg{'commands'}}) {
-        _print_cmd($key, "") if (_is_intern($key) > 0);
-    }
-    print "
-   Commands to show target, connection and certificate details
-
-        The names of these commands are mainly adopted to  openssl's commands
-        (see \"openssl cipher\", \"openssl x509\").
-        All these commands just show  a single detail which is also available
-        with the  +text  command.
-";
-    foreach $key (@{$cfg{'commands'}}) {
-        next if (_is_intern($key) > 0);
-        next if (_is_hashkey($key, \%data) <= 0);
-        _print_cmd($key, $data{$key}->{txt});
-    }
-    print "
-   Commands for checks
-
-        Commands to show results of performed checks.
-";
-    foreach $key (@{$cfg{'commands'}}) {
-        next if (_is_intern($key) > 0);
-        next if (_is_hashkey($key, \%checks) <= 0);
-        next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
-        _print_cmd($key, $checks{$key}->{txt});
-    }
-} # printcommands
-
-sub printopt() {
-    #? print program's help about options
-    local $\; undef $\;
-    local $/; undef $/;
-    my $skip = 1;
-    my $data = "";
-    foreach $data (@DATA) {    # parsing is mor easy to read tha regex
-        $skip = 0 if ($data =~ m/=head.\s*OPTIONS/);
-        next if ($skip > 0);
-        last if ($data =~ m/=head.\s*LAZY/);
-        if ($data =~ m/^=head.\s+/) {
-            $data =~ s/^=head.\s*//;
-            print $data;
-        }
-    }
-} # printopt
-
-sub printoptions() {
-    #? print program's help about options
-    local $/;
-    undef $/;
-    my $data = join("",@DATA);
-    $data =~ s/.*head1 (OPTIONS.*)=head1 LAZY.*/$1/ms;
-    $data =~ s/=head.\s*//g;
-    $data =~ s/\n=[^\n]*\n//g;
-    $data =~ s/=item\s*/    /g;
-    $data =~ s/I<([^>]*)>/"$1"/g;
-    print $data;
-} # printoptions
-
-sub printhist() {
-    #? print
-    my $egg = join ("", @DATA);
-    $egg =~ s{.*?=begin\s+--v --v(.*?)=end\s+--v.*}{$1}ms;
-    print scalar reverse $egg;
-} # printhist
-
-sub printhelp($) {
-    #? print program's help
-    # if parameter is not empty, print brief list of specified label
-    my $label   = shift || ""; # || to avoid uninitialized value
-    local $\;
-    $\ = "\n";
-    _vprintme();
-    _v_print("help: $label");
-    if ($label =~ m/^cmd$/i)            { print "# $mename commands:\t+"        . join(" +", @{$cfg{'commands'}}); exit; }
-    if ($label =~ m/^legacy/i)          { print "# $mename legacy values:\t"    . join(" ",  @{$cfg{'legacys'}});  exit; }
-    if ($label =~ m/^options?/i)        { printoptions();   exit; }
-    if ($label =~ m/^opts?/i)           { printopt();       exit; }
-    if ($label =~ m/^commands?/i)       { printcommands();  exit; }
-    if ($label =~ m/^(abbr|compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i) { printtable(lc($1)); exit; }
-    if ($label =~ m/^cfg[_-]?(check|data|text)s?$/i) { printtable('cfg_'.lc($1)); exit; }
-    if ($label =~ m/^(check|data|text)s?[_-]?cfg$/i) { printtable('cfg_'.lc($1)); exit; }
-        # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
-        # we can simply switch from  --help=text  and/or  --cfg_text=*
-
-    # no special help, print full one
-    if ($cfg{'verbose'} > 1) { printhist(); exit; }
-    if ($cfg{'verbose'} < 1) { # we can test poor man's POD with --v
-        if (eval("require POD::Perldoc;")) {
-            # pod2usage( -verbose => 1 )
-            exit( Pod::Perldoc->run(args=>[$0]) );
-        }
-        if (qx(perldoc -V)) {
-            # may return:  You need to install the perl-doc package to use this program.
-            exec "perldoc $0"; # scary ...
-        }
-        print "\n# no perldoc and no Pod::Perldoc, try poor man's POD ...\n";
-    }
-    # go on if exec fails or --v was given
-    _v_print("poor man's POD ...");
-    $\ = "";
-    my $skip  = 0;
-    my $ident = "        ";
-    foreach (@DATA) {
-        $ident = "        ";
-        next if (/__DATA__$/);
-        next if (/^\s*$/);
-        next if (/^=(cut|pod|for|encoding).*/);
-        last if (/=end ToDo/);      # quick&dirty fix 18jan13 (@DATA contains script at end)
-        s/^=end\s*/  {$skip = 0;}/e && next;
-        s/^=begin\s*/{$skip = 1;}/e && next;
-        next if ($skip != 0);
-        s/\$0(?![>"])/$mename/g;    # negative lookahead: keep "$0" and C<$0>
-        print "\n" if m/^=head3\s/; # quick&dirty: does not work with \n in substitute below
-        s/^=head1\s*/{$ident="\n"}/e;
-        s/^=head2\s*/{$ident="\n  "}/e;
-        s/^=head3\s*/{$ident="    "}/e;
-        s/^=over\s*(\d*)//;
-        s/^=back/{$ident="    "}/e;
-        print "" if m/^=item\s/;
-        s/^=item\s*(.*)/$1/;
-        s/[BICL]<([^>]*)>/"$1"/g;
-        print $ident, $_;
-    }
-} # printhelp
-
 sub printusage() {
     print "# $mename USAGE:
 # most common usage:
@@ -5100,21 +4439,6 @@ sub printusage() {
   $me --help
     ";
 } # printusage
-
-sub printtodo() {
-    #? print program's ToDo
-    my $txt = join ("", @DATA);
-    my $label = "";
-    _vprintme();
-    $txt =~ s{.*?=begin\s+ToDo[^\n]*(.*?)=end\s+ToDo.*}{$1}ms;
-    print $txt;
-    $\   =  "\n";
-    print "  NOT YET IMPLEMENTED";
-    foreach $label (sort keys %checks) {
-        next if (_is_member($label, \@{$cfg{'cmd-NOT_YET'}}) <= 0);
-        print "  " . $checks{$label}->{txt};
-    }
-} # printtodo
 
 # end sub
 
@@ -5139,7 +4463,7 @@ while ($#argv >= 0) {
     # be taken from command line.
     # $typ='HOST' is handles at end of loop, as it may appear anywhere in the
     # command line and does not require an option.
-    # Note: the sequence must be:
+    # NOTE: the sequence must be:
     #   1. check argument (otherwise relooped before)
     #   2. check for options (as they may have arguments)
     #   3. check for commands (as they all start with '+' and we don't expect
@@ -5178,10 +4502,12 @@ while ($#argv >= 0) {
         if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}  = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'TLSDELAY') { $cfg{'starttlsDelay'} = $arg; $typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
@@ -5295,7 +4621,20 @@ while ($#argv >= 0) {
         next;
     }
 
-    #{ handle help and related option and command
+    # --h --help and --help=gen-* are already handled in BEGIN {}
+    # other --help=* options are special as they require settings in %cfg
+    if ($arg =~ /^(?:--|\+)(todo|help)=?(.*)?$/) {
+        # for historic reason this allows: +abbr +abk +glossar +todo
+        $arg = $1;
+        if (defined $2) {
+            $arg = $2 if ($2 !~ /^\s*$/);   # if it was --help=*
+        }
+        require "o-saft-man.pm";            # include if necessary only
+        printhelp($arg);
+        exit 0;
+    }
+
+    #{ handle some specials
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
@@ -5304,18 +4643,12 @@ while ($#argv >= 0) {
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $arg = '# for CGI mode';  next; } # for CGI mode; ignore
-    if ($arg =~ /^--h(?:elp)?$/)        { printhelp($1);          exit 0; } # allow --h --help --h=*
-    if ($arg =~ /^(--|\+)help=?(.*)$/)  { printhelp($2);          exit 0; } # allow +help +help=*
-    if ($arg =~ /^(--|\+)ab(?:br|k)=?$/){ printtable('abbr');     exit 0; }
-    if ($arg =~ /^(--|\+)glossar$/)     { printtable('abbr');     exit 0; }
-    if ($arg =~ /^(--|\+)todo=?$/i)     { printtodo();            exit 0; }
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
+    if ($arg =~ /^(?:--|\+)VERSION/)    { print "$VERSION\n";     exit 0; }
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
-    if ($arg eq  '--VERSION')           { print "$VERSION\n";     exit 0; }
-    if ($arg eq  '+VERSION')            { print "$VERSION\n";     exit 0; }
         # in CGI mode commands need to be passed with --cmd=* option
     #!#--------+------------------------+--------------------------+------------
-    #} handle help
+    #} specials
 
     # normalize options with arguments
     #    --opt=name     --> --opt name
@@ -5335,7 +4668,7 @@ while ($#argv >= 0) {
     # Following checks use exact matches with 'eq' or regex matches with '=~'
 
     #{ options
-    #!# You may read the lines as table with colums like:
+    #!# You may read the lines as table with columns like:
     #!#--------+------------------------+----------------------------
     #!#           argument to check       what to do
     #!#--------+------------------------+----------------------------
@@ -5360,6 +4693,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--proxypass')         { $typ = 'PPASS';           }
     if ($arg eq  '--proxyauth')         { $typ = 'PAUTH';           }
     if ($arg =~ /^--?starttls$/i)       { $typ = 'STARTTLS';        }
+    if ($arg =~ /^--starttlsdelay$/i)   { $typ = 'TLSDELAY';        }
     # options form other programs for compatibility
     if ($arg =~ /^--?nofailed$/)        { $cfg{'enabled'}   = 0;    } # sslscan
     if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
@@ -5436,7 +4770,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
     if ($arg eq  '--nomd5cipher')       { $cfg{'use_md5cipher'}=0;  }
     if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'}=1;  }
-    if ($arg eq  '--tab')               { $text{'separator'} = "\t";} # TAB character
+    if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
@@ -5444,7 +4778,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
     if ($arg =~ /^--lib(?:path)?$/)     { $typ = 'LIB';             }
     if ($arg eq  '--envlibvar')         { $typ = 'ENV';             }
-    if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       }
+    if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
     if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
@@ -5455,13 +4789,19 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
+    if ($arg eq  '--sniname')           { $typ = 'SNINAME';         }
     # options for Net::SSLhello
+    if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
+    if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
     if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
     if ($arg eq  '--nossluseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; } # alias ...
     if ($arg eq  '--sslnouseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; }
     if ($arg eq  '--ssluseecc')         { $cfg{'sslhello'}->{'useecc'}   = 1; }
+    if ($arg eq  '--nossluseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; } # alias ...
+    if ($arg eq  '--sslnouseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; }
+    if ($arg eq  '--ssluseecpoint')     { $cfg{'sslhello'}->{'useecpoint'} = 1; }
     if ($arg eq  '--nosslusereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; } # alias ...
     if ($arg eq  '--sslnousereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; }
     if ($arg eq  '--sslusereneg')       { $cfg{'sslhello'}->{'usereneg'} = 1; }
@@ -5492,13 +4832,14 @@ while ($#argv >= 0) {
     #!#--------+------------------------+----------------------------
 
     next if ($arg =~ /^-/); # all options handled, remaining are ignored
-        # ToDo: means that targets starting with '-' are not possible
+        # TODO: means that targets starting with '-' are not possible
 
     #{ commands
     _y_ARG("command? $arg");
     if ($arg eq  '+info')   { $info  = 1; } # needed 'cause +info and ..
     if ($arg eq  '+quick')  { $quick = 1; } # .. +quick convert to list of commands
     if ($arg eq  '+check')  { $check = 1; $cfg{'out_score'} = 1; } #
+    if ($arg =~ /^\+sni/)   { $cmdsni= 1; }
     # You may read the lines as table with colums like:
     #  +---------+--------------------+-----------------------+-----------------
     #             argument to check     aliased to            # traditional name
@@ -5513,14 +4854,15 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')              { $arg = '+hsts';    }
     if ($arg eq  '+sigkey')           { $arg = '+sigdump'; }  # sigdump
     if ($arg eq  '+sigkey_algorithm') { $arg = '+signame'; }  # signame
+    if ($arg =~ /^\+sha2sig(nature)?$/){$arg = '+sha2signature'; }
     if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';   }
     if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';   }
     if ($arg eq  '+extension')        { $arg = '+extensions';  }
     if ($arg =~ /^\+ext_aia/i)        { $arg = '+ext_authority'; } # AIA is a common acronym ...
     if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw'; }
     if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw'; }
-    if ($arg =~ /^\+npn/i)            { $arg = '+protocols';   } # NPN; ToDo: may be changed in future
-    if ($arg =~ /^\+alpn/i)           { $arg = '+protocols';   } # ALPN; ToDo: may be changed in future
+    if ($arg =~ /^\+npn/i)            { $arg = '+protocols';   } # NPN; TODO: may be changed in future
+    if ($arg =~ /^\+alpn/i)           { $arg = '+protocols';   } # ALPN; TODO: may be changed in future
     #  +---------+--------------------+------------------------+----------------
     #   argument to check     what to do                         what to do next
     #  +---------+----------+----------------------------------+----------------
@@ -5529,7 +4871,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
-    if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}}; $info = 1;next; }
+    if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+traceSUB'){
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
@@ -5641,7 +4983,7 @@ if ($cfg{'exec'} == 0) {
     # this program executes, we need to set PATH and LD_LIBRARY_PATH before
     # being called
     # so we call ourself with proper set environment variables again
-    # Note: --exe points to the directoy with the openssl executable
+    # NOTE: --exe points to the directoy with the openssl executable
     # while --lib points to the directoy with the libraries
     # sometimes, when building new libraries or openssl, the libraries and the
     # executable are located in the same directoy, so we add the directoy given
@@ -5689,7 +5031,7 @@ printopenssl(),     exit 0  if (_is_do('libversion'));
 
 ## check if used software supports SNI properly
 ## -------------------------------------
-if (! _is_do('cipherraw')) { # FIXME ALPHA
+if (! _is_do('cipherraw')) { # +cipherraw does not need these checks
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
 $typ .= "**Hint: #opt# can be used to disables this check";
@@ -5710,13 +5052,12 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
     }
 }
 _trace("cfg{usesni}: $cfg{'usesni'}");
-} # ALPHA
 
 ## check if Net::SSLeay is usable
 ## -------------------------------------
 if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
     die "**ERROR: Net::SSLeay not found, useless use of yet another SSL tool";
-    # ToDo: this is not really true, i.e. if we use openssl instead Net::SSLeay
+    # TODO: this is not really true, i.e. if we use openssl instead Net::SSLeay
 }
 if (1.49 > $Net::SSLeay::VERSION) {
     # only check VERSION instead of requiring a specific version with perl's use
@@ -5726,6 +5067,7 @@ if (1.49 > $Net::SSLeay::VERSION) {
     _warn("$0 requires Net::SSLeay 1.49 or newer");
     _warn("$0 may throw warnings and/or results may be missing");
 }
+} # ! +cipherraw
 
 ## set additional defaults if missing
 ## -------------------------------------
@@ -5753,7 +5095,7 @@ push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
     $Net::SSLinfo::use_sclient = $cmd{'extsclient'};
     $Net::SSLinfo::openssl     = $cmd{'openssl'};
     $Net::SSLinfo::use_http    = $cfg{'usehttp'};
-    $Net::SSLinfo::use_SNI     = $cfg{'usesni'};
+    $Net::SSLinfo::use_SNI     = $cfg{'sni_name'};
     $Net::SSLinfo::use_nextprot= $cfg{'use_nextprot'};
     $Net::SSLinfo::use_extdebug= $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect=$cfg{'use_reconnect'};
@@ -5784,7 +5126,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
     }
     next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
     $cfg{$ssl} = 0; # reset to simplify further checks
-    # ToDo: DTLSv9
+    # TODO: DTLSv9
     if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
         if ($cfg{'ssl_lazy'}>0) {
             # some versions of Net::SSLeay seem not to support the methods for
@@ -5813,7 +5155,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
         } else {# eval failed ..
             _warn("SSL version '$ssl' not supported by openssl; ignored");
         }
-        # ToDo: geht nicht: Net::SSLeay::SSLv23_method();
+        # TODO: geht nicht: Net::SSLeay::SSLv23_method();
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
         _warn("unsupported SSL version '$ssl'; ignored");
     }
@@ -5854,7 +5196,7 @@ if (_need_cipher() > 0) {
             #} else {
             #    _trace(" cipher privat: $pattern");
 _dbx "\n########### fix this place (empty cipher list) ########\n";
-# ToDo: #10jan14: reimplement this check when %ciphers has a new structure
+# TODO: #10jan14: reimplement this check when %ciphers has a new structure
             #10jan14        $new = get_cipher_name($c);
         }
     }
@@ -5950,8 +5292,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     $? = 0;
 
     # print DNS stuff
-    if (($info + $check) > 0) {
-        _y_CMD("+info || +check");
+    if (($info + $check + $cmdsni) > 0) {
+        _y_CMD("+info || +check || +sni*");
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
             print_line($legacy, $host, $port, 'host-host', $text{'host-host'}, $host);
@@ -5964,24 +5306,27 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
     }
 
-## ALPHA {
-	# FIXME: ALPHA   check for more ALPHA herein before removing this line
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
-        _trace(" Net::SSLhello= $Net::SSLhello::VERSION"); # ToDo: alreday done in _yeast_init()
-        #my @acceptedCipherArray = Net::SSLhello::checkSSLciphers();
+        _trace(" Net::SSLhello= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
         # set defaults for Net::SSLhello
         {
             no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
             $Net::SSLhello::trace       = $cfg{'trace'};
+            $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
             $Net::SSLhello::experimental= $cfg{'experimental'};
             $Net::SSLhello::usesni      = $cfg{'usesni'};
+            $Net::SSLhello::usemx       = $cfg{'usemx'};
+            $Net::SSLhello::sni_name    = $cfg{'sni_name'};
             $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
             $Net::SSLhello::starttlsType= $cfg{'starttls'};
+            $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
             $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
             $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
             $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
             $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
+            $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
+            $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
             $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
             $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
             $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
@@ -6015,7 +5360,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         next;
     }
-## ALPHA }
 
     usr_pre_info();
 
@@ -6030,7 +5374,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
             Net::SSLinfo::do_ssl_close($host, $port);
         }
-        $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
+        $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
         _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     }
 
@@ -6080,7 +5424,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if (_is_do('cipher') or $check > 0) {
         _y_CMD("+cipher");
         _trace(" ciphers: @{$cfg{'ciphers'}}");
-        # ToDo: for legacy==testsslserver we need a summary line like:
+        # TODO: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
         my $_printtitle = 0;    # count title lines
         foreach $ssl (@{$cfg{'version'}}) {
@@ -6175,3134 +5519,9 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 } # foreach host
 
 usr_pre_exit();
-
 _yeast_exit();
-
 exit 0; # main
 
-## documentation
-## -------------------------------------
-# all following is documentation in perl's doc format (perldoc), POD)
-# only minimal formatting is used,  if anything fails (+help command
-# or similar), following command can be used to extract text in raw
-# format:
-#    perl -lane '$h=1if/^__DATA__/;next if$h==0;next if/^=(pod|cut|begin|end|over|back|for)/;s/^(=[^\s]*\s)//;s/[BCIL]<([^>]*)>/"$1"/g;print' $0
-#
-# Special syntax:
-#    lines beginning with exactly 9 spaces are handled special in 
-#          usr_printwiki() see o-saft-usr.pm
-# FIXME: find proper POD syntax for this ugly hack
-
 __END__
-
 __DATA__
-
-=pod
-
-=encoding utf8
-
-=head1 NAME
-
-o-saft.pl - OWASP SSL audit for testers
-            OWASP SSL advanced forensic tool
-
-=head1 DESCRIPTION
-
-This tools lists  information about remote target's  SSL  certificate
-and tests the remote target according given list of ciphers.
-
-Note:  Throughout this description  C<$0>  is used as an alias for the
-       program name  C<o-saft.pl> .
-
-=head1 SYNOPSIS
-
-$0 [COMMANDS ..] [OPTIONS ..] target [target target ...]
-
-Where  [COMMANDS]  and  [OPTIONS]  are described below  and  C<target>
-is a hostname either as full qualified domain name or as IP address.
-Multiple commands and targets may be combined.
-
-All  commands  and  options  can also be specified in a  rc-file, see
-B<RC-FILE>  below.
-
-=head1 QUICKSTART
-
-Before going into  a detailed description  of the  purpose and usage,
-here are some examples of the most common use cases:
-
-=over
-
-=item Show supported (enabled) ciphers of target:
-
-    $0 +cipher --enabled example.tld
-
-=item Show details of certificate and connection of target:
-
-    $0 +info example.tld
-
-=item Check certificate, ciphers and SSL connection of target:
-
-    $0 +check example.tld
-
-=item List all available commands:
-
-    $0 --help=commands
-
-=back
-
-For more specialised test cases, refer to the B<COMMANDS> and B<OPTIONS>
-sections below.
-
-If no command is given,  I<+cipher>  is used.
-
-=head1 WHY?
-
-Why a new tool for checking SSL security and configuration when there
-are already a dozen or more such tools in existence (circa 2012)?
-Currently available tools suffer from some or all of following issues:
-
-=over
-
-=item * lack of tests of unusual ciphers
-
-=item * lack of tests of unusual SSL certificate configurations
-
-=item * may return different results for the same checks on a given target
-
-=item * missing tests for modern SSL/TLS functionality
-
-=item * missing tests for specific, known SSL/TLS vulnerabilities
-
-=item * no support for newer, advanced, features e.g. CRL, OCSP, EV
-
-=item * limited capability to create your own customised tests
-
-=back
-
-Other  reasons or problems  are that they are either binary and hence
-not portable to other (newer) platforms.
-
-In contrast to (all?) most other tools,  including openssl, it can be
-used to `ask simple questions' like `does target support STS' just by
-calling:
-
-    $0 +hsts_sts example.tld
-
-For more, please see  B<EXAMPLES>  section below.
-
-=begin comment
-
-Or, if written in perl, they mainly use L<Net::SSLeay(1)> or 
-L<IO::Socket::SSL(1)> which lacks CRL and OCSP and EV checkings.
-
-=end comment
-
-=head1 TECHNICAL INFORMATION
-
-It is important to understand, which provided information is based on
-data returned by underlaying (used) libraries and the information 
-computed directly.
-
-In general the tool uses perl's  L<Net::SSLeay(1)> module which itself
-is based on libssl and/or libssleay library of the operating system.
-It's possible to use other versions of these libraries, see options:
-
-=over 4
-
-=item * --exe-path=PATH --exe=PATH
-
-=item * --lib-path=PATH --lib=PATH
-
-=item * --envlibvar=NAME
-
-=back
-
-The external  L<openssl(1)> is called to extract some information from
-its output.  The version of openssl can be controlled  with following
-options:
-
-=over 4
-
-=item * --openssl=TOOL
-
-=item * --no-openssl
-
-=item * --force-openssl
-
-=item * --exe-path=PATH --exe=PATH
-
-=back
-
-All checks according the validity of the certificate chain  are based
-on the root CAs installed on the system.  NOTE that  L<Net::SSLeay(1)>
-and  L<openssl(1)>  may have their own rules how and where to find the
-root CAs.  Please refer to the documentation on your system for these
-tools. However, there are folloing options to tweak these rules:
-
-=over 4
-
-=item * --ca-file=FILE
-
-=item * --ca-path=DIR
-
-=item * --ca-depth=INT
-
-=back
-
-Above applies to all commands except I<+cipherraw> which uses no other
-libraries.
-
-=head1 RESULTS
-
-For the results,  we have to distinguish those returned by  I<+cipher>
-command  and those from all other tests and checks like  I<+check>  or
-I<+info>  command.
-
-=head3 +cipher
-
-    The cipher checks will return one line for each tested cipher. It
-    contains at least the cipher name,  "yes"  or  "no"  whether it's
-    supported or not, and a security qualification. It may look like:
-         AES256-SHA       yes    HIGH
-         NULL-SHA         no     weak
-
-    Depending on the used  "--legacy=*"  option the format may differ
-    and also contain more information.  For details see  "--legacy=*"
-    option below.
-
-    The text for security qualifications are mainly those returned by
-    openssl (version 1.0.1): LOW, MEDIUM, HIGH and WEAK.
-    The same texts but with all lower case characters are used if the
-    qualification was adapted herein.  Following rules  for adjusting
-    the qualification were used:
-
-         "weak":
-             * all *NULL* ciphers
-             * all *RC4*  ciphers
-             * all *EXPORT*  ciphers
-             * all *anon* (aka ADH aka DHA) ciphers
-         "low":
-             * all *CBC*  ciphers
-         "high":
-             * all *CBC3* (aka 3DES) ciphers
-             * all *AES(128|256)* ciphers
-             * all *CAMELLIA* ciphers
-
-=head3 +check
-
-    These tests return a line with a label describing the test  and a
-    test result for it.  The  idea is to report  "yes"  if the result
-    is considered "secure" and report the reason why it is considered
-    insecure otherwise. Example of a check considered secure:
-         Label of the performed check:           yes
-    Example of a check considered insecure:
-         Label of the performed check:           no (reason why)
-
-    Note that there are tests where the results appear confusing when
-    first viewed, like for www.wi.ld:
-         Certificate is valid according given hostname:  no (*.wi.ld)
-         Certificate's wildcard does not match hostname: yes
-    This can for example occur with:
-         Certificate Common Name:                *.wi.ld
-         Certificate Subject's Alternate Names:  DNS:www.wi.ld
-
-    Please check the result with the  "+info"  command also to verify
-    if the check sounds reasonable.
-
-=head3 +info
-
-    The test result contains  detailed information.  The labels there
-    are mainly the same as for the  "+check"  command.
-
-All output is designed to make it easily parsable by  postprocessors.
-Please see  B<OUTPUT>  section below for details.
-
-=head1 COMMANDS
-
-There are commands for various tests according the  SSL connection to
-the target, the targets certificate and the used ciphers.
-
-All commands are preceded by a  C<+>  to easily distinguish from other
-arguments and options. However, some  I<--OPT>  options are treated as
-commands for historical reason or compatibility to other programs.
-
-The most important commands are (in alphabetical order):
-
-=head3 +check +cipher +info +http +list +quick +sni +sni_check +version
-
-A list of all available commands will be printed with
-
-    $0 --help=cmd
-
-The summary and internal commands return requested information or the
-results of checks. These are described below.
-The description of all other commands will be printed with
-
-    $0 --help=commands
-
-=begin comment
-
-    Nach  =head3  sollten die Paragraphen eingerueckt sein,  das kann
-    (perl)pod aber nicht.  Darum verwenden wir  "verbatime paragraph"
-    und verzichten auf spezielle POD-Auszeichnungen.
-
-=end comment
-
-=head2 Commands for information about this tool
-
-All these commands will exit after execution (cannot be used together
-with other commands).
-
-=head3 +ciphers
-
-    Show ciphers offered by local SSL implementation.
-
-    This commands prints the ciphers in format like `openssl ciphers'
-    does. It also accepts the  "-v"  and  "-V"  option.
-    Use  "+list"  command for more information according ciphers.
-
-=head3 +list
-
-    Show all ciphers  known by this tool.  This includes cryptogrphic
-    details of the cipher and some internal details about the rating.
-
-    In contrast to  "+ciphers"  command  "+list"  uses TAB characters
-    instead of spaces to seperate columns.  By default it also prints
-    table header lines. 
-
-    Different output formats are used for the  "--legacy"  option:
-         --legacy=simple        - tabular output of cipher values
-         --legacy=full          - as "--legacy=simple" but more data
-         --legacy=openssl       - output like with "+ciphers" command
-         --legacy=ssltest       - output like `ssltest --list'
-
-    Use "--v" option to show more details.
-
-=head3 +gen-html +gen-wiki
-
-    Print documentation in various formats, see o-saft-usr.pm .
-
-=head3 +gen-cgi
-
-    See o-saft-usr.pm .
-
-=head3 +abbr, +abk
-
-    Show common abbreviation used in the world of security.
-
-=head3 +VERSION
-
-    Just show version and exit.
-
-=head3 +version
-
-    Show version information for both the program and the Perl modules
-    that it uses, then exit.
-
-    Use "--v" option to show more details.
-
-=head3 +libversion
-
-    Show version of openssl.
-
-=head3 +todo
-
-    Show known problems and bugs.
-
-=head3 +quit
-
-    Show internal data, used for debugging only.
-
-=head2 Commands to check SSL details
-
-=begin comment wozu-dieser-text
-
-    Check for SSL connection in  SNI mode and if given  FQDN  matches
-    certificate's subject.
-
-=end comment
-
-    Following (summary, internal) commands  are simply a shortcut for
-    a list of other commands. For details of the list use:
-
-        $0 --help=intern
-
-=head3 +check
-
-    Check the SSL connection for security issues. This is the same as
-     "+info +cipher +sizes --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12"
-    but also gives some kind of scoring for security issues if any.
-
-=begin comment
-
-    The rating is mainly based on the information given in
-        http://ssllabs.com/.....
-
-=end comment
-
-=head3 +http
-
-    Perform HTTP checks (like STS, redirects etc.).
-
-=head3 +info
-
-    Overview of most important details of the SSL connection.
-
-    Use "--v" option to show details also, which span multiple lines.
-
-=head3 +info--v
-
-    Overview of all details of the SSL connection. This is a shortcut
-    for all commands listed below but not including "+cipher".
-
-    This command is intended for debugging  as it prints some details
-    from the used  Net::SSLinfo  module.
-
-=head3 +quick
-
-    Quick overview of checks. Implies "--enabled"  and  "--short".
-
-=head3 +sts +hsts
-
-    Various checks according STS HTTP header.
-    This option implies  "--http",  means that  "--no-http" is ignored.
-
-=head3 +sni
-
-    Check for Server Name Indication (SNI) usage.
-
-=head3 +sni_check, +check_sni
-
-    Check for  Server Name Indication (SNI) usage and validity of all
-    names (CN, subjectAltName, FQDN, etc.).
-
-=head3 +bsi
-
-    Various checks according BSI TR-02102-2 compliance.
-
-=head3 +ev
-
-    Various checks according certificate's extended Validation (EV).
-
-    Hint: use option "--v --v" to get information about failed checks.
-
-=head3 +sizes
-
-    Check length, size and count of some values in the certificate.
-
-=head3 +s_client
-
-    Dump data retrieved from  "openssl s_client ..."  call. Should be
-    used for debugging only.
-    It can be used just like openssl itself, for example:
-         openssl s_client -connect host:443 -no_sslv2
-
-=head3 +dump
-
-    Dumps internal data for SSL connection and target certificate.
-    This is mainly for debugging and should not be used together with
-    other commands (except "+cipher").
-    Each key-value pair is enclosed in "#{" and "#}" .
-
-    Using "--trace --trace" dumps data of  Net::SSLinfo  too.
-
-=head3 +exec
-
-    Command used internally when requested to use other libraries.
-    This command should not be used directly.
-
-
-=head2 Commands to test target's ciphers
-
-=head3 +cipher
-
-    Check target for ciphers, either all ciphers or ciphers specified
-    with "--cipher=*" option.
-
-    Note that ciphers  not supported  by the local SSL implementation
-    are not checked by default, use "+cipherraw" command for that.
-
-=for comment other names: +cipherall +allciphers +rawciphers
-
-=head3 +cipherraw
-
-    Check target for all possible ciphers.
-    Does not depend on local SSL implementation.
-
-    In contrast to  "+cipher"  this command has some options to tweak
-    the cipher tests, connection results, and some strange behaviours
-    of the target. See "Options for +cipherraw command" for details.
-
-=head2 Commands to test SSL connection to target
-
-Please see:
-
-    $0 --help=commands
-
-=head2 Commands to show details of the target's certificate
-
-Please see:
-
-    $0 --help=commands
-
-=head1 OPTIONS
-
-All options are written in lowercase. Words written in all capital in
-the description here is text provided by the user.
-
-=head2 General options
-
-=head3 --h
-
-=head3 --help
-
-  WYSIWYG
-
-  Note: The documentation is written  with perl's POD format and uses
-  perl's POD module to print it. Unfortunately the first line written
-  by  POD  is:
-         'User Contributed Perl Documentation'
-  which is a bit misleading  because all descriptions  belong to this
-  tool itself.
-
-=head3 --help=cmd
-
-  Show available commands.
-
-=head3 --help=commands
-
-  Show available commands with short description.
-
-=head3 --help=opt
-
-  Show available options.
-
-=head3 --help=options
-
-  Show available options with their description.
-
-=head3 --help=checks
-
-  Show available checks.
-
-=head3 --help=legacy
-
-  Show possible legacy formats (used as value in  "--legacy=TOOL").
-
-=head3 --help=compliance
-
-  Show available compliance checks.
-
-=head3 --help=intern
-
-  Show internal commands.
-
-=head3 --help=range
-
-  Show list of cipherranges (see "--cipherrange=RANGE").
-
-=head3 --help=score
-
-  Show score value for each check.
-  Value is printed in format to be used for  "--cfg-score=KEY=SCORE".
-
-  Note that the  sequence  of options  is important.  Use the options
-  "--trace"  and/or  "--cfg-score=KEY=SCORE"  before  "--help=score".
-
-=head3 --help=text
-
-  Show texts used in various messages.
-
-=head3 --help=cfg-check
-
-  Show texts used as labels in output for checks (see "+check") ready
-  for use in  RC-FILE  or as option.
-
-=head3 --help=cfg-data
-
-  Show texts used as labels in output for  data  (see "+info")  ready
-  for use in  RC-FILE  or as option.
-
-=head3 --help=cfg-text
-
-  Show texts used in various messages ready for use in  RC-FILE  or
-  as option.
-
-=head3 --help=text-cfg
-
-  See "--help=cfg-text" .
-
-=head3 --help=regex
-
-  Show regular expressions used internally.
-
-=head3 --no-rc
-
-  Do not read  RC-FILE .
-
-=head3 --dns
-
-  Do DNS lookups to map given hostname to IP, do a reverse lookup.
-
-=head3 --no-dns
-
-  Do not make DNS lookups.
-  Note  that the corresponding IP and reverse hostname may be missing
-  in some messages then.
-
-=head3 --host=HOST
-
-  Specify HOST as target to be checked. Legacy option.
-
-=head3 --port=PORT
-
-  Specify target's PORT to be used. Legacy option.
-
-=head3 --host=HOST and --port=PORT and HOST:PORT and HOST
-
-  When giving more than one HOST argument,  the sequence of the given
-  HOST argument and the given  --port=PORT  and the given --host=HOST
-  options are important.
-  The rule how ports and hosts are mapped is as follows:
-      HOST:PORT arguments are uses as is (connection to HOST on PORT)
-      only HOST is given, then previous specified --port=PORT is used
-  Note that URLs are treated as HOST:PORT, if they contain a port.
-  Example:
-      $0 +cmd host-1 --port 23 host-2 host-3:42 host-4
-  will connect to:
-      host-1:443
-      host-2:23
-      host-3:42
-      host-4:23
-
-=head3 --proxyhost=PROXYHOST --proxy=PROXYHOST:PROXYPORT
-
-  Make all connection to target using PROXYHOST.
-
-  --proxy=PROXYUSER:PROXYPASS@PROXYHOST:PROXYPORT is also possible.
-
-=head3 --proxyport=PROXYPORT
-
-  Make all connection to target using PROXYHOST:PROXYPORT.
-
-=head3 --proxyuser=PROXYUSER
-
-  Specify username for proxy authentication.
-
-=head3 --proxypass=PROXYPASS
-
-  Specify password for proxy authentication.
-
-=head3 --starttls
-
-  Use STARTTLS command to start a TLS connection via SMTP.
-  This option is a shortcut for  --starttls=SMTP .
-
-=head3 --starttls=PROT
-
-  Use STARTTLS command to start a TLS connection via protocol.
-  PROT  may be any of:  SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
-
-  *EXPERIMENTAL* option; works for  +cipherraw  only.
-
-  *EXPERIMENTAL* option; please use  --experimental to enable it.
-
-=head3 --cgi, --cgi-exec
-
-  Internal use for CGI mode only.
-
-=head2 Options for SSL tool
-
-=head3 --s_client
-
-  Use  "openssl s_slient ..." call to retrieve more informations from
-  the SSL connection.  This is disabled by default on Windows because
-  of performance problems. Without this option following informations
-  are missing on Windows:
-        compression, expansion, renegotiation, resumption,
-        selfsigned, verify, chain, protocols
-  See "Net::SSLinfo" for details.
-
-  If used together with "--trace", s_client data will also be printed
-  in debug output of "Net::SSLinfo".
-
-=head3 --no-openssl
-
-  Do not use external "openssl" tool to retrieve informations. Use of
-  "openssl" is disabled by default on Windows.
-  Note that this results in some missing informations.
-
-=head3 --openssl=TOOL
-
-  TOOL      can be a path to openssl executable;  default: openssl
-
-=begin comment
-
-  ssleay:   use installed SSLeay library for perl
-  local:    use installed openssl (found via PATH envrionment variable)
-                Note that this disables use of SSLeay
-  x86_32:   use  ** NOT YET IMPLEMENTED **
-  x86_64:   use  ** NOT YET IMPLEMENTED **
-  x86Mac:   use  ** NOT YET IMPLEMENTED **
-  arch:     use  ** NOT YET IMPLEMENTED **
-
-=end comment
-
-=head3 --force-openssl
-
-  Use openssl to check for supported ciphers;  default: IO::Socket
-
-  This option forces to use  "openssl s_slient -connect CIPHER .." to
-  check if a cipher is supported by the remote target. This is useful
-  if the "--lib=PATH" option doesn't work (for example due to changes
-  of the API or other incompatibilities).
-
-=head3 --exe-path=PATH --exe=PATH
-
-  PATH      is a full path where to find openssl.
-
-=head3 --lib-path=PATH --lib=PATH
-
-  PATH      is a full path where to find libssl.so and libcrypto.so
-
-  See "HACKER's INFO" below for a detailed description how it works.
-
-=head3 --envlibvar=NAME
-
-  NAME  is the name of the environment variable containing additional
-  paths for searching dynamic shared libraries.
-  Default is LD_LIBRARY_PATH .
-
-  Check your system for the proper name, i.e.:
-      DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH .
-
-=head3 --ssl-lazy
-
-  if the "--lib=PATH" option doesn't work (for example due to changes
-  I.g. this tools tries to identify available functionality according
-  SSL versions from the underlaying libraries.  Unsupported  versions
-  are then disables and a warning is shown.
-  Unfortunately some libraries have  not implemented all functions to
-  check availability of a specific SSL version, which then results in
-  a compile error. 
-
-  This option disables the strict check of availability.
-  If the underlaying library doesn't support the required SSL version
-  at all, following error may occour:
-      Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
-
-=head3 --call=METHOD
-
-  METHOD    method to be used for specific functionality
-
-  Available methods:
-      info-socket    use internal socket for retrieving informations
-      info-openssl   use external openssl for retrieving informations
-      info-user      use usr_getinfo() for retrieving informations
-      cipher-socket  use internal socket to ckeck for ciphers
-      cipher-openssl use external openssl to ckeck for ciphers
-      cipher-user    use usr_getciphers() to ckeck for ciphers
-  
-  Method names starting with:
-      info-   are responsible for retrieving  informations  about the
-              SSL connection and the target certificate (i.g. what is
-              provided by  +info  command)
-      cipher- are responsible to connect to the target and test if it
-              supports the specified ciphers (i.g. what is needed for
-              +cipher  command)
-      check-  are responsible for performing the checks (i.e. what is
-              shown with  +check  command)
-      score-  are responsible to compute the score based on the check
-              results
-  
-  The second part of the name denotes which kind of method to call:
-      socket    the internal functionality with sockets is used
-      openssl   the exteranl openssl executable is used
-      user      the external special function, as specified in user's
-                o-saft-usr.pl,  is used.
-
-  Example:
-      --call=cipher-openssl
-  will use the external  openssl  executable to check  the target for
-  supported ciphers.
-
-  Default settings are:
-      --call=info-socket --call=cipher-socket --call=check-socket
-
-  Just for curiosity, instead of using:
-
-      $0 --call=info-user --call=cipher-user --call=check-user \
-         --call=score-user ...
-
-  consider to use your own script like:
-
-      #!/usr/bin/env perl
-      usr_getinfo();usr_getciphers();usr_checkciphers();usr_score();
-
-  :-))
-
-=head3 -v
-
-  Print list of ciphers in style like: `openssl ciphers -v'.
-  Option used with  "+ciphers"  command only.
-
-=head3 -V
-
-  Print list of ciphers in style like: `openssl ciphers -V'.
-  Option used with  "+ciphers"  command only.
-
-=head2 Options for SSL connection to target
-
-=head3 --cipher=CIPHER
-
-  CIPHER    can be any string accepeted by openssl or following:
-
-  yeast     use all ciphers from list defined herein, see "+list"
-
-  Beside the cipher names accepted by openssl, CIPHER can be the name
-  of the constant or the (hex) value as defined in openssl's files.
-  Currently supported are the names and constants of openssl 1.0.1c .
-  Example:
-         --cipher=DHE_DSS_WITH_RC4_128_SHA
-         --cipher=0x03000066
-         --cipher=66
-  will be mapped to   DHE-DSS-RC4-SHA
-
-  Note: if more than one cipher matches, just one will be selected.
-
-  Default is "ALL:NULL:eNULL:aNULL:LOW" as specified in Net::SSLinfo.
-
-=head3 --no-md5-cipher
-
-  Do not use *-MD5 ciphers for other protocols than SSLv2.
-  This option is only effective with  "+cipher"  command.
-
-  The purpose is to avoid warnings from  IO::Socket::SSL  like:
-         Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
-  which occours with some versions of  IO::Socket::SSL  when a  *-MD5
-  ciphers will be used with other protocols than SSLv2.
-
-  Note that these ciphers will be checked for SSLv2 only.
-
-=begin comment
-
-# IO::Socket::SSL->new() does not return a proper error
-# see in IO::Socket::SSL.pm  Net::SSLeay::CTX_set_cipher_list() call
-
-=end comment
-
-=begin comment
-
-=head3 --local
-
-  It does not make much sense trying a connection with a cipher which
-  is  not supported  by the local SSL implementation. Hence these are
-  silently ignored by default.
-  With this option we try to use such ciphers also.
-
-  Option reserved for future use ...
-
-=end comment
-
-=head3 --SSL, -protocol SSL
-
-=head3 --no-SSL
-
-  SSL       can be any of:  ssl, ssl2, ssl3, sslv2, sslv3, tls1,
-      tls1, tls11, tls1.1, tls1-1, tlsv1, tlsv11, tlsv1.1, tlsv1-1
-      (and similar variants for tlsv1.2).
-  For example  "--tls1"  "--tlsv1"  "--tlsv1_1"  are all the same.
-
-  ("--SSL" variants):    Test ciphers for this SSL/TLS version.
-  ("--no-SSL" variants): Don't test ciphers for this SSL/TLS version.
-
-=head3 --nullsslv2
-
-  This option  forces  to assume that  SSLv2  is enabled  even if the
-  target does not accept any ciphers.
-
-  The target server may accept connections with  SSLv2  but not allow
-  any cipher. Some checks verify if  SSLv2  is enabled at all,  which
-  then would result in a failed test.
-  The default behaviour is to assume that  SSLv2 is not enabled if no
-  ciphers are accepted.
-
-=head3 --http
-
-  Make a HTTP request if cipher is supported.
-
-  If used twice debugging will be enabled using  environment variable
-  "HTTPS_DEBUG" .
-
-=head3 --no-http
-
-  Do not make HTTP request.
-
-=head3 --sni
-
-  Make SSL connection in SNI mode.
-
-=head3 --no-sni
-
-  Do not make SSL connection in SNI mode (default: SNI mode).
-
-=head3 --force-sni
-
-  Do not check if SNI seems to be supported by Net::SSLeay.
-  Older versions of openssl and its libries do not support SNI or the
-  SNI support is implemented buggy. By default it's checked if SNI is
-  properly supported. With this option this check can be disabled.
-
-  Be warned that this may result in improper results.
-
-=head3 --no-cert
-
-  Do not get data from target's certificate, return empty string.
-
-=head3 --no-cert --no-cert
-
-  Do not get data from target's certificate, return Net::SSLinfo.pm's
-  default string (see  "--no-cert-text=TEXT"  option).
-
-=head3 --no-cert-text=TEXT
-
-  Set  TEXT  to be returned from  "Net::SSLinfo.pm" if no certificate
-  data is collected due to use of  "--no-cert".
-
-=head3 --ca-depth=INT
-
-  Check certificate chain to depth  INT (like openssl's -verify).
-
-=head3 --ca-file=FILE
-
-  Use  FILE  with bundle of CAs to verify target's certificate chain.
-
-=head3 --ca-path=DIR
-
-  Use  DIR  where to find CA certificates in PEM format.
-
-=head3 --no-nextprotoneg
-
-  Do not use  "-nextprotoneg"  option for openssl.
-
-=head3 --no-reconnect
-
-  Do not use  "-reconnect"  option for openssl.
-
-=head3 --no-tlsextdebug
-
-  Do not use  "-tlsextdebug"  option for openssl.
-
-=head3 --sclient-opt=VALUE
-
-  Argument or option passed to openssl s_client command.
-
-=head2 Options for I<+cipherraw>  command:
-
-=head3 --cipherrange=RANGE, --range=RANGE 
-
-  Specify range of cipher constants to be tested by  "+cipherraw" .
-  Following RANGEs are supported (see also: "--cipherrange=RANGE"):
-
-=over 4
-
-=item * rfc             all ciphers defined in various RFCs
-
-=item * shifted         rfc, shifted by 64 bytes to the right
-
-=item * long            like C<rfc> but more lazy list of constants
-
-=item * huge            all constants  0x03000000 .. 0x0300FFFF
-
-=item * safe            all constants  0x03000000 .. 0x032FFFFF
-
-=item * full            all constants  0x03000000 .. 0x03FFFFFF
-
-=item * SSLv2           all ciphers according RFC for SSLv2
-
-=item * SSLv2_long      more lazy list of constants for SSLv2 ciphers
-
-Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
-It does not make sense to use it for other protocols; however ...
-
-=back
-
-=head3 --ssl-maxciphers=CNT 
-
-  Maximal number of ciphers sent in a sslhello (default: 32).
-
-=head3 --ssl-double-reneg
-
-  Send SSL extension  "reneg_info"  even if list of ciphers includes
-  TLS_EMPTY_RENEGOTIATION_INFO_SCSV (default: do not include)
-
-=head3 --ssl-nodata-nocipher
-
-  Do not abort testing for next cipher when the target  responds with
-  "NoData" times out. Useful for TLS intolerant servers.
-  By default testing for ciphers is aborted  when the target responds
-  with "noData message.
-
-=for comment alias: --sslnodataeqnocipher --nodataeqnocipher
-
-=head3 --ssl-use-ecc
-
-  Use supported elliptic curves and TLS "ec_point_formats" extension.
-  Default on.
-
-=head3 --ssl-use-reneg
-
-  Test for ciphers with "secure renegotiation" flag set.
-  Default: don't set "secure renegotiation" flag.
-
-=head3 --ssl-retry=CNT
-
-  Number of retries when connection timed-out (default: 2).
-
-=head3 --ssl-timeout=SEC
-
-  Number of seconds to wait until connection is qualified as timeout.
-
-=head2 Options for checks and results
-
-Options used for  I<+check>  command:
-
-=head3 --enabled
-
-  Only print result for ciphers accepted by target.
-
-=head3 --disabled
-
-  Only print result for ciphers not accepted by target.
-
-=head3 --ignorecase
-
-  Checks are done case insensitive.
-
-=head3 --no-ignorecase
-
-  Checks are done case sensitive. Default: case insensitive.
-  Currently only checks according CN, alternate names in the target's
-  certificate compared to the given hostname are effected.
-
-=head2 Options for output format
-
-=head3 --short
-
-  Use short less descriptive text labels for  "+check"   and  "+info"
-  command.
-
-=head3 --legacy=TOOL
-
-  For compatibility with other tools,  the output format used for the
-  result of the "+cipher" command can be adjusted to mimic the format
-  of other SSL testing tools.
-
-  The argument to the "--legacy=TOOL"  option is the name of the tool
-  to be simulated.
-
-  Following TOOLs are supported:
-
-=over 4
-
-=item * sslaudit        format of output similar to  sslaudit
-
-=item * sslcipher       format of output similar to  ssl-cipher-check
-
-=item * ssldiagnos      format of output similar to  ssldiagnos
-
-=item * sslscan         format of output similar to  sslscan
-
-=item * ssltest         format of output similar to  ssltest
-
-=item * ssltestg        format of output similar to  ssltest -g
-
-=item * ssltest-g       format of output similar to  ssltest -g
-
-=item * sslyze          format of output similar to  sslyze
-
-=item * ssl-cipher-check      same as sslcipher
-
-=item * ssl-cert-check  format of output similar to  ssl-cert-check
-
-=item * testsslserver   format of output similar to  TestSSLServer.jar
-
-=item * thcsslcHeck     format of output similar to  THCSSLCheck
-
-=back
-
-  Note that these legacy formats only apply to  output of the checked
-  ciphers. Other texts like headers and footers are adapted slightly.
-
-  Please don't expect identical output as the TOOL, it's a best guess
-  and should be parsable in a very similar way.
-
-  TOOL may also be set to any of following internally defined values:
-
-=over 4
-
-=item * compact
-
-    Mainly avoid tabs and spaces format is as follows
-         Some Label:<-- anything right of colon is data
-
-=item * full
-
-    Pretty print:  each label in its  own line,  followed by data in
-    next line prepended by tab character (useful for "+info" only).
-
-=item * quick
-
-    Use tab as separator; print ciphers with bit length ("--tab" not
-    necessary).
-
-=item * simple
-
-    Default format.
-
-=back
-
-=head3 --format=FORM
-
-  FORM may be one of follwoing:
-
-=over 4
-
-=item * raw
-
-    Print raw data as passed from Net::SSLinfo .
-    Note:  all data will be printed as is,  without additional label
-    or formatting. It's recommended to use the option in conjunction
-    with exactly one command.  Otherwise the user needs  to know how
-    to `read'  the printed data.
-
-=item * hex
-
-    Convert some data to hex: 2 bytes separated by ":".
-
-=back
-
-=head3 --header
-
-  Print formatting header.  Default for  "+check", "+info", "+quick".
-  and  "+cipher"  only.
-
-=head3 --no-header
-
-  Do not print formatting header.
-  Usefull if raw output should be passed to other programs.
-
-  Note: must be used on command line to inhibit all header lines.
-
-=head3 --score
-
-  Print scoring results. Default for  "+check".
-
-=head3 --no-score
-
-  Do not print scoring results.
-
-=head3 --separator=CHAR
-
-=head3 --sep=CHAR
-
-  CHAR      will be used as separator between  label and value of the
-      printed results. Default is  ":".
-
-=head3 --tab
-
-  TAB character (0x09, \t)  will be used  as separator between  label
-      and value of the printed results.
-  As label and value are already separated by a  TAB  character, this
-  options is only useful in conjunction with the   "--legacy=compact"
-  option.
-
-=head3 --showhost
-
-  Prefix each printed line with the given hostname (target).
-  The hostname will be followed by the separator character.
-
-=begin comment
-
-  However, it applies partially if used twice for  +info.
-
-=end comment
-
-=head3 --win-CR
-
-  Print windows-Style with CR LF as end of line. Default is NL only.
-
-=head2 Options for compatibility with other programs
-
-Please see other programs for detailed description (if not obvious:).
-Note that only the long form options are accepted  as most short form
-options are ambiguous.
-
-=over 4
-
-=item * --capath DIR      (curl)           same as I<--ca-path DIR>
-
-=item * --CApath=DIR      (openssl)        same as I<--ca-path DIR>
-
-=item * --ca-directory=DIR        (wget)   same as I<--ca-path DIR>
-
-=item * --cacert FILE     (curl)           same as I<--ca-file DIR>
-
-=item * --CAfile=FILE     (openssl)        same as I<--ca-file DIR>
-
-=item * --ca-certificate=FILE     (wget)   same as I<--ca-path DIR>
-
-=item * -c PATH           (ssldiagnos)     same as I<--ca-path DIR>
-
-=item * --hide_rejected_ciphers (sslyze)   same as I<--disabled>
-
-=item * --http_get        (ssldiagnos)     same as I<--http>
-
-=item * --printcert       (ssldiagnos)     same as I<+ciphers>
-
-=item * --protocol SSL    (ssldiagnos)     same as I<--SSL>
-
-=item * --no-failed       (sslscan)        same as I<--disabled>
-
-=item * --regular         (sslyze)         same as I<--http>
-
-=item * --reneg           (sslyze)         same as I<+renegotiation>
-
-=item * --resum           (sslyze)         same as I<+resumtion>
-
-=item * -h, -h=HOST       (various tools)  same as I<--host HOST>
-
-=item * -p, -p=PORT       (various tools)  same as I<--port PORT>
-
-=item * -t HOST           (ssldiagnos)     same as I<--host HOST>
-
-=item * -noSSL                             same as I<--no-SSL>
-
-=item * -no_SSL                            same as I<--no-SSL>
-
-  For definition of  "SSL"  see  "--SSL"  and  "--no-SSL"  above.
-
-=item * --insecure        (cnark.pl)       ignored
-
-=item * --nopct --nocolor (ssldiagnos)     ignored
-
-=item * --ism, --pci -x   (ssltest.pl)     ignored
-
-=item * --timeout, --grep (ssltest.pl)     ignored
-
-=item * -r,  -s,  -t      (ssltest.pl)     ignored
-
-=item * -connect, --fips, -H, -u, -url, -U ignored
-
-=back
-
-=head2 Options for customization
-
-  For general descriptions please see  CUSTOMIZATION  section below.
-
-=head3 --cfg-cmd=CMD=LIST
-
-  Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
-  are written without the leading  "+".
-  CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
-  Example:
-      --cfg-cmd=sni=sni hostname
-
-  To get a list of commands and their settings, use:
-
-      $0 --help=intern
-
-  Main purpose is to reduce list of commands or print them sorted.
-
-=head3 --cfg-score=KEY=SCORE
-
-  Redefine value for scoring. Sets  %checks{KEY}{score}  to  SCORE.
-  Most score values are set to 10 by default. Values "0" .. "100" are
-  allowed.
-
-  To get a list of current score settings, use:
-
-      $0 --help=score
-
-  For deatils how scoring works, please see  SCORING  section.
-
-  Use the  "--trace-key"  option for the  "+info"  and/or  "+check"
-  command to get the values for  KEY.
-
-=head3 --cfg-checks=KEY=TEXT --cfg-data=KEY=TEXT
-
-  Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
-  %checks{KEY}{txt}  to  TEXT.
-
-  To get a list of preconfigured labels, use:
-
-      $0 --help=cfg-checks
-      $0 --help=cfg-data
-
-=head3 --cfg-text=KEY=TEXT
-
-  Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
-
-  To get a list of preconfigured texts, use:
-
-      $0 --help=cfg-text
-
-  Note that \n, \r and \t are replaced by the corresponding character
-  when read from RC-FILE.
-
-=head3 --call=METHOD
-
-  See  L<Options for SSL tool>
-
-=head3 --usr
-
-  Execute functions defined in  o-saft-usr.pm.
-
-=head3 --usr-*, --user-*
-
-  Options ignored, but stored as is internal in  $cfg{'usr-args'} .
-  These options can be used in  o-saft-usr.pm  or  o-saft-dbx.pm.
-
-=head3 --experimental
-
-  Use experimental functionality.
-  Some functionality of this tool is  under development and only used
-  when this option is given.
-
-=head2 Options for tracing and debugging
-
-=head3 --n
-
-  Do not execute, just show commands (only useful in conjunction with
-  using openssl).
-
-=head3 --v
-
-=head3 --verbose
-
-  Print more information about checks.
-
-  Note that this option should be first otherwise some debug messages
-  are missing.
-
-  Note that  --v  is different from  -v  (see above).
-
-=head3 --v --v
-
-  Print remotely checked ciphers.
-
-=head3 --v --v --v
-
-  Print remotely checked ciphers one per line.
-
-=head3 --v --v --v --v
-
-  Print processed ciphers (check, skip, etc.).
-
-=head3 --trace
-
-  Print debugging messages.
-
-=head3 --trace --trace
-
-  Print more debugging messages and pass "trace=2" to Net::SSLeay and
-  Net::SSLinfo.
-
-=head3 --trace --trace --trace
-
-  Print more debugging messages and pass "trace=3" to Net::SSLeay and
-  Net::SSLinfo.
-
-=head3 --trace --trace --trace --trace
-
-  Print processing of all command line arguments.
-
-=head3 --trace-arg, --trace--
-
-  Print command line argument processing.
-
-=for comment cannot use --trace=  'cause = will be removed (CGI mode)
-
-=head3 --trace-cmd
-
-  Trace execution of command processing (those given as  +*).
-
-=head3 --trace-key, --trace@
-
-  Print some internal variable names in output texts (labels).
-  Variable names are prefixed to printed line and enclosed in  # .
-  Example without --trace-key :
-        Certificate Serial Number:          deadbeef
-
-  Example with    --trace-key :
-        #serial#          Certificate Serial Number:          deadbeef
-
-=head3 --trace=VALUE
-
-=over 4
-
-=item * --trace=1                          same as I<--trace>
-
-=item * --trace=2                          same as I<--trace> I<--trace>
-
-=item * --trace=arg                        same as I<--trace-arg>
-
-=item * --trace=cmd                        same as I<--trace-cmd>
-
-=item * --trace=key                        same as I<--trace-key>
-
-=back
-
-=head3 --trace-time
-
-  Prints timestamp in trace output (implies --trace-cmd).
-
-=head3 --trace=FILE
-
-  Use FILE instead of the default rc-file (.o-saft.pl, see RC-FILE).
-
-=head3 --trace-sub, +traceSUB
-
-  Print formatted list of internal functions with their description.
-  Not to be intended in conjunction with any target check.
-
-=head2 --trace vs. --v
-
-While  I<--v>  is used to print more data, I<--trace> is used to print
-more information about internal data such as  procedure names and/or
-variable names and program flow.
-
-=head3 --no-warning
-
-  Do not print warning messages (**WARNING:).
-
-=head2 Options vs. Commands
-
-For compatibility with other programs and lazy users, some arguments
-looking like options are silently taken as commands. This means that
-I<--THIS>  becomes  I<+THIS>  then. These options are:
-
-=over 4
-
-=item * --help
-
-=item * --abbr
-
-=item * --todo
-
-=item * --chain
-
-=item * --default
-
-=item * --fingerprint
-
-=item * --list
-
-=item * --version
-
-=back
-
-Take care that this behaviour may be removed in future versions as it
-conflicts with those options and commands which actually exist, like:
-
-=over 4
-
-=item --sni  vs.  +sni
-
-=back
-
-=head1 LAZY SYNOPSIS
-
-=head2 Commands
-
-Following strings are treated as a command instead of target names:
-
-    ciphers
-    s_client
-    version
-
-A warning will be printed.
-
-=head2 Options
-
-We support following options, which are all identical, for lazy users
-and for compatibility with other programs.
-
-=head3 Option Variants
-
-    --port PORT
-    --port=PORT
-
-This applies to most such options,  I<--port>  is just an example.
-When used in the RC-FILE, the I<--OPTION=VALUE> variant must be used.
-
-=for comment does not apply to --trace option
-
-=head3 Option Names
-
-Dash  C<->,  dot  C<.>  and/or  underscore  C<_>  in option names are
-optional, all following are the same:
-    --no.dns
-    --no-dns
-    --no_dns
-    --nodns
-
-This applies to all such options, I<--no-dns> is just an example.
-
-=head2 Targets
-
-Following syntax is supported also:
-
-    $0 http://some.tld other.tld:3889/some/path?a=b
-
-Note that only the hostname and the port are used from an URL.
-
-=head2 Options vs. Commands
-
-See  B<Options vs. Commands>  in  B<OPTIONS>  section above
-
-=head1 CHECKS
-
-All SSL related check performed by the tool will be described here in
-the near future (Any help appreciated ...).
-
-=head2 General Checks
-
-Lookup the IP of the given hostname (FQDN), and then tries to reverse
-resolve the FQDN again.
-
-=head2 SSL Ciphers
-
-Check which ciphers are supported by target. Please see B<RESULTS> for
-details of this check.
-
-=head2 SSL Connection
-
-=head3 heartbeat
-
-Check if heartbeat extension is supported by target.
-
-=head3 poodle
-
-Check if target is vulnerable to Poodle attack.
-
-=head2 SSL Vulnerabilities
-
-=head3 ADH
-
-Check if ciphers for anonymous key exchange are supported: ADH|DHA .
-Such key exchanges can be sniffed.
-
-=head3 EDH
-
-Check if ephemeral ciphers are supported: DHE|EDH .
-They are necessary to support Perfect Forward Secrecy (PFS).
-
-=head3 BEAST
-
-Currently (2014) only a simple check is used: only RC4 ciphers used.
-Which is any cipher with RC4, ARC4 or ARCFOUR.
-TLSv1.2 checks are not yet implemented.
-
-=head3 CRIME
-
-Connection is vulnerable if target supports SSL-level compression.
-
-=head3 HEARTBLEED
-
-Check if target is vulnerable to heartbleed attack, see CVE-2014-0160
-and http://heartbleed.com/ .
-
-=head3 Lucky 13
-
-NOT YET IMPLEMENTED
-
-=head3 RC4
-
-Check if RC4 ciphers are supported.
-They are assumed to be broken.
-
-=head3 PFS
-
-Currently (2014) only a simple check is used: only DHE ciphers used.
-Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
-TLSv1.2 checks are not yet implemented.
-
-=head3 Poodle
-
-Check if target is vulnerable to poodle attack (just check if  SSLv3
-is enabled).
-
-=head2 Target (server) Configuration and Support
-
-=head3 BEAST, BREACH, CRIME, Poodle
-
-See above.
-
-=head3 Renegotiation
-
-Check if the server allows client-side initiated renegotiation.
-
-=head3 Version rollback attacks
-
-NOT YET IMPLEMENTED
-Check if the server allows changing the protocol.
-
-=head2 Target (server) Certificate
-
-=head3 Root CA
-
-Provided certificate by target should not be a Root CA.
-
-=head3 Self-signed Certificate
-
-Certificate should not be self-signed.
-
-=head3 IP in CommonName or subjectAltname (RFC6125)
-
-NOT YET IMPLEMENTED
-
-=head3 Basic Constraints
-
-Certificate extension Basic Constraints should be CA:FALSE.
-
-=for comment otherwise someone can generate an intermediate cert
-
-=head3 OCSP, CRL, CPS
-
-Certificate should contain URL for OCSP and CRL.
-
-=head3 Sizes and Lengths of Certificate Settings
-
-=over 4
-
-=item Serial Number <= 20 octets (RFC5280, 4.1.2.2.  Serial Number)
-
-=back
-
-...
-
-=head3 DV-SSL - Domain Validation Certificate
-
-The Certificate must provide:
-
-=over 4
-
-=item * Common Name C</CN=> field
-
-=item * Common Name C</CN=> in C<subject>  or C<subjectAltname> field
-
-=item * Domain name in C<commonName> or C<altname> field
-
-=back
-
-=head3 EV-SSL - Extended Validation Certificate
-
-This check is performed according the requirements defined by the CA/
-Browser Forum  https://www.cabforum.org/contents.html .
-The Certificate must provide:
-
-=over 4
-
-=item * DV - Domain Validation Certificate (see above)
-
-=item * Organization name C</O=> Cn I<subject> field
-
-=item * Organization name must be less to 64 characters
-
-=item * Business Category C</businessCategory=> in C<subject> field
-
-=item * Registration Number C</serialNumber=> in C<subject> field
-
-=item * Address of Place of Business in C<subject> field
-
-Required are: C</C=>, C</ST=>, C</L=>
-
-Optional are: C</street=>, C</postalCode=>
-
-=item * Validation period does not exceed 27 month
-
-=back
-
-See  LIMITATIONS  also.
-
-=head2 Target (server) HTTP(S) Support
-
-=head3 STS header
-
-Using STS is no perfect security.  While the very first request using
-http: is always prone to a MiTM attack, MiTM is possible to following
-requests again, if STS is not well implemented on the server.
-
-=over 4
-
-=item * Request with http: should be redirected to https:
-
-=item * Redirects should use status code 301 (even others will work)
-
-=item * Redirect's Location header must contain schema https:
-
-=item * Redirect's Location header must redirect to same FQDN
-
-=item * Redirect may use Refresh instead of Location header (not RFC6797)
-
-=item * Redirects from HTTP must not contain STS header
-
-=item * Answer from redirected page (HTTPS) must contain STS header
-
-=item * Answer from redirected page for IP must not contain STS header
-
-=item * STS header must contain includeSubDirectoy directive
-
-=item * STS header max-age should be less than 1 month
-
-=back
-
-=head3 Publix Key Pins header
-
-TBD - to be described ...
-
-=head2 Compliances
-
-=head3 FIPS-140
-
-=head3 ISM
-
-=head3 PCI
-
-=head3 BSI TR-02102
-
-=for comment head3 NSA Suite B
-
-Checks if connection and ciphers are compliant according TR-02102-2,
-see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
-/TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
-
-(following headlines are taken from there)
-
-=for comment above link written in 2 lines, otherwise perldoc complains:
-=for comment "<standard input>:1450: warning [p 12, 2.2i]: can't break line"
-
-=over 4
-
-=item 3.2.1 Empfohlene Cipher Suites
-
-=item 3.2.2 Übergangsregelungen
-
-    RC4 allowed temporary for TLS 1.0. Only if  TLS 1.1  and  TLS 1.2
-    cannot be supported.
-
-=item 3.2.3 Mindestanforderungen für Interoperabilität
-
-    Must at least support: ECDHE-ECDSA-* and ECDHE-RSA-*
-
-=item 3.3 Session Renegotation
-
-    Only server-side (secure) renegotiation allowed (see RFC5280).
-
-=item 3.4 Zertifikate und Zertifikatsverifikation
-
-    Must have "CRLDistributionPoint" or "AuthorityInfoAccess".
-
-    MUST have "OCSP URL".
-
-    "PrivateKeyUsage" must not exceed three years for certificate and
-    must not exceed five years for CA certificates.
-
-    "Subject",  "CommonName"  and  "SubjectAltName"  must not contain
-    a wildcard.
-
-    Certificate itself must be valid according dates if validity.
-    Note that  the validity check relies on the years provided by the
-    certificate's  "before"  and  "after"  values only. For example a
-    certificate valid  from Jan 2013 to Mar 2016  is considered valid
-    even the validity is more than three years.
-
-    All certificates in the chain must be valid.
-    **NOT YET IMPLEMENTED**
-
-    Above conditions are not required for lazy checks.
-
-=item 3.5 Domainparameter und Schlüssellängen
-
-    **NOT YET IMPLEMENTED**
-
-=begin comment
-
-+--------------+---------------+--------
-		Minimale
- Algorithmus	Schlüssellänge	Verwendung bis
-+--------------+---------------+--------
- Signaturschlüssel für Zertifikate und Schlüsseleinigung
-   ECDSA	224 Bit	2015
-   ECDSA	250 Bit	2019+
-     DSS	2000 Bit3	2019+
-     RSA	2000 Bit3	2019+
- Statische Diffie-Hellman Schlüssel
-    ECDH	224 Bit	2015
-    ECDH	250 Bit	2019+
-     DH	2000 Bit	2019+
- Ephemerale Diffie-Hellman Schlüssel
-    ECDH	224 Bit	2015
-    ECDH	250 Bit	2019+
-      DH	2000 Bit	2019+
-+--------------+---------------+--------
-
-=end comment
-
-=item 3.6 Schlüsselspeicherung
-
-    This requirement is not testable from remote.
-
-=item 3.7 Umgang mit Ephemeralschlüsseln
-
-    This requirement is not testable from remote.
-
-=item 3.8 Zufallszahlen
-
-    This requirement is not testable from remote.
-
-=back
-
-=head1 SCORING
-
-Coming soon ...
-
-=head1 OUTPUT
-
-All output is designed to make it  easily parsable by postprocessors.
-Following rules are used:
-
-=over 4
-
-=item * Lines for formatting or header lines start with C<=>.
-
-=item * Lines for verbosity or tracing start with C<#>.
-
-=item * Errors and warnings start with C<**>.
-
-=item * Empty lines are comments ;-)
-
-=item * Label texts end with a separation character; default is  C<:>.
-
-=item * Label and value for all checks are separated by  at least one  TAB
-character.
-
-=item * Texts for additional information are enclosed in  C<<<>  and  ">>".
-
-=item * C<N/A> is used when no proper informations was found or provided.
-
-    Replace  C<N/A> by whatever you think is adequate:  No answer,
-    Not available,  Not applicable,  ...
-
-=back
-
-When used in  I<--legacy=full>  or  I<--legacy=simple>  mode, the output
-may contain formatting lines for better (human) readability.
-
-=head2 Postprocessing Output
-
-It is recommended to use the  I<--legacy=quick>  option, if the output
-should be postprocessed, as it omits the default separation character
-(C<:> , see above) and just uses on single tab character (0x09, \t  or
-TAB) to separate the label text from the text of the result. Example:
-         Label of the performed checkTABresult
-
-More examples for postprocessing the output can be found here:
-    https://github.com/OWASP/O-Saft/blob/master/contrib
-
-
-=head1 CUSTOMIZATION
-
-This tools can be customized as follows:
-
-=over 4
-
-=item Using command line options
-
-    This is a simple way to redefine  specific settings.  Please  see
-    CONFIGURATION OPTIONS  below.
-
-=item Using Configuration file
-
-    A configuration file can contain multiple configuration settings.
-    Syntax is simply  KEY=VALUE. Please see CONFIGURATION FILE below.
-
-=item Using resource files
-
-    A resource file can contain multiple command line options. Syntax
-    is the same as for command line options iteself.  Each  directory
-    may contain its own resource file. Please see  RC-FILE  below.
-
-=item Using debugging files
-
-    These files are --nomen est omen-- used for debugging purposes.
-    However, they can be (mis-)used to redefine all settings too.
-    Please see  DEBUG-FILE  below.
-
-=item Using user specified code
-
-    This file contains  user specified  program code.  It can also be
-    (mis-)used to redefine all settings. Please see USER-FILE  below.
-
-=back
-
-Customization is done by redefining values in internal data structure
-which are:  %cfg,  %data,  %checks,  %text,  %scores .
-
-Unless used in  DEBUG-FILE  or  USER-FILE,  there is  no need to know
-these internal data structures or the names of variables; the options
-will set the  proper values.  The key names being part of the option,
-are printed in output with the  I<--trace-key>  option.
-
-I.g. texts (values) of keys in  %data are those used in output of the
-"Informations" section. Texts of keys in  %checks are used for output
-in "Performed Checks" section.  And texts of keys in  %text  are used
-for additional information lines or texts (mainly beginning with C<=>).
-
-=head3 Configuration File vs. RC-FILE vs. DEBUG-FILE
-
-=over 4
-
-=item CONFIGURATION FILE
-
-    Configuration Files must be specified with one of the   "--cfg-*"
-    options. The specified file can be a valid path. Please note that
-    only the characters:  a-zA-Z_0-9,.\/()-  are allowed as pathname.
-    Syntax in configuration file is:  'KEY=VALUE'  where 'KEY' is any
-    key as used in internal data structure.
-    the keys in output).
-
-=item RC-FILE
-
-    Resource files are searched for and used automatically.
-    For details see  RC-FILE  below.
-
-=item DEBUG-FILE
-
-    Debug files are searched for and used automatically.
-    For details see  DEBUG-FILE  below.
-
-=item USER-FILE
-
-    The user program file is included only if the  "--usr" option was
-    used. For details see  USER-FILE  below.
-
-=back
-
-=head2 CONFIGURATION OPTIONS
-
-Configuration options are used to redefine  texts and labels or score
-settings used in output. The options are:
-
-=over 4
-
-=item --cfg-cmd=KEY=LIST
-
-=item --cfg-score=KEY=SCORE
-
-=item --cfg-checks=KEY=TEXT
-
-=item --cfg-data=KEY=TEXT
-
-=item --cfg-text=KEY=TEXT
-
-=back
-
-Here  C<KEY> is the key used in the internal data structure and C<TEXT>
-is the value to be set for this key.  Note that  unknown keys will be
-ignored silently.
-
-If  C<KEY=TEXT>  is an exiting filename,  all lines from that file are
-read and set. For details see  B<CONFIGURATION FILE>  below.
-
-=head2 CONFIGURATION FILE
-
-Note that the file can contain  C<KEY=TEXT>  pairs for the kind of the
-configuration as given by the  I<--cfg-CFG>  option.
-
-For example when used  with  I<--cfg-text=file> only values for  %text
-will be set, when used  with  I<--cfg-data=file> only values for %data
-will be set, and so on.  C<KEY>  is not used when  C<KEY=TEXT>  is  an
-existing filename. Though, it's recommended to use a non-existing key,
-for example: I<--cfg-text=my_file=some/path/to/private/file> .
-
-=head2 RC-FILE
-
-The rc-file will be searched for in the working directory only.
-
-The name of the rc-file is the name of the program file prefixed by a
-C<.>  (dot),  for example:  C<.o-saft.pl>.
-
-A  rc-file  can contain any of the commands and options valid for the
-tool itself. The syntax for them is the same as on command line. Each
-command or option must be in a single line. Any empty or comment line
-will be ignored. Comment lines start with  C<#>  or  C<=>.
-
-Note that options with arguments must be used as  C<KEY=VALUE>  instead
-of  C<KEY VALUE>.
-
-Configurations options must be written like C<--cfg-CFG=KEY=VALUE>
-where "CFG" is any of:  cmd, check, data, text  or  score  and "KEY is
-any key from internal data structure (see above).
-
-All commands and options given on command line will  overwrite  those
-found in the rc-file.
-
-=head2 DEBUG-FILE
-
-All debugging functionality is defined in L<o-saft-dbx.pm>, which will
-be searched for using paths available in perl's  C<@INC>  variable.
-
-Syntax in this file is perl code.  For details see  B<DEBUG>  below.
-
-=head2 USER-FILE
-
-All user functionality is defined in  L<o-saft-dbx.pm>,  which will be
-searched for using paths available in perl's  C<@INC>  variable.
-
-Syntax in this file is perl code.
-
-All functions defined in  L<o-saft-usr.pm>  are called when the option
-I<--usr>  was given. The functions are defined as empty stub, any code
-can be inserted as need.  Please see  L<perldoc o-saft-usr.pm>  to see
-when and how these functions are called.
-
-=head1 CIPHER NAMES
-
-While the SSL/TLS protocol uses integer numbers to identify  ciphers,
-almost all tools use some kind of  `human readable'  texts for cipher
-names. 
-
-These numbers (which are most likely written  as hex values in source
-code and documentations) are the only true identifier, and we have to
-rely on the tools that they use the proper integers.
-
-As such integer or hex numbers are difficult to handle by humans,  we
-decided to use human readable texts. Unfortunately no common standard
-exists how to construct the names and map them to the correct number.
-Some, but by far not all, oddities are described in L<Name Rodeo>.
-
-The rules for specifying cipher names are:
-
-=over 4
-
-=item 1. textual names as defined by IANA (see [IANA])
-
-=item 2. mapping of names and numbers as defined by IANA (see [IANA])
-
-=item 3. C<->  and  C<_>  are treated the same
-
-=item 4. abbreviations are allowed, as long as they are unique
-
-=item 5. beside IANA, openssl's cipher names are preferred
-
-=item 6. name variants are supported, as long as they are unique
-
-=item 7. hex numbers can be used
-
-=back
-
-[IANA]    http://www.iana.org/assignments/tls-parameters/tls-parameters.txt September 2013
-
-[openssl] ... openssl 1.0.1
-
-If in any doubt, use  I<+list --v>  to get an idea about the mapping.
-Use  I<--help=regex>  to see which regex  are used to handle all these
-variants herein.
-
-Mind the traps and dragons with cipher names and what number they are
-actually mapped. In particular when  I<--lib>, I<--exe> or I<--openssl>
-options are in use. Always use these options with I<+list> command too.
-
-=head2 Name Rodeo
-
-As said above, the  SSL/TLS protocol uses integer numbers to identify
-ciphers, but almost all tools use some kind of  human readable  texts
-for cipher names. 
-
-For example the cipher commonly known as C<DES-CBC3-SHA> is identified
-by C<0x020701c0> (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
-as constant name. A definition is missing in IANA, but there is 
-C<TLS_RSA_WITH_3DES_EDE_CBC_SHA> .
-It's each tool's responsibility to map the human readable cipher name
-to the correct (hex, integer) identifier.
-
-For example Firefox uses  C<dhe_dss_des_ede3_sha>,  which is what?
-
-Furthermore, there are different acronyms for the same thing in use.
-For example  C<DHE>  and  C<EDH>  both mean C<Ephemeral Diffie-Hellman>.
-Comments in the openssl sources mention this. And for curiosity these
-sources use both in cypher names but allow only  C<EDH> as shortcut in
-openssl's `ciphers'  command. Wonder about (at least up to 1.0.1h):
-         openssl ciphers -V EDH
-         openssl ciphers -V DHE
-         openssl ciphers -V EECDH
-         openssl ciphers -V ECDHE
-
-Next example is  C<ADH>  which is also known as  C<DH_anon> or C<DHAnon>
-or  C<DHA>  or  C<ANON_DH>. 
-
-You think this is enough? Then have a look how many acronyms are used
-for  `Tripple DES'.
-
-Compared to above, the interchangeable use of  C<->  vs.  C<_> in human
-readable cipher names is just a very simple one. However, see openssl
-again what following means (returns):
-         openssl ciphers -v RC4-MD5
-         openssl ciphers -v RC4+MD5
-         openssl ciphers -v RC4:-MD5
-         openssl ciphers -v RC4:!MD5
-         openssl ciphers -v RC4!MD5
-
-Looking at all these oddities, it would be nice to have a common unique
-naming scheme for cipher names. We have not.  As the SSL/TLS protocol
-just uses a number, it would be natural to use the number as uniq key
-for all cipher names, at least as key in our internal sources.
-
-Unfortunately, the assignment of ciphers to numbers  changed over the
-years, which means that the same number refers to a  different cipher
-depending on the standard, and/or tool, or version of a tool you use.
-
-As a result, we cannot use human readable cipher names as  identifier
-(aka unique key), as there are  to many aliases  for the same cipher.
-And also the number  cannot be used  as unique key, as a key may have
-multiple ciphers assigned.
-
-=head1 KNOWN PROBLEMS
-
-=head2 Segmentation fault
-
-Sometimes  the program terminates with a  `Segmentation fault'.  This
-mainly happens if the target does not return certificate information.
-If so, the  I<--no-cert>  option may help.
-
-=head2 **WARNING: empty result from openssl; ignored at ...
-
-This most likely occurs when the  provided cipher is  not accepted by
-the server, or the server expects client certificates.
-
-=head2 **WARNING: unknown result from openssl; ignored at ...
-
-This most likely occurs when the  openssl  executable is used  with a
-very slow connection. Typically the reason is a connection timeout.
-Try to use  I<--timout=SEC>  option.
-To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
-
-=head2 **WARNING: undefined cipher description
-
-May occour if ciphers are checked, but no description is available for
-them herein. This results in printed cipher checks like:
-
-         EXP-KRB5-RC4-MD5                no
-
-instead of:
-
-         EXP-KRB5-RC4-MD5                no       weak
-
-
-=head2 Use of uninitialized value $headers in split ... do_httpx2.al)
-
-The warning message (like follows or similar):
-
-Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm
-(autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.
-
-occurs if the target refused a connection on port 80. 
-This is considered a bug in L<Net::SSLeay>.
-Workaround to get rid of this message: use  I<--no-http>  option.
-
-=head2 invalid SSL_version specified at ....
-
-This error may occur on systems where SSL's DTLSv1 is not supported.
-The full message looks like:
-
-         invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
-
-Workaround: use  I<--no-dtlsv1>  option.
-
-=head2 Use of uninitialized value $_[0] in length at (eval 4) line 1.
-
-This warning occours with IO::Socket::SSL 1.967, reason is unknown.
-It seems not to harm functionality, hence no workaround, just ignore.
-
-=head2 Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
-
-Some versions of  IO::Socket::SSL return this error message if  *-MD5
-ciphers are used with other protocols than SSLv2.
-
-Workaround: use  I<--no-md5-cipher>  option.
-
-=head2 Performance Problems
-
-There are various reasons when the program responds slow, or seems to
-hang. Beside the problems described below performance issues are most
-likely a target-side problem. Most common reasons are:
-
-=over 4
-
-=item a) DNS resolver problems
-
-Try with  I<--no-dns>
-
-=item b) target does not accept connections for https
-
-Try with  I<--no-http>
-
-=item c) target's certificate is not valid
-
-Try with  I<--no-cert>
-
-=item d) target expects that the client provides a client certificate
-
-No option provided yet ...
-
-=item e) target does not handle Server Name Indication (SNI)
-
-Try with  I<--no-sni>
-
-Try to use following options to narrow down the cause of the problem:
-
-=item use of external openssl executable
-
-Use  I<--no-openssl> 
-
-=back
-
-Other options which may help to get closer to the problem's cause:
-I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>  
-
-
-=head1 LIMITATIONS
-
-=head2 Commands
-
-Some commands cannot be used together with others, for example:
-I<+cipher>,  I<+ciphers>,  I<+list>,  I<+libversion>,  I<+version>,  I<+check>,  I<+help>.
- 
-I<+quick>  should not be used together with other commands, it returns
-strange output then.
-
-I<+protocols>  requires  L<openssl(1)> with support for "-nextprotoneg"
-option. Otherwise the value will be empty.
-
-=head2 Options
-
-The characters C<+> and C<=> cannot be used for I<--separator> option.
-
-Following strings should not be used in any value for options:
-  C<+check>, C<+info>, C<+quick>, C<--header>
-as they my trigger the  -I<--header>  option unintentional.
-
-The used L<timeout(1)> command cannot be defined with a full path like
-L<openssl(1)>  can with the  I<--openssl=path/to/openssl>.
-
-I<--cfg-text=file>  cannot be used to redefine the texts "yes" and "no"
-as used in the output for  I<+cipher>  command.
-
-=head2 Checks (general)
-
-=head3 +constraints
-
-This check is only done for the certificate provided by the target.
-All other certificate in the chain are not checked.
-
-This is currently (2014) a limitation in $0.
-
-=head2 Broken pipe
-
-This error message most likely means that the connection to specified
-was not possible (firewall or whatever reason).
-
-=head2 Target Certificate Chain Verification
-
-The systems default capabilities i.e. libssl.so, openssl, are used to
-verify the target's certificate chain.  Unfortunately various systems
-have implemented different  approaches and rules how identify and how
-to report a successful verification.  As a consequence  this tool can
-only return the  same information about the chain verification as the
-used underlying tools.  If that information is trustworthy depends on
-how trustworthy the tools are.
-
-These limitations apply to following commands:
-
-=over 4
-
-=item I<+verify>
-
-=item I<+selfsigned>
-
-=back
-
-Following commands and options are useful to get more information:
-
-=over 4
-
-=item I<+chain_verify>, I<+verify>, I<+error_verify>, I<+chain>, I<+s_client>
-
-=item I<--ca-file>, I<--ca-path>, I<--ca-depth>
-
-=back
-
-=head2 User Provided Files
-
-Please note that there cannot be any guarantee that the code provided
-in the  DEBUG-FILE L<o-saft-usr.pm>  or  USER-FILE  L<o-saft-usr.pm> 
-will work flawless. Obviously this is the user's responsibility.
-
-=head2 Problems and Errors
-
-Checking the target for supported ciphers may return that a cipher is
-not supported by the server  misleadingly.  Reason is most likely  an
-improper timeout for the connection. See  I<--timeout=SEC>  option.
-
-If the specified targets accepts connections but does not speak  SSL,
-the connection will be closed after the system's TCP/IP-timeout. This
-script will hang (about 2-3 minutes).
-
-If reverse DNS lookup fails, an error message is returned as hostname,
-like:  C<<<gethostbyaddr() failed>>>.
-Workaround to get rid of this message: use  I<--no-dns>  option.
-
-All checks for EV are solely based on the information provided by the
-certificate.
-
-Some versions of openssl (< 1.x) may not support all required options
-which results in various error messages or --more worse--  may not be
-visibale at all.
-Following table shows the openssl option and how to disbale it within
-o-saft:
-
--nextprotoneg       I<--no-nextprotoneg>
-
--reconnect          I<--no-reconnect>
-
--tlsextdebug        I<--no-tlsextdebug>
-
-=head2 Poor Systems
-
-Use of  L<openssl(1)> is disabled by default on Windows due to various
-performance problems. It needs to be enabled with I<--openssl> option.
-
-On Windows the usage of  "openssl s_client" needs to be enabled using
-I<--s_client> option.
-
-On Windows it's a pain to specify the path for I<--openssl=..> option.
-Variants are:
-
-=over 4
-
-=item --openssl=/path/to/openssl.exe
-
-=item --openssl=X:/path/to/openssl.exe
-
-=item --openssl=\path\to\openssl.exe
-
-=item --openssl=X:\path\to\openssl.exe
-
-=item --openssl=\\path\\to\\openssl.exe
-
-=item --openssl=X:\\path\\to\\openssl.exe
-
-=back
-
-You have to fiddle around to find the proper one.
-
-=head1 DEPENDENCIES
-
-All perl modules and all  private moduels and files  will be searched
-for using paths available in perl's  C<@INC>  variable.  C<@INC>  will
-be prepended by following paths:
-
-=over 4
-
-=item .
-
-=item ./lib
-
-=item INSTALL_PATH
-
-=item INSTALL_PATH/lib
-
-=back
-
-Where  C<INSTALL_PATH>  is the path where the tool is installed.
-To see which files have been included use:
-
-  $0 +version --v --user
-
-
-=head2 Perl Modules
-
-=over
-
-=item L<IO::Socket::SSL(1)>
-
-=item L<IO::Socket::INET(1)>
-
-=item L<Net::SSLeay(1)>
-
-=item L<Net::SSLinfo(1)>
-
-=item L<Net::SSLhello(1)>
-
-=back
-
-=head2 Additional Files used if requested
-
-=over
-
-=item L<.o-saft.pl>
-
-=item L<o-saft-dbx.pm>
-
-=item L<o-saft-usr.pm>
-
-=item L<o-saft-README>
-
-=back
-
-=head1 SEE ALSO
-
-L<openssl(1)>, L<Net::SSLeay(1)>, L<Net::SSLinfo(1)>, L<timeout(1)>
-
-http://www.openssl.org/docs/apps/ciphers.html
-
-L<IO::Socket::SSL(1)>, L<IO::Socket::INET(1)>
-
-=head1 HACKER's INFO
-
-=head2 Using private libssl.so and libcrypt.so
-
-For all  cryptographic functionality  the libraries  installed on the
-system will be used. This is in particular perl's  Net:SSLeay module,
-the system's  libssl.so and libcrypt.so  and the openssl executable.
-
-It is possible to provide your own libraries, if the  perl module and
-the executable are  linked using  dynamic shared objects  (aka shared
-library, position independent code).
-The appropriate option is  I<--lib=PATH>  .
-
-On most systems these libraries are loaded at startup of the program.
-The runtime loader uses a preconfigured list of directories  where to
-find these libraries. Also most systems provide a special environment
-variable to specify  additional paths  to directories where to search
-for libraries, for example the  LD_LIBRARY_PATH environment variable.
-This is the default environment variable used herein.  If your system
-uses  another name it must be specified with the  I<--envlibvar=NAME>
-option, where  NAME  is the name of the environment variable.
-
-=head2 Understanding  I<--exe=PATH>, I<--lib=PATH>, I<--openssl=FILE>
-
-If any of I<--exe=PATH> or I<--lib=PATH> is provided, the pragram calls
-(C<exec>) itself recursively with all given options, except the option
-itself. The environment variables  C<LD_LIBRARY_PATH>  and C<PATH>  are
-set before executing as follows:
-
-=over 4
-
-=item prepend  C<PATH>  with all values given with  I<--exe=PATH> 
-
-=item prepend  C<LD_LIBRARY_PATH>  with all values given with  I<--lib=PATH> 
-
-=back
-
-This is exactly, what L<Cumbersome Approach> below describes. So these
-option simply provide a shortcut for that.
-
-Note that I<--openssl=FILE> is a full path to the L<openssl> executable
-and will not be changed.  However, if it is a relative path, it might
-be searched for using the previously set  C<PATH>  (see above).
-
-Note that  C<LD_LIBRARY_PATH>  is the default.  It can be changed with
-the  I<--envlibvar=NAME>  option.
-
-While  I<--exe>  mainly impacts the openssl executable,  I<--lib>  also
-impacts o-saft.pl itself, as it loads other shared libraries if found.
-
-Bear in mind that  all these options  can affect the behaviour of the
-openssl subsystem,  influencing both which  executable is called  and
-which shared libraries will be used.
-
-Why so many options?  Exactly as described above, these options allow
-the users to tune the behaviour of the tool to their needs.  A common
-use case is to enable the use of a separate openssl build independent
-of the openssl package used by the operating system.  This allows the
-user fine grained control over openssl e.g. the encryption suites that
-are compiled/available, without affecting the core system.
-
-=head2 Caveats
-
-Depending on your system and the used modules and executables, it can
-be tricky to replace the configured shared libraries with own ones.
-Reasons are:
-  a) the linked library name contains a version number,
-  b) the linked library uses a fixed path,
-  c) the linked library is searched at a predefined path,
-  d) the executable checks the library version when loaded.
-
-Only the first one a) can be circumvented.  The last one d) can often
-be ignored as it only prints a warning or error message.
-
-To circumvent the "name with version number" problem try following:
-
-=over
-
-=item 1. use L<ldd> (or a similar tool) to get the names used by L<openssl>:
-
-  ldd /usr/bin/openssl
-
-which returns something like:
-
-  libssl.so.0.9.8 => /lib/libssl.so.0.9.8 (0x00007f940cb6d000)
-  libcrypto.so.0.9.8 => /lib/libcrypto.so.0.9.8 (0x00007f940c7de000)
-  libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f940c5d9000)
-  libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f940c3c1000)
-  libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f940c02c000)
-  /lib64/ld-linux-x86-64.so.2 (0x00007f940cdea000)
-
-Here only the first two libraries are important.  Both,  libcrypto.so
-and libssl.so  need to be version "0.9.8" (in this example).
-
-=item 2. create a directory for your libraries, i.e.:
-
-  mkdir /tmp/dada
-
-=item 3. place your libraries there, assuming they are:
-
-  /tmp/dada/libssl.so.1.42
-  /tmp/dada/libcrypto.so.1.42
-
-=item 4. create symbolic links in that directory:
-
-  ln -s libssl.so.1.42    libssl.so.0.9.8
-  ln -s libcrypto.so.1.42 libcrypto.so.0.9.8
-
-=item 5. test program with following option:
-
-  $0 +libversion --lib=/tmp/dada
-  $0 +list --v   --lib=/tmp/dada
-
-  or:
-
-  $0 +libversion --lib=/tmp/dada -exe=/path/to-openssl
-  $0 +list --v   --lib=/tmp/dada -exe=/path/to-openssl
-
-=item 6. start program with your options, i.e.:
-
-  $0 --lib=/tmp/dada +ciphers
-
-=back
-
-This works if L<openssl(1)> uses the same shared libraries as
-L<Net:SSLeay(1)>, which most likely is the case.
-
-It's tested with Unix/Linux only. It may work on other platforms also
-if they support such an environment variable and the installed
-L<Net::SSLeay(1)>  and L<openssl(1)>  are linked using dynamic shared
-objects.
-
-Depending on  compile time settings  and/or  the location of the used
-tool or lib, a warning like following my occur:
-
-  WARNING: can't open config file: /path/to-openssl/ssl/openssl.cnf
-
-This warning can be ignored, usually.
-
-=head3 Cumbersome Approach
-
-A more cumbersome approach to call  this program is to set  following
-environment variables in your shell:
-
-  PATH=/tmp/dada-1.42/apps:$PATH
-  LD_LIBRARY_PATH=/tmp/dada-1.42
-
-=head3 Windows Caveats
-
-I.g. the used libraries on Windows are libeay32.dll and ssleay32.dll.
-
-Windows also supports the LD_LIBRARY_PATH environment variable. If it
-does not work as expected with that variable, it might be possible to
-place the libs in the same directory as the  corresponding executable
-(which is found by the PATH environment variable).
-
-=for comment openssl.exe 1.0.0e needs: libeay32.dll, ssleay32.dll
-
-=head2 Using CGI mode
-
-This script can be used as  CGI application. Output is the same as in
-common CLI mode, using  'Content-Type:text/plain'.  Keep in mind that
-the used modules like  L<Net::SSLeay>  will write some debug messages
-on STDERR instead STDOUT. Therefore multiple  I<--v> and/or  I<--trace>
-options behave slightly different.
-
-No additional external files like  B<RC-FILE> or B<DEBUG-FILE> are read
-in CGI mode; they are silently ignored.
-Some options are disabled in CGI mode  because they are dangerous  or
-don't make any sense.
-
-=head3 WARNING
-
-  There are  no  input data validation checks implemented herein. All 
-  input data is url-decoded once and then used verbatim.
-  More advanced checks must be done outside before calling this tool.
-
-=begin comment
-
-The only code necessary for CGI mode is encapsulated at the beginning,
-see  C<if ($me =~/\.cgi/){ ... }>.  Beside some minor additional regex
-matches (mainly removing trailing  C<=> and empty arguments) no other
-code is needed. 
-
-=end comment
-
-=head2 Using user specified code
-
-There are some functions called within the program flow, which can be
-filled with any perl code.  Empty stubs of the functions are prepared
-in  L<o-saft-usr.pm>.  See also  B<USER-FILE>.
-
-=head2 SECURITY
-
-This tool is designed to be used by people doing security or forensic
-analyses. Hence no malicious input is expected.
-
-There are no special security checks implemented. Some parameters are
-roughly sanatised according unwanted characters.  In particular there
-are no checks according any kind of code injection.
-
-Please see  B<WARNING> above if used in CGI mode. It's not recommended
-to run this tool in CGI mode. You have been warned!
-
-=for comment Program Code below is not shown with +help
-
-=begin comment
-
-=head2 Program Code
-
-First of all: the main goal is to have a tool to be simple for users.
-It's not designed to be accademic code or simple for programmers.
-
-=head3 Documentation
-
-All documentation of code details is  close to the corresponding code
-lines. Some special comment lines are used, see  B<Comments>  below.
-
-All documentation for the user is written in perl's POD format at end
-of the program code. See  C<## documentation>.
-
-All options and commands should be documented using POD's  =head  key
-(see C<printquit()> how this can be used for testing).
-
-Meanwhile, after 2 years of development, it seems that POD wasn't the
-best decission, as it makes extracting information from documentation
-complicated, sometimes.
-
-=head3 General
-
-Perl's  `die()'  is used whenever an unrecoverable error occurs.  The
-message printed will always start with `**ERROR: '.
-Warnings are printed using perl's  `warn()'  function and the message
-always begins with `**WARNING: '.
-
-All C<print*()> functions write on STDOUT directly. They are slightly
-prepared for using texts from  the configuration (%cfg, %checks),  so
-these texts can be adapted easily (either with  B<OPTIONS>  or in code).
-
-The  code  mainly uses  'text enclosed in single quotes'  for program
-internal strings such as hash keys, and uses "double quoted" text for
-texts being printed. However, exceptions if obviously necessary ;-)
-Strings used for RegEx are always enclosed in single quotes.
-Reason is mainly to make searching texts a bit easyer.
-
-Calling external programs uses  C<qx()>  rather than backticks or perl's
-C<system()>  function. Also not that is uses braces insted of slashes to
-avoid confusion with RegEx.
-
-The code flow mainly uses postfix conditions, means the if-conditions
-are written right of the command to be executed. This is done to make
-the code better readable (not disturbed by conditions).
-
-While  Net::SSLinfo  uses  L<Net::SSLeay(1)>,  o-saft.pl  itself uses
-only  L<IO::Socket::SSL(1)>. This is done 'cause we need some special
-features here. However,  L<IO::Socket::SSL(1)>  uses  L<Net::SSLeay(1)>  
-anyways.
-
-The code is most likely not thread-safe. Anyway, we don't use them.
-
-For debugging the code the  I<--trace>  option can be used.  See  B<DEBUG>
-section below for more details. Be prepared for a lot of output!
-
-=head3 Comments
-
-Following comments are used in the code:
-
-=over 4
-
-=item # ToDo:   - parts not working perfect, needs to be changed
-
-=item # FIXME:  - program code known to be buggy, needs to be fixed
-
-=item #!#       - comments not to be removed in compressed code
-
-=item #?        - description of sub
-
-=item ##        - code sections
-
-=back
-
-=head3 Variables
-
-Most functions use global variables (even if they are defined in main
-with `my'). These variables are mainly: @DATA, @results, %cmd, %data,
-%cfg, %checks, %ciphers, %text.
-
-Variables defined with `our' can be used in  L<o-saft-dbx.pm>  and
-L<o-saft-usr.pm> .
-
-For a detailed description of the used variables, please refer to the
-text starting at the line  C<#!# set defaults>.
-
-
-=head3 Sub Names
-
-Some rules used for function names:
-
-=over 4
-
-=item check*
-
-    Functions which perform some checks.
-
-=item print*
-
-    Functions which print results.
-
-=item get_*
-
-    Functions to get a value from internal ciphers data structure.
-
-=item _<function_name>
-
-    Some kind of helper functions.
-
-=item _trace* _y*
-
-    Print information when  "--trace"  is in use.
-
-=item _v*print
-
-    Print information when  "--v"  is in use.
-
-=back
-
-Function (sub) definitions are followed by a short description, which
-is just one line right after the  C<sub>  line. Such lines always start
-with  C<#?>  (see below how to get an overview).
-
-Subs are ordered to avoid forward declarations as much as possible.
-
-=head3 Code information
-
-Examples to get an overview of perl functions (sub):
-
-   egrep '^(sub|\s*#\?)' $0
-
-Same a little bit formatted, see  I<+traceSUB>  command.
-
-Examples to get an overview of workflow:
-
-   egrep '^##\s' $0
-
-Following to get perl's variables for checks:
-
-  $0 +check localhost --trace-key \
-  | awk -F'#' '($2~/^ /){a=$2;gsub(" ","",a);next}(NF>1){printf"%s{%s}\n",a,$2}' \
-  | tr '%' '$'
-
-=head3 Debugging, Tracing
-
-Most functionality for trace, debug or verbose output is encapsulated
-in functions (see B<Sub Names> above). These functions are defined as
-empty stubs herein.  The  real  definitions  are in  L<o-saft-dbx.pm>,
-which is loaded on demand when either any  I<--trace*>  or  I<--v>  option
-is specified. As long as these options are not used  o-saft.pl  works
-without  L<o-saft-dbx.pm>.
-
-Note: in contrast to the name of the RC-file, the name  o-saft-dbx.pm
-is hard-coded.
-
-=end comment
-
-=head1 DEBUG
-
-=head2 Debugging, Tracing
-
-Following  options and commands  are useful for hunting problems with
-SSL connections and/or this tool. Note that some options can be given
-multiple times to increase amount of listed information. Also keep in
-mind that it's best to specify  I<--v>  as very first argument.
-
-Note that the file  L<o-saft-dbx.pm>  is required, if any  I<--trace*>
-or  I<--v>  option is used.
-
-=head3 Commands
-
-=over 4
-
-=item +dump
-
-=item +libversion
-
-=item +s_client
-
-=item +todo
-
-=item +version
-
-=back
-
-=head3 Options
-
-=over 4
-
-=item --v
-
-=item --v--
-
-=item --trace
-
-=item --trace-arg
-
-=item --trace-cmd
-
-=item --trace-key
-
-=back
-
-Empty or undefined strings are written as  "<<undefined>>"  in texts.
-Some parameters, in particular those of  HTTP responses,  are written
-as  "<<response>>".  Long parameter lists are abbreviated with "...".
-
-
-=head3 Output
-
-When using  I<--v>  and/or  I<--trace>  options, additional output will
-be prefixed with a  C<#>  (mainly as first, left-most character.
-Following formats are used:
-
-=over 4
-
-=item #<space>
-
-    Addition text for verbosity ("--v" options).
-
-=item #[variable name]<TAB>
-
-    Internal variable name ("--trace-key" options).
-
-=item #o-saft.pl::
-
-=item #Net::SSLinfo::
-
-    Trace information for "--trace"  options.
-
-=item #{
-
-    Trace information from  "NET::SSLinfo"  for  "--trace"  options.
-    These are data lines in the format:   #{ variable name : value #}
-    Note that  `value'  here can span multiple lines and ends with #}
-
-=back
-
-=head1 EXAMPLES
-
-($0 in all following examples is the name of the tool)
-
-=head2 General
-
-    $0 +cipher some.tld
-    $0 +info   some.tld
-    $0 +check  some.tld
-    $0 +quick  some.tld
-    $0 +help=commands
-    $0 +list
-    $0 +list --v
-    $0 +certificate  some.tld
-    $0 +fingerprint  some.tld 444
-    $0 +after +dates some.tld
-
-=head2 Some specials
-
-=over
-
-=item Get an idea how messages look like
-
-    $0 +check --cipher=RC4 some.tld
-
-=item Check for Server Name Indication (SNI) usage only
-
-    $0 +sni some.tld
-
-=item Check for SNI and print certificate's subject and altname
-
-    $0 +sni +cn +altname some.tld
-
-=item Check for all SNI, certificate's subject and altname issues
-
-    $0 +sni_check some.tld
-
-=item Only print supported ciphers
-
-    $0 +cipher --enabled some.tld
-
-=item Only print unsupported ciphers
-
-    $0 +cipher --disabled some.tld
-
-=item Test for a specific ciphers
-
-    $0 +cipher --cipher=ADH-AES256-SHA some.tld
-
-=item Test all ciphers, even if not supported by local SSL implementation
-
-    $0 +cipherraw some.tld
-
-=item Test using a private libssl.so, libcrypto.so and openssl
-
-    $0 +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps some.tld
-
-=item Test using a private openssl
-
-    $0 +cipher --openssl=/foo/bar-1.42/openssl some.tld
-
-=item Test using a private openssl also for testing supported ciphers
-
-    $0 +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
-
-=item Show current score settings
-
-    $0 --help=score
-
-=item Change a single score setting
-
-    $0 --cfg-score=http_https=42   +check some.tld 
-
-=item Use your private score settings from a file
-
-    $0 --help=score > magic.score
-    # edit as needed: magic.score
-    $0 --cfg-score    magic.score  +check some.tld
-
-=item Use your private texts in output
-
-    $0 +check some.tld --cfg-text=desc="my special description"
-
-=item Use your private texts from RC-FILE
-
-    $0 --help=cfg-text >> .o-saft.pl
-    # edit as needed:     .o-saft.pl
-    $0 +check some.tld
-
-=item Generate simple parsable output
-
-    $0 --legacy=quick --no-header +info  some.tld
-    $0 --legacy=quick --no-header +check some.tld
-    $0 --legacy=quick --no-header --trace-key +info  some.tld
-    $0 --legacy=quick --no-header --trace-key +check some.tld
-
-=item Generate simple parsable output for multiple hosts
-
-    $0 --legacy=quick --no-header --trace-key --showhost +check some.tld other.tld
-
-=item Just for curiosity
-
-    $0 some.tld +fingerprint --format=raw
-    $0 some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
-
-=back
-
-=head2 Special for hunting problems with connections etc.
-
-=over
-
-=item Show command line argument processing
-
-    $0 +info some.tld --trace-arg
-
-=item Simple tracing
-
-    $0 +cn   some.tld --trace
-    $0 +info some.tld --trace
-
-=item A bit more tracing
-
-    $0 +cn   some.tld --trace --trace
-
-=item Show internal variable names in output
-
-    $0 +info some.tld --trace-key
-
-=item Show internal argument processeing
-
-    $0 +info --trace-arg some.tld
-
-=item Show internal control flow and timing
-
-    $0 +info some.tld --trace-time
-
-=item List checked ciphers
-
-    $0 +cipher some.tld --v --v
-
-=item List checked ciphers one per line
-
-    $0 +cipher some.tld --v --v --v
-
-=item Show processing of ciphers
-
-    $0 +cipher some.tld --v --v --v --v
-
-=item Show values retrieved from target certificate directly
-
-    $0 +info some.tld --no-cert --no-cert --no-cert-text=Value-from-Certificate
-
-=item Show certificate CA verifications
-
-    $0 some.tld +chain_verify +verify +error_verify +chain
-
-=item Avoid most performance and timeout problems (don't use  --v)
-
-    $0 +info some.tld --no-cert --no-dns --no-http --no-openssl --no-sni
-
-=back
-
-=for following lines may contain trailing space, which are requiered
-
-=begin --v --v
-
-
-.raw nerobeg
-sretset rof tidua LSS PSAWO  -  "tfaS-O"   
-retseT reuf tiduA LSS PSAWO  -  "tfaS-O"   
- nnawdnegri nnad sib ,elieW enie sad gnig oS
-..wsu ,"haey-lss" ,"agoy-lss" :etsiL red fua dnats -reteaps reibssieW
-eretiew  raap nie-  nohcs se tnha nam  ,ehcuS eid nnageb os ,nebegrev
-nohcs dnis nemaN ednessap eleiV  .guneg 'giffirg`  thcin reba sad raw
-gnuhciltneffeoreV enie reuF .noisrevsgnulkciwtnE red emaN red tsi saD
-. loot LSS rehtona tey -  "lp.tsaey"   :resseb nohcs tsi sad
-,aha ,tsaey -- efeH -- reibssieW -- .thcin sad tgnilk srednoseb ,ajan
-eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"   
-:ehan gal se ,nedrew emaN 'regithcir` nie hcod nnad se etssum
-hcan dnu hcaN  .edruw nefforteg setsre sla "y" sad liew ,"lp.y" :eman
--ietaD nie snetsednim  ,reh emaN nie etssum sE .slooT seseid pytotorP
-retsre nie  nohcs hcua  dnatstne iebaD  .tetsokeg reibssieW eleiv dnu
-nednutS eginie nnad hcim tah esylanA eiD .)dnis hcon remmi dnu( neraw
-nedeihcsrev rhes esiewliet eis muraw ,nednifuzsuareh dnu nehetsrev uz
-)noitpO "*=ycagel--"  eheis( slooT-tseT-LSS reredna releiv essinbegrE
-nehcildeihcsretnu eid hcusreV mieb  dnatstne looT  meseid uz eedI eiD
-
-)-: ti dnatsrednu :laog txeN .eno neddih eht ,ti tog uoY
-
-=end --v
-
-=head1 ATTRIBUTION
-
-Based on ideas (in alphabetical order) of:
-   cnark.pl, SSLAudit.pl sslscan, ssltest.pl, sslyze.py
-
-O-Saft - OWASP SSL advanced forensic tool
-   Thanks to Gregor Kuznik for this title.
-
-+cipherraw and some proxy functionality implemented by Torsten Gigler.
-
-For re-writing some docs in proper English, thanks to Robb Watson.
-
-Code to check heartbleed vulnerability adapted from
-   Steffen Ullrich (08. April 2014):
-   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
-
-=for comment: VERSION string must start with @(#) at beginning of a line
-
-=head1 VERSION
-
-@(#) 14.11.16
-
-=head1 AUTHOR
-
-31. July 2012 Achim Hoffmann (at) sicsec de
-
-=begin comment
-
-* nur protokolle testen (wie testssl.sh)
-* openssl (nicht bei 0.9.8, bei 1.0.1*) -legacy_renegotiation
-* "Minimal encryption strength:     weak encryption (40-bit) (wie TestSSLServer.jar)
-* "Checking fallback from TLS 1.1 to... TLS 1.0" (wie ssl-cipher-check.pl)
-* SSLCertScanner.exe http://www.xenarmor.com/network-ssl-certificate-scanner.php ansehen
-* ssl-cert-check -p 443 -s mail.google.com -i -V
-
-=end comment
-
-=begin ToDo # no POD syntax here!
-
-TODO
-
-  * new features
-    ** allow proxy
-    ** client certificate
-    ** support: PCT protocol
-    ** some STRATTLS need : HELP STARTTLS HELP  # output of HELPs are different
-
-  * missing checks
-    ** SSL_honor_cipher_order => 1
-    ** implement TLSv1.2 checks
-    ** DNSEC and TLSA
-    ** IP in CommonName or subjectAltname (RFC6125)
-    ** checkcert(): KeyUsage, keyCertSign, BasicConstraints
-    ** DV and EV miss some minor checks; see checkdv() and checkev()
-    ** some workaround in SSL protocol
-    ** +constraints does not check +constraints in the certificate of
-       the certificate chain.
-
-  * verify CA chain:
-    ** Net::SSLinfo.pm implement verify*
-    ** implement +check_chain (see Net::SSLinfo.pm implement verify* also)
-    ** implement +ca = +verify +chain +rootcert +expired +fingerprint
-
-  * scoring
-    ** implement score for PFS; lower score if not all ciphers support PFS
-
-  * vulnerabilities
-    ** complete TIME, BREACH check
-    ** implement check for Lucky 13
-    ** is DHE-DSS-RC4-SHA also weak?
-    ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
-
-  * Net::SSLeay
-    ** Net::SSLinfo.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
-       return error message
-    ** Net::SSLeay::CTX_clear_options()
-       Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
-       SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
-       see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
-
-  * Windows
-    ** Unicode:
-       try: cmd /K chcp 65001
-       or:  chcp 65001
-       or:  reg add hklm\system\currentcontrolset\control\nls\codepage -v oemcp -d 65001
-
-  * internal
-    ** make a clear concept how to handle +CMD whether they report
-       checks or informations (aka %data vs. %check_*)
-       currently (2014) each single command returns all values
-    ** complete +http checks (see %checks also)
-       improve score for these checks
-       make clear usage of score from %checks
-    ** client certificates not yet implemented in _usesocket() _useopenssl(),
-       see t.client-cert.txt
-    ** (nicht wichtig, aber sauber programmieren)
-       _get_default(): Net::SSLinfo::default() benutzen
-
-=end ToDo
-
+documentation please see o-saft-man.pm
