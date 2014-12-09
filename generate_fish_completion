@@ -11,8 +11,8 @@ class String
 end
 
 options = [["",""]]
-`#{BIN} --help=options`.each_line{|l|
-	if l =~ /^[^\s]/
+`#{BIN} --help=options`.lines.each{|l|
+	if l =~ /^\s*-/
 		options << []
 		options.last << l.scan(/^(\-.*)/).flatten[0]
 		options.last << ""
@@ -66,8 +66,7 @@ options.each{|o,d|
 	end
 }
 
-
-commands = `#{BIN} --help=commands`.to_a.collect{|l|
+commands = `#{BIN} --help=commands`.lines.collect{|l|
 	l.strip.scan(/^(\+[^\s]*)\s*(.*)$/).flatten
 }.uniq
 commands.each{|c,d|
