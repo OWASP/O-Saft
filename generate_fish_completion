@@ -14,7 +14,7 @@ options = [["",""]]
 `#{BIN} --help=options`.lines.each{|l|
 	if l =~ /^\s*-/
 		options << []
-		options.last << l.scan(/^(\-.*)/).flatten[0]
+		options.last << l.scan(/^\s*(\-.*)/).flatten[0]
 		options.last << ""
 	else
 		options.last[1] += l
@@ -37,15 +37,23 @@ options.collect!{|o|
 }
 options += simopts
 options.delete(nil)
-options.collect!{|o|
-	if o[0] =~ / / # cannot use options with spaces inside
+options.collect!{|o,d|
+	case o
+	when / /,"" # cannot use options with spaces inside or empty
 		nil
 	else
-		o
+		[o,d]
 	end
 }
-options += simopts
 options.delete(nil)
+options.collect!{|o,d|
+	# remove newlines or double spaces
+	[o,d.gsub("\n"," ").gsub(/ {2,}/," ")]
+}
+options.collect!{|o,d|
+	# cut everything after and including the first dot
+	[o,d.gsub(/\..*$/,'')]
+}
 options.each{|o,d|
 	if o
 		case o
@@ -60,7 +68,7 @@ options.each{|o,d|
 		end
 		if opt
 			print "complete -f -c #{BIN} -#{opt} '#{o.gsub(/^-*/,"")}'"
-			print " --description \"#{d[0..20].shell_escape}\"" if d != ""
+			print " --description \"#{d.shell_escape}\"" if d != ""
 			puts
 		end
 	end
@@ -72,7 +80,7 @@ commands = `#{BIN} --help=commands`.lines.collect{|l|
 commands.each{|c,d|
 	if c
 		print "complete -f -c #{BIN} -a '#{c}'"
-		print " --description \"#{d[0..20].shell_escape}\"" if d != ""
+		print " --description \"#{d.shell_escape}\"" if d != ""
 		puts
 	end
 }
