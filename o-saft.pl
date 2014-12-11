@@ -58,7 +58,7 @@ BEGIN {
 
     # handle simple help very quickly
     # get first matching argument
-    my ($arg) = grep(/^(?:--h(?:elp)?|(?:--|\+)help=?(?:gen-)?(?:opts?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
+    my ($arg) = grep(/^(?:--h(?:elp)?|(?:--|\+)help=?(?:gen-)?(?:opts?|cgi|html|wiki|abbr|abk|glossar|cmdcsv|[A-Z]+))$/, @ARGV);
         # we allow:  --h  or  --help  or  +help  or  +help=SOMETHING
     if (defined $arg) {
         $arg =~ s/^(?:--|\+)//;     # remove option prefix
@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.323 14/12/07 23:31:49";
+my  $SID    = "@(#) yeast.pl 1.324 14/12/11 16:05:28";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -288,7 +288,8 @@ my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
 our @results= ();   # list of checked ciphers: [SSL, ciper suite name, yes|no]
-our %data   = (     # values from Net::SSLinfo, will be processed in print_data()
+our %data   = (     # connection and certificate details
+    # values from Net::SSLinfo, will be processed in print_data()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
     #!# +command                 value from Net::SSLinfo::*()                                label to be printed
     #!#----------------+-----------------------------------------------------------+-----------------------------------
@@ -403,7 +404,7 @@ our %checks = (
 
 ); # %checks
 
-my %check_cert = (
+my %check_cert = (  # certificate data
     # collected and checked certificate data
     #------------------+-----------------------------------------------------
     # key               label to be printed (description)
@@ -465,7 +466,7 @@ my %check_cert = (
     # TODO: wee need an option to specify the the local certificate storage!
 ); # %check_cert
 
-my %check_conn = (
+my %check_conn = (  # connection data
     # collected and checked connection data
     #------------------+-----------------------------------------------------
     'ip'            => {'txt' => "IP for given hostname "},
@@ -528,7 +529,7 @@ my %check_conn = (
     #------------------+-----------------------------------------------------
 ); # %check_conn
 
-my %check_dest = (
+my %check_dest = (  # target (connection) data
     # collected and checked target (connection) data
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
@@ -565,7 +566,7 @@ my %check_dest = (
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
-my %check_size = (
+my %check_size = (  # length and count data
     # collected and checked length and count data
     # counts and sizes are integer values, key mast have prefix (len|cnt)_
     #------------------+-----------------------------------------------------
@@ -592,8 +593,7 @@ my %check_size = (
 # TODO: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
 
-my %check_http = (
-    # HTTP vs. HTTPS checks
+my %check_http = (  # HTTP vs. HTTPS data
     # score are absolute values here, they are set to 100 if attribute is found
     # key must have prefix (hsts|sts); see $cfg{'regex'}->{'cmd-http'}
     #------------------+-----------------------------------------------------
