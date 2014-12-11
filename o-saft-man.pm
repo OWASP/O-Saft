@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.7 14/12/11 16:07:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.8 14/12/11 21:13:27";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -531,62 +531,6 @@ sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @A
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
-sub man_cmdlist() {
-    # print commands and short description
-    # data is extracted from $parents internal data structure
-    my $skip = 1;
-    _man_dbx("_man_cmdlist($parent) ...");
-    # first print general commands, manually crafted here
-    # TODO needs to be computed, somehow ...
-    print <<EoHelp;
-Commands for information about this tool
-+dump	Dumps internal data for SSL connection and target certificate.
-+exec	Internal command; should not be used directly.
-+help	Complete documentation.
-+list	Show all ciphers supported by this tool.
-+libversion	Show version of openssl.
-+quit	Show internal data and exit, used for debugging only.
-+VERSION	Just show version and exit.
-+version	Show version information for program and Perl modules.
-Commands to check SSL details
-+bsi	Various checks according BSI TR-02102-2 compliance.
-+check	Check the SSL connection for security issues.
-+check_sni	Check for Server Name Indication (SNI) usage.
-+ev	Various checks according certificate's extended Validation (EV).
-+http	Perform HTTP checks.
-+info	Overview of most important details of the SSL connection.
-+info--v	More detailled overview.
-+quick	Quick overview of checks.
-+s_client	Dump data retrieved from  "openssl s_client ..."  call.
-+sizes	Check length, size and count of some values in the certificate.
-+sni	Check for Server Name Indication (SNI) usage.
-+sts	Various checks according STS HTTP header.
-Commands to test target's ciphers
-+cipher	Check target for ciphers (using libssl)
-+cipherraw	Check target for all possible ciphers.
-EoHelp
-    if (open(P, "<", $parent)) {
-        while(<P>) {
-            # find start of data structure
-            # all structure look like:
-            #    our %check_some = ( # description
-            #          'key' => {... 'txt' => "description of value"},
-            #    );
-            # where we extract the description of the checked class from first
-            # line and the command and its description from the data lines
-            if (m/^(?:my|our)\s+%(?:check_(?:[a-z0-9_]+)|data)\s*=\s*\(\s*#\s*(.*)/) {
-                $skip = 0;
-                print "Commands to show results of checked $1\n"; # print head line, quick&dirty
-                next;
-            }
-            $skip = 1, next if (m/^\s*\)\s*;/); # find end of data structure
-            next if ($skip == 1);
-            next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
-            print "+$1\t$2\n" if m/^\s+'([^']*)'.*"([^"]*)"/;
-        }
-        close(P);
-    }
-}
 sub _man_http_head(){
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
     print "Content-type: text/plain; charset=utf-8\r\n";
@@ -688,7 +632,6 @@ sub _man_html($$) {
 
 sub _man_head($$) { printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60); }
 sub _man_opt($$$) { printf("%16s%s%s\n",   @_); }
-sub _man_cmd($$)  { printf("     +%-14s\t%s\n", @_); }
 sub _man_arr($$$) {
     my ($ssl, $sep, $dumm) = @_;
     my @all = ();
@@ -782,39 +725,59 @@ sub man_table($) {
 } # man_table
 
 sub man_commands() {
-    #? print program's help about commands
-    # we do not use POD, as most texts are already in %data and %checks
-    # NOTE: unfortunately we cannot print alias commands, as they are not part
-    # of %data or %checks but are acceped dynamically in the argument parser
-    my $key;
-    _man_dbx("man_commands ...");
-    print "\n   Summary and internal commands";
-    foreach $key (@{$cfg{'commands'}}) {
-        _man_cmd($key, "") if (_is_intern($key) > 0);
-    }
-    print "
-   Commands to show target, connection and certificate details
-
-        The names of these commands are mainly adopted to  openssl's commands
-        (see \"openssl cipher\", \"openssl x509\").
-        All these commands just show  a single detail which is also available
-        with the  +text  command.
-";
-    foreach $key (@{$cfg{'commands'}}) {
-        next if (_is_intern($key) > 0);
-        next if (_is_hashkey($key, \%data) <= 0);
-        _man_cmd($key, $data{$key}->{txt});
-    }
-    print "
-   Commands for checks
-
-        Commands to show results of performed checks.
-";
-    foreach $key (@{$cfg{'commands'}}) {
-        next if (_is_intern($key) > 0);
-        next if (_is_hashkey($key, \%checks) <= 0);
-        next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
-        _man_cmd($key, $checks{$key}->{txt});
+    # print commands and short description
+    # data is extracted from $parents internal data structure
+    my $skip = 1;
+    _man_dbx("man_commands($parent) ...");
+    # first print general commands, manually crafted here
+    # TODO needs to be computed, somehow ...
+    print <<EoHelp;
+Commands for information about this tool
++dump	Dumps internal data for SSL connection and target certificate.
++exec	Internal command; should not be used directly.
++help	Complete documentation.
++list	Show all ciphers supported by this tool.
++libversion	Show version of openssl.
++quit	Show internal data and exit, used for debugging only.
++VERSION	Just show version and exit.
++version	Show version information for program and Perl modules.
+Commands to check SSL details
++bsi	Various checks according BSI TR-02102-2 compliance.
++check	Check the SSL connection for security issues.
++check_sni	Check for Server Name Indication (SNI) usage.
++ev	Various checks according certificate's extended Validation (EV).
++http	Perform HTTP checks.
++info	Overview of most important details of the SSL connection.
++info--v	More detailled overview.
++quick	Quick overview of checks.
++s_client	Dump data retrieved from  "openssl s_client ..."  call.
++sizes	Check length, size and count of some values in the certificate.
++sni	Check for Server Name Indication (SNI) usage.
++sts	Various checks according STS HTTP header.
+Commands to test target's ciphers
++cipher	Check target for ciphers (using libssl)
++cipherraw	Check target for all possible ciphers.
+EoHelp
+    if (open(P, "<", $parent)) {
+        while(<P>) {
+            # find start of data structure
+            # all structure look like:
+            #    our %check_some = ( # description
+            #          'key' => {... 'txt' => "description of value"},
+            #    );
+            # where we extract the description of the checked class from first
+            # line and the command and its description from the data lines
+            if (m/^(?:my|our)\s+%(?:check_(?:[a-z0-9_]+)|data)\s*=\s*\(\s*#\s*(.*)/) {
+                $skip = 0;
+                print "Commands to show results of checked $1\n"; # print head line, quick&dirty
+                next;
+            }
+            $skip = 1, next if (m/^\s*\)\s*;/); # find end of data structure
+            next if ($skip == 1);
+            next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
+            print "+$1\t$2\n" if m/^\s+'([^']*)'.*"([^"]*)"/;
+        }
+        close(P);
     }
 } # man_commands
 
@@ -999,7 +962,6 @@ sub printhelp($) {
         # BEGIN amd hence %cfg is defined and will not result in warnings
     # anything below requires data defined in parent
     man_commands(),             return if ($hlp =~ /^commands?$/);
-    man_cmdlist(),              return if ($hlp =~ /^cmdcsv?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/);
     man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|text)s?[_-]?cfg$/i);
