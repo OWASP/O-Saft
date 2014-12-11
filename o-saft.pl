@@ -58,8 +58,9 @@ BEGIN {
 
     # handle simple help very quickly
     # get first matching argument
-    my ($arg) = grep(/^(?:--h(?:elp)?|(?:--|\+)help=?(?:gen-)?(?:opts?|cgi|html|wiki|abbr|abk|glossar|cmdcsv|[A-Z]+))$/, @ARGV);
+    my ($arg) = grep(/^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
         # we allow:  --h  or  --help  or  +help  or  +help=SOMETHING
+        # for historic reason this allows: +abbr +abk +glossar +todo
     if (defined $arg) {
         $arg =~ s/^(?:--|\+)//;     # remove option prefix
         $arg =~ s/^help=?//;        # remove option but keep its argument
@@ -72,7 +73,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.325 14/12/11 19:52:49";
+my  $SID    = "@(#) yeast.pl 1.326 14/12/11 21:08:58";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -4629,7 +4630,6 @@ while ($#argv >= 0) {
     # --h --help and --help=gen-* are already handled in BEGIN {}
     # other --help=* options are special as they require settings in %cfg
     if ($arg =~ /^(?:--|\+)(todo|help)=?(.*)?$/) {
-        # for historic reason this allows: +abbr +abk +glossar +todo
         $arg = $1;
         if (defined $2) {
             $arg = $2 if ($2 !~ /^\s*$/);   # if it was --help=*
