@@ -121,7 +121,7 @@ sub _warn   {
     #? print warning if wanted
     #return if ($warning <= 0);
     return if (grep(/(:?--no.?warn)/i, @ARGV) > 0);     # ugly hack 'cause we won't pass $warning
-    local $\ = "\n"; print("**WARNING: ", join(" ", @_));
+    local $\ = "\n"; print STDERR ("**WARNING: ", join(" ", @_));
     # TODO: in CGI mode warning must be avoided until HTTP header written
 }
 sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
@@ -2190,10 +2190,10 @@ if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
         # malloc() problems, in this case print an additional warning.
         # Note that low memory affects external calls only *but not* further
         # control flow herein as perl already managed to load the script.
-        print "**WARNING: perl returned error: '$error'\n";
+        print STDERR "**WARNING: perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
-            print "**WARNING: using external programs disabled.\n";
-            print "**WARNING: data provided by external openssl may be shown as:  <<openssl>>\n";
+            print STDERR "**WARNING: using external programs disabled.\n";
+            print STDERR "**WARNING: data provided by external openssl may be shown as:  <<openssl>>\n";
         }
         $cmd{'extopenssl'} = 0;
         $cmd{'extsclient'} = 0;
@@ -2204,7 +2204,7 @@ if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
         push(@{$cfg{'ca_paths'}}, $arg);
     }
     if ($status != 0) {
-        print "**WARNING: perl returned status: '$status' ('" . ($status>>8) . "')\n";
+        print STDERR "**WARNING: perl returned status: '$status' ('" . ($status>>8) . "')\n";
     }
     $arg = "";
 }
