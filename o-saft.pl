@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "14.12.07"; }
+    sub _VERSION() { return "14.12.08"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -72,7 +72,7 @@ BEGIN {
     _y_TIME("BEGIN}");
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.324 14/12/11 16:05:28";
+my  $SID    = "@(#) yeast.pl 1.325 14/12/11 19:52:49";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -782,6 +782,11 @@ our %shorttexts = (
     'renegotiation' => "Renegotiation",
     'hsts_sts'      => "STS header",
     'sts_maxage'    => "STS long max-age",
+    'sts_maxage0d'  => "STS max-age not set",
+    'sts_maxage1d'  => "STS max-age < 1 day",
+    'sts_maxage1m'  => "STS max-age < 1 month",
+    'sts_maxage1y'  => "STS max-age < 1 year",
+    'sts_maxagexy'  => "STS max-age < 1 year",
     'sts_subdom'    => "STS includeSubdomain",
     'hsts_ip'       => "STS header not for IP",
     'hsts_location' => "STS and Location header",
