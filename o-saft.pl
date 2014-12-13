@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "14.12.08"; }
+    sub _VERSION() { return "14.12.09"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -57,6 +57,7 @@ BEGIN {
     unshift(@INC, "./", "./lib");   # we support some local lib directories
 
     # handle simple help very quickly
+    if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print _VERSION() . "\n"; exit 0; }
     # get first matching argument
     my ($arg) = grep(/^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
         # we allow:  --h  or  --help  or  +help  or  +help=SOMETHING
@@ -70,10 +71,10 @@ BEGIN {
         exit 0;
     }
 } # BEGIN
-    _y_TIME("BEGIN}");
+    _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.326 14/12/11 21:08:58";
+my  $SID    = "@(#) yeast.pl 1.327 14/12/14 00:41:51";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1195,7 +1196,7 @@ our %cmd = (
     'mx_domains'    => [],      # list of mx-domain:port to be processed
     'hosts'         => [],      # list of host:port to be processed
     'host'          => "",      # currently scanned host
-    'ip'            => "",      # currently scanned host's IP
+    'ip'            => "",      # currently scanned host's IP (machine readable format)
     'IP'            => "",      # currently scanned host's IP (human readable, doted octed)
     'rhost'         => "",      # currently scanned host's reverse resolved name
     'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
@@ -4155,6 +4156,7 @@ sub printchecks($$$) {
     _trace_1arr('%checks');
     _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach $key (@{$cfg{'do'}}) {
+        _trace("(%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
@@ -4461,21 +4463,28 @@ while ($#argv >= 0) {
     push(@dbxcfg, $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
 
     # First check for arguments of options.
+    # Options are not case sensitive.  Options may contain  .  and  -  and  _
+    # anywhere in its name. These characters are silently ignored.  These are
+    # all the same:  --no-DNS  --no_DNS  --no.dns  --NoDns  --n-o_D.N.s
     # Options may have an argument, either as separate word or as part of the
-    # option parameter itself: --opt=argument .
+    # option parameter itself: --opt argument   or   --opt=argument .
     # Such an argument is handled using $typ. All types except HOST, which is
     # the default, are handled at the begining here (right below). After pro-
     # cessing the argument, $typ is set to HOST again  and next argument will
     # be taken from command line.
     # $typ='HOST' is handles at end of loop, as it may appear anywhere in the
     # command line and does not require an option.
+    # Commands are case sensitive  because they are used directly as key in a
+    # hash (see %_SSLinfo Net::SSLinfo.pm). Just commands for the tool itself
+    # (not those returning collected data) are case insensitive.
     # NOTE: the sequence must be:
     #   1. check argument (otherwise relooped before)
     #   2. check for options (as they may have arguments)
+    #      NOTE: unknown remaining options are silently ignored, because they
+    #            cannot easily be distinguished from known ones
     #   3. check for commands (as they all start with '+' and we don't expect
     #      any argument starting with '+')
     #   4. check for HOST argument
-    #   finally discard unknown options silently
 
     if ($typ ne 'HOST') { # option arguments
         # Note that $arg already contains the argument
@@ -4615,7 +4624,7 @@ while ($#argv >= 0) {
         next; # no more normalisation!
     }
     if ($arg =~ /^--set[_-]?score=(.*)/){
-        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolte, please use --cfg-score=*; ignored");
+        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; ignored");
         next;
     }
 
@@ -4643,20 +4652,17 @@ while ($#argv >= 0) {
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
-    if ($arg eq  '--http')              { $cfg{'usehttp'}++;        next; } # must be before --help
-    if ($arg =~ /^--no[_-]?http$/)      { $cfg{'usehttp'}   = 0;    next; }
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $arg = '# for CGI mode';  next; } # for CGI mode; ignore
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
-    if ($arg =~ /^(?:--|\+)VERSION/)    { print "$VERSION\n";     exit 0; }
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
-        # in CGI mode commands need to be passed with --cmd=* option
+        # in CGI mode commands need to be passed as --cmd=* option
     #!#--------+------------------------+--------------------------+------------
     #} specials
 
-    # normalize options with arguments
-    #    --opt=name     --> --opt name
+    next if ($arg =~ /^\s*$/);# ignore empty arguments
+    # normalize options with arguments:  --opt=name --> --opt name
     if ($arg =~ m/(^-[^=]*)=(.*)/) {
         $arg = $1;
         unshift(@argv, $2);
@@ -4672,11 +4678,12 @@ while ($#argv >= 0) {
 
     # Following checks use exact matches with 'eq' or regex matches with '=~'
 
+    _y_ARG("option?  $arg");
     #{ options
     #!# You may read the lines as table with columns like:
-    #!#--------+------------------------+----------------------------
-    #!#           argument to check       what to do
-    #!#--------+------------------------+----------------------------
+    #!#--------+------------------------+---------------------------+----------
+    #!#           option to check        what to do                  comment
+    #!#--------+------------------------+---------------------------+----------
     # options for trace and debug
     if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;        }
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
@@ -4721,12 +4728,12 @@ while ($#argv >= 0) {
     if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}= 0;    }
     if ($arg eq  '--forceopenssl')      { $cmd{'extciphers'}= 1;    }
     if ($arg =~ /^--s_?client$/)        { $cmd{'extsclient'}++;     }
-    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use_nextprot'}=1;   }
-    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'use_nextprot'}=0;   }
-    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}=1;   }
-    if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}=0;   }
-    if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'}=1;  }
-    if ($arg =~ /^--noreconnect$/)      { $cfg{'use_reconnect'}=0;  }
+    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use_nextprot'}  = 1;}
+    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'use_nextprot'}  = 0;}
+    if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}  = 1;}
+    if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}  = 0;}
+    if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'} = 1;}
+    if ($arg =~ /^--noreconnect$/)      { $cfg{'use_reconnect'} = 0;}
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
@@ -4758,6 +4765,8 @@ while ($#argv >= 0) {
     if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out_header, see below
 #   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
     # our options
+    if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
+    if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
     if ($arg eq  '--norc')              {                           } # simply ignore
     if ($arg eq  '--ssllazy')           { $cfg{'ssl_lazy'}  = 1;    } # ..
     if ($arg eq  '--nossllazy')         { $cfg{'ssl_lazy'}  = 0;    } # ..
@@ -4773,8 +4782,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
-    if ($arg eq  '--nomd5cipher')       { $cfg{'use_md5cipher'}=0;  }
-    if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'}=1;  }
+    if ($arg eq  '--nomd5cipher')       { $cfg{'use_md5cipher'} = 0;}
+    if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'} = 1;}
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
@@ -4794,7 +4803,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
-    if ($arg eq  '--sniname')           { $typ = 'SNINAME';         }
+    if ($arg =~ /^--sniname/i)          { $typ = 'SNINAME';         }
     # options for Net::SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
@@ -4818,7 +4827,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--sslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 0; }
     if ($arg eq  '--ssldataeqnocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 1; }
     if ($arg eq  '--ssldatanocipher')   { $cfg{'sslhello'}->{'nodatanocipher'} = 1; } # alias
-    #!#--------+------------------------+----------------------------
+    #!#--------+------------------------+---------------------------+----------
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
     if ($arg =~ /^--ca(?:cert(?:ificate)?|file)$/i){ $typ ='CAFILE';} # curl, openssl, wget, ...
     if ($arg =~ /^--ca(?:directory|path)$/i)       { $typ ='CAPATH';} # curl, openssl, wget, ...
@@ -4834,43 +4843,44 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){}
                 # -s HOST   # ssl-cert-check: -s ignored hence HOST parsed as expected
                 # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
-    #!#--------+------------------------+----------------------------
+    #!#--------+------------------------+---------------------------+----------
 
     next if ($arg =~ /^-/); # all options handled, remaining are ignored
-        # TODO: means that targets starting with '-' are not possible
+        # TODO: means that targets starting with '-' are not possible,
+        #       however, such FQDN are illegal
 
     #{ commands
     _y_ARG("command? $arg");
-    if ($arg eq  '+info')   { $info  = 1; } # needed 'cause +info and ..
-    if ($arg eq  '+quick')  { $quick = 1; } # .. +quick convert to list of commands
-    if ($arg eq  '+check')  { $check = 1; $cfg{'out_score'} = 1; } #
-    if ($arg =~ /^\+sni/)   { $cmdsni= 1; }
     # You may read the lines as table with colums like:
-    #  +---------+--------------------+-----------------------+-----------------
-    #             argument to check     aliased to            # traditional name
-    #  +---------+--------------------+-----------------------+-----------------
-    if ($arg =~ /^\+commonName/i)     { $arg = '+cn';      }
-    if ($arg =~ /^\+cert(ificate)?$/i){ $arg = '+pem';     }  # PEM
-    if ($arg =~ /^\+subjectX509/i)    { $arg = '+subject'; }  # subject
-    if ($arg eq  '+owner')            { $arg = '+subject'; }  # subject
-    if ($arg eq  '+authority')        { $arg = '+issuer';  }  # issuer
-    if ($arg =~ /^\+issuerX509/i)     { $arg = '+issuer';  }  # issuer
-    if ($arg eq  '+expire')           { $arg = '+after';   }
-    if ($arg eq  '+sts')              { $arg = '+hsts';    }
-    if ($arg eq  '+sigkey')           { $arg = '+sigdump'; }  # sigdump
-    if ($arg eq  '+sigkey_algorithm') { $arg = '+signame'; }  # signame
-    if ($arg =~ /^\+sha2sig(nature)?$/){$arg = '+sha2signature'; }
-    if ($arg =~ /^\+sni[_-]?check$/)  { $arg = '+check_sni';   }
-    if ($arg =~ /^\+check[_-]?sni$/)  { $arg = '+check_sni';   }
-    if ($arg eq  '+extension')        { $arg = '+extensions';  }
-    if ($arg =~ /^\+ext_aia/i)        { $arg = '+ext_authority'; } # AIA is a common acronym ...
-    if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw'; }
-    if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw'; }
-    if ($arg =~ /^\+npn/i)            { $arg = '+protocols';   } # NPN; TODO: may be changed in future
-    if ($arg =~ /^\+alpn/i)           { $arg = '+protocols';   } # ALPN; TODO: may be changed in future
-    #  +---------+--------------------+------------------------+----------------
-    #   argument to check     what to do                         what to do next
-    #  +---------+----------+----------------------------------+----------------
+    #!#+---------+----------------------+-----------------------+-----------------
+    #!#           command to check       aliased to              comment/traditional name
+    #!#+---------+----------------------+-----------------------+-----------------
+    if ($arg eq  '+check')              { $check  = 1; $cfg{'out_score'} = 1; }
+    if ($arg eq  '+info')               { $info   = 1;          } # needed 'cause +info and ..
+    if ($arg eq  '+quick')              { $quick  = 1;          } # .. +quick convert to list of commands
+    if ($arg eq  '+sni')                { $cmdsni = 1;          }
+    if ($arg eq  '+alpn')               { $arg = '+protocols';  } # ALPN; TODO: may be changed in future
+    if ($arg eq  '+npn')                { $arg = '+protocols';  } # NPN; TODO: may be changed in future
+    if ($arg eq  '+owner')              { $arg = '+subject';    } # subject
+    if ($arg eq  '+authority')          { $arg = '+issuer';     } # issuer
+    if ($arg eq  '+expire')             { $arg = '+after';      }
+    if ($arg eq  '+extension')          { $arg = '+extensions'; }
+    if ($arg eq  '+sts')                { $arg = '+hsts';       }
+    if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
+    if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
+    if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
+    if ($arg =~ /^\+cert(ificate)?$/i)  { $arg = '+pem';        } # PEM
+    if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
+    if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';    }  # subject
+    if ($arg =~ /^\+sha2sig(nature)?$/) { $arg = '+sha2signature'; }
+    if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';  }
+    if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
+    if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # AIA is a common acronym ...
+    if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw';}
+    if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw';}
+    #  +---------+----------------------+-----------------------+----------------
+    #   command to check     what to do                          what to do next
+    #  +---------+----------+-----------------------------------+----------------
     # commands which cannot be combined with others
     if ($arg eq  '+info')   { @{$cfg{'do'}} = (@{$cfg{'cmd-info'}},    'info'); next; }
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
@@ -4886,7 +4896,7 @@ while ($#argv >= 0) {
         exit 0;
 	
     }
-    next if ($arg =~ /^\s*$/);# ignore empty arguments; for CGI mode
+    next if ($arg =~ /^\s*$/);# ignore empty arguments; for CGI mode # TODO: still needed?
     if ($arg =~ /^\+(.*)/)  { # all  other commands
         my $val = $1;
         _y_ARG("command= $val");
@@ -4895,16 +4905,18 @@ while ($#argv >= 0) {
             $cfg{'exec'} = 1;
             next;
         }
-        push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
-        if ($val =~ /^beast/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
-        if ($val =~ /^crime/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); next; }
-        if ($val =~ /^sizes/i){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
-        if ($val =~ /^hsts/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});  next; }
-        if ($val =~ /^http/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
-        if ($val =~ /^sni/i)  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sni'}});   next; }
-        if ($val =~ /^ev$/i)  { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
-        if ($val =~ /^(bsi|TR-?02102)/i)  { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}});   next; }
+        #_dbx("command= $val");
         $val = lc($val);               # be greedy to allow +BEAST, +CRIME, etc.
+        push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
+        if ($val eq 'beast'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
+        if ($val eq 'crime'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); next; }
+        if ($val eq 'sizes'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
+        if ($val eq 'hsts') { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});  next; }
+        if ($val eq 'http') { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
+        if ($val eq 'sni')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sni'}});   next; }
+        if ($val eq 'ev')   { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
+	#	#	#	#	#	#	#	#
+        if ($val =~ /^(bsi|TR-?02102)/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
         if (_is_member($val, \@{$cfg{'cmd-NOT_YET'}}) > 0) {
             _warn("command not yet implemented '$val' may be ignored");
         }
@@ -4915,7 +4927,7 @@ while ($#argv >= 0) {
         }
         next;
     }
-    #} +---------+----------+----------------------------------+----------------
+    #} +---------+----------+------------------------------------+----------------
 
     if ($arg =~ /(ciphers|s_client|version)/) {    # handle openssl commands special
         _warn("host-like argument '$arg' treated as command '+$arg'");
