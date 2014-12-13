@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.8 14/12/11 21:13:27";
+my  $man_SID= "@(#) o-saft-man.pm 1.9 14/12/14 00:52:11";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -597,7 +597,7 @@ sub _man_html_ankor($){
 }
 sub _man_html_cbox($) { return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $_[0], '"--' . $_[0] . '"'); }
 sub _man_html_text($) { return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", $_[0], '"--' . $_[0] . '"'); }
-sub _man_html_span($) { return sprintf("%8s<span>%s</span><br>\n", "", join(", ", @{$cfg{$_[0]}})); }
+sub _man_html_span($) { return sprintf("%8s<span>%s</span><br>\n", "", $_[0]); }
 sub _man_html_cmd($)  { return sprintf("%9s+%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $_[0] . '"'); }
 
 sub _man_html_br()    { return sprintf("        <br>\n"); }
@@ -822,7 +822,7 @@ print << "EoHTML";
 EoHTML
     foreach $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     print _man_html_br();
-    print _man_html_span('cmd-intern');
+    print _man_html_span('check cipher dump check_sni exec help info info--v http quick list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # FIXME: text should be @{$cfg{'cmd-intern'}}
     foreach $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
                      no-sni sni no-http http BR
                      no-dns dns no-cert BR
@@ -836,9 +836,9 @@ EoHTML
     }
     foreach $key (qw(separator timeout legacy)) { print _man_html_text($key); }
     print _man_html_br();
-    print _man_html_span('legacys');
+    print _man_html_span('cnark sslaudit sslcipher ssldiagnos sslscan ssltest ssltest-g sslyze testsslserver thcsslcheck openssl simple full compact quick'); # FIXME:
     print _man_html_text("format");
-    print _man_html_span('formats');
+    print _man_html_span('csv html json ssv tab xml fullxml raw hex'); # FIXME:
     print << "EoHTML";
 	<br>
     </div>
@@ -3653,6 +3653,8 @@ VERSION
 AUTHOR
 
         31. July 2012 Achim Hoffmann (at) sicsec de
+
+        Project Home: https://www.owasp.org/index.php/O-Saft
 
 
 # TODO must be last section
