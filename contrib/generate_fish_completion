@@ -1,0 +1,86 @@
+#!/usr/bin/env ruby
+
+BIN="o-saft"
+
+require "pp"
+
+class String
+	def shell_escape
+		self.gsub("'",'\'').gsub("\"",'\"').gsub('`','\`')
+	end
+end
+
+options = [["",""]]
+`#{BIN} --help=options`.lines.each{|l|
+	if l =~ /^\s*-/
+		options << []
+		options.last << l.scan(/^\s*(\-.*)/).flatten[0]
+		options.last << ""
+	else
+		options.last[1] += l
+	end
+}
+
+options.each{|o| o[1].strip!}
+options.uniq!
+options.delete(["",""])
+options.delete([nil,""])
+
+simopts = []
+options.collect!{|o|
+	if o[0] =~ /, /
+		o[0].split(",").collect{|e|e.strip}.each{|e| simopts << [e,o[1]]}
+		nil
+	else
+		o
+	end
+}
+options += simopts
+options.delete(nil)
+options.collect!{|o,d|
+	case o
+	when / /,"" # cannot use options with spaces inside or empty
+		nil
+	else
+		[o,d]
+	end
+}
+options.delete(nil)
+options.collect!{|o,d|
+	# remove newlines or double spaces
+	[o,d.gsub("\n"," ").gsub(/ {2,}/," ")]
+}
+options.collect!{|o,d|
+	# cut everything after and including the first dot
+	[o,d.gsub(/\..*$/,'')]
+}
+options.each{|o,d|
+	if o
+		case o
+		when /^--/
+			opt = "l"
+		#when /^-\w\w/ # old-style options
+			#opt = "o"
+		when /^-\w$/
+			opt = "s"
+		else
+			opt = nil #unknown
+		end
+		if opt
+			print "complete -f -c #{BIN} -#{opt} '#{o.gsub(/^-*/,"")}'"
+			print " --description \"#{d.shell_escape}\"" if d != ""
+			puts
+		end
+	end
+}
+
+commands = `#{BIN} --help=commands`.lines.collect{|l|
+	l.strip.scan(/^(\+[^\s]*)\s*(.*)$/).flatten
+}.uniq
+commands.each{|c,d|
+	if c
+		print "complete -f -c #{BIN} -a '#{c}'"
+		print " --description \"#{d.shell_escape}\"" if d != ""
+		puts
+	end
+}
