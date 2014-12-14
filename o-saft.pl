@@ -74,7 +74,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.327 14/12/14 00:41:51";
+my  $SID    = "@(#) yeast.pl 1.328 14/12/14 01:03:55";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -4163,12 +4163,6 @@ sub printchecks($$$) {
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
         next if ($key eq 'selected');   # used for @cfg{version} only
         _y_CMD("(%checks) +" . $key);
-        if ($key eq 'beast') {          # check is special
-            if (! _is_do('cipher') && ($check <= 0)) {
-                print_check($legacy, $host, $port, $key, $text{'need-cipher'}) if ($cfg{'verbose'} > 0);
-                next;
-            }
-        }
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) { # sizes are special
             print_size($legacy, $host, $port, $key) if ($cfg{'no_cert'} <= 0);
         } else {
