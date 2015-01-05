@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "14.12.09"; }
+    sub _VERSION() { return "15.01.05"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -74,7 +74,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.328 14/12/14 01:03:55";
+my  $SID    = "@(#) yeast.pl 1.328a 14/12/14 01:03:55";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1104,13 +1104,13 @@ our %cmd = (
         'huge'      => [        # huge range of constants for cipher
                         0x03000000 .. 0x0300FFFF,
                        ],
-        'safe'      => [        # safe full range of constants for cipher
-                                # because some network stack (NIC) will crash for 0x033xxxxx
-                        0x03000000 .. 0x032FFFFF,
-                       ],
-        'full'      => [        # full range of constants for cipher
-                        0x03000000 .. 0x03FFFFFF,
-                       ],
+#tobig#        'safe'      => [        # safe full range of constants for cipher
+#tobig#                                # because some network stack (NIC) will crash for 0x033xxxxx
+#tobig#                        0x03000000 .. 0x032FFFFF,
+#tobig#                       ],
+#tobig#        'full'      => [        # full range of constants for cipher
+#tobig#                        0x03000000 .. 0x03FFFFFF,
+#tobig#                       ],
 # TODO:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
         'SSLv2'     => [        # constants for ciphers according RFC for SSLv2
                         0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
