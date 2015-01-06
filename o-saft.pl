@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.05"; }
+    sub _VERSION() { return "15.01.06"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -74,7 +74,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.328a 14/12/14 01:03:55";
+my  $SID    = "@(#) %M% %I% %E% %U%";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1087,47 +1087,57 @@ our %cmd = (
     'ciphers'       => [],      # contains all ciphers to be tested
     'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
-        'yeast'     => [],      # internal list, computed later ...
+                    # Technical (perl) note for definition of these ranges:
+                    # Each range is defined as a string like  key=>"2..5, c..f"
+                    # instead of an array like  key=>[2..5, c..f]  which would
+                    # result in  key=>[2 3 4 5 c d e f] .
+                    # This expansion of the range is done at compile time  and 
+                    # so will consume a huge amount of memory at runtime.
+                    # Using a string instead of the expanded array reduces the
+                    # memory footprint,  but requires use of  eval()  when the
+                    # range is needed:  eval($cfg{cipherranges}->{rfc})
+                    # Each string must be syntax for perl's range definition.
+        'yeast'     => "",      # internal list, computed later ...
                                 # push(@all, @{$_}[0]) foreach (values %cipher_names);
-        'rfc'       => [        # constants for ciphers defined in various RFCs
+        'rfc'       =>          # constants for ciphers defined in various RFCs
+                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                       ",
+        'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
+                       "0x03000100 .. 0x0300013F,
                         0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
                         0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-                       ],
-        'shifted'   => [        # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
-                        0x03000100 .. 0x0300013F,
-                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-                       ],
-        'long'      => [        # more lazy list of constants for cipher
-                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
-                       ],
-        'huge'      => [        # huge range of constants for cipher
-                        0x03000000 .. 0x0300FFFF,
-                       ],
-#tobig#        'safe'      => [        # safe full range of constants for cipher
-#tobig#                                # because some network stack (NIC) will crash for 0x033xxxxx
-#tobig#                        0x03000000 .. 0x032FFFFF,
-#tobig#                       ],
-#tobig#        'full'      => [        # full range of constants for cipher
-#tobig#                        0x03000000 .. 0x03FFFFFF,
-#tobig#                       ],
+                       ",
+        'long'      =>          # more lazy list of constants for cipher
+                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
+                       ",
+        'huge'      =>          # huge range of constants for cipher
+                       "0x03000000 .. 0x0300FFFF,
+                       ",
+        'safe'      =>          # safe full range of constants for cipher
+                                # because some network stack (NIC) will crash for 0x033xxxxx
+                       "0x03000000 .. 0x032FFFFF,
+                       ",
+        'full'      =>          # full range of constants for cipher
+                       "0x03000000 .. 0x03FFFFFF,
+                       ",
 # TODO:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
-        'SSLv2'     => [        # constants for ciphers according RFC for SSLv2
-                        0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+        'SSLv2'     =>          # constants for ciphers according RFC for SSLv2
+                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
                         0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
 # TODO:                 0x02000000,   0x02FFFFFF,   # increment even only
 # TODO:                 0x03000000,   0x03FFFFFF,   # increment  odd only
-                       ],
-        'SSLv2_long'=> [        # more lazy list of constants for ciphers for SSLv2
-                        0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                       ",
+        'SSLv2_long'=>          # more lazy list of constants for ciphers for SSLv2
+                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,
                         0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
-                       ],
+                       ",
     }, # cipherranges
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
@@ -5350,7 +5360,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
                $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
-            push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$range}});
+            push(@all, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
             if ($Net::SSLhello::usesni == 1) { # always test first without SNI
