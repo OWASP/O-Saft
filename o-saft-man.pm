@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.9 14/12/14 00:52:11";
+my  $man_SID= "@(#) o-saft-man.pm 1.9a 15/01/08 00:42:42";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -639,7 +639,7 @@ sub _man_arr($$$) {
     printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
 }
 sub _man_cfg($$$$){
-    # print line in configuration format
+    #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
     $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
     $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
@@ -725,7 +725,7 @@ sub man_table($) {
 } # man_table
 
 sub man_commands() {
-    # print commands and short description
+    #? print commands and short description
     # data is extracted from $parents internal data structure
     my $skip = 1;
     _man_dbx("man_commands($parent) ...");

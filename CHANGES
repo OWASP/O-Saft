@@ -1,4 +1,12 @@
 
+Version: 15.01.07
+  BUGFIX
+    * avoid huge memory consumtion (fix for issue/39)
+  CHANGES
+    * command line parsing improved
+  NEW
+    * new files in contrib/
+
 Version: 14.12.07
     * new tarball
 
