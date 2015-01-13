@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.06"; }
+    sub _VERSION() { return "15.01.12"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -1181,6 +1181,10 @@ our %cmd = (
     'cmd-bsi'       => [qw(after dates crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
+    'cmd-vulns'     => [                            # commands for checking known vulnerabilities
+                        qw(beast breach crime hassslv2 heartbleed poodle time)
+                       #qw(resumption renegotiation) # die auch?
+                       ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
                        qw(check beast crime time breach pfs rc4 bsi selected cipher)],
@@ -4890,6 +4894,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
+    if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; } # TODO: too lazy, nee +vulnerability +vulnerabilities too
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+traceSUB'){
         print "# $mename  list of internal functions:\n";
