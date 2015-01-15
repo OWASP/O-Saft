@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.12"; }
+    sub _VERSION() { return "15.01.14"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -1290,7 +1290,7 @@ our %cmd = (
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
 #       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         # The following RegEx define what is "not vulnerable":
-        'PFS'       => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?((?:EC)?DHE|EDH)[_-]',
+        'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
 
         'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]',
                        # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA
@@ -2588,17 +2588,12 @@ sub _isbreach($){
     #      *  works against any cipher suite
     #      *  can be executed in under a minute
 }
-sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? "" : $_[0] . " "; }
+sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $_[0] . " "; }
     # return compression if available, empty string otherwise
 sub _istime($)  { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
-sub _ispfs($$)  {
+sub _ispfs($$)  { return ("$_[0]-$_[1]" =~ /$cfg{'regex'}->{'PFS'}/)   ? ""  : $_[1]; }
     # return given cipher if it does not support forward secret connections (PFS)
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    eq "SSLv2"); # PFS not possible with SSLv2
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'PFS'}/);
-    return "";
-} # _ispfs
-sub _isrc4($) { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/) ? $_[0] . " " : ""; }
+sub _isrc4($)   { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/)  ? $_[0] . " "  : ""; }
     # return given cipher if it is RC4
 sub _istr02102($$) {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
@@ -2617,7 +2612,7 @@ sub _isfips($$) {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'FIPS-140'}/);
     return "";
 } # _isfips
-sub _isnsab($$)  {
+sub _isnsab($$) {
     # return given cipher if it is not NSA Suite B compliant, empty string otherwise
 # TODO:
 } # _isnsab
