@@ -163,14 +163,14 @@ $arg = "./.$me";    # check in pwd only
 if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
     if (open(RC, '<', "$arg")) {
         push(@dbxfile, $arg);
-        _print_read($arg, "options done");
+        _print_read("RC-FILE $arg", "options done");
         @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
         @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
         close(RC);
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
     } else {
-        _print_read($arg, $!);
+        _print_read("RC-FILE $arg", $!) if (grep(/--v/i, @ARGV) > 0);;
     }
 }
 
@@ -2340,7 +2340,7 @@ sub _cfg_set($$) {
         my $line ="";
         open(FID, $arg) && do {
             push(@dbxfile, $arg);
-            _print_read($arg, "configuration file done") if ($cfg{'out_header'} > 0);
+            _print_read("USER-FILE $arg", "configuration file done") if ($cfg{'out_header'} > 0);
             while ($line = <FID>) {
                 #
                 # format of each line in file must be:
