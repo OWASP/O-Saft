@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.14"; }
+    sub _VERSION() { return "15.01.15"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -55,6 +55,9 @@ BEGIN {
     # of the source. Therefore this scope is used for --help=* options only.
 
     unshift(@INC, "./", "./lib");   # we support some local lib directories
+    my $_me   = $0; $_me   =~ s#.*[/\\]##;
+    my $_path = $0; $_path =~ s#/[^/\\]*$##;
+    push(@INC, $_path);             # user-friendly: add path of myself also
 
     # handle simple help very quickly
     if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print _VERSION() . "\n"; exit 0; }
