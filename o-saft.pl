@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+### TODO: ocsp_uri pruefen;
+
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -41,7 +43,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.15"; }
+    sub _VERSION() { return "15.01.16"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -1223,7 +1225,7 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(beast breach crime hassslv2 heartbleed poodle time)
+                        qw(hassslv2 hassslv3 beast breach crime heartbleed poodle time)
                        #qw(resumption renegotiation) # die auch?
                        ],
                     # need_* lists used to improve performance
@@ -2606,10 +2608,10 @@ sub _isbeast($$){
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
     return "";
 } # _isbeast
-#sub _isbreach($)       { return "NOT YET IMPLEMEMNTED"; }
+### _isbreach($)       { return "NOT YET IMPLEMEMNTED"; }
 sub _isbreach($){
     # return 'yes' if vulnerable to BREACH
-    return 0;
+    return "";
 # TODO: checks
     # To be vulnerable, a web application must:
     #      Be served from a server that uses HTTP-level compression
@@ -3002,10 +3004,12 @@ sub checkciphers($$) {
     my $cipher  = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
+    my $hasssl3 = 0;# 1: if SSLv3 checked
     foreach my $c (@results) {  # check all accepted ciphers
         my $yn  = ${$c}[2];
         $cipher = ${$c}[1];
         $ssl    = ${$c}[0];
+        $hasssl3= 1 if ($ssl eq 'SSLv3');
         if ($yn =~ m/yes/i) {   # cipher accepted
             $checks{$ssl}->{val}++ if ($yn =~ m/yes/i); # cipher accepted
             checkcipher($ssl, $cipher);
@@ -3013,6 +3017,11 @@ sub checkciphers($$) {
         $hasrsa{$ssl}  = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
+    if ($hasssl3 <= 0) {
+        # if SSLv3 was disabled, check for BEAST is incomplete; inform abozt that
+        $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
+    }
+    $checks{'breach'}->{val}     = "<<NOT YET IMPLEMENTED>>";
     foreach $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
@@ -3546,7 +3555,7 @@ sub checkprot($$) {
             $checks{'hassslv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
             $checks{'hassslv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
             $checks{'poodle'}->{val}        = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
-            return;
+            next;
         }
         my $accepted = $checks{$ssl}->{val};
 	if (! $checks{$ssl}->{val}) {       # avoid check if already done 
@@ -3578,6 +3587,8 @@ sub checkdest($$) {
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
 
+    checkprot($host, $port);    # must be first 'cause $checks{$ssl}->{val} set lbelow
+
     # check default cipher
     foreach $ssl (@{$cfg{'versions'}}) {
         next if (_need_default() <= 0); # avoid connection if default cipher not needed
@@ -3596,7 +3607,6 @@ sub checkdest($$) {
         $checks{$ssl}->{val} = $value;
         $checks{'pfs'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
-    checkprot($host, $port);
 
     # vulnerabilities
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
@@ -5514,8 +5524,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     checksni(  $host, $port); #  "
     checksizes($host, $port); #  "
     checkdv(   $host, $port); #  "
-    checkdest( $host, $port);
     checkprot( $host, $port);
+    checkdest( $host, $port);
     checkbleed($host, $port); # vulnerable TLS heartbeat extentions
 
     usr_pre_print();
