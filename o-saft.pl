@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.14a"; }
+    sub _VERSION() { return "15.01.14"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -3539,16 +3539,18 @@ sub checkprot($$) {
         # if that protocol is supported using _get_default(), which returns
         # the default cipher for that protocol.
 # FIXME: "default" check do no longer (> 14.11.14) make sense; needs to be replaced by "selected" if possible
+        if ($cfg{$ssl} == 0) {
+            $checks{'hassslv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
+            $checks{'hassslv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
+            $checks{'poodle'}->{val}        = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
+            return;
+        }
         my $accepted = $checks{$ssl}->{val};
 	if (! $checks{$ssl}->{val}) {       # avoid check if already done 
 	    # FIXME: lazy type check 'cause integer or string, see FIXME in checkdest()
             $accepted = _get_default($ssl, $host, $port);
         }
-        if ($accepted eq "") {  # protocol not checked
-            $checks{'hassslv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
-            $checks{'hassslv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
-            $checks{'poodle'}->{val}        = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
-        } else {
+        if ($accepted ne "") {  # protocol checked and returned a cipher
             if ($cfg{$ssl} eq 'SSLv2') {
                 $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
             } else {
