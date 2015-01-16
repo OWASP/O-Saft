@@ -1,0 +1,29 @@
+#?/bin/tcsh
+
+#? NAME
+#?      $0  -  tcsh completion function for o-saft.pl
+#?
+#? DESCRIPTION
+#?      This tcsh function provides values to be used in tcsh's completion
+#?      (see tcsh's complete  key).
+#?
+#? USAGE
+#?      source tcsh_completion_o-saft
+#?      complete o-saft.pl C/+/(+help +version)/
+#?
+#? SEE ALSO
+#?      http://hyperpolyglot.org/unix-shells
+#?      http://www.tcsh.org/tcsh.html/Builtin_commands.html#complete
+#?      Get inspired by:
+#?      http://www.opensource.apple.com/source/tcsh/tcsh-64/tcsh/complete.tcsh
+#?
+#? AUTHOR
+#?      14-dec-14 Achim Hoffmann
+# ------------------------------------------------------------------------------
+
+complete o-saft.pl \
+	'C@+@`o-saft.pl --help=commands|awk /^\\+/\{print\ \$1\}`@' \
+	'C@-@`o-saft.pl --help=opts    |awk /^\\-/\{print\ \$1\}`@' \
+
+# NOTE: Some tcsh's man-pages state that ` (backtick) needs to be esacped in
+#       the substitute part. This seems to be wrong.
