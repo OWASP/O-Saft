@@ -15,6 +15,12 @@ our $ich    = $ich;
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
     $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
+if (! defined $wer) { # still nothing found, last resort: parent
+    $wer    = (caller(0))[1]; # parent;
+    $wer    =~ s#/[^/\\]*$##; # path of parent
+    $wer    .= "/$ich";       # append myself
+    print "**WARNING: no '$wer' found" if ! -e $wer;
+}
 our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
 my  $skip   = 1;
 our $egg    = "";
