@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.14"; }
+    sub _VERSION() { return "15.01.14a"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -290,6 +290,9 @@ my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
 our @results= ();   # list of checked ciphers: [SSL, ciper suite name, yes|no]
+
+    # NOTE do not change names of keys in %data and all %check_* as these keys
+    #      are used in output with --tracekey
 our %data   = (     # connection and certificate details
     # values from Net::SSLinfo, will be processed in print_data()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
@@ -481,53 +484,53 @@ my %check_conn = (  # connection data
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
     'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-    'selected'      => {'txt' => "Selected cipher by server for "},# used for @cfg{version} only
+    'selected'      => {'txt' => "Selected cipher by server for"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
      # counter for accepted ciphers, 0 if not supported
-    'SSLv2'         => {'txt' => "Supported ciphers for SSLv2 (total)"},
-    'SSLv3'         => {'txt' => "Supported ciphers for SSLv3 (total)"},
-    'TLSv1'         => {'txt' => "Supported ciphers for TLSv1 (total)"},
-    'TLSv11'        => {'txt' => "Supported ciphers for TLSv11 (total)"},
-    'TLSv12'        => {'txt' => "Supported ciphers for TLSv12 (total)"},
-    'TLSv13'        => {'txt' => "Supported ciphers for TLSv13 (total)"},
-    'DTLSv1'        => {'txt' => "Supported ciphers for DTLSv1 (total)"},
+    'SSLv2'         => {'txt' => "Supported total ciphers (SSLv2)"},
+    'SSLv3'         => {'txt' => "Supported total ciphers (SSLv3)"},
+    'TLSv1'         => {'txt' => "Supported total ciphers (TLSv1)"},
+    'TLSv11'        => {'txt' => "Supported total ciphers (TLSv11)"},
+    'TLSv12'        => {'txt' => "Supported total ciphers (TLSv12)"},
+    'TLSv13'        => {'txt' => "Supported total ciphers (TLSv13)"},
+    'DTLSv1'        => {'txt' => "Supported total ciphers (DTLSv1)"},
     # counter for this type of cipher
-    'SSLv2-LOW'     => {'txt' => "Supported   LOW   security ciphers"},
-    'SSLv2-WEAK'    => {'txt' => "Supported  WEAK   security ciphers"},
-    'SSLv2-HIGH'    => {'txt' => "Supported  HIGH   security ciphers"},
-    'SSLv2-MEDIUM'  => {'txt' => "Supported MEDIUM  security ciphers"},
-    'SSLv2--?-'     => {'txt' => "Supported unknown security ciphers"},
-    'SSLv3-LOW'     => {'txt' => "Supported   LOW   security ciphers"},
-    'SSLv3-WEAK'    => {'txt' => "Supported  WEAK   security ciphers"},
-    'SSLv3-HIGH'    => {'txt' => "Supported  HIGH   security ciphers"},
-    'SSLv3-MEDIUM'  => {'txt' => "Supported MEDIUM  security ciphers"},
-    'SSLv3--?-'     => {'txt' => "Supported unknown security ciphers"},
-    'TLSv1-LOW'     => {'txt' => "Supported   LOW   security ciphers"},
-    'TLSv1-WEAK'    => {'txt' => "Supported  WEAK   security ciphers"},
-    'TLSv1-HIGH'    => {'txt' => "Supported  HIGH   security ciphers"},
-    'TLSv1-MEDIUM'  => {'txt' => "Supported MEDIUM  security ciphers"},
-    'TLSv1--?-'     => {'txt' => "Supported unknown security ciphers"},
-    'TLSv11-LOW'    => {'txt' => "Supported   LOW   security ciphers"},
-    'TLSv11-WEAK'   => {'txt' => "Supported  WEAK   security ciphers"},
-    'TLSv11-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
-    'TLSv11-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
-    'TLSv11--?-'    => {'txt' => "Supported unknown security ciphers"},
-    'TLSv12-LOW'    => {'txt' => "Supported   LOW   security ciphers"},
-    'TLSv12-WEAK'   => {'txt' => "Supported  WEAK   security ciphers"},
-    'TLSv12-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
-    'TLSv12-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
-    'TLSv12--?-'    => {'txt' => "Supported unknown security ciphers"},
-    'TLSv13-LOW'    => {'txt' => "Supported   LOW   security ciphers"},
-    'TLSv13-WEAK'   => {'txt' => "Supported  WEAK   security ciphers"},
-    'TLSv13-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
-    'TLSv13-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
-    'TLSv13--?-'    => {'txt' => "Supported unknown security ciphers"},
-    'DTLSv1-LOW'    => {'txt' => "Supported   LOW   security ciphers"},
-    'DTLSv1-WEAK'   => {'txt' => "Supported  WEAK   security ciphers"},
-    'DTLSv1-HIGH'   => {'txt' => "Supported  HIGH   security ciphers"},
-    'DTLSv1-MEDIUM' => {'txt' => "Supported MEDIUM  security ciphers"},
-    'DTLSv1--?-'    => {'txt' => "Supported unknown security ciphers"},
+    'SSLv2-LOW'     => {'txt' => "Supported ciphers with security LOW"},
+    'SSLv2-WEAK'    => {'txt' => "Supported ciphers with security WEAK"},
+    'SSLv2-HIGH'    => {'txt' => "Supported ciphers with security HIGH"},
+    'SSLv2-MEDIUM'  => {'txt' => "Supported ciphers with security MEDIUM"},
+    'SSLv2--?-'     => {'txt' => "Supported ciphers with security unknown"},
+    'SSLv3-LOW'     => {'txt' => "Supported ciphers with security LOW"},
+    'SSLv3-WEAK'    => {'txt' => "Supported ciphers with security WEAK"},
+    'SSLv3-HIGH'    => {'txt' => "Supported ciphers with security HIGH"},
+    'SSLv3-MEDIUM'  => {'txt' => "Supported ciphers with security MEDIUM"},
+    'SSLv3--?-'     => {'txt' => "Supported ciphers with security unknown"},
+    'TLSv1-LOW'     => {'txt' => "Supported ciphers with security LOW"},
+    'TLSv1-WEAK'    => {'txt' => "Supported ciphers with security WEAK"},
+    'TLSv1-HIGH'    => {'txt' => "Supported ciphers with security HIGH"},
+    'TLSv1-MEDIUM'  => {'txt' => "Supported ciphers with security MEDIUM"},
+    'TLSv1--?-'     => {'txt' => "Supported ciphers with security unknown"},
+    'TLSv11-LOW'    => {'txt' => "Supported ciphers with security LOW"},
+    'TLSv11-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
+    'TLSv11-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
+    'TLSv11-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
+    'TLSv11--?-'    => {'txt' => "Supported ciphers with security unknown"},
+    'TLSv12-LOW'    => {'txt' => "Supported ciphers with security LOW"},
+    'TLSv12-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
+    'TLSv12-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
+    'TLSv12-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
+    'TLSv12--?-'    => {'txt' => "Supported ciphers with security unknown"},
+    'TLSv13-LOW'    => {'txt' => "Supported ciphers with security LOW"},
+    'TLSv13-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
+    'TLSv13-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
+    'TLSv13-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
+    'TLSv13--?-'    => {'txt' => "Supported ciphers with security unknown"},
+    'DTLSv1-LOW'    => {'txt' => "Supported ciphers with security LOW"},
+    'DTLSv1-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
+    'DTLSv1-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
+    'DTLSv1-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
+    'DTLSv1--?-'    => {'txt' => "Supported ciphers with security unknown"},
     #------------------+-----------------------------------------------------
 ); # %check_conn
 
@@ -729,8 +732,42 @@ our %shorttexts = (
     'TLSv12'        => "Ciphers (TLSv12)",
     'TLSv13'        => "Ciphers (TLSv13)",
     'DTLSv1'        => "Ciphers (DTLSv1)",
+    'SSLv2-LOW'     => "Ciphers LOW (SLv2)",
+    'SSLv2-WEAK'    => "Ciphers WEAK (SLv2)",
+    'SSLv2-HIGH'    => "Ciphers HIGH (SLv2)",
+    'SSLv2-MEDIUM'  => "Ciphers MEDIUM (SLv2)",
+    'SSLv2--?-'     => "Ciphers unknown (SLv2)",
+    'SSLv3-LOW'     => "Ciphers LOW (SSLv3)",
+    'SSLv3-WEAK'    => "Ciphers WEAK (SSLv3)",
+    'SSLv3-HIGH'    => "Ciphers HIGH (SSLv3)",
+    'SSLv3-MEDIUM'  => "Ciphers MEDIUM (SSLv3)",
+    'SSLv3--?-'     => "Ciphers unknown (SSLv3)",
+    'TLSv1-LOW'     => "Ciphers LOW (TLSv1)",
+    'TLSv1-WEAK'    => "Ciphers WEAK (TLSv1)",
+    'TLSv1-HIGH'    => "Ciphers HIGH (TLSv1)",
+    'TLSv1-MEDIUM'  => "Ciphers MEDIUM (TLSv1)",
+    'TLSv1--?-'     => "Ciphers unknown (TLSv1)",
+    'TLSv11-LOW'    => "Ciphers LOW (TLSv11)",
+    'TLSv11-WEAK'   => "Ciphers WEAK (TLSv11)",
+    'TLSv11-HIGH'   => "Ciphers HIGH (TLSv11)",
+    'TLSv11-MEDIUM' => "Ciphers MEDIUM (TLSv11)",
+    'TLSv11--?-'    => "Ciphers unknown (TLSv11)",
+    'TLSv12-LOW'    => "Ciphers LOW (TLSv12)",
+    'TLSv12-WEAK'   => "Ciphers WEAK (TLSv12)",
+    'TLSv12-HIGH'   => "Ciphers HIGH (TLSv12)",
+    'TLSv12-MEDIUM' => "Ciphers MEDIUM (TLSv12)",
+    'TLSv12--?-'    => "Ciphers unknown (TLSv12)",
+    'TLSv13-LOW'    => "Ciphers LOW (TLSv13)",
+    'TLSv13-WEAK'   => "Ciphers WEAK (TLSv13)",
+    'TLSv13-HIGH'   => "Ciphers HIGH (TLSv13)",
+    'TLSv13-MEDIUM' => "Ciphers MEDIUM (TLSv13)",
+    'TLSv13--?-'    => "Ciphers unknown (TLSv1)",
+    'DTLSv1-LOW'    => "Ciphers LOW (DTLSv1)",
+    'DTLSv1-WEAK'   => "Ciphers WEAK (DTLSv1)",
+    'DTLSv1-HIGH'   => "Ciphers HIGH (DTLSv1)",
+    'DTLSv1-MEDIUM' => "Ciphers MEDIUM (DTLSv1)",
+    'DTLSv1--?-'    => "Ciphers unknown (DTLSv1)",
     #}
-    'TLSv1-HIGH'    => "Ciphers HIGH",  # FIXME: is this needed (5/2014)
     'ip'            => "IP for hostname",
     'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
@@ -740,7 +777,7 @@ our %shorttexts = (
     'wildhost'      => "Wilcard for hostname",
     'wildcard'      => "No wildcards",
     'sni'           => "Not SNI based",
-    'sernumber'     => "Serial Number size (RFC5280)",
+    'sernumber'     => "Size Serial Number",
     'sha2signature' => "Signature is SHA2",
     'rootcert'      => "Not root CA",
     'ocsp'          => "OCSP supported",
@@ -755,10 +792,10 @@ our %shorttexts = (
     'cps'           => "CPS supported",
     'crl'           => "CRL supported",
     'dv'            => "DV supported",
-    'ev+'           => "Strict EV supported",
-    'ev-'           => "Lazy EV supported",
-    'ev-chars'      => "NO invalid characters in extensions",
-    'beast'         => "Supported cipher safe to BEAST",
+    'ev+'           => "EV supported (strict)",
+    'ev-'           => "EV supported (lazy)",
+    'ev-chars'      => "No invalid characters in extensions",
+    'beast'         => "Safe to BEAST (cipher)",
     'breach'        => "Safe to BREACH",
     'crime'         => "Safe to CRIME",
     'time'          => "Safe to TIME",
@@ -778,8 +815,8 @@ our %shorttexts = (
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
     'tr-02102'      => "TR-02102-2 compliant",
-    'bsi-tr-02102+' => "Strict BSI TR-02102-2 compliant",
-    'bsi-tr-02102-' => "Lazy BSI TR-02102-2 compliant",
+    'bsi-tr-02102+' => "BSI TR-02102-2 compliant (strict)",
+    'bsi-tr-02102-' => "BSI TR-02102-2 compliant (lazy)",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
     'hsts_sts'      => "STS header",
@@ -793,7 +830,7 @@ our %shorttexts = (
     'hsts_ip'       => "STS header not for IP",
     'hsts_location' => "STS and Location header",
     'hsts_refresh'  => "STS and no Refresh header",
-    'hsts_redirect' => "Redirects without STS",
+    'hsts_redirect' => "STS within redirects",
     'http_https'    => "Redirects HTTP",
     'hsts_fqdn'     => "Redirects to same host",
     'hsts_is301'    => "Redirects with 301",
@@ -830,6 +867,7 @@ our %shorttexts = (
     'len_publickey' => "Size pubkey",
     'len_sigdump'   => "Size signature key",
     'len_chain'     => "Size certificate chain",
+    'len_sernumber' => "Size serial number",
     'cnt_altname'   => "Count altname",
     'cnt_wildcard'  => "Count wildcards",
     'cnt_chaindepth'=> "Count chain depth",
@@ -1463,15 +1501,6 @@ foreach $key (keys %data) {
 }
 push(@{$cfg{'cmd-info--v'}}, 'info--v');
 
-# adding more shorttexts
-foreach my $ssl (@{$cfg{'versions'}}) {
-    foreach $sec (qw(LOW WEAK HIGH MEDIUM -?-)) {
-        #------------------+------------------------------------------------------
-        # %checks           short label text
-        #------------------+------------------------------------------------------
-        $shorttexts{$ssl . '-' . $sec} = $sec . " (total)";
-    }
-}
 _y_TIME("cfg}");
 
 our %ciphers_desc = (   # description of following %ciphers table
@@ -3728,12 +3757,12 @@ sub scoring($$) {
 # TODO printf "%20s: %4s %s\n", $key, $scores{'check_ciph'}->{val}, _getscore($key, 'egal', \%checks);
 # TODO       }
 # TODO   }
-        $scores{'check_size'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "sizes");
-#       $scores{'check_ciph'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "cipher");
-        $scores{'check_http'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "https"); # done above
-        $scores{'check_cert'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "certificate");
-        $scores{'check_conn'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "connection");
-        $scores{'check_dest'}->{val} -= _getscore($key, $value, \%checks) if($checks{$key}->{typ} eq "destination");
+        $scores{'check_size'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "sizes");
+#       $scores{'check_ciph'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "cipher");
+        $scores{'check_http'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "https"); # done above
+        $scores{'check_cert'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "certificate");
+        $scores{'check_conn'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "connection");
+        $scores{'check_dest'}->{val} -= _getscore($key, $value, \%checks) if ($checks{$key}->{typ} eq "destination");
 #_dbx "$key " . $checks{$key}->{val} if($checks{$key}->{typ} eq "connection");
 #_dbx "score certificate $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_cert'}->{val} if($checks{$key}->{typ} eq "certificate");
 #_dbx "score connection  $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_conn'}->{val} if($checks{$key}->{typ} eq "connection");
@@ -3852,6 +3881,7 @@ sub print_data($$$$) {
 sub _print_line($$$) {
     #? print label and result of check
     my ($legacy, $label, $value) = @_;
+        $label = "<<undef>>" if (! defined $label);   # defensive programming: missing variable declaration in caller, probaly in %cfg, %data or %shorttexts
     if ($legacy eq 'full')   {
         printf("%s\n", $label . $text{'separator'});
         printf("\t%s\n", $value) if (defined $value);
@@ -4006,7 +4036,6 @@ sub print_ciphertotals($$$$) {
             $key = $ssl . '-' . $sec;
             print_check($legacy, $host, $port, $key, undef);
         }
-        print_check($legacy, $host, $port, $key, undef);
     }
 } # print_ciphertotals
 
@@ -4159,7 +4188,7 @@ sub printchecks($$$) {
         _trace_1arr('@cfg{version}');
         foreach $key (@{$cfg{'versions'}}) {
             next if ($cfg{$key} == 0);  # this version not checked, see eval("Net::SSLeay::SSLv2_method()") above
-            print_line($legacy, $host, $port, 'selected', $checks{'selected'}->{txt} . $key, $checks{$key}->{val});
+            print_line($legacy, $host, $port, 'selected', "$checks{'selected'}->{txt} ($key)", $checks{$key}->{val});
         }
     }
     _trace_1arr('%checks');
@@ -4780,7 +4809,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    }
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    }
-    if ($arg eq  '--short')             { $cfg{'shorttxt'}  = 1;    }
+    if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'shorttxt'}  = 1;    }
     if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    }
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
