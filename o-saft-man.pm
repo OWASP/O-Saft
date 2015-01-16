@@ -766,7 +766,7 @@ Commands to test target's ciphers
 +cipher	Check target for ciphers (using libssl)
 +cipherraw	Check target for all possible ciphers.
 EoHelp
-    if (open(P, "<", $parent)) {
+    if (open(P, "<", $0)) { # need full path for $parent file here
         while(<P>) {
             # find start of data structure
             # all structure look like:
