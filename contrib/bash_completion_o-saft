@@ -1,0 +1,38 @@
+#?/bin/bash
+
+#? NAME
+#?      $0  -  bash completion function for o-saft.pl
+#?
+#? DESCRIPTION
+#?      This bash function provides values to be used in bash's completion
+#?      (see bash's [TAB][TAB]  key).
+#?
+#? USAGE
+#?      source bash_completion_o-saft
+#?      complete -F _o-saft o-saft.pl
+#?
+#? SEE ALSO
+#?      bind -p | grep complete
+#?      http://www.gnu.org/software/bash/manual/bash.html#Programmable-Completion
+#?
+#? AUTHOR
+#?      14-dec-14 Achim Hoffmann
+# ------------------------------------------------------------------------------
+
+# bash is not my favorite, I guess this could be improved in many ways :-)
+
+_y_cmds=`o-saft.pl --help=commands|awk '/^\+/{print $1}'`
+_y_opts=`o-saft.pl --help=opts    |awk '/^\-/{print $1}'`
+_y_rang=`o-saft.pl --help=range   |awk "/ *'/"'{print "--cipherrange="$1}'`
+
+_o-saft()
+{
+  local curr_arg;
+  curr_arg=${COMP_WORDS[COMP_CWORD]}
+  case "$curr_arg" in
+    +*)             COMPREPLY=( $(compgen -W "$_y_cmds" -- $curr_arg ) ); ;;
+    --cipherrange*) COMPREPLY=( $(compgen -W "$_y_rang" -- $curr_arg ) ); ;;
+    -*)             COMPREPLY=( $(compgen -W "$_y_opts" -- $curr_arg ) ); ;;
+  esac
+}
+complete -F _o-saft o-saft.pl
