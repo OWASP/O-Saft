@@ -7,17 +7,19 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.9a 15/01/08 00:42:42";
+my  $man_SID= "@(#) o-saft-man.pm 1.9a 15/01/15 00:42:42";  # our SCCS id
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
-our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
+our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
+our $ich    = $ich;
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
+    $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
 our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
 my  $skip   = 1;
 our $egg    = "";
 our @DATA;
-if (open(DATA, $ich)) {
+if (open(DATA, $wer)) {
     # If this module is used in parent's BEGIN{} section, we don't have any
     # file descriptor, in particular nothing beyond __DATA__. Hence we need
     # to read the file --this one-- manually, and strip off anything before
@@ -2769,7 +2771,7 @@ CUSTOMIZATION
 
     USER-FILE
 
-        All user functionality is defined in   o-saft-dbx.pm ,  which will be
+        All user functionality is defined in   o-saft-usr.pm ,  which will be
         searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is perl code.
@@ -3022,8 +3024,8 @@ LIMITATIONS
     User Provided Files
 
         Please note that there cannot be any guarantee that the code provided
-        in the  DEBUG-FILE  o-saft-dbx.pm   or  USER-FILE   o-saft-usr.pm  
-        will work flawless. Obviously this is the user's responsibility.
+        in the  DEBUG-FILE o-saft-dbx.pm   or  USER-FILE  o-saft-usr.pm  will
+        work flawless. Obviously this is the user's responsibility.
 
     Problems and Errors
 
