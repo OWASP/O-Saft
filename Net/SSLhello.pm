@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '14.12.07';
+    $VERSION    = '15.01.18';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -110,8 +110,8 @@ use constant {
 #defaults for global parameters
 $Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
 $Net::SSLhello::traceTIME    = 0;# 1=trace prints timestamp
-$Net::SSLhello::usesni       = 0;# 1 use SNI to connect to target
-$Net::SSLhello::sni_name     = "";# name to be used for SNI mode connection; hostname if empty
+$Net::SSLhello::usesni       = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name
+$Net::SSLhello::sni_name     = "1";# name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to usesni=2 will be done
 $Net::SSLhello::timeout      = 1;# time in seconds
 $Net::SSLhello::retry        = 2;# number of retry when timeout
 $Net::SSLhello::usereneg     = 0;# secure renegotiation 
@@ -1032,7 +1032,7 @@ sub printCipherStringArray ($$$$$@) {
     
     if ($usesni) {
         $sni = "SNI";
-        $sni .= " ($Net::SSLhello::sni_name)" if ($Net::SSLhello::sni_name);
+        $sni .= " ($Net::SSLhello::sni_name)" if ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") );  ###FIX: quickfix until migration to usesni=2 is completed);
     } else {
         $sni = "no SNI";
     }
@@ -2299,10 +2299,10 @@ sub compileClientHello  {
 
             ### Data for Extension 'Server Name Indication' in reverse order 
             $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/g;  # delete Spaces, \r and \n
-            unless ($Net::SSLhello::sni_name) { # any sni-name is not set
+            unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
                 $clientHello{'extension_sni_name'}     = $host;                                      # Server Name, should be a Name no IP
             } else {
-                $clientHello{'extension_sni_name'}     = $Net::SSLhello::sni_name;                   # Server Name, should be a Name no IP
+                $clientHello{'extension_sni_name'}     = ($Net::SSLhello::sni_name) ? $Net::SSLhello::sni_name : ""; # Server Name, should be a Name no IP
             }
             $clientHello{'extension_sni_len'}          = length($clientHello{'extension_sni_name'}); # len of Server Name
             $clientHello{'extension_sni_type'}         = 0x00;                                       # 0x00= host_name
@@ -2320,7 +2320,7 @@ sub compileClientHello  {
                 $clientHello{'extension_sni_len'},          #n        
                 $clientHello{'extension_sni_name'},         #a[$clientHello{'extension_sni_len'}]
             );
-            _trace2 ("compileClientHello: extension_sni_name Extension added\n");
+            _trace2 ("compileClientHello: extension_sni_name Extension added (name='$clientHello{'extension_sni_name'}', len=$clientHello{'extension_sni_len'})\n");
         } elsif ($Net::SSLhello::usesni) { # && ($record_version <= $PROTOCOL_VERSION{'TLSv1'})  
             $@ = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
             print $@;
