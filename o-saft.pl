@@ -1,7 +1,5 @@
 #!/usr/bin/perl -w
 
-### TODO: ocsp_uri pruefen;
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -43,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.16"; }
+    sub _VERSION() { return "15.01.16a"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -2696,6 +2694,7 @@ sub _isbleed($$) {
     my $cl  = undef; # TODO: =$Net::SSLinfo::socket;
     my $ret = "";       # empty string as required in %checks
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
+    local $\;
     undef $\;           # take care, must not be \n !!
 
     # all following code stolen from Steffen Ullrich (08. April 2014):
