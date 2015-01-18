@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.16c"; }
+    sub _VERSION() { return "15.01.18"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -5437,19 +5437,18 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@all, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
-            if ($Net::SSLhello::usesni == 1) { # always test first without SNI
+            if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
                 $Net::SSLhello::usesni = 0;
                 Net::SSLhello::printCipherStringArray(
                     'compact', $host, $port, $ssl, 0,
                     Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
                 );
-                $Net::SSLhello::usesni = 1;
+                $Net::SSLhello::usesni=$cfg{'usesni'}; # restore$
                 next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
                 next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI 
             }
-            next if ($Net::SSLhello::usesni == 0);
             Net::SSLhello::printCipherStringArray(
-                'compact', $host, $port, $ssl, 1,
+                'compact', $host, $port, $ssl, $Net::SSLhello::usesni,
                 Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
             );
         }
