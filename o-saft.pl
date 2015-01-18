@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.16b"; }
+    sub _VERSION() { return "15.01.16c"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -560,7 +560,23 @@ my %check_dest = (  # target (connection) data
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'resumption'    => {'txt' => "Target supports resumption"},
     'renegotiation' => {'txt' => "Target supports renegotiation"},
-    'pfs'           => {'txt' => "Target supports forward secrecy (PFS)"},
+    'pfs'           => {'txt' => "Target supports PFS (selected cipher)"},
+    'pfs+'          => {'txt' => "Target supports PFS (all ciphers)"},
+     #  *-pfs* are used internally only
+    'SSLv2-pfs+'    => {'txt' => "Target supports PFS (all  SSLv2 ciphers)"}, # dummy
+    'SSLv3-pfs+'    => {'txt' => "Target supports PFS (all  SSLv3 ciphers)"},
+    'TLSv1-pfs+'    => {'txt' => "Target supports PFS (all  TLSv1 ciphers)"},
+    'TLSv11-pfs+'   => {'txt' => "Target supports PFS (all  TLSv11 ciphers)"},
+    'TLSv12-pfs+'   => {'txt' => "Target supports PFS (all  TLSv12 ciphers)"},
+    'TLSv13-pfs+'   => {'txt' => "Target supports PFS (all  TLSv13 ciphers)"},
+    'DTLSv1-pfs+'   => {'txt' => "Target supports PFS (all  DTLSv1 ciphers)"},
+    'SSLv2-pfs-'    => {'txt' => "Target supports PFS (some SSLv2 ciphers)"},
+    'SSLv3-pfs-'    => {'txt' => "Target supports PFS (some SSLv3 ciphers)"},
+    'TLSv1-pfs-'    => {'txt' => "Target supports PFS (some TLSv1 ciphers)"},
+    'TLSv11-pfs-'   => {'txt' => "Target supports PFS (some TLSv11 ciphers)"},
+    'TLSv12-pfs-'   => {'txt' => "Target supports PFS (some TLSv12 ciphers)"},
+    'TLSv13-pfs-'   => {'txt' => "Target supports PFS (some TLSv13 ciphers)"},
+    'DTLSv1-pfs-'   => {'txt' => "Target supports PFS (some DTLSv1 ciphers)"},
     'krb5'          => {'txt' => "Target supports Krb5"},
     'psk_hint'      => {'txt' => "Target supports PSK identity hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
@@ -815,7 +831,22 @@ our %shorttexts = (
     'order'         => "Client's cipher order",
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
-    'pfs'           => "PFS supported",
+    'pfs'           => "PFS (selected cipher)",
+    'pfs+'          => "PFS (all ciphers)",
+    'SSLv2-pfs+'    => "PFS (all  SSLv2 ciphers)",
+    'SSLv3-pfs+'    => "PFS (all  SSLv3 ciphers)",
+    'TLSv1-pfs+'    => "PFS (all  TLSv1 ciphers)",
+    'TLSv11-pfs+'   => "PFS (all  TLSv11 ciphers)",
+    'TLSv12-pfs+'   => "PFS (all  TLSv12 ciphers)",
+    'TLSv13-pfs+'   => "PFS (all  TLSv13 ciphers)",
+    'DTLSv1-pfs+'   => "PFS (all  DTLSv1 ciphers)",
+    'SSLv2-pfs-'    => "PFS (some SSLv2 ciphers)",
+    'SSLv3-pfs-'    => "PFS (some SSLv3 ciphers)",
+    'TLSv1-pfs-'    => "PFS (some TLSv1 ciphers)",
+    'TLSv11-pfs-'   => "PFS (some TLSv11 ciphers)",
+    'TLSv12-pfs-'   => "PFS (some TLSv12 ciphers)",
+    'TLSv13-pfs-'   => "PFS (some TLSv13 ciphers)",
+    'DTLSv1-pfs-'   => "PFS (some DTLSv1 ciphers)",
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
     'tr-02102'      => "TR-02102-2 compliant",
@@ -2983,7 +3014,9 @@ sub checkcipher($$) {
     # check attacks
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
+    $checks{$ssl .'pfs+'}->{val}.= _prot_cipher($ssl, $c) if ("" ne _ispfs($ssl, $c));
     # counters
+    $checks{$ssl .'pfs-'}->{val}++      if ("" eq _ispfs($ssl, $c)); # count PFS ciphers
     $checks{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
     $checks{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
     $checks{$ssl . '-WEAK'}->{val}++    if ($risk =~ /WEAK/i);
@@ -3035,7 +3068,10 @@ sub checkciphers($$) {
             $checks{$ssl . '-LOW'}->{val}  +
             $checks{$ssl . '-WEAK'}->{val} +
             $checks{$ssl . '-HIGH'}->{val} +
-            $checks{$ssl . '-MEDIUM'}->{val};
+            $checks{$ssl . '-MEDIUM'}->{val}
+            ;
+        $checks{$ssl .'pfs-'}->{val} = "" if ($checks{$ssl .'pfs-'}->{val} > 0);
+        $checks{'pfs+'}->{val}  .= $checks{$ssl .'pfs+'}->{val};
     }
     $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
     _trace(" checkciphers }");
@@ -4928,6 +4964,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
     if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; } # TODO: too lazy, nee +vulnerability +vulnerabilities too
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
+    if ($arg eq  '+pfs')    { push(@{$cfg{'do'}}, 'pfs', 'pfs+');               next; }
     if ($arg eq '+traceSUB'){
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
