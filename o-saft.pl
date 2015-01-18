@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.16a"; }
+    sub _VERSION() { return "15.01.16b"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -542,12 +542,12 @@ my %check_dest = (  # target (connection) data
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'edh'           => {'txt' => "Target supports EDH ciphers"},
-    'hassslv2'      => {'txt' => "Target does not supports SSLv2"},
-    'hassslv3'      => {'txt' => "Target does not supports SSLv3"},     # Poodle
-    'adh'           => {'txt' => "Target does not accepts ADH ciphers"},
-    'null'          => {'txt' => "Target does not accepts NULL ciphers"},
-    'export'        => {'txt' => "Target does not accepts EXPORT ciphers"},
-    'rc4'           => {'txt' => "Target does not accepts RC4 ciphers"},
+    'hassslv2'      => {'txt' => "Target does not support SSLv2"},
+    'hassslv3'      => {'txt' => "Target does not support SSLv3"},      # Poodle
+    'adh'           => {'txt' => "Target does not accept ADH ciphers"},
+    'null'          => {'txt' => "Target does not accept NULL ciphers"},
+    'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
+    'rc4'           => {'txt' => "Target does not accept RC4 ciphers"},
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
     'order'         => {'txt' => "Target honors client's cipher order"},
@@ -631,6 +631,7 @@ foreach $key (keys %check_cert) { $checks{$key}->{txt} = $check_cert{$key}->{txt
 foreach $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt}; $checks{$key}->{typ} = 'destination'; }
 foreach $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
 foreach $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
+foreach $ssl (@{$cfg{'versions'}}) { $checks{$ssl}->{val} = 0; }# initialize counter for cipher
 
 our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
         # TODO: generate this table using Net::SSLeay functions like:
@@ -1223,15 +1224,15 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(hassslv2 hassslv3 beast breach crime heartbleed poodle time)
+                        qw(hassslv2 hassslv3 beast breach crime heartbleed pfs poodle time)
                        #qw(resumption renegotiation) # die auch?
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
                        qw(check beast crime time breach pfs rc4 bsi selected cipher)],
     'need_default'  => [        # commands which need selected cipher
-                       qw(selected cipher check pfs)],
-    'need_checkssl' => [        # commands which need checkssl()
+                       qw(check cipher pfs selected)],
+    'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                        qw(check beast crime time breach pfs rc4 bsi selected ev+ ev-)],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
@@ -1335,7 +1336,7 @@ our %cmd = (
 
         'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]',
                        # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA
-                       # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exists, hence lazy regex above
+                       # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exist, hence lazy regex above
         'notTR-02102'     => '[_-]SHA$',
                        # ciphers with SHA1 hash are not allowed
         'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
@@ -2918,7 +2919,7 @@ sub _useopenssl($$$$) {
 } # _useopenssl
 
 sub _get_default($$$) {
-    # return default cipher from target
+    # return (default) offered cipher from target
     my ($ssl, $host, $port) = @_;
     my $cipher = "";
     $cfg{'done'}->{'checkdefault'}++;
@@ -3543,30 +3544,29 @@ sub checkprot($$) {
     return if ($cfg{'done'}->{'checkprot'} > 1);
     # check SSL version support
     foreach $ssl (qw(SSLv2 SSLv3)) {
-        # For +check command, SSL versions are already detected, for single
-        # commands,  i.e. +hasSSLv3 , SSL versions may not yet checked.  We
-        # use the counter for ciphers per SSL version to check if this  SSL
-        # protocol is supported. If the counter equals 0,  we need to check
-        # if that protocol is supported using _get_default(), which returns
-        # the default cipher for that protocol.
-# FIXME: "default" check do no longer (> 14.11.14) make sense; needs to be replaced by "selected" if possible
+        # For  +check command, SSL versions are already detected, for single
+        # commands, i.e. +hasSSLv3, SSL versions may not yet checked. We use
+        # the version flag $cfg{$ssl} to check if the protocol is supported.
+        # If it equals 0, the check may be disabled, i.e. with  --no-sslv3 .
+        # If the protocol is supported by the target accepted,  at least one
+        # ciphers must be accpted. So the amount of ciphers must be > 0.
         if ($cfg{$ssl} == 0) {
             $checks{'hassslv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
             $checks{'hassslv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
-            $checks{'poodle'}->{val}        = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
+            $checks{'poodle'}  ->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
             next;
+        } else {
+            $checks{'hassslv2'}->{val}      = "" if ($ssl eq 'SSLv2');
+            $checks{'hassslv3'}->{val}      = "" if ($ssl eq 'SSLv3');
+            $checks{'poodle'}  ->{val}      = "" if ($ssl eq 'SSLv3');
         }
-        my $accepted = $checks{$ssl}->{val};
-	if (! $checks{$ssl}->{val}) {       # avoid check if already done 
-	    # FIXME: lazy type check 'cause integer or string, see FIXME in checkdest()
-            $accepted = _get_default($ssl, $host, $port);
-        }
-        if ($accepted ne "") {  # protocol checked and returned a cipher
-            if ($cfg{$ssl} eq 'SSLv2') {
+	if ($checks{$ssl}->{val} > 0) {     # protocol checked and returned a cipher
+            if ($ssl eq 'SSLv2') {
                 $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
-            } else {
+            }
+            if ($ssl eq 'SSLv3') {
                 $checks{'hassslv3'}->{val}  = " ";  # Poodle if SSLv3
-                $checks{'poodle'}->{val}    = "SSLv3";
+                $checks{'poodle'}  ->{val}  = "SSLv3";
             }
         }
     }
@@ -3586,26 +3586,20 @@ sub checkdest($$) {
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
 
-    checkprot($host, $port);    # must be first 'cause $checks{$ssl}->{val} set lbelow
-
-    # check default cipher
+    # get selected cipher
     foreach $ssl (@{$cfg{'versions'}}) {
         next if (_need_default() <= 0); # avoid connection if default cipher not needed
         next if ($cfg{$ssl} == 0);
-        $value  = $checks{$ssl}->{val};
+        $value  = $checks{$ssl}->{val}; # $value contains total number of checked ciphers
         $cipher = _get_default($ssl, $host, $port);
-        if (($value == 0) && ($cipher eq "")) {
-            $value = $text{'protocol'};
-            # _getscore() below fails for this (see with --trace) 'cause there
-            # is no entry %checks{'SSLv2-'} ; that's ok
-        } else {
+        if (($value != 0) && ($cipher eq "")) {
             $value = $cipher . " " . get_cipher_sec($cipher);
         }
-        # FIXME: $checks{$ssl}->{val} contains a counter; now we assign a string
-        #        should use own key for default cipher string
-        $checks{$ssl}->{val} = $value;
-        $checks{'pfs'}->{val}           .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
+        $checks{$ssl}->{val}    = "$value"; # cast value to string
+        $checks{'pfs'}->{val}  .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
+
+    checkprot($host, $port);
 
     # vulnerabilities
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
@@ -5523,8 +5517,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     checksni(  $host, $port); #  "
     checksizes($host, $port); #  "
     checkdv(   $host, $port); #  "
-    checkprot( $host, $port);
     checkdest( $host, $port);
+    checkprot( $host, $port);
     checkbleed($host, $port); # vulnerable TLS heartbeat extentions
 
     usr_pre_print();
