@@ -96,14 +96,14 @@
 ###
 ### redefine command +check
 ###
---cfg_cmd=check=selected cnt_totals hassslv2 hassslv3 order adh export null rc4 edh pfs ism pci fips tr-02102 bsi-tr-02102+ bsi-tr-02102- beast breach crime time heartbleed poodle sni hostname reversehost cps crl ev+ ev- ev-chars crnlnull nonprint ocsp fp_not_md5 sha2signature expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket closure sgc zlib open_pgp lzo fallback renegotiation resumption srp scsv cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+--cfg_cmd=check=selected cnt_totals hassslv2 hassslv3 order adh export null rc4 edh pfs pfs+ ism pci fips tr-02102 bsi-tr-02102+ bsi-tr-02102- beast breach crime time heartbleed poodle sni hostname reversehost cps crl ev+ ev- ev-chars crnlnull nonprint ocsp fp_not_md5 sha2signature expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket closure sgc zlib open_pgp lzo fallback renegotiation resumption srp scsv cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
 # useless for +check:    ip
 # don't use   +check:   (SSLv|TLSv)*
 
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=selected cipher sslversion hassslv2 hassslv3 export rc4 pfs beast crime heartbleed poodle fingerprint_hash fp_not_md5 sha2signature email serial subject dates verify heartbeat expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
+--cfg_cmd=quick=selected cipher sslversion hassslv2 hassslv3 export rc4 pfs pfs+ beast crime heartbleed poodle fingerprint_hash fp_not_md5 sha2signature email serial subject dates verify heartbeat expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
 
 ###
 ### redefine texts
