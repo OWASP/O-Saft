@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.01.19';
+    $VERSION   = '15.01.19a';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -919,9 +919,60 @@ sub do_ssl_open($$$) {
             $src = "_check_host($host)";  if (!defined _check_host($host)) { last; }
             $src = "_check_port($port)";  if (!defined _check_port($port)) { last; }
             $src = 'socket()';
-                    socket( $socket, &AF_INET, &SOCK_STREAM, 0) or {$err = $!} and last;
-            $src = 'connect()';
-            $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
+            unless ( ($main::cfg{'starttls'}) || (($main::cfg{'proxyhost'})&&($main::cfg{'proxyport'})) ){ #unless nor starttls neither via Proxy
+                socket( $socket, &AF_INET, &SOCK_STREAM, 0) or {$err = $!} and last;
+                $src = 'connect()';
+                $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
+            } else { #starttls or via Proxy
+## ## ## ## (begin: added starttls and proxy-support)
+
+###########     set new feature temporary to --experimental
+                if  ($main::cfg{'experimental'} >0) { # experimental functions are activated
+                    _trace ("do_ssl_open: WARNING: Experimental use of STARTTLS or Proxy for other commands than '+cipherall'! Send us feedback to o-saft (at) lists.owasp.org, please\n");
+                } else { # use of experimental functions are not permitted (option is not activated)
+                    $@ = "do_ssl_open: WARNING: Use of STARTTLS or Proxy for other commands than '+cipherall' is experimental! Please add option '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
+                    warn ($@);
+                    exit (1); #stop program
+                }
+###########     End: set new feature temporary to --experimental$
+
+                require Net::SSLhello;
+                _trace("do_ssl_open: Net::SSLhello= $Net::SSLhello::VERSION"); # TODO: already done in _yeast_init()
+                # set defaults for Net::SSLhello
+                no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
+                $Net::SSLhello::trace       = $main::cfg{'trace'};
+                $Net::SSLhello::traceTIME   = $main::cfg{'traceTIME'};
+                $Net::SSLhello::experimental= $main::cfg{'experimental'};
+                $Net::SSLhello::usesni      = $main::cfg{'usesni'};
+                $Net::SSLhello::usemx       = $main::cfg{'usemx'};
+                $Net::SSLhello::sni_name    = $main::cfg{'sni_name'};
+                $Net::SSLhello::starttls    = (($main::cfg{'starttls'} eq "") ? 0 : 1);
+                $Net::SSLhello::starttls    = (($main::cfg{'starttls'} eq "") ? 0 : 1);
+                $Net::SSLhello::starttlsType= $main::cfg{'starttls'};
+                $Net::SSLhello::starttlsDelay=$main::cfg{'starttlsDelay'};
+                $Net::SSLhello::timeout     = $main::cfg{'sslhello'}->{'timeout'};
+                $Net::SSLhello::retry       = $main::cfg{'sslhello'}->{'retry'};
+                $Net::SSLhello::max_ciphers = $main::cfg{'sslhello'}->{'maxciphers'};
+                $Net::SSLhello::usereneg    = $main::cfg{'sslhello'}->{'usereneg'};
+                $Net::SSLhello::useecc      = $main::cfg{'sslhello'}->{'useecc'};
+                $Net::SSLhello::useecpoint  = $main::cfg{'sslhello'}->{'useecpoint'};
+                $Net::SSLhello::double_reneg= $main::cfg{'sslhello'}->{'double_reneg'};
+                $Net::SSLhello::noDataEqNoCipher= $main::cfg{'sslhello'}->{'nodatanocipher'};
+                $Net::SSLhello::proxyhost   = $main::cfg{'proxyhost'};
+                $Net::SSLhello::proxyport   = $main::cfg{'proxyport'};
+                $Net::SSLhello::cipherrange = $main::cfg{'cipherrange'};  # not really necessary, see below
+
+                #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested
+                $socket = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if ne     dded
+
+                if ( (!defined ($socket)) || ($@) ) { # No SSL Connection 
+                    $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); #generic      Error Message
+                    warn ("**WARNING: _do_ssl_open (with openTcpSSLconnection): $@\n"); 
+                    _trace ("_do_ssl_open: Fatal Exit in _doCheckSSLciphers }\n");
+                    return ("");
+                }
+            }
+## ## ## ## ## (end: added starttls and proxy-support)
             select($socket); $| = 1; select(STDOUT);  # Eliminate STDIO buffering
             $Net::SSLinfo::socket = $socket;
         } else {
