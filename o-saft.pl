@@ -647,7 +647,6 @@ foreach $key (keys %check_cert) { $checks{$key}->{txt} = $check_cert{$key}->{txt
 foreach $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt}; $checks{$key}->{typ} = 'destination'; }
 foreach $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
 foreach $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
-foreach $ssl (@{$cfg{'versions'}}) { $checks{$ssl}->{val} = 0; }# initialize counter for cipher
 
 our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
         # TODO: generate this table using Net::SSLeay functions like:
@@ -832,6 +831,7 @@ our %shorttexts = (
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
     'pfs'           => "PFS (selected cipher)",
+     #  *-pfs* are used internally only
     'pfs+'          => "PFS (all ciphers)",
     'SSLv2-pfs+'    => "PFS (all  SSLv2 ciphers)",
     'SSLv3-pfs+'    => "PFS (all  SSLv3 ciphers)",
@@ -2341,6 +2341,16 @@ sub _initchecks_val()  {
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'SSLprot'}/);
     }
+    # initialize counter for cipher
+    foreach $ssl (@{$cfg{'versions'}}) {
+        $checks{$ssl . '-pfs+'}->{val}  = "";
+        $checks{$ssl}->{val}            = 0;
+        $checks{$ssl . '-pfs-'}->{val}  = 0; # used internal only
+        $checks{$ssl . '--?-'} ->{val}  = 0;
+        $checks{$ssl . '-LOW'} ->{val}  = 0;
+        $checks{$ssl . '-WEAK'}->{val}  = 0;
+        $checks{$ssl . '-HIGH'}->{val}  = 0;
+    }
 } # _initchecks_val
 
 sub _init_all()  {
@@ -3014,9 +3024,9 @@ sub checkcipher($$) {
     # check attacks
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
-    $checks{$ssl .'pfs+'}->{val}.= _prot_cipher($ssl, $c) if ("" ne _ispfs($ssl, $c));
+    $checks{$ssl . '-pfs+'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _ispfs($ssl, $c));
     # counters
-    $checks{$ssl .'pfs-'}->{val}++      if ("" eq _ispfs($ssl, $c)); # count PFS ciphers
+    $checks{$ssl . '-pfs-'}->{val}++    if ("" eq _ispfs($ssl, $c)); # count PFS ciphers
     $checks{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
     $checks{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
     $checks{$ssl . '-WEAK'}->{val}++    if ($risk =~ /WEAK/i);
@@ -3070,8 +3080,8 @@ sub checkciphers($$) {
             $checks{$ssl . '-HIGH'}->{val} +
             $checks{$ssl . '-MEDIUM'}->{val}
             ;
-        $checks{$ssl .'pfs-'}->{val} = "" if ($checks{$ssl .'pfs-'}->{val} > 0);
-        $checks{'pfs+'}->{val}  .= $checks{$ssl .'pfs+'}->{val};
+        $checks{$ssl .'-pfs-'}->{val} = "" if ($checks{$ssl . '-pfs-'}->{val} > 0);
+        $checks{'pfs+'}->{val}  .= $checks{$ssl . '-pfs+'}->{val}; # TODO: space missing
     }
     $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
     _trace(" checkciphers }");
@@ -5443,7 +5453,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
                     'compact', $host, $port, $ssl, 0,
                     Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
                 );
-                $Net::SSLhello::usesni=$cfg{'usesni'}; # restore$
+                $Net::SSLhello::usesni = $cfg{'usesni'}; # restore
                 next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
                 next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI 
             }
