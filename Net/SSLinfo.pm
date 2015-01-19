@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '14.11.14';
+    $VERSION   = '15.01.19';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1929,7 +1929,7 @@ sub dates           { return _SSLinfo_get('dates',            $_[0], $_[1]); }
 sub issuer          { return _SSLinfo_get('issuer',           $_[0], $_[1]); }
 sub subject         { return _SSLinfo_get('subject',          $_[0], $_[1]); }
 sub default         { return _SSLinfo_get('selected',         $_[0], $_[1]); } # alias; used in VERSION < 14.11.14
-sub selected        { return _SSLinfo_get('default',          $_[0], $_[1]); }
+sub selected        { return _SSLinfo_get('selected',         $_[0], $_[1]); }
 sub cn              { return _SSLinfo_get('cn',               $_[0], $_[1]); }
 sub commonname      { return _SSLinfo_get('cn',               $_[0], $_[1]); } # alias for cn
 sub altname         { return _SSLinfo_get('altname',          $_[0], $_[1]); }
