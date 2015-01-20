@@ -4765,26 +4765,27 @@ while ($#argv >= 0) {
             }
             $typ = 'HOST';
         }
+        # following ($arg !~ /^\s*$/) check avoids warnings in CGI mode
         if ($typ eq 'LEGACY')   {
             $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
             if (1 == grep(/^$arg$/i, @{$cfg{'legacys'}})) {
                 $cfg{'legacy'} = lc($arg);
             } else {
-                _warn("unknown legacy '$arg'; ignored");
+                _warn("unknown legacy '$arg'; ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'FORMAT')   {
             if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
                 $cfg{'format'} = $arg;
             } else {
-                _warn("unknown format '$arg'; ignored");
+                _warn("unknown format '$arg'; ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CRANGE')    {
             if (1 == grep(/^$arg$/, keys %{$cfg{'cipherranges'}})) {
                 $cfg{'cipherrange'} = $arg;
             } else {
-                _warn("unknown cipher range '$arg'; ignored");
+                _warn("unknown cipher range '$arg'; ignored") if ($arg !~ /^\s*$/);
             }
         }
         _y_ARG("argument= $arg");
@@ -5112,7 +5113,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+(.*)/)  { # all  other commands
         my $val = $1;
         _y_ARG("command= $val");
-        next if ($val =~ m/^\+\s*$/);  # ignore empty arguments; for CGI mode
+        next if ($val =~ m/^\+\s*$/);  # ignore empty commands; for CGI mode
+        next if ($val =~ m/^\s*$/);    # ignore empty arguments; for CGI mode
         if ($val =~ m/^exec$/i) {      # +exec is special
             $cfg{'exec'} = 1;
             next;
