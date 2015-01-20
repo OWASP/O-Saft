@@ -487,7 +487,7 @@ my %check_conn = (  # connection data
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
     'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-    'selected'      => {'txt' => "Selected cipher by server for"},
+    'selected'      => {'txt' => "Selected cipher by server"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
      # counter for accepted ciphers, 0 if not supported
@@ -1260,7 +1260,7 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                       qw(check beast crime time breach pfs rc4 bsi selected cipher)],
+                       qw(check beast crime time breach pfs rc4 bsi selected poodle cipher)],
     'need_default'  => [        # commands which need selected cipher
                        qw(check cipher pfs selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
@@ -2454,10 +2454,10 @@ sub _cfg_set($$) {
             next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
             if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
                 push(@{$cfg{$typ}}, 'selected');
-                _warn("please use 'selected' instead of '$key'; ignored");
+                _warn("please use '+selected' instead of '+$key'; ignored");
                 next;
             }
-            _warn("unknown command '$key' for '$typ'; ignored");
+            _warn("unknown command '+$key' for '$typ'; ignored");
         }
     }
 
@@ -3156,7 +3156,7 @@ sub checkcipher($$) {
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     $checks{$ssl . '-pfs+'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _ispfs($ssl, $c));
-    # counters
+    # counters ##                              vv---- take care -----^^
     $checks{$ssl . '-pfs-'}->{val}++    if ("" eq _ispfs($ssl, $c)); # count PFS ciphers
     $checks{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
     $checks{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
@@ -3212,7 +3212,7 @@ sub checkciphers($$) {
             $checks{$ssl . '-MEDIUM'}->{val}
             ;
         $checks{$ssl .'-pfs-'}->{val} = "" if ($checks{$ssl . '-pfs-'}->{val} > 0);
-        $checks{'pfs+'}->{val}  .= $checks{$ssl . '-pfs+'}->{val}; # TODO: space missing
+        $checks{'pfs+'}->{val}  .= $checks{$ssl . '-pfs+'}->{val};
     }
     $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
     _trace(" checkciphers }");
@@ -3763,17 +3763,14 @@ sub checkdest($$) {
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
 
-    # get selected cipher
+    # get selected cipher and store in %checks, use also to check for PFS
     foreach $ssl (@{$cfg{'versions'}}) {
-        next if (_need_default() <= 0); # avoid connection if default cipher not needed
         next if ($cfg{$ssl} == 0);
-        $value  = $checks{$ssl}->{val}; # $value contains total number of checked ciphers
         $cipher = _get_default($ssl, $host, $port);
-        if (($value != 0) && ($cipher eq "")) {
-            $value = $cipher . " " . get_cipher_sec($cipher);
+        if ($cipher ne "") {
+            $checks{'selected'}->{val} = $cipher;
+            $checks{'pfs'}->{val}   = $cipher if ("" ne _ispfs($ssl, $cipher));
         }
-        $checks{$ssl}->{val}    = "$value"; # cast value to string
-        $checks{'pfs'}->{val}  .= _prot_cipher($ssl, $cipher) if ("" ne _ispfs($ssl, $cipher));
     }
 
     checkprot($host, $port);
@@ -4369,14 +4366,11 @@ sub printchecks($$$) {
     my $key  = "";
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
-    if (_is_do('selected')) {           # values are special
-        _trace_1arr('@cfg{version}');
-        foreach $key (@{$cfg{'versions'}}) {
-            next if ($cfg{$key} == 0);  # this version not checked, see eval("Net::SSLeay::SSLv2_method()") above
-            print_line($legacy, $host, $port, 'selected', "$checks{'selected'}->{txt} ($key)", $checks{$key}->{val});
-        }
-    }
     _trace_1arr('%checks');
+    if (_is_do('selected')) {           # value is special
+        $key = $checks{'selected'}->{val};
+        print_line($legacy, $host, $port, 'selected', $checks{'selected'}->{txt}, "$key " . get_cipher_sec($key));
+    }
     _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach $key (@{$cfg{'do'}}) {
         _trace("(%checks) ?" . $key);
@@ -4384,7 +4378,7 @@ sub printchecks($$$) {
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
-        next if ($key eq 'selected');   # used for @cfg{version} only
+        next if ($key eq 'selected');   # done above
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) { # sizes are special
             print_size($legacy, $host, $port, $key) if ($cfg{'no_cert'} <= 0);
@@ -5105,7 +5099,6 @@ while ($#argv >= 0) {
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
     if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; } # TODO: too lazy, nee +vulnerability +vulnerabilities too
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
-    if ($arg eq  '+pfs')    { push(@{$cfg{'do'}}, 'pfs', 'pfs+');               next; }
     if ($arg eq '+traceSUB'){
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
@@ -5204,6 +5197,7 @@ if (_is_do('list')) {
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $text{'separator'}  = "\t" if (grep(/--(?:tab|sep(?:arator)?)/, @argv) <= 0); # tab if not set
 }
+if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs+') if (!_is_do('pfs+')); }
 
 _yeast_args();
 _vprintme();
@@ -5721,6 +5715,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     _y_CMD("do=".join(" ",@{$cfg{'do'}}));
 
     # print all required data and checks
+    # NOTE: if key (aka given command) exists in %checks and %data it will be printed twice
     printdata(  $legacy, $host, $port) if ($check == 0); # not for +check
     printchecks($legacy, $host, $port) if ($info  == 0); # not for +info
 
