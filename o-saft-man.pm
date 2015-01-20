@@ -2378,7 +2378,7 @@ CHECKS
 
       poodle
 
-        Check if target is vulnerable to Poodle attack.
+        Check if target is vulnerable to Poodle attack (SSLv3 enabled).
 
     SSL Vulnerabilities
 
@@ -3077,6 +3077,11 @@ LIMITATIONS
           * --openssl=X:\\path\\to\\openssl.exe
 
         You have to fiddle around to find the proper one.
+
+    Debug and Trace Output
+
+        When both  --trace=key  and  --trace=cmd  options are used, output is
+        mixed, obviously. Hint: output for --trace=cmd always contains "CMD".
 
 
 DEPENDENCIES
