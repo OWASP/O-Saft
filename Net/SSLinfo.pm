@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.01.19a';
+    $VERSION   = '15.01.20';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -478,7 +478,7 @@ sub _setcmd() {
 # $Net::SSLinfo::trace  not available outside sub in modules
 # hence following debugging of constants needs to be enabled manually
 # ToDo: replace eval() by better perlish solution
-if (1==0) {
+if (1==0) { ##### DISABLED #####
     #no strict 'refs';
     my ($op, $_op_sub);
     foreach $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_DTLSv1)) {
@@ -509,6 +509,7 @@ my %_SSLmap = ( # map libssl's constants to speaking names
 );
 # unfortunately not all openssl and/or Net::SSLeay versions have all constants,
 # hence we need to assign some values dynamically (avoid perl errors)
+# NOTE: existance cannot be checked with:  defined &Net::SSLeay::OP_NO_TLSv1
 $_SSLmap{'TLSv1'} [1] = Net::SSLeay::OP_NO_TLSv1()   if (eval "Net::SSLeay::OP_NO_TLSv1()");
 $_SSLmap{'TLSv11'}[1] = Net::SSLeay::OP_NO_TLSv1_1() if (eval "Net::SSLeay::OP_NO_TLSv1_1()");
 $_SSLmap{'TLSv12'}[1] = Net::SSLeay::OP_NO_TLSv1_2() if (eval "Net::SSLeay::OP_NO_TLSv1_2()");
@@ -1021,8 +1022,8 @@ sub do_ssl_open($$$) {
 
         #2b. set protocol options
         $src = "Net::SSLeay::CTX_set_ssl_version()";   # set default SSL protocol
-        $ssl = eval("Net::SSLeay::SSLv23_method()");
-        if (defined $ssl) {
+        $ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
+        if ($ssl == 1) {
             Net::SSLeay::CTX_set_ssl_version($ctx, $ssl) or do {$err = $!} and last;
             # allow all protocols for backward compatibility; user specific
             # restrictions are done later with  CTX_set_options()
@@ -1214,6 +1215,9 @@ sub do_ssl_open($$$) {
                 # need to handle it special as the check for the status below
                 # already does the work.
 		# The error is printed by Net/SSLeay, and cannot be omitted.
+                #
+                # Following error ocours (Net::SSLeay 1.58) when _http() failed:
+                # Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1291.
 
 # $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
             if ($_SSLinfo{'http_status'} =~ m:^HTTP/... ([1234][0-9][0-9]|500) :) {
