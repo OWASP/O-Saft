@@ -129,6 +129,18 @@ sub _warn   {
     local $\ = "\n"; print("**WARNING: ", join(" ", @_));
     # TODO: in CGI mode warning must be avoided until HTTP header written
 }
+sub _warnexperimental {
+    #? print warning that --experimental option is required
+    #-method:  name of function where this message is called
+    #-command: name of command subject to this message
+    local $\ = "\n";
+    if (grep(/(:?--experimental)/i, @ARGV) > 0) {
+        my $method = shift;
+        _trace($method . ": " . join(" ", @_));
+    } else {
+        printf("**WARNING: (%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @_);
+    }
+}
 sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
@@ -2764,13 +2776,8 @@ sub _isbleed($$) {
     } else { #starttls or via Proxy
 
 ########### set new feature temporary to --experimental
-        if  ($cfg{'experimental'} >0) { # experimental functions are activated
-            _trace ("_isbleed: WARNING: Experimental use of STARTTLS or Proxy for other commands than '+cipherall'! Send us feedback to o-saft (at) lists.owasp.org, please\n");
-        } else { # use of experimental functions are not permitted (option is not activated)
-            $@ = "_isbleed: WARNING: Use of STARTTLS or Proxy for other commands than '+cipherall' is experimental! Please add option '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
-            warn ($@);
-            exit (1); #stop program
-        }
+        _warnexperimental("_isbleed", "--starttls, --proxyhost", "experimental use");
+        exit (1) if ($cfg{'experimental'} <= 0);
 ########### End: set new feature temporary to --experimental
 
         _trace("_isbleed: call 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
@@ -5250,17 +5257,14 @@ local $\ = "\n";
 use     IO::Socket::SSL 1.37; #  qw(debug2);
 use     IO::Socket::INET;
 
-require Net::SSLhello if (_is_do('cipherraw') or _is_do('version') or ($cfg{'starttls'}) or (($cfg{'proxyhost'})&&($cfg{'proxyport'})) );
+if (_is_do('cipherraw') or _is_do('version') or ($cfg{'starttls'}) or (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
+    require Net::SSLhello;
 ########### set new feature temporary to --experimental
-        if (!(_is_do('cipherraw')) and !(_is_do('version')) and ( ($cfg{'starttls'}) or (($cfg{'proxyhost'})&&($cfg{'proxyport'})) ) ) {
-            if ($cfg{'experimental'} >0) { # experimental function are activated
-                _trace ("WARNING: Experimental use of STARTTLS or Proxy for other commands than '+cipherall'! Send us feedback to o-saft (at) lists.owasp.org, please\n");
-            } else { # use of experimental functions are not permitted (option is not activated)
-                $@ = "WARNING: Use of STARTTLS or Proxy for other commands than '+cipherall' is experimental! Please add option '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
-                warn ($@);
-                exit (1); #stop program
-            }
-        }
+    if (!(_is_do('cipherraw')) and !(_is_do('version'))) {
+        _warnexperimental("main", "--starttls, --proxyhost", "experimental use");
+        exit (1) if ($cfg{'experimental'} <= 0);
+    }
+}
 ########### End: set new feature temporary to --experimental
 require Net::SSLinfo;
 _y_TIME("inc}");
