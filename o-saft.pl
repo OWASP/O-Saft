@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.19"; }
+    sub _VERSION() { return "15.01.20"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -5369,7 +5369,6 @@ foreach $ssl (@{$cfg{'versions'}}) {
     }
     next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
     $cfg{$ssl} = 0; # reset to simplify further checks
-    # TODO: DTLSv9
     if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
         if ($cfg{'ssl_lazy'}>0) {
             # some versions of Net::SSLeay seem not to support the methods for
@@ -5379,26 +5378,27 @@ foreach $ssl (@{$cfg{'versions'}}) {
             $cfg{$ssl} = 1;
             next;
         }
-        # ToDO: enable checks again
-        $typ = eval("Net::SSLeay::SSLv2_method()")   if ($ssl eq 'SSLv2');
-        $typ = eval("Net::SSLeay::SSLv3_method()")   if ($ssl eq 'SSLv3');
-        $typ = eval("Net::SSLeay::TLSv1_method()")   if ($ssl eq 'TLSv1');
-        $typ = eval("Net::SSLeay::TLSv1_1_method()") if ($ssl eq 'TLSv11');
-        $typ = eval("Net::SSLeay::TLSv1_2_method()") if ($ssl eq 'TLSv12');
-        $typ = eval("Net::SSLeay::TLSv1_3_method()") if ($ssl eq 'TLSv13');
-        $typ = eval("Net::SSLeay::DTLSv1_method()")  if ($ssl eq 'DTLSv1');
-        # ugly eval, but that's the simplest (only?) way to check if required
-        # functionality is available; we could try  Net::SSLeay::CTX_v2_new()
-        # and similar calls also, but that requires eval too
-        # if a version like SSLv2 is not supported, perl bails out with error
+        # If a version like SSLv2 is not supported, perl bails out with error
         # like:        Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
-        if (defined $typ) {
+        # so we check for high-level API functions, also possible would be
+        #    Net::SSLeay::CTX_v2_new, Net::SSLeay::CTX_tlsv1_2_new
+        # and similar calls.
+        # Net::SSLeay::SSLv23_method is missing in some Net::SSLeay versions,
+        # as we don't use it there is no need to check for it
+        # TODO: DTLSv9 which is DTLS 0.9 ; but is this really in use?
+        $typ = (defined &Net::SSLeay::SSLv2_method)   ? 1:0 if ($ssl eq 'SSLv2');
+        $typ = (defined &Net::SSLeay::SSLv3_method)   ? 1:0 if ($ssl eq 'SSLv3');
+        $typ = (defined &Net::SSLeay::TLSv1_method)   ? 1:0 if ($ssl eq 'TLSv1');
+        $typ = (defined &Net::SSLeay::TLSv1_1_method) ? 1:0 if ($ssl eq 'TLSv11');
+        $typ = (defined &Net::SSLeay::TLSv1_2_method) ? 1:0 if ($ssl eq 'TLSv12');
+        $typ = (defined &Net::SSLeay::TLSv1_3_method) ? 1:0 if ($ssl eq 'TLSv13');
+        $typ = (defined &Net::SSLeay::DTLSv1_method)  ? 1:0 if ($ssl eq 'DTLSv1');
+        if ($typ == 1) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
-        } else {# eval failed ..
+        } else {
             _warn("SSL version '$ssl' not supported by openssl; ignored");
         }
-        # TODO: geht nicht: Net::SSLeay::SSLv23_method();
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
         _warn("unsupported SSL version '$ssl'; ignored");
     }
