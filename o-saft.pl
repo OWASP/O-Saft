@@ -129,7 +129,7 @@ sub _warn   {
     local $\ = "\n"; print("**WARNING: ", join(" ", @_));
     # TODO: in CGI mode warning must be avoided until HTTP header written
 }
-sub _warnexperimental {
+sub _warn_and_exit {
     #? print warning that --experimental option is required
     #-method:  name of function where this message is called
     #-command: name of command subject to this message
@@ -139,6 +139,7 @@ sub _warnexperimental {
         _trace($method . ": " . join(" ", @_));
     } else {
         printf("**WARNING: (%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @_);
+        exit(1);
     }
 }
 sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
@@ -2776,8 +2777,7 @@ sub _isbleed($$) {
     } else { #starttls or via Proxy
 
 ########### set new feature temporary to --experimental
-        _warnexperimental("_isbleed", "--starttls, --proxyhost", "experimental use");
-        exit (1) if ($cfg{'experimental'} <= 0);
+        _warn_and_exit("_isbleed", "--starttls, --proxyhost", "experimental use");
 ########### End: set new feature temporary to --experimental
 
         _trace("_isbleed: call 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
@@ -5261,8 +5261,7 @@ if (_is_do('cipherraw') or _is_do('version') or ($cfg{'starttls'}) or (($cfg{'pr
     require Net::SSLhello;
 ########### set new feature temporary to --experimental
     if (!(_is_do('cipherraw')) and !(_is_do('version'))) {
-        _warnexperimental("main", "--starttls, --proxyhost", "experimental use");
-        exit (1) if ($cfg{'experimental'} <= 0);
+        _warn_and_exit("main", "--starttls, --proxyhost", "experimental use");
     }
 }
 ########### End: set new feature temporary to --experimental
