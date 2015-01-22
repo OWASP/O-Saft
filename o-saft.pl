@@ -124,7 +124,7 @@ sub _dprint { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
 sub _dbx    { _dprint(@_); } # alias for _dprint
 sub _warn   {
     #? print warning if wanted
-    #return if ($warning <= 0);
+    # don't print if ($warning <= 0);
     return if (grep(/(:?--no.?warn)/i, @ARGV) > 0);     # ugly hack 'cause we won't pass $warning
     local $\ = "\n"; print("**WARNING: ", join(" ", @_));
     # TODO: in CGI mode warning must be avoided until HTTP header written
@@ -5118,7 +5118,6 @@ while ($#argv >= 0) {
         exit 0;
 	
     }
-    next if ($arg =~ /^\s*$/);# ignore empty arguments; for CGI mode # TODO: still needed?
     if ($arg =~ /^\+(.*)/)  { # all  other commands
         my $val = $1;
         _y_ARG("command= $val");
@@ -5491,7 +5490,8 @@ usr_pre_host();
 # run the appropriate SSL tests for each host (ugly code down here):
 $port = ($cfg{'port'}||"");     # defensive programming
 foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
-    if ($host =~ m#.*?:\d+#) { 
+    $cfg{'host'}      = $host;
+    if ($host =~ m#.*?:\d+#) {  # split host:port
        ($host, $port) = split(":", $host);
         $cfg{'port'}  = $port;  #
         $cfg{'host'}  = $host;
@@ -5505,7 +5505,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     my $rhost = "";
     my $fail  = "";
     $? = 0;
-    $cfg{'host'}        = $host;
     if ($cfg{'proxyhost'} ne "") {
         # if a proxy is used, DNS might not work at all, or be done by the
         # proxy (which even may return other results than the local client)
