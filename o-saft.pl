@@ -109,7 +109,7 @@ open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
 
 ## CGI
 ## -------------------------------------
-my $cgi  = 0;
+our $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
@@ -2413,7 +2413,7 @@ sub _cfg_set($$) {
     no warnings qw(prototype); # avoid: main::_cfg_set() called too early to check prototype at ...
     _trace(" _cfg_set($typ, ){");
     if ($typ !~ m/^CFG-(cmd|checks?|data|text|scores?)$/) {
-        _warn("unknown configuration key '$typ'; ignored");
+        _warn("unknown configuration key '$typ'; setting ignored");
         goto _CFG_RETURN;
     }
     if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
@@ -2447,7 +2447,7 @@ sub _cfg_set($$) {
             close(FID);
             goto _CFG_RETURN;
         };
-        _warn("cannot open '$arg': $! ; ignored");
+        _warn("cannot open '$arg': $! ; file ignored");
         return;
     } # read file
 
@@ -2467,10 +2467,10 @@ sub _cfg_set($$) {
             next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
             if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
                 push(@{$cfg{$typ}}, 'selected');
-                _warn("please use '+selected' instead of '+$key'; ignored");
+                _warn("please use '+selected' instead of '+$key'; setting ignored");
                 next;
             }
-            _warn("unknown command '+$key' for '$typ'; ignored");
+            _warn("unknown command '+$key' for '$typ'; setting ignored");
         }
     }
 
@@ -2479,7 +2479,7 @@ sub _cfg_set($$) {
     if ($typ eq 'CFG-score') {          # set new score value
         _trace(" _cfg_set(KEY=$key, SCORE=$val)\n");
         if ($val !~ m/^(\d\d?|100)$/) { # allow 0 .. 100
-            _warn("invalid score value '$val'; ignored");
+            _warn("invalid score value '$val'; setting ignored");
             goto _CFG_RETURN;
         }
         $checks{$key}->{score} = $val if ($checks{$key});
@@ -4006,7 +4006,7 @@ sub print_data($$$$) {
     # print given label and text from %data according given legacy format
     my ($legacy, $label, $host, $port) = @_;
     if (_is_hashkey($label, \%data) < 1) {     # silently ignore unknown labels
-        _warn("unknown label '$label'; ignored"); # seems to be a programming error
+        _warn("unknown label '$label'; output ignored"); # seems to be a programming error
         return;
     }
     print_host_key($host, $port, $label);
@@ -4780,21 +4780,21 @@ while ($#argv >= 0) {
             if (1 == grep(/^$arg$/i, @{$cfg{'legacys'}})) {
                 $cfg{'legacy'} = lc($arg);
             } else {
-                _warn("unknown legacy '$arg'; ignored") if ($arg !~ /^\s*$/);
+                _warn("unknown legacy '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'FORMAT')   {
             if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
                 $cfg{'format'} = $arg;
             } else {
-                _warn("unknown format '$arg'; ignored") if ($arg !~ /^\s*$/);
+                _warn("unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CRANGE')    {
             if (1 == grep(/^$arg$/, keys %{$cfg{'cipherranges'}})) {
                 $cfg{'cipherrange'} = $arg;
             } else {
-                _warn("unknown cipher range '$arg'; ignored") if ($arg !~ /^\s*$/);
+                _warn("unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         _y_ARG("argument= $arg");
@@ -4828,14 +4828,22 @@ while ($#argv >= 0) {
         }
     } # ne 'HOST'
 
-    # When used as CGI we need some special checks:
-    #   - remove trailing = for all options except (see below)
-    #   - ignore --cgi option
-    #   - ignore empty arguments
-    #   - arguments for --command may miss a leading +, which will be added
-    #
-    if ($arg !~ /([+]|--)(cmd|host|port|exe|lib|cipher|format|legacy|timeout|url)=/) {
-        $arg =~ s/=+$//;                    # remove trailing = (for CGI mode)
+    next if ($arg =~ /^\s*$/);# ignore empty arguments
+
+    # remove trailing = for all options
+    # such options are incorrectly used or passed in CGI mode
+    # NOTE: this means that we cannot have empty strings as value
+    if ($arg =~ m/^-[^=]*=$/) {
+        # in CGI mode all options are passed with a trailing = even those
+        # which do not have an argument (value)
+        # so we cannot ignore all options with empty value, like: --header=
+        # following regex contains those options , which have a value, only
+        # these are ignore if the value is empty
+        if ($arg =~ /^(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)/) {
+            _warn("option with empty argument '$arg'; option ignored") if ($cgi == 0);
+            next;
+        }
+        $arg =~ s/=+$//;
     }
 
     # first handle some old syntax for backward compatibility
@@ -4845,7 +4853,7 @@ while ($#argv >= 0) {
         next; # no more normalisation!
     }
     if ($arg =~ /^--set[_-]?score=(.*)/){
-        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; ignored");
+        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; option ignored");
         next;
     }
 
@@ -4875,14 +4883,13 @@ while ($#argv >= 0) {
     #!#--------+------------------------+--------------------------+------------
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
-    if ($arg =~ /^--cgi.*/)             { $arg = '# for CGI mode';  next; } # for CGI mode; ignore
+    if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # for CGI mode; ignore
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
         # in CGI mode commands need to be passed as --cmd=* option
     #!#--------+------------------------+--------------------------+------------
     #} specials
 
-    next if ($arg =~ /^\s*$/);# ignore empty arguments
     # normalize options with arguments:  --opt=name --> --opt name
     if ($arg =~ m/(^-[^=]*)=(.*)/) {
         $arg = $1;
@@ -5145,7 +5152,7 @@ while ($#argv >= 0) {
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
             push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
         } else {
-            _warn("unknown command '$val' ignored");
+            _warn("unknown command '$val' command ignored");
         }
         next;
     }
@@ -5366,7 +5373,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);
     if (_is_do('cipherraw')) { # +cipherraw does not depend on other libraries
         if ($ssl eq 'DTLSv1') {
-            _warn("SSL version '$ssl' not supported by '$mename +cipherraw'; ignored");
+            _warn("SSL version '$ssl' not supported by '$mename +cipherraw'; not checked");
             next;
         }
         push(@{$cfg{'version'}}, $ssl);
@@ -5401,10 +5408,10 @@ foreach $ssl (@{$cfg{'versions'}}) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
         } else {
-            _warn("SSL version '$ssl' not supported by openssl; ignored");
+            _warn("SSL version '$ssl' not supported by openssl; not checked");
         }
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
-        _warn("unsupported SSL version '$ssl'; ignored");
+        _warn("unsupported SSL version '$ssl'; not checked");
     }
 }
 
@@ -5518,7 +5525,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         $fail  = '<<gethostbyaddr() failed>>';
         $cfg{'ip'}      = gethostbyname($host); # primary IP as identified by given hostname
         if (!defined $cfg{'ip'}) {
-            _warn("Can't get IP for host '$host'; ignored");
+            _warn("Can't get IP for host '$host'; host ignored");
             _y_CMD("host}");
             next; # otherwise all following fails
         }
