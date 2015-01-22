@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.20"; }
+    sub _VERSION() { return "15.01.21"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -3766,6 +3766,8 @@ sub checkdest($$) {
     return if ($cfg{'done'}->{'checkdest'} > 1);
 
     checksni($host, $port);     # set checks according hostname
+    # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'} 
+    # if --proxyhost was used; hence no need to check for proxyhost again
     $checks{'reversehost'}->{val}   = $host . " <> " . $cfg{'rhost'} if ($cfg{'rhost'} ne $host);
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
@@ -5501,39 +5503,52 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     # prepare DNS stuff
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
     my $rhost = "";
-    my $fail  = '<<gethostbyaddr() failed>>';
+    my $fail  = "";
     $? = 0;
     $cfg{'host'}        = $host;
-    $cfg{'ip'}          = gethostbyname($host); # primary IP as identified by given hostname
-    if (!defined $cfg{'ip'}) {
-        _warn("Can't get IP for host '$host'; ignored");
-        _y_CMD("host}");
-        next; # otherwise all following fails
-    }
-    # gethostbyaddr() is strange: returns $?==0 but an error message in $!
-    # hence just checking $? is not reliable, we do it additionally.
-    # iI gethostbyaddr() fails we use perl's  `or'  to assign our default text.
-    # This may happen when there're problems with the local name resolution.
-    # FIXME: when gethostbyaddr() fails, the connection to the target most
-    # likely fails also, which produces more perl warnings later.
-    $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
-    if ($cfg{'usedns'} == 1) {  # following settings only with --dns
-       ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
-        $cfg{'rhost'}   = $fail if ($? != 0);
-    }
-    $? = 0;
-    if ($cfg{'usedns'} == 1) {
-        my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
-        my $i = 0;
-        foreach my $ip (@ips) {
-            $! = 0;
-            $? = 0;
-           ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
-            $rhost  = $fail if ($? != 0);
-            $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
-            #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
+    if ($cfg{'proxyhost'} ne "") {
+        # if a proxy is used, DNS might not work at all, or be done by the
+        # proxy (which even may return other results than the local client)
+        # so we set corresponding values to a warning
+        $fail = _subst($text{'disabled'}, "--proxyhost=$cfg{'proxyhost'}");
+        $cfg{'rhost'}   = $fail;
+        $cfg{'DNS'}     = $fail;
+        $cfg{'IP'}      = $fail;
+        $cfg{'ip'}      = $fail;
+    } else {
+        $fail  = '<<gethostbyaddr() failed>>';
+        $cfg{'ip'}      = gethostbyname($host); # primary IP as identified by given hostname
+        if (!defined $cfg{'ip'}) {
+            _warn("Can't get IP for host '$host'; ignored");
+            _y_CMD("host}");
+            next; # otherwise all following fails
         }
-        _warn("Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
+        # gethostbyaddr() is strange: returns $?==0 but an error message in $!
+        # hence just checking $? is not reliable, we do it additionally.
+        # If gethostbyaddr()  fails we use perl's  `or'  to assign our default
+        # text.  This may happen when there're problems with the local name
+        # resolution.
+        # FIXME: when gethostbyaddr() fails, the connection to the target most
+        # likely fails also, which produces more perl warnings later.
+        $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
+        if ($cfg{'usedns'} == 1) {  # following settings only with --dns
+           ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
+            $cfg{'rhost'}   = $fail if ($? != 0);
+        }
+        $? = 0;
+        if ($cfg{'usedns'} == 1) {
+            my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
+            my $i = 0;
+            foreach my $ip (@ips) {
+                $! = 0;
+                $? = 0;
+               ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
+                $rhost  = $fail if ($? != 0);
+                $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
+                #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
+            }
+            _warn("Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
+        }
     }
     $? = 0;
 
