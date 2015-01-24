@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.85 14/12/06 22:52:22',
+    SID         => '@(#) Net::SSLinfo.pm 1.85a 15/01/21 22:42:42',
 };
 
 ######################################################## public documentation #
@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.01.24';
+    $VERSION   = '15.01.25';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -917,32 +917,27 @@ sub do_ssl_open($$$) {
     TRY: {
         #1. open TCP connection
         if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
-            $src = "_check_host($host)";  if (!defined _check_host($host)) { last; }
-            $src = "_check_port($port)";  if (!defined _check_port($port)) { last; }
-            $src = 'socket()';
-            unless ( ($main::cfg{'starttls'}) || (($main::cfg{'proxyhost'})&&($main::cfg{'proxyport'})) ){ #unless nor starttls neither via Proxy
+            unless (($main::cfg{'starttls'}) || ($main::cfg{'proxyhost'})) { # $cfg{'proxyport'} was already checked in main
+                # no proxy and not starttls
+                $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
+                $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
+                $src = 'socket()';
                 socket( $socket, &AF_INET, &SOCK_STREAM, 0) or {$err = $!} and last;
                 $src = 'connect()';
                 $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
-            } else { #starttls or via Proxy
+            } else { # starttls or via Proxy
 ## ## ## ## (begin: added starttls and proxy-support)
 ########### set new feature temporary to --experimental$
                 main::_warn_and_exit("SSLinfo::do_ssl_open", "--starttls, --proxyhost", "experimental use");
 ########### End: set new feature temporary to --experimental$
 
                 require Net::SSLhello;
-                _trace("SSLinfo::do_ssl_open: Net::SSLhello= $Net::SSLhello::VERSION") if ($trace == 1); # TODO: already done in _yeast_init()
                 Net::SSLhello::version() if ($trace > 1); # TODO: already done in _yeast_init()
-
-                #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested # TBD: Error-Handling if $host or $port not set or invalid
-                $socket = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if ne     dded
-
-                if ( (!defined ($socket)) || ($@) ) { # No SSL Connection 
-                    $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); #generic      Error Message
-                    warn ("**WARNING: _do_ssl_open (with openTcpSSLconnection): $@\n"); 
-                    _trace ("_do_ssl_open: Fatal Exit in _doCheckSSLciphers }\n");
-                    return ("");
-                }
+                $src = "Net::SSLhello::openTcpSSLconnection()";
+                # open TCP connection via proxy and do STARTTLS if requested
+                # NOTE that $host cannot be checked here because the proxy does
+                # DNS and also has the routes to the host
+                ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or {$err = $!} and last;
             }
 ## ## ## ## ## (end: added starttls and proxy-support)
             select($socket); $| = 1; select(STDOUT);  # Eliminate STDIO buffering
