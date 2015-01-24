@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.01.20';
+    $VERSION   = '15.01.24';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump

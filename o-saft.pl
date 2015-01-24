@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.21"; }
+    sub _VERSION() { return "15.01.24"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -5257,7 +5257,7 @@ if (_is_do('cipherraw') or _is_do('version') or ($cfg{'starttls'}) or (($cfg{'pr
         $Net::SSLhello::proxyport   = $cfg{'proxyport'};
         $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
     } # End: no warnings
-    $cfg{'usehttp'}   = 0; # usehttp does not make sende for strttls; TODO: is not (yet) supported for Proxy
+    $cfg{'usehttp'}   = 0; # usehttp does not make sense for strttls; TODO: is not (yet) supported for Proxy
 }
 require Net::SSLinfo;
 _y_TIME("inc}");
