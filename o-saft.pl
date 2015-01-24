@@ -2780,7 +2780,7 @@ sub _isbleed($$) {
         _warn_and_exit("_isbleed", "--starttls, --proxyhost", "experimental use");
 ########### End: set new feature temporary to --experimental
 
-        _trace("_isbleed: call 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
+        _trace("_isbleed: 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
         #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
         $cl = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
   
@@ -2972,9 +2972,9 @@ sub _usesocket($$$$) {
 ########### End: set new feature temporary to --experimental
 
         #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
+        _trace("_usesocket: 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
         $sslsocket = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
 
-        _trace("_usesocket: call 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
         if ( (!defined ($sslsocket)) || ($@) ) { # No SSL Connection 
             $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@); #generic Error Message
             _warn ("**WARNING: _usesocket (with openTcpSSLconnection): $@\n"); 
