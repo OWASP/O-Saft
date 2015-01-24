@@ -3704,7 +3704,7 @@ sub checkprot($$) {
             $checks{'hassslv3'}->{val}      = "" if ($ssl eq 'SSLv3');
             $checks{'poodle'}  ->{val}      = "" if ($ssl eq 'SSLv3');
         }
-    if ($checks{$ssl}->{val} > 0) {     # protocol checked and returned a cipher
+        if ($checks{$ssl}->{val} > 0) {     # protocol checked and returned a cipher
             if ($ssl eq 'SSLv2') {
                 $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
             }
@@ -5083,7 +5083,6 @@ while ($#argv >= 0) {
           ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
         exec 'perl', '-lane', "$perlprog", $0;
         exit 0;
-
     }
     if ($arg =~ /^\+(.*)/)  { # all  other commands
         my $val = $1;
@@ -5104,7 +5103,6 @@ while ($#argv >= 0) {
         if ($val eq 'http') { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
         if ($val eq 'sni')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sni'}});   next; }
         if ($val eq 'ev')   { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
- #    #    #    #    #    #    #    #
         if ($val =~ /^(bsi|TR-?02102)/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
         if (_is_member($val, \@{$cfg{'cmd-NOT_YET'}}) > 0) {
             _warn("command not yet implemented '$val' may be ignored");
@@ -5142,6 +5140,11 @@ while ($#argv >= 0) {
     }
 
 } # while
+if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
+    _warn("--proxyhost=$cfg{'proxyhost'} requires also --proxyport=NN");
+    printusage();
+    exit 2;
+}
 $cfg{'traceCMD'}++ if ($cfg{'traceTIME'} > 0);
 $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
