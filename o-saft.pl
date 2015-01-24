@@ -2781,29 +2781,6 @@ sub _isbleed($$) {
 ########### End: set new feature temporary to --experimental
 
         _trace("_isbleed: call 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
-        # set defaults for Net::SSLhello
-        no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
-        $Net::SSLhello::trace       = $cfg{'trace'};
-        $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
-        $Net::SSLhello::experimental= $cfg{'experimental'};
-        $Net::SSLhello::usesni      = $cfg{'usesni'};
-        $Net::SSLhello::usemx       = $cfg{'usemx'};
-        $Net::SSLhello::sni_name    = $cfg{'sni_name'};
-        $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
-        $Net::SSLhello::starttlsType= $cfg{'starttls'};
-        $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
-        $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
-        $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
-        $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
-        $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
-        $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
-        $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
-        $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
-        $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
-        $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
-        $Net::SSLhello::proxyport   = $cfg{'proxyport'};
-        $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
-
         #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
         $cl = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
   
@@ -2989,33 +2966,15 @@ sub _usesocket($$$$) {
             SSL_cipher_list => $ciphers,
         );
     } else { #starttls or via Proxy
-        _trace("_usesocket: call 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
-        # set defaults for Net::SSLhello
-        no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
-        $Net::SSLhello::trace       = $cfg{'trace'};
-        $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
-        $Net::SSLhello::experimental= $cfg{'experimental'};
-        $Net::SSLhello::usesni      = $cfg{'usesni'};
-        $Net::SSLhello::usemx       = $cfg{'usemx'};
-        $Net::SSLhello::sni_name    = $cfg{'sni_name'};
-        $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
-        $Net::SSLhello::starttlsType= $cfg{'starttls'};
-        $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
-        $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
-        $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
-        $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
-        $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
-        $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
-        $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
-        $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
-        $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
-        $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
-        $Net::SSLhello::proxyport   = $cfg{'proxyport'};
-        $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
+
+########### set new feature temporary to --experimental
+        _warn_and_exit("_usesocket", "--starttls, --proxyhost", "experimental use");
+########### End: set new feature temporary to --experimental
 
         #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
         $sslsocket = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
 
+        _trace("_usesocket: call 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
         if ( (!defined ($sslsocket)) || ($@) ) { # No SSL Connection 
             $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@); #generic Error Message
             _warn ("**WARNING: _usesocket (with openTcpSSLconnection): $@\n"); 
@@ -5271,8 +5230,34 @@ if (_is_do('cipherraw') or _is_do('version') or ($cfg{'starttls'}) or (($cfg{'pr
     if (!(_is_do('cipherraw')) and !(_is_do('version'))) {
         _warn_and_exit("main", "--starttls, --proxyhost", "experimental use");
     }
-}
 ########### End: set new feature temporary to --experimental
+
+    # set defaults for Net::SSLhello
+    { # Section for no warnings
+        no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
+        $Net::SSLhello::trace       = $cfg{'trace'};
+        $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
+        $Net::SSLhello::experimental= $cfg{'experimental'};
+        $Net::SSLhello::usesni      = $cfg{'usesni'};
+        $Net::SSLhello::usemx       = $cfg{'usemx'};
+        $Net::SSLhello::sni_name    = $cfg{'sni_name'};
+        $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
+        $Net::SSLhello::starttlsType= $cfg{'starttls'};
+        $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
+        $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
+        $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
+        $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
+        $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
+        $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
+        $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
+        $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
+        $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
+        $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
+        $Net::SSLhello::proxyport   = $cfg{'proxyport'};
+        $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
+    } # End: no warnings
+    $cfg{'usehttp'}   = 0; # usehttp does not make sende for strttls; TODO: is not (yet) supported for Proxy
+}
 require Net::SSLinfo;
 _y_TIME("inc}");
 
@@ -5575,31 +5560,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
-        _trace(" Net::SSLhello= $Net::SSLhello::VERSION"); # TODO: already done in _yeast_init()
-        # set defaults for Net::SSLhello
-        {
-            no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
-            $Net::SSLhello::trace       = $cfg{'trace'};
-            $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
-            $Net::SSLhello::experimental= $cfg{'experimental'};
-            $Net::SSLhello::usesni      = $cfg{'usesni'};
-            $Net::SSLhello::usemx       = $cfg{'usemx'};
-            $Net::SSLhello::sni_name    = $cfg{'sni_name'};
-            $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
-            $Net::SSLhello::starttlsType= $cfg{'starttls'};
-            $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
-            $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
-            $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
-            $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
-            $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
-            $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
-            $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
-            $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
-            $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
-            $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
-            $Net::SSLhello::proxyport   = $cfg{'proxyport'};
-            $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
-        }
         _v_print("cipher range: $cfg{'cipherrange'}");
         foreach $ssl (@{$cfg{'version'}}) {
             next if ($cfg{$ssl} == 0);
