@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.24"; }
+    sub _VERSION() { return "15.01.25"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -2786,7 +2786,7 @@ sub _isbleed($$) {
   
         if ( (!defined ($cl)) || ($@) ) { # No SSL Connection 
             $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); #generic Error Message
-            _warn ("**WARNING: _isbleed (with openTcpSSLconnection): $@\n"); 
+            _warn ("_isbleed (with openTcpSSLconnection): $@\n"); 
             _trace ("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
             return ("failed to connect");
         } else {
@@ -2977,7 +2977,7 @@ sub _usesocket($$$$) {
 
         if ( (!defined ($sslsocket)) || ($@) ) { # No SSL Connection 
             $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@); #generic Error Message
-            _warn ("**WARNING: _usesocket (with openTcpSSLconnection): $@\n"); 
+            _warn ("_usesocket (with openTcpSSLconnection): $@\n"); 
             _trace ("_usesocket: Fatal Exit in _doCheckSSLciphers }\n");
             return ("");
         } else {
