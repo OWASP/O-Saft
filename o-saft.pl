@@ -5366,6 +5366,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
             next;
         }
         push(@{$cfg{'version'}}, $ssl);
+        next;
     }
     next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
     $cfg{$ssl} = 0; # reset to simplify further checks
