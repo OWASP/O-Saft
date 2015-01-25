@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '15.01.18';
+    $VERSION    = '15.01.25';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -1659,11 +1659,9 @@ sub openTcpSSLconnection ($$) {
             if ($@) { # no Connect
                 alarm (0);
                 close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
-                $@ .= "-> No connection to the Proxy -> Fatal Exit in openTcpSSLconnection";
-                warn ("*** WARNING: openTcpSSLconnection: $@");
+                _trace2 ("openTcpSSLconnection: $@ -> Fatal Exit in openTcpSSLconnection");
                 sleep (1);
-                return (undef);
-                # exit (1); # Exit with Error
+                last; # no retry
             }
             eval {
                 $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
@@ -1674,7 +1672,7 @@ sub openTcpSSLconnection ($$) {
                 alarm (0);
             }; # Do NOT forget the ;
             if ($@) { # no Connect
-                warn "**WARNING: openTcpSSLconnection: ... Could not send a CONNECT-Command to the Proxy: $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport\n"; 
+                _trace2 ("openTcpSSLconnection: ... Could not send a CONNECT-Command to the Proxy: $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport\n"); 
                 close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
                 next; # retry
             } 
