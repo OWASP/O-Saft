@@ -54,7 +54,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '15.01.25';
+    $VERSION    = '15.01.26';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -1399,8 +1399,8 @@ sub checkSSLciphers ($$$@) {
 sub openTcpSSLconnection ($$) {
     #? open a TCP connection to a Server and Port and send STARTTLS if requested
     #? This SSL connection could be made via a http Proxy 
-    my $host        = shift; # hostname
-    my $port        = shift;
+    my $host        = shift || ""; # hostname
+    my $port        = shift || "";
     my $socket;
     my $connect2ip;
     my $proxyConnect="";
@@ -2020,10 +2020,10 @@ sub _doCheckSSLciphers ($$$$) {
     #? Simulate SSL Handshake to check any Ciphers by the HEX value
     #? $cipher_spec: RAW Octets according to RFC
     #
-    my $host        = shift; # hostname
-    my $port        = shift;
-    my $protocol    = shift; # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
-    my $cipher_spec = shift;
+    my $host        = shift || ""; # hostname
+    my $port        = shift || "";
+    my $protocol    = shift || ""; # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
+    my $cipher_spec = shift || "";
     my $socket;
     my $connect2ip;
     my $proxyConnect="";
@@ -2203,10 +2203,10 @@ sub _doCheckSSLciphers ($$$$) {
 sub compileClientHello  {
     #? compile a Client Hello Packet
     #
-    my $record_version    = shift;
-    my $version    = shift;
-    my $ciphers    = shift;
-    my $host = shift;
+    my $record_version    = shift || "";
+    my $version    = shift || "";
+    my $ciphers    = shift || "";
+    my $host = shift || "";
     my $clientHello=""; #return value
     my $clientHello_tmp="";
     my $clientHello_extensions="";
@@ -2530,10 +2530,10 @@ sub compileClientHello  {
 }
 
 sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-Paket enthält  ; second (opional) variable: protocol-version, that the client uses
-    my $host = shift; #for warn- and trace-messages
-    my $port = shift; #for warn- and trace-messages
-    my $buffer = shift; 
-    my $client_protocol = shift;  # optional
+    my $host = shift || ""; #for warn- and trace-messages
+    my $port = shift || ""; #for warn- and trace-messages
+    my $buffer = shift || ""; 
+    my $client_protocol = shift || "";  # optional
     my $rest ="";
     my $tmp_len = 0;
     my $message = "";
@@ -2541,7 +2541,7 @@ sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-P
     my %serverHello;
     my $description = "";
 
-    if (length ($buffer) >0) { # Received Data in the buffer    
+    if (length ($buffer) >=5) { # Received Data in the buffer, at least 5 Bytes
         my $firstByte = unpack ("C", $buffer);
 
         if (defined $client_protocol) {
@@ -2683,16 +2683,16 @@ sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-P
             return ("");
         } #End SSL3/TLS
     } else {
-        _trace2("parseServerHello Server '$host:$port': (no Data)\n");
-    }    
+        warn ("**WARNING: parseServerHello Server '$host:$port': (no SSL/TLS-Record) : ".hexCodedString ($buffer)."\n");
+    }
 }
 
 
 sub parseSSL2_ServerHello ($$$;$) { # Variable: String/Octet, das den Rest des Server-Hello-Pakets enthält  
-    my $host = shift; #for warn- and trace-messages
-    my $port = shift; #for warn- and trace-messages
-    my $buffer = shift; 
-    my $client_protocol = shift;  # optional
+    my $host = shift || ""; #for warn- and trace-messages
+    my $port = shift || ""; #for warn- and trace-messages
+    my $buffer = shift || ""; 
+    my $client_protocol = shift || "";  # optional
     my $rest;
     my %serverHello;
 
@@ -2786,11 +2786,11 @@ sub parseSSL2_ServerHello ($$$;$) { # Variable: String/Octet, das den Rest des S
 
 sub parseTLS_ServerHello {
     # Variable: String/Octet, dass den Rest des Server-Hello-Pakets enthält, Länge, optional: Client-Protokoll  
-    my $host = shift; #for warn- and trace-messages
-    my $port = shift; #for warn- and trace-messages
-    my $buffer = shift; 
-    my $len = shift; 
-    my $client_protocol = shift;  # optional
+    my $host = shift || ""; #for warn- and trace-messages
+    my $port = shift || ""; #for warn- and trace-messages
+    my $buffer = shift || ""; 
+    my $len = shift || 0; 
+    my $client_protocol = shift || "";  # optional
     my $rest ="";
     my $rest2 ="";
     my %serverHello;
@@ -2914,8 +2914,8 @@ sub parseTLS_ServerHello {
 }
 
 sub parseTLS_Extension { # Variable: String/Octet, das die Extension-Bytes enthÃ¤lt
-    my $buffer = shift; 
-    my $len = shift; 
+    my $buffer = shift || ""; 
+    my $len = shift || 0; 
 
     my $rest ="";
     my %serverHello;
@@ -2954,10 +2954,7 @@ sub _timedOut {
 }
 
 sub _chomp_r { # chomp \r\n
-    my $string = shift; 
-    if (!defined($string)) { # undefined -> ""
-            $string="";
-    }
+    my $string = shift || ""; 
     $string =~ s/(.*?)\r?\n?$/$1/g;
     if ($string =~ /[^\x20-\x7E\t\r\n]/) { # non printable charachers in string 
         $string =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eig; #Code all Octets as HEX values and seperate then with a 'space'
@@ -2966,8 +2963,9 @@ sub _chomp_r { # chomp \r\n
 }
 
 sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
-    my $codedString= shift; 
+    my $codedString= shift || ""; 
     my $prefix= shift; # set an optional prefix after '\n' 
+    return ("") if ($codedString eq "");
     if (!defined($prefix)) { # undefined -> ""
             $prefix="";
     }
@@ -2979,8 +2977,9 @@ sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt wer
 }
 
 sub hexCodedCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
-    my $codedString= shift; 
+    my $codedString= shift || ""; 
     my $prefix= shift; # set an optional prefix after '\n' 
+    return ("") if ($codedString eq "");
     if (!defined($prefix)) { # undefined -> ""
             $prefix="";
     }
@@ -2991,11 +2990,12 @@ sub hexCodedCipher { # Variable: String/Octet, der in HEX-Werten dargestellt wer
 }
 
 sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurÃ¼ck 
-    my $codedString= shift;
+    my $codedString= shift || "";
     my $prefix= shift; # set an optional prefix after '\n' 
+    return ("") if ($codedString eq "");
     if (!defined($prefix)) { # undefined -> ""
             $prefix="";
-    }    
+    }
     $codedString =~ s/([\x00-\xFF])([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X%02X ", ord($1), ord($2), ord($3))/eig; #Code all 3-Octet-Ciphers as HEX value-Pairs and separate then with a 'space'
     $codedString =~ s/((?:[0-9A-Fa-f]{6}){16} )/"$1\n$prefix"/eig; #  Add a new line each 16 Ciphers (=112 Symbols incl. Spaces) 
     chomp ($codedString); #delete CR at the end
@@ -3003,11 +3003,12 @@ sub hexCodedSSL2Cipher { # Variable: String/Octet, der in HEX-Werten dargestellt
 }
 
 sub hexCodedTLSCipher { # Variable: String/Octet, der in HEX-Werten dargestellt werden soll, gibt Ausgabestring zurück 
-    my $codedString= shift;
+    my $codedString= shift || "";
     my $prefix= shift; # set an optional prefix after '\n' 
+    return ("") if ($codedString eq "");
     if (!defined($prefix)) { # undefined -> ""
             $prefix="";
-    }        
+    }
     $codedString =~ s/([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X ", ord($1), ord($2))/eig; #Code all 2-Octet-Ciphers as HEX value-Pairs and separate then with a 'space'
     $codedString =~ s/((?:[0-9A-Fa-f]{4}){16} )/"$1\n$prefix"/eig; #  Add a new line each 16 Ciphers (=80 Symbols incl. Spaces) 
     chomp ($codedString); #delete CR at the end
@@ -3015,7 +3016,7 @@ sub hexCodedTLSCipher { # Variable: String/Octet, der in HEX-Werten dargestellt 
 }
 
 sub compileSSL2CipherArray ($) {
-    my $cipherList= shift;
+    my $cipherList= shift || "";
     my $protocolCipher="";
     my $firstByte="";
     my @cipherArray = ();
@@ -3050,7 +3051,7 @@ sub compileSSL2CipherArray ($) {
 
 
 sub compileTLSCipherArray ($) {
-    my $cipherList= shift;
+    my $cipherList= shift || "";
     my $protocolCipher="";
     my $firstByte="";
     my @cipherArray = ();
@@ -3080,7 +3081,7 @@ sub compileTLSCipherArray ($) {
 
 
 sub printSSL2CipherList ($) {
-    my $cipherList= shift;
+    my $cipherList= shift || "";
     my $protocolCipher="";
     my $firstByte="";
 
@@ -3113,7 +3114,7 @@ sub printSSL2CipherList ($) {
 
 
 sub printTLSCipherList ($) {
-    my $cipherList= shift;
+    my $cipherList= shift || "";
     my $protocolCipher="";
 
     my $anzahl = int length ($cipherList) / 2;
