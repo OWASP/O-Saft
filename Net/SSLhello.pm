@@ -1032,7 +1032,7 @@ sub printCipherStringArray ($$$$$@) {
     
     if ($usesni) {
         $sni = "SNI";
-        $sni .= " ($Net::SSLhello::sni_name)" if ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") );  ###FIX: quickfix until migration to usesni=2 is completed);
+        $sni .= " ($Net::SSLhello::sni_name)" if ( ($Net::SSLhello::usesni >=2) || ( ($Net::SSLhello::sni_name ne "1") && ($Net::SSLhello::usesni ==1) ) );  ###FIX: quickfix until migration to usesni=2 is completed);
     } else {
         $sni = "no SNI";
     }
@@ -2290,7 +2290,7 @@ sub compileClientHello  {
                 
             
 # ggf auch prüfen, ob Host ein DNS-Name ist
-        if ( ($Net::SSLhello::usesni) && ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) ) { # allow to test SNI with version TLSv1 and above
+        if ( ($Net::SSLhello::usesni >=1) && ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) ) { # allow to test SNI with version TLSv1 and above
         ######## TBD: prüfen, ab welchem Protokoll SNI eingeführt wurde (z.B. TLS1.0)!!! #####
         ######## SSL3 erhält bei SSLLABS folgende Fußnote: This site requires support for virtual SSL hosting, 
         ########                                           but SSL 2.0 and SSL 3.0 do not support this feature.
@@ -2655,9 +2655,13 @@ sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-P
                         ) ) {
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
-                            my $sni_name = "";
-                            $sni_name .= " '$Net::SSLhello::sni_name'" if ($Net::SSLhello::sni_name);
-                            $@ = sprintf ("parseServerHello: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server $sni_name aborted!\n");
+                            my $sni = "";
+                            unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+                                $sni = "'$host'" if ($Net::SSLhello::usesni ==1); # Server Name, should be a Name no IP
+                            } else { # different sni_name
+                                $sni = "'$Net::SSLhello::sni_name'" if ($Net::SSLhello::sni_name);
+                            }
+                            $@ = sprintf ("parseServerHello: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server $sni aborted!\n");
                             print $@;
                             return (""); 
                         } else {
