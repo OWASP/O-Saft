@@ -2659,7 +2659,7 @@ sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-P
                             unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
                                 $sni = "'$host'" if ($Net::SSLhello::usesni ==1); # Server Name, should be a Name no IP
                             } else { # different sni_name
-                                $sni = "'$Net::SSLhello::sni_name'" if ($Net::SSLhello::sni_name);
+                                $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
                             }
                             $@ = sprintf ("parseServerHello: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server $sni aborted!\n");
                             print $@;
