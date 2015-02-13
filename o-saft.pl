@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.25"; }
+    sub _VERSION() { return "15.01.26"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -2438,7 +2438,7 @@ sub _cfg_set($$) {
                 #       where white spaces are allowed arround =
                 chomp $line;
                 $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
-                    # remove trailing comments, but CFG-text may contain #
+                    # remove trailing comments, but CFG-text may contain hash (#)
                 next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
                 next if ($line =~ m/^\s*$/);# ignore empty lines
                 _trace(" _cfg_set: set " . $line . "\n");
@@ -4791,14 +4791,14 @@ while ($#argv >= 0) {
     next if ($arg =~ /^\s*$/);# ignore empty arguments
 
     # remove trailing = for all options
-    # such options are incorrectly used or passed in CGI mode
+    # such options are incorrectly used, or are passed in in CGI mode
     # NOTE: this means that we cannot have empty strings as value
     if ($arg =~ m/^-[^=]*=$/) {
-        # in CGI mode all options are passed with a trailing = even those
+        # in CGI mode all options are passed with a trailing  =  even those
         # which do not have an argument (value)
         # so we cannot ignore all options with empty value, like: --header=
-        # following regex contains those options , which have a value, only
-        # these are ignore if the value is empty
+        # following regex contains those options, which have a value,  only
+        # these are ignored if the value is empty
         if ($arg =~ /^(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)/) {
             _warn("option with empty argument '$arg'; option ignored") if ($cgi == 0);
             next;
@@ -5031,7 +5031,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){}
                 # -s HOST   # ssl-cert-check: -s ignored hence HOST parsed as expected
                 # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
-    #!#--------+------------------------+---------------------------+----------
+    #} --------+------------------------+---------------------------+----------
 
     next if ($arg =~ /^-/); # all options handled, remaining are ignored
         # TODO: means that targets starting with '-' are not possible,
