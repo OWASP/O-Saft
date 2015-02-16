@@ -7,25 +7,17 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.9a 15/01/15 00:42:42";  # our SCCS id
+my  $man_SID= "@(#) o-saft-man.pm 1.10 15/02/16 23:33:25";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
-our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
-our $ich    = $ich;
+our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
-    $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
-if (! defined $wer) { # still nothing found, last resort: parent
-    $wer    = (caller(0))[1]; # parent;
-    $wer    =~ s#/[^/\\]*$##; # path of parent
-    $wer    .= "/$ich";       # append myself
-    print "**WARNING: no '$wer' found" if ! -e $wer;
-}
 our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
 my  $skip   = 1;
 our $egg    = "";
 our @DATA;
-if (open(DATA, $wer)) {
+if (open(DATA, $ich)) {
     # If this module is used in parent's BEGIN{} section, we don't have any
     # file descriptor, in particular nothing beyond __DATA__. Hence we need
     # to read the file --this one-- manually, and strip off anything before
@@ -541,7 +533,7 @@ sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @A
     # options, which is not performant, but fast enough here.
 sub _man_http_head(){
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-    print "Content-type: text/html; charset=utf-8\r\n";
+    print "Content-type: text/plain; charset=utf-8\r\n";
     print "\r\n";
 }
 sub _man_html_head(){
@@ -647,7 +639,7 @@ sub _man_arr($$$) {
     printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
 }
 sub _man_cfg($$$$){
-    #? print line in configuration format
+    # print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
     $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
     $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
@@ -733,7 +725,7 @@ sub man_table($) {
 } # man_table
 
 sub man_commands() {
-    #? print commands and short description
+    # print commands and short description
     # data is extracted from $parents internal data structure
     my $skip = 1;
     _man_dbx("man_commands($parent) ...");
@@ -766,7 +758,7 @@ Commands to test target's ciphers
 +cipher	Check target for ciphers (using libssl)
 +cipherraw	Check target for all possible ciphers.
 EoHelp
-    if (open(P, "<", $0)) { # need full path for $parent file here
+    if (open(P, "<", $parent)) {
         while(<P>) {
             # find start of data structure
             # all structure look like:
@@ -2378,7 +2370,7 @@ CHECKS
 
       poodle
 
-        Check if target is vulnerable to Poodle attack (SSLv3 enabled).
+        Check if target is vulnerable to Poodle attack.
 
     SSL Vulnerabilities
 
@@ -2777,7 +2769,7 @@ CUSTOMIZATION
 
     USER-FILE
 
-        All user functionality is defined in   o-saft-usr.pm ,  which will be
+        All user functionality is defined in   o-saft-dbx.pm ,  which will be
         searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is perl code.
@@ -2983,6 +2975,9 @@ LIMITATIONS
 
     Options
 
+        The option  --port=PORT  must preceed  --host=HOST  for a target like
+        HOST:PORT  .
+
         The characters  '+' and '='  cannot be used for  --separator  option.
 
         Following strings should not be used in any value for options:
@@ -3030,8 +3025,8 @@ LIMITATIONS
     User Provided Files
 
         Please note that there cannot be any guarantee that the code provided
-        in the  DEBUG-FILE o-saft-dbx.pm   or  USER-FILE  o-saft-usr.pm  will
-        work flawless. Obviously this is the user's responsibility.
+        in the  DEBUG-FILE  o-saft-dbx.pm   or  USER-FILE   o-saft-usr.pm  
+        will work flawless. Obviously this is the user's responsibility.
 
     Problems and Errors
 
@@ -3077,11 +3072,6 @@ LIMITATIONS
           * --openssl=X:\\path\\to\\openssl.exe
 
         You have to fiddle around to find the proper one.
-
-    Debug and Trace Output
-
-        When both  --trace=key  and  --trace=cmd  options are used, output is
-        mixed, obviously. Hint: output for --trace=cmd always contains "CMD".
 
 
 DEPENDENCIES
