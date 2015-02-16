@@ -1,0 +1,44 @@
+#!/bin/cat
+
+#? NAME
+#?      usage_examples  - examples for advanced usage of o-saft.pl
+#?
+#? DESCRIPTION
+#?      This file just contains examples and hints for advanced usage of
+#?      o-saft.pl.
+#?
+
+
+###############################################################################
+###
+### Command completion
+###
+
+# Command and parameter completion exists for following shells:
+#
+#	shell	file to be used
+#	-------+-------------------------
+#	bash	bash_completion_o-saft
+#	fish	generate_fish_completion
+#	tcsh	tcsh_completion_o-saft
+#	-------+-------------------------
+
+
+###############################################################################
+###
+### Reading parameters from file or STDIN
+###
+
+# o-saft.pl does not support reading parameters (arguments and options) from
+# STDIN, here-documents or redirected from a file. This behaviour is reserved
+# for future functionality (reading data from STDIN etc.).
+# However, o-saft.pl supports reading parameters from its RC-FILE ,see
+#	o-saft.pl --help=CUSTOMIZATION
+# this can be used to tweak reading prepared file.
+#
+# Example: file host-list.txt which contains host:port one per line:
+
+o-saft.pl +cipher `awk -F: '/:/{print "--port="$2" --host="$1}' host-list.txt`
+
+
+
