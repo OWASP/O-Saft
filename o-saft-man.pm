@@ -541,7 +541,7 @@ sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @A
     # options, which is not performant, but fast enough here.
 sub _man_http_head(){
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-    print "Content-type: text/plain; charset=utf-8\r\n";
+    print "Content-type: text/html; charset=utf-8\r\n";
     print "\r\n";
 }
 sub _man_html_head(){
