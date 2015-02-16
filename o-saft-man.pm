@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.10 15/02/16 23:33:25";
+my  $man_SID= "@(#) o-saft-man.pm 1.11 15/02/16 23:44:57";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -1148,6 +1148,9 @@ TECHNICAL INFORMATION
 
         Above applies to all commands except  +cipherraw  which uses no other
         libraries.
+
+        Reading any data from STDIN or here-documents is not yet supported.
+        It's reserved for future use.
 
 
 RESULTS
