@@ -1,11 +1,11 @@
 #!/bin/cat
 
 #? NAME
-#?      contrib  - examples for usage of o-saft.pl
+#?      filter_examples  - examples for formatting o-saft.pl's output
 #?
 #? DESCRIPTION
-#?      This file just contains examples for more sophisticated usage of
-#?      o-saft.pl.
+#?      This file contains examples for more sophisticated convertions of
+#?      o-saft.pl's output.
 #?      All examples should work just by copy&paste.
 #?
 
@@ -80,5 +80,23 @@ o-saft.pl +info --legacy=quick localhost \
 
 o-saft.pl +info --legacy=quick localhost \
 | gawk -F'\t' 'BEGIN{print "<infos xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"SSLResults.xsd\" >"}(NF>0){gsub(/&/,"\\&amp;");gsub(/"/,"\\&quot;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{i++;printf(" <info id=\"%s\" label=\"%s\" value=\"%s\" />\n",i,$1,$2);}END{print "</info>"}'
+
+
+###############################################################################
+###
+### Parsable SSL protocol in output
+###
+
+### +cipher output: cipher lines with SSL protocol version
+
+o-saft.pl +cipher localhost --header --legacy=sslaudit
+o-saft.pl +cipher localhost --header --legacy=ssldiagnose
+o-saft.pl +cipher localhost --header --legacy=full
+
+
+### +cipher output: all lines are prefixed with SSL protocol version
+
+o-saft.pl +cipher localhost --header --legacy=quick \
+| awk '/^=== schl/{p=$(NF-1)}/^/{printf"%s\t%s\n",p,$0;}'
 
 
