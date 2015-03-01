@@ -7,17 +7,25 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.11 15/02/16 23:44:57";
+my  $man_SID= "@(#) o-saft-man.pm 1.14 15/03/01 13:58:42";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
-our $ich    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
+our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
+our $ich    = $wer;
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
+    $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
+if (! defined $wer) { # still nothing found, last resort: parent
+    $wer    = (caller(0))[1]; # parent;
+    $wer    =~ s#/[^/\\]*$##; # path of parent
+    $wer    .= "/$ich";       # append myself
+    print "**WARNING: no '$wer' found" if ! -e $wer;
+}
 our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
 my  $skip   = 1;
 our $egg    = "";
 our @DATA;
-if (open(DATA, $ich)) {
+if (open(DATA, $wer)) {
     # If this module is used in parent's BEGIN{} section, we don't have any
     # file descriptor, in particular nothing beyond __DATA__. Hence we need
     # to read the file --this one-- manually, and strip off anything before
@@ -533,7 +541,7 @@ sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @A
     # options, which is not performant, but fast enough here.
 sub _man_http_head(){
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-    print "Content-type: text/plain; charset=utf-8\r\n";
+    print "Content-type: text/html; charset=utf-8\r\n";
     print "\r\n";
 }
 sub _man_html_head(){
@@ -639,7 +647,7 @@ sub _man_arr($$$) {
     printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
 }
 sub _man_cfg($$$$){
-    # print line in configuration format
+    #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
     $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
     $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
@@ -725,7 +733,7 @@ sub man_table($) {
 } # man_table
 
 sub man_commands() {
-    # print commands and short description
+    #? print commands and short description
     # data is extracted from $parents internal data structure
     my $skip = 1;
     _man_dbx("man_commands($parent) ...");
@@ -758,7 +766,7 @@ Commands to test target's ciphers
 +cipher	Check target for ciphers (using libssl)
 +cipherraw	Check target for all possible ciphers.
 EoHelp
-    if (open(P, "<", $parent)) {
+    if (open(P, "<", $0)) { # need full path for $parent file here
         while(<P>) {
             # find start of data structure
             # all structure look like:
@@ -935,13 +943,17 @@ sub man_help($) {
     $txt =~ s/\nS&([^&]*)&/\n$1/g;
     $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
-    print $txt;
+    if ($^O !~ m/MSWin32/) {
+    	print $txt;
+    } else {    # 32-bit Wind. is tooo stupid to print strings > 32k
+    	print "**WARNING: workaround for $^O which cannot output large strings.\n\n";
+    	print foreach split(//, $txt);  # print character by character :-((
+    }
     if ($label =~ m/^todo/i)    {
-        #$\   =  "\n";
         print "\n  NOT YET IMPLEMENTED\n";
         foreach $label (sort keys %checks) {
             next if (_is_member($label, \@{$cfg{'cmd-NOT_YET'}}) <= 0);
-            print "  " . $checks{$label}->{txt};
+            print "        $label\t- " . $checks{$label}->{txt} . "\n";
         }
     }
 } # man_help
@@ -2373,7 +2385,7 @@ CHECKS
 
       poodle
 
-        Check if target is vulnerable to Poodle attack.
+        Check if target is vulnerable to Poodle attack (SSLv3 enabled).
 
     SSL Vulnerabilities
 
@@ -2772,7 +2784,7 @@ CUSTOMIZATION
 
     USER-FILE
 
-        All user functionality is defined in   o-saft-dbx.pm ,  which will be
+        All user functionality is defined in   o-saft-usr.pm ,  which will be
         searched for using paths available in  '@INC'  variable.
 
         Syntax in this file is perl code.
@@ -3028,8 +3040,8 @@ LIMITATIONS
     User Provided Files
 
         Please note that there cannot be any guarantee that the code provided
-        in the  DEBUG-FILE  o-saft-dbx.pm   or  USER-FILE   o-saft-usr.pm  
-        will work flawless. Obviously this is the user's responsibility.
+        in the  DEBUG-FILE  o-saft-dbx.pm  or  USER-FILE  o-saft-usr.pm  will
+        work flawless. Obviously this is the user's responsibility.
 
     Problems and Errors
 
@@ -3075,6 +3087,11 @@ LIMITATIONS
           * --openssl=X:\\path\\to\\openssl.exe
 
         You have to fiddle around to find the proper one.
+
+    Debug and Trace Output
+
+        When both  --trace=key  and  --trace=cmd  options are used, output is
+        mixed, obviously. Hint: output for --trace=cmd always contains "CMD".
 
 
 DEPENDENCIES
@@ -3717,6 +3734,14 @@ TODO
              try: cmd /K chcp 65001
              or:  chcp 65001
              or:  reg add hklm\system\currentcontrolset\control\nls\codepage -v oemcp -d 65001
+          ** perl
+             perl 5.10.x from PortableApps does not work, cause it misses
+             IO/Socket/SSL.pm, however, checkAllCiphers.pl works.
+             perl from older PortableApps/xampp (i.e. 1.7.x) does not work, cause
+	     IO/Socket/SSL.pm is too old (1.37).
+          ** 32-bit Windows
+	     on 32-bit systems, print of strings > 32k does not work. Problem
+	     only fixed (ugly workaround) in o-saft-man.pm .
 
         * internal
           ** make a clear concept how to handle +CMD whether they report
