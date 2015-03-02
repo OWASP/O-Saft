@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.14 15/03/01 13:58:42";
+my  $man_SID= "@(#) o-saft-man.pm 1.15 15/03/02 09:06:08";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -943,11 +943,12 @@ sub man_help($) {
     $txt =~ s/\nS&([^&]*)&/\n$1/g;
     $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
-    if ($^O !~ m/MSWin32/) {
-    	print $txt;
-    } else {    # 32-bit Wind. is tooo stupid to print strings > 32k
-    	print "**WARNING: workaround for $^O which cannot output large strings.\n\n";
+    if (grep(/^--v/, @ARGV)>0) {        # do not use $^O but our own option
+        # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
+    	print "**WARNING: using workaround to print large strings.\n\n";
     	print foreach split(//, $txt);  # print character by character :-((
+    } else {
+    	print $txt;
     }
     if ($label =~ m/^todo/i)    {
         print "\n  NOT YET IMPLEMENTED\n";
@@ -2946,6 +2947,18 @@ KNOWN PROBLEMS
         ciphers are used with other protocols than SSLv2.
 
         Workaround: use  --no-md5-cipher  option.
+
+    No output with  +help  and/or  --help=todo
+
+        On some (mainly Windows-based) systems using
+              $0 +help
+              $0 --help
+        does not print anything.
+
+        Workaround: use  --v  option
+              $0 +help --v
+        or
+              $0 +help | more
 
     Performance Problems
 
