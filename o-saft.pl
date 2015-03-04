@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.01.26"; }
+    sub _VERSION() { return "15.02.28"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -77,7 +77,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) %M% %I% %E% %U%";
+my  $SID    = "@(#) yeast.pl 1.330 15/03/04 14:21:23";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -497,6 +497,7 @@ my %check_conn = (  # connection data
     'breach'        => {'txt' => "Connection is safe against BREACH attack"},
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
     'time'          => {'txt' => "Connection is safe against TIME attack"},
+    'freak'         => {'txt' => "Connection is safe against FREAK attack"},
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
     'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
@@ -831,6 +832,7 @@ our %shorttexts = (
     'breach'        => "Safe to BREACH",
     'crime'         => "Safe to CRIME",
     'time'          => "Safe to TIME",
+    'freak'         => "Safe to FREAK",
     'heartbleed'    => "Safe to heartbleed",
     'poodle'        => "Safe to Poodle",
     'scsv'          => "SCSV not supported",
@@ -1250,6 +1252,7 @@ our %cmd = (
                        ],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
+    'cmd-freak'     => [qw(freak)],                 # commands for +freak
     'cmd-http'      => [],      # commands for +http, computed below
     'cmd-hsts'      => [],      # commands for +hsts, computed below
     'cmd-info'      => [],      # commands for +info, simply anything from %data
@@ -1260,7 +1263,7 @@ our %cmd = (
                        qw(
                         selected cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast crime export rc4 pfs crl hassslv2 hassslv3 poodle
+                        beast crime freak export rc4 pfs crl hassslv2 hassslv3 poodle
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
@@ -1268,16 +1271,16 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(hassslv2 hassslv3 beast breach crime heartbleed pfs poodle time)
+                        qw(hassslv2 hassslv3 beast breach crime freak heartbleed pfs poodle time)
                        #qw(resumption renegotiation) # die auch?
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                       qw(check beast crime time breach pfs rc4 bsi selected poodle cipher)],
+                       qw(check beast crime time breach freak pfs rc4 bsi selected poodle cipher)],
     'need_default'  => [        # commands which need selected cipher
                        qw(check cipher pfs selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                       qw(check beast crime time breach pfs rc4 bsi selected ev+ ev-)],
+                       qw(check beast crime time breach freak pfs rc4 bsi selected ev+ ev-)],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
                        qw(
@@ -1372,6 +1375,8 @@ our %cmd = (
         # The following RegEx define what is "vulnerable":
         'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?(?:ARC(?:4|FOUR)|RC4)',
 #       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
+        'FREAK'     => '^(?:SSL[23]?)?(?:EXP(?:ORT)?(?:40|56|1024)?[_-])',
+                       # EXP? is same as regex{EXPORT} above
         'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
 #       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
@@ -2678,6 +2683,13 @@ sub _isbreach($){
 sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $_[0] . " "; }
     # return compression if available, empty string otherwise
 sub _istime($)  { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
+sub _isfreak($$){
+    # return given cipher if vulnerable to FREAK attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return ""      if ($ssl    !~ /(SSLv3)/); # TODO: probaly only SSLv3 is vulnerable
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
+    return "";
+} # _isfreak
 sub _ispfs($$)  { return ("$_[0]-$_[1]" =~ /$cfg{'regex'}->{'PFS'}/)   ? ""  : $_[1]; }
     # return given cipher if it does not support forward secret connections (PFS)
 sub _isrc4($)   { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/)  ? $_[0] . " "  : ""; }
@@ -3122,6 +3134,7 @@ sub checkcipher($$) {
     # check attacks
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
+    $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
     $checks{$ssl . '-pfs+'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _ispfs($ssl, $c));
     # counters ##                              vv---- take care -----^^
     $checks{$ssl . '-pfs-'}->{val}++    if ("" eq _ispfs($ssl, $c)); # count PFS ciphers
@@ -3159,7 +3172,7 @@ sub checkciphers($$) {
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
     if ($hasssl3 <= 0) {
-        # if SSLv3 was disabled, check for BEAST is incomplete; inform abozt that
+        # if SSLv3 was disabled, check for BEAST is incomplete; inform about that
         $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
     }
     $checks{'breach'}->{val}     = "<<NOT YET IMPLEMENTED>>";
@@ -5098,6 +5111,7 @@ while ($#argv >= 0) {
         push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val eq 'beast'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
         if ($val eq 'crime'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); next; }
+        if ($val eq 'freak'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-freak'}}); next; }
         if ($val eq 'sizes'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
         if ($val eq 'hsts') { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});  next; }
         if ($val eq 'http') { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
