@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.16 15/03/04 15:03:07";
+my  $man_SID= "@(#) o-saft-man.pm 1.17 15/03/05 17:38:32";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -217,7 +217,7 @@ our %man_text = (
         'FIPS186-3' => "FIPS Digital Signature Standard (DSS)",
         'FIPS197'   => "FIPS Advanced Encryption Standard (AES)",
         'FIPS198-1' => "FIPS The Keyed-Hash Message Authentication Code (HMAC)",
-        'FREAK'     => "Attack Against SSL/TLS to downgrate to EXPORT ciphers",
+        'FREAK'     => "Factoring Attack on RSA-EXPORT Keys",
         'FQDN'      => "Fully-qualified Domain Name",
         'FSB'       => "Fast Syndrome Based Hash",
         'FSM'       => "Finite State Machine",
