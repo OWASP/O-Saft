@@ -16,9 +16,13 @@ our $ich    = $wer;
     $ich    =~ s:.*/::;
     $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
 if (! defined $wer) { # still nothing found, last resort: parent
-    $wer    = (caller(0))[1]; # parent;
-    $wer    =~ s#/[^/\\]*$##; # path of parent
-    $wer    .= "/$ich";       # append myself
+    $wer    = (caller(0))[1];           # parent;
+    if (! defined $wer) {
+        $wer    = $0;     # still nothing found, last resort: myself
+    } else {
+        $wer    =~ s#/[^/\\]*$##;       # path of parent
+        $wer   .= "/$ich";              # append myself
+    }
     print "**WARNING: no '$wer' found" if ! -e $wer;
 }
 our $version= "$man_SID";               # version of myself
