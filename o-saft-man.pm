@@ -15,7 +15,7 @@ our $ich    = $wer;
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
     $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
-if (! defined $wer) { # still nothing found, last resort: parent
+if (! defined $wer) { # still nothing found, try parent
     $wer    = (caller(0))[1];           # parent;
     if (! defined $wer) {
         $wer    = $0;     # still nothing found, last resort: myself
@@ -38,7 +38,7 @@ if (open(DATA, $wer)) {
     # functions, but using a simple loop is more readable.
     # Preformat plain text with markup for further simple substitutions. We
     # use a modified (& instead of < >) POD markup as it is easy to parse.
-    # &  was choosen 'cause it rarely appears in texts and is not a meta
+    # &  was choosen because it rarely appears in texts and  is not  a meta
     # character in any of the supported  output formats (text, wiki, html),
     # and also causes no problems inside regex.
     while (<DATA>) {
@@ -58,9 +58,12 @@ if (open(DATA, $wer)) {
         s/^( +\* .*)/=item $1/;         # list item, first level
         s/^( {11})([^ ].*)/=item * $1$2/;# list item
         s/^( {14})([^ ].*)/S&$1$2&/;    # exactly 14 spaces used to highlight line
-        if (!m/^(?:=|S&|\s+\$0)/) { # no markup in example lines and already marked lines
-            s!(\s)((?:\+|--)[^,\s).]*)([,\s).])!$1I&$2&$3!g; # markup commands and options
-                # FIXME: fails for something like:  --opt="foo bar"
+        if (!m/^(?:=|S&|\s+\$0)/) {     # no markup in example lines and already marked lines
+            s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g; # markup commands and options
+                # FIXME: fails for something like:  --opt=foo="bar"
+                # FIXME: above substitute fails for something like:  --opt --opt
+                #        hence same substitute again (should be sufficent then)
+            s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
         }
         s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d\))/L&$1&/g;
         s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
@@ -69,7 +72,9 @@ if (open(DATA, $wer)) {
             # If external references are enclosed in double spaces, we squesze
             # leading and trailing spaces 'cause additional characters will be
             # added later (i.e. in man_help()). Just pretty printing ...
-        if (m/^ /) {                    # add internal links; quick&dirty list here
+        if (m/^ /) {
+            # add internal links; quick&dirty list here
+            # we only want to catch header lines, hence all capital letters
             s/ ((?:DEBUG|RC|USER)-FILE)/ X&$1&/g;
             s/ (CONFIGURATION (?:FILE|OPTIONS))/ X&$1&/g;
             s/ (COMMANDS|OPTIONS|RESULTS|CHECKS|OUTPUT) / X&$1& /g;
@@ -104,7 +109,7 @@ our %man_text = (
         'ARCFOUR'   => "alias for ARC4",
         'ARIA'      => "128-bit Symmetric Block Cipher",
         'ASN'       => "Autonomous System Number",
-        'ASN.1'     => "Abstract Syntax Notation One",
+        'ASN.1'     => "Abstract Syntax Notation number One",
         'BDH'       => "Bilinear Diffie-Hellman",
         'BEAST'     => "Browser Exploit Against SSL/TLS",
         'BER'       => "Basic Encoding Rules",
@@ -184,6 +189,7 @@ our %man_text = (
         'DTLSv1'    => "Datagram TLS 1.0",
         'DV'        => "Domain Validation",
         'DV-SSL'    => "Domain Validated Certificate",
+        'EAL'       => "Evaluation Assurance Level",
         'EAP'       => "Extensible Authentication Protocol",
         'EAP-PSK'   => "Extensible Authentication Protocol using a Pre-Shared Key",
         'EAX'       => "EAX Mode (block cipher mode)",
@@ -209,6 +215,7 @@ our %man_text = (
         'ENCIPHER'  => "synonym for encryption",
         'EME'       => "Encoding Method for Encryption",
         'ESP'       => "Encapsulating Security Payload",
+        'ETSI-TS'   => "European Telecommunications Standards Institute - Technical Specification",
         'EV'        => "Extended Validation",
         'EV-SSL'    => "Extended Validation Certificate",
         'FEAL'      => "Fast Data Encryption Algorithm",
@@ -257,48 +264,48 @@ our %man_text = (
         'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
         'KEK'       => "Key Encryption Key",
         'KSK'       => "Key Signing Key", # DNSSEC
-        'LM hash'   => "LAN Manager hash aka LanMan hash",
         'LFSR'      => "Linear Feedback Shift Register",
+        'LM hash'   => "LAN Manager hash aka LanMan hash",
         'Lucky 13'  => "Break SSL/TLS Protocol",
         'MARS'      => "",
         'MAC'       => "Message Authentication Code",
         'MCF'       => "Modular Crypt Format",
-        'MEE'       => "MAC-then-Encode-then-Encrypt",
-        'MEK'       => "Message Encryption Key",
         'MDC2'      => "Modification Detection Code 2 aka Meyer-Schilling",
         'MDC-2'     => "same as MDC2",
         'MD2'       => "Message Digest 2",
         'MD4'       => "Message Digest 4",
         'MD5'       => "Message Digest 5",
+        'MEE'       => "MAC-then-Encode-then-Encrypt",
+        'MEK'       => "Message Encryption Key",
         'MGF'       => "Mask Generation Function",
         'MISTY1'    => "block cipher algorithm",
         'MQV'       => "Menezes-Qu-Vanstone (authentecated key agreement",
-        'NTLM'      => "NT Lan Manager. Microsoft Windows challenge-response authentication method.",
-        'NPN'       => "Next Protocol Negotiation",
+        'NCP'       => "Normalized Certification Policy (according TS 102 042)",
         'Neokeon'   => "symmetric block cipher algorithm",
-        'NSS'       => "Network Security Services",
         'nonce'     => "(arbitrary) number used only once",
+        'NPN'       => "Next Protocol Negotiation",
+        'NSS'       => "Network Security Services",
+        'NTLM'      => "NT Lan Manager. Microsoft Windows challenge-response authentication method.",
         'NULL'      => "no encryption",
         'NUMS'      => "nothing up my sleeve numbers",
         'OAEP'      => "Optimal Asymmetric Encryption Padding",
-        'OFB'       => "Output Feedback",
         'OCB'       => "Offset Codebook Mode (block cipher mode of operation)",
         'OCB1'      => "same as OCB",
         'OCB2'      => "improved OCB aka AEM",
         'OCB3'      => "improved OCB2",
-        'OFBx'      => "Output Feedback x bit mode",
-        'OID'       => "Object Identifier",
-        'OTP'       => "One Time Pad",
         'OCSP'      => "Online Certificate Status Protocol",
         'OCSP stapling' => "formerly known as: TLS Certificate Status Request",
+        'OFB'       => "Output Feedback",
+        'OFBx'      => "Output Feedback x bit mode",
+        'OID'       => "Object Identifier",
         'OMAC'      => "One-Key CMAC, aka CBC-MAC",
         'OMAC1'     => "same as CMAC",
         'OMAC2'     => "same as OMAC",
+        'OTP'       => "One Time Pad",
         'OV'        => "Organisational Validation",
         'OV-SSL'    => "Organisational Validated Certificate",
         'P12'       => "see PKCS#12",
         'P7B'       => "see PKCS#7",
-        'PCT'       => "Private Communications Transport",
         'PACE'      => "Password Authenticated Connection Establishment",
         'PAKE'      => "Password Authenticated Key Exchange",
         'PBE'       => "Password Based Encryption",
@@ -306,6 +313,7 @@ our %man_text = (
         'PC'        => "Policy Constraints (certificate extension)",
         'PCBC'      => "Propagating Cipher Block Chaining",
         'PCFB'      => "Periodic Cipher Feedback Mode",
+        'PCT'       => "Private Communications Transport",
         'PEM'       => "Privacy Enhanced Mail",
         'PES'       => "Proposed Encryption Standard",
         'PFS'       => "Perfect Forward Secrecy",
@@ -344,6 +352,7 @@ our %man_text = (
         'RC5-64'    => "Rivest Cipher 5, block cipher (64-bit word)",
         'RC6'       => "Rivest Cipher 6",
         'RCSU'      => "Reuters' Compression Scheme for Unicode (aka SCSU)",
+        'RFC'       => "Request for Comments",
         'Rijndael'  => "symmetric block cipher algorithm",
         'RIPEMD'    => "RACE Integrity Primitives Evaluation Message Digest",
         'RMAC'      => "block cipher authentication mode",
@@ -358,6 +367,7 @@ our %man_text = (
         'Salsa20'   => "stream cipher",
         'SAM'       => "syriac abbreviation mark",
         'SAN'       => "Subject Alternate Name",
+        'SCA'       => "Selfsigned CA signature",
         'SBCS'      => "single-byte character set",
         'SCEP'      => "Simple Certificate Enrollment Protocol",
         'SCSU'      => "Standard Compression Scheme for Unicode (compressed UTF-16)",
@@ -391,6 +401,8 @@ our %man_text = (
         'Square'    => "block cipher",
         'SRP'       => "Secure Remote Password protocol",
         'SRTP'      => "Secure RTP",
+        'SSCD'      => "Secure Signature Creation Device",
+        'SSEE'      => "Sichere Signaturerstellungseinheit (same as SSCD)",
         'SSL'       => "Secure Sockets Layer",
         'SSLv2'     => "Secure Sockets Layer Version 2",
         'SSLv3'     => "Secure Sockets Layer Version 3",
@@ -412,12 +424,13 @@ our %man_text = (
         'TOCTOU'    => "Time-of-check, time-of-use",
         'TOFU'      => "Trust on First Use",
         'TR-02102'  => "Technische Richtlinie 02102 (des BSI)",
-        'TSK'       => "TACK signing key",
-        'TSP'       => "trust-Management Service Provider",
         'TLS'       => "Transport Layer Security",
         'TLSA'      => "TLS Trus Anchors",
         'TLSv1'     => "Transport Layer Security version 1",
         'TSK'       => "Transmission Security Key",
+        'TSK '      => "TACK signing key",
+        'TSP'       => "trust-Management Service Provider",
+        'TSS'       => "Time Stamp Service",
         'TTP'       => "trusted Third Party",
         'Twofish'   => "symmetric key block cipher (128 bit)",
         'UC'        => "Unified Communications (SSL Certificate using SAN)",
@@ -501,8 +514,8 @@ our %man_text = (
     # RFC 4387: X509 PKI Operational Protocols: Certificate Store Access via HTTP
     # RFC 5746: TLS Renegotiation Indication Extension http://tools.ietf.org/html/rfc5746,
 
-    # AIA  : {http://www.startssl.com/certs/sub.class4.server.ca.crt}
-    # CDP  : {http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl}
+    # AIA  : http://www.startssl.com/certs/sub.class4.server.ca.crt
+    # CDP  : http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl
     # OCSP : http://ocsp.startssl.com/sub/class4/server/ca
     # cat some.crl | openssl crl -text -inform der -noout
     # OCSP response "3" (TLS 1.3) ==> certifcate gueltig
@@ -537,6 +550,7 @@ our %man_text = (
     # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
     #
     # SCSV   https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
+    # TS 102 042 : http://
 ); # %man_text
 
 ## definitions: internal functions
