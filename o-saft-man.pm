@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.17 15/03/05 17:38:32";
+my  $man_SID= "@(#) o-saft-man.pm 1.18 15/03/15 20:08:58";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -21,7 +21,8 @@ if (! defined $wer) { # still nothing found, last resort: parent
     $wer    .= "/$ich";       # append myself
     print "**WARNING: no '$wer' found" if ! -e $wer;
 }
-our $version= _VERSION() || "$man_SID"; # version of parent, myself if empty
+our $version= "$man_SID";               # version of myself
+    $version= _VERSION() if (defined &_VERSION); # or parent's if available
 my  $skip   = 1;
 our $egg    = "";
 our @DATA;
