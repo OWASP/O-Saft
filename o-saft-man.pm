@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.18 15/03/15 20:08:58";
+my  $man_SID= "@(#) o-saft-man.pm 1.19 15/03/20 08:16:49";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
 our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
@@ -337,7 +337,7 @@ our %man_text = (
         'PMAC'      => "Parallelizable MAC (by Phillip Rogaway)",
         'Poly1305-AES'  => "MAC (by D. Bernstein)",
         'POP'       => "Proof of Possession",
-        'Poodle'    => "Padding Oracle On Downgraded Legacy Encryption",
+        'POODLE'    => "Padding Oracle On Downgraded Legacy Encryption",
         'PRF'       => "pseudo-random function",
         'PRNG'      => "pseudo-random number generator",
         'PSK'       => "Pre-shared Key",
@@ -2406,7 +2406,7 @@ CHECKS
 
       poodle
 
-        Check if target is vulnerable to Poodle attack (SSLv3 enabled).
+        Check if target is vulnerable to POODLE attack (SSLv3 enabled).
 
     SSL Vulnerabilities
 
@@ -2457,14 +2457,14 @@ CHECKS
         Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
         TLSv1.2 checks are not yet implemented.
 
-      Poodle
+      POODLE
 
         Check if target is vulnerable to poodle attack (just check if  SSLv3
         is enabled).
 
     Target (server) Configuration and Support
 
-      BEAST, BREACH, CRIME, Poodle
+      BEAST, BREACH, CRIME, FREAK, POODLE
 
         See above.
 
