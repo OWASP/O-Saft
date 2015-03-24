@@ -501,6 +501,7 @@ my %check_conn = (  # connection data
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'freak'         => {'txt' => "Connection is safe against FREAK attack"},
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
+    'lucky13'       => {'txt' => "Connection is safe against Lucky 13 attack"},
     'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
     'rc4'           => {'txt' => "Connection is safe against RC4 attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
@@ -837,6 +838,7 @@ our %shorttexts = (
     'time'          => "Safe to TIME",
     'freak'         => "Safe to FREAK",
     'heartbleed'    => "Safe to heartbleed",
+    'lucky13'       => "Safe to Lucky 13",
     'poodle'        => "Safe to POODLE",
     'rc4'           => "Safe to RC4 attack",
     'scsv'          => "SCSV not supported",
@@ -1257,6 +1259,7 @@ our %cmd = (
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
     'cmd-freak'     => [qw(freak)],                 # commands for +freak
+    'cmd-lucky13'   => [qw(lucky13)],               # commands for +lucky13
     'cmd-http'      => [],      # commands for +http, computed below
     'cmd-hsts'      => [],      # commands for +hsts, computed below
     'cmd-info'      => [],      # commands for +info, simply anything from %data
@@ -1275,7 +1278,7 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(hassslv2 hassslv3 beast breach crime freak heartbleed pfs poodle rc4 time)
+                        qw(beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs)
                        #qw(resumption renegotiation) # die auch?
                        ],
                     # need_* lists used to improve performance
@@ -1383,7 +1386,7 @@ our %cmd = (
                        # EXP? is same as regex{EXPORT} above
         'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
-#       'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
+        'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?*?[_-]CBC',
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
 
@@ -2686,6 +2689,8 @@ sub _isbreach($){
 }
 sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $_[0] . " "; }
     # return compression if available, empty string otherwise
+sub _islucky($) { return ($_[0] =~ /$cfg{'regex'}->{'Lucky13'}/) ? $_[0] : ""; }
+    # return given cipher if vulnerable to Lucky 13 attack, empty string otherwise
 sub _istime($)  { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
 sub _isfreak($$){
     # return given cipher if vulnerable to FREAK attack, empty string otherwise
@@ -3140,6 +3145,7 @@ sub checkcipher($$) {
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
+    $checks{'lucky13'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islucky($c));
     $checks{$ssl . '-pfs+'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _ispfs($ssl, $c));
     # counters ##                              vv---- take care -----^^
     $checks{$ssl . '-pfs-'}->{val}++    if ("" eq _ispfs($ssl, $c)); # count PFS ciphers
@@ -5117,6 +5123,7 @@ while ($#argv >= 0) {
         if ($val eq 'beast'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
         if ($val eq 'crime'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); next; }
         if ($val eq 'freak'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-freak'}}); next; }
+        if ($val eq 'lucky13'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
         if ($val eq 'sizes'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
         if ($val eq 'hsts') { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});  next; }
         if ($val eq 'http') { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
