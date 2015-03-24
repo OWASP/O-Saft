@@ -106,6 +106,11 @@
 --cfg_cmd=quick=selected cipher sslversion hassslv2 hassslv3 export rc4_cipher pfs beast crime freak heartbleed poodle rc4 fingerprint_hash fp_not_md5 sha2signature email serial subject dates verify heartbeat expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
 
 ###
+### redefine command +vulns
+###
+--cfg_cmd=vulns=beast breach crime freak heartbleed poodle rc4 time hassslv2 hassslv3 pfs
+
+###
 ### redefine texts
 ###
 # Syntax
@@ -150,7 +155,7 @@
 #--cfg_text=out-scoring=\n=== Bewertung === 
 #--cfg_text=out-summary=== Schlüssel: Zusammenfassung @@ == 
 #--cfg_text=out-target=\n==== Zielsystem: @@ ====\n
-#--cfg_text=protocol=<<Protokol evt. angeboten, es werden aber keine Schlüssel akzeptiert>>
+#--cfg_text=protocol=<<Protokoll evt. angeboten, es werden aber keine Schlüssel akzeptiert>>
 #--cfg_text=response=<<Antwort>>
 #--cfg_text=security=Sicherheit
 #--cfg_text=support=angeboten
