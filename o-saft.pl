@@ -1386,7 +1386,7 @@ our %cmd = (
                        # EXP? is same as regex{EXPORT} above
         'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
-        'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?*?[_-]CBC',
+        'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
 
