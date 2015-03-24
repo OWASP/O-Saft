@@ -7,9 +7,10 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.19 15/03/20 08:16:49";
+my  $man_SID= "@(#) o-saft-man.pm 1.21 15/03/25 00:26:12";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
+    $parent =~ s:\\:/:g;                # necessary for Windows only
 our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
 our $ich    = $wer;
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
@@ -868,7 +869,7 @@ EoHTML
     print _man_html_text("format");
     print _man_html_span('csv html json ssv tab xml fullxml raw hex'); # FIXME:
     print << "EoHTML";
-	<br>
+        <br>
     </div>
     <div id=b style="display:none;">
         <button class=r onclick="d('a').display='block';d('b').display='none';return false;">Simple GUI</button><br>
@@ -879,7 +880,7 @@ EoHTML
     print << "EoHTML";
 </p>
     </div>
-	<input type=submit value="go" />
+        <input type=submit value="go" />
   </fieldset>
  </form>
 EoHTML
@@ -896,6 +897,9 @@ sub man_wiki() {
 ==O-Saft==
 This is O-Saft's documentation as you get with:
  o-saft.pl --help
+<small>On Windows following must be used
+ o-saft.pl --help --v
+</small>
 
 __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing MediaWiki:Common.css -->
 <!-- position left is no good as the list is too big and then overlaps some texts
@@ -965,10 +969,10 @@ sub man_help($) {
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
     if (grep(/^--v/, @ARGV)>0) {        # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
-    	print "**WARNING: using workaround to print large strings.\n\n";
-    	print foreach split(//, $txt);  # print character by character :-((
+        print "**WARNING: using workaround to print large strings.\n\n";
+        print foreach split(//, $txt);  # print character by character :-((
     } else {
-    	print $txt;
+        print $txt;
     }
     if ($label =~ m/^todo/i)    {
         print "\n  NOT YET IMPLEMENTED\n";
@@ -1113,6 +1117,9 @@ QUICKSTART
         * Check certificate, ciphers and SSL connection of target:
           $0 +check example.tld
 
+        * Check connection to target for vulnerabilities:
+          $0 +vulns example.tld
+
         * List all available commands:
           $0 --help=commands
 
@@ -1134,6 +1141,7 @@ WHY?
           * missing tests for specific, known SSL/TLS vulnerabilities
           * no support for newer, advanced, features e.g. CRL, OCSP, EV
           * limited capability to create your own customised tests
+          * working in closed environments, i.e. without internet connection
 
         Other  reasons or problems  are that they are either binary and hence
         not portable to other (newer) platforms.
@@ -1187,6 +1195,9 @@ TECHNICAL INFORMATION
 
 
 RESULTS
+
+        All output is designed to be easily parsed by postprocessors.  Please
+        see  OUTPUT  section below for details.
 
         For the results,  we have to distinguish  those  returned by  +cipher
         command  and those from  all other tests and checks like   +check  or
@@ -1250,9 +1261,6 @@ RESULTS
           The test result contains detailed information. The labels there are
           mainly the same as for the  +check  command.
 
-          All output is designed to be easily parsed by postprocessors.
-          Please see  OUTPUT  section below for details.
-
 
 COMMANDS
 
@@ -1302,7 +1310,8 @@ COMMANDS
             * --legacy=openssl  output like with +ciphers command
             * --legacy=ssltest  output like "ssltest --list"
 
-          Use  --v  option to show more details.
+#          Use  --v  option to show more details.
+# seit 15.01.07 nicht mehr benutzt
 
       +VERSION
 
@@ -1431,7 +1440,7 @@ COMMANDS
 
           In contrast to  +cipher  this command has some options to tweak the
           cipher tests, connection results and some strange behaviours of the
-          target. See  X&Options for  cipherraw  command&  for details.
+          target. See  X&Options for  +cipherraw  command&  for details.
 
     Commands to test SSL connection to target
 
@@ -1515,14 +1524,10 @@ OPTIONS
           Show texts used  as labels in output for  data  (see  +info)  ready
           for use in  RC-FILE  or as option.
 
-      --help=cfg-text
+      --help=cfg-text --help=text-cfg
 
           Show texts used in various messages ready for use in  RC-FILE  or
           as option.
-
-      --help=text-cfg
-
-          See --help=cfg-text.
 
       --help=regex
 
@@ -1700,6 +1705,7 @@ OPTIONS
           at all, following error may occour:
               Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
 
+# following missing on owasp.org 'cause still not fully implemented
       --call=METHOD
 
           'METHOD'      method to be used for specific functionality
@@ -1767,7 +1773,7 @@ OPTIONS
 
           Beside the cipher names accepted by openssl, CIPHER can be the name
           of the constant or the (hex) value as defined in openssl's files.
-          Currently supported are the names and constants of openssl 1.0.1c.
+          Currently supported are the names and constants of openssl 1.0.1k.
           Example:
             * --cipher=DHE_DSS_WITH_RC4_128_SHA
             * --cipher=0x03000066
@@ -1913,7 +1919,7 @@ OPTIONS
 
           Argument or option passed to openssl's  s_client  command.
 
-    Options for  cipherraw  command:
+    Options for +cipherraw  command:
 
       --range=RANGE 
       --cipherrange=RANGE
@@ -2435,7 +2441,7 @@ CHECKS
         Attack Against SSL/TLS to downgrade to EXPORT ciphers.
         Currently (2015) a simple check is used:   SSLv3 enabled and EXPORT
         ciphers supported by server.
-	See CVE-2015-0204 and https://freakattack.com/ .
+        See CVE-2015-0204 and https://freakattack.com/ .
 
       HEARTBLEED
 
@@ -2444,12 +2450,18 @@ CHECKS
 
       Lucky 13
 
-        NOT YET IMPLEMENTED
+        Check if CBC ciphers are offered.
+        NOTE the recommendation to be safe againts  Lucky 13  was to use RC4
+        ciphers. But they are also subjetc to attacks (see below). Hence the
+        check is only for CBC ciphers.
 
       RC4
 
         Check if RC4 ciphers are supported.
         They are assumed to be broken.
+        Note that  +rc4  reports the vulnerabilitiy to the RC4 Attack, while
+        +rc4_cipher  simply reports if RC4 ciphers are offered.  However the
+        the check, and hence the result, is the same.
 
       PFS
 
@@ -2459,12 +2471,12 @@ CHECKS
 
       POODLE
 
-        Check if target is vulnerable to poodle attack (just check if  SSLv3
+        Check if target is vulnerable to POODLE attack (just check if  SSLv3
         is enabled).
 
     Target (server) Configuration and Support
 
-      BEAST, BREACH, CRIME, FREAK, POODLE
+      BEAST, BREACH, CRIME, FREAK, Lucky 13, POODLE, RC4
 
         See above.
 
@@ -2560,6 +2572,10 @@ CHECKS
         TBD - to be described ...
 
     Compliances
+
+      Note that it is not possible to satisfy all following compliances. Best
+      match is: 'PSF' and 'ISM' and 'PCI' and 'lazy BSI TR-02102-2'.
+# example: fancyssl.hboeck.de
 
           * FIPS-140
           * ISM
@@ -2822,6 +2838,15 @@ CUSTOMIZATION
         can be inserted as need.  Please see   perldoc o-saft-usr.pm   to see
         when and how these functions are called.
 
+    SHELL TWEAKS
+
+        Configurering the shell environment where the tool is startet, is not
+        not really a task for the tool itself, but it can simplify your life,
+        somehow.
+
+        There exist customizations for some commonly used shells,  please see
+        the files in the ./contrib/ directory.
+
 
 CIPHER NAMES
 
@@ -2975,6 +3000,12 @@ KNOWN PROBLEMS
 
         Workaround: use  --no-md5-cipher  option.
 
+    Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
+
+        Underlaying library doesn't support the required SSL version.
+
+        Workaround: use  --ssl-lazy  option, or corresponding --no-SSL option.
+
     No output with  +help  and/or  --help=todo
 
         On some (mainly Windows-based) systems using
@@ -2982,7 +3013,7 @@ KNOWN PROBLEMS
               $0 --help
         does not print anything.
 
-        Workaround: use  --v  option
+        Workaround: use  --v  option.
               $0 +help --v
         or
               $0 +help | more
@@ -3708,10 +3739,9 @@ ATTRIBUTION
             https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 
-# VERSION string must start with @(#) at beginning of a line
 VERSION
 
-        (#) $VERSION
+        @(#) $VERSION
 
 AUTHOR
 
@@ -3731,7 +3761,6 @@ TODO
 #        ssl-cert-check -p 443 -s mail.google.com -i -V
 
         * new features
-          ** allow proxy
           ** client certificate
           ** some STRATTLS need : HELP STARTTLS HELP as output of HELPs are different
           ** support: PCT protocol
@@ -3754,10 +3783,10 @@ TODO
 
         * scoring
           ** implement score for PFS; lower score if not all ciphers support PFS
+          ** scoring will be removed, must be done by a postprocess
 
         * vulnerabilities
           ** complete TIME, BREACH check
-          ** implement check for Lucky 13
           ** is DHE-DSS-RC4-SHA also weak?
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
@@ -3778,10 +3807,10 @@ TODO
              perl 5.10.x from PortableApps does not work, cause it misses
              IO/Socket/SSL.pm, however, checkAllCiphers.pl works.
              perl from older PortableApps/xampp (i.e. 1.7.x) does not work, cause
-	     IO/Socket/SSL.pm is too old (1.37).
-          ** 32-bit Windows
-	     on 32-bit systems, print of strings > 32k does not work. Problem
-	     only fixed (ugly workaround) in o-saft-man.pm .
+             IO/Socket/SSL.pm is too old (1.37).
+          ** Windows
+             on Windows print of strings > 32k does not work. Problem only
+             fixed (ugly workaround using --v ) in o-saft-man.pm .
 
         * internal
           ** make a clear concept how to handle +CMD whether they report
