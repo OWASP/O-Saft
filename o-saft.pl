@@ -502,6 +502,7 @@ my %check_conn = (  # connection data
     'freak'         => {'txt' => "Connection is safe against FREAK attack"},
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
     'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
+    'rc4'           => {'txt' => "Connection is safe against RC4 attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'selected'      => {'txt' => "Selected cipher by server"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
@@ -563,7 +564,7 @@ my %check_dest = (  # target (connection) data
     'adh'           => {'txt' => "Target does not accept ADH ciphers"},
     'null'          => {'txt' => "Target does not accept NULL ciphers"},
     'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
-    'rc4'           => {'txt' => "Target does not accept RC4 ciphers"},
+    'rc4_cipher'    => {'txt' => "Target does not accept RC4 ciphers"},
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
     'order'         => {'txt' => "Target honors client's cipher order"},
@@ -822,7 +823,7 @@ our %shorttexts = (
     'edh'           => "EDH ciphers",
     'null'          => "No NULL ciphers",
     'export'        => "No EXPORT ciphers",
-    'rc4'           => "No RC4 ciphers",
+    'rc4_cipher'    => "No RC4 ciphers",
     'sgc'           => "SGC supported",
     'cps'           => "CPS supported",
     'crl'           => "CRL supported",
@@ -837,6 +838,7 @@ our %shorttexts = (
     'freak'         => "Safe to FREAK",
     'heartbleed'    => "Safe to heartbleed",
     'poodle'        => "Safe to POODLE",
+    'rc4'           => "Safe to RC4 attack",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'closure'       => "TLS closure alerts",
@@ -1265,24 +1267,24 @@ our %cmd = (
                        qw(
                         selected cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast crime freak export rc4 pfs crl hassslv2 hassslv3 poodle
+                        beast crime freak export rc4_cipher rc4 pfs crl hassslv2 hassslv3 poodle
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
-    'cmd-bsi'       => [qw(after dates crl rc4 renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
+    'cmd-bsi'       => [qw(after dates crl rc4_cipher renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(hassslv2 hassslv3 beast breach crime freak heartbleed pfs poodle time)
+                        qw(hassslv2 hassslv3 beast breach crime freak heartbleed pfs poodle rc4 time)
                        #qw(resumption renegotiation) # die auch?
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                       qw(check beast crime time breach freak pfs rc4 bsi selected poodle cipher)],
+                       qw(check beast crime time breach freak pfs rc4_cipher rc4 bsi selected poodle cipher)],
     'need_default'  => [        # commands which need selected cipher
                        qw(check cipher pfs selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                       qw(check beast crime time breach freak pfs rc4 bsi selected ev+ ev-)],
+                       qw(check beast crime time breach freak pfs rc4_cipher rc4 bsi selected ev+ ev-)],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
                        qw(
@@ -3126,7 +3128,7 @@ sub checkcipher($$) {
     $checks{'adh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
     $checks{'edh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
     $checks{'export'}->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
-    $checks{'rc4'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+    $checks{'rc4_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
@@ -3134,6 +3136,7 @@ sub checkcipher($$) {
     $checks{'fips'}->{val}      .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
     $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _istr02102($ssl, $c));
     # check attacks
+    $checks{'rc4'}->{val}        = $checks{'rc4_cipher'}->{val}; # these are the same checks
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
