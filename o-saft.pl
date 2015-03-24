@@ -2186,7 +2186,7 @@ our %text = (
     'undef'         => "<<undefined>>",
     'response'      => "<<response>>",
     'protocol'      => "<<protocol probably supported, but no ciphers accepted>>",
-    'need-cipher'   => "<<check possible in conjunction with `+cipher' only>>",
+    'need-cipher'   => "<<check possible in conjunction with +cipher only>>",
     'no-STS'        => "<<N/A as STS not set>>",
     'no-dns'        => "<<N/A as --no-dns in use>>",
     'no-cert'       => "<<N/A as --no-cert in use>>",
@@ -2205,7 +2205,7 @@ our %text = (
     'cert-dates'    => " <<invalid certificate date>>",
     'cert-valid'    => " <<certificate validity to large @@>>",
     'cert-chars'    => " <<invalid charcters in @@>>",
-    'wildcards'     => " <<uses wildcards:",
+    'wildcards'     => " <<uses wildcards:@@>>",
     'gethost'       => " <<gethostbyaddr() failed>>",
     'out-target'    => "\n==== Target: @@ ====\n",
     'out-ciphers'   => "\n=== Ciphers: Checking @@ ===",
@@ -3454,7 +3454,7 @@ sub check02102($$) {
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'CRL')  if ($checks{'crl'}->{val}   ne "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host)  eq "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
-    $checks{'bsi-tr-02102+'}->{val}.= $text{'wildcards'} . $checks{'wildcard'}->{val} .">>" if ($checks{'wildcard'}->{val} ne "");
+    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'wildcards'}, $checks{'wildcard'}->{val}) if ($checks{'wildcard'}->{val} ne "");
 
     #! TR-02102-2 3.5 Domainparameter und Schlüssellängen
 # FIXME:
