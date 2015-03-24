@@ -54,7 +54,9 @@ BEGIN {
     # some dirty code hacks and split the flow of processing in different parts
     # of the source. Therefore this scope is used for --help=* options only.
 
-    unshift(@INC, "./", "./lib");   # we support some local lib directories
+    unshift(@INC, "./", "./lib", "/bin");
+        # we support some local lib directories
+        # /bin special for installation on portable media
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     my $_path = $0; $_path =~ s#/[^/\\]*$##;
     push(@INC, $_path);             # user-friendly: add path of myself also
