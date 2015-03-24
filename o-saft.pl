@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.02.28"; }
+    sub _VERSION() { return "15.03.20"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -77,7 +77,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.330 15/03/04 14:21:23";
+my  $SID    = "@(#) yeast.pl 1.332 15/03/24 12:05:22";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -499,7 +499,7 @@ my %check_conn = (  # connection data
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'freak'         => {'txt' => "Connection is safe against FREAK attack"},
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
-    'poodle'        => {'txt' => "Connection is safe against Poodle attack"},
+    'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'selected'      => {'txt' => "Selected cipher by server"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
@@ -557,7 +557,7 @@ my %check_dest = (  # target (connection) data
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'edh'           => {'txt' => "Target supports EDH ciphers"},
     'hassslv2'      => {'txt' => "Target does not support SSLv2"},
-    'hassslv3'      => {'txt' => "Target does not support SSLv3"},      # Poodle
+    'hassslv3'      => {'txt' => "Target does not support SSLv3"},      # POODLE
     'adh'           => {'txt' => "Target does not accept ADH ciphers"},
     'null'          => {'txt' => "Target does not accept NULL ciphers"},
     'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
@@ -834,7 +834,7 @@ our %shorttexts = (
     'time'          => "Safe to TIME",
     'freak'         => "Safe to FREAK",
     'heartbleed'    => "Safe to heartbleed",
-    'poodle'        => "Safe to Poodle",
+    'poodle'        => "Safe to POODLE",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'closure'       => "TLS closure alerts",
@@ -3722,7 +3722,7 @@ sub checkprot($$) {
                 $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
             }
             if ($ssl eq 'SSLv3') {
-                $checks{'hassslv3'}->{val}  = " ";  # Poodle if SSLv3
+                $checks{'hassslv3'}->{val}  = " ";  # POODLE if SSLv3
                 $checks{'poodle'}  ->{val}  = "SSLv3";
             }
         }
