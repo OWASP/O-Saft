@@ -123,6 +123,11 @@
 # NOTE that charater = will be lost if it is the last character in line
 #      workaround: add space or \t
 #
+# Hint
+#     o-saft.pl --help=text     can be used to get all available texts.
+#
+# Examples below simply set texts to German.
+#
 #--cfg_text=cert-chars= <<nicht erlaubte Zeichen in @@>>
 #--cfg_text=cert-dates= <<ungültiges Datum des Zertifikats>>
 #--cfg_text=cert-valid= <<Gültigkeitsdauer des Zertifikats zu groß @@>>
@@ -160,5 +165,5 @@
 #--cfg_text=security=Sicherheit
 #--cfg_text=support=angeboten
 #--cfg_text=undef=<<undefiniert>>
-#--cfg_text=wildcards= <<verwendet Wildcards:
+#--cfg_text=wildcards= <<verwendet Wildcards:@@>>
 
