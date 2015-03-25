@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.21 15/03/25 00:26:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.22 15/03/25 01:24:52";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -943,6 +943,17 @@ Content of this wiki page generated with:
 ";
 } # man_wiki
 
+sub man_toc() {
+    #? print help table of content
+    foreach my $txt (grep(/^=head. /, @DATA)) {
+        next if ($txt !~ m/^=head/);
+        next if ($txt =~ m/^=head. *END/);  # skip last line
+        $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
+            # print =head1 and =head2
+            # just =head1 is lame, =head1 and =head2 and =head3 is too much
+    }
+} # man_toc
+
 sub man_help($) {
     #? print program's help
     my $label   = lc(shift) || "";      # || to avoid uninitialized value
@@ -990,6 +1001,7 @@ sub printhelp($) {
     # Note: some lower case strings are special
     man_help('NAME'),           return if ($hlp =~ /^$/);
     man_help('TODO'),           return if ($hlp =~ /^todo$/i);
+    man_toc(),                  return if ($hlp =~ /^toc|content/i);
     man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
     man_wiki(),                 return if ($hlp =~ /^(gen-)?wiki$/);
     man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
@@ -1509,6 +1521,10 @@ OPTIONS
 
           Note that the  sequence  of options  is important.  Use the options
           --trace  and/or  --cfg-score=KEY=SCORE  before  --help=score.
+
+      --help=toc --help=content
+
+          Show headlines from help text. Useful to get an overview.
 
       --help=text
 
