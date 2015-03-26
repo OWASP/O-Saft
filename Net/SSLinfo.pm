@@ -475,16 +475,15 @@ sub _setcmd() {
     }
 } # _setcmd
 
-# $Net::SSLinfo::trace  not available outside sub in modules
-# hence following debugging of constants needs to be enabled manually
-# ToDo: replace eval() by better perlish solution
-if (1==0) { ##### DISABLED #####
-    #no strict 'refs';
+sub _traceSSL() {
+    # print bitmasks of available SSL constants
     my ($op, $_op_sub);
-    foreach $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_DTLSv1)) {
+    _settrace();
+    foreach $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_TLSv1_3 OP_NO_DTLSv1)) {
         $_op_sub = \&{"Net::SSLeay::$op"};
+        # cannot use _trace() 'cause we want our own formatting
         printf("#%s SSL version bitmask: %15s ", SSLINFO, $op);
-        if (eval "Net::SSLeay::$op") {
+        if (defined &{"Net::SSLeay::$op"}) {
             printf("0x%010x\n", &$_op_sub()); # &$_op_sub() same as &{"Net::SSLeay::$op"}() here
         } else {
             printf("<<undef>>\n");
@@ -745,7 +744,7 @@ sub _ssleay_get($$) {
         _trace("_ssleay_get: Altname: " . join(" ", @altnames));
         while (@altnames) {             # construct string like openssl
             my ($type, $name) = splice(@altnames, 0, 2);
-            # ToDo: replace ugly code by %_SSLtypemap
+            # TODO: replace ugly code by %_SSLtypemap
             $type = 'DNS'           if ($type eq '2');
             $type = 'URI'           if ($type eq '6');
             $type = 'X400'          if ($type eq '3');
@@ -895,6 +894,7 @@ sub do_ssl_open($$$) {
     my ($host, $port, $sslversions, $cipher) = @_;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
     _settrace();
+    _traceSSL() if ($trace > 0);
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
@@ -1015,10 +1015,10 @@ sub do_ssl_open($$$) {
         }
         $ssl = undef;
 
-# ToDo:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
-# ToDo:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
-# ToDo: Client-Cert see smtp_tls_cert.pl
-# ToDo: proxy settings work in HTTP mode only
+# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
+# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
+# TODO: Client-Cert see smtp_tls_cert.pl
+# TODO: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
 ##print "#ERR: $!";
 
@@ -1043,7 +1043,7 @@ sub do_ssl_open($$$) {
                 #  use constant TLSEXT_NAMETYPE_host_name    => 0
                 $src = 'Net::SSLeay::ctrl()';
                 Net::SSLeay::ctrl($ssl, 55, 0, $name)          or {$err = $!} and last;
-                #ToDo: ctrl() sometimes fails but does not return errors, reason yet unknown
+                # TODO: ctrl() sometimes fails but does not return errors, reason yet unknown
             }
         }
 
@@ -1062,7 +1062,7 @@ sub do_ssl_open($$$) {
         #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
 
         #5. SSL established, let's get informations
-        # ToDo: starting from here implement error checks
+        # TODO: starting from here implement error checks
         $src ='Net::SSLeay::get_peer_certificate()';
         my $x509= Net::SSLeay::get_peer_certificate($ssl);
 
@@ -1072,7 +1072,7 @@ sub do_ssl_open($$$) {
         $_SSLinfo{'x509'}       = $x509;
         $_SSLinfo{'_options'}  .= sprintf("0x%016x", Net::SSLeay::CTX_get_options($ctx));
         $_SSLinfo{'SSLversion'} = $_SSLhex{Net::SSLeay::version($ssl)};
-            # ToDo: Net::SSLeay's documentation also has:
+            # TODO: Net::SSLeay's documentation also has:
             #    get_version($ssl); get_cipher_version($ssl);
             # but they are not implemented (up to 1.49)
 
@@ -1085,7 +1085,7 @@ sub do_ssl_open($$$) {
 
         #5c. store certificate informations
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
-        #$_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # ToDo: returns binary, hence see below
+        #$_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # TODO: returns binary, hence see below
         $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
@@ -1114,7 +1114,7 @@ sub do_ssl_open($$$) {
         }
         if (1.46 <= $Net::SSLeay::VERSION) {# see man Net::SSLeay
             #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
-                # ToDo: returns a structure, needs to be unpacked
+                # TODO: returns a structure, needs to be unpacked
             $_SSLinfo{'error_verify'}   = Net::SSLeay::X509_verify_cert_error_string(Net::SSLeay::get_verify_result($ssl));
             $_SSLinfo{'error_depth'}    = Net::SSLeay::X509_STORE_CTX_get_error_depth($x509);
             $_SSLinfo{'serial'}         = _ssleay_get('serial', $x509);
@@ -1136,17 +1136,18 @@ sub do_ssl_open($$$) {
         #5d. get data related to HTTP(S)
         if ($Net::SSLinfo::use_http > 0) {
             _trace("do_ssl_open HTTPS {");
-            #dbx# $host .= 'x';
+            #dbx# $host .= 'x'; # TODO: <== some servers behave strange if a wrong hostname is passed
             my $response = "";
             my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
             $src = 'Net::SSLeay::write()';
 # $t1 = time();
-#               ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
-            $src = 'Net::SSLeay::read()';
+#           ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
+            $src = 'Net::SSLeay::read()';
             $response = Net::SSLeay::read($ssl) || "<<GET failed>>";
-# FIXME: if Net::SSLeay::read() fails most $_SSLinfo{'hsts_*'} and $_SSLinfo{'https_*'} are empty
-#        check with ancyssl.hboeck.de
+# TODO: Net::SSLeay::read() fails sometimes, i.e. for fancyssl.hboeck.de
+# 03/2015: even using ssl_write_all() and ssl_read_all() does not help
+# TODO: reason unknown, happens probably if server requires SNI
 # $t2 = time(); set error = "<<timeout: Net::SSLeay::read()>>";
             $_SSLinfo{'https_status'}   =  $response;
             $_SSLinfo{'https_status'}   =~ s/[\r\n].*$//ms; # get very first line
@@ -1158,12 +1159,11 @@ sub do_ssl_open($$$) {
             $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'https_sts'};
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
             $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'https_sts'} =~ m/includeSubDomains/i);
-# ToDo:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
-# ToDo: HTTP header:
+# TODO:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
+# TODO: HTTP header:
 #    X-Firefox-Spdy: 3.1
             _trace("\n$response \n# do_ssl_open HTTPS }");
             _trace("do_ssl_open HTTP {");   # HTTP uses its own connection ...
-# FIXME: use @headers instead of %headers so we get *all* headers returned
             my %headers;
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
@@ -1187,7 +1187,7 @@ sub do_ssl_open($$$) {
 
 # $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
             if ($_SSLinfo{'http_status'} =~ m:^HTTP/... ([1234][0-9][0-9]|500) :) {
-                # ToDo: not tested if following grep() catches multiple occourances
+                # TODO: not tested if following grep() catches multiple occourances
                 $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0] || ""};
                 $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0] || ""};
                 $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
@@ -1346,7 +1346,7 @@ sub do_ssl_open($$$) {
             # from s_client:
             #   Secure Renegotiation IS supported
             #   Secure Renegotiation IS NOT supported
-            # ToDo: pedantically we also need to check if "RENEGOTIATING" is
+            # TODO: pedantically we also need to check if "RENEGOTIATING" is
             #       there, as just the information "IS supported" does not
             #       mean that it works
         $d = $data; $d =~ s/.*?((?:Secure\s*)?Renegotiation[^\n]*)\n.*/$1/si; $_SSLinfo{'renegotiation'}  = $d;
@@ -1390,7 +1390,7 @@ sub do_ssl_open($$$) {
             #       Verify return code: 21 (unable to verify the first certificate)
         $d = $data; $d =~ s/.*?Verify (?:error|return code):\s*((?:num=)?[\d]*[^\n]*).*/$1/si;
         $_SSLinfo{'verify'}         = $d;
-        # ToDo: $_SSLinfo{'verify_host'}= $ssl->verify_hostname($host, 'http');  # returns 0 or 1
+        # TODO: $_SSLinfo{'verify_host'}= $ssl->verify_hostname($host, 'http');  # returns 0 or 1
         # scheme can be: ldap, pop3, imap, acap, nntp http, smtp
 
         $d =~ s/.*?(self signed.*)/$1/si;
@@ -2033,7 +2033,7 @@ sub hsts_subdom     { return _SSLinfo_get('hsts_subdom',      $_[0], $_[1]); }
 Verify if given hostname matches common name (CN) in certificate.
 =cut
 
-############ ToDo:  do_ssl_open  vorbereiten fuer verify_*
+############ TODO:  do_ssl_open  vorbereiten fuer verify_*
 sub verify_hostname {
     my ($host, $port) = @_;
     return undef if !defined do_ssl_open($host, $port, '');
@@ -2064,7 +2064,7 @@ sub verify_altname($$) {
     _trace("verify_altname: $cname");
     foreach my $alt (split(' ', $cname)) {
         my ($type, $name) = split(':', $alt);
-# ToDo: implement IP and URI
+# TODO: implement IP and URI
 #dbx print "# ($type, $name)";
         push(@{$_SSLinfo{'errors'}}, "verify_altname() $type not supported in SNA") if ($type !~ m/DNS/i);
         my $rex = $name;
