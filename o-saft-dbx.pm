@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.18 14/12/06 14:42:15";
+my  $SID    = "@(#) o-saft-dbx.pm 1.19 15/03/26 17:01:26";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -91,19 +91,22 @@ sub _y_CMD    { local $\ = "\n"; print "#" . $mename . _y_ts() . " CMD: " . join
 sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); }
 sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); }
 sub _y_ARR(@) { return join(" ", "[", @_, "]"); }
-sub _yeast_trac($){
+sub _yeast_trac($$){}   # forward declaration
+sub _yeast_trac($$){
+    #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
+    my $ref  = shift;   # must be a hash reference
     my $key  = shift;
-    _yTRAC($key, "<<null>>"), return if (! defined $cfg{$key});    # undef is special, avoid perl warnings
-    SWITCH: for (ref($cfg{$key})) {     # ugly but save use of $_ here
+    _yTRAC($key, "<<null>>"), return if (! defined $ref->{$key});   # undef is special, avoid perl warnings
+    SWITCH: for (ref($ref->{$key})) {   # ugly but save use of $_ here
         /CODE/  && do { _yTRAC($key, "<<code>>"); last SWITCH; };
-        /^$/    && do { _yTRAC($key, $cfg{$key}); last SWITCH; };
-        /SCALAR/&& do { _yTRAC($key, $cfg{$key}); last SWITCH; };
-        /ARRAY/ && do { _yTRAC($key, _y_ARR(@{$cfg{$key}})); last SWITCH; };
-        /HASH/  && do { last SWITCH if ($cfg{'trace'} <= 2);            # print hashes for full trace only
+        /^$/    && do { _yTRAC($key, $ref->{$key}); last SWITCH; };
+        /SCALAR/&& do { _yTRAC($key, $ref->{$key}); last SWITCH; };
+        /ARRAY/ && do { _yTRAC($key, _y_ARR(@{$ref->{$key}})); last SWITCH; };
+        /HASH/  && do { last SWITCH if ($ref->{'trace'} <= 2);      # print hashes for full trace only
                         _yeast("# - - - - HASH: $key = {");
-                        foreach my $k (sort keys %{$cfg{$key}}) {
-                        # _yeast_trac($key); # FIXME: does not work 'cause of lazy global variable usage
-                        _yTRAC("    ".$key."->".$k, ""); # ToDo: join("-", @{$cfg{$key}->{$k}}))
+                        foreach my $k (sort keys %{$ref->{$key}}) {
+                            _yeast_trac($ref, $key);
+                        _yTRAC("    ".$key."->".$k, ""); # ToDo: join("-", @{$ref->{$key}->{$k}}))
                         };
                         _yeast("# - - - - HASH: $key }");
                         last SWITCH;
@@ -129,21 +132,15 @@ sub _yeast_init() {
         if ($cfg{'trace'} > 1){
             _yline(" %cmd {");
             foreach $key (sort keys %cmd) {
-                # FIXME: use _yeast_trac()
-                if (ref($cmd{$key}) eq 'ARRAY') {
-                    _yTRAC($key, _y_ARR(@{$cmd{$key}}));
-                } else {
-                    _yTRAC($key, $cmd{$key});
-                }
+                _yeast_trac(\%cmd, $key)
             }
             _yline(" %cmd }");
             _yline(" complete %cfg {");
             foreach $key (sort keys %cfg) {
-                #dbx# print "# $key : " . ref ($cfg{$key});
                 if ($cfg{'trace'} <= 2){
                     next if $key =~ /^cmd-/; # print internal list of command for full trace only
                 }
-                _yeast_trac($key);
+                _yeast_trac(\%cfg, $key);
             }
             _yline(" %cfg }");
         }
