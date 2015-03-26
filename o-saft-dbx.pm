@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.19 15/03/26 17:01:26";
+my  $SID    = "@(#) o-saft-dbx.pm 1.20 15/03/26 20:09:13";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -106,7 +106,7 @@ sub _yeast_trac($$){
                         _yeast("# - - - - HASH: $key = {");
                         foreach my $k (sort keys %{$ref->{$key}}) {
                             _yeast_trac($ref, $key);
-                        _yTRAC("    ".$key."->".$k, ""); # ToDo: join("-", @{$ref->{$key}->{$k}}))
+                            _yTRAC("    ".$key."->".$k, ""); # TODO: join("-", @{$ref->{$key}->{$k}}))
                         };
                         _yeast("# - - - - HASH: $key }");
                         last SWITCH;
@@ -125,7 +125,7 @@ sub _yeast_init() {
         _yTRAC("$0", $VERSION);
         _yTRAC("_yeast_init::SID", $SID) if ($cfg{'trace'} > 2);
         _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
-        _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION); # ToDo: ALPHA defined check until Net::SSLhello fully integrated
+        _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
         _yTRAC("verbose", $cfg{'verbose'});
         _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
         # more detailed trace first
@@ -272,7 +272,7 @@ sub _yeast_data() {
 }
 
 sub _yeast_cipher() {
-# ToDo: %ciphers %cipher_names
+# TODO: %ciphers %cipher_names
 }
 
 1;
