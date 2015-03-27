@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.85a 15/01/21 22:42:42',
+    SID         => '@(#) Net::SSLinfo.pm 1.88 15/03/27 09:03:47',
 };
 
 ######################################################## public documentation #
@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.01.25';
+    $VERSION   = '15.03.25';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -343,12 +343,14 @@ require Exporter;
         version
         keysize
         keyusage
+        https_protocols
         https_status
         https_server
         https_alerts
         https_location
         https_refresh
         https_pins
+        http_protocols
         http_status
         http_location
         http_refresh
@@ -597,12 +599,14 @@ my %_SSLinfo= ( # our internal data structure
     'session_timeout'   => "",  # SSL-Session Timeout
     'session_protocol'  => "",  # SSL-Session Protocol
     # following from HTTP(S) request
+    'https_protocols'   => "",  # HTTPS Alternate-Protocol header
     'https_status'      => "",  # HTTPS response (aka status) line
     'https_server'      => "",  # HTTPS Server header
     'https_alerts'      => "",  # HTTPS Alerts send by server
     'https_location'    => "",  # HTTPS Location header send by server
     'https_refresh'     => "",  # HTTPS Refresh header send by server
     'https_pins'        => "",  # HTTPS Public Key Pins header
+    'http_protocols'    => "",  # HTTP Alternate-Protocol header
     'http_status'       => "",  # HTTP response (aka status) line
     'http_location'     => "",  # HTTP Location header send by server
     'http_refresh'      => "",  # HTTP Refresh header send by server
@@ -1155,6 +1159,7 @@ sub do_ssl_open($$$) {
             $_SSLinfo{'https_location'} =  _header_get('Location', $response);
             $_SSLinfo{'https_refresh'}  =  _header_get('Refresh',  $response);
             $_SSLinfo{'https_pins'}     =  _header_get('Public-Key-Pins', $response);
+            $_SSLinfo{'https_protocols'}=  _header_get('Alternate-Protocol', $response);
             $_SSLinfo{'https_sts'}      =  _header_get('Strict-Transport-Security', $response);
             $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'https_sts'};
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
@@ -1191,6 +1196,9 @@ sub do_ssl_open($$$) {
                 $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0] || ""};
                 $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0] || ""};
                 $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
+                $_SSLinfo{'http_protocols'} =  $headers{(grep(/^Alternate-Protocol/i, keys %headers))[0] || ""};
+                # TODO: http_protocols somtimes fails, reason unknown (03/2015)
+
             } else { # any status code > 500
                 #no print "**WARNING: http:// connection refused; consider using --no-http"; # no print here!
                 push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: " . $_SSLinfo{'http_status'});
@@ -1888,6 +1896,10 @@ If certificate is self signed.
 
 Get HTTPS alerts send by server.
 
+=head2 https_protocols( )
+
+Get HTTPS Alterenate-Protocol header.
+
 =head2 https_status( )
 
 Get HTTPS response (aka status) line.
@@ -1903,6 +1915,10 @@ Get HTTPS Location header.
 =head2 https_refresh( )
 
 Get HTTPS Refresh header.
+
+=head2 http_protocols( )
+
+Get HTTP Alterenate-Protocol header.
 
 =head2 http_status( )
 
@@ -2012,12 +2028,14 @@ sub pubkey_value    { return _SSLinfo_get('pubkey_value',     $_[0], $_[1]); }
 sub renegotiation   { return _SSLinfo_get('renegotiation',    $_[0], $_[1]); }
 sub resumption      { return _SSLinfo_get('resumption',       $_[0], $_[1]); }
 sub selfsigned      { return _SSLinfo_get('selfsigned',       $_[0], $_[1]); }
+sub https_protocols { return _SSLinfo_get('https_protocols',  $_[0], $_[1]); }
 sub https_status    { return _SSLinfo_get('https_status',     $_[0], $_[1]); }
 sub https_server    { return _SSLinfo_get('https_server',     $_[0], $_[1]); }
 sub https_alerts    { return _SSLinfo_get('https_alerts',     $_[0], $_[1]); }
 sub https_location  { return _SSLinfo_get('https_location',   $_[0], $_[1]); }
 sub https_refresh   { return _SSLinfo_get('https_refresh',    $_[0], $_[1]); }
 sub https_pins      { return _SSLinfo_get('https_pins',       $_[0], $_[1]); }
+sub http_protocols  { return _SSLinfo_get('http_protocols',   $_[0], $_[1]); }
 sub http_status     { return _SSLinfo_get('http_status',      $_[0], $_[1]); }
 sub http_location   { return _SSLinfo_get('http_location',    $_[0], $_[1]); }
 sub http_refresh    { return _SSLinfo_get('http_refresh',     $_[0], $_[1]); }
