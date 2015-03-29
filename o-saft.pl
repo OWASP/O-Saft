@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.03.20"; }
+    sub _VERSION() { return "15.03.29"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -79,7 +79,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.332 15/03/24 12:05:22";
+my  $SID    = "@(#) yeast.pl 1.337 15/03/29 23:39:34";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -381,7 +381,7 @@ our %data   = (     # connection and certificate details
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
     'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Target supports heartbeat"},
-    'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target supported protocols (ALPN, NPN)"},
+    'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target advertised protocols"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
@@ -402,7 +402,7 @@ our %data   = (     # connection and certificate details
     'https_sts'     => {'val' => sub { Net::SSLinfo::https_sts(     $_[0], $_[1])}, 'txt' => "HTTPS STS header"},
     'hsts_maxage'   => {'val' => sub { Net::SSLinfo::hsts_maxage(   $_[0], $_[1])}, 'txt' => "HTTPS STS MaxAge"},
     'hsts_subdom'   => {'val' => sub { Net::SSLinfo::hsts_subdom(   $_[0], $_[1])}, 'txt' => "HTTPS STS include sub-domains"},
-    'http_protocols'=> {'val' => sub { Net::SSLinfo::https_protocol($_[0], $_[1])}, 'txt' => "HTTP Alternate-Protocol"},
+    'http_protocols'=> {'val' => sub { Net::SSLinfo::http_protocols($_[0], $_[1])}, 'txt' => "HTTP Alternate-Protocol"},
     'http_status'   => {'val' => sub { Net::SSLinfo::http_status(   $_[0], $_[1])}, 'txt' => "HTTP Status line"},
     'http_location' => {'val' => sub { Net::SSLinfo::http_location( $_[0], $_[1])}, 'txt' => "HTTP Location header"},
     'http_refresh'  => {'val' => sub { Net::SSLinfo::http_refresh(  $_[0], $_[1])}, 'txt' => "HTTP Refresh header"},
@@ -564,6 +564,10 @@ my %check_dest = (  # target (connection) data
     'edh'           => {'txt' => "Target supports EDH ciphers"},
     'hassslv2'      => {'txt' => "Target does not support SSLv2"},
     'hassslv3'      => {'txt' => "Target does not support SSLv3"},      # POODLE
+    'hastls10'      => {'txt' => "Target supports TLSv1"},
+    'hastls11'      => {'txt' => "Target supports TLSv1.1"},
+    'hastls12'      => {'txt' => "Target supports TLSv1.2"},
+    'hastls13'      => {'txt' => "Target supports TLSv1.3"},
     'adh'           => {'txt' => "Target does not accept ADH ciphers"},
     'null'          => {'txt' => "Target does not accept NULL ciphers"},
     'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
@@ -822,6 +826,10 @@ our %shorttexts = (
     'ocsp'          => "OCSP supported",
     'hassslv2'      => "No SSLv2",
     'hassslv3'      => "No SSLv3",
+    'hastls10'      => "TLSv1",
+    'hastls11'      => "TLSv1.1",
+    'hastls12'      => "TLSv1.2",
+    'hastls13'      => "TLSv1.3",
     'adh'           => "No ADH ciphers",
     'edh'           => "EDH ciphers",
     'null'          => "No NULL ciphers",
@@ -1283,9 +1291,14 @@ our %cmd = (
                         qw(beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs)
                        #qw(resumption renegotiation) # die auch?
                        ],
+    'cmd-prots'     => [                            # commands for checking protocols
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 protocols https_protocols http_protocols)
+                       ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                       qw(check beast crime time breach freak pfs rc4_cipher rc4 bsi selected poodle cipher)],
+                        qw(check beast crime time breach freak pfs rc4_cipher rc4 bsi selected poodle cipher),
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13) # TODO: need simple check for protocols
+                       ],
     'need_default'  => [        # commands which need selected cipher
                        qw(check cipher pfs selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
@@ -3713,6 +3726,12 @@ sub checkprot($$) {
     $cfg{'done'}->{'checkprot'}++;
     return if ($cfg{'done'}->{'checkprot'} > 1);
     # check SSL version support
+    foreach $ssl (qw(TLSv1 TLSv11 TLSv12 TLSv13)) {
+        $checks{'hastls10'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv1');
+        $checks{'hastls11'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv11');
+        $checks{'hastls12'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv12');
+        $checks{'hastls13'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv13');
+    }
     foreach $ssl (qw(SSLv2 SSLv3)) {
         # For  +check command, SSL versions are already detected, for single
         # commands, i.e. +hasSSLv3, SSL versions may not yet checked. We use
@@ -5075,6 +5094,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+sni')                { $cmdsni = 1;          }
     if ($arg eq  '+alpn')               { $arg = '+protocols';  } # ALPN; TODO: may be changed in future
     if ($arg eq  '+npn')                { $arg = '+protocols';  } # NPN; TODO: may be changed in future
+    if ($arg eq  '+spdy')               { $arg = '+protocols';  } # spdy; TODO: may be changed in future
     if ($arg eq  '+owner')              { $arg = '+subject';    } # subject
     if ($arg eq  '+authority')          { $arg = '+issuer';     } # issuer
     if ($arg eq  '+expire')             { $arg = '+after';      }
@@ -5102,6 +5122,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
     if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; } # TODO: too lazy, nee +vulnerability +vulnerabilities too
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
+    if ($arg eq  '+protocols'){@{$cfg{'do'}}= (@{$cfg{'cmd-prots'}});           next; }
     if ($arg eq '+traceSUB'){
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
