@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.88 15/03/27 09:03:47',
+    SID         => '@(#) Net::SSLinfo.pm 1.89 15/03/29 23:43:06',
 };
 
 ######################################################## public documentation #
@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.03.25';
+    $VERSION   = '15.03.29';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -429,7 +429,7 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
-$Net::SSLinfo::protocols   = 'spdy/4a4,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1';
+$Net::SSLinfo::protocols   = 'h2-15,h2-14,spdy/4a4,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1';
                                 # next protocols not yet configurable
                                 # protocols may have prefix `exp' which should not be checked by server
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
