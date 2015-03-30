@@ -106,6 +106,11 @@
 --cfg_cmd=quick=selected cipher sslversion hassslv2 hassslv3 export rc4_cipher pfs beast crime freak heartbleed lucky13 poodle rc4 fingerprint_hash fp_not_md5 sha2signature email serial subject dates verify heartbeat expansion compression hostname tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts crl resumption renegotiation
 
 ###
+### redefine command +protocols
+###
+--cfg_cmd=prots=hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 protocols https_protocols http_protocols
+
+###
 ### redefine command +vulns
 ###
 --cfg_cmd=vulns=beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs
