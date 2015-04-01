@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.03.29"; }
+    sub _VERSION() { return "15.04.01"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -79,7 +79,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.337 15/03/29 23:39:34";
+my  $SID    = "@(#) yeast.pl 1.338 15/04/02 01:27:38";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -308,6 +308,8 @@ my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
 our @results= ();   # list of checked ciphers: [SSL, ciper suite name, yes|no]
+our %data0  = ();   # same as %data but has 'val' only, no 'txt'
+                    # contains values from first connection only
 
     # NOTE do not change names of keys in %data and all %check_* as these keys
     #      are used in output with --tracekey
@@ -385,6 +387,7 @@ our %data   = (     # connection and certificate details
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
+    'session_lifetime'=>{'val'=> sub { Net::SSLinfo::session_lifetime($_[0],$_[1])},'txt' => "Target's TLS Session Ticket Lifetime"},
     'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
     'chain_verify'  => {'val' => sub { Net::SSLinfo::chain_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification (trace)"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
@@ -413,10 +416,10 @@ our %data   = (     # connection and certificate details
     # they are not printed with +info or +check; values are integer
     'valid-years'   => {'val' =>  0, 'txt' => "certificate validity in years"},
     'valid-months'  => {'val' =>  0, 'txt' => "certificate validity in months"},
-    'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},   # approx. value, accurate if < 30
+    'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},  # approx. value, accurate if < 30
 ); # %data
 # need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|protocols|
-# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|
+# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|session_lifetime|
 
 our %checks = (
     # key           =>  {val => "", txt => "label to be printed", score => 0, typ => "connection"},
@@ -606,6 +609,8 @@ my %check_dest = (  # target (connection) data
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
+    'session_lifetime'=>{'txt'=> "Target TLS Session Ticket Lifetime"},
+    'session_random'=> {'txt' => "Target TLS Session Ticket is random"},
     'heartbeat'     => {'txt' => "Target does not support heartbeat extension"},
     'scsv'          => {'txt' => "Target does not support SCSV"},
     # following for information, checks not useful; see "# check target specials" in checkdest also
@@ -862,8 +867,8 @@ our %shorttexts = (
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
     'pfs'           => "PFS (selected cipher)",
-     #  *-pfs* are used internally only
     'pfs+'          => "PFS (all ciphers)",
+     #  *-pfs* are used internally only
     'SSLv2-pfs+'    => "PFS (all  SSLv2 ciphers)",
     'SSLv3-pfs+'    => "PFS (all  SSLv3 ciphers)",
     'TLSv1-pfs+'    => "PFS (all  TLSv1 ciphers)",
@@ -920,6 +925,8 @@ our %shorttexts = (
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
     'session_ticket'=> "TLS Session Ticket",
+    'session_lifetime'=> "TLS Session Ticket Lifetime",
+    'session_random'=> "TLS Session Ticket random",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -3787,6 +3794,13 @@ sub checkdest($$) {
         }
     }
 
+    # PFS is scary if the TLS session ticket is not random
+    #  we should have different tickets in %data0 and %data
+    #  it's ok if both are empty 'cause then no tickets are used
+    $key   = 'session_ticket';
+    $value = $data{$key}->{val}($host, $port);
+    $checks{'session_random'}->{val} = $value if ($value eq $data0{$key}->{val});
+
     checkprot($host, $port);
 
     # vulnerabilities
@@ -3802,7 +3816,7 @@ sub checkdest($$) {
     $checks{'resumption'}->{val}    = $value if ($value !~ m/^Reused/);
 
     # check target specials
-    foreach $key (qw(krb5 psk_hint psk_identity srp session_ticket)) { # master_key session_id: see %check_dest above also
+    foreach $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) { # master_key session_id: see %check_dest above also
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " "    if ($value eq "");
         $checks{$key}->{val} = "None" if ($value =~ m/^\s*None\s*$/i);
@@ -5643,20 +5657,24 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     usr_pre_info();
 
-    # check if SNI supported
+    # check if SNI supported, also copy all data to %data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
         # finally we close the connection to be clean for all other tests
-    if ($cfg{'usesni'} != 0) {      # useful with SNI only
-        _trace(" cn_nosni: {");
-        $Net::SSLinfo::use_SNI  = 0;
-        if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
-            $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
-            Net::SSLinfo::do_ssl_close($host, $port);
+    _trace(" cn_nosni: {");
+    $Net::SSLinfo::use_SNI  = 0;
+    if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
+        $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
+        foreach $key (keys %data) { # copy to %data0
+            next if ($key =~ m/$cfg{'regex'}->{'cmd-intern'}/i);
+            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
         }
-        $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
-        _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
+        Net::SSLinfo::do_ssl_close($host, $port);
+    } else {
+        _warn("Can't make a connection to $host:$port; no initial data");
     }
+    $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
+    _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
 
     usr_pre_open();
 
