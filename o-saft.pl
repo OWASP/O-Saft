@@ -79,7 +79,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.339 15/04/02 11:30:53";
+my  $SID    = "@(#) yeast.pl 1.340 15/04/02 13:49:27";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -589,8 +589,8 @@ my %check_dest = (  # target (connection) data
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'resumption'    => {'txt' => "Target supports resumption"},
     'renegotiation' => {'txt' => "Target supports renegotiation"},
-    'pfs'           => {'txt' => "Target supports PFS (selected cipher)"},
-    'pfs+'          => {'txt' => "Target supports PFS (all ciphers)"},
+    'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
+    'pfs_cipherall' => {'txt' => "Target supports PFS (all ciphers)"},
      #  *-pfs* are used internally only
     'SSLv2-pfs+'    => {'txt' => "Target supports PFS (all  SSLv2 ciphers)"}, # dummy
     'SSLv3-pfs+'    => {'txt' => "Target supports PFS (all  SSLv3 ciphers)"},
@@ -868,8 +868,8 @@ our %shorttexts = (
     'order'         => "Client's cipher order",
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
-    'pfs'           => "PFS (selected cipher)",
-    'pfs+'          => "PFS (all ciphers)",
+    'pfs_cipher'    => "PFS (selected cipher)",
+    'pfs_cipherall' => "PFS (all ciphers)",
      #  *-pfs* are used internally only
     'SSLv2-pfs+'    => "PFS (all  SSLv2 ciphers)",
     'SSLv3-pfs+'    => "PFS (all  SSLv3 ciphers)",
@@ -1289,15 +1289,16 @@ our %cmd = (
                        qw(
                         selected cipher fingerprint_hash fp_not_md5 email serial
                         subject dates verify expansion compression hostname
-                        beast crime freak export rc4_cipher rc4 pfs crl hassslv2 hassslv3 poodle
+                        beast crime freak export rc4_cipher rc4 pfs_cipher crl hassslv2 hassslv3 poodle
                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
     'cmd-bsi'       => [qw(after dates crl rc4_cipher renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
+    'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],     # commands for +pfs
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs)
+                        qw(beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
@@ -1305,13 +1306,13 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach freak pfs rc4_cipher rc4 bsi selected poodle cipher),
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 bsi selected poodle cipher),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13) # TODO: need simple check for protocols
                        ],
     'need_default'  => [        # commands which need selected cipher
-                       qw(check cipher pfs selected)],
+                       qw(check cipher pfs_cipher selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                       qw(check beast crime time breach freak pfs rc4_cipher rc4 bsi selected ev+ ev-)],
+                       qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 bsi selected ev+ ev-)],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
                        qw(
@@ -3226,8 +3227,8 @@ sub checkciphers($$) {
             $checks{$ssl . '-HIGH'}->{val} +
             $checks{$ssl . '-MEDIUM'}->{val}
             ;
-        $checks{$ssl .'-pfs-'}->{val} = "" if ($checks{$ssl . '-pfs-'}->{val} > 0);
-        $checks{'pfs+'}->{val}  .= $checks{$ssl . '-pfs+'}->{val};
+        $checks{$ssl .'-pfs-'}->{val}    = "" if ($checks{$ssl . '-pfs-'}->{val} > 0);
+        $checks{'pfs_cipherall'}->{val} .= $checks{$ssl . '-pfs+'}->{val};
     }
     $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
     _trace(" checkciphers }");
@@ -3791,8 +3792,8 @@ sub checkdest($$) {
         next if ($cfg{$ssl} == 0);
         $cipher = _get_default($ssl, $host, $port);
         if ($cipher ne "") {
-            $checks{'selected'}->{val} = $cipher;
-            $checks{'pfs'}->{val}   = $cipher if ("" ne _ispfs($ssl, $cipher));
+            $checks{'selected'}->{val}  = $cipher;
+            $checks{'pfs_cipher'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
         }
     }
 
@@ -5166,6 +5167,7 @@ while ($#argv >= 0) {
         if ($val eq 'sizes'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
         if ($val eq 'hsts') { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});  next; }
         if ($val eq 'http') { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
+        if ($val eq 'pfs')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-pfs'}});   next; }
         if ($val eq 'sni')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sni'}});   next; }
         if ($val eq 'ev')   { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
         if ($val =~ /^(bsi|TR-?02102)/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
@@ -5242,7 +5244,7 @@ if (_is_do('list')) {
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $text{'separator'}  = "\t" if (grep(/--(?:tab|sep(?:arator)?)/, @argv) <= 0); # tab if not set
 }
-if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs+') if (!_is_do('pfs+')); }
+if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs_cipherall') if (!_is_do('pfs_cipherall')); }
 
 _yeast_args();
 _vprintme();
