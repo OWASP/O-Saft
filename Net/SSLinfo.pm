@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.89 15/03/29 23:43:06',
+    SID         => '@(#) Net::SSLinfo.pm 1.90 15/04/02 10:48:18',
 };
 
 ######################################################## public documentation #
@@ -281,7 +281,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.03.29';
+    $VERSION   = '15.04.01';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -1198,7 +1198,6 @@ sub do_ssl_open($$$) {
                 $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
                 $_SSLinfo{'http_protocols'} =  $headers{(grep(/^Alternate-Protocol/i, keys %headers))[0] || ""};
                 # TODO: http_protocols somtimes fails, reason unknown (03/2015)
-
             } else { # any status code > 500
                 #no print "**WARNING: http:// connection refused; consider using --no-http"; # no print here!
                 push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: " . $_SSLinfo{'http_status'});
@@ -1294,6 +1293,7 @@ sub do_ssl_open($$$) {
 
             # from s_client:
             #    Protocol  : TLSv1
+            #    Cipher    : ECDHE-RSA-RC4-SHA
             #    Session-ID: 322193A0D243EDD1C07BA0B2E68D1044CDB06AF0306B67836558276E8E70655C
             #    Session-ID-ctx: 
             #    Master-Key: EAC0900291A1E5B73242C3C1F5DDCD4BAA7D9F8F4BC6E640562654B51E024143E5403716F9BF74672AF3703283456403
@@ -1303,9 +1303,21 @@ sub do_ssl_open($$$) {
             #    PSK identity hint: None
             #    SRP username: None
             #    Timeout   : 300 (sec)
-            #    TLS session ticket lifetime hint: 100800 (seconds)
             #    Compression: zlib compression
             #    Expansion: zlib compression
+            #    TLS session ticket lifetime hint: 100800 (seconds)
+            #    TLS session ticket:
+            #    0000 - 00 82 87 03 7b 42 7f b5-a2 fc 9a 95 9c 95 2c f3   ....{B........,.
+            #    0010 - 69 91 54 a9 5b 7a 32 1c-08 b1 6e 3c 8c b7 b8 1f   i.T.[z2...n<....
+            #    0020 - e4 89 63 3e 3c 0c aa bd-96 70 30 b2 cd 1e 2d c0   ..c><....p0...-.
+            #    0030 - e7 fe 10 cd d4 82 e9 8f-d8 ee 91 16 02 42 7b 93   .............B{.
+            #    0040 - fc 93 82 c4 d3 fd 0a f3-c6 3d 77 ab 1d 25 4f 5a   .........=w..%OZ
+            #    0050 - fc 44 9a 21 3e cb 18 e9-a4 44 1b 30 7c 98 4d 04   .D.!>....D.0|.M.
+            #    0060 - bb 12 3e 67 c8 9a ad 99-b4 50 32 81 1e 54 70 2d   ..>g.....P2..Tp-
+            #    0070 - 06 08 82 30 9a 94 82 6f-e2 fa c7 e8 5a 19 af dc   ...0...o....Z...
+            #    0080 - 70 45 71 f9 d1 e6 a8 d7-3c c2 c6 b8 e1 d5 4f dd   pEq.....<.....O.
+            #    0090 - 52 12 f3 90 0c 51 c5 81-6c 9e 69 b6 bd 0c e6 e6   R....Q..l.i.....
+            #    00a0 - 4c d4 72 33                                       L.r3
         my %match_map = (
             # %_SSLinfo key       string to match in s_client output
             #-------------------+-----------------------------------
@@ -1332,7 +1344,7 @@ sub do_ssl_open($$$) {
             # data may contain output of s_client up to 5 times
             # it's not ensured that all 5 data sets are identical, hence
             # we need to check them all -at least the last one-
-            # Unfortunately all following checks us akk 5 data sets.
+            # Unfortunately all following checks use all 5 data sets.
         foreach my $key (keys %match_map) {
             my $regex = $match_map{$key};
             $d = $data;
@@ -1340,8 +1352,6 @@ sub do_ssl_open($$$) {
             $_SSLinfo{$key} = $d if ($data =~ m/$regex/);
         }
 
-            # from s_client:
-            #   TLS server extension "session ticket" (id=35), len=0
         $d = $data; $d =~ s/.*?TLS session ticket:\s*[\n\r]+(.*?)\n\n.*/$1_/si;
         if ($data =~ m/TLS session ticket:/) {
             $d =~ s/\s*[0-9a-f]{4}\s*-\s*/_/gi;   # replace leading numbering with marker
@@ -1419,15 +1429,17 @@ sub do_ssl_open($$$) {
         $d = $data; $d =~ s/.*?(depth=-?[0-9]+.*?)[\r\n]+---[\r\n]+.*/$1/si;
         $_SSLinfo{'chain_verify'}   = $d;
 
+            # from s_client -tlsextdebug -nextprotoneg
             # TLS server extension "renegotiation info" (id=65281), len=1
             # TLS server extension "session ticket" (id=35), len=0
             # TLS server extension "heartbeat" (id=15), len=1
             # TLS server extension "EC point formats" (id=11), len=4
             # TLS server extension "next protocol" (id=13172), len=25
+            # TLS server extension "session ticket" (id=35), len=0
         foreach my $line (split(/[\r\n]+/, $data)) {
-            next if ($line !~ m/TLS server extension/);
+            next if ($line !~ m/TLS server extension/i);
             $d = $line;
-            $d =~ s/TLS server extension\s*"([^"]*)"/$1/;
+            $d =~ s/TLS server extension\s*"([^"]*)"/$1/i;
                 # remove prefix text, but leave id= and len= for caller
             my $rex =  $d;  # $d may contain regex meta characters, like ()
                $rex =~ s#([(/*)])#\\$1#g;
