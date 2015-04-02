@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.90 15/04/02 11:09:10',
+    SID         => '@(#) Net::SSLinfo.pm 1.90 15/04/02 11:26:08',
 };
 
 ######################################################## public documentation #
@@ -344,7 +344,7 @@ require Exporter;
         keysize
         keyusage
         https_protocols
-        https_scv
+        https_svc
         https_status
         https_server
         https_alerts
@@ -352,7 +352,7 @@ require Exporter;
         https_refresh
         https_pins
         http_protocols
-        http_scv
+        http_svc
         http_status
         http_location
         http_refresh
@@ -2055,7 +2055,7 @@ sub renegotiation   { return _SSLinfo_get('renegotiation',    $_[0], $_[1]); }
 sub resumption      { return _SSLinfo_get('resumption',       $_[0], $_[1]); }
 sub selfsigned      { return _SSLinfo_get('selfsigned',       $_[0], $_[1]); }
 sub https_protocols { return _SSLinfo_get('https_protocols',  $_[0], $_[1]); }
-sub https_scv       { return _SSLinfo_get('https_scv',        $_[0], $_[1]); }
+sub https_svc       { return _SSLinfo_get('https_svc',        $_[0], $_[1]); }
 sub https_status    { return _SSLinfo_get('https_status',     $_[0], $_[1]); }
 sub https_server    { return _SSLinfo_get('https_server',     $_[0], $_[1]); }
 sub https_alerts    { return _SSLinfo_get('https_alerts',     $_[0], $_[1]); }
@@ -2063,7 +2063,7 @@ sub https_location  { return _SSLinfo_get('https_location',   $_[0], $_[1]); }
 sub https_refresh   { return _SSLinfo_get('https_refresh',    $_[0], $_[1]); }
 sub https_pins      { return _SSLinfo_get('https_pins',       $_[0], $_[1]); }
 sub http_protocols  { return _SSLinfo_get('http_protocols',   $_[0], $_[1]); }
-sub http_scv        { return _SSLinfo_get('http_scv',         $_[0], $_[1]); }
+sub http_svc        { return _SSLinfo_get('http_svc',         $_[0], $_[1]); }
 sub http_status     { return _SSLinfo_get('http_status',      $_[0], $_[1]); }
 sub http_location   { return _SSLinfo_get('http_location',    $_[0], $_[1]); }
 sub http_refresh    { return _SSLinfo_get('http_refresh',     $_[0], $_[1]); }
