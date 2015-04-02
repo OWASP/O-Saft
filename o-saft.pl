@@ -63,6 +63,8 @@ BEGIN {
 
     # handle simple help very quickly
     if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print _VERSION() . "\n"; exit 0; }
+    print STDERR "**WARNING: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
+        # be smart to users if systems behave strange :-/
     # get first matching argument
     my ($arg) = grep(/^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
         # we allow:  --h  or  --help  or  +help  or  +help=SOMETHING
@@ -79,7 +81,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.340 15/04/02 13:49:27";
+my  $SID    = "@(#) yeast.pl 1.341 15/04/02 20:28:02";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
