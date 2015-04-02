@@ -54,12 +54,13 @@ BEGIN {
     # some dirty code hacks and split the flow of processing in different parts
     # of the source. Therefore this scope is used for --help=* options only.
 
-    unshift(@INC, "./", "./lib", "/bin");
-        # we support some local lib directories
-        # /bin special for installation on portable media
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
-    my $_path = $0; $_path =~ s#/[^/\\]*$##;
-    push(@INC, $_path);             # user-friendly: add path of myself also
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC,                   # NOTE that / works here even for Windoze
+            "./", "./lib",          # we support some local lib directories
+            $_path,                 # user-friendly: add path of myself also
+            "/bin",                 # special installation on portable media
+    );
 
     # handle simple help very quickly
     if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print _VERSION() . "\n"; exit 0; }
@@ -73,7 +74,7 @@ BEGIN {
         $arg =~ s/^(?:--|\+)//;     # remove option prefix
         $arg =~ s/^help=?//;        # remove option but keep its argument
         $arg =~ s/^h$//;            # --h is same as --help
-        require "o-saft-man.pm";    # must be found with %INC
+        require "o-saft-man.pm";    # must be found with @INC
         printhelp($arg);            # empty $arg for full help text
         exit 0;
     }
@@ -81,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.341 15/04/02 20:28:02";
+my  $SID    = "@(#) yeast.pl 1.342 15/04/02 21:01:20";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
