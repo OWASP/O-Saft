@@ -32,13 +32,27 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.90 15/04/02 11:26:08',
+    SID         => '@(#) Net::SSLinfo.pm 1.93 15/04/03 14:36:43',
 };
 
 ######################################################## public documentation #
-# Documentaion starts here, so we can use the inline documentation for our
-# functions also and it will be extracted automatically by POD tools.  All
-# public functions will be prefixed with a POD description.
+# Documentaion starts here, so  POD-style inline documentation  can be used for
+# functions also which will be extracted automatically by POD tools. All public
+# functions will be prefixed with a POD description.
+#
+# Dragons with perldoc:
+#   =head2
+#       Needs at least one space between ( and ) , otherwise formatting will be
+#       wrong.
+#   C<$something>
+#       Does not print  "$something"  but simply  $something  unless  $somthing
+#       contains = or * character, i.e. $some=thing. Hence we use I<$something>
+#       instead.
+
+# NOTE: This module should not use any  print(), warn() or die() calls to avoid
+#       unexpected behaviours in the calling program. Only exception is print()
+#       when used in trace mode ($trace > 0).
+# FIXME: there're still some warn (3/2015)
 
 =pod
 
@@ -59,8 +73,8 @@ Net::SSLinfo -- perl extension for SSL certificates
 
 =head1 DESCRIPTION
 
-This module is an extension to Net::SSLeay to provide information according
-a SSL connection to a specific server.
+This module is an extension to L<Net::SSLeay(3pm)> to provide information
+according a SSL connection to a specific server.
 
 The purpose is to give as much as possible information to the user (caller)
 according the specified server aka hostname without struggling with the
@@ -70,17 +84,20 @@ internals of SSL as needed by Net::SSLeay.
 
 All methods return a string on success, empty string otherwise.
 
+No output is written on STDOUT or STDERR. Errors need to be retrived using
+I<Net::SSLinfo::errors()> method.
+
 =head1 DEBUGGING
 
-Simple tracing can be activated with C<$Net::SSLinfo:trace=1>.
+Simple tracing can be activated with I<$Net::SSLinfo:trace=1>.
 
-C<$Net::SSLinfo:trace=2> or C<$Net::SSLinfo:trace=3> will be passed to
-C<$Net::SSLeay::trace>.
+I<$Net::SSLinfo:trace=2> or I<$Net::SSLinfo:trace=3> will be passed to
+I<$Net::SSLeay::trace>.
 
-Debugging of low level SSL can be enabled by setting C<$Net::SSLeay::trace>,
+Debugging of low level SSL can be enabled by setting I<$Net::SSLeay::trace>,
 see L<Net::SSLeay> for details.
 
-In trace messages empty or undefined strings are writtens as "<<undefined>>".
+In trace messages empty or undefined strings are written as "<<undefined>>".
 
 =head1 VARIABLES
 
@@ -106,9 +123,9 @@ Value will not be used at all is set C<undef>.
 
 =item $Net::SSLinfo::ca_depth
 
-Depth of peer certificate verification verification; default: 9
+Depth of peer certificate verification; default: 9
 
-Value will not be used at all is set C<undef>.
+Value will not be used at all if set C<undef>.
 
 =item $Net::SSLinfo::socket
 
@@ -130,7 +147,7 @@ More informations according the  SSL connection and  the certificate,
 additional to that of Net::SSLeay, can be retrived using the  openssl
 executable. If set to "1" openssl will be used also; default: 1
 
-If disabled, the values returned value will be: #
+If disabled, the values returned will be: #
 
 =item $Net::SSLinfo::use_sclient
 
@@ -219,7 +236,7 @@ Please see  B<VARIABLES>  for details.
 
 Unfortunately the  default settings  for the libraries and tools differ on
 various platforms, so there is  no simple way to check if the verification
-was successfull as expected.
+was successful as expected.
 
 In particular the behaviour is unpredictable if the  environment variables 
 are set and our internal variables (see above) too. Hence, we recommend to
@@ -281,7 +298,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.04.02';
+    $VERSION   = '15.04.03';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -874,19 +891,17 @@ sub _openssl_x509($$) {
 } # _openssl_x509
 
 ############################################################ public functions #
-#
-# for perldoc we need at least one space between ( and ) if used in a =head2
-# line, otherwise it will be formatted wrong
 
 =pod
 
-=head2 do_ssl_open( $host,$port,$sslversions[,$cipherlist])
+=head2 do_ssl_open($host,$port,$sslversions[,$cipherlist])
 
 Opens new SSL connection with Net::SSLeay.
-If C<$sslversions> is space-separated list of SSL versions to be used. Following
+
+I<$sslversions> is space-separated list of SSL versions to be used. Following
 strings are allowed for versions: C<SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 DTLSv1>.
-If C<$sslversions> is empty, the system's default settings of versions are used.
-If C<$cipherlist> is missing or empty, default C<ALL:NULL:eNULL:aNULL:LOW> will be used.
+If I<$sslversions> is empty, the system's default settings of versions are used.
+If I<$cipherlist> is missing or empty, default C<ALL:NULL:eNULL:aNULL:LOW> will be used.
 
 Returns array with $ssl object and $ctx object.
 
@@ -917,10 +932,11 @@ sub do_ssl_open($$$) {
     my $err = "";    # error string, if any, from sub-system $src
     my $ctx = undef;
     my $ssl = undef;
-    my $dum;         # used to avoid warnings with perl's -w
     my $cafile  = "";
     my $capath  = "";
     my $socket  = *FH;  # if we need it ...
+    my $dum     = *FH;  # keep perl's -w quiet
+       $dum     = undef;
 
     TRY: {
         #1. open TCP connection
@@ -985,6 +1001,7 @@ sub do_ssl_open($$$) {
             # CTX_load_verify_locations()  sets SSLeay's error stack,  which is
             # roughly the same as $!
         }
+        $dum = $Net::SSLinfo::ca_crl;   # TODO: keep perl's -w quiet until used
         $src = "Net::SSLeay::CTX_set_verify_depth()";
         if (defined $Net::SSLinfo::ca_depth) {
             if ($Net::SSLinfo::ca_depth !~ m/^[0-9]$/) {
@@ -993,6 +1010,13 @@ sub do_ssl_open($$$) {
             }
             Net::SSLeay::CTX_set_verify_depth($ctx, $Net::SSLinfo::ca_depth);
         }
+        # TODO: certificate CRL
+        # just code example, not yet tested
+        #
+        # enable Net::SSLeay CRL checking:
+        #   &Net::SSLeay::X509_STORE_set_flags
+        #       (&Net::SSLeay::CTX_get_cert_store($ssl),
+        #        &Net::SSLeay::X509_V_FLAG_CRL_CHECK);
 
         #2b. set protocol options
         $src = "Net::SSLeay::CTX_set_ssl_version()";   # set default SSL protocol
@@ -1140,6 +1164,9 @@ sub do_ssl_open($$$) {
             # used by IO::Socket::SSL, allow for compatibility and lazy user
             #   owner commonName cn subject issuer authority subjectAltNames
             #   alias: owner == subject, issuer == authority, commonName == cn
+
+        # TODO: certificate chain depth, OCSP
+        # see: http://search.cpan.org/~mikem/Net-SSLeay-1.68/lib/Net/SSLeay.pod#Certificate_verification_and_Online_Status_Revocation_Protocol_%28OCSP%29
 
         #5d. get data related to HTTP(S)
         if ($Net::SSLinfo::use_http > 0) {
@@ -1484,7 +1511,7 @@ sub do_ssl_open($$$) {
 
 =head2 do_ssl_close( )
 
-Close Net::SSLeay connection and free allocated objects.
+Close L<Net::SSLeay> connection and free allocated objects.
 =cut
 
 sub do_ssl_close($$) {
@@ -1511,16 +1538,18 @@ sub do_ssl_close($$) {
 Wrapper for call of external L<openssl(1)> executable. Handles special
 behaviours on some platforms.
 
-If C<$command> equals C<s_client> it will add C<-reconnect -connect> to the
-openssl call. All other values of C<$command> will be used verbatim.
+If I<$command> equals C<s_client> it will add C<-reconnect -connect> to the
+openssl call. All other values of I<$command> will be used verbatim.
 Note that the SSL version must be part (added) as proper openssl option
 to C<$command> as this option cannot preceed the command in openssl..
 
-Examples for C<$command>:
+Examples for I<$command>:
+
     ciphers -sslv3
+
     s_client -tlsv1_1 -connect
 
-The value of C<$data>, if set, is piped to openssl.
+The value of I<$data>, if set, is piped to openssl.
 
 Returns retrieved data or '<<openssl>>' if openssl or s_client missing.
 =cut
@@ -1581,6 +1610,10 @@ sub do_openssl($$$) {
     return $data;
 } # do_openssl
 
+# From here on, we use a pod sections for multiple functions, then the
+# corresponding function definitions follow that section. This is done
+# to make the code more readable for humans.
+
 =pod
 
 =head2 set_cipher_list($cipherlist)
@@ -1600,13 +1633,13 @@ sub set_cipher_list($$) {
 
 =pod
 
+=head2 errors( )
+
+Get list of errors, intenal ones but most likely from I<$Net::SSLeay::*> calls.
+
 =head2 s_client( )
 
 Dump data retrived from "openssl s_client ..." call. For debugging only.
-
-=head2 errors( )
-
-Get list of errors from C<$Net::SSLeay::*> calls.
 
 =head2 options( )
 
@@ -1733,6 +1766,7 @@ Get SSL protocol version used by connection.
 Get version from certificate.
 =cut
 
+# TODO: not yet implemented
 #=head2 keysize( )
 #
 #Get certificate private key size.
@@ -1748,11 +1782,11 @@ Get version from certificate.
 Print all available (by Net::SSLinfo) data.
 
 Due to huge amount of data, the value for s_client is usually omitted.
-Please set C<$Net::SSLinfo::use_sclient > 1> to print this data also.
+Please set I<$Net::SSLinfo::use_sclient gt 1> to print this data also.
 
 =head2 (details)
 
-All following require that C<$Net::SSLinfo::use_openssl=1;> being set.
+All following require that I<$Net::SSLinfo::use_openssl=1;> being set.
 
 =head2 compression( )
 
@@ -1821,11 +1855,11 @@ Get certificate fingerprint hash algorithm.
 =head2 fingerprint_text( )
 
 Get certificate fingerprint, which is the hash algorthm followed by the hash
-value. This is usually the same as C<fingerprint_type()=fingerprint_hash()>.
+value. This is usually the same as I<fingerprint_type()=fingerprint_hash()>.
 
 =head2 fingerprint( )
 
-Alias for C<fingerprint_text()>.
+Alias for I<fingerprint_text()>.
 
 =head2 email( )
 
@@ -1872,7 +1906,7 @@ unexpected sequence. If `Reused' is found and less than 3 `New' then
 resumption is assumed. 
 
 If resumption is not detected, increasing the timeout with i.e.
-"$Net::SSLinfo::timeout_sec = 5"  may return different results.
+I<$Net::SSLinfo::timeout_sec = 5>  may return different results.
 
 =head2 sigkey_len( )
 
@@ -1980,8 +2014,8 @@ Get pins attribute of STS header.
 
 =cut
 
-sub s_client        { return _SSLinfo_get('s_client',         $_[0], $_[1]); }
 sub errors          { return _SSLinfo_get('errors',           $_[0], $_[1]); }
+sub s_client        { return _SSLinfo_get('s_client',         $_[0], $_[1]); }
 sub options         { return _SSLinfo_get('_options',         $_[0], $_[1]); }
 sub PEM             { return _SSLinfo_get('PEM',              $_[0], $_[1]); }
 sub pem             { return _SSLinfo_get('PEM',              $_[0], $_[1]); } # alias for PEM
