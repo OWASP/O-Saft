@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.22 15/03/25 01:24:52";
+my  $man_SID= "@(#) o-saft-man.pm 1.24 15/04/03 15:04:28";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -61,8 +61,8 @@ if (open(DATA, $wer)) {
         s/^( {14})([^ ].*)/S&$1$2&/;    # exactly 14 spaces used to highlight line
         if (!m/^(?:=|S&|\s+\$0)/) {     # no markup in example lines and already marked lines
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g; # markup commands and options
-                # FIXME: fails for something like:  --opt=foo="bar"
-                # FIXME: above substitute fails for something like:  --opt --opt
+                # TODO: fails for something like:  --opt=foo="bar"
+                # TODO: above substitute fails for something like:  --opt --opt
                 #        hence same substitute again (should be sufficent then)
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
         }
@@ -561,6 +561,10 @@ sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @A
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
 sub _man_http_head(){
+    return if (grep(/--cgi/, @ARGV) <= 0);
+    # checking @ARGV for --cgi is ok, as this option is for simulating
+    # CGI mode only.
+    # When called from o-saft.cgi, HTTP headers are already written.
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
     print "Content-type: text/html; charset=utf-8\r\n";
     print "\r\n";
@@ -570,7 +574,7 @@ sub _man_html_head(){
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title> . :  O - S a f t  &#151;  OWASP SSL audit for testers : . </title>
+<title> . :  O - S a f t  &#151;  OWASP SSL advanced forensic tool : . </title>
 <script>
 function d(id){return document.getElementById(id).style;}
 function t(id){id.display=(id.display=='none')?'block':'none';}
@@ -597,7 +601,7 @@ sub _man_html_foot(){
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar ><button value="" />Download (stable)</button></a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
- <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2014</span></p>
+ <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2015</span></p>
 </body></html>
 EoHTML
 }
@@ -716,7 +720,7 @@ sub man_table($) {
     if ($typ eq 'score') { _man_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
    #if ($typ eq 'range') { _man_arr($_, $sep, $cfg{'cipherranges'}->{$_}) foreach (sort keys %{$cfg{'cipherranges'}}); }
         # above prints > 65.000 hex values, not very usefull ...
-    if ($typ eq 'range') { print qx(\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0); } # ToDo: quick&dirty backticks
+    if ($typ eq 'range') { print qx(\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0); } # TODO: quick&dirty backticks
     if ($typ eq 'intern') {
         foreach $key (sort keys %cfg) {
             next if ($key eq 'cmd-intern'); # don't list myself
@@ -814,7 +818,7 @@ sub man_html() {
     #? print complete HTML page for o-saft.pl --help=gen-html
     #? recommended usage:   $0 --no-warning --no-header --help=gen-html
     _man_dbx("man_html ...");
-    _man_http_head(); #FIXME if (grep(/^usr-cgi/, @{$cfg{'usr-args'}}) > 0);
+    _man_http_head();
     _man_html_head();
     _man_html('NAME', 'TODO');
     _man_html_foot();
@@ -826,9 +830,8 @@ sub man_cgi() {
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
     _man_dbx("man_cgi ...");
     my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
-#??#    my $cgi = "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
     my $key = "";
-    _man_http_head(); #FIXME if (grep(/^usr-cgi/, @{$cfg{'usr-args'}}) > 0);
+    _man_http_head();
     _man_html_head();
 print << "EoHTML";
  <a href="$cgi?--cgi&--help" target=_help ><button value="" />help</button></a>&#160;&#160;
@@ -851,7 +854,7 @@ print << "EoHTML";
 EoHTML
     foreach $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     print _man_html_br();
-    print _man_html_span('check cipher dump check_sni exec help info info--v http quick list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # FIXME: text should be @{$cfg{'cmd-intern'}}
+    print _man_html_span('check cipher quick info info--v vulns dump check_sni help http list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # similar to @{$cfg{'cmd-intern'}}
     foreach $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
                      no-sni sni no-http http BR
                      no-dns dns no-cert BR
@@ -865,9 +868,9 @@ EoHTML
     }
     foreach $key (qw(separator timeout legacy)) { print _man_html_text($key); }
     print _man_html_br();
-    print _man_html_span('cnark sslaudit sslcipher ssldiagnos sslscan ssltest ssltest-g sslyze testsslserver thcsslcheck openssl simple full compact quick'); # FIXME:
+    print _man_html_span('cnark sslaudit sslcipher ssldiagnos sslscan ssltest ssltest-g sslyze testsslserver thcsslcheck openssl simple full compact quick'); # similar to @{$cfg{'legacys'}}
     print _man_html_text("format");
-    print _man_html_span('csv html json ssv tab xml fullxml raw hex'); # FIXME:
+    print _man_html_span('csv html json ssv tab xml fullxml raw hex'); # milar to @{$cfg{'formats'}}:
     print << "EoHTML";
         <br>
     </div>
@@ -2444,7 +2447,7 @@ CHECKS
 
       BEAST
 
-        Currently (2014) only a simple check is used: only RC4 ciphers used.
+        Currently (2015) only a simple check is used: only RC4 ciphers used.
         Which is any cipher with RC4, ARC4 or ARCFOUR.
         TLSv1.2 checks are not yet implemented.
 
@@ -2481,7 +2484,9 @@ CHECKS
 
       PFS
 
-        Currently (2014) only a simple check is used: only DHE ciphers used.
+        Check if DHE ciphers are used. Also check if the  TLS session ticket
+        is random or not used at all.
+        Currently (2015) only a simple check is used: only DHE ciphers used.
         Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
         TLSv1.2 checks are not yet implemented.
 
@@ -3099,7 +3104,7 @@ LIMITATIONS
           This check is only done for the certificate provided by the target.
           All other certificate in the chain are not checked.
 
-          This is currently (2014) a limitation in $0.
+          This is currently (2015) a limitation in $0.
 
     Broken pipe
 
@@ -3469,7 +3474,7 @@ HACKER's INFO
 #
 #        Following comments are used in the code:
 #
-#          # ToDo:       Parts not working perfect, needs to be changed.
+#          # TODO:       Parts not working perfect, needs to be changed.
 #          # FIXME:      Program code known to be buggy, needs to be fixed.
 #          #!#           Comments not to be removed in compressed code.
 #          #?            Description of sub.
@@ -3769,17 +3774,15 @@ AUTHOR
 # TODO must be last section
 TODO
 
-#        nur protokolle testen (wie testssl.sh)
 #        openssl (nicht bei 0.9.8, bei 1.0.1*) -legacy_renegotiation
-#        Minimal encryption strength:     weak encryption (40-bit) (wie TestSSLServer.jar)
-#        "Checking fallback from TLS 1.1 to... TLS 1.0" (wie ssl-cipher-check.pl)
 #        SSLCertScanner.exe http://www.xenarmor.com/network-ssl-certificate-scanner.php ansehen
-#        ssl-cert-check -p 443 -s mail.google.com -i -V
 
         * new features
           ** client certificate
           ** some STRATTLS need : HELP STARTTLS HELP as output of HELPs are different
           ** support: PCT protocol
+	  ** Checking fallback from TLS 1.1 to TLS 1.0 (see ssl-cipher-check.pl)
+	  ** Minimal encryption strength: weak encryption (40-bit) (TestSSLServer.jar)
 
         * missing checks
           ** SSL_honor_cipher_order => 1
@@ -3788,31 +3791,37 @@ TODO
           ** IP in CommonName or subjectAltname (RFC6125)
           ** checkcert(): KeyUsage, keyCertSign, BasicConstraints
           ** DV and EV miss some minor checks; see checkdv() and checkev()
-          ** some workaround in SSL protocol
           ** +constraints does not check +constraints in the certificate of
              the certificate chain.
-
-        * verify CA chain:
-          ** Net::SSLinfo.pm implement verify*
-          ** implement +check_chain (see Net::SSLinfo.pm implement verify* also)
-          ** implement +ca = +verify +chain +rootcert +expired +fingerprint
-
-        * scoring
-          ** implement score for PFS; lower score if not all ciphers support PFS
-          ** scoring will be removed, must be done by a postprocess
 
         * vulnerabilities
           ** complete TIME, BREACH check
           ** is DHE-DSS-RC4-SHA also weak?
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
+        * verify CA chain:
+          ** Net::SSLinfo.pm implement verify*
+          ** implement +check_chain (see Net::SSLinfo.pm implement verify* also)
+          ** implement +ca = +verify +chain +rootcert +expired +fingerprint
+
+        * postprocessing
+	  Remove all options for output formatting. Use a "postprocess" script
+	  instead.
+          ** scoring
+             implement score for PFS; lower score if not all ciphers support PFS
+             make clear usage of score from %checks
+          ** write postprocessor for tabular data, like
+	     ssl-cert-check -p 443 -s mail.google.com -i -V
+
         * Net::SSLeay
+	  ** remove all warn() as Net::SSLeay should be silent
           ** Net::SSLinfo.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
              return error message
           ** Net::SSLeay::CTX_clear_options()
              Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
              SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
              see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
+          ** Net::SSLeay::do_ssl_close()  does not realy work
 
         * Windows
           ** Unicode:
@@ -3825,16 +3834,14 @@ TODO
              perl from older PortableApps/xampp (i.e. 1.7.x) does not work, cause
              IO/Socket/SSL.pm is too old (1.37).
           ** Windows
-             on Windows print of strings > 32k does not work. Problem only
-             fixed (ugly workaround using --v ) in o-saft-man.pm .
+             on Windows print of strings > 32k does not work.
+             Ugly workaround using --v implemented in o-saft-man.pm only.
 
         * internal
+          ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
           ** make a clear concept how to handle +CMD whether they report
              checks or informations (aka %data vs. %check_*)
-             currently (2014) each single command returns all values
-          ** complete +http checks (see %checks also)
-             improve score for these checks
-             make clear usage of score from %checks
+             currently (2015) each single command returns all values
           ** client certificates not yet implemented in _usesocket() _useopenssl(),
              see t.client-cert.txt
           ** (nicht wichtig, aber sauber programmieren)
