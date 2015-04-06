@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.24 15/04/03 15:04:28";
+my  $man_SID= "@(#) o-saft-man.pm 1.25 15/04/06 22:50:34";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1829,8 +1829,22 @@ OPTIONS
 #         Option reserved for future use ...
 #
 
+      --sslv2
+      --sslv3
+      --tlsv1
+      --tlsv11
+      --tlsv12
+      --tlsv13
+      --dtlsv1
       --SSL, -protocol SSL
 
+      --no-sslv2
+      --no-sslv3
+      --no-tlsv1
+      --no-tlsv11
+      --no-tlsv12
+      --no-tlsv13
+      --no-dtlsv1
       --no-SSL
 
           * SSL         can be any of:
@@ -2078,7 +2092,8 @@ OPTIONS
 
           Internal default format.
 
-      --format=FORM
+      --format=hex
+      --format=raw
 
           'FORM'  may be one of following:
 
@@ -2176,6 +2191,7 @@ OPTIONS
 
           For general descriptions please see  CUSTOMIZATION  section below.
 
+      --cfg_cmd=CMD=LIST
       --cfg-cmd=CMD=LIST
 
           Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
@@ -2202,7 +2218,10 @@ OPTIONS
           Use the  --trace-key  option for the  +info  and/or  +check command
           to get the values for  KEY.
 
-      --cfg-checks=KEY=TEXT --cfg-data=KEY=TEXT
+      --cfg_checks=KEY=TEXT
+      --cfg-checks=KEY=TEXT
+      --cfg_data=KEY=TEXT
+      --cfg-data=KEY=TEXT
 
           Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
           %checks{KEY}{txt}  to  TEXT.
@@ -2211,6 +2230,7 @@ OPTIONS
               $0 --help=cfg-checks
               $0 --help=cfg-data
 
+      --cfg_text=KEY=TEXT
       --cfg-text=KEY=TEXT
 
           Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
@@ -2336,6 +2356,10 @@ OPTIONS
           While  --v  is used to print more data,  --trace  is used to  print
           more information about internal data such as procedure names and/or
           variable names and program flow.
+
+      --warning
+
+          Print warning messages (**WARNING:).
 
       --no-warning
 
