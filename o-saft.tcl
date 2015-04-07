@@ -381,7 +381,8 @@ proc osaft_exec {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
     global cfg hosts tab
     set cfg(INFO) "$cmd"; update idletasks;         # enforce display update
-    set do {};      # must be set to avoid tcl error
+    set do  {};     # must be set to avoid tcl error
+    set opt {};     # ..
     set targets {}; # ..
     if {$cmd eq "Start"} {
         foreach {idx val} [array get cfg] { # collect selected commands
