@@ -79,7 +79,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.1 15/04/06 22:46:08 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.1 15/04/07 09:09:08 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -90,8 +90,11 @@ set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 o
 #   all settings for o-saft.pl go here
 set cfg(SAFT)   {o-saft.pl}
 set cfg(INIT)   {.o-saft.pl}
-set fid [open $cfg(INIT) r]
-set cfg(.CFG) [read $fid];   close $fid;            # read .o-saft.pl
+set cfg(.CFG)   {}
+catch {
+  set fid [open $cfg(INIT) r]
+  set cfg(.CFG) [read $fid];   close $fid;          # read .o-saft.pl
+}
 set toc      "\nCONTENT\n[exec $cfg(SAFT) +help=toc]"
 set cfg(HELP)   "$toc\n\n[exec $cfg(SAFT) +help]";  # get all texts at startup
 set cfg(OPTS)   [exec $cfg(SAFT) --help=opt];       # which is a performance
