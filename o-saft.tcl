@@ -18,9 +18,6 @@
 #? ARGUMENTS
 #?      All arguments, except --help, are treated as a hostname to be checked.
 #?
-#? LIMITATIONS
-#?      All filenames (for Save) are hardcoded and will be overwritten.
-#?
 #. LAYOUT
 #.           +---------------------------------------------------------------+
 #.       (H) | Host:Port [________________________________________]  [+] [-] |
@@ -53,8 +50,8 @@
 #.          Options for commands
 #.          --opt1      this options does something
 #.      This tools relies on the format of these lines. If the format changes
-#.      commands and options may be missing iin the generated GUI.
-#.      Following options are used:  --help=toc  --help=opt  --help=commands
+#.      commands and options may be missing in the generated GUI.
+#.      Following options are used:  --help  --help=opt  --help=commands
 #.
 #. HACKER's INFO
 #.      The tool will only work if o-saft.pl is available and executes without
@@ -69,7 +66,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.6 Easterhack 2015
+#?      @(#) 1.7 Easterhack 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -79,7 +76,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.6 15/04/09 00:35:07 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.7 15/04/09 01:06:05 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -397,12 +394,14 @@ proc osaft_save {type nr} {
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
     global cfg tab
     if {$type eq "TAB"} {
-        set name "$cfg(SAFT)--$nr.log"
+        set name [tk_getSaveFile -confirmoverwrite true -title "Save result to file" -initialfile "$cfg(SAFT)--$nr.log"]
+        if {$name eq ""} { return }
         set fid  [open $name w]
         puts $fid $tab($nr)
     }
     if {$type eq "CFG"} {
-        set name ".$cfg(SAFT)--new"
+        set name [tk_getSaveFile -confirmoverwrite true -title "Save configuration to file" -initialfile ".$cfg(SAFT)--new"]
+        if {$name eq ""} { return }
         set fid  [open $name w]
         foreach {idx val} [array get cfg] { # collect selected options
             if {[regexp {^[^-]} $idx]}     { continue }; # want options only
@@ -552,7 +551,7 @@ option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
 
 ## create About window
-set cfg(ABOUT) [create_window {About} "570x432"];
+set cfg(ABOUT) [create_window {About} "570x400"];
 destroy $cfg(ABOUT).f1.s;       # no catch{}, so we're informed when code is changed
 wm iconify $cfg(ABOUT)
 set t [create_text $cfg(ABOUT) [osaft_about "ABOUT"]];
