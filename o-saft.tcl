@@ -69,7 +69,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.5 Easterhack 2015
+#?      @(#) 1.1 Easterhack 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -79,7 +79,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.5 15/04/08 23:37:00 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.1 15/04/07 09:09:08 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -95,7 +95,8 @@ catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];   close $fid;          # read .o-saft.pl
 }
-set cfg(HELP)   [exec $cfg(SAFT) +help];            # get all texts at startup
+set toc      "\nCONTENT\n[exec $cfg(SAFT) +help=toc]"
+set cfg(HELP)   "$toc\n\n[exec $cfg(SAFT) +help]";  # get all texts at startup
 set cfg(OPTS)   [exec $cfg(SAFT) --help=opt];       # which is a performance
 set cfg(CMDS)   [exec $cfg(SAFT) --help=commands];  # penulty :-(
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+vulns}}; # quick access commands
@@ -163,7 +164,7 @@ proc create_host {parent} {
     #?  frame with label and entry for host:port; $nr is index to hosts()
     global cfg hosts
     incr hosts(0)
-    if {$cfg(VERB)==1} { puts "create: host($hosts(0)): " }; # $hosts($hosts(0))
+    if {$cfg(VERB)==1} { puts "create host $hosts(0)" }
     set this $parent.ft$hosts(0)
           frame  $this
     pack [label  $this.lh -text {Host[:Port]}]                         -side left
@@ -197,47 +198,24 @@ proc create_text {parent txt} {
     return $this
 }; # create_text
 
-proc create_see {w t} { $w see [$w index $t.first] }
-
 proc create_help {} {
     #? create new window with complete help; returns widget
     global cfg
     set this    [create_window {Help} "600x800-0+0"]
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];  # remove informal messages
     set txt     [create_text $this $help].t
-    set toc     {}
-    # mark all headlines blue; anf contains start, end corresponding end position
-    set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-Z][A-Z_? -]+$} 1.0] 
-    set i 0
-    foreach a $anf {
-        set e [lindex $end $i];
-        set t [$txt get $a "$a + $e c"];
-        set l [string length $t]
-        incr i
-        set toc "$toc\n  $t"
-        set name [str2obj [string trim $t]]
-        $txt tag add  osaft-HEAD       $a "$a + $e c"
-        $txt tag add  osaft-HEAD-$name $a "$a + $e c"
+    # mark all headlines blue
+    foreach idx [$txt search -all -regexp {^ *([A-Z_ -]+)$} 2.1] {
+        #set name [str2obj $match]
+        $txt tag add  osaft-TOC  $idx "$idx + 1 line - 1 char"
     }
-    $txt config -state normal
-    $txt insert 1.0 "\nCONTENT\n$toc\n\n"
-    $txt config -state disabled
-    set end [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
-    set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-Z_? -]+$} 3.0 $end] 
-    set i 0
-    foreach a $anf {
-        set e [lindex $end $i];
-        set t [$txt get $a "$a + $e c"];
-        set name [str2obj [string trim $t]]
-        set b [$txt search -regexp {[A-Z]+} $a] 
-        $txt tag add  osaft-TOC    $b "$b + $e c - 1 c";# do not markup leading spaces
-        $txt tag add  osaft-TOC-$i $a "$a + $e c";      # bus complete line is clickable
-        $txt tag bind osaft-TOC-$i <ButtonPress> "create_see $txt {osaft-HEAD-$name}"
-        incr i
-    }
-    $txt tag config   osaft-HEAD -foreground BLUE; # -underline 1 # no underline 'cause leading spaces
-    $txt tag config   osaft-TOC  -foreground BLUE
+    # FIXME: bindings miss proper tags
+    ## set binding for headline from TOC
+    #foreach idx [$txt search -all -regexp {^([A-Z_ -]+)$} 2.1] {
+    #    $txt tag bind osaft-TOC  <ButtonPress> "$txt see $idx"
+    #}
 
+    $txt tag config  osaft-TOC  -foreground BLUE -underline 1
     wm iconify  $this
     return $this
 }; # create_help
@@ -278,24 +256,22 @@ proc create_opts {parent cmd} {
     set txt  "";# FIXME: ..
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
-        ## skipped general
-        if {$dat eq ""}                    { continue; }
-        if {[regexp {^(==|\*\*)}    $dat]} { continue; }; # header or Warning
-        ## skipped commands
+        if {$dat eq ""}                      { continue; }
+        ### skipped commands
         if {[regexp {^\+(cgi|exec)} $dat]} { continue; }; # internal use only
-        ## skipped options
-        if {"OPTIONS" eq $dat}             { continue; }
+        ### skipped options
+        if {$dat eq "OPTIONS"} { continue; }
         if {[regexp {^--h$}         $dat]} { continue; }
         if {[regexp {^--help}       $dat]} { continue; }
         if {[regexp {^--(cgi|call)} $dat]} { continue; }; # use other tools for that
-        if {[regexp {^[^+-]} $dat] || $max > 33} {
-            if {$max > 33} { incr cnt; set dat $txt }
+        if {[regexp {^[^+-]} $dat] || $max > 36} {
+            if {$max > 36} { incr cnt; set dat $txt }
             set max  0
-            set hoch 450
+            set hoch 500
             set name [str2obj $dat]$cnt
             incr cfg(POSX) 25;
             incr cfg(POSY) 25;
-            if {[regexp {(checked|SSL) connection} $dat]} { set hoch 680 }; # <<== dirty hack ;-(
+            if {[regexp {(checked|SSL) connection} $dat]} { set hoch 750 }; # <<== dirty hack ;-(
             set grp  [create_window "$dat $cnt" "300x$hoch+$cfg(POSX)+$cfg(POSY)"]
             wm iconify $grp
             pack [button $this.$name -text $dat -command "show_window $grp"] \
@@ -306,10 +282,10 @@ proc create_opts {parent cmd} {
         }
         incr max
         set dat [lindex [split $dat " \t"] 0]
-        if {$cfg(VERB)==1} { puts "create: $cmd >$dat<" }
+        if {$cfg(VERB)==1} { puts ">$dat<" }
         set name [str2obj $dat]
         if {[winfo exists $grp.$name]} {
-            if {$cfg(VERB)==1} {puts "exists: $grp.$name"};
+            if {$cfg(VERB)==1} {puts "existing: $grp.$name"};
             continue
         }
         if {[regexp {=} $l]} {
@@ -401,69 +377,6 @@ proc osaft_save {type nr} {
     set cfg(INFO) "saved to $name"; update idletasks;# enforce display update
 }; # osaft_save
 
-proc create_filter {txt} {
-    #? apply filters for markup in output
-      #------+-------+--+--------------+---------------+---------------+-------+----
-      # key   mode    len regex		     foreground	background    underline	font
-      #------+-------+--+--------------+---------------+---------------+-------+----
-    array set filter {
-      {YES}  {-regexp 3  {yes\n}		""	lightgreen	0	""}
-      {CMT}  {-regexp 0  {^==*}			gray	""		1	osaftBold }
-      {DBX}  {-regexp 0  {^#[^[]}		blue	""		0	""}
-      {KEY}  {-regexp 2  {^#\[[^:]+:\s*} 	""	gray		0	""}
-      {CMD}  "-regexp 0  {.*?cfg(SAFT).*\\n\\n}	white	black		0	{}"
-      {NO}   {-exact  2  {no (}			""	orange		0	""}
-      {LOW}  {-exact  3  {LOW}			""	red		0	""}
-      {WEAK} {-exact  4  {WEAK}			""	red		0	""}
-      {weak} {-exact  4  {weak}			""	red		0	""}
-      {HIGH} {-exact  4  {HIGH}			""	lightgreen	0	""}
-      {WARN} {-exact  0  {**WARN}		""	lightyellow	0	""}
-    };#------+-------+--+--------------+---------------+---------------+-------+----
-        #
-        # Info zu den RegEx:
-        #   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
-        #   werden, meist geht es aber auch so. Es wird \\n benutzt, damit bei
-        #   der Debug-Ausgabe ein \n sichtbar ist.
-        #   DBX  soll keine Zeilen treffen, die mit einem  KEY  beginnen, also
-        #       # [sowas]: ist eine Debug-Zeile
-        #       #[irgendwas]: ist eine Zeile die wegen --trace-key so aussieht
-        #   KEY  matched  #[irgendwas]: mit den folgenden Whitespace
-        #   CMD  benutzt  cfg(SAFT),  das kann so nicht in der Liste definiert
-        #        werden, darum cfg.SAFT. spaeter nochmal gesetzt
-        #
-    global cfg
-    foreach key [array names filter] {
-        set mod [lindex $filter($key) 0]
-        set len [lindex $filter($key) 1]; # currenty used for 0 only
-        set rex [lindex $filter($key) 2]
-        set fg  [lindex $filter($key) 3]
-        set bg  [lindex $filter($key) 4]
-        set nr  [lindex $filter($key) 5]
-        set fn  [lindex $filter($key) 6]
-	set rex [regsub {cfg.SAFT.} $rex $cfg(SAFT)];   # substitute variable
-        if {$cfg(VERB)==1} {puts "filter: $key : $rex"};
-        # anf contains start, end corresponding end position of match
-        set anf [$txt search -all $mod -count end "$rex" 1.0] 
-        set i 0
-        foreach a $anf {
-            set e [lindex $end $i];
-            incr i
-            if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # very dirty hack to beautify print
-            if {$len == 0} {
-               $txt tag add osaft-$key  $a "$a + 1 line - 1 char"
-            } else {
-               $txt tag add osaft-$key  $a "$a + $e c"
-            }
-        }
-        #dbx# puts "$key: $rex F $fg B $bg U $nr font $fn"
-        if {$fg ne ""}  { $txt tag config osaft-$key -foreground $fg }
-        if {$bg ne ""}  { $txt tag config osaft-$key -background $bg }
-        if {$nr ne "0"} { $txt tag config osaft-$key -underline  $nr }
-        if {$fn ne ""}  { $txt tag config osaft-$key -font       $fn }
-    }
-
-}; # create_filter
-
 proc osaft_exec {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
     global cfg hosts tab
@@ -507,7 +420,43 @@ proc osaft_exec {parent cmd} {
     pack [button $tab_run.bq -text {Close TAB} -bg orange -command "destroy $tab_run"] -side right
     create_tip   $tab_run.bq "Close window"
     create_tip   $tab_run.bs "Save result to file"
-    create_filter $txt ;        # text placed in pane, now do some markup
+    # text placed in pane, now do some markup
+    # FIXME: the indices  wordend and lineend do not work :-(
+    #        hence some cumbersome indicies used below
+    foreach idx [$txt search -all -regexp "$cfg(SAFT).*\n\n" 2.1] {
+        # o-saft command is preceded and followed by empty line
+        $txt tag add osaft-CMD  "$idx - 1 line" "$idx + 2 line - 1 char"
+    }
+    foreach idx [$txt search -all -regexp "yes\n" 2.1] {
+        $txt tag add osaft-YES  $idx "$idx + 3 char"
+    }
+    foreach idx [$txt search -all -exact  "no (" 2.1] {
+        $txt tag add osaft-NO   $idx "$idx + 3 char"
+    }
+    foreach idx [$txt search -all -exact  "HIGH" 2.1] {
+        $txt tag add osaft-HIGH $idx "$idx + 4 char"
+    }
+    foreach idx [$txt search -all -regexp -nocase "(LOW|WEAK)" 2.1] {
+        $txt tag add osaft-WEAK $idx "$idx + 4 char"
+    }
+    foreach idx [$txt search -all -exact  "**WARN" 2.1] {
+        $txt tag add osaft-WARN $idx "$idx + 1 line - 1 char"
+    }
+    foreach idx [$txt search -all -regexp {^==*} 2.1] {
+        $txt tag add osaft-CMT  $idx "$idx + 1 line - 1 char"
+    }
+    foreach idx [$txt search -all -regexp {^#[^[]} 2.1] {
+        # note: regex does not match #[ which is used with --trace-key
+        $txt tag add osaft-DBX  $idx "$idx + 1 line - 1 char"
+    }
+    $txt tag config  osaft-CMD  -background black -foreground white
+    $txt tag config  osaft-YES  -background lightgreen;;
+    $txt tag config  osaft-NO   -background orange;
+    $txt tag config  osaft-HIGH -background lightgreen;
+    $txt tag config  osaft-WEAK -background red;
+    $txt tag config  osaft-WARN -background lightyellow;
+    $txt tag config  osaft-CMT  -foreground gray -underline 1 -font osaftBold;
+    $txt tag config  osaft-DBX  -foreground blue;
     $cfg(NOTE) select $tab_run
     set cfg(INFO) "$do done."
 }; # osaft_exec
