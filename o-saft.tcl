@@ -69,7 +69,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.5 Easterhack 2015
+#?      @(#) 1.6 Easterhack 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -79,25 +79,42 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.5 15/04/08 23:37:00 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.6 15/04/09 00:35:07 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
+
+set cfg(PERL)   {};             # full path to perl; empty on *nix
+if {[regexp {indows} $tcl_platform(os)]} {
+    # Some platforms are too stupid to run our executable cfg(SAFT) directly,
+    # they need a proper perl executable to do it. We set a default path and
+    # then check if it is executable. If it is not, ask the user to choose a
+    # proper one.  There are no more checks for the selected file.  If it is
+    # wrong, the script will bail out with an error later.
+    set cfg(PERL)   {c:/programs/perl/perl/bin/perl.exe}
+    if {![file executable $cfg(PERL)]} {
+        set cfg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
+    }
+}
+# NOTE: as Tcl is picky about empty variables, we have to ensure later, that
+# $cfg(PERL) is evaluated propperly, in particular when it is empty.  We use
+# Tcl's  {*}  evaluation for that.
 
 #-----------------------------------------------------------------------------{
 #   CONFIGURATION
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
-set cfg(SAFT)   {o-saft.pl}
-set cfg(INIT)   {.o-saft.pl}
-set cfg(.CFG)   {}
+set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
+set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
+set cfg(.CFG)   {}; # set below
 catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];   close $fid;          # read .o-saft.pl
 }
-set cfg(HELP)   [exec $cfg(SAFT) +help];            # get all texts at startup
-set cfg(OPTS)   [exec $cfg(SAFT) --help=opt];       # which is a performance
-set cfg(CMDS)   [exec $cfg(SAFT) --help=commands];  # penulty :-(
+    # now get information from O-Saft; it's a performance penulty, but simple ;-)
+catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
+catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
+catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+vulns}}; # quick access commands
 #-----------------------------------------------------------------------------}
 
@@ -492,7 +509,7 @@ proc osaft_exec {parent cmd} {
         if {[string trim $h] eq ""} { continue };   # skip empty entries
         lappend targets $h
     }
-    set execme [list exec $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+    set execme [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
     set cfg(INFO) "$execme"; update idletasks;      # enforce display update
     incr cfg(EXEC)
     catch {
