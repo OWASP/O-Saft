@@ -1,0 +1,939 @@
+
+Version: 15.04.02
+  BUGFIX
+    * path @INC corrected for MSWin32
+  CHANGES
+    * .o-saft.pl: new --cfg_cmd=prots=; new checks for PFS added
+    * documentation improved
+  NEW
+    * o-saft.txl: simple GUI
+    * o-saft.pl: be smart to users if systems behave strange :-(
+    * +https_svc and +http_svc for Alt-Svc header implemented
+    * +session_ticket implemented
+
+Version: 15.03.29
+  CHANGES
+    * +protocols improved
+  NEW
+    * +https_protocols +http_protocols
+
+Version: 15.03.20
+  BUGFIX
+    * text: Poodle -> POODLE
+  CHANGES
+    * cleanup FIXME
+    * add /bin to @INC (special for installation on portable media)
+    * +rc4 renamed to +rc4_cipher; rc4 is now attack
+  NEW
+    * +https_protocols +http_protocols
+    * +lucky13 implemented
+    * --help=toc
+
+Version: 15.02.28
+  BUGFIX
+    * o-saft-man.pm: bugfix: path to myself corrected when called as itself
+    * o-saft-man.pm: avoid undefined subroutine if called by itself
+    * o-saft-man.pm: corrected handlichg of multiple options per line
+  CHANGES
+    * o-saft-man.pm: glossar improved
+  NEW
+    * check for FREAK attack added: +freak
+
+Version: 15.03.01
+  BUGFIX
+    * use --v option as workaround for problem with strings > 32k
+    * bugfix: workaround for stupid MSWin32 to print large strings
+
+Version: 15.01.25a
+  BUGFIX
+    * bugfix: +cipherall does not check for openssl methods; avoids warnings
+    * o-saft-man.pm: content-type text/html for --help=html
+  CHANGES
+    * example for prefixing SSL protocol in output
+  NEW
+    * contrib/usage_examples
+
+Version: 15.01.24
+  BUGFIX
+    * Net/SSLinfo.pm: check for valid host only done if no --proxyhost given
+  CHANGES
+    * usage check: --proxyhost requires --proxyport too
+
+Version: 15.01.21
+  BUGFIX
+    * no DNS and reverse lookups when --proxyhost was used
+  CHANGES
+    * formal changes (checks for empty option arguments)
+
+Version: 15.01.20
+  CHANGES
+    * check for methods supported by Net::SSLeay improved (no eval() anymore)
+
+Version: 15.01.19
+  BUGFIX
+    * avoid warnings in CGI mode
+  CHANGES
+    * more limitations explained
+
+Version: 15.01.18
+  BUGFIX
+    * --nosni for command +cipherall
+    * initialize data for PFS (avoids perl warnings)
+
+Version: 15.01.07 .. 15.01.17
+  BUGFIX
+    * various bugfixes and formal changes
+
+Version: 15.01.07
+  BUGFIX
+    * avoid huge memory consumtion (fix for issue/39)
+  CHANGES
+    * command line parsing improved
+  NEW
+    * new files in contrib/
+
+Version: 14.12.07
+    * new tarball
+
+Version: 14.11.23
+  BUGFIX
+    * text for checks{hostname} corrected (check was ok, but proided text not accurate)
+  CHANGES
+    * cipherrange vor SSLv2 improved
+  NEW
+    * pass --mx option to SSLhello
+    * pass --starttls-delay=SEC option to SSLhello
+    * Net::SSLinfo hostname for SNI can be specified in $Net::SSLinfo::use_SNI
+    * --sni-name=NAME added
+
+Version: 14.11.22
+  BUGFIX
+  CHANGES
+    * o-saft-man.pm: generating various formats improved
+  NEW
+    * new check: Certificate private key signature is SHA2
+    * .o-saft.pl new check sha2signature added to +check and +quick
+
+Version: 14.11.21
+  BUGFIX
+    * missing useecc parameter passed to Net::SSLhello
+    * --h same as --help
+    * better handling of results for +sigkey_algorithm
+  NEW
+    * --use-ec-point option passed to Net::SSLhello
+
+Version: 14.11.20
+  CHANGES
+    * get VERSION for --help from caller
+  NEW
+    * o-saft-man.pm
+
+Version: 14.11.19
+  CHANGES
+    * documentation improved
+  NEW
+    * o-saft-man.pm
+
+Version: 14.11.18
+  CHANGES
+    * markup in documentation improved
+
+Version: 14.11.17
+  BUGFIX
+    * check version mismatch
+
+Version: 14.11.16
+  CHANGES
+    * beast-default removed 
+
+Version: 14.11.15
+  NEW
+    * --help=opt and --help=options implemented
+
+Version: 14.11.14
+  NEW
+    * check for Poodle attack
+    * --trace-time implemented
+    * o-saft-dbx.pm: trace command prints timestamp for --trace-time
+    * options for +cipherraw command documented
+  BUGFIX
+    * --showhost  print host:port
+    * keys in internal hashes in lower case letters
+    * .o-saft.pl: duplicate commands in -cfg_cmd=check removed
+  CHANGES
+    * _yeast_init() prints SSL versions to be checked with --v
+    * .o-saft.pl: list of commands for +quick improved
+
+Version: 14.10.12
+  NEW
+    * --cipherrange=shifted
+
+Version: 14.07.27
+  CHANGES
+    * formal changes
+
+Version: 14.07.26
+  BUGFIX
+    * @INC set in BEGIN{}
+
+Version: 14.07.25
+  CHANGES
+    * using (require) modules and files simplified; documentation improved
+    * warnings unified and improved
+    * o-saft-usr.pl: usr_version() and usr_pre_init() added; formal (name) changes
+  NEW
+    * +TLS_FALLBACK_SCSV added
+    * +VERSION implemented
+
+Version: 14.07.18
+  CHANGES
+    * +ciphers and +list command improved (handle different output formats)
+
+Version: 14.07.17
+  BUGFIX
+    * corrected output (counts) for command  +list --v
+  CHANGES
+    * cipher descriptions improved; missing descriptions added
+    * print version mismatch (openssl vs. Net::SSLeay)
+    * lazy commands added
+
+Version: 14.07.16
+  BUGFIX
+    * avoid uninitialized value and WARNING messages for some commands
+  CHANGES
+    * options -v and -V improved
+    * formal changes
+
+Version: 14.07.15
+  BUGFIX
+    * avoid uninitialized value in +list command
+
+Version: 14.07.14
+  CHANGES
+    * cipher descriptions improved; security and score qualification adapted 
+
+Version: 14.07.07
+  CHANGES
+    * check for low memory
+    * backticks replaced by qx()
+
+Version: 14.06.30
+  CHANGES
+    * TECHNICAL INFORMATION added
+  NEW
+    * --starttls=PROT added (experimental)
+    * --ssl-maxciphers added
+
+Version: 14.06.16
+  BUGFIX
+    * printing warnings enabled
+  CHANGES
+    * --experimental option added
+
+Version: 14.06.15
+  CHANGES
+    * formal changes
+
+Version: 14.06.14
+  BUGFIX
+  CHANGES
+    * printmediawiki() moved to o-saft-usr.pm::usr_printwiki()
+    * commands unified: +gen-html +gen-wiki +gen-cgi
+
+Version: 14.06.13
+  BUGFIX
+    * bugfix: parsing --trace (without argument) corrected (bug since 14.06.08)
+    * honor --noSSL options for +cipherraw command
+  CHANGES
+    * improvements for CGI usage; internal option --cgi-exec
+    * formal changes in documentation
+
+Version: 14.06.12
+  CHANGES
+    * avoid error messages when gethostbyaddr() fails
+
+Version: 14.06.11
+  CHANGES
+    * store all --usr* options and arguments in $cfg{'usr-args'}
+
+Version: 14.06.10
+  BUGFIX
+    * avoid perl's uninitalized value after GET request
+    * +cipher and cipherraw (commnad line parsing) corrected
+    * no SNI for SSLv3 with +cipherraw
+
+Version: 14.06.08
+  CHANGES
+    * --no-rc option added
+    * scanning options and arguments from command line simplified and improved
+  NEW
+    * --help=range implemented
+    * +quit command implemented
+
+Version: 14.06.07
+  CHANGES
+    * -ssl-* options for +cipherraw command added; check with and without SNI for +checkraw
+
+Version: 14.06.05
+  CHANGES
+    * +version improved (print more informations about Net::SSLeay)
+
+Version: 14.06.04
+  BUGFIX
+    * bugfix: print usage with correct script name
+
+Version: 14.06.01
+  NEW
+    * --cipherrange=RANGE implemented; +cipherall supports full range
+
+Version: 14.05.31
+  CHANGES
+    * print $Net::SSLhello::VERSION with --trace and --version
+
+Version: 14.05.27
+  BUGFIX
+    * using scalar() instead of length() for array
+
+Version: 14.05.26
+  NEW
+    * --help=wiki implemented
+
+Version: 14.05.25
+  CHANGES
+    * avoid some check warnings for +cipherall
+
+Version: 14.05.24
+  NEW
+    * --no-md5-cipher implemented (avoids some error messages)
+
+Version: 14.05.23
+  BUGFIX
+    * avoid some checks and connections if not required by given command
+
+Version: 14.05.22
+  CHANGES
+    * better compatibility to ssldiagnose.exe
+    * compatibility ssl-cert-check, THCSSLCheck
+  NEW
+    * +constraints check implemented
+    * --protocol SSL implemented; better compatibility to ssldiagnose.exe
+    * --printavailable as alias for +ciphers
+
+Version: 14.05.21
+  BUGFIX
+    * +ciphers command re-enabled
+
+Version: 14.05.21
+  NEW
+    * +tlsextensions implemented
+
+Version: 14.05.20
+  CHANGES
+    * +ext_* commands enabled
+    * more TLS extensions added
+
+Version: 14.05.17
+  BUGFIX
+    * parsing command line argunents improved
+
+Version: 14.05.16
+  CHANGES
+    * output for --legacy=compact improved
+
+Version: 14.05.15
+  CHANGES
+    * output for --tracecmd improved
+    * output for --no-http improved
+    * passing options and arguments to openssl improved
+
+Version: 14.05.14
+  CHANGES
+    * detect more TLS extensions; +heartbeat and --no-tlsextdebug implemented
+
+Version: 14.05.13
+  NEW
+    * prepared for TLSv1.3
+
+Version: 14.05.12
+  NEW
+    * +cipherall implemented with Net/SSLhello.pm; ALPHA version!
+    * Net/SSLhello.pm
+
+Version: 14.05.11
+  CHANGES
+    * some missing cipher descriptions added 
+
+Version: 14.05.10
+  BUGFIX
+    * "None" values are mainly treated as "no" for checks
+
+Version: 14.05.09
+  BUGFIX
+    * setting default +cipher command corrected if no command given
+    * bugfix: avoid "Broken Pipe" if connection fails
+
+Version: 14.05.08
+  BUGFIX
+    *
+  CHANGES
+    * o-saft-dbx.pm: _yeast_init() improved
+
+Version: 14.05.07
+  BUGFIX
+    * missing descriptions for KRB5* ciphers added
+
+Version: 14.05.07
+  CHANGES
+    * print warning for invalid command combinations (defense, user-friendly programming)
+
+Version: 14.05.06
+  NEW
+    * --ssl-lazy option implemented 
+
+Version: 14.05.05
+  NEW
+    * --no-warning implemented
+
+Version: 14.04.28
+  NEW
+    * +cipherall ALPHA version implemented
+
+Version: 14.04.27
+  CHANGES
+    * more _trace*() functions added
+
+Version: 14.04.26
+  NEW
+    * --proxy* options added (but no functionality)
+
+Version: 14.04.24
+  BUGFIX
+    * output corrected for  --showhost --legacy=full
+  CHANGES
+    * improved path settings for windows
+
+Version: 14.04.10
+  NEW
+    * +heartbleed implemented
+
+Version: 14.02.17
+  BUGFIX
+    * +sts implies --http
+    * +sts command re-implemented
+
+Version: 14.02.01
+  BUGFIX
+    * use SNI if possible for cipher checks (+cipher command)
+  CHANGES
+    * +version improved
+  NEW
+    * --force-sni added
+
+Version: 14.1.31
+  CHANGES
+    * code cleanup
+
+Version: 14.1.30
+  CHANGES
+    * --cipher no longer alias for +cipher so we can support "--cipher CIPHER" option
+
+Version: 14.1.29
+  CHANGES
+    * code cleanup for checkciphers()
+    * check Net::SSLeay::cipher_local() can return array
+    * check Net::SSLeay::VERSION < 1.49
+
+Version: 14.1.28
+  CHANGES
+    * +default can get cipher using openssl
+
+Version: 14.1.27
+  BUGFIX
+    * parsing options and commands improved
+  CHANGES
+    * documentation improved
+    * +quick command uses common output format (instead of --legacy=quick)
+
+Version: 14.1.26
+  CHANGES
+    * typos documentation corrected
+  NEW
+    * --call=METHOD implemented
+
+Version: 14.1.25
+  CHANGES
+    * allow --exe-path=PATH and --lib-path=PATH
+    * --lib= and --exe= can be used multiple times
+    * debugging improved; _yeast_args() added; _yeast_init() improved
+
+Version: 14.1.24
+  CHANGES
+    * allow --exe-path=PATH and --lib-path=PATH
+    * --lib= and --exe= can be used multiple times
+    * debugging improved; _yeast_args() added; _yeast_init() improved
+
+Version: 14.1.23
+  BUGFIX
+    * +pfs command enabled
+  CHANGES
+    * SSL protocol options (SSL version, cipher list) improved
+    * collecting SSL information improved
+  NEW
+    * commands +options +sslversion +cert_type +error_verify +error_depth
+
+Version: 14.1.22
+  BUGFIX
+    * +default command enabled
+    * avoid uninitialized value
+  CHANGES
+    * set SSL protocol version for connections
+    * Net::SSLinfo::do_ssl_close() with version list parameter
+
+Version: 14.1.21
+  NEW
+    * existing socket for connection can be provided with $Net::SSLinfo::socket
+    * usr_pre_open() added
+
+Version: 14.1.12
+  UPDATE
+    * get list of ciphers improved: cipher_list() uses Net::SSLeay::new() to get list of ciphers
+  NEW
+    * new sub usr_pre_info() in o-saft-usr.pm
+
+Version: 14.1.4
+  BUGFIX
+    * bugfix: regex for pubkey_value on windows
+    * bugfix: empty len_public_key and len_sidump on windows corrected
+  UPDATE
+    * documentation improved
+
+Version: 14.1.3
+  BUGFIX
+    * bugfix: avoid perl warning for +cipher
+    * bugfix: avoid perl warning in Net::SSLinfo::do_openssl()
+
+Version: 14.1.2
+  BUGFIX
+    * bugfix: avoid perl warning in Net::SSLinfo::do_openssl()
+
+Version: 14.1.1
+  NEW
+    * option --win-CR implemented
+
+Version: 13.12.31
+  BUGFIX
+    * bugfix: separator in output for --trace-corrected
+    * bugfix: no checks for master_key and session_id to avoid perl warnings
+    * bugfix: initialization of check values corrected
+  UPDATE
+    * Net::SSLeay initialization inside BEGIN{}
+    * use Net::SSLeay::set_tlsext_host_name() for SNI
+
+Version: 13.12.30
+  BUGFIX
+    * check for +ev improved
+  NEW
+    * +dv command and checks added
+
+Version: 13.12.29
+  BUGFIX
+    * bugfix: missing \n added when printing checks with --legacy=full
+  UPDATE
+    * check for CN= in checkev()
+    * +ev improved
+    * special handling for +ev removed (use --legacy=full now)
+
+Version: 13.12.28
+  NEW
+    * +chain_verify command added
+    * documentation according +verify, +selsigned added
+
+Version: 13.12.27
+  NEW
+    * options --ca-file  --ca-path --ca-depth implemented
+
+Version: 13.12.26
+  BUGFIX
+    * print hostname correctly with --showhost
+    * reset checks when multiple hosts are given
+    * --tracekey and --showhost was missing for +check
+
+Version: 13.12.25
+  NEW
+    * --usr option for o-saft-usr.pm implemented
+    * new file o-saft-usr.pm
+
+Version: 13.12.24
+  NEW
+    * --tab option added
+    * contrib file
+
+Version: 13.12.21
+  UPDATE
+    * --help=cfg_{check,data,text} and --cfg_{check,data,text}= implemented the same way
+
+Version: 13.12.20
+  UPDATE
+    * don't read external files in CGI mode
+
+Version: 13.12.19
+  UPDATE
+    * formal changes
+    * --yeast implemented to call _yeast_data()
+    * _yeast_data() improved; documentation improved in o-saft-dbx.pl
+    * don't read external files in CGI mode
+
+Version: 13.12.18
+  UPDATE
+    * --cfg_* configuration options implemented
+    * CUSTOMIZATION description added
+
+Version: 13.12.17
+  UPDATE
+    * samples to redefine texts in Deutsch added in .o-saft.pl
+    * --cfg_text* implemented
+    * print internal data with --help=* simplified
+    * --set-score renamed to --cfg_score
+Version: 13.12.16
+Version: 13.12.15
+  BUGFIX
+    * (issue 16) define $_timeout variable when missing (Mac OS X problem)
+    * reading score values from files corrected; allow + in score settings
+  UPDATE
+    * get subject_hash and issuer_hash from Net::SSLeay
+    * commands issuer and issuer_hash added to --cfg_cmd-info in .o-saft.pl
+  NEW
+    * +chain to retrive Certificate Chain implemented
+    * +protocols to retrive supported protocols by target (requres openssl
+      with -nextprotoneg support)
+
+Version: 13.12.14
+  NEW
+    * Serial Number <= 20 octets (RFC5280, 4.1.2.2. Serial Number)
+    * new commands len_sernumber and sernumber added to --cfg_cmd-check in .o-saft.pl
+
+Version: 13.12.13
+  UPDATE
+    * documentation improved (better English)
+
+Version: 13.12.12
+  BUGFIX
+    * error handling for DNS corrected (if something failed)
+    * no scoring for +info (avoids some "unitialised" warnings too)
+    * avoid some warnings with --cmd-* in .o-saft.pl
+    * reverse hostname computation corrected
+    * --cfg_cmd-check withoud valid command in .o-saft.pl
+  NEW
+    * --cfg_cmd-quick added in .o-saft.pl
+
+Version: 13.12.11
+  BUGFIX
+    * STS check corrected
+  UPDATE
+    * +http improved
+    * huge code cleanup; checks improved; scoring now in sub scoring()
+    * Net/SSLinfo.pm: hsts_pins renamed to https_pins; hsts renamed to https_sts
+  NEW
+    * o-saft-README file implemented
+    * o-saft-dbx.pm with functions for debug, trace and verbose output
+    * .o-saft.pl as local resource file implemented
+    * --cfg_text-*  and --cfg_cmd-* options implemented
+
+Version: 13.12.09
+  UPDATE
+    *  duplicate messages removed
+
+Version: 13.12.08
+  BUGFIX
+    * bugfix: check for renegotiation and resumption corrected
+  UPDATE
+    * --no-header avoids printing most formating lines
+
+Version: 13.12.07
+  BUGFIX
+    * --showhost works for +check too
+    * checks corrected if --no-http was used
+    * checks improved  if --no-cert was used
+    * bugfix: missing (..) added in sub checkhttp
+  UPDATE
+    * code cleanup and simplified, all %check_* --> %checks
+    * documentation improved
+  NEW
+    * --help=cmd, --help=commands, --help=intern
+
+Version: 13.11.30
+  UPDATE
+    * _yeast_data() implemented; documentation improved for o-saft-dbx.pm
+    * cleanup for texts
+
+Version: 13.11.29
+  BUGFIX
+    * some warnings (perl -w) corrected (for --no-cert option)
+  UPDATE
+    * code cleanup for checkssl()
+    * output for +check sorted
+    * output improved for --no-cert option
+
+Version: 13.11.28
+  UPDATE
+    * check hostname vs. certificate name improved
+
+Version: 13.11.27
+  UPDATE
+    * omit cipher checks if protocoll not supported for BSI TR-02102
+
+Version: 13.11.26
+  BUGFIX
+    * better extraction of certificate extensions details
+  NEW
+    * check invalid characters in extensions added
+
+Version: 13.11.25
+  BUGFIX
+    * checks for CRL, OCSP corrected;
+    * missing EV checks for AIA, CRL and OCSP added
+    * ouput of certificate extensions corrected
+  NEW
+    * commands for details of certificate extensions added
+      ext_authority, ext_cps, ext_crl, ...
+
+Version: 13.11.23
+  NEW
+    * +extensions implemented; --header, --no-header implemented
+
+Version: 13.11.22
+  BUGFIX
+    * print cipher totals for all versions; some texts unified
+
+Version: 13.11.21
+  BUGFIX
+    * "Given hostname is same as reverse resolved hostname" ccorrected
+    * check for wildcards in TR-02102-2 compliance corrected
+    * +info--v command fixed; _dump() call
+  UPDATE
+    * texts and output layout unified; prepared for configurable texts
+    * debug, trace and verbose functions are emty stubs, now in o-saft-dbx.pm
+  NEW
+    * o-saft-dbx.pm with functions for debug, trace and verbose output
+
+Version: 13.11.20
+  UPDATE
+    * texts and output layout unified; prepared for configurable texts
+    * certificate's date checks improved
+
+Version: 13.11.19
+  BUGFIX
+    * some warnings (perl -w) corrected
+    * perl warnings fixed for +version command
+  UPDATE
+    * --trace command improved
+    * function calls unified
+    * using temporary variables for better (human) readability
+  NEW
+    * --trace=VALUE implemented; --trace-cmd implemented
+
+Version: 13.11.18
+  UPDATE
+    * function calls unified
+    * using temporary variables for better (human) readability
+
+Version: 13.11.17
+  BUGFIX
+    * missing labels in output added
+    * +bsi does not inhibit other checks
+    * +quick with more check (got lost with implementation of +bsi)
+  UPDATE
+    * some labels in output improved
+    * +quick improved with labels
+
+Version: 13.11.16
+  UPDATE
+    * missing security flag for some ciphers added; documentation improved
+
+Version: 13.11.15
+  UPDATE
+    * RC4 ciphers degraded as weak
+
+Version: 13.11.14
+  UPDATE
+    * documentation and glossar improved
+
+Version: 13.11.13
+  NEW
+    * compliance check: BSI TR-02102 implemented; command +bsi
+
+Version: 13.11.12
+  UPDATE
+    * glossar improved
+
+Version: 13.11.11
+  BUGFIX
+    * parsing altname in certificate corrected
+  UPDATE
+    * +sts alias for +hsts
+  NEW
+    * check for RC4 implemented
+
+Version: 13.10.22
+  UPDATE
+    * retrive target data for: krb5 psk_hint psk_identity srp master_key session_id session_ticket
+
+Version: 13.10.20
+  BUGFIX
+    * connecting with openssl improved for openssl 1.0.1.e
+  UPDATE
+    * --v honored in various modes
+    * --format=hex  includes +fingerprint
+  NEW
+    * reading options and arguments from rc-file implemented
+
+Version: 13.10.19
+  BUGFIX
+    * more improvements for perl's -w
+    * Net::SSLinfo::do_openssl() uses optional $data parameter; code improved
+
+Version: 13.10.18
+  BUGFIX
+    * bugfix: variable syntax corrected; more improvements for perl's -w
+
+Version: 13.10.17
+  BUGFIX
+    * code improved for perl's -w
+
+Version: 13.10.16
+  BUGFIX
+    * syntax improved for ActivePerl
+  UPDATE
+    * INSTALLTION part added to README file
+
+Version: 13.10.14
+  BUGFIX
+    * --cmd=quick is same as +quick
+    * --help=checks instead of --help=check
+
+Version: 13.10.11
+  BUGFIX
+  UPDATE
+    * --v honored in various modes
+    * --format=hex  includes +fingerprint
+  NEW
+    * description for CIPHER NAMES
+
+Version: 13.09.29
+  BUGFIX
+    * check --envlibvar= option
+    * +cipher command corrected
+  UPDATE
+    * fomal code changes in checkciphers()
+  NEW
+    * --force-openssl implemented to use openssl for cipher checks
+
+Version: 13.09.28
+  BUGFIX
+    * s_client command corrected
+    * PFS check label text corrected
+    * Net::SSLinfo::do_openssl() supports ciphers command correctly
+  NEW
+    * EV-SSL checks implemented
+    * +subject_ev implemented
+
+Version: 13.09.27
+  UPDATE
+    * minor changes of output texts
+  NEW
+    * --format=hex implemented
+
+Version: 13.09.25
+  UPDATE
+    * regex and check for compliance and attacks improved
+
+Version: 13.09.16
+  BUGFIX
+    * label for EDH check corrected
+    * RegEx ADHorDHA and DHEorEDH corrected
+  UPDATE
+    * glossar improved
+  NEW
+    * --format=raw implemented
+
+Version: 13.09.15
+  BUGFIX
+    *  +list command exits
+  NEW
+    * check  for CRIME implemented
+
+Version: 13.09.14
+  BUGFIX
+    * BEAST check for default cipher corrected
+
+Version: 13.09.13
+  UPDATE
+    * documentation improved
+    * huge amount of code cleanup (no change of functionality)
+
+Version: 13.09.12
+    not released
+
+Version: 13.09.11
+  BUGFIX
+    * reverse hostname lookup corrected; now prints list
+    * print host (target) information before doing checks
+  UPDATE
+    * be greedy to allow +BEAST, +CRIME, etc.
+    * cipher names are prependet by SSL version in +check output
+    * documentation (COMMANDS, OPTIONS) improved
+    * legacy option improved
+  NEW
+    * -no-dns implemented (workaround for '<gethostbyaddr() failed>)
+    * %cfg{regex} added
+
+Version: 13.09.10
+  BUGFIX
+    * output for some legacy formats corrected (sslscan, ssltest, sslyze)
+    * print correct SSL version for ciphers in results
+    * legacy option --no-failed corrected
+  UPDATE
+    * Glossar improved
+
+Version: 13.09.09
+  BUGFIX
+    * +cipher command corrected
+
+Version: 13.09.08
+  NEW
+    * --cipher= allows other names;  _find_cipher_name() implemented
+
+Version: 13.09.07
+  BUGFIX
+    * --short texts corrected
+  UPDATE
+    * scoring improved
+    * documentation improved
+  NEW
+    * +quick  command for quick and simple check
+    * +http   command for HTTP(S) checks
+    * --legasy=testsslserver  implemented
+
+Version: 13.07.31 
+  UPDATE
+    * debugging and tracing improved
+  NEW
+    * STS     checks implemented (scoring not yet perfect)
+    * PFS     checks implemented
+    * --format=raw implemented
+    * new commands:  +sigkey_value, +sigkey_algorithm, +sigkey_len
+
+Version: 13.03.31 
+  BUGFIX
+    * avoid useless or wrong output when --no-cert given
+  UPDATE
+    * glossar
+  NEW
+    * --http  implemented
+    * --set_score implemented
+    * --help=LABEL implemented
+    * --ignorecase implemented
+    * --showhost implemented
+    * scoring implemented (first simple attempt)
+
+

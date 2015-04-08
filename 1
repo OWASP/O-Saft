@@ -1,0 +1,498 @@
+[1mNAME[0m
+    Net::SSLinfo -- perl extension for SSL certificates
+
+[1mSYNOPSIS[0m
+        use Net::SSLinfo;
+        print join("\n",
+            PEM("www.example.com",443),
+            dates(),
+            selected()
+            ciphers()
+            );
+        do_ssl_close("www.example.com",443);
+
+[1mDESCRIPTION[0m
+    This module is an extension to Net::SSLeay to provide information
+    according a SSL connection to a specific server.
+
+    The purpose is to give as much as possible information to the user
+    (caller) according the specified server aka hostname without struggling
+    with the internals of SSL as needed by Net::SSLeay.
+
+[1mRETURN VALUES[0m
+    All methods return a string on success, empty string otherwise.
+
+[1mDEBUGGING[0m
+    Simple tracing can be activated with [4m$Net::SSLinfo:trace=1[0m.
+
+    [4m$Net::SSLinfo:trace=2[0m or [4m$Net::SSLinfo:trace=3[0m will be passed to
+    [4m$Net::SSLeay::trace[0m.
+
+    Debugging of low level SSL can be enabled by setting [4m$Net::SSLeay::trace[0m,
+    see Net::SSLeay for details.
+
+    In trace messages empty or undefined strings are writtens as
+    "<<undefined>>".
+
+[1mVARIABLES[0m
+    Following variables are supported:
+
+    $Net::SSLinfo::ca_crl
+        URL where to find CRL file; default: ''
+
+    $Net::SSLinfo::ca_file
+        File in PEM format file with all CAs; default: ''
+
+        Value will not be used at all is set "undef".
+
+    $Net::SSLinfo::ca_path
+        Directory with PEM files for all CAs; default: ''
+
+        Value will not be used at all is set "undef".
+
+    $Net::SSLinfo::ca_depth
+        Depth of peer certificate verification verification; default: 9
+
+        Value will not be used at all is set "undef".
+
+    $Net::SSLinfo::socket
+        Socket to be used for connection. This must be a file descriptor and
+        it's assumed to be an AF_INET or AF_INET6 TCP STREAM type connection.
+        Note: the calling application is responsible for closing the socket.
+
+    $Net::SSLinfo::openssl
+        Path for openssl executable to be used; default: openssl
+
+    $Net::SSLinfo::timeout
+        Path for timeout executable to be used; default: timeout
+
+    $Net::SSLinfo::use_openssl
+        More informations according the SSL connection and the certificate,
+        additional to that of Net::SSLeay, can be retrived using the openssl
+        executable. If set to "1" openssl will be used also; default: 1
+
+        If disabled, the values returned value will be: #
+
+    $Net::SSLinfo::use_sclient
+        Some informations according the SSL connection and the certificate,
+        can only be retrived using "openssl s_client ...". Unfortunatelly the
+        use may result in a performance penulty on some systems and so it can
+        be disabled with "0"; default: 1
+
+        If disabled, the values returned will be: #
+
+    $Net::SSLinfo::use_SNI
+        The specified string will be used as hostname for SNI. If set to "1",
+        the given hostname will be used for SNI. This is needed if there are
+        multiple SSL hostnames on the same IP address. If empty string or set
+        to "0", the hostname from PeerAddr will be used. The latter will fail
+        if only an IP was given. If set to "0" no SNI will be used. This can
+        be used to check if the target supports SNI; default: 1
+
+    $Net::SSLinfo::use_http
+        If set to "1", make a simple HTTP request on the open SSL connection
+        and parse the response for additional SSL/TLS related information (for
+        example Strict-Transport-Security header); default: 1
+
+    $Net::SSLinfo::no_cert
+        The target may allow connections using SSL protocol, but does not
+        provide a certificate. In this case all calls to functions to get
+        details from the certificate fail (most likely with "segmentation
+        fault" or alike). Due to the behaviour of the used low level ssl
+        libraries, there is no way to detect this failure automatically. If
+        the calling programm terminates abnormally with an error, then setting
+        this value can help.
+
+        If set to "0", collect data from target's certificate; this is
+        default. If set to "1", don't collect data from target's certificate
+        and return an empty string. If set to "2", don't collect data from
+        target's certificate and return the string defined in
+        "$Net::SSLinfo::no_cert_txt".
+
+    $Net::SSLinfo::no_cert_txt
+        String to be used if "$Net::SSLinfo::no_cert" is set. Default is (same
+        as openssl): "unable to load certificate"
+
+[1mEXAMPLES[0m
+    See SYNOPSIS above.
+
+[1mLIMITATIONS[0m
+  [1mCollected data with openssl[0m
+    Some data is collected using an external openssl executable. The output of
+    this executable is used to find proper information. Hence some data may be
+    missing or detected wrong due to different output formats of openssl. If
+    in doubt use "$Net::SSLinfo::use_openssl = 0" to disable openssl usage.
+
+  [1mThreads[0m
+    This module is not thread-save as it only supports one internal object for
+    socket handles. However, it will work if all threads use the same
+    hostname.
+
+[1mKNOWN PROBLEMS[0m
+  [1mCertificate Verification[0m
+    The verification of the target's certificate chain relies on the installed
+    root CAs. As this tool uses Net::SSLeay which usually relies on openssl
+    and its libraries, the (default) settings in these libraries are effective
+    for our certificate chain verification.
+
+    I.g. the root CAs can be provided in a single combined PEM format file, or
+    in a directory containing one file per CA with a proper link which name is
+    the CA's hash value. Therfor the library uses the CAPFILE and/or CAPATH
+    environment variable. The tools, like openssl, have options to pass proper
+    values for the file and path.
+
+    We provide these settings in the variables: [4m$Net::SSLinfo::ca_file[0m,
+    [4m$Net::SSLinfo::ca_path[0m, [4m$Net::SSLinfo::ca_depth[0m .
+
+    Please see [1mVARIABLES[0m for details.
+
+    Unfortunately the default settings for the libraries and tools differ on
+    various platforms, so there is no simple way to check if the verification
+    was successfull as expected.
+
+    In particular the behaviour is unpredictable if the environment variables
+    are set and our internal variables (see above) too. Hence, we recommend to
+    either ensure that no environment variables are in use, or our variables
+    are set "undef".
+
+  [1mErrors[0m
+    Net::SSLeay::X509_get_subject_name() from version 1.49 sometimes crashes
+    with segmentation fault.
+
+    Error message like: panic: sv_setpvn called with negative strlen at
+    Net/SSLinfo.pm line 552, <DATA> line 1384.
+
+    Reason most likely Net::SSLeay Version (version<1.49) which doesn't define
+    "Net::SSLeay::X509_NAME_get_text_by_NID()".
+
+[1mMETHODS[0m
+    All methods are simple getters to retrieve information from `SSL objects'.
+    The general usage is:
+
+    # 1. very first call with hostname and port
+            my $value = method('hostname', 8443);
+
+    # 2. very first call with hostname only, port defaults to 443
+            my $value = method('hostname');
+
+    # 3. continous call, hostname and port not necessary
+            my $value = method();
+
+    Methods named "do_*" open and close the TCP connections. They are called
+    automatically by the getters (see above) if at least a "hostname"
+    parameter is given. It's obvious, that for these "do_*" methods the
+    "hostname" parameter is mandatory.
+
+    All following descriptions omit the "hostname, port" parameter as they all
+    follow the rules describend above.
+
+  [1mdo_ssl_open($host,$port,$sslversions[,$cipherlist])[0m
+    Opens new SSL connection with Net::SSLeay. [4m$sslversions[0m is space-separated
+    list of SSL versions to be used. Following strings are allowed for
+    versions: "SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 DTLSv1". If [4m$sslversions[0m is
+    empty, the system's default settings of versions are used. If
+    [4m$cipherlist[0m is missing or empty, default "ALL:NULL:eNULL:aNULL:LOW" will
+    be used.
+
+    Returns array with $ssl object and $ctx object.
+
+    This method is called automatically by all other functions, hence no need
+    to call it directly.
+
+  [1mdo_ssl_close( )[0m
+    Close Net::SSLeay connection and free allocated objects.
+
+  [1mdo_openssl($command,$host,$port,$data)[0m
+    Wrapper for call of external openssl(1) executable. Handles special
+    behaviours on some platforms.
+
+    If [4m$command[0m equals "s_client" it will add "-reconnect -connect" to the
+    openssl call. All other values of [4m$command[0m will be used verbatim. Note
+    that the SSL version must be part (added) as proper openssl option to
+    $command as this option cannot preceed the command in openssl..
+
+    Examples for $command: ciphers -sslv3 s_client -tlsv1_1 -connect
+
+    The value of $data, if set, is piped to openssl.
+
+    Returns retrieved data or '<<openssl>>' if openssl or s_client missing.
+
+  [1mset_cipher_list($cipherlist)[0m
+    Set cipher list for connection.
+
+    Returns empty string on success, errors otherwise.
+
+  [1merrors( )[0m
+    Get list of errors, intenal ones but most likely from [4m$Net::SSLeay::*[0m
+    calls.
+
+  [1ms_client( )[0m
+    Dump data retrived from "openssl s_client ..." call. For debugging only.
+
+  [1moptions( )[0m
+    Return hex value bitmask of (openssl) options used to establish
+    connection. Useful for debugging and trouble shooting.
+
+  [1mPEM( ), pem( )[0m
+    Get certificate in PEM format.
+
+  [1mtext( )[0m
+    Get certificate in human readable format.
+
+  [1mbefore( )[0m
+    Get date before certificate is valid.
+
+  [1mafter( )[0m
+    Get date after certificate is valid.
+
+  [1mdates( )[0m
+    Get dates when certificate is valid.
+
+  [1missuer( )[0m
+    Get issuer of certificate.
+
+  [1msubject( )[0m
+    Get subject of certificate.
+
+  [1mselected( )[0m
+    Get cipher selected by server for current session. Returns ciphers string.
+
+  [1mcipher_list($pattern)[0m
+    Get cipher list offered by local SSL implementation. Returns
+    space-separated list of ciphers. Returns array if used in array context, a
+    single string otherwise.
+
+    Requires successful connection to target.
+
+  [1mciphers($pattern)[0m
+    Returns List of ciphers provided for current connection to target.
+
+  [1mcipher_local($pattern)[0m
+    Get cipher list offered by local openssl implementation. Returns
+    colon-separated list of ciphers.
+
+    Does not require connection to any target.
+
+    All following functions have $host and $port parameter and return
+    information according the the connection, certificate for this connection.
+
+  [1mcn( ), commonname( )[0m
+    Get common name (CN) from certificate.
+
+  [1maltname( )[0m
+    Get alternate name (subjectAltNames) from certificate.
+
+  [1mauthority( )[0m
+    Get authority (issuer) from certificate.
+
+  [1mowner( )[0m
+    Get owner (subject) from certificate.
+
+  [1mcertificate( )[0m
+    Get certificate (subject, issuer) from certificate.
+
+  [1mSSLversion( )[0m
+    Get SSL protocol version used by connection.
+
+  [1mversion( )[0m
+    Get version from certificate.
+
+  [1mdump( )[0m
+    Print all available (by Net::SSLinfo) data.
+
+    Due to huge amount of data, the value for s_client is usually omitted.
+    Please set [4m$Net::SSLinfo::use_sclient [0m 1> to print this data also.
+
+  [1m(details)[0m
+    All following require that [4m$Net::SSLinfo::use_openssl=1;[0m being set.
+
+  [1mcompression( )[0m
+    Get target's compression support.
+
+  [1mexapansion( )[0m
+    Get target's exapansion support.
+
+  [1mprotocols( )[0m
+    Get protocols advertised by server,
+
+  [1mkrb5[0m
+    Get target's Krb5 Principal.
+
+  [1mpsk_identity[0m
+    Get target's PSK identity.
+
+  [1mpsk_hint[0m
+    Get target's PSK identity hint.
+
+  [1msrp[0m
+    Get target's SRP username.
+
+  [1mmaster_key[0m
+    Get target's Master-Key.
+
+  [1msession_protocol[0m
+    Get target's announced SSL protocols.
+
+  [1msession_ticket[0m
+    Get target's TLS session ticket.
+
+  [1msession_ticket_hint, session_lifetime[0m
+    Get target's TLS session ticket lifetime hint.
+
+  [1msession_timeout[0m
+    Get target's SSL session timeout.
+
+  [1mfingerprint_hash( )[0m
+    Get certificate fingerprint hash value.
+
+  [1mfingerprint_md5( )[0m
+    Get MD5 fingerprint if available (Net::SSLeay >= 1.49)
+
+  [1mfingerprint_sha1( )[0m
+    Get SHA1 fingerprint if available (Net::SSLeay >= 1.49)
+
+  [1mfingerprint_type( )[0m
+    Get certificate fingerprint hash algorithm.
+
+  [1mfingerprint_text( )[0m
+    Get certificate fingerprint, which is the hash algorthm followed by the
+    hash value. This is usually the same as
+    "fingerprint_type()=fingerprint_hash()".
+
+  [1mfingerprint( )[0m
+    Alias for "fingerprint_text()".
+
+  [1memail( )[0m
+    Get certificate email address(es).
+
+  [1mserial( )[0m
+    Get certificate serial number.
+
+  [1mmodulus( )[0m
+    Get certificate modulus of the public key.
+
+  [1mmodulus_exponent( )[0m
+    Get certificate modulus' exponent of the public key.
+
+  [1mmodulus_len( )[0m
+    Get certificate modulus (bit) length of the public key.
+
+  [1mpubkey( )[0m
+    Get certificate's public key.
+
+  [1mpubkey_algorithm( )[0m
+    Get certificate's public key algorithm.
+
+  [1mpubkey_value( )[0m
+    Get certificate's public key value. Same as [4mmodulus()[0m but may be different
+    format.
+
+  [1mrenegotiation( )[0m
+    Get certificate's renegotiation support.
+
+  [1mresumption( )[0m
+    Get certificate's resumption support. Some target servers respond with
+    `New' and `Reused' connections in unexpected sequence. If `Reused' is
+    found and less than 3 `New' then resumption is assumed.
+
+    If resumption is not detected, increasing the timeout with i.e.
+    "$Net::SSLinfo::timeout_sec = 5" may return different results.
+
+  [1msigkey_len( )[0m
+    Get certificate signature key (bit).
+
+  [1msigkey_value( )[0m
+    Get certificate signature value (hexdump).
+
+  [1msubject_hash( ), issuer_hash( )[0m
+    Get certificate subject/issuer hash value (in hex).
+
+  [1mverify( )[0m
+    Get result of certificate chain verification.
+
+  [1merror_verify( )[0m
+    Get error string of certificate chain verification, if any.
+
+  [1merror_depth( )[0m
+    Get depth where certificate chain verification failed.
+
+  [1mchain( )[0m
+    Get certificate's CA chain.
+
+  [1mchain_verify( )[0m
+    Get certificate's CA chain verification trace (for debugging only).
+
+  [1mselfsigned( )[0m
+    If certificate is self signed.
+
+  [1mhttps_alerts( )[0m
+    Get HTTPS alerts send by server.
+
+  [1mhttps_protocols( )[0m
+    Get HTTPS Alterenate-Protocol header.
+
+  [1mhttps_svc( )[0m
+    Get HTTPS Alt-Svc header.
+
+  [1mhttps_status( )[0m
+    Get HTTPS response (aka status) line.
+
+  [1mhttps_server( )[0m
+    Get HTTPS Server header.
+
+  [1mhttps_location( )[0m
+    Get HTTPS Location header.
+
+  [1mhttps_refresh( )[0m
+    Get HTTPS Refresh header.
+
+  [1mhttp_protocols( )[0m
+    Get HTTP Alterenate-Protocol header.
+
+  [1mhttp_svc( )[0m
+    Get HTTP Alt-Svc header.
+
+  [1mhttp_status( )[0m
+    Get HTTP response (aka status) line.
+
+  [1mhttp_location( )[0m
+    Get HTTP Location header.
+
+  [1mhttp_refresh( )[0m
+    Get HTTP Refresh header.
+
+  [1mhttp_sts( )[0m
+    Get HTTP Strict-Transport-Security header, if any.
+
+  [1mhsts( )[0m
+    Get complete STS header.
+
+  [1mhsts_maxage( )[0m
+    Get max-age attribute of STS header.
+
+  [1mhsts_subdom( )[0m
+    Get includeSubDomains attribute of STS header.
+
+  [1mhttps_pins( )[0m
+    Get pins attribute of STS header.
+
+  [1mverify_hostname( )[0m
+    Verify if given hostname matches common name (CN) in certificate.
+
+  [1mverify_altname( ), verify_alias( )[0m
+    Verify if given hostname matches alternate name (subjectAltNames) in
+    certificate.
+
+[1mSEE ALSO[0m
+    Net::SSLeay(1)
+
+[1mAUTHOR[0m
+    08-aug-12 Achim Hoffmann
+
+[1mPOD ERRORS[0m
+    Hey! [1mThe above document had some coding errors, which are explained
+    below:[0m
+
+    Around line 1517:
+        L<> starts or ends with whitespace
+
