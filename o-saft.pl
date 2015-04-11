@@ -3220,8 +3220,8 @@ sub checkciphers($$) {
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
         # TR-02102-2, see 3.2.3
         if ($checks{$ssl}->{val} > 0) { # checks do not make sense if there're no ciphers
-            $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
-            $checks{'tr-02102'}->{val} .=_prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
+            $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
+            $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
         }
         $checks{'cnt_totals'}->{val} +=
             $checks{$ssl . '--?-'}->{val}  +
@@ -3292,6 +3292,8 @@ sub _getwilds($$) {
     # compute usage of wildcard in CN and subjectAltname
     my ($host, $port) = @_;
     my ($value, $regex);
+    $value = $data{'cn'}->{val}($host);
+    $checks{'wildcard'}->{val} = "<<CN:>>$value" if ($value =~ m/[*]/);
     foreach $value (split(" ", $data{'altname'}->{val}($host))) {
             $value =~ s/.*://;      # strip prefix
         if ($value =~ m/\*/) {
@@ -3483,10 +3485,10 @@ sub check02102($$) {
 
     #! TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
     $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val});
-    $checks{'bsi-tr-02102+'}->{val}.= $txt                if ($data{'valid-years'}->{val}  > 3);
+    $checks{'bsi-tr-02102+'}->{val}.= $txt                if ($data{'valid-years'}->{val} > 3);
     $checks{'bsi-tr-02102+'}->{val}.= $text{'cert-dates'} if ($checks{'dates'}->{val} ne "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'CRL')  if ($checks{'crl'}->{val}   ne "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host)  eq "");
+    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'CRL')  if ($checks{'crl'}->{val} ne "");
+    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host) eq "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'wildcards'}, $checks{'wildcard'}->{val}) if ($checks{'wildcard'}->{val} ne "");
 
