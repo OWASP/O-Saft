@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.342 15/04/02 21:01:20";
+my  $SID    = "@(#) yeast.pl 1.343 15/04/11 17:29:12";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -588,8 +588,12 @@ my %check_dest = (  # target (connection) data
     'fips'          => {'txt' => "Target supports FIPS-140 compliant ciphers"},
 #   'nsab'          => {'txt' => "Target supports NSA Suite B compliant ciphers"},
     'tr-02102'      => {'txt' => "Target supports TR-02102-2 compliant ciphers"},
+    'tr-03116+'     => {'txt' => "Target supports TR-03116-4 compliant ciphers+"},
+    'tr-03116-'     => {'txt' => "Target supports TR-03116-4 compliant ciphers-"},
     'bsi-tr-02102+' => {'txt' => "Target is strict BSI TR-02102-2 compliant"},
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
+    'bsi-tr-03116+' => {'txt' => "Target is strict BSI TR-03116-4 compliant"},
+    'bsi-tr-03116-' => {'txt' => "Target is  lazy  BSI TR-03116-4 compliant"},
     'resumption'    => {'txt' => "Target supports resumption"},
     'renegotiation' => {'txt' => "Target supports renegotiation"},
     'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
@@ -891,8 +895,12 @@ our %shorttexts = (
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
     'tr-02102'      => "TR-02102-2 compliant",
+    'tr-03116+'     => "TR-03116-4 compliant",
+    'tr-03116-'     => "TR-03116-4 compliant",
     'bsi-tr-02102+' => "BSI TR-02102-2 compliant (strict)",
     'bsi-tr-02102-' => "BSI TR-02102-2 compliant (lazy)",
+    'bsi-tr-03116+' => "BSI TR-03116-4 compliant (strict)",
+    'bsi-tr-03116-' => "BSI TR-03116-4 compliant (lazy)",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
     'hsts_sts'      => "STS header",
@@ -1296,8 +1304,12 @@ our %cmd = (
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
-    'cmd-bsi'       => [qw(after dates crl rc4_cipher renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
-    'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],     # commands for +pfs
+    'cmd-bsi'       => [                            # commands for +bsi
+                        qw(after dates crl rc4_cipher renegotiation
+                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
+                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+                       )],
+    'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
@@ -1309,13 +1321,16 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 bsi selected poodle cipher),
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13) # TODO: need simple check for protocols
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle cipher),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need_default'  => [        # commands which need selected cipher
                         qw(check cipher pfs_cipher selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 bsi selected ev+ ev-)],
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
+                       ],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
                         qw(
@@ -1425,6 +1440,15 @@ our %cmd = (
                        # ciphers with SHA1 hash are not allowed
         'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
                        # if PFS not possible, see TR-02102-2 3.2.1
+        'TR-03116+' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES128[_-](?:GCM[_-])?SHA256',
+        'TR-03116-' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES(?:128|256)[_-](?:GCM[_-])?SHA(?:256|384)',
+                       # in strict mode only:
+                       #  ECDHE-ECDSA-AES128.*SHA256 ECDHE-RSA-AES128.*SHA256 RSA-PSK-AES128-SHA256 ECDHE-PSK-AES128-SHA256
+                       # in lazy mode (for curiosity) we also allow:
+                       #  ECDHE-ECDSA-AES256.*SHA256 ECDHE-RSA-AES256.*SHA256
+                       #  ECDHE-ECDSA-AES256.*SHA384 ECDHE-RSA-AES256.*SHA384
+        'notTR-03116'     => '(?:PSK[_-]AES256|[_-]SHA$)',
+                       # NOTE: for curiosity again, notTR-03116 is for strict mode only
         '1.3.6.1.5.5.7.1.1'  =>  '(?:1\.3\.6\.1\.5\.5\.7\.1\.1|authorityInfoAccess)',
         'NSA-B'     =>'(?:ECD(?:H|SA).*?AES.*?GCM.*?SHA(?:256|384|512))',
 
@@ -1473,6 +1497,7 @@ our %cmd = (
     }, # regex
     'compliance' => {           # description of RegEx above for compliance checks
         'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
+        'TR-03116'  => "TLSv1.2, only ECDSA, RSA or PSK ciphers, only eclipic curve, only SHA224 or SHA256, need OCSP-Stapling CRL and AIA, no wildcards, and verifications ...",
         'ISM'       => "no NULL cipher, no Anonymous Auth, no single DES, no MD5, no RC ciphers",
         'PCI'       => "no NULL cipher, no Anonymous Auth, no single DES, no Export encryption, DH > 1023",
         'FIPS-140'  => "must be TLSv1 or 3DES or AES, no IDEA, no RC4, no MD5",
@@ -1543,6 +1568,7 @@ our %cmd = (
         'checkciphers'  => 0,   # not used, as it's called multiple times
         'checkdefault'  => 0,
         'check02102'=> 0,
+        'check03116'=> 0,
         'checkdates'=> 0,
         'checksizes'=> 0,
         'checkbleed'=> 0,
@@ -2627,8 +2653,8 @@ sub _need_this($)      {
        $is  =~ s/\+/\\+/g;    # we have commands with +, needs to be escaped
     return grep(/^($is)$/,  @{$cfg{$key}});
 }
-sub _need_cipher()     { return _need_this('need_cipher');   };   
-sub _need_default()    { return _need_this('need_default');  };  
+sub _need_cipher()     { return _need_this('need_cipher');   };
+sub _need_default()    { return _need_this('need_default');  };
 sub _need_checkssl()   { return _need_this('need_checkssl'); };
     # returns >0 if any of the given commands is listed in $cfg{need_*}
 sub _is_hashkey($$)    { my $is=shift; return grep({lc($is) eq lc($_)} keys %{$_[0]}); }
@@ -2746,6 +2772,23 @@ sub _istr02102($$) {
 # FIXME: check for SHA1 missing, which is a lazy accept, see TR-02102-2 3.2.2
     return "";
 } # _istr02102
+sub _istr03116_strict($$) {
+    # return given cipher if it is not TR-03116 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    ne "TLSv12");
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-03116'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116+'}/);
+    return "";
+} # _istr03116_strict
+sub _istr03116_lazy($$) {
+    # return given cipher if it is not TR-03116 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    ne "TLSv12");
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
+    return "";
+} # _istr03116_lazy
 sub _isfips($$) {
     # return given cipher if it is not FIPS-140 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
@@ -3174,6 +3217,8 @@ sub checkcipher($$) {
     $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
     $checks{'fips'}->{val}      .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
     $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _istr02102($ssl, $c));
+    $checks{'tr-03116+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
+    $checks{'tr-03116-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy($ssl, $c));
     # check attacks
     $checks{'rc4'}->{val}        = $checks{'rc4_cipher'}->{val}; # these are the same checks
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
@@ -3194,7 +3239,7 @@ sub checkciphers($$) {
     #? test target if given ciphers are accepted, results stored in global %checks
     my ($host, $port) = @_;     # not yet used
 
-    _y_CMD("checkciphers() ". $cfg{'done'}->{'checkciphers'});
+    _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
     return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace(" checkciphers {");
@@ -3473,6 +3518,7 @@ sub check02102($$) {
     #? check if target is compliant to BSI TR-02102-2
     # assumes that checkssl() already done
     my ($host, $port) = @_;
+    _y_CMD("check02102() " . $cfg{'done'}->{'check02102'});
     $cfg{'done'}->{'check02102'}++;
     return if ($cfg{'done'}->{'check02102'} > 1);
     my $txt = "";
@@ -3514,6 +3560,89 @@ sub check02102($$) {
     # TODO: cipher bit length check
 
 } # check02102
+
+sub check03116($$) {
+    #? check if target is compliant to BSI TR-03116-4
+    # BSI TR-03116-4 is similar to BSI TR-02102-2
+    _y_CMD("check03116() " . $cfg{'done'}->{'check03116'});
+    $cfg{'done'}->{'check03116'}++;
+    return if ($cfg{'done'}->{'check03116'} > 1);
+    my $txt = "";
+
+    # All checks according ciphers already done in checkciphers() and stored
+    # in $checks{'tr-02102'}. We need to do checks according certificate and
+    # protocol and fill other %checks values according requirements.
+
+    #! TR-03116-4 2.1.1 TLS-Versionen und Sessions
+        # muss mindestens die TLS-Version 1.2 unterstützt werden
+    #! TR-03116-4 2.1.2 Cipher Suites
+    $checks{'bsi-tr-03116+'}->{val} = $checks{'tr-03116+'}->{val};
+    $checks{'bsi-tr-03116-'}->{val} = $checks{'tr-03116-'}->{val};
+
+    #! TR-03116-4 2.1.1 TLS-Versionen und Sessions
+        # TLS Session darf eine Lebensdauer von 2 Tagen nicht überschreiten
+    #! TR-03116-4 2.1.4.2 Encrypt-then-MAC-Extension
+    #! TR-03116-4 2.1.4.3 OCSP-Stapling
+    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
+
+    #! TR-03116-4 4.1.1 Zertifizierungsstellen/Vertrauensanker
+        # muss für die Verifikation von Zertifikaten einen oder mehrere Vertrauensanker vorhalten
+        # Die Zahl der Vertrauensanker sollte so gering wie möglich gehalten werden.
+# FIXME:
+
+    #! TR-03116-4 4.1.2 Zertifikate
+        # müssen die folgenden Anforderungen erfüllen:
+        # * Alle Zertifikate müssen ...
+        # ** jederzeit aktuelle CRLs zur Verfügung stehen, oder
+        # ** eine AuthorityInfoAccess-Extension mit OCSP
+        # * Endnutzerzertifikate dürfen eine Gültigkeitsdauer von höchstens drei,
+        #   CA-Zertifikate von höchstens fünf Jahren haben.
+        # * CA-Zertifikate müssen eine BasicConstraints-Extension enthalten.
+        # * Das in der Extension enthaltene Feld pathLenConstraint muss
+        #   vorhanden sein und auf einen möglichst kleinen Wert gesetzt werden.
+        # * Alle Zertifikate müssen eine KeyUsage-Extension enthalten.
+        # * Zertifikate dürfen keine Wildcards CommonName des Subject oder
+        #   SubjectAltName enthalten.
+        # Verwendung von Extended-Validation-Zertifikaten wird empfohlen
+    $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val}); # NOTE: 'valid-years' is special value
+    $checks{'bsi-tr-03116+'}->{val} .= $txt                if ($data{'valid-years'}->{val} > 3);
+# FIXME: cert itself and CA-cert have different validity: 3 vs. 5 years
+    $txt = $checks{'wildcard'}->{val};
+    if (($data{'ext_crl'}->{val}($host) eq "") && ($data{'ext_authority'}->{val}($host) eq "")) {
+        $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'EV-miss'}, 'AIA or CRL');
+    }
+# FIXME: need to verify provided CRL and OCSP
+    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'wildcards'}, $txt) if ($txt ne "");
+    # _getwilds() checks for CN and subjectAltname only, we need Subject also
+    $txt = $data{'subject'}->{val}($host);
+    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'wildcards'}, "Subject:$txt") if ($txt =~ m/[*]/);
+# FIXME: need to check wildcards in all certificates
+
+    #! TR-03116-4 4.1.3 Zertifikatsverifikation
+        # * vollständige Prüfung der Zertifikatskette bis zu einem für die
+        #   jeweilige Anwendung vertrauenswürdigen und als authentisch
+        #   bekannten Vertrauensanker
+# FIXME:
+        # * Prüfung auf Gültigkeit (Ausstellungs- und Ablaufdatum)
+        # * Rückrufprüfung aller Zertifikate
+    $txt = $checks{'dates'}->{val};
+    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'cert-dates'}, $txt) if ($txt ne "");
+    $txt = $checks{'expired'}->{val};
+    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'cert-valid'}, $txt) if ($txt ne "");
+
+    #! TR-03116-4 4.1.4 Domainparameter und Schlüssellängen
+        # ECDSA 224 Bit; DSA 2048 Bit; RSASSA-PSS 2048 Bit; alle SHA-224
+        # empfohlene ECC:
+        # * BrainpoolP224r1 3 , BrainpoolP256r1, BrainpoolP384r1, BrainpoolP512r1
+        # * NIST Curve P-224, NIST Curve P-256, NIST Curve P-384, NIST Curve P-521
+# FIXME:
+
+    #! TR-03116-4 5.2 Zufallszahlen
+        # these checks are not possible from remote
+
+    $checks{'bsi-tr-03116-'}->{val} .= $checks{'bsi-tr-03116+'}->{val};
+
+} # check03116
 
 sub checkdv($$) {
     #? check if certificate is DV-SSL
@@ -3922,6 +4051,7 @@ sub checkssl($$) {
         checkdv(   $host, $port);   # check for DV
         checkev(   $host, $port);   # check for EV
         check02102($host, $port);   # check for BSI TR-02102-2
+        check03116($host, $port);   # check for BSI TR-03116-4
         checksni(  $host, $port);   # check for SNI
         checksizes($host, $port);   # some sizes
     } else {
@@ -3929,6 +4059,7 @@ sub checkssl($$) {
         $cfg{'done'}->{'checkdates'}++;# "
         $cfg{'done'}->{'checksizes'}++;# "
         $cfg{'done'}->{'check02102'}++;# "
+        $cfg{'done'}->{'check03116'}++;# "
         $cfg{'done'}->{'checkdv'}++;   # "
         $cfg{'done'}->{'checkev'}++;   # "
         foreach $key (sort keys %checks) { # anything related to certs need special setting
@@ -3937,6 +4068,8 @@ sub checkssl($$) {
         $checks{'hostname'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-02102+'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-02102-'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'bsi-tr-03116+'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'bsi-tr-03116-'}->{val} = $cfg{'no_cert_txt'};
     }
 
     if ($cfg{'usehttp'} == 1) {
@@ -5185,7 +5318,7 @@ while ($#argv >= 0) {
         if ($val eq 'pfs')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-pfs'}});   next; }
         if ($val eq 'sni')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sni'}});   next; }
         if ($val eq 'ev')   { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
-        if ($val =~ /^(bsi|TR-?02102)/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
+        if ($val =~ /^(bsi|TR-?0(2102|3116))$/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
         if (_is_member($val, \@{$cfg{'cmd-NOT_YET'}}) > 0) {
             _warn("command not yet implemented '$val' may be ignored");
         }
