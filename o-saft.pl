@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.04.02"; }
+    sub _VERSION() { return "15.04.04"; }
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -1261,22 +1261,22 @@ our %cmd = (
     'commands'      => [],      # contains all commands, constructed below
     'cmd-intern'    => [        # add internal commands
                     # these have no key in %data or %checks
-                       qw(
-                        check cipher dump check_sni exec help info info--v http
-                        quick list libversion sizes s_client version quit
-                        sigkey bsi ev cipherraw
-                       ),
+                        qw(
+                         check cipher dump check_sni exec help info info--v http
+                         quick list libversion sizes s_client version quit
+                         sigkey bsi ev cipherraw
+                        ),
                     # internal (debugging or experimental) commands
                       # qw(options cert_type),  # will bee seen with +info--v only
                     # keys not used as command
-                       qw(cn_nosni valid-years valid-months valid-days)
+                        qw(cn_nosni valid-years valid-months valid-days)
                        ],
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only 
-                       qw(certificate extensions pem pubkey sigdump text chain chain_verify)
+                        qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
-                       qw(zlib lzo open_pgp fallback closure order sgc scsv time)
+                        qw(zlib lzo open_pgp fallback closure order sgc scsv time)
                        ],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
@@ -1289,11 +1289,11 @@ our %cmd = (
     'cmd-check'     => [],      # commands for +check, simply anything from %checks
     'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
-                       qw(
-                        selected cipher fingerprint_hash fp_not_md5 email serial
-                        subject dates verify expansion compression hostname
-                        beast crime freak export rc4_cipher rc4 pfs_cipher crl hassslv2 hassslv3 poodle
-                        resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
+                        qw(
+                         selected cipher fingerprint_hash fp_not_md5 email serial
+                         subject dates verify expansion compression hostname
+                         beast crime freak export rc4_cipher rc4 pfs_cipher crl hassslv2 hassslv3 poodle
+                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
     'cmd-bsi'       => [qw(after dates crl rc4_cipher renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102-)], # commands for +bsi
@@ -1313,15 +1313,15 @@ our %cmd = (
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13) # TODO: need simple check for protocols
                        ],
     'need_default'  => [        # commands which need selected cipher
-                       qw(check cipher pfs_cipher selected)],
+                        qw(check cipher pfs_cipher selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                       qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 bsi selected ev+ ev-)],
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 bsi selected ev+ ev-)],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
-                       qw(
-                        fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
-                        serial sigkey_value pubkey_value modulus
-                        master_key session_id session_ticket extension
+                        qw(
+                         fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
+                         serial sigkey_value pubkey_value modulus
+                         master_key session_id session_ticket extension
                        )],      # fingerprint is special, see _ishexdata()
     'opt-v'         => 0,       # 1 when option -v was given
     'opt-V'         => 0,       # 1 when option -V was given
@@ -1545,6 +1545,7 @@ our %cmd = (
         'check02102'=> 0,
         'checkdates'=> 0,
         'checksizes'=> 0,
+        'checkbleed'=> 0,
         'checkcert' => 0,
         'checkprot' => 0,
         'checkdest' => 0,
@@ -2619,12 +2620,17 @@ sub __SSLinfo($$$) {
 
 sub _subst($$)         { my $is=shift; $is=~s/@@/$_[0]/;  return $is; }
     # return given text with '@@' replaced by given value
-sub _need_cipher()     { my $is=join("|", @{$cfg{'do'}}); return grep(/^($is)$/,  @{$cfg{'need_cipher'}}); }
-    # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_cipher'}
-sub _need_default()    { my $is=join("|", @{$cfg{'do'}}); return grep(/^($is)$/,  @{$cfg{'need_default'}}); }
-    # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_default'}
-sub _need_checkssl()   { my $is=join("|", @{$cfg{'do'}}); return grep(/^($is)$/,  @{$cfg{'need_checkssl'}}); }
-    # returns >0 if any of the given commands ($cfg{'do'}) is listed in $cfg{'need_checkssl'}
+sub _need_this($)      {
+    # returns >0 if any of the given commands is listed in $cfg{'$_'}
+    my $key = shift;
+    my $is  = join("|", @{$cfg{'do'}});
+       $is  =~ s/\+/\\+/g;    # we have commands with +, needs to be escaped
+    return grep(/^($is)$/,  @{$cfg{$key}});
+}
+sub _need_cipher()     { return _need_this('need_cipher');   };   
+sub _need_default()    { return _need_this('need_default');  };  
+sub _need_checkssl()   { return _need_this('need_checkssl'); };
+    # returns >0 if any of the given commands is listed in $cfg{need_*}
 sub _is_hashkey($$)    { my $is=shift; return grep({lc($is) eq lc($_)} keys %{$_[0]}); }
 sub _is_member($$)     { my $is=shift; return grep({lc($is) eq lc($_)}      @{$_[0]}); }
 sub _is_do($)          { my $is=shift; return _is_member($is, \@{$cfg{'do'}}); }
@@ -3188,7 +3194,7 @@ sub checkciphers($$) {
     #? test target if given ciphers are accepted, results stored in global %checks
     my ($host, $port) = @_;     # not yet used
 
-    _y_CMD("checkciphers() ");
+    _y_CMD("checkciphers() ". $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
     return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace(" checkciphers {");
@@ -3222,6 +3228,8 @@ sub checkciphers($$) {
         if ($checks{$ssl}->{val} > 0) { # checks do not make sense if there're no ciphers
             $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
             $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
+            $checks{'tr-03116+'}->{val} .= $checks{'tr-02102'}->{val};  # same as TR-02102
+            $checks{'tr-03116-'}->{val} .= $checks{'tr-02102'}->{val};
         }
         $checks{'cnt_totals'}->{val} +=
             $checks{$ssl . '--?-'}->{val}  +
@@ -3240,7 +3248,9 @@ sub checkciphers($$) {
 sub checkbleed($$) {
     #? check if target supports TLS extension 15 (hearbeat)
     my ($host, $port) = @_;
-    _y_CMD("checkbleed() ");
+    _y_CMD("checkbleed() ". $cfg{'done'}->{'checkbleed'});
+    $cfg{'done'}->{'checkbleed'}++;
+    return if ($cfg{'done'}->{'checkbleed'} > 1);
     $checks{'heartbleed'}->{val}  = _isbleed($host, $port);
 
 } # checkbleed
