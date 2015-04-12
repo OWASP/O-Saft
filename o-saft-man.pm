@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.25 15/04/06 22:50:34";
+my  $man_SID= "@(#) o-saft-man.pm 1.26 15/04/12 10:56:05";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -425,6 +425,7 @@ our %man_text = (
         'TOCTOU'    => "Time-of-check, time-of-use",
         'TOFU'      => "Trust on First Use",
         'TR-02102'  => "Technische Richtlinie 02102 (des BSI)",
+        'TR-03116'  => "Technische Richtlinie 03116 (des BSI)",
         'TLS'       => "Transport Layer Security",
         'TLSA'      => "TLS Trus Anchors",
         'TLSv1'     => "Transport Layer Security version 1",
@@ -775,7 +776,7 @@ Commands for information about this tool
 +VERSION	Just show version and exit.
 +version	Show version information for program and Perl modules.
 Commands to check SSL details
-+bsi	Various checks according BSI TR-02102-2 compliance.
++bsi	Various checks according BSI TR-02102-2 and TR-03116-4 compliance.
 +check	Check the SSL connection for security issues.
 +check_sni	Check for Server Name Indication (SNI) usage.
 +ev	Various checks according certificate's extended Validation (EV).
@@ -1403,7 +1404,7 @@ COMMANDS
 
       +bsi
 
-          Various checks according BSI TR-02102-2 compliance.
+          Various checks according BSI TR-02102-2 and TR-03116-4 compliance.
 
       +ev
 
@@ -2625,9 +2626,11 @@ CHECKS
           * FIPS-140
           * ISM
           * PCI
-          * BSI TR-02102
+          * BSI TR-02102-2
+          * BSI TR-03116-4
 
 #   NSA Suite B
+      BSI TR-02102-2
         Checks if connection and ciphers are compliant according TR-02102-2,
         see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
         /TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
@@ -2704,6 +2707,74 @@ CHECKS
           This requirement is not testable from remote.
 
         3.8 Zufallszahlen
+
+          This requirement is not testable from remote.
+
+      BSI TR-03116-4
+        Checks if connection and ciphers are compliant according TR-03116-4,
+        see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
+        /TechnischeRichtlinien/TR03116/BSI-TR-03116-4.pdf?__blob=publicationFile
+
+        (following headlines are taken from there)
+
+        2.1.1 TLS-Versionen und Sessions
+
+          Allows only TLS 1.2.
+
+        2.1.2 Cipher Suites
+
+          Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265. 
+          For curiosity, stronger cipher suites with AES256 and/or SHA384 are
+          not not allowed. To follow this curiosity the +bsi-tr-03116- (lazy)
+          check allows the stronger cipher suites ;-)
+
+        2.1.1 TLS-Versionen und Sessions
+
+          The TLS session lifetime must not exceed 2 days.
+
+        2.1.4.2 Encrypt-then-MAC-Extension
+
+        2.1.4.3 OCSP-Stapling
+
+          MUST have 'OCSP Stapling URL'.
+
+        4.1.1 Zertifizierungsstellen/Vertrauensanker
+
+          Certificate must provide all root CAs. (NOT YET IMPLEMENTED).
+
+          Should use a small certificate trust chain.
+
+        4.1.2 Zertifikate
+
+          Must have 'CRLDistributionPoint' or 'AuthorityInfoAccess'.
+
+          End-user certificate must not be valid longer than 3 years.
+          Root-CA certificate must not be valid longer than 5 years.
+
+          Certificate extension 'pathLenConstraint' must exist, and should be
+          a small value ("small" is not defined).
+
+          All certificates must contain the extension 'KeyUsage'.
+
+          Wildcards for 'CN' or 'Subject' or 'SubjectAltName' are not allowed
+          in any certificate.
+
+          EV certificates are recommended (NOT YET checked properly).
+
+        4.1.3 Zertifikatsverifikation
+
+          Must verify all certificates in the chain down to their root-CA.
+          (NOT YET IMPLEMENTED).
+
+          Certificate must be valid according issue and expire date.
+
+          All Checks must be doen for all certificates in the chain.
+
+        4.1.4 Domainparameter und Schlüssellängen
+
+          This requirement is not testable from remote.
+
+        4 5.2 Zufallszahlen
 
           This requirement is not testable from remote.
 
@@ -3817,6 +3888,7 @@ TODO
           ** DV and EV miss some minor checks; see checkdv() and checkev()
           ** +constraints does not check +constraints in the certificate of
              the certificate chain.
+          ** TR-03116-4: does not check data in certificate chain
 
         * vulnerabilities
           ** complete TIME, BREACH check
