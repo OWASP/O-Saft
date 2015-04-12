@@ -66,7 +66,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.7 Easterhack 2015
+#?      @(#) 1.8 Easterhack 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -76,7 +76,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.7 15/04/09 01:06:05 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.8 15/04/12 11:56:13 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -304,6 +304,8 @@ proc create_opts {parent cmd} {
         if {[regexp {^--(cgi|call)} $dat]} { continue; }; # use other tools for that
         if {[regexp {^[^+-]} $dat] || $max > 33} {
             if {$max > 33} { incr cnt; set dat $txt }
+            # remove noicy prefix and make first character upper case
+            set dat [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $dat ""]] 0 0]
             set max  0
             set hoch 450
             set name [str2obj $dat]$cnt
@@ -435,6 +437,12 @@ proc create_filter {txt} {
       {HIGH} {-exact  4  {HIGH}			""	lightgreen	0	""}
       {WARN} {-exact  0  {**WARN}		""	lightyellow	0	""}
     };#------+-------+--+--------------+---------------+---------------+-------+----
+        # following would be better, but does not mark summary lines
+        # it also marks "yes ", which is not easy to compute and avoid
+      #{LOW}  {-regexp 4  {yes\s+LOW}		""	red		0	""}
+      #{WEAK} {-regexp 4  {yes\s+WEAK}		""	red		0	""}
+      #{weak} {-regexp 4  {yes\s+weak}		""	red		0	""}
+      #{HIGH} {-regexp 4  {yes\s+HIGH}		""	lightgreen	0	""}
         #
         # Info zu den RegEx:
         #   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
@@ -456,6 +464,7 @@ proc create_filter {txt} {
         set bg  [lindex $filter($key) 4]
         set nr  [lindex $filter($key) 5]
         set fn  [lindex $filter($key) 6]
+        if {$mod eq ""} { continue };   # disabled filter rules
 	set rex [regsub {cfg.SAFT.} $rex $cfg(SAFT)];   # substitute variable
         if {$cfg(VERB)==1} {puts "filter: $key : $rex"};
         # anf contains start, end corresponding end position of match
