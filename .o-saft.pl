@@ -67,6 +67,21 @@
 #--enabled
 
 ###
+### omit output for commands
+###
+# commands are used witout + prefix
+# Example: all commands for various BSI compliance checks 'cause these checks
+# are rarely used in practice and most likely produce a huge amount of data.
+
+#--ignore-output=tr-02102
+#--ignore-output=tr-03116+
+#--ignore-output=tr-03116-
+#--ignore-output=bsi-tr-02102+
+#--ignore-output=bsi-tr-02102-
+#--ignore-output=bsi-tr-03116+
+#--ignore-output=bsi-tr-03116-
+
+###
 ### reconfigure list of check for special commands (+http +check ...)
 ###
 # The default behaviour to print the results is to loop over the list of hash
@@ -143,7 +158,7 @@
 #--cfg_text=cert-valid= <<Gültigkeitsdauer des Zertifikats zu groß @@>>
 #--cfg_text=cipher=Schlüssel
 #--cfg_text=desc=Beschreibung
-#--cfg_text=desc-check=Prüfergebnis (ja ist gut)
+#--cfg_text=desc-check=Prüfergebnis ('yes' ist gut)
 #--cfg_text=desc-info=Wert
 #--cfg_text=desc-score=Score (max. Wert 100)
 #--cfg_text=disabled=<<Test deaktiviert>>
