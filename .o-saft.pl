@@ -73,13 +73,17 @@
 # Example: all commands for various BSI compliance checks 'cause these checks
 # are rarely used in practice and most likely produce a huge amount of data.
 
-#--ignore-output=tr-02102
-#--ignore-output=tr-03116+
-#--ignore-output=tr-03116-
-#--ignore-output=bsi-tr-02102+
-#--ignore-output=bsi-tr-02102-
-#--ignore-output=bsi-tr-03116+
-#--ignore-output=bsi-tr-03116-
+--ignore-output=tr-02102
+--ignore-output=tr-03116+
+--ignore-output=tr-03116-
+--ignore-output=bsi-tr-02102+
+--ignore-output=bsi-tr-02102-
+--ignore-output=bsi-tr-03116+
+--ignore-output=bsi-tr-03116-
+--ignore-output=ism
+--ignore-output=pci
+--ignore-output=fips
+--ignore-output=ev+
 
 ###
 ### reconfigure list of check for special commands (+http +check ...)
