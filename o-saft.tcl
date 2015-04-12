@@ -66,7 +66,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.8 Easterhack 2015
+#?      @(#) 1.9 Easterhack 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -76,7 +76,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.8 15/04/12 11:56:13 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.9 15/04/12 13:05:40 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -204,8 +204,9 @@ proc create_text {parent txt} {
     set this    $parent
     text        $this.t -wrap char -yscroll "$this.s set";  # -width 40 -height 10
     scrollbar   $this.s -orient vertical -command "$this.t yview"
+    #set txt     [regsub -all {\t} $txt "\t"];   # tabs are a pain in Tcl :-(
     $this.t insert end $txt
-    $this.t config -state disabled
+    $this.t config -state disabled -font TkFixedFont
     pack $this.s -side right -fill y  -pady 2 -padx {0 2} -in $this
     pack $this.t -fill both -expand 1 -pady 2 -padx {2 0} -in $this
     return $this
@@ -321,6 +322,7 @@ proc create_opts {parent cmd} {
             continue
         }
         incr max
+        set tip [lindex [split $dat "\t"]  1]
         set dat [lindex [split $dat " \t"] 0]
         if {$cfg(VERB)==1} { puts "create: $cmd >$dat<" }
         set name [str2obj $dat]
@@ -339,6 +341,7 @@ proc create_opts {parent cmd} {
             pack [ttk::checkbutton $grp.$name -text $dat -variable cfg($dat)] -anchor w
             # use ttk::checkbutton 'cause checkbutton alway aligns centered
         }
+        create_tip $grp.$name "$tip";   # $tip may be empty, i.. for options
     }
 }; # create_opts
 
@@ -426,7 +429,7 @@ proc create_filter {txt} {
       #------+-------+--+--------------+---------------+---------------+-------+----
     array set filter {
       {YES}  {-regexp 3  {yes\n}		""	lightgreen	0	""}
-      {CMT}  {-regexp 0  {^==*}			gray	""		1	osaftBold }
+      {CMT}  {-regexp 0  {^==*}			gray	""		1	osaftHead }
       {DBX}  {-regexp 0  {^#[^[]}		blue	""		0	""}
       {KEY}  {-regexp 2  {^#\[[^:]+:\s*} 	""	gray		0	""}
       {CMD}  "-regexp 0  {.*?cfg(SAFT).*\\n\\n}	white	black		0	{}"
@@ -554,6 +557,7 @@ wm title        . $cfg(TITLE)
 wm iconname     . [string tolower $cfg(TITLE)]
 wm geometry     . 600x600
 
+font create osaftHead   {*}[font configure TkFixedFont;]  -weight bold
 font create osaftBold   {*}[font configure TkDefaultFont] -weight bold
 option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
