@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.04.04"; }
+    sub _VERSION() { return "15.04.05"; }   # <== our official version number
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.343 15/04/11 17:29:12";
+my  $SID    = "@(#) yeast.pl 1.344 15/04/12 11:34:57";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1267,6 +1267,14 @@ our %cmd = (
     'ciphers-V'     => 0,       # as: openssl ciphers -V
     'do'            => [],      # the commands to be performed, any of commands
     'commands'      => [],      # contains all commands, constructed below
+    'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
+                    # Results of these commands are not printed in output.
+                    # Purpose is to avoid output of noicy commands  (like some
+                    # +bsi*).  All data collections and checks are still done,
+                    # just output of results is omitted.
+                    # Technically these commands are not removed from cfg{do},
+                    # but just skipped in printdata() and printchecks(), which
+                    # makes implementation much easier.
     'cmd-intern'    => [        # add internal commands
                     # these have no key in %data or %checks
                         qw(
@@ -4517,6 +4525,7 @@ sub printdata($$$) {
     _trace_1arr('%data');
     foreach $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
+        next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%data) < 1);
         # special handling vor +info--v
         if (_is_do('info--v') > 0) {
@@ -4554,6 +4563,7 @@ sub printchecks($$$) {
     foreach $key (@{$cfg{'do'}}) {
         _trace("(%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
+        next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
@@ -4892,6 +4902,7 @@ while ($#argv >= 0) {
            # hence we simply convert anything to lower case
         if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'NO_OUT')   { push(@{$cfg{'ignore-out'}}, $arg);$typ = 'HOST'; }
         if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'CALL')     { push(@{$cmd{'call'}}, $arg);  $typ = 'HOST'; }
@@ -5078,6 +5089,7 @@ while ($#argv >= 0) {
 
     _y_ARG("option?  $arg");
     #{ options
+    #  NOTE that strings miss - and _ characters (see normalization above)
     #!# You may read the lines as table with columns like:
     #!#--------+------------------------+---------------------------+----------
     #!#           option to check        what to do                  comment
@@ -5190,6 +5202,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
     if ($arg =~ /^--lib(?:path)?$/)     { $typ = 'LIB';             }
     if ($arg eq  '--envlibvar')         { $typ = 'ENV';             }
+    if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
+    if ($arg =~ /^--(?:no|ignore)cmd$/) { $typ = 'NO_OUT';          } # alias ...
     if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
@@ -5699,6 +5713,16 @@ if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
 # now commands which do make a connection
 usr_pre_host();
 
+my $fail = 0;
+# check if output disabled for given/used commands
+foreach $key (@{$cfg{'ignore-out'}}) {
+    $fail++ if (_is_do($key) > 0);
+}
+if ($fail > 0) {
+    _warn("output for some data and checks disbaled due to use of '--no-out':");
+    _warn("  +" . join(" +", @{$cfg{'ignore-out'}}));
+}
+
 # run the appropriate SSL tests for each host (ugly code down here):
 $port = ($cfg{'port'}||"");     # defensive programming
 foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
@@ -5715,7 +5739,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     # prepare DNS stuff
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
     my $rhost = "";
-    my $fail  = "";
+    $fail = "";
     $? = 0;
     if ($cfg{'proxyhost'} ne "") {
         # if a proxy is used, DNS might not work at all, or be done by the
