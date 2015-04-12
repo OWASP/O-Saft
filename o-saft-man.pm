@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.26 15/04/12 10:56:05";
+my  $man_SID= "@(#) o-saft-man.pm 1.27 15/04/12 11:21:07";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1456,7 +1456,7 @@ COMMANDS
 
           In contrast to  +cipher  this command has some options to tweak the
           cipher tests, connection results and some strange behaviours of the
-          target. See  X&Options for  +cipherraw  command&  for details.
+          target. See  X&Options for cipherraw command&  for details.
 
     Commands to test SSL connection to target
 
@@ -1953,7 +1953,7 @@ OPTIONS
 
           Argument or option passed to openssl's  s_client  command.
 
-    Options for +cipherraw  command:
+    Options for cipherraw command
 
       --range=RANGE 
       --cipherrange=RANGE
@@ -2117,6 +2117,15 @@ OPTIONS
           Usefull if raw output should be passed to other programs.
 
           Note: must be used on command line to inhibit all header lines.
+
+      --ignore-cmd=CMD
+      --ignore-output=CMD
+      --no-cmd=CMD
+      --no-output=CMD
+
+          Do not print output (data or check result) for command 'CMD'.
+          'CMD' is any valid command, see  COMMANDS ,  without leading '+'.
+          Option can be used multiple times.
 
       --score
 
