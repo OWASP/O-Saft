@@ -76,7 +76,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.20 15/03/26 20:09:13";
+my  $SID    = "@(#) o-saft-dbx.pm 1.21 15/04/12 10:41:30";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -98,7 +98,7 @@ sub _yeast_trac($$){
     my $key  = shift;
     _yTRAC($key, "<<null>>"), return if (! defined $ref->{$key});   # undef is special, avoid perl warnings
     SWITCH: for (ref($ref->{$key})) {   # ugly but save use of $_ here
-        /CODE/  && do { _yTRAC($key, "<<code>>"); last SWITCH; };
+        /CODE/  && do { _yTRAC($key, "<<code>>");   last SWITCH; };
         /^$/    && do { _yTRAC($key, $ref->{$key}); last SWITCH; };
         /SCALAR/&& do { _yTRAC($key, $ref->{$key}); last SWITCH; };
         /ARRAY/ && do { _yTRAC($key, _y_ARR(@{$ref->{$key}})); last SWITCH; };
@@ -173,6 +173,7 @@ sub _yeast_init() {
         }
         printf("]\n");
         _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
+        _yeast(" ignore output= " . _y_ARR(@{$cfg{'ignore-out'}}));
         _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
         _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
         _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
@@ -183,7 +184,8 @@ sub _yeast_init() {
 sub _yeast_exit() {
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
-    _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (keys %{$cfg{'done'}});
+    _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}});
+    #_yeast_trac(\%{$cfg{'done'}}, $_) foreach (keys %{$cfg{'done'}});
     _y_CMD("cfg'done'}");
 }
 sub _yeast_args() {
