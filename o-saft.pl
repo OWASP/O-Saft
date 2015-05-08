@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.345 15/05/08 17:29:01";
+my  $SID    = "@(#) yeast.pl 1.345a 15/05/08 17:29:01";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -594,6 +594,7 @@ my %check_dest = (  # target (connection) data
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'bsi-tr-03116+' => {'txt' => "Target is strict BSI TR-03116-4 compliant"},
     'bsi-tr-03116-' => {'txt' => "Target is  lazy  BSI TR-03116-4 compliant"},
+    'rfc7527'       => {'txt' => "Target is rfc7527 compliant"},
     'resumption'    => {'txt' => "Target supports resumption"},
     'renegotiation' => {'txt' => "Target supports renegotiation"},
     'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
@@ -901,6 +902,7 @@ our %shorttexts = (
     'bsi-tr-02102-' => "BSI TR-02102-2 compliant (lazy)",
     'bsi-tr-03116+' => "BSI TR-03116-4 compliant (strict)",
     'bsi-tr-03116-' => "BSI TR-03116-4 compliant (lazy)",
+    'rfc7527'       => "rfc7527 compliant",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
     'hsts_sts'      => "STS header",
@@ -1337,7 +1339,7 @@ our %cmd = (
                         qw(check cipher pfs_cipher selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
-                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
                        ],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
@@ -2263,7 +2265,7 @@ our %text = (
     'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
-    'EV-miss'       => " <<missing @@>>",
+    'missing'       => " <<missing @@>>",
     'EV-large'      => " <<too large @@>>",
     'EV-subject-CN' => " <<missmatch: subject CN= and commonName>>",
     'EV-subject-host'=>" <<missmatch: subject CN= and given hostname>>",
@@ -3551,9 +3553,9 @@ sub check02102($$) {
     $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val});
     $checks{'bsi-tr-02102+'}->{val}.= $txt                if ($data{'valid-years'}->{val} > 3);
     $checks{'bsi-tr-02102+'}->{val}.= $text{'cert-dates'} if ($checks{'dates'}->{val} ne "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'CRL')  if ($checks{'crl'}->{val} ne "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'AIA')  if ($data{'ext_authority'}->{val}($host) eq "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
+    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'missing'}, 'CRL')  if ($checks{'crl'}->{val} ne "");
+    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'missing'}, 'AIA')  if ($data{'ext_authority'}->{val}($host) eq "");
+    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'missing'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
     $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'wildcards'}, $checks{'wildcard'}->{val}) if ($checks{'wildcard'}->{val} ne "");
 
     #! TR-02102-2 3.5 Domainparameter und Schlüssellängen
@@ -3591,7 +3593,7 @@ sub check03116($$) {
         # TLS Session darf eine Lebensdauer von 2 Tagen nicht überschreiten
     #! TR-03116-4 2.1.4.2 Encrypt-then-MAC-Extension
     #! TR-03116-4 2.1.4.3 OCSP-Stapling
-    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'EV-miss'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
+    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'missing'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
 
     #! TR-03116-4 4.1.1 Zertifizierungsstellen/Vertrauensanker
         # muss für die Verifikation von Zertifikaten einen oder mehrere Vertrauensanker vorhalten
@@ -3617,7 +3619,7 @@ sub check03116($$) {
 # FIXME: cert itself and CA-cert have different validity: 3 vs. 5 years
     $txt = $checks{'wildcard'}->{val};
     if (($data{'ext_crl'}->{val}($host) eq "") && ($data{'ext_authority'}->{val}($host) eq "")) {
-        $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'EV-miss'}, 'AIA or CRL');
+        $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'missing'}, 'AIA or CRL');
     }
 # FIXME: need to verify provided CRL and OCSP
     $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'wildcards'}, $txt) if ($txt ne "");
@@ -3677,14 +3679,14 @@ sub checkdv($$) {
 
     # required CN=
     if ($cn =~ m/^\s*$/) {
-        $checks{'dv'}->{val} .= _subst($text{'EV-miss'}, "Common Name");
+        $checks{'dv'}->{val} .= _subst($text{'missing'}, "Common Name");
         return; # .. as all other checks will fail too now
     }
 
     # CN= in subject or subjectAltname
     if (($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#)
     and ($altname !~ m#/$cfg{'regex'}->{$oid}=([^\s\n]*)#)) {
-        $checks{'dv'}->{val} .= _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
+        $checks{'dv'}->{val} .= _subst($text{'missing'}, $data_oid{$oid}->{txt});
         return; # .. as ..
     }
     $txt = $1;  # $1 is matched FQDN
@@ -3775,30 +3777,30 @@ sub checkev($$) {
             _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1\n");
             #dbx# _dbx "L:$oid: $1";
         } else {
-            _v2print("EV: " . _subst($text{'EV-miss'}, $cfg{'regex'}->{$oid}) . "; required\n");
-            $txt = _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
+            _v2print("EV: " . _subst($text{'missing'}, $cfg{'regex'}->{$oid}) . "; required\n");
+            $txt = _subst($text{'missing'}, $data_oid{$oid}->{txt});
             $checks{'ev+'}->{val} .= $txt;
             $checks{'ev-'}->{val} .= $txt;
         }
     }
     $oid = '1.3.6.1.4.1.311.60.2.1.2'; # or /ST=
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
-        $txt = _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
+        $txt = _subst($text{'missing'}, $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
         $oid = '2.5.4.8'; # or /ST=
         if ($subject =~ m#/$cfg{'regex'}->{'2.5.4.8'}=([^/\n]*)#) {
             $data_oid{$oid}->{val} = $1;
         } else {
             $checks{'ev-'}->{val} .= $txt;
-            _v2print("EV: " . _subst($text{'EV-miss'}, $cfg{'regex'}->{$oid}) . "; required\n");
+            _v2print("EV: " . _subst($text{'missing'}, $cfg{'regex'}->{$oid}) . "; required\n");
         }
     }
     $oid = '2.5.4.9'; # may be missing
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
-        $txt = _subst($text{'EV-miss'}, $data_oid{$oid}->{txt});
+        $txt = _subst($text{'missing'}, $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
         _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing+\n");
-        _v2print("EV: " . _subst($text{'EV-miss'}, $cfg{'regex'}->{$oid}) . "; required\n");
+        _v2print("EV: " . _subst($text{'missing'}, $cfg{'regex'}->{$oid}) . "; required\n");
     }
     # optional OID
     foreach $oid (qw(2.5.4.6 2.5.4.17)) {
