@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.344 15/04/12 11:34:57";
+my  $SID    = "@(#) yeast.pl 1.345 15/05/08 17:29:01";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -583,13 +583,13 @@ my %check_dest = (  # target (connection) data
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
     'order'         => {'txt' => "Target honors client's cipher order"},
-    'ism'           => {'txt' => "Target supports ISM compliant ciphers"},
-    'pci'           => {'txt' => "Target supports PCI compliant ciphers"},
-    'fips'          => {'txt' => "Target supports FIPS-140 compliant ciphers"},
-#   'nsab'          => {'txt' => "Target supports NSA Suite B compliant ciphers"},
-    'tr-02102'      => {'txt' => "Target supports TR-02102-2 compliant ciphers"},
-    'tr-03116+'     => {'txt' => "Target supports TR-03116-4 compliant ciphers+"},
-    'tr-03116-'     => {'txt' => "Target supports TR-03116-4 compliant ciphers-"},
+    'ism'           => {'txt' => "Target is ISM compliant (ciphers only)"},
+    'pci'           => {'txt' => "Target is PCI compliant (ciphers only)"},
+    'fips'          => {'txt' => "Target is FIPS-140 compliant"},
+#   'nsab'          => {'txt' => "Target is NSA Suite B compliant"},
+    'tr-02102'      => {'txt' => "Target is TR-02102-2 compliant"},
+    'tr-03116+'     => {'txt' => "Target is strict TR-03116-4 compliant"},
+    'tr-03116-'     => {'txt' => "Target is  lazy  TR-03116-4 compliant"},
     'bsi-tr-02102+' => {'txt' => "Target is strict BSI TR-02102-2 compliant"},
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'bsi-tr-03116+' => {'txt' => "Target is strict BSI TR-03116-4 compliant"},
@@ -895,8 +895,8 @@ our %shorttexts = (
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
     'tr-02102'      => "TR-02102-2 compliant",
-    'tr-03116+'     => "TR-03116-4 compliant",
-    'tr-03116-'     => "TR-03116-4 compliant",
+    'tr-03116+'     => "TR-03116-4 compliant (strict)",
+    'tr-03116-'     => "TR-03116-4 compliant (lazy)",
     'bsi-tr-02102+' => "BSI TR-02102-2 compliant (strict)",
     'bsi-tr-02102-' => "BSI TR-02102-2 compliant (lazy)",
     'bsi-tr-03116+' => "BSI TR-03116-4 compliant (strict)",
