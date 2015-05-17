@@ -66,7 +66,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.9 Easterhack 2015
+#?      @(#) 1.10 Easterhack 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -76,7 +76,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.9 15/04/12 13:05:40 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.10 15/04/13 21:49:05 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -216,12 +216,21 @@ proc create_see {w t} { $w see [$w index $t.first] }
 
 proc create_help {} {
     #? create new window with complete help; returns widget
+    # uses plain text help text from "o-saft.pl --help"
+    # This text is parsed for section header line (all capital characters)
+    # which will be used as Table of Content and inserted before the text.
+    # All referenzes to this sections are clickable.
+    # Also all references to commands (starting with '+') and options ('-')
+    # are highlighted and used for navigation.
+    # Idea: probably "o-saft.pl --help=wiki" is better suitable for creating
+    # the help text herein.
     global cfg
     set this    [create_window {Help} "600x800-0+0"]
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];  # remove informal messages
     set txt     [create_text $this $help].t
     set toc     {}
-    # mark all headlines blue; anf contains start, end corresponding end position
+
+    # 1. search for section head lines, mark them and add (prefix) to text
     set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-Z][A-Z_? -]+$} 1.0] 
     set i 0
     foreach a $anf {
@@ -237,21 +246,86 @@ proc create_help {} {
     $txt config -state normal
     $txt insert 1.0 "\nCONTENT\n$toc\n\n"
     $txt config -state disabled
-    set end [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
-    set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-Z_? -]+$} 3.0 $end] 
+    set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
+
+    # 2. search for all references to section head lines in TOC and add click event
+    set anf [$txt search -regexp -nolinestop -all -count end { *[A-Z_\? -]+( |$)} 3.0 $nam] 
+    # FIXME: above regex fails for some lines in generated TOC, reason unknown.
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
         set name [str2obj [string trim $t]]
         set b [$txt search -regexp {[A-Z]+} $a] 
-        $txt tag add  osaft-TOC    $b "$b + $e c - 1 c";# do not markup leading spaces
-        $txt tag add  osaft-TOC-$i $a "$a + $e c";      # bus complete line is clickable
+        $txt tag add  osaft-TOC    $b "$b + $e c"; # - 1 c";# do not markup leading spaces
+        $txt tag add  osaft-TOC-$i $a "$a + $e c";      # but complete line is clickable
         $txt tag bind osaft-TOC-$i <ButtonPress> "create_see $txt {osaft-HEAD-$name}"
         incr i
     }
-    $txt tag config   osaft-HEAD -foreground BLUE; # -underline 1 # no underline 'cause leading spaces
-    $txt tag config   osaft-TOC  -foreground BLUE
+
+#    # 2a. search for all references to section head in text
+#    set anf [$txt search -regexp -nolinestop -all -count end { +[A-Z_-]+} $nam] 
+#    # FIXME: returns too much false positives
+#    set i 0
+#    foreach a $anf {
+#        set e [lindex $end $i];
+#        set t [$txt get $a "$a + $e c"];
+#        if {[regexp {HIGH|MDIUM|LOW|WEAK|SSL|DHE} $t]} { continue };  # skip false matches
+#        $txt tag add    osaft-XXX $a "$a + $e c"
+#        $txt tag bind   osaft-XXX-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
+#        $txt tag config osaft-XXX    -foreground blue
+#        incr i
+#    }
+
+    # 3. search all commands and options and try to set click event
+    set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0] 
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i];
+        set l [$txt get "$a - 2 c" "$a + $e c + 1 c"]; # one char more, so we can detect head line
+        set t [string trim [$txt get $a "$a + $e c"]];
+        set r [regsub {[+]} $t {\\+}];  # need to escape +
+        set r [regsub {[-]} $r {\\-}];  # need to escape -
+        set name [str2obj [string trim $t]]
+        if {[regexp -lineanchor "\\s\\s+$r$" $l]} {    # FIXME: dos not match all line proper
+            # these matches are assumed the header lines
+            $txt tag add    osaft-LNK-$name $a "$a + $e c";
+            $txt tag add    osaft-LNK       $a "$a + $e c";
+        } else {
+            # these matches are assumed references
+            $txt tag add    osaft-LNK-$i $a "$a + $e c - 1 c"; # do not markup spaces
+            $txt tag bind   osaft-LNK-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
+            $txt tag config osaft-LNK-$i -foreground blue
+            $txt tag config osaft-LNK-$i -font osaftSlant
+        }
+        incr i
+    }
+
+    # 4. search for all examles and highlight them
+    set anf [$txt search -regexp -nolinestop -all -count end "$cfg(SAFT) \[^\\n\]+" 3.0] 
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i];
+        $txt tag add  osaft-CODE $a "$a + $e c"
+        incr i
+    }
+
+    # 5. search for all special quoted strings and highlight them
+    set anf [$txt search -regexp -nolinestop -all -count end {'[^'\n]+'} 3.0] 
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i];
+        $txt tag add  osaft-CODE $a "$a + $e c"
+        incr i
+        #regsub -start $a -all {'} $txt { }
+    }
+
+    # finaly global markups
+    $txt tag config   osaft-TOC  -foreground blue
+    $txt tag config   osaft-HEAD -font osaftBold
+    $txt tag config   osaft-TOC  -font osaftBold
+    $txt tag config   osaft-LNK  -font osaftBold
+    $txt tag config   osaft-CODE -background lightgrey
 
     wm iconify  $this
     return $this
@@ -559,6 +633,7 @@ wm geometry     . 600x600
 
 font create osaftHead   {*}[font configure TkFixedFont;]  -weight bold
 font create osaftBold   {*}[font configure TkDefaultFont] -weight bold
+font create osaftSlant  {*}[font configure TkDefaultFont] -slant italic
 option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
