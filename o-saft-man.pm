@@ -1,13 +1,14 @@
 #!/usr/bin/perl -w
 
-### This  software is licensed under GPLv2. Please see o-saft.pl for details.
+#!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package main;   # ensure that main:: variables are used
 
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.28 15/05/17 08:54:35";
+my  $man_SID= "@(#) o-saft-man.pm 1.29 15/05/17 21:43:21";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1646,6 +1647,7 @@ OPTIONS
           Use 'STARTTLS' command to start a TLS connection via SMTP.
           This option is a shortcut for  --starttls=SMTP .
 
+      --starttls=SMTP
       --starttls=PROT
 
           Use 'STARTTLS' command to start a TLS connection via protocol. PORT
