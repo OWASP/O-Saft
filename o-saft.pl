@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.346 15/05/17 08:39:29";
+my  $SID    = "@(#) yeast.pl 1.347 15/05/17 21:13:58";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -2806,7 +2806,7 @@ sub _isrfc7525($$) {
     # return given cipher if it is not RFC 7525 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($ssl    ne "TLSv12");
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notRFC7525'}/);
+   #return $cipher if ($cipher =~ /$cfg{'regex'}->{'notRFC7525'}/);
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
     return "";
 } # _isrfc7525
@@ -2871,63 +2871,49 @@ sub _isbleed($$) {
     local $\;
     undef $\;           # take care, must not be \n !!
 
-    # all following code stolen from Steffen Ullrich (08. April 2014):
-    #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
-    # code slightly adapted to our own variables: $host, $port, $cfg{'timeout'}
-    # also die() replaced by warn()
-
         # open our own connection and close it at end
 # TODO: does not work with socket from SSLinfo.pm
-    
-#    $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
-#        #ORIG die "failed to connect: $!";
-#        _warn("failed to connect: '$!'");
-#        return "failed to connect";
-#    };
-    unless ( ($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'})) ){ #unless nor starttls neither via Proxy
+# TODO: following unless{}else{} should be same as in _usesocket()
+    unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
+        # no proxy and not starttls
         $cl=IO::Socket::SSL->new(
             PeerAddr        => $host,
             PeerPort        => $port,
             Timeout         => $cfg{'timeout'},
-        ) or  do {
+        ) or do {
             _warn("_isbleed: failed to connect: '$!'");
             return "failed to connect";
         };
-    } else { #starttls or via Proxy
-
-########### set new feature temporary to --experimental
-        _warn_and_exit("_isbleed", "--starttls, --proxyhost", "experimental use");
-########### End: set new feature temporary to --experimental
-
-        _trace("_isbleed: 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
-        #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
-        $cl = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
-  
-        if ( (!defined ($cl)) || ($@) ) { # No SSL Connection 
-            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); #generic Error Message
-            _warn ("_isbleed (with openTcpSSLconnection): $@\n"); 
+    } else {
+        # proxy or starttls
+        _trace("_isbleed: using 'Net::SSLhello'");
+        $cl = Net::SSLhello::openTcpSSLconnection($host, $port);
+        if ((!defined ($cl)) || ($@)) { # No SSL Connection
+            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
+            _warn ("_isbleed (with openTcpSSLconnection): $@\n");
             _trace ("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
             return ("failed to connect");
         } else {
             # SSL upgrade
             _trace("_isbleed: start_SSL ($host:$port)");
             IO::Socket::SSL->start_SSL($cl,
-#             PeerAddr        => $host,
-#             PeerPort        => $port,
-#             Proto           => "tcp",
               Timeout         => $cfg{'timeout'},
-#             SSL_hostname    => $sni,    # for SNI
-              SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-#             SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
-#             SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
-#             SSL_version     => $ssl,    # default is SSLv23
+              SSL_verify_mode => 0x0,   # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+#             SSL_ca_file     => undef, # see man IO::Socket::SSL ..
+#             SSL_ca_path     => undef, # .. newer versions are smarter and accept ''
+#             SSL_version     => $ssl,  # default is SSLv23
 #             SSL_cipher_list => $ciphers
             ) or do {
-                _warn("_isbleed: failed to connect: '$!'");
+                _warn("_isbleed: failed to connect with proxy: '$!'");
                 return "failed to connect";
             };
         }
     }
+
+    # all following code stolen from Steffen Ullrich (08. April 2014):
+    #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
+    # code slightly adapted to our own variables: $host, $port, $cfg{'timeout'}
+    # also die() replaced by warn()
 
     # client hello with heartbeat extension
     # taken from http://s3.jspenguin.org/ssltest.py
@@ -3071,8 +3057,9 @@ sub _usesocket($$$$) {
     my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher = "";
     my $sslsocket = undef;
-    unless ( ($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'})) ){ #unless nor starttls neither via Proxy
-        $sslsocket=IO::Socket::SSL->new(
+    unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
+        # no proxy and not starttls
+        $sslsocket = IO::Socket::SSL->new(
             PeerAddr        => $host,
             PeerPort        => $port,
             Proto           => "tcp",
@@ -3082,30 +3069,20 @@ sub _usesocket($$$$) {
             SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
             SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
             SSL_version     => $ssl,    # default is SSLv23
-            SSL_cipher_list => $ciphers,
+            SSL_cipher_list => $ciphers
         );
-    } else { #starttls or via Proxy
-
-########### set new feature temporary to --experimental
-        _warn_and_exit("_usesocket", "--starttls, --proxyhost", "experimental use");
-########### End: set new feature temporary to --experimental
-
-        #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
-        _trace("_usesocket: 'Net::SSLhello'= $Net::SSLhello::VERSION"); # TODO: alreday done in _yeast_init()
-        $sslsocket = Net::SSLhello::openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
-
-        if ( (!defined ($sslsocket)) || ($@) ) { # No SSL Connection 
-            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@); #generic Error Message
-            _warn ("_usesocket (with openTcpSSLconnection): $@\n"); 
-            _trace ("_usesocket: Fatal Exit in _doCheckSSLciphers }\n");
+    } else {
+        # proxy or starttls
+        _trace("_usesocket: using 'Net::SSLhello'");
+        $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
+        if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection 
+            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
+            _warn("_usesocket: openTcpSSLconnection() failed: $@\n"); 
             return ("");
         } else {
             # SSL upgrade
             _trace("_usesocket: start_SSL ($host, $port, $ciphers)\t= $cipher");
             IO::Socket::SSL->start_SSL($sslsocket,
-#             PeerAddr        => $host,
-#             PeerPort        => $port,
-#             Proto           => "tcp",
               Timeout         => $cfg{'timeout'},
               SSL_hostname    => $sni,    # for SNI
               SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
@@ -3113,8 +3090,8 @@ sub _usesocket($$$$) {
               SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
               SSL_version     => $ssl,    # default is SSLv23
               SSL_cipher_list => $ciphers,
-            ) or do { 
-                _trace ("_usesocket: failed to ssl handshake: $!");
+            ) or do {
+                _trace ("_usesocket: ssl handshake failed: $!");
                 return "";
             };
         }
@@ -3237,7 +3214,7 @@ sub checkcipher($$) {
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
     $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci( $ssl, $c));
     $checks{'fips'}->{val}      .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
-    $checks{'rfc7525'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
+#   $checks{'rfc7525'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
     $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _istr02102($ssl, $c));
     $checks{'tr-03116+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
     $checks{'tr-03116-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy($ssl, $c));
@@ -5581,39 +5558,13 @@ local $\ = "\n";
 use     IO::Socket::SSL 1.37; #  qw(debug2);
 use     IO::Socket::INET;
 
-if (_is_do('cipherraw') or _is_do('version') or ($cfg{'starttls'}) or (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
+if (_is_do('cipherraw') or _is_do('version')
+    or ($cfg{'starttls'})
+    or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
+   ) {
     require Net::SSLhello;
-########### set new feature temporary to --experimental
-    if (!(_is_do('cipherraw')) and !(_is_do('version'))) {
-        _warn_and_exit("main", "--starttls, --proxyhost", "experimental use");
-    }
-########### End: set new feature temporary to --experimental
-
-    # set defaults for Net::SSLhello
-    { # Section for no warnings
-        no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
-        $Net::SSLhello::trace       = $cfg{'trace'};
-        $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
-        $Net::SSLhello::experimental= $cfg{'experimental'};
-        $Net::SSLhello::usesni      = $cfg{'usesni'};
-        $Net::SSLhello::usemx       = $cfg{'usemx'};
-        $Net::SSLhello::sni_name    = $cfg{'sni_name'};
-        $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
-        $Net::SSLhello::starttlsType= $cfg{'starttls'};
-        $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
-        $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
-        $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
-        $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
-        $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
-        $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
-        $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
-        $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
-        $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
-        $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
-        $Net::SSLhello::proxyport   = $cfg{'proxyport'};
-        $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
-    } # End: no warnings
-    $cfg{'usehttp'}   = 0; # usehttp does not make sense for strttls; TODO: is not (yet) supported for Proxy
+    $cfg{'usehttp'} = 0; # makes no sense for starttls
+    # TODO: not (yet) supported for proxy
 }
 require Net::SSLinfo;
 _y_TIME("inc}");
@@ -5686,27 +5637,53 @@ push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
 ## -------------------------------------
 {
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
-    $Net::SSLinfo::trace       = $cfg{'trace'} if ($cfg{'trace'} > 0);
-    $Net::SSLinfo::use_openssl = $cmd{'extopenssl'};
-    $Net::SSLinfo::use_sclient = $cmd{'extsclient'};
-    $Net::SSLinfo::openssl     = $cmd{'openssl'};
-    $Net::SSLinfo::use_http    = $cfg{'usehttp'};
-    $Net::SSLinfo::use_SNI     = $cfg{'sni_name'};
-    $Net::SSLinfo::use_nextprot= $cfg{'use_nextprot'};
-    $Net::SSLinfo::use_extdebug= $cfg{'use_extdebug'};
+    $Net::SSLinfo::trace        = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    $Net::SSLinfo::use_openssl  = $cmd{'extopenssl'};
+    $Net::SSLinfo::use_sclient  = $cmd{'extsclient'};
+    $Net::SSLinfo::openssl      = $cmd{'openssl'};
+    $Net::SSLinfo::use_http     = $cfg{'usehttp'};
+    $Net::SSLinfo::use_SNI      = $cfg{'sni_name'};
+    $Net::SSLinfo::use_nextprot = $cfg{'use_nextprot'};
+    $Net::SSLinfo::use_extdebug = $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect=$cfg{'use_reconnect'};
-    $Net::SSLinfo::sclient_opt = $cfg{'sclient_opt'};
-    $Net::SSLinfo::timeout_sec = $cfg{'timeout'};
-    $Net::SSLinfo::no_cert     = $cfg{'no_cert'};
-    $Net::SSLinfo::no_cert_txt = $cfg{'no_cert_txt'};
-    $Net::SSLinfo::ignore_case = $cfg{'ignorecase'};
-    $Net::SSLinfo::ca_crl      = $cfg{'ca_crl'};
-    $Net::SSLinfo::ca_file     = $cfg{'ca_file'};
-    $Net::SSLinfo::ca_path     = $cfg{'ca_path'};
-    $Net::SSLinfo::ca_depth    = $cfg{'ca_depth'};
+    $Net::SSLinfo::sclient_opt  = $cfg{'sclient_opt'};
+    $Net::SSLinfo::timeout_sec  = $cfg{'timeout'};
+    $Net::SSLinfo::no_cert      = $cfg{'no_cert'};
+    $Net::SSLinfo::no_cert_txt  = $cfg{'no_cert_txt'};
+    $Net::SSLinfo::ignore_case  = $cfg{'ignorecase'};
+    $Net::SSLinfo::ca_crl       = $cfg{'ca_crl'};
+    $Net::SSLinfo::ca_file      = $cfg{'ca_file'};
+    $Net::SSLinfo::ca_path      = $cfg{'ca_path'};
+    $Net::SSLinfo::ca_depth     = $cfg{'ca_depth'};
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
-    $Net::SSLinfo::use_http    = 0; # if only +cipher given don't use http 'cause it may cause erros
+    $Net::SSLinfo::use_http     = 0; # if only +cipher given don't use http 'cause it may cause erros
+}
+
+## set defaults for Net::SSLhello
+## -------------------------------------
+if (defined $Net::SSLhello::VERSION) {
+    no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
+    $Net::SSLhello::trace       = $cfg{'trace'};
+    $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
+    $Net::SSLhello::experimental= $cfg{'experimental'};
+    $Net::SSLhello::usesni      = $cfg{'usesni'};
+    $Net::SSLhello::usemx       = $cfg{'usemx'};
+    $Net::SSLhello::sni_name    = $cfg{'sni_name'};
+    $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
+    $Net::SSLhello::starttlsType= $cfg{'starttls'};
+    $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
+    $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
+    $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
+    $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
+    $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
+    $Net::SSLhello::useecc      = $cfg{'sslhello'}->{'useecc'};
+    $Net::SSLhello::useecpoint  = $cfg{'sslhello'}->{'useecpoint'};
+    $Net::SSLhello::double_reneg= $cfg{'sslhello'}->{'double_reneg'};
+    $Net::SSLhello::noDataEqNoCipher= $cfg{'sslhello'}->{'nodatanocipher'};
+    $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
+    $Net::SSLhello::proxyport   = $cfg{'proxyport'};
+    $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
 }
 
 ## check for supported SSL versions
