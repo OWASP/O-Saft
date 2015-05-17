@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+#!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
+
 =pod
 
 =head1 NAME
@@ -76,7 +79,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.21 15/04/12 10:41:30";
+my  $SID    = "@(#) o-saft-dbx.pm 1.23 15/05/17 21:44:12";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
