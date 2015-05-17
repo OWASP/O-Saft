@@ -1,5 +1,5 @@
 
-                               VERSION  14.1.4
+                               VERSION  15.05.15
 +-----------------------+--+-----------------------+--+-----------------------+
 
  *Über diese Datei/Text     *About This File           *Enpienso eso texto
@@ -11,7 +11,7 @@
  ber wichtige Änderungen    inform  about important    importantes de eso nuevo
  der aktuellen Version.     news of this version.      version.
  Solange diese Datei von    o-saft.pl wont continue    o-saft.pl  no va avanzar
- o-saft.pl  lesbar  ist,    to work as long as this    asta lo  existe  fichero
+ o-saft.pl  lesbar  ist,    to work as long as this    hasta lo  existe fichero
  wird es nicht gestartet    file: o-saft-README, is    o-saft-README.
  Die Datei o-saft-README    readable.
  muss umbenannt  werden,    To get rid of this text
@@ -21,29 +21,10 @@
 
  *Release Information       *Release Information       *Informationes
  =======================    =======================    =======================
-        +sernumber                 +sernumber                 +sernumber
- Die neuen Commands bzgl.   The new checks for size
- Längenprüfung d. Serial    of certificate's serial
- Number  muss in bereits    number must be added to
- vorhandenen  .o-saft.pl    existing  .o-saft.pl :
- eingearbeitet werden:      sernumber len_sernumber
- sernumber len_sernumber
-
-        +listregex                 +listregex                 +listregex
- +listregex  wurde durch    +listregex was replaced 
- --help=regex  ersetzt.     by  --help=regex .
-
-        --cmd-*                    --cmd-*                    --cmd-*
-Diese Optionen wurden in    These options have been
---cfg_cmd=*  umbenannt.     renamed to  --cfg_cmd=*
-
-        --set-score                --set-score                --set-score
-Diese Optionen wurden in    These options have been
---cfg_score=* umbenannt.    renamed to --cfg_score=*
-
-     Size: und Count:           Size: and Count:           Size: and Count:
-In den Texten der Labels    These words are part of
-wurden diese Wörter int-    the label texts now  to
-egriert, um die  Ausgabe    simplify parsing of the
-besser weiterverarbeiten    output ('cause of : ).
-zu können.
+ Falls es ein .o-saft.pl    If a .o-saft.pl exists,    Si existe un .o-saft.pl
+ gibt,  wird   o-saft.pl    o-saft.pl will most li-    o-saft.pl probablemente
+ vermutlich    Warnungen    kely issue warnings.       gastar advertencias.
+ ausgeben. Dann muss das    Then  please adapt your    Entonces   tienes   que
+ vorhandene   .o-saft.pl    existing  .o-saft.pl       adaptar .o-saft.pl como
+ angepasst werden, siehe    see  .o-saft.pl.sample     en  el fichero  visible
+ .o-saft.pl.sample                                     .o-saft.pl.sample
