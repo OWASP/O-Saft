@@ -7,7 +7,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.27 15/04/12 11:21:07";
+my  $man_SID= "@(#) o-saft-man.pm 1.28 15/05/17 08:54:35";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -163,6 +163,10 @@ our %man_text = (
         'CWC'       => "CWC Mode (Carter-Wegman + CTR mode; block cipher mode)",
         'DAA'       => "Data Authentication Algorithm",
         'DAC'       => "Data Authentication Code",
+        'DANE'      => "DNS-based Authentication of Named Entities",
+        'DDH'       => "Decisional Diffie-Hellman (Problem)",
+        'DEA'       => "Data Encryption Algorithm (sometimes a synonym for DES)",
+        'DECIPHER'  => "synonym for decryption",
         'DEK'       => "Data Encryption Key",
         'DER'       => "Distinguished Encoding Rules",
         'DES'       => "Data Encryption Standard",
@@ -173,14 +177,10 @@ our %man_text = (
         '3TDEA'     => "Three-key  Tripple DEA (sometimes: Tripple DES; 168 bits)",
         '2TDEA'     => "Double-key Tripple DEA (sometimes: Double DES; 112 bits)",
         'D5'        => "Verhoeff's Dihedral Group D5 Check",
-        'DANE'      => "DNS-based Authentication of Named Entities",
-        'DDH'       => "Decisional Diffie-Hellman (Problem)",
-        'DEA'       => "Data Encryption Algorithm (sometimes a synonym for DES)",
-        'DECIPHER'  => "synonym for decryption",
-        'DER'       => "Distinguished Encoding Rules",
         'DH'        => "Diffie-Hellman",
         'DHE'       => "Diffie-Hellman ephemeral", # historic acronym, often used, mainly in openssl
         'DLIES'     => "Discrete Logarithm Integrated Encryption Scheme",
+        'DLP'       => "Discrete Logarithm Problem",
         'DN'        => "Distinguished Name",
         'DPA'       => "Dynamic Passcode Authentication (see CAP)",
         'DRBG'      => "Deterministic Random Bit Generator",
@@ -1049,25 +1049,32 @@ sub printhelp($) {
 # All documentation is in plain ASCII format.
 # Following notations / markups are used:
 #   TITEL
-#       Titles start at beginning of a line, i.g. all upper case characters
+#       Titles start at beginning of a line, i.g. all upper case characters.
 #     SUB-Title
 #       Sub-titles start at beginning of a line preceeded by 4 or 6 spaces.
 #     code
-#       Code lines start at beginning of a line preceeded by 14 spaces.
+#       Code lines start at beginning of a line preceeded by 11 or 15 spaces.
 #   "text in double quotes"
-#       References to text or cite
+#       References to text or cite.
 #   'text in single quotes'
-#       References to verbatim text elswhere or constant string in description
+#       References to verbatim text elswhere or constant string in description.
 #   * list item
-#     force list item in generated markup
+#       Force list item in generated markup.
 #   ** list item
-#     force list item (second level) in generated markup
+#       Force list item (second level) in generated markup.
 #   d) list item
-#     force list item in generated markup (d may be a digit or character)
+#       Force list item in generated markup (d may be a digit or character).
 #   $VERSION
-#     will be replaced by current version string (as defined in caller)
+#       Will be replaced by current version string (as defined in caller).
 #   $0
-#     will be replaced by caller's name (i.g. o-saft.pl)
+#       Will be replaced by caller's name (i.g. o-saft.pl).
+#   Referenzes to titles are written in all upper case characters and prefixed
+#   and suffixed with 2 spaces (except on line end).
+#
+#   All head lines for sections (see TITLE above) are preceeded by 2 empty lines
+#   All head lines for commands and options should contain just this command
+#   or option, aliases should be written in theor own line (to avoid confusion
+#   in some other parsers, like Tcl).
 #
 # Initilly the documentation was done using perl's doc format (perldoc, POD).
 # The advantage having a well formated output available on various platforms,
@@ -1388,7 +1395,8 @@ COMMANDS
 
           Quick overview of checks. Implies  --enabled  and  --short.
 
-      +sts +hsts
+      +sts
+      +hsts
 
           Various checks according STS HTTP header.
           This option implies  --http,  means that  --no-http is ignored.
@@ -1397,7 +1405,8 @@ COMMANDS
 
           Check for Server Name Indication (SNI) usage.
 
-      +sni_check, +check_sni
+      +sni_check
+      +check_sni
 
           Check for Server Name Indication (SNI) usage  and  validity  of all
           names (CN, subjectAltName, FQDN, etc.).
@@ -1526,7 +1535,8 @@ OPTIONS
           Note that the  sequence  of options  is important.  Use the options
           --trace  and/or  --cfg-score=KEY=SCORE  before  --help=score.
 
-      --help=toc --help=content
+      --help=toc
+      --help=content
 
           Show headlines from help text. Useful to get an overview.
 
@@ -1544,7 +1554,8 @@ OPTIONS
           Show texts used  as labels in output for  data  (see  +info)  ready
           for use in  RC-FILE  or as option.
 
-      --help=cfg-text --help=text-cfg
+      --help=cfg-text
+      --help=text-cfg
 
           Show texts used in various messages ready for use in  RC-FILE  or
           as option.
@@ -1553,13 +1564,17 @@ OPTIONS
 
           Show regular expressions used internally.
 
-      --help=gen-html --help=gen-wiki
+      --help=gen-html
 
-          Print documentation in various formats, see o-saft-man.pm.
+          Print documentation in HTML format.
+
+      --help=gen-wiki
+
+          Print documentation in mediawiki format.
 
       --help=gen-cgi
 
-          See o-saft-man.pm.
+          Print documentation in format to be used for CGI.
 
       --help=glossar
 
@@ -1585,11 +1600,11 @@ OPTIONS
 
       --host=HOST
 
-          Specify  'HOST'  as target to be checked. Legacy option.
+          Specify HOST as target to be checked. Legacy option.
 
       --port=PORT
 
-          Specify  'PORT'  of target to be used. Legacy option.
+          Specify PORT of target to be used. Legacy option.
 
       --host=HOST and --port=PORT and HOST:PORT and HOST
 
@@ -1610,13 +1625,13 @@ OPTIONS
 
       --proxyhost=PROXYHOST --proxy=PROXYHOST:PROXYPORT
 
-          Make all connection to target using 'PROXYHOST'.
+          Make all connection to target using PROXYHOST.
 
           Also possible is: --proxy=PROXYUSER:PROXYPASS@PROXYHOST:PROXYPORT
 
       --proxyport=PROXYPORT
 
-          Make all connection to target using 'PROXYHOST:PROXYPORT'.
+          Make all connection to target using PROXYHOST:PROXYPORT.
 
       --proxyuser=PROXYUSER
 
@@ -1629,14 +1644,15 @@ OPTIONS
       --starttls
 
           Use 'STARTTLS' command to start a TLS connection via SMTP.
-          This option is a shortcut for  --starttls=SMTP.
+          This option is a shortcut for  --starttls=SMTP .
 
       --starttls=PROT
 
-          Use 'STARTTLS' command to start a TLS connection via protocol.
-          PROT  may be any of: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+          Use 'STARTTLS' command to start a TLS connection via protocol. PORT
+          PORT may be any of: 'SMTP', 'IMAP', 'IMAP2', 'POP3', 'FTPS', 'RDP',
+          'LDAP' or 'XMPP'
 
-          For  --starttls=SMTP, see  --dns-mx  also to use MX records instead
+          For  --starttls=SMTP  see  --dns-mx  also to use MX records instead
           of host
 
       --starttls-delay=SEC
@@ -1648,7 +1664,8 @@ OPTIONS
           Note:  In this case there is an automatic suspension and retry with
           a longer delay.
 
-      --cgi, --cgi-exec
+      --cgi
+      --cgi-exec
 
           Internal use for CGI mode only.
 
@@ -1691,13 +1708,15 @@ OPTIONS
           if the  --lib=PATH  option doesn't work (for example due to changes
           of the API or other incompatibilities).
 
-      --exe-path=PATH --exe=PATH
+      --exe-path=PATH
+      --exe=PATH
 
-          'PATH'        is a full path where to find openssl.
+          PATH          is a full path where to find openssl.
 
-      --lib-path=PATH --lib=PATH
+      --lib-path=PATH
+      --lib=PATH
 
-          'PATH'        is a full path where to find libssl.so and libcrypto.so
+          PATH          is a full path where to find libssl.so and libcrypto.so
 
           See X&HACKER's INFO& below for a detailed description how it works.
 
@@ -1728,7 +1747,7 @@ OPTIONS
 # following missing on owasp.org 'cause still not fully implemented
       --call=METHOD
 
-          'METHOD'      method to be used for specific functionality
+          METHOD        method to be used for specific functionality
 
           Available methods:
           * info-socket         use internal socket to retrieve information
@@ -1788,7 +1807,7 @@ OPTIONS
 
       --cipher=CIPHER
 
-          * 'CIPHER'    can be any string accepeted by openssl or following:
+          * CIPHER      can be any string accepeted by openssl or following:
           * 'yeast'     use all ciphers from list defined herein, see  +list
 
           Beside the cipher names accepted by openssl, CIPHER can be the name
@@ -1898,8 +1917,8 @@ OPTIONS
 
       --sni-name=NAME
 
-          Use  'NAME'  instead of given hostname to connect to  target in SNI
-          mode. By  default,  'NAME'  is automatically set to the given FQDN.
+          Use NAME instead of given hostname to connect to target in SNI mode
+          By  default, NAME is automatically set to the given FQDN.
           This is insufficient, when an IP instead of a FQDN was given,  then
           the connection needs to specify the correct hostname (i.g. a FQDN).
 
@@ -1922,20 +1941,20 @@ OPTIONS
 
       --no-cert-text=TEXT
 
-          Set  'TEXT'  to be returned from  Net::SSLinfo if no certificate data
-          is collected due to use of  --no-cert.
+          Set TEXT to be returned from  Net::SSLinfo if no certificate data is
+          collected due to use of  --no-cert.
 
       --ca-depth=INT
 
-          Check certificate chain to depth  'INT'  (like openssl's -verify).
+          Check certificate chain to depth INT (like openssl's -verify).
 
       --ca-file=FILE
 
-          Use  'FILE'  with bundle of CAs to verify target's certificate chain.
+          Use FILE with bundle of CAs to verify target's certificate chain.
 
       --ca-path=DIR
 
-          Use  'DIR'  where to find CA certificates in PEM format.
+          Use DIR where to find CA certificates in PEM format.
 
       --no-nextprotoneg
 
@@ -1959,15 +1978,15 @@ OPTIONS
       --cipherrange=RANGE
 
           Specify range of cipher constants to be tested by  +cipherraw.
-          Following 'RANGE's are supported (see also:  --cipherrange=RANGE):
-          * rfc                 all ciphers defined in various RFCs
-          * shifted             'rfc', shifted by 64 bytes to the right
-          * long                like 'rfc' but more lazy list of constants
-          * huge                all constants  0x03000000 .. 0x0300FFFF
-          * safe                all constants  0x03000000 .. 0x032FFFFF
-          * full                all constants  0x03000000 .. 0x03FFFFFF
-          * SSLv2               all ciphers according RFC for SSLv2
-          * SSLv2_long          more lazy list of constants for SSLv2 ciphers
+          Following RANGEs are supported (see also:  --cipherrange=RANGE):
+          * 'rfc'               all ciphers defined in various RFCs
+          * 'shifted'           'rfc', shifted by 64 bytes to the right
+          * 'long'              like 'rfc' but more lazy list of constants
+          * 'huge'              all constants  0x03000000 .. 0x0300FFFF
+          * 'safe'              all constants  0x03000000 .. 0x032FFFFF
+          * 'full'              all constants  0x03000000 .. 0x03FFFFFF
+          * 'SSLv2'             all ciphers according RFC for SSLv2
+          * 'SSLv2_long'        more lazy list of constants for SSLv2 ciphers
 
           Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
@@ -2010,10 +2029,11 @@ OPTIONS
 
           Number of seconds to wait until connection is qualified as timeout.
 
-      --dns-mx, --mx
+      --dns-mx
+      --mx
 
           Get DNS MX records for given target and check the returned targets.
-          (only useful with  --STARTTLS=SMTP)
+          (only useful with  --starttls=SMTP).
 
     Options for checks and results
 
@@ -2054,18 +2074,18 @@ OPTIONS
           to be simulated.
 
           Following TOOLs are supported:
-          * sslaudit            format of output similar to  sslaudit
-          * sslcipher           format of output similar to  ssl-cipher-check
-          * ssldiagnos          format of output similar to  ssldiagnos
-          * sslscan             format of output similar to  sslscan
-          * ssltest             format of output similar to  ssltest
-          * ssltestg            format of output similar to  ssltest -g
-          * ssltest-g           format of output similar to  ssltest -g
-          * sslyze              format of output similar to  sslyze
-          * ssl-cipher-check    same as sslcipher
-          * ssl-cert-check      format of output similar to  ssl-cert-check
-          * testsslserver       format of output similar to  TestSSLServer.jar
-          * thcsslcHeck         format of output similar to  THCSSLCheck
+          * 'sslaudit'          format of output similar to  sslaudit
+          * 'sslcipher'         format of output similar to  ssl-cipher-check
+          * 'ssldiagnos'        format of output similar to  ssldiagnos
+          * 'sslscan'           format of output similar to  sslscan
+          * 'ssltest'           format of output similar to  ssltest
+          * 'ssltestg'          format of output similar to  ssltest -g
+          * 'ssltest-g'         format of output similar to  ssltest -g
+          * 'sslyze'            format of output similar to  sslyze
+          * 'ssl-cipher-check'  same as sslcipher
+          * 'ssl-cert-check'    format of output similar to  ssl-cert-check
+          * 'testsslserver'     format of output similar to  TestSSLServer.jar
+          * 'thcsslcHeck'       format of output similar to  THCSSLCheck
 
           Note that these legacy formats only apply to  output of the checked
           ciphers. Other texts like headers and footers are adapted slightly.
@@ -2096,8 +2116,6 @@ OPTIONS
       --format=hex
       --format=raw
 
-          'FORM'  may be one of following:
-
           * 'raw'       Print raw data as passed from  Net::SSLinfo.
             Note:  all data will be printed as is,  without  additional label
             or formatting. It's recommended to use the  option in conjunction
@@ -2123,8 +2141,8 @@ OPTIONS
       --no-cmd=CMD
       --no-output=CMD
 
-          Do not print output (data or check result) for command 'CMD'.
-          'CMD' is any valid command, see  COMMANDS ,  without leading '+'.
+          Do not print output (data or check result) for command CMD.  CMD is
+          is any valid command, see  COMMANDS ,  without leading '+'.
           Option can be used multiple times.
 
       --score
@@ -2138,7 +2156,7 @@ OPTIONS
       --separator=CHAR
       --sep=CHAR
 
-          'CHAR'    will be used as separator between  label and value of the
+          CHAR      will be used as separator between  label and value of the
                     printed results. Default is  ':'.
 
       --tab
@@ -2356,7 +2374,8 @@ OPTIONS
 
           Use FILE instead of the default rc-file (.o-saft.pl, see RC-FILE).
 
-      --trace-sub, +traceSUB
+      --trace-sub
+      +traceSUB
 
           Print formatted list of internal functions with their description.
           Not to be intended in conjunction with any target check.
@@ -2434,7 +2453,7 @@ LAZY SYNOPSIS
     Targets
 
         Following syntax is supported also:
-            $0 http://some.tld other.tld:3889/some/path?a=b
+          $0 http://some.tld other.tld:3889/some/path?a=b
 
         Note that only the hostname and the port are used from an URL.
 
@@ -2504,21 +2523,21 @@ CHECKS
       Lucky 13
 
         Check if CBC ciphers are offered.
-        NOTE the recommendation to be safe againts  Lucky 13  was to use RC4
-        ciphers. But they are also subjetc to attacks (see below). Hence the
+        NOTE the recommendation to be safe againts  Lucky 13  was to use  RC4
+        ciphers. But they are also subjetc to attacks (see below).  Hence the
         check is only for CBC ciphers.
 
       RC4
 
         Check if RC4 ciphers are supported.
         They are assumed to be broken.
-        Note that  +rc4  reports the vulnerabilitiy to the RC4 Attack, while
-        +rc4_cipher  simply reports if RC4 ciphers are offered.  However the
-        the check, and hence the result, is the same.
+        Note that  +rc4  reports the vulnerabilitiy to the  RC4 Attack, while
+        +rc4_cipher  simply reports if  RC4 ciphers are offered.  However the
+        check, and hence the result, is the same.
 
       PFS
 
-        Check if DHE ciphers are used. Also check if the  TLS session ticket
+        Check if DHE ciphers are used.  Checks also if the TLS session ticket
         is random or not used at all.
         Currently (2015) only a simple check is used: only DHE ciphers used.
         Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
@@ -2526,7 +2545,7 @@ CHECKS
 
       POODLE
 
-        Check if target is vulnerable to POODLE attack (just check if  SSLv3
+        Check if target is vulnerable to  POODLE attack (just check if  SSLv3
         is enabled).
 
     Target (server) Configuration and Support
@@ -2637,6 +2656,7 @@ CHECKS
           * PCI
           * BSI TR-02102-2
           * BSI TR-03116-4
+          * RFC 7525
 
 #   NSA Suite B
       BSI TR-02102-2
@@ -2787,6 +2807,9 @@ CHECKS
 
           This requirement is not testable from remote.
 
+      RFC 7525
+        Checks if connection and ciphers are compliant according RFC 7525.
+
 
 SCORING
 
@@ -2904,23 +2927,23 @@ CUSTOMIZATION
           * --cfg-data=KEY=TEXT
           * --cfg-text=KEY=TEXT
 
-        Here  'KEY' is the key used in the internal data structure and 'TEXT'
-        is the value to be set for this key.  Note that  unknown keys will be
-        ignored silently.
+        KEY  is the key used in the internal data structure, and  TEXT is the
+        value to be set for this key.  Note that unknown keys will be ignored
+        silently.
 
-        If  'KEY=TEXT'  is an exiting filename,  all lines from that file are
-        read and set. For details see  CONFIGURATION FILE  below.
+        If KEY=TEXT is an exiting filename, all lines from that file are read
+        and set. For details see  CONFIGURATION FILE  below.
 
     CONFIGURATION FILE
 
-        Note that the file can contain  'KEY=TEXT'  pairs for the kind of the
+        Note that the file can contain KEY=TEXT pairs for any kind of the
         configuration as given by the  --cfg-CFG  option.
 
         For example  when used with  --cfg-text=file  only values for  %text
         will be set, when used with  --cfg-data=file  only values for  %data
-        will be set, and so on.  'KEY'  is not used  when  'KEY=TEXT'  is  an
-        existing filename. Though, it's recommended to use a non-existing key,
-        for example:  --cfg-text=my_file=some/path/to/private/file .
+        will be set, and so on. KEY is not used  when KEY=TEXT is an existing
+        filename. Though, it's recommended to use a non-existing key, i.e.:
+        --cfg-text=my_file=some/path/to/private/file .
 
     RC-FILE
 
@@ -3134,14 +3157,14 @@ KNOWN PROBLEMS
     No output with  +help  and/or  --help=todo
 
         On some (mainly Windows-based) systems using
-              $0 +help
-              $0 --help
+          $0 +help
+          $0 --help
         does not print anything.
 
         Workaround: use  --v  option.
-              $0 +help --v
+          $0 +help --v
         or
-              $0 +help | more
+          $0 +help | more
 
     Performance Problems
 
@@ -3533,7 +3556,7 @@ HACKER's INFO
 #        lines. Some special comment lines are used, see  X&Comments&  below.
 #
 #        All documentation for the user is written in  plain ASCII text format
-#        at end of this file
+#        at end of this file  o-saft-usr.pm.
 #
 #        All documentation was initially written in perl's POD format. After 2
 #        years of development, it seems that POD wasn't the best decission, as
@@ -3542,9 +3565,9 @@ HACKER's INFO
 #
 #      General
 #
-#        Perl's  "die()"  is used whenever an unrecoverable error occurs.  The
+#        Perl's  'die()'  is used whenever an unrecoverable error occurs.  The
 #        message printed will always start with '**ERROR: '.
-#        warnings are printed using perl's  "warn()"  function and the message
+#        warnings are printed using perl's  'warn()'  function and the message
 #        always begins with '**WARNING: '.
 #
 #        All 'print*()' functions write on STDOUT directly.  They are slightly
@@ -3554,12 +3577,12 @@ HACKER's INFO
 #        The  code  mainly uses  'text enclosed in single quotes'  for program
 #        internal strings such as hash keys, and uses "double quoted text" for
 #        texts being printed. However, exceptions if obviously necessary ;-)
-#        strings used for RegEx are always enclosed in single quotes.
-#        reason is mainly to make searching texts a bit easyer.
+#        Strings used for  RegEx are always enclosed in single quotes.  Reason
+#        is mainly to make searching texts a bit easyer.
 #
 #        Calling external programs uses 'qx()' rather than backticks or perl's
-#        system()  function. Also not that is uses braces insted of slashes to
-#        avoid confusion with RegEx.
+#        'system()' function.  Also note that it uses braces insted of slashes
+#        to avoid confusion with RegEx.
 #
 #        The code flow mainly uses postfix conditions, means the if-conditions
 #        are written right of the command to be executed. This is done to make
@@ -3609,7 +3632,7 @@ HACKER's INFO
 #          _v*print      Print information when  --v  is in use.
 #
 #        Function (sub) definitions are followed by a short description, which
-#        is just one line right after the 'sub' line. Such lines always start
+#        is just one line right after the 'sub' line.  Such lines always start
 #        with  '#?'  (see below how to get an overview).
 #
 #        Subs are ordered to avoid forward declarations as much as possible.
@@ -3633,12 +3656,12 @@ HACKER's INFO
 #
 #        Most functionality for trace, debug or verbose output is encapsulated
 #        in functions (see X&Sub Names& above). These functions are defined as
-#        empty stubs herein. The real definitions are in  o-saft-dbx.pm, which
-#        is loaded on demand when any  --trace*  or  --v  option is specified.
-#        As long as these options are not used  o-saft.pl  works without
+#        empty stubs in o-saft.pl. The real definitions are in  o-saft-dbx.pm,
+#        which is loaded on demand when any  --trace*  or --v  option is used.
+#        As long as these options are not used,  o-saft.pl  works without
 #        o-saft-dbx.pm.
 #
-#        Note: in contrast to the name of the RC-file, the name  o-saft-dbx.pm
+#        Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
 #        is hard-coded.
 
 
@@ -3898,6 +3921,7 @@ TODO
           ** +constraints does not check +constraints in the certificate of
              the certificate chain.
           ** TR-03116-4: does not check data in certificate chain
+          ** RFC7525: does not check data in certificate chain
 
         * vulnerabilities
           ** complete TIME, BREACH check

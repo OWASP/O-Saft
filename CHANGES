@@ -1,4 +1,25 @@
 
+Version: 15.04.15
+  CHANGES
+    * o-saft.tcl markup for help text improved
+  NEW
+    * prepared for RFC 7525 check
+
+Version: 15.04.05
+  CHANGES
+    * some texts for compliance texts changed
+  NEW
+    * --ignore-{cmd,output, --no-{cmd,output} implemented
+
+Version: 15.04.04
+  CHANGES
+    * o-saft-dbx.pm: added $cfg{'ignore-out'}
+
+Version: 15.04.02
+  BUGFIX
+    * check for wildcards in certificate's CN also
+
+
 Version: 15.01.07
   BUGFIX
     * avoid huge memory consumtion (fix for issue/39)
