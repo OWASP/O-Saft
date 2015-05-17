@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.347 15/05/17 21:13:58";
+my  $SID    = "@(#) yeast.pl 1.348 15/05/17 22:06:46";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -5368,7 +5368,7 @@ while ($#argv >= 0) {
     #!#+---------+----------------------+-----------------------+-----------------
     #!#           command to check       aliased to              comment/traditional name
     #!#+---------+----------------------+-----------------------+-----------------
-    if ($arg eq  '+check')              { $check  = 1; $cfg{'out_score'} = 1; }
+    if ($arg eq  '+check')              { $check  = 1;          }
     if ($arg eq  '+info')               { $info   = 1;          } # needed 'cause +info and ..
     if ($arg eq  '+quick')              { $quick  = 1;          } # .. +quick convert to list of commands
     if ($arg eq  '+sni')                { $cmdsni = 1;          }
