@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+### TODO: RFC 7525 fertig implementieren
+### TODO: _isccs($$$) fertig implementieren
+### TODO: ocsp_uri pruefen;
+
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -82,7 +86,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.348 15/05/17 22:06:46";
+my  $SID    = "@(#) yeast.pl 1.349 15/05/17 22:15:06";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -4752,6 +4756,7 @@ sub printversion() {
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
     print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
+    print "    Net::DNS             $Net::DNS::VERSION";
     print "    Net::SSLinfo         $Net::SSLinfo::VERSION";
     print "    Net::SSLhello        $Net::SSLhello::VERSION";
     print "    Net::SSLeay          $Net::SSLeay::VERSION";
@@ -5558,6 +5563,7 @@ local $\ = "\n";
 use     IO::Socket::SSL 1.37; #  qw(debug2);
 use     IO::Socket::INET;
 
+require Net::DNS if (_is_do('version') or ($cfg{'usemx'} > 0));
 if (_is_do('cipherraw') or _is_do('version')
     or ($cfg{'starttls'})
     or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
