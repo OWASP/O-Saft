@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+#!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
+
 =pod
 
 =head1 NAME
@@ -117,7 +120,7 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.12 14/11/27 01:40:22";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.14 15/05/17 21:43:54";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
