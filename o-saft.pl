@@ -41,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.04.05"; }   # <== our official version number
+    sub _VERSION() { return "15.04.15"; }   # <== our official version number
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.345a 15/05/08 17:29:01";
+my  $SID    = "@(#) yeast.pl 1.346 15/05/17 08:39:29";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1459,6 +1459,7 @@ our %cmd = (
                        #  ECDHE-ECDSA-AES256.*SHA384 ECDHE-RSA-AES256.*SHA384
         'notTR-03116'     => '(?:PSK[_-]AES256|[_-]SHA$)',
                        # NOTE: for curiosity again, notTR-03116 is for strict mode only
+        'RFC7525'   => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES128[_-](?:GCM[_-])?SHA256',
         '1.3.6.1.5.5.7.1.1'  =>  '(?:1\.3\.6\.1\.5\.5\.7\.1\.1|authorityInfoAccess)',
         'NSA-B'     =>'(?:ECD(?:H|SA).*?AES.*?GCM.*?SHA(?:256|384|512))',
 
@@ -1512,6 +1513,7 @@ our %cmd = (
         'PCI'       => "no NULL cipher, no Anonymous Auth, no single DES, no Export encryption, DH > 1023",
         'FIPS-140'  => "must be TLSv1 or 3DES or AES, no IDEA, no RC4, no MD5",
         'FIPS-140-2'=> "-- NOT YET IMPLEMENTED --",      # TODO:
+        'RFC7525'   => "TLS 1.2; AES with GCM; ECDHE and SHA256 or SHA384; HSTS",
         #
         # NIST SP800-52 recommendations for clients (best first):
         #   TLS_DHE_DSS_WITH_AES_256_CBC_SHA
@@ -1579,6 +1581,7 @@ our %cmd = (
         'checkdefault'  => 0,
         'check02102'=> 0,
         'check03116'=> 0,
+        'check7525' => 0,
         'checkdates'=> 0,
         'checksizes'=> 0,
         'checkbleed'=> 0,
@@ -2799,6 +2802,14 @@ sub _istr03116_lazy($$) {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
     return "";
 } # _istr03116_lazy
+sub _isrfc7525($$) {
+    # return given cipher if it is not RFC 7525 compliant, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($ssl    ne "TLSv12");
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notRFC7525'}/);
+    return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
+    return "";
+} # _isrfc7525
 sub _isfips($$) {
     # return given cipher if it is not FIPS-140 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
@@ -3224,8 +3235,9 @@ sub checkcipher($$) {
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-    $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci($ssl, $c));
+    $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci( $ssl, $c));
     $checks{'fips'}->{val}      .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
+    $checks{'rfc7525'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
     $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _istr02102($ssl, $c));
     $checks{'tr-03116+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
     $checks{'tr-03116-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy($ssl, $c));
@@ -3654,6 +3666,112 @@ sub check03116($$) {
 
 } # check03116
 
+sub check7525($$) {
+    #? check if target is RFC 7525 compliant
+    _y_CMD("check7525() " . $cfg{'done'}->{'check7525'});
+    $cfg{'done'}->{'check7525'}++;
+    return if ($cfg{'done'}->{'check7525'} > 1);
+
+    #from: https://www.rfc-editor.org/rfc/rfc7525.txt
+    # 3.1.1.  SSL/TLS Protocol Versions
+    #    Implementations MUST support TLS 1.2 [RFC5246] and MUST prefer to
+    #    negotiate TLS version 1.2 over earlier versions of TLS.
+    #  ==> done in _isrfc7525
+    #    Implementations SHOULD NOT negotiate TLS version 1.1 [RFC4346];
+    #    the only exception is when no higher version is available in the
+    #    negotiation.
+    # TODO for lazy check
+    #
+    # 3.1.2.  DTLS Protocol Versions
+    #    Implementations SHOULD NOT negotiate DTLS version 1.0 [RFC4347].
+    #    Implementations MUST support and MUST prefer to negotiate DTLS
+    #    version 1.2 [RFC6347].
+    # TODO o-saft currently (5/2015) does not support DTLSv1x
+    #
+    # 3.2.  Strict TLS
+    #    ... TLS-protected traffic (such as STARTTLS),
+    #    clients and servers SHOULD prefer strict TLS configuration.
+    #
+    #    HTTP client and server implementations MUST support the HTTP
+    #    Strict Transport Security (HSTS) header [RFC6797]
+    #
+    # 3.3.  Compression
+    #    ... implementations and deployments SHOULD
+    #    disable TLS-level compression (Section 6.2.2 of [RFC5246]), unless
+    #    the application protocol in question has been shown not to be open to
+    #    such attacks.
+    #
+    # 3.4.  TLS Session Resumption
+    #    ... the resumption information MUST be authenticated and encrypted ..
+    #    A strong cipher suite MUST be used when encrypting the ticket (as
+    #    least as strong as the main TLS cipher suite).
+    #    Ticket keys MUST be changed regularly, e.g., once every week, ...
+    #    For similar reasons, session ticket validity SHOULD be limited to
+    #    a reasonable duration (e.g., half as long as ticket key validity).
+    # TODO 
+    #
+    # 3.5.  TLS Renegotiation
+    #    ... both clients and servers MUST implement the renegotiation_info
+    #    extension, as defined in [RFC5746].
+    #
+    # 3.6.  Server Name Indication
+    #    TLS implementations MUST support the Server Name Indication (SNI)
+    #
+    # 4.  Recommendations: Cipher Suites
+    # 4.1.  General Guidelines
+    #    Implementations MUST NOT negotiate the cipher suites with NULL encryption.
+    #    Implementations MUST NOT negotiate RC4 cipher suites.
+    #    Implementations MUST NOT negotiate cipher suites offering less
+    #    than 112 bits of security, ...
+    #  ==> done in _isrfc7525
+    #    Implementations SHOULD NOT negotiate cipher suites that use
+    #    algorithms offering less than 128 bits of security.
+    # TODO for lazy check
+    #    Implementations SHOULD NOT negotiate cipher suites based on RSA
+    #    key transport, a.k.a. "static RSA".
+    #  ==> done in _isrfc7525
+    #    Implementations MUST support and prefer to negotiate cipher suites
+    #    offering forward secrecy, ...
+    #  ==> done in _isrfc7525
+    #
+    # 4.2.  Recommended Cipher Suites
+    #    TLS_DHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    #    TLS_DHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    #  ==> done in _isrfc7525
+    #
+    # 4.3.  Public Key Length
+    #    ... DH key lengths of at least 2048 bits are RECOMMENDED.
+    #    ... Curves of less than 192 bits SHOULD NOT be used.
+    # TODO 
+    #
+    # 4.5.  Truncated HMAC
+    #    Implementations MUST NOT use the Truncated HMAC extension, defined in
+    #    Section 7 of [RFC6066].
+    # TODO 
+    #
+    # 6.  Security Considerations
+    # 6.1.  Host Name Validation
+    #    If the host name is discovered indirectly and in an insecure manner
+    #    (e.g., by an insecure DNS query for an MX or SRV record), it SHOULD
+    #    NOT be used as a reference identifier [RFC6125] even when it matches
+    #    the presented certificate.  This proviso does not apply if the host
+    #    name is discovered securely (for further discussion, see [DANE-SRV]
+    #    and [DANE-SMTP]).
+    # TODO 
+    #
+    # 6.3.  Forward Secrecy
+    #    ... therefore advocates strict use of forward-secrecy-only ciphers.
+    #
+    # 6.4.  Diffie-Hellman Exponent Reuse
+    #
+    # 6.5.  Certificate Revocation
+    #    ... servers SHOULD support the following as a best practice
+    #    OCSP [RFC6960]
+    #    The OCSP stapling extension defined in [RFC6961]
+    #
+    my $txt = "";
+} # check7525
+
 sub checkdv($$) {
     #? check if certificate is DV-SSL
     my ($host, $port) = @_;
@@ -4062,6 +4180,7 @@ sub checkssl($$) {
         checkev(   $host, $port);   # check for EV
         check02102($host, $port);   # check for BSI TR-02102-2
         check03116($host, $port);   # check for BSI TR-03116-4
+        check7525( $host, $port);   # check for RFC 7525
         checksni(  $host, $port);   # check for SNI
         checksizes($host, $port);   # some sizes
     } else {
@@ -4070,6 +4189,7 @@ sub checkssl($$) {
         $cfg{'done'}->{'checksizes'}++;# "
         $cfg{'done'}->{'check02102'}++;# "
         $cfg{'done'}->{'check03116'}++;# "
+        $cfg{'done'}->{'check7525'}++; # "
         $cfg{'done'}->{'checkdv'}++;   # "
         $cfg{'done'}->{'checkev'}++;   # "
         foreach $key (sort keys %checks) { # anything related to certs need special setting
@@ -4094,6 +4214,8 @@ sub checkssl($$) {
     # and check02102(); some more are done in checkhttp()
     # now do remaining for %checks
     checkdest( $host, $port);
+    my $txt = $checks{'hsts_sts'}->{val};
+    $checks{'rfc7525'}->{val} .= _subst($text{'missing'}, 'STS') if ($txt ne "");
 
 # TODO: folgende Checks implementieren
     foreach $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
