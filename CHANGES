@@ -1,7 +1,10 @@
 
+Version: 15.05.15
+
 Version: 15.04.15
   CHANGES
     * o-saft.tcl markup for help text improved
+    * support proxy and STARTTLS (no longer experimental)
   NEW
     * prepared for RFC 7525 check
 
