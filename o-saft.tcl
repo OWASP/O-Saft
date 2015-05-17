@@ -2,6 +2,31 @@
 ##  # restarts using wish \
 ##  exec wish8.6 "$0" ${1+"$@"}
 
+#!#############################################################################
+#!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!#----------------------------------------------------------------------------
+#!# If this tool is valuable for you and we meet some day,  you can spend me an
+#!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
+#!# your're encouraged to make a donation to any needy child you see.   Thanks!
+#!#----------------------------------------------------------------------------
+#!# This software is provided "as is", without warranty of any kind, express or
+#!# implied,  including  but not limited to  the warranties of merchantability,
+#!# fitness for a particular purpose.  In no event shall the  copyright holders
+#!# or authors be liable for any claim, damages or other liability.
+#!# This software is distributed in the hope that it will be useful.
+#!#
+#!# This  software is licensed under GPLv2.
+#!#
+#!# GPL - The GNU General Public License, version 2
+#!#                       as specified in:  http://www.gnu.org/licenses/gpl-2.0
+#!#      or a copy of it https://github.com/OWASP/O-Saft/blob/master/LICENSE.md
+#!# Permits anyone the right to use and modify the software without limitations
+#!# as long as proper  credits are given  and the original  and modified source
+#!# code are included. Requires  that the final product, software derivate from
+#!# the original  source or any  software  utilizing a GPL  component, such  as
+#!# this, is also licensed under the same GPL license.
+#!#############################################################################
+
 #?
 #? NAME
 #?      $0 - simple GUI for o-saft.pl
@@ -66,7 +91,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.10 Easterhack 2015
+#?      @(#) 1.11 Easterhack 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -76,7 +101,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.10 15/04/13 21:49:05 Easterhack 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.11 15/05/17 21:20:13 Easterhack 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
