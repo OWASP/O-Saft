@@ -45,7 +45,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.05.15"; }   # <== our official version number
+    sub _VERSION() { return "15.05.16"; }   # <== our official version number
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -86,7 +86,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.349 15/05/17 22:15:06";
+my  $SID    = "@(#) yeast.pl 1.351 15/05/18 09:09:44";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -2880,11 +2880,7 @@ sub _isbleed($$) {
 # TODO: following unless{}else{} should be same as in _usesocket()
     unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
         # no proxy and not starttls
-        $cl=IO::Socket::SSL->new(
-            PeerAddr        => $host,
-            PeerPort        => $port,
-            Timeout         => $cfg{'timeout'},
-        ) or do {
+        $cl = IO::Socket::INET->new(PeerAddr=>"$host:$port", Timeout=>$cfg{'timeout'}) or do {
             _warn("_isbleed: failed to connect: '$!'");
             return "failed to connect";
         };
