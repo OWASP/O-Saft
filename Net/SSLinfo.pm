@@ -32,7 +32,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.94 15/05/17 09:22:31',
+    SID         => '@(#) Net::SSLinfo.pm 1.95 15/05/18 08:48:06',
 };
 
 ######################################################## public documentation #
@@ -298,7 +298,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.05.15';
+    $VERSION   = '15.05.16';
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -917,9 +917,9 @@ sub do_ssl_open($$$) {
     my ($host, $port, $sslversions, $cipher) = @_;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
     _settrace();
-    _traceSSL() if ($trace > 0);
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
+    _traceSSL() if ($trace > 0);
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
 
     if ($cipher =~ m/^\s*$/) {
