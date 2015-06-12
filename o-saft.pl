@@ -1,9 +1,5 @@
 #!/usr/bin/perl -w
 
-### TODO: RFC 7525 fertig implementieren
-### TODO: _isccs($$$) fertig implementieren
-### TODO: ocsp_uri pruefen;
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -45,7 +41,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.05.16"; }   # <== our official version number
+    sub _VERSION() { return "15.06.09"; }   # <== our official version number
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -78,7 +74,7 @@ BEGIN {
         $arg =~ s/^(?:--|\+)//;     # remove option prefix
         $arg =~ s/^help=?//;        # remove option but keep its argument
         $arg =~ s/^h$//;            # --h is same as --help
-        require "o-saft-man.pm";    # must be found with @INC
+        require "o-saft-man.pm";    # must be found with @INC; dies if missing
         printhelp($arg);            # empty $arg for full help text
         exit 0;
     }
@@ -86,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.351 15/05/18 09:09:44";
+my  $SID    = "@(#) yeast.pl 1.355 15/06/12 21:34:46";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -163,7 +159,8 @@ sub _load_file($$) {
     my $txt = shift;
     my $err = "";
     eval("require '$fil';"); # need eval to catch "Can't locate ... in @INC ..."
-    $err = $!;
+    $err = $@;
+    chomp $err;
     if ($err eq "") {
         $txt = "$txt done";
         $INC{$fil} = "." . $INC{$fil} if ("/$fil" eq $INC{$fil}); # fix ugly %INC
@@ -213,7 +210,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     $err = _load_file($arg, "trace file");
     if ($err ne "") {
-        die  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
+        die  "**ERROR: '$err' '$arg'; exit" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -242,6 +239,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
 if (grep(/--(?:use?r)/, @argv) > 0) { # must have any --usr option
     $err = _load_file("o-saft-usr.pm", "user file");
     if ($err ne "") {
+        # continue without warning, it's already printed in "=== reading: " line
         sub usr_version()   { return ""; }; # dummy stub, see o-saft-usr.pm
         sub usr_pre_init()  {}; #  "
         sub usr_pre_file()  {}; #  "
@@ -598,7 +596,7 @@ my %check_dest = (  # target (connection) data
     'bsi-tr-02102-' => {'txt' => "Target is  lazy  BSI TR-02102-2 compliant"},
     'bsi-tr-03116+' => {'txt' => "Target is strict BSI TR-03116-4 compliant"},
     'bsi-tr-03116-' => {'txt' => "Target is  lazy  BSI TR-03116-4 compliant"},
-    'rfc7527'       => {'txt' => "Target is rfc7527 compliant"},
+    'rfc7525'       => {'txt' => "Target is RFC 7525 compliant"},
     'resumption'    => {'txt' => "Target supports resumption"},
     'renegotiation' => {'txt' => "Target supports renegotiation"},
     'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
@@ -906,7 +904,7 @@ our %shorttexts = (
     'bsi-tr-02102-' => "BSI TR-02102-2 compliant (lazy)",
     'bsi-tr-03116+' => "BSI TR-03116-4 compliant (strict)",
     'bsi-tr-03116-' => "BSI TR-03116-4 compliant (lazy)",
-    'rfc7527'       => "rfc7527 compliant",
+    'rfc7525'       => "RFC 7525 compliant",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",
     'hsts_sts'      => "STS header",
@@ -1197,7 +1195,7 @@ our %cmd = (
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
-    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv1)],
+    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv1)], # all supported versions
                                 # NOTE: must be same string as used in %ciphers[ssl]
                                 # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
                                 # TODO: DTLSv0.9, DTLSv1.2
@@ -4729,8 +4727,6 @@ sub printversion() {
     print '# Path = ' . $mepath if ($cfg{'verbose'} > 1);
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
     print "    $0 $VERSION";
-    print "    openssl version (ext executable) " . Net::SSLinfo::do_openssl('version', "", "", "");
-    print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
     print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
     print "       ::SSLeay()                    0x" . Net::SSLeay::SSLeay();
@@ -4742,7 +4738,41 @@ sub printversion() {
         print "       ::SSLEAY_PLATFORM             " . Net::SSLeay::SSLeay_version(4);
         print "       ::SSLEAY_CFLAGS               " . Net::SSLeay::SSLeay_version(2);
     }
+    print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
+
+    print "= openssl =";
+    print "    version of external executable   " . Net::SSLinfo::do_openssl('version', "", "", "");
+#$cmd{'timeout'}
+    my $openssl = $cmd{'openssl'};
+    if ($cmd{'openssl'} !~ m/[\/\\]/) {         # try to find path
+        foreach my $p (split(":", $ENV{'PATH'})) {
+            $openssl = "$p/$cmd{'openssl'}";
+            last if (-e $openssl);
+        }
+    }
+    print "    external executable              " . $openssl;
+    print "    supported SSL versions           " . join(" ", @{$cfg{'version'}});
+    print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
+    my @ciphers= Net::SSLinfo::cipher_local();  # openssl ciphers ALL:aNULL:eNULL
+    print "    number of supported ciphers      " . @ciphers;
+    if ($cfg{'verbose'} > 0) {
+        print "    list of supported ciphers        " . join(" ", @ciphers);
+    }
     printversionmismatch();
+
+    print "= $me +cipherall =";
+    # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
+    print "    default list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
+    if ($cfg{'verbose'} > 0) {
+	# these lists are for special purpose, so with --v only
+        print "    long list of ciphers         " . $cfg{'cipherranges'}->{'long'};
+        print "    huge list of ciphers         " . $cfg{'cipherranges'}->{'huge'};
+        print "    safe list of ciphers         " . $cfg{'cipherranges'}->{'safe'};
+        print "    full list of ciphers         " . $cfg{'cipherranges'}->{'full'};
+        print "    SSLv2 list of ciphers        " . $cfg{'cipherranges'}->{'SSLv2'};
+        print "    SSLv2_long list of ciphers   " . $cfg{'cipherranges'}->{'SSLv2_long'};
+        print "    shifted list of ciphers      " . $cfg{'cipherranges'}->{'shifted'};
+    }
 
 # TODO: i.g. OPENSSL_VERSION_NUMBER() returns same value as SSLeay()
 #       but when using libraries with LD_LIBRARY_PATH or alike, these
@@ -4752,7 +4782,7 @@ sub printversion() {
     print "= Required (and used) Modules =";
     print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
     print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
-    print "    Net::DNS             $Net::DNS::VERSION";
+    print "    Net::DNS             $Net::DNS::VERSION"  if (defined $Net::DNS::VERSION);
     print "    Net::SSLinfo         $Net::SSLinfo::VERSION";
     print "    Net::SSLhello        $Net::SSLhello::VERSION";
     print "    Net::SSLeay          $Net::SSLeay::VERSION";
@@ -5143,7 +5173,7 @@ while ($#argv >= 0) {
     # all options starting with  --usr or --user  are not handled herein
     # push them on $cfg{'usr-args'} so they can be accessd in o-saft-*.pm
     if ($arg =~ /^--use?r/){
-        $arg =~ s/^(?:--|\+)//;  # strip leading chars
+        $arg =~ s/^(?:--|\+)//;     # strip leading chars
         push(@{$cfg{'usr-args'}}, $arg);
         next;
     }
@@ -5155,7 +5185,7 @@ while ($#argv >= 0) {
         if (defined $2) {
             $arg = $2 if ($2 !~ /^\s*$/);   # if it was --help=*
         }
-        require "o-saft-man.pm";            # include if necessary only
+        require "o-saft-man.pm";    # include if necessary only; dies if missing
         printhelp($arg);
         exit 0;
     }
@@ -5556,20 +5586,79 @@ local $\ = "\n";
 ## -------------------------------------
 # Unfortunately `use autouse' is not possible as to much functions need to
 # be declared for that pragma then.
-use     IO::Socket::SSL 1.37; #  qw(debug2);
+use     IO::Socket::SSL 1.37;       # qw(debug2);
 use     IO::Socket::INET;
-
-require Net::DNS if (_is_do('version') or ($cfg{'usemx'} > 0));
+if (_is_do('version') or ($cfg{'usemx'} > 0)) {
+    eval("require Net::DNS;");
+    if ($@ ne "") {
+        chomp $@;
+        _warn($@); _warn("--mx disabled");
+        $cfg{'usemx'} = 0;
+    }
+}
 if (_is_do('cipherraw') or _is_do('version')
     or ($cfg{'starttls'})
     or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
    ) {
-    require Net::SSLhello;
-    $cfg{'usehttp'} = 0; # makes no sense for starttls
+    require Net::SSLhello;          # must be found with @INC; dies if missing
+    $cfg{'usehttp'} = 0;            # makes no sense for starttls
     # TODO: not (yet) supported for proxy
 }
 require Net::SSLinfo;
 _y_TIME("inc}");
+
+## check for supported SSL versions
+## -------------------------------------
+_y_CMD("  check support SSL versions ...");
+foreach $ssl (@{$cfg{'versions'}}) {
+    next if ($cfg{$ssl} == 0);
+    if (_is_do('cipherraw')) { # +cipherraw does not depend on other libraries
+        if ($ssl eq 'DTLSv1') {
+            _warn("SSL version '$ssl' not supported by '$mename +cipherraw'; not checked");
+            next;
+        }
+        push(@{$cfg{'version'}}, $ssl);
+        next;
+    }
+    next if ((_need_cipher() <= 0) and (_need_default() <= 0) and ! _is_do('version'));
+    # following checks for these commands only
+    $cfg{$ssl} = 0; # reset to simplify further checks
+    if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
+        if ($cfg{'ssl_lazy'}>0) {
+            # some versions of Net::SSLeay seem not to support the methods for
+            # all SSL versions even the underlying library supports it, hence
+            # the check (see below) is disabled
+            push(@{$cfg{'version'}}, $ssl);
+            $cfg{$ssl} = 1;
+            next;
+        }
+        # If a version like SSLv2 is not supported, perl bails out with error
+        # like:        Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
+        # so we check for high-level API functions, also possible would be
+        #    Net::SSLeay::CTX_v2_new, Net::SSLeay::CTX_tlsv1_2_new
+        # and similar calls.
+        # Net::SSLeay::SSLv23_method is missing in some Net::SSLeay versions,
+        # as we don't use it there is no need to check for it
+        # TODO: DTLSv9 which is DTLS 0.9 ; but is this really in use?
+        $typ = (defined &Net::SSLeay::SSLv2_method)   ? 1:0 if ($ssl eq 'SSLv2');
+        $typ = (defined &Net::SSLeay::SSLv3_method)   ? 1:0 if ($ssl eq 'SSLv3');
+        $typ = (defined &Net::SSLeay::TLSv1_method)   ? 1:0 if ($ssl eq 'TLSv1');
+        $typ = (defined &Net::SSLeay::TLSv1_1_method) ? 1:0 if ($ssl eq 'TLSv11');
+        $typ = (defined &Net::SSLeay::TLSv1_2_method) ? 1:0 if ($ssl eq 'TLSv12');
+        $typ = (defined &Net::SSLeay::TLSv1_3_method) ? 1:0 if ($ssl eq 'TLSv13');
+        $typ = (defined &Net::SSLeay::DTLSv1_method)  ? 1:0 if ($ssl eq 'DTLSv1');
+        if ($typ == 1) {
+            push(@{$cfg{'version'}}, $ssl);
+            $cfg{$ssl} = 1;
+        } else {
+            _warn("SSL version '$ssl' not supported by openssl; not checked");
+        }
+    } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
+        _warn("unsupported SSL version '$ssl'; not checked");
+    }
+}
+_v_print("supported SSL versions: @{$cfg{'versions'}}");
+_v_print("  checked SSL versions: @{$cfg{'version'}}");
 
 ## first: all commands which do not make a connection
 ## -------------------------------------
@@ -5580,7 +5669,7 @@ printopenssl(),     exit 0  if (_is_do('libversion'));
 
 ## check if used software supports SNI properly
 ## -------------------------------------
-if (! _is_do('cipherraw')) { # +cipherraw does not need these checks
+if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
 $typ .= "**Hint: #opt# can be used to disables this check";
@@ -5686,55 +5775,6 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport   = $cfg{'proxyport'};
     $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
-}
-
-## check for supported SSL versions
-## -------------------------------------
-foreach $ssl (@{$cfg{'versions'}}) {
-    next if ($cfg{$ssl} == 0);
-    if (_is_do('cipherraw')) { # +cipherraw does not depend on other libraries
-        if ($ssl eq 'DTLSv1') {
-            _warn("SSL version '$ssl' not supported by '$mename +cipherraw'; not checked");
-            next;
-        }
-        push(@{$cfg{'version'}}, $ssl);
-        next;
-    }
-    next if ((_need_cipher() <= 0) and (_need_default() <= 0)); # following checks for these commands only
-    $cfg{$ssl} = 0; # reset to simplify further checks
-    if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
-        if ($cfg{'ssl_lazy'}>0) {
-            # some versions of Net::SSLeay seem not to support the methods for
-            # all SSL versions even the underlying library supports it, hence
-            # the check (see below) is disabled
-            push(@{$cfg{'version'}}, $ssl);
-            $cfg{$ssl} = 1;
-            next;
-        }
-        # If a version like SSLv2 is not supported, perl bails out with error
-        # like:        Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
-        # so we check for high-level API functions, also possible would be
-        #    Net::SSLeay::CTX_v2_new, Net::SSLeay::CTX_tlsv1_2_new
-        # and similar calls.
-        # Net::SSLeay::SSLv23_method is missing in some Net::SSLeay versions,
-        # as we don't use it there is no need to check for it
-        # TODO: DTLSv9 which is DTLS 0.9 ; but is this really in use?
-        $typ = (defined &Net::SSLeay::SSLv2_method)   ? 1:0 if ($ssl eq 'SSLv2');
-        $typ = (defined &Net::SSLeay::SSLv3_method)   ? 1:0 if ($ssl eq 'SSLv3');
-        $typ = (defined &Net::SSLeay::TLSv1_method)   ? 1:0 if ($ssl eq 'TLSv1');
-        $typ = (defined &Net::SSLeay::TLSv1_1_method) ? 1:0 if ($ssl eq 'TLSv11');
-        $typ = (defined &Net::SSLeay::TLSv1_2_method) ? 1:0 if ($ssl eq 'TLSv12');
-        $typ = (defined &Net::SSLeay::TLSv1_3_method) ? 1:0 if ($ssl eq 'TLSv13');
-        $typ = (defined &Net::SSLeay::DTLSv1_method)  ? 1:0 if ($ssl eq 'DTLSv1');
-        if ($typ == 1) {
-            push(@{$cfg{'version'}}, $ssl);
-            $cfg{$ssl} = 1;
-        } else {
-            _warn("SSL version '$ssl' not supported by openssl; not checked");
-        }
-    } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
-        _warn("unsupported SSL version '$ssl'; not checked");
-    }
 }
 
 if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
