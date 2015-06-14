@@ -82,7 +82,7 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.355 15/06/12 21:34:46";
+my  $SID    = "@(#) yeast.pl 1.356 15/06/14 17:52:46";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -1191,7 +1191,9 @@ our %cmd = (
     'ca_path'       => undef,   # path to directory with PEM files for CAs
                                 # see Net::SSLinfo why undef as default
     'ca_paths'      => [qw(/etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL)],
+                                # common paths to PEM files for CAs
     'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
+                                # common PEM filenames for CAs
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
@@ -4742,15 +4744,34 @@ sub printversion() {
 
     print "= openssl =";
     print "    version of external executable   " . Net::SSLinfo::do_openssl('version', "", "", "");
-#$cmd{'timeout'}
     my $openssl = $cmd{'openssl'};
-    if ($cmd{'openssl'} !~ m/[\/\\]/) {         # try to find path
-        foreach my $p (split(":", $ENV{'PATH'})) {
-            $openssl = "$p/$cmd{'openssl'}";
-            last if (-e $openssl);
-        }
+    foreach my $p ("", split(":", $ENV{'PATH'})) { # try to find path
+        # "" above ensures that full path in $cmd{'openssl'} will be checked
+        $openssl = "$p/$cmd{'openssl'}";
+        last if (-e $openssl);
+        $openssl = "<<$cmd{'openssl'} not found>>";
     }
     print "    external executable              " . $openssl;
+        #  . ($cmd{'openssl'} eq $openssl)?" (executable not found??)":"";
+    print "    path to shared libraries         " . join(" ", @{$cmd{'libs'}});
+    if (scalar @{$cmd{'libs'}} > 0) {
+        foreach my $l (qw(libcrypto.a libcrypto.so libssl.a libssl.so)) {
+           foreach my $p (@{$cmd{'libs'}}) {
+               my $lib = "$p/$l";
+                  $lib = "<<$p/$l not found>>" if (! -e $lib);
+               print "    library                          " . $lib;
+               if ($cfg{'verbose'} > 1) {
+                   print "#   strings $lib | grep 'part of OpenSSL')";
+                   print qx(strings $lib | grep 'part of OpenSSL');
+               }
+           }
+        }
+    }
+    print "    directory with PEM files for CAs " . ($cfg{'ca_path'} || "<<undef>>");
+    print "    PEM format file with CAs         " . ($cfg{'ca_file'} || "<<undef>>");
+    print "    URL where to find CRL file       " . ($cfg{'ca_crl'}  || "<<undef>>");
+    print "    common paths to PEM files for CAs ". join(" ", @{$cfg{'ca_paths'}});
+    print "    common PEM filenames for CAs     " . join(" ", @{$cfg{'ca_files'}});
     print "    supported SSL versions           " . join(" ", @{$cfg{'version'}});
     print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
     my @ciphers= Net::SSLinfo::cipher_local();  # openssl ciphers ALL:aNULL:eNULL
@@ -5200,6 +5221,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
         # in CGI mode commands need to be passed as --cmd=* option
+    if ($arg eq '--openssl')            { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
     #!#--------+------------------------+--------------------------+------------
     #} specials
 
@@ -5266,9 +5288,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--printcert')         { $arg = '+text';           } # ..
     if ($arg eq  '-i')                  { $arg = '+issuer';         } # ssl-cert-check
     # options to handle external openssl
-    if ($arg eq  '--openssl')           { $cmd{'extopenssl'}= 1;    }
-    if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}= 0;    }
-    if ($arg eq  '--forceopenssl')      { $cmd{'extciphers'}= 1;    }
+    if ($arg eq  '--openssl')           { $typ = 'OPENSSL';         }
+    if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}    = 1;}
+    if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}    = 0;}
+    if ($arg eq  '--forceopenssl')      { $cmd{'extciphers'}    = 1;}
     if ($arg =~ /^--s_?client$/)        { $cmd{'extsclient'}++;     }
     if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use_nextprot'}  = 1;}
     if ($arg =~ /^--nonextprotoneg/)    { $cfg{'use_nextprot'}  = 0;}
@@ -5559,7 +5582,7 @@ if ($cfg{'exec'} == 0) {
     # sometimes, when building new libraries or openssl, the libraries and the
     # executable are located in the same directoy, so we add the directoy given
     # with --lib to the PATH environment variable too, which should not harm
-    if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) {
+    if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) { # any of these is used
         _y_CMD("exec command " . join(" ", @{$cfg{'do'}}));
         my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
         my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
@@ -5569,9 +5592,9 @@ if ($cfg{'exec'} == 0) {
         $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0);
         $ENV{$cmd{envlibvar}} .= $chr . $lib if ($lib);
         if ($verbose > 0) {
-            _yeast("exec: envlibvar= $cmd{envlibvar}");
-            _yeast("exec: $cmd{envlibvar}= " . ($ENV{$cmd{envlibvar}} || "")); # ENV may not exist
-            _yeast("exec: PATH= $ENV{PATH}");
+            _yeast("exec: envlibvar=$cmd{envlibvar}");
+            _yeast("exec: $cmd{envlibvar}=" . ($ENV{$cmd{envlibvar}} || "")); # ENV may not exist
+            _yeast("exec: PATH=$ENV{PATH}");
         }
         _yeast("exec: $0 +exec " . join(" ", @ARGV));
         _yeast("################################################") if (($cfg{'traceARG'} + $cfg{'traceCMD'}) > 0);
