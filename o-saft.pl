@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.357 15/06/14 18:26:18",
+    SID         => "@(#) yeast.pl 1.358 15/06/14 18:41:57",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
@@ -4759,6 +4759,8 @@ sub printversion() {
     }
     print "    external executable              " . $openssl;
         #  . ($cmd{'openssl'} eq $openssl)?" (executable not found??)":"";
+    print "    used environment variable (name) " . $cmd{'envlibvar'};
+    print "    environment variable (content)   " . ($ENV{$cmd{'envlibvar'}} || STR_UNDEF);
     print "    path to shared libraries         " . join(" ", @{$cmd{'libs'}});
     if (scalar @{$cmd{'libs'}} > 0) {
         foreach my $l (qw(libcrypto.a libcrypto.so libssl.a libssl.so)) {
@@ -4773,18 +4775,16 @@ sub printversion() {
            }
         }
     }
+    print "    URL where to find CRL file       " . ($cfg{'ca_crl'}  || STR_UNDEF);
     print "    directory with PEM files for CAs " . ($cfg{'ca_path'} || STR_UNDEF);
     print "    PEM format file with CAs         " . ($cfg{'ca_file'} || STR_UNDEF);
-    print "    URL where to find CRL file       " . ($cfg{'ca_crl'}  || STR_UNDEF);
     print "    common paths to PEM files for CAs ". join(" ", @{$cfg{'ca_paths'}});
     print "    common PEM filenames for CAs     " . join(" ", @{$cfg{'ca_files'}});
     print "    supported SSL versions           " . join(" ", @{$cfg{'version'}});
     print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
     my @ciphers= Net::SSLinfo::cipher_local();  # openssl ciphers ALL:aNULL:eNULL
     print "    number of supported ciphers      " . @ciphers;
-    if ($cfg{'verbose'} > 0) {
-        print "    list of supported ciphers        " . join(" ", @ciphers);
-    }
+    print "    list of supported ciphers        " . join(" ", @ciphers) if ($cfg{'verbose'} > 0);
     printversionmismatch();
 
     print "= $me +cipherall =";
@@ -5057,7 +5057,7 @@ while ($#argv >= 0) {
         if ($typ =~ m/^CFG/)    { _cfg_set($typ, lc($arg));     $typ = 'HOST'; }
            # lc($arg) is contribution to old keys (pre 14.10.13) where keys in
            # our internal hashes %check etc. where case sensitive
-           # we don'z want to force users to rewrite their existing .o-saft.pl
+           # we don't want to force users to rewrite their existing .o-saft.pl
            # hence we simply convert anything to lower case
         if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
@@ -5686,8 +5686,10 @@ foreach $ssl (@{$cfg{'versions'}}) {
         _warn("unsupported SSL version '$ssl'; not checked");
     }
 }
-_v_print("supported SSL versions: @{$cfg{'versions'}}");
-_v_print("  checked SSL versions: @{$cfg{'version'}}");
+if (! _is_do('version')) {
+    _v_print("supported SSL versions: @{$cfg{'versions'}}");
+    _v_print("  checked SSL versions: @{$cfg{'version'}}");
+}
 
 ## first: all commands which do not make a connection
 ## -------------------------------------
@@ -5705,7 +5707,7 @@ $typ .= STR_HINT ."#opt# can be used to disables this check";
 if ($IO::Socket::SSL::VERSION < 1.90) {
     if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
         $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/; $txt =~ s/#opt#/--force-openssl /;
+        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/; $txt =~ s/#opt#/--force-?openssl /;
         _warn($txt);
     }
 }
@@ -5714,7 +5716,7 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
     # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
     if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
         $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/`openssl < 1.0.0'/; $txt =~ s/#opt#/--force-sni/;
+        my $txt = $typ; $txt =~ s/##/`openssl < 1.0.0'/; $txt =~ s/#opt#/--force-?sni/;
         _warn($txt);
     }
 }
