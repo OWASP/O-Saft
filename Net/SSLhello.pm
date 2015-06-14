@@ -57,7 +57,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '15.01.26';
+    $VERSION    = '15.06.14';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
