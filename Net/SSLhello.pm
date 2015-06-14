@@ -2517,6 +2517,76 @@ sub _readPdu {
 
 ###############################################################
 
+sub _readText {
+    #? receive the answer e. of a Proxy or Starttls
+    #
+    my $socket = shift || "";
+    my $isUdp = shift || 0;
+    my $input = shift || ""; # Input that has been read before
+    my $untilFound = shift || "";
+    my $len = 0;
+    my $MAXLEN= 32767;
+    my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection
+    my ($rin, $rout);
+    my $retryCnt = 0; # 1st read with up to 5 Bytes will be not counted
+
+    ###### receive the answer 
+    vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
+    while ( ($untilFound) && ( ! m {\A$untilFound\Z}) ) {{
+        $@ ="";
+        eval { # check this for timeout, protect it against an unexpected Exit of the Program
+            #Set alarm and timeout 
+            $SIG{ALRM}= "Net::SSLhello::_timedOut";
+            alarm($alarmTimeout);
+            # Opimized with reference to 'https://github.com/noxxi/p5-ssl-tools/blob/master/check-ssl-heartbleed.pl'
+            if ( ! select($rout = $rin,undef,undef,$Net::SSLhello::timeout) ) { # Nor data NEITHER special event => Timeout
+                alarm (0); #clear alarm
+                $@="Timeout in _readText $!";
+                last;
+            }
+            alarm (0); #clear alarm
+        }; # end of eval select
+        alarm (0);   # race condition protection
+        if ($@) {
+            $@="_readText: unknown Timeout-Error (1): $@";
+             warn ("_readText: $@");
+             return ($input);
+        }
+        if (vec($rout, fileno($socket),1)) { # got data
+            eval { # check this for timeout, protect it against an unexpected Exit of the Program
+                #Set alarm and timeout 
+                $SIG{ALRM}= "Net::SSLhello::_timedOut";
+                alarm($alarmTimeout);
+                ## read only up to 5 Bytes in the first round, then up to the expected pduLen
+                recv($socket, $input, $MAXLEN - length($input), length($input) );  # EOF or other Error while reading Data
+                alarm (0); #clear alarm
+            };
+            if ($@) {
+                $@="_readText unknown Timeout-Error (2): $@";
+                 warn ("_readText: $@");
+                 last;
+            }
+            alarm (0);   # race condition protection
+            if ($len <= 0) { # Error no Data
+                $@ = "NULL-Len-Data in _readText $!";
+                _trace1 ("_readText: $@\n");
+                last;
+            }
+        } else {# got NO (more) Data
+            last;
+        }
+        if ($retryCnt++ < $Net::SSLhello::retry) {
+            $@ = "Retry-Counter exceeded $Net::SSLhello::retry while reading Text";
+            _trace1 ("_readText: $@\n");
+            last;
+        }
+    }}
+    alarm (0);   # race condition protection
+    chomp ($@);
+    return ($input);
+}
+
+
 ############################################################
 
 sub compileClientHello ($$$$;$$$$) {
