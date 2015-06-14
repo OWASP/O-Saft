@@ -1101,10 +1101,10 @@ sub checkSSLciphers ($$$@) {
     #? If the first 2 Ciphers are identical the Array is sorted by Priority of the Server
     #
     my($host, $port, $ssl, @cipher_str_array) = @_;
-#    my $host            = shift; # hostname
-#    my $port            = shift;
-#    my $ssl             = shift; # SSLv2
-#    my @cipher_str_array= @{$_[0]};
+#    my $host  = shift || "localhost"; # hostname
+#    my $port  = shift || 443;
+#    my $ssl   = shift || ""; # SSLv2
+#    my (@cipher_str_array) = @_ || ();
     my @cipher_spec_array;
     my $cipher_str="";
     my $cipher_spec="";
@@ -1151,7 +1151,7 @@ sub checkSSLciphers ($$$@) {
             _trace(" checkSSLciphers: }\n\n");
         }
         return (compileSSL2CipherArray ($acceptedCipher)); 
-    } else { # SSL3, TLS,.... check by the cipher
+    } else { # SSL3, TLS, DTLS .... check by the cipher
         $cipher_spec = ""; # collect Cipher-Specs
         _trace4_ ("\n");
         foreach $cipher_str (@cipher_str_array) {
@@ -1185,7 +1185,7 @@ sub checkSSLciphers ($$$@) {
                     }
                     _trace2_ ("\n");
                 }
-                $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec); # Test Ciphers and collect Accepted Ciphers
+                $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # Test Ciphers and collect Accepted Ciphers, $dtlsEpoch is only used in DTLS
                 _trace2_ ("       ");
                 if ($acceptedCipher) { # received an accepted Cipher
                     _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
@@ -1194,12 +1194,12 @@ sub checkSSLciphers ($$$@) {
                 } else { # no Ciphers accepted
                     _trace1_ ("=> no Cipher found\n");
                     if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
-                        _trace2 ("checkSSLciphers (1.1): '$@'\n"); 
+                        _trace ("checkSSLciphers (1.1): '$@'\n"); 
                         warn ("**WARNING: checkSSLciphers => Exit Loop (1.1)");
                         @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                         last;
                     } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                        _trace1 ("checkSSLciphers (1.2): '$@'\n"); 
+                        _trace2 ("checkSSLciphers (1.2): '$@'\n"); 
                         @cipherSpecArray =(); # Server did not accept any Cipher => Nothing to do for these Ciphers => Empty @cipherSpecArray
                         last;
                     } elsif ( ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Errors -> Useless to check more ciphers
@@ -1243,7 +1243,7 @@ sub checkSSLciphers ($$$@) {
                 }
                 _trace2_ ("\n");
             }
-            $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec); # Test Ciphers and collect Accepted Ciphers
+            $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # Test Ciphers and collect Accepted Ciphers
             _trace2_ ("       ");
             if ($acceptedCipher) { # received an accepted Cipher
                 _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
@@ -1310,7 +1310,7 @@ sub checkSSLciphers ($$$@) {
             _trace3 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             _trace4 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             $@=""; # reset Error-Msg
-            $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str); # collect Accepted Ciphers by Priority
+            $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch); # collect Accepted Ciphers by Priority
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
             if ($@) {
                 _trace2 ("checkSSLciphers (3): '$@'\n");
@@ -1347,7 +1347,7 @@ sub checkSSLciphers ($$$@) {
                         $cipher_str = join ("",@acceptedCipherArray).$acceptedCipher; # Test again with the first Cipher as the last 
                         _trace3 ("Check Cipher Prioity for Cipher-S(2) > ". hexCodedCipher($cipher_str)."< ");
                         _trace4 ("\n");
-                        $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str); # If Server uses a Priority List we get the same Cipher again!
+                        $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch); # If Server uses a Priority List we get the same Cipher again!
                         _trace3_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
                         _trace4_ ("#                                 --->". hexCodedCipher($acceptedCipher)."<\n");
                         if ($acceptedCipher) { # received an accepted Cipher ### TBD: if ($acceptedCipher eq ($acceptedCipherArray[0]) => no Order => return (@acceptedCipherSortedArray[0].$acceptedCipherArray)  
