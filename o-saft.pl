@@ -32,6 +32,13 @@
 
 use strict;
 
+use constant {
+    SID         => "@(#) yeast.pl 1.357 15/06/14 18:26:18",
+    STR_WARN    => "**WARNING: ",
+    STR_HINT    => "**Hint: ",
+    STR_DBX     => "#dbx# ", 
+    STR_UNDEF   => "<<undef>>",
+};
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
     if (grep(/(:?--trace.*time)/i, @ARGV) > 0) {
@@ -64,7 +71,7 @@ BEGIN {
 
     # handle simple help very quickly
     if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print _VERSION() . "\n"; exit 0; }
-    print STDERR "**WARNING: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
+    print STDERR STR_WARN, "on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
         # be smart to users if systems behave strange :-/
     # get first matching argument
     my ($arg) = grep(/^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
@@ -82,7 +89,6 @@ BEGIN {
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
 our $VERSION= _VERSION();
-my  $SID    = "@(#) yeast.pl 1.356 15/06/14 17:52:46";
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -125,13 +131,13 @@ if ($me =~/\.cgi$/) {
 ## functions and variables used very early in main
 ## -------------------------------------
 our %cfg =  ('trace' => 0 ); # used in usr_pre_init(); avoid: Use of uninitialized value ...
-sub _dprint { local $\ = "\n"; print "#dbx# ", join(" ", @_); }
+sub _dprint { local $\ = "\n"; print STR_DBX, join(" ", @_); }
 sub _dbx    { _dprint(@_); } # alias for _dprint
 sub _warn   {
     #? print warning if wanted
     # don't print if ($warning <= 0);
     return if (grep(/(:?--no.?warn)/i, @ARGV) > 0);     # ugly hack 'cause we won't pass $warning
-    local $\ = "\n"; print("**WARNING: ", join(" ", @_));
+    local $\ = "\n"; print(STR_WARN, join(" ", @_));
     # TODO: in CGI mode warning must be avoided until HTTP header written
 }
 sub _warn_and_exit {
@@ -143,7 +149,7 @@ sub _warn_and_exit {
         my $method = shift;
         _trace($method . ": " . join(" ", @_));
     } else {
-        printf("**WARNING: (%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @_);
+        printf(STR_WARN, "(%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @_);
         exit(1);
     }
 }
@@ -716,7 +722,7 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
 #   '1.3.6.1'                   => {iso(1) org(3) dod(6) iana(1)}
     '1.3.6.1'                   => {'txt' => "Internet OID"},
     '1.3.6.1.5.5.7.1.1'         => {'txt' => "Authority Information Access"}, # authorityInfoAccess
-    '1.3.6.1.5.5.7.1.12'        => {'txt' => "<<undef>>"},
+    '1.3.6.1.5.5.7.1.12'        => {'txt' => STR_UNDEF},
     '1.3.6.1.5.5.7.1.14'        => {'txt' => "Proxy Certification Information"},
     '1.3.6.1.5.5.7.3.1'         => {'txt' => "Server Authentication"},
     '1.3.6.1.5.5.7.3.2'         => {'txt' => "Client Authentication"},
@@ -726,13 +732,13 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '1.3.6.1.5.5.7.3.6'         => {'txt' => "IPSec tunnel"},
     '1.3.6.1.5.5.7.3.7'         => {'txt' => "IPSec user"},
     '1.3.6.1.5.5.7.3.8'         => {'txt' => "Timestamping"},
-    '1.3.6.1.4.1.11129.2.5.1'   => {'txt' => "<<undef>>"}, # Certificate Policy?
-    '1.3.6.1.4.1.14370.1.6'     => {'txt' => "<<undef>>"}, # Certificate Policy?
+    '1.3.6.1.4.1.11129.2.5.1'   => {'txt' => STR_UNDEF},    # Certificate Policy?
+    '1.3.6.1.4.1.14370.1.6'     => {'txt' => STR_UNDEF},    # Certificate Policy?
     '1.3.6.1.4.1.311.10.3.3'    => {'txt' => "Microsoft Server Gated Crypto"},
     '1.3.6.1.4.1.311.10.11'     => {'txt' => "Microsoft Server: EV additional Attributes"},
     '1.3.6.1.4.1.311.10.11.11'  => {'txt' => "Microsoft Server: EV ??friendly name??"},
     '1.3.6.1.4.1.311.10.11.83'  => {'txt' => "Microsoft Server: EV ??root program??"},
-    '1.3.6.1.4.1.4146.1.10'     => {'txt' => "<<undef>>"}, # Certificate Policy?
+    '1.3.6.1.4.1.4146.1.10'     => {'txt' => STR_UNDEF},    # Certificate Policy?
     '2.16.840.1.113730.4.1'     => {'txt' => "Netscape SGC"},
     '1.2.840.113549.1.1.1'      => {'txt' => "SubjectPublicKeyInfo"}, # ???
     # EV: OIDs used in EV Certificates
@@ -773,9 +779,9 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '2.5.29.19'                 => {'txt' => "subject:basicConstraints"},     # Basic constraints
     '2.5.29.31'                 => {'txt' => "subject:crlDistributionPoints"},# CRL distribution points
     '2.5.29.32'                 => {'txt' => "subject:certificatePolicies"},  # Certificate Policies
-    '2.16.840.1.113733.1.7.23.6'=> {'txt' => "<<undef>>"}, # Certificate Policy?
-    '2.16.840.1.113733.1.7.48.1'=> {'txt' => "<<undef>>"}, # Certificate Policy?
-    '2.16.840.1.113733.1.7.54'  => {'txt' => "<<undef>>"}, # Certificate Policy?
+    '2.16.840.1.113733.1.7.23.6'=> {'txt' => STR_UNDEF},    # Certificate Policy?
+    '2.16.840.1.113733.1.7.48.1'=> {'txt' => STR_UNDEF},    #  ''
+    '2.16.840.1.113733.1.7.54'  => {'txt' => STR_UNDEF},    #  ''
     '0.9.2342.19200300.100.1.3' => {'txt' => "subject:mail"},
 ); # %data_oid
 $data_oid{$_}->{val} = "<<check error>>" foreach (keys %data_oid);
@@ -2372,10 +2378,10 @@ if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
         # malloc() problems, in this case print an additional warning.
         # Note that low memory affects external calls only *but not* further
         # control flow herein as perl already managed to load the script.
-        print "**WARNING: perl returned error: '$error'\n";
+        print STR_WARN, "perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
-            print "**WARNING: using external programs disabled.\n";
-            print "**WARNING: data provided by external openssl may be shown as:  <<openssl>>\n";
+            print STR_WARN, "using external programs disabled.\n";
+            print STR_WARN, "data provided by external openssl may be shown as:  <<openssl>>\n";
         }
         $cmd{'extopenssl'} = 0;
         $cmd{'extsclient'} = 0;
@@ -2386,7 +2392,7 @@ if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
         push(@{$cfg{'ca_paths'}}, $arg);
     }
     if ($status != 0) {
-        print "**WARNING: perl returned status: '$status' ('" . ($status>>8) . "')\n";
+        print STR_WARN, "perl returned status: '$status' ('" . ($status>>8) . "')\n";
     }
     $arg = "";
 }
@@ -2698,7 +2704,7 @@ sub get_cipher_desc($) { my $c=$_[0];
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
         _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
-        return "<<undef>>";
+        return STR_UNDEF;
     }
     my @c = @{$ciphers{$c}}; 
     shift @c;
@@ -3148,7 +3154,7 @@ sub _useopenssl($$$$) {
         _warn("unknown result from openssl; ignored");
     }
     _trace("_useopenssl #{ $data }");
-    print "**Hint: use options like: --v --trace --timeout=42";
+    print STR_HINT, "use options like: --v --trace --timeout=42";
     return "";
 } # _useopenssl
 
@@ -4351,7 +4357,7 @@ sub print_data($$$$) {
 sub _print_line($$$) {
     #? print label and result of check
     my ($legacy, $label, $value) = @_;
-        $label = "<<undef>>" if (! defined $label);   # defensive programming: missing variable declaration in caller, probaly in %cfg, %data or %shorttexts
+        $label = STR_UNDEF if (! defined $label);   # defensive programming: missing variable declaration in caller, probaly in %cfg, %data or %shorttexts
     if ($legacy eq 'full')   {
         printf("%s\n", $label . $text{'separator'});
         printf("\t%s\n", $value) if (defined $value);
@@ -4767,9 +4773,9 @@ sub printversion() {
            }
         }
     }
-    print "    directory with PEM files for CAs " . ($cfg{'ca_path'} || "<<undef>>");
-    print "    PEM format file with CAs         " . ($cfg{'ca_file'} || "<<undef>>");
-    print "    URL where to find CRL file       " . ($cfg{'ca_crl'}  || "<<undef>>");
+    print "    directory with PEM files for CAs " . ($cfg{'ca_path'} || STR_UNDEF);
+    print "    PEM format file with CAs         " . ($cfg{'ca_file'} || STR_UNDEF);
+    print "    URL where to find CRL file       " . ($cfg{'ca_crl'}  || STR_UNDEF);
     print "    common paths to PEM files for CAs ". join(" ", @{$cfg{'ca_paths'}});
     print "    common PEM filenames for CAs     " . join(" ", @{$cfg{'ca_files'}});
     print "    supported SSL versions           " . join(" ", @{$cfg{'version'}});
@@ -5502,7 +5508,7 @@ while ($#argv >= 0) {
 
     if ($arg =~ /(ciphers|s_client|version)/) {    # handle openssl commands special
         _warn("host-like argument '$arg' treated as command '+$arg'");
-        _warn("**Hint: please use '+$arg' instead");
+        _warn(STR_HINT . "please use '+$arg' instead");
         push(@{$cfg{'do'}}, $arg);
         next;
     }
@@ -5695,7 +5701,7 @@ printopenssl(),     exit 0  if (_is_do('libversion'));
 if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
-$typ .= "**Hint: #opt# can be used to disables this check";
+$typ .= STR_HINT ."#opt# can be used to disables this check";
 if ($IO::Socket::SSL::VERSION < 1.90) {
     if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
         $cfg{'usesni'} = 0;
