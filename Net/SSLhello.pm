@@ -38,7 +38,9 @@
 package Net::SSLhello;
 
 use strict;
-use Socket;
+use Socket; ## TBD will be deleted soon TBD ###
+use IO::Socket::INET;
+require IO::Select if ($Net::SSLhello::trace > 3);
 
 my $me      = $0; $me     =~ s#.*(?:/|\\)##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -49,6 +51,7 @@ my $mename  = "yeast::Net::SSLhello ";
 our %cfg=%main::cfg;  # FIXME: must be provided by caller
 our $host; # FIXME: used in _timeOut()
 our $port; # FIXME: used in _timeOut()
+our $dtlsEpoch = 0; # for DTLS only (globally)
 
 use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
@@ -101,7 +104,9 @@ use constant {
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
     _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 3, # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
-    _SLEEP_B4_2ND_READ         => 0.5 # Sleep before second read (STARTTLS and Proxy)
+    _SLEEP_B4_2ND_READ         => 0.5, # Sleep before second read (STARTTLS and Proxy) [in sec.x]
+    _DTLS_SLEEP_AFTER_FOUND_A_CIPHER        => 0.75, # DTLS-Protocol: Sleep after found a Cipher to segregate the following request [in sec.x]
+    _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND      => 0.05  # DTLS-Protocol: Sleep after not found a Cipher to segregate the following request [in sec.x]
 };
 
 #our $LONG_PACKET = 1940; # try to get a 2nd or 3rd segment for long packets
@@ -129,10 +134,10 @@ $Net::SSLhello::max_sslHelloLen = 16388; # According RFC: 16383+5 Bytes; Max len
 $Net::SSLhello::noDataEqNoCipher = 1; # 1= For some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher' supported -> Do NOT abort to test next Ciphers
 
 my %RECORD_TYPE = ( # RFC 5246
-    'change_cipher_spec'    => 20, 
+    'change_cipher_spec'    => 20,
     'alert'                 => 21,
     'handshake'             => 22,
-    'application_data'      => 23,    
+    'application_data'      => 23,
     'heartbeat'             => 24,
     '255'                   => 255
 );
@@ -141,6 +146,7 @@ my %HANDSHAKE_TYPE = ( # RFC 5246
     'hello_request'         => 0,
     'client_hello'          => 1,
     'server_hello'          => 2,
+    'hello_verify_request'  => 3, # rfc4347 DTLS
     'certificate'           => 11,
     'server_key_exchange'   => 12,
     'certificate_request'   => 13,
@@ -154,12 +160,18 @@ my %HANDSHAKE_TYPE = ( # RFC 5246
 my %PROTOCOL_VERSION = (
     'SSLv2'      => 0x0002,
     'SSLv3'      => 0x0300,
-    'TLSv1'      => 0x0301,
-    'TLSv11'     => 0x0302, # adapted to o-saft.pl, was TLS1.1
-    'TLSv12'     => 0x0303, # adapted to o-saft.pl, was TLS1.2
-    'TLSv13'     => 0x0304, # adapted to o-saft.pl, was TLS1.3
-    'DTLSv1'     => 0xFEFF, # adapted to o-saft.pl, was missing
-    'SCSV'       => 0x03FF  # adapted to o-saft.pl, was TLS1.FF # FIXME: TLS1.FF was better ;-)
+    'TLSv1'      => 0x0301, # TLS1.0 = SSL3.1
+    'TLSv11'     => 0x0302, # TLS1.1
+    'TLSv12'     => 0x0303, # TLS1.2
+    'TLSv13'     => 0x0304, # TLS1.3, not YET specified
+    'TLSv1.FF'   => 0x03FF, # Last possible Version of TLS1.x (NOT specified)
+    'DTLS0v9'    => 0x0100, # DTLS, OpenSSL pre 0.9.8f, not finally standardized  (udp)
+    'DTLSfamily' => 0xFE00, # DTLS1.FF, no defined PROTOCOL, for internal usea only (udp)
+    'DTLSv1'     => 0xFEFF, # DTLS1.0 (udp)
+    'DTLSv11'    => 0xFEFE, # DTLS1.1: has NEVER been used (udp)
+    'DTLSv12'    => 0xFEFD, # DTLS1.2 (udp)
+    'DTLSv13'    => 0xFEFC, # DTLS1.3, not YET specified (udp)
+    'SCSV'       => 0x03FF  # adapted to o-saft.pl, was TLS1.FF # FIXME: TLS1.FF was better ;-) TBD: change it at o-saft.pl and delete it here
 );
 
 # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv
