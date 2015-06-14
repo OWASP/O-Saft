@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2015-01-18";
+my $VERSION = "2015-06-14";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -67,9 +67,13 @@ OPTIONS
     --mx        make a MX-Record DNS lookup for the mx-domain-name
                 (makes sense together with --STARTTLS=SMTP)
     --SSL       test for this SSL version
-                SSL is any of: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13
+                SSL is any of: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13, dtls0v9, dtlsv1, (dtlsv11), dtlsv12, dtlsv13
+                (e.g. --dtlsv12; default: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13)A
+                Remark: All DTLS-Protocols are experimental (see --experimental), DTLSv11 has never been released
     --no-SSL    do not test for this SSL version
                 SSL see --SSL  option
+    --no-tcp    do not test any SSL versions using TCP, like sslv2, ... tlsv13
+    --no-udp    do not test any SSL versions using UDP, like dtls0v9, ... dtlsv13
     --legacy=L  use format L in printed results
                 available formarts: compact, simple, full
     --sni       test in SNI mode also (default)
@@ -212,15 +216,18 @@ our %cfg = ( # from o-saft (only relevant parts)
     'usesni'        => 1,       # 0: do not make connection in SNI mode; 2: use sni with sni_name
     'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to use     sni=2 will be done
     'version'       => [],      # contains the versions to be checked
-    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv1)], #added TLSv13
+    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLS0v9 DTLSv1 DTLSv11 DTLSv12 DTLSv13)], #added TLSv13
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
     'TLSv1'         => 1,       # 1:   "
     'TLSv11'        => 1,       # 1:   "
     'TLSv12'        => 1,       # 1:   "
     'TLSv13'        => 1,       # 1:   " # added
-    'DTLSv9'        => 0,       # 1:   "
-    'DTLSv1'        => 1,       # 1:   "
+    'DTLS0v9'       => 0,       # 1:   "TBD: different to o-saft, change it there TBD!!
+    'DTLSv1'        => 0,       # 1:   "TBD: different to o-saft, change it there TBD
+    'DTLSv11'       => 0,       # 1:   "
+    'DTLSv12'       => 0,       # 1:   "
+    'DTLSv13'       => 0,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
@@ -307,6 +314,9 @@ our %cfg = ( # from o-saft (only relevant parts)
         'TLSv12'    => "-tls1_2",
         'TLSv13'    => "-tls1_3",
         'DTLSv1'    => "-dtls1",
+        'DTLSv11'   => "-dtls11",
+        'DTLSv12'   => "-dtls12",
+        'DTLSv13'   => "-dtls13",
      },
     'openssl_version_map' => {  # map our internal option to openssl version (hex value)
         'SSLv2'     => 0x0002,
@@ -316,6 +326,9 @@ our %cfg = ( # from o-saft (only relevant parts)
         'TLSv12'    => 0x0303,
         'TLSv13'    => 0x0304,
         'DTLSv1'    => 0xFEFF,
+        'DTLSv11'   => 0xFEFE,
+        'DTLSv12'   => 0xFEFD,
+        'DTLSv13'   => 0xFEFC,
         'SCSV'      => 0x03FF,
      },
 );
@@ -379,16 +392,33 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?tlsv?1$/i)                      { $cfg{'TLSv1'}     = 1; next; } # ..
     if ($arg =~ /^--?tlsv?1[-_.]?1$/i)               { $cfg{'TLSv11'}    = 1; next; } # allow ._- separator
     if ($arg =~ /^--?tlsv?1[-_.]?2$/i)               { $cfg{'TLSv12'}    = 1; next; } # ..
-    if ($arg =~ /^--dtlsv?0[-_.]?9$/i)               { $cfg{'DTLSv9'}    = 1; next; } # ..
-    if ($arg =~ /^--dtlsv?1[-_.]?0?$/i)              { $cfg{'DTLSv1'}    = 1; next; } # ..
+    if ($arg =~ /^--?dtl0v?[-_.]?9$/i)               { $cfg{'DTLS0v9'}   = 1; next; } # ..
+    if ($arg =~ /^--?dtlsv?1[-_.]?0?$/i)             { $cfg{'DTLSv1'}    = 1; next; } # ..
+    if ($arg =~ /^--?dtlsv?1[-_.]?1$/i)              { $cfg{'DTLSv11'}   = 1; next; } # ..
+    if ($arg =~ /^--?dtlsv?1[-_.]?2$/i)              { $cfg{'DTLSv12'}   = 1; next; } # ..
+    if ($arg =~ /^--?dtlsv?1[-_.]?3$/i)              { $cfg{'DTLSv13'}   = 1; next; } # ..
     if ($arg =~ /^--no[_-]?sslv?2$/i)                { $cfg{'SSLv2'}     = 0; next; } # allow _- separator
     if ($arg =~ /^--no[_-]?sslv?3$/i)                { $cfg{'SSLv3'}     = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?1$/i)                { $cfg{'TLSv1'}     = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?11$/i)               { $cfg{'TLSv11'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?12$/i)               { $cfg{'TLSv12'}    = 0; next; } # ..
     if ($arg =~ /^--no[_-]?tlsv?13$/i)               { $cfg{'TLSv13'}    = 0; next; } # ..
-    if ($arg =~ /^--no[_-]?dtlsv?09$/i)              { $cfg{'DTLSv9'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtls0v?9$/i)              { $cfg{'DTLS0v9'}   = 0; next; } # ..
     if ($arg =~ /^--no[_-]?dtlsv?10?$/i)             { $cfg{'DTLSv1'}    = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtlsv?11$/i)              { $cfg{'DTLSv11'}   = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtlsv?12$/i)              { $cfg{'DTLSv12'}   = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?dtlsv?13$/i)              { $cfg{'DTLSv13'}   = 0; next; } # ..
+    if ($arg =~ /^--no[_-]?tcp$/i)                   { $cfg{'SSLv2'}     = 0;
+                                                       $cfg{'SSLv3'}     = 0;
+                                                       $cfg{'TLSv1'}     = 0;
+                                                       $cfg{'TLSv11'}    = 0;
+                                                       $cfg{'TLSv12'}    = 0;
+                                                       $cfg{'TLSv13'}    = 0; next; } # ..$
+    if ($arg =~ /^--no[_-]?udp$/i)                   { $cfg{'DTLSv9'}    = 0;
+                                                       $cfg{'DTLSv1'}    = 0;
+                                                       $cfg{'DTLSv11'}   = 0;
+                                                       $cfg{'DTLSv12'}   = 0;
+                                                       $cfg{'DTLSv13'}   = 0; next; } # ..$
     if ($arg =~ /^--nullsslv?2$/i)                   { $cfg{'nullssl2'}  = 1; next; } # ..
     if ($arg =~ /^--no[_-]?dns$/i)                   { $cfg{'usedns'}    = 0; next; }
     if ($arg =~ /^--dns$/i)                          { $cfg{'usedns'}    = 1; next; }
@@ -462,18 +492,28 @@ while ($#argv >= 0) {
     $Net::SSLhello::noDataEqNoCipher = $cfg{'sslhello'}->{'noDataEqNoCipher'};
 }
 
-# check ssl protocols
-foreach $ssl (@{$cfg{'versions'}}) {
-    next if ($ssl eq 'DTLSv1'); # not yet supported
-    next if ($cfg{$ssl} == 0);
-    push(@{$cfg{'version'}}, $ssl);
-}
-
 print "##############################################################################\n";
 print "# '$me' (part of OWASP project 'O-Saft'), Version: $VERSION\n";
 print "#                          ";
 Net::SSLhello::version();
-print "##############################################################################\n";
+print "##############################################################################\n\n";
+
+$@="";
+print "Protocols to check:\n";
+# check ssl protocols
+foreach $ssl (@{$cfg{'versions'}}) {
+    if ( ($ssl =~ /DTLS/) && ($cfg{$ssl} == 1) && ($cfg{'experimental'} !=1 ) ) { # DTLS support is experimental
+        $@ .= ", " if ($@);
+        $@ .= "$ssl";
+        next;
+    }
+    next if ($cfg{$ssl} != 1); #  = 0 or undefined
+    print "$ssl\n"; 
+    push(@{$cfg{'version'}}, $ssl);
+}
+print "Use of Protocol(s) '$@' is experimental, please use the option '--experimental' and take care.\n" if ($@);
+$@="";
+print "\n";
 
 if ($cfg{'usemx'}) { # get mx-records
     _trace2 (" \$cfg{'usemx'} = $cfg{'usemx'}\n");
@@ -543,6 +583,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             $Net::SSLhello::usesni=$cfg{'usesni'}; # restore
             next if ($ssl eq 'SSLv2');# SSLv2 has no SNI
             next if ($ssl eq 'SSLv3');# SSLv3 has originally no SNI
+#            next if ($ssl eq 'DTLS0v9');# DTLS0v9 has originally no SNI
         }
         @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
         _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
