@@ -1415,6 +1415,7 @@ sub openTcpSSLconnection ($$) {
     my $port        = shift || "";
     my $socket;
     my $connect2ip;
+    my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection
     my $proxyConnect="";
     my $clientHello="";
     my $input="";
@@ -1643,11 +1644,11 @@ sub openTcpSSLconnection ($$) {
         }
         if ($Net::SSLhello::starttls) {
             _trace2 ("openTcpSSLconnection: $host:$port: wait $sleepSecs secs to prevent too many connects\n");
-            sleep ($sleepSecs); 
+            sleep ($sleepSecs);
         }
         eval  {
             $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-            alarm($Net::SSLhello::timeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
+            alarm($alarmTimeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
             socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or die "Can't create a socket \'$!\' -> target $host:$port ignored ";
             setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
             setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
@@ -1659,18 +1660,25 @@ sub openTcpSSLconnection ($$) {
         if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
             eval {
                 $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                alarm($alarmTimeout); # set Alarm for Connect
                 $connect2ip = inet_aton($Net::SSLhello::proxyhost);
                 if (!defined ($connect2ip) ) {
                     $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
                     die "Can't get the IP-Address of the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
                 }
                 connect($socket, pack_sockaddr_in($Net::SSLhello::proxyport, $connect2ip) ) or die "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+                # TBD will be: TBD
+                # $sock = new IO::Socket::INET(
+                #   Proto     => "tcp",
+                #   PeerAddr => "$Net::SSLhello::proxyhost:$Net::SSLhello::proxyport",
+                #   Blocking  => 1, # Default
+                #   Timeout => $timeout,
+                # ) or die "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport ($@, $!) -> target $host:$port ignored"; # Error-Handling
                 alarm (0);
             }; # Do NOT forget the ;
             if ($@) { # no Connect
                 alarm (0);
-                close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
+                close ($socket) or warn("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!"); #tbd löschen ###
                 _trace2 ("openTcpSSLconnection: $@ -> Fatal Exit in openTcpSSLconnection");
                 sleep (1);
                 last; # no retry
@@ -1679,7 +1687,7 @@ sub openTcpSSLconnection ($$) {
                 $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
                 _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
                 $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                alarm($alarmTimeout); # set Alarm for Connect
                 defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
                 alarm (0);
             }; # Do NOT forget the ;
@@ -1695,7 +1703,7 @@ sub openTcpSSLconnection ($$) {
                 _trace2 ("openTcpSSLconnection ## CONNECT via Proxy: try to receive the Connected-Message from the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
                 select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                 $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($Net::SSLhello::timeout);
+                alarm($alarmTimeout);
                 recv ($socket, $input, 32767, 0); 
                 if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
                     _trace4 ("openTcpSSLconnection: ... Received Connected-Message from Proxy (1a): received NO Data\n");
@@ -1727,7 +1735,7 @@ sub openTcpSSLconnection ($$) {
         } else { #### no Proxy ####
             eval {
                 $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                alarm($alarmTimeout); # set Alarm for Connect
                 $connect2ip = inet_aton($host);
                 if (!defined ($connect2ip) ) {
                     $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
@@ -1764,7 +1772,7 @@ sub openTcpSSLconnection ($$) {
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port\n");
                     select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout);
+                    alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); #|| die "openTcpSSLconnection: STARTTLS (Phase 1aa): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port\n"; # did not receive a Message ## unless seems to work better than if!!
                     alarm (0);
                 };
@@ -1832,7 +1840,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): send $starttls_matrix[$starttlsType][0] Message: >"._chomp_r($starttls_matrix[$starttlsType][2])."<\n");
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout); # set Alarm for Connect
+                    alarm($alarmTimeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][2], 0)) || die  "Could *NOT* send $starttls_matrix[$starttlsType][0] message '$starttls_matrix[$starttlsType][2]' to $host:$port; target ignored\n";
                     alarm (0);
                 }; # Do NOT forget the ;
@@ -1856,7 +1864,7 @@ sub openTcpSSLconnection ($$) {
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n"); 
                     select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout);
+                    alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); 
                     alarm (0);
                 };
@@ -1950,7 +1958,7 @@ sub openTcpSSLconnection ($$) {
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 5): try to receive the $starttls_matrix[$starttlsType][0] STARTTLS Answer from the Server $host:$port\n");
                     select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                    alarm($Net::SSLhello::timeout);
+                    alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
                     alarm (0);
                 };
