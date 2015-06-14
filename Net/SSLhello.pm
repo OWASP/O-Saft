@@ -2016,31 +2016,40 @@ sub openTcpSSLconnection ($$) {
 }
 
 
-sub _doCheckSSLciphers ($$$$) {
+sub _doCheckSSLciphers ($$$$;$) {
     #? Simulate SSL Handshake to check any Ciphers by the HEX value
     #? $cipher_spec: RAW Octets according to RFC
     #
-    my $host        = shift || ""; # hostname
-    my $port        = shift || "";
-    my $protocol    = shift || ""; # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
-    my $cipher_spec = shift || "";
+    my $host         = shift || ""; # hostname
+    my $port         = shift || 443;
+    my $protocol     = shift || 0; # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
+    my $cipher_spec  = shift || "";
+    my $dtlsEpoch    = shift || 0; # optional, used in DTLS only
     my $socket;
     my $connect2ip;
     my $proxyConnect="";
     my $clientHello="";
     my $input="";
-    my $input2="";
+    my $input2=""; ###
     my $pduLen=0;
-    my $v2len=0;
-    my $v2type=0;
-    my $v3len=0;
-    my $v3type=0;
-    my $v3version=0;
+    my $v2len=0; ###
+    my $v2type=0; ###
+    my $v3len=0; ###
+    my $v3type=0; ###
+    my $v3version=0; ###
+    my ($recordType, $recordVersion, $recordLen, $inputLen) = (0,0,0,0);
     my $acceptedCipher="";
     my $retryCnt = 0;
     my $firstMessage = "";
     my $secondMessage = "";
     my $segmentCnt=0;
+    my $dtlsSequence = 0;
+    my $dtlsCookieLen = 0;
+    my $dtlsCookie = "";
+    my $dtlsNewCookieLen = 0;
+    my $dtlsNewCookie = "";
+    my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection
+    my $isUdp=0; # for DTLS
 
     my %rhash = reverse %PROTOCOL_VERSION;
     my $ssl = $rhash{$protocol};
@@ -2050,19 +2059,141 @@ sub _doCheckSSLciphers ($$$$) {
 
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
     $@ =""; # reset Error-String
+    
+    $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLS0v9'})  );  # udp for DTLS1.x or DTLS0v9
 
-    #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
-    $socket=openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
-
-    if ( (!defined ($socket)) || ($@) ) { # No SSL Connection 
-        $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); #generic Error Message
-        warn ("**WARNING: _doCheckSSLciphers: $@\n"); 
-        _trace2 ("_doCheckSSLciphers: Fatal Exit _doCheckSSLciphers }\n");
-        return ("");
+    unless ($isUdp) { # NO UDP = TCP
+        #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
+        $socket=openTcpSSLconnection ($host, $port); #Open TCP/IP, Connect to the Server (via Proxy if needes) and Starttls if nedded
+        if ( (!defined ($socket)) || ($@) ) { # No SSL Connection 
+            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); #generic Error Message
+            warn ("**WARNING: _doCheckSSLciphers: no TCP-Socket \'$@\'\n"); 
+            _trace2 ("_doCheckSSLciphers: Fatal Exit _doCheckSSLciphers (tcp)}\n");
+            return ("");
+        }
+    } else { # udp (no Proxy nor Starttls)
+        $socket = new IO::Socket::INET(
+            Proto    => "udp",
+            PeerAddr => "$host:$port",
+            Timeout  => $Net::SSLhello::timeout,
+            #Blocking  => 1, #Default
+        ) or $@ = " \'$@\', \'$!\'";
+        if ( (!defined ($socket)) || ($@) ) { # No udp Socket 
+            warn ("**WARNING: _doCheckSSLciphers: no UDP-Socket: $@\n");
+            _trace2 ("_doCheckSSLciphers: Fatal Exit _doCheckSSLciphers (udp) }\n");
+            return ("");
+        };
+        _trace4 ("_doCheckSSLciphers: ## New UDP-Socket to >$host:$port<\n"); 
     }
 
-    #### Compile ClientHello   
-    $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host); 
+  ########## TBD TBD Temporary to use old code while new code is tested TBD TBD #########
+  if (($isUdp) || ($Net::SSLhello::experimental >0) ) { # TBD TBD delete this line for geneneral use TBD TBD ######
+    $retryCnt = 0;
+    $@=""; # reset Error Message
+    while ($retryCnt++ < $Net::SSLhello::retry) { # no Error and still retries to go
+        #### Compile ClientHello
+        $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtlsEpoch, $dtlsSequence++, $dtlsCookieLen, $dtlsCookie); 
+        if ($@) { #Error
+            $@ .= " -> Fatal Exit of openTcpSSLconnection";
+            _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
+            return ("");
+        }
+
+        #### Send ClientHello
+        _trace3 ("_doCheckSSLciphers: sending Client_Hello\n      >".hexCodedString(substr($clientHello,0,64),"        ")." ...< (".length($clientHello)." Bytes)\n\n");
+        _trace4 ("_doCheckSSLciphers: sending Client_Hello\n          >".hexCodedString ($clientHello,"           ")."< (".length($clientHello)." Bytes)\n\n");
+
+        eval {
+            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            alarm($alarmTimeout); # set Alarm for Connect
+            defined(send($socket, $clientHello, 0)) || die "Could *NOT* send ClientHello to $host:$port; $! -> target ignored\n";
+            alarm (0);
+        }; # Do NOT forget the ;
+        if ($@) {
+            warn ("_doCheckSSLciphers: $@");
+            return ("");
+        }
+        alarm (0);   # race condition protection
+
+        ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
+        ($recordType, $recordVersion, $recordLen, $inputLen, $input) = _readPdu ($socket, $isUdp);
+        # Error-Handling
+        if ( ($@) && ( ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) || ($Net::SSLhello::trace > 2) )) {
+            _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n");
+            warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n"); 
+            return ("");
+        } elsif (length($input) ==0) { # len == 0 without any timeout
+            $@= "... Received NO Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).") after $Net::SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
+            _trace2 ("_doCheckSSLciphers: $@\n"); 
+            return ("");
+        }
+
+        if ($recordVersion <= 0) { # got no SSL/TLS/DTLS-PDU
+            # Try to read the whole Input Buffer
+            $input = _readText ($socket, $isUdp, $input, "");
+
+            if ($Net::SSLhello::starttls)  {
+                if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i)  { # 554 Security failure; TBD: perhaps more general in the future
+                _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignored and try to Retry\n");
+                    #retry to send clientHello
+                    $@="";
+                    $input=""; #reset input data
+                    $pduLen=0;
+                    next; #retry to send and receive a SSL/TLS or DTLS-Packet
+                }
+            } elsif ($input =~ /(?:^|\s)220(?:\s|-).*?$/)  { # service might need STARTTLS
+                $@= "**WARNING: _doCheckSSLciphers: $host:$port looks like an SMTP-Service, probably the option '--starttls' is needed -> target ignored\n";
+                warn ($@);
+                return ("");
+            } 
+            $@ = "**WARNING: _doCheckSSLciphers: $host:$port dosen't look like a SSL or a SMTP-Service (1) -> Received Data ignored -> target ignored\n";
+            warn ($@);
+            _trace_ ("\n") if ($retryCnt <=1);
+            _trace ("_doCheckSSLciphers: Ignored Data: ".length($input)." Bytes\n        >".hexCodedString($input,"        ")."<\n        >"._chomp_r($input)."<\n");
+            $input="";
+            $pduLen=0;
+            return ("");
+        }
+        if (length($input) >0) {
+            _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes in $segmentCnt segments\n"); 
+            ($acceptedCipher, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $input, $protocol);
+            if ( ($acceptedCipher ne "") || (! $isUdp) ) {
+                last;
+            }
+            if ($@ ne "") {
+                _trace4 ("_doCheckSSLciphers: Exit with Error: '$@'\n");
+                return ("");
+            }
+            if ( ($dtlsNewCookieLen > 0) && $isUdp) {
+                $dtlsCookieLen = $dtlsNewCookieLen;
+                $dtlsCookie = $dtlsNewCookie;
+                $dtlsNewCookieLen = 0;
+                $dtlsNewCookie = "";
+                _trace2 ("_doCheckSSLciphers: received a cookie ($dtlsCookieLen Bytes): >".hexCodedString($dtlsCookie,"        ")."<\n");
+                $retryCnt--;
+            }
+            _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." secs after *NO* cipher found\n");
+            select(undef, undef, undef, _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO Cipher found
+        }
+    } # end while
+    if ($isUdp) { #reset DTLS connection using an Alert Record 
+        eval {
+            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            my $level = 2; #fatal
+            my $description = 90; #### selected Alert 90: user_canceled [RFC5246]
+            alarm($alarmTimeout); # set Alarm for Connect
+            defined(send($socket, compileAlertRecord ($protocol, $host, $level, $description, $dtlsEpoch, $dtlsSequence++), 0)) || die "Could *NOT* send an Alert-Record to $host:$port; $! -> Error ignored\n";
+            alarm (0);
+        }; # Do NOT forget the ;
+        if ($@) {
+            warn ("_doCheckSSLciphers: $@");
+            return ("");
+        }
+        alarm (0);   # race condition protection
+    }
+  } else { # original old code: ### TBD TBD this section will be deleted after migration to new code and tests TBD TBD #####
+    #### Compile ClientHello
+    $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtlsEpoch, $dtlsSequence++); 
     if ($@) { #Error
         $@ .= " -> Fatal Exit of openTcpSSLconnection";
         _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
@@ -2075,12 +2206,16 @@ sub _doCheckSSLciphers ($$$$) {
 
     eval {
         $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-        alarm($Net::SSLhello::timeout); # set Alarm for Connect
+        alarm($alarmTimeout); # set Alarm for Connect
         defined(send($socket, $clientHello, 0)) || die "Could *NOT* send ClientHello to $host:$port; $! -> target ignored\n";
         alarm (0);
     }; # Do NOT forget the ;
+    if ($@) {
+         warn ("_doCheckSSLciphers: $@");
+         return ("");
+    }
+    alarm (0);   # race condition protection
 
-    ###### receive the answer (=ServerHello) 
     $retryCnt = 0;
     $segmentCnt = 1;
     $input="";
@@ -2100,7 +2235,7 @@ sub _doCheckSSLciphers ($$$$) {
         eval { # check this for timeout, protect it against an unexpected Exit of the Program
             #Set alarm and timeout 
             $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-            alarm($Net::SSLhello::timeout);
+            alarm($alarmTimeout);
             recv ($socket, $input2, 32767, 0); 
             alarm (0); #clear alarm 
         }; # end of eval recv
@@ -2129,10 +2264,10 @@ sub _doCheckSSLciphers ($$$$) {
                     eval { # check this for timeout, protect it against an unexpected Exit of the Program
                         #Set alarm and timeout 
                         $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                        alarm($Net::SSLhello::timeout);
+                        alarm($alarmTimeout);
                         defined(send($socket, $clientHello, 0)) || die "**WARNING: _doCheckSSLciphers: Could *NOT* send ClientHello to $host:$port (2 =retry); $! -> target ignored\n";
                         alarm (0);   # race condition protection 
-                    }; # end of eval recv
+                    }; # end of eval send
                     if ($@) {
                          warn ($@);
                          return ("");
@@ -2188,11 +2323,16 @@ sub _doCheckSSLciphers ($$$$) {
          _trace2 ("_doCheckSSLciphers: $@\n"); 
     }
     if (length($input) >0) {
-        _trace2 ("_doCheckSSLciphers: Total Data Received:". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
+        _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
         $acceptedCipher = parseServerHello ($host, $port, $input, $protocol);
     }
+  } # # end original. old Code ### TBD TBD the above section will be deleted after migration to new code and tests TBD TBD #####
     unless ( close ($socket)  ) {
         warn("**WARNING: _doCheckSSLciphers: Can't close socket: $!");
+    }
+    if (($isUdp) && (defined ($acceptedCipher) ) && ($acceptedCipher ne "") ) {
+        _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." secs after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
+        select(undef, undef, undef, _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
     }
     _trace2 ("_doCheckSSLciphers: }\n");
     return ($acceptedCipher);
