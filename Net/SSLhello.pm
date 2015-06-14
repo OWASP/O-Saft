@@ -40,7 +40,7 @@ package Net::SSLhello;
 use strict;
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
-require IO::Select if ($Net::SSLhello::trace > 3);
+require IO::Select if ($main::cfg{'trace'} > 3);
 
 my $me      = $0; $me     =~ s#.*(?:/|\\)##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
