@@ -2357,18 +2357,26 @@ sub _readPdu {
 
 ###############################################################
 
-sub compileClientHello  {
+############################################################
+
+sub compileClientHello ($$$$;$$$$) {
     #? compile a Client Hello Packet
     #
-    my $record_version    = shift || "";
-    my $version    = shift || "";
-    my $ciphers    = shift || "";
-    my $host = shift || "";
-    my $clientHello=""; #return value
-    my $clientHello_tmp="";
-    my $clientHello_extensions="";
+    my $record_version = shift || "";
+    my $version        = shift || "";
+    my $ciphers        = shift || "";
+    my $host           = shift || "";
+    my $dtls_epoch     = shift || 0; # optional
+    my $dtls_sequence  = shift || 0; # optional
+    my $dtls_cookieLen = shift || 0; # optional
+    my $dtls_cookie    = shift || ""; # optional
+    my $clientHello =""; #return value
+    my $clientHello_tmp ="";
+    my $clientHello_extensions ="";
     my $challenge = $CHALLENGE; #16-32 Bytes,
     my $i; #counter
+    my %rhash = reverse %PROTOCOL_VERSION;
+    my $ssl = $rhash{$version};
     
     _trace4 (sprintf("compileClientHello (%04X, %04X,\n          >%s<, %s) {\n", $record_version, $version, hexCodedString ($ciphers,"           "), $host) );
     
@@ -2376,20 +2384,27 @@ sub compileClientHello  {
     _trace4_("#   --->   challenge >".hexCodedString ($challenge)."<\n");
 
     my %clientHello =  ( #V2ClientHello
-        'record_type'            => $RECORD_TYPE {'handshake'},#ab SSL3: Handshake (22=0x16) #uint8
-        'record_version'         => $record_version,           #ab SSL3    #uint16
-        'record_len'             => 0x0000,                    #ab SSL3,    #uint16
-        'msg_len'                => 0x000000,                  #SSL2: uint16 | 0x8000, ab SSL3: uint24 (!)
-        'msg_type'               => $SSL_MT_CLIENT_HELLO,      # 0x01     #uint8  
-        'version'                => $version,                  #SSL2:0x0002,SSL3:0x3000,TLS1:0x0301    #uint16
-        'cipher_spec_len'        => length($ciphers),          #uint16
-        'session_id_len'         => 0x0000,                    #uint16
-        'challenge_len'          => length($challenge),        #uint16
-        'cipher_spec'            => $ciphers,                  #sslv2: 3 Bytes, SSL3/TLS: 2Bytes
-        'session_id'             => "",                        #client_helo => len=0,
-        'challenge'              => $challenge,                #16-32 Bytes | SSL3/TLS: 32 Bytes
+        'record_type'            => $RECORD_TYPE {'handshake'},# from SSL3:  Handshake (22=0x16) #uint8
+        'record_version'         => $record_version,           # from SSL3:  #uint16
+        'record_epoch'           => 0x0000,                    # DTLS only:  #uint16
+        'record_seqNr'           => 0x000000,                  # DTLS only:  #uint24 (!)
+        'record_len'             => 0x0000,                    # from SSL3:  #uint16
+        'msg_type'               => $SSL_MT_CLIENT_HELLO,      # 0x01        #uint8  
+        'msg_len'                => 0x000000,                  # SSL2: uint16 | 0x8000, from SSL3: uint24 (!)
+        'msg_seqNr'              => 0x0000,                    # DTLS only:  #uint16
+        'fragment_offset'        => 0x000000,                  # DTLS only:  #uint24 (!)
+        'fragment_len'           => 0x000000,                  # DTLS only:  #uint24 (!)
+        'version'                => $version,                  # SSL2:0x0002,SSL3:0x3000,TLS1:0x0301 #uint16
+        'cipher_spec_len'        => length($ciphers),          # uint16
+        'session_id_len'         => 0x0000,                    # uint16
+        'cookie_len'             => 0x00,                      # DTLS only:  #uint8
+        'cookie'                 => "",                        # DTLS only: 0.32 Bytes (rfc 4347)
+        'challenge_len'          => length($challenge),        # uint16
+        'cipher_spec'            => $ciphers,                  # sslv2: 3 Bytes, SSL3/TLS: 2Bytes
+        'session_id'             => "",                        # client_helo => len=0,
+        'challenge'              => $challenge,                # 16-32 Bytes | SSL3/TLS: 32 Bytes
         'compression_method_len' => 0x01,                      # len = 1
-        'compression_method'     => 0x00,                      #SSL3/TLS1.x 00 
+        'compression_method'     => 0x00,                      # SSL3/TLS1.x 00
     );
     
     if ($version == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
@@ -2412,7 +2427,7 @@ sub compileClientHello  {
             sprintf (
               "# --> msg_len \| 0x8000 (added): >%04X<\n".
               "# --> msg_type:          >%02X<\n".
-              "# --> version:         >%04X<\n".
+              "# --> version:         >%04X< (%s)\n".
               "# --> cipher_spec_len: >%04X<\n".
               "# --> session_id_len:  >%04X<\n".
               "# --> challenge_len:   >%04X<\n".
@@ -2422,6 +2437,7 @@ sub compileClientHello  {
               $clientHello{'msg_len'},
               $clientHello{'msg_type'},
               $clientHello{'version'},
+              $ssl,
               $clientHello{'cipher_spec_len'},
               $clientHello{'session_id_len'},
               $clientHello{'challenge_len'},
@@ -2444,142 +2460,14 @@ sub compileClientHello  {
     
     } elsif (($record_version & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) { #SSL3 , TLS1.x
         _trace2 ("compileClientHello: Protocol: SSL3/TLS1.x\n");
-                
-            
-# ggf auch prüfen, ob Host ein DNS-Name ist
-        if ( ($Net::SSLhello::usesni >=1) && ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) ) { # allow to test SNI with version TLSv1 and above
-        ######## TBD: prüfen, ab welchem Protokoll SNI eingeführt wurde (z.B. TLS1.0)!!! #####
-        ######## SSL3 erhält bei SSLLABS folgende Fußnote: This site requires support for virtual SSL hosting, 
-        ########                                           but SSL 2.0 and SSL 3.0 do not support this feature.
 
-            ### Data for Extension 'Server Name Indication' in reverse order 
-            $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/g;  # delete Spaces, \r and \n
-            unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
-                $clientHello{'extension_sni_name'}     = $host;                                      # Server Name, should be a Name no IP
-            } else {
-                $clientHello{'extension_sni_name'}     = ($Net::SSLhello::sni_name) ? $Net::SSLhello::sni_name : ""; # Server Name, should be a Name no IP
-            }
-            $clientHello{'extension_sni_len'}          = length($clientHello{'extension_sni_name'}); # len of Server Name
-            $clientHello{'extension_sni_type'}         = 0x00;                                       # 0x00= host_name
-            $clientHello{'extension_sni_list_len'}     = $clientHello{'extension_sni_len'} + 3;      # len of Server Name + 3 Bytes (sni_len, sni_type)
-            $clientHello{'extension_len'}              = $clientHello{'extension_sni_list_len'} + 2; # len of this extension = sni_list_len + 2 Bytes (sni_list_len)
-            $clientHello{'extension_type_server_name'} = 0x0000;                                     # 0x0000
-#            $clientHello{'extensions_total_len'}       = $clientHello{'extension_len'} + 4;          # war +2 len Server Name-Extension + 2 Bytes (extension_type) #??? +4?!!##
-
-            $clientHello_extensions = pack ("n n n C n a[$clientHello{'extension_sni_len'}]",
-#                $clientHello{'extensions_total_len'},        #n    
-                $clientHello{'extension_type_server_name'}, #n
-                $clientHello{'extension_len'},              #n    
-                $clientHello{'extension_sni_list_len'},     #n    
-                $clientHello{'extension_sni_type'},         #C
-                $clientHello{'extension_sni_len'},          #n        
-                $clientHello{'extension_sni_name'},         #a[$clientHello{'extension_sni_len'}]
-            );
-            _trace2 ("compileClientHello: extension_sni_name Extension added (name='$clientHello{'extension_sni_name'}', len=$clientHello{'extension_sni_len'})\n");
-        } elsif ($Net::SSLhello::usesni) { # && ($record_version <= $PROTOCOL_VERSION{'TLSv1'})  
-            $@ = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
-            print $@;
-        }
-        
-        if ($Net::SSLhello::usereneg) { # use secure Renegotiation
-            my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
-            my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'}); 
-            unless ( ($Net::SSLhello::double_reneg == 0) && (grep(/\x00\xff/, @cipherTable)) ) { # Protection against double renegotiation info is active
-                # do *NOT* send a reneg_info Extension if the cipher_spec includes already signalling Cipher Suite Value (SCSV) 
-                # "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
-
-                ### Data for Extension 'renegotiation_info' 
-                $clientHello{'extension_type_renegotiation_info'} = 0xff01; # Tbd: hier, oder zentrale Definition?!
-                $clientHello{'extension_reneg_len'}               = 0x0001; # Tbd: hier, oder zentrale Definition?!
-                $clientHello{'extension_reneg_info_ext_len'}      = 0x00;   # Tbd: hier, oder zentrale Definition?!
-
-                $clientHello_extensions .= pack ("n n a[1]",
-                    $clientHello{'extension_type_renegotiation_info'},      #n    = 0xff01
-                    $clientHello{'extension_reneg_len'},                    #n    = 0x0001
-                    $clientHello{'extension_reneg_info_ext_len'},           #a[1] = 0x00
-                );
-                _trace2 ("compileClientHello: reneg_info Extension added\n");
-            } else {
-                _trace2 ("compileClientHello: *NOT* sent a reneg_info Extension as the cipher_spec includes already the Signalling Cipher Suite Value (TLS_EMPTY_RENEGOTIATION_INFO_SCSV {0x00, 0xFF})\n");
-            }
-        }
-
-        my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
-        my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
-        if ( grep(/\xc0./, @cipherTable) ) { # found Cipher C0xx, Lazy Check; ### TBD: Check with a range of ECC-Ciphers ###
-            if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
-                ### Data for Extension 'elliptic_curves' (in reverse order)
-                $clientHello{'extension_ecc_list'}                
-                    = "\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08"
-                     ."\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00\x10"
-                     ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18"
-                     ."\x00\x19\x00\x1a\x00\x1b\x00\x1c";   # ALL defined ECCs; Tbd: hier, oder zentrale Definition?!
-                $clientHello{'extension_ecc_list_len'}            = length($clientHello{'extension_ecc_list'}); # len of ECC List  
-                $clientHello{'extension_elliptic_curves_len'}     = $clientHello{'extension_ecc_list_len'}+2;   # len of ECC Extension
-                $clientHello{'extension_type_elliptic_curves'}    = 0x000a; # Tbd: hier, oder zentrale Definition?!
-
-                $clientHello_extensions .= pack ("n n n a[$clientHello{'extension_ecc_list_len'}]",
-                  $clientHello{'extension_type_elliptic_curves'},         #n    = 0x000a
-                  $clientHello{'extension_elliptic_curves_len'},          #n    = 0x00xz
-                  $clientHello{'extension_ecc_list_len'},                 #n    = 0x00xy
-                  $clientHello{'extension_ecc_list'},                     #a[$clientHello{'extension_ecc_list_len'}] = 0x00....
-                );
-                _trace2 ("compileClientHello: elliptic_curves Extension added\n");
-            }
-
-            if ($Net::SSLhello::useecpoint ) { # use Elliptic Point Formats Extension
-                ### Data for Extension 'ec_point_formats'
-                $clientHello{'extension_type_ec_point_formats'}   = 0x000b; # Tbd: hier, oder zentrale Definition?!
-                $clientHello{'extension_ec_point_formats_len'}    = 0x0002; # Tbd: hier, oder zentrale Definition?!
-                $clientHello{'extension_ec_point_formats_list_ele'} = 0x01; # Tbd: hier, oder zentrale Definition?!
-                $clientHello{'extension_ec_point_formats_list'}   = "\x00";   # Tbd: hier, oder zentrale Definition?!
-
-                $clientHello_extensions .= pack ("n n C a[$clientHello{'extension_ec_point_formats_list_ele'}]",
-                  $clientHello{'extension_type_ec_point_formats'},        #n    = 0x000b
-                  $clientHello{'extension_ec_point_formats_len'},         #n    = 0x00xz
-                  $clientHello{'extension_ec_point_formats_list_ele'},    #C    = 0xxy
-                  $clientHello{'extension_ec_point_formats_list'},        #a[$clientHello{'extension_ec_point_formats_list_ele'}] = 0x00....
-                );
-                _trace2 ("compileClientHello: ec_point_formats Extension added\n");
-            }
-        }
+        $clientHello_extensions = _compileClientHelloExtensions ($record_version, $version, $ciphers, $host, %clientHello);
 
         $clientHello{'extensions_total_len'} = length($clientHello_extensions);
-        
-        if ($clientHello_extensions) { # not empty
-            $clientHello_extensions = pack ("n a*",
-                length($clientHello_extensions),            #n    
-                $clientHello_extensions                     #a[length($clientHello_extensions)]
-            );
-        }
 
-        my $extensions_size = length($clientHello_extensions);
+         _trace4    ("compileClientHello (SSL3/TLS) (1):\n");
 
-         _trace4_ ( 
-            sprintf (
-              "#        ---> SSL3/TLS-clientHello-Handshake:\n".
-              "#        --->   Handshake Protocol: \n".        
-              "#        --->       version:               >%04X<\n".
-              "#        --->       challenge/random:      >%s<\n".
-              "#        --->       session_id_len:          >%02X<\n".
-              "#        --->       cipher_spec_len:       >%04X<\n".
-              "#        --->       cipher_spec:           >%s<\n".
-              "#        --->       compression_method_len:  >%02X<\n".
-              "#        --->       compression_method:      >%02X<\n".# 0x
-              "#        --->       extensions:  (size=%02d) >%s<\n",
-              $clientHello{'version'},
-              hexCodedString ($clientHello{'challenge'}),
-              $clientHello{'session_id_len'},
-              $clientHello{'cipher_spec_len'},
-              hexCodedString ($clientHello{'cipher_spec'}),
-              $clientHello{'compression_method_len'}, # C (0x01)
-              $clientHello{'compression_method'},     # C[len] (0x00)
-              $clientHello{'extensions_total_len'},
-              hexCodedString ($clientHello_extensions),
-            )
-        );
-        
-        $clientHello_tmp = pack ("n a[32] C n a[$clientHello{'cipher_spec_len'}] C C[$clientHello{'compression_method_len'}] a[$extensions_size]",
+        $clientHello_tmp = pack ("n a[32] C n a[$clientHello{'cipher_spec_len'}] C C[$clientHello{'compression_method_len'}] a[$clientHello{'extensions_total_len'}]",
             $clientHello{'version'},                # n
             $clientHello{'challenge'},              # A[32] = gmt + random [4] + [28] Bytes
             $clientHello{'session_id_len'},         # C
@@ -2590,73 +2478,175 @@ sub compileClientHello  {
             $clientHello_extensions                 # optional
         );
 
-        _trace4    ("compileClientHello (SSL3/TLS) (1):\n          >".hexCodedString ($clientHello_tmp,"           ")."<\n"); 
+        _trace4_    ("          >".hexCodedString ($clientHello_tmp,"           ")."<\n"); 
         
         $clientHello{'msg_len'} = length ($clientHello_tmp);
         $clientHello{'record_len'} = $clientHello{'msg_len'} + 4;
 
-        _trace4_    ( 
-            sprintf (
-              "#        ---> SSL3_TLS-clientHello (Record):\n".
-              "#        --->   record_type:       >%02X<\n".     
-              "#        --->   record_version:  >%04X<\n".    
-              "#        --->   record_len:      >%04X<\n".        
-              "#        --->   Handshake Protocol: \n".        
-              "#        --->       msg_type:                >%02X<\n".
-              "#        --->       msg_len:             >00%04X<\n",    
-              $clientHello{'record_type'},     
-              $clientHello{'record_version'},    
-              $clientHello{'record_len'},        
-              $clientHello{'msg_type'},
-              $clientHello{'msg_len'}
-            )
-        );
-
         $clientHello = pack ("C n n C C n a*",
-            $clientHello{'record_type'},     # C
-            $clientHello{'record_version'},    # n
-            $clientHello{'record_len'},        # n
-            $clientHello{'msg_type'},         # C
-            0x00,                            # C (0x00)
-            $clientHello{'msg_len'},          # n
-               $clientHello_tmp                  # a
+            $clientHello{'record_type'},    # C
+            $clientHello{'record_version'}, # n
+            $clientHello{'record_len'},     # n
+            $clientHello{'msg_type'},       # C
+            0x00,                           # C (0x00)
+            $clientHello{'msg_len'},        # n
+            $clientHello_tmp                # a
         );
 
-        _trace2 ( "compileClientHello (SSL3/TLS) (2):\n       >".hexCodedString ($clientHello,"        ")."<\n");
+        _trace3 ( "compileClientHello (SSL3/TLS) (2):\n       >".hexCodedString ($clientHello,"        ")."<\n");
         _trace2_ ( sprintf (
                 "# -->SSL3/TLS-clientHello:\n".
-                "# -->   record_type:       >%02X<\n".     
-                "# -->   record_version:  >%04X<\n".    
-                "# -->   record_len:      >%04X<\n".        
-                "# -->   Handshake Protocol: \n".        
+                "# -->   record_type:       >%02X<\n".
+                "# -->   record_version:  >%04X< (%s)\n".
+                "# -->   record_len:      >%04X<\n".
+                "# -->   Handshake Protocol: \n".
                 "# -->       msg_type:                >%02X<\n".
                 "# -->       msg_len:             >00%04X<\n".
-                "# -->       version:               >%04X<\n".
+                "# -->       version:               >%04X< (%s)\n".
                 "# -->       challenge/random:      >%s<\n".
                 "# -->       session_id_len:          >%02X<\n".
                 "# -->       cipher_spec_len:       >%04X<\n".
-                "# -->       cipher_spec:           >%s<\n".
-                "# -->       compression_method_len:  >%02X<\n".
-                "# -->       compression_method:      >%02X<\n", #Comma!
-#                "# -->       extensions_len:       >%04X<\n",
-                $clientHello{'record_type'},     
-                $clientHello{'record_version'},    
-                $clientHello{'record_len'},        
+                "# -->       cipher_spec:           >%s<\n",    #Comma!!
+                $clientHello{'record_type'},
+                $clientHello{'record_version'},
+                $ssl,
+                $clientHello{'record_len'},
                 $clientHello{'msg_type'},
                 $clientHello{'msg_len'},
                 $clientHello{'version'},
+                $ssl,
                 hexCodedString ($clientHello{'challenge'}),
                 $clientHello{'session_id_len'},
                 $clientHello{'cipher_spec_len'},
                 hexCodedString ($clientHello{'cipher_spec'}),
+        ));
+
+        if  ($Net::SSLhello::trace > 3) { 
+            printTLSCipherList ($clientHello{'cipher_spec'});
+        }
+
+        _trace2_ ( sprintf (
+                "# -->       compression_method_len:  >%02X<\n".
+                "# -->       compression_method:      >%02X<\n".
+                "# -->       extensions_total_len:  >%04X<\n",   #Comma!!
                 $clientHello{'compression_method_len'}, # C (0x01)
                 $clientHello{'compression_method'},     # C[1] (0x00)
-#                $clientHello{'extensions_len'}
+                $clientHello{'extensions_total_len'},
+        ));
+
+        _trace4_ ( 
+            sprintf (
+              "#        --->       extensions:      >%s<\n",
+              hexCodedString ($clientHello_extensions),
+            )
+        );
+    
+        _trace4 (sprintf ("compileClientHello (%04X)\n          >",$record_version).hexCodedString ($clientHello,"           ")."<\n");
+    
+    } elsif ( (($record_version & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($version == $PROTOCOL_VERSION{'DTLS0v9'})  ) { #DTLS1.x or DTLS0v9
+        _trace2 ("compileClientHello: Protocol: DTLS\n");
+
+        $clientHello_extensions = _compileClientHelloExtensions ($record_version, $version, $ciphers, $host, %clientHello);
+        $clientHello{'extensions_total_len'} = length($clientHello_extensions);
+        
+        $clientHello{'cookie_len'} = $dtls_cookieLen;
+        $clientHello{'cookie'} = $dtls_cookie;
+        _trace4    ("compileClientHello (DTLS) (1):\n"); 
+        
+        $clientHello_tmp = pack ("n a[32] C C A[$clientHello{'cookie_len'}] n a[$clientHello{'cipher_spec_len'}] C C[$clientHello{'compression_method_len'}] a[$clientHello{'extensions_total_len'}]",
+            $clientHello{'version'},                # n
+            $clientHello{'challenge'},              # A[32] = gmt + random [4] + [28] Bytes
+            $clientHello{'session_id_len'},         # C
+            $clientHello{'cookie_len'},             # C, DTLS only
+            $clientHello{'cookie'},                 # A[$clientHello{'cookie_len'}], DTLS
+            $clientHello{'cipher_spec_len'},        # n
+            $clientHello{'cipher_spec'},            # A[$clientHello{'cipher_spec_len'}]
+            $clientHello{'compression_method_len'}, # C (0x01)
+            $clientHello{'compression_method'},     # C[len] (0x00)
+            $clientHello_extensions                 # optional
+        );
+
+        _trace4_    ("          >".hexCodedString ($clientHello_tmp,"           ")."<\n"); 
+        
+        $clientHello{'msg_len'} = length ($clientHello_tmp);
+        $clientHello{'fragment_len'} = $clientHello{'msg_len'}; ## Up to now no fragmented packets (TBD?)
+        $clientHello{'record_len'} = $clientHello{'msg_len'} + 12; #=+4 +8 (DTLS)
+        $clientHello{'record_epoch'} = $dtls_epoch;
+        $clientHello{'record_seqNr'} = $dtls_sequence;
+        $clientHello{'msg_seqNr'} = $dtls_sequence; ## Up to now no fragmented packets (TBD?)$
+
+        $clientHello = pack ("C n n n N n C C n n C n C n a*",
+            $clientHello{'record_type'},     # C
+            $clientHello{'record_version'},  # n
+            $clientHello{'record_epoch'},    # n
+            0x0000,                          # n (0x0000)
+            $clientHello{'record_seqNr'},    # N
+            $clientHello{'record_len'},      # n
+            $clientHello{'msg_type'},        # C
+            0x00,                            # C (0x00)
+            $clientHello{'msg_len'},         # n
+            $clientHello{'msg_seqNr'},       # n
+            0x00,                            # C (0x00)
+            $clientHello{'fragment_offset'}, # n TBD: verify
+            0x00,                            # C (0x00)
+            $clientHello{'fragment_len'},    # n TBD: verify
+            $clientHello_tmp                 # a
+        );
+
+        _trace2 ( "compileClientHello (DTLS) (2):\n       >".hexCodedString ($clientHello,"        ")."<\n");
+        _trace2_ ( sprintf (
+                "# --> DTLS-clientHello (Record):\n".
+                "# -->   record_type:       >%02X<\n".     
+                "# -->   record_version:  >%04X< (%s)\n".    
+                "# -->   record_epoch:    >%04X<\n".  # DTLS
+                "# -->   record_seqNr:    >%012X<\n". # DTLS
+                "# -->   record_len:      >%04X<\n".        
+                "# -->   Handshake Protocol: \n".        
+                "# -->       msg_type:                >%02X<\n".
+                "# -->       msg_len:             >00%04X<\n".
+                "# -->       msg_seqNr:             >%04X<\n". # DTLS
+                "# -->       fragment_offset:     >%06X<\n".   # DTLS = 0x000000 if not fragmented
+                "# -->       fragment_len:        >00%04X<\n". # DTLS = msg_len if not fragmented
+                "# -->       version:               >%04X< (%s)\n".
+                "# -->       challenge/random:      >%s<\n".
+                "# -->       session_id_len:          >%02X<\n".
+                "# -->       cookie_len:              >%02X<\n". # DTLS
+                "# -->       cookie:                >%s<\n". # DTLS
+                "# -->       cipher_spec_len:       >%04X<\n".
+                "# -->       cipher_spec:           >%s<\n",  # Comma!!
+                $clientHello{'record_type'},
+                $clientHello{'record_version'},
+                $ssl,
+                $clientHello{'record_epoch'},            # DTLS
+                $clientHello{'record_seqNr'},            # DTLS
+                $clientHello{'record_len'},
+                $clientHello{'msg_type'},
+                $clientHello{'msg_len'},
+                $clientHello{'msg_seqNr'},               # DTLS
+                $clientHello{'fragment_offset'},         # DTLS
+                $clientHello{'fragment_len'},            # DTLS
+                $clientHello{'version'},
+                $ssl,
+                hexCodedString ($clientHello{'challenge'}),
+                $clientHello{'session_id_len'},
+                $clientHello{'cookie_len'},              # DTLS
+                hexCodedString ($clientHello{'cookie'},"        "), # DTLS
+                $clientHello{'cipher_spec_len'},
+                hexCodedString ($clientHello{'cipher_spec'},"        "),
         ));
     
         if  ($Net::SSLhello::trace > 3) { 
             printTLSCipherList ($clientHello{'cipher_spec'});
         }
+
+        _trace2_ ( sprintf (
+                "# -->       compression_method_len:  >%02X<\n".
+                "# -->       compression_method:      >%02X<\n".
+                "# -->       extensions_total_len:  >%04X<\n", #Comma!
+                $clientHello{'compression_method_len'},  # C (0x01)
+                $clientHello{'compression_method'},      # C[1] (0x00)
+                $clientHello{'extensions_total_len'},
+        ));
 
         _trace4 (sprintf ("compileClientHello (%04X)\n          >",$record_version).hexCodedString ($clientHello,"           ")."<\n");
     } else {
@@ -2677,7 +2667,7 @@ sub compileClientHello  {
         }
         if  ($Net::SSLhello::experimental >0) { # experimental function is are activated
             _trace_("\n");
-            _trace ("openTcpSSLconnection: WARNING: Server $host (Protocol: $ssl): use of ClintHellos > $Net::SSLhello::max_sslHelloLen Bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
+            _trace ("compileClientHello: WARNING: Server $host (Protocol: $ssl): use of ClintHellos > $Net::SSLhello::max_sslHelloLen Bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
         } else { # use of experimental functions is not permitted (option is not activated)
             $@ = "**WARNING: compileClientHello: Server $host: the ClientHello is longer than $Net::SSLhello::max_sslHelloLen Bytes, this caused sometimes virtual servers to stall, e.g. 256 Bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
             warn ($@);
