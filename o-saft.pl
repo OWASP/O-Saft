@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.358 15/06/14 18:41:57",
+    SID         => "@(#) yeast.pl 1.359 15/06/14 19:12:35",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
@@ -2366,36 +2366,6 @@ our %text = (
 $cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
-# FIXME: following check needs to be done after parsing options
-if ($cmd{'extopenssl'} == 1) {                 # add openssl-specific path
-    $arg =  qx($cmd{'openssl'} version -d);    # get something like: OPENSSLDIR: "/usr/local/openssl"
-    my $status = $?;
-    my $error  = $!;
-    if (($error ne "") && ($status != 0)) {    # we ignore error messages for status==0
-        # When there is a status and an error message, external call failed.
-        # Print error message and disable external openssl.
-        # In rare cases (i.e. VM with low memory) external call fails due to
-        # malloc() problems, in this case print an additional warning.
-        # Note that low memory affects external calls only *but not* further
-        # control flow herein as perl already managed to load the script.
-        print STR_WARN, "perl returned error: '$error'\n";
-        if ($error =~ m/allocate memory/) {
-            print STR_WARN, "using external programs disabled.\n";
-            print STR_WARN, "data provided by external openssl may be shown as:  <<openssl>>\n";
-        }
-        $cmd{'extopenssl'} = 0;
-        $cmd{'extsclient'} = 0;
-        $status = 0;  # avoid following warning
-    } else {
-        # process only if no errors to avoid "Use of uninitialized value"
-        $arg =~ s#[^"]*"([^"]*)"#$1#;
-        push(@{$cfg{'ca_paths'}}, $arg);
-    }
-    if ($status != 0) {
-        print STR_WARN, "perl returned status: '$status' ('" . ($status>>8) . "')\n";
-    }
-    $arg = "";
-}
 
 # save hardcoded settings (command lists, texts); used in o-saft-dbx.pm
 our %org = (
@@ -5691,13 +5661,6 @@ if (! _is_do('version')) {
     _v_print("  checked SSL versions: @{$cfg{'version'}}");
 }
 
-## first: all commands which do not make a connection
-## -------------------------------------
-printciphers(),     exit 0  if (_is_do('list'));
-printciphers(),     exit 0  if (_is_do('ciphers'));
-printversion(),     exit 0  if (_is_do('version'));
-printopenssl(),     exit 0  if (_is_do('libversion'));
-
 ## check if used software supports SNI properly
 ## -------------------------------------
 if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
@@ -5754,6 +5717,42 @@ if ($quick == 1) {
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
+
+## add openssl-specific path for CAs
+## -------------------------------------
+if ($cmd{'extopenssl'} == 1) {
+    $arg =  qx($cmd{'openssl'} version -d);    # get something like: OPENSSLDIR: "/usr/local/openssl"
+    my $status = $?;
+    my $error  = $!;
+    if (($error ne "") && ($status != 0)) {    # we ignore error messages for status==0
+        # When there is a status and an error message, external call failed.
+        # Print error message and disable external openssl.
+        # In rare cases (i.e. VM with low memory) external call fails due to
+        # malloc() problems, in this case print an additional warning.
+        # Note that low memory affects external calls only *but not* further
+        # control flow herein as perl already managed to load the script.
+        print STR_WARN, "perl returned error: '$error'\n";
+        if ($error =~ m/allocate memory/) {
+            print STR_WARN, "using external programs disabled.\n";
+            print STR_WARN, "data provided by external openssl may be shown as:  <<openssl>>\n";
+        }
+        $cmd{'extopenssl'} = 0;
+        $cmd{'extsclient'} = 0;
+        $status = 0;  # avoid following warning
+    } else {
+        # process only if no errors to avoid "Use of uninitialized value"
+        $arg =~ s#[^"]*"([^"]*)"#$1#;  chomp $arg;
+        if (-e "$arg/certs") {
+            $cfg{'ca_path'} = "$arg/certs";
+        } else {    # no directory found, add path to common paths as last resort
+            unshift(@{$cfg{'ca_paths'}}, $arg);
+        }
+    }
+    if ($status != 0) {
+        print STR_WARN, "perl returned status: '$status' ('" . ($status>>8) . "')\n";
+    }
+    $arg = "";
+}
 
 ## set defaults for Net::SSLinfo
 ## -------------------------------------
@@ -5813,7 +5812,14 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
-printquit(), exit 0   if (_is_do('quit')); # internal test command
+## first: all commands which do not make a connection
+## -------------------------------------
+printciphers(),     exit 0  if (_is_do('list'));
+printciphers(),     exit 0  if (_is_do('ciphers'));
+printversion(),     exit 0  if (_is_do('version'));
+printopenssl(),     exit 0  if (_is_do('libversion'));
+printquit(),        exit 0  if (_is_do('quit')); # internal test command
+
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
     _yeast_init();
