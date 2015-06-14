@@ -2816,6 +2816,177 @@ sub compileClientHello ($$$$;$$$$) {
     return ($clientHello);
 }
 
+###########################
+
+sub compileAlertRecord ($$$$;$$) {
+    #? compile an Alerp Record 
+    #
+    my $record_version = shift || "";
+    my $host           = shift || "";
+    my $level          = shift || "";
+    my $description    = shift || "";
+    my $dtls_epoch     = shift || 0; # optional
+    my $dtls_sequence  = shift || 0; # optional
+    my $alertRecord =""; #return value
+    my %rhash = reverse %PROTOCOL_VERSION;
+    my $ssl = $rhash{$record_version};
+    
+    _trace4 ("compileAlertRecord ($host) {\n");
+    
+
+    my %alertRecord =  ( #Alert Record
+        'record_type'            => $RECORD_TYPE {'handshake'},# from SSL3:  Handshake (22=0x16) #uint8
+        'record_version'         => $record_version,           # from SSL3:  #uint16
+        'record_epoch'           => 0x0000,                    # DTLS only:  #uint16
+        'record_seqNr'           => 0x000000,                  # DTLS only:  #uint24 (!) 
+        'record_len'             => 0x0002,                    # from SSL3:  #uint16: always 2 Bytes!
+        'level'                  => $level,                    # from SSL3:  #uint8: Alarm-Level
+        'description'            => $description,              # from SSL3:  #uint8: Alarm
+    );
+
+    if ($record_version == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
+#        _trace2 ("compileAlertRecord: Protocol: SSL2\n");
+        $@ = "compileAlert for SSL2 is not yet supported";
+        _trace1 ("compileAlertRecord: $@\n");
+        warn ($@);
+
+#        $alertRecord_tmp = pack ("C n ",
+#            $alertRecord{'msg_type'},       #C
+#            $alertRecord{'version'},        #n
+#        );
+
+#        $alertRecord{'msg_len'} = length ($alertRecord_tmp) | 0x8000;
+
+#          _trace2_ ( 
+#            sprintf (
+#              "# --> msg_len \| 0x8000 (added): >%04X<\n".
+#              "# --> msg_type:          >%02X<\n".
+#              "# --> version:         >%04X< (%s)\n".
+#              $alertRecord{'msg_len'},
+#              $alertRecord{'msg_type'},
+#              $alertRecord{'version'},
+#              $ssl,
+#            )
+#        );
+        
+    
+#        $alertRecord = pack ("n a*",
+#            $alertRecord{'msg_len'},
+#            $alertRecord_tmp,
+#        );
+
+#        _trace4 (sprintf ("compileAlertRecord (Version= %04X)\n          >%s<\n",$version, hexCodedString ($alertRecord,"           ")));
+    
+    } elsif (($record_version & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) { #SSL3 , TLS1.x
+        _trace2    ("compileAlertRecord (SSL3/TLS) (1):\n");
+        $alertRecord{'record_type'} = $RECORD_TYPE {'alert'};
+
+        $alertRecord = pack("C n n C C", # compile alert-messages
+             $alertRecord{'record_type'},    # C
+             $alertRecord{'record_version'}, # n
+             $alertRecord{'record_len'},     # n
+             $alertRecord{'level'},          # C
+             $alertRecord{'description'}     # C
+        );
+                
+        if ($TLS_AlertDescription {$alertRecord{'description'}} ) { # defined, no Null-String
+            $description = $TLS_AlertDescription {$alertRecord{'description'}}[0]." ".$TLS_AlertDescription {$alertRecord{'description'}}[2];
+        } else {
+            $description = "Unknown/Undefined";
+        }
+
+        _trace2_ ( sprintf (
+                "# -->SSL3/TLS-AlertRecord:\n".
+                "# -->   record_type:       >%02X<\n".
+                "# -->   record_version:  >%04X< (%s)\n".
+                "# -->   record_len:      >%04X<\n".
+                "# -->   Alert Message:\n".
+                "# -->       Level:                >%02X<\n".
+                "# -->       Description:          >%02X< (%s)\n",
+                $alertRecord{'record_type'},
+                $alertRecord{'record_version'},
+                $ssl,
+                $alertRecord{'record_len'},
+                $alertRecord{'level'},
+                $alertRecord{'description'},
+                $description,
+        ));
+
+    _trace4 (sprintf ("compileAlertRecord (%04X)\n          >",$record_version).hexCodedString ($alertRecord,"           ")."<\n");
+    
+    } elsif ( (($record_version & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLS0v9'})  ) { #DTLS1.x or DTLS0v9
+        _trace2 ("compileAlertRecord: Protocol: DTLS\n");
+
+        $alertRecord{'record_type'} = $RECORD_TYPE {'alert'};
+        $alertRecord{'record_epoch'} = $dtls_epoch;
+        $alertRecord{'record_seqNr'} = $dtls_sequence;
+
+        $alertRecord = pack ("C n n n N n C C",
+            $alertRecord{'record_type'},     # C
+            $alertRecord{'record_version'},  # n
+            $alertRecord{'record_epoch'},    # n
+            0x0000,                          # n (0x0000)
+            $alertRecord{'record_seqNr'},    # N
+            $alertRecord{'record_len'},      # n
+            $alertRecord{'level'},           # C
+            $alertRecord{'description'}      # C
+        );
+        if ($TLS_AlertDescription {$alertRecord{'description'}} ) { # defined, no Null-String
+            $description = $TLS_AlertDescription {$alertRecord{'description'}}[0]." ".$TLS_AlertDescription {$alertRecord{'description'}}[2];
+        } else {
+            $description = "Unknown/Undefined";
+        }
+
+        _trace2 ( "compileAlertRecord (DTLS) (2):\n       >".hexCodedString ($alertRecord,"        ")."<\n");
+        _trace2_ ( sprintf (
+                "# --> DTLS-Record (Alert):\n".
+                "# -->   record_type:       >%02X<\n".
+                "# -->   record_version:  >%04X< (%s)\n".
+                "# -->   record_epoch:    >%04X<\n".  # DTLS
+                "# -->   record_seqNr:    >%012X<\n". # DTLS
+                "# -->   record_len:      >%04X<\n".
+                "# -->   Alert Message:\n".
+                "# -->       Level:                >%02X<\n".
+                "# -->       Description:          >%02X< (%s)\n",
+                $alertRecord{'record_type'},
+                $alertRecord{'record_version'},
+                $ssl,
+                $alertRecord{'record_epoch'},            # DTLS
+                $alertRecord{'record_seqNr'},            # DTLS
+                $alertRecord{'record_len'},
+                $alertRecord{'level'},
+                $alertRecord{'description'},
+                $description,
+        ));
+    
+        _trace4 (sprintf ("compileAlertRecord (%04X)\n          >",$record_version).hexCodedString ($alertRecord,"           ")."<\n");
+    } else {
+        my %rhash = reverse %PROTOCOL_VERSION;
+        my $ssl = $rhash{$record_version};
+        if (! defined $ssl) {
+            $ssl ="--unknown Protocol--";
+        }
+#        my ($ssl) = grep {$record_version ~~ ${$cfg{'openssl_version_map'}}{$_}} keys %{$cfg{'openssl_version_map'}};
+        $@ = "**WARNING: compileAlertRecord Protocol version $ssl (0x". sprintf("%04X", $record_version) .") not (yet) defined in Net::SSLhello.pm -> protocol ignored";
+        warn($@);
+    }
+    if ( ($Net::SSLhello::max_sslHelloLen > 0) && (length($alertRecord) > $Net::SSLhello::max_sslHelloLen) ) { # According RFC: 16383+5 Bytes; handshake messages between 256 and 511 bytes in length caused sometimes virtual servers to stall, cf.: https://code.google.com/p/chromium/issues/detail?id=245500
+        my %rhash = reverse %PROTOCOL_VERSION;
+        my $ssl = $rhash{$record_version};
+        if (! defined $ssl) {
+            $ssl ="--unknown Protocol--";
+        }
+        if  ($Net::SSLhello::experimental >0) { # experimental function is are activated
+            _trace_("\n");
+            _trace ("compileAlertRecord: WARNING: Server $host (Protocol: $ssl): use of Alert-Message > $Net::SSLhello::max_sslHelloLen Bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
+        } else { # use of experimental functions is not permitted (option is not activated)
+            $@ = "**WARNING: compileAlertRecord: Server $host: the Alert-Message is longer than $Net::SSLhello::max_sslHelloLen Bytes, this caused sometimes virtual servers to stall, e.g. 256 Bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
+            warn ($@);
+        }
+    }
+    return ($alertRecord);
+}
+
 ############################
 
 sub _compileClientHelloExtensions ($$$$@) {
