@@ -2676,6 +2676,276 @@ sub compileClientHello ($$$$;$$$$) {
     return ($clientHello);
 }
 
+
+sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>, <cookie (DTLS)>
+    my $host = shift || ""; #for warn- and trace-messages
+    my $port = shift || ""; #for warn- and trace-messages
+    my $pduType = shift || 0; # recordType
+    my $pduVersion = shift || 0; # recordVersion or SSLv2
+    my $pduLen = shift || 0;  # recordLen
+    my $buffer = shift || ""; # record
+    my $client_protocol = shift || "";  # optional
+
+    my $rest ="";
+    my $tmp_len = 0;
+    my $messages = ""; # all messages of the record
+    my $message = "";
+    my $nextMessages = "";
+    my %serverHello;
+    my $description = "";
+    $@="";
+
+    if (length ($buffer) >=5) { # Received Data in the buffer, at least 5 Bytes
+
+        if (defined $client_protocol) {
+            _trace2("parseHandshakeRecord: Server '$host:$port': (expected Protocol= >".sprintf ("%04X", $client_protocol)."<,\n      (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($buffer)." Bytes >".hexCodedString (substr($buffer,0,48),"       ")."< ...)\n");
+        } else {
+            _trace2("parseHandshakeRecord: Server '$host:$port': (any Protocol, (Record     -)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($buffer)." Bytes\n       Data=".hexCodedString (substr($buffer,0,48),"       ").")... \n");
+        }
+
+        if ($pduVersion == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
+            _trace2_ ("# -->SSL: Message-Type SSL2-Msg"); 
+            ($serverHello{'msg_len'},         # n
+             $serverHello{'msg_type'},        # C
+             $rest) = unpack("n C a*", $buffer); 
+
+            $serverHello{'msg_len'} -= 0x8000;  # delete MSB 
+
+            _trace2_ (sprintf ( 
+                "# -->        parseHandshakeRecord:(1):\n".
+                "# -->        msg_len:              >%04X<\n".
+                "# -->        msg_type:               >%02X<\n",
+                $serverHello{'msg_len'},
+                $serverHello{'msg_type'}
+            ));
+            _trace4 ("parseHandshakeRecord: Server '$host:$port': Rest: >".hexCodedString ($rest)."<\n"); 
+
+            if ($serverHello{'msg_type'} == $SSL_MT_SERVER_HELLO) { 
+                _trace4 ("    Handshake Protocol: SSL2 Server Hello\n"); 
+                _trace4 ("        Message Type: (Server Hello (2)\n"); 
+                return (parseSSL2_ServerHello ($host, $port, $rest,$client_protocol), 0, ""); # cipher_spec-Liste
+            } elsif ($serverHello{'msg_type'} == $SSL_MT_ERROR) { #TBD Error-Handling for ssl2
+                ($serverHello{'err_code'}        # n
+                 ) = unpack("n", $rest); 
+
+                _trace2 ("parseHandshakeRecord: Server '$host:$port': received a SSLv2-Error-Message, Code: >0x".hexCodedString ($serverHello{'err_code'})."<\n");
+                unless ($serverHello{'err_code'} == 0x0001) { # SSLV2_No_Cipher
+                    warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': received a SSLv2-Error_Message: , Code: >0x".hexCodedString ($serverHello{'err_code'})." -> Target Ignored\n");
+                }
+                return ("", 0, "");
+            } else { # if ($serverHello{'msg_type'} == 0 => NOT supported Protocol (?!)
+                $@= "    Unknown SSLv2-Message Type (Dez): ".$serverHello{'msg_type'}.", Msg: >".hexCodedString ($buffer)."< -> Target Ignored\n"; }
+                return ("",0 , "");
+        } else { # SSLv3, TLS or DTLS:
+            if (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) { #SSL3 , TLS1. 
+                _trace2_("# -->TLS Record Layer:\n"); 
+                ($serverHello{'record_type'},       # C
+                 $serverHello{'record_version'},    # n
+                 $serverHello{'record_len'},        # n
+                 $messages) = unpack("C n n a*", $buffer);
+
+### perhaps this could be a good point to start a new function to parse a Message => to check certificates etc later###
+                ($serverHello{'msg_type'},          # C
+                 $serverHello{'msg_len_null_byte'}, # C
+                 $serverHello{'msg_len'},           #n 
+                 $rest) = unpack("C C n a*", $messages);
+
+                _trace2_ (sprintf (
+                     "# -->    => SSL3/TLS-Record Type: Handshake  (%02X):\n".
+                     "# -->    record_version:  >%04X<\n".
+                     "# -->    record_len:      >%04X<\n".
+                     "# -->       msg_type:            >%02X<\n".
+                     "# -->       msg_len_null_byte:   >%02X<\n".
+                     "# -->       msg_len:           >%04X<\n",
+                       $serverHello{'record_type'}, 
+                       $serverHello{'record_version'},
+                       $serverHello{'record_len'},
+                       $serverHello{'msg_type'},
+                       $serverHello{'msg_len_null_byte'}, # prefetched for record_type Handshake 
+                       $serverHello{'msg_len'}              # prefetched for record_type Handshake 
+                )) if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'});
+
+            } elsif ( (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($pduVersion == $PROTOCOL_VERSION{'DTLS0v9'})  ) { #DTLS1.x or DLS0v9$
+                _trace2 ("parseHandshakeRecord: Protocol: DTLS\n");
+                ($serverHello{'record_type'},         # C
+                 $serverHello{'record_version'},      # n
+                 $serverHello{'record_epoch'},        # n
+                 $serverHello{'record_seqNr_null'},   # n (0x0000)
+                 $serverHello{'record_seqNr'},        # N
+                 $serverHello{'record_len'},          # n
+                 $messages) = unpack ("C n n n N n a*", $buffer);
+
+                ($serverHello{'msg_type'},            # C
+                 $serverHello{'msg_len_null_byte'},   # C (0x00)
+                 $serverHello{'msg_len'},             # n
+                 $serverHello{'msg_seqNr'},           # n
+                 $serverHello{'fragment_null_byte'},  # C (0x00)
+                 $serverHello{'fragment_offset'},     # n TBD: verify
+                 $serverHello{'fragment_null_byte'},  # C (0x00)
+                 $serverHello{'fragment_len'},        # n TBD: verify
+                 $rest) = unpack ("C C n n C n C n a*", $messages);
+
+                _trace2_ (sprintf (
+                     "# -->    => DTLS-Record Type: Handshake  (%02X):\n".
+                     "# -->    record_version:    >%04X<\n".
+                     "# -->    record_epoch:      >%04X<\n".        # n
+                     "# -->    record_seqNr_null: >%04X<\n".        # n (0x0000)
+                     "# -->    record_seqNr:  >%08X<\n".            # N
+                     "# -->    record_len:        >%04X<\n".
+                     "# -->       msg_type:             >%02X<\n".
+                     "# -->       msg_len_null_byte:    >%02X<\n".
+                     "# -->       msg_len:            >%04X<\n".
+                     "# -->       msg_seqNr:          >%04X<\n".           # n
+                     "# -->       fragment_null_byte:   >%02X<\n". # C (0x00)
+                     "# -->       fragment_offset:    >%04X<\n".     # n TBD: verify
+                     "# -->       fragment_null_byte:   >%02X<\n". # C (0x00)
+                     "# -->       fragment_len:       >%04X<\n",     # n TBD: verify,
+                       $serverHello{'record_type'}, 
+                       $serverHello{'record_version'},
+                       $serverHello{'record_epoch'},                # n
+                       $serverHello{'record_seqNr_null'},           # n (0x0000)
+                       $serverHello{'record_seqNr'},                # N
+                       $serverHello{'record_len'},                  # n
+                       $serverHello{'msg_type'},
+                       $serverHello{'msg_len_null_byte'},           # prefetched for record_type Handshake 
+                       $serverHello{'msg_len'},                     # prefetched for record_type Handshake 
+                       $serverHello{'msg_seqNr'},                   # n
+                       $serverHello{'fragment_null_byte'},          # C (0x00)
+                       $serverHello{'fragment_offset'},             # n TBD: verify
+                       $serverHello{'fragment_null_byte'},          # C (0x00)
+                       $serverHello{'fragment_len'},                # n TBD: verify,
+                )) if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'});
+
+                if ( (defined ($serverHello{'fragment_offset'}) ) && ($serverHello{'fragment_offset'} > 0) ) {
+                    $@= "$host:$port: sorry, fragmented DTLS Packets are not yet supported -> Retry";   ####TBD TBD TBD ###
+                    _trace2 ("parseHandshakeRecord: $@\n");
+                    warn ("parseHandshakeRecord: $@");
+                    return ("", 0, "");
+                }
+
+            } else {
+                $@ = "$host:$port: received an unknown Record Version ".sprintf ("(0x%04X)",$pduVersion);
+                _trace2 ("parseHandshakeRecord: $@\n");
+                warn ("parseHandshakeRecord: $@");
+                return ("", 0, "");
+            }
+
+            if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'}) { 
+                ($message,                        #a[$serverHello{'msg_len'}] 
+                $nextMessages) = unpack("a[$serverHello{'msg_len'}] a*", $rest);
+              
+                _trace4_ ( sprintf (
+                    "# --->      message:           >%s<\n",
+                    hexCodedString ($message, "                               ")
+                ));
+
+                if ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'server_hello'}) { 
+                    _trace2_ ("# -->     Handshake Type:    Server Hello (22)\n"); 
+
+                    if ($serverHello{'msg_len_null_byte'} != 0x00)  { 
+                            _error (">>> WARNING (parseHandshakeRecord:): Server '$host:$port': 1st Msg-Len-Byte is *NOT* 0x00/n"); 
+                    }
+                    return (parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol),0,"");
+                } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'hello_verify_request'}) { # DTLS only
+                    if (length($buffer) >= 3) { 
+                        ($serverHello{'version'},              # n
+                         $serverHello{'cookie_length'},        # C
+                         $rest) = unpack("n C a*", $message);
+
+                        $serverHello{'cookie'} = "";
+                        ($serverHello{'cookie'},               # a[$serverHello{'cookie_length'}
+                         $rest) = unpack("a[$serverHello{'cookie_length'}] a*", $rest) if ($serverHello{'cookie_length'} > 0) ;
+
+                        _trace2_ ( sprintf ( #added to check the supported Version
+                            "# -->       version:            >%04X<\n".
+                            "# -->       cookie_length:        >%02X<\n".    # C
+                            "# -->       cookie:             >%s<\n",        # a[$serverHello{'cookie_length'}
+                            $serverHello{'version'},
+                            $serverHello{'cookie_length'},        # C
+                            hexCodedString ($serverHello{'cookie'})               # a[$serverHello{'cookie_length'}
+                        ));
+                        if (length ($serverHello{'cookie'}) != $serverHello{'cookie_length'}) {
+                            $@ = "Server '$host:$port': DTLS-HelloVerifyRequest: Len of Cookie (".length ($serverHello{'cookie'}).") <> 'cookie_length' ($serverHello{'cookie_length'})";
+                            $serverHello{'cookie_length'} = length ($serverHello{'cookie'});
+                            warn ("parseHandshakeRecord: $@");
+                        }
+                        if ($serverHello{'cookie_length'} > 32) {
+                            $@ = "Server '$host:$port': DTLS-HelloVerifyRequest: 'cookie_length' ($serverHello{'cookie_length'}) out of Range <0..32)";
+                            warn ("parseHandshakeRecord: $@");
+                        }
+                        return ("", $serverHello{'cookie_length'}, $serverHello{'cookie'});
+                    }
+                }
+            } elsif    ($serverHello{'record_type'} == $RECORD_TYPE {'alert'}) { 
+                _trace2_ ("# -->  Record Type:    Alert (21)\n"); 
+                _trace2_ (sprintf("# -->  Record Version:  $serverHello{'record_version'} (0x%04X)\n",$serverHello{'record_version'}));
+                _trace2_ (sprintf("# -->  Record Len:      $serverHello{'record_len'}   (0x%04X)\n",$serverHello{'record_len'})); 
+                $serverHello{'msg_type'} = 0;           # NO Handshake => set 0
+                $serverHello{'msg_len_null_byte'} = 0;  # NO Handshake => set 0
+                $serverHello{'msg_len'} = 0;            # NO Handshake => set 0
+                $serverHello{'fragment_null_byte'} = 0; # NO Handshake => set 0
+                $serverHello{'fragment_offset'} = 0;    # NO Handshake => set 0
+                $serverHello{'fragment_null_byte'} = 0; # NO Handshake => set 0
+                $serverHello{'fragment_len'} = 0;       # NO Handshake => set 0
+
+                ($serverHello{'level'},      # C
+                 $serverHello{'description'} # C
+                ) = unpack("C C", $messages); # parse alert-messages
+                
+                if ($TLS_AlertDescription {$serverHello{'description'}} ) { # defined, no Null-String
+                        $description = $TLS_AlertDescription {$serverHello{'description'}}[0]." ".$TLS_AlertDescription {$serverHello{'description'}}[2];
+                } else {
+                        $description = "Unknown/Undefined";
+                }
+            
+                _trace2_ ("# -->  Alert Message:\n");
+                _trace2_ ("# -->      Level:       $serverHello{'level'}\n");
+                _trace2_ ("# -->      Description: $serverHello{'description'} ($description)\n"); 
+
+#                Error-Handling according to # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv                
+                unless ( ($serverHello{'level'} == 2) &&
+                        (  ($serverHello{'description'} == 40) # handshake_failure(40): usually cipher not found is suppressed
+                           || ($serverHello{'description'} == 71) # insufficient_security(71): no (secure) cipher found, is suppressed
+                        ) ) {
+                    if ($serverHello{'level'} == 1) { # warning
+                        if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
+                            my $sni = "";
+                            unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+                                $sni = "'$host'" if ($Net::SSLhello::usesni ==1); # Server Name, should be a Name no IP
+                            } else { # different sni_name
+                                $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
+                            }
+                            $@ = sprintf ("parseHandshakeRecord: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server $sni aborted!\n");
+                            print $@;
+                            return ("", 0 , ""); 
+                        } else {
+                            warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': received SSL/TLS-Warning (1): Description: $description ($serverHello{'description'})\n");
+                        }
+                    } elsif ($serverHello{'level'} == 2) { # fatal
+                        if ($serverHello{'description'} == 70) { # protocol_version(70): (old) protocol recognized but not supported, is suppressed
+                            $@ = sprintf ("parseHandshakeRecord: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> protocol_version recognized but not supported!\n");
+                            _trace4 ($@);
+                        } else {                            _trace4 ($@);
+                            warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': received fatal SSL/TLS-Error (2): Description: $description ($serverHello{'description'})\n");
+                        }
+                    } else { # unknown
+                        warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': received unknown SSL/TLS-Error-Level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
+                    }
+                }
+            } else { ################################ to get information about Record Types that are not parsed, yet #############################
+                _trace_ ("\n");
+                warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': Unknown SSL/TLS Record-Type received that is not (yet) defined in Net::SSLhello.pm:\n");
+                warn ("#        Record Type:     Unknown Value (".$serverHello{'record_type'}."), not (yet) defined in Net::SSLhello.pm\n"); 
+                warn ("#        Record Version:  $serverHello{'record_version'} (0x".hexCodedString ($serverHello{'record_version'}).")\n");
+                warn ("#        Record Len:      $serverHello{'record_len'} (0x".hexCodedString ($serverHello{'record_len'}).")\n\n"); 
+            }
+            return ("", 0 , "");
+        } #End SSL3/TLS or DTLS
+    } else {
+        warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': (no SSL/TLS-Record) : ".hexCodedString ($buffer)."\n");
+    }
+}
+
 sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-Paket enthält  ; second (opional) variable: protocol-version, that the client uses
     my $host = shift || ""; #for warn- and trace-messages
     my $port = shift || ""; #for warn- and trace-messages
