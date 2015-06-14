@@ -3703,13 +3703,13 @@ sub parseTLS_ServerHello {
         } else {
             warn ("**WARNING: parseTLS_ServerHello: Server '$host:$port': internal error: All Server Versions are accepted, because there is no information provided which version the client has requested.\n");
         }
-        
+
         _trace2_ ( sprintf (  
-                "# -->       version:              >%04X<\n".
+                "# -->       version:           >%04X<\n".
         #        "# -->       random_gmt_time:  >%08X< (%s)\n".
-                "# -->       random_gmt_time:  >%08X<\n".
-                "# -->       random:               >%s<\n".
-                "# -->       session_id_len:         >%02X<\n",
+                "# -->       random_gmt_time:   >%08X<\n".
+                "# -->       random:            >%s<\n".
+                "# -->       session_id_len:  >%02X<\n",
                 $serverHello{'version'},
                 $serverHello{'random_gmt_time'},
         #        localtime($serverHello{'random_gmt_time'}),
@@ -3717,11 +3717,11 @@ sub parseTLS_ServerHello {
                 $serverHello{'session_id_len'}
         ));
         _trace4_ ( sprintf (  
-                "# -->       Rest: (len=%04X)        >%s<\n",
+                "# -->       Rest: (len=%04X)   >%s<\n",
                 length ($rest),
-                hexCodedString ($rest)
+                hexCodedString ($rest, "                                    ")
         ));
-        
+
         ($serverHello{'session_id'},            # A[]
         $serverHello{'cipher_spec'},            # A2: cipher_spec_len = 2
         $serverHello{'compression_method'},        # C
@@ -3729,7 +3729,7 @@ sub parseTLS_ServerHello {
         $rest2) = unpack("a[$serverHello{'session_id_len'}] a2 C n a*", $rest);
 
         _trace2_ ( sprintf (
-                "# -->       session_id:           >%s<\n".
+                "# -->       session_id:         >%s<\n".
                 "# -->       cipher_spec: (len=%2s) >%s<\n",
                 hexCodedString ($serverHello{'session_id'}),
                 length ($serverHello{'cipher_spec'}),
@@ -3751,7 +3751,7 @@ sub parseTLS_ServerHello {
         }
 
         _trace2_ ( sprintf ( 
-            "\n# -->       compression_method:     >%02X<\n",
+            "\n# -->       compression_method:   >%02X<\n",
             $serverHello{'compression_method'}
         ));
         if ( $serverHello{'extensions_len'} !~ /(?:^$|[\x00]+)/) { # extensions_len > 0
@@ -3759,7 +3759,7 @@ sub parseTLS_ServerHello {
             $rest) = unpack("a[$serverHello{'extensions_len'}] a*", $rest2);
 
             _trace2_ ( sprintf ( 
-                "# -->       extensions_len:       >%04X<\n",
+                "# -->       extensions_len:   >%04X<\n",
                 $serverHello{'extensions_len'} 
             ));
             
