@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.359 15/06/14 19:12:35",
+    SID         => "@(#) yeast.pl 1.360 15/06/14 22:38:40",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
@@ -397,8 +397,10 @@ our %data   = (     # connection and certificate details
     'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target advertised protocols"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
+    'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'session_lifetime'=>{'val'=> sub { Net::SSLinfo::session_lifetime($_[0],$_[1])},'txt' => "Target's TLS Session Ticket Lifetime"},
+    'session_timeout'=>{'val'=> sub { Net::SSLinfo::session_timeout($_[0],$_[1])},'txt' => "Target's TLS Session Timeout"},
     'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
     'chain_verify'  => {'val' => sub { Net::SSLinfo::chain_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification (trace)"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
@@ -432,7 +434,7 @@ our %data   = (     # connection and certificate details
     'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},  # approx. value, accurate if < 30
 ); # %data
 # need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|protocols|
-# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_ticket|session_lifetime|
+# need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout
 
 our %checks = (
     # key           =>  {val => "", txt => "label to be printed", score => 0, typ => "connection"},
@@ -947,9 +949,11 @@ our %shorttexts = (
     'protocols'     => "Protocols",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
+    'session_protocol'=> "Selected SSL Protocol",
     'session_ticket'=> "TLS Session Ticket",
     'session_lifetime'=> "TLS Session Ticket Lifetime",
     'session_random'=> "TLS Session Ticket random",
+    'session_timeout'=> "TLS Session Timeout",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -1337,7 +1341,7 @@ our %cmd = (
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 protocols https_protocols http_protocols https_svc http_svc)
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 session_protocol protocols https_protocols http_protocols https_svc http_svc)
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
@@ -5409,6 +5413,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+authority')          { $arg = '+issuer';     } # issuer
     if ($arg eq  '+expire')             { $arg = '+after';      }
     if ($arg eq  '+extension')          { $arg = '+extensions'; }
+    if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias
     if ($arg eq  '+sts')                { $arg = '+hsts';       }
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
