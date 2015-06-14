@@ -2816,6 +2816,122 @@ sub compileClientHello ($$$$;$$$$) {
     return ($clientHello);
 }
 
+############################
+
+sub _compileClientHelloExtensions ($$$$@) {
+    my $record_version    = shift || "";
+    my $version    = shift || "";
+    my $ciphers    = shift || "";
+    my $host = shift || "";
+    my (%clientHello) = @_;
+#     my ($record_version, $version, $ciphers, $host, %clientHello) = @_;
+    my $clientHello_extensions ="";
+
+    # ggf auch prüfen, ob Host ein DNS-Name ist
+    if ( ($Net::SSLhello::usesni >=1) && ( ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) || ($record_version >= $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLS0v9'}) ) ) { # allow to test SNI with version TLSv1 and above or DTLSv1 and above
+
+    ### Data for Extension 'Server Name Indication' in reverse order 
+        $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/g;  # delete Spaces, \r and \n
+        unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+            $clientHello{'extension_sni_name'}     = $host;                                      # Server Name, should be a Name no IP
+        } else {
+            $clientHello{'extension_sni_name'}     = ($Net::SSLhello::sni_name) ? $Net::SSLhello::sni_name : ""; # Server Name, should be a Name no IP
+        }
+        $clientHello{'extension_sni_len'}          = length($clientHello{'extension_sni_name'}); # len of Server Name
+        $clientHello{'extension_sni_type'}         = 0x00;                                       # 0x00= host_name
+        $clientHello{'extension_sni_list_len'}     = $clientHello{'extension_sni_len'} + 3;      # len of Server Name + 3 Bytes (sni_len, sni_type)
+        $clientHello{'extension_len'}              = $clientHello{'extension_sni_list_len'} + 2; # len of this extension = sni_list_len + 2 Bytes (sni_list_len)
+        $clientHello{'extension_type_server_name'} = 0x0000;                                     # 0x0000
+#        $clientHello{'extensions_total_len'}       = $clientHello{'extension_len'} + 4;          # war +2 len Server Name-Extension + 2 Bytes (extension_type) #??? +4?!!##
+
+        $clientHello_extensions = pack ("n n n C n a[$clientHello{'extension_sni_len'}]",
+            $clientHello{'extension_type_server_name'}, #n
+            $clientHello{'extension_len'},              #n    
+            $clientHello{'extension_sni_list_len'},     #n    
+            $clientHello{'extension_sni_type'},         #C
+            $clientHello{'extension_sni_len'},          #n        
+            $clientHello{'extension_sni_name'},         #a[$clientHello{'extension_sni_len'}]
+        );
+        _trace2 ("compileClientHello: extension_sni_name Extension added (name='$clientHello{'extension_sni_name'}', len=$clientHello{'extension_sni_len'})\n");
+    } elsif ($Net::SSLhello::usesni) { # && ($pduVersion <= $PROTOCOL_VERSION{'TLSv1'})  
+        $@ = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
+        print $@;
+    }
+
+    if ($Net::SSLhello::usereneg) { # use secure Renegotiation
+        my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
+        my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'}); 
+        unless ( ($Net::SSLhello::double_reneg == 0) && (grep(/\x00\xff/, @cipherTable)) ) { # Protection against double renegotiation info is active
+            # do *NOT* send a reneg_info Extension if the cipher_spec includes already signalling Cipher Suite Value (SCSV) 
+            # "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
+
+            ### Data for Extension 'renegotiation_info' 
+            $clientHello{'extension_type_renegotiation_info'} = 0xff01; # Tbd: hier, oder zentrale Definition?!
+            $clientHello{'extension_reneg_len'}               = 0x0001; # Tbd: hier, oder zentrale Definition?!
+            $clientHello{'extension_reneg_info_ext_len'}      = 0x00;   # Tbd: hier, oder zentrale Definition?!
+
+            $clientHello_extensions .= pack ("n n a[1]",
+                $clientHello{'extension_type_renegotiation_info'},      #n    = 0xff01
+                $clientHello{'extension_reneg_len'},                    #n    = 0x0001
+                $clientHello{'extension_reneg_info_ext_len'},           #a[1] = 0x00
+            );
+            _trace2 ("compileClientHello: reneg_info Extension added\n");
+        } else {
+            _trace2 ("compileClientHello: *NOT* sent a reneg_info Extension as the cipher_spec includes already the Signalling Cipher Suite Value (TLS_EMPTY_RENEGOTIATION_INFO_SCSV {0x00, 0xFF})\n");
+        }
+    }
+
+    my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
+    my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
+    if ( grep(/\xc0./, @cipherTable) ) { # found Cipher C0xx, Lazy Check; ### TBD: Check with a range of ECC-Ciphers ###
+        if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
+            ### Data for Extension 'elliptic_curves' (in reverse order)
+            $clientHello{'extension_ecc_list'}                
+                = "\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08"
+                 ."\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00\x10"
+                 ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18"
+                 ."\x00\x19\x00\x1a\x00\x1b\x00\x1c";   # ALL defined ECCs; TBD: hier, oder zentrale Definition?!
+            $clientHello{'extension_ecc_list_len'}            = length($clientHello{'extension_ecc_list'}); # len of ECC List  
+            $clientHello{'extension_elliptic_curves_len'}     = $clientHello{'extension_ecc_list_len'}+2;   # len of ECC Extension
+            $clientHello{'extension_type_elliptic_curves'}    = 0x000a; # Tbd: hier, oder zentrale Definition?!
+
+            $clientHello_extensions .= pack ("n n n a[$clientHello{'extension_ecc_list_len'}]",
+              $clientHello{'extension_type_elliptic_curves'},         #n    = 0x000a
+              $clientHello{'extension_elliptic_curves_len'},          #n    = 0x00xz
+              $clientHello{'extension_ecc_list_len'},                 #n    = 0x00xy
+              $clientHello{'extension_ecc_list'},                     #a[$clientHello{'extension_ecc_list_len'}] = 0x00....
+            );
+            _trace2 ("compileClientHello: elliptic_curves Extension added\n");
+        }
+
+        if ($Net::SSLhello::useecpoint ) { # use Elliptic Point Formats Extension
+            ### Data for Extension 'ec_point_formats'
+            $clientHello{'extension_type_ec_point_formats'}   = 0x000b; # Tbd: hier, oder zentrale Definition?!
+            $clientHello{'extension_ec_point_formats_len'}    = 0x0002; # Tbd: hier, oder zentrale Definition?!
+            $clientHello{'extension_ec_point_formats_list_ele'} = 0x01; # Tbd: hier, oder zentrale Definition?!
+            $clientHello{'extension_ec_point_formats_list'}   = "\x00"; # Tbd: hier, oder zentrale Definition?!
+
+            $clientHello_extensions .= pack ("n n C a[$clientHello{'extension_ec_point_formats_list_ele'}]",
+              $clientHello{'extension_type_ec_point_formats'},        #n    = 0x000b
+              $clientHello{'extension_ec_point_formats_len'},         #n    = 0x00xz
+              $clientHello{'extension_ec_point_formats_list_ele'},    #C    = 0xxy
+              $clientHello{'extension_ec_point_formats_list'},        #a[$clientHello{'extension_ec_point_formats_list_ele'}] = 0x00....
+            );
+            _trace2 ("compileClientHello: ec_point_formats Extension added\n");
+        }
+    }
+
+    $clientHello{'extensions_total_len'} = length($clientHello_extensions);
+    
+    if ($clientHello_extensions) { # not empty
+        $clientHello_extensions = pack ("n a*",
+            length($clientHello_extensions),            #n    
+            $clientHello_extensions                     #a[length($clientHello_extensions)]
+        );
+        _trace4 (sprintf ("_compileClientHelloExtensions (extensions_total_len = %04X)\n          >", $clientHello{'extensions_total_len'}).hexCodedString ($clientHello_extensions ,"           ")."<\n");
+    }
+    return ($clientHello_extensions);
+}
 
 sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>, <cookie (DTLS)>
     my $host = shift || ""; #for warn- and trace-messages
