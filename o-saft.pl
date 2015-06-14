@@ -2873,21 +2873,8 @@ sub _isbleed($$) {
             _warn ("_isbleed (with openTcpSSLconnection): $@\n");
             _trace ("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
             return ("failed to connect");
-        } else {
-            # SSL upgrade
-            _trace("_isbleed: start_SSL ($host:$port)");
-            IO::Socket::SSL->start_SSL($cl,
-              Timeout         => $cfg{'timeout'},
-              SSL_verify_mode => 0x0,   # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-#             SSL_ca_file     => undef, # see man IO::Socket::SSL ..
-#             SSL_ca_path     => undef, # .. newer versions are smarter and accept ''
-#             SSL_version     => $ssl,  # default is SSLv23
-#             SSL_cipher_list => $ciphers
-            ) or do {
-                _warn("_isbleed: failed to connect with proxy: '$!'");
-                return "failed to connect";
-            };
-        }
+        } 
+        # NO SSL upgrade needed -> NO else
     }
 
     # all following code stolen from Steffen Ullrich (08. April 2014):
