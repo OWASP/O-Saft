@@ -40,7 +40,7 @@ package Net::SSLhello;
 use strict;
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
-require IO::Select if ($main::cfg{'trace'} > 3);
+#require IO::Select if ($main::cfg{'trace'} > 1);
 
 my $me      = $0; $me     =~ s#.*(?:/|\\)##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -2375,6 +2375,7 @@ sub _readPdu {
     my $retryCnt = -1; # 1st read with up to 5 Bytes will be not counted
     my $input="";
     my @socketsReady = ();
+    require IO::Select if ($Net::SSLhello::trace > 0);
     my $select = IO::Select->new if ($Net::SSLhello::trace > 3);
     my $success=0;
     $select->add($socket) if ($Net::SSLhello::trace > 3);
