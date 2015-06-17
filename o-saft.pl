@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.360 15/06/14 22:38:40",
+    SID         => "@(#) %M% %I% %E% %U%",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
@@ -301,6 +301,7 @@ usr_pre_init();
 # NOTE: all keys in data and check_* must be unique 'cause of shorttexts!!
 # NOTE: all keys in check_* and checks  must be in lower case letters!!
 #       'cause generic conversion of +commands to keys
+#       exception are the keys related to protocol, i.e. SSLV3, TLSv11-LOW
 
 #
 # Note according perlish programming style:
@@ -1204,6 +1205,7 @@ our %cmd = (
                                 # common paths to PEM files for CAs
     'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
                                 # common PEM filenames for CAs
+    'openssl_cnf'   => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
@@ -1706,7 +1708,7 @@ our %ciphers = (
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
-# FIXME: perl hashes may not have multiple keys (have them for SSLv2 and SSLv3)
+ # FIXME: perl hashes may not have multiple keys (have them for SSLv2 and SSLv3)
         'ADH-AES128-SHA'        => [qw(  weak SSLv3 AES   128 SHA1 None  DH          0 :)],
         'ADH-AES256-SHA'        => [qw(  weak SSLv3 AES   256 SHA1 None  DH          0 :)],
         'ADH-DES-CBC3-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 None  DH          0 :)],
@@ -2873,7 +2875,7 @@ sub _isbleed($$) {
             _warn ("_isbleed (with openTcpSSLconnection): $@\n");
             _trace ("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
             return ("failed to connect");
-        } 
+        }
         # NO SSL upgrade needed -> NO else
     }
 
@@ -4974,6 +4976,15 @@ usr_pre_args();
 
 ## scan options and arguments
 ## -------------------------------------
+# All arguments are  inspected here.  We do not use any module,  like Getopt,
+# 'cause we want to support various variants of the same argument,  like case
+# sensitive or additional characters i.e.  .  -  _  to be ignored, and so on.
+# This also allows to use  different options and commands easily for the same
+# functionality without defining each variant. Grep for "alias" below ...
+# Even most commands are also the key in our own data structure (%data, %cfg)
+# we do not use any argument as key drectly, but always compare with the keys
+# and assign values using keys literally, like: $cfg{'key'} = $arg .
+
 my $typ = 'HOST';
 push(@argv, "");        # need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
@@ -4997,7 +5008,7 @@ while ($#argv >= 0) {
     # Commands are case sensitive  because they are used directly as key in a
     # hash (see %_SSLinfo Net::SSLinfo.pm). Just commands for the tool itself
     # (not those returning collected data) are case insensitive.
-    # NOTE: the sequence must be:
+    # NOTE: the sequence of following code must be:
     #   1. check argument (otherwise relooped before)
     #   2. check for options (as they may have arguments)
     #      NOTE: unknown remaining options are silently ignored, because they
@@ -5005,6 +5016,7 @@ while ($#argv >= 0) {
     #   3. check for commands (as they all start with '+' and we don't expect
     #      any argument starting with '+')
     #   4. check for HOST argument
+    # Parsing options see OPTIONS below, parsing commands see COMMANDS below.
 
     if ($typ ne 'HOST') { # option arguments
         # Note that $arg already contains the argument
@@ -5112,22 +5124,21 @@ while ($#argv >= 0) {
         # which has no argument, hence following checks for valid arguments
         # and pass it to further examination if it not matches
         if ($typ eq 'TRACE')    {
-            $typ = 'HOST';          # expect host as next argument
+            $typ = 'HOST';      # expect host as next argument
             $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
             $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
             $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
             $cfg{'traceTIME'}++  if ($arg =~ m#time#i);
             $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
             # now magic starts ...
-            next if ($arg =~ m#^(arg|cmd|key|time|\d+)$#i); # matched before
+            next if ($arg =~ m#^(ARG|CMD|KEY|TIME|\d+)$#i); # matched before
             # if we reach here, argument did not match valid value for --trace,
             # then simply increment trace level and process argument below
             $cfg{'trace'}++;
-        } else { # $typ handled before if-condition
-            $typ = 'HOST';          # expect host as next argument
-            next;
-        }
-    } # ne 'HOST'
+        } # else $typ handled before if-condition
+        $typ = 'HOST';          # expect host as next argument
+        next;
+    } # ne 'HOST' option arguments
 
     next if ($arg =~ /^\s*$/);# ignore empty arguments
 
@@ -5209,7 +5220,7 @@ while ($#argv >= 0) {
     # Following checks use exact matches with 'eq' or regex matches with '=~'
 
     _y_ARG("option?  $arg");
-    #{ options
+    #{ OPTIONS
     #  NOTE that strings miss - and _ characters (see normalization above)
     #!# You may read the lines as table with columns like:
     #!#--------+------------------------+---------------------------+----------
@@ -5383,7 +5394,7 @@ while ($#argv >= 0) {
         # TODO: means that targets starting with '-' are not possible,
         #       however, such FQDN are illegal
 
-    #{ commands
+    #{ COMMANDS
     _y_ARG("command? $arg");
     # You may read the lines as table with colums like:
     #!#+---------+----------------------+-----------------------+-----------------
@@ -5412,6 +5423,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # AIA is a common acronym ...
+    if ($arg =~ /\+vulnerabilit(y|ies)/){ $arg = '+vulns';      } # vulns
+    if ($arg =~ /^\+selected[_-]?ciphers?$/){$arg= '+selected'; }
     if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw';}
     if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw';}
     #  +---------+----------------------+-----------------------+----------------
@@ -5422,10 +5435,11 @@ while ($#argv >= 0) {
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
-    if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; } # TODO: too lazy, nee +vulnerability +vulnerabilities too
+    if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; }
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
-    if ($arg eq  '+protocols'){@{$cfg{'do'}}= (@{$cfg{'cmd-prots'}});           next; }
+    if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
     if ($arg eq '+traceSUB'){
+        # this command is just documentation, no need to care about other options
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
           ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
@@ -5491,7 +5505,8 @@ while ($#argv >= 0) {
         _yeast("host: $arg") if ($cfg{'trace'} > 0);
     }
 
-} # while
+} # while options and arguments
+
 if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
     _warn("--proxyhost=$cfg{'proxyhost'} requires also --proxyport=NN");
     printusage();
@@ -5502,7 +5517,6 @@ $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
 if ((_is_do('cipher')) and ($#{$cfg{'do'}} == 0)) {
-    # FIXME: +cipher may appear in list which is bug in parsing commands above
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
     $cfg{'usehttp'}     = 0;
@@ -5858,7 +5872,7 @@ usr_pre_main();
 ## -------------------------------------
 
 # defense, user-friendly programming
-  # could do these checks earlier (after seeting defaults), but we want
+  # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenace
 printusage(),      exit 2   if ($#{$cfg{'hosts'}} < 0); # no target hosts, does not make any sense
 if (_is_do('cipher')) {
@@ -5935,8 +5949,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         # If gethostbyaddr()  fails we use perl's  `or'  to assign our default
         # text.  This may happen when there're problems with the local name
         # resolution.
-        # FIXME: when gethostbyaddr() fails, the connection to the target most
-        # likely fails also, which produces more perl warnings later.
+        # When gethostbyaddr() fails, the connection to the target most likely
+        # fails also, which produces more perl warnings later.
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
         if ($cfg{'usedns'} == 1) {  # following settings only with --dns
            ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
