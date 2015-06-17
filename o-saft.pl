@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) %M% %I% %E% %U%",
+    SID         => "@(#) yeast.pl 1.363 15/06/17 23:19:07",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
