@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.29 15/05/17 21:43:21";
+my  $man_SID= "@(#) o-saft-man.pm 1.30 15/06/18 21:46:42";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1214,6 +1214,10 @@ TECHNICAL INFORMATION
         Above applies to all commands except  +cipherraw  which uses no other
         libraries.
 
+        All arguments  starting with  '+'  are considered  COMMANDS  for this
+        tool. All arguments starting with  '--'  are considered  OPTIONS  for
+        this tool.
+
         Reading any data from STDIN or here-documents is not yet supported.
         It's reserved for future use.
 
@@ -1958,6 +1962,20 @@ OPTIONS
 
           Use DIR where to find CA certificates in PEM format.
 
+      --ca-force
+      --force-ca
+
+        NOT YET IMPLEMENTED
+          I. g. openssl uses default settings where to find certificate files.
+          When  --ca-file=FILE  and/or  --ca-path=DIR  was used,  this default
+          will be overwritten by appropriate options passed to openssl. If the
+          default does not work as expected,  --force-ca  can be used to force
+          setting of proper values according well known common defaults. See:
+              $0 +version
+              $0 +version --force-ca
+          to see the used settings.
+
+
       --no-nextprotoneg
 
           Do not use  -nextprotoneg  option for openssl.
@@ -2502,8 +2520,8 @@ CHECKS
 
       BEAST
 
-        Currently (2015) only a simple check is used: only RC4 ciphers used.
-        Which is any cipher with RC4, ARC4 or ARCFOUR.
+        Currently (2015) only a simple check is used: RC4 or CBC ciphers used.
+        Which is any cipher with RC4, ARC4 or ARCFOUR or with CBC.
         TLSv1.2 checks are not yet implemented.
 
       CRIME
@@ -3156,6 +3174,16 @@ KNOWN PROBLEMS
 
         Workaround: use  --ssl-lazy  option, or corresponding --no-SSL option.
 
+    openssl: ...some/path.../libssl.so.1.0.0: no version information available (required by openssl)
+
+        Mismatch of  openssl executable  and loaded underlaying library. This
+        most likely happens when options  --lib=PATH  and/or  --exe=PATH  are
+        used.
+
+        Hint: use following commands to get information about used libraries:
+          $0 +version
+          $0 --v --v +version
+
     No output with  +help  and/or  --help=todo
 
         On some (mainly Windows-based) systems using
@@ -3400,15 +3428,21 @@ HACKER's INFO
         impacts o-saft.pl itself, as it loads other shared libraries if found.
 
         Bear in mind that  all these options  can affect the behaviour of the
-        openssl subsystem,  influencing both which  executable is called  and
+        openssl subsystem,  influencing both  which executable is called  and
         which shared libraries will be used.
+
+        NOTE that no checks are done if the options are set proper. To verify
+        the settings, following commands may be used:
+          $0 --lib=YOU-PATH --exe=YOUE-EXE +version
+          $0 --lib=YOU-PATH --exe=YOUE-EXE --v +version
+          $0 --lib=YOU-PATH --exe=YOUE-EXE --v --v +version
 
         Why so many options?  Exactly as described above, these options allow
         the users to tune the behaviour of the tool to their needs.  A common
         use case is to enable the use of a separate openssl build independent
         of the openssl package used by the operating system.  This allows the
-        user fine grained control over openssl e.g. the encryption suites that
-        are compiled/available, without affecting the core system.
+        user fine grained control over openssl's encryption suites  which are
+        compiled/available, without affecting the core system.
 
     Caveats
 
@@ -3580,7 +3614,7 @@ HACKER's INFO
 #        internal strings such as hash keys, and uses "double quoted text" for
 #        texts being printed. However, exceptions if obviously necessary ;-)
 #        Strings used for  RegEx are always enclosed in single quotes.  Reason
-#        is mainly to make searching texts a bit easyer.
+#        is mainly to make searching texts a bit easier.
 #
 #        Calling external programs uses 'qx()' rather than backticks or perl's
 #        'system()' function.  Also note that it uses braces insted of slashes
@@ -3665,6 +3699,13 @@ HACKER's INFO
 #
 #        Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
 #        is hard-coded.
+#
+#      Code style
+#
+#        As explained above, global variables are used to avoid definitions of
+#        complex functions with various parameters.
+#        Most code is seqential instead of using functions, except the code is
+#        used multiple times. This may be changed in future ...
 
 
 DEBUG
