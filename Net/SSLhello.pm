@@ -2175,7 +2175,7 @@ sub _doCheckSSLciphers ($$$$;$) {
             return ("");
         }
         if (length($input) >0) {
-            _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes in $segmentCnt segments\n"); 
+            _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes\n"); 
             ($acceptedCipher, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $input, $protocol);
             if ( ($acceptedCipher ne "") || (! $isUdp) ) {
                 last;
@@ -2368,17 +2368,18 @@ sub _readPdu {
     my $pduType = 0;
     my $pduVersion = 0; # no existing PDU Version
     my $MAXLEN= 32767;
-    my $pduLen = ($isUdp) ? $MAXLEN : 5; # Minimum Len is: all readable Octetts for UDP (-> MAXLEN), 5 Octetts for TCP
+    my $pduLen = ($isUdp) ? $MAXLEN : 7; # Minimum Len is: all readable Octetts for UDP (-> MAXLEN), 7 Octetts for TCP (=Len of an Alert-Message); Remark: The minimum Record Len is 5 Bytes, but it is better to read 7 bytes to get a compete Alert Message before any diconnects can occure
     my $len = 0;
     my ($rin, $rout);
     my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection$ 
-    my $retryCnt = -1; # 1st read with up to 5 Bytes will be not counted
+    my $retryCnt = 0;
+    my $segmentCnt = 0; # 1st read with up to 7 Bytes will be not counted$
     my $input="";
     my @socketsReady = ();
     require IO::Select if ($Net::SSLhello::trace > 0);
-    my $select = IO::Select->new if ($Net::SSLhello::trace > 3);
+    my $select = IO::Select->new if ($Net::SSLhello::trace > 0);
     my $success=0;
-    $select->add($socket) if ($Net::SSLhello::trace > 3);
+    $select->add($socket) if ($Net::SSLhello::trace > 0);
 
     ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
@@ -2401,9 +2402,10 @@ sub _readPdu {
         }
         if ( ! $success) { # Nor data NEITHER special event => Timeout
             alarm (0); #clear alarm
-            $@="Timeout in _readPdu: $!" if (! $isUdp);
-            _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n") if (! $isUdp);
-            last;
+            _trace4 ("_readPdu -> next: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n") if (! $isUdp);
+            last if ($isUdp); # resend the udp packet
+            select (undef, undef, undef, _SLEEP_B4_2ND_READ);
+            next;
         }
         if (vec($rout, fileno($socket),1)) { # got data
             eval { # check this for timeout, protect it against an unexpected Exit of the Program
@@ -2430,15 +2432,19 @@ sub _readPdu {
                     _trace4 ("_readPdu: received EOF (Disconnect), no Data\n");
                     last;
                 } else {
-                    $@="Unexpected EOF in _readPdu after ".length($input)." of expected $pduLen Bytes: '$!'";
-                    _trace1 ("_readPdu: $@\n");
-                    warn ("_readPdu: $@");
-                    last;
+                    _trace2 ("_readPdu: No Data (EOF) after ".length($input)." of expected $pduLen Bytes: '$!' -> Retry to read\n");
+                    @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 1); ###additional debug (use IO::select needed)
+                    _trace1 ("_readPdu: can read (3): ($retryCnt; ".length($input).")\n") if (scalar (@socketsReady));
+                    select (undef, undef, undef, _SLEEP_B4_2ND_READ);
+                    next;
                 }
             }
             $len = length($input);
-            _trace4 ("_readPdu ... Received $len Bytes\n");
-            if ($len == 5) { # try to get the pduLen of the ssl Pdu (=protocol aware length detection)
+            $segmentCnt++;
+            _trace4 ("_readPdu ... Received $len Bytes in $segmentCnt Segments\n");
+            $retryCnt = -1 if ($segmentCnt <= _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT); # reset Retry-Count to 0 (in next loop)
+
+            if ($len == 7) { # try to get the pduLen of the ssl Pdu (=protocol aware length detection)
                              # Check PDUlen; Parse the first 5 Bytes to check the Len of the PDU (SSL3/TLS)
                 ($pduType,       #C (record_type)
                  $pduVersion,    #n (record_version)
