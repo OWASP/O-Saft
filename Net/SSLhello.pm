@@ -165,7 +165,7 @@ my %PROTOCOL_VERSION = (
     'TLSv12'     => 0x0303, # TLS1.2
     'TLSv13'     => 0x0304, # TLS1.3, not YET specified
     'TLSv1.FF'   => 0x03FF, # Last possible Version of TLS1.x (NOT specified)
-    'DTLS0v9'    => 0x0100, # DTLS, OpenSSL pre 0.9.8f, not finally standardized  (udp)
+    'DTLSv09'    => 0x0100, # DTLS, OpenSSL pre 0.9.8f, not finally standardized (udp)
     'DTLSfamily' => 0xFE00, # DTLS1.FF, no defined PROTOCOL, for internal usea only (udp)
     'DTLSv1'     => 0xFEFF, # DTLS1.0 (udp)
     'DTLSv11'    => 0xFEFE, # DTLS1.1: has NEVER been used (udp)
@@ -2080,7 +2080,7 @@ sub _doCheckSSLciphers ($$$$;$) {
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
     $@ =""; # reset Error-String
     
-    $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLS0v9'})  );  # udp for DTLS1.x or DTLS0v9
+    $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLSv09'})  ); # udp for DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
 
     unless ($isUdp) { # NO UDP = TCP
         #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
@@ -2479,7 +2479,7 @@ sub _readPdu {
                      $pduLen)        #n  (record_len)
                     = unpack("C n x8 n", $input);
                     if ( ($pduType < 0x80) && ( (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) # DTLS
-                                           || ( $pduVersion           == $PROTOCOL_VERSION{'DTLS0v9'}) ) ) { #DTLS, or DTLS0v9 (pre)
+                                           || ( $pduVersion           == $PROTOCOL_VERSION{'DTLSv09'}) ) ) { # DTLS, or DTLSv09 (OpenSSL pre 0.9.8f)
                         $pduLen += 13; # Check PDUlen = len + size of record-header; 
                         _trace3 ("_readPdu ... Received Data: Expected DTLS-PDU-Len of Server-Hello: $pduLen\n");
                         if ($pduLen > $MAXLEN) {
@@ -2774,7 +2774,7 @@ sub compileClientHello ($$$$;$$$$) {
     
         _trace4 (sprintf ("compileClientHello (%04X)\n          >",$record_version).hexCodedString ($clientHello,"           ")."<\n");
     
-    } elsif ( (($record_version & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($version == $PROTOCOL_VERSION{'DTLS0v9'})  ) { #DTLS1.x or DTLS0v9
+    } elsif ( (($record_version & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($version == $PROTOCOL_VERSION{'DTLSv09'})  ) { #DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
         _trace2 ("compileClientHello: Protocol: DTLS\n");
 
         $clientHello_extensions = _compileClientHelloExtensions ($record_version, $version, $ciphers, $host, %clientHello);
@@ -3005,7 +3005,7 @@ sub compileAlertRecord ($$$$;$$) {
 
     _trace4 (sprintf ("compileAlertRecord (%04X)\n          >",$record_version).hexCodedString ($alertRecord,"           ")."<\n");
     
-    } elsif ( (($record_version & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLS0v9'})  ) { #DTLS1.x or DTLS0v9
+    } elsif ( (($record_version & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLSv09'})  ) { #DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
         _trace2 ("compileAlertRecord: Protocol: DTLS\n");
 
         $alertRecord{'record_type'} = $RECORD_TYPE {'alert'};
@@ -3090,7 +3090,7 @@ sub _compileClientHelloExtensions ($$$$@) {
     my $clientHello_extensions ="";
 
     # ggf auch prüfen, ob Host ein DNS-Name ist
-    if ( ($Net::SSLhello::usesni >=1) && ( ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) || ($record_version >= $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLS0v9'}) ) ) { # allow to test SNI with version TLSv1 and above or DTLSv1 and above
+    if ( ($Net::SSLhello::usesni >=1) && ( ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) || ($record_version >= $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLSv09'}) ) ) { # allow to test SNI with version TLSv1 and above or DTLSv09 (OpenSSL pre 0.9.8f), DTLSv1 and above
 
     ### Data for Extension 'Server Name Indication' in reverse order 
         $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/g;  # delete Spaces, \r and \n
@@ -3283,7 +3283,7 @@ sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>,
                        $serverHello{'msg_len'}              # prefetched for record_type Handshake 
                 )) if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'});
 
-            } elsif ( (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($pduVersion == $PROTOCOL_VERSION{'DTLS0v9'})  ) { #DTLS1.x or DLS0v9$
+            } elsif ( (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($pduVersion == $PROTOCOL_VERSION{'DTLSv09'})  ) { #DTLS1.x or DLSv09 (OpenSSL pre 0.9.8f)
                 _trace2 ("parseHandshakeRecord: Protocol: DTLS\n");
                 ($serverHello{'record_type'},         # C
                  $serverHello{'record_version'},      # n
