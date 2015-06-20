@@ -34,6 +34,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.363 15/06/17 23:19:07",
+    STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
@@ -48,11 +49,12 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return "15.06.09"; }   # <== our official version number
+    sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
     # Unfortunately perl's BEGIN has following limits and restrictions:
+    #   - constants can be defined befor and used herein
     #   - sub can be defined herein and used later
     #   - variables can not be defined herein and used later
     #   - some file handles (like <DATA>) are not yet available
@@ -70,7 +72,7 @@ BEGIN {
     );
 
     # handle simple help very quickly
-    if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print _VERSION() . "\n"; exit 0; }
+    if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
     print STDERR STR_WARN, "on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
         # be smart to users if systems behave strange :-/
     # get first matching argument
@@ -88,7 +90,7 @@ BEGIN {
 } # BEGIN
     _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 
-our $VERSION= _VERSION();
+our $VERSION= STR_VERSION;
 our $me     = $0; $me     =~ s#.*[/\\]##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
