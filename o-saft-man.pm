@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.31 15/06/21 11:45:28";
+my  $man_SID= "@(#) o-saft-man.pm 1.32 15/06/21 11:58:18";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1043,6 +1043,9 @@ sub printhelp($) {
     man_help(uc($hlp));
     return;
 } # printhelp
+
+printhelp($ARGV[0]) unless (defined caller);
+
 1;
 
 ## documentation
