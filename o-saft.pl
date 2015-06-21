@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.365 15/06/21 11:46:56",
+    SID         => "@(#) yeast.pl 1.366 15/06/21 14:52:01",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -1494,7 +1494,7 @@ our %cmd = (
         'TLSv13'    => 0x0304,
         'TLS1FF'    => 0x03FF,  # last possible version of TLS1.x (not specified, used internal)
         'DTLSfamily'=> 0xFE00,  # DTLS1.FF, no defined PROTOCOL, for internal use only
-        'DTLSv09'   => 0xFEFF,  # DTLS, OpenSSL pre 0.9.8f, not finally standardized
+        'DTLSv09'   => 0x0100,  # DTLS, OpenSSL pre 0.9.8f, not finally standardized; some versions use 0xFEFF
         'DTLSv1'    => 0xFEFF,  # DTLS1.0 (udp)
         'DTLSv11'   => 0xFEFE,  # DTLS1.1: has never been used (udp)
         'DTLSv12'   => 0xFEFD,  # DTLS1.2 (udp)
