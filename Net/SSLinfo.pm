@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.95 15/05/18 08:48:06',
+    SID         => '@(#) Net::SSLinfo.pm 1.96 15/06/21 14:48:18',
 };
 
 ######################################################## public documentation #
@@ -526,18 +526,30 @@ my %_SSLmap = ( # map libssl's constants to speaking names
     'TLSv1'     => [0x0301,  undef],                        # 0x04000000
     'TLSv11'    => [0x0302,  undef],                        # 0x08000000
     'TLSv12'    => [0x0303,  undef],                        # 0x10000000
+    'TLSv13'    => [0x0304,  undef],                        # 0x10000000
+    'TLS1FF'    => [0x03FF,  undef],                        # 
+    'DTLSfamily'=> [0xFE00,  undef],                        #
+    'DTLSv09'   => [0x0100,  undef],                        # 0xFEFF in some openssl versions
     'DTLSv1'    => [0xFEFF,  undef],                        # ??
+    'DTLSv11'   => [0xFEFE,  undef],                        # ??
+    'DTLSv12'   => [0xFEFD,  undef],                        # ??
+    'DTLSv13'   => [0xFEFF,  undef],                        # ??
 );
 # unfortunately not all openssl and/or Net::SSLeay versions have all constants,
-# hence we need to assign some values dynamically (avoid perl errors)
+# hence we need to assign some values dynamically (to avoid perl errors)
 # NOTE: existance cannot be checked with:  defined &Net::SSLeay::OP_NO_TLSv1
-$_SSLmap{'TLSv1'} [1] = Net::SSLeay::OP_NO_TLSv1()   if (eval "Net::SSLeay::OP_NO_TLSv1()");
-$_SSLmap{'TLSv11'}[1] = Net::SSLeay::OP_NO_TLSv1_1() if (eval "Net::SSLeay::OP_NO_TLSv1_1()");
-$_SSLmap{'TLSv12'}[1] = Net::SSLeay::OP_NO_TLSv1_2() if (eval "Net::SSLeay::OP_NO_TLSv1_2()");
-$_SSLmap{'DTLSv1'}[1] = Net::SSLeay::OP_NO_DTLSv1()  if (eval "Net::SSLeay::OP_NO_DTLSv1()");
+$_SSLmap{'TLSv1'}  [1] = Net::SSLeay::OP_NO_TLSv1()    if (eval "Net::SSLeay::OP_NO_TLSv1()");
+$_SSLmap{'TLSv11'} [1] = Net::SSLeay::OP_NO_TLSv1_1()  if (eval "Net::SSLeay::OP_NO_TLSv1_1()");
+$_SSLmap{'TLSv12'} [1] = Net::SSLeay::OP_NO_TLSv1_2()  if (eval "Net::SSLeay::OP_NO_TLSv1_2()");
+$_SSLmap{'TLSv13'} [1] = Net::SSLeay::OP_NO_TLSv1_3()  if (eval "Net::SSLeay::OP_NO_TLSv1_3()");
+$_SSLmap{'DTLSv1'} [1] = Net::SSLeay::OP_NO_DTLSv1()   if (eval "Net::SSLeay::OP_NO_DTLSv1()");
+#$_SSLmap{'DTLSv11'}[1] = Net::SSLeay::OP_NO_DTLSv1_1() if (eval "Net::SSLeay::OP_NO_DTLSv1_1()");
+#$_SSLmap{'DTLSv12'}[1] = Net::SSLeay::OP_NO_DTLSv1_2() if (eval "Net::SSLeay::OP_NO_DTLSv1_2()");
+#$_SSLmap{'DTLSv13'}[1] = Net::SSLeay::OP_NO_DTLSv1_3() if (eval "Net::SSLeay::OP_NO_DTLSv1_3()");
     # NOTE: we use the bitmask provided by the system
     # NOTE: all checks are done now, we don't need to fiddle around that later
     #       we just need to check for undef then
+# TODO: %_SSLmap should be inherited from $cfg{openssl_version_map} or vice versa
 my %_SSLhex = map { $_SSLmap{$_}[0] => $_ } keys %_SSLmap;  # reverse map
 
 my %_SSLinfo= ( # our internal data structure
@@ -1557,6 +1569,8 @@ sub do_openssl($$$) {
     my $port = shift || "";  # may be empty for some calls
     my $pipe = shift || "";  # piped data is optional
     my $data = "";
+    my $capath = $Net::SSLinfo::ca_path || "";
+    my $cafile = $Net::SSLinfo::ca_file || "";
     _trace("do_openssl($mode,$host,$port...).");
     _setcmd();
     if ($_openssl eq '') {
@@ -1573,6 +1587,10 @@ sub do_openssl($$$) {
         # pass -tlsextdebug option to validate 'heartbeat' support later
         # NOTE that openssl 1.x or later is required for -nextprotoneg
         $mode  = 's_client' . $Net::SSLinfo::sclient_opt;
+# FIXME: { following fixes general verify, but not self signed
+#        $mode .= ' -CApath ' . $capath if ($capath ne "");
+#        $mode .= ' -CAfile ' . $cafile if ($cafile ne "");
+# }
         $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protocols if ($Net::SSLinfo::use_nextprot == 1);
         $mode .= ' -reconnect'   if ($Net::SSLinfo::use_reconnect == 1);
         $mode .= ' -tlsextdebug' if ($Net::SSLinfo::use_extdebug  == 1);
@@ -2186,8 +2204,14 @@ sub error($) {
     #return Net::SSLeay::ERR_get_error;
 }
 
-unless (defined caller) {
+unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if ($#ARGV >= 0) {
+        $\="\n";
+        do_ssl_open( shift, 443, '');
+        print Net::SSLinfo::dump();
+        exit 0;
+    }
     if (eval("require POD::Perldoc;")) {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
@@ -2196,12 +2220,8 @@ unless (defined caller) {
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
         printf("# try:\n  perldoc $0\n");
+        exit 0;
     }
-#dbx# if ($#ARGV >= 0) {
-#dbx#     $\="\n";
-#dbx#     do_ssl_open( shift, 443, '');
-#dbx#     print Net::SSLinfo::dump();
-#dbx# }
 }
 
 1;
