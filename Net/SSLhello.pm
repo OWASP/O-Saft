@@ -2368,12 +2368,13 @@ sub _readPdu {
     my $pduType = 0;
     my $pduVersion = 0; # no existing PDU Version
     my $MAXLEN= 32767;
-    my $pduLen = ($isUdp) ? $MAXLEN : 7; # Minimum Len is: all readable Octetts for UDP (-> MAXLEN), 7 Octetts for TCP (=Len of an Alert-Message); Remark: The minimum Record Len is 5 Bytes, but it is better to read 7 bytes to get a compete Alert Message before any diconnects can occure
+    my $pduLen = 0; # ($isUdp) ? $MAXLEN : 7; # Minimum Len is: all readable Octetts for UDP (-> MAXLEN), 7 Octetts for TCP (=Len of an Alert-Message); Remark: The minimum Record Len is 5 Bytes, but it is better to read 7 bytes to get a compete Alert Message before any diconnects can occure
+    my $readLen = $MAXLEN; # read up to MAXLEN Octetts
     my $len = 0;
     my ($rin, $rout);
     my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection$ 
     my $retryCnt = 0;
-    my $segmentCnt = 0; # 1st read with up to 7 Bytes will be not counted$
+    my $segmentCnt = 0;
     my $input="";
     my @socketsReady = ();
     require IO::Select if ($Net::SSLhello::trace > 0);
@@ -2383,7 +2384,7 @@ sub _readPdu {
 
     ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
-    while ( (length($input) < $pduLen) && ($retryCnt++ < $Net::SSLhello::retry) ) {
+    while ( ( (length($input) < $pduLen) || ($input eq "") ) && ($retryCnt++ < $Net::SSLhello::retry) ) {
         $@ ="";
         eval { # check this for timeout, protect it against an unexpected Exit of the Program
             #Set alarm and timeout 
@@ -2412,10 +2413,9 @@ sub _readPdu {
                 #Set alarm and timeout 
                 $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);
-                ## read only up to 5 Bytes in the first round, then up to the expected pduLen
                 @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed)
                 _trace4 ("_readPdu: can read (1): ($retryCnt; ".length($input).")\n") if (scalar (@socketsReady));
-                $success = sysread ($socket, $input, $pduLen - length($input), length($input)); #if NO success: EOF or other Error while reading Data
+                $success = sysread ($socket, $input, $readLen - length($input), length($input)); #if NO success: EOF or other Error while reading Data
                 alarm (0); #clear alarm
             };
             alarm (0);   # race condition protection
@@ -2432,7 +2432,7 @@ sub _readPdu {
                     _trace4 ("_readPdu: received EOF (Disconnect), no Data\n");
                     last;
                 } else {
-                    _trace2 ("_readPdu: No Data (EOF) after ".length($input)." of expected $pduLen Bytes: '$!' -> Retry to read\n");
+                    _trace1 ("_readPdu: No Data (EOF) after ".length($input)." of expected $pduLen Bytes: '$!' -> Retry to read\n");
                     @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 1); ###additional debug (use IO::select needed)
                     _trace1 ("_readPdu: can read (3): ($retryCnt; ".length($input).")\n") if (scalar (@socketsReady));
                     select (undef, undef, undef, _SLEEP_B4_2ND_READ);
@@ -2442,43 +2442,45 @@ sub _readPdu {
             $len = length($input);
             $segmentCnt++;
             _trace4 ("_readPdu ... Received $len Bytes in $segmentCnt Segments\n");
-            $retryCnt = -1 if ($segmentCnt <= _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT); # reset Retry-Count to 0 (in next loop)
+            $retryCnt = 0 if ($segmentCnt <= _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT); # reset Retry-Count to 0 (in next loop)
+            
+            if ($pduLen == 0) { # no PduLen decoded, yet
+                if ( (! $isUdp) && ($len >= 5) ) { # try to get the pduLen of the SSL/TLS Pdu (=protocol aware length detection)
+                    # Check PDUlen; Parse the first 5 Bytes to check the Len of the PDU (SSL3/TLS)
+                    ($pduType,       #C (record_type)
+                     $pduVersion,    #n (record_version)
+                     $pduLen)        #n (record_len)
+                      = unpack("C n n", $input);
 
-            if ($len == 7) { # try to get the pduLen of the ssl Pdu (=protocol aware length detection)
-                             # Check PDUlen; Parse the first 5 Bytes to check the Len of the PDU (SSL3/TLS)
-                ($pduType,       #C (record_type)
-                 $pduVersion,    #n (record_version)
-                 $pduLen)        #n (record_len)
-                    = unpack("C n n", $input);
-
-                if ( ($pduType < 0x80) && (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) ) { #SSLv3/TLS (no SSLv2)
-                    $pduLen += 5; # Check PDUlen = len + size of record-header; 
-                   _trace3 ("_readPdu ... Received Data: Expected SSLv3/TLS-PDU-Len of Server-Hello: $pduLen\n");
-                } else { # Check for SSLv2
-                    ($pduLen,    # n (V2Len > 0x8000)
-                    $pduType)    # C = 0
-                        = unpack("n C", $input);
-                    if ( ($pduLen > 0x80000) && (($pduType == $SSL_MT_SERVER_HELLO) || ($pduType == $SSL_MT_ERROR)) ) { # SSLv2 check
-                        $pduLen += -0x8000 +2;
-                        $pduVersion = $PROTOCOL_VERSION{'SSLv2'}; # added the implicitely detected protocol
-                        _trace3 ("_readPdu ... Received Data: Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
-                    } else { ### No SSL/TLS/DTLS PDU => Last 
-                        $@ = "no known SSL/TLS PDU-Type";
-                        $pduType    = 0;
-                        $pduVersion = 0;
-                        $pduLen     = 0;
-                        _trace1 ("_readPdu: $@\n");
-                        _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
-                        last;
+                    if ( ($pduType < 0x80) && (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) ) { #SSLv3/TLS (no SSLv2)
+                        $pduLen += 5; # Check PDUlen = len + size of record-header; 
+                        _trace3 ("_readPdu ... Received Data: Expected SSLv3/TLS-PDU-Len of Server-Hello: $pduLen\n");
+                    } else { # Check for SSLv2
+                        ($pduLen,    # n (V2Len > 0x8000)
+                        $pduType)    # C = 0
+                            = unpack("n C", $input);
+                        if ( ($pduLen > 0x8000) && (($pduType == $SSL_MT_SERVER_HELLO) || ($pduType == $SSL_MT_ERROR)) ) { # SSLv2 check
+                            $pduLen += -0x8000 +2;
+                            $pduVersion = $PROTOCOL_VERSION{'SSLv2'}; # added the implicitely detected protocol
+                            _trace3 ("_readPdu ... Received Data: Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
+                        } else { ### No SSL/TLS/DTLS PDU => Last 
+                            $@ = "no known SSL/TLS PDU-Type";
+                            $pduType    = 0;
+                            $pduVersion = 0;
+                            $pduLen     = 0;
+                            _trace1 ("_readPdu: $@\n");
+                            _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                            last;
+                        }
                     }
-                }
-                if ($pduLen > $MAXLEN) {
-                    warn ("_readPdu: expected len of the SSL/TLS-Record is higher than the maximum ($MAXLEN) -> cut at maximum length!");
-                    $pduLen = $MAXLEN;
-                }
+                    if ($pduLen > $MAXLEN) {
+                        _trace1 ("_readPdu: expected len of the SSL/TLS-Record ($pduLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
+                        warn ("_readPdu: expected len of the SSL/TLS-Record ($pduLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
+                        $pduLen = $MAXLEN;
+                    }
 
-            } elsif ( ($isUdp) && ($pduLen == $MAXLEN) && ($len >= 13) )  { # try to get the pduLen of the ssl Pdu (=protocol aware length detection)
-                             # Check PDUlen; Parse the first 13 Bytes to check the Len of the PDU (DTLS)
+                } elsif ( ($isUdp) && ($len >= 13) )  { # try to get the pduLen of the DTLS Pdu (=protocol aware length detection)
+                    # Check PDUlen; Parse the first 13 Bytes to check the Len of the PDU (DTLS)
                     ($pduType,       #C  (record_type)
                      $pduVersion,    #n  (record_version)
                                      #x8 (epoch, sequenceNr)
@@ -2489,12 +2491,13 @@ sub _readPdu {
                         $pduLen += 13; # Check PDUlen = len + size of record-header; 
                         _trace3 ("_readPdu ... Received Data: Expected DTLS-PDU-Len of Server-Hello: $pduLen\n");
                         if ($pduLen > $MAXLEN) {
+                            _trace1 ("_readPdu: expected len of the DTLS-Record is higher than the maximum ($MAXLEN) -> cut at maximum length!");
                             warn ("_readPdu: expected len of the DTLS-Record is higher than the maximum ($MAXLEN) -> cut at maximum length!");
                             $pduLen = $MAXLEN;
                         }
                     } else {
-                        # $pduLen = 13; # no DTLS-Record
-                        $@ = "no known DTLS PDU-Type";
+                        # isUdp is set, but no DTLS-Record recognized
+                        $@ = "no known DTLS PDU-Type -> unknown Protocol";
                         $pduType    = 0;
                         $pduVersion = 0;
                         $pduLen     = 0;
@@ -2502,6 +2505,8 @@ sub _readPdu {
                         _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
                         last;
                     }
+                }
+                $readLen = $pduLen; #read only pduLen Octetts
             } elsif ($len <= 0) { # Error no Data
                 $@ = "NULL-Len-Data in _readPdu: $!";
                 _trace1 ("_readPdu ... Received Data: $@\n");
@@ -2514,7 +2519,7 @@ sub _readPdu {
            _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
             last;
         }
-    }
+    } # End while
     chomp ($@);
     _trace2 ("_readPdu: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
     _trace3_ ("      >".substr(_chomp_r($input),0,64)." ...<\n");
