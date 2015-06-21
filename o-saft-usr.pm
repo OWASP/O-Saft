@@ -120,7 +120,7 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.14 15/05/17 21:43:54";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.15 15/06/21 12:09:10";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -205,5 +205,17 @@ sub usr_pre_exit()  {
 # local functions {
 # -------------------------------------
 # local functions }
+
+unless (defined caller) {
+    if (eval("require POD::Perldoc;")) {
+        # pod2usage( -verbose => 1 )
+        exit( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {
+        # may return:  You need to install the perl-doc package to use this program.
+        #exec "perldoc $0"; # scary ...
+        print "# try:\n  perldoc $0\n";
+    }
+}
 
 1;
