@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.30 15/06/18 21:46:42";
+my  $man_SID= "@(#) o-saft-man.pm 1.31 15/06/21 11:45:28";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1861,7 +1861,11 @@ OPTIONS
       --tlsv11
       --tlsv12
       --tlsv13
+      --dtlsv09
       --dtlsv1
+      --dtlsv11
+      --dtlsv12
+      --dtlsv13
       --SSL, -protocol SSL
 
       --no-sslv2
@@ -1870,7 +1874,11 @@ OPTIONS
       --no-tlsv11
       --no-tlsv12
       --no-tlsv13
+      --no-dtlsv09
       --no-dtlsv1
+      --no-dtlsv11
+      --no-dtlsv12
+      --no-dtlsv13
       --no-SSL
 
           * SSL         can be any of:
@@ -1881,6 +1889,24 @@ OPTIONS
 
           (--SSL variants):    Test ciphers for this SSL/TLS version.
           (--no-SSL variants): Don't test ciphers for this SSL/TLS version.
+
+      --no-tcp
+
+          Shortcut for:
+          --no-sslv2 --no-sslv3 --no-tlsv1 --no-tlsv11 --no-tlsv12 --no-tlsv13
+
+      --tcp
+
+          Shortcut for:  --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12 --tlsv13
+
+      --no-udp
+
+          Shortcut for:
+          --no-dtlsv09 --no-dtlsv1 --no-dtlsv11 --no-dtlsv12 --no-dtlsv13
+
+      --udp
+
+          Shortcut for:  --dtlsv09 --dtlsv1 --dtlsv11 --dtlsv12 --dtlsv13
 
       --nullsslv2
 
