@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.363 15/06/17 23:19:07",
+    SID         => "@(#) yeast.pl 1.364 15/06/21 11:13:54",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -49,12 +49,12 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
+    sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.p
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
     # Unfortunately perl's BEGIN has following limits and restrictions:
-    #   - constants can be defined befor and used herein
+    #   - constants can be defined befor and used herein 
     #   - sub can be defined herein and used later
     #   - variables can not be defined herein and used later
     #   - some file handles (like <DATA>) are not yet available
@@ -531,50 +531,10 @@ my %check_conn = (  # connection data
     'selected'      => {'txt' => "Selected cipher by server"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
-     # counter for accepted ciphers, 0 if not supported
-    'SSLv2'         => {'txt' => "Supported total ciphers (SSLv2)"},
-    'SSLv3'         => {'txt' => "Supported total ciphers (SSLv3)"},
-    'TLSv1'         => {'txt' => "Supported total ciphers (TLSv1)"},
-    'TLSv11'        => {'txt' => "Supported total ciphers (TLSv11)"},
-    'TLSv12'        => {'txt' => "Supported total ciphers (TLSv12)"},
-    'TLSv13'        => {'txt' => "Supported total ciphers (TLSv13)"},
-    'DTLSv1'        => {'txt' => "Supported total ciphers (DTLSv1)"},
-    # counter for this type of cipher
-    'SSLv2-LOW'     => {'txt' => "Supported ciphers with security LOW"},
-    'SSLv2-WEAK'    => {'txt' => "Supported ciphers with security WEAK"},
-    'SSLv2-HIGH'    => {'txt' => "Supported ciphers with security HIGH"},
-    'SSLv2-MEDIUM'  => {'txt' => "Supported ciphers with security MEDIUM"},
-    'SSLv2--?-'     => {'txt' => "Supported ciphers with security unknown"},
-    'SSLv3-LOW'     => {'txt' => "Supported ciphers with security LOW"},
-    'SSLv3-WEAK'    => {'txt' => "Supported ciphers with security WEAK"},
-    'SSLv3-HIGH'    => {'txt' => "Supported ciphers with security HIGH"},
-    'SSLv3-MEDIUM'  => {'txt' => "Supported ciphers with security MEDIUM"},
-    'SSLv3--?-'     => {'txt' => "Supported ciphers with security unknown"},
-    'TLSv1-LOW'     => {'txt' => "Supported ciphers with security LOW"},
-    'TLSv1-WEAK'    => {'txt' => "Supported ciphers with security WEAK"},
-    'TLSv1-HIGH'    => {'txt' => "Supported ciphers with security HIGH"},
-    'TLSv1-MEDIUM'  => {'txt' => "Supported ciphers with security MEDIUM"},
-    'TLSv1--?-'     => {'txt' => "Supported ciphers with security unknown"},
-    'TLSv11-LOW'    => {'txt' => "Supported ciphers with security LOW"},
-    'TLSv11-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
-    'TLSv11-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
-    'TLSv11-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
-    'TLSv11--?-'    => {'txt' => "Supported ciphers with security unknown"},
-    'TLSv12-LOW'    => {'txt' => "Supported ciphers with security LOW"},
-    'TLSv12-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
-    'TLSv12-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
-    'TLSv12-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
-    'TLSv12--?-'    => {'txt' => "Supported ciphers with security unknown"},
-    'TLSv13-LOW'    => {'txt' => "Supported ciphers with security LOW"},
-    'TLSv13-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
-    'TLSv13-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
-    'TLSv13-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
-    'TLSv13--?-'    => {'txt' => "Supported ciphers with security unknown"},
-    'DTLSv1-LOW'    => {'txt' => "Supported ciphers with security LOW"},
-    'DTLSv1-WEAK'   => {'txt' => "Supported ciphers with security WEAK"},
-    'DTLSv1-HIGH'   => {'txt' => "Supported ciphers with security HIGH"},
-    'DTLSv1-MEDIUM' => {'txt' => "Supported ciphers with security MEDIUM"},
-    'DTLSv1--?-'    => {'txt' => "Supported ciphers with security unknown"},
+     # per protocol: counter for accepted ciphers, 0 if not supported; added to %checks directly
+#   'PROT'          => {'txt' => "Supported total ciphers (PROT)"},
+     # per protocol: counter for ciphers; added to %checks directly; see "add special keys" below
+#   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
     #------------------+-----------------------------------------------------
 ); # %check_conn
 
@@ -612,21 +572,7 @@ my %check_dest = (  # target (connection) data
     'renegotiation' => {'txt' => "Target supports renegotiation"},
     'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
     'pfs_cipherall' => {'txt' => "Target supports PFS (all ciphers)"},
-     #  *-pfs* are used internally only
-    'SSLv2-pfs+'    => {'txt' => "Target supports PFS (all  SSLv2 ciphers)"}, # dummy
-    'SSLv3-pfs+'    => {'txt' => "Target supports PFS (all  SSLv3 ciphers)"},
-    'TLSv1-pfs+'    => {'txt' => "Target supports PFS (all  TLSv1 ciphers)"},
-    'TLSv11-pfs+'   => {'txt' => "Target supports PFS (all  TLSv11 ciphers)"},
-    'TLSv12-pfs+'   => {'txt' => "Target supports PFS (all  TLSv12 ciphers)"},
-    'TLSv13-pfs+'   => {'txt' => "Target supports PFS (all  TLSv13 ciphers)"},
-    'DTLSv1-pfs+'   => {'txt' => "Target supports PFS (all  DTLSv1 ciphers)"},
-    'SSLv2-pfs-'    => {'txt' => "Target supports PFS (some SSLv2 ciphers)"},
-    'SSLv3-pfs-'    => {'txt' => "Target supports PFS (some SSLv3 ciphers)"},
-    'TLSv1-pfs-'    => {'txt' => "Target supports PFS (some TLSv1 ciphers)"},
-    'TLSv11-pfs-'   => {'txt' => "Target supports PFS (some TLSv11 ciphers)"},
-    'TLSv12-pfs-'   => {'txt' => "Target supports PFS (some TLSv12 ciphers)"},
-    'TLSv13-pfs-'   => {'txt' => "Target supports PFS (some TLSv13 ciphers)"},
-    'DTLSv1-pfs-'   => {'txt' => "Target supports PFS (some DTLSv1 ciphers)"},
+     #  *-pfs* are used internally only and added to %checks directly
     'krb5'          => {'txt' => "Target supports Krb5"},
     'psk_hint'      => {'txt' => "Target supports PSK identity hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
@@ -699,6 +645,7 @@ foreach $key (keys %check_cert) { $checks{$key}->{txt} = $check_cert{$key}->{txt
 foreach $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt}; $checks{$key}->{typ} = 'destination'; }
 foreach $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
 foreach $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
+# more data added to %checks after defining %cfg, see below
 
 our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
         # TODO: generate this table using Net::SSLeay functions like:
@@ -795,50 +742,9 @@ our %shorttexts = (
     #------------------+------------------------------------------------------
     # %check +check     short label text
     #------------------+------------------------------------------------------
-    # NOTE: key must be same string as used in %ciphers[ssl] {
-    'SSLv2'         => "Ciphers (SSLv2)",
-    'SSLv3'         => "Ciphers (SSLv3)",
-    'TLSv1'         => "Ciphers (TLSv1)",
-    'TLSv11'        => "Ciphers (TLSv11)",
-    'TLSv12'        => "Ciphers (TLSv12)",
-    'TLSv13'        => "Ciphers (TLSv13)",
-    'DTLSv1'        => "Ciphers (DTLSv1)",
-    'SSLv2-LOW'     => "Ciphers LOW (SLv2)",
-    'SSLv2-WEAK'    => "Ciphers WEAK (SLv2)",
-    'SSLv2-HIGH'    => "Ciphers HIGH (SLv2)",
-    'SSLv2-MEDIUM'  => "Ciphers MEDIUM (SLv2)",
-    'SSLv2--?-'     => "Ciphers unknown (SLv2)",
-    'SSLv3-LOW'     => "Ciphers LOW (SSLv3)",
-    'SSLv3-WEAK'    => "Ciphers WEAK (SSLv3)",
-    'SSLv3-HIGH'    => "Ciphers HIGH (SSLv3)",
-    'SSLv3-MEDIUM'  => "Ciphers MEDIUM (SSLv3)",
-    'SSLv3--?-'     => "Ciphers unknown (SSLv3)",
-    'TLSv1-LOW'     => "Ciphers LOW (TLSv1)",
-    'TLSv1-WEAK'    => "Ciphers WEAK (TLSv1)",
-    'TLSv1-HIGH'    => "Ciphers HIGH (TLSv1)",
-    'TLSv1-MEDIUM'  => "Ciphers MEDIUM (TLSv1)",
-    'TLSv1--?-'     => "Ciphers unknown (TLSv1)",
-    'TLSv11-LOW'    => "Ciphers LOW (TLSv11)",
-    'TLSv11-WEAK'   => "Ciphers WEAK (TLSv11)",
-    'TLSv11-HIGH'   => "Ciphers HIGH (TLSv11)",
-    'TLSv11-MEDIUM' => "Ciphers MEDIUM (TLSv11)",
-    'TLSv11--?-'    => "Ciphers unknown (TLSv11)",
-    'TLSv12-LOW'    => "Ciphers LOW (TLSv12)",
-    'TLSv12-WEAK'   => "Ciphers WEAK (TLSv12)",
-    'TLSv12-HIGH'   => "Ciphers HIGH (TLSv12)",
-    'TLSv12-MEDIUM' => "Ciphers MEDIUM (TLSv12)",
-    'TLSv12--?-'    => "Ciphers unknown (TLSv12)",
-    'TLSv13-LOW'    => "Ciphers LOW (TLSv13)",
-    'TLSv13-WEAK'   => "Ciphers WEAK (TLSv13)",
-    'TLSv13-HIGH'   => "Ciphers HIGH (TLSv13)",
-    'TLSv13-MEDIUM' => "Ciphers MEDIUM (TLSv13)",
-    'TLSv13--?-'    => "Ciphers unknown (TLSv1)",
-    'DTLSv1-LOW'    => "Ciphers LOW (DTLSv1)",
-    'DTLSv1-WEAK'   => "Ciphers WEAK (DTLSv1)",
-    'DTLSv1-HIGH'   => "Ciphers HIGH (DTLSv1)",
-    'DTLSv1-MEDIUM' => "Ciphers MEDIUM (DTLSv1)",
-    'DTLSv1--?-'    => "Ciphers unknown (DTLSv1)",
-    #}
+    # labels for various protocol checks are added generic; see "add special keys" below
+#   'PROT'          => "Ciphers (PROT)",
+#   'PROT-LOW'      => "Ciphers LOW (PROT)",
     'ip'            => "IP for hostname",
     'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
@@ -891,21 +797,8 @@ our %shorttexts = (
     'pci'           => "PCI compliant",
     'pfs_cipher'    => "PFS (selected cipher)",
     'pfs_cipherall' => "PFS (all ciphers)",
-     #  *-pfs* are used internally only
-    'SSLv2-pfs+'    => "PFS (all  SSLv2 ciphers)",
-    'SSLv3-pfs+'    => "PFS (all  SSLv3 ciphers)",
-    'TLSv1-pfs+'    => "PFS (all  TLSv1 ciphers)",
-    'TLSv11-pfs+'   => "PFS (all  TLSv11 ciphers)",
-    'TLSv12-pfs+'   => "PFS (all  TLSv12 ciphers)",
-    'TLSv13-pfs+'   => "PFS (all  TLSv13 ciphers)",
-    'DTLSv1-pfs+'   => "PFS (all  DTLSv1 ciphers)",
-    'SSLv2-pfs-'    => "PFS (some SSLv2 ciphers)",
-    'SSLv3-pfs-'    => "PFS (some SSLv3 ciphers)",
-    'TLSv1-pfs-'    => "PFS (some TLSv1 ciphers)",
-    'TLSv11-pfs-'   => "PFS (some TLSv11 ciphers)",
-    'TLSv12-pfs-'   => "PFS (some TLSv12 ciphers)",
-    'TLSv13-pfs-'   => "PFS (some TLSv13 ciphers)",
-    'DTLSv1-pfs-'   => "PFS (some DTLSv1 ciphers)",
+     #  *-pfs* are used internally only and added to %checks directly; see "add special keys" below
+#   'PROT-pfs+'     => "PFS (all  PROT ciphers)",
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
     'tr-02102'      => "TR-02102-2 compliant",
@@ -1083,7 +976,11 @@ my %score_ssllabs = (
     'TLSv11'        => {'val' =>  0, 'score' =>  95, 'txt' => "TLS 1.1"}, #  95%
     'TLSv12'        => {'val' =>  0, 'score' => 100, 'txt' => "TLS 1.2"}, # 100%
     'TLSv13'        => {'val' =>  0, 'score' => 100, 'txt' => "TLS 1.3"}, # 100%
+    'DTLSv09'       => {'val' =>  0, 'score' =>  80, 'txt' => "DTLS 0.9"},#  80%
     'DTLSv1'        => {'val' =>  0, 'score' => 100, 'txt' => "DTLS 1.0"},# 100%
+    'DTLSv11'       => {'val' =>  0, 'score' => 100, 'txt' => "DTLS 1.1"},# 100%
+    'DTLSv12'       => {'val' =>  0, 'score' => 100, 'txt' => "DTLS 1.2"},# 100%
+    'DTLSv13'       => {'val' =>  0, 'score' => 100, 'txt' => "DTLS 1.3"},# 100%
     # 'txt' is not used here!
     #
     #    ( best protocol + worst protocol ) / 2
@@ -1122,7 +1019,7 @@ my %score_howsmyssl = (
         # if they do not support ephemeral key cipher suites,
         # do not support session tickets, or are using TLS 1.1.
     'bad'           => {'txt' => "Bad"},
-        # uses TLS 1.0 (instead of 1.1 or 1.2), or, worse, SSLv3 or earlier.
+        # uses TLS 1.0 (instead of 1.1 or 1.2), or worse: SSLv3 or earlier.
         # supports known insecure cipher suites
         # supports TLS compression (that is compression of the encryption
         #     information used to secure your connection) which exposes it
@@ -1211,10 +1108,12 @@ our %cmd = (
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
-    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv1)], # all supported versions
+    'versions'      =>          # all supported versions
+                       [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
                                 # NOTE: must be same string as used in %ciphers[ssl]
                                 # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
-                                # TODO: DTLSv0.9, DTLSv1.2
+    'DTLS_versions' => [qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
+                                # temporary list 'cause DTLS not supported by openssl (6/2015)
     'ssl_lazy'      => 0,       # 1: lazy check for available SSL protocol functionality
     'SSLv2'         => 1,       # 1: check this SSL version
     'SSLv3'         => 1,       # 1:   "
@@ -1222,8 +1121,12 @@ our %cmd = (
     'TLSv11'        => 1,       # 1:   "
     'TLSv12'        => 1,       # 1:   "
     'TLSv13'        => 1,       # 1:   "
-    'DTLSv9'        => 0,       # 1:   "
-    'DTLSv1'        => 1,       # 1:   "
+                                # NOTE: DTLS currently (6/2015) disabled by default 'cause not supported by openssl
+    'DTLSv09'       => 0,       # 1:   "
+    'DTLSv1'        => 0,       # 1:   "
+    'DTLSv11'       => 0,       # 1:   "
+    'DTLSv12'       => 0,       # 1:   "
+    'DTLSv13'       => 0,       # 1:   "
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => [],      # ciphers we got with --cipher=
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
@@ -1573,17 +1476,29 @@ our %cmd = (
         'TLSv11'    => "-tls1_1",
         'TLSv12'    => "-tls1_2",
         'TLSv13'    => "-tls1_3",
+        'TLS1FF'    => "--dummy--",
+        'DTLSfamily'=> "--dummy--",
+        'DTLSv09'   => "-dtls", # never defined and used in openssl
         'DTLSv1'    => "-dtls1",
+        'DTLSv11'   => "-dtls1_1", # not yet implemented in openssl (5/2015)
+        'DTLSv12'   => "-dtls1_2", #  "
+        'DTLSv13'   => "-dtls1_3", #  "
      },
     'openssl_version_map' => {  # map our internal option to openssl version (hex value)
+        # TODO: should be same as Net::SSLinfo %_SSLmap
         'SSLv2'     => 0x0002,
         'SSLv3'     => 0x0300,
         'TLSv1'     => 0x0301,
         'TLSv11'    => 0x0302,
         'TLSv12'    => 0x0303,
         'TLSv13'    => 0x0304,
-        'DTLSv1'    => 0xFEFF,
-        'SCSV'      => 0x03FF,
+        'TLS1FF'    => 0x03FF,  # last possible version of TLS1.x (not specified, used internal)
+        'DTLSfamily'=> 0xFE00,  # DTLS1.FF, no defined PROTOCOL, for internal use only
+        'DTLSv09'   => 0xFEFF,  # DTLS, OpenSSL pre 0.9.8f, not finally standardized
+        'DTLSv1'    => 0xFEFF,  # DTLS1.0 (udp)
+        'DTLSv11'   => 0xFEFE,  # DTLS1.1: has never been used (udp)
+        'DTLSv12'   => 0xFEFD,  # DTLS1.2 (udp)
+        'DTLSv13'   => 0xFEFC,  # DTLS1.3, NOT YET specified (udp)
         #'TLS_FALLBACK_SCSV' => 0x5600,
      },
     'done' => {                 # internal administration
@@ -1624,6 +1539,40 @@ our %cmd = (
     },
 ); # %cfg
 
+## add special keys for all protocols and labels
+## -------------------------------------
+foreach $ssl (@{$cfg{'versions'}}) {
+    # $shorttexts{'ssl'}            = "Ciphers (ssl)",
+    # $shorttexts{'ssl-LOW'}        = "Ciphers LOW (ssl)", # also WEAK, MEDIUM, HIGH, -?-
+    # $shorttexts{'ssl-pfs+'}       = "PFS (all  ssl ciphers)",
+    # $shorttexts{'ssl-pfs-'}       = "PFS (some ssl ciphers)",
+    # $check_dest{'ssl-pfs+'}{txt}  = "PFS (all  ssl ciphers)",
+    # $check_dest{'ssl-pfs-'}{txt}  = "PFS (some ssl ciphers)",
+    # $check_conn{'ssl'}{txt}       = "Supported total ciphers (ssl)",
+    # $check_conn{'ssl-LOW'}{txt}   = "Supported ciphers with security LOW",
+    # Note that %check_dest and %check_conn are temporary variables, which
+    # are finally added to %checks
+    $key = $ssl;
+    $shorttexts{$key}      =  "Ciphers ($ssl)";
+    $checks{$key} = {'txt' => "Supported total ciphers ($ssl)",           'typ' => 'connection'};
+    $key = $ssl . "-pfs+";                  # SSLv3-pfs+ TLSv1-pfs+ etc.
+    $shorttexts{$key}      =  "PFS (all  $ssl ciphers)";
+    $checks{$key} = {'txt' => "Target supports PFS (all  $ssl ciphers)",  'typ' => 'destination'};
+    $key = $ssl . "-pfs-";                  # SSLv3-pfs- TLSv1-pfs- etc.
+    $shorttexts{$key}      =  "PFS (some $ssl ciphers)";
+    $checks{$key} = {'txt' => "Target supports PFS (some $ssl ciphers)",  'typ' => 'destination'};
+    $key = $ssl . "--?-";                   # SSLv3--?-  (unknown is special)
+    $shorttexts{$key}      =  "Ciphers unknown ($ssl)";
+    $checks{$key} = {'txt' => "Supported ciphers with security unknown",  'typ' => 'connection'};
+    foreach $sec (qw(LOW WEAK MEDIUM HIGH)) {
+        $key = $ssl . "-$sec";              # SSLv3-LOW TLSv1-HIGH etc.
+        $shorttexts{$key}      =  "Ciphers $sec ($ssl)";
+        $checks{$key} = {'txt' => "Supported ciphers with security $sec", 'typ' => 'connection'};
+    }
+    # FIXME: unfortunately above settings are not known in o-saft-dbx.pm
+    #        see comment in _yeast_data() there
+}
+
 ## construct list for special commands: 'cmd-*'
 ## -------------------------------------
 my $old = "";
@@ -1636,6 +1585,7 @@ foreach $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-int
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
 }
+
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
 push(@{$cfg{'cmd-info--v'}}, 'dump');       # more information
 foreach $key (keys %data) {
@@ -4312,10 +4262,11 @@ sub print_data($$$$) {
         if ($label =~ m/((?:pubkey|sigkey)_algorithm|signame)/) {
             $val =~ s#(with)# $1 #ig;
             $val =~ s#(encryption)# $1 #ig;
-         }
-        printf("\n%s%s\n\t%s\n", $data{$label}->{txt},  $text{'separator'}, $val); # comma!
+        }
+        $label = ($data{$label}->{txt} || "");      # defensive programming
+        printf("\n%s%s\n\t%s\n", $label,  $text{'separator'}, $val); # comma!
     } else {
-        printf("%-32s\t%s\n",    $data{$label}->{txt} . $text{'separator'}, $val); # dot!
+        printf("%-32s\t%s\n",    $label . $text{'separator'}, $val); # dot!
     }
 } # print_data
 
@@ -5068,8 +5019,11 @@ while ($#argv >= 0) {
             if ($arg =~ /^?tlsv?1[-_.]?1$/i)  { $cfg{'TLSv11'}  = 1; }
             if ($arg =~ /^?tlsv?1[-_.]?2$/i)  { $cfg{'TLSv12'}  = 1; }
             if ($arg =~ /^?tlsv?1[-_.]?3$/i)  { $cfg{'TLSv13'}  = 1; }
-            if ($arg =~ /^dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv9'}  = 1; }
+            if ($arg =~ /^dtlsv?0[-_.]?9$/i)  { $cfg{'DTLSv09'} = 1; }
             if ($arg =~ /^dtlsv?1[-_.]?0?$/i) { $cfg{'DTLSv1'}  = 1; }
+            if ($arg =~ /^dtlsv?1[-_.]?1$/i)  { $cfg{'DTLSv11'} = 1; }
+            if ($arg =~ /^dtlsv?1[-_.]?2$/i)  { $cfg{'DTLSv12'} = 1; }
+            if ($arg =~ /^dtlsv?1[-_.]?3$/i)  { $cfg{'DTLSv13'} = 1; }
             $typ = 'HOST';
         }
         if ($typ eq 'PHOST')    {
@@ -5198,6 +5152,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # for CGI mode; ignore
+    if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
         # in CGI mode commands need to be passed as --cmd=* option
@@ -5296,16 +5251,22 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?tlsv?11$/i)        { $cfg{'TLSv11'}    = 1;    }
     if ($arg =~ /^--?tlsv?12$/i)        { $cfg{'TLSv12'}    = 1;    }
     if ($arg =~ /^--?tlsv?13$/i)        { $cfg{'TLSv13'}    = 1;    }
-    if ($arg =~ /^--dtlsv?09$/i)        { $cfg{'DTLSv9'}    = 1;    }
+    if ($arg =~ /^--dtlsv?09$/i)        { $cfg{'DTLSv09'}   = 1;    }
     if ($arg =~ /^--dtlsv?10?$/i)       { $cfg{'DTLSv1'}    = 1;    }
+    if ($arg =~ /^--dtlsv?11$/i)        { $cfg{'DTLSv11'}   = 1;    }
+    if ($arg =~ /^--dtlsv?12$/i)        { $cfg{'DTLSv12'}   = 1;    }
+    if ($arg =~ /^--dtlsv?13$/i)        { $cfg{'DTLSv13'}   = 1;    }
     if ($arg =~ /^--nosslv?2$/i)        { $cfg{'SSLv2'}     = 0;    }
     if ($arg =~ /^--nosslv?3$/i)        { $cfg{'SSLv3'}     = 0;    }
     if ($arg =~ /^--notlsv?1$/i)        { $cfg{'TLSv1'}     = 0;    }
     if ($arg =~ /^--notlsv?11$/i)       { $cfg{'TLSv11'}    = 0;    }
     if ($arg =~ /^--notlsv?12$/i)       { $cfg{'TLSv12'}    = 0;    }
     if ($arg =~ /^--notlsv?13$/i)       { $cfg{'TLSv13'}    = 0;    }
-    if ($arg =~ /^--nodtlsv?09$/i)      { $cfg{'DTLSv9'}    = 0;    }
+    if ($arg =~ /^--nodtlsv?09$/i)      { $cfg{'DTLSv09'}   = 0;    }
     if ($arg =~ /^--nodtlsv?10?$/i)     { $cfg{'DTLSv1'}    = 0;    }
+    if ($arg =~ /^--nodtlsv?11$/i)      { $cfg{'DTLSv11'}   = 0;    }
+    if ($arg =~ /^--nodtlsv?12$/i)      { $cfg{'DTLSv12'}   = 0;    }
+    if ($arg =~ /^--nodtlsv?13$/i)      { $cfg{'DTLSv13'}   = 0;    }
     if ($arg eq  '-b')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
     if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out_header, see below
 #   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
