@@ -81,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.24 15/06/21 11:06:59";
+my  $SID    = "@(#) o-saft-dbx.pm 1.25 15/06/21 12:32:03";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -329,6 +329,18 @@ sub _yeast_prot() {
 
 sub _yeast_cipher() {
 # TODO: %ciphers %cipher_names
+}
+
+unless (defined caller) {
+    if (eval("require POD::Perldoc;")) {
+        # pod2usage( -verbose => 1 )
+        exit( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {
+        # may return:  You need to install the perl-doc package to use this program.
+        #exec "perldoc $0"; # scary ...
+        print "# try:\n  perldoc $0\n";
+    }
 }
 
 1;
