@@ -29,6 +29,8 @@ Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
 =item _yeast_data( )
 
+=item _yeast_prot( )
+
 =item _yeast_cipher( )
 
 =item _yeast( )
@@ -79,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.23 15/05/17 21:44:12";
+my  $SID    = "@(#) o-saft-dbx.pm 1.24 15/06/21 11:06:59";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -183,7 +185,7 @@ sub _yeast_init() {
         _yline(" user-friendly cfg }");
         _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
     }
-}
+} # _yeast_init
 sub _yeast_exit() {
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
@@ -225,9 +227,10 @@ sub _yeast_data() {
 === _yeast_data: check internal data structure ===
 
   This function prints a simple overview of all available commands and checks.
-  The purpose is to show if for each command from  %cfg{'commands'}  a proper
-  key is defined  in  %data  and  %checks  and vice versa.
+  The purpose is to show if a proper key is defined in  %data and %checks  for
+  each command from  %cfg{'commands'}  and vice versa.
 ";
+
     my ($key, $old, $label, $value);
     my @yeast = ();     # list of potential internal, private commands
     printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
@@ -248,24 +251,34 @@ sub _yeast_data() {
         }
         $cmd = " ";
         $cmd = "+" if (_is_member($key, \@{$cfg{'commands'}}) > 0);     # command available as is
+        $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/);           # all SSL/TLS commands ar for checks only
         printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
             $cmd,
             (_is_intern($key) > 0)      ?          "I"  : " ",
             (defined $data{$key})       ? __data( $key) : " ",
             (defined $shorttexts{$key}) ?          "*"  : " ",
             (defined $checks{$key})     ?          "*"  : " ",
-            (_is_member($key, \@{$org{'cmd-check'}}) > 0) ? "*"  : "!",
+            ((_is_member($key, \@{$org{'cmd-check'}}) > 0)
+            || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)) ? "*"  : "!",
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
+# FIXME: FIXME: @{$org{'cmd-check'}} is incomplete when o-saft-dbx.pm is 
+#               `require'd in main; some checks above fail (mainly those
+#               those matching $cfg{'regex'}->{'SSLprot'}, hence the dirty
+#               additional  || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)
+#               
     printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
+    printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
     print '
     +  command (key) present
     I  command is an internal command or alias
+    -  command (key) used internal for checks only
     *  key present
        key not present
     ?  key in %data present but missing in $cfg{commands}
     !  key in %cfg{cmd-check} present but missing in redefined %cfg{cmd-check}
+    .  no score defined in %checks{key}
 
     A shorttext should be available for each command and all data keys, except:
         cn_nosni, ext_*, valid-*
@@ -274,7 +287,45 @@ sub _yeast_data() {
     ';
     print "    internal or summary commands:\n        " . join(" ", @yeast);
     print "\n";
-}
+} # _yeast_data
+sub _yeast_prot() {
+    #? print information about SSL/TLS protocols in various variables (hashes)
+    #? this function is for internal use only
+    local $\ = "\n";
+    my $key = "";
+    my $ssl = $cfg{'regex'}->{'SSLprot'};
+    print "=== _yeast_prot: internal data according protocols ===\n";
+        _yline(" %cfg {");
+        foreach $key (sort keys %cfg) {
+            #printf("%16s= %s\n", $key, $cfg{$key}) if ($key =~ m/$ssl/);
+            _yeast_trac(\%cfg, $key) if ($key =~ m/$ssl/);
+        }
+        _yline(" }");
+        _yline(" %cfg{openssl_option_map} {");
+        foreach $key (sort keys %{$cfg{'openssl_option_map'}})  {
+            _yeast_trac(\%{$cfg{'openssl_option_map'}}, $key);
+        }
+        _yline(" }");
+        _yline(" %cfg{openssl_version_map} {");
+        foreach $key (sort keys %{$cfg{'openssl_version_map'}}) {
+            _yeast(sprintf("%14s= ", $key) . sprintf("0x%04x (%d)", ${$cfg{'openssl_version_map'}}{$key}, ${$cfg{'openssl_version_map'}}{$key}));
+        }
+        _yline(" }");
+        # %check_conn and %check_dest are temporary and should be inside %checks
+        _yline(" %checks {");
+        foreach $key (sort keys %checks) {
+            # $checks{$key}->{val} undefined at beginning
+            _yeast(sprintf("%14s= ", $key) . $checks{$key}->{txt}) if ($key =~ m/$ssl/);
+        }
+        _yline(" }");
+        _yline(" %shorttexts {");
+        foreach $key (sort keys %shorttexts) {
+            _yeast(sprintf("%14s= ",$key) . $shorttexts{$key}) if ($key =~ m/$ssl/);
+        }
+        _yline(" }");
+    if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
+    }
+} # _yeast_prot()
 
 sub _yeast_cipher() {
 # TODO: %ciphers %cipher_names
