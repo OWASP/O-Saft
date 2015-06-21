@@ -29,6 +29,7 @@ package Net::SSLinfo;
 
 use strict;
 use constant {
+    SSLINFO_VERSION => '15.06.19',
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
@@ -298,7 +299,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 BEGIN {
 
 require Exporter;
-    $VERSION   = '15.05.16';
+    $VERSION   = SSLINFO_VERSION;
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
         dump
@@ -2185,11 +2186,23 @@ sub error($) {
     #return Net::SSLeay::ERR_get_error;
 }
 
+unless (defined caller) {
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval("require POD::Perldoc;")) {
+        # pod2usage( -verbose => 1 );
+        exit( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {
+        # may return:  You need to install the perl-doc package to use this program.
+        #exec "perldoc $0"; # scary ...
+        printf("# try:\n  perldoc $0\n");
+    }
 #dbx# if ($#ARGV >= 0) {
 #dbx#     $\="\n";
 #dbx#     do_ssl_open( shift, 443, '');
 #dbx#     print Net::SSLinfo::dump();
 #dbx# }
+}
 
 1;
 
