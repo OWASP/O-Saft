@@ -4273,6 +4273,7 @@ sub print_data($$$$) {
         $label = ($data{$label}->{txt} || "");      # defensive programming
         printf("\n%s%s\n\t%s\n", $label,  $text{'separator'}, $val); # comma!
     } else {
+        $label = ($data{$label}->{txt} || "");      # defensive programming
         printf("%-32s\t%s\n",    $label . $text{'separator'}, $val); # dot!
     }
 } # print_data
