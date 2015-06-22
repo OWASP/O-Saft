@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.366 15/06/21 14:52:01",
+    SID         => "@(#) yeast.pl 1.367 15/06/22 13:15:36",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -475,7 +475,10 @@ my %check_cert = (  # certificate data
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
-    'sha2signature' => {'txt' => "Certificate private key signature SHA2"},
+    'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
+    'modulus_size'  => {'txt' => "Certificate Public Key Modulus <16385 bits"},
+    'modulus_exp_size'=>{'txt'=> "Certificate Public Key Modulus Exponent <= 65536"},
+    'pub_encryption'=> {'txt' => "Certificate Public Key with Encryption"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -602,6 +605,7 @@ my %check_size = (  # length and count data
     'len_ocsp'      => {'txt' => "Certificate OCSP size"},          # <  256
     'len_oids'      => {'txt' => "Certificate OIDs size"},
     'len_publickey' => {'txt' => "Certificate Public Key size"},    # > 1024
+    # \---> same as modulus_len
     'len_sigdump'   => {'txt' => "Certificate Signature Key size"} ,# > 1024
     'len_altname'   => {'txt' => "Certificate Subject Altname size"},
     'len_chain'     => {'txt' => "Certificate Chain size"},         # < 2048
@@ -787,6 +791,9 @@ our %shorttexts = (
     'rc4'           => "Safe to RC4 attack",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
+    'modulus_size'  => "Modulus <= 16384 bits",
+    'modulus_exp_size'=>"Modulus exponent <= 65536",
+    'pub_encryption'=> "Public key with encryption",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -839,9 +846,9 @@ our %shorttexts = (
     'compression'   => "Compression",
     'expansion'     => "Expansion",
     'krb5'          => "Krb5 Principal",
-    'psk_hint'      => "PSK identity hint",
-    'psk_identity'  => "PSK identity",
-    'srp'           => "SRP username",
+    'psk_hint'      => "PSK Identity Hint",
+    'psk_identity'  => "PSK Identity",
+    'srp'           => "SRP Username",
     'protocols'     => "Protocols",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
@@ -894,15 +901,15 @@ our %shorttexts = (
     'pubkey_algorithm'  => "Public Key Algorithm",
     'pubkey_value'  => "Public Key Value",
     'modulus_len'   => "Public Key length",
-    'modulus'       => "Public Key modulus",
-    'modulus_exponent'  => "Public Key exponent",
+    'modulus'       => "Public Key Modulus",
+    'modulus_exponent'  => "Public Key Exponent",
     'serial'        => "Serial Number",
     'certversion'   => "Certificate Version",
-    'sslversion'    => "SSL protocol",
+    'sslversion'    => "SSL Protocol",
     'signame'       => "Signature Algorithm",
     'sigdump'       => "Signature (hexdump)",
-    'sigkey_len'    => "Signature key length",
-    'sigkey_value'  => "Signature key value",
+    'sigkey_len'    => "Signature Key length",
+    'sigkey_value'  => "Signature Key value",
     'trustout'      => "Trusted",
     'ocsp_uri'      => "OCSP URL",
     'ocspid'        => "OCSP hash",
@@ -1236,7 +1243,8 @@ our %cmd = (
     'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
                         qw(
-                         selected cipher fingerprint_hash fp_not_md5 email serial
+                         selected cipher fingerprint_hash fp_not_md5 
+                         sha2signature pub_encryption email serial
                          subject dates verify expansion compression hostname
                          beast crime freak export rc4_cipher rc4 pfs_cipher crl hassslv2 hassslv3 poodle
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
@@ -1341,6 +1349,8 @@ our %cmd = (
         'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
                        # FORTEZZA has abbreviations FZA and FRZ
                        # unsure about FORTEZZA_KEA
+        'SHA2'      => 'sha(2|224|256|384|512)/',
+                       # any SHA2, just sha2 is too lazy
         'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
                        # Numerous protocol prefixes are in use:
                        #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
@@ -3347,7 +3357,9 @@ sub checkcert($$) {
     $checks{'selfsigned'}->{val}    = $data{'selfsigned'}->{val}($host);
     $checks{'fp_not_md5'}->{val}    = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
     $value = $data{'signame'}->{val}($host);
-    $checks{'sha2signature'}->{val} = $value if ($value !~ m/^sha(2|224|256|384|512)/); # just sha2 is too lazy
+    $checks{'sha2signature'}->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'SHA2'}/);
+    $value = $data{'pubkey_algorithm'}->{val}($host);
+    $checks{'pub_encryption'}->{val}= $value if ($value !~ m/encryption/i);
 
 # TODO: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
@@ -3435,6 +3447,11 @@ sub checksizes($$) {
     $checks{'len_sernumber'}->{val} = int(length($data{'serial'}->{val}($host)) / 2); # value are hex octets
     $value = $data{'modulus_len'}->{val}($host);
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
+    $value = $data{'modulus_exponent'}->{val}($host);
+    $value =~ s/^(\d+).*/$1/;
+    $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
+    $value = $data{'modulus'}->{val}($host); # value are hex digits
+    $checks{'modulus_size'}->{val}  = length($value) * 4 if ((length($value) * 4) > 16384);
     $value = $data{'sigkey_len'}->{val}($host);
     $checks{'len_sigdump'}->{val}   = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
     $value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
@@ -4543,7 +4560,7 @@ sub print_size($$$$) {
     my ($legacy, $host, $port, $label) = @_;
     my $value = "";
     $value = " bytes" if ($label =~ /^(len)/);
-    $value = " bits"  if ($label =~ /^(len_publickey|len_sigdump)/);
+    $value = " bits"  if ($label =~ /^len_(modulus|publickey|sigdump)/);
     print_check($legacy, $host, $port, $label, $checks{$label}->{val} . $value);
 } # print_size
 
@@ -5390,11 +5407,14 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')                { $arg = '+hsts';       }
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
+    if ($arg eq '+modulus_exponent_size'){$arg = '+modulus_exp_size'; } # alias
+    if ($arg eq '+pub(lic)?_encryption'){ $arg = '+pub_encryption';   } # alias
+    if ($arg eq '+public_key_encryption'){$arg = '+pub_encryption';   } # alias
     if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
     if ($arg =~ /^\+cert(ificate)?$/i)  { $arg = '+pem';        } # PEM
     if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
     if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';    }  # subject
-    if ($arg =~ /^\+sha2sig(nature)?$/) { $arg = '+sha2signature'; }
+    if ($arg =~ /^\+sha2sig(nature)?$/) { $arg = '+sha2signature'; }    # alias
     if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # AIA is a common acronym ...
