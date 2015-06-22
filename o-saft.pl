@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.369 15/06/22 15:40:01",
+    SID         => "@(#) yeast.pl 1.370 15/06/22 20:32:13",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -354,6 +354,8 @@ our %data   = (     # connection and certificate details
     'modulus'       => {'val' => sub { Net::SSLinfo::modulus(       $_[0], $_[1])}, 'txt' => "Certificate Public Key Modulus"},
     'modulus_exponent'=>{'val'=> sub { Net::SSLinfo::modulus_exponent($_[0],$_[1])},'txt' => "Certificate Public Key Exponent"},
     'serial'        => {'val' => sub { Net::SSLinfo::serial(        $_[0], $_[1])}, 'txt' => "Certificate Serial Number"},
+    'serial_hex'    => {'val' => sub { Net::SSLinfo::serial_hex(    $_[0], $_[1])}, 'txt' => "Certificate Serial Number (hex)"},
+    'serial_int'    => {'val' => sub { Net::SSLinfo::serial_int(    $_[0], $_[1])}, 'txt' => "Certificate Serial Number (int)"},
     'certversion'   => {'val' => sub { Net::SSLinfo::version(       $_[0], $_[1])}, 'txt' => "Certificate Version"},
     'sigdump'       => {'val' => sub { Net::SSLinfo::sigdump(       $_[0], $_[1])}, 'txt' => "Certificate Signature (hexdump)"},
     'sigkey_len'    => {'val' => sub { Net::SSLinfo::sigkey_len(    $_[0], $_[1])}, 'txt' => "Certificate Signature Key Length"},
@@ -910,6 +912,8 @@ our %shorttexts = (
     'modulus'       => "Public Key Modulus",
     'modulus_exponent'  => "Public Key Exponent",
     'serial'        => "Serial Number",
+    'serial_hex'    => "Serial Number (hex)",
+    'serial_int'    => "Serial Number (int)",
     'certversion'   => "Certificate Version",
     'sslversion'    => "SSL Protocol",
     'signame'       => "Signature Algorithm",
@@ -3461,7 +3465,9 @@ sub checksizes($$) {
     #$checks{'len_crl_data'} ->{val} = length($data{'crl'}->{val}($host));
     $checks{'len_ocsp'}     ->{val} = length($data{'ocsp_uri'}->{val}($host));
     #$checks{'len_oids'}     ->{val} = length($data{'oids'}->{val}($host));
-    $checks{'len_sernumber'}->{val} = int(length($data{'serial'}->{val}($host)) / 2); # value are hex octets
+    $checks{'len_sernumber'}->{val} = int(length($data{'serial_hex'}->{val}($host)) / 2); # value are hex octets
+        # Note: RFC5280 limits to 20 digit (integer), which is hard to check
+        #       with the hex value, anyway it should not be more than 8 bytes
     $value = $data{'modulus_len'}->{val}($host);
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
     $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001)
@@ -3469,7 +3475,7 @@ sub checksizes($$) {
     $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
     $value = $data{'modulus'}->{val}($host); # value are hex digits
     $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
-    $value = $data{'serial'}->{val}($host);
+    $value = $data{'serial_int'}->{val}($host);
     #$value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
     $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
     $value = $data{'sigkey_len'}->{val}($host);
