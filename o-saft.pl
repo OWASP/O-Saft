@@ -909,6 +909,7 @@ our %shorttexts = (
     'subject_hash'  => "Subject hash",
     'issuer_hash'   => "Issuer hash",
     'fp_not_md5'    => "Fingerprint not MD5",
+    'cert_type'     => "Certificate Type (bitmask)",
     'verify_hostname'   => "Hostname valid",
     'verify_altname'    => "AltNames valid",
     'fingerprint_hash'  => "Fingerprint Hash",
@@ -916,8 +917,11 @@ our %shorttexts = (
     'fingerprint_sha1'  => "Fingerprint SHA1",
     'fingerprint_md5'   => "Fingerprint  MD5",
     'fingerprint'       => "Fingerprint:",
+    'https_protocols'   => "HTTPS Alternate-Protocol",
+    'https_svc'     => "HTTPS Alt-Svc header",
     'https_status'  => "HTTPS Status line",
     'https_server'  => "HTTPS Server banner",
+    'https_location'=> "HTTPS Location header",
     'https_alerts'  => "HTTPS Error alerts",
     'https_refresh' => "HTTPS Refresh header",
     'https_pins'    => "HTTPS Public Key Pins",
@@ -926,10 +930,13 @@ our %shorttexts = (
     'hsts_subdom'   => "HTTPS STS sub-domains",
     'hsts_is301'    => "HTTP Status code is 301",
     'hsts_is30x'    => "HTTP Status code not 30x",
+    'http_protocols'=> "HTTP Alternate-Protocol",
+    'http_svc'      => "HTTP Alt-Svc header",
     'http_status'   => "HTTP Status line",
     'http_location' => "HTTP Location header",
     'http_refresh'  => "HTTP Refresh header",
     'http_sts'      => "HTTP STS header",
+    'options'       => "<<internal>> SSL bitmask",
     #------------------+------------------------------------------------------
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
