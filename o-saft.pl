@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.367 15/06/22 13:15:36",
+    SID         => "@(#) yeast.pl 1.368 15/06/22 14:18:40",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -3437,25 +3437,26 @@ sub checksizes($$) {
     $value =~ s/(----.+----\n)//g;
     chomp $value;
     $checks{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
-    $checks{'len_subject'}->{val}   = length($data{'subject'}->{val}($host));
-    $checks{'len_issuer'}->{val}    = length($data{'issuer'}->{val}($host));
-    $checks{'len_cps'}->{val}       = length($data{'ext_cps'}->{val}($host));
-    $checks{'len_crl'}->{val}       = length($data{'ext_crl'}->{val}($host));
-    #$checks{'len_crl_data'}->{val}  = length($data{'crl'}->{val}($host));
-    $checks{'len_ocsp'}->{val}      = length($data{'ocsp_uri'}->{val}($host));
-    #$checks{'len_oids'}->{val}      = length($data{'oids'}->{val}($host));
+    $checks{'len_subject'}  ->{val} = length($data{'subject'}->{val}($host));
+    $checks{'len_issuer'}   ->{val} = length($data{'issuer'}->{val}($host));
+    $checks{'len_cps'}      ->{val} = length($data{'ext_cps'}->{val}($host));
+    $checks{'len_crl'}      ->{val} = length($data{'ext_crl'}->{val}($host));
+    #$checks{'len_crl_data'} ->{val} = length($data{'crl'}->{val}($host));
+    $checks{'len_ocsp'}     ->{val} = length($data{'ocsp_uri'}->{val}($host));
+    #$checks{'len_oids'}     ->{val} = length($data{'oids'}->{val}($host));
     $checks{'len_sernumber'}->{val} = int(length($data{'serial'}->{val}($host)) / 2); # value are hex octets
     $value = $data{'modulus_len'}->{val}($host);
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
-    $value = $data{'modulus_exponent'}->{val}($host);
+    $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001)
     $value =~ s/^(\d+).*/$1/;
     $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
     $value = $data{'modulus'}->{val}($host); # value are hex digits
-    $checks{'modulus_size'}->{val}  = length($value) * 4 if ((length($value) * 4) > 16384);
+    $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+    $value = $data{'serial'}->{val}($host);
+    #$value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
+    $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
     $value = $data{'sigkey_len'}->{val}($host);
-    $checks{'len_sigdump'}->{val}   = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
-    $value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
-    $checks{'sernumber'}->{val}     = " " if ($value > 20);
+    $checks{'len_sigdump'}  ->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
 } # checksizes
 
 sub check02102($$) {
