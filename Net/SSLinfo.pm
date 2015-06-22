@@ -29,11 +29,11 @@ package Net::SSLinfo;
 
 use strict;
 use constant {
-    SSLINFO_VERSION => '15.06.19',
+    SSLINFO_VERSION => '15.06.20',
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.96 15/06/21 14:48:18',
+    SID         => '@(#) Net::SSLinfo.pm 1.97 15/06/22 17:13:29',
 };
 
 ######################################################## public documentation #
@@ -63,6 +63,10 @@ Net::SSLinfo -- perl extension for SSL certificates
 
 =head1 SYNOPSIS
 
+    Net::SSLinfo.pm            # on command line will print help
+    Net::SSLinfo.pm your.tld   # on command line will print data from your.tld
+
+    # from within perl scripts:
     use Net::SSLinfo;
     print join("\n",
         PEM("www.example.com",443),
@@ -321,6 +325,8 @@ require Exporter;
         cert_type
         email
         serial
+        serial_int
+        serial_hex
         modulus
         modulus_len
         modulus_exponent
@@ -600,7 +606,9 @@ my %_SSLinfo= ( # our internal data structure
     'tlsextensions'     => "",  # TLS extension visible with "openssl -tlsextdebug .."
     'email'             => "",  # the email address(es)
     'heartbeat'         => "",  # heartbeat supported
-    'serial'            => "",  # the serial number
+    'serial'            => "",  # the serial number, string as provided by openssl: int (hex)
+    'serial_hex'        => "",  # the serial number as Integer
+    'serial_int'        => "",  # the serial number as hex
     'modulus'           => "",  # the modulus of the public key
     'modulus_len'       => "",  # bit length  of the public key
     'modulus_exponent'  => "",  # exponent    of the public key
@@ -772,11 +780,20 @@ sub _ssleay_get($$) {
     return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509)) if($key eq 'issuer');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if($key eq 'before');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if($key eq 'after');
-    return Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509)) if($key eq 'serial');
+    return Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509)) if($key eq 'serial_hex');
     return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
     return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_certificate_policies) if ($key eq 'policies');
 
     my $ret = "";
+    if ($key =~ 'serial') {
+# TODO: dead code as Net::SSLeay::X509_get_serialNumber() does not really return an integer
+        $ret = Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509));
+        return $ret if($key eq 'serial_hex');
+        my $int = hex($ret);
+        return $int if($key eq 'serial_int');
+        return "$int (0x$ret)"; # if($key eq 'serial');
+    }
+
     if ($key eq 'altname') {
         my @altnames = Net::SSLeay::X509_get_subjectAltNames($x509); # returns array of (type, string)
         _trace("_ssleay_get: Altname: " . join(" ", @altnames));
@@ -1157,7 +1174,7 @@ sub do_ssl_open($$$) {
                 # TODO: returns a structure, needs to be unpacked
             $_SSLinfo{'error_verify'}   = Net::SSLeay::X509_verify_cert_error_string(Net::SSLeay::get_verify_result($ssl));
             $_SSLinfo{'error_depth'}    = Net::SSLeay::X509_STORE_CTX_get_error_depth($x509);
-            $_SSLinfo{'serial'}         = _ssleay_get('serial', $x509);
+            $_SSLinfo{'serial_hex'}     = _ssleay_get('serial_hex', $x509);
             $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", Net::SSLeay::X509_certificate_type($x509));
             $_SSLinfo{'subject_hash'}   = sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509));
             $_SSLinfo{'issuer_hash'}    = sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));
@@ -1290,7 +1307,7 @@ sub do_ssl_open($$$) {
         $_SSLinfo{'version'}            = _openssl_x509($_SSLinfo{'PEM'}, 'version');
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
-        $_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
+       #$_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
         $_SSLinfo{'email'}              = _openssl_x509($_SSLinfo{'PEM'}, '-email');
         $_SSLinfo{'trustout'}           = _openssl_x509($_SSLinfo{'PEM'}, '-trustout');
         $_SSLinfo{'ocsp_uri'}           = _openssl_x509($_SSLinfo{'PEM'}, '-ocsp_uri');
@@ -1380,7 +1397,19 @@ sub do_ssl_open($$$) {
                 # Renegotiation comes with different values, see below
         );
         my $d    = "";
-        my $data = $_SSLinfo{'s_client'};
+        my $data = $_SSLinfo{'text'};
+        # from text:
+        #        Serial Number: 11598581680733355983 (0xa0f670963276ffcf)
+        $d = $data; $d =~ s/.*?Serial Number:\s*(.*?)\n.*/$1/si;
+        $_SSLinfo{'serial'}             = $d;
+        $d =~ s/\s.*$//;
+        $_SSLinfo{'serial_int'}         = $d;
+            # getting integer value from text representation 'cause
+            # Net::SSLeay does not have a proper function
+            # and converting the retrived hex value to an int with
+            # hex($hex)  returns an error without module bigint
+
+        $data = $_SSLinfo{'s_client'};
             # Note: as openssl s_client is called with -resume, the retrived
             # data may contain output of s_client up to 5 times
             # it's not ensured that all 5 data sets are identical, hence
@@ -1879,9 +1908,17 @@ Alias for I<fingerprint_text()>.
 
 Get certificate email address(es).
 
+=head2 serial_hex( )
+
+Get certificate serial number as hex value.
+
+=head2 serial_int( )
+
+Get certificate serial number as integer value.
+
 =head2 serial( )
 
-Get certificate serial number.
+Get certificate serial number as integer and hex value.
 
 =head2 modulus( )
 
@@ -2053,6 +2090,8 @@ sub keysize         { return _SSLinfo_get('keysize',          $_[0], $_[1]); } #
 sub keyusage        { return _SSLinfo_get('keyusage',         $_[0], $_[1]); } # NOT IMPLEMENTED
 sub email           { return _SSLinfo_get('email',            $_[0], $_[1]); }
 sub modulus         { return _SSLinfo_get('modulus',          $_[0], $_[1]); }
+sub serial_hex      { return _SSLinfo_get('serial_hex',       $_[0], $_[1]); }
+sub serial_int      { return _SSLinfo_get('serial_int',       $_[0], $_[1]); }
 sub serial          { return _SSLinfo_get('serial',           $_[0], $_[1]); }
 sub aux             { return _SSLinfo_get('aux',              $_[0], $_[1]); }
 sub extensions      { return _SSLinfo_get('extensions',       $_[0], $_[1]); }
