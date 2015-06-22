@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.368 15/06/22 14:18:40",
+    SID         => "@(#) yeast.pl 1.369 15/06/22 15:40:01",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -479,6 +479,9 @@ my %check_cert = (  # certificate data
     'modulus_size'  => {'txt' => "Certificate Public Key Modulus <16385 bits"},
     'modulus_exp_size'=>{'txt'=> "Certificate Public Key Modulus Exponent <= 65536"},
     'pub_encryption'=> {'txt' => "Certificate Public Key with Encryption"},
+    'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
+    'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
+    'sig_enc_known' => {'txt' => "Certificate Private Key Encryption known"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -794,6 +797,9 @@ our %shorttexts = (
     'modulus_size'  => "Modulus <= 16384 bits",
     'modulus_exp_size'=>"Modulus exponent <= 65536",
     'pub_encryption'=> "Public key with encryption",
+    'pub_enc_known' => "Public Key Encryption known",
+    'sig_encryption'=> "Private key with encryption",
+    'sig_enc_known' => "Private Key Encryption known",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -1244,8 +1250,8 @@ our %cmd = (
     'cmd-quick'     => [        # commands for +quick
                         qw(
                          selected cipher fingerprint_hash fp_not_md5 
-                         sha2signature pub_encryption email serial
-                         subject dates verify expansion compression hostname
+                         sha2signature pub_encryption pub_enc_known email
+                         serial subject dates verify expansion compression hostname
                          beast crime freak export rc4_cipher rc4 pfs_cipher crl hassslv2 hassslv3 poodle
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
@@ -1358,6 +1364,14 @@ our %cmd = (
                        # various variants for aliases to select cipher groups
         'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
         'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
+        'encryption'    =>'(?:encryption)',     # anything containing this string
+        'encryption_ok' =>'(?:(?:(?:md[245]|ripemd160|sha(?:1|224|256|384|512))with)?[rd]saencryption)',
+                       # well known strings to identify signature and public key encryption
+                       # rsaencryption, dsaencryption, md[245]withrsaencryption, 
+                       # ripemd160withrsa shaXXXwithrsaencryption
+        'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
+                       # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
+
 
         # RegEx containing pattern to identify vulnerable ciphers
             #
@@ -3354,12 +3368,15 @@ sub checkcert($$) {
 #   }
         }
     }
-    $checks{'selfsigned'}->{val}    = $data{'selfsigned'}->{val}($host);
-    $checks{'fp_not_md5'}->{val}    = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+    $checks{'selfsigned'}    ->{val} = $data{'selfsigned'}->{val}($host);
+    $checks{'fp_not_md5'}    ->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
     $value = $data{'signame'}->{val}($host);
-    $checks{'sha2signature'}->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'SHA2'}/);
+    $checks{'sha2signature'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'SHA2'}/);
+    $checks{'sig_encryption'}->{val} = $value if ($value !~ m/$cfg{'regex'}->{'encryption'}/i);
+    $checks{'sig_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i);
     $value = $data{'pubkey_algorithm'}->{val}($host);
-    $checks{'pub_encryption'}->{val}= $value if ($value !~ m/encryption/i);
+    $checks{'pub_encryption'}->{val} = $value if ($value !~ m/$cfg{'regex'}->{'encryption'}/i);
+    $checks{'pub_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i);
 
 # TODO: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
@@ -5409,8 +5426,13 @@ while ($#argv >= 0) {
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
     if ($arg eq '+modulus_exponent_size'){$arg = '+modulus_exp_size'; } # alias
-    if ($arg eq '+pub(lic)?_encryption'){ $arg = '+pub_encryption';   } # alias
-    if ($arg eq '+public_key_encryption'){$arg = '+pub_encryption';   } # alias
+    if ($arg eq '+pub(lic)?_enc(ryption)?')      { $arg = '+pub_encryption';} # alias
+    if ($arg eq '+pubkey_enc(ryption)?')         { $arg = '+pub_encryption';} # alias
+    if ($arg eq '+public_key_encryption')        { $arg = '+pub_encryption';} # alias
+    if ($arg eq '+pub(lic)?_enc(ryption)?_known'){ $arg = '+pub_enc_known'; } # alias
+    if ($arg eq '+pubkey_enc(ryption)?_known')   { $arg = '+pub_enc_known'; } # alias
+    if ($arg eq '+sig(key)?_enc(ryption)?')      { $arg = '+sig_encryption';} # alias
+    if ($arg eq '+sig(key)?_enc(ryption)?_known'){ $arg = '+sig_enc_known'; } # alias
     if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
     if ($arg =~ /^\+cert(ificate)?$/i)  { $arg = '+pem';        } # PEM
     if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
