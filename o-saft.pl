@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.370 15/06/22 20:32:13",
+    SID         => "@(#) yeast.pl 1.371 15/06/23 10:22:59",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -484,6 +484,7 @@ my %check_cert = (  # certificate data
     'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
     'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
     'sig_enc_known' => {'txt' => "Certificate Private Key Encryption known"},
+    'rfc6125_names' => {'txt' => "Certificate Names compliant to RFC6125"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -802,6 +803,7 @@ our %shorttexts = (
     'pub_enc_known' => "Public Key Encryption known",
     'sig_encryption'=> "Private key with encryption",
     'sig_enc_known' => "Private Key Encryption known",
+    'rfc6125_names' => "Names according RFC6125",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -1285,7 +1287,7 @@ our %cmd = (
                         qw(check cipher pfs_cipher selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
-                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
                        ],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
@@ -1375,7 +1377,13 @@ our %cmd = (
                        # ripemd160withrsa shaXXXwithrsaencryption
         'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
                        # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
-
+        'isIP'          => '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)',
+        'isDNS'         => '(?:[a-z0-9.-]+)',
+        'isIDN'         => '(?:xn--)',
+        'leftwild'      => '^\*(?:[a-z0-9.-]+)',
+        'doublewild'    => '(?:[a-z0-9-]+\*[a-z0-9-]+\*)',
+        'invalidwild'   => '(?:\.\*\.)',            # no .*.
+        'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
 
         # RegEx containing pattern to identify vulnerable ciphers
             #
@@ -1549,6 +1557,7 @@ our %cmd = (
         'checkdefault'  => 0,
         'check02102'=> 0,
         'check03116'=> 0,
+        'check6125' => 0,
         'check7525' => 0,
         'checkdates'=> 0,
         'checksizes'=> 0,
@@ -3612,6 +3621,94 @@ sub check03116($$) {
 
 } # check03116
 
+sub check6125($$) {
+    #? check if certificate identifiers are RFC 6125 compliant
+    _y_CMD("check6125() " . $cfg{'done'}->{'check6125'});
+    $cfg{'done'}->{'check6125'}++;
+    return if ($cfg{'done'}->{'check6125'} > 1);
+
+    my $txt = "";
+    my $val = "";
+
+    #from: https://www.rfc-editor.org/rfc/rfc6125.txt
+    #   ... only references which are relevant for checks here
+    # 6.4.  Matching the DNS Domain Name Portion
+    #   (collection of descriptions for following rules)
+    # 6.4.1.  Checking of Traditional Domain Names
+    #   domain name labels using a case-insensitive ASCII comparison, as
+    #   clarified by [DNS-CASE] (e.g., "WWW.Example.Com" would be lower-cased
+    #   to "www.example.com" for comparison purposes).  Each label MUST match
+    #   in order for the names to be considered to match, except as
+    #   supplemented by the rule about checking of wildcard labels
+    #   (Section 6.4.3).
+    # 6.4.2.  Checking of Internationalized Domain Names
+    # 6.4.3.  Checking of Wildcard Certificates
+    #   ...
+    #   1.  The client SHOULD NOT attempt to match a presented identifier in
+    #       which the wildcard character comprises a label other than the
+    #       left-most label (e.g., do not match bar.*.example.net).
+    #   2.  If the wildcard character is the only character of the left-most
+    #       label in the presented identifier, the client SHOULD NOT compare
+    #       against anything but the left-most label of the reference
+    #       identifier (e.g., *.example.com would match foo.example.com but
+    #       not bar.foo.example.com or example.com).
+    #   3.  The client MAY match a presented identifier in which the wildcard
+    #       character is not the only character of the label (e.g.,
+    #       baz*.example.net and *baz.example.net and b*z.example.net would
+    #       be taken to match baz1.example.net and foobaz.example.net and
+    #       buzz.example.net, respectively).  However, the client SHOULD NOT
+    #       attempt to match a presented identifier where the wildcard
+    #       character is embedded within an A-label or U-label [IDNA-DEFS] of
+    #       an internationalized domain name [IDNA-PROTO].
+    # 6.5.2.  URI-ID
+    #   The scheme name portion of a URI-ID (e.g., "sip") MUST be matched in
+    #   a case-insensitive manner, in accordance with [URI].  Note that the
+    #   ":" character is a separator between the scheme name and the rest of
+    #   the URI, and thus does not need to be included in any comparison.
+    # TODO: nothing
+    # 7.2.  Wildcard Certificates
+    #   o  There is no specification that defines how the wildcard character
+    #      may be embedded within the A-labels or U-labels [IDNA-DEFS] of an
+    #      internationalized domain name [IDNA-PROTO]; as a result,
+    #      implementations are strongly discouraged from including or
+    #      attempting to check for the wildcard character embedded within the
+    #      A-labels or U-labels of an internationalized domain name (e.g.,
+    #      "xn--kcry6tjko*.example.org").  Note, however, that a presented
+    #      domain name identifier MAY contain the wildcard character as long
+    #      as that character occupies the entire left-most label position,
+    #      where all of the remaining labels are valid NR-LDH labels,
+    #      A-labels, or U-labels (e.g., "*.xn--kcry6tjko.example.org").
+    # 7.3.  Internationalized Domain Names
+    #   Allowing internationalized domain names can lead to the inclusion of
+    #   visually similar (so-called "confusable") characters in certificates;
+    #   for discussion, see for example [IDNA-DEFS].
+
+    # Note: wildcards itself are checked in   checkcert() _getwilds()
+    $txt = $data{'cn'}->{val}($host);
+    $val     .= " <<6.4.2:cn $txt>>"      if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
+    $val     .= " <<6.4.3:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
+    $val     .= " <<6.4.3:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'invalidwild'}!);
+    $val     .= " <<7.2.o:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
+    $val     .= " <<7.3:cn $txt>>"        if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
+    $txt = $data{'subject'}->{val}($host);
+    $txt =~ s!^.*CN=!!;         # just value of CN=
+    $val     .= " <<6.4.2:subject $txt>>" if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
+    $val     .= " <<6.4.3:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
+    $val     .= " <<6.4.3:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidwild'}!);
+    $val     .= " <<7.2.o:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
+    $val     .= " <<7.3:subject $txt>>"   if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
+    foreach $txt (split(" ", $data{'altname'}->{val}($host))) {
+        $txt  =~ s!.*:!!;        # strip prefix
+        $val .= " <<6.4.2:altname $txt>>" if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
+        $val .= " <<6.4.3:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
+        $val .= " <<6.4.3:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidwild'}!);
+        $val .= " <<7.2.o:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
+        $val .= " <<7.3:altname $txt>>"   if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
+    }
+    $checks{'rfc6125_names'}->{val} = $val;
+
+} # check6125
+
 sub check7525($$) {
     #? check if target is RFC 7525 compliant
     _y_CMD("check7525() " . $cfg{'done'}->{'check7525'});
@@ -4127,6 +4224,7 @@ sub checkssl($$) {
         check02102($host, $port);   # check for BSI TR-02102-2
         check03116($host, $port);   # check for BSI TR-03116-4
         check7525( $host, $port);   # check for RFC 7525
+        check6125( $host, $port);   # check for RFC 6125 (identifiers only)
         checksni(  $host, $port);   # check for SNI
         checksizes($host, $port);   # some sizes
     } else {
@@ -4136,16 +4234,18 @@ sub checkssl($$) {
         $cfg{'done'}->{'check02102'}++;# "
         $cfg{'done'}->{'check03116'}++;# "
         $cfg{'done'}->{'check7525'}++; # "
+        $cfg{'done'}->{'check6125'}++; # "
         $cfg{'done'}->{'checkdv'}++;   # "
         $cfg{'done'}->{'checkev'}++;   # "
         foreach $key (sort keys %checks) { # anything related to certs need special setting
             $checks{$key}->{val} = $cfg{'no_cert_txt'} if (_is_member($key, \@{$cfg{'check_cert'}}));
         }
-        $checks{'hostname'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'hostname'}     ->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-02102+'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-02102-'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-03116+'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-03116-'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'rfc6125_names'}->{val} = $cfg{'no_cert_txt'};
     }
 
     if ($cfg{'usehttp'} == 1) {
@@ -5431,6 +5531,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')                { $arg = '+hsts';       }
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
+    if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; TODO until check is improved (6/2015)
     if ($arg eq '+modulus_exponent_size'){$arg = '+modulus_exp_size'; } # alias
     if ($arg eq '+pub(lic)?_enc(ryption)?')      { $arg = '+pub_encryption';} # alias
     if ($arg eq '+pubkey_enc(ryption)?')         { $arg = '+pub_encryption';} # alias
