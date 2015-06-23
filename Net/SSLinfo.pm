@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.97 15/06/22 17:13:29',
+    SID         => '@(#) Net::SSLinfo.pm 1.98 15/06/23 11:10:46',
 };
 
 ######################################################## public documentation #
@@ -1408,6 +1408,22 @@ sub do_ssl_open($$$) {
             # Net::SSLeay does not have a proper function
             # and converting the retrived hex value to an int with
             # hex($hex)  returns an error without module bigint
+        if ($d =~ m/[0-9a-f]:/i) {
+            # some certs return  09:f5:fd:2e:a5:2a:85:48:db:be:5d:a0:5d:b6
+            # or similar, then we try to convert to integer manually
+            $d =~ s/://g;
+            if (length($d) > 16) {  # ugly check if we need bigint
+                if (eval("require Math::BigInt;")) {
+                    $_SSLinfo{'serial_int'} = Math::BigInt->from_hex($d);
+                } else {
+                    $err = "Math::BigInt->from_hex($d)";
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+                    $_SSLinfo{'serial_int'} = "<<$err failed>>";
+                }
+            } else {
+                $_SSLinfo{'serial_int'} = hex($d);
+            }
+        }
 
         $data = $_SSLinfo{'s_client'};
             # Note: as openssl s_client is called with -resume, the retrived
@@ -2268,6 +2284,11 @@ unless (defined caller) {       # print myself or open connection
 ######################################################## public documentation #
 
 =pod
+
+=head1 DEENDENCIES
+
+L<Net::SSLeay(3pm)>
+L<Math::BigInt(3pm)>  (required if necessary only)
 
 =head1 SEE ALSO
 
