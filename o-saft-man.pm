@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+top: failed tty get
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.32 15/06/21 11:58:18";
+my  $man_SID= "@(#) o-saft-man.pm 1.33 15/06/23 08:08:44";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2640,6 +2640,33 @@ CHECKS
 
         Certificate should contain URL for OCSP and CRL.
 
+      Private Key encyption
+
+        Certificates signature key supports encryption.
+
+      Private Key encyption well known
+
+        Certificates signature key encryption algorithm is well known.
+
+      Public Key encyption
+
+        Certificates public key supports encryption.
+
+      Public Key encyption well known
+
+        Certificates public key encryption algorithm is well known.
+
+      Public Key Modulus size
+
+        Some (historic) SSL implementations are subject to buffer overflow if
+        the key exceeds 16384 or 32768 bits. The check is against 16384 bits.
+
+      Public Key Modulus Exponent size
+
+        The modulus exponent should be <= 65536 as some (mainly historic) SSL
+        implementations may have problems to connect.
+# if > 65536 then all clients usisng MS-SSL-stack will fail to connect
+
       Sizes and Lengths of Certificate Settings
 
         Serial Number <= 20 octets (RFC5280, 4.1.2.2.  Serial Number)
@@ -3615,6 +3642,12 @@ HACKER's INFO
 #        First of all: the main goal is to have a tool to be simple for users.
 #        It's not designed to be accademic code or simple for programmers.
 #
+#        Also testing for various flaws in other tools and protocols could not
+#        be done in a standarized generic way using well designed software but
+#        mainly needs individual code for each check, and sometimes more worse
+#        variants of the same code.
+#        Please keep this in mind, before trying to unitise the code. 
+#
 #      Documentation
 #
 #        All documentation of code details is  close to the corresponding code
@@ -3735,6 +3768,28 @@ HACKER's INFO
 #        complex functions with various parameters.
 #        Most code is seqential instead of using functions, except the code is
 #        used multiple times. This may be changed in future ...
+#
+#      Program flow
+#
+#        As explained in the documentation, please see +help, there are mainly
+#        3 types of `checks':
+#          +info    - getting as much information as possible about the target
+#                     its certificate and the connection
+#          +cipher  - checking for supported ciphers by the target
+#          +check   - doing all the checks based on +info and +cipher
+#
+#        Any information is collected using  Net::SSLinfo and stored in %data.
+#        All information according ciphers is collected directly and stored in
+#        @results. Finally, when performing the checks, these informations are
+#        used and compared to expected well know values.  The results of these
+#        checks are stored in  %checks.
+#        Then all information from %data and %checks is printed by just loop-
+#        ing through these hashes.
+#
+#        Information is just collected using  Net::SSLinfo  and then printed.
+#        Checks are performed on provided data by  Net::SSLinfo  and specified
+#        conditions herein.  Most checks are done in functions  'check*',  see
+#        above.
 
 
 DEBUG
