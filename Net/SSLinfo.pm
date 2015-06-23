@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.98 15/06/23 11:10:46',
+    SID         => '@(#) Net::SSLinfo.pm 1.99 15/06/23 11:41:31',
 };
 
 ######################################################## public documentation #
@@ -1325,9 +1325,12 @@ sub do_ssl_open($$$) {
             # but some versions return:
             #                Modulus:
             # which makes the regex dirty: space followed by question mark
-        $_SSLinfo{'pubkey_value'}       =~ s/Exponent.*//si;
+        $_SSLinfo{'pubkey_value'}       =~ s/^.*?pub:([^\r\n]*)//si;
+            # public key with EC use  "pub:" instead of "Modulus:"
+        $_SSLinfo{'pubkey_value'}       =~ s/(Exponent|ASN1 OID).*//si;
+            # public key with EC use  "ASN1 OID:" instead of "Exponent:"
         $_SSLinfo{'modulus_exponent'}   =  $_SSLinfo{'pubkey'};
-        $_SSLinfo{'modulus_exponent'}   =~ s/^.*?Exponent: (.*)$/$1/si;
+        $_SSLinfo{'modulus_exponent'}   =~ s/^.*?(?:Exponent|ASN1 OID): (.*)$/$1/si;
         $_SSLinfo{'modulus'}            =~ s/^[^=]*=//i;
         $_SSLinfo{'serial'}             =~ s/^[^=]*=//i;
         $_SSLinfo{'signame'}            =~ s/^[^:]*: //i;
