@@ -1,4 +1,4 @@
-top: failed tty get
+#!/usr/bin/perl -w
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.33 15/06/23 08:08:44";
+my  $man_SID= "@(#) o-saft-man.pm 1.34 15/06/23 14:59:24";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -459,10 +459,26 @@ our %man_text = (
         'ZSK'       => "Zone Signing Key", # DNSSEC
     },
 
-    # RFC 2246:  TLS Version 1
-    # RFC 4346:  TLS Version 1.1
-    # RFC 5246:  TLS Version 1.2  http://tools.ietf.org/html/rfc5346
-    # RFC 2412: OAKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')
+    'rfc' => {
+        # number   [ title / description                     additional information ],
+        #----------+----------------------------------------+-----------------------+
+        'url'   => [ "base URL for RFC descriptions",        "http://tools.ietf.org/" ],
+                   # http://tools.ietf.org/html/rfcXXXX
+                   # http://tools.ietf.org/rfc/rfcXXXX.txt
+        '6167'  => [ "Prohibiting Secure Sockets Layer (SSL) Version 2.0" ],
+        '6101'  => [ "SSL Version 3.0"  ],
+        '2246'  => [ "TLS Version 1.0"  ],
+        '4346'  => [ "TLS Version 1.1"  ],
+        '5246'  => [ "TLS Version 1.2"  ],
+        '4347'  => [ "DTLS Version 0.9" ],
+        '6347'  => [ "DTLS Version 1.2" ],
+        '3490'  => [ "Internationalizing Domain Names in Applications (IDNA)" ],
+        '3987'  => [ "Internationalized Resource Identifiers (IRIs)" ],
+        '4518'  => [ "Internationalized String Preparation in LDAP" ],
+        '3986'  => [ "Uniform Resource Identifier (URI): Generic Syntax" ],
+        '2412'  => [ "AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')",
+                     "http://en.wikipedia.org/wiki/Perfect_forward_secrecy"
+                   ],
     #           alle *DH* sind im Prinzip PFS.
     #           wird manchmal zusaetzlich mit DHE bezeichnet, wobei E für ephemeral
     #           also flüchtige, vergängliche Schlüssel steht
@@ -471,51 +487,65 @@ our %man_text = (
     #                TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
     #                TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
     #                TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA 
-    #           http://en.wikipedia.org/wiki/Perfect_forward_secrecy
-    # RFC 2818: ? (Namenspruefung)
-    # RFC 2712: TLSKRB: Addition of Kerberos Cipher Suites to Transport Layer Security (TLS)
-    # RFC 2986: PKCS#10
-    # RFC 5967: PKCS#10
-    # RFC 3268:  TLSAES: Advanced Encryption Standard (AES) Ciphersuites for Transport Layer Security (TLS)
-    # RFC 5081: TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication
-    # RFC 4279:  TLSPSK: Pre-Shared Key Ciphersuites for Transport Layer Security (TLS)
-    # RFC 4492:  TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer Security (TLS)
-    # RFC 3749: TLS Compression Method http://tools.ietf.org/html/rfc3749
-    # RFC 3943: TLS Protocol Compression Using Lempel-Ziv-Stac (LZS) http://tools.ietf.org/html/rfc3943
-    # RFC 3268:  TLS Version 1 AES
-    # RFC 4132:  TLS Version 1 Camellia
-    # RFC 4162: TLS Version 1 SEED
-    # RFC 3546: TLS Extensions
-    # RFC 4366: TLS Extensions
-    #               AKID - authority key identifier
-    #               Server name Indication (SNI): server_name
-    #               Maximum Fragment Length Negotiation: max_fragment_length
-    #               Client Certificate URLs: client_certificate_url
-    #               Trusted CA Indication: trusted_ca_keys
-    #               Truncated HMAC: truncated_hmac
-    #               Certificate Status Request (i.e. OCSP stapling): status_request
-    #               Error Alerts
-    # RFC 5764: TLS Extensions SRTP
-    # RFC 4366: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling)
-    # RFC 6066: OCSP stapling (http://en.wikipedia.org/wiki/OCSP_stapling) TLS Certificate Status Request
-    # RFC 6066: TLS Extensions: Extension Definitions
-    #                PkiPath
-    # RFC 6066: TLS Extensions: Heartbeat https://tools.ietf.org/html/rfc6520
-    # RFC 4749: TLS Compression Methods
-    # RFC 5077: TLS session resumption
-    # RFC 4347: DTLS Datagram TLS
-    # RFC 2246: TLS protocol version 1.0 http://tools.ietf.org/html/rfc2246
-    # RFC 6101: SSL protocol version 3.0 http://tools.ietf.org/html/rfc6101
-    # RFC 6460: ?
-    # RFC 6125: Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)
-    # RFC 4210: X509 PKI Certificate Management Protocol (CMP)
-    # RFC 3739: x509 PKI Qualified Certificates Profile; EU Directive 1999/93/EC
-    # RFC 4158: X509 PKI Certification Path Building
-    # RFC 5055: Server-Based Certificate Validation Protocol (SCVP)
-    # RFC 2560: Online Certificate Status Protocol (OCSP)
-    # RFC 5019: simplified RFC 2560
-    # RFC 4387: X509 PKI Operational Protocols: Certificate Store Access via HTTP
-    # RFC 5746: TLS Renegotiation Indication Extension http://tools.ietf.org/html/rfc5746,
+        '2818'  => [ "HTTP Over TLS" ],
+        '2712'  => [ "TLSKRB: Addition of Kerberos Cipher Suites to TLS" ],
+        '2986'  => [ "PKCS#10" ],
+        '5967'  => [ "PKCS#10" ],
+        '3268'  => [ "TLSAES: Advanced Encryption Standard (AES) Ciphersuites for TLS" ],
+        '4279'  => [ "TLSPSK: Pre-Shared Key Ciphersuites for TLS" ],
+        '4492'  => [ "TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS" ],
+        '5081'  => [ "TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication" ],
+        '4309'  => [ "AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)" ],
+        '5116'  => [ "An Interface and Algorithms for Authenticated Encryption (AEAD)" ],
+        '3749'  => [ "TLS Compression Method" ],
+        '3943'  => [ "TLS Protocol Compression Using Lempel-Ziv-Stac (LZS)" ],
+        '3268'  => [ "TLS Version 1 AES" ],
+        '4132'  => [ "TLS Version 1 Camellia" ],
+        '4162'  => [ "TLS Version 1 SEED" ],
+        '3546'  => [ "TLS Extensions", "obsolete" ],
+        '4366'  => [ "TLS Extensions" ],
+                   # AKID - authority key identifier
+                   # Server name Indication (SNI): server_name
+                   # Maximum Fragment Length Negotiation: max_fragment_length
+                   # Client Certificate URLs: client_certificate_url
+                   # Trusted CA Indication: trusted_ca_keys
+                   # Truncated HMAC: truncated_hmac
+                   # Certificate Status Request (i.e. OCSP stapling): status_request
+                   # Error Alerts
+        '5764'  => [ "TLS Extensions SRTP" ],
+        '6066'  => [ "TLS Extensions: Extension Definitions" ],
+                   # Certificate Status Request
+                   # PkiPath
+        '6520'  => [ "TLS Extensions: Heartbeat" ],
+        '4749'  => [ "TLS Compression Methods" ],
+        '5077'  => [ "TLS session resumption" ],
+        '6961'  => [ "TLS Multiple Certificate Status Request Extension" ],
+        '6460'  => [ "NSA Suite B Profile for TLS" ],
+        '2560'  => [ "Online Certificate Status Protocol (OCSP)", "obsolete" ],
+        '6267'  => [ "Online Certificate Status Protocol Algorithm Agility (OCSP)", "obsolete" ],
+        '4210'  => [ "X509 PKI Certificate Management Protocol (CMP)" ],
+        '3739'  => [ "x509 PKI Qualified Certificates Profile; EU Directive 1999/93/EC" ],
+        '4158'  => [ "X509 PKI Certification Path Building" ],
+        '3280'  => [ "X509 PKI Certificate and Certificate Revocation List (CRL) Profile", "obsolete" ],
+        '5280'  => [ "X509 PKI Certificate and Certificate Revocation List (CRL) Profile" ],
+        '6960'  => [ "X509 Online Certificate Status Protocol (OCSP)",
+                     "http://en.wikipedia.org/wiki/OCSP_stapling" ],
+        '4491'  => [ "Using the GOST Algorithms with X509" ],
+                   # GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94
+        '5055'  => [ "Server-Based Certificate Validation Protocol (SCVP)" ],
+        '5019'  => [ "simplified RFC 2560" ],
+        '4387'  => [ "X509 PKI Operational Protocols: Certificate Store Access via HTTP" ],
+        '5746'  => [ "TLS Renegotiation Indication Extension" ],
+        '6655'  => [ "AES-CCM Cipher Suites for TLS" ],
+        '6125'  => [ "Representation and Verification of Domain-Based Application Service (PKIX) for TLS" ],
+                   # Representation and Verification of Domain-Based Application Service
+                   # Identity within Internet Public Key Infrastructure Using X.509 (PKIX)
+                   # Certificates in the Context of Transport Layer Security (TLS)
+        '6797'  => [ "HTTP Strict Transport Security (HSTS)" ],
+        '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
+        '7507'  => [ "TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks" ],
+        #----------+----------------------------------------+-----------------------+
+    },
 
     # AIA  : http://www.startssl.com/certs/sub.class4.server.ca.crt
     # CDP  : http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl
@@ -705,6 +735,7 @@ sub man_table($) {
         'intern'=> ["Command",       "    ", " list of commands"],
         'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
         'range' => ["range name",    " - ",  "hex values in this range"],
+        'rfc'   => ["Number",        " - ",  "Title"],
         'data'  => ["key",    "=",   "text"],
         'check' => ["key",    "=",   "text"],
         'text'  => ["key",    "=",   "text"],
@@ -716,6 +747,7 @@ sub man_table($) {
     my $sep = $types{$typ}->[1];
     _man_dbx("man_table($typ) ...");
     _man_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
+    if ($typ eq 'rfc')   { _man_opt("RFC $_", $sep, $man_text{'rfc'}->{$_}[0] . "\n\t\t\t$man_text{'rfc'}->{url}[1]/html/rfc$_") foreach (sort keys %{$man_text{'rfc'}}); }
     if ($typ eq 'abbr')  { _man_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $man_text{'glossar'}->{$_}) foreach (sort keys %{$man_text{'glossar'}}); }
     if ($typ eq 'regex') { _man_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
@@ -1016,6 +1048,7 @@ sub printhelp($) {
         # BEGIN amd hence %cfg is defined and will not result in warnings
     # anything below requires data defined in parent
     man_commands(),             return if ($hlp =~ /^commands?$/);
+    man_table('rfc'),           return if ($hlp =~ /^rfc$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/);
     man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|text)s?[_-]?cfg$/i);
@@ -4042,7 +4075,6 @@ TODO
           ** SSL_honor_cipher_order => 1
           ** implement TLSv1.2 checks
           ** DNSEC and TLSA
-          ** IP in CommonName or subjectAltname (RFC6125)
           ** checkcert(): KeyUsage, keyCertSign, BasicConstraints
           ** DV and EV miss some minor checks; see checkdv() and checkev()
           ** +constraints does not check +constraints in the certificate of
