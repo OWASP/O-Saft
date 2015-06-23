@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.371 15/06/23 10:22:59",
+    SID         => "@(#) yeast.pl 1.372 15/06/23 12:03:01",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -3479,11 +3479,16 @@ sub checksizes($$) {
         #       with the hex value, anyway it should not be more than 8 bytes
     $value = $data{'modulus_len'}->{val}($host);
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
-    $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001)
-    $value =~ s/^(\d+).*/$1/;
-    $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
-    $value = $data{'modulus'}->{val}($host); # value are hex digits
-    $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+    $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001) or prime256v1
+    if ($value =~ m/prime/i) {  # public key uses EC with primes
+        $checks{'modulus_exp_size'}->{val}  = "<<N/A $value>>";
+        $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
+    } else  {                   # only traditional exponent needs to be checked
+        $value =~ s/^(\d+).*/$1/;
+        $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
+        $value = $data{'modulus'}->{val}($host); # value are hex digits
+        $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+    }
     $value = $data{'serial_int'}->{val}($host);
     #$value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
     $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
