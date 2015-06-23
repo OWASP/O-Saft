@@ -33,7 +33,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.372 15/06/23 12:03:01",
+    SID         => "@(#) yeast.pl 1.373 15/06/23 12:12:32",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -1370,11 +1370,12 @@ our %cmd = (
                        # various variants for aliases to select cipher groups
         'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
         'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
-        'encryption'    =>'(?:encryption)',     # anything containing this string
-        'encryption_ok' =>'(?:(?:(?:md[245]|ripemd160|sha(?:1|224|256|384|512))with)?[rd]saencryption)',
+        'encryption'    =>'(?:encryption|ecPublicKey)', # anything containing this string
+        'encryption_ok' =>'(?:(?:(?:(?:md[245]|ripemd160|sha(?:1|224|256|384|512))with)?[rd]saencryption)|id-ecPublicKey)',
                        # well known strings to identify signature and public key encryption
                        # rsaencryption, dsaencryption, md[245]withrsaencryption, 
                        # ripemd160withrsa shaXXXwithrsaencryption
+                       # id-ecPublicKey
         'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
                        # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
         'isIP'          => '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)',
