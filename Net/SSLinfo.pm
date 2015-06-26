@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.99 15/06/23 11:41:31',
+    SID         => '@(#) Net::SSLinfo.pm 1.100 15/06/25 20:37:03',
 };
 
 ######################################################## public documentation #
@@ -408,6 +408,7 @@ require Exporter;
         session_protocol
         renegotiation
         resumption
+        dh_parameter
         selfsigned
         s_client
         error
@@ -622,6 +623,7 @@ my %_SSLinfo= ( # our internal data structure
     'verify'            => "",  # certificate chain verification
     'chain'             => "",  # certificate's CA chain
     'chain_verify'      => "",  # certificate's CA chain verifacion trace
+    'dh_parameter'      => "",  # DH Parameter (starting with openssl 1.0.2a)
     'renegotiation'     => "",  # renegotiation supported
     'resumption'        => "",  # resumption supported
     'selfsigned'        => "",  # self-signed certificate
@@ -1352,7 +1354,13 @@ sub do_ssl_open($$$) {
             # from s_client: (if openssl supports -nextprotoneg)
             #    Protocols advertised by server: spdy/4a4, spdy/3.1, spdy/3, http/1.1
 
+            # from s_client: (openssl > 1.0.1)
+            #    Peer signing digest: SHA512
+            #    Server Temp Key: DH, 2048 bits
+            #    Server Temp Key: ECDH, P-256, 256 bits
+
             # from s_client:
+            #  SSL-Session:
             #    Protocol  : TLSv1
             #    Cipher    : ECDHE-RSA-RC4-SHA
             #    Session-ID: 322193A0D243EDD1C07BA0B2E68D1044CDB06AF0306B67836558276E8E70655C
@@ -1379,6 +1387,8 @@ sub do_ssl_open($$$) {
             #    0080 - 70 45 71 f9 d1 e6 a8 d7-3c c2 c6 b8 e1 d5 4f dd   pEq.....<.....O.
             #    0090 - 52 12 f3 90 0c 51 c5 81-6c 9e 69 b6 bd 0c e6 e6   R....Q..l.i.....
             #    00a0 - 4c d4 72 33                                       L.r3
+            #
+            #    Start Time: 1435254245
         my %match_map = (
             # %_SSLinfo key       string to match in s_client output
             #-------------------+-----------------------------------
@@ -1398,6 +1408,7 @@ sub do_ssl_open($$$) {
                 # this is a multiline value, must be handled special, see below
             #'renegotiation'    => "Renegotiation",
                 # Renegotiation comes with different values, see below
+            'dh_parameter'     => "Server Temp Key:",
         );
         my $d    = "";
         my $data = $_SSLinfo{'text'};
@@ -1898,6 +1909,10 @@ Get target's TLS session ticket lifetime hint.
 
 Get target's SSL session timeout.
 
+=head2 dh_parameter( )
+
+Get targets DH parameter.
+
 =head2 fingerprint_hash( )
 
 Get certificate fingerprint hash value.
@@ -2159,6 +2174,7 @@ sub pubkey_algorithm{ return _SSLinfo_get('pubkey_algorithm', $_[0], $_[1]); }
 sub pubkey_value    { return _SSLinfo_get('pubkey_value',     $_[0], $_[1]); }
 sub renegotiation   { return _SSLinfo_get('renegotiation',    $_[0], $_[1]); }
 sub resumption      { return _SSLinfo_get('resumption',       $_[0], $_[1]); }
+sub dh_parameter    { return _SSLinfo_get('dh_parameter',     $_[0], $_[1]); }
 sub selfsigned      { return _SSLinfo_get('selfsigned',       $_[0], $_[1]); }
 sub https_protocols { return _SSLinfo_get('https_protocols',  $_[0], $_[1]); }
 sub https_svc       { return _SSLinfo_get('https_svc',        $_[0], $_[1]); }
