@@ -1,39 +1,7 @@
 #!/usr/bin/perl -w
 
-#!#############################################################################
-#!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
-#!#----------------------------------------------------------------------------
-#!# If this tool is valuable for you and we meet some day,  you can spend me an
-#!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
-#!# your're encouraged to make a donation to any needy child you see.   Thanks!
-#!#----------------------------------------------------------------------------
-#!# This software is provided "as is", without warranty of any kind, express or
-#!# implied,  including  but not limited to  the warranties of merchantability,
-#!# fitness for a particular purpose.  In no event shall the  copyright holders
-#!# or authors be liable for any claim, damages or other liability.
-#!# This software is distributed in the hope that it will be useful.
-#!#
-#!# This  software is licensed under GPLv2.
-#!#
-#!# GPL - The GNU General Public License, version 2
-#!#                       as specified in:  http://www.gnu.org/licenses/gpl-2.0
-#!#      or a copy of it https://github.com/OWASP/O-Saft/blob/master/LICENSE.md
-#!# Permits anyone the right to use and modify the software without limitations
-#!# as long as proper  credits are given  and the original  and modified source
-#!# code are included. Requires  that the final product, software derivate from
-#!# the original  source or any  software  utilizing a GPL  component, such  as
-#!# this, is also licensed under the same GPL license.
-#!#############################################################################
-
-#!# WARNING:
-#!# This is no "academically" certified code,  but written to be understood and
-#!# modified by humans (you:) easily.  Please see the documentation  in section
-#!# "Program Code" in  o-saft-man.pm  if you want to improve the program.
-
-use strict;
-
 use constant {
-    SID         => "@(#) yeast.pl 1.373 15/06/23 12:12:32",
+    SID         => "@(#) yeast.pl 1.374 15/06/25 20:36:29",
     STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -405,7 +373,8 @@ our %data   = (     # connection and certificate details
     'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'session_lifetime'=>{'val'=> sub { Net::SSLinfo::session_lifetime($_[0],$_[1])},'txt' => "Target's TLS Session Ticket Lifetime"},
-    'session_timeout'=>{'val'=> sub { Net::SSLinfo::session_timeout($_[0],$_[1])},'txt' => "Target's TLS Session Timeout"},
+    'session_timeout'=>{'val' => sub { Net::SSLinfo::session_timeout($_[0],$_[1])}, 'txt' => "Target's TLS Session Timeout"},
+    'dh_parameter'  => {'val' => sub { Net::SSLinfo::dh_parameter(  $_[0], $_[1])}, 'txt' => "Target's DH Parameter"},
     'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
     'chain_verify'  => {'val' => sub { Net::SSLinfo::chain_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification (trace)"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
@@ -533,6 +502,7 @@ my %check_conn = (  # connection data
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'freak'         => {'txt' => "Connection is safe against FREAK attack"},
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
+    'logjam'        => {'txt' => "Connection is safe against Logjam attack"},
     'lucky13'       => {'txt' => "Connection is safe against Lucky 13 attack"},
     'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
     'rc4'           => {'txt' => "Connection is safe against RC4 attack"},
@@ -594,6 +564,8 @@ my %check_dest = (  # target (connection) data
     # following for information, checks not useful; see "# check target specials" in checkdest also
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
+    'dh_512'        => {'txt' => "Target DH Parameter < 512 bits"},
+    'dh_2048'       => {'txt' => "Target DH Parameter < 2048 bits"},
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
@@ -793,6 +765,7 @@ our %shorttexts = (
     'freak'         => "Safe to FREAK",
     'heartbleed'    => "Safe to heartbleed",
     'lucky13'       => "Safe to Lucky 13",
+    'logjam'        => "Safe to Logjam",
     'poodle'        => "Safe to POODLE",
     'rc4'           => "Safe to RC4 attack",
     'scsv'          => "SCSV not supported",
@@ -862,11 +835,14 @@ our %shorttexts = (
     'protocols'     => "Protocols",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
-    'session_protocol'=> "Selected SSL Protocol",
-    'session_ticket'=> "TLS Session Ticket",
-    'session_lifetime'=> "TLS Session Ticket Lifetime",
-    'session_random'=> "TLS Session Ticket random",
-    'session_timeout'=> "TLS Session Timeout",
+    'session_protocol'  => "Selected SSL Protocol",
+    'session_ticket'    => "TLS Session Ticket",
+    'session_lifetime'  => "TLS Session Ticket Lifetime",
+    'session_random'    => "TLS Session Ticket random",
+    'session_timeout'   => "TLS Session Timeout",
+    'dh_parameter'  => "DH Parameter",
+    'dh_512'        => "DH Parameter < 512",
+    'dh_2048'       => "DH Parameter < 2048",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -1382,7 +1358,7 @@ our %cmd = (
         'isDNS'         => '(?:[a-z0-9.-]+)',
         'isIDN'         => '(?:xn--)',
         'leftwild'      => '^\*(?:[a-z0-9.-]+)',
-        'doublewild'    => '(?:[a-z0-9-]+\*[a-z0-9-]+\*)',
+        'doublewild'    => '(?:[a-z0-9.-]+\*[a-z0-9-]+\*)', # x*x or x*.x*
         'invalidwild'   => '(?:\.\*\.)',            # no .*.
         'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
 
