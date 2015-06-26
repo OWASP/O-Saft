@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.34 15/06/23 14:59:24";
+my  $man_SID= "@(#) o-saft-man.pm 1.35 15/06/25 20:23:31";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3224,6 +3224,17 @@ KNOWN PROBLEMS
 
         instead of:
               EXP-KRB5-RC4-MD5                no       weak
+
+    **WARNING: Can't make a connection to your.tld:443; no initial data
+    **WARNING: Can't make a connection to your.tld:443; target ignored
+
+        This message occours if the underlaying  SSL library (i.e. libssl.a)
+        was not able to connect to the target. Known observed reasons are:
+          * target does not support SSL protocol on specified port
+          * target expects a client certificate in ClientHello message
+
+        If the targets supports SSL, it should be at least possible to check
+        for supported ciphers using  +cipherraw  instead of  +cipher .
 
 
     Use of uninitialized value $headers in split ... do_httpx2.al)
