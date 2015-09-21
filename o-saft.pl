@@ -1,8 +1,44 @@
 #!/usr/bin/perl -w
 
+### TODO: RFC 7525 fertig implementieren
+### TODO: _isccs($$$) fertig implementieren
+### TODO: ocsp_uri pruefen;
+
+#!#############################################################################
+#!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
+#!#----------------------------------------------------------------------------
+#!# If this tool is valuable for you and we meet some day,  you can spend me an
+#!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
+#!# your're encouraged to make a donation to any needy child you see.   Thanks!
+#!#----------------------------------------------------------------------------
+#!# This software is provided "as is", without warranty of any kind, express or
+#!# implied,  including  but not limited to  the warranties of merchantability,
+#!# fitness for a particular purpose.  In no event shall the  copyright holders
+#!# or authors be liable for any claim, damages or other liability.
+#!# This software is distributed in the hope that it will be useful.
+#!#
+#!# This  software is licensed under GPLv2.
+#!#
+#!# GPL - The GNU General Public License, version 2
+#!#                       as specified in:  http://www.gnu.org/licenses/gpl-2.0
+#!#      or a copy of it https://github.com/OWASP/O-Saft/blob/master/LICENSE.md
+#!# Permits anyone the right to use and modify the software without limitations
+#!# as long as proper  credits are given  and the original  and modified source
+#!# code are included. Requires  that the final product, software derivate from
+#!# the original  source or any  software  utilizing a GPL  component, such  as
+#!# this, is also licensed under the same GPL license.
+#!#############################################################################
+
+#!# WARNING:
+#!# This is no "academically" certified code,  but written to be understood and
+#!# modified by humans (you:) easily.  Please see the documentation  in section
+#!# "Program Code" in  o-saft-man.pm  if you want to improve the program.
+
+use strict;
+
 use constant {
-    SID         => "@(#) yeast.pl 1.374 15/06/25 20:36:29",
-    STR_VERSION => "15.06.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.375 15/09/21 03:35:17",
+    STR_VERSION => "15.09.15",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
@@ -564,8 +600,9 @@ my %check_dest = (  # target (connection) data
     # following for information, checks not useful; see "# check target specials" in checkdest also
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
-    'dh_512'        => {'txt' => "Target DH Parameter < 512 bits"},
-    'dh_2048'       => {'txt' => "Target DH Parameter < 2048 bits"},
+    'dh_512'        => {'txt' => "Target DH Parameter >= 512 bits"},
+    'dh_2048'       => {'txt' => "Target DH Parameter >= 2048 bits"},
+    'ecdh_256'      => {'txt' => "Target DH Parameter >= 256 bits (ECDH)"},
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
@@ -841,8 +878,9 @@ our %shorttexts = (
     'session_random'    => "TLS Session Ticket random",
     'session_timeout'   => "TLS Session Timeout",
     'dh_parameter'  => "DH Parameter",
-    'dh_512'        => "DH Parameter < 512",
-    'dh_2048'       => "DH Parameter < 2048",
+    'dh_512'        => "DH Parameter >= 512",
+    'dh_2048'       => "DH Parameter >= 2048",
+    'ecdh_256'      => "DH Parameter >= 256 (ECDH)",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -1247,7 +1285,7 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random)
+                        qw(beast breach crime freak heartbleed logjam lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
@@ -1255,7 +1293,7 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle cipher),
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam cipher),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
@@ -1381,6 +1419,8 @@ our %cmd = (
         'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',
+        'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',    # match against cipher
+                       # Logjam is same as regex{EXPORT} above
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
 
@@ -2718,7 +2758,7 @@ sub _isbreach($){
     #      *  does not require TLS-layer compression
     #      *  works against any cipher suite
     #      *  can be executed in under a minute
-}
+} # _isbreach
 sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $_[0] . " "; }
     # return compression if available, empty string otherwise
 sub _islucky($) { return ($_[0] =~ /$cfg{'regex'}->{'Lucky13'}/) ? $_[0] : ""; }
@@ -2731,6 +2771,11 @@ sub _isfreak($$){
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
     return "";
 } # _isfreak
+sub _islogjam($$){
+    # return given cipher if vulnerable to logjam attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
+} # _islogjam
 sub _ispfs($$)  { return ("$_[0]-$_[1]" =~ /$cfg{'regex'}->{'PFS'}/)   ? ""  : $_[1]; }
     # return given cipher if it does not support forward secret connections (PFS)
 sub _isrc4($)   { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/)  ? $_[0] . " "  : ""; }
@@ -3187,6 +3232,7 @@ sub checkciphers($$) {
 
     my $ssl     = "";
     my $cipher  = "";
+    my $exp     = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     my $hasssl3 = 0;# 1: if SSLv3 checked
@@ -3198,10 +3244,38 @@ sub checkciphers($$) {
         if ($yn =~ m/yes/i) {   # cipher accepted
             $checks{$ssl}->{val}++ if ($yn =~ m/yes/i); # cipher accepted
             checkcipher($ssl, $cipher);
+            $exp .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $c));
         }
         $hasrsa{$ssl}  = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
+
+    # Logjam check is a bit ugly: DH Parameter may be missing
+    # TODO: implement own check for DH parameters instead relying on openssl
+    my $txt = $data{'dh_parameter'}->{val}($host);
+    my $dh  = $txt;
+       $dh  =~ s/[^\d]*(\d+) *bits.*/$1/i;  # just get number
+       # DH, 512 bits
+       # DH, 1024 bits
+       # DH, 2048 bits
+       # ECDH, P-256, 128 bits
+       # ECDH, P-256, 256 bits
+                       # TODO: ECDH should also have 256 bits or more
+    if ($dh =~ m/^\d+$/) {      # a number, check size
+        if ($txt !~ m/ECDH/) { 
+            $checks{'dh_512'}->{val}    =  $txt if ($dh < 512);
+            $checks{'dh_2048'}->{val}   =  $txt if ($dh < 2048);
+        } else {                # ECDH is different
+            $checks{'ecdh_256'}->{val}  =  $txt if ($dh < 512);
+        }
+    } else {                    # not a number, probably suspicious
+        $checks{'logjam'}->{val}    =  $txt;
+    }
+    if ($txt eq "") {
+        $checks{'logjam'}->{val}   .=  "<<openssl did not return DH Paramter>>";
+        $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
+    }
+
     if ($hasssl3 <= 0) {
         # if SSLv3 was disabled, check for BEAST is incomplete; inform about that
         $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
@@ -6176,6 +6250,10 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
         @results = ();          # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
+#dbx# print "# C", @{$cfg{'ciphers'}};
+# FIXME: 6/2015 es eine kommt Fehlermeldung wenn openssl 1.0.2 verwendet wird:
+# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+# hat vermutlich mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
         foreach $ssl (@{$cfg{'version'}}) {
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
