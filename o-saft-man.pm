@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.35 15/06/25 20:23:31";
+my  $man_SID= "@(#) o-saft-man.pm 1.36 15/09/21 03:06:24";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2602,6 +2602,12 @@ CHECKS
         Check if target is vulnerable to heartbleed attack, see CVE-2014-0160
         and http://heartbleed.com/ .
 
+      Logjam
+
+        Check if target is vulenerable to Logjam attack.
+        Check if target suports  EXPORT ciphers  and/or  DH Parameter is less
+        than 2048 bits.
+
       Lucky 13
 
         Check if CBC ciphers are offered.
@@ -2632,7 +2638,7 @@ CHECKS
 
     Target (server) Configuration and Support
 
-      BEAST, BREACH, CRIME, FREAK, Lucky 13, POODLE, RC4
+      BEAST, BREACH, CRIME, FREAK, Logjam, Lucky 13, POODLE, RC4
 
         See above.
 
@@ -2644,6 +2650,10 @@ CHECKS
 
         NOT YET IMPLEMENTED
         Check if the server allows changing the protocol.
+
+      DH Parameter
+
+        Check if target's DH Parameter is less 512 or 2048 bits.
 
     Target (server) Certificate
 
@@ -3248,13 +3258,15 @@ KNOWN PROBLEMS
         This is considered a bug in  Net::SSLeay(1).
         Workaround to get rid of this message: use  --no-http  option.
 
-    invalid SSL_version specified at ....
+    invalid SSL_version specified at ... IO/Socket/SSL.pm
 
-        This error may occur on systems where SSL's DTLSv1 is not supported.
-        The full message looks like:
+        This error may occur on systems where a specific  SSL version is not
+        supported. Subject are mainly  SSLv2, SSLv3 TLSv1.3 and DTLSv1.
+        For DTLSv1 the full message looks like:
               invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
+        See also  X&Note on SSL versions& .
 
-        Workaround: use  --no-dtlsv1  option.
+        Workaround: use option: --no-sslv2 --no-sslv3 --no-tlsv13 --no-dtlsv1
 
     Use of uninitialized value $_[0] in length at (eval 4) line 1.
 
@@ -3271,6 +3283,7 @@ KNOWN PROBLEMS
     Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
 
         Underlaying library doesn't support the required SSL version.
+        See also  X&Note on SSL versions& .
 
         Workaround: use  --ssl-lazy  option, or corresponding --no-SSL option.
 
@@ -3278,7 +3291,7 @@ KNOWN PROBLEMS
 
         Mismatch of  openssl executable  and loaded underlaying library. This
         most likely happens when options  --lib=PATH  and/or  --exe=PATH  are
-        used.
+        used.  See also  X&Note on SSL versions& .
 
         Hint: use following commands to get information about used libraries:
           $0 +version
@@ -3483,6 +3496,44 @@ SEE ALSO
 
 
 HACKER's INFO
+
+    Note on SSL versions
+
+        Automatically detecting the supported SSL versions of the underlaying
+        system is a hard job and not always possible. Reasons could be:
+
+        * used perl modules (Socket::SSL, Net::SSLeay) does not handle errors
+          properly. Erros may be:
+              invalid SSL_version specified at ... IO/Socket/SSL.pm
+              Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm
+
+        * the underlaying libssl does not support the version, which then may
+          result in segmentation fault
+
+        * the underlaying libssl is newer than the perl module and the module
+          has not been reinstalled. This most often happens with  Net::SSLeay
+          This can be detected with (see version numbers for Net::SSLeay):
+              $0 +version
+
+        * perl (in particular a used module, see above)  may bail out  with a
+          compile error, like
+              Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
+
+        We try to detect unsupported versions and disable them automatically,
+        a warning like follwoing is shown then:
+              **WARNING: SSL version 'SSLv2' not supported by openssl
+
+        If problems occour with  SSL versions, following commands and options
+        may help to to get closer to the reason or can be used as workaround:
+              $0 +version
+              $0 +version | grep versions
+              $0 +version | grep 0x
+              $0 +protocols your.tld
+              $0 +protocols your.tld --no-rc
+
+        If problems occour with  SSL versions, following commands and options
+        Checking for SSL version is done at one place in the code, search for
+              supported SSL versions
 
     Using private libssl.so and libcrypt.so
 
