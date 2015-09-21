@@ -112,7 +112,7 @@
 ###
 ### redefine command +info
 ###
---cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify heartbeat expansion compression renegotiation resumption srp krb5 psk_identity psk_hint protocols master_key session_id session_ticket session_lifetime sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy https_pins pkp_pins info
+--cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify heartbeat expansion compression renegotiation resumption srp krb5 psk_identity psk_hint protocols dh_parameter master_key session_id session_ticket session_lifetime sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy https_pins pkp_pins info
 # useless for +info ('cause aliases): issuer issuer_hash
 # included in +info to be printed with --v :
 #      certificate sigdump pubkey extensions ext_*
@@ -121,14 +121,14 @@
 ###
 ### redefine command +check
 ###
---cfg_cmd=check=selected cnt_totals hassslv2 hassslv3 order adh export null rc4_cipher edh pfs_cipher pfs_cipherall ism pci fips tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ bsi-tr-03116+ bsi-tr-03116- beast breach crime time freak heartbleed lucky13 poodle rc4 sni hostname reversehost cps crl ev+ ev- ev-chars crnlnull nonprint ocsp fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_size modulus_size expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random closure sgc zlib open_pgp lzo fallback renegotiation resumption srp scsv cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+--cfg_cmd=check=selected cnt_totals hassslv2 hassslv3 order adh export null rc4_cipher edh pfs_cipher pfs_cipherall ism pci fips tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ bsi-tr-03116+ bsi-tr-03116- beast breach crime time freak heartbleed logjam lucky13 poodle rc4 sni hostname reversehost cps crl ev+ ev- ev-chars crnlnull nonprint ocsp fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_size modulus_size expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxagexy pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random closure sgc zlib open_pgp lzo fallback renegotiation resumption srp scsv cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
 # useless for +check:    ip
 # don't use   +check:   (SSLv|TLSv)*
 
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=selected cipher sslversion hassslv2 hassslv3 export rc4_cipher pfs_cipher beast crime freak heartbleed lucky13 poodle rc4 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
+--cfg_cmd=quick=selected cipher sslversion hassslv2 hassslv3 export rc4_cipher pfs_cipher beast crime freak heartbleed logjam lucky13 poodle rc4 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
 
 ###
 ### redefine command +bsi
@@ -148,7 +148,7 @@
 ###
 ### redefine command +vulns
 ###
---cfg_cmd=vulns=beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random
+--cfg_cmd=vulns=beast breach crime freak heartbleed logjam lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random
 
 ###
 ### redefine texts
