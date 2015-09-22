@@ -93,7 +93,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.14 Sommer Edition 2015
+#?      @(#) 1.15 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -103,7 +103,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.14 15/09/22 20:24:58 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.15 15/09/22 20:43:28 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -229,7 +229,15 @@ proc create_host {parent} {
         $this.bm configure -text {!} -command "create_about"
         create_tip $this.bm "About $cfg(TITLE)"
     }
-    set prev $parent.ft[expr $hosts(0) - 1]
+    set i [expr $hosts(0) - 1]
+    set prev $parent.ft$i
+    while {$i > 0} {    # check if previous frame exists, otherwise decrement
+        if {[winfo exists $prev]} { break; }
+        incr i -1
+        set prev $parent.ft$i
+    }
+    # if we reach here a previous frame exists
+    # or i==0 which should never occour and then will force an error in next line
     pack $this -fill x -after $prev
 }; # create_host
 proc remove_host {w} {
