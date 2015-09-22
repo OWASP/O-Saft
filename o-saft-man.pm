@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.36 15/09/21 03:06:24";
+my  $man_SID= "@(#) o-saft-man.pm 1.37 15/09/22 22:50:25";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2930,9 +2930,10 @@ CHECKS
         Checks if connection and ciphers are compliant according RFC 7525.
 
 
-SCORING
-
-        Coming soon ...
+# score will be removed, so don't anounce it
+#SCORING
+#
+#        Coming soon ...
 
 
 OUTPUT
@@ -3524,14 +3525,14 @@ HACKER's INFO
               **WARNING: SSL version 'SSLv2' not supported by openssl
 
         If problems occour with  SSL versions, following commands and options
-        may help to to get closer to the reason or can be used as workaround:
+        may help to get closer to the reason or can be used as workaround:
               $0 +version
+              $0 +version --v
               $0 +version | grep versions
               $0 +version | grep 0x
               $0 +protocols your.tld
               $0 +protocols your.tld --no-rc
 
-        If problems occour with  SSL versions, following commands and options
         Checking for SSL version is done at one place in the code, search for
               supported SSL versions
 
@@ -3955,11 +3956,13 @@ EXAMPLES
           $0 +check  some.tld
           $0 +quick  some.tld
           $0 +help=commands
-          $0 +list
-          $0 +list --v
           $0 +certificate  some.tld
           $0 +fingerprint  some.tld 444
           $0 +after +dates some.tld
+          $0 +version
+          $0 +version --v
+          $0 +list
+          $0 +list    --v
 
     Some specials
 
@@ -3996,16 +3999,17 @@ EXAMPLES
         * Test using a private openssl also for testing supported ciphers
           $0 +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
 
-        * Show current score settings
-          $0 --help=score
-
-        * Change a single score setting
-          $0 --cfg-score=http_https=42   +check some.tld
-
-        * Use your private score settings from a file
-          $0 --help=score > magic.score
-                   edit as needed: magic.score
-          $0 --cfg-score    magic.score  +check some.tld
+# score will be removed, so don't anounce it
+#        * Show current score settings
+#          $0 --help=score
+#
+#        * Change a single score setting
+#          $0 --cfg-score=http_https=42   +check some.tld
+#
+#        * Use your private score settings from a file
+#          $0 --help=score > magic.score
+#                   edit as needed: magic.score
+#          $0 --cfg-score    magic.score  +check some.tld
 
         * Use your private texts in output
           $0 +check some.tld --cfg-text=desc="my special description"
@@ -4029,6 +4033,9 @@ EXAMPLES
           $0 some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
 
     Special for hunting problems with connections etc.
+
+        * Do not read RC-FILE .o-saft.pl
+          $0 +info some.tld --no-rc
 
         * Show command line argument processing
           $0 +info some.tld --trace-arg
