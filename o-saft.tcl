@@ -27,7 +27,6 @@
 #!# this, is also licensed under the same GPL license.
 #!#############################################################################
 
-#?
 #? NAME
 #?      $0 - simple GUI for o-saft.pl
 #?
@@ -39,6 +38,9 @@
 #?
 #? SYNOPSIS
 #?      $0 [host:port] [host:port] ...
+#?
+#? OPTIONS
+#?      --v  print verbose messages (for debugging)
 #?
 #? ARGUMENTS
 #?      All arguments, except --help, are treated as a hostname to be checked.
@@ -91,7 +93,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.13 Sommer Edition 2015
+#?      @(#) 1.14 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -101,7 +103,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.13 15/09/22 18:32:12 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.14 15/09/22 20:24:58 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -165,6 +167,14 @@ proc str2obj {str} {
     set name "o$name";  # first character must be lower case letter
     return $name
 }; # str2obj
+
+proc notTOC {str} {
+    #? return 0 if string should be part of TOC; 1 otherwise
+    if {[regexp {^ *(NOT YET|WYSIW)} $str]} { return 1; };  # skip some special strings
+    if {[regexp {^ *\$} $str]}              { return 1; };  # skip empty
+    #dbx# puts "TOC $str";
+    return 0
+}; # isTOC
 
 proc show_window {w} {
     #? show window near current cursor position
@@ -240,13 +250,14 @@ proc create_text {parent txt} {
     return $this
 }; # create_text
 
-proc create_see {w t} { $w see [$w index $t.first] }
+proc create_see {w t} { catch { $w see [$w index $t.first] } }
+     # we simply ignore any error if index is unknown
 
 proc create_about {} {
     #? create new window with About text; store widget in cfg(winA)
     global cfg
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
-    set cfg(winA) [create_window {About} {570x400}]
+    set cfg(winA) [create_window {About} {570x425}]
     set t [create_text $cfg(winA) [osaft_about "ABOUT"]];
     $t.t configure -bg gold;        # dirty hack: widget hardcoded
 }; # create_about
@@ -276,13 +287,17 @@ proc create_help {} {
         set t [$txt get $a "$a + $e c"];
         set l [string length $t]
         incr i
+        if {[notTOC $t]} { continue; }; # skip some special strings
         set toc "$toc\n  $t"
         set name [str2obj [string trim $t]]
         $txt tag add  osaft-HEAD       $a "$a + $e c"
         $txt tag add  osaft-HEAD-$name $a "$a + $e c"
+        #$txt insert $a "\n\[ ^ \]\n"; # TODO: insert button to top 
     }
     $txt config -state normal
     $txt insert 1.0 "\nCONTENT\n$toc\n\n"
+    $txt tag     add  osaft-LNK    2.0 2.7;             # add markup
+    $txt tag     add  osaft-LNK-T  2.0 2.7;             #
     $txt config -state disabled
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
 
@@ -293,27 +308,14 @@ proc create_help {} {
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
+        if {[notTOC $t]} { continue; }; # skip some special strings
+        incr i
         set name [str2obj [string trim $t]]
         set b [$txt search -regexp {[A-Z]+} $a] 
         $txt tag add  osaft-TOC    $b "$b + $e c"; # - 1 c";# do not markup leading spaces
         $txt tag add  osaft-TOC-$i $a "$a + $e c";      # but complete line is clickable
         $txt tag bind osaft-TOC-$i <ButtonPress> "create_see $txt {osaft-HEAD-$name}"
-        incr i
     }
-
-#    # 2a. search for all references to section head in text
-#    set anf [$txt search -regexp -nolinestop -all -count end { +[A-Z_-]+} $nam] 
-#    # FIXME: returns too much false positives
-#    set i 0
-#    foreach a $anf {
-#        set e [lindex $end $i];
-#        set t [$txt get $a "$a + $e c"];
-#        if {[regexp {HIGH|MDIUM|LOW|WEAK|SSL|DHE} $t]} { continue };  # skip false matches
-#        $txt tag add    osaft-XXX $a "$a + $e c"
-#        $txt tag bind   osaft-XXX-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
-#        $txt tag config osaft-XXX    -foreground blue
-#        incr i
-#    }
 
     # 3. search all commands and options and try to set click event
     set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0] 
@@ -477,7 +479,7 @@ proc create_button {parent cmd} {
         set name [str2obj $dat]
         set this $parent.$name
         if {$cfg(VERB)==1} { puts "create_button .$name {$txt}" }
-        pack [button $this -text $dat -command "create_win .$name $cmd {$txt}"] \
+        pack [button $this -text $dat -command "create_win .$name $cmd {$txt}" -bg lightyellow ] \
                  -anchor w -fill x -padx 10 -pady 2
         create_tip   $this "Open window with more settings"
     }
