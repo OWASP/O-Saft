@@ -93,7 +93,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.15 Sommer Edition 2015
+#?      @(#) 1.16 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -103,7 +103,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.15 15/09/22 20:43:28 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.16 15/09/22 22:01:20 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -171,7 +171,7 @@ proc str2obj {str} {
 proc notTOC {str} {
     #? return 0 if string should be part of TOC; 1 otherwise
     if {[regexp {^ *(NOT YET|WYSIW)} $str]} { return 1; };  # skip some special strings
-    if {[regexp {^ *\$} $str]}              { return 1; };  # skip empty
+    if {[regexp {^ *$} $str]}               { return 1; };  # skip empty
     #dbx# puts "TOC $str";
     return 0
 }; # isTOC
@@ -325,6 +325,22 @@ proc create_help {} {
         $txt tag bind osaft-TOC-$i <ButtonPress> "create_see $txt {osaft-HEAD-$name}"
     }
 
+#    # 2a. search for all references to section head in text
+#    set anf [$txt search -regexp -nolinestop -all -count end { +[A-Z_ -]+( |$)} $nam]
+#    # FIXME: returns too much false positives
+#    set i 0
+#    foreach a $anf {
+#        set e [lindex $end $i];
+#        set t [$txt get $a "$a + $e c"];
+#        incr i
+#        if {[regexp {^[A-Z_ -]+$} $t]} { continue };  # skip headlines itself
+#        if {[regexp {HIGH|MDIUM|LOW|WEAK|SSL|DHE} $t]} { continue };  # skip false matches
+#        if {[notTOC $t]} { continue; }; # skip some special strings
+#        $txt tag add    osaft-XXX $a "$a + $e c"
+#        $txt tag bind   osaft-XXX-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
+#        $txt tag config osaft-XXX    -foreground blue
+#    }
+
     # 3. search all commands and options and try to set click event
     set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0] 
     set i 0
@@ -469,15 +485,15 @@ proc create_win {parent cmd title} {
 }; # create_win
 
 proc create_button {parent cmd} {
-    #? create checkbox buttons; can be used for commands and options
-    #  creates one button for each line returned by: o-saft.pl --help=opt|commands
+    #? create buttons to open window with commands or options
+    #  creates one button for header line returned by: o-saft.pl --help=opt|commands
     # cmd must be "OPT" or "CMD" or "TRC"
     global cfg
     set data $cfg(OPTS)
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
-        if {[regexp {^(Commands|Options) } $txt] == 0} { continue }
+        if {[regexp {^(Commands|Options|General) } $txt] == 0} { continue }
         ## skipped general
         if {$txt eq ""}                    { continue; }
         if {[regexp {^(==|\*\*)}    $txt]} { continue; }; # header or Warning
