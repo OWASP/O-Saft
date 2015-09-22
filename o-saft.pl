@@ -37,8 +37,8 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.375 15/09/21 03:35:17",
-    STR_VERSION => "15.09.15",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.365 15/06/21 11:46:56",
+    STR_VERSION => "15.06.19",          # <== our official version number
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
@@ -358,8 +358,6 @@ our %data   = (     # connection and certificate details
     'modulus'       => {'val' => sub { Net::SSLinfo::modulus(       $_[0], $_[1])}, 'txt' => "Certificate Public Key Modulus"},
     'modulus_exponent'=>{'val'=> sub { Net::SSLinfo::modulus_exponent($_[0],$_[1])},'txt' => "Certificate Public Key Exponent"},
     'serial'        => {'val' => sub { Net::SSLinfo::serial(        $_[0], $_[1])}, 'txt' => "Certificate Serial Number"},
-    'serial_hex'    => {'val' => sub { Net::SSLinfo::serial_hex(    $_[0], $_[1])}, 'txt' => "Certificate Serial Number (hex)"},
-    'serial_int'    => {'val' => sub { Net::SSLinfo::serial_int(    $_[0], $_[1])}, 'txt' => "Certificate Serial Number (int)"},
     'certversion'   => {'val' => sub { Net::SSLinfo::version(       $_[0], $_[1])}, 'txt' => "Certificate Version"},
     'sigdump'       => {'val' => sub { Net::SSLinfo::sigdump(       $_[0], $_[1])}, 'txt' => "Certificate Signature (hexdump)"},
     'sigkey_len'    => {'val' => sub { Net::SSLinfo::sigkey_len(    $_[0], $_[1])}, 'txt' => "Certificate Signature Key Length"},
@@ -409,8 +407,7 @@ our %data   = (     # connection and certificate details
     'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'session_lifetime'=>{'val'=> sub { Net::SSLinfo::session_lifetime($_[0],$_[1])},'txt' => "Target's TLS Session Ticket Lifetime"},
-    'session_timeout'=>{'val' => sub { Net::SSLinfo::session_timeout($_[0],$_[1])}, 'txt' => "Target's TLS Session Timeout"},
-    'dh_parameter'  => {'val' => sub { Net::SSLinfo::dh_parameter(  $_[0], $_[1])}, 'txt' => "Target's DH Parameter"},
+    'session_timeout'=>{'val'=> sub { Net::SSLinfo::session_timeout($_[0],$_[1])},'txt' => "Target's TLS Session Timeout"},
     'chain'         => {'val' => sub { Net::SSLinfo::chain(         $_[0], $_[1])}, 'txt' => "Certificate Chain"},
     'chain_verify'  => {'val' => sub { Net::SSLinfo::chain_verify(  $_[0], $_[1])}, 'txt' => "CA Chain Verification (trace)"},
     'verify'        => {'val' => sub { Net::SSLinfo::verify(        $_[0], $_[1])}, 'txt' => "Validity Certificate Chain"},
@@ -482,14 +479,7 @@ my %check_cert = (  # certificate data
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
-    'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
-    'modulus_size'  => {'txt' => "Certificate Public Key Modulus <16385 bits"},
-    'modulus_exp_size'=>{'txt'=> "Certificate Public Key Modulus Exponent <= 65536"},
-    'pub_encryption'=> {'txt' => "Certificate Public Key with Encryption"},
-    'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
-    'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
-    'sig_enc_known' => {'txt' => "Certificate Private Key Encryption known"},
-    'rfc6125_names' => {'txt' => "Certificate Names compliant to RFC6125"},
+    'sha2signature' => {'txt' => "Certificate private key signature SHA2"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -538,7 +528,6 @@ my %check_conn = (  # connection data
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'freak'         => {'txt' => "Connection is safe against FREAK attack"},
     'heartbleed'    => {'txt' => "Connection is safe against heartbleed attack"},
-    'logjam'        => {'txt' => "Connection is safe against Logjam attack"},
     'lucky13'       => {'txt' => "Connection is safe against Lucky 13 attack"},
     'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
     'rc4'           => {'txt' => "Connection is safe against RC4 attack"},
@@ -600,9 +589,6 @@ my %check_dest = (  # target (connection) data
     # following for information, checks not useful; see "# check target specials" in checkdest also
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
-    'dh_512'        => {'txt' => "Target DH Parameter >= 512 bits"},
-    'dh_2048'       => {'txt' => "Target DH Parameter >= 2048 bits"},
-    'ecdh_256'      => {'txt' => "Target DH Parameter >= 256 bits (ECDH)"},
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
@@ -620,7 +606,6 @@ my %check_size = (  # length and count data
     'len_ocsp'      => {'txt' => "Certificate OCSP size"},          # <  256
     'len_oids'      => {'txt' => "Certificate OIDs size"},
     'len_publickey' => {'txt' => "Certificate Public Key size"},    # > 1024
-    # \---> same as modulus_len
     'len_sigdump'   => {'txt' => "Certificate Signature Key size"} ,# > 1024
     'len_altname'   => {'txt' => "Certificate Subject Altname size"},
     'len_chain'     => {'txt' => "Certificate Chain size"},         # < 2048
@@ -802,18 +787,10 @@ our %shorttexts = (
     'freak'         => "Safe to FREAK",
     'heartbleed'    => "Safe to heartbleed",
     'lucky13'       => "Safe to Lucky 13",
-    'logjam'        => "Safe to Logjam",
     'poodle'        => "Safe to POODLE",
     'rc4'           => "Safe to RC4 attack",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
-    'modulus_size'  => "Modulus <= 16384 bits",
-    'modulus_exp_size'=>"Modulus exponent <= 65536",
-    'pub_encryption'=> "Public key with encryption",
-    'pub_enc_known' => "Public Key Encryption known",
-    'sig_encryption'=> "Private key with encryption",
-    'sig_enc_known' => "Private Key Encryption known",
-    'rfc6125_names' => "Names according RFC6125",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -866,21 +843,17 @@ our %shorttexts = (
     'compression'   => "Compression",
     'expansion'     => "Expansion",
     'krb5'          => "Krb5 Principal",
-    'psk_hint'      => "PSK Identity Hint",
-    'psk_identity'  => "PSK Identity",
-    'srp'           => "SRP Username",
+    'psk_hint'      => "PSK identity hint",
+    'psk_identity'  => "PSK identity",
+    'srp'           => "SRP username",
     'protocols'     => "Protocols",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
-    'session_protocol'  => "Selected SSL Protocol",
-    'session_ticket'    => "TLS Session Ticket",
-    'session_lifetime'  => "TLS Session Ticket Lifetime",
-    'session_random'    => "TLS Session Ticket random",
-    'session_timeout'   => "TLS Session Timeout",
-    'dh_parameter'  => "DH Parameter",
-    'dh_512'        => "DH Parameter >= 512",
-    'dh_2048'       => "DH Parameter >= 2048",
-    'ecdh_256'      => "DH Parameter >= 256 (ECDH)",
+    'session_protocol'=> "Selected SSL Protocol",
+    'session_ticket'=> "TLS Session Ticket",
+    'session_lifetime'=> "TLS Session Ticket Lifetime",
+    'session_random'=> "TLS Session Ticket random",
+    'session_timeout'=> "TLS Session Timeout",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -925,24 +898,21 @@ our %shorttexts = (
     'pubkey_algorithm'  => "Public Key Algorithm",
     'pubkey_value'  => "Public Key Value",
     'modulus_len'   => "Public Key length",
-    'modulus'       => "Public Key Modulus",
-    'modulus_exponent'  => "Public Key Exponent",
+    'modulus'       => "Public Key modulus",
+    'modulus_exponent'  => "Public Key exponent",
     'serial'        => "Serial Number",
-    'serial_hex'    => "Serial Number (hex)",
-    'serial_int'    => "Serial Number (int)",
     'certversion'   => "Certificate Version",
-    'sslversion'    => "SSL Protocol",
+    'sslversion'    => "SSL protocol",
     'signame'       => "Signature Algorithm",
     'sigdump'       => "Signature (hexdump)",
-    'sigkey_len'    => "Signature Key length",
-    'sigkey_value'  => "Signature Key value",
+    'sigkey_len'    => "Signature key length",
+    'sigkey_value'  => "Signature key value",
     'trustout'      => "Trusted",
     'ocsp_uri'      => "OCSP URL",
     'ocspid'        => "OCSP hash",
     'subject_hash'  => "Subject hash",
     'issuer_hash'   => "Issuer hash",
     'fp_not_md5'    => "Fingerprint not MD5",
-    'cert_type'     => "Certificate Type (bitmask)",
     'verify_hostname'   => "Hostname valid",
     'verify_altname'    => "AltNames valid",
     'fingerprint_hash'  => "Fingerprint Hash",
@@ -950,11 +920,8 @@ our %shorttexts = (
     'fingerprint_sha1'  => "Fingerprint SHA1",
     'fingerprint_md5'   => "Fingerprint  MD5",
     'fingerprint'       => "Fingerprint:",
-    'https_protocols'   => "HTTPS Alternate-Protocol",
-    'https_svc'     => "HTTPS Alt-Svc header",
     'https_status'  => "HTTPS Status line",
     'https_server'  => "HTTPS Server banner",
-    'https_location'=> "HTTPS Location header",
     'https_alerts'  => "HTTPS Error alerts",
     'https_refresh' => "HTTPS Refresh header",
     'https_pins'    => "HTTPS Public Key Pins",
@@ -963,13 +930,10 @@ our %shorttexts = (
     'hsts_subdom'   => "HTTPS STS sub-domains",
     'hsts_is301'    => "HTTP Status code is 301",
     'hsts_is30x'    => "HTTP Status code not 30x",
-    'http_protocols'=> "HTTP Alternate-Protocol",
-    'http_svc'      => "HTTP Alt-Svc header",
     'http_status'   => "HTTP Status line",
     'http_location' => "HTTP Location header",
     'http_refresh'  => "HTTP Refresh header",
     'http_sts'      => "HTTP STS header",
-    'options'       => "<<internal>> SSL bitmask",
     #------------------+------------------------------------------------------
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
@@ -1269,9 +1233,8 @@ our %cmd = (
     'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
                         qw(
-                         selected cipher fingerprint_hash fp_not_md5 
-                         sha2signature pub_encryption pub_enc_known email
-                         serial subject dates verify expansion compression hostname
+                         selected cipher fingerprint_hash fp_not_md5 email serial
+                         subject dates verify expansion compression hostname
                          beast crime freak export rc4_cipher rc4 pfs_cipher crl hassslv2 hassslv3 poodle
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
@@ -1285,7 +1248,7 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(beast breach crime freak heartbleed logjam lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random)
+                        qw(beast breach crime freak heartbleed lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
@@ -1293,7 +1256,7 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam cipher),
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle cipher),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
@@ -1301,7 +1264,7 @@ our %cmd = (
                         qw(check cipher pfs_cipher selected)],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
-                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
                        ],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
@@ -1375,8 +1338,6 @@ our %cmd = (
         'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
                        # FORTEZZA has abbreviations FZA and FRZ
                        # unsure about FORTEZZA_KEA
-        'SHA2'      => 'sha(2|224|256|384|512)/',
-                       # any SHA2, just sha2 is too lazy
         'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
                        # Numerous protocol prefixes are in use:
                        #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
@@ -1384,21 +1345,6 @@ our %cmd = (
                        # various variants for aliases to select cipher groups
         'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
         'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
-        'encryption'    =>'(?:encryption|ecPublicKey)', # anything containing this string
-        'encryption_ok' =>'(?:(?:(?:(?:md[245]|ripemd160|sha(?:1|224|256|384|512))with)?[rd]saencryption)|id-ecPublicKey)',
-                       # well known strings to identify signature and public key encryption
-                       # rsaencryption, dsaencryption, md[245]withrsaencryption, 
-                       # ripemd160withrsa shaXXXwithrsaencryption
-                       # id-ecPublicKey
-        'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
-                       # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
-        'isIP'          => '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)',
-        'isDNS'         => '(?:[a-z0-9.-]+)',
-        'isIDN'         => '(?:xn--)',
-        'leftwild'      => '^\*(?:[a-z0-9.-]+)',
-        'doublewild'    => '(?:[a-z0-9.-]+\*[a-z0-9-]+\*)', # x*x or x*.x*
-        'invalidwild'   => '(?:\.\*\.)',            # no .*.
-        'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
 
         # RegEx containing pattern to identify vulnerable ciphers
             #
@@ -1419,8 +1365,6 @@ our %cmd = (
         'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',
-        'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',    # match against cipher
-                       # Logjam is same as regex{EXPORT} above
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
 
@@ -1554,7 +1498,7 @@ our %cmd = (
         'TLSv13'    => 0x0304,
         'TLS1FF'    => 0x03FF,  # last possible version of TLS1.x (not specified, used internal)
         'DTLSfamily'=> 0xFE00,  # DTLS1.FF, no defined PROTOCOL, for internal use only
-        'DTLSv09'   => 0x0100,  # DTLS, OpenSSL pre 0.9.8f, not finally standardized; some versions use 0xFEFF
+        'DTLSv09'   => 0xFEFF,  # DTLS, OpenSSL pre 0.9.8f, not finally standardized
         'DTLSv1'    => 0xFEFF,  # DTLS1.0 (udp)
         'DTLSv11'   => 0xFEFE,  # DTLS1.1: has never been used (udp)
         'DTLSv12'   => 0xFEFD,  # DTLS1.2 (udp)
@@ -1574,7 +1518,6 @@ our %cmd = (
         'checkdefault'  => 0,
         'check02102'=> 0,
         'check03116'=> 0,
-        'check6125' => 0,
         'check7525' => 0,
         'checkdates'=> 0,
         'checksizes'=> 0,
@@ -2758,7 +2701,7 @@ sub _isbreach($){
     #      *  does not require TLS-layer compression
     #      *  works against any cipher suite
     #      *  can be executed in under a minute
-} # _isbreach
+}
 sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $_[0] . " "; }
     # return compression if available, empty string otherwise
 sub _islucky($) { return ($_[0] =~ /$cfg{'regex'}->{'Lucky13'}/) ? $_[0] : ""; }
@@ -2771,11 +2714,6 @@ sub _isfreak($$){
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
     return "";
 } # _isfreak
-sub _islogjam($$){
-    # return given cipher if vulnerable to logjam attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
-} # _islogjam
 sub _ispfs($$)  { return ("$_[0]-$_[1]" =~ /$cfg{'regex'}->{'PFS'}/)   ? ""  : $_[1]; }
     # return given cipher if it does not support forward secret connections (PFS)
 sub _isrc4($)   { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/)  ? $_[0] . " "  : ""; }
@@ -3232,7 +3170,6 @@ sub checkciphers($$) {
 
     my $ssl     = "";
     my $cipher  = "";
-    my $exp     = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     my $hasssl3 = 0;# 1: if SSLv3 checked
@@ -3244,38 +3181,10 @@ sub checkciphers($$) {
         if ($yn =~ m/yes/i) {   # cipher accepted
             $checks{$ssl}->{val}++ if ($yn =~ m/yes/i); # cipher accepted
             checkcipher($ssl, $cipher);
-            $exp .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $c));
         }
         $hasrsa{$ssl}  = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
-
-    # Logjam check is a bit ugly: DH Parameter may be missing
-    # TODO: implement own check for DH parameters instead relying on openssl
-    my $txt = $data{'dh_parameter'}->{val}($host);
-    my $dh  = $txt;
-       $dh  =~ s/[^\d]*(\d+) *bits.*/$1/i;  # just get number
-       # DH, 512 bits
-       # DH, 1024 bits
-       # DH, 2048 bits
-       # ECDH, P-256, 128 bits
-       # ECDH, P-256, 256 bits
-                       # TODO: ECDH should also have 256 bits or more
-    if ($dh =~ m/^\d+$/) {      # a number, check size
-        if ($txt !~ m/ECDH/) { 
-            $checks{'dh_512'}->{val}    =  $txt if ($dh < 512);
-            $checks{'dh_2048'}->{val}   =  $txt if ($dh < 2048);
-        } else {                # ECDH is different
-            $checks{'ecdh_256'}->{val}  =  $txt if ($dh < 512);
-        }
-    } else {                    # not a number, probably suspicious
-        $checks{'logjam'}->{val}    =  $txt;
-    }
-    if ($txt eq "") {
-        $checks{'logjam'}->{val}   .=  "<<openssl did not return DH Paramter>>";
-        $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
-    }
-
     if ($hasssl3 <= 0) {
         # if SSLv3 was disabled, check for BEAST is incomplete; inform about that
         $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
@@ -3432,15 +3341,10 @@ sub checkcert($$) {
 #   }
         }
     }
-    $checks{'selfsigned'}    ->{val} = $data{'selfsigned'}->{val}($host);
-    $checks{'fp_not_md5'}    ->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
+    $checks{'selfsigned'}->{val}    = $data{'selfsigned'}->{val}($host);
+    $checks{'fp_not_md5'}->{val}    = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
     $value = $data{'signame'}->{val}($host);
-    $checks{'sha2signature'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'SHA2'}/);
-    $checks{'sig_encryption'}->{val} = $value if ($value !~ m/$cfg{'regex'}->{'encryption'}/i);
-    $checks{'sig_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i);
-    $value = $data{'pubkey_algorithm'}->{val}($host);
-    $checks{'pub_encryption'}->{val} = $value if ($value !~ m/$cfg{'regex'}->{'encryption'}/i);
-    $checks{'pub_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i);
+    $checks{'sha2signature'}->{val} = $value if ($value !~ m/^sha(2|224|256|384|512)/); # just sha2 is too lazy
 
 # TODO: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
@@ -3518,33 +3422,20 @@ sub checksizes($$) {
     $value =~ s/(----.+----\n)//g;
     chomp $value;
     $checks{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
-    $checks{'len_subject'}  ->{val} = length($data{'subject'}->{val}($host));
-    $checks{'len_issuer'}   ->{val} = length($data{'issuer'}->{val}($host));
-    $checks{'len_cps'}      ->{val} = length($data{'ext_cps'}->{val}($host));
-    $checks{'len_crl'}      ->{val} = length($data{'ext_crl'}->{val}($host));
-    #$checks{'len_crl_data'} ->{val} = length($data{'crl'}->{val}($host));
-    $checks{'len_ocsp'}     ->{val} = length($data{'ocsp_uri'}->{val}($host));
-    #$checks{'len_oids'}     ->{val} = length($data{'oids'}->{val}($host));
-    $checks{'len_sernumber'}->{val} = int(length($data{'serial_hex'}->{val}($host)) / 2); # value are hex octets
-        # Note: RFC5280 limits to 20 digit (integer), which is hard to check
-        #       with the hex value, anyway it should not be more than 8 bytes
+    $checks{'len_subject'}->{val}   = length($data{'subject'}->{val}($host));
+    $checks{'len_issuer'}->{val}    = length($data{'issuer'}->{val}($host));
+    $checks{'len_cps'}->{val}       = length($data{'ext_cps'}->{val}($host));
+    $checks{'len_crl'}->{val}       = length($data{'ext_crl'}->{val}($host));
+    #$checks{'len_crl_data'}->{val}  = length($data{'crl'}->{val}($host));
+    $checks{'len_ocsp'}->{val}      = length($data{'ocsp_uri'}->{val}($host));
+    #$checks{'len_oids'}->{val}      = length($data{'oids'}->{val}($host));
+    $checks{'len_sernumber'}->{val} = int(length($data{'serial'}->{val}($host)) / 2); # value are hex octets
     $value = $data{'modulus_len'}->{val}($host);
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
-    $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001) or prime256v1
-    if ($value =~ m/prime/i) {  # public key uses EC with primes
-        $checks{'modulus_exp_size'}->{val}  = "<<N/A $value>>";
-        $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
-    } else  {                   # only traditional exponent needs to be checked
-        $value =~ s/^(\d+).*/$1/;
-        $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
-        $value = $data{'modulus'}->{val}($host); # value are hex digits
-        $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
-    }
-    $value = $data{'serial_int'}->{val}($host);
-    #$value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
-    $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
     $value = $data{'sigkey_len'}->{val}($host);
-    $checks{'len_sigdump'}  ->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
+    $checks{'len_sigdump'}->{val}   = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
+    $value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
+    $checks{'sernumber'}->{val}     = " " if ($value > 20);
 } # checksizes
 
 sub check02102($$) {
@@ -3676,94 +3567,6 @@ sub check03116($$) {
     $checks{'bsi-tr-03116-'}->{val} .= $checks{'bsi-tr-03116+'}->{val};
 
 } # check03116
-
-sub check6125($$) {
-    #? check if certificate identifiers are RFC 6125 compliant
-    _y_CMD("check6125() " . $cfg{'done'}->{'check6125'});
-    $cfg{'done'}->{'check6125'}++;
-    return if ($cfg{'done'}->{'check6125'} > 1);
-
-    my $txt = "";
-    my $val = "";
-
-    #from: https://www.rfc-editor.org/rfc/rfc6125.txt
-    #   ... only references which are relevant for checks here
-    # 6.4.  Matching the DNS Domain Name Portion
-    #   (collection of descriptions for following rules)
-    # 6.4.1.  Checking of Traditional Domain Names
-    #   domain name labels using a case-insensitive ASCII comparison, as
-    #   clarified by [DNS-CASE] (e.g., "WWW.Example.Com" would be lower-cased
-    #   to "www.example.com" for comparison purposes).  Each label MUST match
-    #   in order for the names to be considered to match, except as
-    #   supplemented by the rule about checking of wildcard labels
-    #   (Section 6.4.3).
-    # 6.4.2.  Checking of Internationalized Domain Names
-    # 6.4.3.  Checking of Wildcard Certificates
-    #   ...
-    #   1.  The client SHOULD NOT attempt to match a presented identifier in
-    #       which the wildcard character comprises a label other than the
-    #       left-most label (e.g., do not match bar.*.example.net).
-    #   2.  If the wildcard character is the only character of the left-most
-    #       label in the presented identifier, the client SHOULD NOT compare
-    #       against anything but the left-most label of the reference
-    #       identifier (e.g., *.example.com would match foo.example.com but
-    #       not bar.foo.example.com or example.com).
-    #   3.  The client MAY match a presented identifier in which the wildcard
-    #       character is not the only character of the label (e.g.,
-    #       baz*.example.net and *baz.example.net and b*z.example.net would
-    #       be taken to match baz1.example.net and foobaz.example.net and
-    #       buzz.example.net, respectively).  However, the client SHOULD NOT
-    #       attempt to match a presented identifier where the wildcard
-    #       character is embedded within an A-label or U-label [IDNA-DEFS] of
-    #       an internationalized domain name [IDNA-PROTO].
-    # 6.5.2.  URI-ID
-    #   The scheme name portion of a URI-ID (e.g., "sip") MUST be matched in
-    #   a case-insensitive manner, in accordance with [URI].  Note that the
-    #   ":" character is a separator between the scheme name and the rest of
-    #   the URI, and thus does not need to be included in any comparison.
-    # TODO: nothing
-    # 7.2.  Wildcard Certificates
-    #   o  There is no specification that defines how the wildcard character
-    #      may be embedded within the A-labels or U-labels [IDNA-DEFS] of an
-    #      internationalized domain name [IDNA-PROTO]; as a result,
-    #      implementations are strongly discouraged from including or
-    #      attempting to check for the wildcard character embedded within the
-    #      A-labels or U-labels of an internationalized domain name (e.g.,
-    #      "xn--kcry6tjko*.example.org").  Note, however, that a presented
-    #      domain name identifier MAY contain the wildcard character as long
-    #      as that character occupies the entire left-most label position,
-    #      where all of the remaining labels are valid NR-LDH labels,
-    #      A-labels, or U-labels (e.g., "*.xn--kcry6tjko.example.org").
-    # 7.3.  Internationalized Domain Names
-    #   Allowing internationalized domain names can lead to the inclusion of
-    #   visually similar (so-called "confusable") characters in certificates;
-    #   for discussion, see for example [IDNA-DEFS].
-
-    # Note: wildcards itself are checked in   checkcert() _getwilds()
-    $txt = $data{'cn'}->{val}($host);
-    $val     .= " <<6.4.2:cn $txt>>"      if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
-    $val     .= " <<6.4.3:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
-    $val     .= " <<6.4.3:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'invalidwild'}!);
-    $val     .= " <<7.2.o:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
-    $val     .= " <<7.3:cn $txt>>"        if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
-    $txt = $data{'subject'}->{val}($host);
-    $txt =~ s!^.*CN=!!;         # just value of CN=
-    $val     .= " <<6.4.2:subject $txt>>" if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
-    $val     .= " <<6.4.3:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
-    $val     .= " <<6.4.3:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidwild'}!);
-    $val     .= " <<7.2.o:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
-    $val     .= " <<7.3:subject $txt>>"   if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
-    foreach $txt (split(" ", $data{'altname'}->{val}($host))) {
-        $txt  =~ s!.*:!!;        # strip prefix
-        $val .= " <<6.4.2:altname $txt>>" if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
-        $val .= " <<6.4.3:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
-        $val .= " <<6.4.3:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidwild'}!);
-        $val .= " <<7.2.o:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
-        $val .= " <<7.3:altname $txt>>"   if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
-    }
-    $checks{'rfc6125_names'}->{val} = $val;
-
-} # check6125
 
 sub check7525($$) {
     #? check if target is RFC 7525 compliant
@@ -4280,7 +4083,6 @@ sub checkssl($$) {
         check02102($host, $port);   # check for BSI TR-02102-2
         check03116($host, $port);   # check for BSI TR-03116-4
         check7525( $host, $port);   # check for RFC 7525
-        check6125( $host, $port);   # check for RFC 6125 (identifiers only)
         checksni(  $host, $port);   # check for SNI
         checksizes($host, $port);   # some sizes
     } else {
@@ -4290,18 +4092,16 @@ sub checkssl($$) {
         $cfg{'done'}->{'check02102'}++;# "
         $cfg{'done'}->{'check03116'}++;# "
         $cfg{'done'}->{'check7525'}++; # "
-        $cfg{'done'}->{'check6125'}++; # "
         $cfg{'done'}->{'checkdv'}++;   # "
         $cfg{'done'}->{'checkev'}++;   # "
         foreach $key (sort keys %checks) { # anything related to certs need special setting
             $checks{$key}->{val} = $cfg{'no_cert_txt'} if (_is_member($key, \@{$cfg{'check_cert'}}));
         }
-        $checks{'hostname'}     ->{val} = $cfg{'no_cert_txt'};
+        $checks{'hostname'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-02102+'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-02102-'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-03116+'}->{val} = $cfg{'no_cert_txt'};
         $checks{'bsi-tr-03116-'}->{val} = $cfg{'no_cert_txt'};
-        $checks{'rfc6125_names'}->{val} = $cfg{'no_cert_txt'};
     }
 
     if ($cfg{'usehttp'} == 1) {
@@ -4470,7 +4270,6 @@ sub print_data($$$$) {
         $label = ($data{$label}->{txt} || "");      # defensive programming
         printf("\n%s%s\n\t%s\n", $label,  $text{'separator'}, $val); # comma!
     } else {
-        $label = ($data{$label}->{txt} || "");      # defensive programming
         printf("%-32s\t%s\n",    $label . $text{'separator'}, $val); # dot!
     }
 } # print_data
@@ -4740,7 +4539,7 @@ sub print_size($$$$) {
     my ($legacy, $host, $port, $label) = @_;
     my $value = "";
     $value = " bytes" if ($label =~ /^(len)/);
-    $value = " bits"  if ($label =~ /^len_(modulus|publickey|sigdump)/);
+    $value = " bits"  if ($label =~ /^(len_publickey|len_sigdump)/);
     print_check($legacy, $host, $port, $label, $checks{$label}->{val} . $value);
 } # print_size
 
@@ -5587,20 +5386,11 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')                { $arg = '+hsts';       }
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
-    if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; TODO until check is improved (6/2015)
-    if ($arg eq '+modulus_exponent_size'){$arg = '+modulus_exp_size'; } # alias
-    if ($arg eq '+pub(lic)?_enc(ryption)?')      { $arg = '+pub_encryption';} # alias
-    if ($arg eq '+pubkey_enc(ryption)?')         { $arg = '+pub_encryption';} # alias
-    if ($arg eq '+public_key_encryption')        { $arg = '+pub_encryption';} # alias
-    if ($arg eq '+pub(lic)?_enc(ryption)?_known'){ $arg = '+pub_enc_known'; } # alias
-    if ($arg eq '+pubkey_enc(ryption)?_known')   { $arg = '+pub_enc_known'; } # alias
-    if ($arg eq '+sig(key)?_enc(ryption)?')      { $arg = '+sig_encryption';} # alias
-    if ($arg eq '+sig(key)?_enc(ryption)?_known'){ $arg = '+sig_enc_known'; } # alias
     if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
     if ($arg =~ /^\+cert(ificate)?$/i)  { $arg = '+pem';        } # PEM
     if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
     if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';    }  # subject
-    if ($arg =~ /^\+sha2sig(nature)?$/) { $arg = '+sha2signature'; }    # alias
+    if ($arg =~ /^\+sha2sig(nature)?$/) { $arg = '+sha2signature'; }
     if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # AIA is a common acronym ...
@@ -6250,10 +6040,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
         @results = ();          # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
-#dbx# print "# C", @{$cfg{'ciphers'}};
-# FIXME: 6/2015 es eine kommt Fehlermeldung wenn openssl 1.0.2 verwendet wird:
-# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
-# hat vermutlich mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
         foreach $ssl (@{$cfg{'version'}}) {
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
