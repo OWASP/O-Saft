@@ -1,4 +1,41 @@
 
+Version: 15.09.15
+  CHANGES
+    * o-saft.tcl improved
+    * documentation improved
+  NEW
+    * logjam implemented
+
+Version: 15.06.19
+  BUGFIX
+    * handle checks for EC public keys correctly
+    * DTLSv09 is 0x0100
+    * missing shorttexts added
+    * support serial number in hex format; use Math::BigInt if necessary
+    * check for +sernumber corrected
+  CHANGES
+    * all o-saft-*.pm print helf if called by themselfs
+  NEW
+    * dh_parameter implemented
+    * detect id-ecPublicKey as known and good encryption
+    * support public key with EC parameters
+    * DTLSv1x added (experimental)
+    * +modulus_exp_size +modulus_size and +pub_encryption implemented
+    * 
+
+Version: 15.06.09
+  BUGFIX
+    * setting of path for CAs corrected (when --openssl=Tool is used)
+    * using --openssl=TOOL corrected
+  CHANGES
+    * use VERSION as string constants
+    * using string constants
+  NEW
+    * _yeast_prot() implemented in o-saft-dbx.pm
+    * +session_protocol added to +protocols
+    * +session_protocol +session_timeout added
+    * improved +version
+
 Version: 15.05.15
 
 Version: 15.04.15

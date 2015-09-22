@@ -91,7 +91,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.12 Sommer Edition 2015
+#?      @(#) 1.13 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -101,7 +101,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.12 15/09/12 10:12:59 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.13 15/09/22 18:32:12 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -186,7 +186,7 @@ proc create_window {title size} {
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
     pack [button $this.f1.q -text "Close" -bg orange -command "destroy $this"] -side right
     create_tip   $this.f1.q "Close Window"
-    if {$title ne "Help"} {
+    if {$title ne "Help" && $title ne "About"} {
         # all other windows have Save button
         pack [button $this.f1.s -text Save -bg lightgreen -command {osaft_save "CFG" 0}] -side left
         create_tip   $this.f1.q "Save configuration to file"
