@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.37 15/09/22 22:50:25";
+my  $man_SID= "@(#) o-saft-man.pm 1.38 15/09/26 10:31:59";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -268,6 +268,7 @@ our %man_text = (
         'KSK'       => "Key Signing Key", # DNSSEC
         'LFSR'      => "Linear Feedback Shift Register",
         'LM hash'   => "LAN Manager hash aka LanMan hash",
+        'Logjam'    => "Attack to force server to downgrade to export ciphers",
         'Lucky 13'  => "Break SSL/TLS Protocol",
         'MARS'      => "",
         'MAC'       => "Message Authentication Code",
@@ -337,6 +338,7 @@ our %man_text = (
         'PKIX'      => "Internet Public Key Infrastructure Using X.509",
         'PM'        => "Policy Mappings (certificate extension)",
         'PMAC'      => "Parallelizable MAC (by Phillip Rogaway)",
+        'PMS'       => "pre-master secret",
         'Poly1305-AES'  => "MAC (by D. Bernstein)",
         'POP'       => "Proof of Possession",
         'POODLE'    => "Padding Oracle On Downgraded Legacy Encryption",
@@ -394,7 +396,10 @@ our %man_text = (
         'SIC'       => "Segmented Integer Counter (alias for CTR)",
         'Skein'     => "hash function",
         'SKID'      => "subject key ID (certificate extension)",
+        'SKIP'      => "Message Skipping Attacks on TLS",
+        'SKIP-TLS'  => "see SKIP",
         'Skipjack'  => "block cipher encryption algorithm specified as part of the Fortezza",
+	'SMACK'     => "State Machine AttaCKs",
         'Snefu'     => "hash function",
         'SNI'       => "Server Name Indication",
         'SNOW'      => "word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )",
@@ -2635,6 +2640,12 @@ CHECKS
 
         Check if target is vulnerable to  POODLE attack (just check if  SSLv3
         is enabled).
+
+#      SKIP
+#
+#        Check if target is vulnerable to  SKIP  attack.
+#	Message Skipping Attacks on TLS. Attack to force  server or client  to
+#	skip messages in handshake protocol",
 
     Target (server) Configuration and Support
 
