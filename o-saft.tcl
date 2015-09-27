@@ -1,6 +1,6 @@
 #!/usr/bin/wish
 ##  # restarts using wish \
-##  exec wish8.6 "$0" ${1+"$@"}
+##  exec wish "$0" ${1+"$@"}
 
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -51,9 +51,9 @@
 #.           |                                                               |
 #.       (C) | [Start] [+info] [+check] [+cipher] [+quick] [+vulns]      [?] |
 #.           |---------------------------------------------------------------|
-#.           | +---------++----------++----------++----------+               |
-#.       (T) | | Options || Commands || (n) +cmd || (m) +cmd |               |
-#.           | +         +-------------------------------------------------+ |
+#.           | +----------++---------++----------++----------+               |
+#.       (T) | | Commands || Options || (n) +cmd || (m) +cmd |               |
+#.           | +          +------------------------------------------------+ |
 #.           | |                                                           | |
 #.           | |                                                           | |
 #.           | +-----------------------------------------------------------+ |
@@ -67,6 +67,7 @@
 #.       (T) - Frame containing panes for commands options, and results
 #.       (S) - Frame containing Status messages
 #.
+#. HACKER's INFO
 #.      Generation of all objects (widgets in Tk slang) is done  based on data
 #.      provided by  o-saft.pl  itself, in praticular some  --help=*  options,
 #.      see  CONFIGURATION  below. Output of these  --help=*  must be one item
@@ -80,7 +81,6 @@
 #.      commands and options may be missing in the generated GUI.
 #.      Following options are used:  --help  --help=opt  --help=commands
 #.
-#. HACKER's INFO
 #.      The tool will only work if o-saft.pl is available and executes without
 #.      errors. All commands and options of  o-saft.pl  will be available from
 #.      herein, except:
@@ -93,7 +93,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.16 Sommer Edition 2015
+#?      @(#) 1.17 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -103,7 +103,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.16 15/09/22 22:01:20 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.17 15/09/28 00:26:00 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -131,6 +131,9 @@ if {[regexp {indows} $tcl_platform(os)]} {
 set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
 set cfg(.CFG)   {}; # set below
+set cfg(geoS)   "600x600";      # geometry and position of O-Saft window
+set cfg(geoA)   "600x425";      # geometry and position of About  window
+set cfg(geoH)   "600x775-0+0";  # geometry and position of Help   window
 catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];   close $fid;          # read .o-saft.pl
@@ -151,7 +154,7 @@ set cfg(x++x)   0;  # each command will have its own entry (this is a dummy)
 set cfg(objN)   ""; # object name of notebook; needed to add more note TABS
 set cfg(winA)   ""; # object name of About window
 set cfg(winH)   ""; # object name of Help  window
-set cfg(POSY)   [winfo y .]; # used to position other windows
+set cfg(POSY)   [winfo y .];    # used to position other windows
 set cfg(POSX)   [winfo x .]; incr cfg(POSX) 100;
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
@@ -265,7 +268,7 @@ proc create_about {} {
     #? create new window with About text; store widget in cfg(winA)
     global cfg
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
-    set cfg(winA) [create_window {About} {570x425}]
+    set cfg(winA) [create_window {About} $cfg(geoA)]
     set t [create_text $cfg(winA) [osaft_about "ABOUT"]];
     $t.t configure -bg gold;        # dirty hack: widget hardcoded
 }; # create_about
@@ -282,7 +285,7 @@ proc create_help {} {
     # the help text herein.
     global cfg
     if {[winfo exists $cfg(winH)]}  { show_window $cfg(winH); return; }
-    set this    [create_window {Help} "600x800-0+0"]
+    set this    [create_window {Help} $cfg(geoH)]
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];  # remove informal messages
     set txt     [create_text $this $help].t
     set toc     {}
@@ -403,7 +406,7 @@ proc create_note {parent title} {
     frame       $this
     $parent add $this   -text $title -underline $alt
     return $this
-}; # remove_note
+}; # create_note
 
 proc create_cmd {parent title color} {
     #? create button to run O-Saft command; returns widget
@@ -588,6 +591,7 @@ proc osaft_save {type nr} {
 
 proc create_filter {txt} {
     #? apply filters for markup in output
+    # we do no use output of "o-saft.pl +help=ourstr" 'cause of better readability
       #------+-------+--+--------------+---------------+---------------+-------+----
       # key   mode    len regex		     foreground	background    underline	font
       #------+-------+--+--------------+---------------+---------------+-------+----
@@ -719,7 +723,7 @@ foreach arg $argv {
 
 wm title        . $cfg(TITLE)
 wm iconname     . [string tolower $cfg(TITLE)]
-wm geometry     . 600x600
+wm geometry     . $cfg(geoS)
 
 font create osaftHead   {*}[font configure TkFixedFont;]  -weight bold
 font create osaftBold   {*}[font configure TkDefaultFont] -weight bold
