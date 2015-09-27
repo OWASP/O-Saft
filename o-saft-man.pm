@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.38 15/09/26 10:31:59";
+my  $man_SID= "@(#) o-saft-man.pm 1.40 15/09/27 18:01:04";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -700,7 +700,10 @@ sub _man_html($$) {
     }
 } # _man_html
 
-sub _man_head($$) { printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60); }
+sub _man_head($$) {
+    return if ($cfg{'out_header'} < 1);
+    printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60);
+}
 sub _man_opt($$$) { printf("%16s%s%s\n",   @_); }
 sub _man_arr($$$) {
     my ($ssl, $sep, $dumm) = @_;
@@ -736,6 +739,7 @@ sub man_table($) {
         #-----------+---------------+-------+-------------------------------
         'score' => ["key",           "=",    "SCORE\t# Description"],
         'regex' => ["key",           " => ", " Regular Expressions used internally"],
+        'ourstr'=> ["key",           " => ", " Regular Expressions to match own output"],
         'abbr'  => ["Abbrevation",   " - ",  "Description"],
         'intern'=> ["Command",       "    ", " list of commands"],
         'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
@@ -755,6 +759,7 @@ sub man_table($) {
     if ($typ eq 'rfc')   { _man_opt("RFC $_", $sep, $man_text{'rfc'}->{$_}[0] . "\n\t\t\t$man_text{'rfc'}->{url}[1]/html/rfc$_") foreach (sort keys %{$man_text{'rfc'}}); }
     if ($typ eq 'abbr')  { _man_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $man_text{'glossar'}->{$_}) foreach (sort keys %{$man_text{'glossar'}}); }
     if ($typ eq 'regex') { _man_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
+    if ($typ eq 'ourstr'){ _man_opt($_, $sep, $cfg{'ourstr'}->{$_}) foreach (sort keys %{$cfg{'ourstr'}}); }
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
     if ($typ eq 'score') { _man_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
    #if ($typ eq 'range') { _man_arr($_, $sep, $cfg{'cipherranges'}->{$_}) foreach (sort keys %{$cfg{'cipherranges'}}); }
@@ -788,6 +793,7 @@ sub man_table($) {
             $txt =~ s/(\t)/\\t/g;
             _man_cfg($typ, $key, $sep, $txt);
         }
+        return if ($cfg{'out_header'} < 1);
         print "
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
 = The string  @@  inside texts is used as placeholder.
@@ -953,7 +959,7 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
 [[Category:OWASP Project]]  [[Category:OWASP_Builders]] [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]] [[Category:SSL]]
 ----
 ";
-    # 2.  enerate wiki page content
+    # 2. generate wiki page content
     #    extract from herein and convert POD syntax to mediawiki syntax
     while ($_ = shift @DATA) {
         last if/^=head1 TODO/;
@@ -1055,7 +1061,7 @@ sub printhelp($) {
     man_commands(),             return if ($hlp =~ /^commands?$/);
     man_table('rfc'),           return if ($hlp =~ /^rfc$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/);
-    man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range)(?:iance)?s?$/i);
+    man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range|ourstr)(?:iance)?s?$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|text)s?[_-]?cfg$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|text)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
@@ -1605,6 +1611,10 @@ OPTIONS
 
           Show texts used in various messages ready for use in  RC-FILE  or
           as option.
+
+      --help=ourstr
+
+          Show regular expressions to match our own strings used in output.
 
       --help=regex
 
@@ -4029,6 +4039,9 @@ EXAMPLES
           $0 --help=cfg-text >> .o-saft.pl
                        edit as needed: .o-saft.pl
           $0 +check some.tld
+#
+#        * Use your private score settings from a file
+#          $0 --help=score > magic.score
 
         * Generate simple parsable output
           $0 --legacy=quick --no-header +info  some.tld
@@ -4206,6 +4219,7 @@ TODO
              Ugly workaround using --v implemented in o-saft-man.pm only.
 
         * internal
+          ** use qr() for defining regex, see $cfg{'regex'}
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
           ** make a clear concept how to handle +CMD whether they report
              checks or informations (aka %data vs. %check_*)
