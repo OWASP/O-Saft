@@ -96,7 +96,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.18 Sommer Edition 2015
+#?      @(#) 1.19 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -106,7 +106,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.18 15/10/13 19:48:16 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.19 15/10/13 21:38:36 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -595,28 +595,28 @@ proc osaft_save {type nr} {
 proc create_filter {txt} {
     #? apply filters for markup in output
     # we do no use output of "o-saft.pl +help=ourstr" 'cause of better readability
-      #------+-------+--+--------------+---------------+---------------+-------+----
+      #------+-------+--+----------------------+-------+---------------+-------+----
       # key   mode    len regex		     foreground	background    underline	font
-      #------+-------+--+--------------+---------------+---------------+-------+----
+      #------+-------+--+----------------------+-------+---------------+-------+----
     array set filter {
-      {YES}  {-regexp 3  {yes\n}		""	lightgreen	0	""}
-      {CMT}  {-regexp 0  {^==*}			gray	""		1	osaftHead }
-      {DBX}  {-regexp 0  {^#[^[]}		blue	""		0	""}
-      {KEY}  {-regexp 2  {^#\[[^:]+:\s*} 	""	gray		0	""}
-      {CMD}  "-regexp 0  {.*?cfg(SAFT).*\\n\\n}	white	black		0	{}"
-      {NO}   {-exact  2  {no (}			""	orange		0	""}
-      {LOW}  {-exact  3  {LOW}			""	red		0	""}
-      {WEAK} {-exact  4  {WEAK}			""	red		0	""}
-      {weak} {-exact  4  {weak}			""	red		0	""}
-      {HIGH} {-exact  4  {HIGH}			""	lightgreen	0	""}
-      {WARN} {-exact  0  {**WARN}		""	lightyellow	0	""}
-    };#------+-------+--+--------------+---------------+---------------+-------+----
+      {YES}  {-regexp 3  {yes\n}		{}	{lightgreen}	0	{}}
+      {CMT}  {-regexp 0  {^==*}			{gray}	{}		1	osaftHead }
+      {DBX}  {-regexp 0  {^#[^[]}		{blue}	{}		0	{}}
+      {KEY}  {-regexp 2  {^#\[[^:]+:\s*} 	{}	{gray}		0	{}}
+      {CMD}  "-regexp 0  {.*?cfg(SAFT).*\\n\\n}	{white}	{black}		0	{}"
+      {NO}   {-exact  2  {no (}			{}	{orange}	0	{}}
+      {LOW}  {-exact  3  {LOW}			{}	{red}		0	{}}
+      {WEAK} {-exact  4  {WEAK}			{}	{red}		0	{}}
+      {weak} {-exact  4  {weak}			{}	{red}		0	{}}
+      {HIGH} {-exact  4  {HIGH}			{}	{lightgreen}	0	{}}
+      {WARN} {-exact  0  {**WARN}		{}	{lightyellow}	0	{}}
+    };#------+-------+--+----------------------+-------+---------------+-------+----
         # following would be better, but does not mark summary lines
-        # it also marks "yes ", which is not easy to compute and avoid
-      #{LOW}  {-regexp 4  {yes\s+LOW}		""	red		0	""}
-      #{WEAK} {-regexp 4  {yes\s+WEAK}		""	red		0	""}
-      #{weak} {-regexp 4  {yes\s+weak}		""	red		0	""}
-      #{HIGH} {-regexp 4  {yes\s+HIGH}		""	lightgreen	0	""}
+        # it also marks "yes ", which is not easy to compute
+      #{LOW}  {-regexp 4  {yes\s+LOW}		{}	{red}		0	{}}
+      #{WEAK} {-regexp 4  {yes\s+WEAK}		{}	{red}		0	{}}
+      #{weak} {-regexp 4  {yes\s+weak}		{}	{red}		0	{}}
+      #{HIGH} {-regexp 4  {yes\s+HIGH}		{}	{lightgreen}	0	{}}
         #
         # Info zu den RegEx:
         #   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
@@ -627,7 +627,7 @@ proc create_filter {txt} {
         #       #[irgendwas]: ist eine Zeile die wegen --trace-key so aussieht
         #   KEY  matched  #[irgendwas]: mit den folgenden Whitespace
         #   CMD  benutzt  cfg(SAFT),  das kann so nicht in der Liste definiert
-        #        werden, darum cfg.SAFT. spaeter nochmal gesetzt
+        #        werden, darum wird cfg.SAFT. spaeter nochmal gesetzt
         #
     global cfg
     foreach key [array names filter] {
@@ -722,6 +722,22 @@ foreach arg $argv {
         *       { lappend targets $arg; }
         default { puts "**WARNING: unknown parameter '$arg'; ignored" }
     }
+}
+
+if {$cfg(VERB)==1} {
+    puts "PRG $argv0"
+    puts "TCL version:   $::tcl_patchLevel"
+    puts " |  library:   $::tcl_library"
+    puts " |  platform:  $::tcl_platform(platform)"
+    puts " |  os:        $::tcl_platform(os)"
+    puts " |  osVersion: $::tcl_platform(osVersion)"
+    puts " |  byteOrder: $::tcl_platform(byteOrder)"
+    puts " |  wordSize:  $::tcl_platform(wordSize)"
+    puts "TCL rcFileName:$::tcl_rcFileName"
+    puts "Tk version:    $::tk_patchLevel"
+    puts " |  library:   $::tk_library"
+    puts " |  strictMotif: $::tk_strictMotif"
+    if {[info exists geometry]==1} { puts " |  geometry:  $geometry" }
 }
 
 wm title        . $cfg(TITLE)
