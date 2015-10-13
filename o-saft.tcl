@@ -1,5 +1,8 @@
 #!/usr/bin/wish
-##  # restarts using wish \
+# restarts using wish \
+exec wish "$0" --
+
+## above exec quick&dirt for Mac OS X, below would be better
 ##  exec wish "$0" ${1+"$@"}
 
 #!#############################################################################
@@ -93,7 +96,7 @@
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.17 Sommer Edition 2015
+#?      @(#) 1.18 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -103,7 +106,7 @@
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.17 15/09/28 00:26:00 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.18 15/10/13 19:48:16 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
