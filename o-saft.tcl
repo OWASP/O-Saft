@@ -90,13 +90,20 @@ exec wish "$0" --
 #.          - all "--help*" options (as they make no sense here)
 #.          - "+cgi" and "+exec" command (they are for internal use only)
 #.
-#.     This is no academically perfect code, but quick&dirty scripted:
+#.      Some nameing conventions:
+#.       - procedures
+#.          create_*    - create widget or windows
+#.          osaft_*     - run externl  o-saft.pl  (and process output)
+#.          osaft-      - prefix used for all text tags
+#.         
+#.
+#.      This is no academically perfect code, but quick&dirty scripted:
 #.       - makes use of global variables instead of passing parameters etc..
 #.       - mixes layout and functions and business logic
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.19 Sommer Edition 2015
+#?      @(#) 1.20 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -106,7 +113,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.19 15/10/13 21:38:36 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.20 15/10/14 00:35:23 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -137,6 +144,7 @@ set cfg(.CFG)   {}; # set below
 set cfg(geoS)   "600x600";      # geometry and position of O-Saft window
 set cfg(geoA)   "600x425";      # geometry and position of About  window
 set cfg(geoH)   "600x775-0+0";  # geometry and position of Help   window
+set cfg(geoF)   "";             # geometry and position of Filter window (computed dynamically)
 catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];   close $fid;          # read .o-saft.pl
@@ -155,13 +163,50 @@ set cfg(EXEC)   0;  # count executions, used for object names
 set cfg(x--x)   0;  # each option  will have its own entry (this is a dummy)
 set cfg(x++x)   0;  # each command will have its own entry (this is a dummy)
 set cfg(objN)   ""; # object name of notebook; needed to add more note TABS
-set cfg(winA)   ""; # object name of About window
-set cfg(winH)   ""; # object name of Help  window
+set cfg(winA)   ""; # object name of About  window
+set cfg(winH)   ""; # object name of Help   window
+set cfg(winF)   ""; # object name of Filter window
 set cfg(POSY)   [winfo y .];    # used to position other windows
 set cfg(POSX)   [winfo x .]; incr cfg(POSX) 100;
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
 set tab(0)      ""; # contains results of cfg(SAFT)
+
+# we do no use output of "o-saft.pl +help=ourstr" 'cause of better readability
+  #------+-------+--+----------------------+-------+---------------+-------+---
+  # key   mode    len regex		     foreground	background    underline	font
+  #------+-------+--+----------------------+-------+---------------+-------+---
+array set filter {
+  {YES}  {-regexp 3  {yes\n}			{}	{lightgreen}	0	{}}
+  {CMT}  {-regexp 0  {^==*}			{gray}	{}		1	osaftHead }
+  {DBX}  {-regexp 0  {^#[^[]}			{blue}	{}		0	{}}
+  {KEY}  {-regexp 2  {^#\[[^:]+:\s*} 		{}	{gray}		0	{}}
+  {CMD}  "-regexp 0  {.*?cfg(SAFT).*\\n\\n}	{white}	{black}		0	{}"
+  {NO}   {-exact  2  {no (}			{}	{orange}	0	{}}
+  {LOW}  {-exact  3  {LOW}			{}	{red}		0	{}}
+  {WEAK} {-exact  4  {WEAK}			{}	{red}		0	{}}
+  {weak} {-exact  4  {weak}			{}	{red}		0	{}}
+  {HIGH} {-exact  4  {HIGH}			{}	{lightgreen}	0	{}}
+  {WARN} {-exact  0  {**WARN}			{}	{lightyellow}	0	{}}
+};#------+-------+--+----------------------+-------+---------------+-------+---
+    # following would be better, but does not mark summary lines
+    # it also marks "yes ", which is not easy to compute
+  #{LOW}  {-regexp 4  {yes\s+LOW}		{}	{red}		0	{}}
+  #{WEAK} {-regexp 4  {yes\s+WEAK}		{}	{red}		0	{}}
+  #{weak} {-regexp 4  {yes\s+weak}		{}	{red}		0	{}}
+  #{HIGH} {-regexp 4  {yes\s+HIGH}		{}	{lightgreen}	0	{}}
+    #
+    # Info zu den RegEx:
+    #   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
+    #   werden, meist geht es aber auch so. Es wird \\n benutzt, damit bei
+    #   der Debug-Ausgabe ein \n sichtbar ist.
+    #   DBX  soll keine Zeilen treffen, die mit einem  KEY  beginnen, also
+    #       # [sowas]: ist eine Debug-Zeile
+    #       #[irgendwas]: ist eine Zeile die wegen --trace-key so aussieht
+    #   KEY  matched  #[irgendwas]: mit den folgenden Whitespace
+    #   CMD  benutzt  cfg(SAFT),  das kann so nicht in der Liste definiert
+    #        werden, darum wird cfg.SAFT. in result_filter nochmal gesetzt
+    #
 
 ######################################################################## procs
 
@@ -266,6 +311,39 @@ proc create_text {parent txt} {
 
 proc create_see {w t} { catch { $w see [$w index $t.first] } }
      # we simply ignore any error if index is unknown
+
+proc toggle_txt {txt tag val} {
+    #? toggle visability of text tagged with name $tag
+    global cfg filter 
+    if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]"; }
+    $txt tag config $tag -elide [expr ! $val];  # "elide true" hides the text
+        # TODO: need to elide complete line
+}; # toggle_txt
+
+proc create_filter {txt cmd} {
+    #? create new window with filter commands for exec results; store widget in cfg(winF)
+    global cfg filter filter_bool
+    if {$cfg(VERB)==1} { puts "create_filter: $txt $cmd"; }
+    if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return; }
+    set geo [split [winfo geometry .] {x+-}]
+    set cfg(geoF) +[expr [lindex $geo 2] + [lindex $geo 0]]+[expr [lindex $geo 3]+100]
+        # calculate new position: x(parent)+width(parent), y(parent)+100
+        # most window managers are clever enough to position window
+        # correctly if calculation is outside visible (screen) frame
+    set cfg(winF) [create_window "Filter:$cmd" $cfg(geoF)]
+        # TODO: only one variable for windows, need a variable for each window
+    set this $cfg(winF)
+    #dbx# puts "TXT $txt | $cmd | $cfg(geoF)"
+    pack [label $this.l -text "toggle visibility of various texts\n(experimental)"]
+    foreach key [array names filter] {
+        set filter_bool($txt,osaft-$key) 1; # default: text is visible
+        pack [ttk::checkbutton $this.x$key \
+                    -text $key -variable filter_bool($txt,osaft-$key) \
+                    -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key);"];
+        # note: checkbutton value passed as reference
+    }
+
+}; # create_filter
 
 proc create_about {} {
     #? create new window with About text; store widget in cfg(winA)
@@ -592,44 +670,9 @@ proc osaft_save {type nr} {
     set cfg(INFO) "saved to $name"; update idletasks;# enforce display update
 }; # osaft_save
 
-proc create_filter {txt} {
+proc result_filter {txt} {
     #? apply filters for markup in output
-    # we do no use output of "o-saft.pl +help=ourstr" 'cause of better readability
-      #------+-------+--+----------------------+-------+---------------+-------+----
-      # key   mode    len regex		     foreground	background    underline	font
-      #------+-------+--+----------------------+-------+---------------+-------+----
-    array set filter {
-      {YES}  {-regexp 3  {yes\n}		{}	{lightgreen}	0	{}}
-      {CMT}  {-regexp 0  {^==*}			{gray}	{}		1	osaftHead }
-      {DBX}  {-regexp 0  {^#[^[]}		{blue}	{}		0	{}}
-      {KEY}  {-regexp 2  {^#\[[^:]+:\s*} 	{}	{gray}		0	{}}
-      {CMD}  "-regexp 0  {.*?cfg(SAFT).*\\n\\n}	{white}	{black}		0	{}"
-      {NO}   {-exact  2  {no (}			{}	{orange}	0	{}}
-      {LOW}  {-exact  3  {LOW}			{}	{red}		0	{}}
-      {WEAK} {-exact  4  {WEAK}			{}	{red}		0	{}}
-      {weak} {-exact  4  {weak}			{}	{red}		0	{}}
-      {HIGH} {-exact  4  {HIGH}			{}	{lightgreen}	0	{}}
-      {WARN} {-exact  0  {**WARN}		{}	{lightyellow}	0	{}}
-    };#------+-------+--+----------------------+-------+---------------+-------+----
-        # following would be better, but does not mark summary lines
-        # it also marks "yes ", which is not easy to compute
-      #{LOW}  {-regexp 4  {yes\s+LOW}		{}	{red}		0	{}}
-      #{WEAK} {-regexp 4  {yes\s+WEAK}		{}	{red}		0	{}}
-      #{weak} {-regexp 4  {yes\s+weak}		{}	{red}		0	{}}
-      #{HIGH} {-regexp 4  {yes\s+HIGH}		{}	{lightgreen}	0	{}}
-        #
-        # Info zu den RegEx:
-        #   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
-        #   werden, meist geht es aber auch so. Es wird \\n benutzt, damit bei
-        #   der Debug-Ausgabe ein \n sichtbar ist.
-        #   DBX  soll keine Zeilen treffen, die mit einem  KEY  beginnen, also
-        #       # [sowas]: ist eine Debug-Zeile
-        #       #[irgendwas]: ist eine Zeile die wegen --trace-key so aussieht
-        #   KEY  matched  #[irgendwas]: mit den folgenden Whitespace
-        #   CMD  benutzt  cfg(SAFT),  das kann so nicht in der Liste definiert
-        #        werden, darum wird cfg.SAFT. spaeter nochmal gesetzt
-        #
-    global cfg
+    global cfg filter
     foreach key [array names filter] {
         set mod [lindex $filter($key) 0]
         set len [lindex $filter($key) 1]; # currenty used for 0 only
@@ -640,7 +683,7 @@ proc create_filter {txt} {
         set fn  [lindex $filter($key) 6]
         if {$mod eq ""} { continue };   # disabled filter rules
 	set rex [regsub {cfg.SAFT.} $rex $cfg(SAFT)];   # substitute variable
-        if {$cfg(VERB)==1} {puts "create_filter: $key : $rex"};
+        if {$cfg(VERB)==1} {puts "result_filter: $key : $rex"};
         # anf contains start, end corresponding end position of match
         set anf [$txt search -all $mod -count end "$rex" 1.0] 
         set i 0
@@ -661,7 +704,7 @@ proc create_filter {txt} {
         if {$fn ne ""}  { $txt tag config osaft-$key -font       $fn }
     }
 
-}; # create_filter
+}; # result_filter
 
 proc osaft_exec {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
@@ -703,10 +746,12 @@ proc osaft_exec {parent cmd} {
     set tab_run  [create_note $cfg(objN) "($cfg(EXEC)) $cmd"]
     set txt [create_text  $tab_run $tab($cfg(EXEC))].t ;    # <== ugly hardcoded .t
     pack [button $tab_run.bs -text {Save}  -bg lightgreen -command "osaft_save {TAB} $cfg(EXEC)"] -side left
+    pack [button $tab_run.bf -text {Filter}               -command "create_filter $txt $cmd"] -side left
     pack [button $tab_run.bq -text {Close TAB} -bg orange -command "destroy $tab_run"] -side right
     create_tip   $tab_run.bq "Close window"
     create_tip   $tab_run.bs "Save result to file"
-    create_filter $txt ;        # text placed in pane, now do some markup
+    create_tip   $tab_run.bf "Show options to filter results"
+    result_filter $txt ;        # text placed in pane, now do some markup
     $cfg(objN) select $tab_run
     set cfg(INFO) "$do done."
 }; # osaft_exec
