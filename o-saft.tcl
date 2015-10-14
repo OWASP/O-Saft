@@ -67,7 +67,7 @@ exec wish "$0" --
 #.      Description
 #.       (H) - Frame containing hostnames to be checked
 #.       (C) - Buttons for most commonly used commands
-#.       (T) - Frame containing panes for commands options, and results
+#.       (T) - Frame containing panes for commands, options and results
 #.       (S) - Frame containing Status messages
 #.
 #. HACKER's INFO
@@ -94,8 +94,9 @@ exec wish "$0" --
 #.       - procedures
 #.          create_*    - create widget or windows
 #.          osaft_*     - run externl  o-saft.pl  (and process output)
+#.       - variables
 #.          osaft-      - prefix used for all text tags
-#.         
+#.          f_*         - prefix used for all filter list variables
 #.
 #.      This is no academically perfect code, but quick&dirty scripted:
 #.       - makes use of global variables instead of passing parameters etc..
@@ -103,7 +104,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.20 Sommer Edition 2015
+#?      @(#) 1.21 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -113,7 +114,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.20 15/10/14 00:35:23 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.21 15/10/14 17:57:51 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -172,41 +173,76 @@ set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
 set tab(0)      ""; # contains results of cfg(SAFT)
 
-# we do no use output of "o-saft.pl +help=ourstr" 'cause of better readability
-  #------+-------+--+----------------------+-------+---------------+-------+---
-  # key   mode    len regex		     foreground	background    underline	font
-  #------+-------+--+----------------------+-------+---------------+-------+---
-array set filter {
-  {YES}  {-regexp 3  {yes\n}			{}	{lightgreen}	0	{}}
-  {CMT}  {-regexp 0  {^==*}			{gray}	{}		1	osaftHead }
-  {DBX}  {-regexp 0  {^#[^[]}			{blue}	{}		0	{}}
-  {KEY}  {-regexp 2  {^#\[[^:]+:\s*} 		{}	{gray}		0	{}}
-  {CMD}  "-regexp 0  {.*?cfg(SAFT).*\\n\\n}	{white}	{black}		0	{}"
-  {NO}   {-exact  2  {no (}			{}	{orange}	0	{}}
-  {LOW}  {-exact  3  {LOW}			{}	{red}		0	{}}
-  {WEAK} {-exact  4  {WEAK}			{}	{red}		0	{}}
-  {weak} {-exact  4  {weak}			{}	{red}		0	{}}
-  {HIGH} {-exact  4  {HIGH}			{}	{lightgreen}	0	{}}
-  {WARN} {-exact  0  {**WARN}			{}	{lightyellow}	0	{}}
-};#------+-------+--+----------------------+-------+---------------+-------+---
-    # following would be better, but does not mark summary lines
-    # it also marks "yes ", which is not easy to compute
-  #{LOW}  {-regexp 4  {yes\s+LOW}		{}	{red}		0	{}}
-  #{WEAK} {-regexp 4  {yes\s+WEAK}		{}	{red}		0	{}}
-  #{weak} {-regexp 4  {yes\s+weak}		{}	{red}		0	{}}
-  #{HIGH} {-regexp 4  {yes\s+HIGH}		{}	{lightgreen}	0	{}}
-    #
-    # Info zu den RegEx:
-    #   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
-    #   werden, meist geht es aber auch so. Es wird \\n benutzt, damit bei
-    #   der Debug-Ausgabe ein \n sichtbar ist.
-    #   DBX  soll keine Zeilen treffen, die mit einem  KEY  beginnen, also
-    #       # [sowas]: ist eine Debug-Zeile
-    #       #[irgendwas]: ist eine Zeile die wegen --trace-key so aussieht
-    #   KEY  matched  #[irgendwas]: mit den folgenden Whitespace
-    #   CMD  benutzt  cfg(SAFT),  das kann so nicht in der Liste definiert
-    #        werden, darum wird cfg.SAFT. in result_filter nochmal gesetzt
-    #
+#   filters to match results
+#   For better readability we do not use output of  "o-saft.pl +help=ourstr".
+#   A matrix as follows would be better for human readability, but tcl's arrays
+#   and lists are tricky to use and also have some limitations.
+# #------+-------+--+----------+-------+---------------+-------+--------
+# # key   mode    len regex  foreground	background    underline	font
+# #------+-------+--+----------+-------+---------------+-------+--------
+# array set filter {
+#   {YES}{-regexp 3  {yes\n}	{}	{lightgreen}	0	{}	}
+#   {CMT}{-regexp 0  {^==*}	{gray}	{}		1	osaftHead }
+#   {NO} {-exact  2  {no (}	{}	{orange}	0	{}	}
+#};#-----+-------+--+----------+-------+---------------+-------+--------
+#  # following would be better, but does not mark summary lines
+#  # it also marks "yes ", which is not easy to compute
+#   {LOW}{-regexp 4  {yes\s+LOW} {}	{red}		0	{}	}
+
+#   Hence we use multiple lists, one for each type of data. A filter consist of
+#   all elements with the same index in each lists.
+#   This also allows to extend the list dynamically.
+#   For better readability, we initialize the list with a description to be the
+#   first (0) index, then add all elements for filters.
+
+set lgreen      lightgreen;     # use variables for color names
+set yellow      lightyellow;    # .. to keep table columns below
+set orange      orange;         # .. as small as possible
+set lGray       LightGray;      #
+set lBlue       LightBlue;      # these variables are use here only
+set steelB      SteelBlue;      #
+
+#     # index   0  (description element)
+lappend f_key   "Unique key for regex"
+lappend f_mod   "Modifier how to use regex (-exact or -regexp)"
+lappend f_len   "Length to be matched (0 for complete line)"
+lappend f_bg    "Background color used for matching text"
+lappend f_fg    "Foreground color used for matching text"
+lappend f_un    "Underlined matching text (0 or 1)"
+lappend f_fn    "Font used for matching text"
+lappend f_rex   "Regex to match text"
+lappend f_cmt   "Description of regex"
+#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
+#     # index   1	2	3	4	5	6	7	8	9	10	11
+#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
+lappend f_key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD
+lappend f_mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp
+lappend f_len   3	4	4	4	0	2	3	0	0	2	0
+lappend f_bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black
+lappend f_fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white
+lappend f_un    0	0	0	0	0	0	0	1	0	0	0
+lappend f_fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}
+lappend f_rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"
+#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
+#
+#     # description of regex
+lappend f_cmt   {word  LOW   anywhere}
+lappend f_cmt   {word  WEAK  anywhere}
+lappend f_cmt   {word  weak  anywhere}
+lappend f_cmt   {word  HIGH  anywhere}
+lappend f_cmt   {line  **WARN}
+lappend f_cmt   {word  no (  anywhere}
+lappend f_cmt   {word  yes  at end of line}
+lappend f_cmt   {line starting with  == (formatting lines)}
+lappend f_cmt   {line starting with  #  (verbose or debuf lines)}
+lappend f_cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
+lappend f_cmt   {lines contaning program name}
+
+
+#   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
+#   werden, meist geht es aber auch so. Es wird \\n benutzt, damit bei
+#   der Debug-Ausgabe ein \n sichtbar ist.
+#
 
 ######################################################################## procs
 
@@ -322,7 +358,7 @@ proc toggle_txt {txt tag val} {
 
 proc create_filter {txt cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
-    global cfg filter filter_bool
+    global cfg f_key f_cmt filter_bool
     if {$cfg(VERB)==1} { puts "create_filter: $txt $cmd"; }
     if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return; }
     set geo [split [winfo geometry .] {x+-}]
@@ -335,12 +371,17 @@ proc create_filter {txt cmd} {
     set this $cfg(winF)
     #dbx# puts "TXT $txt | $cmd | $cfg(geoF)"
     pack [label $this.l -text "toggle visibility of various texts\n(experimental)"]
-    foreach key [array names filter] {
+    set k 0;    # NOTE: index 0 is description
+    while {$k < [llength $f_key]} { # all f_* lists are of same size
+        incr k
+        set key [lindex $f_key $k]
+        set cmt [lindex $f_cmt $k]
         set filter_bool($txt,osaft-$key) 1; # default: text is visible
         pack [ttk::checkbutton $this.x$key \
                     -text $key -variable filter_bool($txt,osaft-$key) \
                     -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key);"];
         # note: checkbutton value passed as reference
+        create_tip   $this.x$key "show/hide: $cmt"
     }
 
 }; # create_filter
@@ -672,18 +713,21 @@ proc osaft_save {type nr} {
 
 proc result_filter {txt} {
     #? apply filters for markup in output
-    global cfg filter
-    foreach key [array names filter] {
-        set mod [lindex $filter($key) 0]
-        set len [lindex $filter($key) 1]; # currenty used for 0 only
-        set rex [lindex $filter($key) 2]
-        set fg  [lindex $filter($key) 3]
-        set bg  [lindex $filter($key) 4]
-        set nr  [lindex $filter($key) 5]
-        set fn  [lindex $filter($key) 6]
-        if {$mod eq ""} { continue };   # disabled filter rules
-	set rex [regsub {cfg.SAFT.} $rex $cfg(SAFT)];   # substitute variable
-        if {$cfg(VERB)==1} {puts "result_filter: $key : $rex"};
+    global cfg
+    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
+    set k 0;    # NOTE: index 0 is description
+    while {$k < [llength $f_key]} { # all f_* lists are of same size
+        incr k
+        set key [lindex $f_key $k]
+        set mod [lindex $f_mod $k]
+        set len [lindex $f_len $k]; # currenty used for 0 only
+        set rex [lindex $f_rex $k]
+        set fg  [lindex $f_fg  $k]
+        set bg  [lindex $f_bg  $k]
+        set nr  [lindex $f_un  $k]
+        set fn  [lindex $f_fn  $k]
+        if {$key eq ""} { continue };   # invalid or disabled filter rules
+        if {$cfg(VERB)==1} {puts "result_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"};
         # anf contains start, end corresponding end position of match
         set anf [$txt search -all $mod -count end "$rex" 1.0] 
         set i 0
@@ -820,8 +864,10 @@ pack $cfg(objN) -fill both -expand 1
 ## create TABs: Command and Options
 set tab_cmds    [create_note $cfg(objN) "Commands"]
 set tab_opts    [create_note $cfg(objN) "Options"]
+#set tab_filt    [create_note $cfg(objN) "Filter"]
 create_button $tab_cmds {CMD}; # fill Commands pane
 create_button $tab_opts {OPT}; # fill Options pane
+#create_filtab $tab_filt {FIL}; # fill Filter pane
 
 # add Save and Reset button in Options pane
 pack [button    $tab_opts.bs -text "Save"  -command {osaft_save "CFG" 0} -bg lightgreen] -side left
