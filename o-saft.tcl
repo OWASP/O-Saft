@@ -35,9 +35,14 @@ exec wish "$0" --
 #?
 #? DESCRIPTION
 #?      This is a simple GUI for  O-Saft - OWASP SSL advanced forensic tool.
-#?      The GUI supports all commands and options available in  o-saft.pl.
-#?      It executes  o-saft.pl  as specified, and prints results in a new  TAB
-#?      of the GUI. Results and settings (commands and options) can be saved.
+#?      The GUI supports all commands (Commands TAB) and options (Options TAB)
+#?      available in  o-saft.pl. For each command  o-saft.pl  will be executed
+#?      as specified. Results are printed in a new TAB of the GUI. A filter to
+#?      markup some important texts is applied to the results in the GUI. This
+#?      filter can be modified and extended in the  Filter TAB.
+#?      Each TAB with results has a  Filter  button which opens a window where
+#?      the visibility of filtered texts (see Filter TAB) can be toggeled.
+#?      All results and settings (commands and options) can be saved to files.
 #?
 #? SYNOPSIS
 #?      $0 [host:port] [host:port] ...
@@ -55,7 +60,7 @@ exec wish "$0" --
 #.       (C) | [Start] [+info] [+check] [+cipher] [+quick] [+vulns]      [?] |
 #.           |---------------------------------------------------------------|
 #.           | +----------++---------++----------++----------+               |
-#.       (T) | | Commands || Options || (n) +cmd || (m) +cmd |               |
+#.       (T) | | Commands || Options || Filter || (n) +cmd || (m) +cmd |     |
 #.           | +          +------------------------------------------------+ |
 #.           | |                                                           | |
 #.           | |                                                           | |
@@ -67,7 +72,7 @@ exec wish "$0" --
 #.      Description
 #.       (H) - Frame containing hostnames to be checked
 #.       (C) - Buttons for most commonly used commands
-#.       (T) - Frame containing panes for commands, options and results
+#.       (T) - Frame containing panes for commands, options, filter, results.
 #.       (S) - Frame containing Status messages
 #.
 #. HACKER's INFO
@@ -104,7 +109,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.21 Sommer Edition 2015
+#?      @(#) 1.22 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -114,7 +119,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.21 15/10/14 17:57:51 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.22 15/10/14 20:53:05 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -143,7 +148,7 @@ set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
 set cfg(.CFG)   {}; # set below
 set cfg(geoS)   "600x600";      # geometry and position of O-Saft window
-set cfg(geoA)   "600x425";      # geometry and position of About  window
+set cfg(geoA)   "600x500";      # geometry and position of About  window
 set cfg(geoH)   "600x775-0+0";  # geometry and position of Help   window
 set cfg(geoF)   "";             # geometry and position of Filter window (computed dynamically)
 catch {
@@ -189,9 +194,10 @@ set tab(0)      ""; # contains results of cfg(SAFT)
 #  # it also marks "yes ", which is not easy to compute
 #   {LOW}{-regexp 4  {yes\s+LOW} {}	{red}		0	{}	}
 
-#   Hence we use multiple lists, one for each type of data. A filter consist of
-#   all elements with the same index in each lists.
-#   This also allows to extend the list dynamically.
+#   Hence we use multiple lists, one for each type of data. Then we convert the
+#   lists to arrays for simple access. A filter consist of all elements with
+#   same index in each  array.
+#   This also allows to extend the arrays dynamically.
 #   For better readability, we initialize the list with a description to be the
 #   first (0) index, then add all elements for filters.
 
@@ -203,41 +209,53 @@ set lBlue       LightBlue;      # these variables are use here only
 set steelB      SteelBlue;      #
 
 #     # index   0  (description element)
-lappend f_key   "Unique key for regex"
-lappend f_mod   "Modifier how to use regex (-exact or -regexp)"
-lappend f_len   "Length to be matched (0 for complete line)"
-lappend f_bg    "Background color used for matching text"
-lappend f_fg    "Foreground color used for matching text"
-lappend f_un    "Underlined matching text (0 or 1)"
-lappend f_fn    "Font used for matching text"
-lappend f_rex   "Regex to match text"
-lappend f_cmt   "Description of regex"
+lappend __key   "Unique key for regex"
+lappend __mod   "Modifier how to use regex "
+lappend __len   "Length to be matched (0 for complete line)"
+lappend __bg    "Background color used for matching text (empty: don't change)"
+lappend __fg    "Foreground color used for matching text (empty: don't change)"
+lappend __un    "Underlined matching text (0 or 1)"
+lappend __fn    "Font used for matching text (empty: don't change)"
+lappend __rex   "Regex to match text"
+lappend __cmt   "Description of regex"
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #     # index   1	2	3	4	5	6	7	8	9	10	11
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-lappend f_key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD
-lappend f_mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp
-lappend f_len   3	4	4	4	0	2	3	0	0	2	0
-lappend f_bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black
-lappend f_fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white
-lappend f_un    0	0	0	0	0	0	0	1	0	0	0
-lappend f_fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}
-lappend f_rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"
+lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	usr1	usr2	usr3	usr4
+lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
+lappend __len   3	4	4	4	0	2	3	0	0	2	0	0	0	0	0
+lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}	{}
+lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}	{}
+lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0	0
+lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}	{}	{}	{}	{}
+lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{}	{}	{}	{}
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #
 #     # description of regex
-lappend f_cmt   {word  LOW   anywhere}
-lappend f_cmt   {word  WEAK  anywhere}
-lappend f_cmt   {word  weak  anywhere}
-lappend f_cmt   {word  HIGH  anywhere}
-lappend f_cmt   {line  **WARN}
-lappend f_cmt   {word  no (  anywhere}
-lappend f_cmt   {word  yes  at end of line}
-lappend f_cmt   {line starting with  == (formatting lines)}
-lappend f_cmt   {line starting with  #  (verbose or debuf lines)}
-lappend f_cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
-lappend f_cmt   {lines contaning program name}
+lappend __cmt   {word  LOW   anywhere}
+lappend __cmt   {word  WEAK  anywhere}
+lappend __cmt   {word  weak  anywhere}
+lappend __cmt   {word  HIGH  anywhere}
+lappend __cmt   {line  **WARN}
+lappend __cmt   {word  no (  anywhere}
+lappend __cmt   {word  yes  at end of line}
+lappend __cmt   {line starting with  == (formatting lines)}
+lappend __cmt   {line starting with  #  (verbose or debuf lines)}
+lappend __cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
+lappend __cmt   {lines contaning program name}
 
+# convert list to array
+for {set k 0} { $k < [llength $__key]} {incr k} {
+    set f_key($k) [lindex $__key $k]
+    set f_mod($k) [lindex $__mod $k]
+    set f_len($k) [lindex $__len $k]
+    set f_fg($k)  [lindex $__fg $k]
+    set f_bg($k)  [lindex $__bg $k]
+    set f_fn($k)  [lindex $__fn $k]
+    set f_un($k)  [lindex $__un $k]
+    set f_rex($k) [lindex $__rex $k]
+    set f_cmt($k) [lindex $__cmt $k]
+}
 
 #   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
 #   werden, meist geht es aber auch so. Es wird \\n benutzt, damit bei
@@ -283,11 +301,11 @@ proc create_window {title size} {
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
     pack [button $this.f1.q -text "Close" -bg orange -command "destroy $this"] -side right
     create_tip   $this.f1.q "Close Window"
-    if {$title ne "Help" && $title ne "About"} {
-        # all other windows have Save button
-        pack [button $this.f1.s -text Save -bg lightgreen -command {osaft_save "CFG" 0}] -side left
-        create_tip   $this.f1.q "Save configuration to file"
-    };
+    if {$title eq "Help" || $title eq "About"} { return $this }
+    if {[regexp {^Filter} $title]}             { return $this }
+    # all other windows have Save button
+    pack [button $this.f1.s -text Save -bg lightgreen -command {osaft_save "CFG" 0}] -side left
+    create_tip   $this.f1.q "Save configuration to file"
     return $this
 }; # create_window
 
@@ -356,6 +374,67 @@ proc toggle_txt {txt tag val} {
         # TODO: need to elide complete line
 }; # toggle_txt
 
+
+proc create_filtab {parent cmd} {
+    #? create table with filter data
+    global cfg aaa
+    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
+    pack [text $parent.text -height 3 -relief flat -background lightgray]
+    $parent.text insert end "\nConfigure filter for text markup. Changes apply to next +command."
+    $parent.text config -state disabled
+    # { set header line with descriptions
+        set this $parent.head
+        frame $this
+        pack [label $this.k -text "Key"        -width  6 -relief raised] -side left
+        pack [label $this.x -text "r"          -width  3 -relief raised] -side left
+        pack [label $this.e -text "e"          -width  2 -relief raised] -side left
+        pack [label $this.l -text "#"          -width  3 -relief raised] -side left
+        pack [label $this.r -text "Regex"      -width 20 -relief raised -borderwidth 1] -side left
+        pack [label $this.f -text "foreground" -width 10 -relief raised] -side left
+        pack [label $this.b -text "background" -width 10 -relief raised] -side left
+        pack [label $this.s -text "font"       -width 10 -relief raised] -side left
+        pack [label $this.u -text "u"          -width  3 -relief raised] -side left
+        pack $this -fill x -anchor w
+        create_tip  $this.k $f_key(0)
+        create_tip  $this.x "$f_mod(0) (-regexp)"
+        create_tip  $this.e "$f_mod(0) (-exact)"
+        create_tip  $this.l $f_len(0)
+        create_tip  $this.r $f_rex(0)
+        create_tip  $this.f $f_fg(0)
+        create_tip  $this.b $f_bg(0)
+        create_tip  $this.s $f_fn(0)
+        create_tip  $this.u $f_un(0)
+    # }
+    foreach {k key} [array get f_key] {
+        if {$k eq 0} { continue };
+        #set key $f_key($k)
+        set mod $f_mod($k)
+        set len $f_len($k); # currenty used for 0 only
+        set rex $f_rex($k)
+        set fg  $f_fg($k)
+        set bg  $f_bg($k)
+        set nr  $f_un($k)
+        set fn  $f_fn($k)
+        if {$key eq ""} { continue };   # invalid or disabled filter rules
+        if {$cfg(VERB)==1} { puts "create_filtab .$key /$rex/" }
+        set name [str2obj $key]
+        set this $parent.$name
+        frame $this
+        pack [entry   $this.k -textvariable f_key($k) -width  5 ] -padx 1 -side left -pady 1
+        #grid [radiobutton $this.x -variable f_mod($k) -value "-regexp" ] -row 1 -column 2
+        pack [radiobutton $this.x -variable f_mod($k) -value "-regexp"  ] -side left 
+        pack [radiobutton $this.e -variable f_mod($k) -value "-exact"   ] -side left
+        pack [entry   $this.l -textvariable f_len($k) -width  2 ] -padx 1 -side left
+        pack [entry   $this.r -textvariable f_rex($k) -width 20 ] -padx 1 -side left
+        pack [entry   $this.f -textvariable f_fg($k)  -width  9 ] -padx 1 -side left
+        pack [entry   $this.b -textvariable f_bg($k)  -width  9 ] -padx 1 -side left
+        pack [entry   $this.s -textvariable f_fn($k)  -width 10 ] -padx 1 -side left
+        pack [checkbutton $this.u -variable f_un($k)            ] -padx 1 -side left 
+        pack $this -fill x -anchor w
+    }
+}; # create_filtab
+
+
 proc create_filter {txt cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
     global cfg f_key f_cmt filter_bool
@@ -371,11 +450,10 @@ proc create_filter {txt cmd} {
     set this $cfg(winF)
     #dbx# puts "TXT $txt | $cmd | $cfg(geoF)"
     pack [label $this.l -text "toggle visibility of various texts\n(experimental)"]
-    set k 0;    # NOTE: index 0 is description
-    while {$k < [llength $f_key]} { # all f_* lists are of same size
-        incr k
-        set key [lindex $f_key $k]
-        set cmt [lindex $f_cmt $k]
+    foreach {k key} [array get f_key] {
+        if {$k eq 0} { continue };
+        #set key $f_key($k)
+        set cmt $f_cmt($k)
         set filter_bool($txt,osaft-$key) 1; # default: text is visible
         pack [ttk::checkbutton $this.x$key \
                     -text $key -variable filter_bool($txt,osaft-$key) \
@@ -715,18 +793,18 @@ proc result_filter {txt} {
     #? apply filters for markup in output
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
-    set k 0;    # NOTE: index 0 is description
-    while {$k < [llength $f_key]} { # all f_* lists are of same size
-        incr k
-        set key [lindex $f_key $k]
-        set mod [lindex $f_mod $k]
-        set len [lindex $f_len $k]; # currenty used for 0 only
-        set rex [lindex $f_rex $k]
-        set fg  [lindex $f_fg  $k]
-        set bg  [lindex $f_bg  $k]
-        set nr  [lindex $f_un  $k]
-        set fn  [lindex $f_fn  $k]
+    foreach {k key} [array get f_key] {
+        if {$k eq 0} { continue };
+        #set key $f_key($k)
+        set mod $f_mod($k)
+        set len $f_len($k); # currenty used for 0 only
+        set rex $f_rex($k)
+        set fg  $f_fg($k)
+        set bg  $f_bg($k)
+        set nr  $f_un($k)
+        set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
+        if {$rex eq ""} { continue };   # invalid or disabled filter rules
         if {$cfg(VERB)==1} {puts "result_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"};
         # anf contains start, end corresponding end position of match
         set anf [$txt search -all $mod -count end "$rex" 1.0] 
@@ -794,7 +872,7 @@ proc osaft_exec {parent cmd} {
     pack [button $tab_run.bq -text {Close TAB} -bg orange -command "destroy $tab_run"] -side right
     create_tip   $tab_run.bq "Close window"
     create_tip   $tab_run.bs "Save result to file"
-    create_tip   $tab_run.bf "Show options to filter results"
+    create_tip   $tab_run.bf "Show configuration to filter results"
     result_filter $txt ;        # text placed in pane, now do some markup
     $cfg(objN) select $tab_run
     set cfg(INFO) "$do done."
@@ -864,10 +942,10 @@ pack $cfg(objN) -fill both -expand 1
 ## create TABs: Command and Options
 set tab_cmds    [create_note $cfg(objN) "Commands"]
 set tab_opts    [create_note $cfg(objN) "Options"]
-#set tab_filt    [create_note $cfg(objN) "Filter"]
+set tab_filt    [create_note $cfg(objN) "Filter"]
 create_button $tab_cmds {CMD}; # fill Commands pane
 create_button $tab_opts {OPT}; # fill Options pane
-#create_filtab $tab_filt {FIL}; # fill Filter pane
+create_filtab $tab_filt {FIL}; # fill Filter pane
 
 # add Save and Reset button in Options pane
 pack [button    $tab_opts.bs -text "Save"  -command {osaft_save "CFG" 0} -bg lightgreen] -side left
