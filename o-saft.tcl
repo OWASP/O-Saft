@@ -109,7 +109,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.22 Sommer Edition 2015
+#?      @(#) 1.23 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -119,7 +119,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.22 15/10/14 20:53:05 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.23 15/10/15 01:15:50 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -214,7 +214,7 @@ lappend __mod   "Modifier how to use regex "
 lappend __len   "Length to be matched (0 for complete line)"
 lappend __bg    "Background color used for matching text (empty: don't change)"
 lappend __fg    "Foreground color used for matching text (empty: don't change)"
-lappend __un    "Underlined matching text (0 or 1)"
+lappend __un    "Underline matching text (0 or 1)"
 lappend __fn    "Font used for matching text (empty: don't change)"
 lappend __rex   "Regex to match text"
 lappend __cmt   "Description of regex"
@@ -243,16 +243,17 @@ lappend __cmt   {line starting with  == (formatting lines)}
 lappend __cmt   {line starting with  #  (verbose or debuf lines)}
 lappend __cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
 lappend __cmt   {lines contaning program name}
+lappend __cmt   {} {} {} {}   ; # empty description for undefined usr*
 
-# convert list to array
+# convert lists to arrays
 for {set k 0} { $k < [llength $__key]} {incr k} {
     set f_key($k) [lindex $__key $k]
     set f_mod($k) [lindex $__mod $k]
     set f_len($k) [lindex $__len $k]
-    set f_fg($k)  [lindex $__fg $k]
-    set f_bg($k)  [lindex $__bg $k]
-    set f_fn($k)  [lindex $__fn $k]
-    set f_un($k)  [lindex $__un $k]
+    set f_fg($k)  [lindex $__fg  $k]
+    set f_bg($k)  [lindex $__bg  $k]
+    set f_fn($k)  [lindex $__fn  $k]
+    set f_un($k)  [lindex $__un  $k]
     set f_rex($k) [lindex $__rex $k]
     set f_cmt($k) [lindex $__cmt $k]
 }
@@ -374,7 +375,6 @@ proc toggle_txt {txt tag val} {
         # TODO: need to elide complete line
 }; # toggle_txt
 
-
 proc create_filtab {parent cmd} {
     #? create table with filter data
     global cfg aaa
@@ -382,30 +382,38 @@ proc create_filtab {parent cmd} {
     pack [text $parent.text -height 3 -relief flat -background lightgray]
     $parent.text insert end "\nConfigure filter for text markup. Changes apply to next +command."
     $parent.text config -state disabled
+    set this $parent.g
+    # grid makes nice layouts but is too stupid to resice (expand) the widgets
+    # in its cells. Ugly workaround would be to use the widget inside a frame,
+    # and this frame as grid slave.  The widget then can be packed  inside the
+    # frame with the -exapnd and -fill option.
+    # We use another approach: all widgets get a fixed width, the widget which
+    # should be resized gets a huge width. This widget is in the column, which
+    # should be resized by the grid.  grid honors all specified widths, except
+    # that of the column subject for resizing.  Sounds like a bug in grid, but
+    # works here :-))
+    frame $this
     # { set header line with descriptions
-        set this $parent.head
-        frame $this
-        pack [label $this.k -text "Key"        -width  6 -relief raised] -side left
-        pack [label $this.x -text "r"          -width  3 -relief raised] -side left
-        pack [label $this.e -text "e"          -width  2 -relief raised] -side left
-        pack [label $this.l -text "#"          -width  3 -relief raised] -side left
-        pack [label $this.r -text "Regex"      -width 20 -relief raised -borderwidth 1] -side left
-        pack [label $this.f -text "foreground" -width 10 -relief raised] -side left
-        pack [label $this.b -text "background" -width 10 -relief raised] -side left
-        pack [label $this.s -text "font"       -width 10 -relief raised] -side left
-        pack [label $this.u -text "u"          -width  3 -relief raised] -side left
-        pack $this -fill x -anchor w
-        create_tip  $this.k $f_key(0)
-        create_tip  $this.x "$f_mod(0) (-regexp)"
-        create_tip  $this.e "$f_mod(0) (-exact)"
-        create_tip  $this.l $f_len(0)
-        create_tip  $this.r $f_rex(0)
-        create_tip  $this.f $f_fg(0)
-        create_tip  $this.b $f_bg(0)
-        create_tip  $this.s $f_fn(0)
-        create_tip  $this.u $f_un(0)
+        grid [label $this.k0 -text "Key"        ] -row 0 -column 0
+        grid [label $this.x0 -text "r"          ] -row 0 -column 1
+        grid [label $this.e0 -text "e"          ] -row 0 -column 2
+        grid [label $this.l0 -text "#"          ] -row 0 -column 3
+        grid [label $this.r0 -text "Regex"      ] -row 0 -column 4
+        grid [label $this.f0 -text "Foreground" ] -row 0 -column 5
+        grid [label $this.b0 -text "Background" ] -row 0 -column 6
+        grid [label $this.s0 -text "Font"       ] -row 0 -column 7
+        grid [label $this.u0 -text "u"          ] -row 0 -column 8
+        create_tip  $this.k0 $f_key(0)
+        create_tip  $this.x0 "$f_mod(0) (-regexp)"
+        create_tip  $this.e0 "$f_mod(0) (-exact)"
+        create_tip  $this.l0 $f_len(0)
+        create_tip  $this.r0 $f_rex(0)
+        create_tip  $this.f0 $f_fg(0)
+        create_tip  $this.b0 $f_bg(0)
+        create_tip  $this.s0 $f_fn(0)
+        create_tip  $this.u0 $f_un(0)
     # }
-    foreach {k key} [array get f_key] {
+    foreach {k key} [array get f_key] { # set all filter lines
         if {$k eq 0} { continue };
         #set key $f_key($k)
         set mod $f_mod($k)
@@ -417,21 +425,23 @@ proc create_filtab {parent cmd} {
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
         if {$cfg(VERB)==1} { puts "create_filtab .$key /$rex/" }
-        set name [str2obj $key]
-        set this $parent.$name
-        frame $this
-        pack [entry   $this.k -textvariable f_key($k) -width  5 ] -padx 1 -side left -pady 1
-        #grid [radiobutton $this.x -variable f_mod($k) -value "-regexp" ] -row 1 -column 2
-        pack [radiobutton $this.x -variable f_mod($k) -value "-regexp"  ] -side left 
-        pack [radiobutton $this.e -variable f_mod($k) -value "-exact"   ] -side left
-        pack [entry   $this.l -textvariable f_len($k) -width  2 ] -padx 1 -side left
-        pack [entry   $this.r -textvariable f_rex($k) -width 20 ] -padx 1 -side left
-        pack [entry   $this.f -textvariable f_fg($k)  -width  9 ] -padx 1 -side left
-        pack [entry   $this.b -textvariable f_bg($k)  -width  9 ] -padx 1 -side left
-        pack [entry   $this.s -textvariable f_fn($k)  -width 10 ] -padx 1 -side left
-        pack [checkbutton $this.u -variable f_un($k)            ] -padx 1 -side left 
-        pack $this -fill x -anchor w
+        grid [entry   $this.k$k -textvariable f_key($k) -width  5 ] -row $k -column 0
+        grid [radiobutton $this.x$k -variable f_mod($k) -width  2 -value "-regexp"  ] -row $k -column 1
+        grid [radiobutton $this.e$k -variable f_mod($k) -width  2 -value "-exact"   ] -row $k -column 2
+        grid [entry   $this.l$k -textvariable f_len($k) -width  2 ] -row $k -column 3
+        grid [entry   $this.r$k -textvariable f_rex($k) -width 60 ] -row $k -column 4
+        grid [entry   $this.f$k -textvariable f_fg($k)  -width  9 ] -row $k -column 5
+        grid [entry   $this.b$k -textvariable f_bg($k)  -width  9 ] -row $k -column 6
+        grid [entry   $this.s$k -textvariable f_fn($k)  -width 10 ] -row $k -column 7
+        grid [checkbutton $this.u$k -variable f_un($k)            ] -row $k -column 8
+        create_tip  $this.k$k $f_cmt($k)
+        create_tip  $this.r$k $f_cmt($k)
     }
+    pack $this -fill x -fill both -expand 1
+    set lastrow [lindex [grid size $this] 1]
+    #grid rowconfigure    $this [expr $lastrow - 1] -weight 1
+    grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
+    grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work 
 }; # create_filtab
 
 
