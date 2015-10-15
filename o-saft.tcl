@@ -33,6 +33,9 @@ exec wish "$0" --
 #? NAME
 #?      $0 - simple GUI for o-saft.pl
 #?
+#? SYNOPSIS
+#?      $0 [host:port] [host:port] ...
+#?
 #? DESCRIPTION
 #?      This is a simple GUI for  O-Saft - OWASP SSL advanced forensic tool.
 #?      The GUI supports all commands (Commands TAB) and options (Options TAB)
@@ -43,9 +46,13 @@ exec wish "$0" --
 #?      Each TAB with results has a  Filter  button which opens a window where
 #?      the visibility of filtered texts (see Filter TAB) can be toggeled.
 #?      All results and settings (commands and options) can be saved to files.
-#?
-#? SYNOPSIS
-#?      $0 [host:port] [host:port] ...
+#?   Examples for filter
+#?      Match complete line containing Certificate:
+#?         r=1 e=0 #=0 Regex=Certificate
+#?      Match word Target:
+#?         r=0 e=1 #=6 Regex=Target
+#?      Match label text and emphase:
+#?         r=1 e=0 #=1 Regex=^[A-Za-z][^:]*\s* Font=osaftHead
 #?
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
@@ -109,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.24 Sommer Edition 2015
+#?      @(#) 1.25 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -119,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.24 15/10/15 02:04:40 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.25 15/10/15 11:20:42 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -148,7 +155,7 @@ set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
 set cfg(.CFG)   {}; # set below
 set cfg(geoS)   "600x600";      # geometry and position of O-Saft window
-set cfg(geoA)   "600x500";      # geometry and position of About  window
+set cfg(geoA)   "600x570";      # geometry and position of About  window
 set cfg(geoH)   "600x775-0+0";  # geometry and position of Help   window
 set cfg(geoF)   "";             # geometry and position of Filter window (computed dynamically)
 catch {
@@ -221,14 +228,14 @@ lappend __cmt   "Description of regex"
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #     # index   1	2	3	4	5	6	7	8	9	10	11
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	usr1	usr2	usr3	usr4
-lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
-lappend __len   3	4	4	4	0	2	3	0	0	2	0	0	0	0	0
-lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}	{}
-lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}	{}
-lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0	0
-lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}	{}	{}	{}	{}
-lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{}	{}	{}	{}
+lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	usr1	usr2	usr3
+lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
+lappend __len   3	4	4	4	0	2	3	0	0	2	0	0	0	0
+lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}
+lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}
+lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0
+lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}	{}	{}	{}
+lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{}	{}	{}
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #
 #     # description of regex
@@ -243,7 +250,7 @@ lappend __cmt   {line starting with  == (formatting lines)}
 lappend __cmt   {line starting with  #  (verbose or debuf lines)}
 lappend __cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
 lappend __cmt   {lines contaning program name}
-lappend __cmt   {} {} {} {}   ; # empty description for undefined usr*
+lappend __cmt   {} {} {}  ; # empty description for undefined usr*
 
 # convert lists to arrays
 for {set k 0} { $k < [llength $__key]} {incr k} {
@@ -372,27 +379,30 @@ proc toggle_txt {txt tag val} {
     global cfg filter 
     if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]"; }
     $txt tag config $tag -elide [expr ! $val];  # "elide true" hides the text
-        # TODO: need to elide complete line
+        # FIXME: need to elide complete line
 }; # toggle_txt
 
 proc create_filtab {parent cmd} {
     #? create table with filter data
     global cfg aaa
-    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
-    pack [text $parent.text -height 3 -relief flat -background lightgray]
-    $parent.text insert end "\nConfigure filter for text markup. Changes apply to next +command."
+    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
+    pack [text $parent.text -height 4 -relief flat -background lightgray]
+    $parent.text insert end "
+Configure filter for text markup: r, e and # specify how the Regex should work;
+Forground, Background, Font and u  specify the markup to apply to matched text.
+Changes apply to next +command."
     $parent.text config -state disabled
     set this $parent.g
+    frame $this
     # grid makes nice layouts but is too stupid to resice (expand) the widgets
     # in its cells. Ugly workaround would be to use the widget inside a frame,
-    # and this frame as grid slave.  The widget then can be packed  inside the
-    # frame with the -exapnd and -fill option.
+    # and this frame as a grid slave. The widget then can be packed inside the
+    # frame with the -exapnd and -fill option. A bit cumbersome ...
     # We use another approach: all widgets get a fixed width, the widget which
     # should be resized gets a huge width. This widget is in the column, which
     # should be resized by the grid.  grid honors all specified widths, except
     # that of the column subject for resizing.  Sounds like a bug in grid, but
     # works here :-))
-    frame $this
     # { set header line with descriptions
         grid [label $this.k0 -text "Key"        ] -row 0 -column 0
         grid [label $this.x0 -text "r"          ] -row 0 -column 1
@@ -417,7 +427,7 @@ proc create_filtab {parent cmd} {
         if {$k eq 0} { continue };
         #set key $f_key($k)
         set mod $f_mod($k)
-        set len $f_len($k); # currenty used for 0 only
+        set len $f_len($k)
         set rex $f_rex($k)
         set fg  $f_fg($k)
         set bg  $f_bg($k)
@@ -436,27 +446,48 @@ proc create_filtab {parent cmd} {
         grid [checkbutton $this.u$k -variable f_un($k)            ] -row $k -column 8
         create_tip  $this.k$k $f_cmt($k)
         create_tip  $this.r$k $f_cmt($k)
-        # some entries show their setting
-        $this.f$k config -vcmd "toggle_cfg $this.f$k -fg   \$f_fg($k)" -validate focusout
-        $this.b$k config -vcmd "toggle_cfg $this.b$k -bg   \$f_bg($k)" -validate focusout
-        $this.s$k config -vcmd "toggle_cfg $this.s$k -font \$f_fn($k)" -validate focusout
-        toggle_cfg $this.f$k -fg   $f_fg($k)
-        toggle_cfg $this.b$k -bg   $f_bg($k)
-        toggle_cfg $this.s$k -font $f_fn($k)
+        # some entries apply setting to KEY entry
+        $this.f$k config -vcmd "toggle_cfg $this.k$k -fg   \$f_fg($k)" -validate focusout
+        $this.b$k config -vcmd "toggle_cfg $this.k$k -bg   \$f_bg($k)" -validate focusout
+        $this.s$k config -vcmd "toggle_cfg $this.k$k -font \$f_fn($k)" -validate focusout
+        toggle_cfg $this.k$k -fg   $f_fg($k)
+        toggle_cfg $this.k$k -bg   $f_bg($k)
+        toggle_cfg $this.k$k -font $f_fn($k)
+    }
+    foreach {k key} [array get f_key] { # set all filter lines
+        if {$k eq 0} { continue };
+        # FIXME: unfortunately this binding executes immediately, which results
+        # in a chooseColor window for each row at startup
+        #$this.b$k config -vcmd "set f_bg($k) [tk_chooseColor -title $f_bg(0)]; return 1" -validate focusin
+        #$this.s$k config -vcmd "tk::fontchooser config -command {set f_fn($k)}; tk_chooseColor -title $f_bg(0)]; return 1" -validate focusin
     }
     pack $this -fill x -fill both -expand 1
     set lastrow [lindex [grid size $this] 1]
     #grid rowconfigure    $this [expr $lastrow - 1] -weight 1
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
     grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work 
+    tk fontchooser config -command {show_selected "Font:"}; # what to do with selection
+    pack [button $parent.fc -text "Font Chooser"  -command {tk fontchooser show}] -side right
+    pack [button $parent.cc -text "Color Chooser" -command {show_selected "Color:" [tk_chooseColor]} ] -side right
+        # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
 }; # create_filtab
 
 proc toggle_cfg {w opt val} {
     #? use widget config command to change options value
     if {$val ne {}} { $w config $opt $val; }
-    # quick & dirty complementary check
-    if {$val eq {white} && $opt eq {-fg}} { $w config -bg black; }
-    if {$val eq {black} && $opt eq {-bg}} { $w config -fg white; }
+    return 1
+}; # toggle_cfg
+
+proc show_selected {title val} {
+    #? opens toplevel window with selectable text
+    global __var;   # must be global
+    set w    .selected
+    toplevel $w
+    wm title $w $title
+    wm geometry $w 200x50
+    pack [entry  $w.e -textvariable __var -relief flat]
+    pack [button $w.q -text Close -command "destroy $w" -bg orange] -side right
+    set __var "$val"
     return 1
 }; # toggle_cfg
 
@@ -471,7 +502,7 @@ proc create_filter {txt cmd} {
         # most window managers are clever enough to position window
         # correctly if calculation is outside visible (screen) frame
     set cfg(winF) [create_window "Filter:$cmd" $cfg(geoF)]
-        # TODO: only one variable for windows, need a variable for each window
+        # FIXME: only one variable for windows, need a variable for each window
     set this $cfg(winF)
     #dbx# puts "TXT $txt | $cmd | $cfg(geoF)"
     pack [label $this.l -text "toggle visibility of various texts\n(experimental)"]
