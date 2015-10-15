@@ -109,7 +109,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.23 Sommer Edition 2015
+#?      @(#) 1.24 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -119,7 +119,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.23 15/10/15 01:15:50 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.24 15/10/15 02:04:40 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -436,6 +436,13 @@ proc create_filtab {parent cmd} {
         grid [checkbutton $this.u$k -variable f_un($k)            ] -row $k -column 8
         create_tip  $this.k$k $f_cmt($k)
         create_tip  $this.r$k $f_cmt($k)
+        # some entries show their setting
+        $this.f$k config -vcmd "toggle_cfg $this.f$k -fg   \$f_fg($k)" -validate focusout
+        $this.b$k config -vcmd "toggle_cfg $this.b$k -bg   \$f_bg($k)" -validate focusout
+        $this.s$k config -vcmd "toggle_cfg $this.s$k -font \$f_fn($k)" -validate focusout
+        toggle_cfg $this.f$k -fg   $f_fg($k)
+        toggle_cfg $this.b$k -bg   $f_bg($k)
+        toggle_cfg $this.s$k -font $f_fn($k)
     }
     pack $this -fill x -fill both -expand 1
     set lastrow [lindex [grid size $this] 1]
@@ -444,6 +451,14 @@ proc create_filtab {parent cmd} {
     grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work 
 }; # create_filtab
 
+proc toggle_cfg {w opt val} {
+    #? use widget config command to change options value
+    if {$val ne {}} { $w config $opt $val; }
+    # quick & dirty complementary check
+    if {$val eq {white} && $opt eq {-fg}} { $w config -bg black; }
+    if {$val eq {black} && $opt eq {-bg}} { $w config -fg white; }
+    return 1
+}; # toggle_cfg
 
 proc create_filter {txt cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
