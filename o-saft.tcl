@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.25 Sommer Edition 2015
+#?      @(#) 1.26 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.25 15/10/15 11:20:42 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.26 15/10/15 11:49:28 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -459,15 +459,17 @@ Changes apply to next +command."
         # FIXME: unfortunately this binding executes immediately, which results
         # in a chooseColor window for each row at startup
         #$this.b$k config -vcmd "set f_bg($k) [tk_chooseColor -title $f_bg(0)]; return 1" -validate focusin
-        #$this.s$k config -vcmd "tk::fontchooser config -command {set f_fn($k)}; tk_chooseColor -title $f_bg(0)]; return 1" -validate focusin
+        #$this.s$k config -vcmd "tk fontchooser config -command {set f_fn($k)}; tk_chooseColor -title $f_bg(0)]; return 1" -validate focusin
     }
     pack $this -fill x -fill both -expand 1
     set lastrow [lindex [grid size $this] 1]
     #grid rowconfigure    $this [expr $lastrow - 1] -weight 1
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
     grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work 
+    catch { # silently ignore if systems has no fontchooser
     tk fontchooser config -command {show_selected "Font:"}; # what to do with selection
     pack [button $parent.fc -text "Font Chooser"  -command {tk fontchooser show}] -side right
+    }
     pack [button $parent.cc -text "Color Chooser" -command {show_selected "Color:" [tk_chooseColor]} ] -side right
         # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
 }; # create_filtab
