@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.26 Sommer Edition 2015
+#?      @(#) 1.27 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.26 15/10/15 11:49:28 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.27 15/10/16 14:05:20 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -148,19 +148,15 @@ if {[regexp {indows} $tcl_platform(os)]} {
 # Tcl's  {*}  evaluation for that.
 
 #-----------------------------------------------------------------------------{
-#   CONFIGURATION
+#   CONFIGURATION o-saft.pl
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
 set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
 set cfg(.CFG)   {}; # set below
-set cfg(geoS)   "600x600";      # geometry and position of O-Saft window
-set cfg(geoA)   "600x570";      # geometry and position of About  window
-set cfg(geoH)   "600x775-0+0";  # geometry and position of Help   window
-set cfg(geoF)   "";             # geometry and position of Filter window (computed dynamically)
 catch {
   set fid [open $cfg(INIT) r]
-  set cfg(.CFG) [read $fid];   close $fid;          # read .o-saft.pl
+  set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
 }
 #   now get information from O-Saft; it's a performance penulty, but simple ;-)
 catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
@@ -168,6 +164,33 @@ catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
 catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+vulns}}; # quick access commands
 #-----------------------------------------------------------------------------}
+
+#   CONFIGURATION wm
+#   set minimal window sizes to be usable in a 1024x768 screen
+#   windows will be larger if the screen supports it (we rely on "wm maxsize")
+set cfg(geox)   "700";          # min. window width
+set cfg(geoy)   "720";          # min. window height
+set cfg(geoS)   "700x720";      # geometry and position of O-Saft window
+set cfg(geoA)   "600x570";      # geometry and position of About  window
+set cfg(geoH)   "600x720-0+0";  # geometry and position of Help   window
+set cfg(geoF)   "";             # geometry and position of Filter window (computed dynamically)
+#   now get configure according real size
+set __x         [lindex [wm maxsize .] 0]
+set __y         [lindex [wm maxsize .] 1]
+if {$__y < $cfg(geoy)} { set cfg(geoy) $__y  }
+if {$__x < $cfg(geox)} { set cfg(geox) $__x  }
+if {$__x > 1000 }      { set cfg(geox) "999" }
+set cfg(geoS)   "$cfg(geox)x$cfg(geoy)"
+
+#   CONFIGURATION colours
+set col(osaft)  "gold"
+set col(close)  "orange"
+set col(start)  "yellow"
+set col(save)   "lightgreen"
+set col(button) "lightyellow"
+set col(code)   "lightgray";    # used for help
+set col(link)   "blue";         # used for help
+set col(status) "wheat"
 
 #   internal data storage
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
@@ -299,6 +322,7 @@ proc show_window {w} {
 
 proc create_window {title size} {
     #? create new toplevel window with given title and size; returns widget
+    global col
     set this    .[str2obj $title]
     toplevel    $this
     wm title    $this "O-Saft: $title"
@@ -307,12 +331,12 @@ proc create_window {title size} {
     pack [frame $this.f0  -relief sunken  -borderwidth 1] -fill x -side top
     pack [label $this.f0.l  -text $title  -font TkCaptionFont]    -side left
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
-    pack [button $this.f1.q -text "Close" -bg orange -command "destroy $this"] -side right
+    pack [button $this.f1.q -text "Close" -bg $col(close) -command "destroy $this"] -side right
     create_tip   $this.f1.q "Close Window"
     if {$title eq "Help" || $title eq "About"} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
     # all other windows have Save button
-    pack [button $this.f1.s -text Save -bg lightgreen -command {osaft_save "CFG" 0}] -side left
+    pack [button $this.f1.s -text Save -bg $col(save) -command {osaft_save "CFG" 0}] -side left
     create_tip   $this.f1.q "Save configuration to file"
     return $this
 }; # create_window
@@ -435,7 +459,7 @@ Changes apply to next +command."
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
         if {$cfg(VERB)==1} { puts "create_filtab .$key /$rex/" }
-        grid [entry   $this.k$k -textvariable f_key($k) -width  5 ] -row $k -column 0
+        grid [entry   $this.k$k -textvariable f_key($k) -width  8 ] -row $k -column 0
         grid [radiobutton $this.x$k -variable f_mod($k) -width  2 -value "-regexp"  ] -row $k -column 1
         grid [radiobutton $this.e$k -variable f_mod($k) -width  2 -value "-exact"   ] -row $k -column 2
         grid [entry   $this.l$k -textvariable f_len($k) -width  2 ] -row $k -column 3
@@ -482,13 +506,14 @@ proc toggle_cfg {w opt val} {
 
 proc show_selected {title val} {
     #? opens toplevel window with selectable text
+    global col
     global __var;   # must be global
     set w    .selected
     toplevel $w
     wm title $w $title
     wm geometry $w 200x50
     pack [entry  $w.e -textvariable __var -relief flat]
-    pack [button $w.q -text Close -command "destroy $w" -bg orange] -side right
+    pack [button $w.q -text Close -command "destroy $w" -bg $col(close)] -side right
     set __var "$val"
     return 1
 }; # toggle_cfg
@@ -524,11 +549,11 @@ proc create_filter {txt cmd} {
 
 proc create_about {} {
     #? create new window with About text; store widget in cfg(winA)
-    global cfg
+    global cfg col
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
     set cfg(winA) [create_window {About} $cfg(geoA)]
     set t [create_text $cfg(winA) [osaft_about "ABOUT"]];
-    $t.t configure -bg gold;        # dirty hack: widget hardcoded
+    $t.t configure -bg $col(osaft); # dirty hack: widget hardcoded
 }; # create_about
 
 proc create_help {} {
@@ -541,7 +566,7 @@ proc create_help {} {
     # are highlighted and used for navigation.
     # Idea: probably "o-saft.pl --help=wiki" is better suitable for creating
     # the help text herein.
-    global cfg
+    global cfg col
     if {[winfo exists $cfg(winH)]}  { show_window $cfg(winH); return; }
     set this    [create_window {Help} $cfg(geoH)]
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];  # remove informal messages
@@ -599,7 +624,7 @@ proc create_help {} {
 #        if {[notTOC $t]} { continue; }; # skip some special strings
 #        $txt tag add    osaft-XXX $a "$a + $e c"
 #        $txt tag bind   osaft-XXX-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
-#        $txt tag config osaft-XXX    -foreground blue
+#        $txt tag config osaft-XXX    -foreground $col(link)
 #    }
 
     # 3. search all commands and options and try to set click event
@@ -620,7 +645,7 @@ proc create_help {} {
             # these matches are assumed references
             $txt tag add    osaft-LNK-$i $a "$a + $e c - 1 c"; # do not markup spaces
             $txt tag bind   osaft-LNK-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
-            $txt tag config osaft-LNK-$i -foreground blue
+            $txt tag config osaft-LNK-$i -foreground $col(link)
             $txt tag config osaft-LNK-$i -font osaftSlant
         }
         incr i
@@ -646,11 +671,11 @@ proc create_help {} {
     }
 
     # finaly global markups
-    $txt tag config   osaft-TOC  -foreground blue
+    $txt tag config   osaft-TOC  -foreground $col(link)
     $txt tag config   osaft-HEAD -font osaftBold
     $txt tag config   osaft-TOC  -font osaftBold
     $txt tag config   osaft-LNK  -font osaftBold
-    $txt tag config   osaft-CODE -background lightgrey
+    $txt tag config   osaft-CODE -background $col(code)
 
     set cfg(winH) $this
 }; # create_help
@@ -668,11 +693,11 @@ proc create_note {parent title} {
 
 proc create_cmd {parent title color} {
     #? create button to run O-Saft command; returns widget
-    global cfg
+    global cfg col
     set name [str2obj $title]
     set this $parent.$name
     if {$color < 1 || $color > 4} { set color ""}
-    pack [button $this -text $title -bg "gold$color" -command "osaft_exec $parent $title"] -side left
+    pack [button $this -text $title -bg "$col(osaft)$color" -command "osaft_exec $parent $title"] -side left
     create_tip   $this "Execute $cfg(SAFT) with command $title"
     return $this
 }; # create_cmd
@@ -749,7 +774,7 @@ proc create_button {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
     # cmd must be "OPT" or "CMD" or "TRC"
-    global cfg
+    global cfg col
     set data $cfg(OPTS)
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
     foreach l [split $data "\r\n"] {
@@ -764,7 +789,7 @@ proc create_button {parent cmd} {
         set name [str2obj $dat]
         set this $parent.$name
         if {$cfg(VERB)==1} { puts "create_button .$name {$txt}" }
-        pack [button $this -text $dat -command "create_win .$name $cmd {$txt}" -bg lightyellow ] \
+        pack [button $this -text $dat -command "create_win .$name $cmd {$txt}" -bg $col(button) ] \
                  -anchor w -fill x -padx 10 -pady 2
         create_tip   $this "Open window with more settings"
     }
@@ -888,7 +913,7 @@ proc result_filter {txt} {
 
 proc osaft_exec {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
-    global cfg hosts tab
+    global cfg hosts tab col
     set cfg(INFO) "$cmd"; update idletasks;         # enforce display update
     set do  {};     # must be set to avoid tcl error
     set opt {};     # ..
@@ -925,9 +950,9 @@ proc osaft_exec {parent cmd} {
     set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"
     set tab_run  [create_note $cfg(objN) "($cfg(EXEC)) $cmd"]
     set txt [create_text  $tab_run $tab($cfg(EXEC))].t ;    # <== ugly hardcoded .t
-    pack [button $tab_run.bs -text {Save}  -bg lightgreen -command "osaft_save {TAB} $cfg(EXEC)"] -side left
-    pack [button $tab_run.bf -text {Filter}               -command "create_filter $txt $cmd"] -side left
-    pack [button $tab_run.bq -text {Close TAB} -bg orange -command "destroy $tab_run"] -side right
+    pack [button $tab_run.bs -text {Save}     -bg $col(status) -command "osaft_save {TAB} $cfg(EXEC)"] -side left
+    pack [button $tab_run.bf -text {Filter}                    -command "create_filter $txt $cmd"] -side left
+    pack [button $tab_run.bq -text {Close TAB} -bg $col(close) -command "destroy $tab_run"] -side right
     create_tip   $tab_run.bq "Close window"
     create_tip   $tab_run.bs "Save result to file"
     create_tip   $tab_run.bf "Show configuration to filter results"
@@ -949,22 +974,6 @@ foreach arg $argv {
     }
 }
 
-if {$cfg(VERB)==1} {
-    puts "PRG $argv0"
-    puts "TCL version:   $::tcl_patchLevel"
-    puts " |  library:   $::tcl_library"
-    puts " |  platform:  $::tcl_platform(platform)"
-    puts " |  os:        $::tcl_platform(os)"
-    puts " |  osVersion: $::tcl_platform(osVersion)"
-    puts " |  byteOrder: $::tcl_platform(byteOrder)"
-    puts " |  wordSize:  $::tcl_platform(wordSize)"
-    puts "TCL rcFileName:$::tcl_rcFileName"
-    puts "Tk version:    $::tk_patchLevel"
-    puts " |  library:   $::tk_library"
-    puts " |  strictMotif: $::tk_strictMotif"
-    if {[info exists geometry]==1} { puts " |  geometry:  $geometry" }
-}
-
 wm title        . $cfg(TITLE)
 wm iconname     . [string tolower $cfg(TITLE)]
 wm geometry     . $cfg(geoS)
@@ -981,15 +990,16 @@ set w ""
 pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
 
 ## create command buttons for simple commands and help
+pack [frame     $w.fq] -fill x -side bottom
+pack [button    $w.fq.bq -text "Quit"  -bg $col(close) -command {exit}] -side right
 pack [frame     $w.fc] -expand 1 -fill x
-pack [button    $w.fc.bq -text "Quit"  -bg orange -command {exit}] -side left
-pack [button    $w.fc.bs -text "Start" -bg yellow -command "osaft_exec $w.fc {Start}"] -side left
+pack [button    $w.fc.bs -text "Start" -bg $col(start) -command "osaft_exec $w.fc {Start}"] -side left -padx 11
 set c 0; # used to change color
 foreach b $cfg(FAST) { create_cmd $w.fc $b $c; incr c }
 pack [button    $w.fc.bh -text {?} -command "create_help"] -side right
 create_tip      $w.fc.bh "Open window with complete help"
-create_tip      $w.fc.bq "Close program"
 create_tip      $w.fc.bs "Start $cfg(SAFT) with commands selected in 'Commands' tab"
+create_tip      $w.fq.bq "Close program"
 
 ## create notebook object and set up Ctrl+Tab traversal
 set cfg(objN)   $w.note
@@ -1006,15 +1016,15 @@ create_button $tab_opts {OPT}; # fill Options pane
 create_filtab $tab_filt {FIL}; # fill Filter pane
 
 # add Save and Reset button in Options pane
-pack [button    $tab_opts.bs -text "Save"  -command {osaft_save "CFG" 0} -bg lightgreen] -side left
-pack [button    $tab_opts.br -text "Reset" -command {osaft_reset; osaft_init;}] -side left
+pack [button    $tab_opts.bs -text "Save"  -command {osaft_save "CFG" 0} -bg $col(save)] -side left
+pack [button    $tab_opts.br -text "Reset" -command {osaft_reset; osaft_init;}         ] -side left
 osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
 create_tip      $tab_opts.bs "Save configuration to file"
 create_tip      $tab_opts.br "Reset configuration to values from $cfg(INIT)"
 
 ## create status line
-pack [frame     $w.fl -relief sunken -borderwidth 1] -expand 1 -fill x
-pack [label     $w.fl.l -textvariable cfg(INFO) -bg wheat] -expand 1 -fill x -side left
+pack [frame     $w.fl -relief sunken -borderwidth 1] -fill x
+pack [label     $w.fl.l -textvariable cfg(INFO) -bg $col(status)] -expand 1 -fill x -side left
 
 ## add hosts from command line
 foreach host $targets {         # display hosts
@@ -1025,4 +1035,26 @@ foreach host $targets {         # display hosts
 
 # add one Host: line  with {+} and {!} button
 create_host $w
+
+# some verbose output must be at end when window is created,
+# otherwise wm data is missing or mis-leading
+if {$cfg(VERB)==1} {
+    puts "PRG $argv0"
+    puts "TCL version:   $::tcl_patchLevel"
+    puts " |  library:   $::tcl_library"
+    puts " |  platform:  $::tcl_platform(platform)"
+    puts " |  os:        $::tcl_platform(os)"
+    puts " |  osVersion: $::tcl_platform(osVersion)"
+    puts " |  byteOrder: $::tcl_platform(byteOrder)"
+    puts " |  wordSize:  $::tcl_platform(wordSize)"
+    puts "TCL rcFileName:$::tcl_rcFileName"
+    puts "Tk version:    $::tk_patchLevel"
+    puts " |  library:   $::tk_library"
+    puts " |  strictMotif: $::tk_strictMotif"
+    puts "WM:            [wm frame .]"
+    puts " |  geometry:  [wm geometry   .]"
+    puts " |  maxsize:   [wm maxsize    .]"
+    puts " |  focusmodel:[wm focusmodel .]"
+    if {[info exists geometry]==1} { puts " |  geometry:  $geometry" }
+}
 
