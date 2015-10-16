@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.29 Sommer Edition 2015
+#?      @(#) 1.30 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.29 15/10/16 14:20:25 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.30 15/10/16 16:18:16 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -162,7 +162,7 @@ catch {
 catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
 catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
 catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
-set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+vulns}}; # quick access commands
+set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 #-----------------------------------------------------------------------------}
 
 #   CONFIGURATION wm
@@ -742,7 +742,7 @@ proc create_win {parent cmd title} {
             set name [str2obj "$dat $cnt"]; # same as in create_window
             incr cfg(POSX) 25;
             incr cfg(POSY) 25;
-            if {[regexp {(checked|SSL) connection} $dat]} { set hoch 680 }; # <<== dirty hack ;-(
+            if {[regexp {(checked|SSL) c} $dat]} { set hoch $cfg(geoy) }; # <<== dirty hack ;-(
             set grp  [create_window "$dat $cnt" "300x$hoch+$cfg(POSX)+$cfg(POSY)"]
             if {$cfg(VERB)==1} { puts "create_win: $grp" }
             continue
@@ -993,10 +993,13 @@ pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
 ## create command buttons for simple commands and help
 pack [frame     $w.fq] -fill x -side bottom
 pack [button    $w.fq.bq -text "Quit"  -bg $col(close) -command {exit}] -side right
-pack [frame     $w.fc] -expand 1 -fill x
+pack [frame     $w.fc] -fill x
 pack [button    $w.fc.bs -text "Start" -bg $col(start) -command "osaft_exec $w.fc {Start}"] -side left -padx 11
 set c 0; # used to change color
-foreach b $cfg(FAST) { create_cmd $w.fc $b $c; incr c }
+foreach b $cfg(FAST) {
+    create_cmd $w.fc $b $c;
+    if {[regexp {^\+[c]} $b] == 0} { incr c };  # command not starting with +c get a new color
+}
 pack [button    $w.fc.bh -text {?} -command "create_help"] -side right
 create_tip      $w.fc.bh "Open window with complete help"
 create_tip      $w.fc.bs "Start $cfg(SAFT) with commands selected in 'Commands' tab"
