@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.27 Sommer Edition 2015
+#?      @(#) 1.28 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.27 15/10/16 14:05:20 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.28 15/10/16 14:14:53 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -249,16 +249,16 @@ lappend __fn    "Font used for matching text (empty: don't change)"
 lappend __rex   "Regex to match text"
 lappend __cmt   "Description of regex"
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-#     # index   1	2	3	4	5	6	7	8	9	10	11
+#     # index   1	2	3	4	5	6	7	8	9	10	11	12
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	usr1	usr2	usr3
-lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
-lappend __len   3	4	4	4	0	2	3	0	0	2	0	0	0	0
-lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}
-lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}
-lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0
-lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}	{}	{}	{}
-lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{}	{}	{}
+lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	Label	usr1	usr2	usr3
+lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
+lappend __len   3	4	4	4	0	2	3	0	0	2	0	1	0	0	0
+lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}	{}
+lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}	{}
+lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0	0
+lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}   osaftHead	{}	{}	{}
+lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s} {}	{}	{}
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #
 #     # description of regex
@@ -273,6 +273,7 @@ lappend __cmt   {line starting with  == (formatting lines)}
 lappend __cmt   {line starting with  #  (verbose or debuf lines)}
 lappend __cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
 lappend __cmt   {lines contaning program name}
+lappend __cmt   {label of result string (from start of line until :)}
 lappend __cmt   {} {} {}  ; # empty description for undefined usr*
 
 # convert lists to arrays
