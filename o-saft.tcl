@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.28 Sommer Edition 2015
+#?      @(#) 1.29 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.28 15/10/16 14:14:53 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.29 15/10/16 14:20:25 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -333,12 +333,12 @@ proc create_window {title size} {
     pack [label $this.f0.l  -text $title  -font TkCaptionFont]    -side left
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
     pack [button $this.f1.q -text "Close" -bg $col(close) -command "destroy $this"] -side right
-    create_tip   $this.f1.q "Close Window"
+    create_tip   $this.f1.q "Close window"
     if {$title eq "Help" || $title eq "About"} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
     # all other windows have Save button
     pack [button $this.f1.s -text Save -bg $col(save) -command {osaft_save "CFG" 0}] -side left
-    create_tip   $this.f1.q "Save configuration to file"
+    create_tip   $this.f1.s "Save configuration to file"
     return $this
 }; # create_window
 
@@ -951,7 +951,7 @@ proc osaft_exec {parent cmd} {
     set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"
     set tab_run  [create_note $cfg(objN) "($cfg(EXEC)) $cmd"]
     set txt [create_text  $tab_run $tab($cfg(EXEC))].t ;    # <== ugly hardcoded .t
-    pack [button $tab_run.bs -text {Save}     -bg $col(status) -command "osaft_save {TAB} $cfg(EXEC)"] -side left
+    pack [button $tab_run.bs -text {Save}     -bg $col(save)   -command "osaft_save {TAB} $cfg(EXEC)"] -side left
     pack [button $tab_run.bf -text {Filter}                    -command "create_filter $txt $cmd"] -side left
     pack [button $tab_run.bq -text {Close TAB} -bg $col(close) -command "destroy $tab_run"] -side right
     create_tip   $tab_run.bq "Close window"
