@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.100 15/06/25 20:37:03',
+    SID         => '@(#) Net::SSLinfo.pm 1.101 15/10/17 01:57:04',
 };
 
 ######################################################## public documentation #
@@ -1426,7 +1426,22 @@ sub do_ssl_open($$$) {
             # some certs return  09:f5:fd:2e:a5:2a:85:48:db:be:5d:a0:5d:b6
             # or similar, then we try to convert to integer manually
             $d =~ s/://g;
-            if (length($d) > 16) {  # ugly check if we need bigint
+            my $b = 8;  # the usual size in 64-bit systems
+            if (length($d) > 8) {   # check if we are on 32-bit system
+                # on 32-bit systems perl may handle large numbers correctly
+                # if compiled properly, can be checked with $Config{ivsize}
+                # so we need the value which requires loading the module
+                if (eval('use Configx; $b = $Config{ivsize};')) {
+                    # use $Config{ivsize}
+                } else {
+                    $err = "use Config";
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+                    $_SSLinfo{'serial_int'} = "<<$err failed>>";
+                }
+            }
+            if ((length($d) > $b)   # larger than integer of this architecture
+              ||(length($d) > 16))  # to large at all
+            {  # ugly check if we need bigint
                 if (eval("require Math::BigInt;")) {
                     $_SSLinfo{'serial_int'} = Math::BigInt->from_hex($d);
                 } else {
