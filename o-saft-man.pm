@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.41 15/10/16 22:25:51";
+my  $man_SID= "@(#) o-saft-man.pm 1.42 15/10/17 01:54:15";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3321,6 +3321,14 @@ KNOWN PROBLEMS
         Hint: use following commands to get information about used libraries:
           $0 +version
           $0 --v --v +version
+
+    Integer overflow in hexadecimal number at ...
+
+        This error message may occour on  32-bit systems if perl was not com-
+        piled with proper options. I.g. perl automatically converts the value
+        to a floating pont number.
+        Please report a bug with output of following command:
+          $0 +s_client +dump your.tld
 
     No output with  +help  and/or  --help=todo
 
