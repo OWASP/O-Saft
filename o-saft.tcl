@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.30 Sommer Edition 2015
+#?      @(#) 1.31 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.30 15/10/16 16:18:16 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.31 15/10/16 18:36:48 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -706,20 +706,34 @@ proc create_cmd {parent title color} {
 proc create_win {parent cmd title} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
-    # title must string of group of command or options
+    # title must be string of group of command or options
     global cfg
     set this $parent
-    set grp  $this
+    set win  $this
     set data $cfg(OPTS)
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
-    set max  0; # FIXME: quick&dirty fix to avoid huge windows
-    set cnt  0; # FIXME: ..
-    set txt  "";# FIXME: ..
-    set skip 1; # skip data until $title found
+        # data is a huge list which contains commands or options grouped by a
+        # header line. The window to be created just contains the lines which
+        # follow the header line down to the next header line. $skip controls
+        # that.
+    set winx 280;   # min. width of window
+    set winy 450;   # min. height of window
+    set max  15;    # try use max. this amount of rows
+    set min  280;   # min. size of a row, will be adapted dynamically
+    set skip 1;     # skip data until $title found
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
         if {[regexp {^(Commands|Options)} $dat]} { set skip 1; };    # next group starts
-        if {[regexp "$title" $dat]}        { set skip 0; }
+        if {[regexp "$title" $dat]}        {
+            set skip 0;
+            # remove noicy prefix and make first character upper case
+            set dat [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $dat ""]] 0 0]
+            set win [create_window $dat "280x$winy+$cfg(POSX)+$cfg(POSY)"]
+            if {$cfg(VERB)==1} { puts "create_win: $win $dat" }
+            set this $win.g
+            frame $this;    # frame for grid
+            continue
+        }
         if {$skip == 1}                    { continue; }
         #dbx# puts "DATA $dat"
         ## skipped general
@@ -732,43 +746,55 @@ proc create_win {parent cmd title} {
         if {[regexp {^--h$}         $dat]} { continue; }
         if {[regexp {^--help}       $dat]} { continue; }
         if {[regexp {^--(cgi|call)} $dat]} { continue; }; # use other tools for that
-        if {[regexp {^[^+-]} $dat] || $max > 33} {
-            if {$max > 33} { incr cnt; set dat $txt }
-            # remove noicy prefix and make first character upper case
-            set dat [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $dat ""]] 0 0]
-            set max  0
-            set hoch 450
-            #set name [str2obj $dat]$cnt
-            set name [str2obj "$dat $cnt"]; # same as in create_window
-            incr cfg(POSX) 25;
-            incr cfg(POSY) 25;
-            if {[regexp {(checked|SSL) c} $dat]} { set hoch $cfg(geoy) }; # <<== dirty hack ;-(
-            set grp  [create_window "$dat $cnt" "300x$hoch+$cfg(POSX)+$cfg(POSY)"]
-            if {$cfg(VERB)==1} { puts "create_win: $grp" }
-            continue
-        }
-        incr max
+
         set tip [lindex [split $dat "\t"]  1]
         set dat [lindex [split $dat " \t"] 0]
         if {$cfg(VERB)==1} { puts "create_win: create: $cmd >$dat<" }
         set name [str2obj $dat]
-        if {[winfo exists $grp.$name]} {
-            if {$cfg(VERB)==1} {puts "**WARNING: create_win exists: $grp.$name"};
+        if {[winfo exists $this.$name]} {
+            # this occour if command/or option appears more than once in list
+            # hence the warning is visible only in verbose mode
+            if {$cfg(VERB)==1} {puts "**WARNING: create_win exists: $this.$name; ignored"};
             continue
         }
-        if {[regexp {=} $l]} {
-            regexp {^([^=]*)=(.*)} $l dumm idx val
-            frame $grp.$name
-            pack [label  $grp.$name.l -text $idx]              -side left
-            pack [entry  $grp.$name.e -textvariable cfg($idx)] -side left -fill x -expand 1
-            pack $grp.$name -fill x -anchor w
-            if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
-        } else {
-            pack [ttk::checkbutton $grp.$name -text $dat -variable cfg($dat)] -anchor w
+        frame $this.$name
+        if {[regexp {=} $l] == 0} {
+            pack [ttk::checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
             # use ttk::checkbutton 'cause checkbutton alway aligns centered
+        } else {
+            regexp {^([^=]*)=(.*)} $l dumm idx val
+            pack [label  $this.$name.l -text $idx]              -side left -anchor w
+            pack [entry  $this.$name.e -textvariable cfg($idx)] -side left -fill x -expand 1
+            if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
         }
-        create_tip $grp.$name "$tip";   # $tip may be empty, i.e. for options
+        grid $this.$name ;#-fill x -anchor w
+        create_tip $this.$name "$tip";   # $tip may be empty, i.e. for options
     }
+    pack $this -fill both -expand 1
+    # now arrange grid in rows and columns
+    set cnt [llength [grid slaves $this]]
+    if {([expr $cnt / 35] > 2) && ([expr $cnt % 35] > 0)} {
+        puts "**WARNING: create_win '$cnt': more than 105 objects, some may be invisiable"
+    }
+    if {([expr $cnt / $max] > 3) && ([expr $cnt % $max] > 0)} {
+        # more than our expected max amount of rows, use more rows
+        set max  35
+        set winy $cfg(geoy)
+    }
+    set slaves [lsort -nocase [grid slaves $this]]
+    set col 0
+    set row 0
+    foreach s $slaves {
+        if {$row > $max} { incr col; set row 0 }
+        grid config $s -row $row -column $col -padx 8
+        #if {$min < [$s config -width]} { set min [$s config -width] ;puts "min $min"}
+        # FIXME: re-calculating min width does not work
+        incr row
+    }
+    # reconfigure window as necessary
+    incr col;   # columns start with 0!
+    set winx [expr $winx * $col]
+    wm geometry $win [join [list $winx "x" $winy] ""]
 }; # create_win
 
 proc create_button {parent cmd} {
