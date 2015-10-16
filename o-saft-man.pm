@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.40 15/09/27 18:01:04";
+my  $man_SID= "@(#) o-saft-man.pm 1.41 15/10/16 22:25:51";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -254,6 +254,7 @@ our %man_text = (
         'HMAC'      => "keyed-Hash Message Authentication Code",
         'HMQV'      => "h? Menezes-Qu-Vanstone",
         'HSM'       => "Hardware Security Module",
+        'HPKP'      => "HTTP Public Key Pinning",
         'HSTS'      => "HTTP Strict Transport Security",
         'HTOP'      => "HMAC-Based One-Time Password",
         'IAPM'      => "Integrity Aware Parallelizable Mode (block cipher mode of operation)",
@@ -404,6 +405,7 @@ our %man_text = (
         'SNI'       => "Server Name Indication",
         'SNOW'      => "word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )",
         'SPDY'      => "Google's application-layer protocol on top of SSL",
+        'SPKI'      => "Subject Public Key Infrastructure",
         'SPN'       => "Substitution-Permutation Network",
         'Square'    => "block cipher",
         'SRP'       => "Secure Remote Password protocol",
@@ -547,6 +549,7 @@ our %man_text = (
                    # Identity within Internet Public Key Infrastructure Using X.509 (PKIX)
                    # Certificates in the Context of Transport Layer Security (TLS)
         '6797'  => [ "HTTP Strict Transport Security (HSTS)" ],
+        '7469'  => [ "Public Key Pinning Extension for HTTP" ],
         '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
         '7507'  => [ "TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks" ],
         #----------+----------------------------------------+-----------------------+
@@ -2819,7 +2822,7 @@ CHECKS
 
         3.3 Session Renegotation
 
-          Only server-side (secure) renegotiation allowed (see RFC5280).
+          Only server-side (secure) renegotiation allowed (see RFC 5280).
 
         3.4 Zertifikate und Zertifikatsverifikation
 
@@ -4163,6 +4166,7 @@ TODO
           ** support: PCT protocol
 	  ** Checking fallback from TLS 1.1 to TLS 1.0 (see ssl-cipher-check.pl)
 	  ** Minimal encryption strength: weak encryption (40-bit) (TestSSLServer.jar)
+	  ** check dynamic HTTP Public Key Pinning (HPKP)
 
         * missing checks
           ** SSL_honor_cipher_order => 1
@@ -4173,7 +4177,7 @@ TODO
           ** +constraints does not check +constraints in the certificate of
              the certificate chain.
           ** TR-03116-4: does not check data in certificate chain
-          ** RFC7525: does not check data in certificate chain
+          ** RFC 7525: does not check data in certificate chain
 
         * vulnerabilities
           ** complete TIME, BREACH check
