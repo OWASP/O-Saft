@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.32 Sommer Edition 2015
+#?      @(#) 1.33 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.32 15/10/17 17:27:38 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.33 15/10/17 17:41:36 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -202,8 +202,6 @@ set cfg(objN)   ""; # object name of notebook; needed to add more note TABS
 set cfg(winA)   ""; # object name of About  window
 set cfg(winH)   ""; # object name of Help   window
 set cfg(winF)   ""; # object name of Filter window
-set cfg(POSY)   [winfo y .];    # used to position other windows
-set cfg(POSX)   [winfo x .]; incr cfg(POSX) 100;
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(rpad)   15; # right padding for widgets in the lower right corner
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
@@ -331,6 +329,7 @@ proc create_window {title size} {
     #? create new toplevel window with given title and size; returns widget
     global col cfg
     set this    .[str2obj $title]
+    if {[winfo exists $this]}  { return ""; }; # do nothing
     toplevel    $this
     wm title    $this "O-Saft: $title"
     wm iconname $this "o-saft: $title"
@@ -736,7 +735,8 @@ proc create_win {parent cmd title} {
             # remove noicy prefix and make first character upper case
             if {$cfg(VERB)==1} { puts "create_win: $win $dat" }
             set dat [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $dat ""]] 0 0]
-            set win [create_window $dat "280x$winy+$cfg(POSX)+$cfg(POSY)"]
+            set win [create_window $dat "280x$winy"]
+            if {$win eq ""} { return; };    # do nothing, even no: show_window $this;
             set this $win.g
             frame $this;    # frame for grid
             continue
