@@ -115,8 +115,13 @@ exec wish "$0" --
 #.       - mixes layout and functions and business logic
 #.       - some widget names are hardcoded
 #.
+#? LINKS
+#?      Project site: https://www.owasp.org/index.php/O-Saft
+#?      Online Documentation: https://www.owasp.org/index.php/O-Saft/Documentation
+#?      Repository:   https://github.com/OWASP/O-Saft
+#?
 #? VERSION
-#?      @(#) 1.35 Sommer Edition 2015
+#?      @(#) 1.36 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +131,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.35 15/10/17 20:58:36 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.36 15/10/17 23:43:55 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -182,6 +187,7 @@ if {$__y < $cfg(geoy)} { set cfg(geoy) $__y  }
 if {$__x < $cfg(geox)} { set cfg(geox) $__x  }
 if {$__x > 1000 }      { set cfg(geox) "999" }
 set cfg(geoS)   "$cfg(geox)x$cfg(geoy)"
+set cfg(browser) "";            # external browser program, set below
 
 set col(DESC)   "CONFIGURATION colours"
 set col(osaft)  "gold"
@@ -207,6 +213,19 @@ set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(rpad)   15; # right padding for widgets in the lower right corner
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
 set tab(0)      ""; # contains results of cfg(SAFT)
+
+#   search browser, first matching will be used
+foreach b { firefox chrome chromium mozilla iceweasel konqueror Safari \
+            netscape opera webkit htmlview www-browser w3m \
+          } {
+    set binary [lindex [auto_execok $b] 0]; # found in $PATH ?
+    if {[string length $binary]} {
+        #catch {exec $binary $url &}
+        #dbx# puts "browser: $b $binary"
+        set cfg(browser) $binary
+        break
+    }
+}
 
 #   CONFIGURATION Aqua (Mac OS X)
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
@@ -560,8 +579,29 @@ proc create_about {} {
     global cfg col
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
     set cfg(winA) [create_window {About} $cfg(geoA)]
-    set t [create_text $cfg(winA) [osaft_about "ABOUT"]];
-    $t.t configure -bg $col(osaft); # dirty hack: widget hardcoded
+    set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
+    $txt configure -bg $col(osaft)
+
+    # search for URLs, mark them and bind key to open browser
+    set anf [$txt search -regexp -all -count end {\shttps?://[^\s]*} 1.0] 
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i];
+        set t [string trim [$txt get $a "$a + $e c"]];
+        set l [string length $t]
+        incr i
+        $txt tag add    osaft-URL    $a "$a + $e c"
+        $txt tag add    osaft-URL-$i $a "$a + $e c"
+        $txt tag bind   osaft-URL-$i <ButtonPress> "
+            if {$cfg(browser) eq ''} { return; }
+            if {$cfg(VERB)==1} {
+            puts  { exec $cfg(browser) $t & }
+            }
+            catch { exec $cfg(browser) $t & } 
+            "
+        $txt tag config osaft-URL-$i -foreground $col(link)
+        #create_tip      osaft-URL-$i "Execute $cfg(browser) $t"
+    }
 }; # create_about
 
 proc create_help {} {
@@ -1066,6 +1106,8 @@ create_host $w
 # otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1} {
     puts "PRG $argv0"
+    puts "CFG"
+    puts " |  browser:   $cfg(browser)"
     puts "TCL version:   $::tcl_patchLevel"
     puts " |  library:   $::tcl_library"
     puts " |  platform:  $::tcl_platform(platform)"
