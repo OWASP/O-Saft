@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.31 Sommer Edition 2015
+#?      @(#) 1.32 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.31 15/10/16 18:36:48 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.32 15/10/17 17:27:38 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -205,8 +205,14 @@ set cfg(winF)   ""; # object name of Filter window
 set cfg(POSY)   [winfo y .];    # used to position other windows
 set cfg(POSX)   [winfo x .]; incr cfg(POSX) 100;
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
+set cfg(rpad)   15; # right padding for widgets in the lower right corner
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
 set tab(0)      ""; # contains results of cfg(SAFT)
+
+#   CONFIGURATION Aqua (Mac OS X)
+#   Tcl/Tk on Aqua has some limitations and quirky behaviours
+#      cfg(rpad)    # used as right padding for widgets in the lower right
+                    # corner where there is Aqua's resize icon
 
 #   filters to match results
 #   For better readability we do not use output of  "o-saft.pl +help=ourstr".
@@ -258,7 +264,7 @@ lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	
 lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}	{}
 lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0	0
 lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}   osaftHead	{}	{}	{}
-lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s} {}	{}	{}
+lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*} {}	{}	{}
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #
 #     # description of regex
@@ -323,20 +329,20 @@ proc show_window {w} {
 
 proc create_window {title size} {
     #? create new toplevel window with given title and size; returns widget
-    global col
+    global col cfg
     set this    .[str2obj $title]
     toplevel    $this
     wm title    $this "O-Saft: $title"
     wm iconname $this "o-saft: $title"
     wm geometry $this $size
-    pack [frame $this.f0  -relief sunken  -borderwidth 1] -fill x -side top
-    pack [label $this.f0.l  -text $title  -font TkCaptionFont]    -side left
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
-    pack [button $this.f1.q -text "Close" -bg $col(close) -command "destroy $this"] -side right
+    pack [button $this.f1.q -text "Close" -bg $col(close) -command "destroy $this"] -side right -padx $cfg(rpad)
     create_tip   $this.f1.q "Close window"
     if {$title eq "Help" || $title eq "About"} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
-    # all other windows have Save button
+    # all other windows have a header line and a Save button
+    pack [frame $this.f0  -relief sunken  -borderwidth 1] -fill x -side top
+    pack [label $this.f0.l  -text $title  -font TkCaptionFont]    -side left
     pack [button $this.f1.s -text Save -bg $col(save) -command {osaft_save "CFG" 0}] -side left
     create_tip   $this.f1.s "Save configuration to file"
     return $this
@@ -411,7 +417,7 @@ proc create_filtab {parent cmd} {
     #? create table with filter data
     global cfg aaa
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
-    pack [text $parent.text -height 4 -relief flat -background lightgray]
+    pack [text $parent.text -height 4 -relief flat -background [$parent cget -background]]
     $parent.text insert end "
 Configure filter for text markup: r, e and # specify how the Regex should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
@@ -464,7 +470,7 @@ Changes apply to next +command."
         grid [radiobutton $this.x$k -variable f_mod($k) -width  2 -value "-regexp"  ] -row $k -column 1
         grid [radiobutton $this.e$k -variable f_mod($k) -width  2 -value "-exact"   ] -row $k -column 2
         grid [entry   $this.l$k -textvariable f_len($k) -width  2 ] -row $k -column 3
-        grid [entry   $this.r$k -textvariable f_rex($k) -width 60 ] -row $k -column 4
+        grid [entry   $this.r$k -textvariable f_rex($k) -width 65 ] -row $k -column 4
         grid [entry   $this.f$k -textvariable f_fg($k)  -width  9 ] -row $k -column 5
         grid [entry   $this.b$k -textvariable f_bg($k)  -width  9 ] -row $k -column 6
         grid [entry   $this.s$k -textvariable f_fn($k)  -width 10 ] -row $k -column 7
@@ -507,14 +513,14 @@ proc toggle_cfg {w opt val} {
 
 proc show_selected {title val} {
     #? opens toplevel window with selectable text
-    global col
+    global col cfg
     global __var;   # must be global
     set w    .selected
     toplevel $w
     wm title $w $title
     wm geometry $w 200x50
     pack [entry  $w.e -textvariable __var -relief flat]
-    pack [button $w.q -text Close -command "destroy $w" -bg $col(close)] -side right
+    pack [button $w.q -text Close -command "destroy $w" -bg $col(close)] -side right -padx $cfg(rpad)
     set __var "$val"
     return 1
 }; # toggle_cfg
@@ -539,9 +545,10 @@ proc create_filter {txt cmd} {
         #set key $f_key($k)
         set cmt $f_cmt($k)
         set filter_bool($txt,osaft-$key) 1; # default: text is visible
-        pack [ttk::checkbutton $this.x$key \
+        pack [checkbutton $this.x$key \
                     -text $key -variable filter_bool($txt,osaft-$key) \
-                    -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key);"];
+                    -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key);" \
+             ] -anchor w;
         # note: checkbutton value passed as reference
         create_tip   $this.x$key "show/hide: $cmt"
     }
@@ -724,12 +731,12 @@ proc create_win {parent cmd title} {
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
         if {[regexp {^(Commands|Options)} $dat]} { set skip 1; };    # next group starts
-        if {[regexp "$title" $dat]}        {
+        if {"$title" eq "$dat"} {   # FIXME: scary comparsion, better use regex
             set skip 0;
             # remove noicy prefix and make first character upper case
+            if {$cfg(VERB)==1} { puts "create_win: $win $dat" }
             set dat [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $dat ""]] 0 0]
             set win [create_window $dat "280x$winy+$cfg(POSX)+$cfg(POSY)"]
-            if {$cfg(VERB)==1} { puts "create_win: $win $dat" }
             set this $win.g
             frame $this;    # frame for grid
             continue
@@ -759,26 +766,32 @@ proc create_win {parent cmd title} {
         }
         frame $this.$name
         if {[regexp {=} $l] == 0} {
-            pack [ttk::checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
-            # use ttk::checkbutton 'cause checkbutton alway aligns centered
+            pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
             regexp {^([^=]*)=(.*)} $l dumm idx val
             pack [label  $this.$name.l -text $idx]              -side left -anchor w
             pack [entry  $this.$name.e -textvariable cfg($idx)] -side left -fill x -expand 1
             if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
+            $this.$name.l config -font TkDefaultFont;   # reset to default as Label is bold
         }
-        grid $this.$name ;#-fill x -anchor w
+        grid $this.$name -sticky w
         create_tip $this.$name "$tip";   # $tip may be empty, i.e. for options
     }
     pack $this -fill both -expand 1
+
     # now arrange grid in rows and columns
     set cnt [llength [grid slaves $this]]
-    if {([expr $cnt / 35] > 2) && ([expr $cnt % 35] > 0)} {
+    if {$cnt < 1} { return };   # avoid math errors, no need to resize window
+    if {([expr $cnt / 34] > 2) && ([expr $cnt % 34] > 0)} {
         puts "**WARNING: create_win '$cnt': more than 105 objects, some may be invisiable"
+    }
+    if {($cnt < 45)} {  # adjust to 3 columns
+        set max [expr $cnt / 3]
+        if {[expr $cnt % 3] > 0} { incr max }
     }
     if {([expr $cnt / $max] > 3) && ([expr $cnt % $max] > 0)} {
         # more than our expected max amount of rows, use more rows
-        set max  35
+        set max  34
         set winy $cfg(geoy)
     }
     set slaves [lsort -nocase [grid slaves $this]]
@@ -1018,7 +1031,7 @@ pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
 
 ## create command buttons for simple commands and help
 pack [frame     $w.fq] -fill x -side bottom
-pack [button    $w.fq.bq -text "Quit"  -bg $col(close) -command {exit}] -side right
+pack [button    $w.fq.bq -text "Quit"  -bg $col(close) -command {exit}] -side right -padx $cfg(rpad)
 pack [frame     $w.fc] -fill x
 pack [button    $w.fc.bs -text "Start" -bg $col(start) -command "osaft_exec $w.fc {Start}"] -side left -padx 11
 set c 0; # used to change color
@@ -1085,6 +1098,7 @@ if {$cfg(VERB)==1} {
     puts " |  geometry:  [wm geometry   .]"
     puts " |  maxsize:   [wm maxsize    .]"
     puts " |  focusmodel:[wm focusmodel .]"
+    puts " |  system:    [tk windowingsystem]"; # we believe this a window manager property
     if {[info exists geometry]==1} { puts " |  geometry:  $geometry" }
 }
 
