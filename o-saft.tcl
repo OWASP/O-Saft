@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.33 Sommer Edition 2015
+#?      @(#) 1.34 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.33 15/10/17 17:41:36 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.34 15/10/17 17:49:13 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -765,7 +765,7 @@ proc create_win {parent cmd title} {
             continue
         }
         frame $this.$name
-        if {[regexp {=} $l] == 0} {
+        if {[regexp {=} $dat] == 0} {
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
             regexp {^([^=]*)=(.*)} $l dumm idx val
