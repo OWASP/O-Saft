@@ -116,7 +116,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.34 Sommer Edition 2015
+#?      @(#) 1.35 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -126,7 +126,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.34 15/10/17 17:49:13 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.35 15/10/17 20:58:36 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -165,16 +165,17 @@ catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 #-----------------------------------------------------------------------------}
 
-#   CONFIGURATION wm
+set cfg(DESC)   "CONFIGURATION wm"
 #   set minimal window sizes to be usable in a 1024x768 screen
 #   windows will be larger if the screen supports it (we rely on "wm maxsize")
-set cfg(geox)   "700";          # min. window width
-set cfg(geoy)   "720";          # min. window height
+set cfg(geox)   700;            # O-Saft  window min. width
+set cfg(geoy)   720;            # O-Saft  window min. height
 set cfg(geoS)   "700x720";      # geometry and position of O-Saft window
-set cfg(geoA)   "600x570";      # geometry and position of About  window
+set cfg(geoA)   "600x610";      # geometry and position of About  window
 set cfg(geoH)   "600x720-0+0";  # geometry and position of Help   window
 set cfg(geoF)   "";             # geometry and position of Filter window (computed dynamically)
-#   now get configure according real size
+set cfg(llen)   15;             # fixed width of labels in Options wiindow
+#   get configure according real size
 set __x         [lindex [wm maxsize .] 0]
 set __y         [lindex [wm maxsize .] 1]
 if {$__y < $cfg(geoy)} { set cfg(geoy) $__y  }
@@ -182,7 +183,7 @@ if {$__x < $cfg(geox)} { set cfg(geox) $__x  }
 if {$__x > 1000 }      { set cfg(geox) "999" }
 set cfg(geoS)   "$cfg(geox)x$cfg(geoy)"
 
-#   CONFIGURATION colours
+set col(DESC)   "CONFIGURATION colours"
 set col(osaft)  "gold"
 set col(close)  "orange"
 set col(start)  "yellow"
@@ -192,7 +193,7 @@ set col(code)   "lightgray";    # used for help
 set col(link)   "blue";         # used for help
 set col(status) "wheat"
 
-#   internal data storage
+set cfg(CONF)   "internal data storage"
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
 set cfg(INFO)   ""; # text to be used in status line
 set cfg(EXEC)   0;  # count executions, used for object names
@@ -722,10 +723,6 @@ proc create_win {parent cmd title} {
         # header line. The window to be created just contains the lines which
         # follow the header line down to the next header line. $skip controls
         # that.
-    set winx 280;   # min. width of window
-    set winy 450;   # min. height of window
-    set max  15;    # try use max. this amount of rows
-    set min  280;   # min. size of a row, will be adapted dynamically
     set skip 1;     # skip data until $title found
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
@@ -735,7 +732,7 @@ proc create_win {parent cmd title} {
             # remove noicy prefix and make first character upper case
             if {$cfg(VERB)==1} { puts "create_win: $win $dat" }
             set dat [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $dat ""]] 0 0]
-            set win [create_window $dat "280x$winy"]
+            set win [create_window $dat ""]
             if {$win eq ""} { return; };    # do nothing, even no: show_window $this;
             set this $win.g
             frame $this;    # frame for grid
@@ -769,8 +766,8 @@ proc create_win {parent cmd title} {
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
             regexp {^([^=]*)=(.*)} $l dumm idx val
-            pack [label  $this.$name.l -text $idx]              -side left -anchor w
-            pack [entry  $this.$name.e -textvariable cfg($idx)] -side left -fill x -expand 1
+            pack [label  $this.$name.l -text $idx -width $cfg(llen)]    -side left -anchor w
+            pack [entry  $this.$name.e -textvariable cfg($idx)] -fill x -side left -expand 1
             if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
             $this.$name.l config -font TkDefaultFont;   # reset to default as Label is bold
         }
@@ -780,34 +777,20 @@ proc create_win {parent cmd title} {
     pack $this -fill both -expand 1
 
     # now arrange grid in rows and columns
+    # idea: arrange widgets in at least 3 columns
+    #       we can use 4 columns in Commands window because widgets are smaller
     set cnt [llength [grid slaves $this]]
     if {$cnt < 1} { return };   # avoid math errors, no need to resize window
-    if {([expr $cnt / 34] > 2) && ([expr $cnt % 34] > 0)} {
-        puts "**WARNING: create_win '$cnt': more than 105 objects, some may be invisiable"
-    }
-    if {($cnt < 45)} {  # adjust to 3 columns
-        set max [expr $cnt / 3]
-        if {[expr $cnt % 3] > 0} { incr max }
-    }
-    if {([expr $cnt / $max] > 3) && ([expr $cnt % $max] > 0)} {
-        # more than our expected max amount of rows, use more rows
-        set max  34
-        set winy $cfg(geoy)
-    }
-    set slaves [lsort -nocase [grid slaves $this]]
+    set max 2;          # 3 columns: 0..2
+    if {$cmd eq "CMD"} { incr max }; 
     set col 0
     set row 0
+    set slaves [lsort -nocase [grid slaves $this]]
     foreach s $slaves {
-        if {$row > $max} { incr col; set row 0 }
+        if {$col > $max} { incr row; set col 0 }
         grid config $s -row $row -column $col -padx 8
-        #if {$min < [$s config -width]} { set min [$s config -width] ;puts "min $min"}
-        # FIXME: re-calculating min width does not work
-        incr row
+        incr col
     }
-    # reconfigure window as necessary
-    incr col;   # columns start with 0!
-    set winx [expr $winx * $col]
-    wm geometry $win [join [list $winx "x" $winy] ""]
 }; # create_win
 
 proc create_button {parent cmd} {
