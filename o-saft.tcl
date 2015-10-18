@@ -82,6 +82,12 @@ exec wish "$0" --
 #.       (T) - Frame containing panes for commands, options, filter, results.
 #.       (S) - Frame containing Status messages
 #.
+#. LIMITATIONS
+#.      Options do not work on Windows. Cumbersome workaround:
+#.        # edit o-saft.tcl and set cfg(VERB) 1
+#.        start wish
+#.        source o-saft.tcl
+#.
 #. HACKER's INFO
 #.      Generation of all objects (widgets in Tk slang) is done  based on data
 #.      provided by  o-saft.pl  itself, in praticular some  --help=*  options,
@@ -102,36 +108,52 @@ exec wish "$0" --
 #.          - all "--help*" options (as they make no sense here)
 #.          - "+cgi" and "+exec" command (they are for internal use only)
 #.
-#.      Some nameing conventions:
-#.       - procedures
-#.          create_*    - create widget or windows
-#.          osaft_*     - run externl  o-saft.pl  (and process output)
-#.       - variables
+#.      Some nameing conventions
+#.       - procedures:
+#.          create_*    - create widget or window
+#.          osaft_*     - run external  o-saft.pl  (and process output)
+#.       - variables:
 #.          osaft-      - prefix used for all text tags
 #.          f_*         - prefix used for all filter list variables
+#.          txt         - a text widget
+#.          w           - any widget
+#.          parent      - parent widget (may be toplevel)
+#.          hosts()     - global variable with list of hosts to be checked
+#.          cfg()       - global variable containing most configurations
+#.          myC()       - global variable containing colours for widgets
+#.          myT()       - global variable containing texts for widgets
+#.          myX()       - global variable for windows and window manager
+#.
+#.      Notes about Tcl/Tk
+#.      We try to avoid platform-specific code. The only exceptions (2015) are
+#.      the perl executable and the start method of the external browser.
+#.      All external programs are started using Tcl's  {*}  syntax.
+#.      If there is any text visible, we want to copy&paste it.  Therfore most
+#.      texts are placed in Tk's text widget instead of a label widget, 'cause
+#.      text widgets allow selecting their content by default, while labels do
+#.      not.
 #.
 #.      This is no academically perfect code, but quick&dirty scripted:
 #.       - makes use of global variables instead of passing parameters etc..
 #.       - mixes layout and functions and business logic
 #.       - some widget names are hardcoded
 #.
-#? LINKS
-#?      Project site: https://www.owasp.org/index.php/O-Saft
-#?      Online Documentation: https://www.owasp.org/index.php/O-Saft/Documentation
-#?      Repository:   https://github.com/OWASP/O-Saft
-#?
 #? VERSION
-#?      @(#) 1.36 Sommer Edition 2015
+#?      @(#) 1.37 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
+#?
+#?      Project Home: https://www.owasp.org/index.php/O-Saft
+#?      Help Online:  https://www.owasp.org/index.php/O-Saft/Documentation
+#?      Repository:   https://github.com/OWASP/O-Saft
 #?
 # -----------------------------------------------------------------------------
 
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.36 15/10/17 23:43:55 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.37 15/10/18 11:49:24 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -153,53 +175,70 @@ if {[regexp {indows} $tcl_platform(os)]} {
 # Tcl's  {*}  evaluation for that.
 
 #-----------------------------------------------------------------------------{
-#   CONFIGURATION o-saft.pl
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
+set cfg(DESC)   {CONFIGURATION o-saft.pl}
 set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
-set cfg(.CFG)   {}; # set below
+set cfg(.CFG)   {}; # set below and processed in osaft_init
 catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
 }
 #   now get information from O-Saft; it's a performance penulty, but simple ;-)
-catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
-catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
-catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
+set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
+set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
+set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 #-----------------------------------------------------------------------------}
 
-set cfg(DESC)   "CONFIGURATION wm"
+set myX(DESC)   {CONFIGURATION window manager geometry}
 #   set minimal window sizes to be usable in a 1024x768 screen
 #   windows will be larger if the screen supports it (we rely on "wm maxsize")
-set cfg(geox)   700;            # O-Saft  window min. width
-set cfg(geoy)   720;            # O-Saft  window min. height
-set cfg(geoS)   "700x720";      # geometry and position of O-Saft window
-set cfg(geoA)   "600x610";      # geometry and position of About  window
-set cfg(geoH)   "600x720-0+0";  # geometry and position of Help   window
-set cfg(geoF)   "";             # geometry and position of Filter window (computed dynamically)
-set cfg(llen)   15;             # fixed width of labels in Options wiindow
-#   get configure according real size
+set myX(geoO)   "600x720-0+0";  # geometry and position of Help    window
+set myX(geo-)   "";             # 
+set myX(geoS)   "700x720";      # geometry and position of O-Saft  window
+set myX(geoA)   "600x610";      # geometry and position of About   window
+set myX(geoF)   "";             # geometry and position of Filter  window (computed dynamically)
+set myX(geoT)   "";             # 
+set myX(minx)   700;            # O-Saft  window min. width
+set myX(miny)   720;            # O-Saft  window min. height
+set myX(lenl)   15;             # fixed width of labels in Options window
+set myX(rpad)   15;             # right padding in the lower right corner
+#   configure according real size
 set __x         [lindex [wm maxsize .] 0]
 set __y         [lindex [wm maxsize .] 1]
-if {$__y < $cfg(geoy)} { set cfg(geoy) $__y  }
-if {$__x < $cfg(geox)} { set cfg(geox) $__x  }
-if {$__x > 1000 }      { set cfg(geox) "999" }
-set cfg(geoS)   "$cfg(geox)x$cfg(geoy)"
-set cfg(browser) "";            # external browser program, set below
+if {$__y < $myX(miny)} { set myX(miny) $__y  }
+if {$__x < $myX(minx)} { set myX(minx) $__x  }
+if {$__x > 1000 }      { set myX(minx) "999" }
+set myX(geoS)   "$myX(minx)x$myX(miny)"
 
-set col(DESC)   "CONFIGURATION colours"
-set col(osaft)  "gold"
-set col(close)  "orange"
-set col(start)  "yellow"
-set col(save)   "lightgreen"
-set col(button) "lightyellow"
-set col(code)   "lightgray";    # used for help
-set col(link)   "blue";         # used for help
-set col(status) "wheat"
+array set myC {
+    DESC        {CONFIGURATION colours used in GUI}
+    osaft       gold
+    close       orange
+    start       yellow
+    save        lightgreen
+    button      lightyellow
+    code        lightgray
+    link        blue
+    status      wheat
+}
 
-set cfg(CONF)   "internal data storage"
+array set myT {
+    DESC        {CONFIGURATION texts used in GUI}
+    about       About
+    help        Help
+    close       Close
+    quit        Quit
+    save        Save
+    reset       Reset
+    host        {Host[:Port]}
+    toggle      {toggle visibility of various texts}
+    filter      {}
+}
+
+set cfg(CONF)   {internal data storage}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
 set cfg(INFO)   ""; # text to be used in status line
 set cfg(EXEC)   0;  # count executions, used for object names
@@ -210,27 +249,36 @@ set cfg(winA)   ""; # object name of About  window
 set cfg(winH)   ""; # object name of Help   window
 set cfg(winF)   ""; # object name of Filter window
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
-set cfg(rpad)   15; # right padding for widgets in the lower right corner
-set hosts(0)    0;  # array containing host:port; index 0 contains counter
-set tab(0)      ""; # contains results of cfg(SAFT)
+set cfg(browser) "";            # external browser program, set below
 
 #   search browser, first matching will be used
-foreach b { firefox chrome chromium mozilla iceweasel konqueror Safari \
-            netscape opera webkit htmlview www-browser w3m \
-          } {
-    set binary [lindex [auto_execok $b] 0]; # found in $PATH ?
+set __native    "";
+switch [tk windowingsystem] {   # ugly workaround to detect special start methods
+    "aqua"  { set __native "open"  }
+    "Aqua"  { set __native "open"  }
+    "win32" { set __native "start" }
+    "win64" { set __native "start" }
+    *       { set __native ""      }
+}
+foreach b " $__native \
+            firefox chrome chromium iceweasel konqueror mozilla \
+            netscape opera safari webkit htmlview www-browser w3m \
+          " {
+    set binary [lindex [auto_execok $b] 0]; # search in $PATH
+    #dbx# puts "browser: $b $binary"
     if {[string length $binary]} {
-        #catch {exec $binary $url &}
-        #dbx# puts "browser: $b $binary"
         set cfg(browser) $binary
         break
     }
 }
 
-#   CONFIGURATION Aqua (Mac OS X)
+set cfg(AQUA)   "CONFIGURATION Aqua (Mac OS X)"
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
-#      cfg(rpad)    # used as right padding for widgets in the lower right
+#      myX(rpad)    # used as right padding for widgets in the lower right
                     # corner where there is Aqua's resize icon
+
+set hosts(0)    0;  # array containing host:port; index 0 contains counter
+set tab(0)      ""; # contains results of cfg(SAFT)
 
 #   filters to match results
 #   For better readability we do not use output of  "o-saft.pl +help=ourstr".
@@ -259,7 +307,7 @@ set lgreen      lightgreen;     # use variables for color names
 set yellow      lightyellow;    # .. to keep table columns below
 set orange      orange;         # .. as small as possible
 set lGray       LightGray;      #
-set lBlue       LightBlue;      # these variables are use here only
+set lBlue       LightBlue;      # these variables are used here only
 set steelB      SteelBlue;      #
 
 #     # index   0  (description element)
@@ -275,17 +323,17 @@ lappend __cmt   "Description of regex"
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #     # index   1	2	3	4	5	6	7	8	9	10	11	12
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	Label	usr1	usr2	usr3
-lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
-lappend __len   3	4	4	4	0	2	3	0	0	2	0	1	0	0	0
-lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}	{}
-lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}	{}
-lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0	0
-lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}   osaftHead	{}	{}	{}
-lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*} {}	{}	{}
+lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	Label	usr1	usr2	usr3 usr4
+lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
+lappend __len   3	4	4	4	0	2	3	0	0	2	0	1	0	0	0	0
+lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}	{}	{}
+lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}	{}	{}
+lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0
+lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}   osaftHead	{}	{}	{}	{}
+lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*} {}	{}	{}	{}
 #--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
 #
-#     # description of regex
+#     # description of regex (sequence must match above table)
 lappend __cmt   {word  LOW   anywhere}
 lappend __cmt   {word  WEAK  anywhere}
 lappend __cmt   {word  weak  anywhere}
@@ -294,11 +342,11 @@ lappend __cmt   {line  **WARN}
 lappend __cmt   {word  no (  anywhere}
 lappend __cmt   {word  yes  at end of line}
 lappend __cmt   {line starting with  == (formatting lines)}
-lappend __cmt   {line starting with  #  (verbose or debuf lines)}
+lappend __cmt   {line starting with  #  (verbose or debug lines)}
 lappend __cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
 lappend __cmt   {lines contaning program name}
-lappend __cmt   {label of result string (from start of line until :)}
-lappend __cmt   {} {} {}  ; # empty description for undefined usr*
+lappend __cmt   {label of result string from start of line until :}
+lappend __cmt   {} {} {} {} ;   # empty description as placeholder
 
 # convert lists to arrays
 for {set k 0} { $k < [llength $__key]} {incr k} {
@@ -337,6 +385,72 @@ proc notTOC {str} {
     return 0
 }; # isTOC
 
+proc jumpto_mark {w txt} { catch { $w see [$w index $txt.first] } }
+     # jump to mark in given text widget;
+     # we simply ignore any error if index is unknown
+
+proc toggle_cfg {w opt val} {
+    #? use widget config command to change options value
+    if {$val ne {}} { $w config $opt $val; }
+    return 1
+}; # toggle_cfg
+
+proc toggle_txt {txt tag val} {
+    #? toggle visability of text tagged with name $tag
+    global cfg
+    if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]"; }
+    $txt tag config $tag -elide [expr ! $val];  # "elide true" hides the text
+        # FIXME: need to elide complete line
+}; # toggle_txt
+
+proc apply_filter {txt} {
+    #? apply filters for markup in output
+    global cfg
+    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
+    foreach {k key} [array get f_key] {
+        if {$k eq 0} { continue };
+        #set key $f_key($k)
+        set mod $f_mod($k)
+        set len $f_len($k); # currenty used for 0 only
+        set rex $f_rex($k)
+        set fg  $f_fg($k)
+        set bg  $f_bg($k)
+        set nr  $f_un($k)
+        set fn  $f_fn($k)
+        if {$key eq ""} { continue };   # invalid or disabled filter rules
+        if {$rex eq ""} { continue };   # invalid or disabled filter rules
+        if {$cfg(VERB)==1} {puts "apply_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"};
+        # anf contains start, end corresponding end position of match
+        set anf [$txt search -all $mod -count end "$rex" 1.0] 
+        set i 0
+        foreach a $anf {
+            set e [lindex $end $i];
+            incr i
+            if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # very dirty hack to beautify print
+            if {$len == 0} {
+               $txt tag add osaft-$key  $a "$a + 1 line - 1 char"
+            } else {
+               $txt tag add osaft-$key  $a "$a + $e c"
+            }
+        }
+        #dbx# puts "$key: $rex F $fg B $bg U $nr font $fn"
+        if {$fg ne ""}  { $txt tag config osaft-$key -foreground $fg }
+        if {$bg ne ""}  { $txt tag config osaft-$key -background $bg }
+        if {$nr ne "0"} { $txt tag config osaft-$key -underline  $nr }
+        if {$fn ne ""}  { $txt tag config osaft-$key -font       $fn }
+    }
+}; # apply_filter
+
+proc www_browser {url} {
+    #? open URL in browser, uses system's native browser
+    global cfg
+    if {[string length $cfg(browser)] < 1} { puts {**WARNING: no browser found}; return; }
+    if {$cfg(VERB)==1} {
+        puts  { exec {*}$cfg(browser) $url & }
+    }
+        catch { exec {*}$cfg(browser) $url & } 
+}; # www_browser
+
 proc show_window {w} {
     #? show window near current cursor position
     set y   [winfo pointery $w]; incr y 23
@@ -345,9 +459,23 @@ proc show_window {w} {
     wm deiconify $w
 }; # show_window
 
+proc create_selected {title val} {
+    #? opens toplevel window with selectable text
+    global cfg myC myX
+    global __var;   # must be global
+    set w    .selected
+    toplevel $w
+    wm title $w $title
+    wm geometry $w 200x50
+    pack [entry  $w.e -textvariable __var -relief flat]
+    pack [button $w.q -text "Close" -command "destroy $w" -bg $myC(close)] -side right -padx $myX(rpad)
+    set __var "$val"
+    return 1
+}; # create_selected
+
 proc create_window {title size} {
     #? create new toplevel window with given title and size; returns widget
-    global col cfg
+    global cfg myC myX
     set this    .[str2obj $title]
     if {[winfo exists $this]}  { return ""; }; # do nothing
     toplevel    $this
@@ -355,14 +483,16 @@ proc create_window {title size} {
     wm iconname $this "o-saft: $title"
     wm geometry $this $size
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
-    pack [button $this.f1.q -text "Close" -bg $col(close) -command "destroy $this"] -side right -padx $cfg(rpad)
+    pack [button $this.f1.q -text "Close" -bg $myC(close) -command "destroy $this"] -side right -padx $myX(rpad)
     create_tip   $this.f1.q "Close window"
     if {$title eq "Help" || $title eq "About"} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
     # all other windows have a header line and a Save button
     pack [frame $this.f0  -relief sunken  -borderwidth 1] -fill x -side top
-    pack [label $this.f0.l  -text $title  -font TkCaptionFont]    -side left
-    pack [button $this.f1.s -text Save -bg $col(save) -command {osaft_save "CFG" 0}] -side left
+    pack [text  $this.f0.t -height 1 -relief flat -background [. cget -background]]
+    $this.f0.t insert end $title
+    $this.f0.t config -state disabled -font TkCaptionFont
+    pack [button $this.f1.s -text "Save" -bg $myC(save) -command {osaft_save "CFG" 0}] -side left
     create_tip   $this.f1.s "Save configuration to file"
     return $this
 }; # create_window
@@ -403,6 +533,7 @@ proc create_host {parent} {
     # or i==0 which should never occour and then will force an error in next line
     pack $this -fill x -after $prev
 }; # create_host
+
 proc remove_host {w} {
     #? destroy frame with label and entry for host:port
     catch {destroy $w.eh $w.bp $w.bm $w.lh $w}
@@ -420,17 +551,6 @@ proc create_text {parent txt} {
     pack $this.t -fill both -expand 1 -pady 2 -padx {2 0} -in $this
     return $this
 }; # create_text
-
-proc create_see {w t} { catch { $w see [$w index $t.first] } }
-     # we simply ignore any error if index is unknown
-
-proc toggle_txt {txt tag val} {
-    #? toggle visability of text tagged with name $tag
-    global cfg filter 
-    if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]"; }
-    $txt tag config $tag -elide [expr ! $val];  # "elide true" hides the text
-        # FIXME: need to elide complete line
-}; # toggle_txt
 
 proc create_filtab {parent cmd} {
     #? create table with filter data
@@ -517,48 +637,28 @@ Changes apply to next +command."
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
     grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work 
     catch { # silently ignore if systems has no fontchooser
-    tk fontchooser config -command {show_selected "Font:"}; # what to do with selection
+    tk fontchooser config -command {create_selected "Font:"}; # what to do with selection
     pack [button $parent.fc -text "Font Chooser"  -command {tk fontchooser show}] -side right
     }
-    pack [button $parent.cc -text "Color Chooser" -command {show_selected "Color:" [tk_chooseColor]} ] -side right
+    pack [button $parent.cc -text "Color Chooser" -command {create_selected "Color:" [tk_chooseColor]} ] -side right
         # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
 }; # create_filtab
 
-proc toggle_cfg {w opt val} {
-    #? use widget config command to change options value
-    if {$val ne {}} { $w config $opt $val; }
-    return 1
-}; # toggle_cfg
-
-proc show_selected {title val} {
-    #? opens toplevel window with selectable text
-    global col cfg
-    global __var;   # must be global
-    set w    .selected
-    toplevel $w
-    wm title $w $title
-    wm geometry $w 200x50
-    pack [entry  $w.e -textvariable __var -relief flat]
-    pack [button $w.q -text Close -command "destroy $w" -bg $col(close)] -side right -padx $cfg(rpad)
-    set __var "$val"
-    return 1
-}; # toggle_cfg
-
 proc create_filter {txt cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
-    global cfg f_key f_cmt filter_bool
+    global cfg f_key f_cmt filter_bool myX
     if {$cfg(VERB)==1} { puts "create_filter: $txt $cmd"; }
     if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return; }
     set geo [split [winfo geometry .] {x+-}]
-    set cfg(geoF) +[expr [lindex $geo 2] + [lindex $geo 0]]+[expr [lindex $geo 3]+100]
+    set myX(geoF) +[expr [lindex $geo 2] + [lindex $geo 0]]+[expr [lindex $geo 3]+100]
         # calculate new position: x(parent)+width(parent), y(parent)+100
         # most window managers are clever enough to position window
         # correctly if calculation is outside visible (screen) frame
-    set cfg(winF) [create_window "Filter:$cmd" $cfg(geoF)]
+    set cfg(winF) [create_window "Filter:$cmd" $myX(geoF)]
         # FIXME: only one variable for windows, need a variable for each window
     set this $cfg(winF)
-    #dbx# puts "TXT $txt | $cmd | $cfg(geoF)"
-    pack [label $this.l -text "toggle visibility of various texts\n(experimental)"]
+    #dbx# puts "TXT $txt | $cmd | $myX(geoF)"
+    pack [label $this.l -text "toggle visibility of various texts"]
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
         #set key $f_key($k)
@@ -576,11 +676,11 @@ proc create_filter {txt cmd} {
 
 proc create_about {} {
     #? create new window with About text; store widget in cfg(winA)
-    global cfg col
+    global cfg myC myX
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
-    set cfg(winA) [create_window {About} $cfg(geoA)]
+    set cfg(winA) [create_window {About} $myX(geoA)]
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
-    $txt configure -bg $col(osaft)
+    $txt configure -bg $myC(osaft)
 
     # search for URLs, mark them and bind key to open browser
     set anf [$txt search -regexp -all -count end {\shttps?://[^\s]*} 1.0] 
@@ -592,15 +692,9 @@ proc create_about {} {
         incr i
         $txt tag add    osaft-URL    $a "$a + $e c"
         $txt tag add    osaft-URL-$i $a "$a + $e c"
-        $txt tag bind   osaft-URL-$i <ButtonPress> "
-            if {$cfg(browser) eq ''} { return; }
-            if {$cfg(VERB)==1} {
-            puts  { exec $cfg(browser) $t & }
-            }
-            catch { exec $cfg(browser) $t & } 
-            "
-        $txt tag config osaft-URL-$i -foreground $col(link)
-        #create_tip      osaft-URL-$i "Execute $cfg(browser) $t"
+        $txt tag config osaft-URL-$i -foreground $myC(link)
+        $txt tag bind   osaft-URL-$i <ButtonPress> "www_browser $t"
+        if {$cfg(TIP)==0} { tooltip::tooltip $txt -tag osaft-URL-$i "Execute $cfg(browser) $t" }
     }
 }; # create_about
 
@@ -614,9 +708,9 @@ proc create_help {} {
     # are highlighted and used for navigation.
     # Idea: probably "o-saft.pl --help=wiki" is better suitable for creating
     # the help text herein.
-    global cfg col
+    global cfg myC myX
     if {[winfo exists $cfg(winH)]}  { show_window $cfg(winH); return; }
-    set this    [create_window {Help} $cfg(geoH)]
+    set this    [create_window {Help} $myX(geoO)]
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];  # remove informal messages
     set txt     [create_text $this $help].t
     set toc     {}
@@ -656,7 +750,7 @@ proc create_help {} {
         set b [$txt search -regexp {[A-Z]+} $a] 
         $txt tag add  osaft-TOC    $b "$b + $e c"; # - 1 c";# do not markup leading spaces
         $txt tag add  osaft-TOC-$i $a "$a + $e c";      # but complete line is clickable
-        $txt tag bind osaft-TOC-$i <ButtonPress> "create_see $txt {osaft-HEAD-$name}"
+        $txt tag bind osaft-TOC-$i <ButtonPress> "jumpto_mark $txt {osaft-HEAD-$name}"
     }
 
 #    # 2a. search for all references to section head in text
@@ -671,8 +765,8 @@ proc create_help {} {
 #        if {[regexp {HIGH|MDIUM|LOW|WEAK|SSL|DHE} $t]} { continue };  # skip false matches
 #        if {[notTOC $t]} { continue; }; # skip some special strings
 #        $txt tag add    osaft-XXX $a "$a + $e c"
-#        $txt tag bind   osaft-XXX-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
-#        $txt tag config osaft-XXX    -foreground $col(link)
+#        $txt tag bind   osaft-XXX-$i <ButtonPress> "jumpto_mark $txt {osaft-LNK-$name}"
+#        $txt tag config osaft-XXX    -foreground $myC(link)
 #    }
 
     # 3. search all commands and options and try to set click event
@@ -692,8 +786,8 @@ proc create_help {} {
         } else {
             # these matches are assumed references
             $txt tag add    osaft-LNK-$i $a "$a + $e c - 1 c"; # do not markup spaces
-            $txt tag bind   osaft-LNK-$i <ButtonPress> "create_see $txt {osaft-LNK-$name}"
-            $txt tag config osaft-LNK-$i -foreground $col(link)
+            $txt tag bind   osaft-LNK-$i <ButtonPress> "jumpto_mark $txt {osaft-LNK-$name}"
+            $txt tag config osaft-LNK-$i -foreground $myC(link)
             $txt tag config osaft-LNK-$i -font osaftSlant
         }
         incr i
@@ -719,11 +813,11 @@ proc create_help {} {
     }
 
     # finaly global markups
-    $txt tag config   osaft-TOC  -foreground $col(link)
+    $txt tag config   osaft-TOC  -foreground $myC(link)
     $txt tag config   osaft-HEAD -font osaftBold
     $txt tag config   osaft-TOC  -font osaftBold
     $txt tag config   osaft-LNK  -font osaftBold
-    $txt tag config   osaft-CODE -background $col(code)
+    $txt tag config   osaft-CODE -background $myC(code)
 
     set cfg(winH) $this
 }; # create_help
@@ -741,11 +835,11 @@ proc create_note {parent title} {
 
 proc create_cmd {parent title color} {
     #? create button to run O-Saft command; returns widget
-    global cfg col
+    global cfg myC
     set name [str2obj $title]
     set this $parent.$name
     if {$color < 1 || $color > 4} { set color ""}
-    pack [button $this -text $title -bg "$col(osaft)$color" -command "osaft_exec $parent $title"] -side left
+    pack [button $this -text $title -bg "$myC(osaft)$color" -command "osaft_exec $parent $title"] -side left
     create_tip   $this "Execute $cfg(SAFT) with command $title"
     return $this
 }; # create_cmd
@@ -754,7 +848,7 @@ proc create_win {parent cmd title} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
     # title must be string of group of command or options
-    global cfg
+    global cfg myX
     set this $parent
     set win  $this
     set data $cfg(OPTS)
@@ -806,7 +900,7 @@ proc create_win {parent cmd title} {
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
             regexp {^([^=]*)=(.*)} $l dumm idx val
-            pack [label  $this.$name.l -text $idx -width $cfg(llen)]    -side left -anchor w
+            pack [label  $this.$name.l -text $idx -width $myX(lenl)]    -side left -anchor w
             pack [entry  $this.$name.e -textvariable cfg($idx)] -fill x -side left -expand 1
             if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
             $this.$name.l config -font TkDefaultFont;   # reset to default as Label is bold
@@ -837,7 +931,7 @@ proc create_button {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
     # cmd must be "OPT" or "CMD" or "TRC"
-    global cfg col
+    global cfg myC
     set data $cfg(OPTS)
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
     foreach l [split $data "\r\n"] {
@@ -852,7 +946,7 @@ proc create_button {parent cmd} {
         set name [str2obj $dat]
         set this $parent.$name
         if {$cfg(VERB)==1} { puts "create_button .$name {$txt}" }
-        pack [button $this -text $dat -command "create_win .$name $cmd {$txt}" -bg $col(button) ] \
+        pack [button $this -text $dat -command "create_win .$name $cmd {$txt}" -bg $myC(button) ] \
                  -anchor w -fill x -padx 10 -pady 2
         create_tip   $this "Open window with more settings"
     }
@@ -866,8 +960,8 @@ proc osaft_about {mode} {
     set hlp ""
     foreach l [split $txt "\r\n"] {
         if {![regexp {^#[?.]} $l]} { continue; }
-        if {[regexp {^#\.}  $l] && $mode eq {ABOUT}} { continue }
-        if {[regexp "^\s*$" $l]} { continue }
+        if { [regexp {^#\.}  $l] && $mode eq {ABOUT}} { continue }
+        if { [regexp {^\s*$} $l]} { continue }
         set l [regsub -all {\$0} $l $argv0]
         set hlp "$hlp\n[regsub {^#[?.]} $l {}]"
     }
@@ -935,48 +1029,9 @@ proc osaft_save {type nr} {
     set cfg(INFO) "saved to $name"; update idletasks;# enforce display update
 }; # osaft_save
 
-proc result_filter {txt} {
-    #? apply filters for markup in output
-    global cfg
-    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
-    foreach {k key} [array get f_key] {
-        if {$k eq 0} { continue };
-        #set key $f_key($k)
-        set mod $f_mod($k)
-        set len $f_len($k); # currenty used for 0 only
-        set rex $f_rex($k)
-        set fg  $f_fg($k)
-        set bg  $f_bg($k)
-        set nr  $f_un($k)
-        set fn  $f_fn($k)
-        if {$key eq ""} { continue };   # invalid or disabled filter rules
-        if {$rex eq ""} { continue };   # invalid or disabled filter rules
-        if {$cfg(VERB)==1} {puts "result_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"};
-        # anf contains start, end corresponding end position of match
-        set anf [$txt search -all $mod -count end "$rex" 1.0] 
-        set i 0
-        foreach a $anf {
-            set e [lindex $end $i];
-            incr i
-            if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # very dirty hack to beautify print
-            if {$len == 0} {
-               $txt tag add osaft-$key  $a "$a + 1 line - 1 char"
-            } else {
-               $txt tag add osaft-$key  $a "$a + $e c"
-            }
-        }
-        #dbx# puts "$key: $rex F $fg B $bg U $nr font $fn"
-        if {$fg ne ""}  { $txt tag config osaft-$key -foreground $fg }
-        if {$bg ne ""}  { $txt tag config osaft-$key -background $bg }
-        if {$nr ne "0"} { $txt tag config osaft-$key -underline  $nr }
-        if {$fn ne ""}  { $txt tag config osaft-$key -font       $fn }
-    }
-
-}; # result_filter
-
 proc osaft_exec {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
-    global cfg hosts tab col
+    global cfg hosts tab myC
     set cfg(INFO) "$cmd"; update idletasks;         # enforce display update
     set do  {};     # must be set to avoid tcl error
     set opt {};     # ..
@@ -1013,13 +1068,13 @@ proc osaft_exec {parent cmd} {
     set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"
     set tab_run  [create_note $cfg(objN) "($cfg(EXEC)) $cmd"]
     set txt [create_text  $tab_run $tab($cfg(EXEC))].t ;    # <== ugly hardcoded .t
-    pack [button $tab_run.bs -text {Save}     -bg $col(save)   -command "osaft_save {TAB} $cfg(EXEC)"] -side left
-    pack [button $tab_run.bf -text {Filter}                    -command "create_filter $txt $cmd"] -side left
-    pack [button $tab_run.bq -text {Close TAB} -bg $col(close) -command "destroy $tab_run"] -side right
+    pack [button $tab_run.bs -text "Save"      -bg $myC(save)  -command "osaft_save {TAB} $cfg(EXEC)"] -side left
+    pack [button $tab_run.bf -text "Filter"                    -command "create_filter $txt $cmd"] -side left
+    pack [button $tab_run.bq -text "Close TAB" -bg $myC(close) -command "destroy $tab_run"] -side right
     create_tip   $tab_run.bq "Close window"
     create_tip   $tab_run.bs "Save result to file"
     create_tip   $tab_run.bf "Show configuration to filter results"
-    result_filter $txt ;        # text placed in pane, now do some markup
+    apply_filter $txt ;        # text placed in pane, now do some markup
     $cfg(objN) select $tab_run
     set cfg(INFO) "$do done."
 }; # osaft_exec
@@ -1039,7 +1094,7 @@ foreach arg $argv {
 
 wm title        . $cfg(TITLE)
 wm iconname     . [string tolower $cfg(TITLE)]
-wm geometry     . $cfg(geoS)
+wm geometry     . $myX(geoS)
 
 font create osaftHead   {*}[font configure TkFixedFont;]  -weight bold
 font create osaftBold   {*}[font configure TkDefaultFont] -weight bold
@@ -1054,9 +1109,9 @@ pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
 
 ## create command buttons for simple commands and help
 pack [frame     $w.fq] -fill x -side bottom
-pack [button    $w.fq.bq -text "Quit"  -bg $col(close) -command {exit}] -side right -padx $cfg(rpad)
+pack [button    $w.fq.bq -text "Quit"  -bg $myC(close) -command {exit}] -side right -padx $myX(rpad)
 pack [frame     $w.fc] -fill x
-pack [button    $w.fc.bs -text "Start" -bg $col(start) -command "osaft_exec $w.fc {Start}"] -side left -padx 11
+pack [button    $w.fc.bs -text "Start" -bg $myC(start) -command "osaft_exec $w.fc {Start}"] -side left -padx 11
 set c 0; # used to change color
 foreach b $cfg(FAST) {
     create_cmd $w.fc $b $c;
@@ -1082,15 +1137,15 @@ create_button $tab_opts {OPT}; # fill Options pane
 create_filtab $tab_filt {FIL}; # fill Filter pane
 
 # add Save and Reset button in Options pane
-pack [button    $tab_opts.bs -text "Save"  -command {osaft_save "CFG" 0} -bg $col(save)] -side left
-pack [button    $tab_opts.br -text "Reset" -command {osaft_reset; osaft_init;}         ] -side left
+pack [button    $tab_opts.bs -text "Save"  -command {osaft_save "CFG" 0} -bg $myC(save)] -side left
+pack [button    $tab_opts.br -text "Reset" -command {osaft_reset; osaft_init;}          ] -side left
 osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
 create_tip      $tab_opts.bs "Save configuration to file"
 create_tip      $tab_opts.br "Reset configuration to values from $cfg(INIT)"
 
 ## create status line
 pack [frame     $w.fl -relief sunken -borderwidth 1] -fill x
-pack [label     $w.fl.l -textvariable cfg(INFO) -bg $col(status)] -expand 1 -fill x -side left
+pack [label     $w.fl.l -textvariable cfg(INFO) -bg $myC(status)] -expand 1 -fill x -side left
 
 ## add hosts from command line
 foreach host $targets {         # display hosts
