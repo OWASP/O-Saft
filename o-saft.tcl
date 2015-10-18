@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.38 Sommer Edition 2015
+#?      @(#) 1.39 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.38 15/10/18 14:20:04 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.39 15/10/18 21:36:50 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -280,91 +280,84 @@ set cfg(AQUA)   "CONFIGURATION Aqua (Mac OS X)"
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
 set tab(0)      ""; # contains results of cfg(SAFT)
 
-#   filters to match results
+proc txt2arr {str} {
+    #? convert string to arrays
+    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
+    set k 0
+    foreach line [split $str "\n"] {
+        if {[regexp "^\s*(#|$)" $line]} { continue }; # skip comments
+        set _l   [split [regsub -all {\{\}} $line {}] "\t"]
+        incr k
+        # scan would be nice, but splits on all whitespaces :-( so we do it the hard way
+        set f_key($k) [string trim [lindex $_l 0]]
+        set f_mod($k) [lindex $_l 1]
+        set f_len($k) [lindex $_l 2]
+        set f_bg($k)  [lindex $_l 3]
+        set f_fg($k)  [lindex $_l 4]
+        set f_fn($k)  [lindex $_l 5]
+        set f_un($k)  [lindex $_l 6]
+        set f_rex($k) [lindex $_l 7]
+        set f_cmt($k) [lindex $_l 8]
+    }
+}; # txt2arr
+
+#   array name  {description of element used in header line in Filter tab}
+set f_key(0)    {Unique key for regex}
+set f_mod(0)    {Modifier how to use regex}
+set f_len(0)    {Length to be matched (0 for complete line)}
+set f_bg(0)     {Background color used for matching text (empty: don't change)}
+set f_fg(0)     {Foreground color used for matching text (empty: don't change)}
+set f_fn(0)     {Font used for matching text (empty: don't change)}
+set f_un(0)     {Underline matching text (0 or 1)}
+set f_rex(0)    {Regex to match text}
+set f_cmt(0)    {Description of regex}
+
+#   Filters to match results, defined as tabular text.
 #   For better readability we do not use output of  "o-saft.pl +help=ourstr".
-#   A matrix as follows would be better for human readability, but tcl's arrays
-#   and lists are tricky to use and also have some limitations.
-# #------+-------+--+----------+-------+---------------+-------+--------
-# # key   mode    len regex  foreground	background    underline	font
-# #------+-------+--+----------+-------+---------------+-------+--------
-# array set filter {
-#   {YES}{-regexp 3  {yes\n}	{}	{lightgreen}	0	{}	}
-#   {CMT}{-regexp 0  {^==*}	{gray}	{}		1	osaftHead }
-#   {NO} {-exact  2  {no (}	{}	{orange}	0	{}	}
-#};#-----+-------+--+----------+-------+---------------+-------+--------
-#  # following would be better, but does not mark summary lines
-#  # it also marks "yes ", which is not easy to compute
-#   {LOW}{-regexp 4  {yes\s+LOW} {}	{red}		0	{}	}
-
-#   Hence we use multiple lists, one for each type of data. Then we convert the
-#   lists to arrays for simple access. A filter consist of all elements with
-#   same index in each  array.
+#   We use a tabular string, which is better to maintain than Tcl arrays. Then
+#   we convert this string to multiple arrays for simple access in Tcl.
+#   A filter consist of all elements with same index in each array.
 #   This also allows to extend the arrays dynamically.
-#   For better readability, we initialize the list with a description to be the
-#   first (0) index, then add all elements for filters.
+#   First (0) index in each array is description.
 
-set lgreen      lightgreen;     # use variables for color names
-set yellow      lightyellow;    # .. to keep table columns below
-set orange      orange;         # .. as small as possible
-set lGray       LightGray;      #
-set lBlue       LightBlue;      # these variables are used here only
-set steelB      SteelBlue;      #
+#   use map to replace variables (and short names to fit in 8 characters)
+#   - columns must be separated by exactly one TAB
+#   - empty strings must be written as {}
+#   - strings must not enclosed in "" or {}
+#   - variables must be defined in map and used accordingly
 
-#     # index   0  (description element)
-lappend __key   "Unique key for regex"
-lappend __mod   "Modifier how to use regex "
-lappend __len   "Length to be matched (0 for complete line)"
-lappend __bg    "Background color used for matching text (empty: don't change)"
-lappend __fg    "Foreground color used for matching text (empty: don't change)"
-lappend __un    "Underline matching text (0 or 1)"
-lappend __fn    "Font used for matching text (empty: don't change)"
-lappend __rex   "Regex to match text"
-lappend __cmt   "Description of regex"
-#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-#     # index   1	2	3	4	5	6	7	8	9	10	11	12
-#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-lappend __key   LOW	WEAK	weak	HIGH	WARN	NO	YES	CMT	DBX	KEY	CMD	Label	usr1	usr2	usr3 usr4
-lappend __mod   -exact	-exact	-exact	-exact	-exact	-exact	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp	-regexp
-lappend __len   3	4	4	4	0	2	3	0	0	2	0	1	0	0	0	0
-lappend __bg    red	red	red	$lgreen	$yellow $orange	$lgreen {}	{}	gray	black	{}	{}	{}	{}	{}
-lappend __fg    {}	{}	{}	{}	{}	{}	{}	gray	blue	{}	white	{}	{}	{}	{}	{}
-lappend __un    0	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0
-lappend __fn    {}	{}	{}	{}	{}	{}	{}   osaftHead	{}	{}	{}   osaftHead	{}	{}	{}	{}
-lappend __rex   {LOW}	{WEAK}	{weak}	{HIGH}	{**WARN} {no (} {yes\n}	{^==*}	{^#[^[]} {^#\[[^:]+:\s*}	".*?$cfg(SAFT).*\\n\\n"	{^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*} {}	{}	{}	{}
-#--------------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------
-#
-#     # description of regex (sequence must match above table)
-lappend __cmt   {word  LOW   anywhere}
-lappend __cmt   {word  WEAK  anywhere}
-lappend __cmt   {word  weak  anywhere}
-lappend __cmt   {word  HIGH  anywhere}
-lappend __cmt   {line  **WARN}
-lappend __cmt   {word  no (  anywhere}
-lappend __cmt   {word  yes  at end of line}
-lappend __cmt   {line starting with  == (formatting lines)}
-lappend __cmt   {line starting with  #  (verbose or debug lines)}
-lappend __cmt   {line starting with  #[keyword:]};  # but not:  # [keyword:}
-lappend __cmt   {lines contaning program name}
-lappend __cmt   {label of result string from start of line until :}
-lappend __cmt   {} {} {} {} ;   # empty description as placeholder
+txt2arr [string map "
+    _lgreen lightgreen
+    _yellow lightyellow
+    _orange orange
+    _steelB SteelBlue
+    _lGray  LightGray
+    __bold  osaftHead
+    _ME_    $cfg(SAFT)
+    " {
+#------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
+# f_key	f_mod	f_len	f_bg	f_fg	f_fn	f_un	f_rex	description of regex
+#------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
+  LOW	-exact	3	red	{}	{}	0	LOW	word  LOW   anywhere
+  WEAK	-exact	4	red	{}	{}	0	WEAK	word  WEAK  anywhere
+  weak	-exact	4	red	{}	{}	0	weak	word  weak  anywhere
+  HIGH	-exact	4	_lgreen	{}	{}	0	HIGH	word  HIGH  anywhere
+  WARN	-exact	0	_yellow	{}	{}	0	**WARN	line  **WARN
+  NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
+  YES	-regexp	3	_lgreen	{}	{}	0	yes\n	word  yes  at end of line
+  CMT	-regexp	0	{}	gray	__bold	1	^==*		line starting with  == (formatting lines)
+  DBX	-regexp	0	{}	blue	{}	0	^#[^[]	line starting with  #  (verbose or debug lines)
+  KEY	-regexp	2	gray	{}	{}	0	^#\[[^:]+:\s*	line starting with  #[keyword:]
+# ___                                                                   but not:  # [keyword:
+  CMD	-regexp	0	black	white	{}	0	.*?_ME_.*\n\n	lines contaning program name
+  Label	-regexp	1	{}	{}	__bold	0	^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*	label of result string from start of line until :
+  usr1	-regexp	0	{}	{}	{}	0	{}	{}
+  usr2	-regexp	0	{}	{}	{}	0	{}	{}
+  usr3	-regexp	0	{}	{}	{}	0	{}	{}
+  usr4	-regexp	0	{}	{}	{}	0	{}	{}
+#------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
+}]; # filter
 
-# convert lists to arrays
-for {set k 0} { $k < [llength $__key]} {incr k} {
-    set f_key($k) [lindex $__key $k]
-    set f_mod($k) [lindex $__mod $k]
-    set f_len($k) [lindex $__len $k]
-    set f_fg($k)  [lindex $__fg  $k]
-    set f_bg($k)  [lindex $__bg  $k]
-    set f_fn($k)  [lindex $__fn  $k]
-    set f_un($k)  [lindex $__un  $k]
-    set f_rex($k) [lindex $__rex $k]
-    set f_cmt($k) [lindex $__cmt $k]
-}
-
-#   Metazeichen mit einem \ muessen eigentlich als \\ geschrieben
-#   werden, meist geht es aber auch so. Es wird \\n benutzt, damit bei
-#   der Debug-Ausgabe ein \n sichtbar ist.
-#
 
 ######################################################################## procs
 
