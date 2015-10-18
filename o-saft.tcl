@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.37 Sommer Edition 2015
+#?      @(#) 1.38 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.37 15/10/18 11:49:24 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.38 15/10/18 14:20:04 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -240,7 +240,6 @@ array set myT {
 
 set cfg(CONF)   {internal data storage}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
-set cfg(INFO)   ""; # text to be used in status line
 set cfg(EXEC)   0;  # count executions, used for object names
 set cfg(x--x)   0;  # each option  will have its own entry (this is a dummy)
 set cfg(x++x)   0;  # each command will have its own entry (this is a dummy)
@@ -248,6 +247,7 @@ set cfg(objN)   ""; # object name of notebook; needed to add more note TABS
 set cfg(winA)   ""; # object name of About  window
 set cfg(winH)   ""; # object name of Help   window
 set cfg(winF)   ""; # object name of Filter window
+set cfg(objS)   ""; # object name of status line
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(browser) "";            # external browser program, set below
 
@@ -403,6 +403,16 @@ proc toggle_txt {txt tag val} {
         # FIXME: need to elide complete line
 }; # toggle_txt
 
+proc update_status {val} {
+    #? add text to status line
+    global cfg
+    $cfg(objS) config -state normal
+    $cfg(objS) insert end "$val\n"
+    $cfg(objS) see "end - 2 line"
+    $cfg(objS) config -state disabled
+    update idletasks;       # enforce display update
+}
+
 proc apply_filter {txt} {
     #? apply filters for markup in output
     global cfg
@@ -507,8 +517,9 @@ proc create_tip {parent txt} {
 proc create_host {parent} {
     #?  frame with label and entry for host:port; $nr is index to hosts()
     global cfg hosts
+    set host $hosts($hosts(0))
     incr hosts(0)
-    if {$cfg(VERB)==1} { puts "create_host: host($hosts(0)): " }; # $hosts($hosts(0))
+    if {$cfg(VERB)==1} { puts "create_host: host($hosts(0)): $host" }
     set this $parent.ft$hosts(0)
           frame  $this
     pack [label  $this.lh -text {Host[:Port]}]                         -side left
@@ -604,7 +615,7 @@ Changes apply to next +command."
         set nr  $f_un($k)
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
-        if {$cfg(VERB)==1} { puts "create_filtab .$key /$rex/" }
+        if {$cfg(VERB)==1} { puts "create_filtab: .$key /$rex/" }
         grid [entry   $this.k$k -textvariable f_key($k) -width  8 ] -row $k -column 0
         grid [radiobutton $this.x$k -variable f_mod($k) -width  2 -value "-regexp"  ] -row $k -column 1
         grid [radiobutton $this.e$k -variable f_mod($k) -width  2 -value "-exact"   ] -row $k -column 2
@@ -972,7 +983,7 @@ proc osaft_about {mode} {
 proc osaft_reset {} {
     #? reset all options in cfg()
     global cfg
-    set cfg(INFO) "reset"; update idletasks;
+    update_status "reset"
     foreach {idx val} [array get cfg] {
         if {[regexp {^[^-]} $idx]}     { continue };# want options only
         if {[string trim $val] eq "0"} { continue };# already ok
@@ -982,7 +993,6 @@ proc osaft_reset {} {
             set cfg($idx]) ""
         }
     }
-    update idletasks
 }; # osaft_reset
 
 proc osaft_init {} {
@@ -998,7 +1008,6 @@ proc osaft_init {} {
             set cfg([string trim $l]) 1
         }
     }
-    update idletasks
 }; # osaft_init
 
 proc osaft_save {type nr} {
@@ -1026,13 +1035,13 @@ proc osaft_save {type nr} {
         }
     }
     close $fid
-    set cfg(INFO) "saved to $name"; update idletasks;# enforce display update
+    update_status "saved to $name"
 }; # osaft_save
 
 proc osaft_exec {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
     global cfg hosts tab myC
-    set cfg(INFO) "$cmd"; update idletasks;         # enforce display update
+    update_status "$cmd"
     set do  {};     # must be set to avoid tcl error
     set opt {};     # ..
     set targets {}; # ..
@@ -1058,7 +1067,7 @@ proc osaft_exec {parent cmd} {
         lappend targets $h
     }
     set execme [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
-    set cfg(INFO) "$execme"; update idletasks;      # enforce display update
+    update_status "$execme"
     incr cfg(EXEC)
     catch {
        #set osaft [eval $execme]; # Tcl < 8.5
@@ -1076,7 +1085,7 @@ proc osaft_exec {parent cmd} {
     create_tip   $tab_run.bf "Show configuration to filter results"
     apply_filter $txt ;        # text placed in pane, now do some markup
     $cfg(objN) select $tab_run
-    set cfg(INFO) "$do done."
+    update_status "$do done."
 }; # osaft_exec
 
 ######################################################################### main
@@ -1145,7 +1154,9 @@ create_tip      $tab_opts.br "Reset configuration to values from $cfg(INIT)"
 
 ## create status line
 pack [frame     $w.fl -relief sunken -borderwidth 1] -fill x
-pack [label     $w.fl.l -textvariable cfg(INFO) -bg $myC(status)] -expand 1 -fill x -side left
+pack [text      $w.fl.t -height 2 -relief flat -background $myC(status)] -fill x
+set cfg(objS)   $w.fl.t
+$cfg(objS) config -state disabled
 
 ## add hosts from command line
 foreach host $targets {         # display hosts
