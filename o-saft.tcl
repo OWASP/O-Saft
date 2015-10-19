@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.39 Sommer Edition 2015
+#?      @(#) 1.40 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.39 15/10/18 21:36:50 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.40 15/10/19 10:12:09 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -190,6 +190,7 @@ set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(
 set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
 set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
+lappend cfg(FAST)   {+quit}
 #-----------------------------------------------------------------------------}
 
 set myX(DESC)   {CONFIGURATION window manager geometry}
@@ -234,8 +235,9 @@ array set myT {
     save        Save
     reset       Reset
     host        {Host[:Port]}
-    toggle      {toggle visibility of various texts}
+    toggle      "toggle visibility\nof various texts"
     filter      {}
+    hideline    {Hide complete line}
 }
 
 set cfg(CONF)   {internal data storage}
@@ -388,12 +390,23 @@ proc toggle_cfg {w opt val} {
     return 1
 }; # toggle_cfg
 
-proc toggle_txt {txt tag val} {
+proc toggle_txt {txt tag val line} {
     #? toggle visability of text tagged with name $tag
+    # note that complete line is tagged with name $tag.l (see apply_filter)
     global cfg
     if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]"; }
-    $txt tag config $tag -elide [expr ! $val];  # "elide true" hides the text
-        # FIXME: need to elide complete line
+    #if {$line == 0} {
+        #$txt tag config $tag   -elide [expr ! $val];  # "elide true" hides the text
+    #}
+    if {[regexp {\-(Label|KEY)} $tag]} {
+        $txt tag config $tag   -elide [expr ! $val];  # hide just this pattern
+        return;
+    }
+    # FIXME: if there is more than one tag associated with the same range of
+    # characters (which is obviously for $tag and $tag.l), then unhiding the
+    # tag causes the $tag no longer accessable. Reason yet unknown.
+    # Hence we only support hiding the complete line yet.
+    $txt tag config $tag.l -elide [expr ! $val]
 }; # toggle_txt
 
 proc update_status {val} {
@@ -408,6 +421,8 @@ proc update_status {val} {
 
 proc apply_filter {txt} {
     #? apply filters for markup in output
+    # set tag for all texts mtching pattern from each filter
+    # also sets a tag for the complete line named with suffix .l
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     foreach {k key} [array get f_key] {
@@ -430,11 +445,14 @@ proc apply_filter {txt} {
             set e [lindex $end $i];
             incr i
             if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # very dirty hack to beautify print
+            $txt tag add    osaft-$key.l "$a linestart" "$a lineend"
             if {$len == 0} {
-               $txt tag add osaft-$key  $a "$a + 1 line - 1 char"
+               $txt tag add osaft-$key    $a            "$a + 1 line - 1 char"
+              #$txt tag add osaft-$key    $a            "$a lineend"; # does not work
             } else {
-               $txt tag add osaft-$key  $a "$a + $e c"
+               $txt tag add osaft-$key    $a            "$a + $e c"
             }
+            $txt tag  raise osaft-$key.l osaft-$key
         }
         #dbx# puts "$key: $rex F $fg B $bg U $nr font $fn"
         if {$fg ne ""}  { $txt tag config osaft-$key -foreground $fg }
@@ -486,13 +504,13 @@ proc create_window {title size} {
     wm iconname $this "o-saft: $title"
     wm geometry $this $size
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
-    pack [button $this.f1.q -text "Close" -bg $myC(close) -command "destroy $this"] -side right -padx $myX(rpad)
+    pack [button $this.f1.q -text "Close" -bg $myC(close) -command "destroy $this"]    -side right -padx $myX(rpad)
     create_tip   $this.f1.q "Close window"
     if {$title eq "Help" || $title eq "About"} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
     # all other windows have a header line and a Save button
-    pack [frame $this.f0  -relief sunken  -borderwidth 1] -fill x -side top
-    pack [text  $this.f0.t -height 1 -relief flat -background [. cget -background]]
+    pack [frame $this.f0   -relief sunken -borderwidth 1] -fill x -side top
+    pack [text  $this.f0.t -relief flat   -background [. cget -background] -height 1]  -side left -fill x
     $this.f0.t insert end $title
     $this.f0.t config -state disabled -font TkCaptionFont
     pack [button $this.f1.s -text "Save" -bg $myC(save) -command {osaft_save "CFG" 0}] -side left
@@ -662,7 +680,13 @@ proc create_filter {txt cmd} {
         # FIXME: only one variable for windows, need a variable for each window
     set this $cfg(winF)
     #dbx# puts "TXT $txt | $cmd | $myX(geoF)"
-    pack [label $this.l -text "toggle visibility of various texts"]
+    pack [frame     $this.f -relief sunken -borderwidth 1] -fill x
+    pack [text      $this.f.t -relief flat -background [. cget -background] -height 2 -width 16] -fill x
+    $this.f.t insert  end "toggle visibility\nof various texts"
+    $this.f.t config -state disabled -font osaftBold
+    pack [checkbutton $this.f.c -text "Hide complete line" -variable filter_bool($txt,line)] -anchor w;
+    create_tip $this.f.c "hide complete line instead of pattern only"
+    $this.f.c config -state disabled ; # TODO: not yet working, see FIXME in toggle_txt
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
         #set key $f_key($k)
@@ -670,10 +694,10 @@ proc create_filter {txt cmd} {
         set filter_bool($txt,osaft-$key) 1; # default: text is visible
         pack [checkbutton $this.x$key \
                     -text $key -variable filter_bool($txt,osaft-$key) \
-                    -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key);" \
+                    -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key) \$filter_bool($txt,line);" \
              ] -anchor w;
         # note: checkbutton value passed as reference
-        create_tip   $this.x$key "show/hide: $cmt"
+        create_tip $this.x$key "show/hide: $cmt"
     }
 
 }; # create_filter
