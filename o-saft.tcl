@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.40 Sommer Edition 2015
+#?      @(#) 1.41 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.40 15/10/19 10:12:09 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.41 15/10/19 10:24:36 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -190,7 +190,6 @@ set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(
 set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
 set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
-lappend cfg(FAST)   {+quit}
 #-----------------------------------------------------------------------------}
 
 set myX(DESC)   {CONFIGURATION window manager geometry}
@@ -400,6 +399,7 @@ proc toggle_txt {txt tag val line} {
     #}
     if {[regexp {\-(Label|KEY)} $tag]} {
         $txt tag config $tag   -elide [expr ! $val];  # hide just this pattern
+        # FIXME: still buggy (see below)
         return;
     }
     # FIXME: if there is more than one tag associated with the same range of
@@ -678,6 +678,7 @@ proc create_filter {txt cmd} {
         # correctly if calculation is outside visible (screen) frame
     set cfg(winF) [create_window "Filter:$cmd" $myX(geoF)]
         # FIXME: only one variable for windows, need a variable for each window
+        #        workaround see osaft_exec
     set this $cfg(winF)
     #dbx# puts "TXT $txt | $cmd | $myX(geoF)"
     pack [frame     $this.f -relief sunken -borderwidth 1] -fill x
@@ -1101,6 +1102,7 @@ proc osaft_exec {parent cmd} {
     create_tip   $tab_run.bs "Save result to file"
     create_tip   $tab_run.bf "Show configuration to filter results"
     apply_filter $txt ;        # text placed in pane, now do some markup
+    destroy $cfg(winF);        # workaround, see FIXME in create_filtab
     $cfg(objN) select $tab_run
     update_status "$do done."
 }; # osaft_exec
@@ -1110,7 +1112,7 @@ proc osaft_exec {parent cmd} {
 set targets ""
 foreach arg $argv {
     switch -glob $arg {
-        {--v}   { set cfg(VERB) 1; }
+        {--v}   { set cfg(VERB) 1; lappend cfg(FAST) {+quit}; }
         {--h}   -
         {--help} { puts [osaft_about "HELP"]; exit; }
         *       { lappend targets $arg; }
