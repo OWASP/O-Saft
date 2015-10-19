@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.41 Sommer Edition 2015
+#?      @(#) 1.42 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.41 15/10/19 10:24:36 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.42 15/10/19 13:53:18 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -286,8 +286,9 @@ proc txt2arr {str} {
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     set k 0
     foreach line [split $str "\n"] {
-        if {[regexp "^\s*(#|$)" $line]} { continue }; # skip comments
-        set _l   [split [regsub -all {\{\}} $line {}] "\t"]
+        if {[regexp "^\s*$" $line]} { continue };   # skip empty lines
+        if {[regexp "^#"    $line]} { continue };   # skip comments
+        set _l [split [regsub -all {\{\}} $line {}] "\t"]
         incr k
         # scan would be nice, but splits on all whitespaces :-( so we do it the hard way
         set f_key($k) [string trim [lindex $_l 0]]
@@ -322,41 +323,48 @@ set f_cmt(0)    {Description of regex}
 #   First (0) index in each array is description.
 
 #   use map to replace variables (and short names to fit in 8 characters)
-#   - columns must be separated by exactly one TAB
-#   - empty strings must be written as {}
-#   - strings must not enclosed in "" or {}
-#   - variables must be defined in map and used accordingly
 
 txt2arr [string map "
     _lgreen lightgreen
-    _yellow lightyellow
+    _yellow yellow
     _orange orange
     _steelB SteelBlue
     _lGray  LightGray
     __bold  osaftHead
     _ME_    $cfg(SAFT)
     " {
+# syntax in following table:
+#   - lines starting with # as very first character are comments and ignored
+#     a # anywhere else is part of the string in corresponding column
+#   - columns *must* be separated by exactly one TAB
+#   - empty strings in columns must be written as {}
+#   - strings *must not* enclosed in "" or {}
+#   - variables must be defined in map above and used accordingly
+#   - lines without regex (column f_rex contains {}) will not be applied
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
 # f_key	f_mod	f_len	f_bg	f_fg	f_fn	f_un	f_rex	description of regex
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
+  no	-regexp	1	{}	{}	{}	0	no\s*(LO|WE|we|ME|HI)	word  no  followed by LOW|WEAK|MEDIUM|HIGH
+# NOTE   no  has no colours, otherwhise it would mix with filters below
+# FIXME  no  must be first regex in liste here, but still causes problems in toggle_txt
   LOW	-exact	3	red	{}	{}	0	LOW	word  LOW   anywhere
   WEAK	-exact	4	red	{}	{}	0	WEAK	word  WEAK  anywhere
   weak	-exact	4	red	{}	{}	0	weak	word  weak  anywhere
+ MEDIUM	-exact	6	yellow	{}	{}	0	MEDIUM	word MEDIUM anywhere
   HIGH	-exact	4	_lgreen	{}	{}	0	HIGH	word  HIGH  anywhere
-  WARN	-exact	0	_yellow	{}	{}	0	**WARN	line  **WARN
+ **WARN	-exact	0	_yellow	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
   NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
-  YES	-regexp	3	_lgreen	{}	{}	0	yes\n	word  yes  at end of line
-  CMT	-regexp	0	{}	gray	__bold	1	^==*		line starting with  == (formatting lines)
-  DBX	-regexp	0	{}	blue	{}	0	^#[^[]	line starting with  #  (verbose or debug lines)
-  KEY	-regexp	2	gray	{}	{}	0	^#\[[^:]+:\s*	line starting with  #[keyword:]
+  YES	-regexp	3	_lgreen	{}	{}	0	yes	word  yes  at end of line
+ == CMT	-regexp	0	{}	gray	__bold	1	^==*	line starting with  == (formatting lines)
+  # DBX	-regexp	0	{}	blue	{}	0	^#[^[]	line starting with  #  (verbose or debug lines)
+ #[KEY]	-regexp	2	gray	{}	{}	0	^#\[[^:]+:\s*	line starting with  #[keyword:]
 # ___                                                                   but not:  # [keyword:
-  CMD	-regexp	0	black	white	{}	0	.*?_ME_.*\n\n	lines contaning program name
-  Label	-regexp	1	{}	{}	__bold	0	^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*	label of result string from start of line until :
+  _ME_	-regexp	0	black	white	{}	0	.*?_ME_.*\n\n	lines contaning program name
+ Label:	-regexp	1	{}	{}	__bold	0	^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*	label of result string from start of line until :
   usr1	-regexp	0	{}	{}	{}	0	{}	{}
   usr2	-regexp	0	{}	{}	{}	0	{}	{}
-  usr3	-regexp	0	{}	{}	{}	0	{}	{}
-  usr4	-regexp	0	{}	{}	{}	0	{}	{}
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
+#      ** columns must be separated by exactly one TAB **
 }]; # filter
 
 
@@ -397,7 +405,7 @@ proc toggle_txt {txt tag val line} {
     #if {$line == 0} {
         #$txt tag config $tag   -elide [expr ! $val];  # "elide true" hides the text
     #}
-    if {[regexp {\-(Label|KEY)} $tag]} {
+    if {[regexp {\-(Label|#.KEY)} $tag]} {
         $txt tag config $tag   -elide [expr ! $val];  # hide just this pattern
         # FIXME: still buggy (see below)
         return;
@@ -439,12 +447,13 @@ proc apply_filter {txt} {
         if {$rex eq ""} { continue };   # invalid or disabled filter rules
         if {$cfg(VERB)==1} {puts "apply_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"};
         # anf contains start, end corresponding end position of match
+        set key [str2obj [string trim $key]]
         set anf [$txt search -all $mod -count end "$rex" 1.0] 
         set i 0
         foreach a $anf {
             set e [lindex $end $i];
             incr i
-            if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # very dirty hack to beautify print
+            if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # FIXME very dirty hack to beautify print
             $txt tag add    osaft-$key.l "$a linestart" "$a lineend"
             if {$len == 0} {
                $txt tag add osaft-$key    $a            "$a + 1 line - 1 char"
@@ -618,6 +627,7 @@ Changes apply to next +command."
     foreach {k key} [array get f_key] { # set all filter lines
         if {$k eq 0} { continue };
         #set key $f_key($k)
+        set key [str2obj [string trim $key]]
         set mod $f_mod($k)
         set len $f_len($k)
         set rex $f_rex($k)
@@ -668,7 +678,7 @@ Changes apply to next +command."
 
 proc create_filter {txt cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
-    global cfg f_key f_cmt filter_bool myX
+    global cfg f_key f_bg f_fg f_cmt filter_bool myX
     if {$cfg(VERB)==1} { puts "create_filter: $txt $cmd"; }
     if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return; }
     set geo [split [winfo geometry .] {x+-}]
@@ -691,14 +701,19 @@ proc create_filter {txt cmd} {
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
         #set key $f_key($k)
-        set cmt $f_cmt($k)
+        set bg $f_bg($k)
+        set fg $f_fg($k)
+        set key [str2obj [string trim $key]]
         set filter_bool($txt,osaft-$key) 1; # default: text is visible
         pack [checkbutton $this.x$key \
-                    -text $key -variable filter_bool($txt,osaft-$key) \
+                    -text $f_key($k) -variable filter_bool($txt,osaft-$key) \
                     -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key) \$filter_bool($txt,line);" \
-             ] -anchor w;
+             ] -anchor w ;
+        # note: useing $f_key($k) instead of $key as text
         # note: checkbutton value passed as reference
-        create_tip $this.x$key "show/hide: $cmt"
+        if {$fg ne ""}  { $this.x$key config -fg $fg }; # Tk is picky ..
+        if {$bg ne ""}  { $this.x$key config -bg $bg }; # empty colour not allowd
+        create_tip $this.x$key "show/hide: $f_cmt($k)"
     }
 
 }; # create_filter
