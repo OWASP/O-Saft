@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.42 15/10/17 01:54:15";
+my  $man_SID= "@(#) o-saft-man.pm 1.43 15/10/25 11:25:07";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1052,6 +1052,7 @@ sub printhelp($) {
     # Note: some lower case strings are special
     man_help('NAME'),           return if ($hlp =~ /^$/);
     man_help('TODO'),           return if ($hlp =~ /^todo$/i);
+    man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|warn(?:ing)?|problem)s?$/i);
     man_toc(),                  return if ($hlp =~ /^toc|content/i);
     man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
     man_wiki(),                 return if ($hlp =~ /^(gen-)?wiki$/);
@@ -1634,6 +1635,11 @@ OPTIONS
       --help=gen-cgi
 
           Print documentation in format to be used for CGI.
+
+      --help=error --help=warning --help=problem
+
+          Show  KNOWN PROBLEMS  section with  description of known  error and
+          warning messages.
 
       --help=glossar
 
@@ -3310,7 +3316,16 @@ KNOWN PROBLEMS
         Underlaying library doesn't support the required SSL version.
         See also  X&Note on SSL versions& .
 
-        Workaround: use  --ssl-lazy  option, or corresponding --no-SSL option.
+        Workaround: use  --ssl-lazy option, or corresponding --no-SSL option.
+
+    Read error: Connection reset by peer (,199725) at blib/lib/Net/SSLeay.pm\
+    (autosplit into blib/lib/auto/Net/SSLeay/tcp_read_all.al) line 535.
+
+        Error reported by some Net::SSLeay versions. Reason may be a timeout.
+        This error cannot be omitted or handled properly.
+
+        Workaround: try to use same call again (no guarantee, unfortunatelly)
+# see Net::SSLinfo.pm for details
 
     openssl: ...some/path.../libssl.so.1.0.0: no version information available (required by openssl)
 
