@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.103 15/10/25 18:41:54',
+    SID         => '@(#) Net::SSLinfo.pm 1.104 15/10/25 20:04:52',
 };
 
 ######################################################## public documentation #
@@ -396,6 +396,7 @@ require Exporter;
         expansion
         protocols
         alpn
+        no_alpn
         krb5
         psk_hint
         psk_identity
@@ -632,6 +633,7 @@ my %_SSLinfo= ( # our internal data structure
     'expansion'         => "",  # expansion supported
     'protocols'         => "",  # Protocols advertised by server
     'alpn'              => "",  # ALPN protocol
+    'no_alpn'           => "",  # No ALPN negotiated
     'krb5'              => "",  # Krb Principal
     'psk_hint'          => "",  # PSK identity hint
     'psk_identity'      => "",  # PSK identity
@@ -1404,9 +1406,10 @@ sub do_ssl_open($$$) {
             'compression'      => "Compression:",
             'expansion'        => "Expansion:",
             'alpn'             => "ALPN protocol:",
+            'no_alpn'          => "No ALPN negotiated", # has no value, see below
             'protocols'        => "Protocols advertised by server:",
-            'session_protocol' => "Protocol\\s+:",  # \s must be meta
-            'session_timeout'  => "Timeout\\s+:",   # \s must be meta
+            'session_protocol' => "Protocol\\s+:",      # \s must be meta
+            'session_timeout'  => "Timeout\\s+:",       # \s must be meta
             'session_lifetime' => "TLS session ticket lifetime hint:",
             #'session_ticket'   => "TLS session ticket:",
                 # this is a multiline value, must be handled special, see below
@@ -1468,7 +1471,11 @@ sub do_ssl_open($$$) {
             my $regex = $match_map{$key};
             $d = $data;
             $d =~ s/.*?$regex\s*([^\n]*)\n.*/$1/si;
-            $_SSLinfo{$key} = $d if ($data =~ m/$regex/);
+            if ($data =~ m/$regex/) {
+                $_SSLinfo{$key} = $d if ($data =~ m/$regex/);
+                $_SSLinfo{$key} = $regex if ($key eq 'no_alpn');
+                    # no_alpn: single line, has no value: No ALPN negotiated
+            }
         }
 
         $d = $data; $d =~ s/.*?TLS session ticket:\s*[\n\r]+(.*?)\n\n.*/$1_/si;
@@ -1896,6 +1903,10 @@ Get protocols advertised by server,
 
 Get target's selected protocol (ALPN).
 
+=head2 no_alpn( )
+
+Get target's not negotiated message (ALPN).
+
 =head2 krb5
 
 Get target's Krb5 Principal.
@@ -2174,6 +2185,7 @@ sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
 sub expansion       { return _SSLinfo_get('expansion',        $_[0], $_[1]); }
 sub protocols       { return _SSLinfo_get('protocols',        $_[0], $_[1]); }
 sub alpn            { return _SSLinfo_get('alpn',             $_[0], $_[1]); }
+sub no_alpn         { return _SSLinfo_get('no_alpn',          $_[0], $_[1]); }
 sub krb5            { return _SSLinfo_get('krb5',             $_[0], $_[1]); }
 sub psk_hint        { return _SSLinfo_get('psk_hint',         $_[0], $_[1]); }
 sub psk_identity    { return _SSLinfo_get('psk_identity',     $_[0], $_[1]); }
