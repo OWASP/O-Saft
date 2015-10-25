@@ -44,8 +44,8 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.379 15/10/25 18:49:19",
-    STR_VERSION => "15.09.15",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.380 15/10/25 19:41:46",
+    STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -401,7 +401,7 @@ our %data   = (     # connection and certificate details
     'fingerprint_md5' =>{'val'=> sub { __SSLinfo('fingerprint_md5', $_[0], $_[1])}, 'txt' => "Certificate Fingerprint  MD5"},
     'fingerprint'   => {'val' => sub { __SSLinfo('fingerprint',     $_[0], $_[1])}, 'txt' => "Certificate Fingerprint"},
     'cert_type'     => {'val' => sub { Net::SSLinfo::cert_type(     $_[0], $_[1])}, 'txt' => "Certificate Type (bitmask)"},
-    'sslversion'    => {'val' => sub { Net::SSLinfo::SSLversion(    $_[0], $_[1])}, 'txt' => "Selected SSL Protocol"},
+    'sslversion'    => {'val' => sub { Net::SSLinfo::SSLversion(    $_[0], $_[1])}, 'txt' => "Selected SSL protocol"},
     'resumption'    => {'val' => sub { Net::SSLinfo::resumption(    $_[0], $_[1])}, 'txt' => "Target supports resumption"},
     'renegotiation' => {'val' => sub { Net::SSLinfo::renegotiation( $_[0], $_[1])}, 'txt' => "Target supports renegotiation"},
     'compression'   => {'val' => sub { Net::SSLinfo::compression(   $_[0], $_[1])}, 'txt' => "Target supports compression"},
@@ -412,9 +412,10 @@ our %data   = (     # connection and certificate details
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
     'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Target supports heartbeat"},
     'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target advertised protocols"},
+    'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
-    'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
+    'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL protocol"},
     'session_ticket'=> {'val' => sub { Net::SSLinfo::session_ticket($_[0], $_[1])}, 'txt' => "Target's TLS Session Ticket"},
     'session_lifetime'=>{'val'=> sub { Net::SSLinfo::session_lifetime($_[0],$_[1])},'txt' => "Target's TLS Session Ticket Lifetime"},
     'session_timeout'=>{'val' => sub { Net::SSLinfo::session_timeout($_[0],$_[1])}, 'txt' => "Target's TLS Session Timeout"},
@@ -572,8 +573,8 @@ my %check_dest = (  # target (connection) data
     'hastls11'      => {'txt' => "Target supports TLSv1.1"},
     'hastls12'      => {'txt' => "Target supports TLSv1.2"},
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
+    'hasalpn'       => {'txt' => "Target supports Application Layer Protocol Negotiation (ALPN)"},
     'npn'           => {'txt' => "Target supports Next Protocol Negotiation (NPN)"},
-    'alpn'          => {'txt' => "Target supports Application Layer Protocol Negotiation (ALPN)"},
     'adh'           => {'txt' => "Target does not accept ADH ciphers"},
     'null'          => {'txt' => "Target does not accept NULL ciphers"},
     'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
@@ -793,7 +794,7 @@ our %shorttexts = (
     'hastls11'      => "TLSv1.1",
     'hastls12'      => "TLSv1.2",
     'hastls13'      => "TLSv1.3",
-    'alpn'          => "Supports ALPN",
+    'hasalpn'       => "Supports ALPN",
     'npn'           => "Supports NPN",
     'adh'           => "No ADH ciphers",
     'edh'           => "EDH ciphers",
@@ -882,6 +883,7 @@ our %shorttexts = (
     'psk_identity'  => "PSK Identity",
     'srp'           => "SRP Username",
     'protocols'     => "Protocols",
+    'alpn'          => "ALPN",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
     'session_protocol'  => "Selected SSL Protocol",
@@ -1301,7 +1303,7 @@ our %cmd = (
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 npn session_protocol protocols https_protocols http_protocols https_svc http_svc)
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn alpn npn session_protocol protocols https_protocols http_protocols https_svc http_svc)
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
@@ -4211,6 +4213,9 @@ sub checkdest($$) {
     $key   = 'protocols';
     $value = $data{$key}->{val}($host, $port);
     $checks{'npn'}->{val}   = " " if ($value eq "");
+    $key   = 'alpn';
+    $value = $data{$key}->{val}($host, $port);
+    $checks{'hasalpn'}->{val}   = " " if ($value eq "");
 
     checkprot($host, $port);
 
@@ -5625,8 +5630,11 @@ while ($#argv >= 0) {
     if ($arg eq  '+info')               { $info   = 1;          } # needed 'cause +info and ..
     if ($arg eq  '+quick')              { $quick  = 1;          } # .. +quick convert to list of commands
     if ($arg eq  '+sni')                { $cmdsni = 1;          }
-    if ($arg eq  '+alpn')               { $arg = '+protocols';  } # ALPN; TODO: may be changed in future
+    if ($arg eq  '+http2')              { $arg = '+protocols';  } # HTTP/2.0; TODO: may be changed in future
     if ($arg eq  '+spdy')               { $arg = '+protocols';  } # spdy; TODO: may be changed in future
+    if ($arg eq  '+spdy3')              { $arg = '+protocols';  } # SPDY/3.0; TODO: may be changed in future
+    if ($arg eq  '+spdy31')             { $arg = '+protocols';  } # SPDY/3.1; TODO: may be changed in future
+    if ($arg eq  '+spdy4')              { $arg = '+protocols';  } # SPDY/4.0; TODO: may be changed in future
     if ($arg eq  '+owner')              { $arg = '+subject';    } # subject
     if ($arg eq  '+authority')          { $arg = '+issuer';     } # issuer
     if ($arg eq  '+expire')             { $arg = '+after';      }
