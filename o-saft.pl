@@ -44,7 +44,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.380 15/10/25 19:41:46",
+    SID         => "@(#) yeast.pl 1.381 15/10/25 20:31:42",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -413,6 +413,7 @@ our %data   = (     # connection and certificate details
     'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Target supports heartbeat"},
     'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target advertised protocols"},
     'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
+    'no_alpn'       => {'val' => sub { Net::SSLinfo::no_alpn(       $_[0], $_[1])}, 'txt' => "Target's not ngotiated message (ALPN)"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL protocol"},
@@ -4216,6 +4217,16 @@ sub checkdest($$) {
     $key   = 'alpn';
     $value = $data{$key}->{val}($host, $port);
     $checks{'hasalpn'}->{val}   = " " if ($value eq "");
+    $key   = 'no_alpn';
+    $value = $data{$key}->{val}($host, $port);
+    if ($value ne "") { # ALPN not negotiated
+        # ALPN not negotiated
+        if ($checks{'hasalpn'}->{val} eq "") {
+            $checks{'hasalpn'}->{val}   = $value;
+        } else {
+            $checks{'hasalpn'}->{val}   = "<<mismatch: " . $checks{'hasalpn'}->{val} . " and '$value'>>";
+        }
+    }
 
     checkprot($host, $port);
 
