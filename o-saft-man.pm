@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.43 15/10/25 11:25:07";
+my  $man_SID= "@(#) o-saft-man.pm 1.44 15/10/25 20:43:09";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -564,6 +564,25 @@ our %man_text = (
     # False Start: https://www.imperialviolet.org/2012/04/11/falsestart.html
     #              https://technotes.googlecode.com/git/falsestart.html
     # ALPN : http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
+    #        https://tools.ietf.org/html/rfc7301
+    #        ExtensionType Values 16
+    #        ProtocolNameList: 
+    #        Protocol:  HTTP/1.1
+    #           Identification Sequence: http/1.1
+    #        Protocol:  SPDY/1
+    #           Identification Sequence: spdy/1
+    #        Protocol:  SPDY/2
+    #           Identification Sequence: spdy/2
+    #        Protocol:  SPDY/3
+    #           Identification Sequence: spdy/3
+    #        Application-Layer Protocol Negotiation (ALPN) is available with
+    #        Net::SSLeay 1.56+ and +openssl-1.0.2+.
+    #        Check support with: 'IO::Socket::SSL->can_alpn()'.
+    #        Note that some client implementations may encounter problems if
+    #        both NPN and ALPN are +specified. Since ALPN is intended as a
+    #        replacement for NPN, try providing ALPN protocols +then fall back
+    #        to NPN if that fails.
+    # SPDY/3 http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3
     # ALPN, NPN: https://www.imperialviolet.org/2013/03/20/alpn.html
     # NPN  : https://technotes.googlecode.com/git/nextprotoneg.html
     # HSTS : http://tools.ietf.org/html/draft-hodges-strict-transport-sec-02
@@ -2591,6 +2610,12 @@ CHECKS
       poodle
 
         Check if target is vulnerable to POODLE attack (SSLv3 enabled).
+
+      ALPN
+
+        Check if target supports ALPN. Following messages are evaluated:
+          ALPN protocol: h2-14
+          No ALPN negotiated
 
     SSL Vulnerabilities
 
