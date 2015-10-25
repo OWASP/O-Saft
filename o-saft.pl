@@ -34,10 +34,17 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" in  o-saft-man.pm  if you want to improve the program.
 
+# NOTE
+#       Perl's  `use' and `require' will be used for common and well known perl
+#       modules only. All other modules, in particular our own ones, are loaded
+#       using an internal function, see _load_file().  All required modules are
+#       included as needed. This keeps away noisy messages and allows to be run
+#       and print some information even if installed incompletely.
+
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.377 15/09/27 18:00:42",
+    SID         => "@(#) yeast.pl 1.379 15/10/25 18:49:19",
     STR_VERSION => "15.09.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -54,7 +61,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
 
 BEGIN {
     _y_TIME("BEGIN{");
-    sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.p
+    sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
@@ -180,7 +187,7 @@ sub _load_file($$) {
         # FIXME: above fix fails for NET::SSL* and absolute path like --trace=/file
         $fil = $INC{$fil};
     } else {
-        $txt = $err;
+        $txt = "$txt failed";
         $fil = "<<no $fil>>";
     }
     push(@dbxfile, $fil);
@@ -198,14 +205,14 @@ $arg = "./.$me";    # check in pwd only
 if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
     if (open(RC, '<', "$arg")) {
         push(@dbxfile, $arg);
-        _print_read("RC-FILE $arg", "options done");
+        _print_read("$arg", "RC-FILE done");
         @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
         @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
         close(RC);
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
     } else {
-        _print_read("RC-FILE $arg", $!) if (grep(/--v/i, @ARGV) > 0);;
+        _print_read("$arg", "RC-FILE: $!") if (grep(/--v/i, @ARGV) > 0);;
     }
 }
 
@@ -223,7 +230,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     $err = _load_file($arg, "trace file");
     if ($err ne "") {
-        die  STR_ERROR, "'$err' '$arg'; exit" unless (-e $arg);
+        warn  STR_ERROR, "'$err' '$arg'; exit" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -565,6 +572,8 @@ my %check_dest = (  # target (connection) data
     'hastls11'      => {'txt' => "Target supports TLSv1.1"},
     'hastls12'      => {'txt' => "Target supports TLSv1.2"},
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
+    'npn'           => {'txt' => "Target supports Next Protocol Negotiation (NPN)"},
+    'alpn'          => {'txt' => "Target supports Application Layer Protocol Negotiation (ALPN)"},
     'adh'           => {'txt' => "Target does not accept ADH ciphers"},
     'null'          => {'txt' => "Target does not accept NULL ciphers"},
     'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
@@ -784,6 +793,8 @@ our %shorttexts = (
     'hastls11'      => "TLSv1.1",
     'hastls12'      => "TLSv1.2",
     'hastls13'      => "TLSv1.3",
+    'alpn'          => "Supports ALPN",
+    'npn'           => "Supports NPN",
     'adh'           => "No ADH ciphers",
     'edh'           => "EDH ciphers",
     'null'          => "No NULL ciphers",
@@ -1290,7 +1301,7 @@ our %cmd = (
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 session_protocol protocols https_protocols http_protocols https_svc http_svc)
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 npn session_protocol protocols https_protocols http_protocols https_svc http_svc)
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
@@ -2527,7 +2538,7 @@ sub _cfg_set($$) {
         my $line ="";
         open(FID, $arg) && do {
             push(@dbxfile, $arg);
-            _print_read("USER-FILE $arg", "configuration file done") if ($cfg{'out_header'} > 0);
+            _print_read("$arg", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
             while ($line = <FID>) {
                 #
                 # format of each line in file must be:
@@ -4196,6 +4207,11 @@ sub checkdest($$) {
     $value = $data{$key}->{val}($host, $port);
     $checks{'session_random'}->{val} = $value if ($value eq $data0{$key}->{val});
 
+    # check protocol support
+    $key   = 'protocols';
+    $value = $data{$key}->{val}($host, $port);
+    $checks{'npn'}->{val}   = " " if ($value eq "");
+
     checkprot($host, $port);
 
     # vulnerabilities
@@ -4876,7 +4892,7 @@ sub printversion() {
     local $\ = "\n";
     print '# Path = ' . $mepath if ($cfg{'verbose'} > 1);
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
-    print "= $0 $VERSION =";
+    print "=== $0 $VERSION ===";
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
     print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
     print "       ::SSLeay()                    0x" . Net::SSLeay::SSLeay();
@@ -5610,7 +5626,6 @@ while ($#argv >= 0) {
     if ($arg eq  '+quick')              { $quick  = 1;          } # .. +quick convert to list of commands
     if ($arg eq  '+sni')                { $cmdsni = 1;          }
     if ($arg eq  '+alpn')               { $arg = '+protocols';  } # ALPN; TODO: may be changed in future
-    if ($arg eq  '+npn')                { $arg = '+protocols';  } # NPN; TODO: may be changed in future
     if ($arg eq  '+spdy')               { $arg = '+protocols';  } # spdy; TODO: may be changed in future
     if ($arg eq  '+owner')              { $arg = '+subject';    } # subject
     if ($arg eq  '+authority')          { $arg = '+issuer';     } # issuer
@@ -5819,11 +5834,13 @@ if (_is_do('cipherraw') or _is_do('version')
     or ($cfg{'starttls'})
     or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
    ) {
-    require Net::SSLhello;          # must be found with @INC; dies if missing
+    $err = _load_file("Net/SSLhello.pm", "O-Saft module"); # must be found with @INC
+    warn  STR_ERROR, "'$err' '$arg'" if ($err ne "");
     $cfg{'usehttp'} = 0;            # makes no sense for starttls
     # TODO: not (yet) supported for proxy
 }
-require Net::SSLinfo;
+$err = _load_file("Net/SSLinfo.pm", "O-Saft module");
+warn  STR_ERROR, "'$err' '$arg'" if ($err ne "");
 _y_TIME("inc}");
 
 ## check for supported SSL versions
