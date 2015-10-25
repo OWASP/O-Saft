@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.102 15/10/25 16:39:57',
+    SID         => '@(#) Net::SSLinfo.pm 1.103 15/10/25 18:41:54',
 };
 
 ######################################################## public documentation #
@@ -395,6 +395,7 @@ require Exporter;
         compression
         expansion
         protocols
+        alpn
         krb5
         psk_hint
         psk_identity
@@ -630,6 +631,7 @@ my %_SSLinfo= ( # our internal data structure
     'compression'       => "",  # compression supported
     'expansion'         => "",  # expansion supported
     'protocols'         => "",  # Protocols advertised by server
+    'alpn'              => "",  # ALPN protocol
     'krb5'              => "",  # Krb Principal
     'psk_hint'          => "",  # PSK identity hint
     'psk_identity'      => "",  # PSK identity
@@ -1401,6 +1403,7 @@ sub do_ssl_open($$$) {
             'srp'              => "SRP username:",
             'compression'      => "Compression:",
             'expansion'        => "Expansion:",
+            'alpn'             => "ALPN protocol:",
             'protocols'        => "Protocols advertised by server:",
             'session_protocol' => "Protocol\\s+:",  # \s must be meta
             'session_timeout'  => "Timeout\\s+:",   # \s must be meta
@@ -1889,6 +1892,10 @@ Get target's exapansion support.
 
 Get protocols advertised by server,
 
+=head2 alpn( )
+
+Get target's selected protocol (ALPN).
+
 =head2 krb5
 
 Get target's Krb5 Principal.
@@ -2166,6 +2173,7 @@ sub chain_verify    { return _SSLinfo_get('chain_verify',     $_[0], $_[1]); }
 sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
 sub expansion       { return _SSLinfo_get('expansion',        $_[0], $_[1]); }
 sub protocols       { return _SSLinfo_get('protocols',        $_[0], $_[1]); }
+sub alpn            { return _SSLinfo_get('alpn',             $_[0], $_[1]); }
 sub krb5            { return _SSLinfo_get('krb5',             $_[0], $_[1]); }
 sub psk_hint        { return _SSLinfo_get('psk_hint',         $_[0], $_[1]); }
 sub psk_identity    { return _SSLinfo_get('psk_identity',     $_[0], $_[1]); }
