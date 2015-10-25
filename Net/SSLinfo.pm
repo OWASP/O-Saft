@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.101 15/10/17 01:57:04',
+    SID         => '@(#) Net::SSLinfo.pm 1.102 15/10/25 16:39:57',
 };
 
 ######################################################## public documentation #
@@ -456,7 +456,7 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
-$Net::SSLinfo::protocols   = 'h2-15,h2-14,spdy/4a4,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1';
+$Net::SSLinfo::protocols   = 'h2,h2-15,h2-14,spdy/4a4,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1,http/2.0';
                                 # next protocols not yet configurable
                                 # protocols may have prefix `exp' which should not be checked by server
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
@@ -1050,6 +1050,7 @@ sub do_ssl_open($$$) {
         $ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
         if ($ssl == 1) {
             Net::SSLeay::CTX_set_ssl_version($ctx, $ssl) or do {$err = $!} and last;
+            # FIXME: need to pass &Net::SSLeay::SSLv23_method instead of $ssl ?
             # allow all protocols for backward compatibility; user specific
             # restrictions are done later with  CTX_set_options()
         } else {
