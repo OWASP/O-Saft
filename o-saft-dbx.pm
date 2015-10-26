@@ -81,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.25 15/06/21 12:32:03";
+my  $SID    = "@(#) o-saft-dbx.pm 1.26 15/10/26 22:45:40";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -110,7 +110,7 @@ sub _yeast_trac($$){
         /HASH/  && do { last SWITCH if ($ref->{'trace'} <= 2);      # print hashes for full trace only
                         _yeast("# - - - - HASH: $key = {");
                         foreach my $k (sort keys %{$ref->{$key}}) {
-                            _yeast_trac($ref, $key);
+                            #_yeast_trac($ref, $key); # FIXME: causes infinite loop
                             _yTRAC("    ".$key."->".$k, ""); # TODO: join("-", @{$ref->{$key}->{$k}}))
                         };
                         _yeast("# - - - - HASH: $key }");
