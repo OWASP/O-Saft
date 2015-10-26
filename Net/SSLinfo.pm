@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.107 15/10/27 00:11:27',
+    SID         => '@(#) Net::SSLinfo.pm 1.108 15/10/27 00:16:32',
 };
 
 ######################################################## public documentation #
@@ -2359,7 +2359,7 @@ unless (defined caller) {       # print myself or open connection
     if (qx(perldoc -V)) {
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
-        printf("# no perldoc installed, please try:\n  perldoc $0\n");
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
         exit 0;
     }
 }
