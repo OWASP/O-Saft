@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.42 Sommer Edition 2015
+#?      @(#) 1.43 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.42 15/10/19 13:53:18 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.43 15/10/26 22:10:35 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -1127,7 +1127,7 @@ proc osaft_exec {parent cmd} {
 set targets ""
 foreach arg $argv {
     switch -glob $arg {
-        {--v}   { set cfg(VERB) 1; lappend cfg(FAST) {+quit}; }
+        {--v}   { set cfg(VERB) 1; lappend cfg(FAST) {+quit} {+version}; }
         {--h}   -
         {--help} { puts [osaft_about "HELP"]; exit; }
         *       { lappend targets $arg; }
