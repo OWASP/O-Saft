@@ -81,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.26 15/10/26 22:45:40";
+my  $SID    = "@(#) o-saft-dbx.pm 1.27 15/10/26 23:29:24";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -129,8 +129,29 @@ sub _yeast_init() {
         _yline("");
         _yTRAC("$0", $VERSION);
         _yTRAC("_yeast_init::SID", $SID) if ($cfg{'trace'} > 2);
-        _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
         _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
+        _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
+        if ($cfg{'trace'} > 1) {
+            _yline(" Net::SSLinfo {");
+            _yTRAC("::trace",         $Net::SSLinfo::trace);
+            _yTRAC("::linux_debug",   $Net::SSLinfo::linux_debug);
+            _yTRAC("::slowly",        $Net::SSLinfo::slowly);
+            _yTRAC("::timeout",       $Net::SSLinfo::timeout);
+            _yTRAC("::use_openssl",   $Net::SSLinfo::use_openssl);
+            _yTRAC("::use_sclient",   $Net::SSLinfo::use_sclient);
+            _yTRAC("::use_extdebug",  $Net::SSLinfo::use_extdebug);
+            _yTRAC("::use_nextprot",  $Net::SSLinfo::use_nextprot);
+            _yTRAC("::use_reconnect", $Net::SSLinfo::use_reconnect);
+            _yTRAC("::use_SNI",       $Net::SSLinfo::use_SNI);
+            _yTRAC("::use_http",      $Net::SSLinfo::use_http);
+            _yTRAC("::no_cert",       $Net::SSLinfo::no_cert);
+            _yTRAC("::no_cert_txt",   $Net::SSLinfo::no_cert_txt);
+            _yTRAC("::protocols",     $Net::SSLinfo::protocols);
+            _yTRAC("::sclient_opt",   $Net::SSLinfo::sclient_opt);
+            _yTRAC("::ignore_case",   $Net::SSLinfo::ignore_case);
+            _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
+            _yline(" Net::SSLinfo }");
+        }
         _yTRAC("verbose", $cfg{'verbose'});
         _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
         # more detailed trace first
