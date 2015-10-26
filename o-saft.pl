@@ -44,7 +44,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.381 15/10/25 20:31:42",
+    SID         => "@(#) yeast.pl 1.382 15/10/26 23:46:16",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1120,6 +1120,7 @@ our %cmd = (
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
     'traceTIME'     => 0,       # 1: (trace) print additiona time for benchmarking
+    'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
     'warning'       => 1,       # 1: print warnings; 0: don't print warnings
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
@@ -1145,6 +1146,7 @@ our %cmd = (
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
+    'slowly'        => 0,       # passed to Net::SSLeay::slowly
     'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
                                 # NOTE: default=1 as this is behaviour for Net::SSLinfo < 1.85
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
@@ -5464,7 +5466,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tracetime/i)        { $cfg{'traceTIME'}++;      } # ..
     if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # ..
     if ($arg eq  '--trace')             { $typ = 'TRACE';           }
+    if ($arg eq  '--linux_debug')       { $cfg{'--linux_debug'}++;  }
     if ($arg eq  '--quit')              { $arg = '+quit';           }
+    if ($arg eq  '--slowly')            { $cfg{'slowly'}    = 1;    }
     if ($arg =~ /^--exp(erimental)?$/)  { $cfg{'experimental'} = 1; }
     if ($arg =~ /^--noexp(erimental)?$/){ $cfg{'experimental'} = 0; }
     # proxy options
@@ -6015,6 +6019,7 @@ if ($cmd{'extopenssl'} == 1) {
 {
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
     $Net::SSLinfo::trace        = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    $Net::SSLinfo::linux_debug  = $cfg{'linux_debug'};
     $Net::SSLinfo::use_openssl  = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient  = $cmd{'extsclient'};
     $Net::SSLinfo::openssl      = $cmd{'openssl'};
@@ -6023,6 +6028,7 @@ if ($cmd{'extopenssl'} == 1) {
     $Net::SSLinfo::use_nextprot = $cfg{'use_nextprot'};
     $Net::SSLinfo::use_extdebug = $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect=$cfg{'use_reconnect'};
+    $Net::SSLinfo::slowly       = $cfg{'slowly'};
     $Net::SSLinfo::sclient_opt  = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec  = $cfg{'timeout'};
     $Net::SSLinfo::no_cert      = $cfg{'no_cert'};
