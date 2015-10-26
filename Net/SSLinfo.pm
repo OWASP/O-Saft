@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.106 15/10/26 23:47:40',
+    SID         => '@(#) Net::SSLinfo.pm 1.107 15/10/27 00:11:27',
 };
 
 ######################################################## public documentation #
@@ -104,6 +104,18 @@ Debugging of low level SSL can be enabled by setting I<$Net::SSLeay::trace>,
 see L<Net::SSLeay> for details.
 
 In trace messages empty or undefined strings are written as "<<undefined>>".
+
+=over
+
+=item $Net::SSLeay::linux_debug
+
+Passed to Net::SSLeay; default: 0
+
+=item $Net::SSLinfo::slowly
+
+Passed to Net::SSLeay; default: 0
+
+=back
 
 =head1 VARIABLES
 
@@ -481,6 +493,7 @@ $Net::SSLinfo::slowly      = 0; # passed to Net::SSLeay::slowly
 
 $Net::SSLeay::slowly = 0;
 
+my $dum      = $Net::SSLinfo::linux_debug;  # avoid warning: "used only once: ..."
 my $trace    = $Net::SSLinfo::trace;
 
 sub _settrace {
@@ -2346,7 +2359,7 @@ unless (defined caller) {       # print myself or open connection
     if (qx(perldoc -V)) {
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
-        printf("# try:\n  perldoc $0\n");
+        printf("# no perldoc installed, please try:\n  perldoc $0\n");
         exit 0;
     }
 }
