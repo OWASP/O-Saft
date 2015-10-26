@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.105 15/10/25 21:41:05',
+    SID         => '@(#) Net::SSLinfo.pm 1.106 15/10/26 23:47:40',
 };
 
 ######################################################## public documentation #
@@ -98,6 +98,7 @@ Simple tracing can be activated with I<$Net::SSLinfo:trace=1>.
 
 I<$Net::SSLinfo:trace=2> or I<$Net::SSLinfo:trace=3> will be passed to
 I<$Net::SSLeay::trace>.
+I<$Net::SSLeay::linux_debug=1> will be set if trace > 2.
 
 Debugging of low level SSL can be enabled by setting I<$Net::SSLeay::trace>,
 see L<Net::SSLeay> for details.
@@ -475,13 +476,21 @@ $Net::SSLinfo::ca_depth = undef;# depth of peer certificate verification verific
 $Net::SSLinfo::trace       = 0; # 1=simple debugging Net::SSLinfo
                                 # 2=trace     including $Net::SSLeay::trace=2
                                 # 3=dump data including $Net::SSLeay::trace=3
+$Net::SSLinfo::linux_debug = 0; # passed to Net::SSLeay::linux_debug
+$Net::SSLinfo::slowly      = 0; # passed to Net::SSLeay::slowly
+
+$Net::SSLeay::slowly = 0;
+
 my $trace    = $Net::SSLinfo::trace;
 
 sub _settrace {
     $trace = $Net::SSLinfo::trace;          # set global variable
-    $Net::SSLeay::trace = $trace if ($trace > 1);
+    $Net::SSLeay::trace = $trace    if ($trace > 1);
         # must set $Net::SSLeay::trace here again as $Net::SSLinfo::trace
         # might unset when Net::SSLinfo called initially;
+    $Net::SSLeay::linux_debug = 1   if ($trace > 2);
+        # Net::SSLeay 1.72 uses linux_debug with trace>2 only
+    $Net::SSLeay::slowly = $Net::SSLinfo::slowly;
 }
 
 sub _trace { local $\ = "\n"; print '#' . SSLINFO . '::' . $_[0] if ($trace > 0); }
