@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.109 15/10/27 01:13:58',
+    SID         => '@(#) Net::SSLinfo.pm 1.110 15/10/27 08:16:30',
 };
 
 ######################################################## public documentation #
@@ -710,24 +710,31 @@ sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
 sub test_ssleay() {
     # availability and information about Net::SSLeay
     my $data = "# Net::SSLeay functions: {";
-    $data .= "\n#            ::SSLv2_method   = " . ((defined &Net::SSLeay::SSLv2_method)   ? 1 : 0);
-    $data .= "\n#            ::SSLv3_method   = " . ((defined &Net::SSLeay::SSLv3_method)   ? 1 : 0);
-    $data .= "\n#            ::SSLv23_method  = " . ((defined &Net::SSLeay::SSLv23_method)  ? 1 : 0);
-    $data .= "\n#            ::TLSv1_method   = " . ((defined &Net::SSLeay::TLSv1_method)   ? 1 : 0);
-    $data .= "\n#            ::TLSv1_1_method = " . ((defined &Net::SSLeay::TLSv1_1_method) ? 1 : 0);
-    $data .= "\n#            ::TLSv1_2_method = " . ((defined &Net::SSLeay::TLSv1_2_method) ? 1 : 0);
-    $data .= "\n#            ::TLSv1_3_method = " . ((defined &Net::SSLeay::TLSv1_3_method) ? 1 : 0);
+    $data .= "\n#            ::SSLv2_method     = " . ((defined &Net::SSLeay::SSLv2_method)     ? 1 : 0);
+    $data .= "\n#            ::SSLv3_method     = " . ((defined &Net::SSLeay::SSLv3_method)     ? 1 : 0);
+    $data .= "\n#            ::SSLv23_method    = " . ((defined &Net::SSLeay::SSLv23_method)    ? 1 : 0);
+    $data .= "\n#            ::TLSv1_method     = " . ((defined &Net::SSLeay::TLSv1_method)     ? 1 : 0);
+    $data .= "\n#            ::TLSv1_1_method   = " . ((defined &Net::SSLeay::TLSv1_1_method)   ? 1 : 0);
+    $data .= "\n#            ::TLSv1_2_method   = " . ((defined &Net::SSLeay::TLSv1_2_method)   ? 1 : 0);
+    #{ following missing in Net::SSLeay (up to 1.72):
+    $data .= "\n#            ::TLSv1_3_method   = " . ((defined &Net::SSLeay::TLSv1_3_method)   ? 1 : 0);
+    $data .= "\n#            ::DTLSv1_method    = " . ((defined &Net::SSLeay::DTLSv1_method)    ? 1 : 0);
+    $data .= "\n#            ::DTLSv1_2_method  = " . ((defined &Net::SSLeay::DTLSv1_2_method)  ? 1 : 0);
+    $data .= "\n#            ::DTLS_method      = " . ((defined &Net::SSLeay::DTLS_method)      ? 1 : 0);
+    #}
     $data .= "\n#            ::CTX_new_with_method = " . ((defined &Net::SSLeay::CTX_new_with_method) ? 1 : 0);
-    $data .= "\n#            ::CTX_new        = " . ((defined &Net::SSLeay::CTX_new)        ? 1 : 0);
-    $data .= "\n#            ::CTX_v2_new     = " . ((defined &Net::SSLeay::CTX_v2_new)     ? 1 : 0);
-    $data .= "\n#            ::CTX_v3_new     = " . ((defined &Net::SSLeay::CTX_v3_new)     ? 1 : 0);
-    $data .= "\n#            ::CTX_v23_new    = " . ((defined &Net::SSLeay::CTX_v23_new)    ? 1 : 0);
-    $data .= "\n#            ::CTX_tlsv1_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_new)  ? 1 : 0);
-    $data .= "\n#            ::CTX_tlsv1_0_new= " . ((defined &Net::SSLeay::CTX_tlsv1_0_new)? 1 : 0);
-    $data .= "\n#            ::CTX_tlsv1_1_new= " . ((defined &Net::SSLeay::CTX_tlsv1_1_new)? 1 : 0);
-    $data .= "\n#            ::CTX_tlsv1_2_new= " . ((defined &Net::SSLeay::CTX_tlsv1_2_new)? 1 : 0);
-    $data .= "\n#            ::CTX_tlsv1_3_new= " . ((defined &Net::SSLeay::CTX_tlsv1_3_new)? 1 : 0);
-    $data .= "\n#            ::CTX_get_options= " . ((defined &Net::SSLeay::CTX_get_options)? 1 : 0);
+    $data .= "\n#            ::CTX_new          = " . ((defined &Net::SSLeay::CTX_new)          ? 1 : 0);
+    $data .= "\n#            ::CTX_v2_new       = " . ((defined &Net::SSLeay::CTX_v2_new)       ? 1 : 0);
+    $data .= "\n#            ::CTX_v3_new       = " . ((defined &Net::SSLeay::CTX_v3_new)       ? 1 : 0);
+    $data .= "\n#            ::CTX_v23_new      = " . ((defined &Net::SSLeay::CTX_v23_new)      ? 1 : 0);
+    $data .= "\n#            ::CTX_tlsv1_new    = " . ((defined &Net::SSLeay::CTX_tlsv1_new)    ? 1 : 0);
+    $data .= "\n#            ::CTX_tlsv1_0_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_0_new)  ? 1 : 0);
+    $data .= "\n#            ::CTX_tlsv1_1_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_1_new)  ? 1 : 0);
+    $data .= "\n#            ::CTX_tlsv1_2_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_2_new)  ? 1 : 0);
+    $data .= "\n#            ::CTX_tlsv1_3_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_3_new)  ? 1 : 0);
+    $data .= "\n#            ::CTX_get_options  = " . ((defined &Net::SSLeay::CTX_get_options)  ? 1 : 0);
+    $data .= "\n#            ::CTX_dtlsv1_new   = " . ((defined &Net::SSLeay::CTX_dtlsv1_new)   ? 1 : 0);
+    $data .= "\n#            ::CTX_dtlsv1_2_new = " . ((defined &Net::SSLeay::CTX_dtlsv1_2_new) ? 1 : 0);
     $data .= "\n# Net::SSLeay functions }\n";
     $data .= "\n# Net::SSLeay::CTX_new {";
     $data .= "\n#            ::CTX_get_options(CTX)= " . Net::SSLeay::CTX_get_options(Net::SSLeay::CTX_new());
