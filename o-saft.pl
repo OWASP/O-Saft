@@ -3137,6 +3137,7 @@ sub _useopenssl($$$$) {
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $sni = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
+    $ciphers = $cfg{'cipherpattern'} if ($ciphers eq "");
     _trace("_useopenssl($ssl, $host, $port, $ciphers)");
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
     my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni -cipher $ciphers -connect", $host, $port);
@@ -6285,7 +6286,11 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
         foreach $key (keys %data) { # copy to %data0
             next if ($key =~ m/$cfg{'regex'}->{'cmd-intern'}/i);
-            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+            if ($key =~ m/^(ciphers|ciphers_openssl)$/) {
+                $data0{$key}->{val} = $data{$key}->{val}();
+            } else {
+                $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+            }
         }
         Net::SSLinfo::do_ssl_close($host, $port);
     } else {
@@ -6326,7 +6331,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         @results = ();          # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
 #dbx# print "# C", @{$cfg{'ciphers'}};
-# FIXME: 6/2015 es eine kommt Fehlermeldung wenn openssl 1.0.2 verwendet wird:
+# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
 # Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
 # hat vermutlich mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
         foreach $ssl (@{$cfg{'version'}}) {
