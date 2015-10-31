@@ -1026,7 +1026,7 @@ my %score_ssllabs = (
     # Protocol                                  Score          Protocol
     #------------------------------------------+-----+------------------
     'SSLv2'         => {'val' =>  0, 'score' =>  20, 'txt' => "SSL 2.0"}, #  20%
-    'SSLv2'         => {'val' =>  0, 'score' =>  80, 'txt' => "SSL 3.0"}, #  80%
+    'SSLv3'         => {'val' =>  0, 'score' =>  80, 'txt' => "SSL 3.0"}, #  80%
     'TLSv1'         => {'val' =>  0, 'score' =>  90, 'txt' => "TLS 1.0"}, #  90%
     'TLSv11'        => {'val' =>  0, 'score' =>  95, 'txt' => "TLS 1.1"}, #  95%
     'TLSv12'        => {'val' =>  0, 'score' => 100, 'txt' => "TLS 1.2"}, # 100%
