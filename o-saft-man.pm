@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.44 15/10/25 20:43:09";
+my  $man_SID= "@(#) o-saft-man.pm 1.45 15/11/02 22:33:55";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1469,6 +1469,10 @@ COMMANDS
       +quick
 
           Quick overview of checks. Implies  --enabled  and  --short.
+
+      +pfs
+
+          Check if servers offers ciphers with prefect forward secrecy (PFS).
 
       +sts
       +hsts
