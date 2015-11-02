@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.45 15/11/02 22:33:55";
+my  $man_SID= "@(#) o-saft-man.pm 1.46 15/11/02 22:48:34";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1537,6 +1537,7 @@ COMMANDS
           not checked by default, use  +cipherraw  command for that.
 
 # other names: +cipherall +allciphers +rawciphers
+      +cipherall
       +cipherraw
 
           Check target for all possible ciphers.
@@ -1545,6 +1546,13 @@ COMMANDS
           In contrast to  +cipher  this command has some options to tweak the
           cipher tests, connection results and some strange behaviours of the
           target. See  X&Options for cipherraw command&  for details.
+
+      +cipher-SSL
+
+          Get default cipher for protocol SSL.
+
+          * SSL         can be any of:
+                        sslv2, sslv3, tls1, tls11, tls12, tls13, dtls1
 
     Commands to test SSL connection to target
 
