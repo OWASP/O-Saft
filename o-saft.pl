@@ -1,9 +1,5 @@
 #!/usr/bin/perl -w
 
-### TODO: RFC 7525 fertig implementieren
-### TODO: _isccs($$$) fertig implementieren
-### TODO: ocsp_uri pruefen;
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -44,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.382 15/10/26 23:46:16",
+    SID         => "@(#) yeast.pl 1.383 15/11/03 22:26:51",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -128,6 +124,13 @@ our $warning= 1;    # print warnings; need this variable very early
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
+# forward declarations
+sub __SSLinfo($$$);
+sub _get_default($$$);
+sub _is_intern($);  # perl avoid: main::_is_member() called too early to check prototype
+sub _is_member($$); #   "
+sub _initchecks_prot();
+
 ## README if any
 ## -------------------------------------
 open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
@@ -194,8 +197,6 @@ sub _load_file($$) {
     _print_read($fil, $txt);
     return $err;
 } # _load_file
-sub _is_intern($);  # perl avoid: main::_is_member() called too early to check prototype
-sub _is_member($$); #   "
 
 ## read RC-FILE if any
 ## -------------------------------------
@@ -293,6 +294,8 @@ usr_pre_init();
 #!#   $me             - the program name or script name with path stripped off
 #!#   $mepath         - the path where program or script ($me) is located
 #!#   $mename         - my name pretty printed
+#!#   %prot           - collected data per protocol (from Net::SSLinfo)
+#!#   %prot_txt       - labes for %prot
 #!#   @results        - where we store the results as:  [SSL, cipher, "yes|no"]
 #!#   %data           - labels and correspondig value (from Net::SSLinfo)
 #!#   %checks         - collected and checked certificate data
@@ -315,7 +318,7 @@ usr_pre_init();
 # NOTE: all keys in data and check_* must be unique 'cause of shorttexts!!
 # NOTE: all keys in check_* and checks  must be in lower case letters!!
 #       'cause generic conversion of +commands to keys
-#       exception are the keys related to protocol, i.e. SSLV3, TLSv11-LOW
+#       exception are the keys related to protocol, i.e. SSLV3, TLSv11
 
 #
 # Note according perlish programming style:
@@ -333,7 +336,55 @@ my $info    = 0;    # set to 1 if +info
 my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
-our @results= ();   # list of checked ciphers: [SSL, ciper suite name, yes|no]
+
+our @results= ();   # list of checked ciphers: [PROT, ciper suite name, yes|no]
+our %prot   = (     # collected data for protocols and ciphers
+    # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
+    # ssl           protocol  name        hex version value openssl  option     val LOW ...
+    #--------------+---------------------+-----------------+-------------------+---+---+---+---
+    'SSLv2'     => {'txt' => "SSL 2.0 ",  'hex' => 0x0002,  'opt' => "-ssl2"    },
+    'SSLv3'     => {'txt' => "SSL 3.0 ",  'hex' => 0x0300,  'opt' => "-ssl3"    },
+    'TLSv1'     => {'txt' => "TLS 1.0 ",  'hex' => 0x0301,  'opt' => "-tls1"    },
+    'TLSv11'    => {'txt' => "TLS 1.1 ",  'hex' => 0x0302,  'opt' => "-tls1_1"  },
+    'TLSv12'    => {'txt' => "TLS 1.2 ",  'hex' => 0x0303,  'opt' => "-tls1_2"  },
+    'TLSv13'    => {'txt' => "TLS 1.3 ",  'hex' => 0x0304,  'opt' => "-tls1_3"  },
+    'DTLSv09'   => {'txt' => "DTLS 0.9",  'hex' => 0x0100,  'opt' => "-dtls"    },  # see Notes
+    'DTLSv1'    => {'txt' => "DTLS 1.0",  'hex' => 0xFEFF,  'opt' => "-dtls1"   },  #  "
+    'DTLSv11'   => {'txt' => "DTLS 1.1",  'hex' => 0xFEFE,  'opt' => "-dtls1_1" },  #  "
+    'DTLSv12'   => {'txt' => "DTLS 1.2",  'hex' => 0xFEFD,  'opt' => "-dtls1_2" },  #  "
+    'DTLSv13'   => {'txt' => "DTLS 1.3",  'hex' => 0xFEFC,  'opt' => "-dtls1_3" },  #  "
+    'TLS1FF'    => {'txt' => "--dummy--", 'hex' => 0x03FF,  'opt' => "--dummy-" },  #  "
+    'DTLSfamily'=> {'txt' => "--dummy--", 'hex' => 0xFE00,  'opt' => "--dummy-" },  #  "
+   #'TLS_FALLBACK_SCSV'=>{'txt'=> "SCSV", 'hex' => 0x5600,  'opt' => "--dummy-" },
+    #-----------------------+--------------+----------------+------------------+---+---+---+---
+    # "protocol"=> {cnt, WEAK, LOW, MEDIUM, HIGH, pfs, default, protocol} see _initchecks_prot()
+    # Notes:
+    #  TLS1FF   0x03FF  # last possible version of TLS1.x (not specified, used internal)
+    #  DTLSv09: 0x0100  # DTLS, OpenSSL pre 0.9.8f, not finally standardized; some versions use 0xFEFF
+    #  DTLSv09: -dtls   # never defined and used in openssl
+    #  DTLSv1   0xFEFF  # DTLS1.0 (udp)
+    #  DTLSv11  0xFEFE  # DTLS1.1: has never been used (udp)
+    #  DTLSv12  0xFEFD  # DTLS1.2 (udp)
+    #  DTLSv13  0xFEFC  # DTLS1.3, NOT YET specified (udp)
+    #  DTLSfamily       # DTLS1.FF, no defined PROTOCOL, for internal use only
+    # 'hex' value will be copied to $cfg{'openssl_version_map'} below
+    # 'opt' value will be copied to $cfg{'openssl_option_map'}  below
+    # TODO: hex value should be same as %_SSLmap in Net::SSLinfo
+); # %prot
+_initchecks_prot(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
+our %prot_txt = (
+    'cnt'           => "Supported total ciphers for ",           # counter; $ssl added in print*()
+    '-?-'           => "Supported ciphers with security unknown",# counter
+    'WEAK'          => "Supported ciphers with security WEAK",   #  "
+    'LOW'           => "Supported ciphers with security LOW",    #  "
+    'MEDIUM'        => "Supported ciphers with security MEDIUM", #  "
+    'HIGH'          => "Supported ciphers with security HIGH",   #  "
+    'pfs_ciphers'   => "PFS (all  ciphers)",            # list with PFS ciphers
+    'pfs_cipher'    => "PFS (selected cipher)",         # cipher if offered as default
+    'default'       => "Selected  cipher  by server",   # cipher offered as default
+    'protocol'      => "Selected protocol by server",   # 1 if selected as default protocol
+); # %prot_txt
+
 our %data0  = ();   # same as %data but has 'val' only, no 'txt'
                     # contains values from first connection only
 
@@ -410,7 +461,7 @@ our %data   = (     # connection and certificate details
     'psk_hint'      => {'val' => sub { Net::SSLinfo::psk_hint(      $_[0], $_[1])}, 'txt' => "Target supports PSK identity hint"},
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
-    'heartbeat'     => {'val' => sub { __SSLinfo('heartbeat',       $_[0], $_[1])}, 'txt' => "Target supports heartbeat"},
+    'heartbeat'     => {'val' => sub {    __SSLinfo('heartbeat',    $_[0], $_[1])}, 'txt' => "Target supports heartbeat"},
     'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target advertised protocols"},
     'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
     'no_alpn'       => {'val' => sub { Net::SSLinfo::no_alpn(       $_[0], $_[1])}, 'txt' => "Target's not ngotiated message (ALPN)"},
@@ -447,6 +498,11 @@ our %data   = (     # connection and certificate details
     'http_sts'      => {'val' => sub { Net::SSLinfo::http_sts(      $_[0], $_[1])}, 'txt' => "HTTP STS header"},
     #------------------+---------------------------------------+-------------------------------------------------------
     'options'       => {'val' => sub { Net::SSLinfo::options(       $_[0], $_[1])}, 'txt' => "<<internal>> used SSL options bitmask"},
+    #------------------+---------------------------------------+-------------------------------------------------------
+    # following not printed by default, but can be used as command
+#   'PROT'          => {'val' => sub { return $prot{'PROT'}->{'default'}         }, 'txt' => "Target default PROT     cipher"}, #####
+    # all others will be added below
+    #------------------+---------------------------------------+-------------------------------------------------------
     # following are used for checkdates() only, they must not be a command!
     # they are not printed with +info or +check; values are integer
     'valid-years'   => {'val' =>  0, 'txt' => "certificate validity in years"},
@@ -455,6 +511,13 @@ our %data   = (     # connection and certificate details
 ); # %data
 # need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|protocols|
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout
+
+# add keys from %prot to %data,
+foreach $ssl (keys %prot) {
+    $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
+    $data{$key}->{val} = sub {    return $prot{$ssl}->{'default'}; };
+    $data{$key}->{txt} = "Target default $prot{$ssl}->{txt} cipher";
+}
 
 our %checks = (
     # key           =>  {val => "", txt => "label to be printed", score => 0, typ => "connection"},
@@ -556,10 +619,6 @@ my %check_conn = (  # connection data
     'selected'      => {'txt' => "Selected cipher by server"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
-     # per protocol: counter for accepted ciphers, 0 if not supported; added to %checks directly
-#   'PROT'          => {'txt' => "Supported total ciphers (PROT)"},
-     # per protocol: counter for ciphers; added to %checks directly; see "add special keys" below
-#   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
     #------------------+-----------------------------------------------------
 ); # %check_conn
 
@@ -599,7 +658,6 @@ my %check_dest = (  # target (connection) data
     'renegotiation' => {'txt' => "Target supports renegotiation"},
     'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
     'pfs_cipherall' => {'txt' => "Target supports PFS (all ciphers)"},
-     #  *-pfs* are used internally only and added to %checks directly
     'krb5'          => {'txt' => "Target supports Krb5"},
     'psk_hint'      => {'txt' => "Target supports PSK identity hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
@@ -773,9 +831,6 @@ our %shorttexts = (
     #------------------+------------------------------------------------------
     # %check +check     short label text
     #------------------+------------------------------------------------------
-    # labels for various protocol checks are added generic; see "add special keys" below
-#   'PROT'          => "Ciphers (PROT)",
-#   'PROT-LOW'      => "Ciphers LOW (PROT)",
     'ip'            => "IP for hostname",
     'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
@@ -838,8 +893,6 @@ our %shorttexts = (
     'pci'           => "PCI compliant",
     'pfs_cipher'    => "PFS (selected cipher)",
     'pfs_cipherall' => "PFS (all ciphers)",
-     #  *-pfs* are used internally only and added to %checks directly; see "add special keys" below
-#   'PROT-pfs+'     => "PFS (all  PROT ciphers)",
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
     'tr-02102'      => "TR-02102-2 compliant",
@@ -1166,9 +1219,8 @@ our %cmd = (
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
     'versions'      =>          # all supported versions
+                       # [reverse sort keys %prot], # do not use generic list 'cause the want special order
                        [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
-                                # NOTE: must be same string as used in %ciphers[ssl]
-                                # NOTE: must be same string as used in Net::SSLinfo %_SSLmap
     'DTLS_versions' => [qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
                                 # temporary list 'cause DTLS not supported by openssl (6/2015)
     'ssl_lazy'      => 0,       # 1: lazy check for available SSL protocol functionality
@@ -1184,6 +1236,8 @@ our %cmd = (
     'DTLSv11'       => 0,       # 1:   "
     'DTLSv12'       => 0,       # 1:   "
     'DTLSv13'       => 0,       # 1:   "
+    'TLS1FF'        => 0,       # dummy for future use
+    'DTLSfamily'    => 0,       # dummy for future use
     'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
     'cipher'        => [],      # ciphers we got with --cipher=
     'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
@@ -1263,7 +1317,7 @@ our %cmd = (
                          sigkey bsi ev cipherraw
                         ),
                     # internal (debugging or experimental) commands
-                      # qw(options cert_type),  # will bee seen with +info--v only
+                      # qw(options cert_type),  # will be seen with +info--v only
                     # keys not used as command
                         qw(cn_nosni valid-years valid-months valid-days)
                        ],
@@ -1272,7 +1326,7 @@ our %cmd = (
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
-                        qw(zlib lzo open_pgp fallback closure order sgc scsv time)
+                        qw(zlib lzo open_pgp fallback closure order sgc scsv time),
                        ],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
@@ -1315,7 +1369,12 @@ our %cmd = (
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need_default'  => [        # commands which need selected cipher
-                        qw(check cipher pfs_cipher selected)],
+                        qw(check cipher pfs_cipher selected),
+                        qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
+                                # following checks may cause errors because
+                                # missing functionality (i.e in openssl) # 10/2015
+                        qw(sslv2  tlsv13  dtlsv09 dtlvs1 dtlsv11 dtlsv12 dtlsv13)
+                       ],
     'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
@@ -1566,37 +1625,11 @@ our %cmd = (
         # NIST SP800-57 recommendations for key management (part 1):
         'NSA-B'     => "must be AES with CTR or GCM; ECDSA or ECDH and SHA256 or SHA512",
     },
-    'openssl_option_map' => {   # map our internal option to openssl option
-        'SSLv2'     => "-ssl2",
-        'SSLv3'     => "-ssl3",
-        'TLSv1'     => "-tls1",
-        'TLSv11'    => "-tls1_1",
-        'TLSv12'    => "-tls1_2",
-        'TLSv13'    => "-tls1_3",
-        'TLS1FF'    => "--dummy--",
-        'DTLSfamily'=> "--dummy--",
-        'DTLSv09'   => "-dtls", # never defined and used in openssl
-        'DTLSv1'    => "-dtls1",
-        'DTLSv11'   => "-dtls1_1", # not yet implemented in openssl (5/2015)
-        'DTLSv12'   => "-dtls1_2", #  "
-        'DTLSv13'   => "-dtls1_3", #  "
+    'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
+        # will be initialized from %prot
      },
-    'openssl_version_map' => {  # map our internal option to openssl version (hex value)
-        # TODO: should be same as Net::SSLinfo %_SSLmap
-        'SSLv2'     => 0x0002,
-        'SSLv3'     => 0x0300,
-        'TLSv1'     => 0x0301,
-        'TLSv11'    => 0x0302,
-        'TLSv12'    => 0x0303,
-        'TLSv13'    => 0x0304,
-        'TLS1FF'    => 0x03FF,  # last possible version of TLS1.x (not specified, used internal)
-        'DTLSfamily'=> 0xFE00,  # DTLS1.FF, no defined PROTOCOL, for internal use only
-        'DTLSv09'   => 0x0100,  # DTLS, OpenSSL pre 0.9.8f, not finally standardized; some versions use 0xFEFF
-        'DTLSv1'    => 0xFEFF,  # DTLS1.0 (udp)
-        'DTLSv11'   => 0xFEFE,  # DTLS1.1: has never been used (udp)
-        'DTLSv12'   => 0xFEFD,  # DTLS1.2 (udp)
-        'DTLSv13'   => 0xFEFC,  # DTLS1.3, NOT YET specified (udp)
-        #'TLS_FALLBACK_SCSV' => 0x5600,
+    'openssl_version_map' => {  # map our internal option to openssl version (hex value); used our Net:SSL*
+        # will be initialized from %prot
      },
     'done' => {                 # internal administration
         'hosts'     => 0,
@@ -1637,39 +1670,8 @@ our %cmd = (
     },
 ); # %cfg
 
-## add special keys for all protocols and labels
-## -------------------------------------
-foreach $ssl (@{$cfg{'versions'}}) {
-    # $shorttexts{'ssl'}            = "Ciphers (ssl)",
-    # $shorttexts{'ssl-LOW'}        = "Ciphers LOW (ssl)", # also WEAK, MEDIUM, HIGH, -?-
-    # $shorttexts{'ssl-pfs+'}       = "PFS (all  ssl ciphers)",
-    # $shorttexts{'ssl-pfs-'}       = "PFS (some ssl ciphers)",
-    # $check_dest{'ssl-pfs+'}{txt}  = "PFS (all  ssl ciphers)",
-    # $check_dest{'ssl-pfs-'}{txt}  = "PFS (some ssl ciphers)",
-    # $check_conn{'ssl'}{txt}       = "Supported total ciphers (ssl)",
-    # $check_conn{'ssl-LOW'}{txt}   = "Supported ciphers with security LOW",
-    # Note that %check_dest and %check_conn are temporary variables, which
-    # are finally added to %checks
-    $key = $ssl;
-    $shorttexts{$key}      =  "Ciphers ($ssl)";
-    $checks{$key} = {'txt' => "Supported total ciphers ($ssl)",           'typ' => 'connection'};
-    $key = $ssl . "-pfs+";                  # SSLv3-pfs+ TLSv1-pfs+ etc.
-    $shorttexts{$key}      =  "PFS (all  $ssl ciphers)";
-    $checks{$key} = {'txt' => "Target supports PFS (all  $ssl ciphers)",  'typ' => 'destination'};
-    $key = $ssl . "-pfs-";                  # SSLv3-pfs- TLSv1-pfs- etc.
-    $shorttexts{$key}      =  "PFS (some $ssl ciphers)";
-    $checks{$key} = {'txt' => "Target supports PFS (some $ssl ciphers)",  'typ' => 'destination'};
-    $key = $ssl . "--?-";                   # SSLv3--?-  (unknown is special)
-    $shorttexts{$key}      =  "Ciphers unknown ($ssl)";
-    $checks{$key} = {'txt' => "Supported ciphers with security unknown",  'typ' => 'connection'};
-    foreach $sec (qw(LOW WEAK MEDIUM HIGH)) {
-        $key = $ssl . "-$sec";              # SSLv3-LOW TLSv1-HIGH etc.
-        $shorttexts{$key}      =  "Ciphers $sec ($ssl)";
-        $checks{$key} = {'txt' => "Supported ciphers with security $sec", 'typ' => 'connection'};
-    }
-    # FIXME: unfortunately above settings are not known in o-saft-dbx.pm
-    #        see comment in _yeast_data() there
-}
+$cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot); # copy to %cfg
+$cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot); # copy to %cfg
 
 ## construct list for special commands: 'cmd-*'
 ## -------------------------------------
@@ -2332,6 +2334,7 @@ our %text = (
     'no-nextprotoneg'=>"<<N/A as --no-nextprotoneg in use>>",
     'no-resonnect'  => "<<N/A as --no-resonnect in use>>",
     'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
+    'protocol'      => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'missing'       => " <<missing @@>>",
@@ -2437,7 +2440,7 @@ usr_pre_file();
 
 ## definitions: internal functions
 ## -------------------------------------
-sub _initchecks_score()  {
+sub _initchecks_score() {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
@@ -2446,10 +2449,10 @@ sub _initchecks_score()  {
     $checks{'sts_maxage1m'}->{score} =  20; # low
     $checks{'sts_maxage1y'}->{score} =  70; # medium
     $checks{'sts_maxagexy'}->{score} = 100; # high
-    $checks{'TLSv1-HIGH'}  ->{score} =   0;
-    $checks{'TLSv11-HIGH'} ->{score} =   0;
-    $checks{'TLSv12-HIGH'} ->{score} =   0;
-    $checks{'DTLSv1-HIGH'} ->{score} =   0;
+##  $checks{'TLSv1-HIGH'}  ->{score} =   0;
+##  $checks{'TLSv11-HIGH'} ->{score} =   0;
+##  $checks{'TLSv12-HIGH'} ->{score} =   0;
+##  $checks{'DTLSv1-HIGH'} ->{score} =   0;
     foreach (keys %checks) {
         $checks{$_}->{score} = 90 if (m/WEAK/i);
         $checks{$_}->{score} = 30 if (m/LOW/i);
@@ -2457,32 +2460,40 @@ sub _initchecks_score()  {
     }
 } # _initchecks_score
 
+sub _initchecks_prot() {
+    my $ssl;
+    foreach $ssl (keys %prot) {
+        $prot{$ssl}->{'cnt'}        = 0;
+        $prot{$ssl}->{'-?-'}        = 0;
+        $prot{$ssl}->{'WEAK'}       = 0;
+        $prot{$ssl}->{'LOW'}        = 0;
+        $prot{$ssl}->{'MEDIUM'}     = 0;
+        $prot{$ssl}->{'HIGH'}       = 0;
+        $prot{$ssl}->{'protocol'}   = 0;
+        $prot{$ssl}->{'default'}    = STR_UNDEF;
+        $prot{$ssl}->{'pfs_cipher'} = STR_UNDEF;
+        $prot{$ssl}->{'pfs_ciphers'}= [];
+    }
+} # _initchecks_prot
+
 sub _initchecks_val()  {
     # set all default check values here
     $checks{$_}->{val}   = "" foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
-    $checks{'sts_maxage0d'}->{val} =        0;
-    $checks{'sts_maxage1d'}->{val} =    86400;  # day
-    $checks{'sts_maxage1m'}->{val} =  2592000;  # month
-    $checks{'sts_maxage1y'}->{val} = 31536000;  # year
-    $checks{'sts_maxagexy'}->{val} = 99999999;
+    $checks{'sts_maxage0d'}->{val}  =        0;
+    $checks{'sts_maxage1d'}->{val}  =    86400; # day
+    $checks{'sts_maxage1m'}->{val}  =  2592000; # month
+    $checks{'sts_maxage1y'}->{val}  = 31536000; # year
+    $checks{'sts_maxagexy'}->{val}  = 99999999;
     foreach (keys %checks) {
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'SSLprot'}/);
     }
     # initialize counter for cipher
-    foreach $ssl (@{$cfg{'versions'}}) {
-        $checks{$ssl . '-pfs+'}->{val}  = "";
-        $checks{$ssl}->{val}            = 0;
-        $checks{$ssl . '-pfs-'}->{val}  = 0; # used internal only
-        $checks{$ssl . '--?-'} ->{val}  = 0;
-        $checks{$ssl . '-LOW'} ->{val}  = 0;
-        $checks{$ssl . '-WEAK'}->{val}  = 0;
-        $checks{$ssl . '-HIGH'}->{val}  = 0;
-    }
+    _initchecks_prot();
 } # _initchecks_val
 
-sub _init_all()  {
+sub _init_all()        {
     # set all default values here
     $cfg{'done'}->{'init_all'}++;
     _trace("_init_all()");
@@ -2491,7 +2502,7 @@ sub _init_all()  {
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
 
-sub _resetchecks() {
+sub _resetchecks()     {
     # reset values
     foreach (keys %{$cfg{'done'}}) {
         next if (!m/^check/);  # only reset check*
@@ -2518,7 +2529,7 @@ sub _getscore($$$)     {
     return $score;
 } # _getscore
 
-sub _cfg_set($$) {
+sub _cfg_set($$)       {
     # set value in configuration %checks, %text
     # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
     # if given value is a file, read settings from that file
@@ -2619,7 +2630,7 @@ sub _cfg_set($$) {
 } # _cfg_set
 
 # check functions for array members and hash keys
-sub __SSLinfo($$$) {
+sub __SSLinfo($$$)     {
     # wrapper for Net::SSLinfo::*() functions
     # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
     # these values will be converted to o-saft's preferred format
@@ -2751,7 +2762,7 @@ sub get_cipher_hex($)  {
     return "";
 } # get_cipher_hex
 
-sub get_cipher_name($)  {
+sub get_cipher_name($) {
     # check if given cipher name is a known cipher
     # checks in %cipher_names if nof found in %ciphers
     my $cipher  = shift;
@@ -3136,11 +3147,11 @@ sub _useopenssl($$$$) {
     # should return the targets default cipher if no ciphers passed in
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
-    my $sni = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
-    $ciphers = $cfg{'cipherpattern'} if ($ciphers eq "");
+    my $sni  = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
+    $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace("_useopenssl($ssl, $host, $port, $ciphers)");
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
-    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni -cipher $ciphers -connect", $host, $port);
+    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $ciphers -connect", $host, $port);
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
     # also possible would be Cipher line from:
@@ -3172,8 +3183,12 @@ sub _useopenssl($$$$) {
     } else {
         _warn("unknown result from openssl; ignored");
     }
-    _trace("_useopenssl #{ $data }");
-    print STR_HINT, "use options like: --v --trace --timeout=42";
+    #_trace("_useopenssl #{ $data }");
+    if ($cfg{'verbose'} > 0) {
+        _v_print("_useopenssl: Net::SSLinfo::do_openssl() #{\n$data\n#}");
+    } else {
+        print STR_HINT, "use options like: --v --trace --timeout=42";
+    }
     return "";
 } # _useopenssl
 
@@ -3183,7 +3198,7 @@ sub _get_default($$$) {
     my $cipher = "";
     _trace(" _get_default($ssl, $host, $port) = ..."); # TODO: rejoin the trace?
     $cfg{'done'}->{'checkdefault'}++;
-#   #if (1 == _is_call('cipher-socket')) {
+#   #if (1 == _is_call('cipher-socket')) {}
     if (0 == $cmd{'extciphers'}) {
         $cipher = _usesocket( $ssl, $host, $port, "");
     } else { # force openssl
@@ -3223,7 +3238,7 @@ sub ciphers_get($$$$) {
 } # ciphers_get
 
 sub checkcipher($$) {
-    #? test given cipher and add result to %check_* value
+    #? test given cipher and add result to %checks and %prot
     my ($ssl, $c) = @_;
     my $risk = get_cipher_sec($c);
     # following checks add the "not compliant" or vulnerable ciphers
@@ -3249,18 +3264,18 @@ sub checkcipher($$) {
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
     $checks{'lucky13'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islucky($c));
-    $checks{$ssl . '-pfs+'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _ispfs($ssl, $c));
-    # counters ##                              vv---- take care -----^^
-    $checks{$ssl . '-pfs-'}->{val}++    if ("" eq _ispfs($ssl, $c)); # count PFS ciphers
-    $checks{$ssl . '--?-'}->{val}++     if ($risk =~ /-\?-/); # private marker
-    $checks{$ssl . '-LOW'}->{val}++     if ($risk =~ /LOW/i);
-    $checks{$ssl . '-WEAK'}->{val}++    if ($risk =~ /WEAK/i);
-    $checks{$ssl . '-HIGH'}->{val}++    if ($risk =~ /HIGH/i);
-    $checks{$ssl . '-MEDIUM'}->{val}++  if ($risk =~ /MEDIUM/i);
+    push(@{$prot{$ssl}->{'pfs_ciphers'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
+    # counters
+    $prot{$ssl}->{'-?-'}++      if ($risk =~ /-\?-/);       # private marker
+    $prot{$ssl}->{'WEAK'}++     if ($risk =~ /WEAK/i);
+    $prot{$ssl}->{'LOW'}++      if ($risk =~ /LOW/i);
+    $prot{$ssl}->{'MEDIUM'}++   if ($risk =~ /MEDIUM/i);
+    $prot{$ssl}->{'HIGH'}++     if ($risk =~ /HIGH/i);
 } # checkcipher
 
 sub checkciphers($$) {
     #? test target if given ciphers are accepted, results stored in global %checks
+    # checks are done with information from @results
     my ($host, $port) = @_;     # not yet used
 
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
@@ -3273,14 +3288,13 @@ sub checkciphers($$) {
     my $exp     = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    my $hasssl3 = 0;# 1: if SSLv3 checked
     foreach my $c (@results) {  # check all accepted ciphers
+        # each $c looks like:  TLSv12  ECDHE-RSA-AES128-GCM-SHA256  yes
         my $yn  = ${$c}[2];
         $cipher = ${$c}[1];
         $ssl    = ${$c}[0];
-        $hasssl3= 1 if ($ssl eq 'SSLv3');
         if ($yn =~ m/yes/i) {   # cipher accepted
-            $checks{$ssl}->{val}++ if ($yn =~ m/yes/i); # cipher accepted
+            $prot{$ssl}->{'cnt'}++;
             checkcipher($ssl, $cipher);
             $exp .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $c));
         }
@@ -3307,14 +3321,14 @@ sub checkciphers($$) {
             $checks{'ecdh_256'}->{val}  =  $txt if ($dh < 512);
         }
     } else {                    # not a number, probably suspicious
-        $checks{'logjam'}->{val}    =  $txt;
+        $checks{'logjam'}->{val}=  $txt;
     }
     if ($txt eq "") {
-        $checks{'logjam'}->{val}   .=  "<<openssl did not return DH Paramter>>";
-        $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
+        $checks{'logjam'}->{val}.=  "<<openssl did not return DH Paramter>>";
+        $checks{'logjam'}->{val}.=  "; but has WEAK ciphers: $exp" if ($exp ne "");
     }
 
-    if ($hasssl3 <= 0) {
+    if ($prot{'SSLv3'}->{'cnt'} <= 0) {
         # if SSLv3 was disabled, check for BEAST is incomplete; inform about that
         $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
     }
@@ -3323,23 +3337,23 @@ sub checkciphers($$) {
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
         # TR-02102-2, see 3.2.3
-        if ($checks{$ssl}->{val} > 0) { # checks do not make sense if there're no ciphers
+        if ($prot{$ssl}->{'cnt'} > 0) { # checks do not make sense if there're no ciphers
             $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
             $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
             $checks{'tr-03116+'}->{val} .= $checks{'tr-02102'}->{val};  # same as TR-02102
             $checks{'tr-03116-'}->{val} .= $checks{'tr-02102'}->{val};
         }
-        $checks{'cnt_totals'}->{val} +=
-            $checks{$ssl . '--?-'}->{val}  +
-            $checks{$ssl . '-LOW'}->{val}  +
-            $checks{$ssl . '-WEAK'}->{val} +
-            $checks{$ssl . '-HIGH'}->{val} +
-            $checks{$ssl . '-MEDIUM'}->{val}
-            ;
-        $checks{$ssl .'-pfs-'}->{val}    = "" if ($checks{$ssl . '-pfs-'}->{val} > 0);
-        $checks{'pfs_cipherall'}->{val} .= $checks{$ssl . '-pfs+'}->{val};
+        $checks{'cnt_ciphers'}->{val}   += $prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
     }
-    $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne ""); # good if we have them
+    $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne "");    # good if we have them
+
+    # 'sslversion' returns protocol as used in our data structure (like TLSv12)
+    # 'session_protocol' retruns string used by openssl (like TLSv1.2)
+    # we need our well known string, hence 'sslversion'
+    $ssl    = $data{'sslversion'}->{val}($host, $port); # get selected protocol
+    $cipher = $data{'selected'}->{val}($host, $port);   # get selected cipher
+    $checks{'pfs_cipherall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'pfs_ciphers'}});
+    #$checks{'pfs_cipher'}->{val} # done in checkdest()
     _trace(" checkciphers }");
 } # checkciphers
 
@@ -4145,37 +4159,30 @@ sub checkprot($$) {
     $cfg{'done'}->{'checkprot'}++;
     return if ($cfg{'done'}->{'checkprot'} > 1);
     # check SSL version support
-    foreach $ssl (qw(TLSv1 TLSv11 TLSv12 TLSv13)) {
-        $checks{'hastls10'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv1');
-        $checks{'hastls11'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv11');
-        $checks{'hastls12'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv12');
-        $checks{'hastls13'}->{val}  = " " if ($checks{$ssl}->{val} <= 0 and $ssl eq 'TLSv13');
-    }
-    foreach $ssl (qw(SSLv2 SSLv3)) {
-        # For  +check command, SSL versions are already detected, for single
-        # commands, i.e. +hasSSLv3, SSL versions may not yet checked. We use
-        # the version flag $cfg{$ssl} to check if the protocol is supported.
-        # If it equals 0, the check may be disabled, i.e. with  --no-sslv3 .
-        # If the protocol is supported by the target accepted,  at least one
-        # ciphers must be accpted. So the amount of ciphers must be > 0.
-        if ($cfg{$ssl} == 0) {
-            $checks{'hassslv2'}->{val}      = _subst($text{'disabled'}, "--no-SSLv2") if ($ssl eq 'SSLv2');
-            $checks{'hassslv3'}->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
-            $checks{'poodle'}  ->{val}      = _subst($text{'disabled'}, "--no-SSLv3") if ($ssl eq 'SSLv3');
-            next;
-        } else {
-            $checks{'hassslv2'}->{val}      = "" if ($ssl eq 'SSLv2');
-            $checks{'hassslv3'}->{val}      = "" if ($ssl eq 'SSLv3');
-            $checks{'poodle'}  ->{val}      = "" if ($ssl eq 'SSLv3');
+    $checks{'hassslv2'}->{val}      = " " if ($prot{'SSLv2'}->{'cnt'}  >  0);
+    $checks{'hassslv3'}->{val}      = " " if ($prot{'SSLv3'}->{'cnt'}  >  0);
+    $checks{'hastls10'}->{val}      = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
+    $checks{'hastls11'}->{val}      = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
+    $checks{'hastls12'}->{val}      = " " if ($prot{'TLSv12'}->{'cnt'} <= 0);
+    $checks{'hastls13'}->{val}      = " " if ($prot{'TLSv13'}->{'cnt'} <= 0);
+    # SSLv2 and SSLv3 are special
+        # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
+        # If the protocol  is supported by the target,  at least  one cipher
+        # must be accpted. So the amount of ciphers must be > 0.
+    if ($cfg{'SSLv2'} == 0) {
+        $checks{'hassslv2'}->{val}  = _subst($text{'disabled'}, "--no-SSLv2");
+    } else {
+        if ($prot{'SSLv2'}->{'cnt'} > 0) {
+            $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
         }
-        if ($checks{$ssl}->{val} > 0) {     # protocol checked and returned a cipher
-            if ($ssl eq 'SSLv2') {
-                $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
-            }
-            if ($ssl eq 'SSLv3') {
-                $checks{'hassslv3'}->{val}  = " ";  # POODLE if SSLv3
-                $checks{'poodle'}  ->{val}  = "SSLv3";
-            }
+    }
+    if ($cfg{'SSLv3'} == 0) {
+        $checks{'hassslv3'}->{val}  = _subst($text{'disabled'}, "--no-SSLv3");
+        $checks{'poodle'}  ->{val}  = _subst($text{'disabled'}, "--no-SSLv3");
+    } else {    # SSLv3 enabled, check if there are ciphers
+        if ($prot{'SSLv3'}->{'cnt'} > 0) {
+            $checks{'hassslv3'}->{val}  = " ";  # POODLE if SSLv3 and ciphers
+            $checks{'poodle'}  ->{val}  = "SSLv3";
         }
     }
 } # checkprot
@@ -4196,14 +4203,16 @@ sub checkdest($$) {
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
 
-    # get selected cipher and store in %checks, use also to check for PFS
-    foreach $ssl (@{$cfg{'versions'}}) {
-        next if ($cfg{$ssl} == 0);
-        $cipher = _get_default($ssl, $host, $port);
-        if ($cipher ne "") {
-            $checks{'selected'}->{val}  = $cipher;
-            $checks{'pfs_cipher'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
-        }
+    # get selected cipher and store in %checks, also check for PFS
+    $cipher = $data{'selected'}->{val}($host, $port);
+    $ssl    = $data{'session_protocol'}->{val}($host, $port);
+    $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
+    my @prot = grep(/(^$ssl$)/i, @{$cfg{'versions'}});
+    $checks{'selected'}->{val}      = $cipher;
+    if ($#prot == 0) {          # found exactly one matching protocol
+        $checks{'pfs_cipher'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
+    } else {
+        _warn("protocol '". join(';', @prot) . "' does not match; no selected protocol available");
     }
 
     # PFS is scary if the TLS session ticket is not random
@@ -4401,7 +4410,7 @@ sub scoring($$) {
         $value = $checks{$key}->{val};
         # TODO: go through @results
 # TODO   foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
-# TODO       # keys in %checks look like 'SSLv2-LOW', 'TLSv11-HIGH', etc.
+# TODO       # keys in %prot look like 'SSLv2->LOW', 'TLSv11->HIGH', etc.
 # TODO       $key = $ssl . '-' . $sec;
 # TODO       if ($checks{$key}->{val} != 0) {    # if set, decrement score
 # TODO           $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
@@ -4437,7 +4446,7 @@ sub _dump($$) {
         $label = sprintf("%s %s", $label, '_' x (75 -length($label)));
     $value = "" if (!defined $value); # value parameter is optional
     printf("#{ %s\n\t%s\n#}\n", $label, $value);
-    # using curly prackets 'cause they most likely are not part of any data
+    # using curly brackets 'cause they most likely are not part of any data
 } # _dump
 sub printdump($$$) {
     #? just dumps internal database %data and %check_*
@@ -4470,7 +4479,7 @@ sub print_data($$$$) {
         return;
     }
     print_host_key($host, $port, $label);
-    my $val = $data{$label}->{val}($host) || "";
+    my $val = $data{$label}->{val}($host, $port) || "";
     # { always pretty print
         if ($label =~ m/X509$/) {
             $label =~ s/X509$//;
@@ -4678,16 +4687,16 @@ sub print_ciphertotals($$$$) {
     my ($key, $sec);
     if ($legacy eq 'ssldiagnos') {
         print "\n-= SUMMARY =-\n";
-        printf("Weak:         %s\n", $checks{$ssl . '-WEAK'}->{val});
-        printf("Intermediate: %s\n", $checks{$ssl . '-MEDIUM'}->{val}); # MEDIUM
-        printf("Strong:       %s\n", $checks{$ssl . '-HIGH'}->{val});   # HIGH
+        printf("Weak:         %s\n", $prot{$ssl}->{'WEAK'});
+        printf("Intermediate: %s\n", $prot{$ssl}->{'MEDIUM'}); # MEDIUM
+        printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
     if ($legacy =~ /(full|compact|simple|quick)/) {
         printheader(_subst($text{'out-summary'}, $ssl), "");
         _trace_1arr('%checks');
-        foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
-            $key = $ssl . '-' . $sec;
-            print_check($legacy, $host, $port, $key, undef);
+        foreach $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
+            print_line($legacy, $host, $port, "$ssl-$key", $prot_txt{$key}, $prot{$ssl}->{$key});
+            # NOTE: "$ssl-$key" does not exist in %checks or %prot
         }
     }
 } # print_ciphertotals
@@ -4729,6 +4738,38 @@ sub printfooter($) {
     if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
     # all others are empty, no need to do anything
 } # printfooter
+
+sub printprotocols($$$) {
+    #? print table with cipher informations per protocol
+    # number of found ciphers, various risks ciphers, default and PFS cipher
+    # prints information stored in %prot
+    my ($legacy, $host, $port) = @_;
+    local $\ = "\n";
+    my $ssl;
+    #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
+    printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=total amount  PFS=selected cipher with PFS\n") if ($verbose > 0);
+    printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot default PFS));
+    printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
+    foreach $ssl (@{$cfg{'versions'}}) {
+        # $cfg{'versions'} is sorted in contrast to "keys %prot" 
+        next if ($ssl =~ m/(DTLSv09 DTLSv11 DTLSv12 DTLSv13)$/); # FIXME: ugly hardcoded
+        if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
+            next if (($cfg{$ssl} == 0) and ($verbose <= 0)); # no key without verbose
+            print_host_key($host, $port, $ssl);
+        }
+        if ($cfg{$ssl} == 0) {
+            # we need to ignore NOT YET implemented protocols
+            printf("%-7s %s\n", $ssl, $text{'protocol'}) if ($verbose > 0);
+            next;
+        }
+        printf("%s:\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $ssl,
+                $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
+                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
+                ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
+                $prot{$ssl}->{'default'}, $prot{$ssl}->{'pfs_cipher'});
+    }
+    printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
+} # printprotocols
 
 sub _is_print($$$) {
     #? return 1 if parameter indicate printing
@@ -4786,7 +4827,7 @@ sub printciphercheck($$$$$@) {
             _print_results($ssl, $host, $port, "no", @results);
         }
     }
-    print_ciphertotals($legacy, $ssl, $host, $port);
+    #print_ciphertotals($legacy, $ssl, $host, $port);  # up to version 15.10.15
     print_check($legacy, $host, $port, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
 } # printciphercheck
@@ -5651,14 +5692,17 @@ while ($#argv >= 0) {
     if ($arg eq  '+spdy3')              { $arg = '+protocols';  } # SPDY/3.0; TODO: may be changed in future
     if ($arg eq  '+spdy31')             { $arg = '+protocols';  } # SPDY/3.1; TODO: may be changed in future
     if ($arg eq  '+spdy4')              { $arg = '+protocols';  } # SPDY/4.0; TODO: may be changed in future
+    if ($arg eq  '+prots')              { $arg = '+protocols';  } # alias
+    if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';      } # alias
+    if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';     } # alias
     if ($arg eq  '+owner')              { $arg = '+subject';    } # subject
     if ($arg eq  '+authority')          { $arg = '+issuer';     } # issuer
     if ($arg eq  '+expire')             { $arg = '+after';      }
     if ($arg eq  '+extension')          { $arg = '+extensions'; }
-    if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias
     if ($arg eq  '+sts')                { $arg = '+hsts';       }
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
+    if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias
     if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; TODO until check is improved (6/2015)
     if ($arg eq '+modulus_exponent_size'){$arg = '+modulus_exp_size'; } # alias
     if ($arg eq '+pub(lic)?_enc(ryption)?')      { $arg = '+pub_encryption';} # alias
@@ -5709,7 +5753,7 @@ while ($#argv >= 0) {
             $cfg{'exec'} = 1;
             next;
         }
-        #_dbx("command= $val");
+        #_dbx("command= $val");        # convert all +CMD to lower case
         $val = lc($val);               # be greedy to allow +BEAST, +CRIME, etc.
         push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val eq 'beast'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
@@ -6276,22 +6320,22 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     usr_pre_info();
 
-    # check if SNI supported, also copy all data to %data0
+    _y_CMD("get no SNI ..");
+    # check if SNI supported, also copy some data to %data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
         # finally we close the connection to be clean for all other tests
     _trace(" cn_nosni: {");
     $Net::SSLinfo::use_SNI  = 0;
     if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
-        $data{'cn_nosni'}->{val}= $data{'cn'}->{val}($host, $port);
-        foreach $key (keys %data) { # copy to %data0
-            next if ($key =~ m/$cfg{'regex'}->{'cmd-intern'}/i);
-            if ($key =~ m/^(ciphers|ciphers_openssl)$/) {
-                $data0{$key}->{val} = $data{$key}->{val}();
-            } else {
-                $data0{$key}->{val} = $data{$key}->{val}($host, $port);
-            }
-        }
+        $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
+        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
+## FIXME: following disabled due to multipe openssl calls which may produce 
+##         unexpected results (10/2015) {
+##        foreach $key (keys %data) { # copy to %data0
+##            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+##        }
+## }
         Net::SSLinfo::do_ssl_close($host, $port);
     } else {
         _warn("Can't make a connection to $host:$port; no initial data");
@@ -6310,6 +6354,16 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             _v_print($err);
             _warn("Can't make a connection to $host:$port; target ignored");
             goto CLOSE_SSL;
+        }
+    }
+
+    if ((_need_default() > 0) or ($check > 0)) {
+        _y_CMD("get default ..");
+        foreach $ssl (keys %prot) { # all protocols, no need to sort them
+            next if ($cfg{$ssl} == 0);  # FIXME: remove when proper error checks are performed
+            my $cipher  = _get_default($ssl, $host, $port);
+            $prot{$ssl}->{'default'}    = $cipher;
+            $prot{$ssl}->{'pfs_cipher'} = $cipher if ("" eq _ispfs($ssl, $cipher));
         }
     }
 
@@ -6338,6 +6392,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
                 push(@results, [$ssl, $c, (grep(/^$c/, @supported)>0) ? "yes" : "no"]);
+                $checks{'cnt_totals'}->{val}++;
             }
         }
         checkciphers($host, $port);
@@ -6364,9 +6419,9 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         printruler() if (($quick == 0) and ($legacy ne 'thcsslcheck'));
         printheader("\n" . _subst($text{'out-summary'}, ""), "");
-        foreach $ssl (@{$cfg{'version'}}) {
-            print_check($legacy, $host, $port, $ssl, undef);
-        }
+
+        printprotocols($legacy, $host, $port);
+
         printruler() if ($quick == 0);
     }
 
@@ -6380,6 +6435,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
      }
 
     # following sequence important!
+    _y_CMD("get checks ..");
     checkhttp( $host, $port); # may be already done in checkssl()
     checksni(  $host, $port); #  "
     checksizes($host, $port); #  "
