@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.383 15/11/03 22:26:51",
+    SID         => "@(#) yeast.pl 1.384 15/11/04 00:09:13",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -105,7 +105,6 @@ our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
 our $mename = "yeast  ";
     $mename = "O-Saft " if ($me !~ /yeast/);
 
-
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
 unshift(@INC, "$mepath", "$mepath/lib");
@@ -124,9 +123,9 @@ our $warning= 1;    # print warnings; need this variable very early
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-# forward declarations
+## definitions: forward declarations
+## -------------------------------------
 sub __SSLinfo($$$);
-sub _get_default($$$);
 sub _is_intern($);  # perl avoid: main::_is_member() called too early to check prototype
 sub _is_member($$); #   "
 sub _initchecks_prot();
@@ -145,8 +144,9 @@ if ($me =~/\.cgi$/) {
     $cgi = 1;
 } # CGI
 
-## functions and variables used very early in main
+## definitions: debug and tracing
 ## -------------------------------------
+# functions and variables used very early in main
 our %cfg =  ('trace' => 0 ); # used in usr_pre_init(); avoid: Use of uninitialized value ...
 sub _dprint { local $\ = "\n"; print STR_DBX, join(" ", @_); }
 sub _dbx    { _dprint(@_); } # alias for _dprint
@@ -2449,10 +2449,6 @@ sub _initchecks_score() {
     $checks{'sts_maxage1m'}->{score} =  20; # low
     $checks{'sts_maxage1y'}->{score} =  70; # medium
     $checks{'sts_maxagexy'}->{score} = 100; # high
-##  $checks{'TLSv1-HIGH'}  ->{score} =   0;
-##  $checks{'TLSv11-HIGH'} ->{score} =   0;
-##  $checks{'TLSv12-HIGH'} ->{score} =   0;
-##  $checks{'DTLSv1-HIGH'} ->{score} =   0;
     foreach (keys %checks) {
         $checks{$_}->{score} = 90 if (m/WEAK/i);
         $checks{$_}->{score} = 30 if (m/LOW/i);
@@ -3082,6 +3078,26 @@ sub _isccs($$$) {
     return $ret;
 } # _isccs
 
+sub _getwilds($$) {
+    # compute usage of wildcard in CN and subjectAltname
+    my ($host, $port) = @_;
+    my ($value, $regex);
+    $value = $data{'cn'}->{val}($host);
+    $checks{'wildcard'}->{val} = "<<CN:>>$value" if ($value =~ m/[*]/);
+    foreach $value (split(" ", $data{'altname'}->{val}($host))) {
+            $value =~ s/.*://;      # strip prefix
+        if ($value =~ m/\*/) {
+            $checks{'wildcard'}->{val} .= " " . $value;
+            ($regex = $value) =~ s/[*]/.*/;   # make regex (miss dots is ok)
+            $checks{'wildhost'}->{val}  = $value if ($host =~ m/$regex/);
+            $checks{'cnt_wildcard'}->{val}++;
+        }
+        $checks{'cnt_altname'}->{val}++;
+        $checks{'len_altname'}->{val} = length($value) + 1; # count number of characters + type (int)
+    }
+    # checking for SNI does not work here 'cause it destroys %data
+} # _getwilds
+
 sub _usesocket($$$$) {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers passed in
@@ -3409,26 +3425,6 @@ sub checkdates($$) {
     _trace("checkdates: valid-month: " . $data{'valid-months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
     _trace("checkdates: valid-days:  " . $data{'valid-days'}->{val}   . "  = (" . $data{'valid-years'}->{val} . "*5) + (" . $data{'valid-months'}->{val} . "*30)");
 } # checkdates
-
-sub _getwilds($$) {
-    # compute usage of wildcard in CN and subjectAltname
-    my ($host, $port) = @_;
-    my ($value, $regex);
-    $value = $data{'cn'}->{val}($host);
-    $checks{'wildcard'}->{val} = "<<CN:>>$value" if ($value =~ m/[*]/);
-    foreach $value (split(" ", $data{'altname'}->{val}($host))) {
-            $value =~ s/.*://;      # strip prefix
-        if ($value =~ m/\*/) {
-            $checks{'wildcard'}->{val} .= " " . $value;
-            ($regex = $value) =~ s/[*]/.*/;   # make regex (miss dots is ok)
-            $checks{'wildhost'}->{val}  = $value if ($host =~ m/$regex/);
-            $checks{'cnt_wildcard'}->{val}++;
-        }
-        $checks{'cnt_altname'}->{val}++;
-        $checks{'len_altname'}->{val} = length($value) + 1; # count number of characters + type (int)
-    }
-    # checking for SNI does not work here 'cause it destroys %data
-} # _getwilds
 
 sub checkcert($$) {
     #? check certificate settings
@@ -4326,7 +4322,7 @@ sub checkhttp($$) {
     }
 } # checkhttp
 
-sub checkssl($$) {
+sub checkssl($$)  {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
@@ -4440,6 +4436,15 @@ sub print_host_key($$$) {
     printf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
 }
 
+sub print_size($$$$) {
+    #? print label and result for length, count, size, ...
+    my ($legacy, $host, $port, $label) = @_;
+    my $value = "";
+    $value = " bytes" if ($label =~ /^(len)/);
+    $value = " bits"  if ($label =~ /^len_(modulus|publickey|sigdump)/);
+    print_check($legacy, $host, $port, $label, $checks{$label}->{val} . $value);
+} # print_size
+
 sub _dump($$) {
     my ($label, $value) = @_;
         $label =~ s/\n//g;
@@ -4448,7 +4453,7 @@ sub _dump($$) {
     printf("#{ %s\n\t%s\n#}\n", $label, $value);
     # using curly brackets 'cause they most likely are not part of any data
 } # _dump
-sub printdump($$$) {
+sub printdump($$$)  {
     #? just dumps internal database %data and %check_*
     my ($legacy, $host, $port) = @_;   # NOT IMPLEMENTED
     my $key;
@@ -4460,8 +4465,8 @@ sub printdump($$$) {
     print '######################################################################## %check';
     foreach $key (keys %checks) { _dump($checks{$key}->{txt}, $checks{$key}->{val}); }
 } # printdump
-sub printruler()  { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); }
-sub printheader($$){
+sub printruler()    { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); }
+sub printheader($$) {
     #? print title line and table haeder line if second argument given
     my ($txt, $desc, $rest) = @_;
     return if ($cfg{'out_header'} <= 0);
@@ -4470,6 +4475,70 @@ sub printheader($$){
     printf("= %-37s %s\n", $text{'desc'}, $desc);
     printruler();
 } # printheader
+
+sub printfooter($)  {
+    #? print footer line according given legacy format
+    my $legacy  = shift;
+    if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
+    # all others are empty, no need to do anything
+} # printfooter
+
+sub printtitle($$$$) {
+    #? print title according given legacy format
+    my ($legacy, $ssl, $host, $port) = @_;
+    my $txt     = _subst($text{'out-ciphers'}, $ssl);
+    local    $\ = "\n";
+    if ($legacy eq 'sslyze')    {
+        my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
+        print "$txt";
+        print " " . "-" x length($txt);
+    }
+    if ($legacy eq 'sslaudit')  {} # no title
+    if ($legacy eq 'sslcipher') { print "Testing $host ..."; }
+    if ($legacy eq 'ssldiagnos'){
+        print
+            "----------------TEST INFO---------------------------\n",
+            "[*] Target IP: $cfg{'IP'}\n",
+            "[*] Target Hostname: $host\n",
+            "[*] Target port: $port\n",
+            "----------------------------------------------------\n";
+    }
+    if ($legacy eq 'sslscan')   { $host =~ s/;/ on port /; print "Testing SSL server $host\n"; }
+    if ($legacy eq 'ssltest')   { print "Checking for Supported $ssl Ciphers on $host..."; }
+    if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
+    if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
+    if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
+    if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
+    if ($legacy eq 'quick')     { printheader($txt, ""); }
+    if ($legacy eq 'simple')    { printheader($txt, ""); }
+    if ($legacy eq 'full')      { printheader($txt, ""); }
+} # printtitle
+
+sub _print_line($$$) {
+    #? print label and result of check
+    my ($legacy, $label, $value) = @_;
+        $label = STR_UNDEF if (! defined $label);   # defensive programming: missing variable declaration in caller, probaly in %cfg, %data or %shorttexts
+    if ($legacy eq 'full')   {
+        printf("%s\n", $label . $text{'separator'});
+        printf("\t%s\n", $value) if (defined $value);
+        return;
+    }
+    if ($legacy =~ m/(compact|quick)/) {
+        printf("%s", $label . $text{'separator'});
+        printf("%s", $value) if (defined $value);
+    } else {
+        printf("%-36s", $label . $text{'separator'});
+        printf("\t%s", $value) if (defined $value);
+    }
+    printf("\n");
+} # _print_line
+
+sub print_line($$$$$$) {
+    #? print label and value
+    my ($legacy, $host, $port, $key, $label, $value) = @_;
+    print_host_key($host, $port, $key);
+    _print_line($legacy, $label, $value);
+} # print_line
 
 sub print_data($$$$) {
     # print given label and text from %data according given legacy format
@@ -4540,33 +4609,7 @@ sub print_data($$$$) {
     }
 } # print_data
 
-sub _print_line($$$) {
-    #? print label and result of check
-    my ($legacy, $label, $value) = @_;
-        $label = STR_UNDEF if (! defined $label);   # defensive programming: missing variable declaration in caller, probaly in %cfg, %data or %shorttexts
-    if ($legacy eq 'full')   {
-        printf("%s\n", $label . $text{'separator'});
-        printf("\t%s\n", $value) if (defined $value);
-        return;
-    }
-    if ($legacy =~ m/(compact|quick)/) {
-        printf("%s", $label . $text{'separator'});
-        printf("%s", $value) if (defined $value);
-    } else {
-        printf("%-36s", $label . $text{'separator'});
-        printf("\t%s", $value) if (defined $value);
-    }
-    printf("\n");
-} # _print_line
-
-sub print_line($$$$$$) {
-    #? print label and value
-    my ($legacy, $host, $port, $key, $label, $value) = @_;
-    print_host_key($host, $port, $key);
-    _print_line($legacy, $label, $value);
-} # print_line
-
-sub print_check($$$$$) {
+sub print_check($$$$$)  {
     #? print label and result of check
     my ($legacy, $host, $port, $label, $value) = @_;
     print_host_key($host, $port, $label);
@@ -4574,6 +4617,23 @@ sub print_check($$$$$) {
     $label = $checks{$label}->{txt};
     _print_line($legacy, $label, $value);
 } # print_check
+
+sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); }
+    #? print header ruler line
+sub print_cipherhead($) {
+    #? print header line according given legacy format
+    my $legacy  = shift;
+    if ($legacy eq 'sslscan')   { print "\n  Supported Server Cipher(s):"; }
+    if ($legacy eq 'ssltest')   { printf("   %s, %s (%s)\n",  'Cipher', 'Enc, bits, Auth, MAC, Keyx', 'supported'); }
+    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); }
+    if ($legacy eq 'simple')    { printf("=   %-34s%s\t%s\n", $text{'cipher'}, $text{'support'}, $text{'security'});
+                                  print_cipherruler(); }
+    if ($legacy eq 'full')      {
+        # host:port protocol    supported   cipher    compliant security    description
+        printf("= %s\t%s\t%s\t%s\t%s\t%s\t%s\n", 'host:port', 'Prot.', 'supp.', $text{'cipher'}, 'compliant', $text{'security'}, $text{'desc'});
+    }
+    # all others are empty, no need to do anything
+} # print_cipherhead
 
 sub print_cipherline($$$$$$) {
     #? print cipher check result according given legacy format
@@ -4584,15 +4644,15 @@ sub print_cipherline($$$$$$) {
 #   my $ssl  = get_cipher_ssl($cipher);
     my $desc =  join(" ", get_cipher_desc($cipher));
     my $yesno= $text{'legacy'}->{$legacy}->{$support};
-    if ($legacy eq 'sslyze')   {
-        if ($support eq 'yes') {
+    if ($legacy eq 'sslyze')    {
+        if ($support eq 'yes')  {
             $support = sprintf("%4s bits", $bit) if ($support eq 'yes');
         } else {
             $support = $yesno;
         }
         printf("\t%-24s\t%s\n", $cipher, $support);
     }
-    if ($legacy eq 'sslaudit') {
+    if ($legacy eq 'sslaudit')  {
         # SSLv2 - DES-CBC-SHA - unsuccessfull
         # SSLv3 - DES-CBC3-SHA - successfull - 80
         printf("%s - %s - %s\n", $ssl, $cipher, $yesno);
@@ -4611,13 +4671,13 @@ sub print_cipherline($$$$$$) {
         $sec = ($sec =~ /high/i) ? 'STRONG' : 'WEAK';
         printf("[+] Testing %s: %s, %s (%s bits) ... %s\n", $sec, $ssl, $cipher, $bit, $yesno);
     }
-    if ($legacy eq 'sslscan') {
+    if ($legacy eq 'sslscan')   {
         #    Rejected  SSLv3  256 bits  ADH-AES256-SHA
         #    Accepted  SSLv3  128 bits  AES128-SHA
         $bit = sprintf("%3s bits", $bit);
         printf("    %s  %s  %s  %s\n", $yesno, $ssl, $bit, $cipher);
     }
-    if ($legacy eq 'ssltest') {
+    if ($legacy eq 'ssltest')   {
         # cipher, description, (supported)
         my @arr = @{$ciphers{$cipher}};
         pop(@arr);  # remove last value: tags
@@ -4653,23 +4713,6 @@ sub print_cipherline($$$$$$) {
     }
 } # print_cipherline
 
-sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); }
-    #? print header ruler line
-sub print_cipherhead($) {
-    #? print header line according given legacy format
-    my $legacy  = shift;
-    if ($legacy eq 'sslscan')   { print "\n  Supported Server Cipher(s):"; }
-    if ($legacy eq 'ssltest')   { printf("   %s, %s (%s)\n",  'Cipher', 'Enc, bits, Auth, MAC, Keyx', 'supported'); }
-    if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); }
-    if ($legacy eq 'simple')    { printf("=   %-34s%s\t%s\n", $text{'cipher'}, $text{'support'}, $text{'security'});
-                                  print_cipherruler(); }
-    if ($legacy eq 'full')      {
-        # host:port protocol    supported   cipher    compliant security    description
-        printf("= %s\t%s\t%s\t%s\t%s\t%s\t%s\n", 'host:port', 'Prot.', 'supp.', $text{'cipher'}, 'compliant', $text{'security'}, $text{'desc'});
-    }
-    # all others are empty, no need to do anything
-} # print_cipherhead
-
 sub print_cipherdefault($$$$) {
     #? print default cipher according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
@@ -4701,43 +4744,66 @@ sub print_ciphertotals($$$$) {
     }
 } # print_ciphertotals
 
-sub printtitle($$$$) {
-    #? print title according given legacy format
-    my ($legacy, $ssl, $host, $port) = @_;
-    my $txt     = _subst($text{'out-ciphers'}, $ssl);
-    local    $\ = "\n";
-    if ($legacy eq 'sslyze')    {
-        my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
-        print "$txt";
-        print " " . "-" x length($txt);
-    }
-    if ($legacy eq 'sslaudit')  {} # no title
-    if ($legacy eq 'sslcipher') { print "Testing $host ..."; }
-    if ($legacy eq 'ssldiagnos'){
-        print
-            "----------------TEST INFO---------------------------\n",
-            "[*] Target IP: $cfg{'IP'}\n",
-            "[*] Target Hostname: $host\n",
-            "[*] Target port: $port\n",
-            "----------------------------------------------------\n";
-    }
-    if ($legacy eq 'sslscan')   { $host =~ s/;/ on port /; print "Testing SSL server $host\n"; }
-    if ($legacy eq 'ssltest')   { print "Checking for Supported $ssl Ciphers on $host..."; }
-    if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
-    if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
-    if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
-    if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
-    if ($legacy eq 'quick')     { printheader($txt, ""); }
-    if ($legacy eq 'simple')    { printheader($txt, ""); }
-    if ($legacy eq 'full')      { printheader($txt, ""); }
-} # printtitle
+sub _is_print($$$) {
+    #? return 1 if parameter indicate printing
+    my $enabled = shift;
+    my $print_disabled = shift;
+    my $print_enabled  = shift;
+    return 1 if ($print_disabled == $print_enabled);
+    return 1 if ($print_disabled && ($enabled eq 'no' ));
+    return 1 if ($print_enabled  && ($enabled eq 'yes'));
+    return 0;
+} # _is_print
 
-sub printfooter($) {
-    #? print footer line according given legacy format
+sub _print_results($$$@) {
+    #? print all ciphers from @results if match $ssl and $yesno
+    my $ssl     = shift;
+    my $host    = shift;
+    my $port    = shift;
+    my $yesno   = shift; # only print these results, all if empty
+    my @results = @_;
+    my $print   = 0; # default: do not print
+    my $c       = "";
+    local    $\ = "\n";
+    foreach $c (@results) {
+        next if  (${$c}[0] ne $ssl);
+        next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
+        $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
+        print_cipherline($cfg{'legacy'}, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
+    }
+} # _print_results
+
+sub printciphercheck($$$$$@)    {
+    #? print all cipher check results according given legacy format
     my $legacy  = shift;
-    if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
-    # all others are empty, no need to do anything
-} # printfooter
+    my $ssl     = shift;
+    my $host    = shift;
+    my $port    = shift;
+    my $count   = shift; # print title line if 0
+    my @results = @_;
+    local    $\ = "\n";
+    print_cipherhead( $legacy) if (($cfg{'out_header'}>0) && ($count == 0));
+    print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
+
+    if ($legacy ne 'sslyze') {
+        _print_results($ssl, $host, $port, "", @results);
+        print_cipherruler() if ($legacy eq 'simple');
+    } else {
+        print "\n  * $ssl Cipher Suites :";
+        print_cipherdefault($legacy, $ssl, $host, $port);
+        if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
+            print "\n      Accepted Cipher Suites:";
+            _print_results($ssl, $host, $port, "yes", @results);
+        }
+        if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
+            print "\n      Rejected Cipher Suites:";
+            _print_results($ssl, $host, $port, "no", @results);
+        }
+    }
+    #print_ciphertotals($legacy, $ssl, $host, $port);  # up to version 15.10.15
+    print_check($legacy, $host, $port, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
+    printfooter($legacy);
+} # printciphercheck
 
 sub printprotocols($$$) {
     #? print table with cipher informations per protocol
@@ -4770,76 +4836,6 @@ sub printprotocols($$$) {
     }
     printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
 } # printprotocols
-
-sub _is_print($$$) {
-    #? return 1 if parameter indicate printing
-    my $enabled = shift;
-    my $print_disabled = shift;
-    my $print_enabled  = shift;
-    return 1 if ($print_disabled == $print_enabled);
-    return 1 if ($print_disabled && ($enabled eq 'no' ));
-    return 1 if ($print_enabled  && ($enabled eq 'yes'));
-    return 0;
-} # _is_print
-
-sub _print_results($$$@) {
-    #? print all ciphers from @results if match $ssl and $yesno
-    my $ssl     = shift;
-    my $host    = shift;
-    my $port    = shift;
-    my $yesno   = shift; # only print these results, all if empty
-    my @results = @_;
-    my $print   = 0; # default: do not print
-    my $c       = "";
-    local    $\ = "\n";
-    foreach $c (@results) {
-        next if  (${$c}[0] ne $ssl);
-        next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
-        $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
-        print_cipherline($cfg{'legacy'}, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
-    }
-} # _print_results
-
-sub printciphercheck($$$$$@) {
-    #? print all cipher check results according given legacy format
-    my $legacy  = shift;
-    my $ssl     = shift;
-    my $host    = shift;
-    my $port    = shift;
-    my $count   = shift; # print title line if 0
-    my @results = @_;
-    local    $\ = "\n";
-    print_cipherhead( $legacy) if (($cfg{'out_header'}>0) && ($count == 0));
-    print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
-
-    if ($legacy ne 'sslyze') {
-        _print_results($ssl, $host, $port, "", @results);
-        print_cipherruler() if ($legacy eq 'simple');
-    } else {
-        print "\n  * $ssl Cipher Suites :";
-        print_cipherdefault($legacy, $ssl, $host, $port);
-        if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
-            print "\n      Accepted Cipher Suites:";
-            _print_results($ssl, $host, $port, "yes", @results);
-        }
-        if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
-            print "\n      Rejected Cipher Suites:";
-            _print_results($ssl, $host, $port, "no", @results);
-        }
-    }
-    #print_ciphertotals($legacy, $ssl, $host, $port);  # up to version 15.10.15
-    print_check($legacy, $host, $port, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
-    printfooter($legacy);
-} # printciphercheck
-
-sub print_size($$$$) {
-    #? print label and result for length, count, size, ...
-    my ($legacy, $host, $port, $label) = @_;
-    my $value = "";
-    $value = " bytes" if ($label =~ /^(len)/);
-    $value = " bits"  if ($label =~ /^len_(modulus|publickey|sigdump)/);
-    print_check($legacy, $host, $port, $label, $checks{$label}->{val} . $value);
-} # print_size
 
 sub printdata($$$) {
     #? print information stored in %data
