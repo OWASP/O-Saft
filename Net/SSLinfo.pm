@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.110 15/10/27 08:16:30',
+    SID         => '@(#) Net::SSLinfo.pm 1.111 15/11/03 22:32:51',
 };
 
 ######################################################## public documentation #
@@ -1820,7 +1820,7 @@ sub do_openssl($$$) {
 
 =pod
 
-=head2 set_cipher_list($cipherlist)
+=head2 set_cipher_list($ssl,$cipherlist)
 
 Set cipher list for connection.
 
