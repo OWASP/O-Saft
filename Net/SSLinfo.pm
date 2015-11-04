@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.111 15/11/03 22:32:51',
+    SID         => '@(#) Net::SSLinfo.pm 1.112 15/11/04 23:01:05',
 };
 
 ######################################################## public documentation #
@@ -1156,9 +1156,8 @@ sub do_ssl_open($$$) {
         #2b. set protocol options
         $src = "Net::SSLeay::CTX_set_ssl_version()";   # set default SSL protocol
         $ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
-        if ($ssl == 1) {
-            Net::SSLeay::CTX_set_ssl_version($ctx, $ssl) or do {$err = $!} and last;
-            # FIXME: need to pass &Net::SSLeay::SSLv23_method instead of $ssl ?
+        if (defined &Net::SSLeay::SSLv23_method) {
+            Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
             # allow all protocols for backward compatibility; user specific
             # restrictions are done later with  CTX_set_options()
         } else {
