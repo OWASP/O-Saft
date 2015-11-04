@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.384 15/11/04 00:09:13",
+    SID         => "@(#) yeast.pl 1.385 15/11/04 01:56:01",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1561,7 +1561,7 @@ our %cmd = (
         'cmd-intern'=> '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
 
         # Regex for matching SSL protocol keys in %data and %checks
-        'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1-LOW, ...
+        'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
 
     }, # regex
    #------------------+--------------------------------------------------------
@@ -3108,52 +3108,56 @@ sub _usesocket($$$$) {
     my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher = "";
     my $sslsocket = undef;
-    unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
-        # no proxy and not starttls
-        $sslsocket = IO::Socket::SSL->new(
-            PeerAddr        => $host,
-            PeerPort        => $port,
-            Proto           => "tcp",
-            Timeout         => $cfg{'timeout'},
-            SSL_hostname    => $sni,    # for SNI
-            SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-            SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
-            SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
-            SSL_version     => $ssl,    # default is SSLv23
-            SSL_cipher_list => $ciphers
-        );
-    } else {
-        # proxy or starttls
-        _trace("_usesocket: using 'Net::SSLhello'");
-        $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
-        if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection 
-            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
-            _warn("_usesocket: openTcpSSLconnection() failed: $@\n"); 
-            return ("");
+    if (eval {  # FIXME: use something better than eval()
+        # TODO: eval necessary to avoid perl error like:
+        #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
+        # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
+        unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
+            # no proxy and not starttls
+            $sslsocket = IO::Socket::SSL->new(
+                PeerAddr        => $host,
+                PeerPort        => $port,
+                Proto           => "tcp",
+                Timeout         => $cfg{'timeout'},
+                SSL_hostname    => $sni,    # for SNI
+                SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+                SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
+                SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
+                SSL_version     => $ssl,    # default is SSLv23
+                SSL_cipher_list => $ciphers
+            );
         } else {
-            # SSL upgrade
-            _trace("_usesocket: start_SSL ($host, $port, $ciphers)\t= $cipher");
-            IO::Socket::SSL->start_SSL($sslsocket,
-              Timeout         => $cfg{'timeout'},
-              SSL_hostname    => $sni,    # for SNI
-              SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
-              SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
-              SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
-              SSL_version     => $ssl,    # default is SSLv23
-              SSL_cipher_list => $ciphers,
-            ) or do {
-                _trace ("_usesocket: ssl handshake failed: $!");
-                return "";
-            };
+            # proxy or starttls
+            _trace("_usesocket: using 'Net::SSLhello'");
+            $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
+            if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection 
+                $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
+                _warn("_usesocket: openTcpSSLconnection() failed: $@\n"); 
+                return ("");
+            } else {
+                # SSL upgrade
+                _trace("_usesocket: start_SSL ($host, $port, $ciphers)\t= $cipher");
+                IO::Socket::SSL->start_SSL($sslsocket,
+                  Timeout         => $cfg{'timeout'},
+                  SSL_hostname    => $sni,    # for SNI
+                  SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+                  SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
+                  SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
+                  SSL_version     => $ssl,    # default is SSLv23
+                  SSL_cipher_list => $ciphers,
+                ) or do {
+                    _trace ("_usesocket: ssl handshake failed: $!");
+                    return "";
+                };
+            }
+        }
+    }) {    # eval succeded
+        if ($sslsocket) {
+            $cipher = $sslsocket->get_cipher();
+            $sslsocket->close(SSL_ctx_free => 1);
         }
     }
-
-    # SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
-    if ($sslsocket) {
-        $cipher = $sslsocket->get_cipher();
-        $sslsocket->close(SSL_ctx_free => 1);
-    }
-    # else  # connect failed, cipher not accepted
+    # else  # connect failed, cipher not accepted, or error in IO::Socket::SSL
     _trace("_usesocket($host, $port, $ciphers)\t= $cipher");
     return $cipher;
 } # _usesocket
@@ -4818,15 +4822,9 @@ sub printprotocols($$$) {
     printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     foreach $ssl (@{$cfg{'versions'}}) {
         # $cfg{'versions'} is sorted in contrast to "keys %prot" 
-        next if ($ssl =~ m/(DTLSv09 DTLSv11 DTLSv12 DTLSv13)$/); # FIXME: ugly hardcoded
+        next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # NOT YET implemented with verbose only
         if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
-            next if (($cfg{$ssl} == 0) and ($verbose <= 0)); # no key without verbose
             print_host_key($host, $port, $ssl);
-        }
-        if ($cfg{$ssl} == 0) {
-            # we need to ignore NOT YET implemented protocols
-            printf("%-7s %s\n", $ssl, $text{'protocol'}) if ($verbose > 0);
-            next;
         }
         printf("%s:\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $ssl,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
@@ -5911,8 +5909,8 @@ _y_TIME("inc}");
 ## -------------------------------------
 _y_CMD("  check support SSL versions ...");
 foreach $ssl (@{$cfg{'versions'}}) {
-    next if ($cfg{$ssl} == 0);
-    if (_is_do('cipherraw')) { # +cipherraw does not depend on other libraries
+    next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
+    if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
         if ($ssl eq 'DTLSv1') {
             _warn("SSL version '$ssl' not supported by '$mename +cipherraw'; not checked");
             next;
@@ -5947,6 +5945,9 @@ foreach $ssl (@{$cfg{'versions'}}) {
         $typ = (defined &Net::SSLeay::TLSv1_2_method) ? 1:0 if ($ssl eq 'TLSv12');
         $typ = (defined &Net::SSLeay::TLSv1_3_method) ? 1:0 if ($ssl eq 'TLSv13');
         $typ = (defined &Net::SSLeay::DTLSv1_method)  ? 1:0 if ($ssl eq 'DTLSv1');
+        $typ = (defined &Net::SSLeay::DTLSv1_1_method)? 1:0 if ($ssl eq 'DTLSv11');
+        $typ = (defined &Net::SSLeay::DTLSv1_2_method)? 1:0 if ($ssl eq 'DTLSv12');
+        $typ = (defined &Net::SSLeay::DTLSv1_3_method)? 1:0 if ($ssl eq 'DTLSv13');
         if ($typ == 1) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
@@ -6356,7 +6357,6 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ((_need_default() > 0) or ($check > 0)) {
         _y_CMD("get default ..");
         foreach $ssl (keys %prot) { # all protocols, no need to sort them
-            next if ($cfg{$ssl} == 0);  # FIXME: remove when proper error checks are performed
             my $cipher  = _get_default($ssl, $host, $port);
             $prot{$ssl}->{'default'}    = $cipher;
             $prot{$ssl}->{'pfs_cipher'} = $cipher if ("" eq _ispfs($ssl, $cipher));
