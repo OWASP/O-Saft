@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.387 15/11/06 00:16:21",
+    SID         => "@(#) yeast.pl 1.388 15/11/06 01:08:16",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -4868,10 +4868,12 @@ sub printprotocols($$$) {
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
     my $ssl;
+    if ($cfg{'out_header'}>0) {
+        printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=total amount  PFS=selected cipher with PFS\n") if ($verbose > 0);
+        printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot default PFS));
+        printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
+    }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
-    printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=total amount  PFS=selected cipher with PFS\n") if ($verbose > 0);
-    printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot default PFS));
-    printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     foreach $ssl (@{$cfg{'versions'}}) {
         # $cfg{'versions'} is sorted in contrast to "keys %prot" 
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # NOT YET implemented with verbose only
@@ -4884,7 +4886,9 @@ sub printprotocols($$$) {
                 ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
                 $prot{$ssl}->{'default'}, $prot{$ssl}->{'pfs_cipher'});
     }
-    printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
+    if ($cfg{'out_header'}>0) {
+        printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
+    }
 } # printprotocols
 
 sub printdata($$$) {
@@ -6466,11 +6470,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         foreach $ssl (@{$cfg{'version'}}) {
             print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
         }
-        printruler() if (($quick == 0) and ($legacy ne 'thcsslcheck'));
         printheader("\n" . _subst($text{'out-summary'}, ""), "");
-
         printprotocols($legacy, $host, $port);
-
         printruler() if ($quick == 0);
     }
 
