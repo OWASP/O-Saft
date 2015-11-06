@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.46 15/11/02 22:48:34";
+my  $man_SID= "@(#) o-saft-man.pm 1.47 15/11/06 14:09:15";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1225,20 +1225,25 @@ QUICKSTART
 
 WHY?
 
-        Why a new tool for checking SSL security and configuration when there
-        are already a dozen or more such tools in existence (circa 2012)?
+        Why a new tool for checking SSL security and configuration  when there
+        are already a dozen or more such good tools in existence (circa 2012)?
+
+        Unique features:
+          * working in closed environments, i.e. without internet connection
+          * checking availability of ciphers independent of installed library
+          * checking for all possible ciphers (up to 65535 per SSL protocol)
+          * mainly same results on all platforms.
+
         Currently available tools suffer from some or all of following issues:
-          * lack of tests of unusual ciphers
           * lack of tests of unusual SSL certificate configurations
           * may return different results for the same checks on given target
           * missing tests for modern SSL/TLS functionality
           * missing tests for specific, known SSL/TLS vulnerabilities
           * no support for newer, advanced, features e.g. CRL, OCSP, EV
           * limited capability to create your own customised tests
-          * working in closed environments, i.e. without internet connection
 
-        Other  reasons or problems  are that they are either binary and hence
-        not portable to other (newer) platforms.
+        Other  reasons or problems  are that other tools are either binary or
+        use additional binaries and hence not portable to other platforms.
 
         In contrast to (all?) most other tools, including  openssl(1), it can
         be used to "ask simple questions" like "does target support STS" just
@@ -1257,6 +1262,8 @@ TECHNICAL INFORMATION
         data returned by underlaying (used) libraries and the information 
         computed directly.
 
+    openssl, libssl, libcrypto
+
         In general the tool uses perl's  Net::SSLeay(1)  module  which itself
         is based on libssl and/or libssleay library of the operating system.
         It's possible to use other versions of these libraries, see options:
@@ -1272,6 +1279,11 @@ TECHNICAL INFORMATION
           * --force-openssl
           * --exe-path=PATH --exe=PATH
 
+        Above applies to all commands except  +cipherraw  which uses no other
+        libraries.
+
+    Certificates and CA
+
         All checks according the validity of the certificate chain  are based
         on the root CAs installed on the system. NOTE that Net::SSLeay(1) and
         openssl(1)  may have their own rules where to find the root CAs.
@@ -1281,8 +1293,7 @@ TECHNICAL INFORMATION
           * --ca-path=DIR
           * --ca-depth=INT
 
-        Above applies to all commands except  +cipherraw  which uses no other
-        libraries.
+    Commands and options
 
         All arguments  starting with  '+'  are considered  COMMANDS  for this
         tool. All arguments starting with  '--'  are considered  OPTIONS  for
@@ -1290,6 +1301,30 @@ TECHNICAL INFORMATION
 
         Reading any data from STDIN or here-documents is not yet supported.
         It's reserved for future use.
+
+    Environment variables
+
+        Following environment variables are incorporated:
+          * OPENSSL         - if set, full path to openssl executable
+          * LD_LIBRARY_PATH - used and extended with definitions from options
+
+    Requirements
+
+        For checking all ciphers and all protocols with  +cipherall  command,
+        just perl (5.x) without any modules.
+        For  +info  and  +check  (and all related) commands,  perl (5.x) with
+        following modules (minimal version):
+
+          * IO             1.25 (2011)
+          * IO::Socket:SSL 1.37 (2011)
+          * IO::Socket:SSL 1.90 (2013)
+          * Net::DNS       0.66 (2011)
+          * Net::SSLeay    1.49 (2012)
+
+         However, it is recommended to use the  most recent version  of these
+         modules which then gives more accurate results and less warnings.
+         Also an openssl(1) executable should be available, but is not manda-
+         tory.
 
 
 RESULTS
@@ -3883,13 +3918,13 @@ HACKER's INFO
 #          # FIXME:      Program code known to be buggy, needs to be fixed.
 #          #!#           Comments not to be removed in compressed code.
 #          #?            Description of sub.
-#          ##            Code sections.
+#          ##            Code sections (documents program flow).
 #
 #      Variables
 #
 #        Most functions use global variables (even if they are defined in main
 #        with 'my'). These variables are mainly: @DATA, @results, %cmd, %data,
-#        %cfg, %checks, %ciphers, %text.
+#        %cfg, %checks, %ciphers, %prot, %text.
 #
 #        Variables defined with 'our' can be used in   o-saft-dbx.pm   and
 #        o-saft-usr.pm.
@@ -3901,7 +3936,7 @@ HACKER's INFO
 #
 #        Some rules used for function names:
 #
-#          check*        Functions which perform some checks.
+#          check*        Functions which perform some checks on data.
 #          print*        Functions which print results.
 #          get_*         Functions to get a value from internal ciphers structure.
 #          _<function_name>    Some kind of helper functions.
@@ -3922,8 +3957,8 @@ HACKER's INFO
 #
 #        Same a little bit formatted, see  +traceSUB  command.
 #
-#        Examples to get an overview of workflow:
-#          egrep '^##\s' $0
+#        Examples to get an overview of programs workflow:
+#          egrep '(^##\s|\s\susr_)' $0
 #
 #        Following to get perl's variables for checks:
 #          $0 +check localhost --trace-key \
@@ -3970,6 +4005,21 @@ HACKER's INFO
 #        Checks are performed on provided data by  Net::SSLinfo  and specified
 #        conditions herein.  Most checks are done in functions  'check*',  see
 #        above.
+#
+#      Abstract program flow
+#          check special options and command (+exec, +cgi, --envlibvar)
+#          read RC-FILE, DEBUG-FILE and USER-FILE if necessary
+#          initialize internal data structure
+#          scan options and arguments
++          perform commands without connection to target
+#          loop over all specified targets
+#              print DNS stuff
+#              open connction and retrive information
+#              print ciphers
+#              print protocols
+#              print information
+#              print checks
+#
 
 
 DEBUG
