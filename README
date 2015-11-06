@@ -8,11 +8,12 @@
 (       This tools lists  information about remote target's  SSL  certificate
  )      and tests the remote target according given list of ciphers.
 (
-=== UNIQUE FEATURES ===
-(       * working in closed environments, i.e. without internet connection
- )      * checking availability of ciphers independent of installed library
-(       * checking for all possible ciphers (up to 65535 per SSL protocol)
- )      * mainly same results on all platforms.
+UNIQUE FEATURES
+===============
+###     * working in closed environments, i.e. without internet connection
+###     * checking availability of ciphers independent of installed library
+###     * checking for all possible ciphers (up to 65535 per SSL protocol)
+###     * mainly same results on all platforms.
 (
  )  WHY?
 (       Why a new tool for checking SSL  when there already exist a dozens or
