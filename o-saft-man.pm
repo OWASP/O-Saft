@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.47 15/11/06 14:09:15";
+my  $man_SID= "@(#) o-saft-man.pm 1.48 15/11/06 23:52:16";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1305,8 +1305,15 @@ TECHNICAL INFORMATION
     Environment variables
 
         Following environment variables are incorporated:
-          * OPENSSL         - if set, full path to openssl executable
           * LD_LIBRARY_PATH - used and extended with definitions from options
+          * OPENSSL         - if set, full path to openssl executable
+          * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
+                              directory where to find openssl.cnf
+#         * OPENSSL_FIPS    - 
+#         * OPENSSL_ENGINES -
+#         * OPENSSL_ALLOW_PROXY
+#         * OPENSSL_ALLOW_PROXY_CERTS
+
 
     Requirements
 
@@ -1830,6 +1837,14 @@ OPTIONS
 #         * x86_64:     use  ** NOT YET IMPLEMENTED **
 #         * x86Mac:     use  ** NOT YET IMPLEMENTED **
 #         * arch:       use  ** NOT YET IMPLEMENTED **
+
+      --openssl-cnf=FILE --openssl-conf=FILE
+
+          'FILE'        path of directory or full path of openssl.cnf
+
+          If set, environment variable OPENSSL_CONF will be set to given path
+          (or file) when openssl(1) is started. Please see openssl's man page
+          for details about specifying alternate  openssl.cnf  files.
 
       --force-openssl
 
@@ -3783,11 +3798,14 @@ HACKER's INFO
         objects.
 
         Depending on  compile time settings  and/or  the location of the used
-        tool or lib, a warning like following my occur:
+        tool or lib, a warning like following may occur:
 
-              WARNING: can't open config file: /path/to-openssl/ssl/openssl.cnf
+              WARNING: can't open config file: /path/to/openssl/ssl/openssl.cnf
 
-        This warning can be ignored, usually.
+        This warning can be ignored, usually as  req  or  ca  sub commands of
+        openssl is not used here. 
+        To fix the problem, either use  --openssl-cnf=FILE  option or set the
+        the environment variable OPENSSL_CONF properly.
 
       Cumbersome Approach
 
