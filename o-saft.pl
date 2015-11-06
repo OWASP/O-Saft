@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.390 15/11/06 23:34:47",
+    SID         => "@(#) yeast.pl 1.391 15/11/07 00:02:29",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -6042,7 +6042,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
         } else {
-            _warn("SSL version '$ssl' not supported by openssl; not checked");
+            _warn("SSL version '$ssl' not supported by Net::SSLeay; not checked");
             print STR_HINT . "consider using '+cipherall' instead" if (_is_do('cipher'));
         }
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
