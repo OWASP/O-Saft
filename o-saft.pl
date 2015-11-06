@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.388 15/11/06 01:08:16",
+    SID         => "@(#) yeast.pl 1.389 15/11/06 09:28:22",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -2474,8 +2474,8 @@ our %text = (
 
 ); # %text
 
-$cmd{'extopenssl'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
-$cmd{'extsclient'} = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
+$cmd{'extopenssl'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
+$cmd{'extsclient'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 
 # save hardcoded settings (command lists, texts); used in o-saft-dbx.pm
@@ -2485,6 +2485,15 @@ our %org = (
     'cmd-info'  => $cfg{'cmd-info'},
     'cmd-quick' => $cfg{'cmd-quick'},
 ); # %org
+
+## incorporate some environment variables
+## -------------------------------------
+$cmd{'openssl'}     = $ENV{'OPENSSL'} if (defined $ENV{'OPENSSL'});
+if (defined $ENV{'LIBPATH'}) {
+    print STR_HINT, "LIBPATH environment variable found, consider using '--envlibvar=LIBPATH'\n";
+    # TODO: avoid hint if --envlibvar=LIBPATH in use
+    # $cmd{'envlibvar'} = $ENV{'LIBPATH'}; # don't set silently
+}
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
 
@@ -5913,6 +5922,7 @@ if ($cfg{'exec'} == 0) {
     # with --lib to the PATH environment variable too, which should not harm
     if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) { # any of these is used
         _y_CMD("exec command " . join(" ", @{$cfg{'do'}}));
+        #ENV{OPENSSL} no need to set again if already done when called
         my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
         my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
         local $\ = "\n";
@@ -5934,7 +5944,7 @@ _y_TIME("inc{");
 
 local $\ = "\n";
 
-## include common and private modules
+## import common and private modules
 ## -------------------------------------
 # Unfortunately `use autouse' is not possible as to much functions need to
 # be declared for that pragma then.
@@ -6223,7 +6233,7 @@ _v_print("cipher list: @{$cfg{'ciphers'}}");
 
 usr_pre_main();
 
-## main: do the work
+## main: do the work for all targets
 ## -------------------------------------
 
 # defense, user-friendly programming
@@ -6384,12 +6394,12 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
-## FIXME: following disabled due to multipe openssl calls which may produce 
-##         unexpected results (10/2015) {
-##        foreach $key (keys %data) { # copy to %data0
-##            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
-##        }
-## }
+# FIXME: following disabled due to multipe openssl calls which may produce 
+#         unexpected results (10/2015) {
+#        foreach $key (keys %data) { # copy to %data0
+#            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+#        }
+# }
         Net::SSLinfo::do_ssl_close($host, $port);
     } else {
         _warn("Can't make a connection to $host:$port; no initial data");
