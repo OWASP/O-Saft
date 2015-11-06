@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.389 15/11/06 09:28:22",
+    SID         => "@(#) yeast.pl 1.390 15/11/06 23:34:47",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1214,7 +1214,9 @@ our %cmd = (
                                 # common paths to PEM files for CAs
     'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
                                 # common PEM filenames for CAs
-    'openssl_cnf'   => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
+    'openssl_cnf'   => undef,   # full path with openssl's openssl.cnf
+    'openssl_cnfs'  => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
+    'openssl_fips'  => undef,   # NOT YET USED
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
@@ -2488,7 +2490,9 @@ our %org = (
 
 ## incorporate some environment variables
 ## -------------------------------------
-$cmd{'openssl'}     = $ENV{'OPENSSL'} if (defined $ENV{'OPENSSL'});
+$cmd{'openssl'}     = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
+$cfg{'openssl_cnf'} = $ENV{'OPENSSL_CONF'} if (defined $ENV{'OPENSSL_CONF'});
+$cfg{'openssl_fips'}= $ENV{'OPENSSL_FIPS'} if (defined $ENV{'OPENSSL_FIPS'});
 if (defined $ENV{'LIBPATH'}) {
     print STR_HINT, "LIBPATH environment variable found, consider using '--envlibvar=LIBPATH'\n";
     # TODO: avoid hint if --envlibvar=LIBPATH in use
@@ -5052,6 +5056,8 @@ sub printversion() {
            }
         }
     }
+    print "    full path to openssl.cnf file    " . ($cfg{'openssl_cnf'} || STR_UNDEF);
+    print "    common openssl.cnf files         " . join(" ", @{$cfg{'openssl_cnfs'}});
     print "    URL where to find CRL file       " . ($cfg{'ca_crl'}  || STR_UNDEF);
     print "    directory with PEM files for CAs " . ($cfg{'ca_path'} || STR_UNDEF);
     print "    PEM format file with CAs         " . ($cfg{'ca_file'} || STR_UNDEF);
@@ -5360,6 +5366,8 @@ while ($#argv >= 0) {
            # hence we simply convert anything to lower case
         if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SSLCNF')   { $cfg{'openssl_cnf'}   = $arg; $typ = 'HOST'; }
+        if ($typ eq 'SSLFIPS')  { $cfg{'openssl_fips'}  = $arg; $typ = 'HOST'; }
         if ($typ eq 'NO_OUT')   { push(@{$cfg{'ignore-out'}}, $arg);$typ = 'HOST'; }
         if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; }
@@ -5599,6 +5607,8 @@ while ($#argv >= 0) {
     if ($arg eq  '-i')                  { $arg = '+issuer';         } # ssl-cert-check
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $typ = 'OPENSSL';         }
+    if ($arg =~  '--opensslco?nf')      { $typ = 'SSLCNF';          }
+    if ($arg eq  '--opensslfips')       { $typ = 'SSLFIPS';         }
     if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}    = 1;}
     if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}    = 0;}
     if ($arg eq  '--forceopenssl')      { $cmd{'extciphers'}    = 1;}
@@ -5901,6 +5911,20 @@ if (_is_do('list')) {
 }
 if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs_cipherall') if (!_is_do('pfs_cipherall')); }
 
+# set environment
+# Note:  openssl  has no option to specify the path to its  configuration 
+# directoy.  However, some sub command (like req) do have -config option.
+# Nevertheless the environment variable is used to specify the path, this
+# is independet of the sub command and any platform.
+# We set the environment variable only, if  --openssl-cnf  was used which
+# then overwrites an already set environment variable.
+# This behaviour also honors that  all command line options are  the last
+# resort for all configurations.
+# As we do not use  req  or  ca  sub commands (11/2015),  this setting is
+# just to avoid noicy warnings from openssl.
+$ENV{'OPENSSL_CONF'} = $cfg{'openssl_cnf'}  if (defined $cfg{'openssl_cnf'});
+$ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'});
+
 _yeast_args();
 _vprintme();
 
@@ -6039,7 +6063,7 @@ $typ .= STR_HINT ."#opt# can be used to disables this check";
 if ($IO::Socket::SSL::VERSION < 1.90) {
     if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
         $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/; $txt =~ s/#opt#/--force-?openssl /;
+        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/; $txt =~ s/#opt#/--force-openssl /;
         _warn($txt);
     }
 }
@@ -6182,6 +6206,8 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
     foreach $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
+
+# set environment
 
 ## first: all commands which do not make a connection
 ## -------------------------------------
