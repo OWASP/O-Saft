@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.113 15/11/05 00:39:01',
+    SID         => '@(#) Net::SSLinfo.pm 1.114 15/11/06 01:12:47',
 };
 
 ######################################################## public documentation #
@@ -473,7 +473,7 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
-$Net::SSLinfo::protocols   = 'h2,h2-15,h2-14,spdy/4a4,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1,http/2.0';
+$Net::SSLinfo::protocols   = 'h2,h2-15,h2-14,spdy/4a4,spdy/4a2,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1';
                                 # next protocols not yet configurable
                                 # protocols may have prefix `exp' which should not be checked by server
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
