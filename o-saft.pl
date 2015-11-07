@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.394 15/11/07 20:34:09",
+    SID         => "@(#) yeast.pl 1.395 15/11/07 22:17:16",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -353,9 +353,9 @@ our %prot   = (     # collected data for protocols and ciphers
     'DTLSv11'   => {'txt' => "DTLS 1.1",  'hex' => 0xFEFE,  'opt' => "-dtls1_1" },  #  "
     'DTLSv12'   => {'txt' => "DTLS 1.2",  'hex' => 0xFEFD,  'opt' => "-dtls1_2" },  #  "
     'DTLSv13'   => {'txt' => "DTLS 1.3",  'hex' => 0xFEFC,  'opt' => "-dtls1_3" },  #  "
-    'TLS1FF'    => {'txt' => "--dummy--", 'hex' => 0x03FF,  'opt' => "--dummy-" },  #  "
-    'DTLSfamily'=> {'txt' => "--dummy--", 'hex' => 0xFE00,  'opt' => "--dummy-" },  #  "
-   #'TLS_FALLBACK_SCSV'=>{'txt'=> "SCSV", 'hex' => 0x5600,  'opt' => "--dummy-" },
+    'TLS1FF'    => {'txt' => "--dummy--", 'hex' => 0x03FF,  'opt' => undef      },  #  "
+    'DTLSfamily'=> {'txt' => "--dummy--", 'hex' => 0xFE00,  'opt' => undef      },  #  "
+   #'TLS_FALLBACK_SCSV'=>{'txt'=> "SCSV", 'hex' => 0x5600,  'opt' => undef      },
     #-----------------------+--------------+----------------+------------------+---+---+---+---
     # "protocol"=> {cnt, WEAK, LOW, MEDIUM, HIGH, pfs, default, protocol} see _initchecks_prot()
     # Notes:
@@ -3173,6 +3173,19 @@ sub _usesocket($$$$) {
     my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher = "";
     my $sslsocket = undef;
+    # TODO: dirty hack to avoid perl error like:
+    #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+    # which may occour if Net::SSLeay was not build properly with support for
+    # these protocols. We only check for SSLv2 and SSLv3 as the *TLSX doesn't
+    # produce such arnings. Sigh.
+    if (($ssl eq "SSLv2") && (! defined &Net::SSLeay::CTX_v2_new)) {
+        _warn("SSL version '$ssl': not supported by Net::SSLeay");
+        return "";
+    }
+    if (($ssl eq "SSLv3") && (! defined &Net::SSLeay::CTX_v3_new)) {
+        _warn("SSL version '$ssl': not supported by Net::SSLeay");
+        return "";
+    }
     if (eval {  # FIXME: use something better than eval()
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
@@ -3264,15 +3277,15 @@ sub _useopenssl($$$$) {
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
     return "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
     if ($data =~ m#^\s*$#) {
-        _warn("empty result from openssl; ignored");
+        _warn("SSL version '$ssl': empty result from openssl");
     } else {
-        _warn("unknown result from openssl; ignored");
+        _warn("SSL version '$ssl': unknown result from openssl");
     }
     #_trace("_useopenssl #{ $data }");
     if ($cfg{'verbose'} > 0) {
         _v_print("_useopenssl: Net::SSLinfo::do_openssl() #{\n$data\n#}");
     } else {
-        print STR_HINT, "use options like: --v --trace --timeout=42";
+        print STR_HINT, "use options like: --v --trace";
     }
     return "";
 } # _useopenssl
@@ -3288,6 +3301,14 @@ sub _get_default($$$) {
         $cipher = _usesocket( $ssl, $host, $port, "");
     } else { # force openssl
         $cipher = _useopenssl($ssl, $host, $port, "");
+    }
+    if ($cipher =~ m#^\s*$#) {
+        # TODO: SSLv2 is special, see _usesocket "dirty hack"
+        if ($ssl =~ m/SSLv[2]/) {
+            _warn("SSL version '$ssl': cannot get default cipher; ignored");
+        } else {
+            _v_print("SSL version '$ssl': cannot get default cipher; ignored");
+        }
     }
     _trace(" _get_default($ssl, $host, $port) = $cipher"); # TODO: trace a bit late
     return $cipher;
@@ -6002,7 +6023,7 @@ foreach $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
     if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
         if ($ssl eq 'DTLSv1') {
-            _warn("SSL version '$ssl' not supported by '$mename +cipherraw'; not checked");
+            _warn("SSL version '$ssl': not supported by '$mename +cipherraw'; not checked");
             next;
         }
         push(@{$cfg{'version'}}, $ssl);
@@ -6042,11 +6063,11 @@ foreach $ssl (@{$cfg{'versions'}}) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
         } else {
-            _warn("SSL version '$ssl' not supported by Net::SSLeay; not checked");
+            _warn("SSL version '$ssl': not supported by Net::SSLeay; not checked");
             print STR_HINT . "consider using '+cipherall' instead" if (_is_do('cipher'));
         }
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
-        _warn("unsupported SSL version '$ssl'; not checked");
+        _warn("SSL version '$ssl': not supported; not checked");
     }
 }
 if (! _is_do('version')) {
@@ -6450,6 +6471,8 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ((_need_default() > 0) or ($check > 0)) {
         _y_CMD("get default ..");
         foreach $ssl (keys %prot) { # all protocols, no need to sort them
+            next if (!defined $prot{$ssl}->{opt});
+            # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
             my $cipher  = _get_default($ssl, $host, $port);
             $prot{$ssl}->{'default'}    = $cipher;
             $prot{$ssl}->{'pfs_cipher'} = $cipher if ("" eq _ispfs($ssl, $cipher));
