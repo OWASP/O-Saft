@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.392 15/11/07 13:48:13",
+    SID         => "@(#) yeast.pl 1.393 15/11/07 16:31:40",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1454,7 +1454,7 @@ our %cmd = (
         'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
                        # FORTEZZA has abbreviations FZA and FRZ
                        # unsure about FORTEZZA_KEA
-        'SHA2'      => 'sha(2|224|256|384|512)/',
+        'SHA2'      => 'sha(2|224|256|384|512)',
                        # any SHA2, just sha2 is too lazy
         'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
                        # Numerous protocol prefixes are in use:
