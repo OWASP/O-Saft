@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.395 15/11/07 22:17:16",
+    SID         => "@(#) yeast.pl 1.396 15/11/07 23:51:31",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -673,6 +673,7 @@ my %check_dest = (  # target (connection) data
     'dh_512'        => {'txt' => "Target DH Parameter >= 512 bits"},
     'dh_2048'       => {'txt' => "Target DH Parameter >= 2048 bits"},
     'ecdh_256'      => {'txt' => "Target DH Parameter >= 256 bits (ECDH)"},
+    'ecdh_512'      => {'txt' => "Target DH Parameter >= 512 bits (ECDH)"},
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
@@ -949,6 +950,7 @@ our %shorttexts = (
     'dh_512'        => "DH Parameter >= 512",
     'dh_2048'       => "DH Parameter >= 2048",
     'ecdh_256'      => "DH Parameter >= 256 (ECDH)",
+    'ecdh_512'      => "DH Parameter >= 512 (ECDH)",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -1659,6 +1661,7 @@ our %cmd = (
         'checkssl'  => 0,
         'checkdv'   => 0,
         'checkev'   => 0,
+        'check_dh'  => 0,
      },
     'extension' => {            # TLS extensions
         '00000'     => "renegotiation info length",     # 0x0000 ??
@@ -3391,7 +3394,6 @@ sub checkciphers($$) {
 
     my $ssl     = "";
     my $cipher  = "";
-    my $exp     = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     foreach my $c (@results) {  # check all accepted ciphers
@@ -3402,38 +3404,13 @@ sub checkciphers($$) {
         if ($yn =~ m/yes/i) {   # cipher accepted
             $prot{$ssl}->{'cnt'}++;
             checkcipher($ssl, $cipher);
-            $exp .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $c));
+            $checks{'logjam'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islogjam($ssl, $c));
         }
         $hasrsa{$ssl}  = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
 
-    # Logjam check is a bit ugly: DH Parameter may be missing
-    # TODO: implement own check for DH parameters instead relying on openssl
-    my $txt = $data{'dh_parameter'}->{val}($host);
-    my $dh  = $txt;
-       $dh  =~ s/[^\d]*(\d+) *bits.*/$1/i;  # just get number
-       # DH, 512 bits
-       # DH, 1024 bits
-       # DH, 2048 bits
-       # ECDH, P-256, 128 bits
-       # ECDH, P-256, 256 bits
-                       # TODO: ECDH should also have 256 bits or more
-    if ($dh =~ m/^\d+$/) {      # a number, check size
-        if ($txt !~ m/ECDH/) { 
-            $checks{'dh_512'}->{val}    =  $txt if ($dh < 512);
-            $checks{'dh_2048'}->{val}   =  $txt if ($dh < 2048);
-        } else {                # ECDH is different
-            $checks{'ecdh_256'}->{val}  =  $txt if ($dh < 512);
-        }
-    } else {                    # not a number, probably suspicious
-        $checks{'logjam'}->{val}=  $txt;
-    }
-    if ($txt eq "") {
-        $checks{'logjam'}->{val}.=  "<<openssl did not return DH Paramter>>";
-        $checks{'logjam'}->{val}.=  "; but has WEAK ciphers: $exp" if ($exp ne "");
-    }
-
+    # BEAST check
     if ($prot{'SSLv3'}->{'cnt'} <= 0) {
         # if SSLv3 was disabled, check for BEAST is incomplete; inform about that
         $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
@@ -3463,6 +3440,47 @@ sub checkciphers($$) {
     _trace(" checkciphers }");
 } # checkciphers
 
+sub check_dh($$) {
+    #? check if target is vulnerable to Logjam attack
+    # must be called after checkciphers()
+    my ($host, $port) = @_;
+    _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
+    $cfg{'done'}->{'check_dh'}++;
+    return if ($cfg{'done'}->{'check_dh'} > 1);
+
+    # Logjam check is a bit ugly: DH Parameter may be missing
+    # TODO: implement own check for DH parameters instead relying on openssl
+    my $txt = $data{'dh_parameter'}->{val}($host);
+    my $exp = $checks{'logjam'}->{val};
+    my $dh  = $txt;
+       $dh  =~ s/.*?[^\d]*(\d+) *bits.*/$1/i;   # just get number
+       # DH, 512 bits
+       # DH, 1024 bits
+       # DH, 2048 bits
+       # ECDH, P-256, 128 bits
+       # ECDH, P-256, 256 bits
+       # ECDH, P-384, 384 bits
+       # TODO: ECDH should also have 256 bits or more
+    if ($dh =~ m/^\d+$/) {      # a number, check size
+        if ($txt !~ m/ECDH/) { 
+            $checks{'dh_512'}->{val}    =  $txt if ($dh < 512);
+            $checks{'dh_2048'}->{val}   =  $txt if ($dh < 2048);
+        } else {                # ECDH is different
+            $checks{'ecdh_256'}->{val}  =  $txt if ($dh < 256);
+            $checks{'ecdh_512'}->{val}  =  $txt if ($dh < 512);
+        }
+        # lazy check: logjam if bits < 256 only
+        my $val = $checks{'dh_512'}->{val} . $checks{'dh_2048'}->{val} . $checks{'ecdh_256'}->{val};
+        $checks{'logjam'}->{val} = $val if ($val ne "");
+    } else {                    # not a number, probably suspicious
+        $checks{'logjam'}->{val}=  $txt;
+    }
+    if ($txt eq "") {
+        $checks{'logjam'}->{val}.=  "<<openssl did not return DH Paramter>>";
+        $checks{'logjam'}->{val}.=  "; but has WEAK ciphers: $exp" if ($exp ne "");
+    }
+} # check_dh
+
 sub checkbleed($$) {
     #? check if target supports TLS extension 15 (hearbeat)
     my ($host, $port) = @_;
@@ -3470,7 +3488,6 @@ sub checkbleed($$) {
     $cfg{'done'}->{'checkbleed'}++;
     return if ($cfg{'done'}->{'checkbleed'} > 1);
     $checks{'heartbleed'}->{val}  = _isbleed($host, $port);
-
 } # checkbleed
 
 sub checkdates($$) {
@@ -4329,6 +4346,7 @@ sub checkdest($$) {
     checkprot($host, $port);
 
     # vulnerabilities
+    check_dh($host,$port); # Logjam vulnerability
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
     foreach $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
