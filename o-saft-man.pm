@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.48 15/11/06 23:52:16";
+my  $man_SID= "@(#) o-saft-man.pm 1.49 15/11/08 00:45:33";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2717,7 +2717,7 @@ CHECKS
 
         Check if target is vulenerable to Logjam attack.
         Check if target suports  EXPORT ciphers  and/or  DH Parameter is less
-        than 2048 bits.
+        than 2048 bits. ECDH must be greater to 511 bits.
 
       Lucky 13
 
@@ -3432,6 +3432,13 @@ KNOWN PROBLEMS
         Please report a bug with output of following command:
           $0 +s_client +dump your.tld
 
+    <<openssl did not return DH Paramter>>
+
+        Text may be part of a value. This means that all checks according  DH
+        parameters and logkam attack cannot be done.
+
+        Workaround: try to use  --openssl=TOOL  option.
+
     No output with  +help  and/or  --help=todo
 
         On some (mainly Windows-based) systems using
@@ -3642,6 +3649,8 @@ HACKER's INFO
               invalid SSL_version specified at ... IO/Socket/SSL.pm
               Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm
 
+          There're some workarounds implemented since version 15.11.15 .
+
         * the underlaying libssl does not support the version, which then may
           result in segmentation fault
 
@@ -3654,9 +3663,13 @@ HACKER's INFO
           compile error, like
               Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
 
+          There're some workarounds implemented since version 15.11.15 .
+
         We try to detect unsupported versions and disable them automatically,
         a warning like follwoing is shown then:
-              **WARNING: SSL version 'SSLv2' not supported by openssl
+              **WARNING: SSL version 'SSLv2': not supported by openssl
+        All such warnings look like:
+              **WARNING: SSL version 'SSLv2': ...
 
         If problems occour with  SSL versions, following commands and options
         may help to get closer to the reason or can be used as workaround:
@@ -3669,6 +3682,9 @@ HACKER's INFO
 
         Checking for SSL version is done at one place in the code, search for
               supported SSL versions
+
+        However, there are some dirty hack where  SSLv2 and SSLv3  is checked
+        again.
 
     Using private libssl.so and libcrypt.so
 
@@ -4004,7 +4020,7 @@ HACKER's INFO
 #
 #      Program flow
 #
-#        As explained in the documentation, please see +help, there are mainly
+#        As explained in the documentation (please see +help) there are mainly
 #        3 types of `checks':
 #          +info    - getting as much information as possible about the target
 #                     its certificate and the connection
@@ -4023,6 +4039,9 @@ HACKER's INFO
 #        Checks are performed on provided data by  Net::SSLinfo  and specified
 #        conditions herein.  Most checks are done in functions  'check*',  see
 #        above.
+#        Some checks depend on other checks,  so check functions may be called
+#        anywhere to solve dependencies. To avoid multiple checks,  each check
+#        function sets and checks a flag if already called, see  $cfg{'done'}.
 #
 #      Abstract program flow
 #          check special options and command (+exec, +cgi, --envlibvar)
