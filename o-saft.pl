@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.396 15/11/07 23:51:31",
+    SID         => "@(#) yeast.pl 1.397 15/11/08 00:19:51",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -3442,16 +3442,27 @@ sub checkciphers($$) {
 
 sub check_dh($$) {
     #? check if target is vulnerable to Logjam attack
-    # must be called after checkciphers()
     my ($host, $port) = @_;
     _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
     $cfg{'done'}->{'check_dh'}++;
     return if ($cfg{'done'}->{'check_dh'} > 1);
 
+    checkciphers($host, $port); # need EXPORT ciphers
+
     # Logjam check is a bit ugly: DH Parameter may be missing
     # TODO: implement own check for DH parameters instead relying on openssl
     my $txt = $data{'dh_parameter'}->{val}($host);
     my $exp = $checks{'logjam'}->{val};
+    if ($txt eq "") {
+        $txt = "<<openssl did not return DH Paramter>>";
+        $checks{'logjam'}->{val}   .=  $txt;
+        $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
+        $checks{'dh_512'}->{val}    =  $txt;
+        $checks{'dh_2048'}->{val}   =  $txt;
+        $checks{'ecdh_256'}->{val}  =  $txt;
+        $checks{'ecdh_512'}->{val}  =  $txt;
+        return; # no more checks possible
+    }
     my $dh  = $txt;
        $dh  =~ s/.*?[^\d]*(\d+) *bits.*/$1/i;   # just get number
        # DH, 512 bits
@@ -3474,10 +3485,6 @@ sub check_dh($$) {
         $checks{'logjam'}->{val} = $val if ($val ne "");
     } else {                    # not a number, probably suspicious
         $checks{'logjam'}->{val}=  $txt;
-    }
-    if ($txt eq "") {
-        $checks{'logjam'}->{val}.=  "<<openssl did not return DH Paramter>>";
-        $checks{'logjam'}->{val}.=  "; but has WEAK ciphers: $exp" if ($exp ne "");
     }
 } # check_dh
 
