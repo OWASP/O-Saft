@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.397 15/11/08 00:19:51",
+    SID         => "@(#) yeast.pl 1.398 15/11/08 23:28:46",
     STR_VERSION => "15.10.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -6497,6 +6497,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("get default ..");
         foreach $ssl (keys %prot) { # all protocols, no need to sort them
             next if (!defined $prot{$ssl}->{opt});
+            next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
             my $cipher  = _get_default($ssl, $host, $port);
             $prot{$ssl}->{'default'}    = $cipher;
