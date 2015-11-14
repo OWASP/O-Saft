@@ -40,8 +40,8 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.398 15/11/08 23:28:46",
-    STR_VERSION => "15.10.15",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.399 15/11/14 16:34:08",
+    STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -2320,8 +2320,8 @@ our %cipher_names = (
     '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8            PSK_WITH_AES_256_CCM_8)],
     '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8          ECDHE_ECDSA_WITH_AES_128_CCM_8)],
     '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8          ECDHE_ECDSA_WITH_AES_256_CCM_8)],
-    '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME: according http://tools.ietf.org/html/draft-bmoeller-tls-downgrade-scsv-01
-    '0x030000FF' => [qw(SCSV                            EMPTY_RENEGOTIATION_INFO_SCSV)],
+    '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME: according http://tools.ietf.org/html/7507.html
+    '0x030000FF' => [qw(INFO_SCSV                       EMPTY_RENEGOTIATION_INFO_SCSV)],
     '0x0300C01C' => [qw(SRP-DSS-3DES-EDE-CBC-SHA        SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA)],
     '0x0300C01F' => [qw(SRP-DSS-AES-128-CBC-SHA         SRP_SHA_DSS_WITH_AES_128_CBC_SHA)],
     '0x0300C022' => [qw(SRP-DSS-AES-256-CBC-SHA         SRP_SHA_DSS_WITH_AES_256_CBC_SHA)],
