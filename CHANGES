@@ -1,9 +1,41 @@
 
+Version: 15.11.15
+  BUGFIX
+    * o-saft-dbx.pm: avoid infinite loop for trace>2
+  CHANGES
+    * avoid warning if protocol disabled: cannot get default cipher
+    * warning if openssl does not return DH parameters
+    * checking DH paramters improved
+    * workaround to avoid perl (Net::SSLeay) warnings for unsupported protocols
+  NEW
+    * --help=error --help=warning --help=problem added
+
+Version: 15.10.15
+  BUGFIX
+    * Net::SSLinfo.pm: call Net::SSLeay::CTX_set_ssl_version() corrected
+    * Net::SSLinfo.pm: alpn(), next_protocol() added
+    * Net::SSLinfo.pm: handling of hex conversion on poor 32-bit systems improved
+    * o-saft.tcl: quick & dirty fix to simplefy startup on Mac OSX
+  CHANGES
+    * o-saft.pl: checking protocols (and default) cipher improved
+    * o-saft-dbx.pm: debug output improved
+    * o-saft.tcl: layout improved
+    * Net::SSLinfo.pm: more alternate protocols
+  NEW
+    * --linux_debug and --slowly option (passed to Net::SSLeay)
+    * o-saft.pl: print hint about using +cipherall
+    * o-saft.tcl: new Filter TAB; more filter rules
+    * o-saft.tcl: more verbose output added
+
 Version: 15.09.15
   CHANGES
+    * output for +version improved
+    * use perl constants for some strings in o-saft.pl
     * o-saft.tcl improved
-    * documentation improved
+    * respect --no-header option for output of --help=*
+    * documentation, glossar improved
   NEW
+    * new command  +help=ourstr  to print regex for matching own strings
     * logjam implemented
 
 Version: 15.06.19
@@ -14,7 +46,7 @@ Version: 15.06.19
     * support serial number in hex format; use Math::BigInt if necessary
     * check for +sernumber corrected
   CHANGES
-    * all o-saft-*.pm print helf if called by themselfs
+    * all o-saft-*.pm print help if called by themselfs
   NEW
     * dh_parameter implemented
     * detect id-ecPublicKey as known and good encryption
