@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.402 15/11/21 11:07:27",
+    SID         => "@(#) yeast.pl 1.403 15/11/21 11:57:28",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -655,7 +655,7 @@ my %check_dest = (  # target (connection) data
     'bsi-tr-03116-' => {'txt' => "Target is  lazy  BSI TR-03116-4 compliant"},
     'rfc7525'       => {'txt' => "Target is RFC 7525 compliant"},
     'resumption'    => {'txt' => "Target supports Resumption"},
-    'renegotiation' => {'txt' => "Target supports Renegotiation"},
+    'renegotiation' => {'txt' => "Target supports Secure Renegotiation"},
     'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
     'pfs_cipherall' => {'txt' => "Target supports PFS (all ciphers)"},
     'krb5'          => {'txt' => "Target supports Krb5"},
@@ -905,7 +905,7 @@ our %shorttexts = (
     'bsi-tr-03116-' => "BSI TR-03116-4 compliant (lazy)",
     'rfc7525'       => "RFC 7525 compliant",
     'resumption'    => "Resumption",
-    'renegotiation' => "Renegotiation",
+    'renegotiation' => "Renegotiation",     # NOTE used in %data and %check_dest
     'hsts_sts'      => "STS header",
     'sts_maxage'    => "STS long max-age",
     'sts_maxage0d'  => "STS max-age not set",
