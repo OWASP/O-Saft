@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.405 15/11/21 16:33:44",
+    SID         => "@(#) yeast.pl 1.406 15/11/21 23:55:07",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -4545,21 +4545,6 @@ sub scoring($$) {
 
 ## definitions: print functions
 ## -------------------------------------
-sub print_host_key($$$) {
-    #? print hostname if --showhost given; print key if --tracekey given
-    my ($host, $port, $key) = @_;
-    printf("%s:%s%s", $host, $port, $text{'separator'}) if ($cfg{'showhost'} > 0);
-    printf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
-}
-
-sub print_size($$$$) {
-    #? print label and result for length, count, size, ...
-    my ($legacy, $host, $port, $label) = @_;
-    my $value = "";
-    $value = " bytes" if ($label =~ /^(len)/);
-    $value = " bits"  if ($label =~ /^len_(modulus|publickey|sigdump)/);
-    print_check($legacy, $host, $port, $label, $checks{$label}->{val} . $value);
-} # print_size
 
 sub _dump($$) {
     my ($label, $value) = @_;
@@ -4581,7 +4566,9 @@ sub printdump($$$)  {
     print '######################################################################## %check';
     foreach $key (keys %checks) { _dump($checks{$key}->{txt}, $checks{$key}->{val}); }
 } # printdump
+
 sub printruler()    { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); }
+
 sub printheader($$) {
     #? print title line and table haeder line if second argument given
     my ($txt, $desc, $rest) = @_;
@@ -4630,64 +4617,62 @@ sub printtitle($$$$) {
     if ($legacy eq 'full')      { printheader($txt, ""); }
 } # printtitle
 
-sub _print_line($$$) {
-    #? print label and result of check
-    my ($legacy, $label, $value) = @_;
-        $label = STR_UNDEF if (! defined $label);   # defensive programming: missing variable declaration in caller, probaly in %cfg, %data or %shorttexts
-    if ($legacy eq 'full')   {
-        printf("%s\n", $label . $text{'separator'});
-        printf("\t%s\n", $value) if (defined $value);
+sub print_line($$$$$$)  {
+    #? print label and value separated by separator
+    #? print hostname and key depending on --showhost and --tracekey option
+    #? legacy=cipher is special: it only prints the value
+    my ($legacy, $host, $port, $key, $text, $value) = @_;
+        $text   = '--T--' if (! defined $text);  # defensive programming: missing variable declaration
+        $value  = STR_UNDEF if (! defined $value);  # defensive programming: missing variable declaration
+    my $label   = "";
+        $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if ($cfg{'showhost'} > 0);
+        $label .= sprintf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
+    if ($legacy eq 'cipher') { # internal format for cipher and protocol lines
+        # cipher and protocol lines have no text (label)
+        printf("%s", $label);
+        printf("%s\n", $value);
         return;
     }
-    if ($legacy =~ m/(compact|quick)/) {
-        printf("%s", $label . $text{'separator'});
-        printf("%s", $value) if (defined $value);
+    if ($legacy =~ m/(compact|full|quick)/) {
+        $label .= sprintf("%s",    $text . $text{'separator'});
     } else {
-        if ($legacy eq 'key')   {
-            printf("[%s]", $label);
-        } else {
-            printf("%-36s",  $label . $text{'separator'});
-        }
-        printf("\t%s", $value) if (defined $value);
+        $label .= sprintf("%-36s", $text . $text{'separator'}) if ($legacy ne 'key');
+        $label .= sprintf("[%s]",  $key)   if ($legacy eq 'key');
     }
-    printf("\n");
-} # _print_line
-
-sub print_line($$$$$$) {
-    #? print label and value
-    my ($legacy, $host, $port, $key, $label, $value) = @_;
-    print_host_key($host, $port, $key);
-    $label = $key if ($legacy eq 'key');
-    _print_line($legacy, $label, $value);
+    # formats full, quick and compact differ in separator
+    my $sep = "\t";
+       $sep = "\n\t" if ($legacy eq 'full');
+       $sep = ""     if ($legacy =~ m/(compact|quick)/);
+    printf("%s%s%s\n", $label, $sep, $value);
 } # print_line
 
-sub print_data($$$$) {
+sub print_data($$$$)    {
     # print given label and text from %data according given legacy format
-    my ($legacy, $label, $host, $port) = @_;
-    if (_is_hashkey($label, \%data) < 1) {     # silently ignore unknown labels
-        _warn("unknown label '$label'; output ignored"); # seems to be a programming error
+    my ($legacy, $host, $port, $key) = @_;
+    if (_is_hashkey($key, \%data) < 1) {    # silently ignore unknown labels
+        _warn("unknown label '$key'; output ignored"); # seems to be a programming error
         return;
     }
-    print_host_key($host, $port, $label);
-    my $val = $data{$label}->{val}($host, $port) || "";
+    my $label = ($data{$key}->{txt} || ""); # defensive programming
+    my $value =  $data{$key}->{val}($host, $port) || "";
     # { always pretty print
-        if ($label =~ m/X509$/) {
-            $label =~ s/X509$//;
-            $val = $data{$label}->{val}($host);
-            $val =~ s#/([^=]*)#\n   ($1)#g;
-            $val =~ s#=#\t#g;
-            printf("\n%s%s%s\n", $data{$label}->{txt}, $text{'separator'}, $val);
+        if ($key =~ m/X509$/) {
+            $key =~ s/X509$//;
+            $value =~ s#/([^=]*)#\n   ($1)#g;
+            $value =~ s#=#\t#g;
+            print_line($legacy, $host, $port, $key, $data{$key}->{txt}, $value);
             return;
         }
     # }
-    if ((1 eq _is_hexdata($label)) && ($val !~ m/^\s*$/)) { # check for empty $val to avoid warnings with -w
+    if ((1 eq _is_hexdata($key)) && ($value !~ m/^\s*$/)) {
+        # check for empty $value to avoid warnings with -w
         # pubkey_value may look like:
         #   Subject Public Key Info:Public Key Algorithm: rsaEncryptionPublic-Key: (2048 bit)Modulus=00c11b:...
         # where we want to convert the key value only but not its prefix
         # hence the final : is converted to =
         # (seems to happen on Windows only; reason yet unknown)
-        $val =~ s/([Mm]odulus):/$1=/; #
-        my ($k, $v) = split("=", $val);
+        $value =~ s/([Mm]odulus):/$1=/; #
+        my ($k, $v) = split("=", $value);
         if (defined $v) {       # i.e SHA Fingerprint=
             $k .= "=";
         } else {
@@ -4705,53 +4690,46 @@ sub print_data($$$$) {
             $v =~ s#(..)#0x$1 #g;
             $v =~ s# $##;
         }
-        $val = $k . $v;
+        $value = $k . $v;
     }
-    $val = "\n" . $val if (_is_member($label, \@{$cfg{'cmd-NL'}}) > 0); # multiline data
-    if ($legacy eq 'key') {
-        _print_line($legacy, $label, $val);
-        return;
-    }
+    $value = "\n" . $value if (_is_member($key, \@{$cfg{'cmd-NL'}}) > 0); # multiline data
     if ($legacy eq 'compact') {
-        $val   =~ s#:\n\s+#:#g; # join lines ending with :
-        $val   =~ s#\n\s+# #g;  # squeeze leading white spaces
-        $val   =~ s#[\n\r]#; #g;# join all lines
-        $label = $data{$label}->{txt};
+        $value =~ s#:\n\s+#:#g; # join lines ending with :
+        $value =~ s#\n\s+# #g;  # squeeze leading white spaces
+        $value =~ s#[\n\r]#; #g;# join all lines
         $label =~ s#[\n]##g;
-        printf("%s%s%s\n", $label, $text{'separator'}, $val);
-        return;
-    }
-    if ($legacy eq 'quick') {
-        $label = $data{$label}->{txt};
-        printf("%s%s%s\n", $label, $text{'separator'}, $val);
         return;
     }
     if ($legacy eq 'full') {    # do some pretty printing
-        if ($label =~ m/(^altname)/) { $val =~ s#^ ##;     $val =~ s# #\n\t#g; }
-        if ($label =~ m/(subject)/)  { $val =~ s#/#\n\t#g; $val =~ s#^\n\t##m; }
-        if ($label =~ m/(issuer)/)   { $val =~ s#/#\n\t#g; $val =~ s#^\n\t##m; }
+        if ($label =~ m/(^altname)/) { $value =~ s#^ ##;       $value =~ s# #\n\t#g; }
+        if ($label =~ m/(subject)/)  { $value =~ s#/#\n\t#g;   $value =~ s#^\n\t##m; }
+        if ($label =~ m/(issuer)/)   { $value =~ s#/#\n\t#g;   $value =~ s#^\n\t##m; }
         if ($label =~ m/(serial|modulus|sigkey_value)/) {
-                                       $val =~ s#(..)#$1:#g; $val =~ s#:$##; }
+                                       $value =~ s#(..)#$1:#g; $value =~ s#:$##; }
         if ($label =~ m/((?:pubkey|sigkey)_algorithm|signame)/) {
-            $val =~ s#(with)# $1 #ig;
-            $val =~ s#(encryption)# $1 #ig;
+            $value =~ s#(with)# $1 #ig;
+            $value =~ s#(encryption)# $1 #ig;
         }
-        $label = ($data{$label}->{txt} || "");      # defensive programming
-        printf("\n%s%s\n\t%s\n", $label,  $text{'separator'}, $val); # comma!
-    } else {
-        $label = ($data{$label}->{txt} || "");      # defensive programming
-        printf("%-32s\t%s\n",    $label . $text{'separator'}, $val); # dot!
     }
+    print_line($legacy, $host, $port, $key, $label, $value);
 } # print_data
 
 sub print_check($$$$$)  {
     #? print label and result of check
-    my ($legacy, $host, $port, $label, $value) = @_;
-    print_host_key($host, $port, $label);
-    $value = $checks{$label}->{val} if (!defined $value);
-    $label = $checks{$label}->{txt} if ($legacy ne 'key');
-    _print_line($legacy, $label, $value);
+    my ($legacy, $host, $port, $key, $value) = @_;
+    $value = $checks{$key}->{val} if (!defined $value); # defensive programming
+    my $label = $checks{$key}->{txt} if ($legacy ne 'key');
+    print_line($legacy, $host, $port, $key, $label, $value);
 } # print_check
+
+sub print_size($$$$)    {
+    #? print label and result for length, count, size, ...
+    my ($legacy, $host, $port, $key) = @_;
+    my $value = "";
+    $value = " bytes" if ($key =~ /^(len)/);
+    $value = " bits"  if ($key =~ /^len_(modulus|publickey|sigdump)/);
+    print_check($legacy, $host, $port, $key, $checks{$key}->{val} . $value);
+} # print_size
 
 sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); }
     #? print header ruler line
@@ -4774,11 +4752,27 @@ sub print_cipherline($$$$$$) {
     #? print cipher check result according given legacy format
     my ($legacy, $ssl, $host, $port, $cipher, $support) = @_;
     # variables for better (human) readability
-    my $bit  = get_cipher_bits($cipher);
-    my $sec  = get_cipher_sec($cipher);
-#   my $ssl  = get_cipher_ssl($cipher);
-    my $desc =  join(" ", get_cipher_desc($cipher));
-    my $yesno= $text{'legacy'}->{$legacy}->{$support};
+    my $bit   = get_cipher_bits($cipher);
+    my $sec   = get_cipher_sec($cipher);
+#   my $ssl   = get_cipher_ssl($cipher);
+    my $desc  =  join(" ", get_cipher_desc($cipher));
+    my $yesno = $text{'legacy'}->{$legacy}->{$support};
+    # first our own formats
+    my $value = "";
+    if ($legacy eq 'full') {
+        # host:port protocol    supported   cipher    compliant security    description
+        $desc =  join("\t", get_cipher_desc($cipher));
+        $desc =~ s/\s*:\s*$//;
+        $value = sprintf("%s\t%s\t%s\t%s\t%s\t%s", $ssl, $yesno, $cipher, '-?-', $sec, $desc);
+    }
+    $value = sprintf("    %-28s\t(%s)\t%s", $cipher, $bit,   $sec) if ($legacy eq 'quick');
+    $value = sprintf("    %-28s\t%s\t%s",   $cipher, $yesno, $sec) if ($legacy eq 'simple');
+    $value = sprintf("%s %s %s",            $cipher, $yesno, $sec) if ($legacy eq 'compact');
+    if ($legacy =~ m/compact|full|quick|simple/) {
+        print_line('cipher', $host, $port, 'cipher', "", $value);
+        return;
+    }
+    # now legacy formats  # TODO: should be moved to postprocessor
     if ($legacy eq 'sslyze')    {
         if ($support eq 'yes')  {
             $support = sprintf("%4s bits", $bit) if ($support eq 'yes');
@@ -4830,22 +4824,9 @@ sub print_cipherline($$$$$$) {
         # AES256-SHA - 256 Bits -   supported
         printf("%30s - %3s Bits - %11s\n", $cipher, $bit, $yesno);
     }
-    if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
-        print_host_key($host, $port, 'cipher');
-    }
         # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
-    if ($legacy eq 'quick')     { printf("    %-28s\t(%s)\t%s\n", $cipher, $bit,   $sec); }
-    if ($legacy eq 'simple')    { printf("    %-28s\t%s\t%s\n",   $cipher, $yesno, $sec); }
-    if ($legacy eq 'compact')   { printf("%s %s %s\n",            $cipher, $yesno, $sec); }
     if ($legacy eq 'testsslserver') { printf("    %s\n", $cipher); }
-    if ($legacy eq 'full') {
-        # host:port protocol    supported   cipher    compliant security    description
-        $desc =  join("\t", get_cipher_desc($cipher));
-        $desc =~ s/\s*:\s*$//;
-        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $port, $ssl, $yesno, $cipher, '-?-', $sec, $desc);
-            # host printed above in print_host_key(), so only port here
-    }
 } # print_cipherline
 
 sub print_cipherdefault($$$$) {
@@ -4956,16 +4937,17 @@ sub printprotocols($$$) {
     foreach $ssl (@{$cfg{'versions'}}) {
         # $cfg{'versions'} is sorted in contrast to "keys %prot" 
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # NOT YET implemented with verbose only
-        my $label = $ssl . $text{'separator'};
-           $label = '[' . $ssl . ']' if ($legacy eq 'key');
-        if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
-            print_host_key($host, $port, $ssl);
-        }
-        printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $label,
-                $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
-                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
-                ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
-                $prot{$ssl}->{'default'}, $prot{$ssl}->{'pfs_cipher'});
+        # TODO: print_line() used without label, just value
+        print_line('cipher', $host, $port, $ssl, "",
+                # format value
+                sprintf("%-7s %3s %3s %3s %3s %3s %3s %-31s %s",
+                    $ssl . $text{'separator'},
+                    $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
+                    $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
+                    ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
+                    $prot{$ssl}->{'default'}, $prot{$ssl}->{'pfs_cipher'}
+                )
+        );
     }
     if ($cfg{'out_header'}>0) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
@@ -4999,7 +4981,7 @@ sub printdata($$$) {
         if ($cfg{'format'} eq "raw") {  # should be the only place where format=raw counts
             print $data{$key}->{val}($host);;
         } else {
-            print_data($legacy, $key, $host, $port);
+            print_data($legacy, $host, $port, $key);
         }
     }
 } # printdata
