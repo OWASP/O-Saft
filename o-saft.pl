@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.403 15/11/21 11:57:28",
+    SID         => "@(#) yeast.pl 1.404 15/11/21 14:19:47",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -5662,6 +5662,17 @@ while ($#argv >= 0) {
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';           } # ..
     if ($arg eq  '-i')                  { $arg = '+issuer';         } # ssl-cert-check
+    if ($arg eq  '-B')                  { $arg = '+heartbleed';     } # testssl.sh
+    if ($arg =~ /^-(C|-compression|-crime)$/) { $arg = '+compression';# testssl.sh
+                                          push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); }
+    if ($arg eq  '-R')                  { $arg = '+renegotiation';  } # testssl.sh
+    if ($arg =~  /^--(p?fs|nsa)$/)      { $arg = '+pfs';            } # testssl.sh
+    if ($arg =~  /^--(rc4|appelbaum)$/) { $arg = '+pfs';            } # testssl.sh
+    if ($arg eq  '--spdy')              { $arg = '+spdy';           } # testssl.sh
+    if ($arg eq  '--fips')              { $arg = '+fips';           } # 
+    if ($arg eq  '--ism')               { $arg = '+ism';            } # ssltest.pl
+    if ($arg eq  '--pci')               { $arg = '+pci';            } # ssltest.pl
+    if ($arg =~ /^--(fips|ism|pci)$/i)  {}
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $typ = 'OPENSSL';         }
     if ($arg =~  '--opensslco?nf')      { $typ = 'SSLCNF';          }
@@ -5739,6 +5750,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
+#   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
     if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            }
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
@@ -5788,7 +5800,6 @@ while ($#argv >= 0) {
     if ($arg eq  '-c')                  { $typ = 'CAPATH';          } # ssldiagnose.exe
     if ($arg =~ /^--winCR/i)            { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); }
     # ignored options
-    if ($arg =~ /^--(fips|ism|pci)$/i)  {}
     if ($arg =~ /^-connect$/)           {}
     if ($arg eq  '--insecure')          {}
     if ($arg =~ /^--use?r$/)            {}
