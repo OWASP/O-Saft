@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.52 15/11/21 13:20:02";
+my  $man_SID= "@(#) o-saft-man.pm 1.53 15/11/21 14:17:45";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2415,19 +2415,29 @@ OPTIONS
           * --http_get          (ssldiagnos)    same as  --http
           * --printcert         (ssldiagnos)    same as  +ciphers
           * --protocol SSL      (ssldiagnos)    same as  --SSL
+          * --UDP               (ssldiagnos)    same as  --udp
           * --no-failed         (sslscan)       same as  --disabled
           * --regular           (sslyze)        same as  --http
           * --reneg             (sslyze)        same as  +renegotiation
           * --resum             (sslyze)        same as  +resumtion
+          * --compression       (testssl.sh)    same as  +compression +CRIME
+          * --crime,  -C        (testssl.sh)    same as  +compression +CRIME
+          * --heartbleed, -B    (testssl.sh)    same as  +heartbleed
+          * --pfs,  -fs,  --nsa (testssl.sh)    same as  +pfs
+          * --rc4,  -appelbaum  (testssl.sh)    same as  +rc4
+          * --renegotiation, -R (testssl.sh)    same as  +renegotiation
+          * --spdy              (testssl.sh)    same as  +spdy
           * -h, -h=HOST         (various tools) same as  --host HOST
           * -p, -p=PORT         (various tools) same as  --port PORT
           * -t HOST             (ssldiagnos)    same as  --host HOST
+          * --fips              (??)            same as  +fips
+          * --ism               (ssltest.pl)    same as  +ism
+          * --pci               (ssltest.pl)    same as  +pci
+          * --timeout, --grep   (ssltest.pl)    ignored
+          * -r,  -s,  -t,  -x   (ssltest.pl)    ignored
           * --insecure          (cnark.pl)      ignored
           * --nopct --nocolor   (ssldiagnos)    ignored
-          * --ism, --pci -x     (ssltest.pl)    ignored
-          * --timeout, --grep   (ssltest.pl)    ignored
-          * -r,  -s,  -t        (ssltest.pl)    ignored
-          * -connect, --fips, -H, -u, -url, -U  ignored
+          * -connect, -H, -u, -url, -U          ignored
           * -noSSL                              same as  --no-SSL
           * -no_SSL                             same as  --no-SSL
 
