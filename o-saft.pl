@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.404 15/11/21 14:19:47",
+    SID         => "@(#) yeast.pl 1.405 15/11/21 16:33:44",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1385,15 +1385,16 @@ our %cmd = (
                        ],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
+                                # not usefull in this list: serial extension
                         qw(
                          fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
-                         serial sigkey_value pubkey_value modulus
-                         master_key session_id session_ticket extension
+                         sigkey_value pubkey_value modulus
+                         master_key session_id session_ticket
                        )],      # fingerprint is special, see _ishexdata()
     'opt-v'         => 0,       # 1 when option -v was given
     'opt-V'         => 0,       # 1 when option -V was given
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
-    'formats'       => [qw(csv html json ssv tab xml fullxml raw hex)],
+    'formats'       => [qw(csv html json ssv tab xml fullxml raw hex 0x esc)],
     'out_header'    => 0,       # print header lines in output
     'out_score'     => 0,       # print scoring; default for +check
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
@@ -4693,7 +4694,17 @@ sub print_data($$$$) {
             $v  = $k;
             $k  = "";
         }
-        $v   =~ s#(..)#$1:#g, $v =~ s#:$## if ($cfg{'format'} eq "hex");
+        if ($cfg{'format'} eq "hex") {
+            $v =~ s#(..)#$1:#g;
+            $v =~ s#:$##;
+        }
+        if ($cfg{'format'} eq "esc") {
+            $v =~ s#(..)#\\x$1#g;
+        }
+        if ($cfg{'format'} eq "0x") {
+            $v =~ s#(..)#0x$1 #g;
+            $v =~ s# $##;
+        }
         $val = $k . $v;
     }
     $val = "\n" . $val if (_is_member($label, \@{$cfg{'cmd-NL'}}) > 0); # multiline data
@@ -5467,14 +5478,14 @@ while ($#argv >= 0) {
         if ($typ eq 'PHOST')    {
             # allow   user:pass@f.q.d.n:42
             $cfg{'proxyhost'} = $arg;
-            if ($arg =~ m#([^@]*)@(.*)#) {             # got username:password
+            if ($arg =~ m#([^@]*)@(.*)#) {              # got username:password
                 $arg =  $2;
                 if ($1 =~ m#([^:@]*?):([^@]*)#) {
                     $cfg{'proxyuser'} = $1;
                     $cfg{'proxypass'} = $2;
                 }
             }
-            if ($arg =~ m#([^:]*):(\d+)#) {            # got a port too
+            if ($arg =~ m#([^:]*):(\d+)#) {             # got a port too
                 $cfg{'proxyhost'} = $1;
                 $cfg{'proxyport'} = $2;
             # else port must be given by --proxyport
@@ -5491,6 +5502,7 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'FORMAT')   {
+            $arg = 'esc' if ($arg =~ m#^[/\\]x$#);      # \x and /x are the same
             if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
                 $cfg{'format'} = $arg;
             } else {
