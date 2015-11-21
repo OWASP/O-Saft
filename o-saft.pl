@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.399 15/11/14 16:34:08",
+    SID         => "@(#) yeast.pl 1.400 15/11/20 11:27:21",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -5819,14 +5819,15 @@ while ($#argv >= 0) {
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias
     if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; TODO until check is improved (6/2015)
-    if ($arg eq '+modulus_exponent_size'){$arg = '+modulus_exp_size'; } # alias
-    if ($arg eq '+pub(lic)?_enc(ryption)?')      { $arg = '+pub_encryption';} # alias
-    if ($arg eq '+pubkey_enc(ryption)?')         { $arg = '+pub_encryption';} # alias
-    if ($arg eq '+public_key_encryption')        { $arg = '+pub_encryption';} # alias
-    if ($arg eq '+pub(lic)?_enc(ryption)?_known'){ $arg = '+pub_enc_known'; } # alias
-    if ($arg eq '+pubkey_enc(ryption)?_known')   { $arg = '+pub_enc_known'; } # alias
-    if ($arg eq '+sig(key)?_enc(ryption)?')      { $arg = '+sig_encryption';} # alias
-    if ($arg eq '+sig(key)?_enc(ryption)?_known'){ $arg = '+sig_enc_known'; } # alias
+    if ($arg =~ /^\+modulus_exponent_size/)         { $arg = '+modulus_exp_size'; } # alias
+    if ($arg =~ /^\+pub(lic)?_enc(ryption)?/)       { $arg = '+pub_encryption';} # alias
+    if ($arg =~ /^\+pubkey_enc(ryption)?/)          { $arg = '+pub_encryption';} # alias
+    if ($arg =~ /^\+public_key_encryption/)         { $arg = '+pub_encryption';} # alias
+    if ($arg =~ /^\+pub(lic)?_enc(ryption)?_known/) { $arg = '+pub_enc_known'; } # alias
+    if ($arg =~ /^\+pubkey_enc(ryption)?_known/)    { $arg = '+pub_enc_known'; } # alias
+    if ($arg =~ /^\+sig(key)?_enc(ryption)?/)       { $arg = '+sig_encryption';} # alias
+    if ($arg =~ /^\+sig(key)?_enc(ryption)?_known/) { $arg = '+sig_enc_known'; } # alias
+    if ($arg =~ /^\+server[_-]?(temp)?[_-]?key/)    { $arg = '+dh_parameter';  } # alias
     if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
     if ($arg =~ /^\+cert(ificate)?$/i)  { $arg = '+pem';        } # PEM
     if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
