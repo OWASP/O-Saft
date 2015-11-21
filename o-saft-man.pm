@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.53 15/11/21 14:17:45";
+my  $man_SID= "@(#) o-saft-man.pm 1.54 15/11/21 16:36:54";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2331,6 +2331,9 @@ OPTIONS
 
           Internal default format.
 
+      --format=0x
+      --format=\x
+      --format=/x
       --format=hex
       --format=raw
 
@@ -2341,6 +2344,11 @@ OPTIONS
             to "read"  the printed data.
 
           * 'hex'       Convert some data to hex: 2 bytes separated by ':'.
+          * '0x'        Convert some data with hex values:
+                           2 bytes preceded by '0x' and separated by a space.
+          * '/x'        Same as  --format=\x
+          * '\x'        Convert some data with hex values:
+                           2 bytes preceded by '\x' and no separating char.
 
       --header
 
@@ -2803,6 +2811,7 @@ CHECKS
       Renegotiation
 
         Check if the server allows client-side initiated renegotiation.
+#        This is known as "Secure Renegotiation".
 
       Version rollback attacks
 
