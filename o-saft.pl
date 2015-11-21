@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.401 15/11/20 11:39:24",
+    SID         => "@(#) yeast.pl 1.402 15/11/21 11:07:27",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1425,7 +1425,7 @@ our %cmd = (
     'legacy'        => "simple",
     'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
                         ssltest-g sslyze testsslserver thcsslcheck openssl
-                        simple full compact quick)],
+                        simple full compact quick key)],
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
     'usr-args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
@@ -4642,7 +4642,11 @@ sub _print_line($$$) {
         printf("%s", $label . $text{'separator'});
         printf("%s", $value) if (defined $value);
     } else {
-        printf("%-36s", $label . $text{'separator'});
+        if ($legacy eq 'key')   {
+            printf("[%s]", $label);
+        } else {
+            printf("%-36s",  $label . $text{'separator'});
+        }
         printf("\t%s", $value) if (defined $value);
     }
     printf("\n");
@@ -4652,6 +4656,7 @@ sub print_line($$$$$$) {
     #? print label and value
     my ($legacy, $host, $port, $key, $label, $value) = @_;
     print_host_key($host, $port, $key);
+    $label = $key if ($legacy eq 'key');
     _print_line($legacy, $label, $value);
 } # print_line
 
@@ -4692,6 +4697,10 @@ sub print_data($$$$) {
         $val = $k . $v;
     }
     $val = "\n" . $val if (_is_member($label, \@{$cfg{'cmd-NL'}}) > 0); # multiline data
+    if ($legacy eq 'key') {
+        _print_line($legacy, $label, $val);
+        return;
+    }
     if ($legacy eq 'compact') {
         $val   =~ s#:\n\s+#:#g; # join lines ending with :
         $val   =~ s#\n\s+# #g;  # squeeze leading white spaces
@@ -4729,7 +4738,7 @@ sub print_check($$$$$)  {
     my ($legacy, $host, $port, $label, $value) = @_;
     print_host_key($host, $port, $label);
     $value = $checks{$label}->{val} if (!defined $value);
-    $label = $checks{$label}->{txt};
+    $label = $checks{$label}->{txt} if ($legacy ne 'key');
     _print_line($legacy, $label, $value);
 } # print_check
 
@@ -4936,10 +4945,12 @@ sub printprotocols($$$) {
     foreach $ssl (@{$cfg{'versions'}}) {
         # $cfg{'versions'} is sorted in contrast to "keys %prot" 
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # NOT YET implemented with verbose only
+        my $label = $ssl . $text{'separator'};
+           $label = '[' . $ssl . ']' if ($legacy eq 'key');
         if ($legacy =~ m/compact|full|quick|simple/) { # only our own formats
             print_host_key($host, $port, $ssl);
         }
-        printf("%s:\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $ssl,
+        printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $label,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
                 $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
                 ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
