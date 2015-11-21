@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.51 15/11/14 16:32:02";
+my  $man_SID= "@(#) o-saft-man.pm 1.52 15/11/21 13:20:02";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1845,10 +1845,10 @@ OPTIONS
 
           Use  "openssl s_slient ..."  call to retrieve more information from
           the SSL connection.  This is disabled by default on Windows because
-          of performance problems. Without this option following informations
-          are missing on Windows:
+          of performance problems. Without this option (default on Windows !)
+          following informations are missing on Windows:
               compression, expansion, renegotiation, resumption,
-              selfsigned, verify, chain, protocols
+              selfsigned, verify, chain, protocols, DH parameters
           See  Net::SSLinfo  for details.
 
           If used together with  --trace, s_client  data will also be printed
@@ -1858,7 +1858,7 @@ OPTIONS
 
           Do not use external "openssl"  tool to retrieve information. Use of
           "openssl" is disabled by default on Windows.
-          Note that this results in some missing informations.
+          Note that this results in some missing informations, see above.
 
       --openssl=TOOL
 
@@ -1889,18 +1889,18 @@ OPTIONS
       --exe-path=PATH
       --exe=PATH
 
-          PATH          is a full path where to find openssl.
+          'PATH'        is a full path where to find openssl.
 
       --lib-path=PATH
       --lib=PATH
 
-          PATH          is a full path where to find libssl.so and libcrypto.so
+          'PATH'        is a full path where to find libssl.so and libcrypto.so
 
           See X&HACKER's INFO& below for a detailed description how it works.
 
       --envlibvar=NAME
 
-          NAME  is the name of the environment variable containing additional
+          'NAME'  is the name of a environment variable containing additional
           paths for searching dynamic shared libraries.
           Default is LD_LIBRARY_PATH.
 
@@ -1925,7 +1925,7 @@ OPTIONS
 # following missing on owasp.org 'cause still not fully implemented
       --call=METHOD
 
-          METHOD        method to be used for specific functionality
+          'METHOD'      method to be used for specific functionality
 
           Available methods:
           * info-socket         use internal socket to retrieve information
@@ -1985,7 +1985,7 @@ OPTIONS
 
       --cipher=CIPHER
 
-          * CIPHER      can be any string accepeted by openssl or following:
+          * 'CIPHER'    can be any string accepeted by openssl or following:
           * 'yeast'     use all ciphers from list defined herein, see  +list
 
           Beside the cipher names accepted by openssl, CIPHER can be the name
@@ -2053,7 +2053,7 @@ OPTIONS
       --no-dtlsv13
       --no-SSL
 
-          * SSL         can be any of:
+          * 'SSL'       can be any of:
                         ssl, ssl2, ssl3, sslv2, sslv3, tls1, tls1, tls11,
                         tls1.1, tls1-1, tlsv1, tlsv11, tlsv1.1, tlsv1-1
                         (and similar variants for tlsv1.2).
@@ -2145,20 +2145,20 @@ OPTIONS
 
       --no-cert-text=TEXT
 
-          Set TEXT to be returned from  Net::SSLinfo if no certificate data is
-          collected due to use of  --no-cert.
+          Set 'TEXT' to be returned from  Net::SSLinfo if no certificate data
+          is collected due to use of  --no-cert.
 
       --ca-depth=INT
 
-          Check certificate chain to depth INT (like openssl's -verify).
+          Check certificate chain to depth 'INT' (like openssl's -verify).
 
       --ca-file=FILE
 
-          Use FILE with bundle of CAs to verify target's certificate chain.
+          Use 'FILE' with bundle of CAs to verify target's certificate chain.
 
       --ca-path=DIR
 
-          Use DIR where to find CA certificates in PEM format.
+          Use 'DIR' where to find CA certificates in PEM format.
 
       --ca-force
       --force-ca
@@ -2359,7 +2359,7 @@ OPTIONS
       --no-cmd=CMD
       --no-output=CMD
 
-          Do not print output (data or check result) for command CMD.  CMD is
+          Do not print output (data or check result) for command 'CMD'. 'CMD'
           is any valid command, see  COMMANDS ,  without leading '+'.
           Option can be used multiple times.
 
@@ -2374,7 +2374,7 @@ OPTIONS
       --separator=CHAR
       --sep=CHAR
 
-          CHAR      will be used as separator between  label and value of the
+          'CHAR'    will be used as separator between  label and value of the
                     printed results. Default is  ':'.
 
       --tab
