@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.400 15/11/20 11:27:21",
+    SID         => "@(#) yeast.pl 1.401 15/11/20 11:39:24",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -5828,6 +5828,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sig(key)?_enc(ryption)?/)       { $arg = '+sig_encryption';} # alias
     if ($arg =~ /^\+sig(key)?_enc(ryption)?_known/) { $arg = '+sig_enc_known'; } # alias
     if ($arg =~ /^\+server[_-]?(temp)?[_-]?key/)    { $arg = '+dh_parameter';  } # alias
+    if ($arg =~ /^\+reused?/i)          { $arg = '+resumption'; } # alias
     if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
     if ($arg =~ /^\+cert(ificate)?$/i)  { $arg = '+pem';        } # PEM
     if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
@@ -5837,9 +5838,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # AIA is a common acronym ...
     if ($arg =~ /\+vulnerabilit(y|ies)/){ $arg = '+vulns';      } # vulns
-    if ($arg =~ /^\+selected[_-]?ciphers?$/){$arg= '+selected'; }
-    if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw';}
-    if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw';}
+    if ($arg =~ /^\+selected[_-]?ciphers?$/){$arg= '+selected'; } # alias
+    if ($arg =~ /^\+session[_-]?ciphers?$/) {$arg= '+selected'; } # alias
+    if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw';} # alias
+    if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw';} # alias
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
     #  +---------+----------+-----------------------------------+----------------
