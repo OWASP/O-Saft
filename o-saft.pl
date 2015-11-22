@@ -40,13 +40,14 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.406 15/11/21 23:55:07",
+    SID         => "@(#) yeast.pl 1.407 15/11/22 18:09:16",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
     STR_DBX     => "#dbx# ", 
     STR_UNDEF   => "<<undef>>",
+    STR_NOTXT   => "<<>>",
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -2433,6 +2434,7 @@ our %text = (
         'compact'   => { 'not' => '-',   'yes' => "yes",         'no' => "no" },
         'simple'    => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
         'full'      => { 'not' => '-?-', 'yes' => "Yes",         'no' => "No" },
+        'key'       => { 'not' => '-?-', 'yes' => "yes",         'no' => "no" },
         #              #----------------+------------------------+---------------------
         # following keys are roughly the names of the tool they are used
         #              #----------------+------------------------+---------------------
@@ -4620,24 +4622,24 @@ sub printtitle($$$$) {
 sub print_line($$$$$$)  {
     #? print label and value separated by separator
     #? print hostname and key depending on --showhost and --tracekey option
-    #? legacy=cipher is special: it only prints the value
     my ($legacy, $host, $port, $key, $text, $value) = @_;
-        $text   = '--T--' if (! defined $text);  # defensive programming: missing variable declaration
-        $value  = STR_UNDEF if (! defined $value);  # defensive programming: missing variable declaration
-    my $label   = "";
+        $text   = STR_NOTXT if (! defined $text);   # defensive programming: ..
+        $value  = STR_UNDEF if (! defined $value);  # .. missing variable declaration
+    # general format of a line is:
+    #       host:port:#[key]:label: \tvalue
+    # legacy=_cipher is special: does not print label and value
+    my  $label  = "";
         $label  = sprintf("%s:%s%s", $host, $port, $text{'separator'}) if ($cfg{'showhost'} > 0);
-        $label .= sprintf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
-    if ($legacy eq 'cipher') { # internal format for cipher and protocol lines
-        # cipher and protocol lines have no text (label)
-        printf("%s", $label);
-        printf("%s\n", $value);
+    if ($legacy eq '_cipher') {
+        printf("%s#[%s]%s", $label, $key, $text{'separator'}) if ($cfg{'traceKEY'} > 0);
         return;
     }
+        $label .= sprintf("#[%-18s", $key . ']'  . $text{'separator'}) if ($cfg{'traceKEY'} > 0);
     if ($legacy =~ m/(compact|full|quick)/) {
         $label .= sprintf("%s",    $text . $text{'separator'});
     } else {
-        $label .= sprintf("%-36s", $text . $text{'separator'}) if ($legacy ne 'key');
         $label .= sprintf("[%s]",  $key)   if ($legacy eq 'key');
+        $label .= sprintf("%-36s", $text . $text{'separator'}) if ($legacy ne 'key');
     }
     # formats full, quick and compact differ in separator
     my $sep = "\t";
@@ -4763,13 +4765,15 @@ sub print_cipherline($$$$$$) {
         # host:port protocol    supported   cipher    compliant security    description
         $desc =  join("\t", get_cipher_desc($cipher));
         $desc =~ s/\s*:\s*$//;
-        $value = sprintf("%s\t%s\t%s\t%s\t%s\t%s", $ssl, $yesno, $cipher, '-?-', $sec, $desc);
     }
-    $value = sprintf("    %-28s\t(%s)\t%s", $cipher, $bit,   $sec) if ($legacy eq 'quick');
-    $value = sprintf("    %-28s\t%s\t%s",   $cipher, $yesno, $sec) if ($legacy eq 'simple');
-    $value = sprintf("%s %s %s",            $cipher, $yesno, $sec) if ($legacy eq 'compact');
-    if ($legacy =~ m/compact|full|quick|simple/) {
-        print_line('cipher', $host, $port, 'cipher', "", $value);
+    if ($legacy =~ m/compact|full|quick|simple|key/) {
+        my $k = sprintf("%s", get_cipher_hex($cipher));
+        print_line('_cipher', $host, $port, $k, $cipher, ""); # just host:port:#[key]:
+        printf("[%s]\t%-28s\t%s\t%s\n", $k, $cipher, $yesno, $sec) if ($legacy eq 'key');
+        printf("    %-28s\t(%s)\t%s\n",     $cipher, $bit,   $sec) if ($legacy eq 'quick');
+        printf("    %-28s\t%s\t%s\n",       $cipher, $yesno, $sec) if ($legacy eq 'simple');
+        printf("%s %s %s\n",                $cipher, $yesno, $sec) if ($legacy eq 'compact');
+        printf("%s\t%s\t%s\t%s\t%s\t%s\n", $ssl, $yesno, $cipher, '-?-', $sec, $desc) if ($legacy eq 'full');
         return;
     }
     # now legacy formats  # TODO: should be moved to postprocessor
@@ -4937,16 +4941,14 @@ sub printprotocols($$$) {
     foreach $ssl (@{$cfg{'versions'}}) {
         # $cfg{'versions'} is sorted in contrast to "keys %prot" 
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # NOT YET implemented with verbose only
-        # TODO: print_line() used without label, just value
-        print_line('cipher', $host, $port, $ssl, "",
-                # format value
-                sprintf("%-7s %3s %3s %3s %3s %3s %3s %-31s %s",
-                    $ssl . $text{'separator'},
-                    $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
-                    $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
-                    ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
-                    $prot{$ssl}->{'default'}, $prot{$ssl}->{'pfs_cipher'}
-                )
+        my $key = $ssl . $text{'separator'};
+           $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
+        print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
+        printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
+                $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
+                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
+                ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
+                $prot{$ssl}->{'default'}, $prot{$ssl}->{'pfs_cipher'}
         );
     }
     if ($cfg{'out_header'}>0) {
