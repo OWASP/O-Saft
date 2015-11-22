@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.54 15/11/21 16:36:54";
+my  $man_SID= "@(#) o-saft-man.pm 1.55 15/11/22 22:17:09";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2331,6 +2331,13 @@ OPTIONS
 
           Internal default format.
 
+      --legacy=key
+
+          Internal format: print name of key instead of text as label. Key is
+          that of the internal data structure(s).  For ciphers and protocols,
+          the corresponding hex value is used as key.  Note that these values
+          are unique.
+
       --format=0x
       --format=\x
       --format=/x
@@ -4421,6 +4428,7 @@ TODO
 
         * internal
           ** use qr() for defining regex, see $cfg{'regex'}
+          ** print_line() hase ugly code for legacy=cipher
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
           ** make a clear concept how to handle +CMD whether they report
              checks or informations (aka %data vs. %check_*)
