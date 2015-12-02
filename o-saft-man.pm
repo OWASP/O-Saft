@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.55 15/11/22 22:17:09";
+my  $man_SID= "@(#) o-saft-man.pm 1.56 15/12/01 20:46:16";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2221,10 +2221,16 @@ OPTIONS
 # alias: --sslnodataeqnocipher --nodataeqnocipher
       --ssl-nodata-nocipher
 
-          Do not abort testing for next cipher when the target  responds with
-          'NoData' times out. Useful for TLS intolerant servers.
-          By default testing for ciphers is aborted  when the target responds
-          with 'NoData' message.
+          Some servers do not answer  (i.g. they disconnect) if  none of  the
+          offered ciphers is supported by the server.
+
+          Continue testing with next ciphers  when the target  disconnects or
+          does not send data within specified timeout (see --timeout).
+          Useful for TLS intolerant servers.
+
+      --no-ssl-nodata-nocipher
+
+          Abort testing with next ciphers when the target disconnects.
 
       --ssl-use-ecc
 
