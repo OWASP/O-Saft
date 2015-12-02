@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.407 15/11/22 18:09:16",
+    SID         => "@(#) yeast.pl 1.408 15/12/01 20:25:15",
     STR_VERSION => "15.11.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -5784,11 +5784,11 @@ while ($#argv >= 0) {
     if ($arg eq  '--nossldoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; } # alias ...
     if ($arg eq  '--sslnodoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; }
     if ($arg eq  '--ssldoublereneg')    { $cfg{'sslhello'}->{'double_reneg'}   = 1; }
-    if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 0; } # alias ...
-    if ($arg eq  '--sslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
-    if ($arg eq  '--sslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 0; }
-    if ($arg eq  '--ssldataeqnocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 1; }
-    if ($arg eq  '--ssldatanocipher')   { $cfg{'sslhello'}->{'nodatanocipher'} = 1; } # alias
+    if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 1; } # alias ...
+    if ($arg eq  '--sslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 1; }
+    if ($arg eq  '--sslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 1; }
+    if ($arg eq  '--nosslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
+    if ($arg eq  '--nosslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 0; }
     #!#--------+------------------------+---------------------------+----------
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
     if ($arg =~ /^--ca(?:cert(?:ificate)?|file)$/i){ $typ ='CAFILE';} # curl, openssl, wget, ...
