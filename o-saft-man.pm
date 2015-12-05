@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.57 15/12/05 23:09:39";
+my  $man_SID= "@(#) o-saft-man.pm 1.58 15/12/06 00:50:45";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -283,6 +283,7 @@ our %man_text = (
         'ISAKMP'    => "Internet Security Association and Key Management Protocol",
         'IV'        => "Initialization Vector",
         'JSSE'      => "Java Secure Socket Extension",
+        'KCI'       => "Key Compromise Impersonation",
         'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
         'KEK'       => "Key Encryption Key",
         'KSK'       => "Key Signing Key", # DNSSEC
@@ -2776,6 +2777,10 @@ CHECKS
 
         Check if target is vulnerable to heartbleed attack, see CVE-2014-0160
         and http://heartbleed.com/ .
+
+      KCI
+
+        NOT YET IMPLEMENTED
 
       Logjam
 
