@@ -5766,6 +5766,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     if ($arg =~ /^--sniname/i)          { $typ = 'SNINAME';         }
+    if ($arg =~ /^--?servername/i)      { $typ = 'SNINAME';         } # -servername for openssl
     # options for Net::SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
