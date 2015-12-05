@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.56 15/12/01 20:46:16";
+my  $man_SID= "@(#) o-saft-man.pm 1.57 15/12/05 23:09:39";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2119,6 +2119,7 @@ OPTIONS
 
           Be warned that this may result in improper results.
 
+      --servername=NAME
       --sni-name=NAME
 
           Use NAME instead of given hostname to connect to target in SNI mode
@@ -2437,6 +2438,7 @@ OPTIONS
           * --printcert         (ssldiagnos)    same as  +ciphers
           * --protocol SSL      (ssldiagnos)    same as  --SSL
           * --UDP               (ssldiagnos)    same as  --udp
+          * --serverbname=NAME  (openssl)       same as  --sni-name=NAME
           * --no-failed         (sslscan)       same as  --disabled
           * --regular           (sslyze)        same as  --http
           * --reneg             (sslyze)        same as  +renegotiation
