@@ -1320,7 +1320,7 @@ our %cmd = (
                         qw(
                          check cipher dump check_sni exec help info info--v http
                          quick list libversion sizes s_client version quit
-                         sigkey bsi ev cipherraw
+                         sigkey bsi ev cipherraw cipher-dh
                         ),
                     # internal (debugging or experimental) commands
                       # qw(options cert_type),  # will be seen with +info--v only
@@ -1370,7 +1370,7 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam cipher),
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
@@ -1451,9 +1451,10 @@ our %cmd = (
                        # Tripple DES is used as 3DES or DES_192
         'DHEorEDH'  => '(?:DHE|EDH)[_-]',
                        # DHE and EDH are 2 acronyms for the same thing
-        'EC-RSA'    => 'EC(?:DHE|EDH)[_-]RSA',
         'EC-DSA'    => 'EC(?:DHE|EDH)[_-]ECDSA',
+        'EC-RSA'    => 'EC(?:DHE|EDH)[_-]RSA',
                        # ECDHE-RSA or ECDHE-ECDSA
+        'EC'        => 'EC(?:DHE|EDH)[_-]',
         'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
                        # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
         'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
@@ -2423,6 +2424,7 @@ our %text = (
     'cipher'        => "Cipher",
     'support'       => "supported",
     'security'      => "Security",
+    'dh-param'      => "DH Parameters",
     'desc'          => "Description",
     'desc-check'    => "Check Result (yes is considered good)",
     'desc-info'     => "Value",
@@ -3193,6 +3195,7 @@ sub _usesocket($$$$) {
         _warn("SSL version '$ssl': not supported by Net::SSLeay");
         return "";
     }
+    #if (IO::Socket::SSL->can_ecdh() == 1) {}
     if (eval {  # FIXME: use something better than eval()
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
@@ -3209,7 +3212,8 @@ sub _usesocket($$$$) {
                 SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
                 SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
                 SSL_version     => $ssl,    # default is SSLv23
-                SSL_cipher_list => $ciphers
+                SSL_cipher_list => $ciphers,
+                #SSL_ecdh_curve  => "prime256v1", # default is prime256v1
             );
         } else {
             # proxy or starttls
@@ -3264,10 +3268,16 @@ sub _useopenssl($$$$) {
     #       Cipher    : DES-CBC3-SHA
     _trace("_useopenssl data #{ $data }") if ($cfg{'trace'} > 1);
     return "" if ($data =~ m#New,.*?Cipher is .?NONE#);
+    my  $dh = $data;
+    if ($dh =~ m#Server Temp Key:#) {
+        $dh =~ s/.*?Server Temp Key:\s*([^\n]*)\n.*/$1/si;
+    } else {
+        $dh = "";
+    }
     if ($data =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
         $data =~ s#^.*[\r\n]+New,\s*##s;
         $data =~ s#[A-Za-z0-9/.,-]+ Cipher is\s*([^\r\n]*).*#$1#s;
-        return $data;
+        return wantarray ? ($data, $dh) : $data;
     }
     # grrrr, it's a pain that openssl changes error messages for each version
     # we may get any of following errors:
@@ -4734,16 +4744,20 @@ sub print_size($$$$)    {
     print_check($legacy, $host, $port, $key, $checks{$key}->{val} . $value);
 } # print_size
 
+sub print_cipherruler_dh{ print "=   " . "-"x35 . "+-------------------------" if ($cfg{'out_header'} > 0); }
 sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); }
     #? print header ruler line
 sub print_cipherhead($) {
     #? print header line according given legacy format
     my $legacy  = shift;
+    return if ($cfg{'out_header'} <= 0);
     if ($legacy eq 'sslscan')   { print "\n  Supported Server Cipher(s):"; }
     if ($legacy eq 'ssltest')   { printf("   %s, %s (%s)\n",  'Cipher', 'Enc, bits, Auth, MAC, Keyx', 'supported'); }
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'compliant', 'host:port', 'protocol', 'cipher', 'description'); }
     if ($legacy eq 'simple')    { printf("=   %-34s%s\t%s\n", $text{'cipher'}, $text{'support'}, $text{'security'});
                                   print_cipherruler(); }
+    if ($legacy eq 'cipher-dh') { printf("=   %-34s\t%s\n", $text{'cipher'}, $text{'dh-param'});
+                                  print_cipherruler_dh(); }
     if ($legacy eq 'full')      {
         # host:port protocol    supported   cipher    compliant security    description
         printf("= %s\t%s\t%s\t%s\t%s\t%s\t%s\n", 'host:port', 'Prot.', 'supp.', $text{'cipher'}, 'compliant', $text{'security'}, $text{'desc'});
@@ -4903,7 +4917,7 @@ sub printciphercheck($$$$$@)    {
     my $count   = shift; # print title line if 0
     my @results = @_;
     local    $\ = "\n";
-    print_cipherhead( $legacy) if (($cfg{'out_header'}>0) && ($count == 0));
+    print_cipherhead( $legacy) if ($count == 0);
     print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
     if ($legacy ne 'sslyze') {
@@ -4925,6 +4939,26 @@ sub printciphercheck($$$$$@)    {
     print_check($legacy, $host, $port, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
 } # printciphercheck
+
+sub printciphers_dh($$$) {
+    #? print ciphers and DH parameter from target
+    # currently DH parameters are available with openssl only
+    my ($legacy, $host, $port) = @_;
+    my $ssl;
+    foreach $ssl (@{$cfg{'version'}}) {
+        printtitle($legacy, $ssl, $host, $port);
+        print_cipherhead( 'cipher-dh');
+        foreach my $c (@{$cfg{'ciphers'}}) {
+            #next if ($c !~ /$cfg{'regex'}->{'EC'}/);
+            my ($supported, $dh) = _useopenssl($ssl, $host, $port, $c);
+            next if ($supported =~ /^\s*$/);
+            # TODO: use print_cipherline();
+            # TODO: perform check like check_dh()
+            printf("    %-28s\t%s\n", $c, $dh);
+        }
+        print_cipherruler_dh();
+    }
+} # printciphers_dh
 
 sub printprotocols($$$) {
     #? print table with cipher informations per protocol
@@ -6220,6 +6254,7 @@ if ($cmd{'extopenssl'} == 1) {
 ## set defaults for Net::SSLinfo
 ## -------------------------------------
 {
+    #$IO::Socket::SSL::DEBUG     = $cfg{'trace'} if ($cfg{'trace'} > 0);
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
     $Net::SSLinfo::trace        = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLinfo::linux_debug  = $cfg{'linux_debug'};
@@ -6505,6 +6540,13 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     usr_pre_open();
 
+    # TODO dirty hack, check with dh256.tlsfun.de
+    # checking for DH parameters does not need a default connection
+    if (_is_do('cipher-dh')) {
+        printciphers_dh($legacy, $host, $port);
+        goto CLOSE_SSL;
+    }
+
     # Check if there is something listening on $host:$port
     if ($cfg{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
@@ -6654,7 +6696,12 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     CLOSE_SSL:
     _y_CMD("host}");
-    Net::SSLinfo::do_ssl_close($host, $port);
+    {
+      no warnings qw(once);
+      if (defined $Net::SSLinfo::socket) { # check to avoid: WARNING undefined Net::SSLinfo::socket
+        Net::SSLinfo::do_ssl_close($host, $port);
+      }
+    }
     _trace(" done: $host\n");
     $cfg{'done'}->{'hosts'}++;
 
