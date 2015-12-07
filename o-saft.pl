@@ -1192,6 +1192,7 @@ our %cmd = (
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
     'experimental'  => 0,       # 1: use experimental functionality
+    'ignore_no_conn'=> 0,       # 1: ignore warnings if connection fails, check target anyway
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
@@ -5687,8 +5688,9 @@ while ($#argv >= 0) {
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
     if ($arg eq  '--regular')           { $cfg{'usehttp'}++;        } # sslyze
-    if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
     if ($arg eq  '--forcesni')          { $cfg{'forcesni'}  = 1;    }
+    if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'ignore_no_conn'}= 1;}
+    if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    }
     if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
     if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
@@ -6504,14 +6506,17 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     usr_pre_open();
 
     # Check if there is something listening on $host:$port
+    if ($cfg{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
-    if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
-        my $err     = Net::SSLinfo::errors( $host, $port);
-        if ($err !~ /^\s*$/) {
-            _v_print($err);
-            _warn("Can't make a connection to $host:$port; target ignored");
-            goto CLOSE_SSL;
+        if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
+            my $err = Net::SSLinfo::errors( $host, $port);
+            if ($err !~ /^\s*$/) {
+                _v_print($err);
+                _warn("Can't make a connection to $host:$port; target ignored");
+                _warn(STR_HINT ."--ignore-no-conn can be used to disables this check");
+                goto CLOSE_SSL;
+            }
         }
     }
 
