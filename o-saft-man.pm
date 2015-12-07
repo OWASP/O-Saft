@@ -2002,6 +2002,14 @@ OPTIONS
 
           Default is 'ALL:NULL:eNULL:aNULL:LOW' as specified in Net::SSLinfo.
 
+      --ignore-no-connect
+
+          A simple check if the target can be connected  will be performed by
+          default.  If this check fails, the target will be ignored, means no
+          more reuqested checks will be done.  As this connection check some-
+          times fails due to various reasons, the check can be disabled using
+          this option.
+
       --no-md5-cipher
 
           Do not use *-MD5 ciphers for other protocols than SSLv2.
