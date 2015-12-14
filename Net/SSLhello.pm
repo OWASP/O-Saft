@@ -52,12 +52,13 @@ our %cfg=%main::cfg;  # FIXME: must be provided by caller
 our $host; # FIXME: used in _timeOut()
 our $port; # FIXME: used in _timeOut()
 our $dtlsEpoch = 0; # for DTLS only (globally)
+our %_SSLhello; #  our internal data structure
 
 use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '15.06.21';
+    $VERSION    = '15.12.13';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -103,7 +104,7 @@ use constant {
     _MY_PRINT_CIPHERS_PER_LINE =>  8, # Nr of Ciphers printed in a trace
     _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
     _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
-    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 3, # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
+    _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 16, # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
     _SLEEP_B4_2ND_READ         => 0.5, # Sleep before second read (STARTTLS and Proxy) [in sec.x]
     _DTLS_SLEEP_AFTER_FOUND_A_CIPHER        => 0.75, # DTLS-Protocol: Sleep after found a Cipher to segregate the following request [in sec.x]
     _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND      => 0.05  # DTLS-Protocol: Sleep after not found a Cipher to segregate the following request [in sec.x]
@@ -117,8 +118,8 @@ $Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
 $Net::SSLhello::traceTIME    = 0;# 1=trace prints timestamp
 $Net::SSLhello::usesni       = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name
 $Net::SSLhello::sni_name     = "1";# name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to usesni=2 will be done
-$Net::SSLhello::timeout      = 1;# time in seconds
-$Net::SSLhello::retry        = 2;# number of retry when timeout
+$Net::SSLhello::timeout      = 2;# time in seconds
+$Net::SSLhello::retry        = 3;# number of retry when timeout occurs
 $Net::SSLhello::usereneg     = 0;# secure renegotiation 
 $Net::SSLhello::useecc       = 1;# use 'Supported Elliptic' Curves Extension
 $Net::SSLhello::useecpoint   = 1;# use 'ec_point_formats' Extension
@@ -139,7 +140,8 @@ my %RECORD_TYPE = ( # RFC 5246
     'handshake'             => 22,
     'application_data'      => 23,
     'heartbeat'             => 24,
-    '255'                   => 255
+    '255'                   => 255,
+    '<<undefined>>'         => -1       # added for internal use
 );
 
 my %HANDSHAKE_TYPE = ( # RFC 5246
@@ -154,7 +156,9 @@ my %HANDSHAKE_TYPE = ( # RFC 5246
     'certificate_verify'    => 15,
     'client_key_exchange'   => 16,
     'finished'              => 20,
-    '255'                   => 255
+    '255'                   => 255,
+    '<<undefined>>'         => -1,      # added for internal use
+    '<<fragmented_message>>'=> -99      # added for internal use
 );
 
 my %PROTOCOL_VERSION = (
@@ -1221,7 +1225,7 @@ sub checkSSLciphers ($$$@) {
                         last;
                     } elsif ( $@ =~ /\-> Received NO Data/) { # Some Servers 'Respond' by closing the TCP connection => Check each Cipher individually
                         if ($Net::SSLhello::noDataEqNoCipher == 1) { # Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported
-                            _trace1 ("checkSSLciphers (1.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
+                            _trace2 ("checkSSLciphers (1.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
                             @cipherSpecArray =(); # => Empty @cipherSpecArray
                             $@=""; # reset Error-Msg
                             next;
@@ -1322,7 +1326,7 @@ sub checkSSLciphers ($$$@) {
             _trace3 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             _trace4 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             $@=""; # reset Error-Msg
-            $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch); # collect Accepted Ciphers by Priority
+            $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # collect Accepted Ciphers by Priority
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
             if ($@) {
                 _trace2 ("checkSSLciphers (3): '$@'\n");
@@ -1359,7 +1363,7 @@ sub checkSSLciphers ($$$@) {
                         $cipher_str = join ("",@acceptedCipherArray).$acceptedCipher; # Test again with the first Cipher as the last 
                         _trace3 ("Check Cipher Prioity for Cipher-S(2) > ". hexCodedCipher($cipher_str)."< ");
                         _trace4 ("\n");
-                        $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch); # If Server uses a Priority List we get the same Cipher again!
+                        $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # If Server uses a Priority List we get the same Cipher again!
                         _trace3_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
                         _trace4_ ("#                                 --->". hexCodedCipher($acceptedCipher)."<\n");
                         if ($acceptedCipher) { # received an accepted Cipher ### TBD: if ($acceptedCipher eq ($acceptedCipherArray[0]) => no Order => return (@acceptedCipherSortedArray[0].$acceptedCipherArray)  
@@ -2042,9 +2046,9 @@ sub _doCheckSSLciphers ($$$$;$) {
     #
     my $host         = shift || ""; # hostname
     my $port         = shift || 443;
-    my $protocol     = shift || 0; # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
+    my $protocol     = shift || 0;  # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
     my $cipher_spec  = shift || "";
-    my $dtlsEpoch    = shift || 0; # optional, used in DTLS only
+    my $dtlsEpoch    = shift || 0;  # optional, used in DTLS only
     my $socket;
     my $connect2ip;
     my $proxyConnect="";
@@ -2057,7 +2061,8 @@ sub _doCheckSSLciphers ($$$$;$) {
     my $v3len=0; ###
     my $v3type=0; ###
     my $v3version=0; ###
-    my ($recordType, $recordVersion, $recordLen, $inputLen) = (0,0,0,0);
+    my ($recordType, $recordVersion, $recordLen, $recordEpoch, $recordSeqNr) = (0,0,0,0,0);
+    my $recordData = "";
     my $acceptedCipher="";
     my $retryCnt = 0;
     my $firstMessage = "";
@@ -2069,7 +2074,10 @@ sub _doCheckSSLciphers ($$$$;$) {
     my $dtlsNewCookieLen = 0;
     my $dtlsNewCookie = "";
     my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection
-    my $isUdp=0; # for DTLS
+    my $isUdp = 0; # for DTLS
+    my $buffer = "";
+    my $lastMsgType = $HANDSHAKE_TYPE {'<<undefined>>'}; #undefined Message Type
+    my $lastRecordType = $RECORD_TYPE {'<<undefined>>'}; #undefined Record Type
 
     my %rhash = reverse %PROTOCOL_VERSION;
     my $ssl = $rhash{$protocol};
@@ -2136,7 +2144,7 @@ sub _doCheckSSLciphers ($$$$;$) {
         alarm (0);   # race condition protection
 
         ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
-        ($recordType, $recordVersion, $recordLen, $inputLen, $input) = _readPdu ($socket, $isUdp);
+        ($input, $recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr) = _readRecord ($socket, $isUdp, $host, $port, $protocol);
         # Error-Handling
         if ( ($@) && ( ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) || ($Net::SSLhello::trace > 2) )) {
             _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n");
@@ -2146,7 +2154,11 @@ sub _doCheckSSLciphers ($$$$;$) {
             $@= "... Received NO Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).") after $Net::SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
             _trace2 ("_doCheckSSLciphers: $@\n"); 
             return ("");
+        } elsif ($@) { # any other error
+             _trace2 ("_doCheckSSLciphers: $@\n");
+            return ("");
         }
+        _trace2("_doCheckSSLciphers: Server '$host:$port': (Protocol $ssl [".sprintf ("0x%04X", $protocol)."], (Record-)Type $recordType: received a record with ".length($recordData)." Bytes payload (recordData) >".hexCodedString (substr($recordData,0,48),"       ")."< ...)     \n");
 
         if ($recordVersion <= 0) { # got no SSL/TLS/DTLS-PDU
             # Try to read the whole Input Buffer
@@ -2176,9 +2188,9 @@ sub _doCheckSSLciphers ($$$$;$) {
         }
         if (length($input) >0) {
             _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes\n"); 
-            ($acceptedCipher, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $input, $protocol);
+            ($acceptedCipher, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, "", $protocol,"");
             if ( ($acceptedCipher ne "") || (! $isUdp) ) {
-                last;
+                last;;
             }
             if ($@ ne "") {
                 _trace4 ("_doCheckSSLciphers: Exit with Error: '$@'\n");
@@ -2359,18 +2371,26 @@ sub _doCheckSSLciphers ($$$$;$) {
 }
 
 ############################################################
-
-sub _readPdu {
-    #? receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello)
+sub _readRecord ($$;$$$) { # return ()
     #
     my $socket = shift || "";
     my $isUdp  = shift || 0;
-    my $pduType = 0;
-    my $pduVersion = 0; # no existing PDU Version
-    my $MAXLEN= 32767;
-    my $pduLen = 0; # ($isUdp) ? $MAXLEN : 7; # Minimum Len is: all readable Octetts for UDP (-> MAXLEN), 7 Octetts for TCP (=Len of an Alert-Message); Remark: The minimum Record Len is 5 Bytes, but it is better to read 7 bytes to get a compete Alert Message before any diconnects can occure
-    my $readLen = $MAXLEN; # read up to MAXLEN Octetts
+    my $host = shift || ""; #for warn- and trace-messages
+    my $port = shift || ""; #for warn- and trace-messages
+    my $client_protocol = shift || -1;  # optional
+
+    my $MAXLEN= 16384; # according RFC 5246: 16384 Bytes for the packetData (without the packet header) 
+    my $pduLen = 0; # no PDUlen detected, yet
+    my $readLen = ($isUdp) ? $MAXLEN : 7; # Minimum Len is: all readable Octetts for UDP (-> MAXLEN), 7 Octetts for TCP (=Len of an Alert-Message); Rema     rk: The minimum Record Len is 5 Bytes, but it is better to read 7 bytes to get a compete Alert Message before any disconnects can occure #### was: $MAXLEN; # read up to MAXLEN Octetts
     my $len = 0;
+    my $recordType      = 0;
+    my $recordVersion   = 0;
+    my $recordEpoch     = 0;
+    my $recordSeqNr_null= 0; # (0x0000)
+    my $recordSeqNr     = 0;
+    my $recordLen       = 0;
+    my $recordData      = "";
+    my $recordHeaderLen = 0;
     my ($rin, $rout);
     my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection$ 
     my $retryCnt = 0;
@@ -2396,14 +2416,14 @@ sub _readPdu {
         }; # end of eval select
         alarm (0);   # race condition protection
         if ($@) {
-            $@="_readPdu: unknown Timeout-Error (1): $@";
-             warn ("_readPdu: $@");
-             _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+            $@="_readRecord unknown Timeout-Error (1): $@";
+             warn ("_readRecord $@");
+             _trace4 ("_readRecord Server '$host:$port' -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
              last;
         }
         if ( ! $success) { # Nor data NEITHER special event => Timeout
             alarm (0); #clear alarm
-            _trace4 ("_readPdu -> next: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n") if (! $isUdp);
+            _trace4 ("_readRecord: Server '$host:$port' -> Timeout (received Nor data NEITHER special event) while reading a recordi with".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n") if (! $isUdp);
             last if ($isUdp); # resend the udp packet
             select (undef, undef, undef, _SLEEP_B4_2ND_READ);
             next;
@@ -2414,117 +2434,180 @@ sub _readPdu {
                 $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);
                 @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed)
-                _trace4 ("_readPdu: can read (1): ($retryCnt; ".length($input).")\n") if (scalar (@socketsReady));
+                _trace4 ("_readRecord can read (1): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
                 $success = sysread ($socket, $input, $readLen - length($input), length($input)); #if NO success: EOF or other Error while reading Data
                 alarm (0); #clear alarm
             };
             alarm (0);   # race condition protection
             if ($@) {
-                $@="_readPdu: unknown Timeout-Error (2): $@";
-                 warn ("_readPdu: $@");
-                 _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                $@="_readRecord unknown Timeout-Error (2): $@";
+                 warn ("_readRecord $@");
+                 _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
                  last;
             }
             @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed) 
-            _trace4 ("_readPdu: can read (2): ($retryCnt; ".length($input).")\n") if (scalar (@socketsReady));
+            _trace4 ("_readRecord can read (2): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
             if (! $success ) { # EOF or other Error while reading Data
                 if (length ($input) == 0) { # Disconnected, no Data
-                    _trace4 ("_readPdu: received EOF (Disconnect), no Data\n");
+                    _trace4 ("_readRecord: Server '$host:$port': received EOF (Disconnect), no Data\n");
                     last;
                 } else {
-                    _trace1 ("_readPdu: No Data (EOF) after ".length($input)." of expected $pduLen Bytes: '$!' -> Retry to read\n");
+                    _trace1 ("_readRecord: Server '$host:$port': No Data (EOF) after ".length($input)." of expected $pduLen Bytes: '$!' -> Retry to read\n");
                     @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 1); ###additional debug (use IO::select needed)
-                    _trace1 ("_readPdu: can read (3): ($retryCnt; ".length($input).")\n") if (scalar (@socketsReady));
+                    _trace1 ("_readRecord can read (3): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
                     select (undef, undef, undef, _SLEEP_B4_2ND_READ);
                     next;
                 }
             }
             $len = length($input);
-            $segmentCnt++;
-            _trace4 ("_readPdu ... Received $len Bytes in $segmentCnt Segments\n");
-            $retryCnt = 0 if ($segmentCnt <= _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT); # reset Retry-Count to 0 (in next loop)
-            
+
             if ($pduLen == 0) { # no PduLen decoded, yet
+                _trace4 ("_readRecord: Server '$host:$port': ... Received first $len Bytes to detect PduLen\n");
                 if ( (! $isUdp) && ($len >= 5) ) { # try to get the pduLen of the SSL/TLS Pdu (=protocol aware length detection)
                     # Check PDUlen; Parse the first 5 Bytes to check the Len of the PDU (SSL3/TLS)
-                    ($pduType,       #C (record_type)
-                     $pduVersion,    #n (record_version)
-                     $pduLen)        #n (record_len)
-                      = unpack("C n n", $input);
+                    ($recordType,       #C (record_type)
+                     $recordVersion,    #n (record_version)
+                     $recordLen,        #n (record_len)
+                    ) = unpack("C n n", $input); # assuming to parse a SSLv3/TLS record, will be redone if it is SSLv2
 
-                    if ( ($pduType < 0x80) && (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) ) { #SSLv3/TLS (no SSLv2)
-                        $pduLen += 5; # Check PDUlen = len + size of record-header; 
-                        _trace3 ("_readPdu ... Received Data: Expected SSLv3/TLS-PDU-Len of Server-Hello: $pduLen\n");
-                    } else { # Check for SSLv2
-                        ($pduLen,    # n (V2Len > 0x8000)
-                        $pduType)    # C = 0
-                            = unpack("n C", $input);
-                        if ( ($pduLen > 0x8000) && (($pduType == $SSL_MT_SERVER_HELLO) || ($pduType == $SSL_MT_ERROR)) ) { # SSLv2 check
-                            $pduLen += -0x8000 +2;
-                            $pduVersion = $PROTOCOL_VERSION{'SSLv2'}; # added the implicitely detected protocol
-                            _trace3 ("_readPdu ... Received Data: Expected SSLv2-PDU-Len of Server-Hello: $pduLen\n");
+                    if ( ($recordType < 0x80) && (($recordVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) ) { #SSLv3/TLS (no SSLv2)
+                        _trace2_ (sprintf (
+                         "# -->    => SSL3/TLS-Record Type: Handshake  (%02X):\n".
+                         "# -->    record_version:  >%04X<\n".
+                         "# -->    record_len:      >%04X<\n",
+                           $recordType,
+                           $recordVersion,
+                           $recordLen,
+                        )); # if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'});
+                        $recordHeaderLen = 5; # record Data starts at position 6
+                        _trace2 ("_readRecord: Server '$host:$port': ... Received Data: Expected SSLv3/TLS-PDU-Len:");
+                    } else { # Check for SSLv2 (parse the Inpit again)
+                        ($recordLen,    # n (V2Len > 0x8000)
+                         $recordType,   # C = 0
+                        ) = unpack("n C", $input);
+                        if ( ($recordLen > 0x8000) && (($recordType == $SSL_MT_SERVER_HELLO) || ($recordType == $SSL_MT_ERROR)) ) { # SSLv2 check
+                            $recordLen     -= 0x8000;
+                            $recordHeaderLen = 2; # Message Data starts at position 3
+                            $pduLen         = $recordLen + $recordHeaderLen;
+                            $recordVersion  = $PROTOCOL_VERSION{'SSLv2'}; # added the implicitely detected protocol
+                            _trace2 ("_readRecord: Server '$host:$port': ... Received Data: Expected SSLv2-PDU-Len:");
                         } else { ### No SSL/TLS/DTLS PDU => Last 
                             $@ = "no known SSL/TLS PDU-Type";
-                            $pduType    = 0;
-                            $pduVersion = 0;
-                            $pduLen     = 0;
-                            _trace1 ("_readPdu: $@\n");
-                            _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                            $recordType     = 0;
+                            $recordVersion  = 0;
+                            $recordLen      = 0;
+                            _trace1 ("_readRecord $@\n");
+                            _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
                             last;
                         }
-                    }
-                    if ($pduLen > $MAXLEN) {
-                        _trace1 ("_readPdu: expected len of the SSL/TLS-Record ($pduLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
-                        warn ("_readPdu: expected len of the SSL/TLS-Record ($pduLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
-                        $pduLen = $MAXLEN;
                     }
 
                 } elsif ( ($isUdp) && ($len >= 13) )  { # try to get the pduLen of the DTLS Pdu (=protocol aware length detection)
                     # Check PDUlen; Parse the first 13 Bytes to check the Len of the PDU (DTLS)
-                    ($pduType,       #C  (record_type)
-                     $pduVersion,    #n  (record_version)
-                                     #x8 (epoch, sequenceNr)
-                     $pduLen)        #n  (record_len)
-                    = unpack("C n x8 n", $input);
-                    if ( ($pduType < 0x80) && ( (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) # DTLS
-                                           || ( $pduVersion           == $PROTOCOL_VERSION{'DTLSv09'}) ) ) { # DTLS, or DTLSv09 (OpenSSL pre 0.9.8f)
-                        $pduLen += 13; # Check PDUlen = len + size of record-header; 
-                        _trace3 ("_readPdu ... Received Data: Expected DTLS-PDU-Len of Server-Hello: $pduLen\n");
-                        if ($pduLen > $MAXLEN) {
-                            _trace1 ("_readPdu: expected len of the DTLS-Record is higher than the maximum ($MAXLEN) -> cut at maximum length!");
-                            warn ("_readPdu: expected len of the DTLS-Record is higher than the maximum ($MAXLEN) -> cut at maximum length!");
-                            $pduLen = $MAXLEN;
-                        }
+                    _trace2 ("_readRecord: Server '$host:$port': Protocol: DTLS\n");
+                    ($recordType,         # C
+                     $recordVersion,      # n
+                     $recordEpoch,        # n
+                     $recordSeqNr_null,   # n (0x0000)
+                     $recordSeqNr,        # N
+                     $recordLen,          # n
+                    ) = unpack ("C n n n N n", $input);
+
+                    _trace2_ (sprintf (
+                     "# -->    => DTLS-Record Type: Handshake  (%02X):\n". ### only for Handshake Records that we analyze, yet
+                     "# -->    record_version:    >%04X<\n".
+                     "# -->    record_epoch:      >%04X<\n".        # n
+                     "# -->    record_seqNr_null: >%04X<\n".        # n (0x0000)
+                     "# -->    record_seqNr:  >%08X<\n".            # N
+                     "# -->    record_len:        >%04X<\n",
+                       $recordType, 
+                       $recordVersion,
+                       $recordEpoch,                # n
+                       $recordSeqNr_null,           # n (0x0000)
+                       $recordSeqNr,                # N
+                       $recordLen,                  # n
+                    ));
+                    if ( ($recordType < 0x80) && ( (($recordVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) # DTLS
+                                                 || ($recordVersion == $PROTOCOL_VERSION{'DTLSv09'}) ) ) { # DTLS, or DTLSv09 (OpenSSL pre 0.9.8f)
+                        $recordHeaderLen = 13; # record Data starts at position 14
+                        _trace2 ("_readRecord: Server '$host:$port': ... Received Data: Expected DTLS-PDU-Len:");
                     } else {
                         # isUdp is set, but no DTLS-Record recognized
-                        $@ = "no known DTLS PDU-Type -> unknown Protocol";
-                        $pduType    = 0;
-                        $pduVersion = 0;
-                        $pduLen     = 0;
-                        _trace1 ("_readPdu: $@\n");
-                        _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                        $@ = "Server '$host:$port': no known DTLS PDU-Type -> unknown Protocol";
+                        _trace1 ("_readRecord: $@\n");
+                        _trace1 ("_readRecord: -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)", $recordVersion)." with ".length($input)." Bytes (from $recordLen expected) after $retryCnt tries: reset all the mentioned parameters to 0\n");
+                        $recordType     = 0;
+                        $recordVersion  = 0;
+                        $recordLen      = 0;
+                        $pduLen         = 0;
+                        $recordHeaderLen = 0;
                         last;
                     }
+                } # End: if DTLS
+
+                $pduLen = $recordLen + $recordHeaderLen; # Check PDUlen = len + size of record-header; 
+                _trace2_ (" $pduLen (including the SSL/TLS-Header)\n");
+                if ($recordLen > $MAXLEN) { # check the raw length without the specific size of the header
+                    _trace1 ("_readRecord: Server '$host:$port': expected len of the SSL/TLS-Record ($recordLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
+                    warn ("_readRecord: Server '$host:$port': expected len of the SSL/TLS-Record ($recordLen) is higher than the maximum ($MAXLEN) -> cut at maximum length!");
+                    $pduLen += -$recordLen +$MAXLEN; # => MAXLEN + size of recordHeader
                 }
-                $readLen = $pduLen; #read only pduLen Octetts
+                $readLen = $pduLen; #read only pduLen Octetts (-> only by one record)
+                $retryCnt = 0 if ($readLen > 0); # detection of the recordLen is no Retry -> reset Counter
             } elsif ($len <= 0) { # Error no Data
-                $@ = "NULL-Len-Data in _readPdu: $!";
-                _trace1 ("_readPdu ... Received Data: $@\n");
-                _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                $@ = "Server '$host:$port': NULL-Len-Data in _readRecord $!";
+                _trace1 ("_readRecord ... Received Data: $@\n");
+                _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
                 last;
+            } else {
+                $segmentCnt++;
+                _trace4 ("_readRecord: Server '$host:$port': ... Received $len Bytes in $segmentCnt Segment(s)\n");
+                $retryCnt = 0 if ($segmentCnt <= _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT); # reset Retry-Count to 0 (in next loop)
+            }
+            if (defined ($client_protocol)) {
+                if ($client_protocol != $recordVersion) {
+                    my %rhash = reverse %PROTOCOL_VERSION;
+                    my $ssl_client = $rhash{$client_protocol};
+                    my $ssl_server = $rhash{$recordVersion};
+                    if (! defined $ssl_client) {
+                        $ssl_client ="--unknown Protocol--";
+                    } 
+                    if (! defined $ssl_server) {
+                        $ssl_server ="--unknown Protocol--";
+                    }
+                    $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> protocol_version is not supported!", $recordVersion, $client_protocol);
+                    _trace2("$@\n"); 
+                    return ($input, $recordType, $recordVersion, 0, "", $recordEpoch, $recordSeqNr);
+                }
             }
         } else {# got NO Data
-            $@ = "No Data in _readPdu after reading $len of $pduLen expected Bytes; $!";
-           _trace1 ("_readPdu ... Received Data: $@\n");
-           _trace4 ("_readPdu -> LAST: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+            $@ = "Server '$host:$port': No Data in _readRecord after reading $len of $pduLen expected Bytes; $!";
+           _trace1 ("_readRecord ... Received Data: $@\n");
+           _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
             last;
         }
     } # End while
+    if (!($@) && (length($input) < $pduLen) ) { # No Error, but the loop did *NOT* get all Data within the maximal retries
+        $@ = "Server '$host:$port': Overrun the maximal number of $retryCnt retries in _readRecord after reading $len of $pduLen expected Bytes in the ". $segmentCnt . "th segment; $!";
+        _trace1 ("_readRecord ... Error receiving Data: $@\n");
+        _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+    }
     chomp ($@);
-    _trace2 ("_readPdu: received (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
-    _trace3_ ("      >".substr(_chomp_r($input),0,64)." ...<\n");
-    _trace4_ ("      >"._chomp_r($input)."<\n"); 
-    return ($pduType, $pduVersion, $pduLen, length($input), $input);
+
+    if ($client_protocol >= 0) {
+        _trace3("_readRecord: Server '$host:$port': (expected Protocol= >".sprintf ("%04X", $client_protocol)."<,\n      (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes >".hexCodedString (substr($input,0,48),"       ")."< ...)\n");
+    } else {
+        _trace4("_readRecord: Server '$host:$port': (any Protocol, (Record     -)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes\n       Data=".hexCodedString ($input,"       ").")\n");
+    }
+
+    ($recordData) = unpack ("x[$recordHeaderLen] a*", $input);  # get recordData from input skipping the Header
+    if (length($recordData) != $recordLen) { 
+        _trace1 ("_readRecord: Server '$host:$port': (expected Protocol= >".sprintf ("%04X", $client_protocol)."<, (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)
+                .": recordLen ".sprintf ("%04X",length($recordData))." is not equal to the expected value ".sprintf ("%04X",$recordLen). "\n");
+        warn    ("_readRecord: Server '$host:$port': (expected Protocol= >".sprintf ("%04X", $client_protocol)."<, (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)
+                .": recordLen ".sprintf ("%04X",length($recordData))." is not equal to the expected value ".sprintf ("%04X",$recordLen). "\n");
+    }
+    return ($input, $recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr); ## TBD: $err ###
 }
 
 ###############################################################
@@ -3206,209 +3289,199 @@ sub _compileClientHelloExtensions ($$$$@) {
     return ($clientHello_extensions);
 }
 
-sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>, <cookie (DTLS)>
+sub parseHandshakeRecord ($$$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>, <cookie (DTLS)>
     my $host = shift || ""; #for warn- and trace-messages
     my $port = shift || ""; #for warn- and trace-messages
-    my $pduType = shift || 0; # recordType
-    my $pduVersion = shift || 0; # recordVersion or SSLv2
-    my $pduLen = shift || 0;  # recordLen
-    my $buffer = shift || ""; # record
+    my $recordType = shift || 0; # recordType
+    my $recordVersion = shift || 0; # recordVersion or SSLv2
+    my $recordLen = shift || 0;  # recordLen
+    my $recordData = shift || ""; # record
+    my $lastCipher = shift || ""; # lastCipher
     my $client_protocol = shift || "";  # optional
 
     my $rest ="";
     my $tmp_len = 0;
-    my $messages = ""; # all messages of the record
     my $message = "";
     my $nextMessages = "";
     my %serverHello;
+    my $cipher = "";
+    my $keyExchange= "";
     my $description = "";
+    my $lastMsgType = $HANDSHAKE_TYPE {'<<undefined>>'}; #undefined
     $@="";
 
-    if (length ($buffer) >=5) { # Received Data in the buffer, at least 5 Bytes
+    my $sni = "";
+    unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+        $sni = "'$host'" if ($Net::SSLhello::usesni ==1); # Server Name, should be a Name no IP
+    } else { # different sni_name
+        $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
+    }
 
-        if (defined $client_protocol) {
-            _trace2("parseHandshakeRecord: Server '$host:$port': (expected Protocol= >".sprintf ("%04X", $client_protocol)."<,\n      (Record-)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($buffer)." Bytes >".hexCodedString (substr($buffer,0,48),"       ")."< ...)\n");
-        } else {
-            _trace2("parseHandshakeRecord: Server '$host:$port': (any Protocol, (Record     -)Type $pduType, -Version: ".sprintf ("(0x%04X)",$pduVersion)." with ".length($buffer)." Bytes\n       Data=".hexCodedString (substr($buffer,0,48),"       ").")... \n");
-        }
+    if (defined $client_protocol) {
+        _trace2("parseHandshakeRecord: Server '$host:$port': (expected Protocol= >".sprintf ("%04X", $client_protocol)."<,\n      (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($recordData)." Bytes >".hexCodedString (substr($recordData,0,48),"       ")."< ...)\n");
+    } else {
+        _trace2("parseHandshakeRecord: Server '$host:$port': (any Protocol, (Record     -)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($recordData)." Bytes\n       recordData=".hexCodedString (substr($recordData,0,48),"       ").")... \n");
+    }
 
-        if ($pduVersion == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
-            _trace2_ ("# -->SSL: Message-Type SSL2-Msg"); 
-            ($serverHello{'msg_len'},         # n
-             $serverHello{'msg_type'},        # C
-             $rest) = unpack("n C a*", $buffer); 
+    if (length ($recordData) >=1) { # Received Data in the Record, at least 1 Byte
 
-            $serverHello{'msg_len'} -= 0x8000;  # delete MSB 
-
+        if ($recordVersion == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2 (no real Record -> get MessageData from data that has been parsed before)
+            _trace2_ ("# -->SSL: Message-Type SSL2-Msg\n"); 
+            # SSLV2 uses Messages directly, no records -> get data from record-parameters
+            $serverHello{'msg_len'}  =  $recordLen;   # n (MSB already deleted)
+            $serverHello{'msg_type'} =  $recordType;  # C
+            ($message) = unpack("x a*", $recordData); # Skip '$serverHello{'msg_type'}, # C' -> 'x', which is already parsed as a dummy 'recordType'
             _trace2_ (sprintf ( 
-                "# -->        parseHandshakeRecord:(1):\n".
                 "# -->        msg_len:              >%04X<\n".
                 "# -->        msg_type:               >%02X<\n",
                 $serverHello{'msg_len'},
                 $serverHello{'msg_type'}
             ));
-            _trace4 ("parseHandshakeRecord: Server '$host:$port': Rest: >".hexCodedString ($rest)."<\n"); 
+            _trace4 ("parseHandshakeRecord: Server '$host:$port': MessageData:\n".hexCodedString ($message,"             ")."\n"); 
+
+            $lastMsgType = $serverHello{'msg_type'} || $HANDSHAKE_TYPE {'<<undefined>>'};
 
             if ($serverHello{'msg_type'} == $SSL_MT_SERVER_HELLO) { 
                 _trace4 ("    Handshake Protocol: SSL2 Server Hello\n"); 
                 _trace4 ("        Message Type: (Server Hello (2)\n"); 
-                return (parseSSL2_ServerHello ($host, $port, $rest,$client_protocol), 0, ""); # cipher_spec-Liste
-            } elsif ($serverHello{'msg_type'} == $SSL_MT_ERROR) { #TBD Error-Handling for ssl2
+                return (parseSSL2_ServerHello ($host, $port, $message, $client_protocol), $lastMsgType, 0, ""); # cipher_spec-Liste
+            } elsif ($serverHello{'msg_type'} == $SSL_MT_ERROR) { # simple Error-Handling for ssl2
                 ($serverHello{'err_code'}        # n
-                 ) = unpack("n", $rest); 
+                 ) = unpack("n", $message); 
 
                 _trace2 ("parseHandshakeRecord: Server '$host:$port': received a SSLv2-Error-Message, Code: >0x".hexCodedString ($serverHello{'err_code'})."<\n");
-                unless ($serverHello{'err_code'} == 0x0001) { # SSLV2_No_Cipher
-                    warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': received a SSLv2-Error_Message: , Code: >0x".hexCodedString ($serverHello{'err_code'})." -> Target Ignored\n");
+                unless ($serverHello{'err_code'} == 0x0001) { # SSLV2_No_Cipher, TBD: this could be improved later (if needed)
+                    warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': received a SSLv2-Error_Message: , Code: >0x".hexCodedString ($serverHello{'err_code'})." -> answer ignored\n");
                 }
-                return ("", 0, "");
-            } else { # if ($serverHello{'msg_type'} == 0 => NOT supported Protocol (?!)
-                $@= "    Unknown SSLv2-Message Type (Dez): ".$serverHello{'msg_type'}.", Msg: >".hexCodedString ($buffer)."< -> Target Ignored\n"; }
-                return ("",0 , "");
-        } else { # SSLv3, TLS or DTLS:
-            if (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) { #SSL3 , TLS1. 
-                _trace2_("# -->TLS Record Layer:\n"); 
-                ($serverHello{'record_type'},       # C
-                 $serverHello{'record_version'},    # n
-                 $serverHello{'record_len'},        # n
-                 $messages) = unpack("C n n a*", $buffer);
-
-### perhaps this could be a good point to start a new function to parse a Message => to check certificates etc later###
-                ($serverHello{'msg_type'},          # C
-                 $serverHello{'msg_len_null_byte'}, # C
-                 $serverHello{'msg_len'},           #n 
-                 $rest) = unpack("C C n a*", $messages);
-
-                _trace2_ (sprintf (
-                     "# -->    => SSL3/TLS-Record Type: Handshake  (%02X):\n".
-                     "# -->    record_version:  >%04X<\n".
-                     "# -->    record_len:      >%04X<\n".
-                     "# -->       msg_type:            >%02X<\n".
-                     "# -->       msg_len_null_byte:   >%02X<\n".
-                     "# -->       msg_len:           >%04X<\n",
-                       $serverHello{'record_type'}, 
-                       $serverHello{'record_version'},
-                       $serverHello{'record_len'},
-                       $serverHello{'msg_type'},
-                       $serverHello{'msg_len_null_byte'}, # prefetched for record_type Handshake 
-                       $serverHello{'msg_len'}              # prefetched for record_type Handshake 
-                )) if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'});
-
-            } elsif ( (($pduVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($pduVersion == $PROTOCOL_VERSION{'DTLSv09'})  ) { #DTLS1.x or DLSv09 (OpenSSL pre 0.9.8f)
-                _trace2 ("parseHandshakeRecord: Protocol: DTLS\n");
-                ($serverHello{'record_type'},         # C
-                 $serverHello{'record_version'},      # n
-                 $serverHello{'record_epoch'},        # n
-                 $serverHello{'record_seqNr_null'},   # n (0x0000)
-                 $serverHello{'record_seqNr'},        # N
-                 $serverHello{'record_len'},          # n
-                 $messages) = unpack ("C n n n N n a*", $buffer);
-
-                ($serverHello{'msg_type'},            # C
-                 $serverHello{'msg_len_null_byte'},   # C (0x00)
-                 $serverHello{'msg_len'},             # n
-                 $serverHello{'msg_seqNr'},           # n
-                 $serverHello{'fragment_null_byte'},  # C (0x00)
-                 $serverHello{'fragment_offset'},     # n TBD: verify
-                 $serverHello{'fragment_null_byte'},  # C (0x00)
-                 $serverHello{'fragment_len'},        # n TBD: verify
-                 $rest) = unpack ("C C n n C n C n a*", $messages);
-
-                _trace2_ (sprintf (
-                     "# -->    => DTLS-Record Type: Handshake  (%02X):\n".
-                     "# -->    record_version:    >%04X<\n".
-                     "# -->    record_epoch:      >%04X<\n".        # n
-                     "# -->    record_seqNr_null: >%04X<\n".        # n (0x0000)
-                     "# -->    record_seqNr:  >%08X<\n".            # N
-                     "# -->    record_len:        >%04X<\n".
-                     "# -->       msg_type:             >%02X<\n".
-                     "# -->       msg_len_null_byte:    >%02X<\n".
-                     "# -->       msg_len:            >%04X<\n".
-                     "# -->       msg_seqNr:          >%04X<\n".           # n
-                     "# -->       fragment_null_byte:   >%02X<\n". # C (0x00)
-                     "# -->       fragment_offset:    >%04X<\n".     # n TBD: verify
-                     "# -->       fragment_null_byte:   >%02X<\n". # C (0x00)
-                     "# -->       fragment_len:       >%04X<\n",     # n TBD: verify,
-                       $serverHello{'record_type'}, 
-                       $serverHello{'record_version'},
-                       $serverHello{'record_epoch'},                # n
-                       $serverHello{'record_seqNr_null'},           # n (0x0000)
-                       $serverHello{'record_seqNr'},                # N
-                       $serverHello{'record_len'},                  # n
-                       $serverHello{'msg_type'},
-                       $serverHello{'msg_len_null_byte'},           # prefetched for record_type Handshake 
-                       $serverHello{'msg_len'},                     # prefetched for record_type Handshake 
-                       $serverHello{'msg_seqNr'},                   # n
-                       $serverHello{'fragment_null_byte'},          # C (0x00)
-                       $serverHello{'fragment_offset'},             # n TBD: verify
-                       $serverHello{'fragment_null_byte'},          # C (0x00)
-                       $serverHello{'fragment_len'},                # n TBD: verify,
-                )) if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'});
-
-                if ( (defined ($serverHello{'fragment_offset'}) ) && ($serverHello{'fragment_offset'} > 0) ) {
-                    $@= "$host:$port: sorry, fragmented DTLS Packets are not yet supported -> Retry";   ####TBD TBD TBD ###
-                    _trace2 ("parseHandshakeRecord: $@\n");
-                    warn ("parseHandshakeRecord: $@");
-                    return ("", 0, "");
-                }
-
-            } else {
-                $@ = "$host:$port: received an unknown Record Version ".sprintf ("(0x%04X)",$pduVersion);
-                _trace2 ("parseHandshakeRecord: $@\n");
-                warn ("parseHandshakeRecord: $@");
-                return ("", 0, "");
+                return ("", $lastMsgType, 0, "");
+            } else { # if ($serverHello{'msg_type'} == 0 => unsupported Protocol (?!)
+                $@= "    Unknown SSLv2-Message Type (Dez): ".$serverHello{'msg_type'}.", Msg: >".hexCodedString ($message)."< -> check for SSLv2 is aborted\n";
+                return ("",$lastMsgType, 0 , "");
             }
+        } else { # SSLv3, TLS or DTLS:a parse Messages
+            if ($recordType == $RECORD_TYPE {'handshake'}) {
+                $nextMessages = $recordData;
+                while ($nextMessages ne "") { # read and parse all included messages and return the cipher at the end
+                    if (($recordVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) { #SSL3 , TLS1. 
+                        ($serverHello{'msg_type'},          # C
+                         $serverHello{'msg_len_null_byte'}, # C
+                         $serverHello{'msg_len'},           # n
+                         $rest) = unpack("C C n a*", $nextMessages);
 
-            if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'}) { 
-                ($message,                        #a[$serverHello{'msg_len'}] 
-                $nextMessages) = unpack("a[$serverHello{'msg_len'}] a*", $rest);
-              
-                _trace4_ ( sprintf (
-                    "# --->      message:           >%s<\n",
-                    hexCodedString ($message, "                               ")
-                ));
-
-                if ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'server_hello'}) { 
-                    _trace2_ ("# -->     Handshake Type:    Server Hello (22)\n"); 
-
-                    if ($serverHello{'msg_len_null_byte'} != 0x00)  { 
-                            _error (">>> WARNING (parseHandshakeRecord:): Server '$host:$port': 1st Msg-Len-Byte is *NOT* 0x00/n"); 
-                    }
-                    return (parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol),0,"");
-                } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'hello_verify_request'}) { # DTLS only
-                    if (length($buffer) >= 3) { 
-                        ($serverHello{'version'},              # n
-                         $serverHello{'cookie_length'},        # C
-                         $rest) = unpack("n C a*", $message);
-
-                        $serverHello{'cookie'} = "";
-                        ($serverHello{'cookie'},               # a[$serverHello{'cookie_length'}
-                         $rest) = unpack("a[$serverHello{'cookie_length'}] a*", $rest) if ($serverHello{'cookie_length'} > 0) ;
-
-                        _trace2_ ( sprintf ( #added to check the supported Version
-                            "# -->       version:            >%04X<\n".
-                            "# -->       cookie_length:        >%02X<\n".    # C
-                            "# -->       cookie:             >%s<\n",        # a[$serverHello{'cookie_length'}
-                            $serverHello{'version'},
-                            $serverHello{'cookie_length'},        # C
-                            hexCodedString ($serverHello{'cookie'})               # a[$serverHello{'cookie_length'}
+                        _trace2_ (sprintf (
+                            "# -->     Handshake-Message:\n".
+                            "# -->       msg_type:            >%02X<\n".
+                            "# -->       msg_len_null_byte:   >%02X<\n".
+                            "# -->       msg_len:           >%04X<\n",
+                            $serverHello{'msg_type'},
+                            $serverHello{'msg_len_null_byte'}, # prefetched for record_type Handshake 
+                            $serverHello{'msg_len'}            # prefetched for record_type Handshake 
                         ));
-                        if (length ($serverHello{'cookie'}) != $serverHello{'cookie_length'}) {
-                            $@ = "Server '$host:$port': DTLS-HelloVerifyRequest: Len of Cookie (".length ($serverHello{'cookie'}).") <> 'cookie_length' ($serverHello{'cookie_length'})";
-                            $serverHello{'cookie_length'} = length ($serverHello{'cookie'});
+
+                        $lastMsgType = $serverHello{'msg_type'} || $HANDSHAKE_TYPE {'<<undefined>>'};
+
+                    } elsif ( (($recordVersion & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($recordVersion == $PROTOCOL_VERSION{'DTLSv09'})  ) { #DTLS1.x or DLSv09 (OpenSSL pre 0.9.8f)
+                        ($serverHello{'msg_type'},            # C
+                         $serverHello{'msg_len_null_byte'},   # C (0x00)
+                         $serverHello{'msg_len'},             # n
+                         $serverHello{'msg_seqNr'},           # n
+                         $serverHello{'fragment_null_byte'},  # C (0x00)
+                         $serverHello{'fragment_offset'},     # n TBD: verify
+                         $serverHello{'fragment_null_byte'},  # C (0x00)
+                         $serverHello{'fragment_len'},        # n TBD: verify
+                         $rest) = unpack ("C C n n C n C n a*", $nextMessages);
+   
+                        _trace2_ (sprintf (
+                            "# -->     Handshake-Message:\n".
+                            "# -->       msg_type:             >%02X<\n".
+                            "# -->       msg_len_null_byte:    >%02X<\n".
+                            "# -->       msg_len:            >%04X<\n".
+                            "# -->       msg_seqNr:          >%04X<\n".           # n
+                            "# -->       fragment_null_byte:   >%02X<\n". # C (0x00)
+                            "# -->       fragment_offset:    >%04X<\n".     # n TBD: verify
+                            "# -->       fragment_null_byte:   >%02X<\n". # C (0x00)
+                            "# -->       fragment_len:       >%04X<\n",     # n TBD: verify,
+                            $serverHello{'msg_type'},
+                            $serverHello{'msg_len_null_byte'},           # prefetched for record_type Handshake 
+                            $serverHello{'msg_len'},                     # prefetched for record_type Handshake 
+                            $serverHello{'msg_seqNr'},                   # n
+                            $serverHello{'fragment_null_byte'},          # C (0x00)
+                            $serverHello{'fragment_offset'},             # n TBD: verify
+                            $serverHello{'fragment_null_byte'},          # C (0x00)
+                            $serverHello{'fragment_len'},                # n TBD: verify,
+                        )); ### if ($serverHello{'record_type'} == $RECORD_TYPE {'handshake'});
+
+                        $lastMsgType = $serverHello{'msg_type'} || $HANDSHAKE_TYPE {'<<undefined>>'};
+
+                        if ( (defined ($serverHello{'fragment_offset'}) ) && ($serverHello{'fragment_offset'} > 0) ) {
+                            $@= "$host:$port: sorry, fragmented DTLS Packets are not yet supported -> Retry";   ####TBD TBD TBD ###
+                            _trace2 ("parseHandshakeRecord: $@\n");
                             warn ("parseHandshakeRecord: $@");
+                            return ("", $lastMsgType, 0, "");
                         }
-                        if ($serverHello{'cookie_length'} > 32) {
-                            $@ = "Server '$host:$port': DTLS-HelloVerifyRequest: 'cookie_length' ($serverHello{'cookie_length'}) out of Range <0..32)";
-                            warn ("parseHandshakeRecord: $@");
+                    }
+
+                    if (length ($rest) < $serverHello{'msg_len'}) { #The message is fragmented .... rare, but it may occur
+                        #  fragmented message -> Read next Packet, parse the packet Haeder go on with the message)
+                        ## fragmented message (real length is shorter than the claimed length); test with STARTTLS at smtp.rzone.de:25 -> and receive a very long Certificate Request
+                        _trace2_ ("parseHandshakeRecord: fragmented message with $serverHello{'msg_len'} bytes length -> get next record\n");
+                        return ($nextMessages, $HANDSHAKE_TYPE {'<<fragmented_message>>'}, $serverHello{'cookie_length'}, $serverHello{'cookie'});
+                    }
+
+                    ($message,                        #a[$serverHello{'msg_len'}] 
+                    $nextMessages) = unpack("a[$serverHello{'msg_len'}] a*", $rest);
+                    _trace4_ ( sprintf (
+                        "# --->      message [len= %d]: >%s<\n",
+                        length ($message),                      #real length
+                        hexCodedString ($message, "                               ")
+                    ));
+
+                    # parse several Messages Types (only those that we do need....)
+                    if ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'server_hello'}) { ### Serever Hello -> to get the Cipher and some supported Extensions (planned)
+                        _trace2_ ("# -->     Handshake Type:    Server Hello (22)\n"); 
+
+                        if ($serverHello{'msg_len_null_byte'} != 0x00)  { 
+                            _error (">>> WARNING (parseHandshakeRecord:): Server '$host:$port': 1st Msg-Len-Byte is *NOT* 0x00/n"); 
+                        }
+                        $cipher =  parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol);
+                        $lastCipher = $cipher; # to link further Information to this Cipher
+#                       return (parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol),$lastMsgType, 0,""); # moved bebind the 'while-loop'
+                        _trace2_ ("# ==>       found cipher:      >0x0300".hexCodedCipher($cipher)."<\n");
+                    } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'hello_verify_request'}) { # DTLS only: get the Cookie to resend the request
+                        if (length($message) >= 3) { 
+                            ($serverHello{'version'},              # n
+                             $serverHello{'cookie_length'},        # C
+                             $rest) = unpack("n C a*", $message);
+
+                            $serverHello{'cookie'} = "";
+                            ($serverHello{'cookie'},               # a[$serverHello{'cookie_length'}
+                             $rest) = unpack("a[$serverHello{'cookie_length'}] a*", $rest) if ($serverHello{'cookie_length'} > 0) ;
+
+                            _trace2_ ( sprintf ( #added to check the supported Version
+                                "# -->       version:            >%04X<\n".
+                                "# -->       cookie_length:        >%02X<\n".    # C
+                                "# -->       cookie:             >%s<\n",        # a[$serverHello{'cookie_length'}
+                                $serverHello{'version'},
+                                $serverHello{'cookie_length'},        # C
+                                hexCodedString ($serverHello{'cookie'})               # a[$serverHello{'cookie_length'}
+                            ));
+                            if (length ($serverHello{'cookie'}) != $serverHello{'cookie_length'}) {
+                                $@ = "Server '$host:$port': DTLS-HelloVerifyRequest: Len of Cookie (".length ($serverHello{'cookie'}).") <> 'cookie_length' ($serverHello{'cookie_length'})";
+                                $serverHello{'cookie_length'} = length ($serverHello{'cookie'});
+                                warn ("parseHandshakeRecord: $@");
+                            }
+                            if ($serverHello{'cookie_length'} > 32) {
+                                $@ = "Server '$host:$port': DTLS-HelloVerifyRequest: 'cookie_length' ($serverHello{'cookie_length'}) out of Range <0..32)";
+                                warn ("parseHandshakeRecord: $@");
+                            }
+                            return ("", $lastMsgType, $serverHello{'cookie_length'}, $serverHello{'cookie'});
                         }
                         return ("", $serverHello{'cookie_length'}, $serverHello{'cookie'});
                     }
-                }
-            } elsif    ($serverHello{'record_type'} == $RECORD_TYPE {'alert'}) { 
-                _trace2_ ("# -->  Record Type:    Alert (21)\n"); 
-                _trace2_ (sprintf("# -->  Record Version:  $serverHello{'record_version'} (0x%04X)\n",$serverHello{'record_version'}));
-                _trace2_ (sprintf("# -->  Record Len:      $serverHello{'record_len'}   (0x%04X)\n",$serverHello{'record_len'})); 
+                    _trace2_("\n"); # next message
+                } # while (nextMessages ne ""()
+                return ($cipher,$lastMsgType, 0,"");
+            } elsif ($recordType == $RECORD_TYPE {'alert'}) { 
                 $serverHello{'msg_type'} = 0;           # NO Handshake => set 0
                 $serverHello{'msg_len_null_byte'} = 0;  # NO Handshake => set 0
                 $serverHello{'msg_len'} = 0;            # NO Handshake => set 0
@@ -3419,7 +3492,7 @@ sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>,
 
                 ($serverHello{'level'},      # C
                  $serverHello{'description'} # C
-                ) = unpack("C C", $messages); # parse alert-messages
+                ) = unpack("C C", $recordData); # parse alert-messages
                 
                 if ($TLS_AlertDescription {$serverHello{'description'}} ) { # defined, no Null-String
                         $description = $TLS_AlertDescription {$serverHello{'description'}}[0]." ".$TLS_AlertDescription {$serverHello{'description'}}[2];
@@ -3427,7 +3500,7 @@ sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>,
                         $description = "Unknown/Undefined";
                 }
             
-                _trace2_ ("# -->  Alert Message:\n");
+                _trace2_ ("# -->  Alert Message (Record Type 21):\n");
                 _trace2_ ("# -->      Level:       $serverHello{'level'}\n");
                 _trace2_ ("# -->      Description: $serverHello{'description'} ($description)\n"); 
 
@@ -3446,7 +3519,7 @@ sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>,
                             }
                             $@ = sprintf ("parseHandshakeRecord: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> check of virtual Server $sni aborted!\n");
                             print $@;
-                            return ("", 0 , ""); 
+                            return ("", $lastMsgType, 0 , ""); 
                         } else {
                             warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': received SSL/TLS-Warning (1): Description: $description ($serverHello{'description'})\n");
                         }
@@ -3464,14 +3537,14 @@ sub parseHandshakeRecord ($$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>,
             } else { ################################ to get information about Record Types that are not parsed, yet #############################
                 _trace_ ("\n");
                 warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': Unknown SSL/TLS Record-Type received that is not (yet) defined in Net::SSLhello.pm:\n");
-                warn ("#        Record Type:     Unknown Value (".$serverHello{'record_type'}."), not (yet) defined in Net::SSLhello.pm\n"); 
-                warn ("#        Record Version:  $serverHello{'record_version'} (0x".hexCodedString ($serverHello{'record_version'}).")\n");
-                warn ("#        Record Len:      $serverHello{'record_len'} (0x".hexCodedString ($serverHello{'record_len'}).")\n\n"); 
+                warn ("#        Record Type:     Unknown Value (0x".hexCodedString($recordType)."), not (yet) defined in Net::SSLhello.pm\n"); 
+                warn ("#        Record Version:  $recordVersion (0x".hexCodedString ($recordVersion).")\n");
+                warn ("#        Record Len:      $recordLen (0x".hexCodedString ($recordLen).")\n\n"); 
             }
-            return ("", 0 , "");
+            return ("", $lastMsgType, 0 , "");
         } #End SSL3/TLS or DTLS
     } else {
-        warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': (no SSL/TLS-Record) : ".hexCodedString ($buffer)."\n");
+        warn ("**WARNING: parseHandshakeRecord: Server '$host:$port': (no SSL/TLS-Record) : ".hexCodedString ($recordData)."\n");
     }
 }
 
@@ -3791,7 +3864,7 @@ sub parseTLS_ServerHello {
         #        "# -->       random_gmt_time:  >%08X< (%s)\n".
                 "# -->       random_gmt_time:   >%08X<\n".
                 "# -->       random:            >%s<\n".
-                "# -->       session_id_len:  >%02X<\n",
+                "# -->       session_id_len:      >%02X<\n",
                 $serverHello{'version'},
                 $serverHello{'random_gmt_time'},
         #        localtime($serverHello{'random_gmt_time'}),
@@ -3811,7 +3884,7 @@ sub parseTLS_ServerHello {
         $rest2) = unpack("a[$serverHello{'session_id_len'}] a2 C n a*", $rest);
 
         _trace2_ ( sprintf (
-                "# -->       session_id:         >%s<\n".
+                "# -->       session_id:        >%s<\n".
                 "# -->       cipher_spec: (len=%2s) >%s<\n",
                 hexCodedString ($serverHello{'session_id'}),
                 length ($serverHello{'cipher_spec'}),
@@ -3824,7 +3897,7 @@ sub parseTLS_ServerHello {
         }
         _trace2_ ( sprintf ( 
             #added to check the supported Version
-            "# -->       The Server Server '$host:$port': accepts the following Cipher(s) with SSL3/TLS-Version: >%04X<: ", 
+            "# -->       The Server Server '$host:$port': accepts the following Cipher(s) with SSL3/TLS-Version: >%04X<:\n", 
             $serverHello{'version'}
         ));
 
@@ -3920,7 +3993,7 @@ sub hexCodedString { # Variable: String/Octet, der in HEX-Werten dargestellt wer
             $prefix="";
     }
     $codedString =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eig; #Code all Octets as HEX values and seperate then with a 'space'
-    $codedString =~ s/((?:[0-9A-Fa-f]{2}\s){48})/"$1\n$prefix"/eig; # Add a new line each 48 HEX-Octetts (=144 Symbols incl. Spaces)
+    $codedString =~ s/((?:[0-9A-Fa-f]{2}\s){48})(?=[0-9A-Fa-f]{2})/"$1\n$prefix"/eig; # Add a new line each 48 HEX-Octetts (=144 Symbols incl. Spaces) if not last Octett reched
     chomp ($codedString); #delete CR at the end
     chop ($codedString); #delete 'space' at the end
     return ($codedString);
