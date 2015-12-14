@@ -1063,9 +1063,9 @@ sub printCipherStringArray ($$$$$@) {
         }
     } elsif ($arrayLen == 0) { # no Cipher for this Protocol
         if ($legacy eq 'compact') { # csv-style, protocol without cipher 
-            printf "%20s%s%5s%s%-6s (0x%04X)%s%6s%s%-12s%s%10s%s\n",
-                $host, $sep,            # %20s%s
-                $port, $sep,            # %5s%s
+            printf "%s%s%s%s%-6s (0x%04X)%s%6s%s%-12s%s%10s%s\n",
+                $host, $sep,            # %s%s
+                $port, $sep,            # %s%s
                 $ssl,                   # %-6s (
                 $protocol, $sep,        # 0x%04X)%s
                 $sni, $sep,             # %6s%s%
@@ -1076,9 +1076,9 @@ sub printCipherStringArray ($$$$$@) {
     
        foreach $protocolCipher (@cipherArray[$firstEle .. $#cipherArray]) { # Array may have the first Element twice to signal a Server-Preferred Order
         if ($legacy eq 'compact') { # csv-style
-            printf "%20s%s%5s%s%-6s (0x%04X)%s%6s%s%-12s%s%10s%s",
-                $host, $sep,            # %20s%s
-                $port, $sep,            # %5s%s
+            printf "%s%s%s%s%-6s (0x%04X)%s%6s%s%-12s%s%10s%s",
+                $host, $sep,            # %s%s
+                $port, $sep,            # %s%s
                 $ssl,                   # %-6s (
                 $protocol, $sep,        # 0x%04X)%s
                 $sni, $sep,             # %6s%s%
@@ -1086,18 +1086,26 @@ sub printCipherStringArray ($$$$$@) {
                 $protocolCipher, $sep;  # %10s%s
               if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
 
-                printf "%-32s%s%s\n",
-                    $cipherHexHash {$protocolCipher}[1], $sep,  # %-32s%s
-                    $cipherHexHash {$protocolCipher}[0];        # %s
-
+                printf "%-28s%s%-34s",
+                    $cipherHexHash {$protocolCipher}[1], $sep,  # %-30s%s
+                    $cipherHexHash {$protocolCipher}[0];        # %-30s
+                if (defined ($_SSLhello {$protocolCipher."\|ServerKey"})) { #Length of dh_param
+                    printf "%s%s\n",
+                        $sep, "(".$_SSLhello {$protocolCipher."\|ServerKey"}.")"; # %s%s
+                } else {
+                    print "\n";
+                }
             } else { # no RFC-Defined Cipher
-                printf "%-32s%s%s\n",
-                    "NO-RFC-".$protocolCipher, $sep,            # %-32s%s
+                printf "%-30s%s%s\n",
+                    "NO-RFC-".$protocolCipher, $sep,            # %-30s%s
                     "NO-RFC-".$protocolCipher;                  # %s
             }
         } else { # human readable output 
                if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
                     printf "# Cipher-String: >%s<, %-32s, %s",$protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0];     
+               if (defined ($_SSLhello {$protocolCipher."\|ServerKey"})) { #Length of dh_param
+                    print  ", (".$_SSLhello {$protocolCipher."\|ServerKey"}.")";
+               }
             } else {
                 print  "# Cipher-String: >".$protocolCipher."<, NO-RFC-".$protocolCipher;
             }
@@ -2012,7 +2020,7 @@ sub openTcpSSLconnection ($$) {
                                 # if (($startType == x) || () ....) { $input = hexString ($input) } #
                             }
                             $@ = "STARTTLS (Phase 5): Did *NOT* get a Server SSL/TLS confirmation from $host:$port (retry: $retryCnt); target ignored. Server-Error: >"._chomp_r($input)."<"; #error-message received from the SMTP-Server
-                            _trace2 ("openTcpSSLconnection: ## $@; try to retry;\n");;
+                            _trace2 ("openTcpSSLconnection: ## $@; try to retry;\n");
                             close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
                             next;
                         }
@@ -2040,7 +2048,7 @@ sub openTcpSSLconnection ($$) {
 }
 
 
-sub _doCheckSSLciphers ($$$$;$) {
+sub _doCheckSSLciphers ($$$$;$$) {
     #? Simulate SSL Handshake to check any Ciphers by the HEX value
     #? $cipher_spec: RAW Octets according to RFC
     #
@@ -2049,6 +2057,7 @@ sub _doCheckSSLciphers ($$$$;$) {
     my $protocol     = shift || 0;  # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
     my $cipher_spec  = shift || "";
     my $dtlsEpoch    = shift || 0;  # optional, used in DTLS only
+    my $parseAllRecords = shift || 0; # Option to read, parse and Analyze all received Records (-> 1)
     my $socket;
     my $connect2ip;
     my $proxyConnect="";
@@ -2189,8 +2198,28 @@ sub _doCheckSSLciphers ($$$$;$) {
         if (length($input) >0) {
             _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes\n"); 
             ($acceptedCipher, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, "", $protocol,"");
+
+            if ( ($acceptedCipher ne "") && ($parseAllRecords > 0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) { 
+                _trace2 ("_doCheckSSLciphers: Try to get and parse next Records\n"); 
+                while ( (length($input) >0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) {
+                    ###### receive next record 
+                    _trace2 ("_doCheckSSLciphers: receive next Record\n"); 
+                    $input="";
+                    ($input, $recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr) = _readRecord ($socket, $isUdp, $host, $port, $protocol);
+                    last if ( (length($input)==0) || ($@) );
+                    if ( ($lastMsgType == $HANDSHAKE_TYPE {'<<fragmented_message>>'}) && ($recordType == $lastRecordType) ) { # last message was fragmented
+                        $recordData = $buffer.$recordData;
+                        $recordLen += length($buffer);
+                        _trace4 ("_doCheckSSLciphers: recompiled fragmented message -> compiled RecordLen: $recordLen\n"); 
+                    }
+                    # parse the next record (no cipher expected...)
+                    ($buffer, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, $acceptedCipher, $protocol); # get more Information received together with the accepted Cipher
+                    $lastRecordType = $recordType; # only used for fragmented messages
+                }
+            }
+
             if ( ($acceptedCipher ne "") || (! $isUdp) ) {
-                last;;
+                last;
             }
             if ($@ ne "") {
                 _trace4 ("_doCheckSSLciphers: Exit with Error: '$@'\n");
@@ -2372,7 +2401,17 @@ sub _doCheckSSLciphers ($$$$;$) {
 
 ############################################################
 sub _readRecord ($$;$$$) { # return ()
+    #? receive the answers:
+    # Handshake:
+    # 1) SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello
+    # 2) Certificate
+    # 3) Server Key Exchange (kEDH, kEECDH and ADH only)
+    # 4) Client Certificate Request (optional)
+    # 5) Server Hello Done
     #
+    # or Error Messages
+    #
+
     my $socket = shift || "";
     my $isUdp  = shift || 0;
     my $host = shift || ""; #for warn- and trace-messages
@@ -3289,6 +3328,91 @@ sub _compileClientHelloExtensions ($$$$@) {
     return ($clientHello_extensions);
 }
 
+=pod
+
+=head2 parseServerKeyExchange( )
+
+Manually parse a Server Kex Exchange Packet from DHE-Handshake to detect the length of the DHparam (needed for openssl <= 1.0.1), e.g. dh, 2048 bits (dh in small letters to be different from openssl (large letters)
+TBD: parseServerKeyExchange: ECDH will follow later
+=cut
+
+sub parseServerKeyExchange($$$) {
+    #? parse a ServerKeyExchange Packet to detect length of DHparam
+    my ($keyExchange, $len, $d) = @_;
+    my ($_tmpLen, $_null, $_handshake_type, $_bits) = 0;
+    my %_mySSLinfo;
+    _trace2("parseServerKeyExchange($keyExchange, $len, ...)\n");
+    _trace4("parseServerKeyExchange(KeyExchange= $keyExchange, Len= $len, Data= ".unpack("H*",$d)."\n");
+    $_tmpLen = length (unpack("H*",$d))/2;
+    warn ("parseServerKeyExchange: Error in ServerKeyExchange Message: unexpected len ($_tmpLen) should be $len Bytes") if ($len != $_tmpLen);
+    return if ($len != $_tmpLen);
+
+    #Parse Data
+##    ($_handshake_type,                      # C
+##     $_null,                                # C
+##     $_mySSLinfo{'DH_ServerParamsLen'},     # n
+##     $d) = unpack("C C n a*", $d);
+
+##    _trace2("parseServerKeyExchange: Error in 
+##    warn ("parseServerKeyExchange: Error in ServerKeyExchange Message: unexpected HandshakeType 0x".unpack("H*",$_handshake_type)." should be 0x0C") if ($     _handshake_type != 0x0C);
+##    return if ($_handshake_type != 0x0C);
+
+    if ($keyExchange eq "DH") { 
+
+        ($_mySSLinfo{'DH_ServerParams_p_len'},    # n
+         $d) = unpack("n a*", $d);
+
+        ($_mySSLinfo{'DH_ServerParams_p'},         # a[$_mySSLinfo{'IDH_ServerParams_p_len'}]
+         $_mySSLinfo{'DH_ServerParams_g_len'},     # n
+         $d) = unpack("a[$_mySSLinfo{'DH_ServerParams_p_len'}] n a*", $d);
+         $_mySSLinfo{'DH_ServerParams_p'} = unpack ("H*", $_mySSLinfo{'DH_ServerParams_p'}); # Convert to a readable HEX-String
+
+        ($_mySSLinfo{'DH_ServerParams_g'},         # a[$_mySSLinfo{'IDH_ServerParams_g_len'}]
+         $_mySSLinfo{'DH_ServerParams_PubKeyLen'}, # n
+         $d) = unpack("a[$_mySSLinfo{'DH_ServerParams_g_len'}] n a*", $d);
+        $_mySSLinfo{'DH_ServerParams_g'} = unpack ("H*", $_mySSLinfo{'DH_ServerParams_g'}); # Convert to a readable HEX-String
+
+        ($_mySSLinfo{'DH_ServerParams_PubKey'},    # a[$_mySSLinfo{'IDH_ServerParams_g_len'}]
+         $d) = unpack("a[$_mySSLinfo{'DH_ServerParams_PubKeyLen'}] a*", $d);
+        $_mySSLinfo{'DH_ServerParams_PubKey'} = unpack ("H*", $_mySSLinfo{'DH_ServerParams_PubKey'}); # Convert to a readable HEX-String
+        _trace2( sprintf (
+                " DH_ServerParams (len=%d):\n".
+##                "# -->       handshake_type:             >%02X<\n".
+##                "# -->       null:                       >%02X<\n".
+##                "# -->       DH_ServerParamsLen:       >%04X< = %d\n".
+                "# -->       p: (len=0x%04X=%4d)        >%s<\n".
+                "# -->       g: (len=0x%04X=%4d)        >%s<\n".
+                "# -->       PubKey: (len=0x%04X=%4d)   >%s<\n",
+                $len,
+##                $_handshake_type,
+##                $_null,
+##                $_mySSLinfo{'DH_ServerParamsLen'},
+##                $_mySSLinfo{'DH_ServerParamsLen'},
+                $_mySSLinfo{'DH_ServerParams_p_len'},
+                $_mySSLinfo{'DH_ServerParams_p_len'},
+                $_mySSLinfo{'DH_ServerParams_p'},
+                $_mySSLinfo{'DH_ServerParams_g_len'},
+                $_mySSLinfo{'DH_ServerParams_g_len'},
+                $_mySSLinfo{'DH_ServerParams_g'},
+                $_mySSLinfo{'DH_ServerParams_PubKeyLen'},
+                $_mySSLinfo{'DH_ServerParams_PubKeyLen'},
+                $_mySSLinfo{'DH_ServerParams_PubKey'}
+        ));
+        $_bits = $_mySSLinfo{'DH_ServerParams_p_len'} * 8;
+        $_mySSLinfo{'DH_serverParam'} = "dh, ". $_bits ." bits"; # manually generate the same message that is generated by openssl >= 1.0.2 but here with 'dh' in small letters
+        ###TEST TEST $_mySSLinfo{$keyExchange.'_serverParam'} = "dh, ". $_bits ." bits"; # manually generate the same message that is generated by openssl >= 1.     0.2 but here with 'dh' in small letters
+        _trace4("parseServerKeyExchange: DH_serverParam: ".$_mySSLinfo{'DH_serverParam'}."\n");
+        _trace2("parseServerKeyExchange() done.\n");
+        return ($_mySSLinfo{'DH_serverParam'});
+    } else {
+        _trace2 ("parseServerKeyExchange: The only supported KeyExchange is DH, yet") if ($keyExchange ne "DH") ;
+#        return if ($keyExchange ne "DH");
+        return;
+    }
+
+} # end parseServerKeyExchange
+
+
 sub parseHandshakeRecord ($$$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>, <cookie (DTLS)>
     my $host = shift || ""; #for warn- and trace-messages
     my $port = shift || ""; #for warn- and trace-messages
@@ -3476,7 +3600,36 @@ sub parseHandshakeRecord ($$$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>
                             }
                             return ("", $lastMsgType, $serverHello{'cookie_length'}, $serverHello{'cookie'});
                         }
-                        return ("", $serverHello{'cookie_length'}, $serverHello{'cookie'});
+                    } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'server_key_exchange'}) { ##### Server Key Exchange: to check DHE und ECDHE parameters
+                        _trace2 ("parseHandshakeRecord: Cipher: ".hexCodedCipher ($lastCipher)."\n");
+                        $keyExchange = $cipherHexHash {'0x0300'.hexCodedCipher($lastCipher)}[0];
+                        if (defined ($keyExchange)) { # found a Cipher 
+                            _trace2_ (" --> Cipher(1): $keyExchange\n");
+                            $keyExchange =~ s/^((?:EC)?DHE?)_anon.*/A$1/;   # DHE_anon -> EDH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
+                            _trace4_ (" --> Cipher(2): $keyExchange\n");
+                            $keyExchange =~ s/^((?:EC)?DH)E.*/E$1/;         # DHE -> EDH, ECDHE -> EECDH
+                            _trace4_ (" --> Cipher(3): $keyExchange\n");
+                            $keyExchange =~ s/^(?:E|A|EA)((?:EC)?DH).*/$1/; # EDH -> DH, ADH -> DH, EECDH -> ECDH 
+                            _trace2_ (" --> KeyExchange (DH or ECDH) = $keyExchange\n"); # => ECDH or DH
+
+#                           $_SSLhello {hexCodedString($pduVersion)."\|".$sni."\|".hexCodedCipher($lastCipher)."\|ServerKey"} = parseServerKeyExchange ($keyExchange, length($message), $message);
+                            $_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"} = parseServerKeyExchange ($keyExchange, length($message), $message);
+                            if (defined ($_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"})) { 
+
+                                _trace2_("\n   parseServerKeyExchange: Cipher:".hexCodedCipher ($lastCipher)." -> DH_serverParam: ".$_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"});
+                            }
+                        } else { # no Cipher found
+                            _trace2 ("parseHandshakeRecord: No Name found for Cipher: >0x3000".hexCodedCipher($lastCipher)."< -> counld NOT check the ServerKeyExchange\n");
+                        }
+                    } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'certificate'}) { 
+                         _trace2("parseHandshakeRecord: MessageType \"Certificate\" = ".sprintf("0x%02X", $serverHello{'msg_type'}) . " not yet analyzed\n");
+                    } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'certificate_request'}) { 
+                         _trace2("parseHandshakeRecord: MessageType \"Certificate Request\" = ".sprintf("0x%02X", $serverHello{'msg_type'}) . " not yet analyzed\n");
+                    } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'server_hello_done'}) { 
+                         _trace4("parseHandshakeRecord: MessageType \"ServerHelloDone\" = ".sprintf("0x%02X", $serverHello{'msg_type'}) . " -> Final hello Message\n");
+                         last; # hello-message phase of the handshake is completed
+                    } else { 
+                        _trace2("parseHandshakeRecord: MessageType ".sprintf("%02X", $serverHello{'msg_type'}) . " not yet analyzed\n");
                     }
                     _trace2_("\n"); # next message
                 } # while (nextMessages ne ""()
