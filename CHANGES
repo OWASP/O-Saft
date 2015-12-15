@@ -7,6 +7,7 @@ Version: 15.12.15
     * report ciphers with DH parameters if possible
     * description of compatibility options improved
   NEW
+    * description for KCI and Invalid Curve Attack
     * new options --format=0x and --format=\x
     * more command aliases
 
