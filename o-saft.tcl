@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.43 Sommer Edition 2015
+#?      @(#) 1.44 Sommer Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.43 15/10/26 22:10:35 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.44 15/12/15 21:43:13 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -325,10 +325,11 @@ set f_cmt(0)    {Description of regex}
 #   use map to replace variables (and short names to fit in 8 characters)
 
 txt2arr [string map "
-    _lgreen lightgreen
+    _lGreen lightgreen
     _yellow yellow
     _orange orange
-    _steelB SteelBlue
+    _sBlue  SteelBlue
+    _lBlue  LightBlue
     _lGray  LightGray
     __bold  osaftHead
     _ME_    $cfg(SAFT)
@@ -351,13 +352,13 @@ txt2arr [string map "
   WEAK	-exact	4	red	{}	{}	0	WEAK	word  WEAK  anywhere
   weak	-exact	4	red	{}	{}	0	weak	word  weak  anywhere
  MEDIUM	-exact	6	yellow	{}	{}	0	MEDIUM	word MEDIUM anywhere
-  HIGH	-exact	4	_lgreen	{}	{}	0	HIGH	word  HIGH  anywhere
- **WARN	-exact	0	_yellow	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
+  HIGH	-exact	4	_lGreen	{}	{}	0	HIGH	word  HIGH  anywhere
+ **WARN	-exact	0	_lBlue	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
   NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
-  YES	-regexp	3	_lgreen	{}	{}	0	yes	word  yes  at end of line
- == CMT	-regexp	0	{}	gray	__bold	1	^==*	line starting with  == (formatting lines)
+  YES	-regexp	3	_lGreen	{}	{}	0	yes	word  yes  at end of line
+ == CMT	-regexp	0	gray	{}	__bold	1	^==*	line starting with  == (formatting lines)
   # DBX	-regexp	0	{}	blue	{}	0	^#[^[]	line starting with  #  (verbose or debug lines)
- #[KEY]	-regexp	2	gray	{}	{}	0	^#\[[^:]+:\s*	line starting with  #[keyword:]
+ #[KEY]	-regexp	2	_lGray	{}	{}	0	^#\[[^:]+:\s*	line starting with  #[keyword:]
 # ___                                                                   but not:  # [keyword:
   _ME_	-regexp	0	black	white	{}	0	.*?_ME_.*\n\n	lines contaning program name
  Label:	-regexp	1	{}	{}	__bold	0	^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*	label of result string from start of line until :
@@ -691,8 +692,8 @@ proc create_filter {txt cmd} {
         #        workaround see osaft_exec
     set this $cfg(winF)
     #dbx# puts "TXT $txt | $cmd | $myX(geoF)"
-    pack [frame     $this.f -relief sunken -borderwidth 1] -fill x
-    pack [text      $this.f.t -relief flat -background [. cget -background] -height 2 -width 16] -fill x
+    pack [frame $this.f -relief sunken -borderwidth 1] -fill x
+    pack [text  $this.f.t -relief flat -background [. cget -background] -height 2 -width 16] -fill x
     $this.f.t insert  end "toggle visibility\nof various texts"
     $this.f.t config -state disabled -font osaftBold
     pack [checkbutton $this.f.c -text "Hide complete line" -variable filter_bool($txt,line)] -anchor w;
@@ -711,6 +712,7 @@ proc create_filter {txt cmd} {
              ] -anchor w ;
         # note: useing $f_key($k) instead of $key as text
         # note: checkbutton value passed as reference
+        # TODO: following "-fg white" makes check in checkbox invisible 
         if {$fg ne ""}  { $this.x$key config -fg $fg }; # Tk is picky ..
         if {$bg ne ""}  { $this.x$key config -bg $bg }; # empty colour not allowd
         create_tip $this.x$key "show/hide: $f_cmt($k)"
@@ -966,7 +968,7 @@ proc create_win {parent cmd title} {
     set slaves [lsort -nocase [grid slaves $this]]
     foreach s $slaves {
         if {$col > $max} { incr row; set col 0 }
-        grid config $s -row $row -column $col -padx 8
+        #grid config $s -row $row -column $col -padx 8
         incr col
     }
 }; # create_win
