@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.58 15/12/06 00:50:45";
+my  $man_SID= "@(#) o-saft-man.pm 1.59 15/12/15 23:52:54";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2788,7 +2788,9 @@ CHECKS
 
       KCI
 
-        NOT YET IMPLEMENTED
+        To perform a MiTM attck with Key Compromise Impersonation, the attack
+        needs to engage the victim to install and use a client certificate.
+        This is considered a low risk and hence not tested here.
 
       Logjam
 
@@ -2823,6 +2825,15 @@ CHECKS
 
         Check if target is vulnerable to  POODLE attack (just check if  SSLv3
         is enabled).
+
+      Practical Invalid Curve Attack
+
+        This attack allows an attacker to read the servers private key if the
+        server does not check properly the passed points for a ecliptic curve
+        when EDH ciphers are used.
+
+        This check will not send multiple invalid points,  but only checks if
+        the server closes the connection or responds with no matching cipher.
 
 #      SKIP
 #
