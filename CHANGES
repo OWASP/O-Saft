@@ -1,4 +1,15 @@
 
+Version: 15.12.15
+  BUGFIX
+    * some command aliases corrected
+    * label for protocols corrected
+  CHANGES
+    * report ciphers with DH parameters if possible
+    * description of compatibility options improved
+  NEW
+    * new options --format=0x and --format=\x
+    * more command aliases
+
 Version: 15.11.15
   BUGFIX
     * o-saft-dbx.pm: avoid infinite loop for trace>2
