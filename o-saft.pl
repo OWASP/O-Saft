@@ -41,7 +41,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.408 15/12/01 20:25:15",
-    STR_VERSION => "15.11.15",          # <== our official version number
+    STR_VERSION => "15.12.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -4956,6 +4956,20 @@ sub printciphers_dh($$$) {
             # TODO: perform check like check_dh()
             printf("    %-28s\t%s\n", $c, $dh);
         }
+# TODO: {
+# -------
+# cipher dhe oder edh, ecdh dann muss server temp key da sein
+# sonst kommt kein temp key z.B RSA oder camellia
+# 
+# wenn dh kommen muesste aber fehlt, dann bei openssl -msg probieren
+# -------
+# rfc4492 wenn im cert ec oder ecdsa steht (extension) dann duerfen nur solche
+# akzeptiert werden; wenn nix im cert steht dann durfen nur rsa akzeptiert werden
+# siehe rfc4492 Table 3
+# -------
+# cipherPcurve ...P256
+# TODO: }
+
         print_cipherruler_dh();
     }
 } # printciphers_dh
