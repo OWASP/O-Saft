@@ -1,7 +1,7 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 15.11.15  )
-	O-Saft  - OWASP SSL audit for testers                               (
-                  OWASP SSL advanced forensic tool                           )
+                                                          Version: 15.12.15  )
+        O-Saft  - OWASP SSL advanced forensic tool                          (
+	                                                                     )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
 (
  )  DESCRIPTION
@@ -86,4 +86,8 @@
 (       The version of the tarball  o-saft.tgz  represents the version listed
  )      on top herein. All other files in the repository may be ahead of this
 (       (tarball) version.
+ )
+(       SHA256 checksum of o-saft.tgz
+ )           f52e4a0f5511f236292e955b472c9a834ed5ae60fc6828c26903dd6c18c96f02 
+(
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/
