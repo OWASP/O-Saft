@@ -58,7 +58,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '15.12.13';
+    $VERSION    = '15-12-18';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -2155,7 +2155,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
         ($input, $recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr) = _readRecord ($socket, $isUdp, $host, $port, $protocol);
         # Error-Handling
-        if ( ($@) && ( ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) || ($Net::SSLhello::trace > 2) )) {
+        if ( ($@) && ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) ) {
             _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n");
             warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n"); 
             return ("");
@@ -2164,7 +2164,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             _trace2 ("_doCheckSSLciphers: $@\n"); 
             return ("");
         } elsif ($@) { # any other error
-             _trace2 ("_doCheckSSLciphers: $@\n");
+             _trace2 ("_doCheckSSLciphers: Error-Message: $@\n");
             return ("");
         }
         _trace2("_doCheckSSLciphers: Server '$host:$port': (Protocol $ssl [".sprintf ("0x%04X", $protocol)."], (Record-)Type $recordType: received a record with ".length($recordData)." Bytes payload (recordData) >".hexCodedString (substr($recordData,0,48),"       ")."< ...)     \n");
@@ -2348,7 +2348,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                  $v3len)        #n (record_len)
                     = unpack("C n n", $input);
 
-                if ( ($v3type < 0x80) && (($v3version & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) ) { #SSLv3/TLS (no SSLv2)
+                if ( ($v3type < 0x80) && (($v3version & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'} || $v3version == 0x0000) ) { #SSLv3/TLS (no SSLv2) or 'dummy-Version 0x0000' if recoord Version is not supported by the Server)
                     $pduLen = $v3len + 5; # Check PDUlen = v3len + size of record-header; 
                     _trace2 ("_doCheckSSLciphers: ... Received Data: Expected SSLv3-PDU-Len of Server-Hello: $pduLen\n");
                 } else { # Check for SSLv2
@@ -2376,12 +2376,14 @@ sub _doCheckSSLciphers ($$$$;$$) {
     }} while ( ( (length($input) < $pduLen) || (length($input)==0) ) && ($retryCnt++ < $Net::SSLhello::retry) );
     alarm (0);   # race condition protection
     chomp ($@);
-    if ( ($@) && ( ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) || ($Net::SSLhello::trace > 2) )) {
+    if ( ($@) && ( ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) )) {
          _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n");
          warn ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n"); 
     } elsif (length($input) ==0) { # len == 0 without any timeout
          $@= "... Received NO Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).") after $Net::SSLhello::retry retries; This may occur if the server responds by closing the TCP connection instead with an Alert. -> Received NO Data";
          _trace2 ("_doCheckSSLciphers: $@\n"); 
+    } elsif ($@) { # any other error
+         _trace4 ("_doCheckSSLciphers: Error-Message: $@\n");
     }
     if (length($input) >0) {
         _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
@@ -2509,9 +2511,10 @@ sub _readRecord ($$;$$$) { # return ()
                      $recordLen,        #n (record_len)
                     ) = unpack("C n n", $input); # assuming to parse a SSLv3/TLS record, will be redone if it is SSLv2
 
-                    if ( ($recordType < 0x80) && (($recordVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'}) ) { #SSLv3/TLS (no SSLv2)
+                   if ( ($recordType < 0x80) && (($recordVersion & 0xFF00) == $PROTOCOL_VERSION{'SSLv3'} || $recordVersion == 0x0000) ) { #SSLv3/TLS (no SSLv2 or 'dummy-Version 0x0000' if recoord Version is not supported by the Server)
+                       
                         _trace2_ (sprintf (
-                         "# -->    => SSL3/TLS-Record Type: Handshake  (%02X):\n".
+                         "# -->    => SSL3/TLS-Record Type: >%02X<):\n".
                          "# -->    record_version:  >%04X<\n".
                          "# -->    record_len:      >%04X<\n",
                            $recordType,
@@ -2614,7 +2617,11 @@ sub _readRecord ($$;$$$) { # return ()
                     if (! defined $ssl_server) {
                         $ssl_server ="--unknown Protocol--";
                     }
-                    $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> protocol_version is not supported!", $recordVersion, $client_protocol);
+                    if ($recordVersion == 0) { # some servers respond with the dummy protocol '0x0000' if they do *not* support the requested protocol 
+                        $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': requested Protocol $ssl_client (0x%04X) is not supported by the Server (the server answered with the Protocol 0x%04X) -> protocol_version recognized but not supported!", $client_protocol, $recordVersion);
+                    } else { # unknown protocol
+                        $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> unknown protocol_version is not supported!", $recordVersion, $client_protocol);
+                    }
                     _trace2("$@\n"); 
                     return ($input, $recordType, $recordVersion, 0, "", $recordEpoch, $recordSeqNr);
                 }
@@ -3657,6 +3664,16 @@ sub parseHandshakeRecord ($$$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>
                 _trace2_ ("# -->      Level:       $serverHello{'level'}\n");
                 _trace2_ ("# -->      Description: $serverHello{'description'} ($description)\n"); 
 
+                if ($recordVersion == 0x0000) { # some Servers use this dummy version to indicate that the requested version is not supported
+                    my %rhash = reverse %PROTOCOL_VERSION;
+                    my $ssl_client = $rhash{$client_protocol};
+                    if (! defined $ssl_client) {
+                        $ssl_client ="--unknown Protocol--";
+                    } 
+                    $@ = sprintf ("parseHandshakeRecord: Server '$host:$port': requested Protocol $ssl_client (0x%04X) is not supported by the Server (the server answered with the Protocol 0x%04X) -> protocol_version recognized but not supported!", $client_protocol, $recordVersion);
+                    _trace2 ("$@\n");
+                    return ("", $lastMsgType, 0 , "");
+                }
 #                Error-Handling according to # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv                
                 unless ( ($serverHello{'level'} == 2) &&
                         (  ($serverHello{'description'} == 40) # handshake_failure(40): usually cipher not found is suppressed
@@ -3820,7 +3837,18 @@ sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-P
                 _trace2_ ("# -->      Level:       $serverHello{'level'}\n");
                 _trace2_ ("# -->      Description: $serverHello{'description'} ($description)\n"); 
 
-#                Error-Handling according to # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv                
+                if ($serverHello{'record_version'} == 0x0000) { # some Servers use this dummy version to indicate that the requested version is not supported
+                    my %rhash = reverse %PROTOCOL_VERSION;
+                    my $ssl_client = $rhash{$client_protocol};
+                    if (! defined $ssl_client) {
+                        $ssl_client ="--unknown Protocol--";
+                    } 
+                    $@ = sprintf ("parseServerHello: Server '$host:$port': requested Protocol $ssl_client (0x%04X) is not supported by the Server (the server answered with the Protocol 0x%04X) -> protocol_version recognized but not supported!", $client_protocol, $serverHello{'record_version'});
+                    _trace2 ("$@\n");
+                    return ("");
+                }
+
+#               Error-Handling according to # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv                
                 unless ( ($serverHello{'level'} == 2) &&
                         (  ($serverHello{'description'} == 40) # handshake_failure(40): usually cipher not found is suppressed
                            || ($serverHello{'description'} == 71) # insufficient_security(71): no (secure) cipher found, is suppressed
@@ -4003,8 +4031,12 @@ sub parseTLS_ServerHello {
                 } 
                 if (! defined $ssl_server) {
                     $ssl_server ="--unknown Protocol--";
-                } 
-                $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> answer ignored!", $serverHello{'version'}, $client_protocol);
+                }
+                if ($serverHello{'version'} == 0) { # some servers respond with the dummy prtotocol '0x0000' if they do *not* support the requested protocol 
+                    $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': requested Protocol $ssl_client (0x%04X) is not supported by the Server (the server answered with the Protocol 0x%04X -> protocol_version recognized but not supported!", $client_protocol, $serverHello{'version'});
+                } else { # unknown protocol
+                    $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> answer ignored!", $serverHello{'version'}, $client_protocol);
+                }
                 _trace2("$@\n"); 
                 return ("");
             }    
