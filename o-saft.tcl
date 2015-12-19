@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.44 Sommer Edition 2015
+#?      @(#) 1.45 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,7 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.44 15/12/15 21:43:13 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.45 15/12/19 17:20:54 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -205,6 +205,7 @@ set myX(minx)   700;            # O-Saft  window min. width
 set myX(miny)   720;            # O-Saft  window min. height
 set myX(lenl)   15;             # fixed width of labels in Options window
 set myX(rpad)   15;             # right padding in the lower right corner
+set myX(padx)   5;              # padding to right border
 #   configure according real size
 set __x         [lindex [wm maxsize .] 0]
 set __y         [lindex [wm maxsize .] 1]
@@ -537,21 +538,24 @@ proc create_tip {parent txt} {
 
 proc create_host {parent} {
     #?  frame with label and entry for host:port; $nr is index to hosts()
-    global cfg hosts
-    set host $hosts($hosts(0))
+    global cfg hosts myX
+    set host  $hosts($hosts(0))
+    set leftx 0;    # for nice alignments (we do not use grid)
     incr hosts(0)
+    if {$hosts(0)==1}  { set leftx 5 }
     if {$cfg(VERB)==1} { puts "create_host: host($hosts(0)): $host" }
     set this $parent.ft$hosts(0)
           frame  $this
     pack [label  $this.lh -text {Host[:Port]}]                         -side left
     pack [entry  $this.eh -textvariable hosts($hosts(0))]              -side left -fill x -expand 1
     pack [button $this.bp -text {+} -command "create_host {$parent};"] -side left
-    pack [button $this.bm -text {-} -command "remove_host $this; set hosts($hosts(0)) {}"] -side left
+    pack [button $this.bm -text {-} -command "remove_host $this; set hosts($hosts(0)) {}"] -side left -padx "$leftx $myX(padx)"
     create_tip   $this.bm "Remove this line for a host"
     create_tip   $this.bp "Add new line for a host"
-    if {$hosts(0) == 1} {
+    if {$hosts(0)==1} {
         # do not remove the first one; instead change the {-} button to {about}
-        $this.bm configure -text {!} -command "create_about"
+        global logo
+        $this.bm config -text {!} -command "create_about" -image $logo -relief flat
         create_tip $this.bm "About $cfg(TITLE)"
     }
     set i [expr $hosts(0) - 1]
@@ -726,7 +730,7 @@ proc create_about {} {
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
     set cfg(winA) [create_window {About} $myX(geoA)]
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
-    $txt configure -bg $myC(osaft)
+    $txt config -bg $myC(osaft)
 
     # search for URLs, mark them and bind key to open browser
     set anf [$txt search -regexp -all -count end {\shttps?://[^\s]*} 1.0] 
@@ -1141,9 +1145,16 @@ wm title        . $cfg(TITLE)
 wm iconname     . [string tolower $cfg(TITLE)]
 wm geometry     . $myX(geoS)
 
-font create osaftHead   {*}[font configure TkFixedFont;]  -weight bold
-font create osaftBold   {*}[font configure TkDefaultFont] -weight bold
-font create osaftSlant  {*}[font configure TkDefaultFont] -slant italic
+variable logo [image create photo -data {
+  R0lGODlhGAAYAOMOAAAAAAARAQASAQASAgATAQATAgBwLgCBNgCBNwCCNQCCNgCCNwCDNiZ/AP//
+  /////yH5BAEKAA8ALAAAAAAYABgAAASE8MlJq6o4W3W1fwvHfZ6oLKRmfkKLmcnTDlRrv6IEBC0g
+  2YXMStf7CWiPnETUqAl8suNylFROilHkanh9GpEME9cInU3EVvJ3gkB3umXppCHGYM2UeuUuP4/V
+  WRUJHAcZfEgpgHh5b3teUYsmTV1YBDYCfhwGTlgTA4iSFANQJAccKB8RADs=
+}]; # [!] 24x24
+
+font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
+font create osaftBold   {*}[font config TkDefaultFont] -weight bold
+font create osaftSlant  {*}[font config TkDefaultFont] -slant italic
 option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
@@ -1162,10 +1173,14 @@ foreach b $cfg(FAST) {
     create_cmd $w.fc $b $c;
     if {[regexp {^\+[c]} $b] == 0} { incr c };  # command not starting with +c get a new color
 }
-pack [button    $w.fc.bh -text {?} -command "create_help"] -side right
+pack [button    $w.fc.bh -text {?} -command "create_help"] -side right -padx $myX(padx)
 create_tip      $w.fc.bh "Open window with complete help"
 create_tip      $w.fc.bs "Start $cfg(SAFT) with commands selected in 'Commands' tab"
 create_tip      $w.fq.bq "Close program"
+set q ::tk::icons::question;    # add a nice icon, if it exists
+if {[regexp $q [image names]]} {
+    $w.fc.bh config -image $q -width 26 -height 26 -relief flat; # adapt size tologo
+}
 
 ## create notebook object and set up Ctrl+Tab traversal
 set cfg(objN)   $w.note
