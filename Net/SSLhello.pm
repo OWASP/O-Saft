@@ -71,6 +71,7 @@ BEGIN {
         hexCodedTLSCipher
         openTcpSSLconnection 
         parseServerHello
+        parseServerKeyExchange
         parseSSL2_ServerHello
         parseTLS_Extension
         parseTLS_ServerHello
