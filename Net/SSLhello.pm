@@ -215,6 +215,60 @@ my %TLS_AlertDescription = (
     115 => [qw(unknown_psk_identity  Y  [RFC4279])],
 );
 
+my %ECCURVE_TYPE = ( # RFC 4492 
+    'explicit_prime'        => 1,
+    'explicit_char2'        => 2,
+    'named_curve'           => 3,
+    'reserved_248'          => 248,
+    'reserved_249'          => 249,
+    'reserved_250'          => 250,
+    'reserved_251'          => 251,
+    'reserved_252'          => 252,
+    'reserved_253'          => 253,
+    'reserved_254'          => 254,
+    'reserved_255'          => 255,
+);
+
+#http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
+#Value =>   Description bits(added) DTLS-OK Reference
+my %ECC_NAMED_CURVE = (
+     0 => [qw(Unassigned_0        0 N [IANA])],
+     1 => [qw(sect163k1         163 Y [RFC4492])],
+     2 => [qw(sect163r1         163 Y [RFC4492])],
+     3 => [qw(sect163r2         163 Y [RFC4492])],
+     4 => [qw(sect193r1         193 Y [RFC4492])],
+     5 => [qw(sect193r2         193 Y [RFC4492])],
+     6 => [qw(sect233k1         233 Y [RFC4492])],
+     7 => [qw(sect233r1         233 Y [RFC4492])],
+     8 => [qw(sect239k1         239 Y [RFC4492])],
+     9 => [qw(sect283k1         283 Y [RFC4492])],
+    10 => [qw(sect283r1         283 Y [RFC4492])],
+    11 => [qw(sect409k1         409 Y [RFC4492])],
+    12 => [qw(sect409r1         409 Y [RFC4492])],
+    13 => [qw(sect571k1         571 Y [RFC4492])],
+    14 => [qw(sect571r1         571 Y [RFC4492])],
+    15 => [qw(secp160k1         160 Y [RFC4492])],
+    16 => [qw(secp160r1         160 Y [RFC4492])],
+    17 => [qw(secp160r2         160 Y [RFC4492])],
+    18 => [qw(secp192k1         192 Y [RFC4492])],
+    19 => [qw(secp192r1         192 Y [RFC4492])],
+    20 => [qw(secp224k1         224 Y [RFC4492])],
+    21 => [qw(secp224r1         224 Y [RFC4492])],
+    22 => [qw(secp256k1         256 Y [RFC4492])],
+    23 => [qw(secp256r1         256 Y [RFC4492])],
+    24 => [qw(secp384r1         384 Y [RFC4492])],
+    25 => [qw(secp521r1         521 Y [RFC4492])],
+    26 => [qw(brainpoolP256r1   256 Y [RFC7027])],
+    27 => [qw(brainpoolP384r1   384 Y [RFC7027])],
+    28 => [qw(brainpoolP512r1   512 Y [RFC7027])],
+   256 => [qw(ffdhe2048        2048 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
+   257 => [qw(ffdhe3072        3072 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
+   258 => [qw(ffdhe4096        4096 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
+   259 => [qw(ffdhe6144        6144 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
+   260 => [qw(ffdhe8192        8192 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
+ 65281 => [qw(arbitrary_explicit_prime_curves -variable- Y [RFC4492])],
+ 65282 => [qw(arbitrary_explicit_char2_curves -variable- Y [RFC4492])],
+);
 
 ##################################################################################
 # List of Functions
@@ -3289,9 +3343,10 @@ sub _compileClientHelloExtensions ($$$$@) {
     if ( grep(/\xc0./, @cipherTable) ) { # found Cipher C0xx, Lazy Check; ### TBD: Check with a range of ECC-Ciphers ###
         if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
             ### Data for Extension 'elliptic_curves' (in reverse order)
-            $clientHello{'extension_ecc_list'}                
+            $clientHello{'extension_ecc_list'}               # TBD: should be altered to get all supported ECurves (not only the primary) 
                 = "\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08"
                  ."\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00\x10"
+#                 ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16" # test to get different curves than 0x0017 (secp256r1), 0x0018 (secp384r1) use this line and set a '#' before next line for this manual test
                  ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18"
                  ."\x00\x19\x00\x1a\x00\x1b\x00\x1c";   # ALL defined ECCs; TBD: hier, oder zentrale Definition?!
             $clientHello{'extension_ecc_list_len'}            = length($clientHello{'extension_ecc_list'}); # len of ECC List  
@@ -3355,16 +3410,6 @@ sub parseServerKeyExchange($$$) {
     warn ("parseServerKeyExchange: Error in ServerKeyExchange Message: unexpected len ($_tmpLen) should be $len Bytes") if ($len != $_tmpLen);
     return if ($len != $_tmpLen);
 
-    #Parse Data
-##    ($_handshake_type,                      # C
-##     $_null,                                # C
-##     $_mySSLinfo{'DH_ServerParamsLen'},     # n
-##     $d) = unpack("C C n a*", $d);
-
-##    _trace2("parseServerKeyExchange: Error in 
-##    warn ("parseServerKeyExchange: Error in ServerKeyExchange Message: unexpected HandshakeType 0x".unpack("H*",$_handshake_type)." should be 0x0C") if ($     _handshake_type != 0x0C);
-##    return if ($_handshake_type != 0x0C);
-
     if ($keyExchange eq "DH") { 
 
         ($_mySSLinfo{'DH_ServerParams_p_len'},    # n
@@ -3385,17 +3430,10 @@ sub parseServerKeyExchange($$$) {
         $_mySSLinfo{'DH_ServerParams_PubKey'} = unpack ("H*", $_mySSLinfo{'DH_ServerParams_PubKey'}); # Convert to a readable HEX-String
         _trace2( sprintf (
                 " DH_ServerParams (len=%d):\n".
-##                "# -->       handshake_type:             >%02X<\n".
-##                "# -->       null:                       >%02X<\n".
-##                "# -->       DH_ServerParamsLen:       >%04X< = %d\n".
                 "# -->       p: (len=0x%04X=%4d)        >%s<\n".
                 "# -->       g: (len=0x%04X=%4d)        >%s<\n".
                 "# -->       PubKey: (len=0x%04X=%4d)   >%s<\n",
                 $len,
-##                $_handshake_type,
-##                $_null,
-##                $_mySSLinfo{'DH_ServerParamsLen'},
-##                $_mySSLinfo{'DH_ServerParamsLen'},
                 $_mySSLinfo{'DH_ServerParams_p_len'},
                 $_mySSLinfo{'DH_ServerParams_p_len'},
                 $_mySSLinfo{'DH_ServerParams_p'},
@@ -3412,10 +3450,33 @@ sub parseServerKeyExchange($$$) {
         _trace4("parseServerKeyExchange: DH_serverParam: ".$_mySSLinfo{'DH_serverParam'}."\n");
         _trace2("parseServerKeyExchange() done.\n");
         return ($_mySSLinfo{'DH_serverParam'});
-    } else {
-        _trace2 ("parseServerKeyExchange: The only supported KeyExchange is DH, yet") if ($keyExchange ne "DH") ;
-#        return if ($keyExchange ne "DH");
-        return;
+
+    } elsif ($keyExchange eq "ECDH") { # check for the most priorized Curve; TBD: check for all supported Curves later (by sending more Client_hellos, like to check the ciphers); this should be managed by a superior routine 
+        ($_mySSLinfo{'ECDH_eccurve_type'},    # C
+         $d) = unpack("C a*", $d);
+        
+        if ($_mySSLinfo{'ECDH_eccurve_type'} == $ECCURVE_TYPE{'named_curve'}) {
+            ($_mySSLinfo{'ECDH_namedCurve'},    # n
+            $d) = unpack("n a*", $d);
+            $_mySSLinfo{'ECDH_serverParam'} = "(primary) named_curve: <<unknown: ".$_mySSLinfo{'ECDH_namedCurve'}.">>"; # set a default value
+            $_mySSLinfo{'ECDH_serverParam'} = "(primary) named_curve: ". $ECC_NAMED_CURVE {$_mySSLinfo{'ECDH_namedCurve'}}[0] .", ". $ECC_NAMED_CURVE {$_mySSLinfo{'ECDH_namedCurve'}}[1] . " bits" if ( defined ($ECC_NAMED_CURVE {$_mySSLinfo{'ECDH_namedCurve'}}[0]) ); 
+        } elsif ($_mySSLinfo{'ECDH_eccurve_type'} == $ECCURVE_TYPE{'explicit_prime'}) { # only basic parsing, no additional trace information about additional parameters, yet, 
+            ($_mySSLinfo{'ECDH_explicit_prime_p_len'},    # C
+             $d) = unpack("C a*", $d);
+            $_bits = $_mySSLinfo{'ECDH_explicit_prime_p_len'} * 8;
+            $_mySSLinfo{'ECDH_serverParam'} = "(primary) explicite_prime: ". $_bits ." bits"; # manually generate a message that could ressemble to openssl >= 1.0.2 but here with 'ecdh' in small letters (TBD: get an original Message from OpenSSL for this special type of Curves
+        } elsif ($_mySSLinfo{'ECDH_eccurve_type'} == $ECCURVE_TYPE{'explicit_char2'}) { # no parsing yet: #TBD: support this type later
+            $_mySSLinfo{'ECDH_serverParam'} = "(primary) explicite_char2: <<not parsed, yet>>";
+        } else { 
+            $_mySSLinfo{'ECDH_serverParam'} = "<<unknown ECC Curve Type: ".$_mySSLinfo{'ECDH_eccurve_type'}.">>";
+        }
+        _trace4("parseServerKeyExchange: ECDH_serverParam: '".$_mySSLinfo{'ECDH_serverParam'}."'\n");
+        _trace2("parseServerKeyExchange() done.\n");
+        return ("ecdh, ".$_mySSLinfo{'ECDH_serverParam'});
+    } else { # nor DH neither ECDH
+        _trace2("parseServerKeyExchange: The only supported KeyExchange-Types are DH and ECDH yet (not $keyExchange)\n");
+        _trace2("parseServerKeyExchange() done.\n");
+        return ("");
     }
 
 } # end parseServerKeyExchange
