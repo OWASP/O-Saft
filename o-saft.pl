@@ -1221,6 +1221,7 @@ our %cmd = (
     'openssl_cnf'   => undef,   # full path with openssl's openssl.cnf
     'openssl_cnfs'  => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
     'openssl_fips'  => undef,   # NOT YET USED
+    'openssl_msg'   => "",      # '-msg' option is needed for older openssl versions than 1.0.2 to get the dh_parameter manually
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
@@ -3260,7 +3261,8 @@ sub _useopenssl($$$$) {
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace("_useopenssl($ssl, $host, $port, $ciphers)");
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
-    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $ciphers -connect", $host, $port);
+    my $msg  = $cfg{'openssl_msg'};
+    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers -connect", $host, $port);
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
     # also possible would be Cipher line from:
@@ -3268,17 +3270,63 @@ sub _useopenssl($$$$) {
     #       Cipher    : DES-CBC3-SHA
     _trace("_useopenssl data #{ $data }") if ($cfg{'trace'} > 1);
     return "" if ($data =~ m#New,.*?Cipher is .?NONE#);
-    my  $dh = $data;
-    if ($dh =~ m#Server Temp Key:#) {
-        $dh =~ s/.*?Server Temp Key:\s*([^\n]*)\n.*/$1/si;
-    } else {
-        $dh = "";
+
+    my $cipher = $data;
+    if ($cipher =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
+        $cipher =~ s#^.*[\r\n]+New,\s*##s;
+        $cipher =~ s#[A-Za-z0-9/.,-]+ Cipher is\s*([^\r\n]*).*#$1#s;
+
+        my  $dh = $data;
+        if ($dh =~ m#Server Temp Key:#) {
+            $dh =~ s/.*?Server Temp Key:\s*([^\n]*)\n.*/$1/si;
+        } else { # try to get dh_parameter manually
+            # we may get a ServerKeyExchange-Message with the -msg option
+            # <<< TLS 1.2 Handshake [length 040f], ServerKeyExchange
+            #     0c 00 04 0b 01 00 c1 41 38 da 2e b3 7e 68 71 31
+            #     86 da 01 e5 95 fa 7e 83 9b a2 28 1b a5 fb d2 72
+            #     ...
+            $dh =~ s/.*?Handshake\s*?\[length\s*([0-9a-fA-F]{2,4})\]\,?\s*?ServerKeyExchange\s*[\n\r]+(.*?)[\n\r][\<\>]+.*/$1_$2/si;
+            if ($data =~ m/ServerKeyExchange/) {
+                _trace("_useopenssl(): serverKeyExchange, DHE RAW data:\n".$dh."\n\n") if ($cfg{'trace'} > 2);
+                $dh =~ s/\s+/ /gi;          # replace multible spaces by one space
+                $dh =~ s/[^0-9a-f_]//gi;    # remove all none hex characters and non seperator
+                my ($lenStr, $len) = 0;
+                ($lenStr, $dh) = split('_', $dh); # 2 Strings with Hex Octetts!
+                _trace("_useopenssl(): serverKeyExchange, DHE RAW data (2): len: $lenStr\n".$dh."\n") if ($cfg{'trace'} > 3);
+                $len = hex($lenStr);
+                my $message = pack("H*", $dh);
+                $dh=""; # no dh_parameter found yet
+
+                # parse message header
+                my ($msgType, $msgFirstByte, $msgLen) = 0;
+                my $msgData = "";
+                ($msgType,          # C
+                 $msgFirstByte,     # C
+                 $msgLen,           # n
+                 $msgData) = unpack("C C n a*", $message);
+
+                if ($msgType == 0x0C) { # MessageType == ServerKeyExchange
+                    # get info about the session_cipher
+                    my $keyExchange = $cipher;
+                    _trace ("_useopenssl(): serverKeyExchange: --> Cipher(1): $keyExchange") if ($cfg{'trace'} > 3);
+                    $keyExchange =~ s/^((?:EC)?DHE?)_anon.*/A$1/;   # DHE_anon -> EDH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
+                    _trace ("_useopenssl(): serverKeyExchange: --> Cipher(2): $keyExchange") if ($cfg{'trace'} > 3);
+                    $keyExchange =~ s/^((?:EC)?DH)E.*/E$1/;         # DHE -> EDH, ECDHE -> EECDH
+                    _trace ("_useopenssl(): serverKeyExchange: --> Cipher(3): $keyExchange") if ($cfg{'trace'} > 3);
+                    $keyExchange =~ s/^(?:E|A|EA)((?:EC)?DH).*/$1/; # EDH -> DH, ADH -> DH, EECDH -> ECDH
+                    _trace ("_useopenssl(): serverKeyExchange: KeyExchange (DH or ECDH) = $keyExchange") if ($cfg{'trace'} > 2); # => ECDH or DH
+
+                    # get length of 'dh_parameter' manually from '-msg' data if the 'session_cipher' uses a keyExchange with DHE and DH_anon (according RFC22     46/RFC5246: sections 7.4.3)
+                    $dh = Net::SSLhello::parseServerKeyExchange ($keyExchange, $msgLen, $msgData) if ($keyExchange eq "DH"); ##TBD: ECDH ##
+                    _trace("_useopenssl(): serverKeyExchange: dh_parameter: '$dh'") if ($cfg{'trace'} > 2);
+                }
+            } else {
+                $dh = "";
+            }
+        }
+        return wantarray ? ($cipher, $dh) : $cipher;
     }
-    if ($data =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
-        $data =~ s#^.*[\r\n]+New,\s*##s;
-        $data =~ s#[A-Za-z0-9/.,-]+ Cipher is\s*([^\r\n]*).*#$1#s;
-        return wantarray ? ($data, $dh) : $data;
-    }
+
     # grrrr, it's a pain that openssl changes error messages for each version
     # we may get any of following errors:
     #   TIME:error:140790E5:SSL routines:SSL23_WRITE:ssl handshake failure:.\ssl\s23_lib.c:177:
@@ -4945,6 +4993,15 @@ sub printciphers_dh($$$) {
     # currently DH parameters are available with openssl only
     my ($legacy, $host, $port) = @_;
     my $ssl;
+    if ($cfg{'openssl_msg'} eq "") { # not yet set
+        my $openssl_version = Net::SSLinfo::do_openssl('version', "", ""); # openssl version 
+        $openssl_version =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get only the main version number
+        _trace("printciphers_dh: openssl_version: $openssl_version") if ($cfg{'trace'} > 3);
+        if ($openssl_version lt "1.0.2") { #add option '-msg' to check the dh_parameter manually if an old version of openssl is used
+            $cfg{'openssl_msg'} = ' -msg';
+            require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
+        }
+    }
     foreach $ssl (@{$cfg{'version'}}) {
         printtitle($legacy, $ssl, $host, $port);
         print_cipherhead( 'cipher-dh');
