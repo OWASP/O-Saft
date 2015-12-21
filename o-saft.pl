@@ -3317,7 +3317,7 @@ sub _useopenssl($$$$) {
                     _trace ("_useopenssl(): serverKeyExchange: KeyExchange (DH or ECDH) = $keyExchange") if ($cfg{'trace'} > 2); # => ECDH or DH
 
                     # get length of 'dh_parameter' manually from '-msg' data if the 'session_cipher' uses a keyExchange with DHE and DH_anon (according RFC22     46/RFC5246: sections 7.4.3)
-                    $dh = Net::SSLhello::parseServerKeyExchange ($keyExchange, $msgLen, $msgData) if ($keyExchange eq "DH"); ##TBD: ECDH ##
+                    $dh = Net::SSLhello::parseServerKeyExchange ($keyExchange, $msgLen, $msgData) if ( ($keyExchange eq "DH") || ($keyExchange eq "ECDH"));
                     _trace("_useopenssl(): serverKeyExchange: dh_parameter: '$dh'") if ($cfg{'trace'} > 2);
                 }
             } else {
