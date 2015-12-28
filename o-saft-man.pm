@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.59 15/12/15 23:52:54";
+my  $man_SID= "@(#) o-saft-man.pm 1.60 15/12/28 02:08:57";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1253,6 +1253,8 @@ QUICKSTART
         sections below.
 
         If no command is given,  +cipher  is used.
+
+        For more details, please see  INSTALLATION  below.
 
 
 WHY?
@@ -3717,6 +3719,73 @@ DEPENDENCIES
         * o-saft-man.pm
         * o-saft-usr.pm
         * o-saft-README
+
+
+INSTALLATION
+
+        The tool can be installed in any path. It just requres the modules as
+        described in  DEPENDENCIES  above. However, it's recommended that the
+        modules  Net::SSLhello  and  Net::SSLinfo  are found in the directory
+        './Net/'  where  o-saft.pl  is installed.
+
+        To enable ancient SSL protocol versions like SSLv2 and SSLv3, follow-
+        ing installations should be done.
+
+          * openssl  with SSLv2, SSLv3 and more ciphers enabled
+          * Net::SSLeay  compiled with openssl version as described befor.
+
+    Compile openssl
+
+        Currently (2015) we recommend to use  Peter Mosman's openssl version,
+        which can be found at  https://github.com/PeterMosmans/openssl/ 
+        Installation is as simple as:
+              unzip openssl-1.0.2-chacha.zip
+              cd openssl-1.0.2-chacha
+              ./config --shared -Wl,-rpath=$dest/lib
+              make && make test && make install
+        which will install openssl, libssl.so, libcrypto.so  and some include
+        files as well as the include files in  /usr/local/ .
+        The shared version of the libraries are necessary for  Net::SSLeay.
+
+    Enable SSLv2 and SSLv3
+
+        To enable support for ancient protocol versions,  Net::SSLeay must be
+        compiled as followed. Unfortunatelly  Net::SSLeay  enables some func-
+        tionality for SSL/TLS according the identified openssl version. So we
+        need to patch  SSLeay.xs  befor building our own library and module.
+              tar xf Net-SSLeay-1.72.tar.gz
+              cd Net-SSLeay-1.72
+              edit SSLeay.xs (change some #if as described below)
+              env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
+                    INC=/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
+                    DESTDIR=/usr/local/
+              make && make install
+
+        SSLeay.xs needs to be changed as follows:
+          * search for
+              #ifndef OPENSSL_NO_SSL2
+              #if OPENSSL_VERSION_NUMBER < 0x10000000L
+
+              const SSL_METHOD *
+              SSLv2_method()
+
+              #endif
+              #endif
+
+              #ifndef OPENSSL_NO_SSL3
+              #if OPENSSL_VERSION_NUMBER < 0x10002000L
+
+              const SSL_METHOD *
+              SSLv3_method()
+
+              #endif
+              #endif
+          * and replace by
+              const SSL_METHOD *
+              SSLv2_method()
+
+              const SSL_METHOD *
+              SSLv3_method()
 
 
 SEE ALSO
