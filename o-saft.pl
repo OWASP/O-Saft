@@ -41,7 +41,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.408 15/12/01 20:25:15",
-    STR_VERSION => "15.12.15",          # <== our official version number
+    STR_VERSION => "27.12.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -1221,7 +1221,7 @@ our %cmd = (
     'openssl_cnf'   => undef,   # full path with openssl's openssl.cnf
     'openssl_cnfs'  => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
     'openssl_fips'  => undef,   # NOT YET USED
-    'openssl_msg'   => "",      # '-msg' option is needed for older openssl versions than 1.0.2 to get the dh_parameter manually
+    'openssl_msg'   => "",      # '-msg': option needed for openssl versions older than 1.0.2 to get the dh_parameter
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
@@ -3279,7 +3279,7 @@ sub _useopenssl($$$$) {
         my  $dh = $data;
         if ($dh =~ m#Server Temp Key:#) {
             $dh =~ s/.*?Server Temp Key:\s*([^\n]*)\n.*/$1/si;
-        } else { # try to get dh_parameter manually
+        } else {# try to get dh_parameter manually
             # we may get a ServerKeyExchange-Message with the -msg option
             # <<< TLS 1.2 Handshake [length 040f], ServerKeyExchange
             #     0c 00 04 0b 01 00 c1 41 38 da 2e b3 7e 68 71 31
@@ -3326,7 +3326,6 @@ sub _useopenssl($$$$) {
         }
         return wantarray ? ($cipher, $dh) : $cipher;
     }
-
     # grrrr, it's a pain that openssl changes error messages for each version
     # we may get any of following errors:
     #   TIME:error:140790E5:SSL routines:SSL23_WRITE:ssl handshake failure:.\ssl\s23_lib.c:177:
@@ -4994,8 +4993,8 @@ sub printciphers_dh($$$) {
     my ($legacy, $host, $port) = @_;
     my $ssl;
     if ($cfg{'openssl_msg'} eq "") { # not yet set
-        my $openssl_version = Net::SSLinfo::do_openssl('version', "", ""); # openssl version 
-        $openssl_version =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get only the main version number
+        my $openssl_version = Net::SSLinfo::do_openssl('version', "", ""); # openssl version
+        $openssl_version =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get version number without letters
         _trace("printciphers_dh: openssl_version: $openssl_version") if ($cfg{'trace'} > 3);
         if ($openssl_version lt "1.0.2") { #add option '-msg' to check the dh_parameter manually if an old version of openssl is used
             $cfg{'openssl_msg'} = ' -msg';
@@ -5260,13 +5259,17 @@ sub printversion() {
 
     # get a quick overview also
     print "= Required (and used) Modules =";
-    print "    IO::Socket::INET     $IO::Socket::INET::VERSION";
-    print "    IO::Socket::SSL      $IO::Socket::SSL::VERSION";
-    print "    Net::DNS             $Net::DNS::VERSION"  if (defined $Net::DNS::VERSION);
-    print "    Net::SSLinfo         $Net::SSLinfo::VERSION";
-    print "    Net::SSLhello        $Net::SSLhello::VERSION";
-    print "    Net::SSLeay          $Net::SSLeay::VERSION";
-    my ($m, $d, %p);
+    print '    @INC                 ', "@INC";
+    my ($m, $d, $v, %p);
+    printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
+    printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
+    foreach $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello)) {
+        no strict 'refs';   # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
+        # we expect ::VERSION in all these modules
+        ($d = $m) =~ s#::#/#g;  $d .= '.pm';   # convert string to key for %INC
+        $v  = $m . "::VERSION";
+        printf("    %-22s %-9s%s\n", $m, $$v, $INC{$d});
+    }
     if ($cfg{'verbose'} > 0) {
         print "\n= Loaded Modules =";
         foreach $m (sort keys %INC) {
@@ -6289,7 +6292,7 @@ push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
 ## add openssl-specific path for CAs
 ## -------------------------------------
 if ($cmd{'extopenssl'} == 1) {
-    $arg =  qx($cmd{'openssl'} version -d);    # get something like: OPENSSLDIR: "/usr/local/openssl"
+    $arg = qx($cmd{'openssl'} version -d);     # get something like: OPENSSLDIR: "/usr/local/openssl"
     my $status = $?;
     my $error  = $!;
     if (($error ne "") && ($status != 0)) {    # we ignore error messages for status==0
