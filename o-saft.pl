@@ -41,7 +41,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.408 15/12/01 20:25:15",
-    STR_VERSION => "27.12.15",          # <== our official version number
+    STR_VERSION => "28.12.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -253,6 +253,9 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
     sub _v4print      {}
     sub _vprintme     {}
     sub _trace($)     {}
+    sub _trace1($)    {}
+    sub _trace2($)    {}
+    sub _trace3($)    {}
     sub _trace_1arr($){} # if --trace-arg given
 }
 
@@ -3173,6 +3176,74 @@ sub _getwilds($$) {
     # checking for SNI does not work here 'cause it destroys %data
 } # _getwilds
 
+sub _get_dhparam($$) {
+    #? parse output of `openssl -msg' and returns DH parameters; empty if none found
+    my ($cipher, $data) = @_;
+    if ($data =~ m#Server Temp Key:#) {
+        $data =~ s/.*?Server Temp Key:\s*([^\n]*)\n.*/$1/si;
+        return $data;
+    }
+    # else continue extracting DH parameters from ServerKeyExchange-Message
+    my $dh = "";
+    # we may get a ServerKeyExchange-Message with the -msg option
+    # <<< TLS 1.2 Handshake [length 040f], ServerKeyExchange
+    #     0c 00 04 0b 01 00 c1 41 38 da 2e b3 7e 68 71 31
+    #     86 da 01 e5 95 fa 7e 83 9b a2 28 1b a5 fb d2 72
+    #     ...
+    # >>> TLS 1.2 ChangeCipherSpec [length 0001]
+    return "" if ($data !~ m#ServerKeyExchange#);
+
+    $data =~ s#.*?Handshake\s*?\[length\s*([0-9a-fA-F]{2,4})\]\,?\s*?ServerKeyExchange\s*[\n\r]+(.*?)[\n\r][<>]+.*#$1_$2#si;
+    _trace("_get_dhparam: #{ DHE RAW data:\n$data\n#}\n");
+    $data =~ s/\s+/ /gi;          # squeeze multible spaces
+    $data =~ s/[^0-9a-f_]//gi;    # remove all none hex characters and non seperator
+    my ($lenStr, $len) = 0;
+    ($lenStr, $data) = split('_', $data);   # 2 strings with Hex Octetts!
+    _trace("_get_dhparam: #{ DHE RAW data): len: $lenStr\n$data\n#}\n") if ($cfg{'trace'} > 3);
+    $len = hex($lenStr);
+    my $message = pack("H*", $data);
+
+    # parse message header
+    my $msgData = "";
+    my ($msgType, $msgFirstByte, $msgLen) = 0;
+       ($msgType,       # C
+        $msgFirstByte,  # C
+        $msgLen,        # n
+        $msgData)   = unpack("C C n a*", $message);
+
+    if ($msgType == 0x0C) { # is ServerKeyExchange
+        # get info about the session cipher and prepare parameter $keyExchange
+        # for parseServerKeyExchange()
+        my $keyExchange = $cipher;
+        _trace1("_get_dhparam: cipher: $keyExchange");
+        $keyExchange =~ s/^((?:EC)?DHE?)_anon.*/A$1/;   # DHE_anon -> EDH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
+        $keyExchange =~ s/^((?:EC)?DH)E.*/E$1/;         # DHE -> EDH, ECDHE -> EECDH
+        $keyExchange =~ s/^(?:E|A|EA)((?:EC)?DH).*/$1/; # EDH -> DH, ADH -> DH, EECDH -> ECDH
+        _trace1("_get_dhparam: keyExchange (DH or ECDH) = $keyExchange");
+
+        # get length of 'dh_parameter' manually from '-msg' data if the
+        # 'session cipher' uses a keyExchange with DHE and DH_anon
+        # (according RFC2246/RFC5246: sections 7.4.3)
+        $dh = Net::SSLhello::parseServerKeyExchange($keyExchange, $msgLen, $msgData);
+    }
+
+    chomp $dh;
+    _trace("_get_dhparam: $dh");
+    return $dh;
+}; # _get_dhparam
+
+sub _getversion() {
+    #? call external openssl executable to retrive its version
+    # we do a simple call, no checks, should work on all platforms
+    # get something like: OpenSSL 1.0.1k 8 Jan 2015
+    my $data = qx($cmd{'openssl'} version);
+    ## $data = Net::SSLinfo::do_openssl('version', "", ""); # should work too
+    chomp $data;
+    _trace("_getversion: $data") if ($cfg{'trace'} > 1);
+    $data =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get version number without letters
+    return $data;
+} # _getversion
+
 sub _usesocket($$$$) {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers passed in
@@ -3257,11 +3328,11 @@ sub _useopenssl($$$$) {
     # should return the targets default cipher if no ciphers passed in
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
+    my $msg  =  $cfg{'openssl_msg'};
     my $sni  = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace("_useopenssl($ssl, $host, $port, $ciphers)");
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
-    my $msg  = $cfg{'openssl_msg'};
     my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers -connect", $host, $port);
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
@@ -3275,57 +3346,11 @@ sub _useopenssl($$$$) {
     if ($cipher =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
         $cipher =~ s#^.*[\r\n]+New,\s*##s;
         $cipher =~ s#[A-Za-z0-9/.,-]+ Cipher is\s*([^\r\n]*).*#$1#s;
-
-        my  $dh = $data;
-        if ($dh =~ m#Server Temp Key:#) {
-            $dh =~ s/.*?Server Temp Key:\s*([^\n]*)\n.*/$1/si;
-        } else {# try to get dh_parameter manually
-            # we may get a ServerKeyExchange-Message with the -msg option
-            # <<< TLS 1.2 Handshake [length 040f], ServerKeyExchange
-            #     0c 00 04 0b 01 00 c1 41 38 da 2e b3 7e 68 71 31
-            #     86 da 01 e5 95 fa 7e 83 9b a2 28 1b a5 fb d2 72
-            #     ...
-            $dh =~ s/.*?Handshake\s*?\[length\s*([0-9a-fA-F]{2,4})\]\,?\s*?ServerKeyExchange\s*[\n\r]+(.*?)[\n\r][\<\>]+.*/$1_$2/si;
-            if ($data =~ m/ServerKeyExchange/) {
-                _trace("_useopenssl(): serverKeyExchange, DHE RAW data:\n".$dh."\n\n") if ($cfg{'trace'} > 2);
-                $dh =~ s/\s+/ /gi;          # replace multible spaces by one space
-                $dh =~ s/[^0-9a-f_]//gi;    # remove all none hex characters and non seperator
-                my ($lenStr, $len) = 0;
-                ($lenStr, $dh) = split('_', $dh); # 2 Strings with Hex Octetts!
-                _trace("_useopenssl(): serverKeyExchange, DHE RAW data (2): len: $lenStr\n".$dh."\n") if ($cfg{'trace'} > 3);
-                $len = hex($lenStr);
-                my $message = pack("H*", $dh);
-                $dh=""; # no dh_parameter found yet
-
-                # parse message header
-                my ($msgType, $msgFirstByte, $msgLen) = 0;
-                my $msgData = "";
-                ($msgType,          # C
-                 $msgFirstByte,     # C
-                 $msgLen,           # n
-                 $msgData) = unpack("C C n a*", $message);
-
-                if ($msgType == 0x0C) { # MessageType == ServerKeyExchange
-                    # get info about the session_cipher
-                    my $keyExchange = $cipher;
-                    _trace ("_useopenssl(): serverKeyExchange: --> Cipher(1): $keyExchange") if ($cfg{'trace'} > 3);
-                    $keyExchange =~ s/^((?:EC)?DHE?)_anon.*/A$1/;   # DHE_anon -> EDH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
-                    _trace ("_useopenssl(): serverKeyExchange: --> Cipher(2): $keyExchange") if ($cfg{'trace'} > 3);
-                    $keyExchange =~ s/^((?:EC)?DH)E.*/E$1/;         # DHE -> EDH, ECDHE -> EECDH
-                    _trace ("_useopenssl(): serverKeyExchange: --> Cipher(3): $keyExchange") if ($cfg{'trace'} > 3);
-                    $keyExchange =~ s/^(?:E|A|EA)((?:EC)?DH).*/$1/; # EDH -> DH, ADH -> DH, EECDH -> ECDH
-                    _trace ("_useopenssl(): serverKeyExchange: KeyExchange (DH or ECDH) = $keyExchange") if ($cfg{'trace'} > 2); # => ECDH or DH
-
-                    # get length of 'dh_parameter' manually from '-msg' data if the 'session_cipher' uses a keyExchange with DHE and DH_anon (according RFC22     46/RFC5246: sections 7.4.3)
-                    $dh = Net::SSLhello::parseServerKeyExchange ($keyExchange, $msgLen, $msgData) if ( ($keyExchange eq "DH") || ($keyExchange eq "ECDH"));
-                    _trace("_useopenssl(): serverKeyExchange: dh_parameter: '$dh'") if ($cfg{'trace'} > 2);
-                }
-            } else {
-                $dh = "";
-            }
-        }
+        my $dh  = _get_dhparam($cipher, $data);
         return wantarray ? ($cipher, $dh) : $cipher;
     }
+    # else check for errors ...
+
     # grrrr, it's a pain that openssl changes error messages for each version
     # we may get any of following errors:
     #   TIME:error:140790E5:SSL routines:SSL23_WRITE:ssl handshake failure:.\ssl\s23_lib.c:177:
@@ -3351,6 +3376,7 @@ sub _useopenssl($$$$) {
     } else {
         print STR_HINT, "use options like: --v --trace";
     }
+
     return "";
 } # _useopenssl
 
@@ -4992,14 +5018,12 @@ sub printciphers_dh($$$) {
     # currently DH parameters are available with openssl only
     my ($legacy, $host, $port) = @_;
     my $ssl;
-    if ($cfg{'openssl_msg'} eq "") { # not yet set
-        my $openssl_version = Net::SSLinfo::do_openssl('version', "", ""); # openssl version
-        $openssl_version =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get version number without letters
-        _trace("printciphers_dh: openssl_version: $openssl_version") if ($cfg{'trace'} > 3);
-        if ($openssl_version lt "1.0.2") { #add option '-msg' to check the dh_parameter manually if an old version of openssl is used
-            $cfg{'openssl_msg'} = ' -msg';
-            require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
-        }
+    my $openssl_version = _getversion();
+    _trace("printciphers_dh: openssl_version: $openssl_version") if ($cfg{'trace'} > 1);
+    if ($openssl_version lt "1.0.2") { # yes perl can do this check
+        _warn("ancient openssl $openssl_version: using '-msg' option to get DH parameters");
+        $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl_msg'} eq "");
+        require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
     }
     foreach $ssl (@{$cfg{'version'}}) {
         printtitle($legacy, $ssl, $host, $port);
@@ -6200,8 +6224,9 @@ foreach $ssl (@{$cfg{'versions'}}) {
         }
         # If a version like SSLv2 is not supported, perl bails out with error
         # like:        Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
-        # so we check for high-level API functions, also possible would be
-        #    Net::SSLeay::CTX_v2_new, Net::SSLeay::CTX_tlsv1_2_new
+        # so we check for high-level API functions, like  SSLv2_method,  also
+        # possible would be
+        #    Net::SSLeay::CTX_v2_new,  Net::SSLeay::CTX_tlsv1_2_new
         # and similar calls.
         # Net::SSLeay::SSLv23_method is missing in some Net::SSLeay versions,
         # as we don't use it there is no need to check for it
