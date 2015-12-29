@@ -41,7 +41,7 @@ Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
 =item _v_print( ), _v2print( ), _v3print( ), _v4print( )
 
-=item _trace( ), _trace1( ), _trace2( ), _trace_1arr( )
+=item _trace( ), _trace1( ), _trace2( ), _trace_cmd( )
 
 =back
 
@@ -81,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.27 15/10/26 23:29:24";
+my  $SID    = "@(#) o-saft-dbx.pm 1.28 15/12/29 19:46:18";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -234,7 +234,7 @@ sub _trace2($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 2
 sub _trace3($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 3); }
 sub _trace_($){ local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); }
 # if --trace-arg given
-sub _trace_1arr($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceKEY'} > 0); }
+sub _trace_cmd($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceCMD'} > 0); }
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     _v_print("$0 " . $VERSION);
