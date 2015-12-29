@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.60 15/12/28 02:08:57";
+my  $man_SID= "@(#) o-saft-man.pm 1.61 15/12/29 16:01:01";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1912,7 +1912,6 @@ OPTIONS
 
       --ssl-lazy
 
-          If the  --lib=PATH  option doesn't work (for example due to changes
           I.g. this tools tries to identify available functionality according
           SSL versions from the underlaying libraries.  Unsupported  versions
           are then disables and a warning is shown.
@@ -1924,6 +1923,13 @@ OPTIONS
           If the underlaying library doesn't support the required SSL version
           at all, following error may occour:
               Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
+
+          See X&Note on SSL versions&  for a general note about SSL versions.
+          A more detailled description of the problem and how Net::SSLeay be-
+          haves, can be found in the source of  $0 ,
+          see section starting at
+              ## check for supported SSL versions
+
 
 # following missing on owasp.org 'cause still not fully implemented
       --call=METHOD
@@ -3841,7 +3847,7 @@ HACKER's INFO
         Checking for SSL version is done at one place in the code, search for
               supported SSL versions
 
-        However, there are some dirty hack where  SSLv2 and SSLv3  is checked
+        However, there are some dirty hacks where  SSLv2 and SSLv3 is checked
         again.
 
     Using private libssl.so and libcrypt.so
