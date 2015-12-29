@@ -256,7 +256,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
     sub _trace1($)    {}
     sub _trace2($)    {}
     sub _trace3($)    {}
-    sub _trace_1arr($){} # if --trace-arg given
+    sub _trace_cmd($) {} # if --trace-arg given
 }
 
 ## read USER-FILE, if any (source with user-specified code)
@@ -4944,7 +4944,7 @@ sub print_ciphertotals($$$$) {
     }
     if ($legacy =~ /(full|compact|simple|quick)/) {
         printheader(_subst($text{'out-summary'}, $ssl), "");
-        _trace_1arr('%checks');
+        _trace_cmd('%checks');
         foreach $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
             print_line($legacy, $host, $port, "$ssl-$key", $prot_txt{$key}, $prot{$ssl}->{$key});
             # NOTE: "$ssl-$key" does not exist in %checks or %prot
@@ -5091,7 +5091,7 @@ sub printdata($$$) {
     my $key  = "";
     local $\ = "\n";
     printheader($text{'out-infos'}, $text{'desc-info'});
-    _trace_1arr('%data');
+    _trace_cmd('%data');
     foreach $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
@@ -5123,7 +5123,7 @@ sub printchecks($$$) {
     my $key  = "";
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
-    _trace_1arr('%checks');
+    _trace_cmd('%checks');
     if (_is_do('selected')) {           # value is special
         $key = $checks{'selected'}->{val};
         print_line($legacy, $host, $port, 'selected', $checks{'selected'}->{txt}, "$key " . get_cipher_sec($key));
@@ -6199,7 +6199,7 @@ _y_TIME("inc}");
 
 ## check for supported SSL versions
 ## -------------------------------------
-_y_CMD("  check support SSL versions ...");
+_y_CMD("  check supported SSL versions ...");
 foreach $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
     if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
@@ -6214,22 +6214,32 @@ foreach $ssl (@{$cfg{'versions'}}) {
     # following checks for these commands only
     $cfg{$ssl} = 0; # reset to simplify further checks
     if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
+        # Net::SSLeay only supports methods for those SSL protocols which were
+        # available at the time of compiling Net::SSLeay. The support of these
+        # protocols is not checked dynamically when building Net::SSLeay.
+        # Net::SSLeay's  config script  simply relies on the definitions found
+        # in the specified include files of the underlaying SSL library (which
+        # is openssl usually).
+        # Unfortunately,  there are situations where the assumtions at compile
+        # time don't match the conditions at runtime. Then  Net::SSLeay  bails
+        # out with error like:
+        #   Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
+        # which means that  Net::SSLeay  was build without support for SSLv2.
+        # To avoid bothering users with such messages (see above) or even more
+        # erros or program aborts, we check for the availability of all needed
+        # methods. Sometimes, for whatever reason,  the user may know that the
+        # warning can be avoided. Therfore the  --ssl-lazy option can be used,
+        # which simply disables the check.
         if ($cfg{'ssl_lazy'}>0) {
-            # some versions of Net::SSLeay seem not to support the methods for
-            # all SSL versions even the underlying library supports it, hence
-            # the check (see below) is disabled
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
             next;
         }
-        # If a version like SSLv2 is not supported, perl bails out with error
-        # like:        Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
-        # so we check for high-level API functions, like  SSLv2_method,  also
-        # possible would be
-        #    Net::SSLeay::CTX_v2_new,  Net::SSLeay::CTX_tlsv1_2_new
+        # Check for high-level API functions, like SSLv2_method, also possible
+        # would be    Net::SSLeay::CTX_v2_new,  Net::SSLeay::CTX_tlsv1_2_new
         # and similar calls.
-        # Net::SSLeay::SSLv23_method is missing in some Net::SSLeay versions,
-        # as we don't use it there is no need to check for it
+        # Net::SSLeay::SSLv23_method is missing in some  Net::SSLeay versions,
+        # as we don't use it, there is no need to check for it.
         # TODO: DTLSv9 which is DTLS 0.9 ; but is this really in use?
         $typ = (defined &Net::SSLeay::SSLv2_method)   ? 1:0 if ($ssl eq 'SSLv2');
         $typ = (defined &Net::SSLeay::SSLv3_method)   ? 1:0 if ($ssl eq 'SSLv3');
@@ -6777,7 +6787,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             ) / 5 ) + 0.5);
         printheader($text{'out-scoring'}."\n", $text{'desc-score'});
         print "\n";
-        _trace_1arr('%scores');
+        _trace_cmd('%scores');
         foreach $key (sort keys %scores) {
             next if ($key !~ m/^check_/); # print totals only
             print_line($legacy, $host, $port, $key, $scores{$key}->{txt}, $scores{$key}->{val});
