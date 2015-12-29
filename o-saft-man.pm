@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.62 15/12/29 19:44:42";
+my  $man_SID= "@(#) o-saft-man.pm 1.63 15/12/29 21:15:16";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1260,7 +1260,7 @@ QUICKSTART
         * List all available commands:
           $0 --help=commands
 
-        * Start the siimple GUI
+        * Start the simple GUI
           o-saft.tcl
 
         For more specialised test cases, refer to the  COMMANDS  and  OPTIONS
