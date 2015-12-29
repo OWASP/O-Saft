@@ -3286,7 +3286,9 @@ sub _usesocket($$$$) {
                 SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
                 SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
                 SSL_version     => $ssl,    # default is SSLv23
+                SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
+             # SSL_cipher_list => "$ciphers eNULL",
                 #SSL_ecdh_curve  => "prime256v1", # default is prime256v1
             );
         } else {
@@ -6707,8 +6709,9 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 #dbx# print "# C", @{$cfg{'ciphers'}};
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
 # Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
-# hat vermutlich mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
-# 12/2015 Ursache verm. _get_default()
+# hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
+#    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
+# Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
         foreach $ssl (@{$cfg{'version'}}) {
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
