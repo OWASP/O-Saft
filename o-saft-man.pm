@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.61 15/12/29 16:01:01";
+my  $man_SID= "@(#) o-saft-man.pm 1.62 15/12/29 19:44:42";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1204,8 +1204,8 @@ __DATA__
 
 NAME
 
-        O-Saft - OWASP SSL audit for testers
-                 OWASP SSL advanced forensic tool
+        O-Saft - OWASP SSL advanced forensic tool
+                 OWASP SSL audit for testers
 
 
 DESCRIPTION
@@ -1237,6 +1237,9 @@ QUICKSTART
         * Show supported (enabled) ciphers of target:
           $0 +cipher --enabled example.tld
 
+        * Show supported (enabled) ciphers with their DH parameters:
+          $0 +cipher-dh example.tld
+
         * Show details of certificate and connection of target:
           $0 +info example.tld
 
@@ -1246,11 +1249,22 @@ QUICKSTART
         * Check connection to target for vulnerabilities:
           $0 +vulns example.tld
 
+        * Check for all known ciphers (independant of SSL library):
+          $0 example.tld --range=full
+          checkAllCiphers.pl example.tld
+          checkAllCiphers.pl example.tld --range=full --v
+
+        * Get the certificate's Common Name for a bunch of servers:
+          $0 +cn example.tld some.tld other.tld
+
         * List all available commands:
           $0 --help=commands
 
+        * Start the siimple GUI
+          o-saft.tcl
+
         For more specialised test cases, refer to the  COMMANDS  and  OPTIONS
-        sections below.
+        sections below. For more examples please refer to  EXAMPLES  section.
 
         If no command is given,  +cipher  is used.
 
@@ -1316,6 +1330,14 @@ TECHNICAL INFORMATION
         Above applies to all commands except  +cipherraw  which uses no other
         libraries.
 
+        OpenSSL is recommended to be used for libssl and libcrypto.  Versions
+        0.9.8k to 1.0.2e (Jan. 2016) are known to work. However, versions be-
+        for 1.0.0 may not provide all informations.
+        LibreSSL is not recommended, because  some functionallity  considered
+        insecure, has been removed.
+        For more details, please see  INSTALLATION  below.
+
+
     Certificates and CA
 
         All checks according the validity of the certificate chain  are based
@@ -1352,9 +1374,9 @@ TECHNICAL INFORMATION
     Requirements
 
         For checking all ciphers and all protocols with  +cipherall  command,
-        just perl (5.x) without any modules.
+        just perl (5.x) without any modules is required.
         For  +info  and  +check  (and all related) commands,  perl (5.x) with
-        following modules (minimal version):
+        following modules (minimal version) is required:
 
           * IO             1.25 (2011)
           * IO::Socket:SSL 1.37 (2011)
@@ -1362,10 +1384,13 @@ TECHNICAL INFORMATION
           * Net::DNS       0.66 (2011)
           * Net::SSLeay    1.49 (2012)
 
-         However, it is recommended to use the  most recent version  of these
-         modules which then gives more accurate results and less warnings.
-         Also an openssl(1) executable should be available, but is not manda-
-         tory.
+        However, it is recommended to use the most recent version of the mod-
+        ules which then gives more accurate results and less warnings.   Also
+        an openssl(1) executable should be available, but is not mandatory.
+
+        For checking DH parameters of ciphers, openssl 1.0.2  or newer should
+        be available. If an older version of openssl is found, we try hard to
+        extract the DH parameters from the data returned by the server.
 
 
 RESULTS
@@ -4324,6 +4349,11 @@ EXAMPLES
 
         * Test all ciphers, even if not supported by local SSL implementation
           $0 +cipherraw some.tld
+          $0 +cipherraw some.tld --range=full
+          checkAllCiphers.pl example.tld --range=full --v
+
+        * Show supported (enabled) ciphers with their DH parameters:
+          $0 +cipher-dh some.tld
 
         * Test using a private libssl.so, libcrypto.so and openssl
           $0 +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps some.tld
@@ -4356,6 +4386,10 @@ EXAMPLES
 #
 #        * Use your private score settings from a file
 #          $0 --help=score > magic.score
+
+        * Get the certificate's Common Name for a bunch of servers:
+          $0 +cn example.tld some.tld other.tld
+          $0 +cn example.tld some.tld other.tld --showhost --no-header
 
         * Generate simple parsable output
           $0 --legacy=quick --no-header +info  some.tld
