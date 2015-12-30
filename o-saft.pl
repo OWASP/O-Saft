@@ -3234,10 +3234,11 @@ sub _get_dhparam($$) {
     return $dh;
 }; # _get_dhparam
 
-sub get_openssl_version($cmd) {
+sub get_openssl_version($) {
     #? call external openssl executable to retrive its version
     # we do a simple call, no checks, should work on all platforms
     # get something like: OpenSSL 1.0.1k 8 Jan 2015
+    my $cmd  = shift;
     my $data = qx($cmd version);
     ## $data = Net::SSLinfo::do_openssl('version', "", ""); # should work too
     chomp $data;
