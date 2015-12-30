@@ -81,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.28 15/12/29 19:46:18";
+my  $SID    = "@(#) o-saft-dbx.pm 1.29 15/12/30 09:56:29";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -125,93 +125,89 @@ sub _yeast_init() {
     #? print important content of %cfg and %cmd hashes
     #? more output if trace>1; full output if trace>2
     my $key = "";
-    if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
-        _yline("");
-        _yTRAC("$0", $VERSION);
-        _yTRAC("_yeast_init::SID", $SID) if ($cfg{'trace'} > 2);
-        _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
-        _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
-        if ($cfg{'trace'} > 1) {
-            _yline(" Net::SSLinfo {");
-            _yTRAC("::trace",         $Net::SSLinfo::trace);
-            _yTRAC("::linux_debug",   $Net::SSLinfo::linux_debug);
-            _yTRAC("::slowly",        $Net::SSLinfo::slowly);
-            _yTRAC("::timeout",       $Net::SSLinfo::timeout);
-            _yTRAC("::use_openssl",   $Net::SSLinfo::use_openssl);
-            _yTRAC("::use_sclient",   $Net::SSLinfo::use_sclient);
-            _yTRAC("::use_extdebug",  $Net::SSLinfo::use_extdebug);
-            _yTRAC("::use_nextprot",  $Net::SSLinfo::use_nextprot);
-            _yTRAC("::use_reconnect", $Net::SSLinfo::use_reconnect);
-            _yTRAC("::use_SNI",       $Net::SSLinfo::use_SNI);
-            _yTRAC("::use_http",      $Net::SSLinfo::use_http);
-            _yTRAC("::no_cert",       $Net::SSLinfo::no_cert);
-            _yTRAC("::no_cert_txt",   $Net::SSLinfo::no_cert_txt);
-            _yTRAC("::protocols",     $Net::SSLinfo::protocols);
-            _yTRAC("::sclient_opt",   $Net::SSLinfo::sclient_opt);
-            _yTRAC("::ignore_case",   $Net::SSLinfo::ignore_case);
-            _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
-            _yline(" Net::SSLinfo }");
-        }
-        _yTRAC("verbose", $cfg{'verbose'});
-        _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
-        # more detailed trace first
-        if ($cfg{'trace'} > 1){
-            _yline(" %cmd {");
-            foreach $key (sort keys %cmd) {
-                _yeast_trac(\%cmd, $key)
-            }
-            _yline(" %cmd }");
-            _yline(" complete %cfg {");
-            foreach $key (sort keys %cfg) {
-                if ($cfg{'trace'} <= 2){
-                    next if $key =~ /^cmd-/; # print internal list of command for full trace only
-                }
-                _yeast_trac(\%cfg, $key);
-            }
-            _yline(" %cfg }");
-        }
-        # now user friendly informations
-        _yline(" cmd {");
-        _yeast("# " . join(", ", @dbxexe));
-        _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
-        _yeast("          libs= " . _y_ARR(@{$cmd{'libs'}}));
-        _yeast("     envlibvar= $cmd{'envlibvar'}");
-        _yeast("  cmd->timeout= $cmd{'timeout'}");
-        _yeast("  cmd->openssl= $cmd{'openssl'}");
-        _yeast("   use_openssl= $cmd{'extopenssl'}");
-        _yeast("openssl cipher= $cmd{'extciphers'}");
-        _yline(" cmd }");
-        _yline(" user-friendly cfg {");
-        _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
-        _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
-        _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
-        _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$cfg{'sni_name'}");
-        _yeast("  default port= $cfg{'port'} (last specified)");
-        _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
-        foreach $key (qw(out_header format legacy usehttp usedns usemx starttls starttlsDelay cipherrange)) {
-            printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
-               # cannot use _yeast() 'cause of pretty printing
-        }
-        _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
-        printf("#%s: %14s= %s", $mename, "SSL versions", "[ ");
-        foreach $key (@{$cfg{'versions'}}) {
-            printf("%s=%s ", $key, $cfg{$key});
-        }
-        printf("]\n");
-        _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
-        _yeast(" ignore output= " . _y_ARR(@{$cfg{'ignore-out'}}));
-        _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
-        _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
-        _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
-        _yline(" user-friendly cfg }");
-        _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
+    return if (($cfg{'trace'} + $cfg{'verbose'}) <= 0);
+    _yline("");
+    _yTRAC("$0", $VERSION);
+    _yTRAC("_yeast_init::SID", $SID) if ($cfg{'trace'} > 2);
+    _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
+    _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
+    if ($cfg{'trace'} > 1) {
+        _yline(" Net::SSLinfo {");
+        _yTRAC("::trace",         $Net::SSLinfo::trace);
+        _yTRAC("::linux_debug",   $Net::SSLinfo::linux_debug);
+        _yTRAC("::slowly",        $Net::SSLinfo::slowly);
+        _yTRAC("::timeout",       $Net::SSLinfo::timeout);
+        _yTRAC("::use_openssl",   $Net::SSLinfo::use_openssl);
+        _yTRAC("::use_sclient",   $Net::SSLinfo::use_sclient);
+        _yTRAC("::use_extdebug",  $Net::SSLinfo::use_extdebug);
+        _yTRAC("::use_nextprot",  $Net::SSLinfo::use_nextprot);
+        _yTRAC("::use_reconnect", $Net::SSLinfo::use_reconnect);
+        _yTRAC("::use_SNI",       $Net::SSLinfo::use_SNI);
+        _yTRAC("::use_http",      $Net::SSLinfo::use_http);
+        _yTRAC("::no_cert",       $Net::SSLinfo::no_cert);
+        _yTRAC("::no_cert_txt",   $Net::SSLinfo::no_cert_txt);
+        _yTRAC("::protocols",     $Net::SSLinfo::protocols);
+        _yTRAC("::sclient_opt",   $Net::SSLinfo::sclient_opt);
+        _yTRAC("::ignore_case",   $Net::SSLinfo::ignore_case);
+        _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
+        _yline(" Net::SSLinfo }");
     }
+    _yTRAC("verbose", $cfg{'verbose'});
+    _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
+    # more detailed trace first
+    if ($cfg{'trace'} > 1){
+        _yline(" %cmd {");
+        foreach $key (sort keys %cmd) {
+            _yeast_trac(\%cmd, $key);
+        }
+        _yline(" %cmd }");
+        _yline(" complete %cfg {");
+        foreach $key (sort keys %cfg) {
+            if ($cfg{'trace'} <= 2){
+                next if $key =~ /^cmd-/; # print internal list of command for full trace only
+            }
+            _yeast_trac(\%cfg, $key);
+        }
+        _yline(" %cfg }");
+    }
+    # now user friendly informations
+    _yline(" cmd {");
+    _yeast("# " . join(", ", @dbxexe));
+    _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
+    _yeast("          libs= " . _y_ARR(@{$cmd{'libs'}}));
+    _yeast("     envlibvar= $cmd{'envlibvar'}");
+    _yeast("  cmd->timeout= $cmd{'timeout'}");
+    _yeast("  cmd->openssl= $cmd{'openssl'}");
+    _yeast("   use_openssl= $cmd{'extopenssl'}");
+    _yeast("openssl cipher= $cmd{'extciphers'}");
+    _yline(" cmd }");
+    _yline(" user-friendly cfg {");
+    _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
+    _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
+    _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
+    _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$cfg{'sni_name'}");
+    _yeast("  default port= $cfg{'port'} (last specified)");
+    _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
+    foreach $key (qw(out_header format legacy usehttp usedns usemx starttls starttlsDelay cipherrange)) {
+        printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
+           # cannot use _yeast() 'cause of pretty printing
+    }
+    _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
+    printf("#%s: %14s= %s", $mename, "SSL versions", "[ ");
+    printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
+    printf("]\n");
+    _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
+    _yeast(" ignore output= " . _y_ARR(@{$cfg{'ignore-out'}}));
+    _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
+    _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
+    _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
+    _yline(" user-friendly cfg }");
+    _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
 } # _yeast_init
 sub _yeast_exit() {
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
     _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}});
-    #_yeast_trac(\%{$cfg{'done'}}, $_) foreach (keys %{$cfg{'done'}});
     _y_CMD("cfg'done'}");
 }
 sub _yeast_args() {
