@@ -257,7 +257,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
     sub _trace1($)    {}
     sub _trace2($)    {}
     sub _trace3($)    {}
-    sub _trace_cmd($) {} # if --trace-arg given
+    sub _trace_cmd($) {}
 }
 
 ## read USER-FILE, if any (source with user-specified code)
@@ -1176,6 +1176,8 @@ our %cmd = (
     'try'           => 0,       # 1: do not execute openssl, just show
     'exec'          => 0,       # 1: if +exec command used
     'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
+    'traceME'       => 0,       # 1: trace yeast only, but no modules
+                                # -1: trace modules only, but not yeast
     'traceARG'      => 0,       # 1: trace yeast's argument processing
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
@@ -5653,6 +5655,8 @@ while ($#argv >= 0) {
         #   --trace arg
         #   --trace=2
         #   --trace 2
+        #   --trace=me
+        #   --traceME
         # problem is that we historically allow also
         #   --trace
         # which has no argument, hence following checks for valid arguments
@@ -5663,11 +5667,14 @@ while ($#argv >= 0) {
             $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
             $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
             $cfg{'traceTIME'}++  if ($arg =~ m#time#i);
+            $cfg{'traceME'}++    if ($arg =~ m#^me(?:only)?#i);
+            $cfg{'traceME'}--    if ($arg =~ m#^notme#i);
             $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
             # now magic starts ...
-            next if ($arg =~ m#^(ARG|CMD|KEY|TIME|\d+)$#i); # matched before
+            next if ($arg =~ m#^(ARG|CMD|KEY|ME|TIME|\d+)$#i); # matched before
             # if we reach here, argument did not match valid value for --trace,
             # then simply increment trace level and process argument below
+            # FIXME: should push back arg if not a number
             $cfg{'trace'}++;
         } # else $typ handled before if-condition
         $typ = 'HOST';          # expect host as next argument
@@ -5769,6 +5776,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
     if ($arg =~ /^--trace(@|key)/i)     { $cfg{'traceKEY'}++;       } # ..
+    if ($arg =~ /^--traceme/i)          { $cfg{'traceME'}++;        } # ..
+    if ($arg =~ /^--tracenotme/i)       { $cfg{'traceME'}--;        } # ..
     if ($arg =~ /^--tracetime/i)        { $cfg{'traceTIME'}++;      } # ..
     if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # ..
     if ($arg eq  '--trace')             { $typ = 'TRACE';           }
@@ -6376,7 +6385,9 @@ if ($cmd{'extopenssl'} == 1) {
 {
     #$IO::Socket::SSL::DEBUG     = $cfg{'trace'} if ($cfg{'trace'} > 0);
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
-    $Net::SSLinfo::trace        = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    if ($cfg{'traceME'} < 1) {
+        $Net::SSLinfo::trace    = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    }
     $Net::SSLinfo::linux_debug  = $cfg{'linux_debug'};
     $Net::SSLinfo::use_openssl  = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient  = $cmd{'extsclient'};
@@ -6405,7 +6416,9 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
 ## -------------------------------------
 if (defined $Net::SSLhello::VERSION) {
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
-    $Net::SSLhello::trace       = $cfg{'trace'};
+    if ($cfg{'traceME'} < 1) {
+        $Net::SSLhello::trace   = $cfg{'trace'};
+    }
     $Net::SSLhello::traceTIME   = $cfg{'traceTIME'};
     $Net::SSLhello::experimental= $cfg{'experimental'};
     $Net::SSLhello::usesni      = $cfg{'usesni'};
@@ -6426,6 +6439,7 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::proxyport   = $cfg{'proxyport'};
     $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
 }
+$cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
 
 if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
