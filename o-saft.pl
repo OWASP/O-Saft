@@ -3234,18 +3234,18 @@ sub _get_dhparam($$) {
     return $dh;
 }; # _get_dhparam
 
-sub _getversion() {
+sub get_openssl_version($cmd) {
     #? call external openssl executable to retrive its version
     # we do a simple call, no checks, should work on all platforms
     # get something like: OpenSSL 1.0.1k 8 Jan 2015
-    my $data = qx($cmd{'openssl'} version);
+    my $data = qx($cmd version);
     ## $data = Net::SSLinfo::do_openssl('version', "", ""); # should work too
     chomp $data;
-    _trace("_getversion: $data");
+    _trace("get_openssl_version: $data");
     $data =~ s#^.*?(\d+(?:\.\d+)*).*$#$1#; # get version number without letters
-    _trace("_getversion()\t= $data");
+    _trace("get_openssl_version()\t= $data");
     return $data;
-} # _getversion
+} # get_openssl_version
 
 sub _usesocket($$$$) {
     # return cipher accepted by SSL connection
@@ -5026,7 +5026,7 @@ sub printciphers_dh($$$) {
     # currently DH parameters are available with openssl only
     my ($legacy, $host, $port) = @_;
     my $ssl;
-    my $openssl_version = _getversion();
+    my $openssl_version = get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh: openssl_version: $openssl_version");
     if ($openssl_version lt "1.0.2") { # yes perl can do this check
         _warn("ancient openssl $openssl_version: using '-msg' option to get DH parameters");
