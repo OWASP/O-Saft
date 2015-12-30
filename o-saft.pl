@@ -45,6 +45,7 @@ use constant {
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
+    STR_USAGE   => "**USAGE: ",
     STR_DBX     => "#dbx# ", 
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
@@ -5483,16 +5484,18 @@ sub printciphers() {
 
 } # printciphers
 
-sub printusage() {
-    print "# $mename USAGE:
-# most common usage:
+sub printusage_exit($) {
+    local $\ = "\n";
+    print STR_USAGE, @_;
+    print "# most common usage:
   $me +info   your.tld
   $me +check  your.tld
   $me +cipher your.tld
 # for more help use:
   $me --help
     ";
-} # printusage
+    exit 2;
+} # printusage_exit
 
 # end sub
 
@@ -6085,9 +6088,8 @@ while ($#argv >= 0) {
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
 
 if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
-    _warn("--proxyhost=$cfg{'proxyhost'} requires also --proxyport=NN");
-    printusage();
-    exit 2;
+    my $q = "'";
+    printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
 }
 $cfg{'traceCMD'}++ if ($cfg{'traceTIME'} > 0);
 $verbose = $cfg{'verbose'};
@@ -6445,9 +6447,8 @@ if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with 
 _yeast_init();
 
 if ($#{$cfg{'do'}} < 0) {
-    _warn("no command given; exit");
     _yeast_exit();
-    exit 1;
+    printusage_exit("no command given");
 }
 
 usr_pre_cipher();
@@ -6493,12 +6494,10 @@ usr_pre_main();
 # defense, user-friendly programming
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenace
-printusage(),      exit 2   if ($#{$cfg{'hosts'}} < 0); # no target hosts, does not make any sense
+printusage_exit("no target hosts given") if ($#{$cfg{'hosts'}} < 0); # does not make any sense
 if (_is_do('cipher')) {
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
-        _warn("additional commands in conjuntion with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
-        printusage();
-        exit 2;
+        printusage_exit("additional commands in conjuntion with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
 }
 if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
