@@ -41,7 +41,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.408 15/12/01 20:25:15",
-    STR_VERSION => "29.12.15",          # <== our official version number
+    STR_VERSION => "30.12.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -2894,7 +2894,7 @@ sub _isfreak($$){
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
     return "";
 } # _isfreak
-sub _islogjam($$){
+sub _islogjam($$) {
     # return given cipher if vulnerable to logjam attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
@@ -5689,19 +5689,19 @@ while ($#argv >= 0) {
     }
 
     # first handle some old syntax for backward compatibility
-    if ($arg =~ /^--cfg(cmd|score|text)-([^=]*)=(.*)/){
+    if ($arg =~ /^--cfg(cmd|score|text)-([^=]*)=(.*)/) {
         $typ = 'CFG-'.$1; unshift(@argv, $2 . "=" . $3);   # convert to new syntax
         _warn("old (pre 13.12.12) syntax '--cfg-$1-$2'; converted to '--cfg-$1=$2'; please consider changing your files");
         next; # no more normalisation!
     }
-    if ($arg =~ /^--set[_-]?score=(.*)/){
+    if ($arg =~ /^--set[_-]?score=(.*)/) {
         _warn("old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; option ignored");
         next;
     }
 
     # all options starting with  --usr or --user  are not handled herein
     # push them on $cfg{'usr-args'} so they can be accessd in o-saft-*.pm
-    if ($arg =~ /^--use?r/){
+    if ($arg =~ /^--use?r/) {
         $arg =~ s/^(?:--|\+)//;     # strip leading chars
         push(@{$cfg{'usr-args'}}, $arg);
         next;
@@ -6082,6 +6082,8 @@ while ($#argv >= 0) {
 
 } # while options and arguments
 
+# exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
+
 if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
     _warn("--proxyhost=$cfg{'proxyhost'} requires also --proxyport=NN");
     printusage();
@@ -6329,7 +6331,6 @@ if ($quick == 1) {
     $cfg{'shorttxt'}= 1;
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
-push(@{$cfg{'do'}}, 'cipher') if ($#{$cfg{'do'}} < 0);
 
 ## add openssl-specific path for CAs
 ## -------------------------------------
@@ -6436,11 +6437,17 @@ printciphers(),     exit 0  if (_is_do('list'));
 printciphers(),     exit 0  if (_is_do('ciphers'));
 printversion(),     exit 0  if (_is_do('version'));
 printopenssl(),     exit 0  if (_is_do('libversion'));
-printquit(),        exit 0  if (_is_do('quit')); # internal test command
+printquit(),        exit 0  if (_is_do('quit'));# internal test command
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
-    _yeast_init();
+}
+_yeast_init();
+
+if ($#{$cfg{'do'}} < 0) {
+    _warn("no command given; exit");
+    _yeast_exit();
+    exit 1;
 }
 
 usr_pre_cipher();
@@ -6457,7 +6464,7 @@ if (_need_cipher() > 0) {
         @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_list( $pattern);
     }
     _trace(" got ciphers: @{$cfg{'ciphers'}}");
-    if (@{$cfg{'ciphers'}} < 0) {  # empty list, try openssl and local list
+    if (@{$cfg{'ciphers'}} < 0) {       # empty list, try openssl and local list
         _warn("given pattern '$pattern' did not return cipher list");
         _y_CMD("  get cipher list using openssl ..");
         @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_local($pattern);
