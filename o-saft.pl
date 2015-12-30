@@ -41,7 +41,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.408 15/12/01 20:25:15",
-    STR_VERSION => "28.12.15",          # <== our official version number
+    STR_VERSION => "29.12.15",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -378,7 +378,7 @@ our %prot   = (     # collected data for protocols and ciphers
 _initchecks_prot(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
 our %prot_txt = (
     'cnt'           => "Supported total ciphers for ",           # counter; $ssl added in print*()
-    '-?-'           => "Supported ciphers with security unknown",# counter
+    '-?-'           => "Supported ciphers with security unknown",#  "
     'WEAK'          => "Supported ciphers with security WEAK",   #  "
     'LOW'           => "Supported ciphers with security LOW",    #  "
     'MEDIUM'        => "Supported ciphers with security MEDIUM", #  "
@@ -2418,7 +2418,7 @@ our %text = (
     'out-scoring'   => "\n=== Scoring Results EXPERIMENTAL ===",
     'out-checks'    => "\n=== Performed Checks ===",
     'out-list'      => "=== List @@ Ciphers ===",
-    'out-summary'   => "== Ciphers: Summary @@ ==",
+    'out-summary'   => "=== Ciphers: Summary @@ ==",
     # hostname texts
     'host-host'     => "Given hostname",
     'host-IP'       => "IP for given hostname",
@@ -2535,6 +2535,7 @@ sub _initchecks_score() {
 } # _initchecks_score
 
 sub _initchecks_prot() {
+    #? initialize default values in %prot
     my $ssl;
     foreach $ssl (keys %prot) {
         $prot{$ssl}->{'cnt'}        = 0;
@@ -3269,6 +3270,7 @@ sub _usesocket($$$$) {
         _warn("SSL version '$ssl': not supported by Net::SSLeay");
         return "";
     }
+    # FIXME: use Net::SSLeay instead of IO::Socket::SSL
     #if (IO::Socket::SSL->can_ecdh() == 1) {}
     if (eval {  # FIXME: use something better than eval()
         # TODO: eval necessary to avoid perl error like:
@@ -6730,7 +6732,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _trace(" ciphers: @{$cfg{'ciphers'}}");
         # TODO: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
-        my $_printtitle = 0;    # count title lines
+        my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
         foreach $ssl (@{$cfg{'version'}}) {
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
@@ -6741,9 +6743,11 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         foreach $ssl (@{$cfg{'version'}}) {
             print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
         }
-        printheader("\n" . _subst($text{'out-summary'}, ""), "");
-        printprotocols($legacy, $host, $port);
-        printruler() if ($quick == 0);
+        if ($_printtitle > 0) { # if we checked for ciphers
+            printheader("\n" . _subst($text{'out-summary'}, ""), "");
+            printprotocols($legacy, $host, $port);
+            printruler() if ($quick == 0);
+        }
     }
 
     goto CLOSE_SSL if ((_is_do('cipher') > 0) and ($quick == 0));
