@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.63 15/12/29 21:15:16";
+my  $man_SID= "@(#) o-saft-man.pm 1.64 15/12/30 12:24:15";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1265,8 +1265,6 @@ QUICKSTART
 
         For more specialised test cases, refer to the  COMMANDS  and  OPTIONS
         sections below. For more examples please refer to  EXAMPLES  section.
-
-        If no command is given,  +cipher  is used.
 
         For more details, please see  INSTALLATION  below.
 
@@ -4162,7 +4160,7 @@ HACKER's INFO
 #          check*        Functions which perform some checks on data.
 #          print*        Functions which print results.
 #          get_*         Functions to get a value from internal ciphers structure.
-#          _<function_name>    Some kind of helper functions.
+#          _<function_name>    Some kind of helper (internal) functions.
 #          _trace*
 #          _y*           Print information when  --trace  is in use.
 #          _v*print      Print information when  --v  is in use.
@@ -4196,6 +4194,15 @@ HACKER's INFO
 #        which is loaded on demand when any  --trace*  or --v  option is used.
 #        As long as these options are not used,  o-saft.pl  works without
 #        o-saft-dbx.pm.
+#
+#        Trace messages always start with  '#O-Saft :'.  Debug messages always
+#        start with  '#o-saft.pl::'.
+#        Following formats are used:
+#          #o-saft.pl:: some data           - output from o-saft.pl#s main
+#          #o-saft.pl::subfunc(){           - inital output in subfunc
+#          #o-saft.pl::subfunc: some data   - some output in subfunc
+#          #o-saft.pl::subfunc() = result } - result output of subfunc
+#        However, these rules are implemented very lazy.
 #
 #        Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
 #        is hard-coded.
