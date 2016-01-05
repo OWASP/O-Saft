@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.65 16/01/05 19:31:51";
+my  $man_SID= "@(#) o-saft-man.pm 1.66 16/01/05 19:56:18";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1300,6 +1300,22 @@ WHY?
 #
 #       or, if written in perl, they mainly use  Net::SSLeay(1)  or 
 #       IO::Socket::SSL(1)  which lacks CRL and OCSP and EV checkings.
+
+SECURITY
+
+        This tool is designed to be used by people doing security or forensic
+        analyses. Hence no malicious input is expected.
+
+        There are no special security checks implemented. Some parameters are
+        roughly sanatised according unwanted characters.  In particular there
+        are no checks according any kind of code injection.
+
+        Care should be taken, when additional tools and modules are installed
+        as described in  INSTALLATION  below.  In particular  we recommend to
+        do such installations into directoies specially prepared for use with
+        $0 . No other tools of your system should use these installations
+        i.e. by accident or because your environment variables point to them.
+        A better decision would be to use a separate testing system.
 
 
 TECHNICAL INFORMATION
@@ -4204,6 +4220,9 @@ HACKER's INFO
           input data is url-decoded once and then used verbatim.
           More advanced checks must be done outside before calling this tool.
 
+        It is not recommended to run this tool in CGI mode.
+        You have been warned!
+
 #       The only code necessary for CGI mode is encapsulated at the beginning,
 #       see  'if ($me =~/\.cgi/){ ... }'.  Beside some minor additional regex
 #       matches (mainly removing trailing   '=' and empty arguments) no other
@@ -4215,18 +4234,6 @@ HACKER's INFO
         There are some functions called within the program flow, which can be
         filled with any perl code.  Empty stubs of the functions are prepared
         in  o-saft-usr.pm.  See also  USER-FILE.
-
-    SECURITY
-
-        This tool is designed to be used by people doing security or forensic
-        analyses. Hence no malicious input is expected.
-
-        There are no special security checks implemented. Some parameters are
-        roughly sanatised according unwanted characters.  In particular there
-        are no checks according any kind of code injection.
-
-        Please see  WARNING  above if used in CGI mode. It is not recommended
-        to run this tool in CGI mode. You have been warned!
 
 # Program Code below is not shown with +help
 #
