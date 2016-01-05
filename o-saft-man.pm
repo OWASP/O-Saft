@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.66 16/01/05 19:56:18";
+my  $man_SID= "@(#) o-saft-man.pm 1.67 16/01/05 20:16:10";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -989,9 +989,14 @@ EoHTML
     _man_html_foot();
 } # man_cgi
 
-sub man_wiki() {
+sub man_wiki($) {
     #? print documentation for o-saft.pl in mediawiki format (to be used at owasp.org)
     #? recommended usage:   $0 --no-warning --no-header --help=gen-wiki
+    my $mode =  shift;
+        # currently only mode=colon is implemented to print  :*  instead of *
+        # Up to VERSION 15.12.15 list items * and ** where printed without
+        # leading : (colon). Some versions of mediawiki did not support :*
+        # so we can switch this behavior now.
     _man_dbx("man_wiki ...");
     my $key = "";
     # 1. generate wiki page header
@@ -1030,7 +1035,11 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
         s/L&([^&]*)&/\'\'$1\'\'/g;      # markup other references
         s/I&([^&]*)&/\'\'$1\'\'/g;      # markup commands and options
         s/^ +//;                        # remove leftmost spaces (they are useless in wiki)
-        s/^([^=*].*)/:$1/;              # ident all lines for better readability
+        if ($mode eq 'colon') {
+            s/^([^=].*)/:$1/;           # ident all lines for better readability
+        } else {
+            s/^([^=*].*)/:$1/;          # ...
+        }
         s/^:?\s*($parent)/  $1/;        # myself becomes wiki code line
         s/^:\s+$/\n/;                   # remove empty lines
         print;
@@ -1106,7 +1115,7 @@ sub printhelp($) {
     man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|warn(?:ing)?|problem)s?$/i);
     man_toc(),                  return if ($hlp =~ /^toc|content/i);
     man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
-    man_wiki(),                 return if ($hlp =~ /^(gen-)?wiki$/);
+    man_wiki('colon'),          return if ($hlp =~ /^(gen-)?wiki$/);
     man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
         # Note: gen-cgi is called from within parent's BEGIN and hence
         # causes some   Use of uninitialized value within %cfg 
