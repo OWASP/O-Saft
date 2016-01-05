@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.64 15/12/30 12:24:15";
+my  $man_SID= "@(#) o-saft-man.pm 1.65 16/01/05 19:31:51";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3757,38 +3757,150 @@ INSTALLATION
         modules  Net::SSLhello  and  Net::SSLinfo  are found in the directory
         './Net/'  where  o-saft.pl  is installed.
 
-        To enable ancient SSL protocol versions like SSLv2 and SSLv3, follow-
-        ing installations should be done.
+        For security reasons, most modern libraries  disabled or even removed
+        insecure or "dirty" functionality.  As the purpose of this tool is to
+        detect such insecure settings, functions, etc.,  it needs these dirty
+        things enabled. It needs (incomplete list):
 
-          * openssl  with SSLv2, SSLv3 and more ciphers enabled
-          * Net::SSLeay  compiled with openssl version as described befor.
+          * insecure protocols like SSLv2, SSLv3
+          * more ciphers enabled, like NULL-MD5, AECDH-NULL-SHA, etc.
+          * some SSL extensions and options
 
-    Compile openssl
+        Therefore we recommend to compile and install at least following:
 
-        Currently (2015) we recommend to use  Peter Mosman's openssl version,
-        which can be found at  https://github.com/PeterMosmans/openssl/ 
-        Installation is as simple as:
+          * OpenSSL  with SSLv2, SSLv3 and more ciphers enabled
+          * Net::SSLeay  compiled with openssl version as described before.
+
+        Please read the  SECURITY  section first before following the install
+        instructions below.
+
+    OpenSSL
+
+        Currently it is recommend to use either the openssl version from
+         https://github.com/PeterMosmans/openssl/ which requires compilation,
+        see  X&Compile openssl&, or use any of the precomiled versions which are
+        available for several platforms at https://testssl.sh/ .
+
+        The sources are available at
+          * https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.zip
+        The precomiled static versions are available at
+          * https://github.com/drwetter/testssl.sh/tree/master/bin
+
+        For all following installation examples we assume:
+          * openssl-1.0.2-chacha.zip or openssl-1.0.2d.tar.gz
+          * /usr/local as bae installation directory
+          * a bourne shell (sh) compatible shell
+
+    Example: Precompiled OpenSSL
+
+        Simply download the tarball or zip file for your platform, unpack it,
+        and install (copy) the binaries into a directory of your choice.
+
+    Example: Compile OpenSSL
+
+        OpenSSL can be used from http://openssl.org/ or, as recommended, from
+        https://github.com/PeterMosmans/openssl/ .
+
+        OpenSSL-chacha
+        Compiling and installing the later is as simple as:
+
               unzip openssl-1.0.2-chacha.zip
               cd openssl-1.0.2-chacha
-              ./config --shared -Wl,-rpath=$dest/lib
-              make && make test && make install
+              ./config --shared -Wl,-rpath=/usr/local/lib
+              make
+              make test
+              make install
+
         which will install openssl, libssl.so, libcrypto.so  and some include
         files as well as the include files in  /usr/local/ .
         The shared version of the libraries are necessary for  Net::SSLeay.
 
-    Enable SSLv2 and SSLv3
+        OpenSSL.org
+        Building openssl from the offical  openssl.org  sources requires some
+        patching before compiling and installing the libraries and binaries.
+
+        Example with openssl-1.0.2d:
+
+              echo == unpack tarball
+              tar xf openssl-1.0.2d.tar.gz
+              cd openssl-1.0.2d
+
+              echo == backup files to be modified
+              cp ssl/s2_lib.c{,.bak}
+              cp ssl/s3_lib.c{,.bak}
+              cp ssl/ssl3.h{,.bak}
+              cp ssl/tls1.h{,.bak}
+
+              echo == patch files
+              vi ssl/tls1.h         +/TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES/
+                       # define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
+              vi ssl/ssl3.h ssl/s{2,3}_lib.c   +"/# *if 0/"
+                       #==> remove all   # if 0  and corresponding  #endif 
+                       #    except if lines contain:
+                       #        _FZA
+                       #        /* Fortezza ciphersuite from SSL 3.0
+                       #        /* Do not set the compare functions,
+                       #        if (s->shutdown & SSL_SEND_SHUTDOWN)
+
+              echo == configure with static libraries
+              echo omitt the zlib options if zlib-1g-dev is not installed
+              echo omitt the krb5 options if no kerberos libraries available
+              ./config --prefix=/usr/local --openssldir=/usr/local/ssl \
+                  enable-zlib zlib zlib-dynamic \
+                  enable-krb5 --with-krb5-flavor=MIT \
+                  enable-mdc2 enable-md2 enable-rc5 enable-rc2 \
+                  enable-gost enable-cms enable-ecdh enable-ecdsa \
+                  enable-seed enable-idea enable-rfc3779 \
+                  experimental-jpake -fPIC \
+                  -DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES \
+                  shared
+
+              echo == make binaries and libraries
+              make depend
+              make
+              make test
+              make install
+
+              echo == if you want static binaries and libraries
+              make clean
+              echo same ./config as before but without shared option
+              ./config --prefix=/usr/local --openssldir=/usr/local/ssl \
+                  enable-zlib zlib zlib-dynamic \
+                  enable-krb5 --with-krb5-flavor=MIT \
+                  enable-mdc2 enable-md2 enable-rc5 enable-rc2 \
+                  enable-gost enable-cms enable-ecdh enable-ecdsa \
+                  enable-seed enable-idea enable-rfc3779 \
+                  experimental-jpake -fPIC \
+                  -DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
+              make depend
+              make
+              make test
+              echo next make will overwrite the previously installed dynamic
+              echo shared openssl binary with the static openssl binary
+              make install
+
+    Example: Compile Net::SSLeay
 
         To enable support for ancient protocol versions,  Net::SSLeay must be
-        compiled as followed. Unfortunatelly  Net::SSLeay  enables some func-
-        tionality for SSL/TLS according the identified openssl version. So we
-        need to patch  SSLeay.xs  befor building our own library and module.
+        compiled manually after patching 'SSLeay.xs' (see below).
+        Reason is, that  Net::SSLeay  enables some functionality for  SSL/TLS
+        according the identified openssl version. There is, currently (2015),
+        no possibility to enable this functionality  by passing options on to
+        the configuration script 'perl Makefile.PL'.
+
+        Building our own library and module (with openssl from '/usr/local'):
+
+              echo == unpack tarball
               tar xf Net-SSLeay-1.72.tar.gz
               cd Net-SSLeay-1.72
-              edit SSLeay.xs (change some #if as described below)
+
+              echo == patch files
+              echo "edit SSLeay.xs and change some #if as described below"
               env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
                     INC=/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
                     DESTDIR=/usr/local/
-              make && make install
+              make
+              make install
 
         SSLeay.xs needs to be changed as follows:
           * search for
@@ -3815,6 +3927,51 @@ INSTALLATION
 
               const SSL_METHOD *
               SSLv3_method()
+
+        Note that  Net::SSLeay  will be installed in '/usr/local/' then. This
+        can be adapted to your needs by passing another path to the  'PREFIX'
+        and  'DESTDIR'  parameter.
+
+    Testing OpenSSL
+
+        After installation as descibed above finished, openssl may be tested:
+
+              echo already installed openssl (found with PATH environment)
+              openssl ciphers -v
+              openssl ciphers -V -ssl2
+              openssl ciphers -V -ssl3
+              openssl ciphers -V ALL
+              openssl ciphers -V ALL:COMPLEMENTOFALL
+              openssl ciphers -V ALL:eNULL:EXP
+
+              echo own compiled and installed openssl
+              /usr/local/openssl ciphers -v
+              /usr/local/openssl ciphers -V -ssl2
+              /usr/local/openssl ciphers -V -ssl3
+              /usr/local/openssl ciphers -V ALL
+              /usr/local/openssl ciphers -V ALL:COMPLEMENTOFALL
+              /usr/local/openssl ciphers -V ALL:eNULL:EXP
+
+        The difference should be obvious.
+        Note, the commands using  "ALL:COMPLEMENTOFALL"  and  "ALL:eNULL:EXP"
+        should return the same result.
+
+    Testing Net::SSLeay
+
+        As we want to test the separately installed  Net::SSLeay,  it is best
+        to do it with  $0  itself:
+
+              $0 +version
+
+        we should see a line similar to follwong at the end of the output:
+            Net::SSLeay   1.72  /usr/local/lib/x86_64-linux-gnu/perl/5.20.2/Net/SSLeay.pm
+
+        Now check for supported (known) ciphers:
+
+              $0 ciphers -V
+
+        we should see lines similar to those of the last '/usr/local/openssl'
+        call. However, it should contain more cipher lines.
 
 
 SEE ALSO
