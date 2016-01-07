@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.68 16/01/07 21:43:59";
+my  $man_SID= "@(#) o-saft-man.pm 1.69 16/01/07 21:54:11";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2802,6 +2802,11 @@ CHECKS
       poodle
 
         Check if target is vulnerable to POODLE attack (SSLv3 enabled).
+
+      sloth
+
+        Check if target is vulnerable to SLOTH attack (server offeres RSA-MD5
+        or ECDSA-MD5 ciphers).
 
       ALPN
 
