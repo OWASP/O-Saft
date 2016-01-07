@@ -40,8 +40,8 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.408 15/12/01 20:25:15",
-    STR_VERSION => "30.12.15",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.424 16/01/07 21:35:15",
+    STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
@@ -620,6 +620,7 @@ my %check_conn = (  # connection data
     'lucky13'       => {'txt' => "Connection is safe against Lucky 13 attack"},
     'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
     'rc4'           => {'txt' => "Connection is safe against RC4 attack"},
+    'sloth'         => {'txt' => "Connection is safe against SLOTH attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'selected'      => {'txt' => "Selected cipher by server"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
@@ -880,6 +881,7 @@ our %shorttexts = (
     'logjam'        => "Safe to Logjam",
     'poodle'        => "Safe to POODLE",
     'rc4'           => "Safe to RC4 attack",
+    'sloth'         => "Safe to SLOTH",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'modulus_size'  => "Modulus <16385 bits",
@@ -1356,7 +1358,8 @@ our %cmd = (
                          selected cipher fingerprint_hash fp_not_md5 
                          sha2signature pub_encryption pub_enc_known email
                          serial subject dates verify expansion compression hostname
-                         beast crime freak export rc4_cipher rc4 pfs_cipher crl hassslv2 hassslv3 poodle
+                         beast crime freak export rc4_cipher rc4 pfs_cipher crl
+                         hassslv2 hassslv3 poodle sloth
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
@@ -1369,7 +1372,7 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(beast breach crime freak heartbleed logjam lucky13 poodle rc4 time hassslv2 hassslv3 pfs_cipher session_random)
+                        qw(beast breach crime freak heartbleed logjam lucky13 poodle rc4 sloth time hassslv2 hassslv3 pfs_cipher session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
@@ -1377,7 +1380,7 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam cipher cipher-dh),
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
@@ -1513,6 +1516,7 @@ our %cmd = (
         'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',
         'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',    # match against cipher
                        # Logjam is same as regex{EXPORT} above
+        'SLOTH'     => '(?:(EXP(?:ORT)?|NULL).*MD5$|EC(?:DHE|EDH)[_-]ECDSA[_-].*(?:MD5|SHA)$)',
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
 
@@ -2902,6 +2906,11 @@ sub _islogjam($$) {
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
 } # _islogjam
+sub _issloth($$) {
+    # return given cipher if vulnerable to SLOTH attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
+} # _issloth
 sub _ispfs($$)  { return ("$_[0]-$_[1]" =~ /$cfg{'regex'}->{'PFS'}/)   ? ""  : $_[1]; }
     # return given cipher if it does not support forward secret connections (PFS)
 sub _isrc4($)   { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/)  ? $_[0] . " "  : ""; }
@@ -3471,6 +3480,7 @@ sub checkcipher($$) {
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
     $checks{'lucky13'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islucky($c));
+    $checks{'sloth'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _issloth($ssl, $c));
     push(@{$prot{$ssl}->{'pfs_ciphers'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
     # counters
     $prot{$ssl}->{'-?-'}++      if ($risk =~ /-\?-/);       # private marker
