@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.67 16/01/05 20:16:10";
+my  $man_SID= "@(#) o-saft-man.pm 1.68 16/01/07 21:43:59";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -429,6 +429,7 @@ our %man_text = (
         'SKIP'      => "Message Skipping Attacks on TLS",
         'SKIP-TLS'  => "see SKIP",
         'Skipjack'  => "block cipher encryption algorithm specified as part of the Fortezza",
+        'SLOTH'     => "Security Losses from Obsolete and Truncated Transcript Hashes",
 	'SMACK'     => "State Machine AttaCKs",
         'Snefu'     => "hash function",
         'SNI'       => "Server Name Indication",
@@ -2897,9 +2898,14 @@ CHECKS
 #	Message Skipping Attacks on TLS. Attack to force  server or client  to
 #	skip messages in handshake protocol",
 
+      SLOTH
+
+        Currently (2016) we check for ciphers with  ECDSA, RSA-MD5.
+        Checking the TLS extension 'tls-unique' is not yet implemented.
+
     Target (server) Configuration and Support
 
-      BEAST, BREACH, CRIME, FREAK, Logjam, Lucky 13, POODLE, RC4
+      BEAST, BREACH, CRIME, FREAK, Logjam, Lucky 13, POODLE, RC4, SLOTH
 
         See above.
 
