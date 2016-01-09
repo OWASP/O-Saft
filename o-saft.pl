@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.424 16/01/07 21:35:15",
+    SID         => "@(#) yeast.pl 1.425 16/01/09 09:17:59",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1644,6 +1644,24 @@ our %cmd = (
         # NIST SP800-57 recommendations for key management (part 1):
         'NSA-B'     => "must be AES with CTR or GCM; ECDSA or ECDH and SHA256 or SHA512",
     },
+    'sig_algorithms' => [       # signature algorithms; (2016) not yet used
+        qw(
+           dsaEncryption dsaEncryption-old dsaWithSHA dsaWithSHA1 dsa_With_SHA256
+           ecdsa-with-SHA256
+           md2WithRSAEncryption    md4WithRSAEncryption  md5WithRSAEncryption
+           None   ripemd160WithRSA rsa  rsaEncryption    rsassapss
+           shaWithRSAEncryption	   sha1WithRSAEncryption sha1WithRSA
+           sha224WithRSAEncryption sha256WithRSAEncryption
+           sha384WithRSAEncryption sha512WithRSAEncryption
+        ),
+           "rsassapss (invalid pss parameters)"
+    ],
+    'sig_algorithm_common' => [ # most common signature algorithms; (2016) not yet used
+        qw(None ecdsa-with-SHA256
+           sha1WithRSAEncryption   sha256WithRSAEncryption
+           sha384WithRSAEncryption sha512WithRSAEncryption
+        )
+    ],
     'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
         # will be initialized from %prot
      },
