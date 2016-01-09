@@ -5217,7 +5217,7 @@ sub printquit() {
     $cfg{'trace'}   = 2;
     $cfg{'traceARG'}= 1; # for _yeast_args()
     _yeast_init();
-    _yeast_args();
+    # _yeast_args();  # duplicate call, see in main at "set environment
     print "# TEST done.";
 } # printquit
 
