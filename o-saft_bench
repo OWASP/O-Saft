@@ -22,7 +22,7 @@ yeast=./yeast.pl
   out=./${ich}.times
   cnt=4   # additional 4 lines which are the table header and footer line
 
-[ $# > 0 ] && host="$1"
+[ $# -gt 0 ] && host="$1"
 
 (echo
  echo -n "# " && date
