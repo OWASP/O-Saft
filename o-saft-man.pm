@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.69 16/01/07 21:54:11";
+my  $man_SID= "@(#) o-saft-man.pm 1.70 16/01/09 23:30:56";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -551,22 +551,27 @@ our %man_text = (
                    # Truncated HMAC: truncated_hmac
                    # Certificate Status Request (i.e. OCSP stapling): status_request
                    # Error Alerts
-        '5764'  => [ "TLS Extensions SRTP" ],
-        '6066'  => [ "TLS Extensions: Extension Definitions" ],
+        '4749'  => [ "TLS Compression Methods" ],
+        '5077'  => [ "TLS session resumption" ],
+        '5746'  => [ "TLS Renegotiation Indication Extension" ],
+        '5764'  => [ "TLS Extension: SRTP" ],
+        '5929'  => [ "TLS Extension: Channel Bindings", "tls-unique" ],
+        '6066'  => [ "TLS Extension: Extension Definitions" ],
                    # Certificate Status Request
                    # PkiPath
         '6520'  => [ "TLS Extensions: Heartbeat" ],
-        '4749'  => [ "TLS Compression Methods" ],
-        '5077'  => [ "TLS session resumption" ],
         '6961'  => [ "TLS Multiple Certificate Status Request Extension" ],
+        '7507'  => [ "TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks" ],
+        '7627'  => [ "TLS Session Hash and Extended Master Secret Extension" ],
         '6460'  => [ "NSA Suite B Profile for TLS" ],
         '2560'  => [ "Online Certificate Status Protocol (OCSP)", "obsolete" ],
         '6267'  => [ "Online Certificate Status Protocol Algorithm Agility (OCSP)", "obsolete" ],
         '4210'  => [ "X509 PKI Certificate Management Protocol (CMP)" ],
         '3279'  => [ "x509 Algorithms and Identifiers for X.509 PKI and CRL Profile" ],
         '3739'  => [ "x509 PKI Qualified Certificates Profile; EU Directive 1999/93/EC" ],
-        '4158'  => [ "X509 PKI Certification Path Building" ],
         '3280'  => [ "X509 PKI Certificate and Certificate Revocation List (CRL) Profile", "obsolete" ],
+        '4158'  => [ "X509 PKI Certification Path Building" ],
+        '4387'  => [ "X509 PKI Operational Protocols: Certificate Store Access via HTTP" ],
         '5280'  => [ "X509 PKI Certificate and Certificate Revocation List (CRL) Profile" ],
         '6960'  => [ "X509 Online Certificate Status Protocol (OCSP)",
                      "http://en.wikipedia.org/wiki/OCSP_stapling" ],
@@ -574,17 +579,16 @@ our %man_text = (
                    # GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94
         '5055'  => [ "Server-Based Certificate Validation Protocol (SCVP)" ],
         '5019'  => [ "simplified RFC 2560" ],
-        '4387'  => [ "X509 PKI Operational Protocols: Certificate Store Access via HTTP" ],
-        '5746'  => [ "TLS Renegotiation Indication Extension" ],
+        '5705'  => [ "Keying Material Exporters for TLS" ],
         '6655'  => [ "AES-CCM Cipher Suites for TLS" ],
         '6125'  => [ "Representation and Verification of Domain-Based Application Service (PKIX) for TLS" ],
                    # Representation and Verification of Domain-Based Application Service
                    # Identity within Internet Public Key Infrastructure Using X.509 (PKIX)
                    # Certificates in the Context of Transport Layer Security (TLS)
         '6797'  => [ "HTTP Strict Transport Security (HSTS)" ],
+        '7457'  => [ "Summarizing Known Attacks on TLS and DTLS" ],
         '7469'  => [ "Public Key Pinning Extension for HTTP" ],
         '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
-        '7507'  => [ "TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks" ],
         #----------+----------------------------------------+-----------------------+
     },
 
@@ -2805,7 +2809,7 @@ CHECKS
 
       sloth
 
-        Check if target is vulnerable to SLOTH attack (server offeres RSA-MD5
+        Check if target is vulnerable to SLOTH attack  (server offers RSA-MD5
         or ECDSA-MD5 ciphers).
 
       ALPN
