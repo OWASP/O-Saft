@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.428 16/01/09 21:38:32",
+    SID         => "@(#) yeast.pl 1.429 16/01/09 22:13:05",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -150,7 +150,7 @@ if ($me =~/\.cgi$/) {
 ## -------------------------------------
 # functions and variables used very early in main
 our %cfg =  ('trace' => 0 ); # used in usr_pre_init(); avoid: Use of uninitialized value ...
-sub _dprint { local $\ = "\n"; print STR_DBX, join(" ", @_); }
+sub _dprint { local $\ = "\n"; print STDERR STR_DBX, join(" ", @_); }
 sub _dbx    { _dprint(@_); } # alias for _dprint
 sub _warn   {
     #? print warning if wanted
