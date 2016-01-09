@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.426 16/01/09 21:12:55",
+    SID         => "@(#) yeast.pl 1.427 16/01/09 21:25:44",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -5220,7 +5220,7 @@ sub printquit() {
     #       the commands may be unknown. This results in  **WARNING  texts
     #       for the correspoding commands.
 
-    if ($cfg{'trace'} + $cfg{'verbose'} <= 0) {
+    if ($cfg{'trace'} + $cfg{'traceARG'} + $cfg{'verbose'} <= 0) {
         #_warn(" +quit  command usefull with --v and/or --trace* option only");
         _warn(" +quit  command should be used with  --trace=arg  option");
     }
