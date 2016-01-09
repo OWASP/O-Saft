@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.429 16/01/09 22:13:05",
+    SID         => "@(#) yeast.pl 1.430 16/01/09 23:03:21",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -2004,6 +2004,12 @@ our %ciphers = (
         'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)],
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
 
+        # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2016)
+        'PSK-CHACHA20-POLY1305'         => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   PSK   1 :)],
+        'ECDHE-PSK-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDH  PSK   1 :)],
+        'PSK-DHE-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD DH    PSK   1 :)],
+        'PSK-RSA-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   PSK   1 :)],
+
         # from http://tools.ietf.org/html/rfc6655
         'RSA-AES128-CCM'                => [qw( high TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
         'RSA-AES256-CCM'                => [qw( high TLSv12 AESCCM 256 AEAD   RSA   RSA        91 :)],
@@ -2175,6 +2181,11 @@ our %cipher_names = (
     '0x030000BE' => [qw(DHE-RSA-CAMELLIA128-SHA256      DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x030000C4' => [qw(DHE-RSA-CAMELLIA256-SHA256      DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256)],
     '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305       DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CCAA' => [qw(DHE-RSA-CHACHA20-POLY1305       DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
+    '0x0300CCAB' => [qw(PSK-CHACHA20-POLY1305           PSK_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CCAC' => [qw(ECDHE-PSK-CHACHA20-POLY1305     ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CCAD' => [qw(PSK-DHE-CHACHA20-POLY1305       DHE_PSK_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CCAE' => [qw(PSK-RSA-CHACHA20-POLY1305       RSA_PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300009A' => [qw(DHE-RSA-SEED-SHA                DHE_RSA_WITH_SEED_SHA)],
     '0x030000BB' => [qw(DH-DSS-CAMELLIA128-SHA256       DH_DSS_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x030000C1' => [qw(DH-DSS-CAMELLIA256-SHA256       DH_DSS_WITH_CAMELLIA_256_CBC_SHA256)],
@@ -2213,6 +2224,7 @@ our %cipher_names = (
     '0x03000072' => [qw(ECDHE-ECDSA-CAMELLIA128-SHA256  ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000073' => [qw(ECDHE-ECDSA-CAMELLIA256-SHA384  ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384)],
     '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305   ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CCA9' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305   ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], see Note(c)
     '0x0300C008' => [qw(ECDHE-ECDSA-DES-CBC3-SHA        ECDHE_ECDSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C006' => [qw(ECDHE-ECDSA-NULL-SHA            ECDHE_ECDSA_WITH_NULL_SHA)],
     '0x0300C007' => [qw(ECDHE-ECDSA-RC4-SHA             ECDHE_ECDSA_WITH_RC4_128_SHA)],
@@ -2225,6 +2237,7 @@ our %cipher_names = (
     '0x03000076' => [qw(ECDHE-RSA-CAMELLIA128-SHA256    ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000077' => [qw(ECDHE-RSA-CAMELLIA256-SHA384    ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384)],
     '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305     ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CCA8' => [qw(ECDHE-RSA-CHACHA20-POLY1305     ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], see Note(c)
     '0x0300C012' => [qw(ECDHE-RSA-DES-CBC3-SHA          ECDHE_RSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C010' => [qw(ECDHE-RSA-NULL-SHA              ECDHE_RSA_WITH_NULL_SHA)],
     '0x0300C011' => [qw(ECDHE-RSA-RC4-SHA               ECDHE_RSA_WITH_RC4_128_SHA)],
@@ -2397,6 +2410,10 @@ our %cipher_names = (
     '0x00848040' => [qw(PCT_SSL_CIPHER_TYPE_2ND_HALF    PCT1_ENC_BITS_128|PCT1_MAC_BITS_128)],
     '0x008f8001' => [qw(PCT_SSL_COMPAT                  PCT_VERSION_1)],
     #!#----------+-------------------------------------+--------------------------+
+
+    # Note(c)
+    #   according https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04
+    #   some hex keys for ciphers changed
 
 ); # %cipher_names
 
