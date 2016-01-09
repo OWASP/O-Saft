@@ -81,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.29 15/12/30 09:56:29";
+my  $SID    = "@(#) o-saft-dbx.pm 1.30 16/01/09 21:05:41";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -121,6 +121,7 @@ sub _yeast_trac($$){
     } # SWITCH
 
 } # _yeast_trac()
+
 sub _yeast_init() {
     #? print important content of %cfg and %cmd hashes
     #? more output if trace>1; full output if trace>2
@@ -204,21 +205,40 @@ sub _yeast_init() {
     _yline(" user-friendly cfg }");
     _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
 } # _yeast_init
+
 sub _yeast_exit() {
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
     _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}});
     _y_CMD("cfg'done'}");
-}
+} # _yeast_exit
+
 sub _yeast_args() {
-    _y_ARG("#####{ summary of all arguments and options from command line");
-    _y_ARG("#####  and:      " . _y_ARR(@dbxfile));
-    _y_ARG("collected hosts= " . _y_ARR(@{$cfg{'hosts'}}));
+    return if ($cfg{'traceARG'} <= 0);
+    # using _y_ARG() may be a performance penulty, but it's trace anyway ...
+    _yline(" ARGV {");
+    _y_ARG("# summary of all arguments and options from command line");
+    _y_ARG("       called program ARG0= " . $cfg{'ARG0'});
+    _y_ARG("     passed arguments ARGV= " . _y_ARR(@{$cfg{'ARGV'}}));
+    _y_ARG("                   RC-FILE= " . $cfg{'RC-FILE'});
+    _y_ARG("      from RC-FILE RC-ARGV= ($#{$cfg{'RC-ARGV'}} more args ...)");
+    if ($cfg{'verbose'} <= 0) {
+    _y_ARG("      # hint: use --v to get the list of all RC-ARGV");
+    _y_ARG("      # hint: use --v --v to see the processed RC-ARGV");
+                  # NOTE: ($cfg{'trace'} does not work here
+    }
+    _y_ARG("      from RC-FILE RC-ARGV= " . _y_ARR(@{$cfg{'RC-ARGV'}})) if ($cfg{'verbose'} > 0);
+    _y_ARG("           collected hosts= " . _y_ARR(@{$cfg{'hosts'}}));
+    if ($cfg{'verbose'} > 1) {
+    _y_ARG(" #--v { processed files, arguments and options");
     _y_ARG("processed  exec  arguments= ". _y_ARR(@dbxexe));
     _y_ARG("processed normal arguments= ". _y_ARR(@dbxarg));
-    _y_ARG("processed config arguments= ". _y_ARR(map{"`".$_."'"} @dbxcfg)) if($cfg{'verbose'} > 0);
-    _y_ARG("#####}");
-}
+    _y_ARG("processed config arguments= ". _y_ARR(map{"`".$_."'"} @dbxcfg));
+    _y_ARG(" #--v }");
+    }
+    _yline(" ARGV }");
+} # _yeast_args
+
 sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); }
 sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); } # must provide \n if wanted
 sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); }
@@ -231,12 +251,13 @@ sub _trace3($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 3
 sub _trace_($){ local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); }
 # if --trace-arg given
 sub _trace_cmd($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceCMD'} > 0); }
+
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     _v_print("$0 " . $VERSION);
     _v_print("$0 " . join(" ", @ARGV));
     _v_print("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
-}
+} # _vprintme
 
 sub __data($) { (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub _yeast_data() {
