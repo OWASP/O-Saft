@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.427 16/01/09 21:25:44",
+    SID         => "@(#) yeast.pl 1.428 16/01/09 21:38:32",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -5270,6 +5270,7 @@ sub printversion() {
         last if (-e $openssl);
         $openssl = "<<$cmd{'openssl'} not found>>";
     }
+    $openssl =~ s#//#/#g;       # make a nice path (see first path "" above)
     print "    external executable              " . $openssl;
         #  . ($cmd{'openssl'} eq $openssl)?" (executable not found??)":"";
     print "    used environment variable (name) " . $cmd{'envlibvar'};
