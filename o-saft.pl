@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.425 16/01/09 09:17:59",
+    SID         => "@(#) yeast.pl 1.426 16/01/09 21:12:55",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -221,7 +221,12 @@ if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
 
 push(@argv, @ARGV); # got all now
 push(@ARGV, "--no-header") if grep(/--no-?header/, @argv); # if defined in RC-FILE, needed in _warn()
-#dbx# _dbx "ARG: " . join(" ", @argv);
+# FIXME: (10) { following will be added when %cfg is defined in o-saft-cfg.pm
+# $cfg{'ARG0'}    = $0;
+# $cfg{'ARGV'}    = [@ARGV];
+# $cfg{'RC-ARGV'} = [@rc_argv];
+# $cfg{'RC-FILE'} = "./.$me";
+# FIXME: (10) } # see other FIXME 10 too
 
 ## read DEBUG-FILE, if any (source for trace and verbose)
 ## -------------------------------------
@@ -1173,6 +1178,13 @@ our %cmd = (
 
 #our %cfg = # already defined above (just some values, complete setting here)
 %cfg = (
+    # FIXME: (10) { following will be removed when %cfg is defined in o-saft-cfg.pm
+    'ARG0'          => $0,
+    'ARGV'          => [@ARGV], # arguments passed on command line
+    'RC-ARGV'       => [@rc_argv],   # arguments read from RC-FILE
+    'RC-FILE'       => "./$me", # our RC-FILE
+    # FIXME: (10) }
+
    # config. key        default   description
    #------------------+---------+----------------------------------------------
     'try'           => 0,       # 1: do not execute openssl, just show
@@ -5217,7 +5229,7 @@ sub printquit() {
     $cfg{'trace'}   = 2;
     $cfg{'traceARG'}= 1; # for _yeast_args()
     _yeast_init();
-    # _yeast_args();  # duplicate call, see in main at "set environment
+    # _yeast_args();  # duplicate call, see in main at "set environment"
     print "# TEST done.";
 } # printquit
 
@@ -5544,7 +5556,7 @@ usr_pre_args();
 # and assign values using keys literally, like: $cfg{'key'} = $arg .
 
 my $typ = 'HOST';
-push(@argv, "");        # need one more argument otherwise last --KEY=VALUE will fail
+push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
     $arg = shift @argv;
     _y_ARG($arg);
