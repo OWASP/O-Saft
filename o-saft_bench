@@ -7,11 +7,11 @@
 #? DESCRIPTION
 #?      Runs o-saft.pl with most common commands and measures execution and
 #?      memory usage using system's  time  command.
-#?      Results ae appended to  o-saft_bench.times.
-#?      localhost  is used as target for testing. 
+#?      Results are appended to  o-saft_bench.times .
+#?      localhost is used as target for testing, can be passed as parameter. 
 #?
 
-  SID="@(#) o-saft_bench 1.7 16/01/09 23:56:52"
+  SID="@(#) o-saft_bench 1.8 16/01/09 23:59:01"
 
 
   ich=${0##*/}
@@ -21,6 +21,8 @@ yeast=./yeast.pl
  time=/usr/bin/time
   out=./${ich}.times
   cnt=4   # additional 4 lines which are the table header and footer line
+
+[ $# > 0 ] && host="$1"
 
 (echo
  echo -n "# " && date
