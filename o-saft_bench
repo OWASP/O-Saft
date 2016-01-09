@@ -2,9 +2,17 @@
 #?
 #? NAME
 #?      o-saft_bench  - simple time and memory test program for o-saft.pl
+#? SYNOPSYS
+#?      o-saft_bench [target host]
+#? DESCRIPTION
+#?      Runs o-saft.pl with most common commands and measures execution and
+#?      memory usage using system's  time  command.
+#?      Results ae appended to  o-saft_bench.times.
+#?      localhost  is used as target for testing. 
 #?
 
-  SID="@(#) o-saft_bench 1.6 14/12/13 01:45:53"
+  SID="@(#) o-saft_bench 1.7 16/01/09 23:56:52"
+
 
   ich=${0##*/}
 yeast=o-saft.pl
