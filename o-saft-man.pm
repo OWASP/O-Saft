@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.70 16/01/09 23:30:56";
+my  $man_SID= "@(#) o-saft-man.pm 1.71 16/01/10 21:41:55";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2616,6 +2616,12 @@ OPTIONS
           Do not execute, just show commands (only useful in conjunction with
           using openssl).
 
+      Difference --trace vs. --v
+
+          While  --v  is used to print more data,  --trace  is used to  print
+          more information about internal data such as procedure names and/or
+          variable names and program flow.
+
       --v
 
       --verbose
@@ -2695,17 +2701,19 @@ OPTIONS
 
           Use FILE instead of the default rc-file (.o-saft.pl, see RC-FILE).
 
+      --trace-me
+
+          Print debugging messages for $0 only, but not any modules.
+
+      --trace-not-me
+
+          Print debugging messages for modules only, but not $0 istself.
+
       --trace-sub
       +traceSUB
 
           Print formatted list of internal functions with their description.
           Not to be intended in conjunction with any target check.
-
-      --trace vs. --v
-
-          While  --v  is used to print more data,  --trace  is used to  print
-          more information about internal data such as procedure names and/or
-          variable names and program flow.
 
       --warning
 
