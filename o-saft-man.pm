@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.72 16/01/10 21:51:01";
+my  $man_SID= "@(#) o-saft-man.pm 1.73 16/01/11 00:46:44";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3898,11 +3898,12 @@ INSTALLATION
               echo omitt the zlib options if zlib-1g-dev is not installed
               echo omitt the krb5 options if no kerberos libraries available
               ./config --prefix=/usr/local --openssldir=/usr/local/ssl \
-                  enable-zlib zlib zlib-dynamic \
+                  enable-zlib zlib zlib-dynamic enable-ssl2 \
                   enable-krb5 --with-krb5-flavor=MIT \
-                  enable-mdc2 enable-md2 enable-rc5 enable-rc2 \
-                  enable-gost enable-cms enable-ecdh enable-ecdsa \
-                  enable-seed enable-idea enable-rfc3779 \
+                  enable-mdc2 enable-md2 enable-rc5  enable-rc2 \
+                  enable-cms  enable-ec  enable-ec2m enable-ecdh enable-ecdsa \
+                  enable-gost enable-seed enable-idea enable-camellia \
+                  enable-rfc3779 enable-ec_nistp_64_gcc_128 \
                   experimental-jpake -fPIC \
                   -DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES \
                   shared
@@ -3917,12 +3918,13 @@ INSTALLATION
               make clean
               echo same ./config as before but without shared option
               ./config --prefix=/usr/local --openssldir=/usr/local/ssl \
-                  enable-zlib zlib zlib-dynamic \
+                  enable-zlib zlib zlib-dynamic enable-ssl2 \
                   enable-krb5 --with-krb5-flavor=MIT \
-                  enable-mdc2 enable-md2 enable-rc5 enable-rc2 \
-                  enable-gost enable-cms enable-ecdh enable-ecdsa \
-                  enable-seed enable-idea enable-rfc3779 \
-                  experimental-jpake -fPIC \
+                  enable-mdc2 enable-md2 enable-rc5  enable-rc2 \
+                  enable-cms  enable-ec  enable-ec2m enable-ecdh enable-ecdsa \
+                  enable-gost enable-seed enable-idea enable-camellia \
+                  enable-rfc3779 enable-ec_nistp_64_gcc_128 \
+                  experimental-jpake -fPIC  -static \
                   -DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
               make depend
               make
