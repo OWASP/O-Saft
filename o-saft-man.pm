@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.71 16/01/10 21:41:55";
+my  $man_SID= "@(#) o-saft-man.pm 1.72 16/01/10 21:51:01";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1894,6 +1894,10 @@ OPTIONS
       --cgi-exec
 
           Internal use for CGI mode only.
+
+      --exit=KEY
+
+          For debugging only. 'KEY' see:  'grep exit= $0'
 
     Options for SSL tool
 
