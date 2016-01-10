@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.431 16/01/09 23:42:00",
+    SID         => "@(#) yeast.pl 1.432 16/01/10 21:24:56",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -56,9 +56,19 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
         printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @_);
     }
 }
+sub _y_EXIT($) { # exit if parameter matches given argument in @ARGV
+    my $txt =  shift;
+    my $arg =  $txt;
+       $arg =~ s# .*##; # strip off anything right of a space
+    if (grep(/(:?([+]|--)$arg).*/i, @ARGV) > 0) {
+        printf STDERR ("#o-saft.pl  _y_EXIT $txt\n");
+        exit 0;
+    }
+}
 
 BEGIN {
     _y_TIME("BEGIN{");
+    _y_EXIT("exit=BEGIN0 - BEGIN start");
     sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
@@ -97,8 +107,10 @@ BEGIN {
         printhelp($arg);            # empty $arg for full help text
         exit 0;
     }
+    _y_EXIT("exit=BEGIN1 - BEGIN end");
 } # BEGIN
-    _y_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
+_y_TIME("BEGIN}");                  # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
+_y_EXIT("exit=INIT0 - initialization start");
 
 our $VERSION= STR_VERSION;
 our $me     = $0; $me     =~ s#.*[/\\]##;
@@ -203,6 +215,7 @@ sub _load_file($$) {
 ## read RC-FILE if any
 ## -------------------------------------
 _y_TIME("cfg{");
+_y_EXIT("exit=CONF  - RC-FILE start");
 my @rc_argv = "";
 $arg = "./.$me";    # check in pwd only
 if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
@@ -2568,6 +2581,7 @@ if (defined $ENV{'LIBPATH'}) {
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
 
+_y_EXIT("exit=INIT1 - initialization end");
 usr_pre_file();
 
 ## definitions: internal functions
@@ -5796,7 +5810,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # for CGI mode; ignore
     if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
-    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # debugging
+    if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # -"-
+    if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
         # in CGI mode commands need to be passed as --cmd=* option
     if ($arg eq '--openssl')            { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
@@ -6559,6 +6574,7 @@ _dbx "\n########### fix this place (empty cipher list) ########\n";
 }
 _v_print("cipher list: @{$cfg{'ciphers'}}");
 
+_y_EXIT("exit=MAIN  - start");
 usr_pre_main();
 
 ## main: do the work for all targets
