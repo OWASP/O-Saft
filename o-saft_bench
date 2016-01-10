@@ -11,7 +11,7 @@
 #?      localhost is used as target for testing, can be passed as parameter. 
 #?
 
-  SID="@(#) o-saft_bench 1.9 16/01/10 00:49:00"
+  SID="@(#) o-saft_bench 1.10 16/01/10 22:47:33"
 
 
   ich=${0##*/}
@@ -22,10 +22,11 @@ yeast=./yeast.pl
   out=./${ich}.times
   cnt=4   # additional 4 lines which are the table header and footer line
 
-[ $# > -gt ] && host="$1"
+[ $# > -gt 0 ] && host="$1"
 
 (echo
  echo -n "# " && date
+ echo -n "# $SID"
  echo -n "# o-saft.pl +VERSION: " && $yeast +VERSION --norc
  echo -n "# System (uname -a):  " && uname -a
  echo -n "# Perl   (perl -v):   " && perl -v|grep This
@@ -52,7 +53,9 @@ while read -r cmd ; do
 #echo "$txt #"
 	echo -n "o-saft.pl $txt" | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast $cmd >/dev/null && echo ""
         cnt=`expr $cnt + 1`
+	# note: --exit=BEGIN0 is some kind of minimal (perl) resources
 done << EoT
+	--exit=BEGIN0                \ 
 	+VERSION           --norc    \ 
 	+version                     \ 
 	+version --v --usr           \ 
