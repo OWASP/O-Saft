@@ -17,7 +17,7 @@
 #?      --italic colourize special words and additionally print "label texts:"
 #?               with italic characters
 #?              "label text:" is all text left of first : including :
-#?      --NUM   if a number, change assumed terminal width to number
+#?      --NUM   if a number, change assumed terminal width to NUM
 #?              (used for padding text on the right);  default: terminal width
 #?
 #? LIMITATIONS
@@ -33,7 +33,7 @@
 #       How it workd, see function  testeme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.1 16/01/08 18:00:26
+#?      @(#) bunt.sh 1.2 16/01/11 00:25:07
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -101,6 +101,7 @@ purple='5'; # purple='0;35m';	light_purple='1;35m'
 
 _FG=""
 _BG=""  # default: do not change background
+_MM=0m  # used for changing character decoration
 
 # check terminal width
 # NOTE: Unfortunatelly stty fails if we have no terminal, i.e. in cron,
@@ -130,6 +131,25 @@ colour () {
 
 colour_reset () {
 	$echo "\033[0;m\033[0m\c"
+}
+deco () {
+	[ -z "$TERM" ] && echo $@ && return
+	$echo "\033[$_MM$@\033[0m\c"
+}
+bold () {
+	_MM=1m;  deco "$@"
+}
+italic () {
+	_MM=3m;  deco "$@"
+}
+underline () {
+	_MM=4m;  deco "$@"
+}
+__reverse () {
+	_MM=8m;  deco "$@"
+}
+strike () {
+	_MM=9m;  deco "$@"
 }
 
 # as changing text colour (forground) is the most common usage, there is one
@@ -167,6 +187,9 @@ blue () {
 purple () {
 	m=$_FG; _FG=$purple;   colour "$@"; _FG=$m
 }
+megenta () {
+	m=$_FG; _FG=$purple;   colour "$@"; _FG=$m;  # alias for purple
+}
 cyan () {
 	m=$_FG; _FG=$cyan;     colour "$@"; _FG=$m
 }
@@ -185,20 +208,14 @@ boldred () {
 boldpurple () {
 	m=$_MOD; _MOD=1;       purple "$@"; _MOD=$m
 }
-underline () {
-	m=$_MOD; _MOD=4;       purple "$@"; _MOD=$m
-}
 something () {
 	m=$_MOD; _MOD=6;       purple "$@"; _MOD=$m
-}
-strike () {
-	m=$_MOD; _MOD=9;       purple "$@"; _MOD=$m
 }
 reverse () {
 	f=$_FG;  _FG=$gray
 	m=$_MOD; _MOD=7;       colour "$@"; _MOD=$m; _FG=$f
 }
-italic () {
+talic () {
 	f=$_FG;  _FG=$gray
 	m=$_MOD; _MOD=3;       colour "$@"; _MOD=$m; _FG=$f
 }
@@ -232,10 +249,16 @@ testeme () {
 	yellow  " line  yellow\n"
 	underline " line  underlined\n"
 	strike  " line  striked\n"
+	bold    " line  bold\n"
+	italic  " line  italic\n"
 	something " line  something\n"
 	$echo   " line with `red 'red'` word"
 	$echo   " line with `red 'red'` `reverse and` `green 'green'` word"
-	$echo   " line with `strike 'striked'` `reverse and` `underline 'underlined'` word"
+	$echo   " line with `strike 'striked'` `reverse and` `underline 'underlined'` `reverse and` `bold 'bold'` word"
+	txt=`bold  'striked bold green'`
+	txt=`strike "$txt"`
+	txt=`green  "$txt"`
+	$echo   " line with $txt word"
 	reverse " line reverse\n"
 	italic_label "label with italic text: normal text "
 	background cyan
