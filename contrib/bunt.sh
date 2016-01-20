@@ -4,7 +4,7 @@
 #?      $0 - postprocess to colourize output of o-saft.pl
 #?
 #? SYNOPSIS
-#?      o-saft.pl | $0 
+#?      o-saft.pl | $0 [OPTIONS]
 #?
 #? DESCRIPTION
 #?      That's it.
@@ -33,7 +33,7 @@
 #       How it workd, see function  testeme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.2 16/01/11 00:25:07
+#?      @(#) bunt.sh 1.3 16/01/21 00:40:00
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -82,8 +82,8 @@ _MOD=0          # default: normal text, no highlight, bold, italic, underline, .
 	# [3 normal italic
 	# [4 normal underlined
 	# [6 normal light gray
-	# [7 normal reversed
-	# [8 reversed bold
+	# [7 reverse background
+	# [8 reversed foreground (bold)
 	# [9 normal strike
 
 # colours   # escape sequence to be used in echo
@@ -139,13 +139,19 @@ deco () {
 bold () {
 	_MM=1m;  deco "$@"
 }
+dim () {
+	_MM=2m;  deco "$@"
+}
 italic () {
 	_MM=3m;  deco "$@"
 }
 underline () {
 	_MM=4m;  deco "$@"
 }
-__reverse () {
+reversebg () {
+	_MM=7m;  deco "$@"
+}
+reversefg () {
 	_MM=8m;  deco "$@"
 }
 strike () {
@@ -187,7 +193,7 @@ blue () {
 purple () {
 	m=$_FG; _FG=$purple;   colour "$@"; _FG=$m
 }
-megenta () {
+magenta () {
 	m=$_FG; _FG=$purple;   colour "$@"; _FG=$m;  # alias for purple
 }
 cyan () {
@@ -211,13 +217,12 @@ boldpurple () {
 something () {
 	m=$_MOD; _MOD=6;       purple "$@"; _MOD=$m
 }
-reverse () {
-	f=$_FG;  _FG=$gray
-	m=$_MOD; _MOD=7;       colour "$@"; _MOD=$m; _FG=$f
-}
 talic () {
 	f=$_FG;  _FG=$gray
 	m=$_MOD; _MOD=3;       colour "$@"; _MOD=$m; _FG=$f
+}
+reverse () {
+	deco "$@"; # alias for reversebg
 }
 
 italic_label () {
@@ -253,20 +258,20 @@ testeme () {
 	italic  " line  italic\n"
 	something " line  something\n"
 	$echo   " line with `red 'red'` word"
-	$echo   " line with `red 'red'` `reverse and` `green 'green'` word"
-	$echo   " line with `strike 'striked'` `reverse and` `underline 'underlined'` `reverse and` `bold 'bold'` word"
+	$echo   " line with `red 'red'` `reversebg and` `green 'green'` `reversebg and` `underline 'underlined'` word"
+	$echo   " line with `bold 'bold'` `reversebg and` `dim 'dimmed'` `reversebg and` `strike 'striked'` word"
 	txt=`bold  'striked bold green'`
 	txt=`strike "$txt"`
 	txt=`green  "$txt"`
 	$echo   " line with $txt word"
-	reverse " line reverse\n"
+	reversebg " line reverse\n"
 	italic_label "label with italic text: normal text "
 	background cyan
 	black   " line  black\n"
 	green   " line  green\n"
-
+	$echo   " line"
 	background ''
-	$echo   `boldred "background just for the text"`
+	$echo   `boldred "line bold red"`
 	colour_reset    # no reset background completely
 	$echo   `green "done"`
 }
@@ -324,7 +329,7 @@ while read line; do
 		  \*\*WARN*)	$echo `boldpurple "$line"`;  continue; ;;
 		  \*\*ERROR*)	$echo `boldred "$line"`;     continue; ;;
 		  =*)	line=`pad_right "$line"`; $echo "\033[7;37m$line\033[m"; continue; ;;
-			#$echo `reverse "$line$space"`	# squeezes blanks :-((
+			#$echo `reversebg "$line$space"` # squeezes blanks :-((
 		  "Use of "*perl*) $echo `purple "$line"`;   continue; ;;
 	esac
 	if [ $word -eq 0 ]; then
@@ -366,7 +371,7 @@ while read line; do
 		\echo "$line" | \egrep -q 'no$'
 		[ $? -eq 0 ] && \echo "$line" | \sed -e  "s/no$/`brown no`/"  && continue
 		\echo "$line" | \egrep -q 'no \('
-		[ $? -eq 0 ] && \echo "$line" | \sed -e "s/\(no (.*\)/`brown \&`/"  && continue
+		[ $? -eq 0 ] && \echo "$line" | \sed -e "s/\(no (.*\)/`yellow \&`/"  && continue
 		\echo "$line" | \egrep -q '^#\['
 		[ $? -eq 0 ] && \echo "$line" | \sed -e  "s/^\(#\[.*\]\)/`cyan \&`/"  && continue
 		$echo "$line"
