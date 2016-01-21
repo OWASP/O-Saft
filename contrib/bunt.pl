@@ -29,7 +29,7 @@
 #       How it workd, see function  testeme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.1 16/01/21 00:40:17
+#?      @(#) bunt.pl 1.2 16/01/21 23:08:47
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -44,18 +44,32 @@ if (defined $ENV{TERM}) {
 	# probably better exit here
 
 # --------------------------------------------- internal variables; defaults
-my $ich   = $0; $ich   =~ s#.*[/\\]##;
+my $ich     = $0; $ich =~ s#.*[/\\]##;
 
 my $mode    = 'word';   # default: colourize words
 my $italic  = 0;        # default: nothing italic
 my $_LEN    = 80;       # default: 80 characters per line; set to termial width below
+my $cols = $_LEN;
 
 # check terminal width
-# NOTE: Unfortunatelly stty fails if we have no terminal, i.e. in cron, or the
-#       intended use in a stream (pipe). Hence we use tput; if that fails too,
-#       80 will be hardcoded (which then may return the a warning about length
-#       misatches).
-my $cols = qx(\\tput cols); # quick&dirty
+
+if ($^O =~ m/MSWin32/) {
+	my $rows;
+	$cols = $ENV{COLUMNS};
+	if (eval { require Win32::Console; }) {
+		($cols, $rows) = Win32::Console::Size();
+	} else {
+	  if (eval { require Term::Size; }) {
+		($cols, $rows) = Term::Size::chars *STDOUT{IO};
+		#($x, $y) = Term::Size::pixels;
+	  } # else ... gave up; feel free to try harder on dumb system
+	}
+	if (! defined $cols) {
+		print STDERR "**WARNING: cannot find terminal width, using default $_LEN\n";
+		print STDERR "**HINT: consider setting COLUMNS environment variable\n";
+		$cols = $_LEN;
+	}
+} else { $cols = qx(\\tput cols); } # quick&dirty
 chomp $cols;
 if (defined $ENV{COLUMNS}) {
 	print "**WARNING: terminal width $ENV{COLUMNS} mismatch, using $cols" if ($ENV{COLUMNS} ne $cols);
