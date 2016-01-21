@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.433 16/01/10 22:15:19",
+    SID         => "@(#) yeast.pl 1.434 16/01/21 23:59:36",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -1356,10 +1356,13 @@ our %cmd = (
                          quick list libversion sizes s_client version quit
                          sigkey bsi ev cipherraw cipher-dh
                         ),
-                    # internal (debugging or experimental) commands
+                    # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
                     # keys not used as command
                         qw(cn_nosni valid-years valid-months valid-days)
+                       ],
+    'cmd-experiment'=> [        # experimental commands
+                        qw(sloth),
                        ],
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only 
@@ -5178,6 +5181,9 @@ sub printdata($$$) {
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%data) < 1);
+        if ($cfg{'experimental'} == 0) {
+            next if (_is_member( $key, \@{$cfg{'cmd-experiment'}}) > 0);
+        }
         # special handling vor +info--v
         if (_is_do('info--v') > 0) {
             next if ($key eq 'info--v');
@@ -5219,6 +5225,9 @@ sub printchecks($$$) {
         next if (_is_intern( $key) > 0);# ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
         next if ($key eq 'selected');   # done above
+        if ($cfg{'experimental'} == 0) {
+            next if (_is_member( $key, \@{$cfg{'cmd-experiment'}}) > 0);
+        }
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) { # sizes are special
             print_size($legacy, $host, $port, $key) if ($cfg{'no_cert'} <= 0);
