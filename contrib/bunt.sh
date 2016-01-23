@@ -31,9 +31,11 @@
 #       following "main" below.
 #
 #       How it workd, see function  testeme  below calling with  $0 --test
+#       $echo is used if /bin/echo or /usr/bin/printf is needed, \echo is used
+#       if shell builtin is needed.
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.5 16/01/23 13:47:45
+#?      @(#) bunt.sh 1.6 16/01/23 16:23:12
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -71,8 +73,8 @@ if [ -x $echo ]; then
 			echo="/bin/echo -e"
 	else
 		if [ -e /usr/bin/printf ]; then
-			printf=1
 			echo="/usr/bin/printf %b"
+			printf=1
 			_warn "WARNING: using '$echo'; take care ..."
 		else
 			_warn "WARNING: not GNU '$echo'; take care ..."
@@ -144,7 +146,6 @@ colour () {
 
 colour_reset () {
 	r=$_FG; _FG=$off;   colour ""; _FG=$r
-	#$echo "\033[0;m\033[0m\c"
 }
 deco () {
 	[ -z "$TERM" ] && echo $@ && return
@@ -248,7 +249,8 @@ pad_right () {
 	from=`echo "$@" | \wc -c`
 	if [ $printf -eq 1 ]; then
 		from=`\expr $_LEN - $from`
-		/usr/bin/printf "%s%${from}c" "$@"
+		_p=$@;  # printf is is really strange; squeezes spaces also
+		/usr/bin/printf "%s%${from}c" "$_p"
 	else
 		if [ -x $seq ]; then
 			for s in `$seq $from $_LEN`; do
@@ -260,7 +262,6 @@ pad_right () {
 }
 
 testeme () {
-	#txt=`pad_right " line padded"`; reversebg "$txt\n"
 	reversebg "`pad_right ' line padded'`\n"
 	red     " line  red\n"
 	green   " line  green\n"
@@ -277,19 +278,19 @@ testeme () {
 	bold    " line  bold\n"
 	italic  " line  italic\n"
 	something " line  something\n"
-	$echo   " line with `red 'red'` word\n"
-	$echo   " line with `red 'red'` `reversebg and` `green 'green'` `reversebg and` `underline 'underlined'` word\n"
-	$echo   " line with `bold 'bold'` `reversebg and` `dim 'dimmed'` `reversebg and` `strike 'striked'` word\n"
+	\echo   " line with `red 'red'` word"
+	\echo   " line with `red 'red'` `reversebg and` `green 'green'` `reversebg and` `underline 'underlined'` word"
+	\echo   " line with `bold 'bold'` `reversebg and` `dim 'dimmed'` `reversebg and` `strike 'striked'` word"
 	txt=`bold  'striked bold green'`
 	txt=`strike "$txt"`
 	txt=`green  "$txt"`
-	$echo   " line with $txt word\n"
+	\echo   " line with $txt word"
 	reversebg " line reverse\n"
 	italic_label "label with italic text: normal text "
 	background cyan
 	black   " line  black\n"
 	green   " line  green\n"
-	$echo   " line\n"
+	\echo   " line"
 	background ''
 	boldred "line bold red\n"
 	colour_reset    # reset background completely
@@ -331,7 +332,7 @@ done
 
 bgcyan () {
 	background cyan
-	$echo `gray  "$@"`
+	\echo `gray  "$@"`
 	colour_reset    # FIXME: does not yet work proper
 }
 
@@ -343,29 +344,29 @@ while read line; do
 	[ -z "$line" ] &&	$echo && continue;   # speed!
 	case "$line" in
 		  \#\[*)	true; ;;
-		  #\#yeast*CMD:*) bgcyan        "$line";      continue; ;;
-		  \#*)		$echo `blue    "$line"`;     continue; ;;
-		  \*\*HINT*)	$echo `purple  "$line"`;     continue; ;;
-		  \*\*WARN*)	$echo `boldpurple "$line"`;  continue; ;;
-		  \*\*ERROR*)	$echo `boldred "$line"`;     continue; ;;
-		  =*)	   reversebg "`pad_right $line`\n";  continue; ;;
-		  "Use of "*perl*) $echo `purple "$line"`;   continue; ;;
+		  #\#yeast*CMD:*) bgcyan   "$line";     continue; ;;
+		  \#*)		blue       "$line\n";   continue; ;;
+		  \*\*HINT*)	purple     "$line\n";   continue; ;;
+		  \*\*WARN*)	boldpurple "$line\n";   continue; ;;
+		  \*\*ERROR*)	boldred    "$line\n";   continue; ;;
+		  =*) reversebg "`pad_right $line`\n";  continue; ;;
+		  "Use of "*perl*)  purple "$line\n";   continue; ;;
 	esac
 	if [ $word -eq 0 ]; then
 		case "$line" in
-		  *"<<"*">>"*)	$echo `cyan  "$line"`; ;;
-		  *yes*weak)	$echo `red   "$line"`; ;;
-		  *yes*WEAK)	$echo `red   "$line"`; ;;
-		  *yes*low)	$echo `red   "$line"`; ;;
-		  *yes*LOW)	$echo `red   "$line"`; ;;
-		  *yes*medium)	$echo `brown "$line"`; ;;
-		  *yes*MEDIUM)	$echo `brown "$line"`; ;;
-		  *yes*high)	$echo `green "$line"`; ;;
-		  *yes*HIGH)	$echo `green "$line"`; ;;
-		  *yes)		$echo `green "$line"`; ;;
-		  *no)		$echo `brown "$line"`; ;;
-		  *"no "*)	$echo `red   "$line"`; ;;
-		  *)		$echo "$line"; ;;
+		  *"<<"*">>"*)	cyan  "$line\n"; ;;
+		  *yes*weak)	red   "$line\n"; ;;
+		  *yes*WEAK)	red   "$line\n"; ;;
+		  *yes*low)	red   "$line\n"; ;;
+		  *yes*LOW)	red   "$line\n"; ;;
+		  *yes*medium)	brown "$line\n"; ;;
+		  *yes*MEDIUM)	brown "$line\n"; ;;
+		  *yes*high)	green "$line\n"; ;;
+		  *yes*HIGH)	green "$line\n"; ;;
+		  *yes)		green "$line\n"; ;;
+		  *no)		brown "$line\n"; ;;
+		  *"no "*)	red   "$line\n"; ;;
+		  *)		\echo "$line"; ;;
 		esac
 	fi
 
@@ -377,13 +378,15 @@ while read line; do
 			\echo "$line" | \egrep -q 'yes$'
 			[ $? -eq 0 ] && \echo "$line" | \sed -e "s/yes$/`green yes`/" && continue
 			\echo "$line" | \egrep -q -i 'yes.*(WEAK|LOW|MEDIUM|HIGH)$'
+				# some older sed do not support i flag, hence
+				# case insensitive matching the traditional way
 			[ $? -eq 0 ] && \echo "$line" | \sed \
-					-e "s/\(LOW\)$/`red \&`/i"	\
-					-e "s/\(WEAK\)$/`red \&`/i"	\
-					-e "s/\(MEDIUM\)$/`brown \&`/i"	\
-					-e "s/\(HIGH\)$/`green \&`/i"	\
+					-e "s/\([Ll][Oo][Ww]\)$/`red \&`/"	\
+					-e "s/\([Ww][Ee][Aa][Kk]\)$/`red \&`/"	\
+					-e "s/\([Mm][Ee][Dd][Ii][Uu][Mm]\)$/`brown \&`/" \
+					-e "s/\([Hh][Ii][Gg][Hh]\)$/`green \&`/"	\
 				     && continue
-			$echo "$line"
+			\echo  "$line"
 			continue
 		fi
 		# anything with "no" in value is a bit special
@@ -393,7 +396,7 @@ while read line; do
 		[ $? -eq 0 ] && \echo "$line" | \sed -e "s/\(no (.*\)/`yellow \&`/"  && continue
 		\echo "$line" | \egrep -q '^#\['
 		[ $? -eq 0 ] && \echo "$line" | \sed -e  "s/^\(#\[.*\]\)/`cyan \&`/"  && continue
-		$echo "$line"
+		\echo "$line"
         fi
 
 done
