@@ -105,7 +105,7 @@ sub colour ($$$) {
 	$fg = "\033[${fg}" if ($fg ne "");
 	return "$fg$bg$txt\033[0m";
 }
-sub colour_reset () { print "\033[0;m\033[0m"; }
+sub colour_reset () { print colour('off', '', ''); }
 
 sub deco ($$) {
 	my ($mm, $txt) = @_;
