@@ -33,16 +33,21 @@
 #       How it workd, see function  testeme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.3 16/01/21 00:40:00
+#?      @(#) bunt.sh 1.4 16/01/23 12:34:02
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
 #?
 # -----------------------------------------------------------------------------
 
+ich=${0##*/}
+_warn () {
+	\echo "[$ich]: **$@" >&2
+}
+
 if [ -n "$TERM" ]; then
 	case "$TERM" in
-	  screen) \echo "**WARNING: TERM=screen; take care ..." >&2; ;;
+	  screen) _warn "WARNING: 'TERM=screen'; take care ..." ;;
 	esac
 else
 	# not a terminal, switch off terminal capabilities
@@ -53,7 +58,6 @@ fi
 
 # --------------------------------------------- internal variables; defaults
 try=''
-ich=${0##*/}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 
@@ -63,7 +67,7 @@ echo=/bin/echo
 if [ -x $echo ]; then
 	$echo --version | \egrep -q 'echo.*GNU'
 	if [ $? -ne 0 ]; then
-		\echo "**WARNING: not GNU $echo; take care ..." >&2
+		_warn "WARNING: not GNU '$echo'; take care ..." >&2
 	fi
 
 	echo="/bin/echo -e"
@@ -113,7 +117,7 @@ expr "$arg" + 0 >/dev/null ; # prints warning on STDERR
 [ $? -eq 0 ] && len=$arg
 if [ -n "$COLUMNS" ]; then
 	# we got a hint, i.e. a bash
-	[ $COLUMNS -ne $len ] && \echo "**WARNING: terminal width $COLUMNS mismatch, using $len"
+	[ $COLUMNS -ne $len ] && _warn "WARNING: terminal width $COLUMNS mismatch, using $len"
 fi
 _LEN=$len       # got it
 
@@ -296,7 +300,7 @@ while [ $# -gt 0 ]; do
 		expr "$arg" + 0 >/dev/null ; # prints warning on STDERR
 		if [ $? -eq 0 ]; then
 			[ $arg -gt $_LEN ] && \
-				\echo "**WARNING: given width $arg larger than computed size $_LEN"
+				_warn "WARNING: given width '$arg' larger than computed size '$_LEN'"
 			_LEN=$arg
 		fi
 		;;
@@ -316,7 +320,7 @@ bgcyan () {
 }
 
 if [ -t 0 ]; then
-	\echo "**ERROR [$ich]: text on STDIN expected; exit" >&2
+	_warn "ERROR: text on STDIN expected; exit"
 	exit 2
 fi
 while read line; do
