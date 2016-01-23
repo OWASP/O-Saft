@@ -29,7 +29,7 @@
 #       How it workd, see function  testeme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.2 16/01/21 23:08:47
+#?      @(#) bunt.pl 1.3 16/01/23 11:56:19
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -40,7 +40,7 @@ $::ich   = $0; $::ich =~ s#.*[/\\]##;
 sub _warn($) { print STDERR "[$::ich]: **", @_, "\n"; }
 
 if (defined $ENV{TERM}) {
-	_warn("WARNING: TERM=screen; take care ...") if ($ENV{TERM} eq 'screen');
+	_warn("WARNING: 'TERM=screen'; take care ...") if ($ENV{TERM} eq 'screen');
 } # else
 	# not a terminal, switch off terminal capabilities
 	# checks are done with:    (defined $ENV{TERM})
@@ -49,12 +49,30 @@ if (defined $ENV{TERM}) {
 # --------------------------------------------- internal variables; defaults
 my $mode    = 'word';   # default: colourize words
 my $italic  = 0;        # default: nothing italic
-my $_LEN    = 80;       # default: 80 characters per line; set to termial width below
+my $_LEN    = 80;       # default: 80 characters per line; -1 for unsupported terminals
+			# set to termial width below
 my $cols = $_LEN;
 
 # check terminal width
-
-if ($^O =~ m/MSWin32/) {
+if (defined $ENV{ComSpec}) {    # supported system do not have it, usually ...
+	# Note that  cmd.exe and command.exe  do not support colours, at least
+	# not per word or line. There exists some alternates like  ansicmd.exe
+	# or  cecho.exe,  which are not supported herein (not tested if loaded
+	# modules support them). If any of these alternates mudt be supported,
+	# feel free to hack the code below.  Meanwhile,  colourizing for these
+	# dumb terminals is simply disabled.
+	# Hint to get the number of columns in cmd.exe:
+	#       $c= qx(mode);
+	#       $c=~s/.*CON:[\n\r]+(?:[^\n\r]*[\n\r]+){2}[^:]*:\s*([\d]+).*/$1/ms;
+	if (!defined $ENV{TERM}) {
+		# cygwin has both environment variables, no warning there
+		_warn("WARNING: unsupported terminal '$ENV{ComSpec}'; printing text as is");
+	}
+	$_LEN = -1;
+} else {
+    if ($^O !~ m/MSWin32/) {
+	$cols = qx(\\tput cols); # quick&dirty
+    } else {
 	my $rows;
 	$cols = $ENV{COLUMNS};
 	if (eval { require Win32::Console; }) {
@@ -66,14 +84,15 @@ if ($^O =~ m/MSWin32/) {
 	  } # else ... gave up; feel free to try harder on dumb system
 	}
 	if (! defined $cols) {
-		_warn("WARNING: cannot find terminal width, using default $_LEN");
-		_warn("HINT: consider setting COLUMNS environment variable");
+		_warn("WARNING: cannot find terminal width, using default '$_LEN'");
+		_warn("HINT: consider setting 'COLUMNS' environment variable");
 		$cols = $_LEN;
 	}
-} else { $cols = qx(\\tput cols); } # quick&dirty
+    }
+}
 chomp $cols;
 if (defined $ENV{COLUMNS}) {
-	_warn("WARNING: terminal width $ENV{COLUMNS} mismatch, using $cols") if ($ENV{COLUMNS} ne $cols);
+	_warn("WARNING: terminal width '$ENV{COLUMNS}' mismatch, using '$cols'") if ($ENV{COLUMNS} ne $cols);
 	$_LEN = $cols;
 }
 $_LEN = $cols;
@@ -98,8 +117,10 @@ $_LEN = $cols;
 sub colour ($$$) {
 	my ($fg, $bg, $txt) = @_;
 	return $txt if (!defined $ENV{TERM});
-	$bg = $::map{$bg};
-	$fg = $::map{$fg};
+	return $txt if ($_LEN == -1);
+
+	$bg = $map{$bg};
+	$fg = $map{$fg};
 	$bg =~ s#;3#;4#    if ($bg ne "");
 	$bg = "\033[${bg}" if ($bg ne "");
 	$fg = "\033[${fg}" if ($fg ne "");
@@ -147,9 +168,10 @@ sub italic_label ($) {
 
 sub pad_right ($) {
 	my $txt = shift;
-	my $_t  = "";
-	$_t .= " " for length($txt)..($_LEN - 1);
-	return "$txt$_t";
+	my $_c  = " ";
+	   $_c  = "_" if (defined $ENV{ComSpec}); # dirty hack
+	$txt .= $_c for length($txt)..($_LEN - 1);
+	return "$txt";
 }
 
 sub testeme () {
@@ -214,7 +236,7 @@ while ( $#ARGV >= 0 ) {
 	if ($arg =~ m/--test/)   { testeme; exit 0; }
 	if ($arg =~ m/--(\d+)/)  {
 		my $num = $1;
-		_warn("WARNING: given width $num larger than computed size $_LEN") if ($num > $_LEN);
+		_warn("WARNING: given width '$num' larger than computed size '$_LEN'") if ($num > $_LEN);
 		$_LEN = $num
 	}
 }
@@ -231,7 +253,7 @@ sub bgcyan ($) {
 }
 
 if (-t STDIN) {
-	_warn("ERROR: text on STDIN expected; exit");
+	_warn("ERROR text on STDIN expected; exit");
 	exit 2;
 }
 
