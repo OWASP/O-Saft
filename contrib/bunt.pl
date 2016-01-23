@@ -36,16 +36,17 @@
 #?
 # -----------------------------------------------------------------------------
 
+$::ich   = $0; $::ich =~ s#.*[/\\]##;
+sub _warn($) { print STDERR "[$::ich]: **", @_, "\n"; }
+
 if (defined $ENV{TERM}) {
-	print STDERR "**WARNING: TERM=screen; take care ...\n" if ($ENV{TERM} eq 'screen');
+	_warn("WARNING: TERM=screen; take care ...") if ($ENV{TERM} eq 'screen');
 } # else
 	# not a terminal, switch off terminal capabilities
 	# checks are done with:    (defined $ENV{TERM})
 	# probably better exit here
 
 # --------------------------------------------- internal variables; defaults
-my $ich     = $0; $ich =~ s#.*[/\\]##;
-
 my $mode    = 'word';   # default: colourize words
 my $italic  = 0;        # default: nothing italic
 my $_LEN    = 80;       # default: 80 characters per line; set to termial width below
@@ -65,14 +66,14 @@ if ($^O =~ m/MSWin32/) {
 	  } # else ... gave up; feel free to try harder on dumb system
 	}
 	if (! defined $cols) {
-		print STDERR "**WARNING: cannot find terminal width, using default $_LEN\n";
-		print STDERR "**HINT: consider setting COLUMNS environment variable\n";
+		_warn("WARNING: cannot find terminal width, using default $_LEN");
+		_warn("HINT: consider setting COLUMNS environment variable");
 		$cols = $_LEN;
 	}
 } else { $cols = qx(\\tput cols); } # quick&dirty
 chomp $cols;
 if (defined $ENV{COLUMNS}) {
-	print "**WARNING: terminal width $ENV{COLUMNS} mismatch, using $cols" if ($ENV{COLUMNS} ne $cols);
+	_warn("WARNING: terminal width $ENV{COLUMNS} mismatch, using $cols") if ($ENV{COLUMNS} ne $cols);
 	$_LEN = $cols;
 }
 $_LEN = $cols;
@@ -199,8 +200,8 @@ sub testeme () {
 while ( $#ARGV >= 0 ) {
 	my $arg = shift;
 	if ($arg =~ m/--?h(elp)/) {
-		open(FID, $0) || die "$0: WARNING: cannot read myself.\n";
-		grep { s/\$0/$ich/g; /#\?(.*)$/ && print "$1\n"; } (<FID>);
+		open(FID, $0) || die "[$0]: **ERROR: cannot read myself.\n";
+		grep { s/\$0/$::ich/g; /#\?(.*)$/ && print "$1\n"; } (<FID>);
 		exit 0;
 	}
 	if ($arg =~ m/--version/) {
@@ -213,7 +214,7 @@ while ( $#ARGV >= 0 ) {
 	if ($arg =~ m/--test/)   { testeme; exit 0; }
 	if ($arg =~ m/--(\d+)/)  {
 		my $num = $1;
-		print "**WARNING: given width $num larger than computed size $_LEN\n" if ($num > $_LEN);
+		_warn("WARNING: given width $num larger than computed size $_LEN") if ($num > $_LEN);
 		$_LEN = $num
 	}
 }
@@ -230,7 +231,7 @@ sub bgcyan ($) {
 }
 
 if (-t STDIN) {
-	print STDERR "**ERROR [$ich]: text on STDIN expected; exit\n" ;
+	_warn("ERROR: text on STDIN expected; exit");
 	exit 2;
 }
 
