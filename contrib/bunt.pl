@@ -77,29 +77,28 @@ if (defined $ENV{COLUMNS}) {
 }
 $_LEN = $cols;
 
+%::map = (
+	# colours  # escape sequence to be used
+	#----------+----------------------------------------
+	'black'  => '0;30m',    'dark_gray'    => '1;30m',
+	'red'    => '0;31m',    'light_red'    => '1;31m',
+	'green'  => '0;32m',    'light_green'  => '1;32m',
+	'brown'  => '0;33m',    'yellow'       => '1;33m',
+	'blue'   => '0;34m',    'light_blue'   => '1;34m',
+	'purple' => '0;35m',    'light_purple' => '1;35m',
+	'cyan'   => '0;36m',    'light_cyan'   => '1;36m',
+	'gray'   => '0;37m',    'white'        => '1;37m',
+	'off'    => '0m',   # used to reset colours
+	''       => '',  # dummy
+	#----------+----------------------------------------
+);
+
 # --------------------------------------------- functions
 sub colour ($$$) {
 	my ($fg, $bg, $txt) = @_;
 	return $txt if (!defined $ENV{TERM});
-
-	%map = (
-		# colours        # escape sequence to be used
-		#----------+----------------------------------------
-		'black'  => '0;30m',    'dark_gray'    => '1;30m',
-		'red'    => '0;31m',    'light_red'    => '1;31m',
-		'green'  => '0;32m',    'light_green'  => '1;32m',
-		'brown'  => '0;33m',    'yellow'       => '1;33m',
-		'blue'   => '0;34m',    'light_blue'   => '1;34m',
-		'purple' => '0;35m',    'light_purple' => '1;35m',
-		'cyan'   => '0;36m',    'light_cyan'   => '1;36m',
-		'gray'   => '0;37m',    'white'        => '1;37m',
-		'off'    => '0m',
-		''       => '',  # dummy
-		#----------+----------------------------------------
-		);
-
-	$bg = $map{$bg};
-	$fg = $map{$fg};
+	$bg = $::map{$bg};
+	$fg = $::map{$fg};
 	$bg =~ s#;3#;4#    if ($bg ne "");
 	$bg = "\033[${bg}" if ($bg ne "");
 	$fg = "\033[${fg}" if ($fg ne "");
