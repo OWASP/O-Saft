@@ -33,7 +33,7 @@
 #       How it workd, see function  testeme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.4 16/01/23 12:34:02
+#?      @(#) bunt.sh 1.5 16/01/23 13:47:45
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -47,7 +47,7 @@ _warn () {
 
 if [ -n "$TERM" ]; then
 	case "$TERM" in
-	  screen) _warn "WARNING: 'TERM=screen'; take care ..." ;;
+	  screen) _warn "WARNING: 'TERM=screen'; take care ..."; ;;
 	esac
 else
 	# not a terminal, switch off terminal capabilities
@@ -63,23 +63,31 @@ dir=${0%/*}
 
 seq=/usr/bin/seq
 echo=/bin/echo
+printf=0
 # try to detect GNU echo
 if [ -x $echo ]; then
 	$echo --version | \egrep -q 'echo.*GNU'
-	if [ $? -ne 0 ]; then
-		_warn "WARNING: not GNU '$echo'; take care ..." >&2
+	if [ $? -eq 0 ]; then
+			echo="/bin/echo -e"
+	else
+		if [ -e /usr/bin/printf ]; then
+			printf=1
+			echo="/usr/bin/printf %b"
+			_warn "WARNING: using '$echo'; take care ..."
+		else
+			_warn "WARNING: not GNU '$echo'; take care ..."
+	    			# more escape sequenzes for GNU /bin/echo:
+	    			# \a alarm    \c no more output
+		fi
 	fi
-
-	echo="/bin/echo -e"
-	    # more escape sequenzes for GNU /bin/echo:
-	    # \a alarm    \c no more output
 fi
 
 word=1          # default: colourize words
 italic=0        # default: nothing italic
 _LEN=80         # default: 80 characters per line; set to termial width below
 _MOD=0          # default: normal text, no highlight, bold, italic, underline, ...
-	# more modes for GNU /bin/echo:
+
+	# more modes for /usr/bin/printf and GNU /bin/echo:
 	# [0 normal
 	# [1 bold/highlight
 	# [2 dark
@@ -100,6 +108,7 @@ _MOD=0          # default: normal text, no highlight, bold, italic, underline, .
 purple='5'; # purple='0;35m';	light_purple='1;35m'
   cyan='6'; #   cyan='0;36m';	  light_cyan='1;36m'
   gray='7'; #   gray='0;37m';	       white='1;37m'
+   off='';  # used to reset colours
 #-----------+----------------------------------------
 # we use $_MOD later to switch to light colours
 
@@ -134,7 +143,8 @@ colour () {
 }
 
 colour_reset () {
-	$echo "\033[0;m\033[0m\c"
+	r=$_FG; _FG=$off;   colour ""; _FG=$r
+	#$echo "\033[0;m\033[0m\c"
 }
 deco () {
 	[ -z "$TERM" ] && echo $@ && return
@@ -235,17 +245,23 @@ italic_label () {
 
 pad_right () {
 	space=""
-	if [ -x $seq ]; then
-		from=`echo "$@" | \wc -c`
-		for s in `$seq $from $_LEN`; do
-			space="$space "
-		done
+	from=`echo "$@" | \wc -c`
+	if [ $printf -eq 1 ]; then
+		from=`\expr $_LEN - $from`
+		/usr/bin/printf "%s%${from}c" "$@"
+	else
+		if [ -x $seq ]; then
+			for s in `$seq $from $_LEN`; do
+				space="$space "
+			done
+		fi
+		$echo "$@$space"
 	fi
-	$echo "$@$space"
 }
 
 testeme () {
-	txt=`pad_right "  line padded"`; $echo "\033[7;37m$txt\033[m"
+	#txt=`pad_right " line padded"`; reversebg "$txt\n"
+	reversebg "`pad_right ' line padded'`\n"
 	red     " line  red\n"
 	green   " line  green\n"
 	brown   " line  brown\n"
@@ -261,23 +277,23 @@ testeme () {
 	bold    " line  bold\n"
 	italic  " line  italic\n"
 	something " line  something\n"
-	$echo   " line with `red 'red'` word"
-	$echo   " line with `red 'red'` `reversebg and` `green 'green'` `reversebg and` `underline 'underlined'` word"
-	$echo   " line with `bold 'bold'` `reversebg and` `dim 'dimmed'` `reversebg and` `strike 'striked'` word"
+	$echo   " line with `red 'red'` word\n"
+	$echo   " line with `red 'red'` `reversebg and` `green 'green'` `reversebg and` `underline 'underlined'` word\n"
+	$echo   " line with `bold 'bold'` `reversebg and` `dim 'dimmed'` `reversebg and` `strike 'striked'` word\n"
 	txt=`bold  'striked bold green'`
 	txt=`strike "$txt"`
 	txt=`green  "$txt"`
-	$echo   " line with $txt word"
+	$echo   " line with $txt word\n"
 	reversebg " line reverse\n"
 	italic_label "label with italic text: normal text "
 	background cyan
 	black   " line  black\n"
 	green   " line  green\n"
-	$echo   " line"
+	$echo   " line\n"
 	background ''
-	$echo   `boldred "line bold red"`
-	colour_reset    # no reset background completely
-	$echo   `green "done"`
+	boldred "line bold red\n"
+	colour_reset    # reset background completely
+	green   "done\n"
 }
 
 # --------------------------------------------- options
@@ -332,8 +348,7 @@ while read line; do
 		  \*\*HINT*)	$echo `purple  "$line"`;     continue; ;;
 		  \*\*WARN*)	$echo `boldpurple "$line"`;  continue; ;;
 		  \*\*ERROR*)	$echo `boldred "$line"`;     continue; ;;
-		  =*)	line=`pad_right "$line"`; $echo "\033[7;37m$line\033[m"; continue; ;;
-			#$echo `reversebg "$line$space"` # squeezes blanks :-((
+		  =*)	   reversebg "`pad_right $line`\n";  continue; ;;
 		  "Use of "*perl*) $echo `purple "$line"`;   continue; ;;
 	esac
 	if [ $word -eq 0 ]; then
