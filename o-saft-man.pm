@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.73 16/01/11 00:46:44";
+my  $man_SID= "@(#) o-saft-man.pm 1.74 16/02/09 21:23:24";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -467,7 +467,7 @@ our %man_text = (
         'TR-02102'  => "Technische Richtlinie 02102 (des BSI)",
         'TR-03116'  => "Technische Richtlinie 03116 (des BSI)",
         'TLS'       => "Transport Layer Security",
-        'TLSA'      => "TLS Trus Anchors",
+        'TLSA'      => "TLS Trust Anchors",
         'TLSv1'     => "Transport Layer Security version 1",
         'TSK'       => "Transmission Security Key",
         'TSK '      => "TACK signing key",
@@ -2866,8 +2866,8 @@ CHECKS
 
       KCI
 
-        To perform a MiTM attck with Key Compromise Impersonation, the attack
-        needs to engage the victim to install and use a client certificate.
+        To perform a MiTM attack with Key Compromise Impersonation, the atta-
+        cker needs to engage the victim to install and use a client certificate.
         This is considered a low risk and hence not tested here.
 
       Logjam
