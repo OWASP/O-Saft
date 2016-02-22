@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.74 16/02/09 21:23:24";
+my  $man_SID= "@(#) o-saft-man.pm 1.75 16/02/22 09:39:12";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1020,7 +1020,7 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
  |}
 -->
 
-[[Category:OWASP Project]]  [[Category:OWASP_Builders]] [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]] [[Category:SSL]]
+[[Category:OWASP Project]]  [[Category:OWASP_Builders]]  [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]  [[Category:SSL]]  [[Category:Test]]
 ----
 ";
     # 2. generate wiki page content
