@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.75 16/02/22 09:39:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.76 16/02/23 18:26:53";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -17,10 +17,10 @@ our $ich    = $wer;
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
     $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
-if (! defined $wer) { # still nothing found, try parent
+if (! defined $wer) {                   # still nothing found, try parent
     $wer    = (caller(0))[1];           # parent;
     if (! defined $wer) {
-        $wer    = $0;     # still nothing found, last resort: myself
+        $wer    = $0;                   # still nothing found, last resort: myself
     } else {
         $wer    =~ s#/[^/\\]*$##;       # path of parent
         $wer   .= "/$ich";              # append myself
@@ -71,7 +71,7 @@ if (open(DATA, $wer)) {
         s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
         s/  (L&[^&]*&)/ $1/g;
         s/(L&[^&]*&)  /$1 /g;
-            # If external references are enclosed in double spaces, we squesze
+            # If external references are enclosed in double spaces, we squeeze
             # leading and trailing spaces 'cause additional characters will be
             # added later (i.e. in man_help()). Just pretty printing ...
         if (m/^ /) {
@@ -1118,6 +1118,11 @@ sub printhelp($) {
     man_help('NAME'),           return if ($hlp =~ /^$/);
     man_help('TODO'),           return if ($hlp =~ /^todo$/i);
     man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|warn(?:ing)?|problem)s?$/i);
+    if ($hlp =~ /^faq/i) {
+        man_help('KNOWN PROBLEMS');
+        man_help('LIMITATIONS');
+        return
+    }
     man_toc(),                  return if ($hlp =~ /^toc|content/i);
     man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
     man_wiki('colon'),          return if ($hlp =~ /^(gen-)?wiki$/);
@@ -1165,7 +1170,7 @@ printhelp($ARGV[0]) unless (defined caller);
 ## -------------------------------------
 # All documentation is in plain ASCII format.
 # Following notations / markups are used:
-#   TITEL
+#   TITLE
 #       Titles start at beginning of a line, i.g. all upper case characters.
 #     SUB-Title
 #       Sub-titles start at beginning of a line preceeded by 4 or 6 spaces.
@@ -1190,7 +1195,7 @@ printhelp($ARGV[0]) unless (defined caller);
 #
 #   All head lines for sections (see TITLE above) are preceeded by 2 empty lines
 #   All head lines for commands and options should contain just this command
-#   or option, aliases should be written in theor own line (to avoid confusion
+#   or option, aliases should be written in their own line (to avoid confusion
 #   in some other parsers, like Tcl).
 #
 # Initilly the documentation was done using perl's doc format (perldoc, POD).
@@ -1800,6 +1805,10 @@ OPTIONS
 
           Show  KNOWN PROBLEMS  section with  description of known  error and
           warning messages.
+
+      --help=FAQ
+
+          Show  KNOWN PROBLEMS  and  LIMITATIONS  section.
 
       --help=glossar
 
@@ -3438,7 +3447,7 @@ CIPHER NAMES
         herein.
 
         Mind the traps and dragons with cipher names and what number they are
-        actually mapped. In particular when  --lib,  --exe  or  --openssl 
+        actually mapped to. In particular when  --lib,  --exe  or  --openssl 
         options are in use. Always use these options with  +list command too.
 
     Name Rodeo
@@ -3497,6 +3506,10 @@ CIPHER NAMES
 
 
 KNOWN PROBLEMS
+
+        This section describes knwon problems, and known error messages which
+        may occour when using $0. This sections can be used as FAQ too
+        as it gives hints and workarounds.
 
     Segmentation fault
 
@@ -3840,7 +3853,7 @@ INSTALLATION
 
         For all following installation examples we assume:
           * openssl-1.0.2-chacha.zip or openssl-1.0.2d.tar.gz
-          * /usr/local as bae installation directory
+          * /usr/local as base installation directory
           * a bourne shell (sh) compatible shell
 
     Example: Precompiled OpenSSL
