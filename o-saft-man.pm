@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.76 16/02/23 18:26:53";
+my  $man_SID= "@(#) o-saft-man.pm 1.77 16/02/23 21:26:59";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -113,6 +113,7 @@ our %man_text = (
         'ARIA'      => "128-bit Symmetric Block Cipher",
         'ASN'       => "Autonomous System Number",
         'ASN.1'     => "Abstract Syntax Notation number One",
+        'BACPA'     => "Blockwise-adaptive chosen-plaintext attack",
         'BEAR'      => "block cipher combining stream cipher and hash function",
         'BDH'       => "Bilinear Diffie-Hellman",
         'BEAST'     => "Browser Exploit Against SSL/TLS",
@@ -280,6 +281,12 @@ our %man_text = (
         'ICM'       => "Integer Counter Mode (alias for CTR)",
         'IDEA'      => "International Data Encryption Algorithm (by James Massey and Xuejia Lai)",
         'IFC'       => "Integer Factorization Cryptography",
+        'IGE'       => "Infinite Garble Extension",
+        'IND-BACPA' => "Indistinguishability of encryptions under blockwise-adaptive chosen-plaintext attack",
+        'IND-CCA'   => "Indistinguishability of encryptions under chosen-cipgertext attack",
+        'IND-CPA'   => "Indistinguishability of encryptions under chosen-plaintext attack",
+        'INT-CTXT'  => "Integrity of ciphertext",
+        'INT-PTXT'  => "Integrity of plaintext",
         'ISAKMP'    => "Internet Security Association and Key Management Protocol",
         'IV'        => "Initialization Vector",
         'JSSE'      => "Java Secure Socket Extension",
