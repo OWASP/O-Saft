@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.77 16/02/23 21:26:59";
+my  $man_SID= "@(#) o-saft-man.pm 1.78 16/03/04 15:47:58";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -79,7 +79,7 @@ if (open(DATA, $wer)) {
             # we only want to catch header lines, hence all capital letters
             s/ ((?:DEBUG|RC|USER)-FILE)/ X&$1&/g;
             s/ (CONFIGURATION (?:FILE|OPTIONS))/ X&$1&/g;
-            s/ (COMMANDS|OPTIONS|RESULTS|CHECKS|OUTPUT) / X&$1& /g;
+            s/ (COMMANDS|OPTIONS|RESULTS|CHECKS|OUTPUT|INSTALLATION) / X&$1& /g;
             s/ (CUSTOMIZATION|SCORING|LIMITATIONS|DEBUG|EXAMPLES) / X&$1& /g;
         }
         s#\$VERSION#$version#g;         # add current VERSION
@@ -1266,6 +1266,9 @@ QUICKSTART
         * Show supported (enabled) ciphers with their DH parameters:
           $0 +cipher-dh example.tld
 
+        * Test all ciphers, even if not supported by local SSL implementation
+          $0 +cipherraw example.tld
+
         * Show details of certificate and connection of target:
           $0 +info example.tld
 
@@ -1289,10 +1292,10 @@ QUICKSTART
         * Start the simple GUI
           o-saft.tcl
 
-        For more specialised test cases, refer to the  COMMANDS  and  OPTIONS
+        For more specialised test cases, refer to the  COMMANDS  and  OPTIONS 
         sections below. For more examples please refer to  EXAMPLES  section.
 
-        For more details, please see  INSTALLATION  below.
+        For more details, please see  X&Requirements&  and  INSTALLATION  below.
 
 
 WHY?
@@ -1415,22 +1418,32 @@ TECHNICAL INFORMATION
 
         For checking all ciphers and all protocols with  +cipherall  command,
         just perl (5.x) without any modules is required.
+
         For  +info  and  +check  (and all related) commands,  perl (5.x) with
         following modules (minimal version) is required:
 
-          * IO             1.25 (2011)
-          * IO::Socket:SSL 1.37 (2011)
-          * IO::Socket:SSL 1.90 (2013)
-          * Net::DNS       0.66 (2011)
-          * Net::SSLeay    1.49 (2012)
+          * IO              1.25 (2011)
+          * IO::Socket::SSL 1.37 (2011)
+          * IO::Socket::SSL 1.90 (2013)
+          * Net::DNS        0.66 (2011)
+          * Net::SSLeay     1.49 (2012)
 
         However, it is recommended to use the most recent version of the mod-
-        ules which then gives more accurate results and less warnings.   Also
-        an openssl(1) executable should be available, but is not mandatory.
+        ules which then gives more accurate results and less warnings. If the
+	modules are missing, they can be installed i.e. with:
+
+          cpan Net::SSLeay
+
+	Note: if you want to use advanced features of openssl or Net::SSLeay,
+	please see  INSTALLTION  section how to compile and install the tools
+	fully customized.
+
+	Also an openssl executable should be available, but is not mandatory.
 
         For checking DH parameters of ciphers, openssl 1.0.2  or newer should
         be available. If an older version of openssl is found, we try hard to
-        extract the DH parameters from the data returned by the server.
+        extract  the DH parameters from the  data returned by the server, see
+	+cipher-dh  command.
 
 
 RESULTS
@@ -3971,10 +3984,10 @@ INSTALLATION
               echo == patch files
               echo "edit SSLeay.xs and change some #if as described below"
               env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
-                    INC=/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
-                    DESTDIR=/usr/local/
+                    INC=/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
               make
               make install
+              cd /tmp && $0 +version
 
         SSLeay.xs needs to be changed as follows:
           * search for
