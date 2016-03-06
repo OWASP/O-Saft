@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.434 16/01/21 23:59:36",
+    SID         => "@(#) yeast.pl 1.434a 16/03/04 23:59:59",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -74,11 +74,13 @@ BEGIN {
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
     # Unfortunately perl's BEGIN has following limits and restrictions:
-    #   - constants can be defined befor and used herein 
+    #   - constants can be defined before and used herein 
     #   - sub can be defined herein and used later
     #   - variables can not be defined herein and used later
     #   - some file handles (like <DATA>) are not yet available
     #   - strict sequence of definitions and usage (even for variables in subs)
+    # subs used in the BEGIN block must be defined in the BEGIN block or before
+    # the BEGIN block (which is a crazy behaviour of perl).
     # To make the program work as needed,  these limitations would force to use
     # some dirty code hacks and split the flow of processing in different parts
     # of the source. Therefore this scope is used for --help=* options only.
@@ -215,7 +217,7 @@ sub _load_file($$) {
 ## read RC-FILE if any
 ## -------------------------------------
 _y_TIME("cfg{");
-_y_EXIT("exit=CONF  - RC-FILE start");
+_y_EXIT("exit=CONF0 - RC-FILE start");
 my @rc_argv = "";
 $arg = "./.$me";    # check in pwd only
 if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
@@ -231,6 +233,7 @@ if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
         _print_read("$arg", "RC-FILE: $!") if (grep(/--v/i, @ARGV) > 0);;
     }
 }
+_y_EXIT("exit=CONF0 - RC-FILE start");
 
 push(@argv, @ARGV); # got all now
 push(@ARGV, "--no-header") if grep(/--no-?header/, @argv); # if defined in RC-FILE, needed in _warn()
