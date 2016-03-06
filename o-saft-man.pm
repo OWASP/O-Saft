@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.78 16/03/04 15:47:58";
+my  $man_SID= "@(#) o-saft-man.pm 1.79 16/03/06 11:34:29";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1155,12 +1155,24 @@ sub printhelp($) {
         print "# $parent legacy values:\t" . join(" ",  @{$cfg{'legacys'}});
         return;
     }
-
     if ($hlp =~ m/^opts?$/i)    { # print program's options
         my @txt  = grep(/^=head. (General|Option|--)/, @DATA);  # grep options only
         map({$_ =~ s/^=head. *//} @txt);                        # remove leading markup
         my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
         print join("", "OPTIONS\n", splice(@txt, 0, $end));     # print anything before end
+        return;
+    }
+    if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description, is not yet public
+        # quick&dirty hack, may be improved in future ...
+        $skip = 1;
+        open(FID, $wer) or die(STR_ERROR, "$!");
+        while (<FID>) {
+            $skip = 0 if (/^#\s+Program Code/);
+            next if ($skip gt 0);
+            last if (($skip eq 0) and (/^$/));
+            print;
+        }
+        close(FID);
         return;
     }
     # nothing matched so far, try to find special section and only print that
@@ -1198,7 +1210,7 @@ printhelp($ARGV[0]) unless (defined caller);
 #   $0
 #       Will be replaced by caller's name (i.g. o-saft.pl).
 #   Referenzes to titles are written in all upper case characters and prefixed
-#   and suffixed with 2 spaces (except on line end).
+#   and suffixed with 2 spaces.
 #
 #   All head lines for sections (see TITLE above) are preceeded by 2 empty lines
 #   All head lines for commands and options should contain just this command
@@ -1209,10 +1221,10 @@ printhelp($ARGV[0]) unless (defined caller);
 # The advantage having a well formated output available on various platforms,
 # resulted in more difficult efforts extracting information from there.
 # In particular following problems occoured:
-#   * perldoc is not available on all platforms by default
-#   * POD is picky when text lines start with a whitespace
-#   * programatically extracting data from POD requires additional substitutes
-#   * POD is slow
+#   - perldoc is not available on all platforms by default
+#   - POD is picky when text lines start with a whitespace
+#   - programatically extracting data from POD requires additional substitutes
+#   - POD is slow
 #
 # Changing POD to plain ASCII
 #   equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm
@@ -1227,6 +1239,7 @@ printhelp($ARGV[0]) unless (defined caller);
 
 __END__
 __DATA__
+
 
 NAME
 
@@ -1266,7 +1279,7 @@ QUICKSTART
         * Show supported (enabled) ciphers with their DH parameters:
           $0 +cipher-dh example.tld
 
-        * Test all ciphers, even if not supported by local SSL implementation
+        * Test all ciphers, even if not supported by local SSL implementation:
           $0 +cipherraw example.tld
 
         * Show details of certificate and connection of target:
@@ -1326,9 +1339,7 @@ WHY?
           $0 +hsts_sts example.tld
 
         For more, please see  EXAMPLES  section below.
-#
-#       or, if written in perl, they mainly use  Net::SSLeay(1)  or 
-#       IO::Socket::SSL(1)  which lacks CRL and OCSP and EV checkings.
+
 
 SECURITY
 
@@ -1344,7 +1355,15 @@ SECURITY
         do such installations into directoies specially prepared for use with
         $0 . No other tools of your system should use these installations
         i.e. by accident or because your environment variables point to them.
-        A better decision would be to use a separate testing system.
+
+        Note that compilation and installation of additional tools  (openssl, 
+        Net::SSLeay, etc.) uses known insecure configurations and features!
+        This is essential to make $0 able to check for such insecurities.
+
+        It is  highly recommended to do these installations and use the tools
+        on a separate testing system.
+
+        DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYTEMS.
 
 
 TECHNICAL INFORMATION
@@ -1923,10 +1942,6 @@ OPTIONS
       --cgi-exec
 
           Internal use for CGI mode only.
-
-      --exit=KEY
-
-          For debugging only. 'KEY' see:  'grep exit= $0'
 
     Options for SSL tool
 
@@ -2755,6 +2770,11 @@ OPTIONS
       --no-warning
 
           Do not print warning messages (**WARNING:).
+
+      --exit=KEY
+
+          For debugging only: terminate $0 at specified 'KEY'.
+          For 'KEY' please see:  'grep exit= $0'
 
     Options vs. Commands
 
@@ -4306,7 +4326,8 @@ HACKER's INFO
         filled with any perl code.  Empty stubs of the functions are prepared
         in  o-saft-usr.pm.  See also  USER-FILE.
 
-# Program Code below is not shown with +help
+# Description about Program Code and Documentation
+# It is not shown with +help but can be retrieved with: '$0 --help=ProgramCode
 #
 #    Program Code
 #
@@ -4319,29 +4340,35 @@ HACKER's INFO
 #        variants of the same code.
 #        Please keep this in mind, before trying to unitise the code. 
 #
-#      Documentation
+#        Note:  following descriptions mainly uses the term "sub" (the perlish
+#        term) when talking about functions, procedures, and/or methods.
 #
-#        All documentation of code details is  close to the corresponding code
-#        lines. Some special comment lines are used, see  X&Comments&  below.
+#      Syntax style
 #
-#        All documentation for the user is written in  plain ASCII text format
-#        at end of this file  o-saft-usr.pm.
+#        Identation is 4 spaces. TABs would be the better solution, IMHO.
+#        Unfortunately some repositories have issues with TABs,  so spaces are
+#        used only. Sick.
 #
-#        All documentation was initially written in perl's POD format. After 2
-#        years of development, it seems that POD wasn't the best decission, as
-#        it makes extracting information from documentation complicated, some-
-#        times. It's also a huge performance penulty on all platforms.
+#        Additional spacing is used to format the code for better human reada-
+#        bility. There is no strict rule about this, it's just done as needed.
 #
-#      General
+#        Empty lines (empty, without any space!) are used to group code blocks
+#        logically. However, there is no strict rule about this too.
 #
-#        Perl's  'die()'  is used whenever an unrecoverable error occurs.  The
-#        message printed will always start with '**ERROR: '.
-#        warnings are printed using perl's  'warn()'  function and the message
-#        always begins with '**WARNING: '.
+#        K&R-style curly brackets for subs and conditions are used.
+#        K&R-style round brackets for subs and conditions are used (means that
+#        definitions of subs, and calls of subs  do not use  spaces before the
+#        opening bracket, while conditions use spaces).
 #
-#        All 'print*()' functions write on STDOUT directly.  They are slightly
-#        prepared for using texts from  the configuration (%cfg, %checks),  so
-#        these texts can be adapted easily (either with  OPTIONS  or in code).
+#        Calls of subs are written in  K&R-style using round brackets, and the
+#        perlisch way without round brackets. This may be unitised in future.
+#
+#        Short subs and conditions may be written in just one line.
+#        Note: there is no need for each command in its one line, as debugging
+#        on code level is rarely done.
+#
+#        subs are defined with number and type of parameters to have a minimal
+#        syntax check at compile time.
 #
 #        The  code  mainly uses  'text enclosed in single quotes'  for program
 #        internal strings such as hash keys, and uses "double quoted text" for
@@ -4349,11 +4376,56 @@ HACKER's INFO
 #        Strings used for  RegEx are always enclosed in single quotes.  Reason
 #        is mainly to make searching texts a bit easier.
 #
-#        Calling external programs uses 'qx()' rather than backticks or perl's
-#        'system()' function.  Also note that it uses braces insted of slashes
-#        to avoid confusion with RegEx.
+#      Code style
 #
-#        The code flow mainly uses postfix conditions, means the if-conditions
+#        Global variables are used, see X&Variables& for details below.
+#
+#        Variables are declared at beginning of subs. I.g. we do not use local
+#        or my declarations in blocks (there may be some exceptions).
+#
+#        The code tries to avoid if-else constructs as much as possible. If an
+#        else condition is used, it is written in one line:   } else {  .
+#        elsif is used in "borrowed" code only ;-)
+#
+#        Early return statements in subs are prefered, rather than complicated
+#        and nested conditions. There are also goto statements in parsers, but
+#        return statements are prefered.
+#
+#        Most code is seqential instead of using functions, except the code is
+#        used multiple times. This may be changed in future ...
+#        It is not intended to have OO-code,  even perl's  OO capabilities are
+#        used when rational.
+#
+#      General
+#
+#        Exceptions are not used, there is no need for them.
+#
+#        In general, the code *must not* use any additional libraries. We know
+#        that there exist infinite marvellous libraries and frameworks (called
+#        modules in perl), which would make some programming simpler,  but one
+#        of the main goals of this tool is that it  should work on  any system
+#        with just the core language (i.e. perl) installed. We do not want any
+#        additional dependency, in particular no dependency on versions beside
+#        the core language.  Currently some perl modules are an exception, and
+#        will be removed in future.
+#
+#        Perl's  'die()'  is used whenever an unrecoverable error occurs.  The
+#        message printed will always start with '**ERROR: '.
+#        warnings are printed using perl's  'warn()'  function and the message
+#        always starts with '**WARNING: '.
+#
+#        All output is written to STDOUT.  However perl's 'die()' and 'warn()'
+#        write on STDERR. Only debug messages inside $0 are written to STDERR.
+#
+#        All 'print*()' functions write to STDOUT directly.  They are slightly
+#        prepared for using texts from  the configuration (%cfg, %checks),  so
+#        these texts can be adapted easily (either with  OPTIONS  or in code).
+#
+#        Calling external programs uses 'qx()' rather than backticks or perl's
+#        'system()' function.  Also note that it uses round brackets insted of
+#        slashes to avoid confusion with RegEx.
+#
+#        The code flow often uses postfix conditions, means the  if-conditions
 #        are written right of the command to be executed. This is done to make
 #        the code better readable (not disturbed by conditions).
 #
@@ -4363,7 +4435,7 @@ HACKER's INFO
 #
 #        The code is most likely not thread-safe. Anyway, we don't use them.
 #
-#        For debugging the code the  --trace  option can be used.  See  DEBUG
+#        For debugging the code, the  --trace  option can be used. See  DEBUG 
 #        section below for more details. Be prepared for a lot of output!
 #
 #      Comments
@@ -4375,12 +4447,16 @@ HACKER's INFO
 #          #!#           Comments not to be removed in compressed code.
 #          #?            Description of sub.
 #          ##            Code sections (documents program flow).
+#          # func        name of sub behind the closing bracket of sub
 #
 #      Variables
 #
-#        Most functions use global variables (even if they are defined in main
-#        with 'my'). These variables are mainly: @DATA, @results, %cmd, %data,
-#        %cfg, %checks, %ciphers, %prot, %text.
+#        As explained above, global variables are used to avoid definitions of
+#        complex subs with various parameters.
+#
+#        Most subs use global variables (even if they are defined in main with
+#        'my'). These variables are mainly: @DATA, @results, %cmd, %data, %cfg,
+#        %checks, %ciphers, %prot, %text.
 #
 #        Variables defined with 'our' can be used in   o-saft-dbx.pm   and
 #        o-saft-usr.pm.
@@ -4388,14 +4464,14 @@ HACKER's INFO
 #        For a detailed description of the used variables, please refer to the
 #        text starting at the line  '#!# set defaults'.
 #
-#      Sub Names
+#      Function names
 #
-#        Some rules used for function names:
+#        Some rules used for sub names:
 #
 #          check*        Functions which perform some checks on data.
 #          print*        Functions which print results.
-#          get_*         Functions to get a value from internal ciphers structure.
-#          _<function_name>    Some kind of helper (internal) functions.
+#          get_*         Functions to get values from internal data structure.
+#          _<function_name>    Some kind of helper (internal) function.
 #          _trace*
 #          _y*           Print information when  --trace  is in use.
 #          _v*print      Print information when  --v  is in use.
@@ -4424,16 +4500,16 @@ HACKER's INFO
 #      Debugging, Tracing
 #
 #        Most functionality for trace, debug or verbose output is encapsulated
-#        in functions (see X&Sub Names& above). These functions are defined as
+#        in functions (see X&Function names& above). These subs are defined as
 #        empty stubs in o-saft.pl. The real definitions are in  o-saft-dbx.pm,
 #        which is loaded on demand when any  --trace*  or --v  option is used.
 #        As long as these options are not used,  o-saft.pl  works without
 #        o-saft-dbx.pm.
 #
-#        Trace messages always start with  '#O-Saft :'.  Debug messages always
-#        start with  '#o-saft.pl::'.
+#        Trace messages always start with  '#O-Saft :'.
+#        Debug messages always start with  '#o-saft.pl::'.
 #        Following formats are used:
-#          #o-saft.pl:: some data           - output from o-saft.pl#s main
+#          #o-saft.pl:: some data           - output from o-saft.pl's main
 #          #o-saft.pl::subfunc(){           - inital output in subfunc
 #          #o-saft.pl::subfunc: some data   - some output in subfunc
 #          #o-saft.pl::subfunc() = result } - result output of subfunc
@@ -4442,12 +4518,19 @@ HACKER's INFO
 #        Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
 #        is hard-coded.
 #
-#      Code style
-#
-#        As explained above, global variables are used to avoid definitions of
-#        complex functions with various parameters.
-#        Most code is seqential instead of using functions, except the code is
-#        used multiple times. This may be changed in future ...
+#      Abstract program flow
+#          check special options and command (+exec, +cgi, --envlibvar)
+#          read RC-FILE, DEBUG-FILE and USER-FILE if necessary
+#          initialize internal data structure
+#          scan options and arguments
+#          perform commands without connection to target
+#          loop over all specified targets
+#              print DNS stuff
+#              open connction and retrive information
+#              print ciphers
+#              print protocols
+#              print information
+#              print checks
 #
 #      Program flow
 #
@@ -4474,20 +4557,21 @@ HACKER's INFO
 #        anywhere to solve dependencies. To avoid multiple checks,  each check
 #        function sets and checks a flag if already called, see  $cfg{'done'}.
 #
-#      Abstract program flow
-#          check special options and command (+exec, +cgi, --envlibvar)
-#          read RC-FILE, DEBUG-FILE and USER-FILE if necessary
-#          initialize internal data structure
-#          scan options and arguments
-+          perform commands without connection to target
-#          loop over all specified targets
-#              print DNS stuff
-#              open connction and retrive information
-#              print ciphers
-#              print protocols
-#              print information
-#              print checks
+#      Documentation
 #
+#        All documentation of code details is  close to the corresponding code
+#        lines. Some special comment lines are used, see  X&Comments&  above.
+#        Note: comments describe *why* the code is written in some way  (means
+#        the logic of the code),  and not  *what* the code does (which is most
+#        likely obvious).
+#
+#        All documentation for the user is written in  plain ASCII text format
+#        at end of this file  o-saft-usr.pm.
+#
+#        All documentation was initially written in perl's POD format. After 2
+#        years of development, it seems that POD wasn't the best decission, as
+#        it makes extracting information from documentation complicated, some-
+#        times. Using POD is also a huge performance penulty on all platforms.
 
 
 DEBUG
