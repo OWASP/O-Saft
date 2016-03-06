@@ -415,7 +415,7 @@ our %data0  = ();   # same as %data but has 'val' only, no 'txt'
                     # contains values from first connection only
 
     # NOTE do not change names of keys in %data and all %check_* as these keys
-    #      are used in output with --tracekey
+    #      are used in output with --trace-key
 our %data   = (     # connection and certificate details
     # values from Net::SSLinfo, will be processed in print_data()
     #!#----------------+-----------------------------------------------------------+-----------------------------------
@@ -4793,7 +4793,7 @@ sub printtitle($$$$) {
 
 sub print_line($$$$$$)  {
     #? print label and value separated by separator
-    #? print hostname and key depending on --showhost and --tracekey option
+    #? print hostname and key depending on --showhost and --trace-key option
     my ($legacy, $host, $port, $key, $text, $value) = @_;
         $text   = STR_NOTXT if (! defined $text);   # defensive programming: ..
         $value  = STR_UNDEF if (! defined $value);  # .. missing variable declaration
