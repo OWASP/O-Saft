@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.434a 16/03/04 23:59:59",
+    SID         => "@(#) yeast.pl 1.434b 16/03/04 23:59:59",
     STR_VERSION => "07.01.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -254,7 +254,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     $err = _load_file($arg, "trace file");
     if ($err ne "") {
-        warn  STR_ERROR, "'$err' '$arg'; exit" unless (-e $arg);
+        die STR_ERROR, "$err" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -6295,13 +6295,19 @@ if (_is_do('cipherraw') or _is_do('version')
     or ($cfg{'starttls'})
     or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
    ) {
-    $err = _load_file("Net/SSLhello.pm", "O-Saft module"); # must be found with @INC
-    warn  STR_ERROR, "'$err' '$arg'" if ($err ne "");
+    $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
+    if ($err ne "") {
+        die  STR_ERROR, "$err"  if (! _is_do('version'));
+        warn STR_ERROR, "$err";     # no reason to die for +version
+    }
     $cfg{'usehttp'} = 0;            # makes no sense for starttls
     # TODO: not (yet) supported for proxy
 }
-$err = _load_file("Net/SSLinfo.pm", "O-Saft module");
-warn  STR_ERROR, "'$err' '$arg'" if ($err ne "");
+$err = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
+if ($err ne "") {
+    die  STR_ERROR, "$err"  if (! _is_do('version'));
+    warn STR_ERROR, "$err";         # no reason to die for +version
+}
 _y_TIME("inc}");
 
 ## check for supported SSL versions
