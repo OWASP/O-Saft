@@ -81,7 +81,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.30 16/01/09 21:05:41";
+my  $SID    = "@(#) o-saft-dbx.pm 1.31 16/03/06 07:40:49";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -117,7 +117,7 @@ sub _yeast_trac($$){
                         last SWITCH;
                     };
         # DEFAULT
-                        warn "**WARNING: user defined type '$_' skipped";
+                        warn STR_WARN . " user defined type '$_' skipped";
     } # SWITCH
 
 } # _yeast_trac()
