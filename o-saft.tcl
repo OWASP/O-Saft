@@ -1,9 +1,9 @@
 #!/usr/bin/wish
-# restarts using wish \
+## restarts using wish \
 exec wish "$0" --
 
-## above exec quick&dirt for Mac OS X, below would be better
-##  exec wish "$0" ${1+"$@"}
+# above exec quick&dirt for Mac OS X, below would be better
+#  exec wish "$0" ${1+"$@"}
 
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.45 Winter Edition 2015
+#?      @(#) 1.47 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -153,7 +153,10 @@ exec wish "$0" --
 package require Tcl     8.5
 package require Tk      8.5
 
-set cfg(SID)    {@(#) o-saft.tcl 1.45 15/12/19 17:20:54 Sommer Edition 2015}
+#_____________________________________________________________________________
+#____________________________________________________________ configuration __|
+
+set cfg(SID)    {@(#) o-saft.tcl 1.47 16/03/06 21:45:54 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -282,6 +285,9 @@ set cfg(AQUA)   "CONFIGURATION Aqua (Mac OS X)"
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
 set tab(0)      ""; # contains results of cfg(SAFT)
 
+#_____________________________________________________________________________
+#_______________________________________________________ filter definitions __|
+
 proc txt2arr {str} {
     #? convert string to arrays
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
@@ -363,14 +369,14 @@ txt2arr [string map "
 # ___                                                                   but not:  # [keyword:
   _ME_	-regexp	0	black	white	{}	0	.*?_ME_.*\n\n	lines contaning program name
  Label:	-regexp	1	{}	{}	__bold	0	^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*	label of result string from start of line until :
+  perl	-regexp	0	purple	{}	{}	0	^Use of .*perl	lines with perl warnings
   usr1	-regexp	0	{}	{}	{}	0	{}	{}
-  usr2	-regexp	0	{}	{}	{}	0	{}	{}
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
 #      ** columns must be separated by exactly one TAB **
 }]; # filter
 
-
-######################################################################## procs
+#_____________________________________________________________________________
+#________________________________________________________________ functions __|
 
 proc str2obj {str} {
     #? convert string to valid Tcl object name; returns new string
@@ -1128,7 +1134,8 @@ proc osaft_exec {parent cmd} {
     update_status "$do done."
 }; # osaft_exec
 
-######################################################################### main
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
 
 set targets ""
 foreach arg $argv {
@@ -1140,10 +1147,6 @@ foreach arg $argv {
         default { puts "**WARNING: unknown parameter '$arg'; ignored" }
     }
 }
-
-wm title        . $cfg(TITLE)
-wm iconname     . [string tolower $cfg(TITLE)]
-wm geometry     . $myX(geoS)
 
 variable logo [image create photo -data {
   R0lGODlhGAAYAOMOAAAAAAARAQASAQASAgATAQATAgBwLgCBNgCBNwCCNQCCNgCCNwCDNiZ/AP//
@@ -1159,12 +1162,20 @@ option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
 
-set w ""
+## create toplevel window
+wm title        . $cfg(TITLE)
+wm iconname     . [string tolower $cfg(TITLE)]
+wm geometry     . $myX(geoS)
 
+set w ""
 pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
 
 ## create command buttons for simple commands and help
 pack [frame     $w.fq] -fill x -side bottom
+if {$cfg(VERB)==1} {
+    pack [button $w.fq.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
+    # TODO: does not work proper 'cause passing --v fails
+}
 pack [button    $w.fq.bq -text "Quit"  -bg $myC(close) -command {exit}] -side right -padx $myX(rpad)
 pack [frame     $w.fc] -fill x
 pack [button    $w.fc.bs -text "Start" -bg $myC(start) -command "osaft_exec $w.fc {Start}"] -side left -padx 11
@@ -1219,8 +1230,8 @@ foreach host $targets {         # display hosts
 # add one Host: line  with {+} and {!} button
 create_host $w
 
-# some verbose output must be at end when window is created,
-# otherwise wm data is missing or mis-leading
+## some verbose output
+# must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1} {
     puts "PRG $argv0"
     puts "CFG"
