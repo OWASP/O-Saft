@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.47 Winter Edition 2015
+#?      @(#) 1.48 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -156,7 +156,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.47 16/03/06 21:45:54 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.48 16/03/07 16:12:46 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -1219,6 +1219,7 @@ pack [frame     $w.fl -relief sunken -borderwidth 1] -fill x
 pack [text      $w.fl.t -height 2 -relief flat -background $myC(status)] -fill x
 set cfg(objS)   $w.fl.t
 $cfg(objS) config -state disabled
+if {$cfg(TIP) == 1} { update_status {**WARNING: Ballon help not available because package "tooltip" not installed} }
 
 ## add hosts from command line
 foreach host $targets {         # display hosts
