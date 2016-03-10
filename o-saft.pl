@@ -124,7 +124,7 @@ our $mename = "yeast  ";
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
 unshift(@INC, "$mepath", "$mepath/lib");
-#_dbx "INC: ".join(" ",@INC) . "\n";
+#dbx print STDERR "INC: ".join(" ",@INC) . "\n";
 
 my  $arg    = "";
 my  @argv   = ();   # all options, including those from RC-FILE
@@ -233,7 +233,7 @@ if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
         _print_read("$arg", "RC-FILE: $!") if (grep(/--v/i, @ARGV) > 0);;
     }
 }
-_y_EXIT("exit=CONF0 - RC-FILE start");
+_y_EXIT("exit=CONF1 - RC-FILE end");
 
 push(@argv, @ARGV); # got all now
 push(@ARGV, "--no-header") if grep(/--no-?header/, @argv); # if defined in RC-FILE, needed in _warn()
