@@ -207,7 +207,7 @@ BEGIN {
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-my $SID         =  '@(#) o-saft-lib.pm 1.6 16/01/31 10:57:57';
+my $SID         =  '@(#) o-saft-lib.pm 1.7 16/03/14 13:31:28';
 
 use constant {
   # STR_VERSION => 'dd.mm.yy',  # must be defined in calling program
@@ -903,6 +903,13 @@ use constant {
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
+
+# TODO: interanl wrappers for main's methods
+sub _trace(@)   { ::_trace(@_); }
+sub _trace0(@)  { ::_trace(@_); }
+sub _trace1(@)  { ::_trace(@_); }
+sub _trace2(@)  { ::_trace(@_); }
+sub _trace3(@)  { ::_trace(@_); }
 
 =pod
 
