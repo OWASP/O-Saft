@@ -95,7 +95,7 @@ BEGIN {
 
     # handle simple help very quickly
     if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
-    print STDERR STR_WARN, "on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
+    print STDERR "**WARNING: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
         # be smart to users if systems behave strange :-/
     # get first matching argument
     my ($arg) = grep(/^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
