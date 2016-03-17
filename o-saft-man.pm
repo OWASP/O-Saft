@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.79 16/03/06 11:34:29";
+my  $man_SID= "@(#) o-saft-man.pm 1.80 16/03/17 14:02:27";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4038,6 +4038,11 @@ INSTALLATION
         Note that  Net::SSLeay  will be installed in '/usr/local/' then. This
         can be adapted to your needs by passing another path to the  'PREFIX'
         and  'DESTDIR'  parameter.
+
+        Following command can be used to check  which methods are avilable in
+        Net::SSLeay, hence above patches can be verified:
+
+              perl -MNet::SSLinfo -le 'print Net::SSLinfo::test_ssleay();'
 
     Testing OpenSSL
 
