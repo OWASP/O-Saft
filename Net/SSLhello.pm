@@ -119,7 +119,7 @@ use constant {
 #defaults for global parameters
 $Net::SSLhello::trace        	 = 0;# 1=simple debugging Net::SSLhello
 $Net::SSLhello::traceTIME    	 = 0;# 1=trace prints timestamp
-$Net::SSLhello::usesni       	 = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name
+$Net::SSLhello::usesni       	 = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name; 3: toggle sni; 6: toggle sni and use sni with sni_name
 $Net::SSLhello::sni_name     	 = "1";# name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to usesni=2 will be done
 $Net::SSLhello::timeout      	 = 2;# time in seconds
 $Net::SSLhello::retry        	 = 3;# number of retry when timeout occurs
@@ -1107,7 +1107,7 @@ sub printCipherStringArray ($$$$$@) {
     
     if ($usesni) {
         $sni = "SNI";
-        $sni .= " ($Net::SSLhello::sni_name)" if ( ($Net::SSLhello::usesni >=2) || ( ($Net::SSLhello::sni_name ne "1") && ($Net::SSLhello::usesni ==1) ) );  ###FIX: quickfix until migration to usesni=2 is completed);
+        $sni .= " ($Net::SSLhello::sni_name)" if ( ($Net::SSLhello::usesni ==2) || ($Net::SSLhello::usesni >=6) || ( ($Net::SSLhello::sni_name ne "1") && (($Net::SSLhello::usesni ==1) || $Net::SSLhello::usesni ==3) ) );  ###FIX: quickfix until migration to usesni=2 is completed);
     } else {
         $sni = "no SNI";
     }
@@ -3302,7 +3302,7 @@ sub _compileClientHelloExtensions ($$$$@) {
 
     ### Data for Extension 'Server Name Indication' in reverse order 
         $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/g;  # delete Spaces, \r and \n
-        unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+        unless ( ($Net::SSLhello::usesni ==2) || ($Net::SSLhello::usesni >=6) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
             $clientHello{'extension_sni_name'}     = $host;                                      # Server Name, should be a Name no IP
         } else {
             $clientHello{'extension_sni_name'}     = ($Net::SSLhello::sni_name) ? $Net::SSLhello::sni_name : ""; # Server Name, should be a Name no IP
@@ -3547,8 +3547,8 @@ sub parseHandshakeRecord ($$$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>
     $@="";
 
     my $sni = "";
-    unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
-        $sni = "'$host'" if ($Net::SSLhello::usesni ==1); # Server Name, should be a Name no IP
+    unless ( ($Net::SSLhello::usesni ==2) || ($Net::SSLhello::usesni >=6) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+        $sni = "'$host'" if (($Net::SSLhello::usesni ==1) || ($Net::SSLhello::usesni ==3)); # Server Name, should be a Name no IP
     } else { # different sni_name
         $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
     }
@@ -3787,8 +3787,8 @@ sub parseHandshakeRecord ($$$$$$$;$) {  # return (<cipher>, <cookie-len (DTLDS)>
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
                             my $sni = "";
-                            unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
-                                $sni = "'$host'" if ($Net::SSLhello::usesni ==1); # Server Name, should be a Name no IP
+                            unless ( ($Net::SSLhello::usesni ==2) || ($Net::SSLhello::usesni >=6) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+                                $sni = "'$host'" if (($Net::SSLhello::usesni ==1) || ($Net::SSLhello::usesni ==3) ); # Server Name, should be a Name no IP
                             } else { # different sni_name
                                 $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
                             }
@@ -3961,8 +3961,8 @@ sub parseServerHello ($$$;$) { # Variable: String/Octet, dass das Server-Hello-P
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
                             my $sni = "";
-                            unless ( ($Net::SSLhello::usesni >=2) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
-                                $sni = "'$host'" if ($Net::SSLhello::usesni ==1); # Server Name, should be a Name no IP
+                            unless ( ($Net::SSLhello::usesni ==2) || ($Net::SSLhello::usesni >=6) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
+                                $sni = "'$host'" if (($Net::SSLhello::usesni ==1) || ($Net::SSLhello::usesni ==3) ) ; # Server Name, should be a Name no IP
                             } else { # different sni_name
                                 $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
                             }

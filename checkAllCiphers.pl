@@ -77,8 +77,10 @@ OPTIONS
     --no-udp    do not test any SSL versions using UDP, like dtlsv09, ... dtlsv13
     --legacy=L  use format L in printed results
                 available formarts: compact, simple, full
-    --sni       test in SNI mode also (default)
-    --no-sni    do not test in SNI mode
+    --sni       test with 'Server Name Indication (SNI)' mode if supported by the protocol (default)
+    --no-sni    do not test with SNI mode
+    --toggle-sni
+		test with and witout SNI mode (equivalent to --sni-toggle)
     --sniname=SNINAME
                 if SNINAME is set, this Name is used in the Server Name Indication (SNI) Extension
                 (instead of the hostname)
@@ -389,8 +391,10 @@ while ($#argv >= 0) {
     # option
     if ($arg =~ /^--sni$/i)                          	{ $cfg{'usesni'}    = 1; next; }
     if ($arg =~ /^--no[_-]?sni$/i)                   	{ $cfg{'usesni'}    = 0; next; }
-    if ($arg =~ /^--sni[_-]?name$/i)                 	{ $cfg{'sni_name'} = ""; $cfg{'usesni'} *=2; next; } # sniname=""; usesni=2 -> use sni_name not the hostname (if not 0 before)
-    if ($arg =~ /^--sni[_-]?name=(.*)$/i)            	{ $cfg{'sni_name'} = $1; $cfg{'usesni'} *=2; next; } # sniname=SNINAME; usesni=2 -> use sni_name not the host name (if not 0 before)
+    if ($arg =~ /^--toggle[_-]?sni$/i)                  { $cfg{'usesni'}    = 3; next; } # test with and without SNI
+    if ($arg =~ /^--sni[_-]?toggle$/i)                  { $cfg{'usesni'}    = 3; next; } # test with and without SNI
+    if ($arg =~ /^--sni[_-]?name$/i)                 	{ $cfg{'sni_name'} = ""; $cfg{'usesni'} *=2; next; } # sniname=""; usesni=2 or 6 -> use sni_name not the hostname (if not 0 before)
+    if ($arg =~ /^--sni[_-]?name=(.*)$/i)            	{ $cfg{'sni_name'} = $1; $cfg{'usesni'} *=2; next; } # sniname=SNINAME; usesni=2 or 6 -> use sni_name not the host name (if not 0 before)
     if ($arg =~ /^--header$/i)                       	{ $cfg{'out_header'}= 1; next; }
     if ($arg =~ /^--no[_-]?header$/i)                	{ $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); next; } # push() is ugly hack to preserve option even from rc-file
     if ($arg =~ /^--?sslv?2$/i)                      	{ $cfg{'SSLv2'}     = 1; next; } # allow case insensitive
@@ -580,14 +584,16 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         my $range = $cfg{'cipherrange'};            # use specified range of constants
            $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
         push(@testing, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
-        if ($Net::SSLhello::usesni>=1) { # always test first without SNI
-            $Net::SSLhello::usesni=0;
-            @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
-            _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
-            _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
-            _trace("accepted ciphers: @accepted\n");
-            Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
-            $Net::SSLhello::usesni=$cfg{'usesni'}; # restore
+        if ($Net::SSLhello::usesni>=1) { # use SNI is set 
+	    if (($Net::SSLhello::usesni>=3) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3')) { # toggle SNI: test first without sni, old protocols: test without SNI
+	    	$Net::SSLhello::usesni=0;
+            	@accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
+            	_trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+            	_v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
+            	_trace("accepted ciphers: @accepted\n");
+            	Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, 0, @accepted);
+            	$Net::SSLhello::usesni=$cfg{'usesni'}; # restore
+	    }
             next if ($ssl eq 'SSLv2');# SSLv2 has no SNI
             next if ($ssl eq 'SSLv3');# SSLv3 has originally no SNI
 #            next if ($ssl eq 'DTLSv09');# DTLSv09 has originally no SNI(??)
