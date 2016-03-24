@@ -129,6 +129,7 @@ $Net::SSLhello::useecpoint   = 1;# use 'ec_point_formats' Extension
 $Net::SSLhello::starttls     = 0;# 1= do STARTTLS
 $Net::SSLhello::starttlsType = "SMTP";# default: SMTP
 $Net::SSLhello::starttlsDelay= 0;# STARTTLS: time to wait in Seconds (to slow down the requests)
+$Net::SSLhello::slowServerDelay = 0;# Proxy and STARTLS: Time to wait in Seconds (for slow Proxies and STARTTLS-Servers)
 $Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
 $Net::SSLhello::proxyhost    = "";#
 $Net::SSLhello::proxyport    = "";#
@@ -1059,6 +1060,7 @@ sub version { # Version of SSLhello
      _trace2 ("       starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
      _trace2 ("   starttlsType=$Net::SSLhello::starttlsType\n")    if (defined($Net::SSLhello::starttlsType));
      _trace2 ("  starttlsDelay=$Net::SSLhello::starttlsDelay\n")   if (defined($Net::SSLhello::starttlsDelay));
+     _trace2 ("slowServerDelay=$Net::SSLhello::slowServerDelay\n") if (defined($Net::SSLhello::slowServerDelay));
      _trace2 ("   experimental=$Net::SSLhello::experimental\n")    if (defined($Net::SSLhello::experimental));
      _trace2 ("      proxyhost=$Net::SSLhello::proxyhost\n")       if (defined($Net::SSLhello::proxyhost));
      _trace2 ("      proxyport=$Net::SSLhello::proxyport\n")       if (defined($Net::SSLhello::proxyport));
@@ -1491,6 +1493,7 @@ sub openTcpSSLconnection ($$) {
     my $input2="";
     my $retryCnt = 0;
     my $sleepSecs =  $Net::SSLhello::starttlsDelay;
+    my $slowServerDelay =  $Net::SSLhello::slowServerDelay || 0;
     my $suspendSecs = 0;
     my $firstMessage = "";
     my $secondMessage = "";
@@ -1766,6 +1769,10 @@ sub openTcpSSLconnection ($$) {
                 next; # retry
             } 
             alarm (0);
+            if (defined($slowServerDelay) && ($slowServerDelay>0)) {
+                _trace2 ("openTcpSSLconnection: via Proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
+                sleep ($slowServerDelay);
+            }
             # CONNECT via Proxy
             eval {
                 $input="";
@@ -1832,8 +1839,12 @@ sub openTcpSSLconnection ($$) {
 
         if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
             _trace2 ("openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]."-Protocol for Server $host:$port, Retry = $retryCnt\n");
-            select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-            select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+            # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+            if (($slowServerDelay > 0) || ($retryCnt > 0)) { # slow server or retry: sleep some s
+                _trace2 ("openTcpSSLconnection: $host:$port: wait ".($slowServerDelay||1)." sec(s) to cope with slow servers\n");
+                sleep ($slowServerDelay||1); # sleep $slowServerDelay secs or min 1 sec
+                #select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+            }
             ### STARTTLS_Phase1 (receive)
             if ($starttls_matrix[$starttlsType][1]) { 
                 eval {

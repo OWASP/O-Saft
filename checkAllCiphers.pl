@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2015-06-20";
+my $VERSION = "2016-03-24";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -102,6 +102,9 @@ OPTIONS
                 use secure renegotion
     --ssl-doubel-reneg
                 use renegotion SSL Extension also for SCSV (double send)
+    --slow-server-delay=SEC
+                additional delay n secs after a server s connected via a proxy or before starting STARTTLS. 
+                This is useful for testing connections via slow proxy chains or slow servers before sending the STARTTLS sequence
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
                 Use STARTTLS to start TLS. 
@@ -288,6 +291,7 @@ our %cfg = ( # from o-saft (only relevant parts)
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
+    'slowServerDelay' => 0,     # time to wait in seconds after a connection via proxy or before starting the STARTTLS sequence
     'starttlsDelay' => 0,       # STARTTLS: time to wait in Seconds (to slow down the requests)
     #} +---------+----------------------+-------------------------
     'sslhello' => {    # configurations for TCP SSL protocol
@@ -377,6 +381,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--proxyuser=(.+)$/i)               { $cfg{'proxyuser'}= $1; next; }
     if ($arg =~ /^--proxypass=(.+)$/i)               { $cfg{'proxypass'}= $1; next; }
     if ($arg =~ /^--proxyauth=(.+)$/i)               { $cfg{'proxyauth'}= $1; next; }
+    if ($arg =~ /^--slow[_-]?server[_-]?delay=(\d+)$/i){$cfg{'slowServerDelay'}=$1; next; }
     if ($arg =~ /^--starttls$/i)                     { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; next; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--starttls=(\w+)$/i)               { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); next;} # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                      # 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
@@ -479,6 +484,7 @@ while ($#argv >= 0) {
     $Net::SSLhello::starttls    = $cfg{'starttls'};
     $Net::SSLhello::starttlsType= $cfg{'starttlsType'}; 
     $Net::SSLhello::starttlsDelay = $cfg{'starttlsDelay'}; #reset to original value for each host (same as some lines later to prevent 'used only once' warning) 
+    $Net::SSLhello::slowServerDelay = $cfg{'slowServerDelay'}; 
     $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
     $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
     $Net::SSLhello::usereneg    = $cfg{'sslhello'}->{'usereneg'};
