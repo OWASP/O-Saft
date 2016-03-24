@@ -41,7 +41,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.434b 16/03/04 23:59:59",
-    STR_VERSION => "07.01.16",          # <== our official version number
+    STR_VERSION => "24.03.16",          # <== our official version number
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "**Hint: ",
