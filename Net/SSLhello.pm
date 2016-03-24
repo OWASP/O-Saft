@@ -117,25 +117,25 @@ use constant {
 #
 #
 #defaults for global parameters
-$Net::SSLhello::trace        = 0;# 1=simple debugging Net::SSLhello
-$Net::SSLhello::traceTIME    = 0;# 1=trace prints timestamp
-$Net::SSLhello::usesni       = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name
-$Net::SSLhello::sni_name     = "1";# name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to usesni=2 will be done
-$Net::SSLhello::timeout      = 2;# time in seconds
-$Net::SSLhello::retry        = 3;# number of retry when timeout occurs
-$Net::SSLhello::usereneg     = 0;# secure renegotiation 
-$Net::SSLhello::useecc       = 1;# use 'Supported Elliptic' Curves Extension
-$Net::SSLhello::useecpoint   = 1;# use 'ec_point_formats' Extension
-$Net::SSLhello::starttls     = 0;# 1= do STARTTLS
-$Net::SSLhello::starttlsType = "SMTP";# default: SMTP
-$Net::SSLhello::starttlsDelay= 0;# STARTTLS: time to wait in Seconds (to slow down the requests)
-$Net::SSLhello::slowServerDelay = 0;# Proxy and STARTLS: Time to wait in Seconds (for slow Proxies and STARTTLS-Servers)
-$Net::SSLhello::double_reneg = 0;# 0=Protection against double renegotiation info is active
-$Net::SSLhello::proxyhost    = "";#
-$Net::SSLhello::proxyport    = "";#
-$Net::SSLhello::experimental = 0;# 0: experimental functions are protected (=not active)
-$Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
-$Net::SSLhello::max_sslHelloLen = 16388; # According RFC: 16383+5 Bytes; Max len of sslHello Messages (some implementations had issues with packets longer than 256 Bytes)
+$Net::SSLhello::trace        	 = 0;# 1=simple debugging Net::SSLhello
+$Net::SSLhello::traceTIME    	 = 0;# 1=trace prints timestamp
+$Net::SSLhello::usesni       	 = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name
+$Net::SSLhello::sni_name     	 = "1";# name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to usesni=2 will be done
+$Net::SSLhello::timeout      	 = 2;# time in seconds
+$Net::SSLhello::retry        	 = 3;# number of retry when timeout occurs
+$Net::SSLhello::usereneg     	 = 0;# secure renegotiation 
+$Net::SSLhello::useecc       	 = 1;# use 'Supported Elliptic' Curves Extension
+$Net::SSLhello::useecpoint   	 = 1;# use 'ec_point_formats' Extension
+$Net::SSLhello::starttls     	 = 0;# 1= do STARTTLS
+$Net::SSLhello::starttlsType 	 = "SMTP";# default: SMTP
+$Net::SSLhello::starttlsDelay	 = 0;# STARTTLS: time to wait in Seconds (to slow down the requests)
+$Net::SSLhello::slowServerDelay  = 0;# Proxy and STARTLS: Time to wait in Seconds (for slow Proxies and STARTTLS-Servers)
+$Net::SSLhello::double_reneg 	 = 0;# 0=Protection against double renegotiation info is active
+$Net::SSLhello::proxyhost    	 = "";#
+$Net::SSLhello::proxyport    	 = "";#
+$Net::SSLhello::experimental 	 = 0;# 0: experimental functions are protected (=not active)
+$Net::SSLhello::max_ciphers 	 = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
+$Net::SSLhello::max_sslHelloLen  = 16388; # According RFC: 16383+5 Bytes; Max len of sslHello Messages (some implementations had issues with packets longer than 256 Bytes)
 $Net::SSLhello::noDataEqNoCipher = 1; # 1= For some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher' supported -> Do NOT abort to test next Ciphers
 
 my %RECORD_TYPE = ( # RFC 5246
@@ -1492,7 +1492,7 @@ sub openTcpSSLconnection ($$) {
     my $input="";
     my $input2="";
     my $retryCnt = 0;
-    my $sleepSecs =  $Net::SSLhello::starttlsDelay;
+    my $sleepSecs =        $Net::SSLhello::starttlsDelay   || 0;
     my $slowServerDelay =  $Net::SSLhello::slowServerDelay || 0;
     my $suspendSecs = 0;
     my $firstMessage = "";
@@ -1715,7 +1715,7 @@ sub openTcpSSLconnection ($$) {
             } 
         }
         if ($Net::SSLhello::starttls) {
-            _trace2 ("openTcpSSLconnection: $host:$port: wait $sleepSecs secs to prevent too many connects\n");
+            _trace2 ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n");
             sleep ($sleepSecs);
         }
         eval  {
@@ -1866,13 +1866,13 @@ sub openTcpSSLconnection ($$) {
                         $input=_chomp_r($input);
                         if ( ($starttls_matrix[$starttlsType][6]) && ($input =~ /$starttls_matrix[$starttlsType][6]/) ) { # did receive a temporary Error Message
                             if ($retryCnt > $Net::SSLhello::retry) { # already an additional final retry -> restore last Error-Message
-                                $@ = "STARTTLS (Phase 1): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs seconds and all subsequent packets will be slowed down by $sleepSecs seconds";
+                                $@ = "STARTTLS (Phase 1): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                                 last;
                             } 
                             $Net::SSLhello::starttlsDelay = $sleepSecs; # adopt global Variable 1 step later
                             $sleepSecs += $retryCnt + 2;
                             $suspendSecs= 60 * ($retryCnt +1);
-                            $@ = "STARTTLS (Phase 1): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs seconds and all subsequent packets will be slowed down by $sleepSecs seconds";
+                            $@ = "STARTTLS (Phase 1): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                             _trace2  ("openTcpSSLconnection: $@\n");
                             warn ("**WARNING: openTcpSSLconnection: ... $@"); #if ($retryCnt > 1); # Warning if at least 2nd retry 
                             close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
@@ -1960,13 +1960,13 @@ sub openTcpSSLconnection ($$) {
                         $input=_chomp_r($input);
                         if ( ($starttls_matrix[$starttlsType][6]) && ($input =~ /$starttls_matrix[$starttlsType][6]/) ) { # did receive a temporary Error Message
                            if ($retryCnt > $Net::SSLhello::retry) { # already an additional final retry -> restore last Error-Message
-                                $@ = "STARTTLS (Phase 3): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs seconds and all subsequent packets will be slowed down by $sleepSecs seconds";
+                                $@ = "STARTTLS (Phase 3): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                                 last;
                             } 
                             $Net::SSLhello::starttlsDelay = $sleepSecs; # adopt global Variable 1 step later
                             $sleepSecs += $retryCnt + 2;
                             $suspendSecs= 60 * ($retryCnt +1);
-                            $@ = "STARTTLS (Phase 3): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs seconds and all subsequent packets will be slowed down by $sleepSecs seconds";
+                            $@ = "STARTTLS (Phase 3): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                             _trace2  ("openTcpSSLconnection: $@\n");
                             warn ("**WARNING: openTcpSSLconnection: ... $@"); # if ($retryCnt > 1); # Warning if at least 2nd retry 
                             close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
@@ -2054,13 +2054,13 @@ sub openTcpSSLconnection ($$) {
                         $input=_chomp_r($input);
                         if ( ($starttls_matrix[$starttlsType][6]) && ($input =~ /$starttls_matrix[$starttlsType][6]/) ) { # did receive a temporary Error Message
                             if ($retryCnt > $Net::SSLhello::retry) { # already an additional final retry -> restore last Error-Message
-                                $@ = "STARTTLS (Phase 5): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs seconds and all subsequent packets will be slowed down by $sleepSecs seconds";
+                                $@ = "STARTTLS (Phase 5): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                                 last;
                             }
                             $Net::SSLhello::starttlsDelay = $sleepSecs; # adopt global Variable 1 step later
                             $sleepSecs += $retryCnt + 2;
                             $suspendSecs = 60 * ($retryCnt +1);
-                            $@ = "STARTTLS (Phase 5): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs seconds and all subsequent packets will be slowed down by $sleepSecs seconds";
+                            $@ = "STARTTLS (Phase 5): Error 1: too many requests: $host:$port \'$input\' -> suspend $suspendSecs second(s) and all subsequent packets will be slowed down by $sleepSecs second(s)";
                             _trace2  ("openTcpSSLconnection: $@\n");
                             warn ("**WARNING: openTcpSSLconnection: ... $@"); # if ($retryCnt > 1); # Warning if at least 2nd retry 
                             close ($socket) or warn("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
@@ -2301,7 +2301,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 _trace2 ("_doCheckSSLciphers: received a cookie ($dtlsCookieLen Bytes): >".hexCodedString($dtlsCookie,"        ")."<\n");
                 $retryCnt--;
             }
-            _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." secs after *NO* cipher found\n");
+            _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." sec(s) after *NO* cipher found\n");
             select(undef, undef, undef, _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO Cipher found
         }
     } # end while
@@ -2462,7 +2462,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         warn("**WARNING: _doCheckSSLciphers: Can't close socket: $!");
     }
     if (($isUdp) && (defined ($acceptedCipher) ) && ($acceptedCipher ne "") ) {
-        _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." secs after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
+        _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." sec(s) after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
         select(undef, undef, undef, _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
     }
     _trace2 ("_doCheckSSLciphers: }\n");
