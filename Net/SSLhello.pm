@@ -58,7 +58,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '15-12-18';
+    $VERSION    = '16-03-24';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -99,6 +99,8 @@ BEGIN {
     } ? 1 : 0;
 } # BEGIN
 
+# All Main Parameters, Constants, Lists and Functions that are used by o-saft andSSLhello
+use osaft; # TBD add "raw";
 
 use constant {
     _MY_SSL3_MAX_CIPHERS       => 64, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 48, 64, 128, ...
