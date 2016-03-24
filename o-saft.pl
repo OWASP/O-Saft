@@ -3296,11 +3296,13 @@ sub _get_dhparam($$) {
         # get info about the session cipher and prepare parameter $keyExchange
         # for parseServerKeyExchange()
         my $keyExchange = $cipher;
-        _trace1("_get_dhparam: cipher: $keyExchange");
-        $keyExchange =~ s/^((?:EC)?DHE?)_anon.*/A$1/;   # DHE_anon -> EDH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
-        $keyExchange =~ s/^((?:EC)?DH)E.*/E$1/;         # DHE -> EDH, ECDHE -> EECDH
-        $keyExchange =~ s/^(?:E|A|EA)((?:EC)?DH).*/$1/; # EDH -> DH, ADH -> DH, EECDH -> ECDH
-        _trace1(" _get_dhparam: keyExchange (DH or ECDH) = $keyExchange");
+        _trace1("_get_dhparam: cipher(1): $keyExchange");
+        $keyExchange =~ s/((?:EC)?DHE?)_anon.*/A$1/;               # DH_anon -> ADH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
+        _trace2("_get_dhparam: cipher(2): $keyExchange");
+        $keyExchange =~ s/((?:EC)?DH)E.*/E$1/;         # DHE -> EDH, ECDHE -> EECDH
+        _trace2("_get_dhparam: cipher(3): $keyExchange");
+        $keyExchange =~ s/^(?:EXP[_-])?(?:E|A|EA)((?:EC)?DH).*/$1/; # (EXP-)EDH -> DH,  (EXP-)ADH -> DH, (EXP-)EECDH -> ECDH
+        _trace1("_get_dhparam: keyExchange (DH or ECDH) = $keyExchange");
         # get length of 'dh_parameter' manually from '-msg' data if the
         # 'session cipher' uses a keyExchange with DHE and DH_anon
         # (according RFC2246/RFC5246: sections 7.4.3)
