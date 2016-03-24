@@ -385,7 +385,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--starttls$/i)                     { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; next; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--starttls=(\w+)$/i)               { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); next;} # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                      # 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
-    if ($arg =~ /^--starttls[_-]?delay=(\d+)/)       {$cfg{'starttlsDelay'}=$1;next;}
+    if ($arg =~ /^--starttls[_-]?delay=(\d+)$/i)     {$cfg{'starttlsDelay'}=$1; next;}
     # option
     if ($arg =~ /^--sni$/i)                          { $cfg{'usesni'}    = 1; next; }
     if ($arg =~ /^--no[_-]?sni$/i)                   { $cfg{'usesni'}    = 0; next; }
