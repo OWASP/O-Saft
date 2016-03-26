@@ -103,41 +103,41 @@ BEGIN {
 use osaft; # TBD add "raw";
 
 use constant {
-    _MY_SSL3_MAX_CIPHERS       => 64, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 48, 64, 128, ...
-    _MY_PRINT_CIPHERS_PER_LINE =>  8, # Nr of Ciphers printed in a trace
-    _PROXY_CONNECT_MESSAGE1    => "CONNECT ",
-    _PROXY_CONNECT_MESSAGE2    => " HTTP/1.1\n\n",
+    _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server, e.g. 32, 48, 64, 128, ...
+    _MY_PRINT_CIPHERS_PER_LINE          =>  8, # Nr of Ciphers printed in a trace
+    _PROXY_CONNECT_MESSAGE1             => "CONNECT ",
+    _PROXY_CONNECT_MESSAGE2             => " HTTP/1.1\n\n",
     _MAX_SEGMENT_COUNT_TO_RESET_RETRY_COUNT => 16, # Max Number og TCP-Segments that can reset the Retry-Counter to '0' for next read
-    _SLEEP_B4_2ND_READ         => 0.5, # Sleep before second read (STARTTLS and Proxy) [in sec.x]
-    _DTLS_SLEEP_AFTER_FOUND_A_CIPHER        => 0.75, # DTLS-Protocol: Sleep after found a Cipher to segregate the following request [in sec.x]
-    _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND      => 0.05  # DTLS-Protocol: Sleep after not found a Cipher to segregate the following request [in sec.x]
+    _SLEEP_B4_2ND_READ                  => 0.5, # Sleep before second read (STARTTLS and Proxy) [in sec.x]
+    _DTLS_SLEEP_AFTER_FOUND_A_CIPHER    => 0.75, # DTLS-Protocol: Sleep after found a Cipher to segregate the following request [in sec.x]
+    _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND  => 0.05  # DTLS-Protocol: Sleep after not found a Cipher to segregate the following request [in sec.x]
 };
 
 #our $LONG_PACKET = 1940; # try to get a 2nd or 3rd segment for long packets
 #
 #
 #defaults for global parameters
-$Net::SSLhello::trace        	 = 0;# 1=simple debugging Net::SSLhello
-$Net::SSLhello::traceTIME    	 = 0;# 1=trace prints timestamp
-$Net::SSLhello::usesni       	 = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name; 3: toggle sni; 6: toggle sni and use sni with sni_name
-$Net::SSLhello::sni_name     	 = "1";# name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to usesni=2 will be done
-$Net::SSLhello::timeout      	 = 2;# time in seconds
-$Net::SSLhello::retry        	 = 3;# number of retry when timeout occurs
-$Net::SSLhello::usereneg     	 = 0;# secure renegotiation 
-$Net::SSLhello::useecc       	 = 1;# use 'Supported Elliptic' Curves Extension
-$Net::SSLhello::useecpoint   	 = 1;# use 'ec_point_formats' Extension
-$Net::SSLhello::starttls     	 = 0;# 1= do STARTTLS
-$Net::SSLhello::starttlsType 	 = "SMTP";# default: SMTP
-@Net::SSLhello::starttlsPhaseArray	 = [];# STARTTLS: customized phases (1-5) and error handling (6-8)
-$Net::SSLhello::starttlsDelay	 = 0;# STARTTLS: time to wait in Seconds (to slow down the requests)
-$Net::SSLhello::slowServerDelay  = 0;# Proxy and STARTLS: Time to wait in Seconds (for slow Proxies and STARTTLS-Servers)
-$Net::SSLhello::double_reneg 	 = 0;# 0=Protection against double renegotiation info is active
-$Net::SSLhello::proxyhost    	 = "";#
-$Net::SSLhello::proxyport    	 = "";#
-$Net::SSLhello::experimental 	 = 0;# 0: experimental functions are protected (=not active)
-$Net::SSLhello::max_ciphers 	 = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
-$Net::SSLhello::max_sslHelloLen  = 16388; # According RFC: 16383+5 Bytes; Max len of sslHello Messages (some implementations had issues with packets longer than 256 Bytes)
-$Net::SSLhello::noDataEqNoCipher = 1; # 1= For some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher' supported -> Do NOT abort to test next Ciphers
+$Net::SSLhello::trace               = 0;# 1=simple debugging Net::SSLhello
+$Net::SSLhello::traceTIME           = 0;# 1=trace prints timestamp
+$Net::SSLhello::usesni              = 0;# 1 use SNI-Extension with nane of host, 2: use sni with sni_name; 3: toggle sni; 6: toggle sni and use sni with sni_name
+$Net::SSLhello::sni_name            = "1";# name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to usesni=2 will be done
+$Net::SSLhello::timeout             = 2;# time in seconds
+$Net::SSLhello::retry               = 3;# number of retry when timeout occurs
+$Net::SSLhello::usereneg            = 0;# secure renegotiation 
+$Net::SSLhello::useecc              = 1;# use 'Supported Elliptic' Curves Extension
+$Net::SSLhello::useecpoint          = 1;# use 'ec_point_formats' Extension
+$Net::SSLhello::starttls            = 0;# 1= do STARTTLS
+$Net::SSLhello::starttlsType        = "SMTP";# default: SMTP
+@Net::SSLhello::starttlsPhaseArray  = [];# STARTTLS: customized phases (1-5) and error handling (6-8)
+$Net::SSLhello::starttlsDelay       = 0;# STARTTLS: time to wait in Seconds (to slow down the requests)
+$Net::SSLhello::slowServerDelay     = 0;# Proxy and STARTLS: Time to wait in Seconds (for slow Proxies and STARTTLS-Servers)
+$Net::SSLhello::double_reneg        = 0;# 0=Protection against double renegotiation info is active
+$Net::SSLhello::proxyhost           = "";#
+$Net::SSLhello::proxyport           = "";#
+$Net::SSLhello::experimental        = 0;# 0: experimental functions are protected (=not active)
+$Net::SSLhello::max_ciphers         = _MY_SSL3_MAX_CIPHERS; # Max nr of Ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the Server
+$Net::SSLhello::max_sslHelloLen     = 16388; # According RFC: 16383+5 Bytes; Max len of sslHello Messages (some implementations had issues with packets longer than 256 Bytes)
+$Net::SSLhello::noDataEqNoCipher    = 1; # 1= For some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher' supported -> Do NOT abort to test next Ciphers
 
 my %RECORD_TYPE = ( # RFC 5246
     'change_cipher_spec'    => 20,
