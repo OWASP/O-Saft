@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.81 16/03/26 18:46:30";
+my  $man_SID= "@(#) o-saft-man.pm 1.82 16/03/26 21:53:37";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2230,6 +2230,11 @@ OPTIONS
 
           Do not make SSL connection in SNI mode (default: SNI mode).
 
+      --sni-toggle
+      --toggle-sni
+
+          Test with and witout SNI mode.
+
       --force-sni
 
           Do not check if SNI seems to be supported by  Net::SSLeay(1).
@@ -2329,6 +2334,13 @@ OPTIONS
 
           Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
+
+      --slow-server-delay=SEC 
+
+          Additional delay in seconds  after the server is connected  using a
+          proxy or before starting STARTTLS.
+          This is useful when connecting via  slow proxy chains or connecting
+          to slow servers before sending the STARTTLS sequence.
 
       --ssl-maxciphers=CNT 
 
