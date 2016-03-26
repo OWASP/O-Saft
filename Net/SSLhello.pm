@@ -58,7 +58,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '16-03-24';
+    $VERSION    = '16-03-26';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -128,6 +128,7 @@ $Net::SSLhello::useecc       	 = 1;# use 'Supported Elliptic' Curves Extension
 $Net::SSLhello::useecpoint   	 = 1;# use 'ec_point_formats' Extension
 $Net::SSLhello::starttls     	 = 0;# 1= do STARTTLS
 $Net::SSLhello::starttlsType 	 = "SMTP";# default: SMTP
+@Net::SSLhello::starttlsPhaseArray	 = [];# STARTTLS: customized phases (1-5) and error handling (6-8)
 $Net::SSLhello::starttlsDelay	 = 0;# STARTTLS: time to wait in Seconds (to slow down the requests)
 $Net::SSLhello::slowServerDelay  = 0;# Proxy and STARTLS: Time to wait in Seconds (for slow Proxies and STARTTLS-Servers)
 $Net::SSLhello::double_reneg 	 = 0;# 0=Protection against double renegotiation info is active
@@ -1060,6 +1061,9 @@ sub version { # Version of SSLhello
      _trace2 ("       starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
      _trace2 ("   starttlsType=$Net::SSLhello::starttlsType\n")    if (defined($Net::SSLhello::starttlsType));
      _trace2 ("  starttlsDelay=$Net::SSLhello::starttlsDelay\n")   if (defined($Net::SSLhello::starttlsDelay));
+     for my $i (1..8) {
+        _trace2 ("  starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+     }
      _trace2 ("slowServerDelay=$Net::SSLhello::slowServerDelay\n") if (defined($Net::SSLhello::slowServerDelay));
      _trace2 ("   experimental=$Net::SSLhello::experimental\n")    if (defined($Net::SSLhello::experimental));
      _trace2 ("      proxyhost=$Net::SSLhello::proxyhost\n")       if (defined($Net::SSLhello::proxyhost));
@@ -1659,6 +1663,16 @@ sub openTcpSSLconnection ($$) {
             "",                                                 # Error2: This SSL/TLS-Protocol is not supported 
             ".*?(?:^|\\n)421\\s",                               # Error3: fatal Error/STARTTLS not supported: '421 ERR_UNKNOWNCOMMAND "<command> :Unknown command"'
           ],
+          ["CUSTOM",                                            # CUSTOMize your own starttls sequence wit up to 5 phases
+            "",                                                 # Phase1: receive <placeholder|-unused->
+            "",                                                 # Phase2: send    <placeholder|-unused->
+            "",                                                 # Phase2: receive <placeholder|-unused->
+            "",                                                 # Phase4: send    <placeholder|-unused-> STARTTLS'
+            "",                                                 # Phase5: receive <placeholder|-unused-> OK (Begin TLS Negotiation)' 
+            "",                                                 # Error1: temporary unreachable (too many connections): <placeholder|-unused->
+            "",                                                 # Error2: This SSL/TLS-Protocol is not supported: <placeholder|-unused->
+            "",                                                 # Error3: fatal Error/STARTTLS not supported: <placeholder|-unused->
+          ],
         );
 
     my %startTlsTypeHash;
@@ -1676,12 +1690,12 @@ sub openTcpSSLconnection ($$) {
         if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
             _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-            if ( grep(/^$starttlsType$/,('12', '13', '14') )) { # ('12', '13', ...) -> Use of an experimental starttls-Type
+            if ( grep(/^$starttlsType$/,('12', '13', '14','15') )) { # ('12', '13', ...) -> Use of an experimental starttls-Type
                 if  ($Net::SSLhello::experimental >0) { # experimental function is are  activated
                     _trace_("\n");
                     _trace ("openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
                 } else { # use of experimental functions is not permitted (option is not activated)
-                    if ( grep(/^$starttlsType$/,('12', '13', '14') )) { # experimental and untested
+                    if ( grep(/^$starttlsType$/,('12', '13', '14', '15') )) { # experimental and untested
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                     } else { # tested, but still experimental # experimental but tested 
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
@@ -1690,6 +1704,24 @@ sub openTcpSSLconnection ($$) {
                     #last;
                     warn ($@);
                     exit (1); #stop program
+                }
+            }
+            if ($starttls_matrix[$starttlsType][0] eq 'CUSTOM') { # customize the starttls_matrix 
+                for my $i (1..8) {
+                    if (defined($Net::SSLhello::starttlsPhaseArray[$i])) {
+                        _trace4 ("openTcpSSLconnection: Customize starttls_matrix: \$Net::SSLhello::starttlsPhaseArray[$i]= >$Net::SSLhello::starttlsPhaseArray[$i]< = >".unpack("H*",$Net::SSLhello::starttlsPhaseArray[$i])."<\n");
+                        if (($i == 2) || ($i == 4)) { #TX Data needs a different handling
+                            $starttls_matrix[$starttlsType][$i] = "$Net::SSLhello::starttlsPhaseArray[$i]";
+                            #($starttls_matrix[$starttlsType][$i]) =~ s/(\[^xc]|\c.)/chr(ord('$1'))/eg; ## escape2hex does not work 
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\r/chr(13)/eg; ## return character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\n/chr(10)/eg; ## new line character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\t/chr(9)/eg; ## tab character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\x([a-fA-F0-9]{2})/chr(hex $1)/eg; ## Str2hex
+                        } else { # normal copy
+                            $starttls_matrix[$starttlsType][$i] = $Net::SSLhello::starttlsPhaseArray[$i];
+                        }
+                        _trace2 ("openTcpSSLconnection: Customize \$starttls_matrix[$starttlsType][$i]= >$starttls_matrix[$starttlsType][$i]<>".unpack("H*",$starttls_matrix[$starttlsType][$i])."<\n");
+                    }
                 }
             }
         } else {

@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2016-03-24";
+my $VERSION = "2016-03-26";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -110,15 +110,34 @@ OPTIONS
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
                 Use STARTTLS to start TLS. 
-                STARTTLS_TYPE is any of SMTP (SMTP_2), ACAP, IMAP (IMAP_2), IRC, POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP
+                STARTTLS_TYPE is any of SMTP (SMTP_2), ACAP, IMAP (IMAP_2), IRC, POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP, CUSTOM
                 (Notes: * SMTP_2 and IMAP_2 are second ways to use SMTP/IMAP, like RDP_SSL for RDP
                         * SMTP: use '--mx' for checking a mail-domain instead of a host)
-                Please give us feedback (especially for FTPS, LDAP, RDP)
-                The STARTTLS_TYPEs ACAP and IRC need the '--experimental' option, and please take care!
+                Please give us feedback (especially for FTPS, LDAP, RDP, CUSTOM)
+                The STARTTLS_TYPEs 'ACAP', 'IRC' and 'CUSTOM' need the '--experimental' option, and please take care!
+                You can use the STARTTLS_TYPE 'CUSTOM' to customize your own STARTTLS sequence including error handling, see '--starttls_phase[NUMBER]' and --starttls_error[NUMBER]
     --starttls_delay=SEC
                 seconds to pause before sending a packet, to slow down the starttls-requests (default = 0).
                 This may prevent a blockade of requests due to too much/too fast connections.
                 (Info: In this case there is an automatic suspension and retry with a longer delay)
+    --starttls_phase[NUMBER from 1..5]="VALUE" (VALUE might be an expression or a string)
+                Customize the internal state machine to manage STARTTLS, you can use up to 5 phases:
+                 1: set expression for 'receive data (RX)', e.g. ".?(?:^|\\n)220\\s"
+                 2: set string for 'send data (TX)',        e.g. "EHLO o-saft.localhost\\r\\n"
+                 3: set expression for RX,                  e.g. ".?(?:^|\\n)250\\s"
+                 4: set string for TX,                      e.g. "STARTTLS\\r\\n"
+                 5: set expression for RX,                  e.g. ".?(?:^|\\n)220\\s"
+                For the TX phases 2 and 4 solely the escape sequences '\\r', '\\n', '\\t' and '\\x<00-ff>' are supported, e.g. "\\r\\n", "\\x0d\\x0a"
+                It is recommended to use at least TX and RX (last RX to get data that does not belong to the handshake of SSL/TLS itself), furthermore you should use '--trace=3' when you start customizing.
+                Please share your results with us (o-saft (at) lists.owasp.org or via github).
+                needs also '--starttls=CUSTOM', see above
+                optional use of '--starttls_error[NUMBER]' to handle errors
+    --starttls_error[NUMBER from 1..3]="EXPRESSION" (or '--starttls_err[NUMBER from 1..3]="EXPRESSION")
+                Optional error handling for customized STARTTLS used in the RX phases (1, 3 and 5)
+                 1: set expression for 'temporary unreachable (too many connections)', e.g. ".?(?:^|\\n)(?:421|450)\\s"
+                 2: set expression for 'this SSL/TLS-Protocol is not supported',       e.g. ".?(?:^|\\n)4[57]4\\s"
+                 3: set exptession for 'fatal Error/STARTTLS not supported',           e.g. ".*?(?:^|\\n)(?:451|50[023]|554)\\s"
+                needs also '--starttls=CUSTOM' and '--starttls_phase[NUMBER]', see above
     --experimental
                 to use experimental functions
     --trace     
@@ -295,6 +314,7 @@ our %cfg = ( # from o-saft (only relevant parts)
                                 #      results in a performance bottleneck, obviously
     'slowServerDelay'  => 0,    # time to wait in seconds after a connection via proxy or before starting the STARTTLS sequence
     'starttlsDelay'    => 0,    # STARTTLS: time to wait in seconds (to slow down the requests)
+    'starttlsPhaseArray' => [], # STARTTLS: Array for CUSTOMized starttls sequences including error handling)
     #} +---------+----------------------+-------------------------
     'sslhello' => {    # configurations for TCP SSL protocol
         'timeout'      => 2,    # timeout to receive ssl-answer
@@ -386,7 +406,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^--slow[_-]?server[_-]?delay=(\d+)$/i)	{$cfg{'slowServerDelay'}=$1; next; }
     if ($arg =~ /^--starttls$/i)                     	{ $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; next; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--starttls=(\w+)$/i)               	{ $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); next;} # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
-                                                     	# 8 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+                                                     	# 9 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP, CUSTOM
+    if ($arg =~ /^--starttls[_-]?phase\[(\d)\]=(.+)$/i){ $cfg{'starttlsPhaseArray'}[$1] = $2 if (($1 >0) && ($1<=5)); next; } # starttl, CUSTOM starttls-sequence 
+    if ($arg =~ /^--starttls[_-]?err(?:or)?\[(\d)\]=(.+)$/i){ $cfg{'starttlsPhaseArray'}[($1+5)] = $2 if (($1 >0) && ($1<=3)); next; } # starttls, error-handling for CUSTOMized starttls
     if ($arg =~ /^--starttls[_-]?delay=(\d+)$/i)     	{$cfg{'starttlsDelay'}=$1; next;}
     # option
     if ($arg =~ /^--sni$/i)                          	{ $cfg{'usesni'}    = 1; next; }
@@ -487,6 +509,13 @@ while ($#argv >= 0) {
     $Net::SSLhello::sni_name    	= $cfg{'sni_name'};
     $Net::SSLhello::starttls    	= $cfg{'starttls'};
     $Net::SSLhello::starttlsType	= $cfg{'starttlsType'}; 
+    @Net::SSLhello::starttlsPhaseArray	= @{$cfg{'starttlsPhaseArray'}};
+    if ($cfg{'trace'} > 3) {
+        for my $i (1..8) {
+            _trace ("  \$cfg{'starttlsPhaseArray'}[$i]=$cfg{'starttlsPhaseArray'}[$i]\n") if (defined($cfg{'starttlsPhaseArray'}[$i]));
+            _trace ("  starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")  if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+        }
+    }
     $Net::SSLhello::starttlsDelay   	= $cfg{'starttlsDelay'}; #reset to original value for each host (same as some lines later to prevent 'used only once' warning) 
     $Net::SSLhello::slowServerDelay 	= $cfg{'slowServerDelay'}; 
     $Net::SSLhello::timeout     	= $cfg{'sslhello'}->{'timeout'};
