@@ -35,4 +35,5 @@ _o-saft()
     -*)             COMPREPLY=( $(compgen -W "$_y_opts" -- $curr_arg ) ); ;;
   esac
 }
+complete -F _o-saft o-saft
 complete -F _o-saft o-saft.pl
