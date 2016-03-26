@@ -1223,6 +1223,7 @@ our %cmd = (
     'starttls'      => "",      # use STARTTLS if not empty
                                 # protocol to be used with STARTTLS; default: SMTP
                                 # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+    'slowServerDelay'   => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
     'starttlsDelay' => 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
@@ -1232,6 +1233,7 @@ our %cmd = (
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
+                                # 3: test with and without SNI mode (used with +cipherraw only)
     'usedns'        => 1,       # 1: make DNS reverse lookup
     'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttp'       => 1,       # 1: make HTTP request
@@ -3296,12 +3298,12 @@ sub _get_dhparam($$) {
         # get info about the session cipher and prepare parameter $keyExchange
         # for parseServerKeyExchange()
         my $keyExchange = $cipher;
-        _trace1("_get_dhparam: cipher(1): $keyExchange");
-        $keyExchange =~ s/((?:EC)?DHE?)_anon.*/A$1/;               # DH_anon -> ADH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
-        _trace2("_get_dhparam: cipher(2): $keyExchange");
+        _trace1("_get_dhparam: cipher: $keyExchange");
+        $keyExchange =~ s/((?:EC)?DHE?)_anon.*/A$1/;   # DHE_anon -> EDH, ECDHE_anon -> AECDH, DHE_anon -> ADHE
+#       _trace2("_get_dhparam: cipher(2): $keyExchange");
         $keyExchange =~ s/((?:EC)?DH)E.*/E$1/;         # DHE -> EDH, ECDHE -> EECDH
-        _trace2("_get_dhparam: cipher(3): $keyExchange");
-        $keyExchange =~ s/^(?:EXP[_-])?(?:E|A|EA)((?:EC)?DH).*/$1/; # (EXP-)EDH -> DH,  (EXP-)ADH -> DH, (EXP-)EECDH -> ECDH
+#       _trace2("_get_dhparam: cipher(3): $keyExchange");
+        $keyExchange =~ s/^(?:EXP[_-])?(?:E|A|EA)((?:EC)?DH).*/$1/; # (EXP-)EDH -> DH,  (EXP-)ADH -> DH, EECDH -> ECDH
         _trace1("_get_dhparam: keyExchange (DH or ECDH) = $keyExchange");
         # get length of 'dh_parameter' manually from '-msg' data if the
         # 'session cipher' uses a keyExchange with DHE and DH_anon
@@ -5674,6 +5676,7 @@ while ($#argv >= 0) {
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'TLSDELAY') { $cfg{'starttlsDelay'} = $arg; $typ = 'HOST'; }
+        if ($typ eq 'SLOWDELAY'){ $cfg{'slowServerDelay'}= $arg;$typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
@@ -5881,6 +5884,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--proxyauth')         { $typ = 'PAUTH';           }
     if ($arg =~ /^--?starttls$/i)       { $typ = 'STARTTLS';        }
     if ($arg =~ /^--starttlsdelay$/i)   { $typ = 'TLSDELAY';        }
+    if ($arg =~ /^--slowserverdelay$/i) { $typ = 'SLOWDELAY';       }
     # options form other programs for compatibility
     if ($arg =~ /^--?nofailed$/)        { $cfg{'enabled'}   = 0;    } # sslscan
     if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
@@ -5933,6 +5937,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    }
     if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
+    if ($arg eq  '--snitoggle')         { $cfg{'usesni'}    = 3;    }
+    if ($arg eq  '--togglesni')         { $cfg{'usesni'}    = 3;    }
     if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
@@ -6521,6 +6527,7 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::starttls    = (($cfg{'starttls'} eq "") ? 0 : 1);
     $Net::SSLhello::starttlsType= $cfg{'starttls'};
     $Net::SSLhello::starttlsDelay=$cfg{'starttlsDelay'};
+    $Net::SSLhello::slowServerDelay = $cfg{'slowServerDelay'};
     $Net::SSLhello::timeout     = $cfg{'sslhello'}->{'timeout'};
     $Net::SSLhello::retry       = $cfg{'sslhello'}->{'retry'};
     $Net::SSLhello::max_ciphers = $cfg{'sslhello'}->{'maxciphers'};
