@@ -1225,6 +1225,8 @@ our %cmd = (
                                 # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
     'slowServerDelay'   => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
     'starttlsDelay' => 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
+    'starttls_pahse'=> [],      # STARTTLS: Array for customized STARTTLS sequences
+    'starttls_error'=> [],      # STARTTLS: Array for customized STARTTLS sequences error handling
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
@@ -5674,9 +5676,17 @@ while ($#argv >= 0) {
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
-        if ($typ eq 'STARTTLS') { $cfg{'starttls'}  = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'TLSDELAY') { $cfg{'starttlsDelay'} = $arg; $typ = 'HOST'; }
-        if ($typ eq 'SLOWDELAY'){ $cfg{'slowServerDelay'}= $arg;$typ = 'HOST'; }
+        if ($typ eq 'STARTTLS') { $cfg{'starttls'}              = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'TLSDELAY') { $cfg{'starttlsDelay'}         = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SLOWDELAY'){ $cfg{'slowServerDelay'}       = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE1'){$cfg{'starttls_error[1]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE2'){$cfg{'starttls_error[2]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE3'){$cfg{'starttls_error[3]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP1'){$cfg{'starttls_pahse[1]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP2'){$cfg{'starttls_pahse[2]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP3'){$cfg{'starttls_pahse[3]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP4'){$cfg{'starttls_pahse[4]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP5'){$cfg{'starttls_pahse[5]'}     = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
@@ -5885,6 +5895,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?starttls$/i)       { $typ = 'STARTTLS';        }
     if ($arg =~ /^--starttlsdelay$/i)   { $typ = 'TLSDELAY';        }
     if ($arg =~ /^--slowserverdelay$/i) { $typ = 'SLOWDELAY';       }
+    if ($arg =~ /^--starttlserror1$/i)  { $typ = 'STARTTLSE1';      }
+    if ($arg =~ /^--starttlserror2$/i)  { $typ = 'STARTTLSE2';      }
+    if ($arg =~ /^--starttlserror3$/i)  { $typ = 'STARTTLSE3';      }
+    if ($arg =~ /^--starttlsphase1$/i)  { $typ = 'STARTTLSP1';      }
+    if ($arg =~ /^--starttlsphase2$/i)  { $typ = 'STARTTLSP2';      }
+    if ($arg =~ /^--starttlsphase3$/i)  { $typ = 'STARTTLSP3';      }
+    if ($arg =~ /^--starttlsphase4$/i)  { $typ = 'STARTTLSP4';      }
+    if ($arg =~ /^--starttlsphase5$/i)  { $typ = 'STARTTLSP5';      }
     # options form other programs for compatibility
     if ($arg =~ /^--?nofailed$/)        { $cfg{'enabled'}   = 0;    } # sslscan
     if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
@@ -6539,6 +6557,9 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::proxyhost   = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport   = $cfg{'proxyport'};
     $Net::SSLhello::cipherrange = $cfg{'cipherrange'};  # not really necessary, see below
+    # TODO: need to unify variables
+    @{$Net::SSLhello::starttlsPhaseArray} = @{$cfg{'starttls_pahse'}};
+    push(@{$Net::SSLhello::starttlsPhaseArray}, @{$cfg{'starttls_error'}});
 }
 $cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
 
