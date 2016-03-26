@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.80 16/03/17 14:02:27";
+my  $man_SID= "@(#) o-saft-man.pm 1.81 16/03/26 18:46:30";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -237,6 +237,7 @@ our %man_text = (
         'ENCIPHER'  => "synonym for encryption",
         'EME'       => "Encoding Method for Encryption",
         'ESP'       => "Encapsulating Security Payload",
+        'EtM'       => "Encrypt-then-MAC",
         'ETSI-TS'   => "European Telecommunications Standards Institute - Technical Specification",
         'EV'        => "Extended Validation",
         'EV-SSL'    => "Extended Validation Certificate",
@@ -314,6 +315,7 @@ our %man_text = (
         'MGF'       => "Mask Generation Function",
         'MISTY1'    => "block cipher algorithm",
         'MQV'       => "Menezes-Qu-Vanstone (authentecated key agreement",
+        'MtE'       => "MAC-then-encrypt",
         'NCP'       => "Normalized Certification Policy (according TS 102 042)",
         'Neokeon'   => "symmetric block cipher algorithm",
         'nonce'     => "(arbitrary) number used only once",
