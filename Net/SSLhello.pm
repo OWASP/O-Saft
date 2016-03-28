@@ -48,7 +48,7 @@ my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
 my $mename  = "yeast::Net::SSLhello ";
    $mename  = "O-Saft::Net::SSLhello " if ($me !~ /yeast/);
 
-our %cfg=%main::cfg;  # FIXME: must be provided by caller
+#our %main::cfg;    # provided by caller
 our $host; # FIXME: used in _timeOut()
 our $port; # FIXME: used in _timeOut()
 our $dtlsEpoch = 0; # for DTLS only (globally)
@@ -58,7 +58,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '16-03-26';
+    $VERSION    = '16-03-27';
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
