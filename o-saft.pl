@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.436 16/03/30 00:11:37",
+    SID         => "@(#) yeast.pl 1.437 16/03/30 00:29:23",
     STR_VERSION => "16.03.27",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2784,7 +2784,7 @@ sub _useopenssl($$$$) {
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
-    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers -connect", $host, $port);
+    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers -connect", $host, $port, '');
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
     # also possible would be Cipher line from:
@@ -4670,7 +4670,7 @@ sub printversion() {
     print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
 
     print "= openssl =";
-    print "    version of external executable   " . Net::SSLinfo::do_openssl('version', "", "", "");
+    print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
     my $openssl = $cmd{'openssl'};
     foreach my $p ("", split(":", $ENV{'PATH'})) { # try to find path
         # "" above ensures that full path in $cmd{'openssl'} will be checked
@@ -4783,7 +4783,7 @@ sub printversion() {
 
 sub printopenssl() {
     #? print openssl version
-    print Net::SSLinfo::do_openssl('version', "", "", "");
+    print Net::SSLinfo::do_openssl('version', '', '', '');
     printversionmismatch();
 } # printopenssl
 
