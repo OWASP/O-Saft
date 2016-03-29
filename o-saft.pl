@@ -40,8 +40,8 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.435 16/03/27 11:19:00",
-    STR_VERSION => "16.03.26",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.436 16/03/30 00:11:37",
+    STR_VERSION => "16.03.27",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -4085,14 +4085,14 @@ sub scoring($$) {
 ## definitions: print functions
 ## -------------------------------------
 
-sub _dump($$) {
+sub _printdump($$) {
     my ($label, $value) = @_;
         $label =~ s/\n//g;
         $label = sprintf("%s %s", $label, '_' x (75 -length($label)));
     $value = "" if (!defined $value); # value parameter is optional
     printf("#{ %s\n\t%s\n#}\n", $label, $value);
     # using curly brackets 'cause they most likely are not part of any data
-} # _dump
+} # _printdump
 sub printdump($$$)  {
     #? just dumps internal database %data and %check_*
     my ($legacy, $host, $port) = @_;   # NOT IMPLEMENTED
@@ -4100,10 +4100,10 @@ sub printdump($$$)  {
     print '######################################################################### %data';
     foreach $key (keys %data) {
         next if (_is_intern($key) > 0);  # ignore aliases
-        _dump($data{$key}->{txt}, $data{$key}->{val}($host));
+        _printdump($data{$key}->{txt}, $data{$key}->{val}($host));
     }
     print '######################################################################## %check';
-    foreach $key (keys %checks) { _dump($checks{$key}->{txt}, $checks{$key}->{val}); }
+    foreach $key (keys %checks) { _printdump($checks{$key}->{txt}, $checks{$key}->{val}); }
 } # printdump
 
 sub printruler()    { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); }
