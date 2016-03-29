@@ -33,7 +33,7 @@ use constant {
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.115 15/11/14 16:36:42',
+    SID         => '@(#) Net::SSLinfo.pm 1.116 16/03/30 00:02:34',
 };
 
 ######################################################## public documentation #
@@ -507,7 +507,7 @@ sub _settrace {
     $Net::SSLeay::slowly = $Net::SSLinfo::slowly;
 }
 
-sub _trace { local $\ = "\n"; print '#' . SSLINFO . '::' . $_[0] if ($trace > 0); }
+sub _trace($) { local $\ = "\n"; print '#' . SSLINFO . '::' . $_[0] if ($trace > 0); }
 
 # define some shortcuts to avoid $Net::SSLinfo::*
 my $_echo    = "";              # dangerous if aliased or wrong one found
