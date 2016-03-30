@@ -613,19 +613,21 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol:  http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
 #!# added manually 20140209: ChaCha Stream Cipher for Transport Layer Security 
+#!# 20160330: renamed Ciphers 0x0300CC12 .. 0x0300CC19 as hex-numbers changed
+#!#           in version 05 of the draft: OLD__, __OLD 
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+  
-  '0x0300CC12'=> [qw(RSA_WITH_CHACHA20_POLY1305         RSA-CHACHA20-POLY1305)],
-  '0x0300CC13'=> [qw(ECDHE_RSA_WITH_CHACHA20_POLY1305   ECDHE-RSA-CHACHA20-POLY1305)],
-  '0x0300CC14'=> [qw(ECDHE_ECDSA_WITH_CHACHA20_POLY1305 ECDHE-ECDSA-CHACHA20-POLY1305)],
+  '0x0300CC12'=> [qw(OLD__RSA_WITH_CHACHA20_POLY1305         RSA-CHACHA20-POLY1305__OLD)],
+  '0x0300CC13'=> [qw(OLD__ECDHE_RSA_WITH_CHACHA20_POLY1305   ECDHE-RSA-CHACHA20-POLY1305__OLD)],
+  '0x0300CC14'=> [qw(OLD__ECDHE_ECDSA_WITH_CHACHA20_POLY1305 ECDHE-ECDSA-CHACHA20-POLY1305__OLD)],
 
-  '0x0300CC15'=> [qw(DHE_RSA_WITH_CHACHA20_POLY1305     DHE-RSA-CHACHA20-POLY1305)],
-  '0x0300CC16'=> [qw(DHE_PSK_WITH_CHACHA20_POLY1305     DHE-PSK-CHACHA20-POLY1305)],
+  '0x0300CC15'=> [qw(OLD__DHE_RSA_WITH_CHACHA20_POLY1305     DHE-RSA-CHACHA20-POLY1305__OLD)],
+  '0x0300CC16'=> [qw(OLD__DHE_PSK_WITH_CHACHA20_POLY1305     DHE-PSK-CHACHA20-POLY1305__OLD)],
 
-  '0x0300CC17'=> [qw(PSK_WITH_CHACHA20_POLY1305         PSK-CHACHA20-POLY1305)],
-  '0x0300CC18'=> [qw(ECDHE_PSK_WITH_CHACHA20_POLY1305   ECDHE-PSK-CHACHA20-POLY1305)],
-  '0x0300CC19'=> [qw(RSA_PSK_WITH_CHACHA20_POLY1305     RSA-PSK-CHACHA20-POLY1305)],
+  '0x0300CC17'=> [qw(OLD__PSK_WITH_CHACHA20_POLY1305         PSK-CHACHA20-POLY1305__OLD)],
+  '0x0300CC18'=> [qw(OLD__ECDHE_PSK_WITH_CHACHA20_POLY1305   ECDHE-PSK-CHACHA20-POLY1305__OLD)],
+  '0x0300CC19'=> [qw(OLD__RSA_PSK_WITH_CHACHA20_POLY1305     RSA-PSK-CHACHA20-POLY1305__OLD)],
 
   '0x0300CC20'=> [qw(RSA_WITH_CHACHA20_SHA              RSA-CHACHA20-SHA)],
   '0x0300CC21'=> [qw(ECDHE_RSA_WITH_CHACHA20_SHA        ECDHE-RSA-CHACHA20-SHA)],
@@ -637,6 +639,24 @@ my %cipherHexHash = (
   '0x0300CC25'=> [qw(PSK_WITH_CHACHA20_SHA              PSK-CHACHA20-SHA)],
   '0x0300CC26'=> [qw(ECDHE_PSK_WITH_CHACHA20_SHA        ECDHE-PSK-CHACHA20-SHA)],
   '0x0300CC27'=> [qw(RSA_PSK_WITH_CHACHA20_SHA          RSA-PSK-CHACHA20-SHA)],
+  
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol:  http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-05
+#!# added manually 20160330: NEW ChaCha Stream Cipher for Transport Layer Security 
+#!# ATTENTION: the same Ciphers existed ibefor using 0x0300CC12 .. 0x0300CC19
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+  
+  '0x0300CCA0'=> [qw(RSA_WITH_CHACHA20_POLY1305         RSA-CHACHA20-POLY1305)],
+  '0x0300CCA1'=> [qw(ECDHE_RSA_WITH_CHACHA20_POLY1305   ECDHE-RSA-CHACHA20-POLY1305)],
+  '0x0300CCA2'=> [qw(ECDHE_ECDSA_WITH_CHACHA20_POLY1305 ECDHE-ECDSA-CHACHA20-POLY1305)],
+
+  '0x0300CCA3'=> [qw(DHE_RSA_WITH_CHACHA20_POLY1305     DHE-RSA-CHACHA20-POLY1305)],
+  '0x0300CCA4'=> [qw(DHE_PSK_WITH_CHACHA20_POLY1305     DHE-PSK-CHACHA20-POLY1305)],
+
+  '0x0300CCA5'=> [qw(PSK_WITH_CHACHA20_POLY1305         PSK-CHACHA20-POLY1305)],
+  '0x0300CCA6'=> [qw(ECDHE_PSK_WITH_CHACHA20_POLY1305   ECDHE-PSK-CHACHA20-POLY1305)],
+  '0x0300CCA7'=> [qw(RSA_PSK_WITH_CHACHA20_POLY1305     RSA-PSK-CHACHA20-POLY1305)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol:  http://tools.ietf.org/html/rfc5932
