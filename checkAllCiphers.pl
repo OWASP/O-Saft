@@ -540,6 +540,7 @@ print "# '$me' (part of OWASP project 'O-Saft'), Version: $VERSION\n";
 print "#                          ";
 Net::SSLhello::version();
 print "##############################################################################\n\n";
+Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
 
 $@="";
 print "Protocols to check:\n";
