@@ -88,6 +88,7 @@ BEGIN {
     $VERSION    = SSLHELLO_VERSION;
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
+        net_sslhello_done
         checkSSLciphers
         compileClientHello
         compileSSL2CipherArray
