@@ -104,6 +104,7 @@ BEGIN {
         parseTLS_Extension
         parseTLS_ServerHello
         printCipherStringArray
+        printParameters
         printSSL2CipherList
         printTLSCipherList
         version
@@ -1091,36 +1092,41 @@ my %SSL2_CIPHER_STRINGS = (
 
 #############################################################################################
 ############################################################################################
-sub version {
-    #? Version of SSLhello
+sub version { # version of SSLhello
+    #? prints the official version number of SSLhello (yyyy-mm-dd)
+
     print "NET::SSLhello_20$VERSION\n";
-    _trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
-#   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
-#    print "\$main::cfg\{\'trace\'\}=$main::cfg{'trace'}\n";
-     _trace2 ("          retry=$Net::SSLhello::retry\n")           if (defined($Net::SSLhello::retry));
-     _trace2 ("        timeout=$Net::SSLhello::timeout\n")         if (defined($Net::SSLhello::timeout));
-     _trace2 ("          trace=$Net::SSLhello::trace\n")           if (defined($Net::SSLhello::trace));
-     _trace2 ("      traceTIME=$main::traceTIME\n")                if (defined($main::traceTIME));
-     _trace2 ("       usereneg=$Net::SSLhello::usereneg\n")        if (defined($Net::SSLhello::usereneg));
-     _trace2 ("   double_reneg=$Net::SSLhello::double_reneg\n")    if (defined($Net::SSLhello::double_reneg));
-     _trace2 ("         usesni=$Net::SSLhello::usesni\n")          if (defined($Net::SSLhello::usesni));
-     _trace2 ("       sni_name=$Net::SSLhello::sni_name\n")        if (defined($Net::SSLhello::sni_name));
-     _trace2 ("         useecc=$Net::SSLhello::useecc\n")          if (defined($Net::SSLhello::useecc));
-     _trace2 ("     useecpoint=$Net::SSLhello::useecpoint\n")      if (defined($Net::SSLhello::useecpoint));
-     _trace2 ("       starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
-     _trace2 ("   starttlsType=$Net::SSLhello::starttlsType\n")    if (defined($Net::SSLhello::starttlsType));
-     _trace2 ("  starttlsDelay=$Net::SSLhello::starttlsDelay\n")   if (defined($Net::SSLhello::starttlsDelay));
-     for my $i (1..8) {
-        _trace2 ("  starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
-     }
-     _trace2 ("slowServerDelay=$Net::SSLhello::slowServerDelay\n") if (defined($Net::SSLhello::slowServerDelay));
-     _trace2 ("   experimental=$Net::SSLhello::experimental\n")    if (defined($Net::SSLhello::experimental));
-     _trace2 ("      proxyhost=$Net::SSLhello::proxyhost\n")       if (defined($Net::SSLhello::proxyhost));
-     _trace2 ("      proxyport=$Net::SSLhello::proxyport\n")       if (defined($Net::SSLhello::proxyport));
-     _trace2 ("    max_ciphers=$Net::SSLhello::max_ciphers\n")     if (defined($Net::SSLhello::max_ciphers));
-     _trace2 ("max_sslHelloLen=$Net::SSLhello::max_sslHelloLen\n") if (defined($Net::SSLhello::max_sslHelloLen));
-     _trace2_("------------------------------------------------------------------------------------\n");
-} # version
+}
+
+sub printParameters { 
+    #? prints the global parameters
+    #
+    print ("SSLHello::Parameters:\n");
+    print ("                retry=$Net::SSLhello::retry\n")           if (defined($Net::SSLhello::retry));
+    print ("              timeout=$Net::SSLhello::timeout\n")         if (defined($Net::SSLhello::timeout));
+    print ("                trace=$Net::SSLhello::trace\n")           if (defined($Net::SSLhello::trace));
+    print ("            traceTIME=$main::traceTIME\n")                if (defined($main::traceTIME));
+    print ("             usereneg=$Net::SSLhello::usereneg\n")        if (defined($Net::SSLhello::usereneg));
+    print ("         double_reneg=$Net::SSLhello::double_reneg\n")    if (defined($Net::SSLhello::double_reneg));
+    print ("               usesni=$Net::SSLhello::usesni\n")          if (defined($Net::SSLhello::usesni));
+    print ("         use_sni_name=$Net::SSLhello::use_sni_name\n")    if (defined($Net::SSLhello::use_sni_name));
+    print ("             sni_name=$Net::SSLhello::sni_name\n")        if (defined($Net::SSLhello::sni_name));
+    print ("               useecc=$Net::SSLhello::useecc\n")          if (defined($Net::SSLhello::useecc));
+    print ("           useecpoint=$Net::SSLhello::useecpoint\n")      if (defined($Net::SSLhello::useecpoint));
+    print ("             starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
+    print ("         starttlsType=$Net::SSLhello::starttlsType\n")    if (defined($Net::SSLhello::starttlsType));
+    for my $i (1..8) {
+        print ("starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+    }
+    print ("        starttlsDelay=$Net::SSLhello::starttlsDelay\n")   if (defined($Net::SSLhello::starttlsDelay));
+    print ("      slowServerDelay=$Net::SSLhello::slowServerDelay\n") if (defined($Net::SSLhello::slowServerDelay));
+    print ("         experimental=$Net::SSLhello::experimental\n")    if (defined($Net::SSLhello::experimental));
+    print ("            proxyhost=$Net::SSLhello::proxyhost\n")       if (defined($Net::SSLhello::proxyhost));
+    print ("            proxyport=$Net::SSLhello::proxyport\n")       if (defined($Net::SSLhello::proxyport));
+    print ("          max_ciphers=$Net::SSLhello::max_ciphers\n")     if (defined($Net::SSLhello::max_ciphers));
+    print ("      max_sslHelloLen=$Net::SSLhello::max_sslHelloLen\n") if (defined($Net::SSLhello::max_sslHelloLen));
+    print ("------------------------------------------------------------------------------------------\n");
+}
 
 ### --------------------------------------------------------------------------------------------------------- ###
 ### compile packets functions
