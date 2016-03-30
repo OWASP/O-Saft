@@ -238,8 +238,9 @@ our %cfg = ( # from o-saft (only relevant parts)
     'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttp'       => 1,       # 1: make HTTP request
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
-    'usesni'        => 1,       # 0: do not make connection in SNI mode; 2: use sni with sni_name
-    'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if usesni=1; temp: Default is "1" until migration of o-saft.pl to use     sni=2 will be done
+    'usesni'        => 1,       # 0: do not make connection in SNI mode, 1: use SNI extension (if protocol >= tlsv1), 2: toggle-sni (check without and with SNI)
+    'use_sni_name'  => 0,       # 0: use hostname (default), 1: use sni_name for SNI mode connections
+    'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if usesni=1; temp/tbd: Default is "1" until migration of o-saft.pl to additionally set 'use_sni_name'=1 will be done
     'version'       => [],      # contains the versions to be checked
     'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)], #added TLSv13
     'SSLv2'         => 1,       # 1: check this SSL version
@@ -412,11 +413,12 @@ while ($#argv >= 0) {
     if ($arg =~ /^--starttls[_-]?delay=(\d+)$/i)        {$cfg{'starttlsDelay'}=$1; next;}
     # option
     if ($arg =~ /^--sni$/i)                             { $cfg{'usesni'}    = 1; next; }
-    if ($arg =~ /^--no[_-]?sni$/i)                      { $cfg{'usesni'}    = 0; next; }
-    if ($arg =~ /^--toggle[_-]?sni$/i)                  { $cfg{'usesni'}    = 3; next; } # test with and without SNI
-    if ($arg =~ /^--sni[_-]?toggle$/i)                  { $cfg{'usesni'}    = 3; next; } # test with and without SNI
-    if ($arg =~ /^--sni[_-]?name$/i)                    { $cfg{'sni_name'} = ""; $cfg{'usesni'} *=2; next; } # sniname=""; usesni=2 or 6 -> use sni_name not the hostname (if not 0 before)
-    if ($arg =~ /^--sni[_-]?name=(.*)$/i)               { $cfg{'sni_name'} = $1; $cfg{'usesni'} *=2; next; } # sniname=SNINAME; usesni=2 or 6 -> use sni_name not the host name (if not 0 before)
+    if ($arg =~ /^--no[_-]?sni$/i)                      { $cfg{'usesni'}    = 0; next; } 
+    if ($arg =~ /^--toggle[_-]?sni$/i)                  { $cfg{'usesni'}    = 2; next; } # test with and without SNI
+    if ($arg =~ /^--sni[_-]?toggle$/i)                  { $cfg{'usesni'}    = 2; next; } # test with and without SNI
+    if ($arg =~ /^--sni[_-]?name$/i)                    { $cfg{'sni_name'}  = ""; $cfg{'use_sni_name'} = 1; next; } # sniname=""
+    if ($arg =~ /^--sni[_-]?name=(.*)$/i)               { $cfg{'sni_name'}  = $1; $cfg{'use_sni_name'} = 1; next; } # sniname=SNINAME 
+    if ($arg =~ /^--no[_-]?sni[_-]?name$/i)             { $cfg{'use_sni_name'} = 0; $cfg{'sni_name'} = "1"; next; } # go back to hostname; ##FIX: reset 'sni_name'="1" until o-saft migrated to get 'use_sni_name', too
     if ($arg =~ /^--header$/i)                          { $cfg{'out_header'}= 1; next; }
     if ($arg =~ /^--no[_-]?header$/i)                   { $cfg{'out_header'}= 0; push(@ARGV, "--no-header"); next; } # push() is ugly hack to preserve option even from rc-file
     if ($arg =~ /^--?sslv?2$/i)                         { $cfg{'SSLv2'}     = 1; next; } # allow case insensitive
@@ -506,6 +508,7 @@ while ($#argv >= 0) {
     no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
     $Net::SSLhello::trace           = $cfg{'trace'} if ($cfg{'trace'} > 0);
     $Net::SSLhello::usesni          = $cfg{'usesni'};
+    $Net::SSLhello::use_sni_name    = $cfg{'use_sni_name'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
     $Net::SSLhello::starttls        = $cfg{'starttls'};
     $Net::SSLhello::starttlsType    = $cfg{'starttlsType'}; 
@@ -613,9 +616,9 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         my $range = $cfg{'cipherrange'};            # use specified range of constants
            $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
         push(@testing, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
-        if ($Net::SSLhello::usesni>=1) { # use SNI is set 
-            if (($Net::SSLhello::usesni>=3) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3')) { # toggle SNI: test first without sni, old protocols: test without SNI
-                $Net::SSLhello::usesni=0;
+        if ($Net::SSLhello::usesni) { # usesni (--sni: 1 or --togglesni: 2) is set 
+            if ( ($Net::SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
+                $Net::SSLhello::usesni = 0;
                 @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
                 _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
                 _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
