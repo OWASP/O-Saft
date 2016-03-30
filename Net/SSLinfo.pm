@@ -29,11 +29,11 @@ package Net::SSLinfo;
 
 use strict;
 use constant {
-    SSLINFO_VERSION => '15.11.15',
+    SSLINFO_VERSION => '16.03.30',
     SSLINFO     => 'Net::SSLinfo',
     SSLINFO_ERR => '#Net::SSLinfo::errors:',
     SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.116 16/03/30 00:02:34',
+    SID         => '@(#) Net::SSLinfo.pm 1.118 16/03/30 19:43:18',
 };
 
 ######################################################## public documentation #
