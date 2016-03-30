@@ -30,10 +30,10 @@ package Net::SSLinfo;
 use strict;
 use constant {
     SSLINFO_VERSION => '16.03.30',
-    SSLINFO     => 'Net::SSLinfo',
-    SSLINFO_ERR => '#Net::SSLinfo::errors:',
-    SSLINFO_HASH=> '<<openssl>>',
-    SID         => '@(#) Net::SSLinfo.pm 1.118 16/03/30 19:43:18',
+    SSLINFO         => 'Net::SSLinfo',
+    SSLINFO_ERR     => '#Net::SSLinfo::errors:',
+    SSLINFO_HASH    => '<<openssl>>',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.119 16/03/30 20:02:17',
 };
 
 ######################################################## public documentation #
@@ -307,9 +307,9 @@ follow the rules describend above.
 ############################################################## initialization #
 
 # forward declarations
-sub do_ssl_open($$$);
+sub do_ssl_open($$$@);
 sub do_ssl_close($$);
-sub do_openssl($$$);
+sub do_openssl($$$$);
 
 use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
@@ -1041,7 +1041,7 @@ call it directly.
 sub _X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT () { 18 }
 sub _FLAGS_ALLOW_SELFSIGNED () { 0x00000001 }
 
-sub do_ssl_open($$$) {
+sub do_ssl_open($$$@) {
     my ($host, $port, $sslversions, $cipher) = @_;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
     _settrace();
@@ -1445,7 +1445,7 @@ sub do_ssl_open($$$) {
         chomp $_SSLinfo{'signame'};
         # NO Certificate }
 
-        $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port);
+        $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port, '');
 
             # from s_client: (if openssl supports -nextprotoneg)
             #    Protocols advertised by server: spdy/4a4, spdy/3.1, spdy/3, http/1.1
@@ -1739,7 +1739,7 @@ The value of I<$data>, if set, is piped to openssl.
 Returns retrieved data or '<<openssl>>' if openssl or s_client missing.
 =cut
 
-sub do_openssl($$$) {
+sub do_openssl($$$$) {
     #? call external openssl executable to retrive more data
     my $mode = shift;   # must be openssl command
     my $host = shift;
@@ -1913,7 +1913,7 @@ sub cipher_local {
     _trace("cipher_local($pattern)");
     _setcmd();
     _trace("_SSLinfo_get: openssl ciphers $pattern") if ($trace > 1);
-    $list = do_openssl("ciphers $pattern", '', '');
+    $list = do_openssl("ciphers $pattern", '', '', '');
     chomp  $list;
     return (wantarray) ? split(/[:\s]+/, $list) : $list;
 } # cipher_local
