@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# PACKAGE {
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -81,7 +82,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.31 16/03/06 07:40:49";
+my  $SID    = "@(#) o-saft-dbx.pm 1.32 16/03/30 21:33:24";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -368,6 +369,9 @@ sub _yeast_prot() {
 sub _yeast_cipher() {
 # TODO: %ciphers %cipher_names
 }
+
+sub o_saft_dbx_done() {};       # dummy to check successful include
+# PACKAGE }
 
 unless (defined caller) {
     if (eval("require POD::Perldoc;")) {
