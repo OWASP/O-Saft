@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# PACKAGE {
 # Filename : SSLhello.pm
 #!#############################################################################
 #!#                    Copyright (c) Torsten Gigler 
@@ -4530,22 +4531,6 @@ sub printTLSCipherList ($) {
 } # printTLSCipherList
 
 
-unless (defined caller) {       # print myself or open connection
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval("require POD::Perldoc;")) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        exit 0;
-    }
-}
-
-1;
-
 =pod
 
 =head1 EXAMPLES
@@ -4570,3 +4555,21 @@ L<IO::Socket(1)>
 
 =cut
 
+sub net_sslhello_done() {};     # dummy to check successful include
+# PACKAGE }
+
+unless (defined caller) {       # print myself or open connection
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval("require POD::Perldoc;")) {
+        # pod2usage( -verbose => 1 );
+        exit( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {
+        # may return:  You need to install the perl-doc package to use this program.
+        #exec "perldoc $0"; # scary ...
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        exit 0;
+    }
+}
+
+1;
