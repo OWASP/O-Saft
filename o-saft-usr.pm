@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# PACKAGE {
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -120,7 +121,7 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.15 15/06/21 12:09:10";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.16 16/03/30 21:43:57";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -201,6 +202,9 @@ sub usr_pre_next()  {
 sub usr_pre_exit()  {
     _usr_dbx("usr_pre_exit ...");
 };
+
+sub o_saft_usr_done() {};       # dummy to check successful include
+# PACKAGE }
 
 # local functions {
 # -------------------------------------
