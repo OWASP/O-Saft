@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# PACKAGE {
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -8,7 +9,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.85 16/03/30 19:05:11";
+my  $man_SID= "@(#) o-saft-man.pm 1.86 16/03/30 21:46:12";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1183,6 +1184,9 @@ sub printhelp($) {
     man_help(uc($hlp));
     return;
 } # printhelp
+
+sub o_saft_man_done() {};       # dummy to check successful include
+# PACKAGE }
 
 printhelp($ARGV[0]) unless (defined caller);
 
