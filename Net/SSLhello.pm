@@ -1071,7 +1071,6 @@ my %SSL2_CIPHER_STRINGS = (
 ############################################################################################
 sub version {
     #? Version of SSLhello
-$main::cfg{'trace'}=3;
     print "NET::SSLhello_20$VERSION\n";
     _trace ("version: global Parameters: Timeout=$Net::SSLhello::timeout, Retry=$Net::SSLhello::retry\n");
 #   test trace (see 'tbd: import/export of the trace-function from o-saft-dbx.pm;')
