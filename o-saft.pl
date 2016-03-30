@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.437 16/03/30 00:29:23",
+    SID         => "@(#) yeast.pl 1.438 16/03/30 19:25:46",
     STR_VERSION => "16.03.27",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -587,6 +587,7 @@ my %check_conn = (  # connection data
     'beast'         => {'txt' => "Connection is safe against BEAST attack (any cipher)"},
     'breach'        => {'txt' => "Connection is safe against BREACH attack"},
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
+    'drown'         => {'txt' => "Connection is safe against DROWN attack"},
     'time'          => {'txt' => "Connection is safe against TIME attack"},
     'freak'         => {'txt' => "Connection is safe against FREAK attack"},
     'heartbleed'    => {'txt' => "Connection is safe against Heartbleed attack"},
@@ -757,6 +758,7 @@ our %shorttexts = (
     'beast'         => "Safe to BEAST (cipher)",
     'breach'        => "Safe to BREACH",
     'crime'         => "Safe to CRIME",
+    'drown'         => "Safe to DROWN",
     'time'          => "Safe to TIME",
     'freak'         => "Safe to FREAK",
     'heartbleed'    => "Safe to Heartbleed",
@@ -1242,6 +1244,7 @@ our %cmd = (
                        ],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
+    'cmd-drown'     => [qw(drown)],                 # commands for +drown
     'cmd-freak'     => [qw(freak)],                 # commands for +freak
     'cmd-lucky13'   => [qw(lucky13)],               # commands for +lucky13
     'cmd-http'      => [],      # commands for +http, computed below
@@ -1255,7 +1258,7 @@ our %cmd = (
                          selected cipher fingerprint_hash fp_not_md5 
                          sha2signature pub_encryption pub_enc_known email
                          serial subject dates verify expansion compression hostname
-                         beast crime freak export rc4_cipher rc4 pfs_cipher crl
+                         beast crime drown freak export rc4_cipher rc4 pfs_cipher crl
                          hassslv2 hassslv3 poodle sloth
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
                        )],
@@ -1269,7 +1272,7 @@ our %cmd = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [                            # commands for checking known vulnerabilities
-                        qw(beast breach crime freak heartbleed logjam lucky13 poodle rc4 sloth time hassslv2 hassslv3 pfs_cipher session_random)
+                        qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth time hassslv2 hassslv3 pfs_cipher session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [                            # commands for checking protocols
@@ -1277,7 +1280,7 @@ our %cmd = (
                        ],
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
+                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
@@ -3821,9 +3824,11 @@ sub checkprot($$) {
         # must be accpted. So the amount of ciphers must be > 0.
     if ($cfg{'SSLv2'} == 0) {
         $checks{'hassslv2'}->{val}  = _subst($text{'disabled'}, "--no-SSLv2");
+        $checks{'drown'}->{val}     = _subst($text{'disabled'}, "--no-SSLv2");
     } else {
         if ($prot{'SSLv2'}->{'cnt'} > 0) {
             $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
+            $checks{'drown'}->{val}     = " ";  # SSLv2 there, then potentially vulnerable to DROWN
         }
     }
     if ($cfg{'SSLv3'} == 0) {
@@ -5520,6 +5525,7 @@ while ($#argv >= 0) {
         push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val eq 'beast'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-beast'}}); next; }
         if ($val eq 'crime'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); next; }
+        if ($val eq 'drown'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-drown'}}); next; }
         if ($val eq 'freak'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-freak'}}); next; }
         if ($val eq 'lucky13'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
         if ($val eq 'sizes'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
