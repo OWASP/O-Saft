@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.83 16/03/30 11:46:11";
+my  $man_SID= "@(#) o-saft-man.pm 1.84 16/03/30 18:42:10";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -201,6 +201,7 @@ our %man_text = (
         'DNSSEC'    => "DNS Security Extension",
         'DPA'       => "Dynamic Passcode Authentication (see CAP)",
         'DRBG'      => "Deterministic Random Bit Generator",
+        'DROWN'     => "Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)",
         'DSA'       => "Digital Signature Algorithm",
         'DSS'       => "Digital Signature Standard",
         'DTLS'      => "Datagram TLS",
@@ -2915,6 +2916,10 @@ CHECKS
 
         Connection is vulnerable if target supports SSL-level compression.
 
+      DROWN
+
+        Connection is vulnerable if target supports SSLv2.
+
       FREAK
 
         Attack Against SSL/TLS to downgrade to EXPORT ciphers.
@@ -2989,7 +2994,7 @@ CHECKS
 
     Target (server) Configuration and Support
 
-      BEAST, BREACH, CRIME, FREAK, Logjam, Lucky 13, POODLE, RC4, SLOTH
+      BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4, SLOTH
 
         See above.
 
