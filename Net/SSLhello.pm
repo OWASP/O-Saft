@@ -2316,7 +2316,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         }
         if (length($input) >0) {
             _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes\n"); 
-            ($acceptedCipher, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, "", $protocol,"");
+            ($acceptedCipher, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, "", $protocol);
 
             if ( ($acceptedCipher ne "") && ($parseAllRecords > 0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) { 
                 _trace2 ("_doCheckSSLciphers: Try to get and parse next Records\n"); 
