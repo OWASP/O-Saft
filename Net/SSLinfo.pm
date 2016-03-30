@@ -1,5 +1,6 @@
 #! /usr/bin/perl -w
 
+# PACKAGE {
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -33,7 +34,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.119 16/03/30 20:02:17',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.120 16/03/30 21:24:55',
 };
 
 ######################################################## public documentation #
@@ -319,6 +320,7 @@ require Exporter;
     $VERSION   = SSLINFO_VERSION;
     @ISA       = qw(Exporter);
     @EXPORT    = qw(
+        net_sslinfo_done
         test_ssleay
         dump
         do_ssl_open
@@ -2416,6 +2418,26 @@ sub error($) {
     #return Net::SSLeay::ERR_get_error;
 }
 
+=pod
+
+=head1 DEENDENCIES
+
+L<Net::SSLeay(3pm)>
+L<Math::BigInt(3pm)>  (required if necessary only)
+
+=head1 SEE ALSO
+
+L<Net::SSLeay(1)>
+
+=head1 AUTHOR
+
+08-aug-12 Achim Hoffmann
+
+=cut
+
+sub net_sslinfo_done() {};      # dummy to check successful include
+# PACKAGE }
+
 unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
     if ($#ARGV >= 0) {
@@ -2437,22 +2459,3 @@ unless (defined caller) {       # print myself or open connection
 }
 
 1;
-
-######################################################## public documentation #
-
-=pod
-
-=head1 DEENDENCIES
-
-L<Net::SSLeay(3pm)>
-L<Math::BigInt(3pm)>  (required if necessary only)
-
-=head1 SEE ALSO
-
-L<Net::SSLeay(1)>
-
-=head1 AUTHOR
-
-08-aug-12 Achim Hoffmann
-
-=cut
