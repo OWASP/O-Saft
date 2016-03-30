@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.82 16/03/26 21:53:37";
+my  $man_SID= "@(#) o-saft-man.pm 1.83 16/03/30 11:46:11";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3689,6 +3689,27 @@ KNOWN PROBLEMS
           $0 +help --v
         or
           $0 +help | more
+
+    **WARNING: on MSWin32 additional option  --v  required, sometimes ...
+
+        On some (mainly Windows-based) systems  this may happen  when calling
+        for example:
+          $0 --help=FAQ
+        which then may produce:
+          **WARNING: on MSWin32 additional option  --v  required, sometimes ...
+          === reading: ./.o-saft.pl (RC-FILE done) ===
+          === reading: Net/SSLinfo.pm (O-Saft module done) ===
+          **USAGE: no command given
+          # most common usage:
+            o-saft.pl +info   your.tld
+            o-saft.pl +check  your.tld
+            o-saft.pl +cipher your.tld
+          # for more help use:
+            o-saft.pl --help
+
+        Workaround: use full path to perl.exe, for example
+          C:\Programs\perl\bin\perl.exe $0 --help=FAQ
+
 
     Performance Problems
 
