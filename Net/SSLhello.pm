@@ -37,6 +37,11 @@
 package Net::SSLhello;
 
 use strict;
+use constant {
+    SSLHELLO_VERSION=> '16.03.30',
+    SSLHELLO        => 'O-Saft::Net::SSLhello ',
+#   SSLHELLO_SID    => '@(#) %M% %I% %E% %U%',
+};
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
 #require IO::Select if ($main::cfg{'trace'} > 1);
@@ -71,12 +76,6 @@ Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni,
 =cut
 
 
-my $me      = $0; $me     =~ s#.*(?:/|\\)##;
-my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
-   $mepath  = "./" if ($mepath eq $me);
-my $mename  = "yeast::Net::SSLhello ";
-   $mename  = "O-Saft::Net::SSLhello " if ($me !~ /yeast/);
-
 #our %main::cfg;    # provided by caller
 our $dtlsEpoch = 0; # for DTLS only (globally)
 our %_SSLhello; #  our internal data structure
@@ -85,7 +84,7 @@ use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
 
 BEGIN {
     require Exporter;
-    $VERSION    = '16-03-27';
+    $VERSION    = SSLHELLO_VERSION;
     @ISA        = qw(Exporter);
     @EXPORT     = qw(
         checkSSLciphers
@@ -327,12 +326,12 @@ sub _error;
 
 sub _y_ts      { if ($main::cfg{'traceTIME'} <= 0)  { return ""; }   return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]); }
 
-sub _trace($)  { local $\ = ""; print "#" . _y_ts() . $mename . "::" . $_[0]                    if ($main::cfg{'trace'} > 0); }
-sub _trace0($) { local $\ = ""; print "#" . _y_ts() . $mename . "::"                            if ($main::cfg{'trace'} > 0); }
-sub _trace1($) { local $\ = ""; print "# " . _y_ts() . $mename . "::" . join(" ", @_)           if ($main::cfg{'trace'} > 1); }
-sub _trace2($) { local $\ = ""; print "# --> " . _y_ts() . $mename . "::" . join(" ", @_)       if ($main::cfg{'trace'} > 2); }
-sub _trace3($) { local $\ = ""; print "# --> " . _y_ts() . $mename . "::" . join(" ", @_)       if ($main::cfg{'trace'} ==3); }
-sub _trace4($) { local $\ = ""; print "#   ---> " . _y_ts() . $mename . "::" . join(" ", @_)    if ($main::cfg{'trace'} > 3); }
+sub _trace($)  { local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::" . $_[0]                    if ($main::cfg{'trace'} > 0); }
+sub _trace0($) { local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::"                            if ($main::cfg{'trace'} > 0); }
+sub _trace1($) { local $\ = ""; print "# " . _y_ts() . SSLHELLO . "::" . join(" ", @_)           if ($main::cfg{'trace'} > 1); }
+sub _trace2($) { local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @_)       if ($main::cfg{'trace'} > 2); }
+sub _trace3($) { local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @_)       if ($main::cfg{'trace'} ==3); }
+sub _trace4($) { local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @_)    if ($main::cfg{'trace'} > 3); }
 sub _trace_($) { local $\ = ""; print " " . join(" ", @_)                                       if ($main::cfg{'trace'} > 0); }
 sub _trace1_($){ local $\ = ""; print " " . join(" ", @_)                                       if ($main::cfg{'trace'} > 1); }
 sub _trace2_($){ local $\ = ""; print join(" ", @_)                                             if ($main::cfg{'trace'} > 2); }
