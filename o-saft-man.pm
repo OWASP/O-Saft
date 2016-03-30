@@ -8,7 +8,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.84 16/03/30 18:42:10";
+my  $man_SID= "@(#) o-saft-man.pm 1.85 16/03/30 19:05:11";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3749,7 +3749,8 @@ LIMITATIONS
     Commands
 
         Some commands cannot be used together with others, for example:
-        +cipher,  +ciphers,  +list,  +libversion,  +version,  +check,  +help.
+        +cipher,  +ciphers,  +list,  +libversion,  +version,  +check,  +help,
+        +protocols .
  
         +quick  should not be used together with other commands, it returns
         strange output then.
