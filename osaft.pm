@@ -1,8 +1,9 @@
 #! /usr/bin/perl -w
+# PACKAGE {
 
 ################
 #
-# sobald in o-saft.pl eingebaut, folgendes pruefen/aendern:
+# sobald in o-saft.pl eingebaut, Folgendes pruefen/aendern:
 #	1. FIXME (10) in yeast.pl   auch Variablen *dbx* ueberdenken
 #	2. alles was mit $cfg{'trace'} in o-saft-dbx.pm
 #	3. in o-saft-dbx.pm  _vprintme:  @ARGV ersetzen
@@ -30,6 +31,22 @@
 ###########	mehr Optionen angegebn werden koennen: -starttls  -proxy*  usw.
 
 ################
+
+no warnings qw(once);
+
+package osaft;
+
+use constant {
+    OSAFT_VERSION   => '16.04.01',
+  # STR_VERSION => 'dd.mm.yy',  # must be defined in calling program
+    STR_ERROR   => "**ERROR: ",
+    STR_WARN    => "**WARNING: ",
+    STR_HINT    => "**Hint: ",
+    STR_USAGE   => "**USAGE: ",
+    STR_DBX     => "#dbx# ",
+    STR_UNDEF   => "<<undef>>",
+    STR_NOTXT   => "<<>>",
+};
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -155,14 +172,10 @@ Following functions (methods) must be defined in the calling program:
 =cut
 
 
-no warnings qw(once);
-
-package osaft;
-
 BEGIN {
     use Exporter qw(import);
     @ISA     = qw(Exporter);
-    $VERSION = STR_LIB_VERSION;
+    $VERSION = OSAFT_VERSION;
     @EXPORT  = qw(
 		STR_ERROR
 		STR_WARN
@@ -196,6 +209,7 @@ BEGIN {
 		get_cipher_name
 		get_openssl_version
 		get_dh_paramter
+		osaft_done
     );
     # insert above in vi with:
     # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
@@ -207,19 +221,7 @@ BEGIN {
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-my $SID         =  '@(#) o-saft-lib.pm 1.7 16/03/14 13:31:28';
-
-use constant {
-  # STR_VERSION => 'dd.mm.yy',  # must be defined in calling program
-    STR_ERROR   => "**ERROR: ",
-    STR_WARN    => "**WARNING: ",
-    STR_HINT    => "**Hint: ",
-    STR_USAGE   => "**USAGE: ",
-    STR_DBX     => "#dbx# ",
-    STR_UNDEF   => "<<undef>>",
-    STR_NOTXT   => "<<>>",
-    LIB_VERSION => '16.01.16',
-};
+my $SID         =  '@(#) o-saft-lib.pm 1.8 16/03/31 22:49:43';
 
 
 %prot   = (     # collected data for protocols and ciphers
@@ -1121,29 +1123,10 @@ sub _osaft_init() {
 
 }; # _osaft_init
 
-
-#_____________________________________________________________________________
-#_____________________________________________________________________ self __|
-
-unless (defined caller) {       # print myself or open connection
-    printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval("require POD::Perldoc;")) {
-        # pod2usage( -verbose => 1 );
-        exit( Pod::Perldoc->run(args=>[$0]) );
-    }
-    if (qx(perldoc -V)) {
-        # may return:  You need to install the perl-doc package to use this program.
-        #exec "perldoc $0"; # scary ...
-        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        exit 0;
-    }
-}
+sub osaft_done() {};            # dummy to check successful include
 
 # complete initializations
 _osaft_init();
-
-1;
-
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -1164,4 +1147,26 @@ main purpose of this module is defining variables. Hence we export them.
 28-dec-15 Achim Hoffmann
 
 =cut
+
+# PACKAGE }
+
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ self __|
+
+unless (defined caller) {       # print myself or open connection
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval("require POD::Perldoc;")) {
+        # pod2usage( -verbose => 1 );
+        exit( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {
+        # may return:  You need to install the perl-doc package to use this program.
+        #exec "perldoc $0"; # scary ...
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        exit 0;
+    }
+}
+
+1;
 
