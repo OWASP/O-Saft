@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2016-03-26";
+my $VERSION = "2016-03-30";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
