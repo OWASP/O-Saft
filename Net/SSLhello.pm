@@ -645,7 +645,7 @@ my %cipherHexHash = (
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol:  http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-05
 #!# added manually 20160330: NEW ChaCha Stream Cipher for Transport Layer Security 
-#!# ATTENTION: the same Ciphers existed ibefor using 0x0300CC12 .. 0x0300CC19
+#!# ATTENTION: the same Ciphers existed before using 0x0300CC12 .. 0x0300CC19
 #!#----------------------------------------+-------------+--------------------+
 #!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
 #!#----------------------------------------+-------------+--------------------+  
@@ -659,6 +659,31 @@ my %cipherHexHash = (
   '0x0300CCA5'=> [qw(PSK_WITH_CHACHA20_POLY1305         PSK-CHACHA20-POLY1305)],
   '0x0300CCA6'=> [qw(ECDHE_PSK_WITH_CHACHA20_POLY1305   ECDHE-PSK-CHACHA20-POLY1305)],
   '0x0300CCA7'=> [qw(RSA_PSK_WITH_CHACHA20_POLY1305     RSA-PSK-CHACHA20-POLY1305)],
+
+#!#----------------------------------------+-------------+--------------------+
+#!# Protocol: https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 
+#!# added manually 20160331: 
+#!#           ChaCha20-Poly1305 Cipher Suites for Transport Layer Security (TLS)
+#!#----------------------------------------+-------------+--------------------+
+#!# cipher suite hex value => [ cipher_name1 cipher_name2 ],
+#!#----------------------------------------+-------------+--------------------+
+
+# CipherSuite TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   = {0xTBD, 0xTBD} {0xCC, 0xA8}
+# CipherSuite TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 = {0xTBD, 0xTBD} {0xCC, 0xA9}
+# CipherSuite TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256     = {0xTBD, 0xTBD} {0xCC, 0xAA}
+
+# CipherSuite TLS_PSK_WITH_CHACHA20_POLY1305_SHA256         = {0xTBD, 0xTBD} {0xCC, 0xAB}
+# CipherSuite TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256   = {0xTBD, 0xTBD} {0xCC, 0xAC}
+# CipherSuite TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256     = {0xTBD, 0xTBD} {0xCC, 0xAD}
+# CipherSuite TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256     = {0xTBD, 0xTBD} {0xCC, 0xAE}
+  '0x0300CCA8'=> [qw(ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   ECDHE-RSA-CHACHA20-POLY1305-SHA256)],
+  '0x0300CCA9'=> [qw(ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 ECDHE-ECDSA-CHACHA20-POLY1305-SHA256)],
+  '0x0300CCAA'=> [qw(DHE_RSA_WITH_CHACHA20_POLY1305_SHA256     DHE-RSA-CHACHA20-POLY1305-SHA256)],
+
+  '0x0300CCAB'=> [qw(PSK_WITH_CHACHA20_POLY1305_SHA256         PSK-CHACHA20-POLY1305-SHA256)],
+  '0x0300CCAC'=> [qw(ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256   ECDHE-PSK-CHACHA20-POLY1305-SHA256)],
+  '0x0300CCAD'=> [qw(DHE_PSK_WITH_CHACHA20_POLY1305_SHA256     DHE-PSK-CHACHA20-POLY1305-SHA256)],
+  '0x0300CCAE'=> [qw(RSA_PSK_WITH_CHACHA20_POLY1305_SHA256     RSA-PSK-CHACHA20-POLY1305-SHA256)],
 
 #!#----------------------------------------+-------------+--------------------+
 #!# Protocol:  http://tools.ietf.org/html/rfc5932
