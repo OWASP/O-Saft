@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.438 16/03/30 19:25:46",
+    SID         => "@(#) yeast.pl 1.439 16/04/01 00:25:55",
     STR_VERSION => "16.03.27",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -194,6 +194,7 @@ sub _load_file($$) {
     my $fil = shift;
     my $txt = shift;
     my $err = "";
+    return "" if (defined($::osaft_standalone));
     eval("require '$fil';"); # need eval to catch "Can't locate ... in @INC ..."
     $err = $@;
     chomp $err;
