@@ -1,4 +1,65 @@
 
+Version: 16.03.30
+  BUGFIX
+    * Net/SSLinfo.pm: prototypes for do_openssl() and do_ssl_open() corrected
+    * Net/SSLhello.pm: constants added; $me* variables removed
+    * Net/SSLhello.pm: setting _trace variable in version() removed
+  NEW
+    * Net/SSLinfo.pm: dummy function net_sslinfo_done() added
+    * Net/SSLhello.pm: dummy function net_sslhello_done() added
+
+Version: 16.03.27
+  CHANGES
+    * o-saft.pl: configuration moved to osaft.pm
+  NEW
+    * +drown check for DROWN attack vulnerability
+
+Version: 16.03.26
+  CHANGES
+    * o-saft.pl: configuration moved to osaft.pm
+
+Version: 16.03.16
+  BUGFIX
+    * duplicate hint message for +quit corrected
+  CHANGES
+    * o-saft-dbx.pm: _yeast_args() improved
+    * o-saft-man.pm: Program Code documentation improved
+    * o-saft-man.pm: typos corrected and more glossar
+  NEW
+    * o-saft-man.pm: hint to check Net::SSLeay methods added to INSTALLATION
+    * --slow-server-delayand --sni-toggle added
+
+Version: 16.01.16
+  BUGFIX
+    * duplicate hint message for +quit corrected
+  CHANGES
+    * most configuration now in osaft.pm
+  NEW
+    * experimental: SLOTH check
+    * contrib/bunt.pl: postprocess script to colourize shell output
+    * contrib/bunt.sh: postprocess script to colourize shell output
+
+Version: 30.12.15
+  BUGFIX
+    * do not print cipher summary if no ciphers were checked
+    * --help=wiki prints wiki list items with leading : (colon)
+    * pretty-print path in output for +version
+  CHANGES
+    * USAGE improved; no more +cipher as default command
+    * checking DH parameters simplified
+    * +version prints path of included (use) module
+    * _trace_1arr() renamed to _trace_cmd()
+    * INSTALLATION section improved
+    * help: SECURITY section moved to top
+    * collect *ARG* variables in %cfg for debugging
+    * o-saft_bench: output format improved; accept host as parameter
+  NEW
+    * description for some more CHACHA cipher suites added
+    * --exit=* for debugging implemted
+    * --trace-me and --trace-not-me implemented
+    * +cipher-sh implemented
+    * o-saft-man.pm: INSTALLATION section
+
 Version: 15.12.15
   BUGFIX
     * some command aliases corrected
