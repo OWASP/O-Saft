@@ -82,7 +82,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $SID    = "@(#) o-saft-dbx.pm 1.32 16/03/30 21:33:24";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.34 16/04/01 00:14:05";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -130,7 +130,7 @@ sub _yeast_init() {
     return if (($cfg{'trace'} + $cfg{'verbose'}) <= 0);
     _yline("");
     _yTRAC("$0", $VERSION);
-    _yTRAC("_yeast_init::SID", $SID) if ($cfg{'trace'} > 2);
+    _yTRAC("_yeast_init::SID", $DBX_SID) if ($cfg{'trace'} > 2);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
     _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
     if ($cfg{'trace'} > 1) {
@@ -272,6 +272,7 @@ sub _yeast_data() {
 
     my ($key, $old, $label, $value);
     my @yeast = ();     # list of potential internal, private commands
+    my $cmd = " ";
     printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
     printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
     $old = "";
@@ -288,7 +289,6 @@ sub _yeast_data() {
             push(@yeast, $key); # probaly internal command
             next;
         }
-        $cmd = " ";
         $cmd = "+" if (_is_member($key, \@{$cfg{'commands'}}) > 0);     # command available as is
         $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/);           # all SSL/TLS commands ar for checks only
         printf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $key,
