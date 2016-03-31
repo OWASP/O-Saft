@@ -1195,11 +1195,10 @@ sub printCipherStringArray ($$$$$@) {
                 $sni, $sep,             # %6s%s%
                 $cipherOrder, $sep,     # %-12s%s
                 $protocolCipher, $sep;  # %10s%s
-              if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
-
+              if ( (defined ($cipherHexHash {$protocolCipher}) ) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
                 printf "%-28s%s%-34s",
-                    $cipherHexHash {$protocolCipher}[1], $sep,  # %-30s%s
-                    $cipherHexHash {$protocolCipher}[0];        # %-30s
+                    $cipherHexHash {$protocolCipher}[1], $sep,  # %-28s%s
+                    $cipherHexHash {$protocolCipher}[0];        # %-34s
                 if (defined ($_SSLhello {$protocolCipher."\|ServerKey"})) { #length of dh_param
                     printf "%s%s\n",
                         $sep, "(".$_SSLhello {$protocolCipher."\|ServerKey"}.")"; # %s%s
@@ -1207,12 +1206,12 @@ sub printCipherStringArray ($$$$$@) {
                     print "\n";
                 }
             } else { # no RFC-Defined cipher
-                printf "%-30s%s%s\n",
-                    "NO-RFC-".$protocolCipher, $sep,            # %-30s%s
-                    "NO-RFC-".$protocolCipher;                  # %s
+                printf "%-28s%s%-34s\n",
+                    "NO-RFC-".$protocolCipher, $sep,            # %-28s%s
+                    "NO-RFC-".$protocolCipher;                  # %-34ss
             }
         } else { # human readable output 
-               if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-string
+               if ( (defined ($cipherHexHash {$protocolCipher}) ) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
                     printf "# Cipher-String: >%s<, %-32s, %s",$protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0];     
                if (defined ($_SSLhello {$protocolCipher."\|ServerKey"})) { #length of dh_param
                     print  ", (".$_SSLhello {$protocolCipher."\|ServerKey"}.")";
@@ -3813,10 +3812,11 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             $_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"} = parseServerKeyExchange ($keyExchange, length($message), $message);
                             if (defined ($_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"})) { 
 
-                                _trace2_("\n   parseServerKeyExchange: Cipher:".hexCodedCipher ($lastCipher)." -> DH_serverParam: ".$_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"});
+                                _trace2_("\n   parseHandshakeRecord: Cipher:".hexCodedCipher ($lastCipher)." -> DH_serverParam: ".$_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"});
                             }
                         } else { # no cipher found
                             _trace2 ("parseHandshakeRecord: No Name found for Cipher: >0x3000".hexCodedCipher($lastCipher)."< -> counld NOT check the ServerKeyExchange\n");
+                            $_SSLhello {'0x0300'.hexCodedCipher($lastCipher)."\|ServerKey"}="---unknown--";
                         }
                     } elsif ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'certificate'}) { 
                          _trace2("parseHandshakeRecord: MessageType \"Certificate\" = ".sprintf("0x%02X", $serverHello{'msg_type'}) . " not yet analyzed\n");
@@ -4487,7 +4487,7 @@ sub compileTLSCipherArray ($) {
         _trace4_ (sprintf (" >".hexCodedCipher ($cipherTable[$i])."< -> "));
         $protocolCipher = pack ("a6a*", "0x0300", hexCodedCipher($cipherTable[$i]));
         if ($Net::SSLhello::trace > 2) {
-            if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
+            if ( (defined ($cipherHexHash {$protocolCipher})) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
                 _trace4_ (sprintf ("%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]));     
             } else {
                 _trace4_ ("$protocolCipher -> NO-RFC-".$protocolCipher);     
@@ -4523,7 +4523,7 @@ sub printSSL2CipherList ($) {
             } else { # V2Cipher
                 $protocolCipher = pack ("a4a*", "0x02", hexCodedCipher($cipherTable[$i]));
             }
-            if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
+            if ( (defined ($cipherHexHash {$protocolCipher})) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
                 _trace4_ (sprintf ("%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]));     
             } else {
                 _trace4_ ("$protocolCipher -> NO-RFC-".$protocolCipher);     
@@ -4551,7 +4551,7 @@ sub printTLSCipherList ($) {
             _trace4_ (sprintf("           Cipher[%2d]: ", $i));
             _trace4_ (" >".hexCodedCipher ($cipherTable[$i])."< -> ");
             $protocolCipher = pack ("a6a*", "0x0300", hexCodedCipher($cipherTable[$i]));
-            if ($cipherHexHash {$protocolCipher} ) { # definiert, kein Null-String
+            if ( (defined ($cipherHexHash {$protocolCipher})) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
                 _trace_ (sprintf "%s -> %-32s -> %s", $protocolCipher, $cipherHexHash {$protocolCipher}[1], $cipherHexHash {$protocolCipher}[0]);     
             } else {
                 _trace_ ("$protocolCipher -> NO-RFC-".$protocolCipher);     
