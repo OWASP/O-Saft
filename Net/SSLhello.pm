@@ -4049,8 +4049,9 @@ sub parseServerHello ($$$;$) {
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
                             my $sni = "";
-                            unless ( ($Net::SSLhello::usesni ==2) || ($Net::SSLhello::usesni >=6) || ($Net::SSLhello::sni_name ne "1") ) { ###FIX: quickfix until migration to usesni>=2 is compeated #### any sni-name is not set
-                                $sni = "'$host'" if (($Net::SSLhello::usesni ==1) || ($Net::SSLhello::usesni ==3) ) ; # server name, should be a name no IP
+                            $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
+                            unless ($Net::SSLhello::use_sni_name) {
+                                $sni = "'$host'" if ($Net::SSLhello::usesni); # server name, should be a name no IP
                             } else { # different sni_name
                                 $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
                             }
