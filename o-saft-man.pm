@@ -9,7 +9,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.86 16/03/30 21:46:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.88 16/03/31 12:54:46";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -122,8 +122,8 @@ our %man_text = (
         'BGP'       => "Boorder Gateway Protocol",
         'Blowfish'  => "symmetric block cipher",
         'BREACH'    => "Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)",
-        'Bullrun'   => "NSA program to break encrypted communication",
                     #   http://www.breachattack.com/
+        'Bullrun'   => "NSA program to break encrypted communication",
         'CAMELLIA'  => "Encryption algorithm 128 bit (by Mitsubishi and NTT)",
         'CAST-128'  => "Carlisle Adams and Stafford Tavares, block cipher",
         'CAST5'     => "alias for CAST-128",
@@ -203,6 +203,7 @@ our %man_text = (
         'DPA'       => "Dynamic Passcode Authentication (see CAP)",
         'DRBG'      => "Deterministic Random Bit Generator",
         'DROWN'     => "Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)",
+                    #  https://drownattack.com/
         'DSA'       => "Digital Signature Algorithm",
         'DSS'       => "Digital Signature Standard",
         'DTLS'      => "Datagram TLS",
@@ -4129,6 +4130,46 @@ INSTALLATION
 
         we should see lines similar to those of the last '/usr/local/openssl'
         call. However, it should contain more cipher lines.
+
+    Stand-alone Executable
+
+        Some people asked for a stand-alone executable (mainly for Windows).
+        Even perl is a scripting language there are situations where a stand-
+        alone executable would be nice, for example if the installed perl and
+        its libraries are outdated, or if perl is missing at all.
+
+        Currently (2016) there a at least following possibilities to generate
+        a stand-alone executable:
+
+          * perl with PAR::Packer module
+              pp -C -c $0
+              pp -C -c $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
+                          -M Net::SSLinfo -M Net::SSLhello
+              pp -C -c checkAllCiphers.pl
+              pp -C -c checkAllCiphers.pl -M Net::DNS
+
+          * ActiveState perl with its perlapp
+              perlapp --clean $0
+              perlapp --clean $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
+                          -M Net::SSLinfo -M Net::SSLhello
+              perlapp --clean checkAllCiphers.pl
+              perlapp --clean checkAllCiphers.pl -M Net::DNS
+
+          * perl2exe from IndigoSTar
+              perl2exe $0
+              perl2exe checkAllCiphers.pl
+
+        For details  on building the executable,  for example how to include
+        all required modules, please refer to the documentation of the tool.
+           * http://search.cpan.org/~rschupp/PAR-Packer-1.030/lib/PAR/Packer.pm
+           * http://docs.activestate.com/pdk/6.0/PerlApp.html
+           * http://www.indigostar.com 
+
+        Note that  pre-build executables (build by perlapp, perl2exe) cannot
+        be provided due to licence problems.
+        Also note that using stand-alone executable have not been tested the
+        same way as the $0 itself. Use them at your own risk.
+
 
 
 SEE ALSO
