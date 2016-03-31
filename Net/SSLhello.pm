@@ -3434,7 +3434,9 @@ sub _compileClientHelloExtensions ($$$$@) {
 
     my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
     my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
-    if ( grep(/\xc0./, @cipherTable) ) { # found cipher C0xx, lazy check; ### TBD: check with a range of ECC-ciphers ###
+
+    # send always ECC extensions if not switched off manually
+    #if ( grep(/\xc0./, @cipherTable) || 1==1 ) { # found cipher C0xx, lazy check; ### TBD: check with a range of ECC-ciphers ###
         if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
             ### Data for Extension 'elliptic_curves' (in reverse order)
             $clientHello{'extension_ecc_list'}               # TBD: should be altered to get all supported ECurves (not only the primary) 
@@ -3471,7 +3473,7 @@ sub _compileClientHelloExtensions ($$$$@) {
             );
             _trace2 ("compileClientHello: ec_point_formats Extension added\n");
         }
-    }
+    #} #end send always ECC extensions
 
     $clientHello{'extensions_total_len'} = length($clientHello_extensions);
     
