@@ -263,7 +263,7 @@ my %ECCURVE_TYPE = ( # RFC 4492
     'reserved_255'          => 255,
 );
 
-#http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
+#http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 #Value =>   Description bits(added) DTLS-OK Reference
 my %ECC_NAMED_CURVE = (
      0 => [qw(Unassigned_0        0 N [IANA])],
@@ -295,6 +295,8 @@ my %ECC_NAMED_CURVE = (
     26 => [qw(brainpoolP256r1   256 Y [RFC7027])],
     27 => [qw(brainpoolP384r1   384 Y [RFC7027])],
     28 => [qw(brainpoolP512r1   512 Y [RFC7027])],
+    29 => [qw(ecdh_x25519       255 Y [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
+    30 => [qw(ecdh_x448         448 Y [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
    256 => [qw(ffdhe2048        2048 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
    257 => [qw(ffdhe3072        3072 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
    258 => [qw(ffdhe4096        4096 Y [RFC-ietf-tls-negotiated-ff-dhe-10])],
@@ -3469,7 +3471,7 @@ sub _compileClientHelloExtensions ($$$$@) {
                  ."\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00\x10"
 #                 ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16" # test to get different curves than 0x0017 (secp256r1), 0x0018 (secp384r1) use this line and set a '#' before next line for this manual test
                  ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18"
-                 ."\x00\x19\x00\x1a\x00\x1b\x00\x1c";   # ALL defined ECCs; TBD: hier, oder zentrale Definition?!
+                 ."\x00\x19\x00\x1a\x00\x1b\x00\x1c\x00\x1d\x00\x1e";   # ALL defined ECCs; TBD: hier, oder zentrale Definition?!
             $clientHello{'extension_ecc_list_len'}            = length($clientHello{'extension_ecc_list'}); # len of ECC List  
             $clientHello{'extension_elliptic_curves_len'}     = $clientHello{'extension_ecc_list_len'}+2;   # len of ECC Extension
             $clientHello{'extension_type_elliptic_curves'}    = 0x000a; # Tbd: hier, oder zentrale Definition?!
