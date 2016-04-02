@@ -37,7 +37,7 @@ no warnings qw(once);
 package osaft;
 
 use constant {
-    OSAFT_VERSION   => '16.04.01',
+    OSAFT_VERSION   => '16.04.02',
   # STR_VERSION => 'dd.mm.yy',  # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -46,6 +46,8 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.9 16/04/02 20:05:35',
+
 };
 
 #_____________________________________________________________________________
@@ -221,9 +223,6 @@ BEGIN {
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-my $SID         =  '@(#) o-saft-lib.pm 1.8 16/03/31 22:49:43';
-
-
 %prot   = (     # collected data for protocols and ciphers
     # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
     # ssl           protocol  name        hex version value openssl  option     val LOW ...
@@ -287,7 +286,8 @@ my $SID         =  '@(#) o-saft-lib.pm 1.8 16/03/31 22:49:43';
 ); # %curve_types
 
 # Torsten: %ECC_NAMED_CURVE = 
-# TODO: should we use integer or hex as ID?
+# http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
+# Value =>   Description bits(added) DTLS-OK Reference
 %curves = (
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
     #----+-------------+-------+----+--+----+----------------------+-------------------------
@@ -323,6 +323,11 @@ my $SID         =  '@(#) o-saft-lib.pm 1.8 16/03/31 22:49:43';
    27 => [qw(brainpoolP384r1  -  384  Y 7027 1.3.36.3.3.2.8.1.1.11)],
    28 => [qw(brainpoolP512r1  -  512  Y 7027 1.3.36.3.3.2.8.1.1.13)],
 #  28 => [qw(brainpoolP521r1  -  521  Y 7027 1.3.36.3.3.2.8.1.1.13)], # ACHTUNG: in manchen Beschreibungen dieser falsche String
+   29 => [qw(ecdh_x25519      -  255  Y 4492bis -                  ], # [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
+   30 => [qw(ecdh_x448        -  448  Y 4492bis -                  ], # -"-
+#  31 => [qw(eddsa_ed25519    -  448  Y 4492bis 1.3.101.100        ], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
+#  32 => [qw(eddsa_ed448      -  448  Y 4492bis 1.3.101.101        ], # -"-
+
   256 => [qw(ffdhe2048        - 2048  Y ietf-tls-negotiated-ff-dhe-10)],
   257 => [qw(ffdhe3072        - 3072  Y ietf-tls-negotiated-ff-dhe-10)],
   258 => [qw(ffdhe4096        - 4096  Y ietf-tls-negotiated-ff-dhe-10)],
