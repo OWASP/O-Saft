@@ -1083,6 +1083,7 @@ sub do_ssl_open($$$@) {
                 #1b. starttls or via proxy
                 require Net::SSLhello;      # ok here, as perl handles multiple includes proper
                 Net::SSLhello::version() if ($trace > 1); # TODO: already done in _yeast_init()
+                Net::SSLhello::printParameters() if ($trace > 1);
                 $src = "Net::SSLhello::openTcpSSLconnection()";
                 # open TCP connection via proxy and do STARTTLS if requested
                 # NOTE that $host cannot be checked here because the proxy does
