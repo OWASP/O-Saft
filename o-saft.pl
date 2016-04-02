@@ -41,7 +41,7 @@ use strict;
 
 use constant {
     SID         => "@(#) yeast.pl 1.439 16/04/01 00:25:55",
-    STR_VERSION => "16.03.27",          # <== our official version number
+    STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -5044,14 +5044,14 @@ while ($#argv >= 0) {
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}              = $arg;     $typ = 'HOST'; }
         if ($typ eq 'TLSDELAY') { $cfg{'starttlsDelay'}         = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SLOWDELAY'){ $cfg{'slowServerDelay'}       = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE1'){$cfg{'starttls_error[1]'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE2'){$cfg{'starttls_error[2]'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSE3'){$cfg{'starttls_error[3]'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP1'){$cfg{'starttls_phase[1]'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP2'){$cfg{'starttls_phase[2]'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP3'){$cfg{'starttls_phase[3]'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP4'){$cfg{'starttls_phase[4]'}     = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'STARTTLSP5'){$cfg{'starttls_phase[5]'}     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE1'){$cfg{'starttls_error'}[1]     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE2'){$cfg{'starttls_error'}[2]     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSE3'){$cfg{'starttls_error'}[3]     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP1'){$cfg{'starttls_phase'}[1]     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP2'){$cfg{'starttls_phase'}[2]     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP3'){$cfg{'starttls_phase'}[3]     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP4'){$cfg{'starttls_phase'}[4]     = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'STARTTLSP5'){$cfg{'starttls_phase'}[5]     = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
@@ -5924,8 +5924,9 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::proxyport       = $cfg{'proxyport'};
     $Net::SSLhello::cipherrange     = $cfg{'cipherrange'};  # not really necessary, see below
     # TODO: need to unify variables
-    @{$Net::SSLhello::starttlsPhaseArray} = @{$cfg{'starttls_phase'}};
-    push(@{$Net::SSLhello::starttlsPhaseArray}, @{$cfg{'starttls_error'}});
+    @Net::SSLhello::starttlsPhaseArray = @{$cfg{'starttls_phase'}};
+    #add the elements of 'starttls_error' according to internal representation of Net::SSLhello
+    push(@Net::SSLhello::starttlsPhaseArray, $cfg{'starttls_error'}[1], $cfg{'starttls_error'}[2], $cfg{'starttls_error'}[3]);
 }
 $cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
 
