@@ -1123,37 +1123,42 @@ my %SSL2_CIPHER_STRINGS = (
 sub version { # version of SSLhello
     #? prints the official version number of SSLhello (yyyy-mm-dd)
 
+    local $\ = ""; # no auto '\n' at the end of the line
     print "NET::SSLhello_20$VERSION\n";
 }
 
 sub printParameters { 
     #? prints the global parameters
     #
-    print ("SSLHello::Parameters:\n");
-    print ("                retry=$Net::SSLhello::retry\n")           if (defined($Net::SSLhello::retry));
-    print ("              timeout=$Net::SSLhello::timeout\n")         if (defined($Net::SSLhello::timeout));
-    print ("                trace=$Net::SSLhello::trace\n")           if (defined($Net::SSLhello::trace));
-    print ("            traceTIME=$main::traceTIME\n")                if (defined($main::traceTIME));
-    print ("             usereneg=$Net::SSLhello::usereneg\n")        if (defined($Net::SSLhello::usereneg));
-    print ("         double_reneg=$Net::SSLhello::double_reneg\n")    if (defined($Net::SSLhello::double_reneg));
-    print ("               usesni=$Net::SSLhello::usesni\n")          if (defined($Net::SSLhello::usesni));
-    print ("         use_sni_name=$Net::SSLhello::use_sni_name\n")    if (defined($Net::SSLhello::use_sni_name));
-    print ("             sni_name=$Net::SSLhello::sni_name\n")        if (defined($Net::SSLhello::sni_name));
-    print ("               useecc=$Net::SSLhello::useecc\n")          if (defined($Net::SSLhello::useecc));
-    print ("           useecpoint=$Net::SSLhello::useecpoint\n")      if (defined($Net::SSLhello::useecpoint));
-    print ("             starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
-    print ("         starttlsType=$Net::SSLhello::starttlsType\n")    if (defined($Net::SSLhello::starttlsType));
-    for my $i (1..8) {
-        print ("starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+    local $\ = ""; # no auto '\n' at the end of the line
+    print ("#O-Saft::Net::SSLhello::Parameters:\n");
+    print ("#SSLHello:                 retry=$Net::SSLhello::retry\n")           if (defined($Net::SSLhello::retry));
+    print ("#SSLHello:               timeout=$Net::SSLhello::timeout\n")         if (defined($Net::SSLhello::timeout));
+    print ("#SSLHello:                 trace=$Net::SSLhello::trace\n")           if (defined($Net::SSLhello::trace));
+    print ("#SSLHello:             traceTIME=$main::traceTIME\n")                if (defined($main::traceTIME));
+    print ("#SSLHello:              usereneg=$Net::SSLhello::usereneg\n")        if (defined($Net::SSLhello::usereneg));
+    print ("#SSLHello:          double_reneg=$Net::SSLhello::double_reneg\n")    if (defined($Net::SSLhello::double_reneg));
+    print ("#SSLHello:                usesni=$Net::SSLhello::usesni\n")          if (defined($Net::SSLhello::usesni));
+    print ("#SSLHello:          use_sni_name=$Net::SSLhello::use_sni_name\n")    if (defined($Net::SSLhello::use_sni_name));
+    print ("#SSLHello:              sni_name=$Net::SSLhello::sni_name\n")        if (defined($Net::SSLhello::sni_name));
+    print ("#SSLHello:                useecc=$Net::SSLhello::useecc\n")          if (defined($Net::SSLhello::useecc));
+    print ("#SSLHello:            useecpoint=$Net::SSLhello::useecpoint\n")      if (defined($Net::SSLhello::useecpoint));
+    print ("#SSLHello:              starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
+    print ("#SSLHello:          starttlsType=$Net::SSLhello::starttlsType\n")    if (defined($Net::SSLhello::starttlsType));
+    for my $i (1..5) {
+        print ("#SSLHello: starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
     }
-    print ("        starttlsDelay=$Net::SSLhello::starttlsDelay\n")   if (defined($Net::SSLhello::starttlsDelay));
-    print ("      slowServerDelay=$Net::SSLhello::slowServerDelay\n") if (defined($Net::SSLhello::slowServerDelay));
-    print ("         experimental=$Net::SSLhello::experimental\n")    if (defined($Net::SSLhello::experimental));
-    print ("            proxyhost=$Net::SSLhello::proxyhost\n")       if (defined($Net::SSLhello::proxyhost));
-    print ("            proxyport=$Net::SSLhello::proxyport\n")       if (defined($Net::SSLhello::proxyport));
-    print ("          max_ciphers=$Net::SSLhello::max_ciphers\n")     if (defined($Net::SSLhello::max_ciphers));
-    print ("      max_sslHelloLen=$Net::SSLhello::max_sslHelloLen\n") if (defined($Net::SSLhello::max_sslHelloLen));
-    print ("------------------------------------------------------------------------------------------\n");
+    for my $i (6..8) {
+        print ("#SSLHello: starttlsErrorArray[".($i-5)."]=$Net::SSLhello::starttlsPhaseArray[$i] = starttlsPhaseArray[$i] (internally)\n")   if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+    }
+    print ("#SSLHello:         starttlsDelay=$Net::SSLhello::starttlsDelay\n")   if (defined($Net::SSLhello::starttlsDelay));
+    print ("#SSLHello:       slowServerDelay=$Net::SSLhello::slowServerDelay\n") if (defined($Net::SSLhello::slowServerDelay));
+    print ("#SSLHello:          experimental=$Net::SSLhello::experimental\n")    if (defined($Net::SSLhello::experimental));
+    print ("#SSLHello:             proxyhost=$Net::SSLhello::proxyhost\n")       if (defined($Net::SSLhello::proxyhost));
+    print ("#SSLHello:             proxyport=$Net::SSLhello::proxyport\n")       if (defined($Net::SSLhello::proxyport));
+    print ("#SSLHello:           max_ciphers=$Net::SSLhello::max_ciphers\n")     if (defined($Net::SSLhello::max_ciphers));
+    print ("#SSLHello:       max_sslHelloLen=$Net::SSLhello::max_sslHelloLen\n") if (defined($Net::SSLhello::max_sslHelloLen));
+    print ("#------------------------------------------------------------------------------------------\n");
 }
 
 ### --------------------------------------------------------------------------------------------------------- ###
@@ -1180,6 +1185,7 @@ sub printCipherStringArray ($$$$$@) {
     my $sni    = "";
     my $sep =", ";
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
+    local $\ = ""; # no auto '\n' at the end of the line
 
     _trace4 ("printCipherStringArray: {\n");
     
@@ -1278,6 +1284,7 @@ sub checkSSLciphers ($$$@) {
     my $anzahl = 0;
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
     my $maxCiphers = $Net::SSLhello::max_ciphers;
+    local $\ = ""; # no auto '\n' at the end of the line
 
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
@@ -4540,6 +4547,7 @@ sub printSSL2CipherList ($) {
 
     my $anzahl = int length ($cipherList) / 3;
     my @cipherTable = unpack("a3" x $anzahl, $cipherList);  
+    local $\ = ""; # no auto '\n' at the end of the line
 
     if ($Net::SSLhello::trace > 3) { 
         _trace4 ("printSSL2CipherList ($anzahl):\n");
@@ -4573,6 +4581,7 @@ sub printTLSCipherList ($) {
 
     my $anzahl = int length ($cipherList) / 2;
     my @cipherTable = unpack("a2" x $anzahl, $cipherList);  
+    local $\ = ""; # no auto '\n' at the end of the line
 
 #    if ($Net::SSLhello::trace > 2) 
     if ($Net::SSLhello::trace > 1) {
