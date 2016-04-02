@@ -6114,6 +6114,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
         _v_print("cipher range: $cfg{'cipherrange'}");
+        Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
         foreach $ssl (@{$cfg{'version'}}) {
             next if ($cfg{$ssl} == 0);
             my @all;
