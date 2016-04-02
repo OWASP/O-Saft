@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.440 16/04/02 21:13:11",
+    SID         => "@(#) yeast.pl 1.441 16/04/03 01:35:03",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -194,7 +194,10 @@ sub _load_file($$) {
     my $fil = shift;
     my $txt = shift;
     my $err = "";
-    return "" if (defined($::osaft_standalone));
+    {
+      no warnings qw(once);
+      return "" if (defined($::osaft_standalone));
+    }
     eval("require '$fil';"); # need eval to catch "Can't locate ... in @INC ..."
     $err = $@;
     chomp $err;
@@ -1111,7 +1114,6 @@ our %cmd = (
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
     'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
                                 # NOTE: default=1 as this is behaviour for Net::SSLinfo < 1.85
-    'use_sni_name'  => 0,       # 0: use hostname (default), 1: use sni_name for SNI mode connections; ##TBD: use this switch in SSLinfo and o-saft 
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
@@ -1262,7 +1264,7 @@ our %cmd = (
                          serial subject dates verify expansion compression hostname
                          beast crime drown freak export rc4_cipher rc4 pfs_cipher crl
                          hassslv2 hassslv3 poodle sloth
-                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- hsts_sts
+                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- rfc7525 hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
     'cmd-bsi'       => [                            # commands for +bsi
@@ -1283,7 +1285,7 @@ our %cmd = (
                     # need_* lists used to improve performance
     'need_cipher'   => [        # commands which need +cipher
                         qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
-                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need_default'  => [        # commands which need selected cipher
@@ -2451,9 +2453,13 @@ sub _istr03116_lazy($$) {
 sub _isrfc7525($$) {
     # return given cipher if it is not RFC 7525 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    ne "TLSv12");
-   #return $cipher if ($cipher =~ /$cfg{'regex'}->{'notRFC7525'}/);
+    my $bit   = get_cipher_bits($cipher) + 0;
+    return $cipher if ($bit < 128);
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
+   # /notRFC7525/;
+    return $cipher if ($cipher =~ /NULL/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'RC4orARC4'}/);
     return "";
 } # _isrfc7525
 sub _isfips($$) {
@@ -2703,7 +2709,7 @@ sub _usesocket($$$$) {
     # need for sophisticated options in new()
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
-    my $sni = ($cfg{'usesni'} >= 1) ? $host : "";
+    my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher = "";
     my $sslsocket = undef;
     # TODO: dirty hack to avoid perl error like:
@@ -2785,7 +2791,7 @@ sub _useopenssl($$$$) {
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
-    my $sni  = ($cfg{'usesni'} >= 1) ? "-servername $host" : "";
+    my $sni  = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
@@ -2907,7 +2913,7 @@ sub checkcipher($$) {
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
     $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci( $ssl, $c));
     $checks{'fips'}->{val}      .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
-#   $checks{'rfc7525'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
+    $checks{'rfc7525'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
     $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _istr02102($ssl, $c));
     $checks{'tr-03116+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
     $checks{'tr-03116-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy($ssl, $c));
@@ -3188,7 +3194,7 @@ sub checksni($$) {
     _y_CMD("checksni() "  . $cfg{'done'}->{'checksni'});
     $cfg{'done'}->{'checksni'}++;
     return if ($cfg{'done'}->{'checksni'} > 1);
-    if ($cfg{'usesni'} >= 1) {      # useless check for --no-sni
+    if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
         if ($data{'cn_nosni'}->{val} eq $host) {
             $checks{'sni'}->{val}   = "";
         } else {
@@ -3263,7 +3269,7 @@ sub check02102($$) {
     return if ($cfg{'done'}->{'check02102'} > 1);
     my $txt = "";
     #
-    # description (see CHECK in pod below) ...
+    # description (see CHECK in o-saft-man.pm) ...
     # lines starting with #! are headlines from TR-02102-2
 
     # All checks according ciphers already done in checkciphers() and stored
@@ -3482,7 +3488,6 @@ sub check7525($$) {
     # 3.1.1.  SSL/TLS Protocol Versions
     #    Implementations MUST support TLS 1.2 [RFC5246] and MUST prefer to
     #    negotiate TLS version 1.2 over earlier versions of TLS.
-    #  ==> done in _isrfc7525
     #    Implementations SHOULD NOT negotiate TLS version 1.1 [RFC4346];
     #    the only exception is when no higher version is available in the
     #    negotiation.
@@ -3529,21 +3534,21 @@ sub check7525($$) {
     #    Implementations MUST NOT negotiate RC4 cipher suites.
     #    Implementations MUST NOT negotiate cipher suites offering less
     #    than 112 bits of security, ...
-    #  ==> done in _isrfc7525
+    #  ==> done in checkcipher() with _isrfc7525
     #    Implementations SHOULD NOT negotiate cipher suites that use
     #    algorithms offering less than 128 bits of security.
     # TODO for lazy check
     #    Implementations SHOULD NOT negotiate cipher suites based on RSA
     #    key transport, a.k.a. "static RSA".
-    #  ==> done in _isrfc7525
+    #  ==> done in checkcipher() with _isrfc7525
     #    Implementations MUST support and prefer to negotiate cipher suites
     #    offering forward secrecy, ...
-    #  ==> done in _isrfc7525
+    #  ==> done in checkcipher() with _isrfc7525
     #
     # 4.2.  Recommended Cipher Suites
     #    TLS_DHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     #    TLS_DHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-    #  ==> done in _isrfc7525
+    #  ==> done in checkcipher() with _isrfc7525
     #
     # 4.3.  Public Key Length
     #    ... DH key lengths of at least 2048 bits are RECOMMENDED.
@@ -3575,7 +3580,70 @@ sub check7525($$) {
     #    OCSP [RFC6960]
     #    The OCSP stapling extension defined in [RFC6961]
     #
-    my $txt = "";
+    my $val = "";
+
+    #! 3.1.1.  SSL/TLS Protocol Versions
+    $val  = " <<not TLSv12>>" if ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/);
+    $val .= " SSLv2"   if ( $prot{'SSLv2'}->{'cnt'}  > 0);
+    $val .= " SSLv3"   if ( $prot{'SSLv3'}->{'cnt'}  > 0);
+    $val .= " TLSv1"   if (($prot{'TLSv11'}->{'cnt'} + $prot{'TLSv12'}->{'cnt'}) > 0);
+    $val .= " TLSv11"  if (($prot{'TLSv11'}->{'cnt'} > 0) and ($prot{'TLSv12'}->{'cnt'} > 0));
+
+    #! 3.1.2.  DTLS Protocol Versions
+    $val .= " DTLSv1"  if ( $prot{'DTLSv1'}->{'cnt'} > 0);
+    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
+
+    #! 3.1.3.  Fallback to Lower Versions
+    # no checks, as already covered by 3.1.1 checks
+
+    #! 3.2.  Strict TLS
+    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
+    # TODO: strict TLS checks are for STARTTLS only, not necessary here
+    checkhttp($host, $port);    # need http_sts
+    $val .= " <<no HSTS>>" if ($checks{'hsts_sts'} eq "");
+
+    #! 3.3.  Compression
+    $val .= _iscrime($data{'compression'}->{val}($host)); # misuse _iscrime() to check if TLS compression is enabled
+
+    #! 3.4.  TLS Session Resumption
+    if ($data{'resumption'}->{val}($host) eq "") {
+        $val .= " <<insecure resumption>>";
+        $val .= " <<missing session ticket>>" if ($data{'session_ticket'}->{val}($host) eq "");
+        # FIXME: session ticket must be authenticated and encrypted, and must be random
+    }
+
+    #! 3.5.  TLS Renegotiation
+    $val .= " <<missing renegotiation_info extension>>" if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
+    $val .= " <<insecure renegotiation>>" if ($data{'renegotiation'}->{val}($host) eq "");
+
+    #! 3.6.  Server Name Indication
+    checksni($host, $port);    # need sni
+    # FIXME: need a reliable check if SNI is supported
+    # $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
+
+    #! 4.1.  General Guidelines
+    #! 4.2.  Recommended Cipher Suites
+    #  ==> done in checkcipher() with _isrfc7525
+
+    #! 4.3.  Public Key Length
+    check_dh($host, $port);    # need DH Parameter
+    # $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
+    if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) { 
+        $val .= " <<insecure DH Parameter: $checks{'ecdh_256'}->{val}>>" if ($checks{'ecdh_256'}->{val} ne "");
+    } else {
+        $val .= " <<insecure DH Parameter: $checks{'dh_2048'}->{val}>>"  if ($checks{'dh_2048'}->{val} ne "");
+    }
+
+    #! 4.5.  Truncated HMAC
+    #! 4.5.  Truncated HMAC
+    #! 6.1.  Host Name Validation
+    #! 6.3.  Forward Secrecy
+    #! 6.4.  Diffie-Hellman Exponent Reuse
+    #! 6.5.  Certificate Revocation
+# FIXME: all above
+
+    $checks{'rfc7525'}->{val} .= $val;
+
 } # check7525
 
 sub checkdv($$) {
@@ -3814,6 +3882,7 @@ sub checkprot($$) {
     $cfg{'done'}->{'checkprot'}++;
     return if ($cfg{'done'}->{'checkprot'} > 1);
     # check SSL version support
+    # NOTE: the check is adapted to the text in $%check_dest{'hassslv2'}->{txt}
     $checks{'hassslv2'}->{val}      = " " if ($prot{'SSLv2'}->{'cnt'}  >  0);
     $checks{'hassslv3'}->{val}      = " " if ($prot{'SSLv3'}->{'cnt'}  >  0);
     $checks{'hastls10'}->{val}      = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
@@ -5038,7 +5107,7 @@ while ($#argv >= 0) {
         if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg; $cfg{'use_sni_name'}= 1; $typ = 'HOST'; }
+        if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
@@ -5321,8 +5390,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    }
     if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
-    if ($arg eq  '--snitoggle')         { $cfg{'usesni'}    = 2;    }
-    if ($arg eq  '--togglesni')         { $cfg{'usesni'}    = 2;    }
+    if ($arg eq  '--snitoggle')         { $cfg{'usesni'}    = 3;    }
+    if ($arg eq  '--togglesni')         { $cfg{'usesni'}    = 3;    }
     if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
@@ -5909,7 +5978,6 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::usesni          = $cfg{'usesni'};
     $Net::SSLhello::usemx           = $cfg{'usemx'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
-    $Net::SSLhello::use_sni_name    = $cfg{'use_sni_name'};
     $Net::SSLhello::starttls        = (($cfg{'starttls'} eq "") ? 0 : 1);
     $Net::SSLhello::starttlsType    = $cfg{'starttls'};
     $Net::SSLhello::starttlsDelay   = $cfg{'starttlsDelay'};
@@ -6131,15 +6199,13 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@all, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
-            if ($Net::SSLhello::usesni) { # usesni (--sni: 1 or --togglesni: 2) is set
-                if ( ($Net::SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
-                    $Net::SSLhello::usesni = 0;
-                    Net::SSLhello::printCipherStringArray(
-                        'compact', $host, $port, $ssl, 0,
-                        Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
-                    );
-                    $Net::SSLhello::usesni = $cfg{'usesni'}; # restore
-                }
+            if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
+                $Net::SSLhello::usesni = 0;
+                Net::SSLhello::printCipherStringArray(
+                    'compact', $host, $port, $ssl, 0,
+                    Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
+                );
+                $Net::SSLhello::usesni = $cfg{'usesni'}; # restore
                 next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
                 next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI 
             }
@@ -6154,7 +6220,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     usr_pre_info();
 
     _y_CMD("get no SNI ..");
-# FIXME: some servers do not respond for following (caka.sigmatech.de)
+# FIXME: some servers do not respond for following
     # check if SNI supported, also copy some data to %data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
@@ -6186,7 +6252,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         goto CLOSE_SSL;
     }
 
-# FIXME: some servers do not respond for following (caka.sigmatech.de); --no-http helps sometimes
+# FIXME: some servers do not respond for following; --no-http helps sometimes
     # Check if there is something listening on $host:$port
     if ($cfg{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
