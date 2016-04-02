@@ -46,7 +46,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.9 16/04/02 20:05:35',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.10 16/04/02 21:29:35',
 
 };
 
@@ -323,10 +323,10 @@ BEGIN {
    27 => [qw(brainpoolP384r1  -  384  Y 7027 1.3.36.3.3.2.8.1.1.11)],
    28 => [qw(brainpoolP512r1  -  512  Y 7027 1.3.36.3.3.2.8.1.1.13)],
 #  28 => [qw(brainpoolP521r1  -  521  Y 7027 1.3.36.3.3.2.8.1.1.13)], # ACHTUNG: in manchen Beschreibungen dieser falsche String
-   29 => [qw(ecdh_x25519      -  255  Y 4492bis -                  ], # [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
-   30 => [qw(ecdh_x448        -  448  Y 4492bis -                  ], # -"-
-#  31 => [qw(eddsa_ed25519    -  448  Y 4492bis 1.3.101.100        ], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
-#  32 => [qw(eddsa_ed448      -  448  Y 4492bis 1.3.101.101        ], # -"-
+   29 => [qw(ecdh_x25519      -  255  Y 4492bis -                 )], # [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
+   30 => [qw(ecdh_x448        -  448  Y 4492bis -                 )], # -"-
+#  31 => [qw(eddsa_ed25519    -  448  Y 4492bis 1.3.101.100       )], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
+#  32 => [qw(eddsa_ed448      -  448  Y 4492bis 1.3.101.101       )], # -"-
 
   256 => [qw(ffdhe2048        - 2048  Y ietf-tls-negotiated-ff-dhe-10)],
   257 => [qw(ffdhe3072        - 3072  Y ietf-tls-negotiated-ff-dhe-10)],
