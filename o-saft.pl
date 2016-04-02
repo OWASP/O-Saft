@@ -1111,6 +1111,7 @@ our %cmd = (
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
     'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
                                 # NOTE: default=1 as this is behaviour for Net::SSLinfo < 1.85
+    'use_sni_name'  => 0,       # 0: use hostname (default), 1: use sni_name for SNI mode connections; ##TBD: use this switch in SSLinfo and o-saft 
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
@@ -2702,7 +2703,7 @@ sub _usesocket($$$$) {
     # need for sophisticated options in new()
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
-    my $sni = ($cfg{'usesni'} == 1) ? $host : "";
+    my $sni = ($cfg{'usesni'} >= 1) ? $host : "";
     my $cipher = "";
     my $sslsocket = undef;
     # TODO: dirty hack to avoid perl error like:
@@ -2784,7 +2785,7 @@ sub _useopenssl($$$$) {
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
-    my $sni  = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
+    my $sni  = ($cfg{'usesni'} >= 1) ? "-servername $host" : "";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
     $ssl = $cfg{'openssl_option_map'}->{$ssl};
@@ -3187,7 +3188,7 @@ sub checksni($$) {
     _y_CMD("checksni() "  . $cfg{'done'}->{'checksni'});
     $cfg{'done'}->{'checksni'}++;
     return if ($cfg{'done'}->{'checksni'} > 1);
-    if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
+    if ($cfg{'usesni'} >= 1) {      # useless check for --no-sni
         if ($data{'cn_nosni'}->{val} eq $host) {
             $checks{'sni'}->{val}   = "";
         } else {
@@ -5037,7 +5038,7 @@ while ($#argv >= 0) {
         if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg; $cfg{'use_sni_name'}= 1; $typ = 'HOST'; }
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
@@ -5320,8 +5321,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    }
     if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
-    if ($arg eq  '--snitoggle')         { $cfg{'usesni'}    = 3;    }
-    if ($arg eq  '--togglesni')         { $cfg{'usesni'}    = 3;    }
+    if ($arg eq  '--snitoggle')         { $cfg{'usesni'}    = 2;    }
+    if ($arg eq  '--togglesni')         { $cfg{'usesni'}    = 2;    }
     if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
@@ -5908,6 +5909,7 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::usesni          = $cfg{'usesni'};
     $Net::SSLhello::usemx           = $cfg{'usemx'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
+    $Net::SSLhello::use_sni_name    = $cfg{'use_sni_name'};
     $Net::SSLhello::starttls        = (($cfg{'starttls'} eq "") ? 0 : 1);
     $Net::SSLhello::starttlsType    = $cfg{'starttls'};
     $Net::SSLhello::starttlsDelay   = $cfg{'starttlsDelay'};
