@@ -39,7 +39,7 @@ package Net::SSLhello;
 
 use strict;
 use constant {
-    SSLHELLO_VERSION=> '16.04.01',
+    SSLHELLO_VERSION=> '16.04.02',
     SSLHELLO        => 'O-Saft::Net::SSLhello ',
 #   SSLHELLO_SID    => '@(#) %M% %I% %E% %U%',
 };
@@ -1784,18 +1784,20 @@ sub openTcpSSLconnection ($$) {
             if ($starttls_matrix[$starttlsType][0] eq 'CUSTOM') { # customize the starttls_matrix 
                 for my $i (1..8) {
                     if (defined($Net::SSLhello::starttlsPhaseArray[$i])) {
-                        _trace4 ("openTcpSSLconnection: Customize starttls_matrix: \$Net::SSLhello::starttlsPhaseArray[$i]= >$Net::SSLhello::starttlsPhaseArray[$i]< = >".unpack("H*",$Net::SSLhello::starttlsPhaseArray[$i])."<\n");
+                        _trace4 ("openTcpSSLconnection: Customize starttls_matrix: \$Net::SSLhello::starttlsPhaseArray[$i]= >$Net::SSLhello::starttlsPhaseArray[$i]< = hex: >".unpack("H*",$Net::SSLhello::starttlsPhaseArray[$i])."<\n");
                         if (($i == 2) || ($i == 4)) { #TX Data needs a different handling
                             $starttls_matrix[$starttlsType][$i] = "$Net::SSLhello::starttlsPhaseArray[$i]";
                             #($starttls_matrix[$starttlsType][$i]) =~ s/(\[^xc]|\c.)/chr(ord('$1'))/eg; ## escape2hex does not work 
                             ($starttls_matrix[$starttlsType][$i]) =~ s/\\r/chr(13)/eg; ## return character
                             ($starttls_matrix[$starttlsType][$i]) =~ s/\\n/chr(10)/eg; ## new line character
-                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\t/chr(9)/eg; ## tab character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\t/chr(9)/eg;  ## tab character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\e/chr(27)/eg; ## 'esc' character
                             ($starttls_matrix[$starttlsType][$i]) =~ s/\\x([a-fA-F0-9]{2})/chr(hex $1)/eg; ## Str2hex
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\\\/\\/g;      ## escaping the escape character
                         } else { # normal copy
                             $starttls_matrix[$starttlsType][$i] = $Net::SSLhello::starttlsPhaseArray[$i];
                         }
-                        _trace2 ("openTcpSSLconnection: Customize \$starttls_matrix[$starttlsType][$i]= >$starttls_matrix[$starttlsType][$i]<>".unpack("H*",$starttls_matrix[$starttlsType][$i])."<\n");
+                        _trace2 ("openTcpSSLconnection: Customize \$starttls_matrix[$starttlsType][$i]= >$starttls_matrix[$starttlsType][$i]< = hex: >".unpack("H*",$starttls_matrix[$starttlsType][$i])."<\n");
                     }
                 }
             }
