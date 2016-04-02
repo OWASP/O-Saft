@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.439 16/04/01 00:25:55",
+    SID         => "@(#) yeast.pl 1.440 16/04/02 21:13:11",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5924,9 +5924,14 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::proxyport       = $cfg{'proxyport'};
     $Net::SSLhello::cipherrange     = $cfg{'cipherrange'};  # not really necessary, see below
     # TODO: need to unify variables
-    @Net::SSLhello::starttlsPhaseArray = @{$cfg{'starttls_phase'}};
-    #add the elements of 'starttls_error' according to internal representation of Net::SSLhello
+    @Net::SSLhello::starttlsPhaseArray  = @{$cfg{'starttls_phase'}};
+    # add 'starttls_error' array elements according Net::SSLhello's internal
+    # representation
     push(@Net::SSLhello::starttlsPhaseArray, $cfg{'starttls_error'}[1], $cfg{'starttls_error'}[2], $cfg{'starttls_error'}[3]);
+
+    # unfotunatelly 'starttls_error' does not have element [0], hence the more
+    # perlish assignment cannot be used
+    #push(@Net::SSLhello::starttlsPhaseArray, @{$cfg{'starttls_error'}});
 }
 $cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
 
