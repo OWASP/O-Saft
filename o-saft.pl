@@ -6131,13 +6131,15 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
             push(@all, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
-            if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
-                $Net::SSLhello::usesni = 0;
-                Net::SSLhello::printCipherStringArray(
-                    'compact', $host, $port, $ssl, 0,
-                    Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
-                );
-                $Net::SSLhello::usesni = $cfg{'usesni'}; # restore
+            if ($Net::SSLhello::usesni) { # usesni (--sni: 1 or --togglesni: 2) is set
+                if ( ($Net::SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
+                    $Net::SSLhello::usesni = 0;
+                    Net::SSLhello::printCipherStringArray(
+                        'compact', $host, $port, $ssl, 0,
+                        Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all)
+                    );
+                    $Net::SSLhello::usesni = $cfg{'usesni'}; # restore
+                }
                 next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
                 next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI 
             }
