@@ -9,7 +9,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.88 16/03/31 12:54:46";
+my  $man_SID= "@(#) o-saft-man.pm 1.89 16/04/03 23:34:56";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3290,6 +3290,30 @@ CHECKS
 
       RFC 7525
         Checks if connection and ciphers are compliant according RFC 7525.
+        See http://tools.ietf.org/rfc/rfc7525.txt
+
+        (following headlines are taken from there)
+
+        3.1.1.  SSL/TLS Protocol Versions
+        3.1.2.  DTLS Protocol Versions
+        3.2.  Strict TLS
+        3.3.  Compression
+        3.4.  TLS Session Resumption
+        3.5.  TLS Renegotiation
+        3.6.  Server Name Indication
+        4.  Recommendations: Cipher Suites
+        4.1.  General Guidelines
+        4.2.  Recommended Cipher Suites
+        4.3.  Public Key Length
+        4.5.  Truncated HMAC
+        6.  Security Considerations
+        6.1.  Host Name Validation
+          (NOT YET IMPLEMENTED).
+        6.3.  Forward Secrecy
+        6.4.  Diffie-Hellman Exponent Reuse
+          (NOT YET IMPLEMENTED).
+        6.5.  Certificate Revocation
+          (NOT YET IMPLEMENTED).
 
 
 # score will be removed, so don't anounce it
