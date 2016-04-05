@@ -30,11 +30,11 @@ package Net::SSLinfo;
 
 use strict;
 use constant {
-    SSLINFO_VERSION => '16.03.30',
+    SSLINFO_VERSION => '16.04.05',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.120 16/03/30 21:24:55',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.121 16/04/05 21:45:29',
 };
 
 ######################################################## public documentation #
@@ -64,8 +64,9 @@ Net::SSLinfo -- perl extension for SSL certificates
 
 =head1 SYNOPSIS
 
-    Net::SSLinfo.pm            # on command line will print help
-    Net::SSLinfo.pm your.tld   # on command line will print data from your.tld
+    # on command line:
+    Net::SSLinfo.pm            # print help
+    Net::SSLinfo.pm your.tld   # print data from your.tld
 
     # from within perl scripts:
     use Net::SSLinfo;
@@ -1083,7 +1084,6 @@ sub do_ssl_open($$$@) {
                 #1b. starttls or via proxy
                 require Net::SSLhello;      # ok here, as perl handles multiple includes proper
                 Net::SSLhello::version() if ($trace > 1); # TODO: already done in _yeast_init()
-                Net::SSLhello::printParameters() if ($trace > 1);
                 $src = "Net::SSLhello::openTcpSSLconnection()";
                 # open TCP connection via proxy and do STARTTLS if requested
                 # NOTE that $host cannot be checked here because the proxy does
@@ -1145,13 +1145,14 @@ sub do_ssl_open($$$@) {
         #        &Net::SSLeay::X509_V_FLAG_CRL_CHECK);
 
         #2b. set protocol options
-        $src = "Net::SSLeay::CTX_set_ssl_version()";   # set default SSL protocol
         $ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
         if (defined &Net::SSLeay::SSLv23_method) {
+            $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";   # set default SSL protocol
             Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
             # allow all protocols for backward compatibility; user specific
             # restrictions are done later with  CTX_set_options()
         } else {
+            $src = "Net::SSLeay::SSLv23_method()";
             push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
             # if we don't have  SSLv23_method(), we better use the system's
             # default behaviour, because anything else  would stick  on the
@@ -1684,8 +1685,7 @@ sub do_ssl_open($$$@) {
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
     if ($trace > 1) {
         Net::SSLeay::print_errs(SSLINFO_ERR);
-        printf(SSLINFO_ERR);
-        print join(SSLINFO_ERR, @{$_SSLinfo{'errors'}});
+        print SSLINFO_ERR . $_ foreach @{$_SSLinfo{'errors'}};
     }
     _trace("do_ssl_open() failed.");
     return undef;
