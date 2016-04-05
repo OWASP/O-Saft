@@ -9,7 +9,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.89 16/04/03 23:34:56";
+my  $man_SID= "@(#) o-saft-man.pm 1.90 16/04/05 21:37:59";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3633,6 +3633,8 @@ KNOWN PROBLEMS
         was not able to connect to the target. Known observed reasons are:
           * target does not support SSL protocol on specified port
           * target expects a client certificate in ClientHello message
+
+        More details why the connection failed can be seen using  --trace=2 .
 
         If the targets supports SSL, it should be at least possible to check
         for supported ciphers using  +cipherraw  instead of  +cipher .
