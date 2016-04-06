@@ -40,7 +40,7 @@ our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
 our $mename = "checkAllCiphers";
     $mename = "O-Saft " if ($me !~ /checkAllCiphers/);
 
-sub printhelp() {
+sub printhelp {
     print << "EoT";
 NAME
     $me - simple wrapper for Net::SSLhello to test for all ciphers
@@ -546,7 +546,7 @@ Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
 $@="";
 print "Protocols to check:\n";
 # check ssl protocols
-foreach $ssl (@{$cfg{'versions'}}) {
+foreach my $ssl (@{$cfg{'versions'}}) {
     if ( ($ssl =~ /DTLS/) && ($cfg{$ssl} == 1) && ($cfg{'experimental'} !=1 ) ) { # DTLS support is experimental
         $@ .= ", " if ($@);
         $@ .= "$ssl";
@@ -566,9 +566,7 @@ if ($cfg{'usemx'}) { # get mx-records
     @{$cfg{'mx_domains'}} = @{$cfg{'hosts'}}; #we have got mx domains no hosts, yet
     $cfg{'hosts'} = [];
 
-    my $mx_domain;
-
-    foreach $mx_domain (@{$cfg{'mx_domains'}}) {  # loop domains
+    foreach my $mx_domain (@{$cfg{'mx_domains'}}) {  # loop domains
         if ($mx_domain =~ m#.*?:\d+#) { 
             ($mx_domain, $port) = split(":", $mx_domain); 
         }
@@ -602,7 +600,7 @@ if ($cfg{'usemx'}) { # get mx-records
     print "------------------------------------------------------------------------------\n";
 }
 
-foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
+foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($host =~ m#.*?:\d+#) { 
        ($host, $port) = split(":", $host);
         $cfg{'port'}  = $port;  #
@@ -612,7 +610,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
     $? = 0;
     $cfg{'host'} = $host;
     $Net::SSLhello::starttlsDelay = $cfg{'starttlsDelay'}; #reset to original value for each host 
-    foreach $ssl (@{$cfg{'version'}}) {
+    foreach my $ssl (@{$cfg{'version'}}) {
         my @accepted = (); # List of all Ciphers that are supported by the server with the tested Protocol
         my @testing  = ();
         my $range = $cfg{'cipherrange'};            # use specified range of constants
