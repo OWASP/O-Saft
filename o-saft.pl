@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.442 16/04/06 15:36:44",
+    SID         => "@(#) yeast.pl 1.443 16/04/06 16:28:57",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -496,7 +496,7 @@ our %data   = (     # connection and certificate details
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout
 
 # add keys from %prot to %data,
-foreach $ssl (keys %prot) {
+foreach my $ssl (keys %prot) {
     $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
     $data{$key}->{val} = sub {    return $prot{$ssl}->{'default'}; };
     $data{$key}->{txt} = "Target default $prot{$ssl}->{txt} cipher";
@@ -716,11 +716,11 @@ my %check_http = (  # HTTP vs. HTTPS data
 ); # %check_http
 
 # now construct %checks from %check_* and set 'typ'
-foreach $key (keys %check_conn) { $checks{$key}->{txt} = $check_conn{$key}->{txt}; $checks{$key}->{typ} = 'connection'; }
-foreach $key (keys %check_cert) { $checks{$key}->{txt} = $check_cert{$key}->{txt}; $checks{$key}->{typ} = 'certificate'; }
-foreach $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt}; $checks{$key}->{typ} = 'destination'; }
-foreach $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
-foreach $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
+foreach my $key (keys %check_conn) { $checks{$key}->{txt} = $check_conn{$key}->{txt}; $checks{$key}->{typ} = 'connection'; }
+foreach my $key (keys %check_cert) { $checks{$key}->{txt} = $check_cert{$key}->{txt}; $checks{$key}->{typ} = 'certificate'; }
+foreach my $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt}; $checks{$key}->{typ} = 'destination'; }
+foreach my $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
+foreach my $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
 # more data added to %checks after defining %cfg, see below
 
 our %shorttexts = (
@@ -1621,7 +1621,7 @@ $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot); # c
 ## -------------------------------------
 my $old = "";
 my $rex = join("|", @{$cfg{'versions'}});   # these are data only, not commands
-foreach $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
+foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
     next if ($key eq $old); # unique
     $old = $key;
     push(@{$cfg{'commands'}},  $key) if ($key !~ m/^($rex)/);
@@ -1632,7 +1632,7 @@ foreach $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-int
 
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
 push(@{$cfg{'cmd-info--v'}}, 'dump');       # more information
-foreach $key (keys %data) {
+foreach my $key (keys %data) {
     push(@{$cfg{'cmd-info--v'}}, $key);
     next if (_is_intern($key) > 0);         # ignore aliases
     next if ($key =~ m/^(ciphers)/   and $verbose == 0); # Client ciphers are less important
@@ -2236,7 +2236,7 @@ sub _cfg_set($$)       {
         _trace("_cfg_set: KEY=$key, CMD=$val");
         @{$cfg{$typ}} = ();
         push(@{$cfg{$typ}}, split(/\s+/, $val));
-        foreach $key (@{$cfg{$typ}}) {  # check for mis-spelled commands
+        foreach my $key (@{$cfg{$typ}}){# check for mis-spelled commands
             next if (_is_hashkey($key, \%checks) > 0);
             next if (_is_hashkey($key, \%data) > 0);
             next if (_is_intern( $key) > 0);
@@ -2690,7 +2690,7 @@ sub _getwilds($$) {
     my ($value, $regex);
     $value = $data{'cn'}->{val}($host);
     $checks{'wildcard'}->{val} = "<<CN:>>$value" if ($value =~ m/[*]/);
-    foreach $value (split(" ", $data{'altname'}->{val}($host))) {
+    foreach my $value (split(" ", $data{'altname'}->{val}($host))) {
             $value =~ s/.*://;      # strip prefix
         if ($value =~ m/\*/) {
             $checks{'wildcard'}->{val} .= " " . $value;
@@ -2969,7 +2969,7 @@ sub checkciphers($$) {
         $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
     }
     $checks{'breach'}->{val}     = "<<NOT YET IMPLEMENTED>>";
-    foreach $ssl (@{$cfg{'version'}}) { # check all SSL versions
+    foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
         # TR-02102-2, see 3.2.3
@@ -3110,6 +3110,7 @@ sub checkdates($$) {
         my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
         my $maxage = $data{'hsts_maxage'}->{val}($host);
         $now = time();  # we need epoch timestamp here
+        $txt = "$now + $maxage > $ts" if ($now + $maxage > $ts);
     }
     $checks{'sts_expired'} ->{val}  = $txt;
 
@@ -3145,7 +3146,7 @@ sub checkcert($$) {
     # TODO: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
-    foreach $label (qw(cn subject issuer email aux ocsp_uri altname)) {
+    foreach my $label (qw(cn subject issuer email aux ocsp_uri altname)) {
         $value = $data{$label}->{val}($host);
         if ($value ne "") {
             $checks{'nonprint'}{val} .= " $label" if ($value =~ m/[\x00-\x1f\x7f-\xff]+/); # m/[:^print:]/);
@@ -3155,7 +3156,7 @@ sub checkcert($$) {
 
     # certificate
     if ($cfg{'verbose'} > 0) { # TODO
-        foreach $label (qw(verify selfsigned)) {
+        foreach my $label (qw(verify selfsigned)) {
             #dbx# _dbx "$label : $value #";
             $value = $data{$label}->{val}($host);
             $checks{$label}->{val}   = $value if ($value eq "");
@@ -3188,7 +3189,7 @@ sub checkcert($$) {
 
     # valid characters (most likely only relevant for EV)
     #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
-    foreach $label (qw(cn subject altname extensions ext_crl ocsp_uri)) { # CRL
+    foreach my $label (qw(cn subject altname extensions ext_crl ocsp_uri)) { # CRL
         # also (should already be part of others): CN, O, U
         $subject =  $data{$label}->{val}($host);
         $subject =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
@@ -3495,7 +3496,7 @@ sub check6125($$) {
     $val     .= " <<6.4.3:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidwild'}!);
     $val     .= " <<7.2.o:subject $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
     $val     .= " <<7.3:subject $txt>>"   if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
-    foreach $txt (split(" ", $data{'altname'}->{val}($host))) {
+    foreach my $txt (split(" ", $data{'altname'}->{val}($host))) {
         $txt  =~ s!.*:!!;        # strip prefix
         $val .= " <<6.4.2:altname $txt>>" if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
         $val .= " <<6.4.3:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
@@ -3789,7 +3790,7 @@ sub checkev($$) {
     $checks{'ev+'}->{val} = $checks{'dv'}->{val}; # wrong for DV then wrong for EV too
 
     # required OID
-    foreach $oid (qw(
+    foreach my $oid (qw(
         1.3.6.1.4.1.311.60.2.1.1   1.3.6.1.4.1.311.60.2.1.3
         2.5.4.5    2.5.4.7   2.5.4.10   2.5.4.15
         )) {
@@ -3824,7 +3825,7 @@ sub checkev($$) {
         _v2print("EV: " . _subst($text{'missing'}, $cfg{'regex'}->{$oid}) . "; required\n");
     }
     # optional OID
-    foreach $oid (qw(2.5.4.6 2.5.4.17)) {
+    foreach my $oid (qw(2.5.4.6 2.5.4.17)) {
     }
     if (64 < length($data_oid{'2.5.4.10'}->{val})) {
         $txt = _subst($text{'EV-large'}, "64 < " . $data_oid{$oid}->{txt});
@@ -4000,7 +4001,7 @@ sub checkdest($$) {
     # vulnerabilities
     check_dh($host,$port); # Logjam vulnerability
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
-    foreach $key (qw(resumption renegotiation)) {
+    foreach my $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
     }
@@ -4011,14 +4012,14 @@ sub checkdest($$) {
     $checks{'resumption'}->{val}    = $value if ($value !~ m/^Reused/);
 
     # check target specials
-    foreach $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) { # master_key session_id: see %check_dest above also
+    foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) { # master_key session_id: see %check_dest above also
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " "    if ($value eq "");
         $checks{$key}->{val} = "None" if ($value =~ m/^\s*None\s*$/i);
         # if supported we have a value
         # TODO: see ZLIB also (seems to be wrong currently)
     }
-    foreach $key (qw(heartbeat)) { # these are good if there is no value
+    foreach my $key (qw(heartbeat)) { # these are good if there is no value
         $checks{$key}->{val} = $data{$key}->{val}($host);
         $checks{$key}->{val} = ""     if ($checks{$key}->{val} =~ m/^\s*$/);
     }
@@ -4060,7 +4061,7 @@ sub checkhttp($$) {
         checkdates($host,$port);    # computes check{'sts_exired'}
     } else {
         $checks{'sts_maxagexy'} ->{val} = $text{'no-STS'};
-        foreach $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_sts sts_subdom sts_maxage)) {
+        foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_sts sts_subdom sts_maxage)) {
             $checks{$key}->{val}    = $text{'no-STS'};
         }
     }
@@ -4072,7 +4073,7 @@ sub checkhttp($$) {
     $no = $text{'no-STS'};
     $no = $text{'no-http'} if ($cfg{'usehttp'} < 1);
     # NOTE: following sequence is important!
-    foreach $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
+    foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
         if ($data{'https_sts'}->{val}($host) ne "") {
             $checks{'sts_maxage'}->{score} = $checks{$key}->{score} if ($hsts_maxage < $checks{$key}->{val});
             $checks{$key}->{val}    = ($hsts_maxage < $checks{$key}->{val}) ? "" : "> ".$checks{$key}->{val};
@@ -4087,7 +4088,6 @@ sub checkssl($$)  {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
-    my $key;
     _y_CMD("checkssl() "  . $cfg{'done'}->{'checkssl'});
     $cfg{'done'}->{'checkssl'}++;
     return if ($cfg{'done'}->{'checkssl'} > 1);
@@ -4115,7 +4115,7 @@ sub checkssl($$)  {
         $cfg{'done'}->{'check6125'}++; # "
         $cfg{'done'}->{'checkdv'}++;   # "
         $cfg{'done'}->{'checkev'}++;   # "
-        foreach $key (sort keys %checks) { # anything related to certs need special setting
+        foreach my $key (sort keys %checks) { # anything related to certs need special setting
             $checks{$key}->{val} = $cfg{'no_cert_txt'} if (_is_member($key, \@{$cfg{'check_cert'}}));
         }
         $checks{'hostname'}     ->{val} = $cfg{'no_cert_txt'};
@@ -4130,7 +4130,7 @@ sub checkssl($$)  {
         checkhttp( $host, $port);
     } else {
         $cfg{'done'}->{'checkhttp'}++;
-        foreach $key (sort keys %checks) {
+        foreach my $key (sort keys %checks) {
             $checks{$key}->{val} = $text{'no-http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
     }
@@ -4142,7 +4142,7 @@ sub checkssl($$)  {
     $checks{'rfc7525'}->{val} .= _subst($text{'missing'}, 'STS') if ($txt ne "");
 
 # TODO: folgende Checks implementieren
-    foreach $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
+    foreach my $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
 # TODO: nicht sinnvoll wenn $cfg{'no_cert'} > 0
     }
 
@@ -4151,7 +4151,7 @@ sub checkssl($$)  {
 sub scoring($$) {
     #? compute scoring of all checks; sets values in %scores
     my ($host, $port) = @_;
-    my ($key, $value);
+    my $value;
 
     # http
     #  some scores are set in checkhttp()
@@ -4159,14 +4159,14 @@ sub scoring($$) {
     $scores{'check_http'}->{val}    = 100;
     $checks{'hsts_fqdn'}->{score}   = 0 if ($http_location eq "");
 
-    foreach $key (sort keys %checks) {
+    foreach my $key (sort keys %checks) {
         next if ($key =~ m/^(ip|reversehost)/); # not scored
         next if ($key =~ m/^(sts_)/);           # needs special handlicg
         next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); # FIXME: not yet scored
         next if ($key =~ m/^TLSv1[123]/); # FIXME:
         $value = $checks{$key}->{val};
         # TODO: go through @results
-# TODO   foreach $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
+# TODO   foreach my $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
 # TODO       # keys in %prot look like 'SSLv2->LOW', 'TLSv11->HIGH', etc.
 # TODO       $key = $ssl . '-' . $sec;
 # TODO       if ($checks{$key}->{val} != 0) {    # if set, decrement score
@@ -4202,14 +4202,13 @@ sub _printdump($$) {
 sub printdump($$$)  {
     #? just dumps internal database %data and %check_*
     my ($legacy, $host, $port) = @_;   # NOT IMPLEMENTED
-    my $key;
     print '######################################################################### %data';
-    foreach $key (keys %data) {
+    foreach my $key (keys %data) {
         next if (_is_intern($key) > 0);  # ignore aliases
         _printdump($data{$key}->{txt}, $data{$key}->{val}($host));
     }
     print '######################################################################## %check';
-    foreach $key (keys %checks) { _printdump($checks{$key}->{txt}, $checks{$key}->{val}); }
+    foreach my $key (keys %checks) { _printdump($checks{$key}->{txt}, $checks{$key}->{val}); }
 } # printdump
 
 sub printruler()    { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); }
@@ -4494,7 +4493,6 @@ sub print_cipherdefault($$$$) {
 sub print_ciphertotals($$$$) {
     #? print total number of ciphers supported for SSL version according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
-    my ($key, $sec);
     if ($legacy eq 'ssldiagnos') {
         print "\n-= SUMMARY =-\n";
         printf("Weak:         %s\n", $prot{$ssl}->{'WEAK'});
@@ -4504,7 +4502,7 @@ sub print_ciphertotals($$$$) {
     if ($legacy =~ /(full|compact|simple|quick)/) {
         printheader(_subst($text{'out-summary'}, $ssl), "");
         _trace_cmd('%checks');
-        foreach $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
+        foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
             print_line($legacy, $host, $port, "$ssl-$key", $prot_txt{$key}, $prot{$ssl}->{$key});
             # NOTE: "$ssl-$key" does not exist in %checks or %prot
         }
@@ -4530,9 +4528,8 @@ sub _print_results($$$@) {
     my $yesno   = shift; # only print these results, all if empty
     my @results = @_;
     my $print   = 0; # default: do not print
-    my $c       = "";
     local    $\ = "\n";
-    foreach $c (@results) {
+    foreach my $c (@results) {
         next if  (${$c}[0] ne $ssl);
         next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
@@ -4576,7 +4573,6 @@ sub printciphers_dh($$$) {
     #? print ciphers and DH parameter from target
     # currently DH parameters are available with openssl only
     my ($legacy, $host, $port) = @_;
-    my $ssl;
     my $openssl_version = get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh: openssl_version: $openssl_version");
     if ($openssl_version lt "1.0.2") { # yes perl can do this check
@@ -4584,7 +4580,7 @@ sub printciphers_dh($$$) {
         $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl_msg'} eq "");
         require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
     }
-    foreach $ssl (@{$cfg{'version'}}) {
+    foreach my $ssl (@{$cfg{'version'}}) {
         printtitle($legacy, $ssl, $host, $port);
         print_cipherhead( 'cipher-dh');
         foreach my $c (@{$cfg{'ciphers'}}) {
@@ -4619,14 +4615,13 @@ sub printprotocols($$$) {
     # prints information stored in %prot
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
-    my $ssl;
     if ($cfg{'out_header'}>0) {
         printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=total amount  PFS=selected cipher with PFS\n") if ($verbose > 0);
         printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot default PFS));
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
-    foreach $ssl (@{$cfg{'versions'}}) {
+    foreach my $ssl (@{$cfg{'versions'}}) {
         # $cfg{'versions'} is sorted in contrast to "keys %prot" 
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # NOT YET implemented with verbose only
         my $key = $ssl . $text{'separator'};
@@ -4647,11 +4642,10 @@ sub printprotocols($$$) {
 sub printdata($$$) {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
-    my $key  = "";
     local $\ = "\n";
     printheader($text{'out-infos'}, $text{'desc-info'});
     _trace_cmd('%data');
-    foreach $key (@{$cfg{'do'}}) {
+    foreach my $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%data) < 1);
@@ -4682,7 +4676,6 @@ sub printdata($$$) {
 sub printchecks($$$) {
     #? print results stored in %checks
     my ($legacy, $host, $port) = @_;
-    my $key  = "";
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
     _trace_cmd(' printchecks: %checks');
@@ -4691,7 +4684,7 @@ sub printchecks($$$) {
         print_line($legacy, $host, $port, 'selected', $checks{'selected'}->{txt}, "$key " . get_cipher_sec($key));
     }
     _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
-    foreach $key (@{$cfg{'do'}}) {
+    foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
@@ -4850,10 +4843,10 @@ sub printversion() {
     # get a quick overview also
     print "= Required (and used) Modules =";
     print '    @INC                 ', "@INC";
-    my ($m, $d, $v, %p);
+    my ($d, $v, %p);
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
-    foreach $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello)) {
+    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello)) {
         no strict 'refs';   # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
         # we expect ::VERSION in all these modules
         ($d = $m) =~ s#::#/#g;  $d .= '.pm';   # convert string to key for %INC
@@ -4862,13 +4855,13 @@ sub printversion() {
     }
     if ($cfg{'verbose'} > 0) {
         print "\n= Loaded Modules =";
-        foreach $m (sort keys %INC) {
+        foreach my $m (sort keys %INC) {
             printf("    %-22s %6s\n", $m, $INC{$m});
             $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
         }
         print "\n= Loaded Module Versions =";
         no strict 'refs';   # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
-        foreach $m (sort keys %main:: ) {
+        foreach my $m (sort keys %main:: ) {
             next if $m !~ /::/;
             $d = "?";       # beat the "Use of uninitialized value" dragon
             $d = ${$$m{'VERSION'}} if (defined ${$$m{'VERSION'}});
@@ -4879,7 +4872,7 @@ sub printversion() {
     if ($cfg{'verbose'} > 1) {
         print "\n= Used Shared Objects =";
         # quick&dirty, don't want to use ::Find module
-        foreach $d (sort keys %p) {
+        foreach my $d (sort keys %p) {
              next if ($d =~ m/^\s*$/);
              print "# find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*";
              print qx(find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*);
@@ -4917,7 +4910,6 @@ sub printciphers() {
 
     # anything else prints user-specified formats
     _trace("printciphers: +list");
-    my $c = "";
     my $sep = $text{'separator'};
     my ($hex,  $ssl,  $tag,  $bit,  $aut,  $enc,  $key,  $mac);
         $hex = $ssl = $tag = $bit = $aut = $enc = $key = $mac = "";
@@ -4935,10 +4927,10 @@ sub printciphers() {
 
     if ($cfg{'legacy'} eq "ssltest") {        # output looks like: ssltest --list
         _warn("not all ciphers listed");
-        foreach $ssl (qw(SSLv2 SSLv3 TLSv1)) {# SSLv3 and TLSv1 are the same, hence search both
+        foreach my $ssl (qw(SSLv2 SSLv3 TLSv1)) {# SSLv3 and TLSv1 are the same, hence search both
           print "SSLv2 Ciphers Supported..."       if ($ssl eq 'SSLv2');
           print "SSLv3/TLSv1 Ciphers Supported..." if ($ssl eq 'SSLv3');
-          foreach $c (sort keys %ciphers) {
+          foreach my $c (sort keys %ciphers) {
             next if ($ssl ne get_cipher_ssl($c));
             # FIXME: sprintf below gives warning if $bits == 0
             $bit =  get_cipher_bits($c); $bit =  sprintf("%03d", $bit) if ($bit ne '-?-');
@@ -4954,7 +4946,7 @@ sub printciphers() {
     }
 
     if ($cfg{'legacy'} eq "openssl") {        # output looks like: openssl ciphers -[v|V]
-        foreach $c (sort keys %ciphers) {
+        foreach my $c (sort keys %ciphers) {
             $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'ciphers-V'} > 0); # -V
             $ssl =  get_cipher_ssl($c);  $ssl =~ s/^(TLSv1)(\d)$/$1.$2/;   # openssl has a .
             $bit =  get_cipher_bits($c); $bit =  "($bit)" if ($bit ne ""); # avoid single :
@@ -4986,7 +4978,7 @@ sub printciphers() {
             printf("= %-30s %s\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=%s%s\n", ('-' x 30), ('+-------' x 9));
         }
-        foreach $c (sort keys %ciphers) {
+        foreach my $c (sort keys %ciphers) {
             printf(" %-30s %s\n", $c, join($sep, @{$ciphers{$c}}));
         }
         if ($cfg{'out_header'} > 0) {
@@ -5001,7 +4993,7 @@ sub printciphers() {
             printf("= constant$sep%-30s$sep%s${sep}alias\n", "cipher", join($sep, @{$ciphers_desc{'head'}}));
             printf("=--------------+%s%s\n", ('-' x 31), ('+-------' x 10));
         }
-        foreach $c (sort keys %ciphers) {
+        foreach my $c (sort keys %ciphers) {
             my $can = " "; # FIXME
             if ($cfg{'verbose'} > 0) {
                 if (0 >= grep({$_ eq $c} split(":", $ciphers))) {
@@ -5024,7 +5016,7 @@ sub printciphers() {
             my @miss = ();
             my @test = ();
             my $dupl = ""; # need to identify duplicates as we don't have List::MoreUtils
-            foreach $c (split(':', $ciphers)) {
+            foreach my $c (split(':', $ciphers)) {
                 next if ($c eq $dupl);
                 push(@test, $c) if (  defined $ciphers{$c});
                 push(@miss, $c) if (! defined $ciphers{$c});
@@ -5805,7 +5797,7 @@ _y_TIME("inc}");
 ## check for supported SSL versions
 ## -------------------------------------
 _y_CMD("  check supported SSL versions ...");
-foreach $ssl (@{$cfg{'versions'}}) {
+foreach my $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
     if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
         if ($ssl eq 'DTLSv1') {
@@ -6036,8 +6028,8 @@ if (defined $Net::SSLhello::VERSION) {
 $cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
 
 if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
-    foreach $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
-    foreach $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
+    foreach my $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
+    foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
 # set environment
@@ -6117,7 +6109,7 @@ if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
 }
 if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +check does not allow additional commands of type "info"
-    foreach $key (@{$cfg{'done'}->{'arg_cmds'}}) {
+    foreach my $key (@{$cfg{'done'}->{'arg_cmds'}}) {
         if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
             _warn("additional commands in conjuntion with '+check' are not supported; +'$key' ignored");
         }
@@ -6129,7 +6121,7 @@ usr_pre_host();
 
 my $fail = 0;
 # check if output disabled for given/used commands
-foreach $key (@{$cfg{'ignore-out'}}) {
+foreach my $key (@{$cfg{'ignore-out'}}) {
     $fail++ if (_is_do($key) > 0);
 }
 if ($fail > 0) {
@@ -6139,7 +6131,7 @@ if ($fail > 0) {
 
 # run the appropriate SSL tests for each host (ugly code down here):
 $port = ($cfg{'port'}||"");     # defensive programming
-foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
+foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     $cfg{'host'}      = $host;
     if ($host =~ m#.*?:\d+#) {  # split host:port
        ($host, $port) = split(":", $host);
@@ -6221,7 +6213,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("+cipherraw");
         _v_print("cipher range: $cfg{'cipherrange'}");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
-        foreach $ssl (@{$cfg{'version'}}) {
+        foreach my $ssl (@{$cfg{'version'}}) {
             next if ($cfg{$ssl} == 0);
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
@@ -6262,7 +6254,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
 # FIXME: following disabled due to multipe openssl calls which may produce 
 #         unexpected results (10/2015) {
-#        foreach $key (keys %data) { # copy to %data0
+#        foreach my $key (keys %data) { # copy to %data0
 #            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
 #        }
 # }
@@ -6300,7 +6292,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if ((_need_default() > 0) or ($check > 0)) {
         _y_CMD("get default ..");
-        foreach $ssl (keys %prot) { # all protocols, no need to sort them
+        foreach my $ssl (keys %prot) { # all protocols, no need to sort them
             next if (!defined $prot{$ssl}->{opt});
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
@@ -6333,7 +6325,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
-        foreach $ssl (@{$cfg{'version'}}) {
+        foreach my $ssl (@{$cfg{'version'}}) {
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
                 push(@results, [$ssl, $c, (grep(/^$c/, @supported)>0) ? "yes" : "no"]);
@@ -6352,14 +6344,14 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         # TODO: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
         my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
-        foreach $ssl (@{$cfg{'version'}}) {
+        foreach my $ssl (@{$cfg{'version'}}) {
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 printtitle($legacy, $ssl, $host, $port);
             }
             printciphercheck($legacy, $ssl, $host, $port, ($legacy eq "sslscan")?($_printtitle):0, @results);
         }
-        foreach $ssl (@{$cfg{'version'}}) {
+        foreach my $ssl (@{$cfg{'version'}}) {
             print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
         }
         if ($_printtitle > 0) { # if we checked for ciphers
@@ -6419,7 +6411,7 @@ foreach $host (@{$cfg{'hosts'}}) {  # loop hosts
         printheader($text{'out-scoring'}."\n", $text{'desc-score'});
         print "\n";
         _trace_cmd('%scores');
-        foreach $key (sort keys %scores) {
+        foreach my $key (sort keys %scores) {
             next if ($key !~ m/^check_/); # print totals only
             print_line($legacy, $host, $port, $key, $scores{$key}->{txt}, $scores{$key}->{val});
         }
