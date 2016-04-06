@@ -46,7 +46,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.11 16/04/06 19:28:09',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.12 16/04/07 01:57:59',
 
 };
 
@@ -912,11 +912,11 @@ BEGIN {
 #__________________________________________________________________ methods __|
 
 # TODO: interanl wrappers for main's methods
-sub _trace(@)   { ::_trace(@_); }
-sub _trace0(@)  { ::_trace(@_); }
-sub _trace1(@)  { ::_trace(@_); }
-sub _trace2(@)  { ::_trace(@_); }
-sub _trace3(@)  { ::_trace(@_); }
+sub _trace(@)   { ::_trace(@_); return; }
+sub _trace0(@)  { ::_trace(@_); return; }
+sub _trace1(@)  { ::_trace(@_); return; }
+sub _trace2(@)  { ::_trace(@_); return; }
+sub _trace3(@)  { ::_trace(@_); return; }
 
 =pod
 
@@ -1113,6 +1113,7 @@ sub _prot_init_value() {
         $prot{$ssl}->{'pfs_cipher'} = STR_UNDEF;
         $prot{$ssl}->{'pfs_ciphers'}= [];
     }
+    return;
 } # _prot_init_value
 
 sub _osaft_init() {
@@ -1128,6 +1129,7 @@ sub _osaft_init() {
    #    $cfg{'openssl_version_map'}->{$k} = $prot{$k}->{'hex'}; # copy to %cfg
    #}
 
+    return;
 }; # _osaft_init
 
 sub osaft_done() {};            # dummy to check successful include
