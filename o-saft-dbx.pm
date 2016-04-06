@@ -82,7 +82,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.34 16/04/01 00:14:05";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.35 16/04/06 19:37:30";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -126,7 +126,6 @@ sub _yeast_trac($$){
 sub _yeast_init() {
     #? print important content of %cfg and %cmd hashes
     #? more output if trace>1; full output if trace>2
-    my $key = "";
     return if (($cfg{'trace'} + $cfg{'verbose'}) <= 0);
     _yline("");
     _yTRAC("$0", $VERSION);
@@ -159,12 +158,12 @@ sub _yeast_init() {
     # more detailed trace first
     if ($cfg{'trace'} > 1){
         _yline(" %cmd {");
-        foreach $key (sort keys %cmd) {
+        foreach my $key (sort keys %cmd) {
             _yeast_trac(\%cmd, $key);
         }
         _yline(" %cmd }");
         _yline(" complete %cfg {");
-        foreach $key (sort keys %cfg) {
+        foreach my $key (sort keys %cfg) {
             if ($cfg{'trace'} <= 2){
                 next if $key =~ /^cmd-/; # print internal list of command for full trace only
             }
@@ -190,7 +189,7 @@ sub _yeast_init() {
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$cfg{'sni_name'}");
     _yeast("  default port= $cfg{'port'} (last specified)");
     _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
-    foreach $key (qw(out_header format legacy usehttp usedns usemx starttls starttlsDelay cipherrange)) {
+    foreach my $key (qw(out_header format legacy usehttp usedns usemx starttls starttlsDelay cipherrange)) {
         printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
            # cannot use _yeast() 'cause of pretty printing
     }
@@ -270,13 +269,13 @@ sub _yeast_data() {
   each command from  %cfg{'commands'}  and vice versa.
 ";
 
-    my ($key, $old, $label, $value);
+    my ($old, $label, $value);
     my @yeast = ();     # list of potential internal, private commands
     my $cmd = " ";
     printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
     printf("%20s+%s+%s+%s+%s+%s+%s+%s\n", "-"x20, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7, "-"x7);
     $old = "";
-    foreach $key
+    foreach my $key
             (sort {uc($a) cmp uc($b)}
                 @{$cfg{'commands'}}, keys %data, keys %shorttexts, keys %checks
             )
@@ -331,34 +330,33 @@ sub _yeast_prot() {
     #? print information about SSL/TLS protocols in various variables (hashes)
     #? this function is for internal use only
     local $\ = "\n";
-    my $key = "";
     my $ssl = $cfg{'regex'}->{'SSLprot'};
     print "=== _yeast_prot: internal data according protocols ===\n";
         _yline(" %cfg {");
-        foreach $key (sort keys %cfg) {
+        foreach my $key (sort keys %cfg) {
             #printf("%16s= %s\n", $key, $cfg{$key}) if ($key =~ m/$ssl/);
             _yeast_trac(\%cfg, $key) if ($key =~ m/$ssl/);
         }
         _yline(" }");
         _yline(" %cfg{openssl_option_map} {");
-        foreach $key (sort keys %{$cfg{'openssl_option_map'}})  {
+        foreach my $key (sort keys %{$cfg{'openssl_option_map'}})  {
             _yeast_trac(\%{$cfg{'openssl_option_map'}}, $key);
         }
         _yline(" }");
         _yline(" %cfg{openssl_version_map} {");
-        foreach $key (sort keys %{$cfg{'openssl_version_map'}}) {
+        foreach my $key (sort keys %{$cfg{'openssl_version_map'}}) {
             _yeast(sprintf("%14s= ", $key) . sprintf("0x%04x (%d)", ${$cfg{'openssl_version_map'}}{$key}, ${$cfg{'openssl_version_map'}}{$key}));
         }
         _yline(" }");
         # %check_conn and %check_dest are temporary and should be inside %checks
         _yline(" %checks {");
-        foreach $key (sort keys %checks) {
+        foreach my $key (sort keys %checks) {
             # $checks{$key}->{val} undefined at beginning
             _yeast(sprintf("%14s= ", $key) . $checks{$key}->{txt}) if ($key =~ m/$ssl/);
         }
         _yline(" }");
         _yline(" %shorttexts {");
-        foreach $key (sort keys %shorttexts) {
+        foreach my $key (sort keys %shorttexts) {
             _yeast(sprintf("%14s= ",$key) . $shorttexts{$key}) if ($key =~ m/$ssl/);
         }
         _yline(" }");
