@@ -29,7 +29,7 @@
 #       How it workd, see function  testeme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.3 16/01/23 11:56:19
+#?      @(#) bunt.pl 1.4 16/04/06 19:58:34
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -229,6 +229,7 @@ while ( $#ARGV >= 0 ) {
 	if ($arg =~ m/--version/) {
 		open(FID, $0) || die "$0: WARNING: cannot read myself.\n";
 		grep { /^#\?\s*@\(#\)/ && s/#\?// && print } (<FID>);
+		exit 0;
 	}
 	if ($arg =~ m/--line/)   { $mode='line'; $italic=0; }
 	if ($arg =~ m/--word/)   { $mode='word'; }
