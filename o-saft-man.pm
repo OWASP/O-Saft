@@ -9,7 +9,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.90 16/04/05 21:37:59";
+my  $man_SID= "@(#) o-saft-man.pm 1.91 16/04/06 16:42:21";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -731,7 +731,7 @@ sub _man_html_ankor($){
     my $n = shift;
     my $a = "";
     return sprintf('<a name="a%s"></a>', $n) if ($n !~ m/^[-\+]+/);
-    foreach $n (split(/[\s,]+/,$n)) {
+    foreach my $n (split(/[\s,]+/,$n)) {
         $a .= sprintf("<a name='a%s'></a>", _man_name_ankor($n));
     }
     return $a;
@@ -823,7 +823,7 @@ sub man_table($) {
         'cfg_data'  =>["N/A", "=",   "N/A"],
         'cfg_text'  =>["N/A", "=",   "N/A"],
     );
-    my ($key, $txt);
+    my $txt ="";
     my $sep = $types{$typ}->[1];
     _man_dbx("man_table($typ) ...");
     _man_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
@@ -837,26 +837,26 @@ sub man_table($) {
         # above prints > 65.000 hex values, not very usefull ...
     if ($typ eq 'range') { print qx(\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0); } # TODO: quick&dirty backticks
     if ($typ eq 'intern') {
-        foreach $key (sort keys %cfg) {
+        foreach my $key (sort keys %cfg) {
             next if ($key eq 'cmd-intern'); # don't list myself
             next if ($key !~ m/^cmd-(.*)/);
             _man_opt("cmd-" . $1, $sep, "+" . join(" +", @{$cfg{$key}}));
         }
     }
     if ($typ =~ m/check/) {
-        foreach $key (sort keys %checks) {
+        foreach my $key (sort keys %checks) {
             $txt =  $checks{$key}->{txt};
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
     if ($typ =~ m/data/) {
-        foreach $key (sort keys %data) {
+        foreach my $key (sort keys %data) {
             $txt =  $data{$key}->{txt};
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
     if ($typ =~ m/text/) {
-        foreach $key (sort keys %text) {
+        foreach my $key (sort keys %text) {
             next if (ref($text{$key}) ne ""); # skip except string
             $txt =  $text{$key};
             $txt =~ s/(\n)/\\n/g;
@@ -946,7 +946,6 @@ sub man_cgi() {
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
     _man_dbx("man_cgi ...");
     my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
-    my $key = "";
     _man_http_head();
     _man_html_head();
 print << "EoHTML";
@@ -968,10 +967,10 @@ print << "EoHTML";
     <div id=a style="display:block;">
         <button class=r onclick="t(d('a'));t(d('b'));return false;">Full GUI</button><br>
 EoHTML
-    foreach $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
+    foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     print _man_html_br();
     print _man_html_span('check cipher quick info info--v vulns dump check_sni help http list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # similar to @{$cfg{'cmd-intern'}}
-    foreach $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
+    foreach my $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
                      no-sni sni no-http http BR
                      no-dns dns no-cert BR
                      no-openssl openssl force-openssl  BR
@@ -982,7 +981,7 @@ EoHTML
         if ($key eq 'BR') { print _man_html_br(); next; }
         print _man_html_cbox($key);
     }
-    foreach $key (qw(separator timeout legacy)) { print _man_html_text($key); }
+    foreach my $key (qw(separator timeout legacy)) { print _man_html_text($key); }
     print _man_html_br();
     print _man_html_span('cnark sslaudit sslcipher ssldiagnos sslscan ssltest ssltest-g sslyze testsslserver thcsslcheck openssl simple full compact quick'); # similar to @{$cfg{'legacys'}}
     print _man_html_text("format");
@@ -1115,7 +1114,7 @@ sub man_help($) {
     }
     if ($label =~ m/^todo/i)    {
         print "\n  NOT YET IMPLEMENTED\n";
-        foreach $label (sort keys %checks) {
+        foreach my $label (sort keys %checks) {
             next if (_is_member($label, \@{$cfg{'cmd-NOT_YET'}}) <= 0);
             print "        $label\t- " . $checks{$label}->{txt} . "\n";
         }
