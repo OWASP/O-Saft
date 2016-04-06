@@ -3105,10 +3105,6 @@ sub checkdates($$) {
         if (eval("require Time::Local;")) {
             my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
             my $maxage = $data{'hsts_maxage'}->{val}($host);
-	    _dbx "maxage:" . $maxage;
-            _dbx "END  : $end";
-            _dbx "UNTIL: $ts";
-            _dbx "time : " . time();
             $txt = "$now + $maxage > $ts" if ($now + $maxage > $ts);
         } else {
             $txt = "<<need Time::Local module for this check>>";
