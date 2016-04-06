@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.443 16/04/06 16:28:57",
+    SID         => "@(#) yeast.pl 1.444 16/04/07 01:38:08",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -145,7 +145,8 @@ sub _is_member($$); #   "
 
 ## README if any
 ## -------------------------------------
-open(RC, '<', "o-saft-README") && do { print <RC>; close(RC); exit 0; };
+my $rc;
+open($rc, '<', "o-saft-README") && do { print <$rc>; close($rc); exit 0; };
 
 ## CGI
 ## -------------------------------------
@@ -222,12 +223,12 @@ _y_EXIT("exit=CONF0 - RC-FILE start");
 my @rc_argv = "";
 $arg = "./.$me";    # check in pwd only
 if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
-    if (open(RC, '<', "$arg")) {
+    if (open(my $rc, '<:encoding(UTF-8)', "$arg")) {
         push(@dbxfile, $arg);
         _print_read("$arg", "RC-FILE done");
-        @rc_argv = grep(!/\s*#[^\r\n]*/, <RC>); # remove comment lines
+        @rc_argv = grep(!/\s*#[^\r\n]*/, <$rc>); # remove comment lines
         @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
-        close(RC);
+        close($rc);
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
     } else {
@@ -2201,10 +2202,11 @@ sub _cfg_set($$)       {
         }
         _trace("_cfg_set: read $arg \n");
         my $line ="";
-        open(FID, $arg) && do {
+        my $fh;
+        open($fh, '<:encoding(UTF-8)', $arg) && do {
             push(@dbxfile, $arg);
             _print_read("$arg", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
-            while ($line = <FID>) {
+            while ($line = <$fh>) {
                 #
                 # format of each line in file must be:
                 #    Lines starting with  =  are comments and ignored.
@@ -2220,7 +2222,7 @@ sub _cfg_set($$)       {
                 _trace("_cfg_set: set $line ");
                 _cfg_set($typ, $line);
             }
-            close(FID);
+            close($fh);
             goto _CFG_RETURN;
         };
         _warn("cannot open '$arg': $! ; file ignored");
