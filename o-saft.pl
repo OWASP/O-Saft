@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.444 16/04/07 01:38:08",
+    SID         => "@(#) yeast.pl 1.446 16/04/07 01:55:19",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -48,6 +48,7 @@ sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
     if (grep(/(:?--trace.*time)/i, @ARGV) > 0) {
         printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @_);
     }
+    return;
 }
 sub _y_EXIT($) { # exit if parameter matches given argument in @ARGV
     my $txt =  shift;
@@ -57,6 +58,7 @@ sub _y_EXIT($) { # exit if parameter matches given argument in @ARGV
         printf STDERR ("#o-saft.pl  _y_EXIT $txt\n");
         exit 0;
     }
+    return;
 }
 
 BEGIN {
@@ -162,14 +164,15 @@ if ($me =~/\.cgi$/) {
 ## -------------------------------------
 # functions and variables used very early in main
 our %cfg =  ('trace' => 0 ); # used in usr_pre_init(); avoid: Use of uninitialized value ...
-sub _dprint { local $\ = "\n"; print STDERR STR_DBX, join(" ", @_); }
-sub _dbx    { _dprint(@_); } # alias for _dprint
+sub _dprint { local $\ = "\n"; print STDERR STR_DBX, join(" ", @_); return; }
+sub _dbx    { _dprint(@_); return; } # alias for _dprint
 sub _warn   {
     #? print warning if wanted
     # don't print if ($warning <= 0);
     return if (grep(/(:?--no.?warn)/i, @ARGV) > 0);     # ugly hack 'cause we won't pass $warning
     local $\ = "\n"; print(STR_WARN, join(" ", @_));
     # TODO: in CGI mode warning must be avoided until HTTP header written
+    return;
 }
 sub _warn_and_exit {
     #? print warning that --experimental option is required
@@ -183,8 +186,9 @@ sub _warn_and_exit {
         printf(STR_WARN, "(%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @_);
         exit(1);
     }
+    return;
 }
-sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); }
+sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); return; }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
@@ -2126,6 +2130,7 @@ sub _initchecks_score() {
         $checks{$_}->{score} = 30 if (m/LOW/i);
         $checks{$_}->{score} = 10 if (m/MEDIUM/i);
     }
+    return;
 } # _initchecks_score
 
 sub _initchecks_val()  {
@@ -2141,6 +2146,7 @@ sub _initchecks_val()  {
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'SSLprot'}/);
     }
+    return;
 } # _initchecks_val
 
 sub _init_all()        {
@@ -2149,6 +2155,7 @@ sub _init_all()        {
     _trace("_init_all(){}");
     _initchecks_score();
     _initchecks_val();
+    return;
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
 
@@ -2161,6 +2168,7 @@ sub _resetchecks()     {
     $cfg{'done'}->{'ciphers_all'} = 0;
     $cfg{'done'}->{'ciphers_get'} = 0;
     _initchecks_val();
+    return;
 }
 
 sub _prot_cipher($$)   { return " " . join(":", @_); }
@@ -2418,11 +2426,13 @@ sub _islogjam($$) {
     # return given cipher if vulnerable to logjam attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
+    return "";
 } # _islogjam
 sub _issloth($$) {
     # return given cipher if vulnerable to SLOTH attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
+    return "";
 } # _issloth
 sub _ispfs($$)  { return ("$_[0]-$_[1]" =~ /$cfg{'regex'}->{'PFS'}/)   ? ""  : $_[1]; }
     # return given cipher if it does not support forward secret connections (PFS)
@@ -2704,6 +2714,7 @@ sub _getwilds($$) {
         $checks{'len_altname'}->{val} = length($value) + 1; # count number of characters + type (int)
     }
     # checking for SNI does not work here 'cause it destroys %data
+    return;
 } # _getwilds
 
 sub _usesocket($$$$) {
@@ -2935,6 +2946,7 @@ sub checkcipher($$) {
     $prot{$ssl}->{'LOW'}++      if ($risk =~ /LOW/i);
     $prot{$ssl}->{'MEDIUM'}++   if ($risk =~ /MEDIUM/i);
     $prot{$ssl}->{'HIGH'}++     if ($risk =~ /HIGH/i);
+    return;
 } # checkcipher
 
 sub checkciphers($$) {
@@ -2993,6 +3005,7 @@ sub checkciphers($$) {
     $checks{'pfs_cipherall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'pfs_ciphers'}});
     #$checks{'pfs_cipher'}->{val} # done in checkdest()
     _trace("checkciphers() }");
+    return;
 } # checkciphers
 
 sub check_dh($$) {
@@ -3041,6 +3054,7 @@ sub check_dh($$) {
     } else {                    # not a number, probably suspicious
         $checks{'logjam'}->{val}=  $txt;
     }
+    return;
 } # check_dh
 
 sub checkbleed($$) {
@@ -3050,6 +3064,7 @@ sub checkbleed($$) {
     $cfg{'done'}->{'checkbleed'}++;
     return if ($cfg{'done'}->{'checkbleed'} > 1);
     $checks{'heartbleed'}->{val}  = _isbleed($host, $port);
+    return;
 } # checkbleed
 
 sub checkdates($$) {
@@ -3121,6 +3136,7 @@ sub checkdates($$) {
     _trace("checkdates: valid-years: " . $data{'valid-years'}->{val});
     _trace("checkdates: valid-month: " . $data{'valid-months'}->{val} . "  = ($until[3]*12) - ($since[3]*12) + $u_mon - $s_mon");
     _trace("checkdates: valid-days:  " . $data{'valid-days'}->{val}   . "  = (" . $data{'valid-years'}->{val} . "*5) + (" . $data{'valid-months'}->{val} . "*30)");
+    return;
 } # checkdates
 
 sub checkcert($$) {
@@ -3217,6 +3233,7 @@ sub checkcert($$) {
 # TODO: check: Subject
 #        The subject field can be empty in which case the entity being authenticated is defined in the subjectAltName.
 
+    return;
 } # checkcert
 
 sub checksni($$) {
@@ -3246,6 +3263,7 @@ sub checksni($$) {
     #dbx# _dbx "data{cn_nosni}:\t"   . $data{'cn_nosni'}->{val};
     #dbx# _dbx "checks{hostname}:\t" . $checks{'hostname'}->{val};
     #dbx# _dbx "checks{certfqdn}:\t" . $checks{'certfqdn'}->{val};
+    return;
 } # checksni
 
 sub checksizes($$) {
@@ -3290,6 +3308,7 @@ sub checksizes($$) {
     $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
     $value = $data{'sigkey_len'}->{val}($host);
     $checks{'len_sigdump'}  ->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
+    return;
 } # checksizes
 
 sub check02102($$) {
@@ -3337,6 +3356,7 @@ sub check02102($$) {
     # FIXME: certificate (chain) validation check
     # TODO: cipher bit length check
 
+    return;
 } # check02102
 
 sub check03116($$) {
@@ -3420,6 +3440,7 @@ sub check03116($$) {
 
     $checks{'bsi-tr-03116-'}->{val} .= $checks{'bsi-tr-03116+'}->{val};
 
+    return;
 } # check03116
 
 sub check6125($$) {
@@ -3508,6 +3529,7 @@ sub check6125($$) {
     }
     $checks{'rfc6125_names'}->{val} = $val;
 
+    return;
 } # check6125
 
 sub check7525($$) {
@@ -3676,6 +3698,7 @@ sub check7525($$) {
 
     $checks{'rfc7525'}->{val} .= $val;
 
+    return;
 } # check7525
 
 sub checkdv($$) {
@@ -3730,6 +3753,7 @@ sub checkdv($$) {
         }
     }
 
+    return;
 } # checkdv
 
 sub checkev($$) {
@@ -3846,6 +3870,7 @@ sub checkev($$) {
     # TODO: cipher 2048 bit?
     # TODO: potential dangerous OID: '1.3.6.1.4.1.311.60.1.1'
     # TODO: Scoring: 100 EV+SGC; 80 EV; 70 EV-; 50 OV; 30 DV
+    return;
 } # checkev
 
 sub checkroot($$) {
@@ -3901,9 +3926,10 @@ sub checkroot($$) {
 #  4.2.1.10  Basic Constraints
 #    X509v3 Basic Constraints:
 #        cA:FALSE
-#        pathLenConstraint  INTEGER (0..MAX) OPTIONAL }
+#        pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
 # RFC 4158
 
+    return;
 } # checkroot
 
 sub checkprot($$) {
@@ -3943,6 +3969,7 @@ sub checkprot($$) {
             $checks{'poodle'}  ->{val}  = "SSLv3";
         }
     }
+    return;
 } # checkprot
 
 sub checkdest($$) {
@@ -4026,6 +4053,7 @@ sub checkdest($$) {
         $checks{$key}->{val} = ""     if ($checks{$key}->{val} =~ m/^\s*$/);
     }
     $checks{'heartbeat'}->{val} = $text{'no-tlsextdebug'} if ($cfg{'use_extdebug'} < 1);
+    return;
 } # checkdest
 
 sub checkhttp($$) {
@@ -4084,6 +4112,7 @@ sub checkhttp($$) {
             $checks{$key}->{score}  = 0;
         }
     }
+    return;
 } # checkhttp
 
 sub checkssl($$)  {
@@ -4148,6 +4177,7 @@ sub checkssl($$)  {
 # TODO: nicht sinnvoll wenn $cfg{'no_cert'} > 0
     }
 
+    return;
 } # checkssl
 
 sub scoring($$) {
@@ -4188,6 +4218,7 @@ sub scoring($$) {
 #_dbx "score destination $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_dest'}->{val} if($checks{$key}->{typ} eq "destination");
 #_dbx "score http/https  $key : ".$checks{$key}->{val}." - ". $checks{$key}->{score}." = ".$scores{'check_http'}->{val} if($checks{$key}->{typ} eq "https");
     }
+    return;
 } # scoring
 
 ## definitions: print functions
@@ -4200,6 +4231,7 @@ sub _printdump($$) {
     $value = "" if (!defined $value); # value parameter is optional
     printf("#{ %s\n\t%s\n#}\n", $label, $value);
     # using curly brackets 'cause they most likely are not part of any data
+    return;
 } # _printdump
 sub printdump($$$)  {
     #? just dumps internal database %data and %check_*
@@ -4211,9 +4243,10 @@ sub printdump($$$)  {
     }
     print '######################################################################## %check';
     foreach my $key (keys %checks) { _printdump($checks{$key}->{txt}, $checks{$key}->{val}); }
+    return;
 } # printdump
 
-sub printruler()    { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); }
+sub printruler()    { print "=" . '-'x38, "+" . '-'x35 if ($cfg{'out_header'} > 0); return; }
 
 sub printheader($$) {
     #? print title line and table haeder line if second argument given
@@ -4223,6 +4256,7 @@ sub printheader($$) {
     return if ($desc =~ m/^ *$/); # title only if no more arguments
     printf("= %-37s %s\n", $text{'desc'}, $desc);
     printruler();
+    return;
 } # printheader
 
 sub printfooter($)  {
@@ -4230,6 +4264,7 @@ sub printfooter($)  {
     my $legacy  = shift;
     if ($legacy eq 'sslyze')    { print "\n\n SCAN COMPLETED IN ...\n"; }
     # all others are empty, no need to do anything
+    return;
 } # printfooter
 
 sub printtitle($$$$) {
@@ -4261,6 +4296,7 @@ sub printtitle($$$$) {
     if ($legacy eq 'quick')     { printheader($txt, ""); }
     if ($legacy eq 'simple')    { printheader($txt, ""); }
     if ($legacy eq 'full')      { printheader($txt, ""); }
+    return;
 } # printtitle
 
 sub print_line($$$$$$)  {
@@ -4290,6 +4326,7 @@ sub print_line($$$$$$)  {
        $sep = "\n\t" if ($legacy eq 'full');
        $sep = ""     if ($legacy =~ m/(compact|quick)/);
     printf("%s%s%s\n", $label, $sep, $value);
+    return;
 } # print_line
 
 sub print_data($$$$)    {
@@ -4358,6 +4395,7 @@ sub print_data($$$$)    {
         }
     }
     print_line($legacy, $host, $port, $key, $label, $value);
+    return;
 } # print_data
 
 sub print_check($$$$$)  {
@@ -4366,6 +4404,7 @@ sub print_check($$$$$)  {
     $value = $checks{$key}->{val} if (!defined $value); # defensive programming
     my $label = $checks{$key}->{txt} if ($legacy ne 'key');
     print_line($legacy, $host, $port, $key, $label, $value);
+    return;
 } # print_check
 
 sub print_size($$$$)    {
@@ -4375,10 +4414,11 @@ sub print_size($$$$)    {
     $value = " bytes" if ($key =~ /^(len)/);
     $value = " bits"  if ($key =~ /^len_(modulus|publickey|sigdump)/);
     print_check($legacy, $host, $port, $key, $checks{$key}->{val} . $value);
+    return;
 } # print_size
 
-sub print_cipherruler_dh{ print "=   " . "-"x35 . "+-------------------------" if ($cfg{'out_header'} > 0); }
-sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); }
+sub print_cipherruler_dh{ print "=   " . "-"x35 . "+-------------------------" if ($cfg{'out_header'} > 0); return; }
+sub print_cipherruler   { print "=   " . "-"x35 . "+-------+-------" if ($cfg{'out_header'} > 0); return; }
     #? print header ruler line
 sub print_cipherhead($) {
     #? print header line according given legacy format
@@ -4396,6 +4436,7 @@ sub print_cipherhead($) {
         printf("= %s\t%s\t%s\t%s\t%s\t%s\t%s\n", 'host:port', 'Prot.', 'supp.', $text{'cipher'}, 'compliant', $text{'security'}, $text{'desc'});
     }
     # all others are empty, no need to do anything
+    return;
 } # print_cipherhead
 
 sub print_cipherline($$$$$$) {
@@ -4479,6 +4520,7 @@ sub print_cipherline($$$$$$) {
         # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest-g') { printf("%s;%s;%s;%s\n", 'C', $host . ":" . $port, $sec, $cipher, $desc); } # 'C' needs to be checked first
     if ($legacy eq 'testsslserver') { printf("    %s\n", $cipher); }
+    return;
 } # print_cipherline
 
 sub print_cipherdefault($$$$) {
@@ -4490,6 +4532,7 @@ sub print_cipherdefault($$$$) {
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
     print_cipherline($legacy, $ssl, $host, $port, $data{'selected'}->{val}($host), $yesno);
+    return;
 } # print_cipherdefault
 
 sub print_ciphertotals($$$$) {
@@ -4509,6 +4552,7 @@ sub print_ciphertotals($$$$) {
             # NOTE: "$ssl-$key" does not exist in %checks or %prot
         }
     }
+    return;
 } # print_ciphertotals
 
 sub _is_print($$$) {
@@ -4537,6 +4581,7 @@ sub _print_results($$$@) {
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
         print_cipherline($cfg{'legacy'}, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
     }
+    return;
 } # _print_results
 
 sub printciphercheck($$$$$@)    {
@@ -4569,6 +4614,7 @@ sub printciphercheck($$$$$@)    {
     #print_ciphertotals($legacy, $ssl, $host, $port);  # up to version 15.10.15
     print_check($legacy, $host, $port, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
+    return;
 } # printciphercheck
 
 sub printciphers_dh($$$) {
@@ -4609,6 +4655,7 @@ sub printciphers_dh($$$) {
 
         print_cipherruler_dh();
     }
+    return;
 } # printciphers_dh
 
 sub printprotocols($$$) {
@@ -4639,6 +4686,7 @@ sub printprotocols($$$) {
     if ($cfg{'out_header'}>0) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
+    return;
 } # printprotocols
 
 sub printdata($$$) {
@@ -4673,6 +4721,7 @@ sub printdata($$$) {
             print_data($legacy, $host, $port, $key);
         }
     }
+    return;
 } # printdata
 
 sub printchecks($$$) {
@@ -4704,6 +4753,7 @@ sub printchecks($$$) {
             print_check($legacy, $host, $port, $key, _setvalue($checks{$key}->{val}));
         }
     }
+    return;
 } # printchecks
 
 ## definitions: print functions for help and information
@@ -4740,6 +4790,7 @@ sub printquit() {
     _yeast_init();
     # _yeast_args();  # duplicate call, see in main at "set environment"
     print "# TEST done.";
+    return;
 } # printquit
 
 sub printversionmismatch() {
@@ -4749,6 +4800,7 @@ sub printversionmismatch() {
     if ($o ne $s) {
         _warn("used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
     }
+    return;
 } # printversionmismatch
 
 sub printversion() {
@@ -4880,12 +4932,14 @@ sub printversion() {
              print qx(find $d -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*);
         }
     }
+    return;
 } # printversion
 
 sub printopenssl() {
     #? print openssl version
     print Net::SSLinfo::do_openssl('version', '', '', '');
     printversionmismatch();
+    return;
 } # printopenssl
 
 sub _hex_like_openssl($) {
@@ -5034,6 +5088,7 @@ sub printciphers() {
         }
     }
 
+    return;
 } # printciphers
 
 sub printusage_exit($) {
