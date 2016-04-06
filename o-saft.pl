@@ -3099,18 +3099,17 @@ sub checkdates($$) {
     # of most perl installations.  If it is missing, we give up on checking
     # the time difference. That's why we use eval() to load the Time::Local
     # modul at runtime and not at startup with use.
-    if (_is_do('sts_expired')) {
-        $now = time();  # we need epoch timestamp here
-        # compute epoch timestamp from 'after'
-        if (eval("require Time::Local;")) {
-            my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
-            my $maxage = $data{'hsts_maxage'}->{val}($host);
-            $txt = "$now + $maxage > $ts" if ($now + $maxage > $ts);
-        } else {
-            $txt = "<<need Time::Local module for this check>>";
-        }
-    } else {
+    MAXAGE_CHECK: {
+        $txt = $text{'no-STS'};
+        last MAXAGE_CHECK if ($data{'https_sts'}->{val}($host) eq "");
         $txt = STR_UNDEF;
+        last MAXAGE_CHECK if (!_is_do('sts_expired'));
+        $txt = "<<need Time::Local module for this check>>";
+        last MAXAGE_CHECK if (!eval("require Time::Local;"));
+        # compute epoch timestamp from 'after'
+        my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
+        my $maxage = $data{'hsts_maxage'}->{val}($host);
+        $now = time();  # we need epoch timestamp here
     }
     $checks{'sts_expired'} ->{val}  = $txt;
 
