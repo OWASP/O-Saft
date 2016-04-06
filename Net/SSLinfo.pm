@@ -34,7 +34,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.121 16/04/05 21:45:29',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.122 16/04/06 16:32:10',
 };
 
 ######################################################## public documentation #
@@ -535,9 +535,9 @@ sub _setcmd() {
 
 sub _traceSSL() {
     # print bitmasks of available SSL constants
-    my ($op, $_op_sub);
+    my $_op_sub;
     _settrace();
-    foreach $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_TLSv1_3 OP_NO_DTLSv1)) {
+    foreach my $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_TLSv1_3 OP_NO_DTLSv1)) {
         $_op_sub = \&{"Net::SSLeay::$op"};
         # cannot use _trace() 'cause we want our own formatting
         printf("#%s SSL version bitmask: %15s ", SSLINFO, $op);
@@ -1161,7 +1161,7 @@ sub do_ssl_open($$$@) {
         $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
             # disable not specified SSL versions
-        foreach  $ssl (keys %_SSLmap) {
+        foreach  my $ssl (keys %_SSLmap) {
             # $sslversions  passes the version which should be supported,  but
             # openssl and hence Net::SSLeay, configures what  should *not*  be
             # supported, so we skip all versions found in  $sslversions
