@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.441 16/04/03 01:35:03",
+    SID         => "@(#) yeast.pl 1.442 16/04/06 15:36:44",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -699,6 +699,7 @@ my %check_http = (  # HTTP vs. HTTPS data
     'sts_maxage1m'  => {'txt' => "STS max-age less than one month"}, # low
     'sts_maxage1y'  => {'txt' => "STS max-age less than one year"},  # medium
     'sts_maxagexy'  => {'txt' => "STS max-age more than one year"},  # high
+    'sts_expired'   => {'txt' => "STS max-age < certificate's validity"},
     'hsts_sts'      => {'txt' => "Target sends STS header"},
     'sts_maxage'    => {'txt' => "Target sends STS header with proper max-age"},
     'sts_subdom'    => {'txt' => "Target sends STS header with includeSubdomain"},
@@ -809,6 +810,7 @@ our %shorttexts = (
     'sts_maxage1m'  => "STS max-age < 1 month",
     'sts_maxage1y'  => "STS max-age < 1 year",
     'sts_maxagexy'  => "STS max-age < 1 year",
+    'sts_expired'   => "STS max-age < certificate's validity",
     'sts_subdom'    => "STS includeSubdomain",
     'hsts_ip'       => "STS header not for IP",
     'hsts_location' => "STS and Location header",
@@ -3054,17 +3056,17 @@ sub checkdates($$) {
     _y_CMD("checkdates() " . $cfg{'done'}->{'checkdates'});
     $cfg{'done'}->{'checkdates'}++;
     return if ($cfg{'done'}->{'checkdates'} > 1);
-       #
-       # Note about calculating dates:
-       # calculation should be done without using additional perl modules like
-       # Time::Local, Date::Calc, Date::Manip, ...
-       # Hence we convert the date given by the certificate's before and after
-       # value to the format  YYYYMMDD. The format given in the certificate is
-       # always GMT and in fixed form:  MMM DD hh:mm:ss YYYY GMT. So a split()
-       # gives year and day as integer. Just the month is a string, which need
-       # to be converted to an integer using the map() funtion on @mon array.
-       # The same format is used for the current date given by gmtime(), but
-       # convertion is much simpler as no strings exist here.
+
+   # Note about calculating dates:
+   # Calculation should be done without using additional perl modules like
+   #   Time::Local, Date::Calc, Date::Manip, ...
+   # Hence we convert dates given by the certificate's before and after value
+   # to the format  YYYYMMDD.  The format given in the certificate  is always
+   # GMT and in fixed form: MMM DD hh:mm:ss YYYY GMT. So a split() gives year
+   # and day as integer.  Just the month is a string, which must be converted
+   # to an integer using the map() funtion on @mon array.
+   # The same format is used for the current date given by gmtime(), but
+   # convertion is much simpler as no strings exist here.
     my @now = gmtime(time);
     my $now = sprintf("%4d%02d%02d ", $now[5]+1900, $now[4]+1, $now[3]);
     my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
@@ -3076,14 +3078,46 @@ sub checkdates($$) {
        map({$m++; $u_mon=$m if/$until[0]/} @mon); $m = 0;
     my $start = sprintf("%s%02s%02s", $since[3], $s_mon, $since[1]);
     my $end   = sprintf("%s%02s%02s", $until[3], $u_mon, $until[1]);
+    my $txt   = "";
     # end date magic, do checks ..
-    $checks{'dates'}->{val}     =          $data{'before'}->{val}($host) if ($now < $start);
-    $checks{'dates'}->{val}    .= " .. " . $data{'after'} ->{val}($host) if ($now > $end);
-    $checks{'expired'}->{val}   =          $data{'after'} ->{val}($host) if ($now > $end);
+    $checks{'dates'}->{val}         =          $data{'before'}->{val}($host) if ($now < $start);
+    $checks{'dates'}->{val}        .= " .. " . $data{'after'} ->{val}($host) if ($now > $end);
+    $checks{'expired'}->{val}       =          $data{'after'} ->{val}($host) if ($now > $end);
     $data{'valid-years'}->{val}     = ($until[3]       -  $since[3]);
     $data{'valid-months'}->{val}    = ($until[3] * 12) - ($since[3] * 12) + $u_mon - $s_mon;
     $data{'valid-days'}->{val}      = ($data{'valid-years'}->{val}  *  5) + ($data{'valid-months'}->{val} * 30); # approximately
     $data{'valid-days'}->{val}      = ($until[1] - $since[1]) if ($data{'valid-days'}->{val} < 60); # more accurate
+
+    # To check if the STS max-age exceeds the certificate's expire date, we
+    # add the current timestamp to the  STS max-age. They are both given in
+    # epoch timestamp format.
+    # The certificate's 'after' value must be converted to  epoch timestamp
+    # format, and then can be compared to STS max-age.
+    # Unfortunately there exist  no simple method to convert human readable
+    # timestamps (like certificate's 'after') into epoch timestamp format.
+    # We use perl's Time::Local module for that in the hope that it is part
+    # of most perl installations.  If it is missing, we give up on checking
+    # the time difference. That's why we use eval() to load the Time::Local
+    # modul at runtime and not at startup with use.
+    if (_is_do('sts_expired')) {
+        $now = time();  # we need epoch timestamp here
+        # compute epoch timestamp from 'after'
+        if (eval("require Time::Local;")) {
+            my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
+            my $maxage = $data{'hsts_maxage'}->{val}($host);
+	    _dbx "maxage:" . $maxage;
+            _dbx "END  : $end";
+            _dbx "UNTIL: $ts";
+            _dbx "time : " . time();
+            $txt = "$now + $maxage > $ts" if ($now + $maxage > $ts);
+        } else {
+            $txt = "<<need Time::Local module for this check>>";
+        }
+    } else {
+        $txt = STR_UNDEF;
+    }
+    $checks{'sts_expired'} ->{val}  = $txt;
+
     _trace("checkdates: start, now, end: : $start, $now, $end");
     _trace("checkdates: valid:       " . $checks{'dates'}->{val});
     _trace("checkdates: valid-years: " . $data{'valid-years'}->{val});
@@ -4028,6 +4062,7 @@ sub checkhttp($$) {
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
         # other sts_maxage* are done below as they change {val}
+        checkdates($host,$port);    # computes check{'sts_exired'}
     } else {
         $checks{'sts_maxagexy'} ->{val} = $text{'no-STS'};
         foreach $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_sts sts_subdom sts_maxage)) {
