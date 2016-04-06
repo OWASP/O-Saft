@@ -46,7 +46,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.10 16/04/02 21:29:35',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.11 16/04/06 19:28:09',
 
 };
 
@@ -983,11 +983,10 @@ Check if given C<%cipher> name is a known cipher.
 sub get_cipher_hex($)  {
     # find hex key for cipher in %cipher_names or %cipher_alias
     my $c = shift;
-    my $k = "";
-    foreach $k (keys %cipher_names) { # database up to VERSION 14.07.14
+    foreach my $k (keys %cipher_names) { # database up to VERSION 14.07.14
         return $k if (($cipher_names{$k}[0] eq $c) or ($cipher_names{$k}[1] eq $c));
     }
-    foreach $k (keys %cipher_alias) { # not yet found, check for alias
+    foreach my $k (keys %cipher_alias) { # not yet found, check for alias
         return $k if ($cipher_alias{$k}[0] eq $c);
     }
     return "";
@@ -999,15 +998,15 @@ sub get_cipher_name($) {
     my $cipher  = shift;
     return $cipher if (grep(/^$cipher/, %ciphers)>0);
     _trace("get_cipher_name: search $cipher");
-    foreach (keys %cipher_names) {
-        return $cipher_names{$_}[0] if ($cipher =~ m/$cipher_names{$_}[0]/);
-        return $cipher_names{$_}[0] if ($cipher_names{$_}[1] =~ /$cipher/);
+    foreach my $k (keys %cipher_names) {
+        return $cipher_names{$k}[0] if ($cipher =~ m/$cipher_names{$k}[0]/);
+        return $cipher_names{$k}[0] if ($cipher_names{$k}[1] =~ /$cipher/);
     }
     # nothing found yet, try more lazy match
-    foreach (keys %cipher_names) {
-        if ($cipher_names{$_}[0] =~ m/$cipher/) {
+    foreach my $k (keys %cipher_names) {
+        if ($cipher_names{$k}[0] =~ m/$cipher/) {
             _warn("partial match for cipher name found '$cipher'");
-            return $cipher_names{$_}[0];
+            return $cipher_names{$k}[0];
         }
     }
     return "";
@@ -1102,8 +1101,7 @@ sub get_dh_paramter($$) {
 
 sub _prot_init_value() {
     #? initialize default values in %prot
-    my $ssl;
-    foreach $ssl (keys %prot) {
+    foreach my $ssl (keys %prot) {
         $prot{$ssl}->{'cnt'}        = 0;
         $prot{$ssl}->{'-?-'}        = 0;
         $prot{$ssl}->{'WEAK'}       = 0;
@@ -1120,11 +1118,15 @@ sub _prot_init_value() {
 sub _osaft_init() {
     #? additional generic initializations for data structures
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
-    $data_oid{$_}->{val} = "<<check error>>" foreach (keys %data_oid); # set a default value
+    foreach my $k (keys %data_oid) {
+        $data_oid{$k}->{val} = "<<check error>>"; # set a default value
+    }
 
     # complete initialization of %cfg data
-  #$cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot); # copy to %cfg
-  #$cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot); # copy to %cfg
+   #foreach my $k (keys %prot); # copy to %cfg
+   #    $cfg{'openssl_option_map'}->{$k}  = $prot{$k}->{'opt'}; # copy to %cfg
+   #    $cfg{'openssl_version_map'}->{$k} = $prot{$k}->{'hex'}; # copy to %cfg
+   #}
 
 }; # _osaft_init
 
