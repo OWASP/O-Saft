@@ -6076,11 +6076,7 @@ if (defined $Net::SSLhello::VERSION) {
     @Net::SSLhello::starttlsPhaseArray  = @{$cfg{'starttls_phase'}};
     # add 'starttls_error' array elements according Net::SSLhello's internal
     # representation
-    push(@Net::SSLhello::starttlsPhaseArray, $cfg{'starttls_error'}[1], $cfg{'starttls_error'}[2], $cfg{'starttls_error'}[3]);
-
-    # unfotunatelly 'starttls_error' does not have element [0], hence the more
-    # perlish assignment cannot be used
-    #push(@Net::SSLhello::starttlsPhaseArray, @{$cfg{'starttls_error'}});
+    push(@Net::SSLhello::starttlsPhaseArray, @{$cfg{'starttls_error'}}[1..3]);
 }
 $cfg{'trace'} = 0 if ($cfg{'traceME'} < 0);
 
