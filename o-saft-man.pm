@@ -9,7 +9,7 @@ package main;   # ensure that main:: variables are used
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.91 16/04/06 16:42:21";
+my  $man_SID= "@(#) o-saft-man.pm 1.92 16/04/07 02:09:12";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -33,7 +33,8 @@ our $version= "$man_SID";               # version of myself
 my  $skip   = 1;
 our $egg    = "";
 our @DATA;
-if (open(DATA, $wer)) {
+my  $fh;
+if (open($fh, '<:encoding(UTF-8)', $wer)) {
     # If this module is used in parent's BEGIN{} section, we don't have any
     # file descriptor, in particular nothing beyond __DATA__. Hence we need
     # to read the file --this one-- manually, and strip off anything before
@@ -44,7 +45,7 @@ if (open(DATA, $wer)) {
     # &  was choosen because it rarely appears in texts and  is not  a meta
     # character in any of the supported  output formats (text, wiki, html),
     # and also causes no problems inside regex.
-    while (<DATA>) {
+    while (<$fh>) {
         $skip = 2, next if (/^#begin/);
         $skip = 0, next if (/^#end/);
         $skip = 0, next if (/^__DATA__/);
@@ -87,7 +88,7 @@ if (open(DATA, $wer)) {
         s# \$0# $parent#g;              # my name
         push(@DATA, $_);
     }
-    close(DATA);
+    close($fh);
 }
 our $\ = "";
 
@@ -442,7 +443,7 @@ our %man_text = (
         'SKIP-TLS'  => "see SKIP",
         'Skipjack'  => "block cipher encryption algorithm specified as part of the Fortezza",
         'SLOTH'     => "Security Losses from Obsolete and Truncated Transcript Hashes",
-	'SMACK'     => "State Machine AttaCKs",
+        'SMACK'     => "State Machine AttaCKs",
         'Snefu'     => "hash function",
         'SNI'       => "Server Name Indication",
         'SNOW'      => "word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )",
@@ -664,7 +665,7 @@ our %man_text = (
 
 ## definitions: internal functions
 ## -------------------------------------
-sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @ARGV)>0); }
+sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @ARGV)>0); return; }
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
@@ -676,6 +677,7 @@ sub _man_http_head(){
     print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
     print "Content-type: text/html; charset=utf-8\r\n";
     print "\r\n";
+    return;
 }
 sub _man_html_head(){
     print << "EoHTML";
@@ -703,6 +705,7 @@ function t(id){id.display=(id.display=='none')?'block':'none';}
 <body>
  <h2>O - S a f t &#160; &#151; &#160; OWASP SSL advanced forensic tool</h2><!-- hides unwanted text before <body> tag -->
 EoHTML
+    return;
 }
 sub _man_html_foot(){
     print << "EoHTML";
@@ -712,6 +715,7 @@ sub _man_html_foot(){
  <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2015</span></p>
 </body></html>
 EoHTML
+    return;
 }
 
 sub _man_html_chck($){
@@ -769,18 +773,21 @@ sub _man_html($$) {
         s/^\s*$/<p>/;                               # add paragraph for formatting
         print;
     }
+    return;
 } # _man_html
 
 sub _man_head($$) {
     return if ($cfg{'out_header'} < 1);
     printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60);
+    return;
 }
-sub _man_opt($$$) { printf("%16s%s%s\n",   @_); }
+sub _man_opt($$$) { printf("%16s%s%s\n",   @_); return; }
 sub _man_arr($$$) {
     my ($ssl, $sep, $dumm) = @_;
     my @all = ();
     push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$ssl}});
     printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
+    return;
 }
 sub _man_cfg($$$$){
     #? print line in configuration format
@@ -788,6 +795,7 @@ sub _man_cfg($$$$){
     $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
     $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
     _man_opt($key, $sep, $txt);
+    return;
 }
 
 sub _man_usr_value($)   {
@@ -871,6 +879,7 @@ sub man_table($) {
 = (Don't be confused about multiple  =  as they are part of  TEXT.)
     " if ($typ !~ m/^cfg/);
     }
+    return;
 } # man_table
 
 sub man_commands() {
@@ -907,8 +916,9 @@ Commands to test target's ciphers
 +cipher	Check target for ciphers (using libssl)
 +cipherraw	Check target for all possible ciphers.
 EoHelp
-    if (open(P, "<", $0)) { # need full path for $parent file here
-        while(<P>) {
+    my $fh;
+    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
+        while(<$fh>) {
             # find start of data structure
             # all structure look like:
             #    our %check_some = ( # description
@@ -926,8 +936,9 @@ EoHelp
             next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
             print "+$1\t$2\n" if m/^\s+'([^']*)'.*"([^"]*)"/;
         }
-        close(P);
+        close($fh);
     }
+    return;
 } # man_commands
 
 sub man_html() {
@@ -938,6 +949,7 @@ sub man_html() {
     _man_html_head();
     _man_html('NAME', 'TODO');
     _man_html_foot();
+    return;
 } # man_html
 
 sub man_cgi() {
@@ -1003,6 +1015,7 @@ EoHTML
  </form>
 EoHTML
     _man_html_foot();
+    return;
 } # man_cgi
 
 sub man_wiki($) {
@@ -1068,6 +1081,7 @@ Content of this wiki page generated with:
  $parent --no-warning --no-header --help=gen-wiki
 </small>
 ";
+    return;
 } # man_wiki
 
 sub man_toc() {
@@ -1079,6 +1093,7 @@ sub man_toc() {
             # print =head1 and =head2
             # just =head1 is lame, =head1 and =head2 and =head3 is too much
     }
+    return;
 } # man_toc
 
 sub man_help($) {
@@ -1119,6 +1134,7 @@ sub man_help($) {
             print "        $label\t- " . $checks{$label}->{txt} . "\n";
         }
     }
+    return;
 } # man_help
 
 sub printhelp($) {
@@ -1169,14 +1185,15 @@ sub printhelp($) {
     if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description, is not yet public
         # quick&dirty hack, may be improved in future ...
         $skip = 1;
-        open(FID, $wer) or die(STR_ERROR, "$!");
-        while (<FID>) {
+        my $fh;
+        open($fh, '<:encoding(UTF-8)', $wer) or die(STR_ERROR, "$!");
+        while (<$fh>) {
             $skip = 0 if (/^#\s+Program Code/);
             next if ($skip gt 0);
             last if (($skip eq 0) and (/^$/));
             print;
         }
-        close(FID);
+        close($fh);
         return;
     }
     # nothing matched so far, try to find special section and only print that
@@ -1456,20 +1473,20 @@ TECHNICAL INFORMATION
 
         However, it is recommended to use the most recent version of the mod-
         ules which then gives more accurate results and less warnings. If the
-	modules are missing, they can be installed i.e. with:
+        modules are missing, they can be installed i.e. with:
 
           cpan Net::SSLeay
 
-	Note: if you want to use advanced features of openssl or Net::SSLeay,
-	please see  INSTALLTION  section how to compile and install the tools
-	fully customized.
+        Note: if you want to use advanced features of openssl or Net::SSLeay,
+        please see  INSTALLTION  section how to compile and install the tools
+        fully customized.
 
-	Also an openssl executable should be available, but is not mandatory.
+        Also an openssl executable should be available, but is not mandatory.
 
         For checking DH parameters of ciphers, openssl 1.0.2  or newer should
         be available. If an older version of openssl is found, we try hard to
         extract  the DH parameters from the  data returned by the server, see
-	+cipher-dh  command.
+        +cipher-dh  command.
 
 
 RESULTS
@@ -2988,8 +3005,8 @@ CHECKS
 #      SKIP
 #
 #        Check if target is vulnerable to  SKIP  attack.
-#	Message Skipping Attacks on TLS. Attack to force  server or client  to
-#	skip messages in handshake protocol",
+#       Message Skipping Attacks on TLS. Attack to force  server or client  to
+#       skip messages in handshake protocol",
 
       SLOTH
 
@@ -4951,9 +4968,9 @@ TODO
           ** client certificate
           ** some STRATTLS need : HELP STARTTLS HELP as output of HELPs are different
           ** support: PCT protocol
-	  ** Checking fallback from TLS 1.1 to TLS 1.0 (see ssl-cipher-check.pl)
-	  ** Minimal encryption strength: weak encryption (40-bit) (TestSSLServer.jar)
-	  ** check dynamic HTTP Public Key Pinning (HPKP)
+          ** Checking fallback from TLS 1.1 to TLS 1.0 (see ssl-cipher-check.pl)
+          ** Minimal encryption strength: weak encryption (40-bit) (TestSSLServer.jar)
+          ** check dynamic HTTP Public Key Pinning (HPKP)
 
         * missing checks
           ** SSL_honor_cipher_order => 1
@@ -4977,16 +4994,16 @@ TODO
           ** implement +ca = +verify +chain +rootcert +expired +fingerprint
 
         * postprocessing
-	  Remove all options for output formatting. Use a "postprocess" script
-	  instead.
+          Remove all options for output formatting. Use a "postprocess" script
+          instead.
           ** scoring
              implement score for PFS; lower score if not all ciphers support PFS
              make clear usage of score from %checks
           ** write postprocessor for tabular data, like
-	     ssl-cert-check -p 443 -s mail.google.com -i -V
+             ssl-cert-check -p 443 -s mail.google.com -i -V
 
         * Net::SSLeay
-	  ** remove all warn() as Net::SSLeay should be silent
+          ** remove all warn() as Net::SSLeay should be silent
           ** Net::SSLinfo.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
              return error message
           ** Net::SSLeay::CTX_clear_options()
