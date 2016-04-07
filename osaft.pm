@@ -39,7 +39,7 @@ use warnings;
 no warnings qw(once);
 
 use constant {
-    OSAFT_VERSION   => '16.04.02',
+    OSAFT_VERSION   => '16.04.07',
   # STR_VERSION => 'dd.mm.yy',  # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -48,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.13 16/04/08 00:47:27',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.15 16/04/08 01:30:33',
 
 };
 
@@ -176,6 +176,7 @@ Following functions (methods) must be defined in the calling program:
 =cut
 
 
+## no critic (Modules::ProhibitAutomaticExportation)
 use Exporter qw(import);
 our @ISA     = qw(Exporter);
 our $VERSION = OSAFT_VERSION;
@@ -912,11 +913,11 @@ our %cfg = (
 #__________________________________________________________________ methods __|
 
 # TODO: interanl wrappers for main's methods
-sub _trace(@)   { ::_trace(@_); return; }
-sub _trace0(@)  { ::_trace(@_); return; }
-sub _trace1(@)  { ::_trace(@_); return; }
-sub _trace2(@)  { ::_trace(@_); return; }
-sub _trace3(@)  { ::_trace(@_); return; }
+sub _trace(@)   { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace0(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace1(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace2(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace3(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
 =pod
 
@@ -947,16 +948,16 @@ Get information from internal C<%cipher> data structure.
 # some people prefer to use a getter function to get data from objects
 # each function returns a spcific value (column) from the %cipher table
 # see %ciphers_desc about description of the columns
-sub get_cipher_sec($)  { my $c=$_[0]; return $ciphers{$c}[0] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_ssl($)  { my $c=$_[0]; return $ciphers{$c}[1] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_enc($)  { my $c=$_[0]; return $ciphers{$c}[2] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_bits($) { my $c=$_[0]; return $ciphers{$c}[3] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_mac($)  { my $c=$_[0]; return $ciphers{$c}[4] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_auth($) { my $c=$_[0]; return $ciphers{$c}[5] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_keyx($) { my $c=$_[0]; return $ciphers{$c}[6] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_score($){ my $c=$_[0]; return $ciphers{$c}[7] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_tags($) { my $c=$_[0]; return $ciphers{$c}[8] || "" if (grep(/^$c/, %ciphers)>0); return ""; }
-sub get_cipher_desc($) { my $c=$_[0];
+sub get_cipher_sec($)  { my $c=shift; return $ciphers{$c}[0] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_ssl($)  { my $c=shift; return $ciphers{$c}[1] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_enc($)  { my $c=shift; return $ciphers{$c}[2] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_bits($) { my $c=shift; return $ciphers{$c}[3] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_mac($)  { my $c=shift; return $ciphers{$c}[4] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_auth($) { my $c=shift; return $ciphers{$c}[5] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_keyx($) { my $c=shift; return $ciphers{$c}[6] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_score($){ my $c=shift; return $ciphers{$c}[7] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_tags($) { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+sub get_cipher_desc($) { my $c=shift;
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
 #       _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
@@ -964,7 +965,7 @@ sub get_cipher_desc($) { my $c=$_[0];
     }
     my @c = @{$ciphers{$c}};
     shift @c;
-    return @c if (grep(/^$c/, %ciphers)>0);
+    return @c if ((grep{/^$c/} %ciphers)>0);
     return "";
 }
 
@@ -996,7 +997,7 @@ sub get_cipher_name($) {
     # check if given cipher name is a known cipher
     # checks in %cipher_names if nof found in %ciphers
     my $cipher  = shift;
-    return $cipher if (grep(/^$cipher/, %ciphers)>0);
+    return $cipher if ((grep{/^$cipher/} %ciphers)>0);
     _trace("get_cipher_name: search $cipher");
     foreach my $k (keys %cipher_names) {
         return $cipher_names{$k}[0] if ($cipher =~ m/$cipher_names{$k}[0]/);
