@@ -34,7 +34,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.122 16/04/06 16:32:10',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.123 16/04/07 02:28:36',
 };
 
 ######################################################## public documentation #
@@ -508,9 +508,10 @@ sub _settrace {
     $Net::SSLeay::linux_debug = 1   if ($trace > 2);
         # Net::SSLeay 1.72 uses linux_debug with trace>2 only
     $Net::SSLeay::slowly = $Net::SSLinfo::slowly;
+    return;
 }
 
-sub _trace($) { local $\ = "\n"; print '#' . SSLINFO . '::' . $_[0] if ($trace > 0); }
+sub _trace($) { local $\ = "\n"; print '#' . SSLINFO . '::' . $_[0] if ($trace > 0); return; }
 
 # define some shortcuts to avoid $Net::SSLinfo::*
 my $_echo    = "";              # dangerous if aliased or wrong one found
@@ -531,6 +532,7 @@ sub _setcmd() {
         $_openssl = '\\' .  $_openssl if (($_openssl ne '') and ($_openssl !~ /\//));
         $_echo    = '\\' .  $_echo;
     }
+    return;
 } # _setcmd
 
 sub _traceSSL() {
@@ -547,6 +549,7 @@ sub _traceSSL() {
             printf("<<undef>>\n");
         }
     }
+    return;
 }
 
 ##################################################### internal data structure #
@@ -708,6 +711,7 @@ sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
     $_SSLinfo{'cipherlist'} = 'ALL:NULL:eNULL:aNULL:LOW';
     $_SSLinfo{'verify_cnt'} = 0;
     $_SSLinfo{'ciphers_openssl'} = "";
+    return;
 } # _SSLinfo_reset
 
 sub test_ssleay() {
@@ -960,9 +964,10 @@ sub _openssl_MS($$$$) {
     my $tmp = '.\\_yeast.bat'; # do not use $ENV{'TMP'} as it can be empty or unset
     _trace("_openssl_MS $mode $host$port: cmd.exe /D /C /S $tmp") if ($trace > 1);
     TRY: {
-        open( T, '>', $tmp)                or {$err = $!} and last;
-        print T "$text | $_openssl $mode $host$port 2>&1";
-        close T;
+        my $fh;
+        open($fh, '>', $tmp)                or {$err = $!} and last;
+        print $fh "$text | $_openssl $mode $host$port 2>&1";
+        close($fh);
         #dbx# print `cat $tmp`;
         $src = 'cmd.exe';
         ($data =  `cmd.exe /D /S /C $tmp`) or {$err = $!} and last;
@@ -2396,7 +2401,7 @@ sub verify_altname($$) {
     return sprintf("Given hostname '%s' %s alternate name '%s' in certificate", $host, $match, $cname);
 }
 
-sub verify_alias { verify_altname($_[0], $_[1]); }
+sub verify_alias { verify_altname($_[0], $_[1]); return; }
 
 sub _check_peer() {
     # TBD
@@ -2405,13 +2410,14 @@ sub _check_peer() {
     $_SSLinfo{'verify_cnt'} += 1;
     return $ok;
 }
-sub _check_client_cert() {print "##check_client_cert\n";}
+sub _check_client_cert() {print "##check_client_cert\n"; return; }
 #$my $err = Net::SSLeay::set_verify ($ssl, Net::SSLeay::VERIFY_CLIENT_ONCE, \&_check_client_cert );
 
 sub _check_crl($$) {
     # TBD
     my $ssl = shift;
     _trace("_check_crl()");
+    return;
 }
 
 sub error($) {
