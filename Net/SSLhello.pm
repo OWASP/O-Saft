@@ -4225,8 +4225,15 @@ sub parseSSL2_ServerHello ($$$;$) {
 
 
 sub parseTLS_ServerHello {
-    #? FIXME: <<description missing>> <<POD missing>>
-    # Variable: String/Octet, dass den Rest des Server-Hello-Pakets enthält, Länge, optional: Client-Protokoll  
+    #? parse and get data from a ServerHello message that has been received via SSLv3 or TLS
+    #? according RFC6101 (SSL3), RFC2246 (TLS1), RFC4346 (TLS1.1), RFC5246 (TLS1.2) and draft-ietf-tls-tls13 (TLS1.3)
+    #? FIXME: <<POD missing>>
+    #? Variableis:
+    #? $host and $port:   used for error and trave messages
+    #? $buffer:           unparsed data of the ServerHello
+    #? $len:              Len if the buffer
+    #? $client_protokoll: optional the protocol used by the client
+    #
     my $host = shift || ""; #for warn- and trace-messages
     my $port = shift || ""; #for warn- and trace-messages
     my $buffer = shift || ""; 
@@ -4235,7 +4242,6 @@ sub parseTLS_ServerHello {
     my $rest ="";
     my $rest2 ="";
     my %serverHello;
-
     
     $serverHello{'cipher_spec'} = "";
     $serverHello{'extensions_len'} = 0;
