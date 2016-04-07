@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # PACKAGE {
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -121,14 +121,17 @@ Call:  usr_version()
 
 =cut
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.16 16/03/30 21:43:57";
+use strict;
+use warnings;
+
+my  $usr_SID= "@(#) o-saft-usr.pm 1.17 16/04/07 02:20:46";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 package main;   # ensure that main:: variables are used
 
-sub _usr_dbx { _trace(join(" ", @_, "\n")); } # requires --v
+sub _usr_dbx { _trace(join(" ", @_, "\n")); return; } # requires --v
 
 # user functions
 # -------------------------------------
@@ -138,14 +141,17 @@ sub usr_version()   { return "14.07.26"; }
 
 sub usr_pre_init()  {
     _usr_dbx("usr_pre_init ...");
+    return;
 };
 
 sub usr_pre_file()  {
     _usr_dbx("usr_pre_file ...");
+    return;
 };
 
 sub usr_pre_args()  {
     _usr_dbx("usr_pre_args ...");
+    return;
 };
 
 sub usr_pre_exec()  {
@@ -155,22 +161,27 @@ sub usr_pre_exec()  {
     # searched for in cfg{'done'}->{'arg_cmds'} which allows users
     # to "create" and use their own commands without changing 
     # o-saft.pl itself. However, o-saft.pl will print a WARNING then.
+    return;
 };
 
 sub usr_pre_cipher(){
     _usr_dbx("usr_pre_cipher ...");
+    return;
 };
 
 sub usr_pre_main()  {
     _usr_dbx("usr_pre_main ...");
+    return;
 };
 
 sub usr_pre_host()  {
     _usr_dbx("usr_pre_host ...");
+    return;
 };
 
 sub usr_pre_info()  {
     _usr_dbx("usr_pre_info ...");
+    return;
 };
 
 sub usr_pre_open()  {
@@ -181,26 +192,32 @@ sub usr_pre_open()  {
     #use IO::Socket;
     #$Net::SSLinfo::socket = IO::Socket::INET->new(PeerHost=>'localhost', PeerPort=>443, Proto=>'tcp') 
     #or die "**ERROR usr_pre_open socket(): $!\n";
+    return;
 };
 
 sub usr_pre_cmds()  {
     _usr_dbx("usr_pre_cmds ...");
+    return;
 };
 
 sub usr_pre_data()  {
     _usr_dbx("usr_pre_data ...");
+    return;
 };
 
 sub usr_pre_print() {
     _usr_dbx("usr_pre_print ...");
+    return;
 };
 
 sub usr_pre_next()  {
     _usr_dbx("usr_pre_next ...");
+    return;
 };
 
 sub usr_pre_exit()  {
     _usr_dbx("usr_pre_exit ...");
+    return;
 };
 
 sub o_saft_usr_done() {};       # dummy to check successful include
