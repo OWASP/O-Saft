@@ -1181,7 +1181,6 @@ sub printCipherStringArray ($$$$$@) {
 #    my $usesni    = shift; #$_[4]
 #    my (@cipherArray) = @{$_[5]};
 
-    my $protocolCipher ="";
     my $arrayLen = @cipherArray;
     my $cipherOrder = ""; # cipher suites in server-preferred order or not
     my $sni    = "";
@@ -1220,7 +1219,7 @@ sub printCipherStringArray ($$$$$@) {
         }
     }
     
-       foreach $protocolCipher (@cipherArray[$firstEle .. $#cipherArray]) { # array may have the first element twice to signal a server-preferred order
+    foreach my $protocolCipher (@cipherArray[$firstEle .. $#cipherArray]) { # array may have the first element twice to signal a server-preferred order
         if ($legacy eq 'compact') { # csv-style
             printf "%s%s%s%s%-6s (0x%04X)%s%6s%s%-12s%s%10s%s",
                 $host, $sep,            # %s%s
@@ -1230,7 +1229,7 @@ sub printCipherStringArray ($$$$$@) {
                 $sni, $sep,             # %6s%s%
                 $cipherOrder, $sep,     # %-12s%s
                 $protocolCipher, $sep;  # %10s%s
-              if ( (defined ($cipherHexHash {$protocolCipher}) ) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
+            if ( (defined ($cipherHexHash {$protocolCipher}) ) && ($#{$cipherHexHash {$protocolCipher}}>0) ) { # definiert, max index >0
                 printf "%-28s%s%-34s",
                     $cipherHexHash {$protocolCipher}[1], $sep,  # %-28s%s
                     $cipherHexHash {$protocolCipher}[0];        # %-34s
@@ -1256,7 +1255,7 @@ sub printCipherStringArray ($$$$$@) {
             }
             print "\n";
         }
-    }
+    } # foreach my $protocolCipher ...
     if ($legacy eq 'compact') { # csv-style
         print "\n";
     }
@@ -1275,7 +1274,6 @@ sub checkSSLciphers ($$$@) {
 #    my $ssl   = shift || ""; # SSLv2
 #    my (@cipher_str_array) = @_ || ();
     my @cipher_spec_array;
-    my $cipher_str="";
     my $cipher_spec="";
     my $acceptedCipher="";
     my @cipherSpecArray = ();               # temporary Array for all ciphers to be tested in the next _doCheckSSLciphers
@@ -1290,17 +1288,16 @@ sub checkSSLciphers ($$$@) {
 
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
-        foreach $cipher_str (@cipher_str_array) {    
+        foreach my $cipher_str (@cipher_str_array) {    
             _trace_ ("\n  ")  if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
             _trace_ (" >$cipher_str<");
         }
         _trace_(") {\n");
-        $cipher_str="";
     }
 
     if ($protocol == $PROTOCOL_VERSION{'SSLv2'}) { #SSL2
         _trace4_ ("\n");
-        foreach $cipher_str (@cipher_str_array) {
+        foreach my $cipher_str (@cipher_str_array) {
             _trace4 ("checkSSLciphers: Cipher-String: >$cipher_str< -> ");
             ($cipher_str) =~ s/(?:0x03|0x02|0x)? ?([a-fA-F0-9]{2}) ?/chr(hex $1)/eg; ## Str2hex
             _trace4_ (" >". hexCodedCipher($cipher_str)."<\n");
@@ -1313,7 +1310,7 @@ sub checkSSLciphers ($$$@) {
             $i = 0;
             my $anzahl = int length ($acceptedCipher) / 3;
             _trace(" checkSSLciphers: Accepted ". $anzahl ." Ciphers:\n");
-            foreach $cipher_str (compileSSL2CipherArray ($acceptedCipher) ) {
+            foreach my $cipher_str (compileSSL2CipherArray ($acceptedCipher) ) {
                 _trace_ ("\n         ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0); #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
                 _trace_ (" >" . $cipher_str . "<");
             }
@@ -1324,7 +1321,7 @@ sub checkSSLciphers ($$$@) {
     } else { # SSL3, TLS, DTLS .... check by the cipher
         $cipher_spec = ""; # collect cipher specs
         _trace4_ ("\n");
-        foreach $cipher_str (@cipher_str_array) {
+        foreach my $cipher_str (@cipher_str_array) {
             _trace4 ("checkSSLciphers: Cipher-String: >$cipher_str< -> ");
             if ($cipher_str !~ /0x02/) { # No SSL2 cipher
                 ($cipher_str) =~ s/(?:0x0[3-9a-fA-F]00|0x)? ?([a-fA-F0-9]{2}) ?/chr(hex $1)/eg; ## Str2hex    
@@ -1349,7 +1346,7 @@ sub checkSSLciphers ($$$@) {
                         _trace1 ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
                     }
                     _trace4_ ("\n");
-                    foreach $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {    
+                    foreach my $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {    
                         _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0); #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
                         _trace_ (" >" . $cipher_str . "<");
                     }
@@ -1399,7 +1396,7 @@ sub checkSSLciphers ($$$@) {
                     @cipherSpecArray =(); # => Empty @cipherSpecArray
                 } # end: if 'no ciphers accepted'
             } # end: test ciphers
-        } # end: foreach $cipher_str...
+        } # end: foreach my $cipher_str...
 
         while ( (@cipherSpecArray > 0) && (!$@) ) { # there are still ciphers to test in this last round
             $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round;
@@ -1407,7 +1404,7 @@ sub checkSSLciphers ($$$@) {
                 $i = 0;
                 _trace ("checkSSLciphers ($host, $port, $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (2):");
                 _trace4_ ("\n");
-                foreach $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {    
+                foreach my $cipher_str (compileTLSCipherArray (join ("",@cipherSpecArray)) ) {    
                     _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line 
                     _trace_ ( " >" . $cipher_str . "<");
                 }
@@ -1461,24 +1458,22 @@ sub checkSSLciphers ($$$@) {
         if ($Net::SSLhello::trace > 0) { #about: _trace
             $i = 0;
             _trace(" checkSSLciphers ($host, $port, $ssl): Accepted ". scalar(@acceptedCipherArray)." Ciphers (unsorted):");
-            foreach $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {    
+            foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {    
                 _trace_ ("\n  ") if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0); #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line 
                 _trace_ (" >" . $cipher_str . "<");
             }
             _trace_("\n");
-            $cipher_str="";
         }
         
         # >>>>> Check priority of ciphers <<<<<
         ####################################################################################################################
         ######      Derzeit wird der 1. Cipher doppelt in die Liste eingetragen, wenn der Server die Prio vorgibt      #####
         ####################################################################################################################
-        $cipher_str = join ("",@acceptedCipherArray);
+        my $cipher_str = join ("",@acceptedCipherArray);
         printTLSCipherList ($cipher_str) if ($Net::SSLhello::trace > 3); # abt: _trace4
 
         while ($cipher_str) { # found some cipher => Check priority
-            _trace3 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
-            _trace4 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
+            _trace2 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             $@=""; # reset Error-Msg
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # collect accepted ciphers by priority
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
@@ -1487,7 +1482,7 @@ sub checkSSLciphers ($$$@) {
                 # list untested ciphers
                 $i = 0;
                 my $str=""; #output string with list of ciphers
-                foreach $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
+                foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
                     if (($i++) != 0) { # not 1st element
                         $str .= "\n  " if ($i %_MY_PRINT_CIPHERS_PER_LINE == 0); # 'print' up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
                         $str .= " ";
@@ -1534,7 +1529,7 @@ sub checkSSLciphers ($$$@) {
                 # list untested ciphers
                 $i = 0;
                 my $str=""; #output string with list of ciphers
-                foreach $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
+                foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
                     if (($i++) != 0) { # not 1st element
                         $str .= "\n  " if ($i %_MY_PRINT_CIPHERS_PER_LINE == 0); # 'print' up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
                         $str .= " ";
@@ -2626,7 +2621,8 @@ sub _readRecord ($$;$$$) {
     my $input="";
     my @socketsReady = ();
     require IO::Select if ($Net::SSLhello::trace > 0);
-    my $select = IO::Select->new if ($Net::SSLhello::trace > 0);
+    my $select; #used for tracing only
+    $select = IO::Select->new if ($Net::SSLhello::trace > 0);
     my $success=0;
     $select->add($socket) if ($Net::SSLhello::trace > 0);
 
