@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.447 16/04/07 09:15:13",
+    SID         => "@(#) yeast.pl 1.449 16/04/08 00:09:28",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -203,7 +203,7 @@ sub _load_file($$) {
       no warnings qw(once);
       return "" if (defined($::osaft_standalone));
     }
-    eval("require '$fil';"); # need eval to catch "Can't locate ... in @INC ..."
+    eval {require $fil;};   # need eval to catch "Can't locate ... in @INC ..."
     $err = $@;
     chomp $err;
     if ($err eq "") {
@@ -3122,7 +3122,7 @@ sub checkdates($$) {
         $txt = STR_UNDEF;
         last MAXAGE_CHECK if (!_is_do('sts_expired'));
         $txt = "<<need Time::Local module for this check>>";
-        last MAXAGE_CHECK if (!eval("require Time::Local;"));
+        last MAXAGE_CHECK if (!eval {require Time::Local;});
         # compute epoch timestamp from 'after'
         my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
         my $maxage = $data{'hsts_maxage'}->{val}($host);
@@ -4402,7 +4402,8 @@ sub print_check($$$$$)  {
     #? print label and result of check
     my ($legacy, $host, $port, $key, $value) = @_;
     $value = $checks{$key}->{val} if (!defined $value); # defensive programming
-    my $label = $checks{$key}->{txt} if ($legacy ne 'key');
+    my $label = "";
+    $label = $checks{$key}->{txt} if ($legacy ne 'key');
     print_line($legacy, $host, $port, $key, $label, $value);
     return;
 } # print_check
@@ -4901,6 +4902,7 @@ sub printversion() {
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
     foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello)) {
+        ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
         no strict 'refs';   # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
         # we expect ::VERSION in all these modules
         ($d = $m) =~ s#::#/#g;  $d .= '.pm';   # convert string to key for %INC
@@ -4914,6 +4916,7 @@ sub printversion() {
             $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
         }
         print "\n= Loaded Module Versions =";
+        ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
         no strict 'refs';   # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
         foreach my $m (sort keys %main:: ) {
             next if $m !~ /::/;
@@ -5825,7 +5828,7 @@ local $\ = "\n";
 use     IO::Socket::SSL 1.37;       # qw(debug2);
 use     IO::Socket::INET;
 if (_is_do('version') or ($cfg{'usemx'} > 0)) {
-    eval("require Net::DNS;");
+    eval {require Net::DNS;};
     if ($@ ne "") {
         chomp $@;
         _warn($@); _warn("--mx disabled");
@@ -6268,7 +6271,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
                $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
-            push(@all, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
+            push(@all, sprintf("0x%08X",$_)) foreach (eval {$cfg{'cipherranges'}->{$range} });
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
             if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
