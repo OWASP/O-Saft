@@ -11,34 +11,73 @@
 #?      The settings are explained, why they are ENABLED or DISABLED.
 #?
 #?       ###################################################################
-#?       FIXME: this file is an first attempt, not yet completed.
+#?       FIXME: this file is a first attempt, not yet completed.
 #?       ###################################################################
 #?
+#? EXAMPLES
+#?      # the usual way
+#?          perlcritic <filenames>
+#?
+#?      # print policy for each message
+#?          perlcritic <filenames> --verbose 8
+#?
+#?      # print full description for each message
+#?          perlcritic <filenames> --verbose 10
+#?
+#?      # check for a single policy (Subroutines::RequireFinalReturn)
+#?          perlcritic <filenames> --single-policy  Subroutines::RequireFinalReturn
+#?          perlcritic <filenames> --only --include Subroutines::RequireFinalReturn
+#?
+#?      # just get a statistic for severity 4 and 5
+#?          perlcritic <filenames> --severity 4 --statistics-only
+#?
+#?      # get a a quick overview for violations of severity 4 and 5
+#?          perlcritic *.pl *.pm --severity 4 --count
+#?
+#? LIMITATIONS
+#?      Do not use perlcritic with an directory as parameter in the development
+#?      directory as there are  too much matching files (i.e. SCCS/*) which may
+#?      cause problems. Use list of files instead:   *.pl *.pm Net/*.pm
+#?
 #? VERSION
-#?      @(#) %M% %I% %E% %U%
+#?      @(#) .perlcriticrc 1.1 16/04/07 10:23:22
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
+# global options
+severity    = 5
+    # will change to 4 o 3 later
 
-[-ControlStructures::ProhibitPostfixControls]
+verbose     = 8
+    # always want to see the policy name
+
+#program-extensions '.pl .pm'
+    # does not work as described by perlcritic :-/
+
+[ControlStructures::ProhibitPostfixControls]
+    allow   = if unless
+    #allow  = foreach
+	# as the severity is already 2, its okay to report foreach violations
 
     # Message:
 	# Postfix control "if" used at line ...
 
-    # CHECK DISABLED
+    # CHECK adapted
 	# Postfix controls are used often to have the relevant code far left!
 
 
-[-InputOutput::RequireCheckedClose]
+[InputOutput::RequireCheckedClose]
+    severity = 1
 
     # Message:
 	# Return value of "close" ignored at line ...
 
     # CHECK DISABLED
 	# For our purpose it's nice if the files is closed, but not necessary.
+	# hence severity reduced to 1
 
 
 [InputOutput::ProhibitBacktickOperators]
@@ -87,14 +126,16 @@
 
 
 [InputOutput::RequireBriefOpen]
-    lines = 15
+    lines    = 15
+    severity = 2
 
     # Message:
 	# Close filehandles as soon as possible after opening them at line ...
 
     # CHECK adapted
 	# Because we have more code until close, sometimes.
-	# FIXME: check seems not to work as descibed, produces false positives
+	# TODO: lines= seems not to work as descibed, produces false positives
+	#         therefore serverity is reduced
 
 
 #[InputOutput::RequireCheckedOpen]
@@ -150,7 +191,7 @@
 	# Code is not tidy at line 1, column 1.
 
     # CHECK DISABLED
-	# FIXME: tidy not yet used
+	# TODO: tidy not yet used
 
 
 [-CodeLayout::ProhibitParensWithBuiltins]
@@ -170,7 +211,7 @@
 	# Code is not tidy at line 1, column 1.
 
     # CHECK DISABLED
-	# FIXME: tidy not yet used
+	# TODO: tidy not yet used
 
 
 [CodeLayout::ProhibitHardTabs]
@@ -194,9 +235,22 @@
 
 
 [Variables::ProhibitPunctuationVars]
-    allow = $@ $! $? $0 $. $^O
+    allow = $@ $! $? $0 $. $^O $\
 
 	# we make regular use of these variables as we know them;-)
+
+
+[Variables::RequireLocalizedPunctuationVars]
+    allow   = @ENV
+
+    # Message:
+	# Magic variable "$ENV" should be assigned as "local"
+
+    # CHECK adapted
+	# @ENV must be changed globally (at least in o-saft.pl)
+	# TODO: need to verify if @INC should be allowed too
+	# percritic seems to be buggy as it does not honor the allow option
+
 
 [-ValuesAndExpressions::ProhibitEmptyQuotes]
 
@@ -243,12 +297,13 @@
 		## no critic qw(TestingAndDebugging::ProhibitNoStrict)
 
 
-#[TestingAndDebugging::ProhibitNoWarnings]
+[TestingAndDebugging::ProhibitNoWarnings]
+    severity = 3
 
     # Message:
 	# Warnings disabled at line
 
-	# FIXME: to be discussed
+	# FIXME: to be discussed; for now severity reduced to 3
 	# i.g. we want this warning, but some warnings are also disabled in
 	# the code for good reason, probably use
 		## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
