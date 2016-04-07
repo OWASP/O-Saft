@@ -82,7 +82,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.35 16/04/06 19:37:30";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.36 16/04/07 02:14:09";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -91,12 +91,12 @@ package main;   # ensure that main:: variables are used, if not defined herein
 
 # debug functions
 sub _y_ts     { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
-sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; }
-sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); }
-sub _y_CMD    { local $\ = "\n"; print "#" . $mename . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); }
-sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); }
-sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); }
-sub _y_ARR(@) { return join(" ", "[", @_, "]"); }
+sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; return; }
+sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); return; }
+sub _y_CMD    { local $\ = "\n"; print "#" . $mename . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
+sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); return; }
+sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); return; }
+sub _y_ARR(@) { return join(" ", "[", @_, "]"); return; }
 sub _yeast_trac($$){}   # forward declaration
 sub _yeast_trac($$){
     #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
@@ -121,6 +121,7 @@ sub _yeast_trac($$){
                         warn STR_WARN . " user defined type '$_' skipped";
     } # SWITCH
 
+    return;
 } # _yeast_trac()
 
 sub _yeast_init() {
@@ -204,6 +205,7 @@ sub _yeast_init() {
     _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
     _yline(" user-friendly cfg }");
     _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
+    return;
 } # _yeast_init
 
 sub _yeast_exit() {
@@ -211,6 +213,7 @@ sub _yeast_exit() {
     _y_CMD("cfg'done'{");
     _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}});
     _y_CMD("cfg'done'}");
+    return;
 } # _yeast_exit
 
 sub _yeast_args() {
@@ -237,29 +240,31 @@ sub _yeast_args() {
     _y_ARG(" #--v }");
     }
     _yline(" ARGV }");
+    return;
 } # _yeast_args
 
-sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); }
-sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); } # must provide \n if wanted
-sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); }
-sub _v4print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 4); }
-sub _trace($) { print "#" . $mename . "::" . $_[0]         if ($cfg{'trace'} > 0); }
-sub _trace0($){ print "#" . $mename . "::"                 if ($cfg{'trace'} > 0); }
-sub _trace1($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 1); }
-sub _trace2($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 2); }
-sub _trace3($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 3); }
-sub _trace_($){ local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); }
+sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); return; }
+sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); return; } # must provide \n if wanted
+sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); return; }
+sub _v4print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 4); return; }
+sub _trace($) { print "#" . $mename . "::" . $_[0]         if ($cfg{'trace'} > 0); return; }
+sub _trace0($){ print "#" . $mename . "::"                 if ($cfg{'trace'} > 0); return; }
+sub _trace1($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 1); return; }
+sub _trace2($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 2); return; }
+sub _trace3($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 3); return; }
+sub _trace_($){ local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); return; }
 # if --trace-arg given
-sub _trace_cmd($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceCMD'} > 0); }
+sub _trace_cmd($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceCMD'} > 0); return; }
 
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     _v_print("$0 " . $VERSION);
     _v_print("$0 " . join(" ", @ARGV));
     _v_print("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
+    return;
 } # _vprintme
 
-sub __data($) { (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
+sub __data($) { (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; return; }
 sub _yeast_data() {
     print "
 === _yeast_data: check internal data structure ===
@@ -325,6 +330,7 @@ sub _yeast_data() {
     ';
     print "    internal or summary commands:\n        " . join(" ", @yeast);
     print "\n";
+    return;
 } # _yeast_data
 sub _yeast_prot() {
     #? print information about SSL/TLS protocols in various variables (hashes)
@@ -362,6 +368,7 @@ sub _yeast_prot() {
         _yline(" }");
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
     }
+    return;
 } # _yeast_prot()
 
 sub _yeast_cipher() {
