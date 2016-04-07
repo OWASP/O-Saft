@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 # PACKAGE {
 
 ################
@@ -32,9 +32,11 @@
 
 ################
 
-no warnings qw(once);
-
 package osaft;
+
+use strict;
+use warnings;
+no warnings qw(once);
 
 use constant {
     OSAFT_VERSION   => '16.04.02',
@@ -46,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.12 16/04/07 01:57:59',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.13 16/04/08 00:47:27',
 
 };
 
@@ -174,11 +176,10 @@ Following functions (methods) must be defined in the calling program:
 =cut
 
 
-BEGIN {
-    use Exporter qw(import);
-    @ISA     = qw(Exporter);
-    $VERSION = OSAFT_VERSION;
-    @EXPORT  = qw(
+use Exporter qw(import);
+our @ISA     = qw(Exporter);
+our $VERSION = OSAFT_VERSION;
+our @EXPORT  = qw(
 		STR_ERROR
 		STR_WARN
 		STR_HINT
@@ -212,18 +213,17 @@ BEGIN {
 		get_openssl_version
 		get_dh_paramter
 		osaft_done
-    );
-    # insert above in vi with:
-    # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
-    # :r !sed -ne 's/^\([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
-    # :r !sed -ne 's/^ *\(STR_[A-Z][^ ]*\).*/\t\t\1/p' %
-} # BEGIN
+);
+# insert above in vi with:
+# :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
+# :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
+# :r !sed -ne 's/^ *\(STR_[A-Z][^ ]*\).*/\t\t\1/p' %
 
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-%prot   = (     # collected data for protocols and ciphers
+our %prot   = (     # collected data for protocols and ciphers
     # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
     # ssl           protocol  name        hex version value openssl  option     val LOW ...
     #--------------+---------------------+-----------------+-------------------+---+---+---+---
@@ -257,7 +257,7 @@ BEGIN {
     # TODO: hex value should be same as %_SSLmap in Net::SSLinfo
 ); # %prot
 
-%prot_txt = (
+our %prot_txt = (
     'cnt'           => "Supported total ciphers for ",           # counter
     '-?-'           => "Supported ciphers with security unknown",# "
     'WEAK'          => "Supported ciphers with security WEAK",   #  "
@@ -271,7 +271,7 @@ BEGIN {
 ); # %prot_txt
 
 # Torsten: %ECCURVE_TYPE
-%curve_types = ( # RFC 4492 
+our %curve_types = ( # RFC 4492 
     'explicit_prime'        => 1,
     'explicit_char2'        => 2,
     'named_curve'           => 3,
@@ -288,7 +288,7 @@ BEGIN {
 # Torsten: %ECC_NAMED_CURVE = 
 # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 # Value =>   Description bits(added) DTLS-OK Reference
-%curves = (
+our %curves = (
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
     #----+-------------+-------+----+--+----+----------------------+-------------------------
     # ID   name         NIST   bits DTLD RFC OID                    other name
@@ -417,7 +417,7 @@ BEGIN {
 # order_for_NIST_curves_by_ID = 23, 1, 3, 19, 21, 6, 7, 9, 10, 24, 11, 12, 25, 13, 14
 ################
 
-%data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
+our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
         # TODO: generate this table using Net::SSLeay functions like:
         #   Net::SSLeay::OBJ_nid2ln(),  Net::SSLeay::OBJ_ln2nid()
         #   Net::SSLeay::OBJ_nid2sn(),  Net::SSLeay::OBJ_sn2nid(),
@@ -508,7 +508,7 @@ BEGIN {
 ); # %data_oid
 
 
-%ciphers_desc = (   # description of following %ciphers table
+our %ciphers_desc = (   # description of following %ciphers table
     'head'          => [qw(  sec  ssl   enc  bits mac  auth  keyx   score  tags)],
                             # abbreviations used by openssl:
                             # SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2
@@ -552,7 +552,7 @@ BEGIN {
 ); # %ciphers_desc
 
 
-%ciphers = (
+our %ciphers = (
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #'head'                 => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
@@ -560,7 +560,7 @@ BEGIN {
 ); # %ciphers
 
 
-%cipher_names = (
+our %cipher_names = (
 ### Achtung: die hex-Wert sind intern, davon sind nur die letzten 4 oder 6
 ###	 Stellen (je nach Protokoll) der eigentliche Wert.
     # ADH_DES_192_CBC_SHA      # alias: DH_anon_WITH_3DES_EDE_CBC_SHA
@@ -854,7 +854,7 @@ BEGIN {
     #   some hex keys for ciphers changed
 ); # %cipher_names
 
-%cipher_alias = ( # TODO: list not yet used
+our %cipher_alias = ( # TODO: list not yet used
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name alias        # comment (where found)
     #!#----------+-------------------------------------+--------------------------+
@@ -876,7 +876,7 @@ BEGIN {
 ); # %cipher_alias
 
 
-@cipher_results = [
+our @cipher_results = [
 # currently (12/2015)
 #   [ sslv3, rc4-md5, yes ]
 #   [ sslv3, NULL,    no ]
@@ -901,7 +901,7 @@ BEGIN {
 ]; # @cipher_results
 
 
-%cfg = (
+our %cfg = (
    # config. key        default   description
    #------------------+---------+----------------------------------------------
 # ...
@@ -1165,7 +1165,7 @@ main purpose of this module is defining variables. Hence we export them.
 
 unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval("require POD::Perldoc;")) {
+    if (eval {require POD::Perldoc;}) {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
