@@ -40,12 +40,12 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.449 16/04/08 00:09:28",
-    STR_VERSION => "16.04.02",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.451 16/04/08 01:58:22",
+    STR_VERSION => "16.04.07",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
-    if (grep(/(:?--trace.*time)/i, @ARGV) > 0) {
+    if ((grep{/(:?--trace.*time)/i} @ARGV) > 0) {
         printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @_);
     }
     return;
@@ -54,7 +54,7 @@ sub _y_EXIT($) { # exit if parameter matches given argument in @ARGV
     my $txt =  shift;
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if (grep(/(:?([+]|--)$arg).*/i, @ARGV) > 0) {
+    if ((grep{/(:?([+]|--)$arg).*/i} @ARGV) > 0) {
         printf STDERR ("#o-saft.pl  _y_EXIT $txt\n");
         exit 0;
     }
@@ -89,11 +89,11 @@ BEGIN {
     );
 
     # handle simple help very quickly
-    if (grep(/^(?:--|\+)VERSION/, @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
+    if ((grep{/^(?:--|\+)VERSION/} @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
     print STDERR "**WARNING: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
         # be smart to users if systems behave strange :-/
     # get first matching argument
-    my ($arg) = grep(/^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/, @ARGV);
+    my ($arg) = grep{ /^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/} @ARGV;
         # we allow:  --h  or  --help  or  +help  or  +help=SOMETHING
         # for historic reason this allows: +abbr +abk +glossar +todo
     if (defined $arg) {
@@ -156,7 +156,7 @@ our $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
-    die STR_ERROR, "CGI mode requires strict settings" if (grep(/--cgi=?/, @ARGV) <= 0);
+    die STR_ERROR, "CGI mode requires strict settings" if ((grep{/--cgi=?/} @ARGV) <= 0);
     $cgi = 1;
 } # CGI
 
@@ -169,7 +169,7 @@ sub _dbx    { _dprint(@_); return; } # alias for _dprint
 sub _warn   {
     #? print warning if wanted
     # don't print if ($warning <= 0);
-    return if (grep(/(:?--no.?warn)/i, @ARGV) > 0);     # ugly hack 'cause we won't pass $warning
+    return if ((grep{/(:?--no.?warn)/i} @ARGV) > 0);    # ugly hack 'cause we won't pass $warning
     local $\ = "\n"; print(STR_WARN, join(" ", @_));
     # TODO: in CGI mode warning must be avoided until HTTP header written
     return;
@@ -179,7 +179,7 @@ sub _warn_and_exit {
     #-method:  name of function where this message is called
     #-command: name of command subject to this message
     local $\ = "\n";
-    if (grep(/(:?--experimental)/i, @ARGV) > 0) {
+    if ((grep{/(:?--experimental)/i} @ARGV) > 0) {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @_));
     } else {
@@ -188,7 +188,7 @@ sub _warn_and_exit {
     }
     return;
 }
-sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if (grep(/(:?--no.?header|--cgi)/i, @ARGV) <= 0); return; }
+sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if ((grep{/(:?--no.?header|--cgi)/i} @ARGV) <= 0); return; }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
@@ -226,23 +226,23 @@ _y_TIME("cfg{");
 _y_EXIT("exit=CONF0 - RC-FILE start");
 my @rc_argv = "";
 $arg = "./.$me";    # check in pwd only
-if (grep(/(:?--no.?rc)$/i, @ARGV) <= 0) {   # only if not inhibited
+if ((grep{/(:?--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
     if (open(my $rc, '<:encoding(UTF-8)', "$arg")) {
         push(@dbxfile, $arg);
         _print_read("$arg", "RC-FILE done");
-        @rc_argv = grep(!/\s*#[^\r\n]*/, <$rc>); # remove comment lines
-        @rc_argv = grep(s/[\r\n]//, @rc_argv);  # remove newlines
+        @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
+        @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
         close($rc);
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
     } else {
-        _print_read("$arg", "RC-FILE: $!") if (grep(/--v/i, @ARGV) > 0);;
+        _print_read("$arg", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);;
     }
 }
 _y_EXIT("exit=CONF1 - RC-FILE end");
 
 push(@argv, @ARGV); # got all now
-push(@ARGV, "--no-header") if grep(/--no-?header/, @argv); # if defined in RC-FILE, needed in _warn()
+push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC-FILE, needed in _warn()
 # FIXME: (10) { following will be added when %cfg is defined in o-saft-cfg.pm
 # $cfg{'ARG0'}    = $0;
 # $cfg{'ARGV'}    = [@ARGV];
@@ -253,8 +253,8 @@ push(@ARGV, "--no-header") if grep(/--no-?header/, @argv); # if defined in RC-FI
 ## read DEBUG-FILE, if any (source for trace and verbose)
 ## -------------------------------------
 my $err = "";
-my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # may have --trace=./file
-if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
+my @dbx = grep{/--(?:trace|v$|yeast)/} @argv;   # may have --trace=./file
+if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
     $arg =  "o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
@@ -289,7 +289,7 @@ if (($#dbx >= 0) and (grep(/--cgi=?/,@argv) <= 0)) {
 
 ## read USER-FILE, if any (source with user-specified code)
 ## -------------------------------------
-if (grep(/--(?:use?r)/, @argv) > 0) { # must have any --usr option
+if ((grep{/--(?:use?r)/} @argv) > 0) { # must have any --usr option
     $err = _load_file("o-saft-usr.pm", "user file");
     if ($err ne "") {
         # continue without warning, it's already printed in "=== reading: " line
@@ -2370,7 +2370,7 @@ sub _need_this($)      {
     my $key = shift;
     my $is  = join("|", @{$cfg{'do'}});
        $is  =~ s/\+/\\+/g;    # we have commands with +, needs to be escaped
-    return grep(/^($is)$/,  @{$cfg{$key}});
+    return grep{/^($is)$/} @{$cfg{$key}};
 }
 sub _need_cipher()     { return _need_this('need_cipher');   };
 sub _need_default()    { return _need_this('need_default');  };
@@ -3748,7 +3748,7 @@ sub checkdv($$) {
         $checks{'dv'}->{val} .= $text{'EV-subject-CN'};
     }
     if ($txt ne $host) {# mismatch
-        if (0 >= grep(/^DNS:$host$/, split(/[\s]/, $altname))) {
+        if (0 >= (grep{/^DNS:$host$/} split(/[\s]/, $altname))) {
             $checks{'dv'}->{val} .= $text{'EV-subject-host'};
         }
     }
@@ -3992,7 +3992,7 @@ sub checkdest($$) {
     $cipher = $data{'selected'}->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
-    my @prot = grep(/(^$ssl$)/i, @{$cfg{'versions'}});
+    my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
     $checks{'selected'}->{val}      = $cipher;
     if ($#prot == 0) {          # found exactly one matching protocol
         $checks{'pfs_cipher'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
@@ -5055,7 +5055,7 @@ sub printciphers() {
         foreach my $c (sort keys %ciphers) {
             my $can = " "; # FIXME
             if ($cfg{'verbose'} > 0) {
-                if (0 >= grep({$_ eq $c} split(":", $ciphers))) {
+                if (0 >= (grep{$_ eq $c} split(":", $ciphers))) {
                     $can = "#";
                     $miss_cipher++;
                 } else {
@@ -5241,7 +5241,7 @@ while ($#argv >= 0) {
         # following ($arg !~ /^\s*$/) check avoids warnings in CGI mode
         if ($typ eq 'LEGACY')   {
             $arg = 'sslcipher' if ($arg eq 'ssl-cipher-check'); # alias
-            if (1 == grep(/^$arg$/i, @{$cfg{'legacys'}})) {
+            if (1 == (grep{/^$arg$/i} @{$cfg{'legacys'}})) {
                 $cfg{'legacy'} = lc($arg);
             } else {
                 _warn("unknown legacy '$arg'; setting ignored") if ($arg !~ /^\s*$/);
@@ -5249,14 +5249,14 @@ while ($#argv >= 0) {
         }
         if ($typ eq 'FORMAT')   {
             $arg = 'esc' if ($arg =~ m#^[/\\]x$#);      # \x and /x are the same
-            if (1 == grep(/^$arg$/, @{$cfg{'formats'}})) {
+            if (1 == (grep{/^$arg$/} @{$cfg{'formats'}})) {
                 $cfg{'format'} = $arg;
             } else {
                 _warn("unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CRANGE')    {
-            if (1 == grep(/^$arg$/, keys %{$cfg{'cipherranges'}})) {
+            if (1 == (grep{/^$arg$/} keys %{$cfg{'cipherranges'}})) {
                 $cfg{'cipherrange'} = $arg;
             } else {
                 _warn("unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
@@ -5744,11 +5744,11 @@ if ((_is_do('cipher')) and ($#{$cfg{'do'}} == 0)) {
 if (_is_do('ciphers')) {
     # +ciphers command is special:
     #   simulates openssl's ciphers command and accepts -v or -V option
-    $cfg{'out_header'}  = 0 if (grep(/--header/, @argv) <= 0);
+    $cfg{'out_header'}  = 0 if ((grep{/--header/} @argv) <= 0);
     $cfg{'ciphers-v'}   = $cfg{'opt-v'};
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $cfg{'legacy'}      = "openssl";
-    $text{'separator'}  = " " if (grep(/--(?:tab|sep(?:arator)?)/, @argv) <= 0); # space if not set
+    $text{'separator'}  = " " if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # space if not set
 } else {
     # not +ciphers command, then  -V  is for compatibility
     if (! _is_do('list')) {
@@ -5757,10 +5757,10 @@ if (_is_do('ciphers')) {
 }
 if (_is_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
-    $cfg{'out_header'}  = 1 if (grep(/--no.?header/, @argv) <= 0);
+    $cfg{'out_header'}  = 1 if ((grep{/--no.?header/} @argv) <= 0);
     $cfg{'ciphers-v'}   = $cfg{'opt-v'};
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
-    $text{'separator'}  = "\t" if (grep(/--(?:tab|sep(?:arator)?)/, @argv) <= 0); # tab if not set
+    $text{'separator'}  = "\t" if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # tab if not set
 }
 if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs_cipherall') if (!_is_do('pfs_cipherall')); }
 
@@ -5967,11 +5967,11 @@ if (1.49 > $Net::SSLeay::VERSION) {
 ## set additional defaults if missing
 ## -------------------------------------
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
-$cfg{'out_header'}  = 1 if(0 => grep(/\+(check|info|quick|cipher)$/, @argv)); # see --header
-$cfg{'out_header'}  = 0 if(0 => grep(/--no.?header/, @argv));   # command line option overwrites defaults above
+$cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
+$cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
 if ($cfg{'usehttp'} == 0) {                # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
-    _warn("STS $text{'no-http'}") if(0 => grep(/hsts/, @{$cfg{'do'}})); # check for any hsts*
+    _warn("STS $text{'no-http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
@@ -6381,7 +6381,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         foreach my $ssl (@{$cfg{'version'}}) {
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-                push(@results, [$ssl, $c, (grep(/^$c/, @supported)>0) ? "yes" : "no"]);
+                push(@results, [$ssl, $c, ((grep{/^$c/} @supported)>0) ? "yes" : "no"]);
                 $checks{'cnt_totals'}->{val}++;
             }
         }
