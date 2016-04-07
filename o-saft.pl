@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.446 16/04/07 01:55:19",
+    SID         => "@(#) yeast.pl 1.447 16/04/07 09:15:13",
     STR_VERSION => "16.04.02",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2551,7 +2551,7 @@ sub _isbleed($$) {
         _trace("_isbleed: using 'Net::SSLhello'");
         $cl = Net::SSLhello::openTcpSSLconnection($host, $port);
         if ((!defined ($cl)) || ($@)) { # No SSL Connection
-            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
+            local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
             _warn ("_isbleed (with openTcpSSLconnection): $@\n");
             _trace("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
             return("failed to connect");
@@ -2769,7 +2769,7 @@ sub _usesocket($$$$) {
             _trace1("_usesocket: using 'Net::SSLhello'");
             $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
             if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection 
-                $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
+                local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
                 _warn("_usesocket: openTcpSSLconnection() failed: $@\n"); 
                 return ("");
             } else {
@@ -5864,7 +5864,7 @@ foreach my $ssl (@{$cfg{'versions'}}) {
         push(@{$cfg{'version'}}, $ssl);
         next;
     }
-    next if ((_need_cipher() <= 0) and (_need_default() <= 0) and ! _is_do('version'));
+    next if ((_need_cipher() <= 0) and (_need_default() <= 0) and not _is_do('version'));
     # following checks for these commands only
     $cfg{$ssl} = 0; # reset to simplify further checks
     if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
@@ -6204,7 +6204,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
     my $rhost = "";
     $fail = "";
-    $? = 0;
     if ($cfg{'proxyhost'} ne "") {
         # if a proxy is used, DNS might not work at all, or be done by the
         # proxy (which even may return other results than the local client)
@@ -6234,13 +6233,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
            ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
             $cfg{'rhost'}   = $fail if ($? != 0);
         }
-        $? = 0;
         if ($cfg{'usedns'} == 1) {
             my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
             my $i = 0;
             foreach my $ip (@ips) {
-                $! = 0;
-                $? = 0;
+                local $! = 0;
+                local $? = 0;
                ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
                 $rhost  = $fail if ($? != 0);
                 $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
@@ -6249,7 +6247,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             _warn("Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
         }
     }
-    $? = 0;
 
     # print DNS stuff
     if (($info + $check + $cmdsni) > 0) {
