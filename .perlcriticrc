@@ -1,0 +1,264 @@
+#! /usr/bin/perlcritic
+#?
+#? NAME
+#?      .perlcriticrc  - configuration for Perl::Critic for O-Saft
+#?
+#? SYNOPSIS
+#?      perlcritic <filenames> ...
+#?
+#? DESCRIPTION
+#?      This file contains the configuration for  Perl::Critic,  perlcritic.
+#?      The settings are explained, why they are ENABLED or DISABLED.
+#?
+#?       ###################################################################
+#?       FIXME: this file is an first attempt, not yet completed.
+#?       ###################################################################
+#?
+#? VERSION
+#?      @(#) %M% %I% %E% %U%
+#
+#? AUTHOR
+#?      06-apr-16 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+
+[-ControlStructures::ProhibitPostfixControls]
+
+    # Message:
+	# Postfix control "if" used at line ...
+
+    # CHECK DISABLED
+	# Postfix controls are used often to have the relevant code far left!
+
+
+[-InputOutput::RequireCheckedClose]
+
+    # Message:
+	# Return value of "close" ignored at line ...
+
+    # CHECK DISABLED
+	# For our purpose it's nice if the files is closed, but not necessary.
+
+
+[InputOutput::ProhibitBacktickOperators]
+    only_in_void_context = 1
+
+    # Message:
+	# Backtick operator used at line ...
+
+    # CHECK ENABLED
+	# Literal backticks are not used, but the qx() operator. Backticks are
+	# used in void context, hence the restriction to only_in_void_context.
+
+
+[InputOutput::ProhibitBarewordFileHandles]
+[InputOutput::ProhibitTwoArgOpen]
+
+    # Messages:
+	# Bareword file handle opened at line ...
+	# Two-argument "open" used at line ...
+
+	# A bareword is a series of characters (like the FH) without quotes
+	# around them, or without a sigil in-front of them. They can be used in
+	# some places, but in file-handles they are not recommended any more.
+
+    # Recommendation
+	# Always use lexical variables and always use 3-parameter for open. 
+
+
+[-InputOutput::ProhibitExplicitStdin]
+
+    # Message:
+	# Use "<>" or "<ARGV>" or a prompting module instead of "<STDIN>" at line ...
+
+    # CHECK DISABLED
+	# The reason why  "*ARGV behaves like *STDIN"  is described as
+	# "is almost always what you want"  sounds strange.
+	# In our usage this is never the case, because we also may get data on
+	# STDIN and have command line arguments.
+
+
+#[InputOutput::ProhibitInteractiveTest]
+#[InputOutput::ProhibitJoinedReadline]
+#[InputOutput::ProhibitOneArgSelect]
+#[InputOutput::ProhibitReadlineInForLoop]
+#[InputOutput::RequireBracedFileHandleWithPrint]
+
+
+[InputOutput::RequireBriefOpen]
+    lines = 15
+
+    # Message:
+	# Close filehandles as soon as possible after opening them at line ...
+
+    # CHECK adapted
+	# Because we have more code until close, sometimes.
+	# FIXME: check seems not to work as descibed, produces false positives
+
+
+#[InputOutput::RequireCheckedOpen]
+#[InputOutput::RequireCheckedSyscalls]
+#[InputOutput::RequireEncodingWithUTF8Layer]
+
+
+[-RegularExpressions::RequireDotMatchAnything]
+
+    # Message:
+	# Regular expression without "/s" flag at line ...
+
+    # CHECK DISABLED
+	# cause we know about meta character . and /s modifier in RegEx ;-)
+
+
+[-RegularExpressions::RequireLineBoundaryMatching]
+
+    # Message:
+	# Regular expression without "/m" flag at line ...
+
+    # CHECK DISABLED
+	# cause we use /m as needed
+
+
+[-RegularExpressions::RequireExtendedFormatting]
+
+    # Message:
+	# Regular expression without "/x" flag at line ...
+
+    # CHECK DISABLED
+	# cause we use /x as needed for human readability
+
+
+[-Subroutines::ProhibitSubroutinePrototypes]
+
+    # Message:
+	# Subroutine prototypes used at line ...
+
+    # CHECK DISABLED
+	# Contrary to Perl::Critic we consider prototypes as useful, even if
+	# perls compile-time checks are not perfect, perl may give some hints.
+
+
+#[-Subroutines::RequireFinalReturn]
+
+	# FIXME:
+
+
+[-CodeLayout::RequireTidyCode]
+
+    # Message:
+	# Code is not tidy at line 1, column 1.
+
+    # CHECK DISABLED
+	# FIXME: tidy not yet used
+
+
+[-CodeLayout::ProhibitParensWithBuiltins]
+
+    # Message:
+	# Builtin function called with parentheses at line ...
+
+    # CHECK DISABLED
+	# Contrary to BPB we think that all functions should use parentheses.
+	# Continous use of parentheses makes thir-party parsers happy.
+	# However: we miss parentheses, mainly for print builtin function.
+
+
+[-CodeLayout::RequireTidyCode]
+
+    # Message:
+	# Code is not tidy at line 1, column 1.
+
+    # CHECK DISABLED
+	# FIXME: tidy not yet used
+
+
+[CodeLayout::ProhibitHardTabs]
+
+    # CHECK ENABLED
+	# thera are leading tabs only, usually
+
+
+[CodeLayout::ProhibitTrailingWhitespace]
+
+    # Message:
+	# Found "\N{SPACE}" at the end of the line ...
+
+    # CHECK ENABLED
+	# We hate unecessary characters too ;-)
+
+
+[CodeLayout::RequireConsistentNewlines]
+
+    # CHECK ENABLED
+
+
+[Variables::ProhibitPunctuationVars]
+    allow = $@ $! $? $0 $. $^O
+
+	# we make regular use of these variables as we know them;-)
+
+[-ValuesAndExpressions::ProhibitEmptyQuotes]
+
+    # Message:
+	# Quotes used with a string containing no non-whitespace characters at line ...
+
+    # CHECK DISABLED
+	# cause we consider following correct and useful:  my $var = '';
+	# the recomended use of q{} looks too complex:     my $var = q{};
+
+
+[ValuesAndExpressions::ProhibitEscapedCharacters]
+
+    # Message:
+	# Numeric escapes in interpolated string at line ...
+
+    # CHECK ENABLED
+
+
+#[ValuesAndExpressions::ProhibitConstantPragma]
+
+	# FIXME: to be discussed
+
+
+#[ValuesAndExpressions::ProhibitMagicNumbers]
+
+	# FIXME: to be discussed
+	# Workaround: disable selectively where appropriate with:
+		## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+
+
+    # Message:
+	# "grep" used in void context at line  ...
+
+
+#[TestingAndDebugging::ProhibitNoStrict]
+
+    # Message:
+	# Stricture disabled at line 
+
+	# FIXME: to be discussed
+	# i.g. we want this warning, but strict is also disabled in the code
+	# for good reason, probably use
+		## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+
+
+#[TestingAndDebugging::ProhibitNoWarnings]
+
+    # Message:
+	# Warnings disabled at line
+
+	# FIXME: to be discussed
+	# i.g. we want this warning, but some warnings are also disabled in
+	# the code for good reason, probably use
+		## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+
+
+#[BuiltinFunctions::ProhibitStringyEval]
+
+    # Message:
+	# Expression form of "eval" at line 3117
+
+	# FIXME: to be discussed
+	# This occour for  eval("require ..."), so probably use
+		## no critic qw(BuiltinFunctions::ProhibitStringyEval)
