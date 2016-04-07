@@ -317,3 +317,24 @@ verbose     = 8
 	# FIXME: to be discussed
 	# This occour for  eval("require ..."), so probably use
 		## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+
+[-BuiltinFunctions::ProhibitSleepViaSelect]
+    #
+    # CHECK DISABLED:
+    # We do not wish to use too much external modules
+    # used several times in SSLhello.pm
+    #
+    # Message:
+    # "select" used to emulate "sleep" at line 1893, column 17.
+    # BuiltinFunctions::ProhibitSleepViaSelect (Severity: 5)
+    # Conway discourages the use of `select()' for performing non-integer
+    # sleeps. Although documented in perlfunc, it's something that generally
+    # requires the reader to read `perldoc -f select' to figure out what it
+    # should be doing. Instead, Conway recommends that you use the
+    # `Time::HiRes' module when you want to sleep.
+    #
+    # select undef, undef, undef, 0.25;         # not ok
+    #
+    # use Time::HiRes;
+    # sleep( 0.25 );                            # ok
+    #
