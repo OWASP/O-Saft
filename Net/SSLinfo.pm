@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 
 # PACKAGE {
 #!#############################################################################
@@ -29,12 +29,13 @@
 package Net::SSLinfo;
 
 use strict;
+use warnings;
 use constant {
     SSLINFO_VERSION => '16.04.05',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.124 16/04/08 15:01:59',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.125 16/04/08 15:17:09',
 };
 
 ######################################################## public documentation #
@@ -831,7 +832,7 @@ sub _SSLinfo_get($$$) {
         return ( $_SSLinfo{'before'}, $_SSLinfo{'after'});
     }
     _trace("_SSLinfo_get '$key'=" . ($_SSLinfo{$key} || ""));
-    return (grep(/^$key$/, keys %_SSLinfo)) ? $_SSLinfo{$key} : '';
+    return (grep{/^$key$/} keys %_SSLinfo) ? $_SSLinfo{$key} : '';
 } # _SSLinfo_get
 
 #
@@ -1095,7 +1096,7 @@ sub do_ssl_open($$$@) {
                 # DNS and also has the routes to the host
                 ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or {$err = $!} and last;
             }
-            select($socket); $| = 1; select(STDOUT);  # Eliminate STDIO buffering
+            select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
             $Net::SSLinfo::socket = $socket;
         } else {
             $socket = $Net::SSLinfo::socket;
@@ -1171,7 +1172,7 @@ sub do_ssl_open($$$@) {
             # openssl and hence Net::SSLeay, configures what  should *not*  be
             # supported, so we skip all versions found in  $sslversions
             next if ($sslversions =~ m/^\s*$/); # no version given, leave default
-            next if (grep(/^$ssl$/, split(" ", $sslversions)));
+            next if (grep{/^$ssl$/} split(" ", $sslversions));
             if (defined $_SSLmap{$ssl}[1]) {        # if there is a bitmask, disable this version
                 _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
                 Net::SSLeay::CTX_set_options($ctx, $_SSLmap{$ssl}[1]) if(defined $_SSLmap{$ssl}[1]);
@@ -1212,7 +1213,7 @@ sub do_ssl_open($$$@) {
         }
 
         #4. connect SSL
-        $SIG{PIPE} = 'IGNORE';              # Avoid "Broken Pipe"
+        local $SIG{PIPE} = 'IGNORE';        # Avoid "Broken Pipe"
         my $ret;
         $src = 'Net::SSLeay::connect() ';
         $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
@@ -1357,11 +1358,11 @@ sub do_ssl_open($$$@) {
 # $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
             if ($_SSLinfo{'http_status'} =~ m:^HTTP/... ([1234][0-9][0-9]|500) :) {
                 # TODO: not tested if following grep() catches multiple occourances
-                $_SSLinfo{'http_location'}  =  $headers{(grep(/^Location$/i, keys %headers))[0] || ""};
-                $_SSLinfo{'http_refresh'}   =  $headers{(grep(/^Refresh$/i,  keys %headers))[0] || ""};
-                $_SSLinfo{'http_sts'}       =  $headers{(grep(/^Strict-Transport-Security$/i, keys %headers))[0] || ""};
-                $_SSLinfo{'http_svc'}       =  $headers{(grep(/^Alt-Svc$/i, keys %headers))[0]  || ""};
-                $_SSLinfo{'http_protocols'} =  $headers{(grep(/^Alternate-Protocol/i, keys %headers))[0] || ""};
+                $_SSLinfo{'http_location'}  =  $headers{(grep{/^Location$/i} keys %headers)[0] || ""};
+                $_SSLinfo{'http_refresh'}   =  $headers{(grep{/^Refresh$/i}  keys %headers)[0] || ""};
+                $_SSLinfo{'http_sts'}       =  $headers{(grep{/^Strict-Transport-Security$/i} keys %headers)[0] || ""};
+                $_SSLinfo{'http_svc'}       =  $headers{(grep{/^Alt-Svc$/i} keys %headers)[0]  || ""};
+                $_SSLinfo{'http_protocols'} =  $headers{(grep{/^Alternate-Protocol/i} keys %headers)[0] || ""};
                 # TODO: http_protocols somtimes fails, reason unknown (03/2015)
             } else { # any status code > 500
                 #no print "**WARNING: http:// connection refused; consider using --no-http"; # no print here!
@@ -1674,7 +1675,7 @@ sub do_ssl_open($$$@) {
                 # remove prefix text, but leave id= and len= for caller
             my $rex =  $d;  # $d may contain regex meta characters, like ()
                $rex =~ s#([(/*)])#\\$1#g;
-            next if (grep(/$rex/, split(/\n/, $_SSLinfo{'tlsextensions'})) > 0);
+            next if ((grep{/$rex/} split(/\n/, $_SSLinfo{'tlsextensions'})) > 0);
             $_SSLinfo{'tlsextdebug'}   .= "\n" . $line;
             $_SSLinfo{'tlsextensions'} .= "\n" . $d;
             $_SSLinfo{'heartbeat'}= $d if ($d =~ m/heartbeat/);
@@ -2452,7 +2453,7 @@ sub net_sslinfo_done() {};      # dummy to check successful include
 unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
     if ($#ARGV >= 0) {
-        $\="\n";
+        local $\="\n";
         do_ssl_open( shift, 443, '');
         print Net::SSLinfo::dump();
         exit 0;
