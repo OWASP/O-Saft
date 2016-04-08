@@ -82,7 +82,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.36 16/04/07 02:14:09";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.37 16/04/08 02:09:04";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
@@ -264,7 +264,7 @@ sub _vprintme {
     return;
 } # _vprintme
 
-sub __data($) { (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; return; }
+sub __data($) { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
 sub _yeast_data() {
     print "
 === _yeast_data: check internal data structure ===
