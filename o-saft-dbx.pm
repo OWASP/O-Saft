@@ -82,9 +82,10 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
+## no critic qw(TestingAndDebugging::RequireUseStrict)
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.38 16/04/08 02:58:21";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.39 16/04/08 12:34:54";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
