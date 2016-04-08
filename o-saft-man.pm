@@ -1,15 +1,21 @@
-#!/usr/bin/perl -w
-# PACKAGE {
+#!/usr/bin/perl
+## PACKAGE {
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package main;   # ensure that main:: variables are used
 
+use warnings;
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.92 16/04/07 02:09:12";
+# FIXME: we have a lot of comman separated statements to somplify the code.
+#        needs to be chage in future to keep perlcritic happy.
+#        However, the code herein is just for our own documentation ...
+## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
+
+my  $man_SID= "@(#) o-saft-man.pm 1.93 16/04/08 03:30:50";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -90,7 +96,7 @@ if (open($fh, '<:encoding(UTF-8)', $wer)) {
     }
     close($fh);
 }
-our $\ = "";
+local $\ = "";
 
 ## definitions: more documentations as data
 ## -------------------------------------
@@ -665,12 +671,12 @@ our %man_text = (
 
 ## definitions: internal functions
 ## -------------------------------------
-sub _man_dbx { print "#" . $ich . "::" . join(" ", @_, "\n") if (grep(/^--v/, @ARGV)>0); return; }
+sub _man_dbx { my @args; print "#" . $ich . "::" . join(" ", @args, "\n") if ((grep{/^--v/} @ARGV)>0); return; }
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
 sub _man_http_head(){
-    return if (grep(/--cgi/, @ARGV) <= 0);
+    return if ((grep{/--cgi/} @ARGV) <= 0);
     # checking @ARGV for --cgi is ok, as this option is for simulating
     # CGI mode only.
     # When called from o-saft.cgi, HTTP headers are already written.
@@ -740,10 +746,10 @@ sub _man_html_ankor($){
     }
     return $a;
 }
-sub _man_html_cbox($) { return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $_[0], '"--' . $_[0] . '"'); }
-sub _man_html_text($) { return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", $_[0], '"--' . $_[0] . '"'); }
-sub _man_html_span($) { return sprintf("%8s<span>%s</span><br>\n", "", $_[0]); }
-sub _man_html_cmd($)  { return sprintf("%9s+%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $_[0] . '"'); }
+sub _man_html_cbox($) { my $key = shift; return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $key, '"--' . $key . '"'); }
+sub _man_html_text($) { my $key = shift; return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", $key, '"--' . $key . '"'); }
+sub _man_html_span($) { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
+sub _man_html_cmd($)  { my $key = shift; return sprintf("%9s+%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $key . '"'); }
 
 sub _man_html_br()    { return sprintf("        <br>\n"); }
 
@@ -776,12 +782,13 @@ sub _man_html($$) {
     return;
 } # _man_html
 
-sub _man_head($$) {
+sub _man_head(@) {
+    my @args = @_;
     return if ($cfg{'out_header'} < 1);
-    printf("=%14s | %s\n", @_); printf("=%s+%s\n", '-'x15, '-'x60);
+    printf("=%14s | %s\n", @args); printf("=%s+%s\n", '-'x15, '-'x60);
     return;
 }
-sub _man_opt($$$) { printf("%16s%s%s\n",   @_); return; }
+sub _man_opt(@) { my @args = @_; printf("%16s%s%s\n", @args); return; }
 sub _man_arr($$$) {
     my ($ssl, $sep, $dumm) = @_;
     my @all = ();
@@ -1086,7 +1093,7 @@ Content of this wiki page generated with:
 
 sub man_toc() {
     #? print help table of content
-    foreach my $txt (grep(/^=head. /, @DATA)) {
+    foreach my $txt (grep{/^=head. /} @DATA) {
         next if ($txt !~ m/^=head/);
         next if ($txt =~ m/^=head. *END/);  # skip last line
         $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
@@ -1104,7 +1111,7 @@ sub man_help($) {
     _man_dbx("man_help($anf, $end) ...");
     # no special help, print full one or parts of it
     my $txt = join ("", @DATA);
-    if (grep(/^--v/, @ARGV) > 1){       # with --v --v
+    if ((grep{/^--v/} @ARGV) > 1) {     # with --v --v
         print scalar reverse "\n\n$egg";
         return;
     }
@@ -1120,7 +1127,7 @@ sub man_help($) {
     $txt =~ s/\nS&([^&]*)&/\n$1/g;
     $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
-    if (grep(/^--v/, @ARGV)>0) {        # do not use $^O but our own option
+    if ((grep{/^--v/} @ARGV) > 0) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
         print "**WARNING: using workaround to print large strings.\n\n";
         print foreach split(//, $txt);  # print character by character :-((
@@ -1176,8 +1183,8 @@ sub printhelp($) {
         return;
     }
     if ($hlp =~ m/^opts?$/i)    { # print program's options
-        my @txt  = grep(/^=head. (General|Option|--)/, @DATA);  # grep options only
-        map({$_ =~ s/^=head. *//} @txt);                        # remove leading markup
+        my @txt  = grep{/^=head. (General|Option|--)/} @DATA;   # grep options only
+        foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
         my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
         print join("", "OPTIONS\n", splice(@txt, 0, $end));     # print anything before end
         return;
@@ -1203,7 +1210,7 @@ sub printhelp($) {
 } # printhelp
 
 sub o_saft_man_done() {};       # dummy to check successful include
-# PACKAGE }
+## PACKAGE }
 
 printhelp($ARGV[0]) unless (defined caller);
 
