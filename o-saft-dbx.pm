@@ -1,5 +1,5 @@
-#!/usr/bin/perl -w
-# PACKAGE {
+#!/usr/bin/perl
+## PACKAGE {
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -82,12 +82,18 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.37 16/04/08 02:09:04";
+use warnings;
+
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.38 16/04/08 02:58:21";
+
+package main;   # ensure that main:: variables are used, if not defined herein
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
-package main;   # ensure that main:: variables are used, if not defined herein
+
+# parameters ar ok for trace output, hence
+## no critic qw(Subroutines::RequireArgUnpacking)
 
 # debug functions
 sub _y_ts     { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
@@ -96,7 +102,7 @@ sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) 
 sub _y_CMD    { local $\ = "\n"; print "#" . $mename . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
 sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); return; }
 sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); return; }
-sub _y_ARR(@) { return join(" ", "[", @_, "]"); return; }
+sub _y_ARR(@) { return join(" ", "[", @_, "]"); }
 sub _yeast_trac($$){}   # forward declaration
 sub _yeast_trac($$){
     #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
@@ -376,10 +382,10 @@ sub _yeast_cipher() {
 }
 
 sub o_saft_dbx_done() {};       # dummy to check successful include
-# PACKAGE }
+## PACKAGE }
 
 unless (defined caller) {
-    if (eval("require POD::Perldoc;")) {
+    if (eval {require POD::Perldoc;}) {
         # pod2usage( -verbose => 1 )
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
