@@ -40,7 +40,7 @@
 #?      cause problems. Use list of files instead:   *.pl *.pm Net/*.pm
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.1 16/04/07 10:23:22
+#?      @(#) .perlcriticrc 1.2 16/04/08 02:22:47
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -62,7 +62,7 @@ verbose     = 8
     #allow  = foreach
 	# as the severity is already 2, its okay to report foreach violations
 
-    # Message:
+    # Message
 	# Postfix control "if" used at line ...
 
     # CHECK adapted
@@ -72,7 +72,7 @@ verbose     = 8
 [InputOutput::RequireCheckedClose]
     severity = 1
 
-    # Message:
+    # Message
 	# Return value of "close" ignored at line ...
 
     # CHECK DISABLED
@@ -83,7 +83,7 @@ verbose     = 8
 [InputOutput::ProhibitBacktickOperators]
     only_in_void_context = 1
 
-    # Message:
+    # Message
 	# Backtick operator used at line ...
 
     # CHECK ENABLED
@@ -108,7 +108,7 @@ verbose     = 8
 
 [-InputOutput::ProhibitExplicitStdin]
 
-    # Message:
+    # Message
 	# Use "<>" or "<ARGV>" or a prompting module instead of "<STDIN>" at line ...
 
     # CHECK DISABLED
@@ -129,7 +129,7 @@ verbose     = 8
     lines    = 15
     severity = 2
 
-    # Message:
+    # Message
 	# Close filehandles as soon as possible after opening them at line ...
 
     # CHECK adapted
@@ -143,9 +143,26 @@ verbose     = 8
 #[InputOutput::RequireEncodingWithUTF8Layer]
 
 
+[Modules::RequireBarewordIncludes]
+    severity = 3
+
+    # Message
+	# "require" statement with library name as string at line ...
+
+    # CHECK ENABLED
+    # CHECK adapted
+	# FIXME: O-Saft uses require like:  require "o-saft-man.pm";
+	# which is necessary because the filename contains a - (dash),
+	# without quotes perl complains with:
+	#    Bareword "saft" not allowed while "strict subs" in use
+	#
+	# To get rid of this critic the filename needs to be changed,
+	# so we leave this violation but reduce the severity to 3.
+
+
 [-RegularExpressions::RequireDotMatchAnything]
 
-    # Message:
+    # Message
 	# Regular expression without "/s" flag at line ...
 
     # CHECK DISABLED
@@ -154,7 +171,7 @@ verbose     = 8
 
 [-RegularExpressions::RequireLineBoundaryMatching]
 
-    # Message:
+    # Message
 	# Regular expression without "/m" flag at line ...
 
     # CHECK DISABLED
@@ -163,7 +180,7 @@ verbose     = 8
 
 [-RegularExpressions::RequireExtendedFormatting]
 
-    # Message:
+    # Message
 	# Regular expression without "/x" flag at line ...
 
     # CHECK DISABLED
@@ -172,7 +189,7 @@ verbose     = 8
 
 [-Subroutines::ProhibitSubroutinePrototypes]
 
-    # Message:
+    # Message
 	# Subroutine prototypes used at line ...
 
     # CHECK DISABLED
@@ -187,7 +204,7 @@ verbose     = 8
 
 [-CodeLayout::RequireTidyCode]
 
-    # Message:
+    # Message
 	# Code is not tidy at line 1, column 1.
 
     # CHECK DISABLED
@@ -196,7 +213,7 @@ verbose     = 8
 
 [-CodeLayout::ProhibitParensWithBuiltins]
 
-    # Message:
+    # Message
 	# Builtin function called with parentheses at line ...
 
     # CHECK DISABLED
@@ -207,7 +224,7 @@ verbose     = 8
 
 [-CodeLayout::RequireTidyCode]
 
-    # Message:
+    # Message
 	# Code is not tidy at line 1, column 1.
 
     # CHECK DISABLED
@@ -217,12 +234,12 @@ verbose     = 8
 [CodeLayout::ProhibitHardTabs]
 
     # CHECK ENABLED
-	# thera are leading tabs only, usually
+	# there are leading tabs only, usually
 
 
 [CodeLayout::ProhibitTrailingWhitespace]
 
-    # Message:
+    # Message
 	# Found "\N{SPACE}" at the end of the line ...
 
     # CHECK ENABLED
@@ -243,7 +260,7 @@ verbose     = 8
 [Variables::RequireLocalizedPunctuationVars]
     allow   = @ENV
 
-    # Message:
+    # Message
 	# Magic variable "$ENV" should be assigned as "local"
 
     # CHECK adapted
@@ -252,9 +269,19 @@ verbose     = 8
 	# percritic seems to be buggy as it does not honor the allow option
 
 
+[ValuesAndExpressions::ProhibitConstantPragma]
+
+    # Message
+	# Pragma "constant" used at line ...
+
+    # CHECK ENABLED
+	# FIXME: constant should be reeplaced by Readonly
+	#  but need to check if Readonly.pm is available on ancient systems
+
+
 [-ValuesAndExpressions::ProhibitEmptyQuotes]
 
-    # Message:
+    # Message
 	# Quotes used with a string containing no non-whitespace characters at line ...
 
     # CHECK DISABLED
@@ -264,7 +291,7 @@ verbose     = 8
 
 [ValuesAndExpressions::ProhibitEscapedCharacters]
 
-    # Message:
+    # Message
 	# Numeric escapes in interpolated string at line ...
 
     # CHECK ENABLED
@@ -282,7 +309,9 @@ verbose     = 8
 		## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
 
 
-    # Message:
+#[]
+
+    # Message
 	# "grep" used in void context at line  ...
 
 
@@ -308,6 +337,17 @@ verbose     = 8
 	# the code for good reason, probably use
 		## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 
+[TestingAndDebugging::RequireUseStrict]
+
+    # Message:
+	# Code before strictures are enabled at line ...
+
+    # Note:
+	# This check produces false positives in module files, if there is no
+	#  "use strict"  , but this is not necessary as long as the module is
+	# executed itself.
+	# Anyway, "use strict" and "use warnings" is added to modules too.
+
 
 #[BuiltinFunctions::ProhibitStringyEval]
 
@@ -318,23 +358,28 @@ verbose     = 8
 	# This occour for  eval("require ..."), so probably use
 		## no critic qw(BuiltinFunctions::ProhibitStringyEval)
 
+
 [-BuiltinFunctions::ProhibitSleepViaSelect]
-    #
-    # CHECK DISABLED:
-    # We do not wish to use too much external modules
-    # used several times in SSLhello.pm
-    #
+
     # Message:
-    # "select" used to emulate "sleep" at line 1893, column 17.
-    # BuiltinFunctions::ProhibitSleepViaSelect (Severity: 5)
-    # Conway discourages the use of `select()' for performing non-integer
-    # sleeps. Although documented in perlfunc, it's something that generally
-    # requires the reader to read `perldoc -f select' to figure out what it
-    # should be doing. Instead, Conway recommends that you use the
-    # `Time::HiRes' module when you want to sleep.
-    #
-    # select undef, undef, undef, 0.25;         # not ok
-    #
-    # use Time::HiRes;
-    # sleep( 0.25 );                            # ok
-    #
+	# "select" used to emulate "sleep" at line ...
+
+	# BuiltinFunctions::ProhibitSleepViaSelect (Severity: 5)
+	# Conway discourages the use of `select()' for performing non-integer
+	# sleeps. Although documented in perlfunc, it's something that generally
+	# requires the reader to read `perldoc -f select' to figure out what it
+	# should be doing. Instead, Conway recommends that you use the
+	# `Time::HiRes' module when you want to sleep.
+	#
+	# select undef, undef, undef, 0.25;         # not ok
+	#
+	# use Time::HiRes;
+	# sleep( 0.25 );                            # ok
+
+    # CHECK DISABLED
+	# We do not wish to use too much external modules. selects is used
+	# several times in SSLhello.pm
+	# FIXME: write a  osaft_sleep() which hides the select, this way the
+	# violation is printed only once. Then we can enable it again.
+    	
+
