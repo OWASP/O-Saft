@@ -48,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.15 16/04/08 01:30:33',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.16 16/04/08 02:35:45',
 
 };
 
@@ -213,6 +213,7 @@ our @EXPORT  = qw(
 		get_cipher_name
 		get_openssl_version
 		get_dh_paramter
+		osaft_sleep
 		osaft_done
 );
 # insert above in vi with:
@@ -1116,6 +1117,13 @@ sub _prot_init_value() {
     }
     return;
 } # _prot_init_value
+
+sub osaft_sleep($) {
+    #? wrapper for IO::select
+    my $wait = shift;
+    select( undef, undef, undef, $wait);
+    return;
+} # osaft_sleep
 
 sub _osaft_init() {
     #? additional generic initializations for data structures
