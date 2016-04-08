@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# PACKAGE {
+## PACKAGE {
 
 ################
 #
@@ -48,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.16 16/04/08 02:35:45',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.17 16/04/08 12:49:50',
 
 };
 
@@ -1061,7 +1061,17 @@ sub get_dh_paramter($$) {
     # >>> TLS 1.2 ChangeCipherSpec [length 0001]
     return "" if ($data !~ m#ServerKeyExchange#);
 
-    $data =~ s#.*?Handshake\s*?\[length\s*([0-9a-fA-F]{2,4})\]\,?\s*?ServerKeyExchange\s*[\n\r]+(.*?)[\n\r][<>]+.*#$1_$2#si;
+    # this is a long regex and cannot be chunked
+    ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+    $data =~ s{
+	    .*?Handshake
+            \s*?\[length\s*([0-9a-fA-F]{2,4})\]\,?
+            \s*?ServerKeyExchange
+            \s*[\n\r]+(.*?)
+            [\n\r][<>]+.*
+        }
+        {$1_$2}xsi;
+    ## use critic
     _trace("get_dh_paramter: #{ DHE RAW data:\n$data\n#}\n");
     $data =~ s/\s+/ /gi;          # squeeze multible spaces
     $data =~ s/[^0-9a-f_]//gi;    # remove all none hex characters and non seperator
@@ -1166,7 +1176,7 @@ main purpose of this module is defining variables. Hence we export them.
 
 =cut
 
-# PACKAGE }
+## PACKAGE }
 
 
 #_____________________________________________________________________________
