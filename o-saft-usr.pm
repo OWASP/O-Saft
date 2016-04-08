@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# PACKAGE {
+## PACKAGE {
 
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -124,14 +124,14 @@ Call:  usr_version()
 use strict;
 use warnings;
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.17 16/04/07 02:20:46";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.18 16/04/08 03:34:12";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 package main;   # ensure that main:: variables are used
 
-sub _usr_dbx { _trace(join(" ", @_, "\n")); return; } # requires --v
+sub _usr_dbx { my @args = @_; _trace(join(" ", @args, "\n")); return; } # requires --v
 
 # user functions
 # -------------------------------------
@@ -221,14 +221,14 @@ sub usr_pre_exit()  {
 };
 
 sub o_saft_usr_done() {};       # dummy to check successful include
-# PACKAGE }
+## PACKAGE }
 
 # local functions {
 # -------------------------------------
 # local functions }
 
 unless (defined caller) {
-    if (eval("require POD::Perldoc;")) {
+    if (eval{require POD::Perldoc;}) {
         # pod2usage( -verbose => 1 )
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
