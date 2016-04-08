@@ -34,7 +34,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.123 16/04/07 02:28:36',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.124 16/04/08 15:01:59',
 };
 
 ######################################################## public documentation #
@@ -577,14 +577,14 @@ my %_SSLmap = ( # map libssl's constants to speaking names
 # unfortunately not all openssl and/or Net::SSLeay versions have all constants,
 # hence we need to assign some values dynamically (to avoid perl errors)
 # NOTE: existance cannot be checked with:  defined &Net::SSLeay::OP_NO_TLSv1
-$_SSLmap{'TLSv1'}  [1] = Net::SSLeay::OP_NO_TLSv1()    if (eval "Net::SSLeay::OP_NO_TLSv1()");
-$_SSLmap{'TLSv11'} [1] = Net::SSLeay::OP_NO_TLSv1_1()  if (eval "Net::SSLeay::OP_NO_TLSv1_1()");
-$_SSLmap{'TLSv12'} [1] = Net::SSLeay::OP_NO_TLSv1_2()  if (eval "Net::SSLeay::OP_NO_TLSv1_2()");
-$_SSLmap{'TLSv13'} [1] = Net::SSLeay::OP_NO_TLSv1_3()  if (eval "Net::SSLeay::OP_NO_TLSv1_3()");
-$_SSLmap{'DTLSv1'} [1] = Net::SSLeay::OP_NO_DTLSv1()   if (eval "Net::SSLeay::OP_NO_DTLSv1()");
-#$_SSLmap{'DTLSv11'}[1] = Net::SSLeay::OP_NO_DTLSv1_1() if (eval "Net::SSLeay::OP_NO_DTLSv1_1()");
-#$_SSLmap{'DTLSv12'}[1] = Net::SSLeay::OP_NO_DTLSv1_2() if (eval "Net::SSLeay::OP_NO_DTLSv1_2()");
-#$_SSLmap{'DTLSv13'}[1] = Net::SSLeay::OP_NO_DTLSv1_3() if (eval "Net::SSLeay::OP_NO_DTLSv1_3()");
+$_SSLmap{'TLSv1'}  [1] = Net::SSLeay::OP_NO_TLSv1()    if (eval {Net::SSLeay::OP_NO_TLSv1()});
+$_SSLmap{'TLSv11'} [1] = Net::SSLeay::OP_NO_TLSv1_1()  if (eval {Net::SSLeay::OP_NO_TLSv1_1()});
+$_SSLmap{'TLSv12'} [1] = Net::SSLeay::OP_NO_TLSv1_2()  if (eval {Net::SSLeay::OP_NO_TLSv1_2()});
+$_SSLmap{'TLSv13'} [1] = Net::SSLeay::OP_NO_TLSv1_3()  if (eval {Net::SSLeay::OP_NO_TLSv1_3()});
+$_SSLmap{'DTLSv1'} [1] = Net::SSLeay::OP_NO_DTLSv1()   if (eval {Net::SSLeay::OP_NO_DTLSv1()});
+#$_SSLmap{'DTLSv11'}[1] = Net::SSLeay::OP_NO_DTLSv1_1() if (eval {Net::SSLeay::OP_NO_DTLSv1_1()});
+#$_SSLmap{'DTLSv12'}[1] = Net::SSLeay::OP_NO_DTLSv1_2() if (eval {Net::SSLeay::OP_NO_DTLSv1_2()});
+#$_SSLmap{'DTLSv13'}[1] = Net::SSLeay::OP_NO_DTLSv1_3() if (eval {Net::SSLeay::OP_NO_DTLSv1_3()});
     # NOTE: we use the bitmask provided by the system
     # NOTE: all checks are done now, we don't need to fiddle around that later
     #       we just need to check for undef then
@@ -1539,6 +1539,9 @@ sub do_ssl_open($$$@) {
                 # on 32-bit systems perl may handle large numbers correctly
                 # if compiled properly, can be checked with $Config{ivsize}
                 # so we need the value which requires loading the module
+                #
+                # cannot use eval with block form here, needs to be quoted
+                ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
                 if (eval('use Configx; $b = $Config{ivsize};')) {
                     # use $Config{ivsize}
                 } else {
@@ -1546,11 +1549,12 @@ sub do_ssl_open($$$@) {
                     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
                     $_SSLinfo{'serial_int'} = "<<$err failed>>";
                 }
+                ## use critic
             }
             if ((length($d) > $b)   # larger than integer of this architecture
               ||(length($d) > 16))  # to large at all
             {  # ugly check if we need bigint
-                if (eval("require Math::BigInt;")) {
+                if (eval {require Math::BigInt;}) {
                     $_SSLinfo{'serial_int'} = Math::BigInt->from_hex($d);
                 } else {
                     $err = "Math::BigInt->from_hex($d)";
@@ -1693,7 +1697,7 @@ sub do_ssl_open($$$@) {
         print SSLINFO_ERR . $_ foreach @{$_SSLinfo{'errors'}};
     }
     _trace("do_ssl_open() failed.");
-    return undef;
+    return;
 
     finished:
     _trace("do_ssl_open() done.");
@@ -2350,7 +2354,7 @@ Verify if given hostname matches common name (CN) in certificate.
 ############ TODO:  do_ssl_open  vorbereiten fuer verify_*
 sub verify_hostname {
     my ($host, $port) = @_;
-    return undef if !defined do_ssl_open($host, $port, '');
+    return if !defined do_ssl_open($host, $port, '');
     return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert != 0);
     my $cname = $_SSLinfo{'cn'};
     my $match = '';
@@ -2369,7 +2373,7 @@ Verify if given hostname matches alternate name (subjectAltNames) in certificate
 
 sub verify_altname($$) {
     my ($host, $port) = @_;
-    return undef if !defined do_ssl_open($host, $port, '');
+    return if !defined do_ssl_open($host, $port, '');
     return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert != 0);
     _trace("verify_altname($host)");
     my $match = 'does not match';
@@ -2453,7 +2457,7 @@ unless (defined caller) {       # print myself or open connection
         print Net::SSLinfo::dump();
         exit 0;
     }
-    if (eval("require POD::Perldoc;")) {
+    if (eval{require POD::Perldoc;}) {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
