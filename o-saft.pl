@@ -40,8 +40,8 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.453 16/04/09 21:58:50",
-    STR_VERSION => "16.04.07",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.454 16/04/09 22:26:44",
+    STR_VERSION => "16.04.08",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -230,8 +230,11 @@ if ((grep{/(:?--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
     if (open(my $rc, '<:encoding(UTF-8)', "$arg")) {
         push(@dbxfile, $arg);
         _print_read("$arg", "RC-FILE done");
+        ## no critic qw(ControlStructures::ProhibitMutatingListFunctions)
+        #  NOTE: the purpose here is to *change the source array"
         @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
         @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
+        ## use critic
         close($rc);
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
