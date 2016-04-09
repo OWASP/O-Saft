@@ -1415,7 +1415,7 @@ sub checkSSLciphers ($$$@) {
             }
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # test ciphers and collect Accepted ciphers
             _trace2_ ("       ");
-            if ($acceptedCipher) { # received an accepted cipher
+            if ($acceptedCipher) { # received an accepted cipher ## TBD: Error handling using `given'/`when' TBD
                 _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
                 @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
                 push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the list of accepted ciphers 
@@ -1585,6 +1585,8 @@ sub openTcpSSLconnection ($$) {
     my $secondMessage = "";
     my $starttlsType=0; # SMTP 
 #   15 Types defined: 0:SMTP, 1:SMTP_2, 2:IMAP, 3:IMAP_CAPACITY, 4:IMAP_2, 5:POP3, 6:POP3_CAPACITY, 7:FTPS, 8:LDAP, 9:RDP, 10:RDP_SSL, 11:XMPP, 12:ACAP, 13:IRC, 14:IRC_CAPACITY
+#
+#   ##TBD new subs openTcpSSLconnectionViaProxy, openTcpSSLconnectionUsingStarttls
 
     my @starttls_matrix = 
         ( ["SMTP", 
