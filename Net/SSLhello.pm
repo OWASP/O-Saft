@@ -1772,12 +1772,12 @@ sub openTcpSSLconnection ($$) {
         if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
             _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-            if ( grep(/^$starttlsType$/,('12', '13', '14','15') )) { # ('12', '13', ...) -> Use of an experimental starttls-Type
+            if ( grep {/^$starttlsType$/} ('12', '13', '14','15') ) { # ('12', '13', ...) -> Use of an experimental starttls-Type
                 if  ($Net::SSLhello::experimental >0) { # experimental function is are  activated
                     _trace_("\n");
                     _trace ("openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
                 } else { # use of experimental functions is not permitted (option is not activated)
-                    if ( grep(/^$starttlsType$/,('12', '13', '14', '15') )) { # experimental and untested
+                    if ( grep {/^$starttlsType$/} ('12', '13', '14', '15') ) { # experimental and untested
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
                     } else { # tested, but still experimental # experimental but tested 
                         $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
@@ -3449,7 +3449,7 @@ sub _compileClientHelloExtensions ($$$$@) {
     if ($Net::SSLhello::usereneg) { # use secure Renegotiation
         my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
         my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'}); 
-        unless ( ($Net::SSLhello::double_reneg == 0) && (grep(/\x00\xff/, @cipherTable)) ) { # Protection against double renegotiation info is active
+        unless ( ($Net::SSLhello::double_reneg == 0) && (grep {/\x00\xff/} @cipherTable) ) { # Protection against double renegotiation info is active
             # do *NOT* send a reneg_info extension if the cipher_spec includes already Signalling Cipher Suite Value (SCSV) 
             # "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
 
