@@ -85,7 +85,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 ## no critic qw(TestingAndDebugging::RequireUseStrict)
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.39 16/04/08 12:34:54";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.40 16/04/10 01:41:43";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -140,6 +140,7 @@ sub _yeast_init() {
     _yTRAC("_yeast_init::SID", $DBX_SID) if ($cfg{'trace'} > 2);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
     _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
+    ## no critic qw(Variables::ProhibitPackageVars)
     if ($cfg{'trace'} > 1) {
         _yline(" Net::SSLinfo {");
         _yTRAC("::trace",         $Net::SSLinfo::trace);
@@ -161,6 +162,7 @@ sub _yeast_init() {
         _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
         _yline(" Net::SSLinfo }");
     }
+    ## use critic
     _yTRAC("verbose", $cfg{'verbose'});
     _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
     # more detailed trace first
@@ -281,7 +283,7 @@ sub _yeast_data() {
   each command from  %cfg{'commands'}  and vice versa.
 ";
 
-    my ($old, $label, $value);
+    my $old;
     my @yeast = ();     # list of potential internal, private commands
     my $cmd = " ";
     printf("%20s %s %s %s %s %s %s %s\n", "key", "command", "intern ", "  data  ", "short ", "checks ", "cmd-ch.", " score");
