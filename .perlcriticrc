@@ -39,8 +39,11 @@
 #?      directory as there are  too much matching files (i.e. SCCS/*) which may
 #?      cause problems. Use list of files instead:   *.pl *.pm Net/*.pm
 #?
+#? SEE ALSO
+#?      contrib/critick.sh
+#?
 #? VERSION
-#?      @(#) .perlcriticrc 1.2 16/04/08 02:22:47
+#?      @(#) .perlcriticrc 1.3 16/04/10 01:46:59
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -121,6 +124,17 @@ verbose     = 8
 #[InputOutput::ProhibitInteractiveTest]
 #[InputOutput::ProhibitJoinedReadline]
 #[InputOutput::ProhibitOneArgSelect]
+
+
+[InputOutput::ProhibitOneArgSelect]
+
+    # Message
+	# One-argument "select" used at line ...
+
+    # CHECK ENABLED
+	# selectively disabled in souce with ## no critic ..
+
+
 #[InputOutput::ProhibitReadlineInForLoop]
 #[InputOutput::RequireBracedFileHandleWithPrint]
 
@@ -143,6 +157,14 @@ verbose     = 8
 #[InputOutput::RequireEncodingWithUTF8Layer]
 
 
+[Modules::ProhibitAutomaticExportation]
+
+    # Message
+	# Symbols are exported by default at line ...
+
+    # CHECK ENABLED
+
+
 [Modules::RequireBarewordIncludes]
     severity = 3
 
@@ -158,6 +180,25 @@ verbose     = 8
 	#
 	# To get rid of this critic the filename needs to be changed,
 	# so we leave this violation but reduce the severity to 3.
+
+
+[RegularExpressions::ProhibitCaptureWithoutTest]
+[RegularExpressions::ProhibitUnusedCapture]
+
+    # Messages
+	# Capture variable used outside conditional at line ...
+	# Only use a capturing group if you plan to use the captured value at line  ...
+
+    # CHECK ENABLED
+	# NOTE: perlcritic has a lot of false negatives!
+
+
+[-Subroutines::ProhibitUnusedPrivateSubroutines]
+
+    # Message
+	# Private subroutine/method 'XXXX' declared but not used at line ...
+
+    # CHECK DIABLED
 
 
 [-RegularExpressions::RequireDotMatchAnything]
@@ -184,7 +225,26 @@ verbose     = 8
 	# Regular expression without "/x" flag at line ...
 
     # CHECK DISABLED
-	# cause we use /x as needed for human readability
+	# because we use /x as needed for human readability
+
+
+[Subroutines::ProhibitBuiltinHomonyms]
+
+    # Message
+	# Subroutine name is a homonym for builtin function XXXX at line ...
+
+    # CHECK ENABLED
+
+
+[-Subroutines::ProhibitManyArgs]
+
+    # Message
+	# Too many arguments at line ...
+
+    # CHECK DISABLED
+	# because there are functions with more than 5 paramters
+	# NOTE: this policy has no "allow" option but we need more than 5
+	#       arguments, sometimes;hence disabled
 
 
 [-Subroutines::ProhibitSubroutinePrototypes]
@@ -197,9 +257,20 @@ verbose     = 8
 	# perls compile-time checks are not perfect, perl may give some hints.
 
 
-#[-Subroutines::RequireFinalReturn]
+[Subroutines::RequireArgUnpacking]
 
-	# FIXME:
+    # Message
+	# Always unpack @_ first at line  ...
+
+    # CHECK ENABLED
+
+
+[Subroutines::RequireFinalReturn]
+
+    # Message
+	#
+
+    # CHECK ENABLED
 
 
 [-CodeLayout::RequireTidyCode]
@@ -266,7 +337,7 @@ verbose     = 8
     # CHECK adapted
 	# @ENV must be changed globally (at least in o-saft.pl)
 	# TODO: need to verify if @INC should be allowed too
-	# percritic seems to be buggy as it does not honor the allow option
+	# perlcritic seems to be buggy as it does not honor the allow option
 
 
 [ValuesAndExpressions::ProhibitConstantPragma]
@@ -302,6 +373,15 @@ verbose     = 8
 	# FIXME: to be discussed
 
 
+[-ValuesAndExpressions::ProhibitImplicitNewlines]
+
+    # Message
+	# Literal line breaks in a string at line ...
+
+    # CHECK DISABLED
+	# yes, there are a lot of constructs using nwelines in texts, that's ok
+
+
 #[ValuesAndExpressions::ProhibitMagicNumbers]
 
 	# FIXME: to be discussed
@@ -327,12 +407,13 @@ verbose     = 8
 
 
 [TestingAndDebugging::ProhibitNoWarnings]
-    severity = 3
+    severity = 2
 
     # Message:
 	# Warnings disabled at line
 
-	# FIXME: to be discussed; for now severity reduced to 3
+    # CHECK adapted
+	# FIXME: to be discussed; for now severity reduced from 4 to 2
 	# i.g. we want this warning, but some warnings are also disabled in
 	# the code for good reason, probably use
 		## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
