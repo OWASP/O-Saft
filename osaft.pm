@@ -48,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.17 16/04/08 12:49:50',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.18 16/04/09 19:30:51',
 
 };
 
@@ -175,12 +175,15 @@ Following functions (methods) must be defined in the calling program:
 
 =cut
 
+## no critic qw(Modules::ProhibitAutomaticExportation)
+# FIXME: perlcritic complains to use @EXPORT_OK instead of @EXPORT, but that
+#        is not possible as long as constants are exported;
+#        should be changed when "use constnt" is replaced by "use Readonly"
 
-## no critic (Modules::ProhibitAutomaticExportation)
 use Exporter qw(import);
-our @ISA     = qw(Exporter);
-our $VERSION = OSAFT_VERSION;
-our @EXPORT  = qw(
+our @ISA        = qw(Exporter);
+our $VERSION    = OSAFT_VERSION;
+our @EXPORT     = qw(
 		STR_ERROR
 		STR_WARN
 		STR_HINT
