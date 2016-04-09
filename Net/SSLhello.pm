@@ -332,19 +332,19 @@ sub _error;
 #sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
 #sub _trace4_  { _trace4(@_); }
 
-sub _y_ts      { if ($main::cfg{'traceTIME'} <= 0)  { return ""; }   return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]); }
+sub _y_ts      { if ($main::cfg{'traceTIME'} <= 0)  { return ""; }            return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]); return }
 
-sub _trace($)  { local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::" . $_[0]                    if ($main::cfg{'trace'} > 0); }
-sub _trace0($) { local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::"                            if ($main::cfg{'trace'} > 0); }
-sub _trace1($) { local $\ = ""; print "# " . _y_ts() . SSLHELLO . "::" . join(" ", @_)           if ($main::cfg{'trace'} > 1); }
-sub _trace2($) { local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @_)       if ($main::cfg{'trace'} > 2); }
-sub _trace3($) { local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @_)       if ($main::cfg{'trace'} ==3); }
-sub _trace4($) { local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @_)    if ($main::cfg{'trace'} > 3); }
-sub _trace_($) { local $\ = ""; print " " . join(" ", @_)                                       if ($main::cfg{'trace'} > 0); }
-sub _trace1_($){ local $\ = ""; print " " . join(" ", @_)                                       if ($main::cfg{'trace'} > 1); }
-sub _trace2_($){ local $\ = ""; print join(" ", @_)                                             if ($main::cfg{'trace'} > 2); }
-sub _trace3_($){ local $\ = ""; print join(" ", @_)                                             if ($main::cfg{'trace'} ==3); }
-sub _trace4_($){ local $\ = ""; print join(" ", @_)                                             if ($main::cfg{'trace'} > 3); }
+sub _trace($)  { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::" . $messages[0]                 if ($main::cfg{'trace'} > 0); return }
+sub _trace0($) { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::"                                if ($main::cfg{'trace'} > 0); return }
+sub _trace1($) { my @messages = @_; local $\ = ""; print "# " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)        if ($main::cfg{'trace'} > 1); return }
+sub _trace2($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($main::cfg{'trace'} > 2); return }
+sub _trace3($) { my @messages = @_; local $\ = ""; print "# --> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages)    if ($main::cfg{'trace'} ==3); return }
+sub _trace4($) { my @messages = @_; local $\ = ""; print "#   ---> " . _y_ts() . SSLHELLO . "::" . join(" ", @messages) if ($main::cfg{'trace'} > 3); return }
+sub _trace_($) { my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($main::cfg{'trace'} > 0); return }
+sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messages)                                     if ($main::cfg{'trace'} > 1); return }
+sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 2); return }
+sub _trace3_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} ==3); return }
+sub _trace4_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 3); return }
 
 #if (! eval("require o-saft-dbx.pm;")) {
 #        # o-saft-dbx.pm may not be installed, try to find in program's directory
