@@ -1127,6 +1127,7 @@ sub version { # version of SSLhello
 
     local $\ = ""; # no auto '\n' at the end of the line
     print "NET::SSLhello_20$VERSION\n";
+    return;
 }
 
 sub printParameters { 
@@ -1161,6 +1162,7 @@ sub printParameters {
     print ("#SSLHello:           max_ciphers=$Net::SSLhello::max_ciphers\n")     if (defined($Net::SSLhello::max_ciphers));
     print ("#SSLHello:       max_sslHelloLen=$Net::SSLhello::max_sslHelloLen\n") if (defined($Net::SSLhello::max_sslHelloLen));
     print ("#------------------------------------------------------------------------------------------\n");
+    return;
 }
 
 ### --------------------------------------------------------------------------------------------------------- ###
@@ -1260,6 +1262,7 @@ sub printCipherStringArray ($$$$$@) {
         print "\n";
     }
     _trace4 ("printCipherStringArray: }\n\n");
+    return;
 } # printCipherStringArray
 
 
@@ -4119,6 +4122,7 @@ sub parseServerHello ($$$;$) {
     } else {
         warn ("**WARNING: parseServerHello Server '$host:$port': (no SSL/TLS-Record) : ".hexCodedString ($buffer)."\n");
     }
+    return;
 } # parseServerHello
 
 
@@ -4396,6 +4400,7 @@ sub parseTLS_Extension {
             }
         }
     }
+    return;
 } # parseTLS_Extension
 
 
@@ -4575,6 +4580,7 @@ sub printSSL2CipherList ($) {
         }    
         _trace_ "\n";
     }
+    return;
 } # printSSL2CipherList
 
 
@@ -4604,6 +4610,7 @@ sub printTLSCipherList ($) {
         }    
         _trace4_ ("\n");
     }
+    return;
 } # printTLSCipherList
 
 
