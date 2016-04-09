@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.452 16/04/09 18:34:13",
+    SID         => "@(#) yeast.pl 1.453 16/04/09 21:58:50",
     STR_VERSION => "16.04.07",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6271,7 +6271,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
                $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
-            push(@all, sprintf("0x%08X",$_)) foreach (eval {$cfg{'cipherranges'}->{$range} });
+            ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+            #  NOTE: this eval must not use the block form because the value needs to be evaluated
+            foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) {
+                push(@all, sprintf("0x%08X",$c));
+            }
+            ## use critic
             _v_print( "number of ciphers: " . scalar(@all));
             printtitle($legacy, $ssl, $host, $port);
             if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
