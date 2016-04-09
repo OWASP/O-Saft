@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.126 16/04/09 18:42:32',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.127 16/04/09 19:06:12',
 };
 
 ######################################################## public documentation #
@@ -309,19 +309,11 @@ follow the rules describend above.
 
 ############################################################## initialization #
 
-# forward declarations
-sub do_ssl_open($$$@);
-sub do_ssl_close($$);
-sub do_openssl($$$$);
 
-use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
-
-BEGIN {
-
-require Exporter;
-    $VERSION   = SSLINFO_VERSION;
-    @ISA       = qw(Exporter);
-    @EXPORT    = qw(
+use Exporter qw(import);
+our $VERSION   = SSLINFO_VERSION;
+our @ISA       = qw(Exporter);
+our @EXPORT_OK = qw(
         net_sslinfo_done
         test_ssleay
         datadump
@@ -433,11 +425,11 @@ require Exporter;
         selfsigned
         s_client
         error
-    );
+);
     # insert above in vi with:
     # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
-    $HAVE_XS = eval { 
+our $HAVE_XS = eval { 
         local $SIG{'__DIE__'} = 'DEFAULT';
         eval {
             require XSLoader;
@@ -451,7 +443,6 @@ require Exporter;
         };
 
     } ? 1 : 0;
-} # BEGIN
 
 use Socket;
 use Net::SSLeay;
@@ -500,6 +491,11 @@ $Net::SSLeay::slowly = 0;
 
 my $dum      = $Net::SSLinfo::linux_debug;  # avoid warning: "used only once: ..."
 my $trace    = $Net::SSLinfo::trace;
+
+# forward declarations
+sub do_ssl_open($$$@);
+sub do_ssl_close($$);
+sub do_openssl($$$$);
 
 sub _settrace {
     $trace = $Net::SSLinfo::trace;          # set global variable
@@ -1047,8 +1043,8 @@ call it directly.
 =cut
 
 # from openssl/x509_vfy.h
-sub _X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT () { 18 }
-sub _FLAGS_ALLOW_SELFSIGNED () { 0x00000001 }
+sub _X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT () { return 18; }
+sub _FLAGS_ALLOW_SELFSIGNED () { return 0x00000001; }
 
 sub do_ssl_open($$$@) {
     my ($host, $port, $sslversions, $cipher) = @_;
@@ -2264,7 +2260,7 @@ sub after           { return _SSLinfo_get('after',            $_[0], $_[1]); }
 sub dates           { return _SSLinfo_get('dates',            $_[0], $_[1]); }
 sub issuer          { return _SSLinfo_get('issuer',           $_[0], $_[1]); }
 sub subject         { return _SSLinfo_get('subject',          $_[0], $_[1]); }
-sub default         { return _SSLinfo_get('selected',         $_[0], $_[1]); } # alias; used in VERSION < 14.11.14
+#sub default         { return _SSLinfo_get('selected',         $_[0], $_[1]); } # alias; used in VERSION < 14.11.14
 sub selected        { return _SSLinfo_get('selected',         $_[0], $_[1]); }
 sub cn              { return _SSLinfo_get('cn',               $_[0], $_[1]); }
 sub commonname      { return _SSLinfo_get('cn',               $_[0], $_[1]); } # alias for cn
