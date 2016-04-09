@@ -38,15 +38,16 @@
 #       and print some information even if installed incompletely.
 
 use strict;
-
+use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.454 16/04/09 22:26:44",
+    SID         => "@(#) yeast.pl 1.455 16/04/10 01:25:22",
     STR_VERSION => "16.04.08",          # <== our official version number
 };
-sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
+sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
+    my @txt = @_;
     if ((grep{/(:?--trace.*time)/i} @ARGV) > 0) {
-        printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @_);
+        printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @txt);
     }
     return;
 }
@@ -147,8 +148,7 @@ sub _is_member($$); #   "
 
 ## README if any
 ## -------------------------------------
-my $rc;
-open($rc, '<', "o-saft-README") && do { print <$rc>; close($rc); exit 0; };
+if (open(my $rc, '<', "o-saft-README")) { print <$rc>; close($rc); exit 0; };
 
 ## CGI
 ## -------------------------------------
@@ -164,13 +164,14 @@ if ($me =~/\.cgi$/) {
 ## -------------------------------------
 # functions and variables used very early in main
 our %cfg =  ('trace' => 0 ); # used in usr_pre_init(); avoid: Use of uninitialized value ...
-sub _dprint { local $\ = "\n"; print STDERR STR_DBX, join(" ", @_); return; }
-sub _dbx    { _dprint(@_); return; } # alias for _dprint
+sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
+sub _dbx    { my @txt = @_; _dprint(@txt); return; } # alias for _dprint
 sub _warn   {
     #? print warning if wanted
     # don't print if ($warning <= 0);
+    my @txt = @_;
     return if ((grep{/(:?--no.?warn)/i} @ARGV) > 0);    # ugly hack 'cause we won't pass $warning
-    local $\ = "\n"; print(STR_WARN, join(" ", @_));
+    local $\ = "\n"; print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
     return;
 }
@@ -178,17 +179,18 @@ sub _warn_and_exit {
     #? print warning that --experimental option is required
     #-method:  name of function where this message is called
     #-command: name of command subject to this message
+    my @txt = @_;
     local $\ = "\n";
     if ((grep{/(:?--experimental)/i} @ARGV) > 0) {
         my $method = shift;
-        _trace("_warn_and_exit $method: " . join(" ", @_));
+        _trace("_warn_and_exit $method: " . join(" ", @txt));
     } else {
-        printf(STR_WARN, "(%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @_);
+        printf(STR_WARN, "(%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
         exit(1);
     }
     return;
 }
-sub _print_read($$) { printf("=== reading: %s (%s) ===\n", @_) if ((grep{/(:?--no.?header|--cgi)/i} @ARGV) <= 0); return; }
+sub _print_read($$) { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(:?--no.?header|--cgi)/i} @ARGV) <= 0); return; }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet available, see LIMITATIONS also
@@ -203,7 +205,8 @@ sub _load_file($$) {
       no warnings qw(once);
       return "" if (defined($::osaft_standalone));
     }
-    eval {require $fil;};   # need eval to catch "Can't locate ... in @INC ..."
+    # need eval to catch "Can't locate ... in @INC ..."
+    eval {require $fil;} or warn STR_WARN, "'require $fil' failed";
     $err = $@;
     chomp $err;
     if ($err eq "") {
@@ -1564,7 +1567,7 @@ our %cmd = (
            ecdsa-with-SHA256
            md2WithRSAEncryption    md4WithRSAEncryption  md5WithRSAEncryption
            None   ripemd160WithRSA rsa  rsaEncryption    rsassapss
-           shaWithRSAEncryption	   sha1WithRSAEncryption sha1WithRSA
+           shaWithRSAEncryption    sha1WithRSAEncryption sha1WithRSA
            sha224WithRSAEncryption sha256WithRSAEncryption
            sha384WithRSAEncryption sha512WithRSAEncryption
         ),
@@ -1632,7 +1635,7 @@ my $rex = join("|", @{$cfg{'versions'}});   # these are data only, not commands
 foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
     next if ($key eq $old); # unique
     $old = $key;
-    push(@{$cfg{'commands'}},  $key) if ($key !~ m/^($rex)/);
+    push(@{$cfg{'commands'}},  $key) if ($key !~ m/^(?:$rex)/);
     push(@{$cfg{'cmd-hsts'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-hsts'}/i);
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
@@ -2174,7 +2177,7 @@ sub _resetchecks()     {
     return;
 }
 
-sub _prot_cipher($$)   { return " " . join(":", @_); }
+sub _prot_cipher($$)   { my @txt = @_; return " " . join(":", @txt); }
     # return string consisting of given parameters separated by : and prefixed with a space
     # (mainly used to concatenate SSL Version and cipher suite name)
 
@@ -2200,7 +2203,7 @@ sub _cfg_set($$)       {
     my ($key, $val);
     no warnings qw(prototype); # avoid: main::_cfg_set() called too early to check prototype at ...
     _trace("_cfg_set($typ, ){");
-    if ($typ !~ m/^CFG-(cmd|checks?|data|text|scores?)$/) {
+    if ($typ !~ m/^CFG-(?:cmd|checks?|data|text|scores?)$/) {
         _warn("unknown configuration key '$typ'; setting ignored");
         goto _CFG_RETURN;
     }
@@ -2214,6 +2217,9 @@ sub _cfg_set($$)       {
         _trace("_cfg_set: read $arg \n");
         my $line ="";
         my $fh;
+        # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
+        #       is a flse positive because perlcritic seems not to understand
+        #       the logic of "open() && do{}; warn();"
         open($fh, '<:encoding(UTF-8)', $arg) && do {
             push(@dbxfile, $arg);
             _print_read("$arg", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
@@ -2267,7 +2273,7 @@ sub _cfg_set($$)       {
 
     if ($typ eq 'CFG-score') {          # set new score value
         _trace("_cfg_set: KEY=$key, SCORE=$val");
-        if ($val !~ m/^(\d\d?|100)$/) { # allow 0 .. 100
+        if ($val !~ m/^(?:\d\d?|100)$/) { # allow 0 .. 100
             _warn("invalid score value '$val'; setting ignored");
             goto _CFG_RETURN;
         }
@@ -2296,19 +2302,19 @@ sub __SSLinfo($$$)     {
     # wrapper for Net::SSLinfo::*() functions
     # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
     # these values will be converted to o-saft's preferred format
-    my $cmd = shift;
+    my ($cmd, $host, $port) = @_;
     my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
     my $ext = "";
-    $val =  Net::SSLinfo::fingerprint(      $_[0], $_[1]) if ($cmd eq 'fingerprint');
-    $val =  Net::SSLinfo::fingerprint_hash( $_[0], $_[1]) if ($cmd eq 'fingerprint_hash');
-    $val =  Net::SSLinfo::fingerprint_sha1( $_[0], $_[1]) if ($cmd eq 'fingerprint_sha1');
-    $val =  Net::SSLinfo::fingerprint_md5(  $_[0], $_[1]) if ($cmd eq 'fingerprint_md5');
-    $val =  Net::SSLinfo::pubkey_value(     $_[0], $_[1]) if ($cmd eq 'pubkey_value');
-    $val =  Net::SSLinfo::sigkey_value(     $_[0], $_[1]) if ($cmd eq 'sigkey_value');
-    $val =  Net::SSLinfo::heartbeat(        $_[0], $_[1]) if ($cmd eq 'heartbeat');
-    $val =  Net::SSLinfo::tlsextdebug(      $_[0], $_[1]) if ($cmd eq 'tlsextdebug');
-    $val =  Net::SSLinfo::tlsextensions(    $_[0], $_[1]) if ($cmd eq 'tlsextensions');
-    $val =  Net::SSLinfo::extensions(       $_[0], $_[1]) if ($cmd =~ /^ext(?:ensions|_)/);
+    $val =  Net::SSLinfo::fingerprint(      $host, $port) if ($cmd eq 'fingerprint');
+    $val =  Net::SSLinfo::fingerprint_hash( $host, $port) if ($cmd eq 'fingerprint_hash');
+    $val =  Net::SSLinfo::fingerprint_sha1( $host, $port) if ($cmd eq 'fingerprint_sha1');
+    $val =  Net::SSLinfo::fingerprint_md5(  $host, $port) if ($cmd eq 'fingerprint_md5');
+    $val =  Net::SSLinfo::pubkey_value(     $host, $port) if ($cmd eq 'pubkey_value');
+    $val =  Net::SSLinfo::sigkey_value(     $host, $port) if ($cmd eq 'sigkey_value');
+    $val =  Net::SSLinfo::heartbeat(        $host, $port) if ($cmd eq 'heartbeat');
+    $val =  Net::SSLinfo::tlsextdebug(      $host, $port) if ($cmd eq 'tlsextdebug');
+    $val =  Net::SSLinfo::tlsextensions(    $host, $port) if ($cmd eq 'tlsextensions');
+    $val =  Net::SSLinfo::extensions(       $host, $port) if ($cmd =~ /^ext(?:ensions|_)/);
     if ($cmd =~ m/ext_/) {
         # all following are part of Net::SSLinfo::extensions(), now extract parts
         # The extension section in the certificate starts with
@@ -2379,23 +2385,23 @@ sub _need_cipher()     { return _need_this('need_cipher');   };
 sub _need_default()    { return _need_this('need_default');  };
 sub _need_checkssl()   { return _need_this('need_checkssl'); };
     # returns >0 if any of the given commands is listed in $cfg{need_*}
-sub _is_hashkey($$)    { my $is=shift; return grep({lc($is) eq lc($_)} keys %{$_[0]}); }
-sub _is_member($$)     { my $is=shift; return grep({lc($is) eq lc($_)}      @{$_[0]}); }
-sub _is_do($)          { my $is=shift; return _is_member($is, \@{$cfg{'do'}}); }
-sub _is_intern($)      { my $is=shift; return _is_member($is, \@{$cfg{'cmd-intern'}}); }
-sub _is_hexdata($)     { my $is=shift; return _is_member($is, \@{$cfg{'data_hex'}});   }
-sub _is_call($)        { my $is=shift; return _is_member($is, \@{$cmd{'call'}}); }
+sub _is_hashkey($$)    { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
+sub _is_member($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
+sub _is_do($)          { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
+sub _is_intern($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'cmd-intern'}}); }
+sub _is_hexdata($)     { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});   }
+sub _is_call($)        { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
 
 
 ## definitions: check functions
 ## -------------------------------------
-sub _setvalue($){ return ($_[0] eq "") ? 'yes' : 'no (' . $_[0] . ')'; }
+sub _setvalue($){ my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
 sub _isbeast($$){
     # return given cipher if vulnerable to BEAST attack, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(SSLv3|TLSv11?)/); # SSLv2 and TLSv1.2 not vulnerable to BEAST
+    return ""      if ($ssl    !~ /(?:SSLv3|TLSv11?)/); # SSLv2 and TLSv1.2 not vulnerable to BEAST
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
     return "";
 } # _isbeast
@@ -2413,15 +2419,15 @@ sub _isbreach($){
     #      *  works against any cipher suite
     #      *  can be executed in under a minute
 } # _isbreach
-sub _iscrime($) { return ($_[0] =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $_[0] . " "; }
+sub _iscrime($) { my $val=shift; return ($val =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $val . " "; }
     # return compression if available, empty string otherwise
-sub _islucky($) { return ($_[0] =~ /$cfg{'regex'}->{'Lucky13'}/) ? $_[0] : ""; }
+sub _islucky($) { my $val=shift; return ($val =~ /$cfg{'regex'}->{'Lucky13'}/) ? $val : ""; }
     # return given cipher if vulnerable to Lucky 13 attack, empty string otherwise
 sub _istime($)  { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
 sub _isfreak($$){
     # return given cipher if vulnerable to FREAK attack, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(SSLv3)/); # TODO: probaly only SSLv3 is vulnerable
+    return ""      if ($ssl    !~ /(?:SSLv3)/); # TODO: probaly only SSLv3 is vulnerable
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
     return "";
 } # _isfreak
@@ -2437,9 +2443,9 @@ sub _issloth($$) {
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
     return "";
 } # _issloth
-sub _ispfs($$)  { return ("$_[0]-$_[1]" =~ /$cfg{'regex'}->{'PFS'}/)   ? ""  : $_[1]; }
+sub _ispfs($$)  { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  ""  : $c; }
     # return given cipher if it does not support forward secret connections (PFS)
-sub _isrc4($)   { return ($_[0] =~ /$cfg{'regex'}->{'RC4'}/)  ? $_[0] . " "  : ""; }
+sub _isrc4($)   { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
     # return given cipher if it is RC4
 sub _istr02102($$) {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
@@ -2537,8 +2543,7 @@ sub _isbleed($$) {
     my $cl  = undef; # TODO: =$Net::SSLinfo::socket;
     my $ret = "";       # empty string as required in %checks
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
-    local $\;
-    undef $\;           # take care, must not be \n !!
+    local $\ = undef;   # take care, must not be \n !!
 
         # open our own connection and close it at end
 # TODO: does not work with socket from SSLinfo.pm
@@ -2887,17 +2892,15 @@ sub _get_default($$$) {
 
 sub ciphers_get($$$$) {
     #? test target if given ciphers are accepted, returns array of accepted ciphers
-    my $ssl     = shift;
-    my $host    = shift;
-    my $port    = shift;
-    my @ciphers = @{$_[0]};# ciphers to be checked
+    my ($ssl, $host, $port, $arr) = @_;
+    my @ciphers = @{$arr};# ciphers to be checked
 
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();      # return accepted ciphers
     foreach my $c (@ciphers) {
     #    _v_print("check cipher: $ssl:$c");
         my $supported = "";
-#        if (1 == _is_call('cipher-socket')) {
+#        if (1 == _is_call('cipher-socket'))
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'use_md5cipher'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
@@ -3847,7 +3850,7 @@ sub checkev($$) {
         }
     }
     $oid = '2.5.4.9'; # may be missing
-    if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
+    if ($subject !~ m#/$cfg{'regex'}->{$oid}=(?:[^/\n]*)#) {
         $txt = _subst($text{'missing'}, $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
         _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing+\n");
@@ -4068,7 +4071,7 @@ sub checkhttp($$) {
     return if ($cfg{'done'}->{'checkhttp'} > 1);
 
     # collect informations
-    my $no = " "; # use a variable to make assignments below more human readable
+    my $notxt = " "; # use a variable to make assignments below more human readable
     my $http_sts      = $data{'http_sts'}     ->{val}($host) || ""; # value may be undefined, avoid perl error
     my $http_location = $data{'http_location'}->{val}($host) || ""; #  "
     my $hsts_maxage   = $data{'hsts_maxage'}  ->{val}($host) || -1;
@@ -4078,15 +4081,15 @@ sub checkhttp($$) {
     $checks{'hsts_is301'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
     $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
-    $checks{'http_https'}->{val} = $no if ($http_location eq "");  # HTTP Location is there
+    $checks{'http_https'}->{val} = $notxt if ($http_location eq "");  # HTTP Location is there
     $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne ""); 
     if ($data{'https_sts'}->{val}($host) ne "") {
         $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host) if ($data{'https_location'}->{val}($host) ne "");
         $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host) if ($data{'https_refresh'} ->{val}($host) ne "");
         $checks{'hsts_ip'}      ->{val} = $host        if ($host =~ m/\d+\.\d+\.\d+\.\d+/); # RFC6797 requirement
         $checks{'hsts_fqdn'}    ->{val} = $hsts_fqdn   if ($http_location !~ m|^https://$host|i);
-        $checks{'hsts_sts'}     ->{val} = $no          if ($data{'https_sts'}  ->{val}($host) eq "");
-        $checks{'sts_subdom'}   ->{val} = $no          if ($data{'hsts_subdom'}->{val}($host) eq "");
+        $checks{'hsts_sts'}     ->{val} = $notxt       if ($data{'https_sts'}  ->{val}($host) eq "");
+        $checks{'sts_subdom'}   ->{val} = $notxt       if ($data{'hsts_subdom'}->{val}($host) eq "");
         $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
@@ -4100,18 +4103,18 @@ sub checkhttp($$) {
     }
 # TODO: invalid certs are not allowed for HSTS
     $checks{'hsts_fqdn'}->{val} = "<<N/A>>" if ($http_location eq "");   # useless if no redirect
-    $checks{'pkp_pins'} ->{val} = $no if ($data{'https_pins'}->{val}($host) eq "");
+    $checks{'pkp_pins'} ->{val} = $notxt if ($data{'https_pins'}->{val}($host) eq "");
 # TODO: pins= ==> fingerprint des Zertifikats
 
-    $no = $text{'no-STS'};
-    $no = $text{'no-http'} if ($cfg{'usehttp'} < 1);
+    $notxt = $text{'no-STS'};
+    $notxt = $text{'no-http'} if ($cfg{'usehttp'} < 1);
     # NOTE: following sequence is important!
     foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
         if ($data{'https_sts'}->{val}($host) ne "") {
             $checks{'sts_maxage'}->{score} = $checks{$key}->{score} if ($hsts_maxage < $checks{$key}->{val});
             $checks{$key}->{val}    = ($hsts_maxage < $checks{$key}->{val}) ? "" : "> ".$checks{$key}->{val};
         } else {
-            $checks{$key}->{val}    = $no;
+            $checks{$key}->{val}    = $notxt;
             $checks{$key}->{score}  = 0;
         }
     }
@@ -4570,7 +4573,9 @@ sub _is_print($$$) {
     return 0;
 } # _is_print
 
-sub _print_results($$$@) {
+## no critic qw(Subroutines::RequireArgUnpacking)
+#  NOTE: perlcritic's violation for next 2 subs are false positives
+sub _print_results($$$$@) {
     #? print all ciphers from @results if match $ssl and $yesno
     my $ssl     = shift;
     my $host    = shift;
@@ -4620,6 +4625,7 @@ sub printciphercheck($$$$$@)    {
     printfooter($legacy);
     return;
 } # printciphercheck
+## use critic
 
 sub printciphers_dh($$$) {
     #? print ciphers and DH parameter from target
@@ -4807,6 +4813,8 @@ sub printversionmismatch() {
     return;
 } # printversionmismatch
 
+## no critic qw(Subroutines::ProhibitExcessComplexity)
+#  NOTE: yes, it is high complecity, but that's the nature of printing all information
 sub printversion() {
     #? print program and module versions
     local $\ = "\n";
@@ -4884,7 +4892,7 @@ sub printversion() {
     # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
     print "    default list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
     if ($cfg{'verbose'} > 0) {
-	# these lists are for special purpose, so with --v only
+        # these lists are for special purpose, so with --v only
         print "    long list of ciphers         " . $cfg{'cipherranges'}->{'long'};
         print "    huge list of ciphers         " . $cfg{'cipherranges'}->{'huge'};
         print "    safe list of ciphers         " . $cfg{'cipherranges'}->{'safe'};
@@ -4905,8 +4913,10 @@ sub printversion() {
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
     foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello)) {
-        ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+        ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
+        #  NOTE: we need "no strict" here!
         no strict 'refs';   # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
+        ## use critic
         # we expect ::VERSION in all these modules
         ($d = $m) =~ s#::#/#g;  $d .= '.pm';   # convert string to key for %INC
         $v  = $m . "::VERSION";
@@ -4940,13 +4950,6 @@ sub printversion() {
     }
     return;
 } # printversion
-
-sub printopenssl() {
-    #? print openssl version
-    print Net::SSLinfo::do_openssl('version', '', '', '');
-    printversionmismatch();
-    return;
-} # printopenssl
 
 sub _hex_like_openssl($) {
     # convert full hex constant to format used by openssl's output
@@ -5096,10 +5099,19 @@ sub printciphers() {
 
     return;
 } # printciphers
+## use critic
+
+sub printopenssl() {
+    #? print openssl version
+    print Net::SSLinfo::do_openssl('version', '', '', '');
+    printversionmismatch();
+    return;
+} # printopenssl
 
 sub printusage_exit($) {
+    my @txt = @_;
     local $\ = "\n";
-    print STR_USAGE, @_;
+    print STR_USAGE, @txt;
     print "# most common usage:
   $me +info   your.tld
   $me +check  your.tld
@@ -5660,6 +5672,8 @@ while ($#argv >= 0) {
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
+        ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
+        #  NOTE: false positive from perlcritic, as the strings is passed to exec()
         print "# $mename  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
           ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
@@ -5831,7 +5845,7 @@ local $\ = "\n";
 use     IO::Socket::SSL 1.37;       # qw(debug2);
 use     IO::Socket::INET;
 if (_is_do('version') or ($cfg{'usemx'} > 0)) {
-    eval {require Net::DNS;};
+    eval {require Net::DNS;} or warn STR_ERROR, "'require Net::DNS' failed";
     if ($@ ne "") {
         chomp $@;
         _warn($@); _warn("--mx disabled");
@@ -6095,11 +6109,11 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
 
 ## first: all commands which do not make a connection
 ## -------------------------------------
-printciphers(),     exit 0  if (_is_do('list'));
-printciphers(),     exit 0  if (_is_do('ciphers'));
-printversion(),     exit 0  if (_is_do('version'));
-printopenssl(),     exit 0  if (_is_do('libversion'));
-printquit(),        exit 0  if (_is_do('quit'));# internal test command
+if (_is_do('list'))       { printciphers(); exit 0; }
+if (_is_do('ciphers'))    { printciphers(); exit 0; }
+if (_is_do('version'))    { printversion(); exit 0; }
+if (_is_do('libversion')) { printopenssl(); exit 0; }
+if (_is_do('quit'))       { printquit();    exit 0; } # internal test command
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
@@ -6341,9 +6355,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
         if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
-            my $err = Net::SSLinfo::errors( $host, $port);
-            if ($err !~ /^\s*$/) {
-                _v_print($err);
+            my $errtxt = Net::SSLinfo::errors($host, $port);
+            if ($errtxt !~ /^\s*$/) {
+                _v_print($errtxt);
                 _warn("Can't make a connection to $host:$port; target ignored");
                 _warn(STR_HINT ."--ignore-no-conn can be used to disables this check");
                 goto CLOSE_SSL;
