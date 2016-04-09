@@ -1,6 +1,6 @@
 #! /usr/bin/perl
+## PACKAGE {
 
-# PACKAGE {
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.125 16/04/08 15:17:09',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.126 16/04/09 18:42:32',
 };
 
 ######################################################## public documentation #
@@ -324,7 +324,7 @@ require Exporter;
     @EXPORT    = qw(
         net_sslinfo_done
         test_ssleay
-        dump
+        datadump
         do_ssl_open
         do_ssl_close
         do_openssl
@@ -784,7 +784,7 @@ $line
 
 sub _dump($$$) { return sprintf("#{ %-12s:%s%s #}\n", $_[0], $_[1], ($_[2] || "<<undefined>>")); }
     # my ($label, $separator, $value) = @_;
-sub dump() {
+sub datadump() {
     #? return internal data structure
     my $data = '';
     if ($Net::SSLinfo::use_sclient > 1) {
@@ -805,7 +805,7 @@ sub dump() {
     }
     $data .= _dump('errors',  "\n", join("\n ** ", @{$_SSLinfo{'errors'}}));
     return $data;
-} # dump
+} # datadump
 
 ########################################################## internal functions #
 
@@ -1687,7 +1687,7 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'tlsextensions'} =~ s/\s+len=\d+//g;      # ...
 
         _trace("do_ssl_open() with openssl done.");
-        print Net::SSLinfo::dump() if ($trace > 0);
+        print Net::SSLinfo::datadump() if ($trace > 0);
         goto finished;
     } # TRY
 
@@ -1931,10 +1931,16 @@ sub cipher_local {
     return (wantarray) ? split(/[:\s]+/, $list) : $list;
 } # cipher_local
 
+## no critic qw(Subroutines::RequireArgUnpacking)
 sub ciphers {
     return cipher_list( @_) if ($Net::SSLinfo::use_openssl == 0);
     return cipher_local(@_);
 } # ciphers
+
+# "critic Subroutines::RequireArgUnpacking" disabled from hereon for a couple
+# of subs because using explicit variable declarations in each sub would make
+# (human) reading more difficult; it is also ensured that the called function
+# _SSLinfo_get()  does not modify the parameters.
 
 =pod
 
@@ -1986,7 +1992,7 @@ Get version from certificate.
 Test availability and print information about Net::SSLeay:
 Example: C<perl -MNet::SSLinfo -le 'print Net::SSLinfo::test_ssleay();'>
 
-=head2 dump( )
+=head2 datadump( )
 
 Print all available (by Net::SSLinfo) data.
 
@@ -2448,14 +2454,14 @@ L<Net::SSLeay(1)>
 =cut
 
 sub net_sslinfo_done() {};      # dummy to check successful include
-# PACKAGE }
+## PACKAGE }
 
 unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
     if ($#ARGV >= 0) {
         local $\="\n";
         do_ssl_open( shift, 443, '');
-        print Net::SSLinfo::dump();
+        print Net::SSLinfo::datadump();
         exit 0;
     }
     if (eval{require POD::Perldoc;}) {
