@@ -162,6 +162,7 @@ INSTALLATION
                 All dependencies for these modules must also be installed.
 
 EoT
+return;
 } # printhelp
 
 if (! eval("require 'o-saft-dbx.pm';")) {
@@ -189,7 +190,7 @@ push(@argv, @ARGV);
 
 # read file with source for trace and verbose, if any
 # -------------------------------------
-my @dbx = grep(/--(?:trace|v$|yeast)/, @argv);  # option can be in .rc-file, hence @argv
+my @dbx = grep {/--(?:trace|v$|yeast)/} @argv;  # option can be in .rc-file, hence @argv
 if ($#dbx >= 0) {
     $arg =  "./o-saft-dbx.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
@@ -203,7 +204,7 @@ if ($#dbx >= 0) {
         #       we don't fix that! Workaround: install file in ./
     }
     push(@dbxfile, $arg);
-    printf("=== reading trace file ===\n") if(grep(/(:?--no.?header)/i, @ARGV) <= 0);
+    printf("=== reading trace file ===\n") if(grep {/(:?--no.?header)/i} @ARGV <= 0);
     require $arg;   # `our' variables are available there
 }
 
@@ -571,7 +572,7 @@ if ($cfg{'usemx'}) { # get mx-records
             ($mx_domain, $port) = split(":", $mx_domain); 
         }
         _trace3 (" get MX-Records for '$mx_domain'\n");
-        my $dns = new Net::DNS::Resolver;
+        my $dns = Net::DNS::Resolver->new;
         my $mx = $dns->query($mx_domain, 'MX');
         my $sep =", ";
 
