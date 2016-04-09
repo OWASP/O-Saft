@@ -10,6 +10,7 @@
 #?      --h     - na sowas
 #?      --n     - nix machen, nur zeigen
 #?      --      - alle weiteren Argumenta an perlcritic übergeben
+#?      --v     - alias für:  --verbose 10
 #?      <mode>
 #?          only     - perlcritic mit  --verbose 10 --single-policy  aufrufen
 #?        --only     - Alias für  only
@@ -60,7 +61,7 @@
 #?      dieses Argument immer als Dateiname und nie als Policy-Name benutzt.
 #?
 #? VERSION
-#?      @(#) critic.sh 1.1 16/04/09 18:25:45
+#?      @(#) critic.sh 1.2 16/04/09 20:35:16
 #?
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -80,6 +81,7 @@ while [ $# -gt 0 ]; do
 		exit 0
 		;;
 	 '-n' | '--n') try=echo; ;;
+	 '-v' | '--v') opts="--verbose 10 $opts"; ;;
 	 '--only'     | 'only')
 		mode="--single-policy"
 		;;
