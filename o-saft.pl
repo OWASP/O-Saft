@@ -40,7 +40,7 @@
 use strict;
 
 use constant {
-    SID         => "@(#) yeast.pl 1.451 16/04/08 01:58:22",
+    SID         => "@(#) yeast.pl 1.452 16/04/09 18:34:13",
     STR_VERSION => "16.04.07",          # <== our official version number
 };
 sub _y_TIME($) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6361,7 +6361,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("+dump");
         if ($cfg{'trace'} > 1) {   # requires: --v --trace --trace
             _trace(' ############################################################ %SSLinfo');
-            print Net::SSLinfo::dump();
+            print Net::SSLinfo::datadump();
         }
         printdump($legacy, $host, $port);
     }
