@@ -1842,9 +1842,9 @@ sub openTcpSSLconnection ($$) {
         eval  {
             local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
             alarm($alarmTimeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
-            socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or die "Can't create a socket \'$!\' -> target $host:$port ignored ";
-            setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
-            setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
+            socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
+            setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
+            setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
             alarm (0);             #clear alarm
         }; # Do NOT forget the ;
         next if ($@); # Error -> next retry
@@ -1857,9 +1857,9 @@ sub openTcpSSLconnection ($$) {
                 $connect2ip = inet_aton($Net::SSLhello::proxyhost);
                 if (!defined ($connect2ip) ) {
                     $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
-                    die "Can't get the IP-Address of the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+                    croak "Can't get the IP-Address of the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
                 }
-                connect($socket, pack_sockaddr_in($Net::SSLhello::proxyport, $connect2ip) ) or die "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+                connect($socket, pack_sockaddr_in($Net::SSLhello::proxyport, $connect2ip) ) or croak "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
                 # TBD will be: TBD
                 # $sock = new IO::Socket::INET(
                 #   Proto     => "tcp",
@@ -1881,7 +1881,7 @@ sub openTcpSSLconnection ($$) {
                 _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
                 local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                 alarm($alarmTimeout); # set Alarm for Connect
-                defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
+                defined(send($socket, $proxyConnect, 0)) || croak "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
                 alarm (0);
             }; # Do NOT forget the ;
             if ($@) { # no Connect
@@ -1939,9 +1939,9 @@ sub openTcpSSLconnection ($$) {
                 if (!defined ($connect2ip) ) {
                     $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
                      $@ = "Can't get the IP-Address of $host -> target $host:$port ignored";
-                     die "Can't get the IP-Address of $host -> target $host:$port ignored";
+                     croak "Can't get the IP-Address of $host -> target $host:$port ignored";
                 }
-                connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or  die  "Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ";
+                connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak "Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ";
                 alarm (0);
             }; # Do NOT forget the ;
             if ($@) { # no Connect
