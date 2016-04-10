@@ -25,7 +25,7 @@
 #?           "our" variable XXXX redeclared at ...
 #?
 #? VERSION
-#?       @(#) gen_standalone.sh 1.2 16/04/03 23:59:47
+#?       @(#) gen_standalone.sh 1.3 16/04/10 02:54:52
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -59,7 +59,7 @@ o_saft="\
 "
 
 for f in $o_saft ; do
-	\egrep -q 'SID.*1.2' $f \
+	\egrep -q 'SID.*1.3' $f \
 	  && \echo "**ERROR: $f wird bearbeitet; exit" \
 	  && exit 2
 done
@@ -96,7 +96,7 @@ EoT
 
   for f in $o_saft ; do
 	\echo "# $f {"
-	$try \perl -ne 'print if m(# PACKAGE {)..m(# PACKAGE })' $f
+	$try \perl -ne 'print if m(## PACKAGE {)..m(## PACKAGE })' $f
 	\echo "# $f }"
 	\echo ""
   done
