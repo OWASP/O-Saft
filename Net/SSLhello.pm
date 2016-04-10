@@ -1278,7 +1278,6 @@ sub checkSSLciphers ($$$@) {
 #    my $port  = shift || 443;
 #    my $ssl   = shift || ""; # SSLv2
 #    my (@cipher_str_array) = @_ || ();
-    my @cipher_spec_array;
     my $cipher_spec="";                     # raw data with all hex values, SSLv2: 3 bytes, SSLv3 and later: 2 bytes
     my $acceptedCipher="";
     my @cipherSpecArray = ();               # temporary Array for all ciphers to be tested in the next _doCheckSSLciphers
@@ -1286,11 +1285,10 @@ sub checkSSLciphers ($$$@) {
     my @acceptedCipherSortedArray = ();     # all ciphers accepted by the server with server order
     my $arrayLen=0;
     my $i=0;
-    my $anzahl = 0;
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
     my $maxCiphers = $Net::SSLhello::max_ciphers;
     local $\ = ""; # no auto '\n' at the end of the line
-    local $@; # Error handling uses $@ in this and all sub function (TBD: new error handling)
+    local $@ = ""; # Error handling uses $@ in this and all sub function (TBD: new error handling)
 
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
@@ -1840,7 +1838,7 @@ sub openTcpSSLconnection ($$) {
             sleep ($sleepSecs);
         }
         eval  {
-            local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            local $SIG{ALRM}= "Net::SSLhello::_timedOut";
             alarm($alarmTimeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
             socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
             setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
@@ -1922,7 +1920,7 @@ sub openTcpSSLconnection ($$) {
                     $@ =""; # Connection established 
                     _trace2 ("openTcpSSLconnection: Connection established to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
                 } else {
-                    unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
+                    if ($Net::SSLhello::trace == 0) { # no trace => shorten the output
                         $input =~ /^((?:.+?(?:\r?\n|$)){1,4})/; #maximal 4 lines
                         $input = _chomp_r($1);
                     }
@@ -2018,8 +2016,8 @@ sub openTcpSSLconnection ($$) {
                             close ($socket) or carp("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
                             last;
                         } else {
-                            unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                                $input =~ /^(.+?)(?:\r?\n|$)/; #maximal 1 line  of error message
+                            if ($Net::SSLhello::trace == 0) {   # no trace => shorten the output
+                                $input =~ /^(.+?)(?:\r?\n|$)/;  # maximal 1 line  of error message
                                 $input = $1;
                                 # if (($startType == x) || () ....) { $input = hexString ($input) } #
                             }
@@ -2115,8 +2113,8 @@ sub openTcpSSLconnection ($$) {
                             close ($socket) or carp("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
                             last;
                         } else {
-                            unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                               $input =~ /^(.+?)(?:\r?\n|$)/; #maximal 1 line  of error message
+                            if ($Net::SSLhello::trace == 0) {   # no trace => shorten the output
+                                $input =~ /^(.+?)(?:\r?\n|$)/;  # maximal 1 line  of error message
                                 $input = $1;
                                 # if (($startType == x) || () ....) { $input = hexString ($input) } #
                             }
@@ -2212,8 +2210,8 @@ sub openTcpSSLconnection ($$) {
                             close ($socket) or carp("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
                             last;
                         } else {
-                            unless ($Net::SSLhello::trace > 0) { # no trace => shorten the output
-                               $input =~ /^(.+?)(?:\r?\n|$)/; #maximal 1 line  of error message
+                            if ($Net::SSLhello::trace == 0) {   # no trace => shorten the output
+                                $input =~ /^(.+?)(?:\r?\n|$)/;  # maximal 1 line  of error message
                                 $input = $1;
                                 # if (($startType == x) || () ....) { $input = hexString ($input) } #
                             }
