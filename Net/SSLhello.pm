@@ -1270,7 +1270,7 @@ sub printCipherStringArray ($$$$$@) {
 
 sub checkSSLciphers ($$$@) {
     #? simulate SSL handshake to check any ciphers by the HEX value
-    #? @cipher_str_array: string representation of the cipher octet, e.g. 0x0300000A
+    #? @cipher_str_array: string representation of the cipher octet, e.g. >=SSLv3: 0x0300000Aa, SSLv2: 0x02800102
     #? if the first 2 ciphers are identical the array is sorted by priority of the server
     #
     my($host, $port, $ssl, @cipher_str_array) = @_;
@@ -1279,7 +1279,7 @@ sub checkSSLciphers ($$$@) {
 #    my $ssl   = shift || ""; # SSLv2
 #    my (@cipher_str_array) = @_ || ();
     my @cipher_spec_array;
-    my $cipher_spec="";
+    my $cipher_spec="";                     # raw data with all hex values, SSLv2: 3 bytes, SSLv3 and later: 2 bytes
     my $acceptedCipher="";
     my @cipherSpecArray = ();               # temporary Array for all ciphers to be tested in the next _doCheckSSLciphers
     my @acceptedCipherArray = ();           # all ciphers accepted by the server
@@ -1294,7 +1294,7 @@ sub checkSSLciphers ($$$@) {
 
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
-        foreach my $cipher_str (@cipher_str_array) {    
+        foreach my $cipher_str (@cipher_str_array) {                         # $cipher_str: human readable in internal repesentation ('0x0300xxxx' or '0x02yyyyyy')
             _trace_ ("\n  ")  if (($i++) %_MY_PRINT_CIPHERS_PER_LINE == 0);  #  print up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
             _trace_ (" >$cipher_str<");
         }
@@ -2070,7 +2070,7 @@ sub openTcpSSLconnection ($$) {
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n"); 
                     osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms                   
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); 
                     alarm (0);
@@ -2248,6 +2248,13 @@ sub openTcpSSLconnection ($$) {
 
 sub _doCheckSSLciphers ($$$$;$$) {
     #? simulate SSL handshake to check any ciphers by the HEX value
+    #? called by checkSSLciphers to check some ciphers by the call
+    #? if $parseAllRecords==0: solely the ServerHello is parsed to get the selected cipher from the server
+    #? if $parseAllRecords >0: All other messages are received up to ServerHelloDone:
+    #?                         Certificate:         not parsed in detail yet
+    #?                         ServerKeyExchange:   optional message, parsed (if DH, ECDH or EXPORT-RSA Ciphers are used)
+    #?                         CertificateRequest:  not parsed in detaili yet
+    #?                         ServerHelloDone:     parsed (as trigger to end this function)
     #? $cipher_spec: RAW octets according to RFC
     #
     my $host         = shift || ""; # hostname
@@ -3424,12 +3431,12 @@ sub compileAlertRecord ($$$$;$$) {
 ############################
 sub _compileClientHelloExtensions ($$$$@) {
     #? FIXME: <<description missing>>
-    my $record_version    = shift || "";
-    my $version    = shift || "";
-    my $ciphers    = shift || "";
-    my $host = shift || "";
-    my (%clientHello) = @_;
-#     my ($record_version, $version, $ciphers, $host, %clientHello) = @_;
+    my ($record_version, $version, $ciphers, $host, %clientHello) = @_;
+    #my $record_version    = shift || "";
+    #my $version    = shift || "";
+    #my $ciphers    = shift || "";
+    #my $host = shift || "";
+    #my (%clientHello) = @_;
     my $clientHello_extensions ="";
 
     # ggf auch prüfen, ob Host ein DNS-Name ist
