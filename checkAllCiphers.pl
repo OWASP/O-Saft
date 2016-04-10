@@ -32,6 +32,7 @@
 #!# "Program Code" at the end of this file if you want to improve the program.
 
 use strict;
+use warnings;
 use Carp;           #replaces warn and die
 
 my $VERSION = "16.04.10";
@@ -185,7 +186,7 @@ our @dbxcfg;    # config options and arguments
 our @dbxexe;    # executable, library, environment
 our @dbxfile;   # read files
 
-my @argv = grep(/--trace.?arg/, @ARGV);# preserve --tracearg option
+my @argv = grep {/--trace.?arg/} @ARGV;# preserve --tracearg option
 push(@argv, @ARGV);
 #dbx# _dbx "ARG: " . join(" ", @argv);
 
@@ -210,7 +211,7 @@ if ($#dbx >= 0) {
 }
 
 # initialize defaults
-my ($key,$sec,$ssl);# some temporary variables used in main
+my $ssl;            # temporary variable used in main
 my $host    = "";   # the host currently processed in main
 my $port    = 443;  # the port currently used in main
    # above host, port, legacy and verbose are just shortcuts for corresponding
@@ -373,7 +374,7 @@ while ($#argv >= 0) {
     $arg = shift @argv;
     push(@dbxarg, $arg) if (($arg !~ m/^--cfg_/) && ($arg =~ m/^[+-]/));
     push(@dbxcfg, $arg) if  ($arg =~ m/^--cfg_/);    # both aprox. match are sufficient for debugging
-    if ($arg !~ /([+]|--)(cmd|host|port|exe|lib|cipher|format|legacy|timeout|url)=/) {
+    if ($arg !~ /(?:[+]|--)(?:cmd|host|port|exe|lib|cipher|format|legacy|timeout|url)=/) {
         $arg =~ s/=+$//;                    # remove trailing = (for CGI mode)
     }
     # Simple check for option; only options with syntax  --KEY=VALUE allowed.
@@ -386,8 +387,8 @@ while ($#argv >= 0) {
     #!#--------+------------------------+-------------------------
     if ($arg =~ /^--http$/i)                            { $cfg{'usehttp'}++;     next; } # must be before --h
     if ($arg =~ /^--no[_-]?http$/i)                     { $cfg{'usehttp'}   = 0; next; }
-    if ($arg =~ /^--h(?:elp)?(?:=(.*))?$/i)             { printhelp(); exit 0;   next; } # allow --h --help --h=*
-    if ($arg =~ /^\+help=?(.*)$/i)                      { printhelp(); exit 0;   next; } # allow +help +help=*
+    if ($arg =~ /^--h(?:elp)?(?:=(.*))?$/i)             { printhelp(); exit 0;         } # allow --h --help --h=*
+    if ($arg =~ /^\+help=?(.*)$/i)                      { printhelp(); exit 0;         } # allow +help +help=*
     if ($arg =~ /^--v(erbose)?$/i)                      { $cfg{'verbose'}++;     next; }
     if ($arg =~ /^--n$/i)                               { $cfg{'try'}       = 1; next; }
     if ($arg =~ /^--trace$/i)                           { $cfg{'trace'}++;       next; }
@@ -459,7 +460,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?dns$/i)                      { $cfg{'usedns'}    = 0; next; }
     if ($arg =~ /^--dns$/i)                             { $cfg{'usedns'}    = 1; next; }
     if ($arg =~ /^--no[_-]?(?:dns[_-]?)?mx$/i)          { $cfg{'usemx'}     = 0; next; }
-    if ($arg =~ /^--(?:dns[_-]?)?mx$/i)                 { eval {require Net::DNS;}; # this command needs an additional Perl Module
+    if ($arg =~ /^--(?:dns[_-]?)?mx$/i)                 { local $@="";
+                                                          eval {require Net::DNS;};       # this command needs an additional Perl Module
                                                           unless ($@) { $cfg{'usemx'}= 1; # no error
                                                                       } else { carp ("$me: Perl Module 'NET::DNS' is not installed, opition '$arg' ignored: $@");
                                                                       }         next; }
@@ -546,21 +548,20 @@ Net::SSLhello::version();
 print "##############################################################################\n\n";
 Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
 
-$@="";
+my $protocols;
 print "Protocols to check:\n";
 # check ssl protocols
 foreach my $ssl (@{$cfg{'versions'}}) {
     if ( ($ssl =~ /DTLS/) && ($cfg{$ssl} == 1) && ($cfg{'experimental'} !=1 ) ) { # DTLS support is experimental
-        $@ .= ", " if ($@);
-        $@ .= "$ssl";
+        $protocols .= ", " if ($protocols);
+        $protocols .= "$ssl";
         next;
     }
     next if ($cfg{$ssl} != 1); #  = 0 or undefined
     print "$ssl\n"; 
     push(@{$cfg{'version'}}, $ssl);
 }
-print "Use of Protocol(s) '$@' is experimental, please use the option '--experimental' and take care.\n" if ($@);
-$@="";
+print "Use of Protocol(s) '$protocols' is experimental, please use the option '--experimental' and take care.\n" if ($protocols);
 print "\n";
 
 if ($cfg{'usemx'}) { # get mx-records
@@ -610,7 +611,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         $cfg{'host'}  = $host;
     }
     _trace("host{ " . ($host||"") . ":" . $port . "\n");
-    $? = 0;
     $cfg{'host'} = $host;
     $Net::SSLhello::starttlsDelay = $cfg{'starttlsDelay'}; #reset to original value for each host 
     foreach my $ssl (@{$cfg{'version'}}) {
