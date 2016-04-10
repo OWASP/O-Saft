@@ -40,7 +40,7 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {
-    SSLHELLO_VERSION=> '16.04.08',
+    SSLHELLO_VERSION=> '16.04.10',
     SSLHELLO        => 'O-Saft::Net::SSLhello ',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.16 16/04/10 02:57:12',
 };
@@ -1125,10 +1125,10 @@ my %SSL2_CIPHER_STRINGS = (
 #############################################################################################
 ############################################################################################
 sub version { # version of SSLhello
-    #? prints the official version number of SSLhello (yyyy-mm-dd)
+    #? prints the official version number of SSLhello (yy-mm-dd)
 
     local $\ = ""; # no auto '\n' at the end of the line
-    print "NET::SSLhello_20$VERSION\n";
+    print "NET::SSLhello_$VERSION\n";
     return;
 }
 
