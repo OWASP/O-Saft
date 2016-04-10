@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.96 16/04/10 17:14:33";
+my  $man_SID= "@(#) o-saft-man.pm 1.97 16/04/10 17:39:02";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1784,7 +1784,7 @@ OPTIONS
         All options are written in lowercase. Words written in all capital in
         the description here is text provided by the user.
 
-    General options
+    Options for help and documentation
 
       --h
 
@@ -1881,12 +1881,14 @@ OPTIONS
 
           Print documentation in format to be used for CGI.
 
-      --help=error --help=warning --help=problem
+      --help=error
+      --help=warning
+      --help=problem
 
           Show  KNOWN PROBLEMS  section with  description of known  error and
           warning messages.
 
-      --help=FAQ
+      --help=faq
 
           Show  KNOWN PROBLEMS  and  LIMITATIONS  section.
 
@@ -1897,6 +1899,12 @@ OPTIONS
       --help=todo
 
           Show known problems and bugs.
+
+      --help=program.code
+
+          For developers.
+
+    Options for all commands (general)
 
       --no-rc
 
