@@ -2314,7 +2314,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             return ("");
         }
     } else { # udp (no proxy nor STARTTLS)
-        $socket = new IO::Socket::INET(
+        $socket = IO::Socket::INET->new (
             Proto    => "udp",
             PeerAddr => "$host:$port",
             Timeout  => $Net::SSLhello::timeout,
@@ -4668,7 +4668,7 @@ sub net_sslhello_done() {};     # dummy to check successful include
 
 unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
-    if (eval("require POD::Perldoc;")) {
+    if (eval {require POD::Perldoc;}) {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
