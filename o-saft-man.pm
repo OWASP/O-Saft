@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.95 16/04/10 03:31:25";
+my  $man_SID= "@(#) o-saft-man.pm 1.96 16/04/10 17:14:33";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1331,8 +1331,17 @@ QUICKSTART
         * Get the certificate's Common Name for a bunch of servers:
           $0 +cn example.tld some.tld other.tld
 
+        * List more usage examples
+          $0 --help=examples
+
         * List all available commands:
           $0 --help=commands
+
+        * Get table of contents for complete help
+          $0 --help=toc
+
+        * Show just one section, for example SECURITY, from help
+          $0 --help=SECURITY
 
         * Start the simple GUI
           o-saft.tcl
@@ -2595,6 +2604,7 @@ OPTIONS
           * --CAfile=FILE       (openssl)       same as  --ca-file DIR
           * --ca-certificate=FILE (wget)        same as  --ca-path DIR
           * -c PATH             (ssldiagnos)    same as  --ca-path DIR
+          * --checks CMD        (TLS-Check.pl)  same as  +CMD
           * --hide_rejected_ciphers (sslyze)    same as  --disabled
           * --http_get          (ssldiagnos)    same as  --http
           * --printcert         (ssldiagnos)    same as  +ciphers
@@ -2625,6 +2635,7 @@ OPTIONS
           * -connect, -H, -u, -url, -U          ignored
           * -noSSL                              same as  --no-SSL
           * -no_SSL                             same as  --no-SSL
+          #--------------------+---------------+----------------------------#
 
         For definition of  'SSL'  see  --SSL  and  --no-SSL  above.
 
