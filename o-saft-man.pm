@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.100 16/04/10 18:56:47";
+my  $man_SID= "@(#) o-saft-man.pm 1.101 16/04/10 23:16:41";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -905,32 +905,36 @@ sub man_commands() {
     # first print general commands, manually crafted here
     # TODO needs to be computed, somehow ...
     print "\n";
+    _man_head("Command", "Description");
     print <<EoHelp;
-Commands for information about this tool
-+dump	Dumps internal data for SSL connection and target certificate.
-+exec	Internal command; should not be used directly.
-+help	Complete documentation.
-+list	Show all ciphers supported by this tool.
-+libversion	Show version of openssl.
-+quit	Show internal data and exit, used for debugging only.
-+VERSION	Just show version and exit.
-+version	Show version information for program and Perl modules.
-Commands to check SSL details
-+bsi	Various checks according BSI TR-02102-2 and TR-03116-4 compliance.
-+check	Check the SSL connection for security issues.
-+check_sni	Check for Server Name Indication (SNI) usage.
-+ev	Various checks according certificate's extended Validation (EV).
-+http	Perform HTTP checks.
-+info	Overview of most important details of the SSL connection.
-+info--v	More detailled overview.
-+quick	Quick overview of checks.
-+s_client	Dump data retrieved from  "openssl s_client ..."  call.
-+sizes	Check length, size and count of some values in the certificate.
-+sni	Check for Server Name Indication (SNI) usage.
-+sts	Various checks according STS HTTP header.
-Commands to test target's ciphers
-+cipher	Check target for ciphers (using libssl)
-+cipherraw	Check target for all possible ciphers.
+                  Commands for information about this tool
++dump             Dumps internal data for SSL connection and target certificate.
++exec             Internal command; should not be used directly.
++help             Complete documentation.
++list             Show all ciphers supported by this tool.
++libversion       Show version of openssl.
++quit             Show internal data and exit, used for debugging only.
++VERSION          Just show version and exit.
++version          Show version information for program and Perl modules.
+
+                  Commands to check SSL details
++bsi              Various checks according BSI TR-02102-2 and TR-03116-4 compliance.
++check            Check the SSL connection for security issues.
++check_sni        Check for Server Name Indication (SNI) usage.
++ev               Various checks according certificate's extended Validation (EV).
++http             Perform HTTP checks.
++info             Overview of most important details of the SSL connection.
++info--v          More detailled overview.
++quick            Quick overview of checks.
++s_client         Dump data retrieved from  "openssl s_client ..."  call.
++sizes            Check length, size and count of some values in the certificate.
++sni              Check for Server Name Indication (SNI) usage.
++sts              Various checks according STS HTTP header.
+
+                  Commands to test target's ciphers
++cipher           Check target for ciphers (using libssl)
++cipherraw        Check target for all possible ciphers.
+
 EoHelp
     my $fh;
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
@@ -942,18 +946,21 @@ EoHelp
             #    );
             # where we extract the description of the checked class from first
             # line and the command and its description from the data lines
-            if (m/^(?:my|our)\s+%(?:check_(?:[a-z0-9_]+)|data)\s*=\s*\(\s*#\s*(.*)/) {
+            if (m/^(?:my|our)\s+%(?:check_(?:[a-z0-9_]+)|data)\s*=\s*\(\s*##*\s*(.*)/) {
                 $skip = 0;
-                print "Commands to show results of checked $1\n"; # print head line, quick&dirty
+                print "\n                  Commands to show results of checked $1\n";
                 next;
             }
             $skip = 1, next if (m/^\s*\)\s*;/); # find end of data structure
             next if ($skip == 1);
             next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
-            print "+$1\t$2\n" if m/^\s+'([^']*)'.*"([^"]*)"/;
+            my $t   = "\t";
+           #   $t  .= "\t" if (length($1) < 7);
+            printf("+%-17s%s\n", $1, $2) if m/^\s+'([^']*)'.*"([^"]*)"/;
         }
         close($fh);
     }
+    print "\n";
     return;
 } # man_commands
 
