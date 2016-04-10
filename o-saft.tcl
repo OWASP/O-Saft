@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.48 Winter Edition 2015
+#?      @(#) 1.49 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -156,7 +156,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.48 16/03/07 16:12:46 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.49 16/04/10 18:05:56 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -992,11 +992,15 @@ proc create_button {parent cmd} {
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
-        if {[regexp {^(Commands|Options|General) } $txt] == 0} { continue }
+        if {[regexp {^(Commands|Options) } $txt] == 0} { continue }
+            # buttons for Commands and options only
+        if {[regexp {^Options\s*for\s*(help|compatibility) } $txt] != 0} { continue }
+            # we do not support these options in the GUI
         ## skipped general
         if {$txt eq ""}                    { continue; }
         if {[regexp {^(==|\*\*)}    $txt]} { continue; }; # header or Warning
         if {"OPTIONS" eq $txt}             { continue; }
+puts "L $txt";
         # remove noicy prefix and make first character upper case
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
         set name [str2obj $dat]
