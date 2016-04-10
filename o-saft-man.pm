@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.94 16/04/08 12:32:30";
+my  $man_SID= "@(#) o-saft-man.pm 1.95 16/04/10 03:31:25";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -99,8 +99,8 @@ if (open($fh, '<:encoding(UTF-8)', $wer)) {
 }
 local $\ = "";
 
-## definitions: more documentations as data
-## -------------------------------------
+#| definitions: more documentations as data
+#| -------------------------------------
 our %man_text = (
     # short list of used terms and acronyms, always incomplete ...
     'glossar' => {
@@ -670,8 +670,8 @@ our %man_text = (
     # TS 102 042 : http://
 ); # %man_text
 
-## definitions: internal functions
-## -------------------------------------
+#| definitions: internal functions
+#| -------------------------------------
 sub _man_dbx { my @args; print "#" . $ich . "::" . join(" ", @args, "\n") if ((grep{/^--v/} @ARGV)>0); return; }
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
@@ -815,8 +815,8 @@ sub _man_usr_value($)   {
     return $arg[1];
 } # _man_usr_value
 
-## definitions: print functions for help and information
-## -------------------------------------
+#| definitions: print functions for help and information
+#| -------------------------------------
 
 sub man_table($) {
     #? print data from hash in tabular form, $typ denotes hash
@@ -1217,8 +1217,8 @@ printhelp($ARGV[0]) unless (defined caller);
 
 1;
 
-## documentation
-## -------------------------------------
+#| documentation
+#| -------------------------------------
 # All documentation is in plain ASCII format.
 # Following notations / markups are used:
 #   TITLE
@@ -2061,7 +2061,7 @@ OPTIONS
           A more detailled description of the problem and how Net::SSLeay be-
           haves, can be found in the source of  $0 ,
           see section starting at
-              ## check for supported SSL versions
+              #| check for supported SSL versions
 
 
 # following missing on owasp.org 'cause still not fully implemented
@@ -4473,7 +4473,7 @@ HACKER's INFO
 #    Program Code
 #
 #        First of all: the main goal is to have a tool to be simple for users.
-#        It's not designed to be accademic code or simple for programmers.
+#        It's not designed to be academic code or simple for programmers.
 #
 #        Also testing for various flaws in other tools and protocols could not
 #        be done in a standarized generic way using well designed software but
@@ -4537,6 +4537,14 @@ HACKER's INFO
 #        It is not intended to have OO-code,  even perl's  OO capabilities are
 #        used when rational.
 #
+#      Code quality
+#
+#        The code is regulary analysed using "perlcritic" -a front-end command
+#        line tool to the Perl::Critic module. As decribed above, this code is
+#        not supposed to be academically correct.  Nevertheless, we follow the
+#        recommendations given by perlcritic to make the most of it.
+#        For details please see:  .perlcriticrc  and  contrib/critic.sh .
+#
 #      General
 #
 #        Exceptions are not used, there is no need for them.
@@ -4587,7 +4595,9 @@ HACKER's INFO
 #          # FIXME:      Program code known to be buggy, needs to be fixed.
 #          #!#           Comments not to be removed in compressed code.
 #          #?            Description of sub.
-#          ##            Code sections (documents program flow).
+#          #|            Code sections (documents program flow).
+#          ##            Comments used by third-party programs  (for example:
+#                        contrib/gen_standalone.sh, perlcritic).
 #          # func        name of sub behind the closing bracket of sub
 #
 #      Variables
@@ -4631,7 +4641,7 @@ HACKER's INFO
 #        Same a little bit formatted, see  +traceSUB  command.
 #
 #        Examples to get an overview of programs workflow:
-#          egrep '(^##\s|\s\susr_)' $0
+#          egrep '(^#\|\s|\s\susr_)' $0
 #
 #        Following to get perl's variables for checks:
 #          $0 +check localhost --trace-key \
@@ -4941,7 +4951,7 @@ nehcildeihcsretnu eid hcusreV mieb  dnatstne looT  meseid uz eedI eiD
 ATTRIBUTION
 
         Based on ideas (in alphabetical order) of:
-            cnark.pl, SSLAudit.pl sslscan, ssltest.pl, sslyze.py
+            cnark.pl, SSLAudit.pl sslscan, ssltest.pl, sslyze.py, testssl.sh
 
         O-Saft - OWASP SSL advanced forensic tool
             Thanks to Gregor Kuznik for this title.
@@ -4953,6 +4963,8 @@ ATTRIBUTION
         Code to check heartbleed vulnerability adapted from
             Steffen Ullrich (08. April 2014):
             https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
+
+        Colouration inspired by https://testssl.sh/ .
 
 
 VERSION
