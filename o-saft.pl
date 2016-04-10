@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.455 16/04/10 01:25:22",
+    SID         => "@(#) yeast.pl 1.456 16/04/10 03:06:35",
     STR_VERSION => "16.04.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -140,18 +140,18 @@ our $warning= 1;    # print warnings; need this variable very early
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-## definitions: forward declarations
-## -------------------------------------
+#| definitions: forward declarations
+#| -------------------------------------
 sub __SSLinfo($$$);
 sub _is_intern($);  # perl avoid: main::_is_member() called too early to check prototype
 sub _is_member($$); #   "
 
-## README if any
-## -------------------------------------
+#| README if any
+#| -------------------------------------
 if (open(my $rc, '<', "o-saft-README")) { print <$rc>; close($rc); exit 0; };
 
-## CGI
-## -------------------------------------
+#| CGI
+#| -------------------------------------
 our $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
@@ -160,8 +160,8 @@ if ($me =~/\.cgi$/) {
     $cgi = 1;
 } # CGI
 
-## definitions: debug and tracing
-## -------------------------------------
+#| definitions: debug and tracing
+#| -------------------------------------
 # functions and variables used very early in main
 our %cfg =  ('trace' => 0 ); # used in usr_pre_init(); avoid: Use of uninitialized value ...
 sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
@@ -223,8 +223,8 @@ sub _load_file($$) {
     return $err;
 } # _load_file
 
-## read RC-FILE if any
-## -------------------------------------
+#| read RC-FILE if any
+#| -------------------------------------
 _y_TIME("cfg{");
 _y_EXIT("exit=CONF0 - RC-FILE start");
 my @rc_argv = "";
@@ -256,8 +256,8 @@ push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC
 # $cfg{'RC-FILE'} = "./.$me";
 # FIXME: (10) } # see other FIXME 10 too
 
-## read DEBUG-FILE, if any (source for trace and verbose)
-## -------------------------------------
+#| read DEBUG-FILE, if any (source for trace and verbose)
+#| -------------------------------------
 my $err = "";
 my @dbx = grep{/--(?:trace|v$|yeast)/} @argv;   # may have --trace=./file
 if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
@@ -293,8 +293,8 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
     sub _trace_cmd($) {}
 }
 
-## read USER-FILE, if any (source with user-specified code)
-## -------------------------------------
+#| read USER-FILE, if any (source with user-specified code)
+#| -------------------------------------
 if ((grep{/--(?:use?r)/} @argv) > 0) { # must have any --usr option
     $err = _load_file("o-saft-usr.pm", "user file");
     if ($err ne "") {
@@ -319,8 +319,8 @@ if ((grep{/--(?:use?r)/} @argv) > 0) { # must have any --usr option
 
 usr_pre_init();
 
-## initialize defaults
-## -------------------------------------
+#| initialize defaults
+#| -------------------------------------
 #!# set defaults
 #!# -------------------------------------
 #!# To make (programmer's) life simple, we try to avoid complex data structure,
@@ -1628,8 +1628,8 @@ our %cmd = (
 $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot); # copy to %cfg
 $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot); # copy to %cfg
 
-## construct list for special commands: 'cmd-*'
-## -------------------------------------
+#| construct list for special commands: 'cmd-*'
+#| -------------------------------------
 my $old = "";
 my $rex = join("|", @{$cfg{'versions'}});   # these are data only, not commands
 foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
@@ -2104,8 +2104,8 @@ our %org = (
     'cmd-quick' => $cfg{'cmd-quick'},
 ); # %org
 
-## incorporate some environment variables
-## -------------------------------------
+#| incorporate some environment variables
+#| -------------------------------------
 $cmd{'openssl'}     = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
 $cfg{'openssl_cnf'} = $ENV{'OPENSSL_CONF'} if (defined $ENV{'OPENSSL_CONF'});
 $cfg{'openssl_fips'}= $ENV{'OPENSSL_FIPS'} if (defined $ENV{'OPENSSL_FIPS'});
@@ -2120,8 +2120,8 @@ if (defined $ENV{'LIBPATH'}) {
 _y_EXIT("exit=INIT1 - initialization end");
 usr_pre_file();
 
-## definitions: internal functions
-## -------------------------------------
+#| definitions: internal functions
+#| -------------------------------------
 sub _initchecks_score() {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
@@ -2394,8 +2394,8 @@ sub _is_call($)        { my  $is=shift;    return _is_member($is, \@{$cmd{'call'
     # returns >0 if any of the given string is listed in $cfg{*}
 
 
-## definitions: check functions
-## -------------------------------------
+#| definitions: check functions
+#| -------------------------------------
 sub _setvalue($){ my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
     # return 'yes' if given value is empty, return 'no' otherwise
 sub _isbeast($$){
@@ -4227,8 +4227,8 @@ sub scoring($$) {
     return;
 } # scoring
 
-## definitions: print functions
-## -------------------------------------
+#| definitions: print functions
+#| -------------------------------------
 
 sub _printdump($$) {
     my ($label, $value) = @_;
@@ -4766,8 +4766,8 @@ sub printchecks($$$) {
     return;
 } # printchecks
 
-## definitions: print functions for help and information
-## -------------------------------------
+#| definitions: print functions for help and information
+#| -------------------------------------
 
 sub printquit() {
     #? print internal data
@@ -5126,8 +5126,8 @@ sub printusage_exit($) {
 
 usr_pre_args();
 
-## scan options and arguments
-## -------------------------------------
+#| scan options and arguments
+#| -------------------------------------
 # All arguments are  inspected here.  We do not use any module,  like Getopt,
 # 'cause we want to support various variants of the same argument,  like case
 # sensitive or additional characters i.e.  .  -  _  to be ignored, and so on.
@@ -5800,8 +5800,8 @@ _vprintme();
 
 usr_pre_exec();
 
-## call with other libraries
-## -------------------------------------
+#| call with other libraries
+#| -------------------------------------
 _y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
 if ($cfg{'exec'} == 0) {
@@ -5838,8 +5838,8 @@ _y_TIME("inc{");
 
 local $\ = "\n";
 
-## import common and private modules
-## -------------------------------------
+#| import common and private modules
+#| -------------------------------------
 # Unfortunately `use autouse' is not possible as to much functions need to
 # be declared for that pragma then.
 use     IO::Socket::SSL 1.37;       # qw(debug2);
@@ -5871,8 +5871,8 @@ if ($err ne "") {
 }
 _y_TIME("inc}");
 
-## check for supported SSL versions
-## -------------------------------------
+#| check for supported SSL versions
+#| -------------------------------------
 _y_CMD("  check supported SSL versions ...");
 foreach my $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
@@ -5941,8 +5941,8 @@ if (! _is_do('version')) {
     _v_print("  checked SSL versions: @{$cfg{'version'}}");
 }
 
-## check if used software supports SNI properly
-## -------------------------------------
+#| check if used software supports SNI properly
+#| -------------------------------------
 if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
 $typ  = "old version of ## detected which does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled\n";
@@ -5965,8 +5965,8 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
 }
 _trace(" cfg{usesni}: $cfg{'usesni'}");
 
-## check if Net::SSLeay is usable
-## -------------------------------------
+#| check if Net::SSLeay is usable
+#| -------------------------------------
 if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
     die STR_ERROR, "Net::SSLeay not found, useless use of yet another SSL tool";
     # TODO: this is not really true, i.e. if we use openssl instead Net::SSLeay
@@ -5981,8 +5981,8 @@ if (1.49 > $Net::SSLeay::VERSION) {
 }
 } # ! +cipherraw
 
-## set additional defaults if missing
-## -------------------------------------
+#| set additional defaults if missing
+#| -------------------------------------
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
@@ -5997,8 +5997,8 @@ if ($quick == 1) {
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
 
-## add openssl-specific path for CAs
-## -------------------------------------
+#| add openssl-specific path for CAs
+#| -------------------------------------
 if ($cmd{'extopenssl'} == 1) {
     $arg = qx($cmd{'openssl'} version -d);     # get something like: OPENSSLDIR: "/usr/local/openssl"
     my $status = $?;
@@ -6033,8 +6033,8 @@ if ($cmd{'extopenssl'} == 1) {
     $arg = "";
 }
 
-## set defaults for Net::SSLinfo
-## -------------------------------------
+#| set defaults for Net::SSLinfo
+#| -------------------------------------
 {
     #$IO::Socket::SSL::DEBUG         = $cfg{'trace'} if ($cfg{'trace'} > 0);
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
@@ -6065,8 +6065,8 @@ if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http         = 0; # if only +cipher given don't use http 'cause it may cause erros
 }
 
-## set defaults for Net::SSLhello
-## -------------------------------------
+#| set defaults for Net::SSLhello
+#| -------------------------------------
 if (defined $Net::SSLhello::VERSION) {
     no warnings qw(once); # avoid: Name "Net::SSLinfo::trace" used only once: possible typo at ...
     if ($cfg{'traceME'} < 1) {
@@ -6107,8 +6107,8 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
 
 # set environment
 
-## first: all commands which do not make a connection
-## -------------------------------------
+#| first: all commands which do not make a connection
+#| -------------------------------------
 if (_is_do('list'))       { printciphers(); exit 0; }
 if (_is_do('ciphers'))    { printciphers(); exit 0; }
 if (_is_do('version'))    { printversion(); exit 0; }
@@ -6163,8 +6163,8 @@ _v_print("cipher list: @{$cfg{'ciphers'}}");
 _y_EXIT("exit=MAIN  - start");
 usr_pre_main();
 
-## main: do the work for all targets
-## -------------------------------------
+#| main: do the work for all targets
+#| -------------------------------------
 
 # defense, user-friendly programming
   # could do these checks earlier (after setting defaults), but we want
