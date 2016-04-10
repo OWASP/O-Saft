@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# PACKAGE {
+## PACKAGE {
 # Filename : SSLhello.pm
 #!#############################################################################
 #!#                    Copyright (c) Torsten Gigler 
@@ -41,7 +41,7 @@ use strict;
 use constant {
     SSLHELLO_VERSION=> '16.04.08',
     SSLHELLO        => 'O-Saft::Net::SSLhello ',
-#   SSLHELLO_SID    => '@(#) %M% %I% %E% %U%',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.16 16/04/10 02:57:12',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -4654,7 +4654,7 @@ L<IO::Socket(1)>
 =cut
 
 sub net_sslhello_done() {};     # dummy to check successful include
-# PACKAGE }
+## PACKAGE }
 
 unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
