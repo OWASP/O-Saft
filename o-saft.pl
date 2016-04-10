@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.457 16/04/10 16:33:51",
+    SID         => "@(#) yeast.pl 1.458 16/04/10 23:14:15",
     STR_VERSION => "16.04.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -513,6 +513,10 @@ foreach my $ssl (keys %prot) {
     $data{$key}->{txt} = "Target default $prot{$ssl}->{txt} cipher";
 }
 
+# NOTE: the comments prefixed with  ##  are used by third-party software,
+#       for example o-saft.tcl uses a pattern like:
+#           (?:my|our) check_(.*)=\( ## (.*)
+
 our %checks = (
     # key           =>  {val => "", txt => "label to be printed", score => 0, typ => "connection"},
     #
@@ -524,7 +528,7 @@ our %checks = (
 
 ); # %checks
 
-my %check_cert = (  # certificate data
+my %check_cert = (  ## certificate data
     # collected and checked certificate data
     #------------------+-----------------------------------------------------
     # key               label to be printed (description)
@@ -593,7 +597,7 @@ my %check_cert = (  # certificate data
     # TODO: wee need an option to specify the the local certificate storage!
 ); # %check_cert
 
-my %check_conn = (  # connection data
+my %check_conn = (  ## connection data
     # collected and checked connection data
     #------------------+-----------------------------------------------------
     'ip'            => {'txt' => "IP for given hostname "},
@@ -618,7 +622,7 @@ my %check_conn = (  # connection data
     #------------------+-----------------------------------------------------
 ); # %check_conn
 
-my %check_dest = (  # target (connection) data
+my %check_dest = (  ## target (connection) data
     # collected and checked target (connection) data
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
@@ -673,7 +677,7 @@ my %check_dest = (  # target (connection) data
     #------------------+-----------------------------------------------------
 ); # %check_dest
 
-my %check_size = (  # length and count data
+my %check_size = (  ## length and count data
     # collected and checked length and count data
     # counts and sizes are integer values, key mast have prefix (len|cnt)_
     #------------------+-----------------------------------------------------
@@ -701,7 +705,7 @@ my %check_size = (  # length and count data
 # TODO: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
 
-my %check_http = (  # HTTP vs. HTTPS data
+my %check_http = (  ## HTTP vs. HTTPS data
     # score are absolute values here, they are set to 100 if attribute is found
     # key must have prefix (hsts|sts); see $cfg{'regex'}->{'cmd-http'}
     #------------------+-----------------------------------------------------
