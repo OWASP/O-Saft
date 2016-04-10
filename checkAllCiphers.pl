@@ -165,13 +165,13 @@ EoT
 return;
 } # printhelp
 
-if (! eval("require 'o-saft-dbx.pm';")) {
+if (! eval {require 'o-saft-dbx.pm';} ) {
     # o-saft-dbx.pm may not be installed, try to find in program's directory
     push(@INC, $mepath);
     require("o-saft-dbx.pm");
 }
 
-if (! eval("require Net::SSLhello;")) {
+if (! eval {require Net::SSLhello;} ) {
     # Net::SSLhello may not be installed, try to find in program's directory
     push(@INC, $mepath);
     require Net::SSLhello;
@@ -617,7 +617,10 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         my @testing  = ();
         my $range = $cfg{'cipherrange'};            # use specified range of constants
            $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
+        ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+        #  NOTE: this eval must not use the block form because the value needs to be evaluated
         push(@testing, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
+        ## use critic
         if ($Net::SSLhello::usesni) { # usesni (--sni: 1 or --togglesni: 2) is set 
             if ( ($Net::SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
                 $Net::SSLhello::usesni = 0;
