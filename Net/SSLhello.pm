@@ -1290,6 +1290,7 @@ sub checkSSLciphers ($$$@) {
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
     my $maxCiphers = $Net::SSLhello::max_ciphers;
     local $\ = ""; # no auto '\n' at the end of the line
+    local $@; # Error handling uses $@ in this and all sub function (TBD: new error handling)
 
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
@@ -1839,7 +1840,7 @@ sub openTcpSSLconnection ($$) {
             sleep ($sleepSecs);
         }
         eval  {
-            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
             alarm($alarmTimeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
             socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or die "Can't create a socket \'$!\' -> target $host:$port ignored ";
             setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or die "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
@@ -1851,7 +1852,7 @@ sub openTcpSSLconnection ($$) {
         ######## Connection via a Proxy ########
         if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
             eval {
-                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                 alarm($alarmTimeout); # set Alarm for Connect
                 $connect2ip = inet_aton($Net::SSLhello::proxyhost);
                 if (!defined ($connect2ip) ) {
@@ -1878,7 +1879,7 @@ sub openTcpSSLconnection ($$) {
             eval {
                 $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
                 _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
-                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                 alarm($alarmTimeout); # set Alarm for Connect
                 defined(send($socket, $proxyConnect, 0)) || die  "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
                 alarm (0);
@@ -1899,7 +1900,7 @@ sub openTcpSSLconnection ($$) {
                 _trace2 ("openTcpSSLconnection ## CONNECT via Proxy: try to receive the Connected-Message from the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                 osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                 alarm($alarmTimeout);
                 recv ($socket, $input, 32767, 0); 
                 if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
@@ -1932,7 +1933,7 @@ sub openTcpSSLconnection ($$) {
             }
         } else { #### no Proxy ####
             eval {
-                $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                 alarm($alarmTimeout); # set Alarm for Connect
                 $connect2ip = inet_aton($host);
                 if (!defined ($connect2ip) ) {
@@ -2042,7 +2043,7 @@ sub openTcpSSLconnection ($$) {
             if ($starttls_matrix[$starttlsType][2]) { 
                 eval {
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): send $starttls_matrix[$starttlsType][0] Message: >"._chomp_r($starttls_matrix[$starttlsType][2])."<\n");
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($alarmTimeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][2], 0)) || die  "Could *NOT* send $starttls_matrix[$starttlsType][0] message '$starttls_matrix[$starttlsType][2]' to $host:$port; target ignored\n";
                     alarm (0);
@@ -2139,7 +2140,7 @@ sub openTcpSSLconnection ($$) {
             if ($starttls_matrix[$starttlsType][4]) { 
                 eval {
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): $starttls_matrix[$starttlsType][0] Do STARTTLS Message: >"._chomp_r($starttls_matrix[$starttlsType][4])."<\n");
-                    $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($Net::SSLhello::timeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][4], 0)) || die "Could *NOT* send a STARTTLS message to $host:$port; target ignored\n";
                     alarm (0);
@@ -2338,7 +2339,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         _trace4 ("_doCheckSSLciphers: sending Client_Hello\n          >".hexCodedString ($clientHello,"           ")."< (".length($clientHello)." Bytes)\n\n");
 
         eval {
-            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
             alarm($alarmTimeout); # set Alarm for Connect
             defined(send($socket, $clientHello, 0)) || die "Could *NOT* send ClientHello to $host:$port; $! -> target ignored\n";
             alarm (0);
@@ -2437,7 +2438,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     } # end while
     if ($isUdp) { #reset DTLS connection using an Alert Record 
         eval {
-            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
             my $level = 2; #fatal
             my $description = 90; #### selected Alert 90: user_canceled [RFC5246]
             alarm($alarmTimeout); # set Alarm for Connect
@@ -2464,7 +2465,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     _trace4 ("_doCheckSSLciphers: sending Client_Hello\n          >".hexCodedString ($clientHello,"           ")."< (".length($clientHello)." Bytes)\n\n");
 
     eval {
-        $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+        local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
         alarm($alarmTimeout); # set Alarm for Connect
         defined(send($socket, $clientHello, 0)) || die "Could *NOT* send ClientHello to $host:$port; $! -> target ignored\n";
         alarm (0);
@@ -2493,7 +2494,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         }
         eval { # check this for timeout, protect it against an unexpected Exit of the Program
             #Set alarm and timeout 
-            $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+            local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
             alarm($alarmTimeout);
             recv ($socket, $input2, 32767, 0); 
             alarm (0); #clear alarm 
@@ -2522,7 +2523,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                     $pduLen=0;
                     eval { # check this for timeout, protect it against an unexpected Exit of the Program
                         #Set alarm and timeout 
-                        $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                        local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                         alarm($alarmTimeout);
                         defined(send($socket, $clientHello, 0)) || die "**WARNING: _doCheckSSLciphers: Could *NOT* send ClientHello to $host:$port (2 =retry); $! -> target ignored\n";
                         alarm (0);   # race condition protection 
@@ -2650,7 +2651,7 @@ sub _readRecord ($$;$$$) {
         $@ ="";
         eval { # check this for timeout, protect it against an unexpected Exit of the Program
             #Set alarm and timeout 
-            $SIG{ALRM}= "Net::SSLhello::_timedOut";
+            local $SIG{ALRM}= "Net::SSLhello::_timedOut";
             alarm($alarmTimeout);
             # Opimized with reference to 'https://github.com/noxxi/p5-ssl-tools/blob/master/check-ssl-heartbleed.pl'
             $success = select($rout = $rin,undef,undef,$Net::SSLhello::timeout); 
@@ -2674,7 +2675,7 @@ sub _readRecord ($$;$$$) {
         if (vec($rout, fileno($socket),1)) { # got data
             eval { # check this for timeout, protect it against an unexpected Exit of the Program
                 #Set alarm and timeout 
-                $SIG{ALRM}= "Net::SSLhello::_timedOut";
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);
                 @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed)
                 _trace4 ("_readRecord can read (1): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
@@ -2880,7 +2881,7 @@ sub _readText {
         $@ ="";
         eval { # check this for timeout, protect it against an unexpected Exit of the Program
             #Set alarm and timeout 
-            $SIG{ALRM}= "Net::SSLhello::_timedOut";
+            local $SIG{ALRM}= "Net::SSLhello::_timedOut";
             alarm($alarmTimeout);
             # Opimized with reference to 'https://github.com/noxxi/p5-ssl-tools/blob/master/check-ssl-heartbleed.pl'
             if ( ! select($rout = $rin,undef,undef,$Net::SSLhello::timeout) ) { # Nor data NEITHER special event => Timeout
@@ -2899,7 +2900,7 @@ sub _readText {
         if (vec($rout, fileno($socket),1)) { # got data
             eval { # check this for timeout, protect it against an unexpected Exit of the Program
                 #Set alarm and timeout 
-                $SIG{ALRM}= "Net::SSLhello::_timedOut";
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);
                 ## read only up to 5 Bytes in the first round, then up to the expected pduLen
                 recv($socket, $input, $MAXLEN - length($input), length($input) );  # EOF or other Error while reading Data
