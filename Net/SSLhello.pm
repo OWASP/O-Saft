@@ -334,7 +334,7 @@ sub _error;
 #sub _trace4($){ print "# Net::SSLhello::" . join(" ", @_) if ($Net::SSLhello::trace >3); }
 #sub _trace4_  { _trace4(@_); }
 
-sub _y_ts      { if ($main::cfg{'traceTIME'} <= 0)  { return ""; }            return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]); return }
+sub _y_ts      { if ($main::cfg{'traceTIME'} <= 0)  { return ""; }            return sprintf("[%02s:%02s:%02s] ", (localtime)[2,1,0]) }
 
 sub _trace($)  { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::" . $messages[0]                 if ($main::cfg{'trace'} > 0); return }
 sub _trace0($) { my @messages = @_; local $\ = ""; print "#" . _y_ts() . SSLHELLO . "::"                                if ($main::cfg{'trace'} > 0); return }
@@ -1140,7 +1140,7 @@ sub printParameters {
     print ("#SSLHello:                 retry=$Net::SSLhello::retry\n")           if (defined($Net::SSLhello::retry));
     print ("#SSLHello:               timeout=$Net::SSLhello::timeout\n")         if (defined($Net::SSLhello::timeout));
     print ("#SSLHello:                 trace=$Net::SSLhello::trace\n")           if (defined($Net::SSLhello::trace));
-    print ("#SSLHello:             traceTIME=$main::traceTIME\n")                if (defined($main::traceTIME));
+    print ("#SSLHello:             traceTIME=$Net::SSLhello::traceTIME\n")       if (defined($Net::SSLhello::traceTIME));
     print ("#SSLHello:              usereneg=$Net::SSLhello::usereneg\n")        if (defined($Net::SSLhello::usereneg));
     print ("#SSLHello:          double_reneg=$Net::SSLhello::double_reneg\n")    if (defined($Net::SSLhello::double_reneg));
     print ("#SSLHello:                usesni=$Net::SSLhello::usesni\n")          if (defined($Net::SSLhello::usesni));
