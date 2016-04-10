@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.98 16/04/10 17:52:16";
+my  $man_SID= "@(#) o-saft-man.pm 1.99 16/04/10 18:53:23";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -40,6 +40,8 @@ our $version= "$man_SID";               # version of myself
 my  $skip   = 1;
 our $egg    = "";
 our @DATA;
+my  $cfg_header = 0;                   # we may be called from within parents BEGIN, hence no %cfg available
+    $cfg_header = 1 if ((grep{/^--header/} @ARGV)>0);
 my  $fh;
 if (open($fh, '<:encoding(UTF-8)', $wer)) {
     # If this module is used in parent's BEGIN{} section, we don't have any
@@ -672,10 +674,11 @@ our %man_text = (
 
 #| definitions: internal functions
 #| -------------------------------------
-sub _man_dbx { my @args; print "#" . $ich . "::" . join(" ", @args, "\n") if ((grep{/^--v/} @ARGV)>0); return; }
+sub _man_dbx(@) { my @txt=@_; print "#" . $ich . " CMD: " . join(" ", @txt, "\n") if ((grep{/^--v/} @ARGV)>0); return; } # similar to _y_CMD
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
+
 sub _man_http_head(){
     return if ((grep{/--cgi/} @ARGV) <= 0);
     # checking @ARGV for --cgi is ok, as this option is for simulating
@@ -686,7 +689,9 @@ sub _man_http_head(){
     print "\r\n";
     return;
 }
+
 sub _man_html_head(){
+    _man_dbx("_man_html_head() ...");
     print << "EoHTML";
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
@@ -715,6 +720,7 @@ EoHTML
     return;
 }
 sub _man_html_foot(){
+    _man_dbx("_man_html_foot() ...");
     print << "EoHTML";
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar ><button value="" />Download (stable)</button></a><br>
@@ -785,7 +791,8 @@ sub _man_html($$) {
 
 sub _man_head(@) {
     my @args = @_;
-    return if ($cfg{'out_header'} < 1);
+    _man_dbx("_man_head(..) ...");
+    return if ($cfg_header < 1);
     printf("=%14s | %s\n", @args); printf("=%s+%s\n", '-'x15, '-'x60);
     return;
 }
@@ -880,7 +887,7 @@ sub man_table($) {
             $txt =~ s/(\t)/\\t/g;
             _man_cfg($typ, $key, $sep, $txt);
         }
-        return if ($cfg{'out_header'} < 1);
+        return if ($cfg_header < 1);
         print "
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
 = The string  @@  inside texts is used as placeholder.
@@ -897,6 +904,7 @@ sub man_commands() {
     _man_dbx("man_commands($parent) ...");
     # first print general commands, manually crafted here
     # TODO needs to be computed, somehow ...
+    print "\n";
     print <<EoHelp;
 Commands for information about this tool
 +dump	Dumps internal data for SSL connection and target certificate.
@@ -952,7 +960,7 @@ EoHelp
 sub man_html() {
     #? print complete HTML page for o-saft.pl --help=gen-html
     #? recommended usage:   $0 --no-warning --no-header --help=gen-html
-    _man_dbx("man_html ...");
+    _man_dbx("man_html() ...");
     _man_http_head();
     _man_html_head();
     _man_html('NAME', 'TODO');
@@ -964,7 +972,7 @@ sub man_cgi() {
     #? print complete HTML page for o-saft.pl used as CGI
     #? recommended usage:   $0 --no-warning --no-header --help=gen-cgi
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
-    _man_dbx("man_cgi ...");
+    _man_dbx("man_cgi() ...");
     my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
     _man_http_head();
     _man_html_head();
@@ -1034,7 +1042,7 @@ sub man_wiki($) {
         # Up to VERSION 15.12.15 list items * and ** where printed without
         # leading : (colon). Some versions of mediawiki did not support :*
         # so we can switch this behavior now.
-    _man_dbx("man_wiki ...");
+    _man_dbx("man_wiki($mode) ...");
     my $key = "";
     # 1. generate wiki page header
     print "
@@ -1094,6 +1102,7 @@ Content of this wiki page generated with:
 
 sub man_toc() {
     #? print help table of content
+    _man_dbx("man_toc() ..");
     foreach my $txt (grep{/^=head. /} @DATA) {
         next if ($txt !~ m/^=head/);
         next if ($txt =~ m/^=head. *END/);  # skip last line
