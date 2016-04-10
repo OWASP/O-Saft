@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.99 16/04/10 18:53:23";
+my  $man_SID= "@(#) o-saft-man.pm 1.100 16/04/10 18:56:47";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -674,7 +674,7 @@ our %man_text = (
 
 #| definitions: internal functions
 #| -------------------------------------
-sub _man_dbx(@) { my @txt=@_; print "#" . $ich . " CMD: " . join(" ", @txt, "\n") if ((grep{/^--v/} @ARGV)>0); return; } # similar to _y_CMD
+sub _man_dbx(@) { my @txt=@_; print "#" . $ich . " CMD: " . join(" ", @txt, "\n") if ((grep{/^--(?:v|trace.?CMD)/i} @ARGV)>0); return; } # similar to _y_CMD
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
