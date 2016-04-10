@@ -394,7 +394,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--trace([_-]?cmd)$/i)                 { $cfg{'traceCMD'}++;    next; } # ..
     if ($arg =~ /^--trace(@|[_-]?key)$/i)               { $cfg{'traceKEY'}++;    next; } # ..
     if ($arg =~ /^--trace=(\d+)$/i)                     { $cfg{'trace'}    = $1; next; }
-    if ($arg =~ /^--trace([_-]?time)$/i)                { $cfg{'traceTIME'}++;   next; } # Timestamp on
+    if ($arg =~ /^--trace([_-]?time)$/i)                { $cfg{'traceTIME'}++;   $cfg{'trace'} = $cfg{'trace'}||1; next; } # Timestamp on; trace on if it was off
     if ($arg =~ /^--?p(?:ort)?=(\d+)$/i)                { $cfg{'port'}     = $1; next; }
     if ($arg =~ /^--?h(?:ost)?=(.+)$/i)                 { push(@{$cfg{'hosts'}}, $1 . ":" . ($cfg{'port'}||443)); next; }     
     # proxy options
@@ -508,6 +508,7 @@ while ($#argv >= 0) {
 {
     no warnings qw(once); # avoid: Name "Net::SSLhello::trace" used only once: possible typo at ...
     $Net::SSLhello::trace           = $cfg{'trace'} if ($cfg{'trace'} > 0);
+    $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
     $Net::SSLhello::usesni          = $cfg{'usesni'};
     $Net::SSLhello::use_sni_name    = $cfg{'use_sni_name'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
