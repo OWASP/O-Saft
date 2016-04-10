@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.456 16/04/10 03:06:35",
+    SID         => "@(#) yeast.pl 1.457 16/04/10 16:33:51",
     STR_VERSION => "16.04.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5184,6 +5184,7 @@ while ($#argv >= 0) {
            # our internal hashes %check etc. where case sensitive
            # we don't want to force users to rewrite their existing .o-saft.pl
            # hence we simply convert anything to lower case
+        if ($typ eq 'DO')       { push(@{$cfg{'do'}}, $arg);    $typ = 'HOST'; } # treat as command,
         if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLCNF')   { $cfg{'openssl_cnf'}   = $arg; $typ = 'HOST'; }
@@ -5401,7 +5402,7 @@ while ($#argv >= 0) {
     #!#           option to check        what to do                  comment
     #!#--------+------------------------+---------------------------+----------
     # options for trace and debug
-    if ($arg =~ /^--v(erbose)?$/)       { $cfg{'verbose'}++;        }
+    if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        }
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
     if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
@@ -5444,12 +5445,13 @@ while ($#argv >= 0) {
     if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # openssl, sets ciphers-V, see below
     if ($arg eq  '--V')                 { $cfg{'opt-V'}     = 1;    } # for lazy people, not documented
     # options form other programs which we treat as command; see Options vs. Commands also
+    if ($arg =~ /^--checks?$/)          { $typ = 'DO';              } # tls-check.pl
     if ($arg eq  '--list')              { $arg = '+list';           } # no next!
     if ($arg eq  '--chain')             { $arg = '+chain';          } # as these
     if ($arg eq  '--default')           { $arg = '+default';        } # should
     if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';    } # become
-    if ($arg =~ /^--resum(ption)?$/)    { $arg = '+resumption';     } # commands
-    if ($arg =~ /^--reneg(otiation)?/)  { $arg = '+renegotiation';  } # ..
+    if ($arg =~ /^--resum(?:ption)?$/)  { $arg = '+resumption';     } # commands
+    if ($arg =~ /^--reneg(?:otiation)?/){ $arg = '+renegotiation';  } # ..
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';           } # ..
     if ($arg eq  '-i')                  { $arg = '+issuer';         } # ssl-cert-check
@@ -5598,9 +5600,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^-connect$/)           {}
     if ($arg eq  '--insecure')          {}
     if ($arg =~ /^--use?r$/)            {}
-    if ($arg =~ /^--(ciscospeshul|nocolor|nopct|strictpcigrade|UDP)$/)    {} # ssldiagnos.exe
+    if ($arg =~ /^--(?:ciscospeshul|nocolor|nopct|strictpcigrade|UDP)$/)  {} # ssldiagnos.exe
     if ($arg =~ /^--server(cert|certkey|certpass|cipher|protocol|mode)$/) {} #  "
-    if ($arg =~ /^-(H|r|s|t|url|u|U|x)$/){}
+    if ($arg =~ /^-(?:H|r|s|t|url|u|U|x)$/) {}
                 # -s HOST   # ssl-cert-check: -s ignored hence HOST parsed as expected
                 # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
     #} --------+------------------------+---------------------------+----------
@@ -5637,20 +5639,20 @@ while ($#argv >= 0) {
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias
     if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; TODO until check is improved (6/2015)
     if ($arg =~ /^\+modulus_exponent_size/)         { $arg = '+modulus_exp_size'; } # alias
-    if ($arg =~ /^\+pub(lic)?_enc(ryption)?/)       { $arg = '+pub_encryption';} # alias
-    if ($arg =~ /^\+pubkey_enc(ryption)?/)          { $arg = '+pub_encryption';} # alias
+    if ($arg =~ /^\+pub(lic)?_enc(?:ryption)?/)     { $arg = '+pub_encryption';} # alias
+    if ($arg =~ /^\+pubkey_enc(?:ryption)?/)        { $arg = '+pub_encryption';} # alias
     if ($arg =~ /^\+public_key_encryption/)         { $arg = '+pub_encryption';} # alias
-    if ($arg =~ /^\+pub(lic)?_enc(ryption)?_known/) { $arg = '+pub_enc_known'; } # alias
-    if ($arg =~ /^\+pubkey_enc(ryption)?_known/)    { $arg = '+pub_enc_known'; } # alias
-    if ($arg =~ /^\+sig(key)?_enc(ryption)?/)       { $arg = '+sig_encryption';} # alias
-    if ($arg =~ /^\+sig(key)?_enc(ryption)?_known/) { $arg = '+sig_enc_known'; } # alias
-    if ($arg =~ /^\+server[_-]?(temp)?[_-]?key/)    { $arg = '+dh_parameter';  } # alias
+    if ($arg =~ /^\+pub(lic)?_enc(?:ryption)?_known/){$arg = '+pub_enc_known'; } # alias
+    if ($arg =~ /^\+pubkey_enc(?:ryption)?_known/)  { $arg = '+pub_enc_known'; } # alias
+    if ($arg =~ /^\+sig(key)?_enc(?:ryption)?/)     { $arg = '+sig_encryption';} # alias
+    if ($arg =~ /^\+sig(key)?_enc(?:ryption)?_known/){$arg = '+sig_enc_known'; } # alias
+    if ($arg =~ /^\+server[_-]?(?:temp)?[_-]?key/)  { $arg = '+dh_parameter';  } # alias
     if ($arg =~ /^\+reused?/i)          { $arg = '+resumption'; } # alias
     if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
-    if ($arg =~ /^\+cert(ificate)?$/i)  { $arg = '+pem';        } # PEM
+    if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';        } # PEM
     if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
     if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';    }  # subject
-    if ($arg =~ /^\+sha2sig(nature)?$/) { $arg = '+sha2signature'; }    # alias
+    if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature'; }    # alias
     if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # AIA is a common acronym ...
@@ -5717,7 +5719,7 @@ while ($#argv >= 0) {
     }
     #} +---------+----------+------------------------------------+----------------
 
-    if ($arg =~ /(ciphers|s_client|version)/) {    # handle openssl commands special
+    if ($arg =~ /(?:ciphers|s_client|version)/) {  # handle openssl commands special
         _warn("host-like argument '$arg' treated as command '+$arg'");
         _warn(STR_HINT . "please use '+$arg' instead");
         push(@{$cfg{'do'}}, $arg);
