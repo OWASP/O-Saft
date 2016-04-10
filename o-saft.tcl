@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.49 Winter Edition 2015
+#?      @(#) 1.50 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -156,7 +156,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.49 16/04/10 18:05:56 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.50 16/04/10 22:33:52 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -1000,7 +1000,6 @@ proc create_button {parent cmd} {
         if {$txt eq ""}                    { continue; }
         if {[regexp {^(==|\*\*)}    $txt]} { continue; }; # header or Warning
         if {"OPTIONS" eq $txt}             { continue; }
-puts "L $txt";
         # remove noicy prefix and make first character upper case
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
         set name [str2obj $dat]
