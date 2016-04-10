@@ -32,6 +32,7 @@
 #!# "Program Code" at the end of this file if you want to improve the program.
 
 use strict;
+use Carp;           #replaces warn and die
 
 my $VERSION = "16.04.10";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
@@ -196,9 +197,9 @@ if ($#dbx >= 0) {
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     if (! -e $arg) {
-        warn "**WARNING: '$arg' not found";
+        carp "**WARNING: '$arg' not found";
         $arg = join("/", $mepath, $arg);    # try to find it in installation directory
-        die  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
+        croak  "**ERROR: '$!' '$arg'; exit" unless (-e $arg);
         # no need to continue if required file does not exist
         # Note: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -460,7 +461,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?(?:dns[_-]?)?mx$/i)          { $cfg{'usemx'}     = 0; next; }
     if ($arg =~ /^--(?:dns[_-]?)?mx$/i)                 { eval {require Net::DNS;}; # this command needs an additional Perl Module
                                                           unless ($@) { $cfg{'usemx'}= 1; # no error
-                                                                      } else { warn ("$me: Perl Module 'NET::DNS' is not installed, opition '$arg' ignored: $@");
+                                                                      } else { carp ("$me: Perl Module 'NET::DNS' is not installed, opition '$arg' ignored: $@");
                                                                       }         next; }
     if ($arg =~ /^--enabled$/i)                         { $cfg{'enabled'}   = 1; next; }
     if ($arg =~ /^--disabled$/i)                        { $cfg{'disabled'}  = 1; next; }
@@ -497,7 +498,7 @@ while ($#argv >= 0) {
     #} +---------+----------------------+-------------------------
 
     if ($arg =~ /^[+-]/) {
-        warn "**WARNING: unknown command or option '$arg' ignored. Try '$me --help' to get more information!";
+        carp "**WARNING: unknown command or option '$arg' ignored. Try '$me --help' to get more information!";
         next;
     }
     push(@{$cfg{'hosts'}}, $arg . ":" . ($cfg{'port'}||443));
