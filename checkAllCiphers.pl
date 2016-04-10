@@ -33,7 +33,7 @@
 
 use strict;
 
-my $VERSION = "2016-04-08";
+my $VERSION = "16.04.10";
 our $me     = $0; $me     =~ s#.*(?:/|\\)##;
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -539,8 +539,8 @@ while ($#argv >= 0) {
 }
 
 print "##############################################################################\n";
-print "# '$me' (part of OWASP project 'O-Saft'), Version: $VERSION\n";
-print "#                          ";
+print "# '$me' (part of OWASP project 'O-Saft'), Version (yy.mm.dd): $VERSION\n";
+print "# using module: O-Saft::";
 Net::SSLhello::version();
 print "##############################################################################\n\n";
 Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
