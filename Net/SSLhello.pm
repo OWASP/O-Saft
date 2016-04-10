@@ -3969,7 +3969,10 @@ sub parseHandshakeRecord ($$$$$$$;$) {
         } #End SSL3/TLS or DTLS
     } else {
         carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': (no SSL/TLS-Record) : ".hexCodedString ($recordData)."\n");
+        return ("",$lastMsgType, 0 , "");
     }
+    carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': internal error: ".hexCodedString ($recordData)."\n");
+    return ("",$lastMsgType, 0 , "");
 } # parseHandshakeRecord
 
 
