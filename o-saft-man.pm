@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.97 16/04/10 17:39:02";
+my  $man_SID= "@(#) o-saft-man.pm 1.98 16/04/10 17:52:16";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1840,6 +1840,12 @@ OPTIONS
       --help=content
 
           Show headlines from help text. Useful to get an overview.
+
+      --help=SECTION
+
+          Show  <SECTION>  from documentation, see  --help=toc  for a list.
+          Example:
+              $0 --help=EXAMPLES
 
       --help=text
 
