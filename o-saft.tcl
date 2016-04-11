@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.50 Winter Edition 2015
+#?      @(#) 1.51 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -156,7 +156,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.50 16/04/10 22:33:52 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.51 16/04/11 11:24:21 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -913,6 +913,31 @@ proc create_win {parent cmd title} {
         # header line. The window to be created just contains the lines which
         # follow the header line down to the next header line. $skip controls
         # that.
+
+        # we expect following data in $cfg(CMDS):
+        #                      Commands for information about this tool
+        #    +dump             Dumps internal data for SSL connection and target certificate.
+        #    ...
+        #                      Commands to check SSL details
+        #    +check            Check the SSL connection for security issues.
+        #    ...
+        #
+        # we expect following data in $cfg(OPTS):
+        #    OPTIONS
+        #    Options for help and documentation
+        #    --h
+        #    --help
+        #    ...
+        #    Options for all commands (general)
+        #    --no-rc
+        #    --dns
+        #    ...
+        #    Options for SSL tool
+        #    --s_client
+        #    --no-openssl
+        #    --openssl=TOOL
+        #    ...
+
     set skip 1;     # skip data until $title found
     foreach l [split $data "\r\n"] {
         set dat [string trim $l]
@@ -990,6 +1015,8 @@ proc create_button {parent cmd} {
     global cfg myC
     set data $cfg(OPTS)
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
+        # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
+
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
         if {[regexp {^(Commands|Options) } $txt] == 0} { continue }
