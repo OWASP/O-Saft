@@ -139,7 +139,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.51 Winter Edition 2015
+#?      @(#) 1.52 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -156,7 +156,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.51 16/04/11 11:24:21 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.52 16/04/11 11:28:51 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -1032,8 +1032,8 @@ proc create_button {parent cmd} {
         set name [str2obj $dat]
         set this $parent.$name
         if {$cfg(VERB)==1} { puts "create_button .$name {$txt}" }
-        pack [button $this -text $dat -command "create_win .$name $cmd {$txt}" -bg $myC(button) ] \
-                 -anchor w -fill x -padx 10 -pady 2
+        pack [button $this -text $dat -width 58 -command "create_win .$name $cmd {$txt}" -bg $myC(button) ] \
+                 -anchor c -padx 10 -pady 2
         create_tip   $this "Open window with more settings"
     }
 }; # create_button
