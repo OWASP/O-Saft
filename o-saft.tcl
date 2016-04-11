@@ -168,7 +168,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.54 Winter Edition 2015
+#?      @(#) 1.55 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -185,7 +185,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.54 16/04/11 12:30:36 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.55 16/04/11 23:33:58 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -1021,8 +1021,16 @@ proc create_win {parent cmd title} {
         if {[regexp {^--help}       $dat]} { continue; }
         if {[regexp {^--(cgi|call)} $dat]} { continue; }; # use other tools for that
 
-        set tip [lindex [split $dat "\t"]  1]
-        set dat [lindex [split $dat " \t"] 0]
+        # the line $l looks like:
+        #    our_key   some descriptive text
+        # where $dat should contain "our_key" and $tip "some descriptive text"
+        # so all multiple white spaces are reduced, which results in first word
+        # being $dat and all the rest will be $tip
+        # multiple white spaces in descriptive text are lost, that's ok if any
+        set dat [regsub -all {\s+} $dat { }]
+        set tip [regsub {[^\s]+\s*} $dat {}]
+        set dat [lindex [split $dat " "] 0]
+
         if {$cfg(VERB)==1} { puts "create_win: create: $cmd >$dat<" }
         set name [str2obj $dat]
         if {[winfo exists $this.$name]} {
