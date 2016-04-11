@@ -57,6 +57,13 @@ exec wish "$0" --
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
 #?
+#? KNOWN PROBLEMS
+#?      The markup defined in the filters (see Filter TAB) may not yet produce
+#?      perfect layouts for the results and the help texts,  to be improved in
+#?      many ways. 
+#?      Note that the markup is independent of the results and does not change
+#?      them, just "highlight" texts of the results.
+#?
 #? ARGUMENTS
 #?      All arguments, except --help, are treated as a hostname to be checked.
 #?
@@ -82,6 +89,27 @@ exec wish "$0" --
 #.       (T) - Frame containing panes for commands, options, filter, results.
 #.       (S) - Frame containing Status messages
 #.
+#.      Filter TAB Description
+#.           +---------------------------------------------------------------+
+#.       (f) |    Key     r  e  #  Regex  Foreground Background  Font     u  |
+#.           | +---------+--+--+--+------+----------+----------+--------+--- |
+#.       (F) | |== CMT    *  o  0  ^==*               gray      osaftHead x  |
+#.           | +---------+--+--+--+------+----------+----------+--------+--- |
+#.           | ...                                                           |
+#.           +---------------------------------------------------------------+
+#.
+#.       (f) - Headline for filter description
+#.             key        - unique key for this filter
+#.             r          - Regex used as regular expression
+#.             e          - Regex used as exact match
+#.             #          - Nr. of characters to be matched by Regex
+#.             Foreground - colour for matched text
+#.             Background - colour for background of matched text
+#.             Font       - use this font for matched text
+#.             u          - matched text will be underlined
+#.       (F) - Filter settings
+#.             example of a filter
+#.
 #. LIMITATIONS
 #.      Options do not work on Windows. Cumbersome workaround:
 #.        # edit o-saft.tcl and set cfg(VERB) 1
@@ -101,6 +129,7 @@ exec wish "$0" --
 #.      This tools relies on the format of these lines. If the format changes
 #.      commands and options may be missing in the generated GUI.
 #.      Following options are used:  --help  --help=opt  --help=commands
+#.      A detailed example of the format can be found in  proc create_win().
 #.
 #.      The tool will only work if o-saft.pl is available and executes without
 #.      errors. All commands and options of  o-saft.pl  will be available from
@@ -139,7 +168,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.52 Winter Edition 2015
+#?      @(#) 1.54 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -156,7 +185,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.52 16/04/11 11:28:51 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.54 16/04/11 12:30:36 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -732,6 +761,7 @@ proc create_filter {txt cmd} {
 
 proc create_about {} {
     #? create new window with About text; store widget in cfg(winA)
+    #  Show the text starting with  #?  from this file.
     global cfg myC myX
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
     set cfg(winA) [create_window {About} $myX(geoA)]
@@ -762,6 +792,31 @@ proc create_help {} {
     # All referenzes to this sections are clickable.
     # Also all references to commands (starting with '+') and options ('-')
     # are highlighted and used for navigation.
+    # Example text:
+        # ...
+        # QUICKSTART
+        # 
+        #         Before going into  a detailed description  of the  purpose and usage,
+        #         here are some examples of the most common use cases:
+        # 
+        #         * Show supported (enabled) ciphers of target:
+        #           o-saft.pl +cipher --enabled example.tld
+        # ...
+        # OPTIONS
+        # 
+        #         All options are written in lowercase. Words written in all capital in
+        #         the description here is text provided by the user.
+        # 
+        #     Options for help and documentation
+        # 
+        #       --help
+        # 
+        #           WYSIWYG
+        # ...
+        #
+    # In above example  QUICKSTART  and  OPTIONS  are the section headers,
+    # --help is an option  and the line starting with  o-saft.pl  will be
+    # as a command (not to be confused with commands of o-saft.pl).
     # Idea: probably "o-saft.pl --help=wiki" is better suitable for creating
     # the help text herein.
     global cfg myC myX
