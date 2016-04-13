@@ -168,7 +168,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.56 Winter Edition 2015
+#?      @(#) 1.57 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -185,7 +185,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.56 16/04/13 23:31:59 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.57 16/04/14 00:29:28 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
@@ -286,8 +286,8 @@ array set cfg_label {
     f_moder     r
     f_modee     e
     f_chars     {#}
-    f_regex     xRegex
-    f_fg        xForeground
+    f_regex     Regex
+    f_fg        Foreground
     f_bg        Background
     f_font      Font
     f_u         u
