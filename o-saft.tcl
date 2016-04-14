@@ -53,6 +53,11 @@ exec wish "$0" --
 #?         r=0 e=1 #=6 Regex=Target
 #?      Match label text and emphase:
 #?         r=1 e=0 #=1 Regex=^[A-Za-z][^:]*\s* Font=osaftHead
+#?   Configuration
+#?      Some parts of the GUI, for example widget fonts or widget label texts,
+#?      can be customized in .o-saft.tcl. This file will be searched in user's
+#?      HOME directory and in the local directory.
+#?      For details, please see .o-saft.tcl itself.
 #?
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
@@ -168,7 +173,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.57 Winter Edition 2015
+#?      @(#) 1.58 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -185,8 +190,9 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.57 16/04/14 00:29:28 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.58 16/04/14 10:12:12 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
+set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
 
@@ -217,11 +223,6 @@ catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
 }
-#   now get information from O-Saft; it's a performance penulty, but simple ;-)
-set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
-set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
-set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
-set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 #-----------------------------------------------------------------------------}
 
 set myX(DESC)   {CONFIGURATION window manager geometry}
@@ -1296,6 +1297,22 @@ option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
 
+## read .o-saft.tcl if any
+#  this may redefine some previous settings
+#  if the file does not exist, the error is silently catched and ignored
+set rcfile [file join $env(HOME) {.o-saft.tcl}]
+if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+set rcfile [file join {./}       {.o-saft.tcl}]
+if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+
+puts "## $cfg(FAST)"
+
+# get information from O-Saft; it's a performance penulty, but simple ;-)
+set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
+set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
+set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
+
+
 ## create toplevel window
 wm title        . $cfg(TITLE)
 wm iconname     . [string tolower $cfg(TITLE)]
@@ -1341,7 +1358,7 @@ create_button $tab_cmds {CMD}; # fill Commands pane
 create_button $tab_opts {OPT}; # fill Options pane
 create_filtab $tab_filt {FIL}; # fill Filter pane
 
-# add Save and Reset button in Options pane
+## add Save and Reset button in Options pane
 pack [button    $tab_opts.bs -text [get_text save]  -command {osaft_save "CFG" 0} -bg [get_color start] ] -side left
 pack [button    $tab_opts.br -text [get_text reset] -command {osaft_reset; osaft_init;}                 ] -side left
 osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
@@ -1362,7 +1379,7 @@ foreach host $targets {         # display hosts
     set hosts($hosts(0)) $host
 }
 
-# add one Host: line  with  +  and  !  button
+## add one Host: line  with  +  and  !  button
 create_host $w
 
 ## some verbose output
