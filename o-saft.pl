@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.458 16/04/10 23:14:15",
+    SID         => "@(#) yeast.pl 1.459 16/04/15 20:55:45",
     STR_VERSION => "16.04.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6204,8 +6204,13 @@ foreach my $key (@{$cfg{'ignore-out'}}) {
     $fail++ if (_is_do($key) > 0);
 }
 if ($fail > 0) {
-    _warn("output for some data and checks disbaled due to use of '--no-out':");
-    _warn("  +" . join(" +", @{$cfg{'ignore-out'}}));
+    _warn("$fail data and check outputs are disbaled due to use of '--no-out':");
+    _warn("  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
+    _warn("  given:  +" . join(" +", @{$cfg{'do'}}));
+    print STR_HINT . "do not use '--ignore-out=*' or '--no-out=*' options\n";
+        # It's not simple to identify the given command, as $cfg{'do'} may
+        # contain a list of commands. So the hint is a bit vage.
+        # _dbx "@{$cfg{'done'}->{'arg_cmds'}}"
 }
 
 # run the appropriate SSL tests for each host (ugly code down here):
