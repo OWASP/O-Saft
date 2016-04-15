@@ -868,7 +868,7 @@ proc create_help {} {
     set toc     {}
 
     # 1. search for section head lines, mark them and add (prefix) to text
-    set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-Z][A-Za-z_? -]+$} 1.0] 
+    set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? -]+$} 1.0] 
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
@@ -876,7 +876,9 @@ proc create_help {} {
         set l [string length $t]
         incr i
         if {[notTOC $t]} { continue; };                 # skip some special strings
-        set toc "$toc\n  $t"
+        if {[string trim $t] eq ""} { continue };       # skip empty entries
+        if {[regexp {^[A-Z][A-Z_? -]+$} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
+        set toc "$toc\n  $t";                           # prefix headline with spaces in TOC
         set name [str2obj [string trim $t]]
         $txt tag add  osaft-HEAD       $a "$a + $e c"
         $txt tag add  osaft-HEAD-$name $a "$a + $e c"
