@@ -28,7 +28,7 @@
 
 # in sub _useopenssl() :
 ########### --> Aendern:  s_client als Variable uebergeben, damit dahinter 
-###########	mehr Optionen angegebn werden koennen: -starttls  -proxy*  usw.
+###########     mehr Optionen angegebn werden koennen: -starttls  -proxy*  usw.
 
 ################
 
@@ -48,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.18 16/04/09 19:30:51',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.19 16/04/16 00:57:18',
 
 };
 
@@ -153,9 +153,17 @@ Following functions (methods) must be defined in the calling program:
 
 =item %prot_txt
 
-=item %curve_types
+=item %tls_handshake_type
 
-=item %curves
+=item %tls_record_type
+
+=item %tls_error_alerts
+
+=item %tls_extensions
+
+=item %tls_curve_types
+
+=item %tls_curves
 
 =item %data_oid
 
@@ -184,40 +192,44 @@ use Exporter qw(import);
 our @ISA        = qw(Exporter);
 our $VERSION    = OSAFT_VERSION;
 our @EXPORT     = qw(
-		STR_ERROR
-		STR_WARN
-		STR_HINT
-		STR_USAGE
-		STR_DBX
-		STR_UNDEF
-		STR_NOTXT
-		%prot
-		%prot_txt
-		%curve_types
-		%curves
-		%data_oid
-		%cfg
-		%ciphers_desc
-		%ciphers
-		%cipher_names
-		%cipher_alias
-		@cipher_results
-		get_cipher_sec
-		get_cipher_ssl
-		get_cipher_enc
-		get_cipher_bits
-		get_cipher_mac
-		get_cipher_auth
-		get_cipher_keyx
-		get_cipher_score
-		get_cipher_tags
-		get_cipher_desc
-		get_cipher_hex
-		get_cipher_name
-		get_openssl_version
-		get_dh_paramter
-		osaft_sleep
-		osaft_done
+                STR_ERROR
+                STR_WARN
+                STR_HINT
+                STR_USAGE
+                STR_DBX
+                STR_UNDEF
+                STR_NOTXT
+                %prot
+                %prot_txt
+                %tls_handshake_type
+                %tls_record_type
+                %tls_error_alerts
+                %tls_extensions
+                %tls_curve_types
+                %tls_curves
+                %data_oid
+                %cfg
+                %ciphers_desc
+                %ciphers
+                %cipher_names
+                %cipher_alias
+                @cipher_results
+                get_cipher_sec
+                get_cipher_ssl
+                get_cipher_enc
+                get_cipher_bits
+                get_cipher_mac
+                get_cipher_auth
+                get_cipher_keyx
+                get_cipher_score
+                get_cipher_tags
+                get_cipher_desc
+                get_cipher_hex
+                get_cipher_name
+                get_openssl_version
+                get_dh_paramter
+                osaft_sleep
+                osaft_done
 );
 # insert above in vi with:
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
@@ -275,8 +287,97 @@ our %prot_txt = (
     'protocol'      => "Selected protocol by server",   # 1 if selected as default protocol
 ); # %prot_txt
 
+our %tls_handshake_type = (
+    'hello_request'         => 0,
+    'client_hello'          => 1,
+    'server_hello'          => 2,
+    'hello_verify_request'  => 3,       # RFC4347 DTLS
+    'certificate'           => 11,
+    'server_key_exchange'   => 12,
+    'certificate_request'   => 13,
+    'server_hello_done'     => 14,
+    'certificate_verify'    => 15,
+    'client_key_exchange'   => 16,
+    'finished'              => 20,
+    'certificate_url'       => 21,      # RFC6066 10.2
+    'certificate_status'    => 22,      # RFC6066 10.2
+    '255'                   => 255,
+    '<<undefined>>'         => -1,      # added for internal use
+    '<<fragmented_message>>'=> -99      # added for internal use
+); # tls_handshake_type
+
+our %tls_record_type = (
+    'change_cipher_spec'    => 20,
+    'alert'                 => 21,
+    'handshake'             => 22,
+    'application_data'      => 23,
+    'heartbeat'             => 24,
+    '255'                   => 255,
+    '<<undefined>>'         => -1       # added for internal use
+); # %tls_record_type
+
+our %tls_error_alerts = ( # mainly RFC6066
+    #----+-------------------------------------+--+----+---------------
+    # ID      name                             DTLD RFC OID
+    #----+-------------------------------------+--+----+---------------
+     0 => [qw(close_notify                      Y  6066 -)],
+    10 => [qw(unexpected_message                Y  6066 -)],
+    20 => [qw(bad_record_mac                    Y  6066 -)],
+    21 => [qw(decryption_failed                 Y  6066 -)],
+    22 => [qw(record_overflow                   Y  6066 -)],
+    30 => [qw(decompression_failure             Y  6066 -)],
+    40 => [qw(handshake_failure                 Y  6066 -)],
+    41 => [qw(no_certificate_RESERVED           Y  5246 -)],
+    42 => [qw(bad_certificate                   Y  6066 -)],
+    43 => [qw(unsupported_certificate           Y  6066 -)],
+    44 => [qw(certificate_revoked               Y  6066 -)],
+    45 => [qw(certificate_expired               Y  6066 -)],
+    46 => [qw(certificate_unknown               Y  6066 -)],
+    47 => [qw(illegal_parameter                 Y  6066 -)],
+    48 => [qw(unknown_ca                        Y  6066 -)],
+    49 => [qw(access_denied                     Y  6066 -)],
+    50 => [qw(decode_error                      Y  6066 -)],
+    51 => [qw(decrypt_error                     Y  6066 -)],
+    60 => [qw(export_restriction_RESERVED       Y  6066 -)],
+    70 => [qw(protocol_version                  Y  6066 -)],
+    71 => [qw(insufficient_security             Y  6066 -)],
+    80 => [qw(internal_error                    Y  6066 -)],
+    86 => [qw(inappropriate_fallback            Y  RFC5246_update-Draft-2014-05-31 -)], # added according 'https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1'
+    90 => [qw(user_canceled                     Y  6066 -)],
+   100 => [qw(no_renegotiation                  Y  6066 -)],
+   110 => [qw(unsupported_extension             Y  6066 -)],
+   111 => [qw(certificate_unobtainable          Y  6066 -)],
+   112 => [qw(unrecognized_name                 Y  6066 -)],
+   113 => [qw(bad_certificate_status_response   Y  6066 -)],
+   114 => [qw(bad_certificate_hash_value        Y  6066 -)],
+   115 => [qw(unknown_psk_identity              Y  4279 -)],
+    #----+-------------------------------------+--+----+---------------
+); # %tls_error_alerts
+
+our %tls_extensions = ( # RFC 6066
+    0 => [qw(server_name)               ],
+    1 => [qw(max_fragment_length)       ],
+    2 => [qw(client_certificate_url)    ],
+    3 => [qw(trusted_ca_keys)           ],
+    4 => [qw(truncated_hmac)            ],
+    5 => [qw(status_request)            ],
+    6 => [qw(user_mapping)              ],  # RFC????
+    7 => [qw(reserved_7)                ],  # -"-
+    8 => [qw(reserved_8)                ],  # -"-
+    9 => [qw(cert_tape)                 ],  # RFC5081
+   10 => [qw(ecliptic_curves)           ],  # RFC4492
+   11 => [qw(ec_point_formats)          ],  # RFC4492
+   12 => [qw(srp)                       ],  # RFC5054
+   13 => [qw(signature_algorithms)      ],  # RFC5246; also supported_algorithms
+#  14 => [qw(unassigned)                ],  # -"-
+#  ...
+#  34 => [qw(unassigned)                ],  # -"-
+   35 => [qw(SessionTicket)             ],  # RFC4507
+65535 => [qw(65535)  ],
+); # %tls_extensions
+
 # Torsten: %ECCURVE_TYPE
-our %curve_types = ( # RFC 4492 
+our %tls_curve_types = ( # RFC 4492 
     'explicit_prime'        => 1,
     'explicit_char2'        => 2,
     'named_curve'           => 3,
@@ -288,12 +389,12 @@ our %curve_types = ( # RFC 4492
     'reserved_253'          => 253,
     'reserved_254'          => 254,
     'reserved_255'          => 255,
-); # %curve_types
+); # %tls_curve_types
 
 # Torsten: %ECC_NAMED_CURVE = 
 # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 # Value =>   Description bits(added) DTLS-OK Reference
-our %curves = (
+our %tls_curves = (
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
     #----+-------------+-------+----+--+----+----------------------+-------------------------
     # ID   name         NIST   bits DTLD RFC OID                    other name
@@ -412,7 +513,7 @@ our %curves = (
 # numsp256t1
 # Curve25519
 #----+--------+------------+---------------------+-------------------------
-); # %curves
+); # %tls_curves
 
 ################
 # FIPS-186-2 FIPS-186-3
@@ -567,7 +668,7 @@ our %ciphers = (
 
 our %cipher_names = (
 ### Achtung: die hex-Wert sind intern, davon sind nur die letzten 4 oder 6
-###	 Stellen (je nach Protokoll) der eigentliche Wert.
+###          Stellen (je nach Protokoll) der eigentliche Wert.
     # ADH_DES_192_CBC_SHA      # alias: DH_anon_WITH_3DES_EDE_CBC_SHA
     # ADH_DES_40_CBC_SHA       # alias: DH_anon_EXPORT_WITH_DES40_CBC_SHA
     # ADH_DES_64_CBC_SHA       # alias: DH_anon_WITH_DES_CBC_SHA
@@ -1067,7 +1168,7 @@ sub get_dh_paramter($$) {
     # this is a long regex and cannot be chunked
     ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
     $data =~ s{
-	    .*?Handshake
+            .*?Handshake
             \s*?\[length\s*([0-9a-fA-F]{2,4})\]\,?
             \s*?ServerKeyExchange
             \s*[\n\r]+(.*?)
