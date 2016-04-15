@@ -863,24 +863,24 @@ proc create_help {} {
     global cfg myX
     if {[winfo exists $cfg(winH)]}  { show_window $cfg(winH); return; }
     set this    [create_window {Help} $myX(geoO)]
-    set help    [regsub -all {===.*?===} $cfg(HELP) {}];  # remove informal messages
+    set help    [regsub -all {===.*?===} $cfg(HELP) {}];# remove informal messages
     set txt     [create_text $this $help].t
     set toc     {}
 
     # 1. search for section head lines, mark them and add (prefix) to text
-    set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-Z][A-Z_? -]+$} 1.0] 
+    set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-Z][A-Za-z_? -]+$} 1.0] 
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
         set l [string length $t]
         incr i
-        if {[notTOC $t]} { continue; }; # skip some special strings
+        if {[notTOC $t]} { continue; };                 # skip some special strings
         set toc "$toc\n  $t"
         set name [str2obj [string trim $t]]
         $txt tag add  osaft-HEAD       $a "$a + $e c"
         $txt tag add  osaft-HEAD-$name $a "$a + $e c"
-        #$txt insert $a "\n\[ ^ \]\n"; # TODO: insert button to top 
+        #$txt insert $a "\n\[ ^ \]\n";                  # TODO: insert button to top 
     }
     $txt config -state normal
     $txt insert 1.0 "\nCONTENT\n$toc\n\n"
@@ -890,13 +890,13 @@ proc create_help {} {
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
 
     # 2. search for all references to section head lines in TOC and add click event
-    set anf [$txt search -regexp -nolinestop -all -count end { *[A-Z_\? -]+( |$)} 3.0 $nam] 
+    set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_\? -]+( |$)} 3.0 $nam] 
     # FIXME: above regex fails for some lines in generated TOC, reason unknown.
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
-        if {[notTOC $t]} { continue; }; # skip some special strings
+        if {[notTOC $t]} { continue; };                 # skip some special strings
         incr i
         set name [str2obj [string trim $t]]
         set b [$txt search -regexp {[A-Z]+} $a] 
@@ -926,12 +926,12 @@ proc create_help {} {
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
-        set l [$txt get "$a - 2 c" "$a + $e c + 1 c"]; # one char more, so we can detect head line
+        set l [$txt get "$a - 2 c" "$a + $e c + 1 c"];  # one char more, so we can detect head line
         set t [string trim [$txt get $a "$a + $e c"]];
         set r [regsub {[+]} $t {\\+}];  # need to escape +
         set r [regsub {[-]} $r {\\-}];  # need to escape -
         set name [str2obj [string trim $t]]
-        if {[regexp -lineanchor "\\s\\s+$r$" $l]} {    # FIXME: dos not match all line proper
+        if {[regexp -lineanchor "\\s\\s+$r$" $l]} {     # FIXME: dos not match all line proper
             # these matches are assumed the header lines
             $txt tag add    osaft-LNK-$name $a "$a + $e c";
             $txt tag add    osaft-LNK       $a "$a + $e c";
