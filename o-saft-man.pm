@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.101 16/04/10 23:16:41";
+my  $man_SID= "@(#) o-saft-man.pm 1.102 16/04/15 18:53:10";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1174,6 +1174,16 @@ sub printhelp($) {
         man_help('LIMITATIONS');
         return
     }
+    man_help($hlp),             return if ($hlp =~ /^(?:CHECKS?|CUSTOM)$/); # not case-sensitive!
+        # NOTE: bad design, as we have headlines in the documentation which
+        #       are also used as spezial meaning (see below). In particular
+        #       CHECKS  is a  headline for a section  in the documentation,
+        #       while  checks  is used to print the labels of performed all
+        #       checks. Workaround is to treat all-uppercase words as head-
+        #       line of a section and anything else as special meaning.
+        # However, note that  --help=chec  already behaves the  same way as
+        # --help=CHECKS  while  --help=check  prints the labels. Means that
+        # this special condition (match CHECKS) is just for commodity.
     man_toc(),                  return if ($hlp =~ /^toc|content/i);
     man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
     man_wiki('colon'),          return if ($hlp =~ /^(gen-)?wiki$/);
@@ -4640,6 +4650,10 @@ HACKER's INFO
 #          ##            Comments used by third-party programs  (for example:
 #                        contrib/gen_standalone.sh, perlcritic).
 #          # func        name of sub behind the closing bracket of sub
+#
+#        Comments usually precede the code line(s) or are placed at end of the
+#        code line which they belong too. If the comments are placed after the
+#        code line which they belong too, the lines are idented.
 #
 #      Variables
 #
