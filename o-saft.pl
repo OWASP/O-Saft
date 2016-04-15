@@ -420,8 +420,8 @@ our %data   = (     # connection and certificate details
     'sigkey_value'  => {'val' => sub {    __SSLinfo('sigkey_value', $_[0], $_[1])}, 'txt' => "Certificate Signature Key Value"},
     'trustout'      => {'val' => sub { Net::SSLinfo::trustout(      $_[0], $_[1])}, 'txt' => "Certificate trusted"},
     'extensions'    => {'val' => sub { __SSLinfo('extensions',      $_[0], $_[1])}, 'txt' => "Certificate extensions"},
-    'tlsextdebug'   => {'val' => sub { __SSLinfo('tlsextdebug',     $_[0], $_[1])}, 'txt' => "SSL extensions (debug)"},
-    'tlsextensions' => {'val' => sub { __SSLinfo('tlsextensions',   $_[0], $_[1])}, 'txt' => "SSL extensions"},
+    'tlsextdebug'   => {'val' => sub { __SSLinfo('tlsextdebug',     $_[0], $_[1])}, 'txt' => "TLS extensions (debug)"},
+    'tlsextensions' => {'val' => sub { __SSLinfo('tlsextensions',   $_[0], $_[1])}, 'txt' => "TLS extensions"},
     'ext_authority' => {'val' => sub { __SSLinfo('ext_authority',   $_[0], $_[1])}, 'txt' => "Certificate extensions Authority Information Access"},
     'ext_authorityid'=>{'val' => sub { __SSLinfo('ext_authorityid', $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
     'ext_constraints'=>{'val' => sub { __SSLinfo('ext_constraints', $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
@@ -2316,9 +2316,13 @@ sub __SSLinfo($$$)     {
     $val =  Net::SSLinfo::pubkey_value(     $host, $port) if ($cmd eq 'pubkey_value');
     $val =  Net::SSLinfo::sigkey_value(     $host, $port) if ($cmd eq 'sigkey_value');
     $val =  Net::SSLinfo::heartbeat(        $host, $port) if ($cmd eq 'heartbeat');
-    $val =  Net::SSLinfo::tlsextdebug(      $host, $port) if ($cmd eq 'tlsextdebug');
-    $val =  Net::SSLinfo::tlsextensions(    $host, $port) if ($cmd eq 'tlsextensions');
     $val =  Net::SSLinfo::extensions(       $host, $port) if ($cmd =~ /^ext(?:ensions|_)/);
+    $val =  Net::SSLinfo::tlsextdebug(      $host, $port) if ($cmd eq 'tlsextdebug');
+    if ($cmd eq 'tlsextensions') {
+        $val =  Net::SSLinfo::tlsextensions($host, $port);
+        $val =~ s/^\s*//g;
+        $val =~ s/\n/; /g;
+    }
     if ($cmd =~ m/ext_/) {
         # all following are part of Net::SSLinfo::extensions(), now extract parts
         # The extension section in the certificate starts with
