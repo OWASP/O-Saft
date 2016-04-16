@@ -40,8 +40,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.460 16/04/16 02:01:41",
-    STR_VERSION => "16.04.08",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.461 16/04/16 09:59:26",
+    STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -2010,6 +2010,7 @@ our %text = (
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'missing'       => " <<missing @@>>",
+    'insecure'      => " <<insecure @@>>",
     'EV-large'      => " <<too large @@>>",
     'EV-subject-CN' => " <<missmatch: subject CN= and commonName>>",
     'EV-subject-host'=>" <<missmatch: subject CN= and given hostname>>",
@@ -3551,8 +3552,14 @@ sub check7525($$) {
     _y_CMD("check7525() " . $cfg{'done'}->{'check7525'});
     $cfg{'done'}->{'check7525'}++;
     return if ($cfg{'done'}->{'check7525'} > 1);
+    my $val = "";
 
-    #from: https://www.rfc-editor.org/rfc/rfc7525.txt
+    # All checks according ciphers already done in checkciphers() and stored
+    # in $checks{'rfc7525'}.  We need to do checks according certificate and
+    # protocol and fill other %checks values according requirements.
+
+    # descriptions from: https://www.rfc-editor.org/rfc/rfc7525.txt
+
     # 3.1.1.  SSL/TLS Protocol Versions
     #    Implementations MUST support TLS 1.2 [RFC5246] and MUST prefer to
     #    negotiate TLS version 1.2 over earlier versions of TLS.
@@ -3560,26 +3567,47 @@ sub check7525($$) {
     #    the only exception is when no higher version is available in the
     #    negotiation.
     # TODO: for lazy check
-    #
+
+    $val  = " <<not TLSv12>>" if ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/);
+    $val .= " SSLv2"   if ( $prot{'SSLv2'}->{'cnt'}   > 0);
+    $val .= " SSLv3"   if ( $prot{'SSLv3'}->{'cnt'}   > 0);
+    $val .= " TLSv1"   if (($prot{'TLSv11'}->{'cnt'} + $prot{'TLSv12'}->{'cnt'}) > 0);
+    $val .= " TLSv11"  if (($prot{'TLSv11'}->{'cnt'}  > 0) and ($prot{'TLSv12'}->{'cnt'} > 0));
+
     # 3.1.2.  DTLS Protocol Versions
     #    Implementations SHOULD NOT negotiate DTLS version 1.0 [RFC4347].
     #    Implementations MUST support and MUST prefer to negotiate DTLS
     #    version 1.2 [RFC6347].
+
+    $val .= " DTLSv1"  if ( $prot{'DTLSv1'}->{'cnt'}  > 0);
+    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
     # TODO: we currently (5/2015) do not support DTLSv1x
-    #
+
+    # 3.1.3.  Fallback to Lower Versions
+    # no checks, as already covered by 3.1.1 checks
+
     # 3.2.  Strict TLS
     #    ... TLS-protected traffic (such as STARTTLS),
     #    clients and servers SHOULD prefer strict TLS configuration.
     #
     #    HTTP client and server implementations MUST support the HTTP
     #    Strict Transport Security (HSTS) header [RFC6797]
-    #
+
+    # FIXME: what to check for STARTTLS?
+
+    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
+    checkhttp($host, $port);    # need http_sts
+    $val .= _subst($text{'missing'}, 'STS') if ($checks{'hsts_sts'} eq "");
+    # TODO: strict TLS checks are for STARTTLS only, not necessary here
+
     # 3.3.  Compression
     #    ... implementations and deployments SHOULD
     #    disable TLS-level compression (Section 6.2.2 of [RFC5246]), unless
     #    the application protocol in question has been shown not to be open to
     #    such attacks.
-    #
+
+    $val .= _iscrime($data{'compression'}->{val}($host)); # misuse _iscrime() to check if TLS compression is enabled
+
     # 3.4.  TLS Session Resumption
     #    ... the resumption information MUST be authenticated and encrypted ..
     #    A strong cipher suite MUST be used when encrypting the ticket (as
@@ -3587,47 +3615,70 @@ sub check7525($$) {
     #    Ticket keys MUST be changed regularly, e.g., once every week, ...
     #    For similar reasons, session ticket validity SHOULD be limited to
     #    a reasonable duration (e.g., half as long as ticket key validity).
-    # TODO: 
-    #
+
+    if ($data{'resumption'}->{val}($host) eq "") {
+        $val .= _subst($text{'insecure'}, 'resumption');
+        $val .= _subst($text{'missing'},  'session ticket') if ($data{'session_ticket'}->{val}($host) eq "");
+        $val .= _subst($text{'insecure'}, 'randomness of session') if ($data{'session_random'}->{val}($host) ne "");
+    }
+    # TODO: session ticket must be random
+    # FIXME: session ticket must be authenticated and encrypted
+
     # 3.5.  TLS Renegotiation
     #    ... both clients and servers MUST implement the renegotiation_info
     #    extension, as defined in [RFC5746].
-    #
+
+    $val .= _subst($text{'missing'},  'renegotiation_info extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
+    $val .= _subst($text{'insecure'}, 'renegotiation') if ($data{'renegotiation'}->{val}($host)  eq "");
+
     # 3.6.  Server Name Indication
     #    TLS implementations MUST support the Server Name Indication (SNI)
-    #
+
+    checksni($host, $port);    # need sni
+    $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
+    # TODO: need a reliable check if SNI is supported
+
     # 4.  Recommendations: Cipher Suites
     # 4.1.  General Guidelines
     #    Implementations MUST NOT negotiate the cipher suites with NULL encryption.
     #    Implementations MUST NOT negotiate RC4 cipher suites.
     #    Implementations MUST NOT negotiate cipher suites offering less
     #    than 112 bits of security, ...
-    #  ==> done in checkcipher() with _isrfc7525
     #    Implementations SHOULD NOT negotiate cipher suites that use
     #    algorithms offering less than 128 bits of security.
     # TODO: for lazy check
     #    Implementations SHOULD NOT negotiate cipher suites based on RSA
     #    key transport, a.k.a. "static RSA".
-    #  ==> done in checkcipher() with _isrfc7525
     #    Implementations MUST support and prefer to negotiate cipher suites
     #    offering forward secrecy, ...
-    #  ==> done in checkcipher() with _isrfc7525
     #
     # 4.2.  Recommended Cipher Suites
     #    TLS_DHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     #    TLS_DHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+
     #  ==> done in checkcipher() with _isrfc7525
-    #
+
     # 4.3.  Public Key Length
     #    ... DH key lengths of at least 2048 bits are RECOMMENDED.
     #    ... Curves of less than 192 bits SHOULD NOT be used.
-    # TODO 
-    #
+
+    check_dh($host, $port);    # need DH Parameter
+    # $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
+    if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) { 
+        $val .= _subst($text{'insecure'}, "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
+    } else {
+        $val .= _subst($text{'insecure'}, "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
+    }
+    # TODO: is this a reliable check?
+
     # 4.5.  Truncated HMAC
     #    Implementations MUST NOT use the Truncated HMAC extension, defined in
     #    Section 7 of [RFC6066].
-    # TODO 
-    #
+
+    $val .= _subst($text{'missing'}, 'truncated HMAC extension') if ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i);
+    #$val .= _subst($text{'missing'}, 'session ticket extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/session.*ticket/);
+    #$val .= _subst($text{'missing'}, 'session ticket lifetime extension') if ($data{'session_lifetime'}->{val}($host, $port) eq "");
+
     # 6.  Security Considerations
     # 6.1.  Host Name Validation
     #    If the host name is discovered indirectly and in an insecure manner
@@ -3636,96 +3687,30 @@ sub check7525($$) {
     #    the presented certificate.  This proviso does not apply if the host
     #    name is discovered securely (for further discussion, see [DANE-SRV]
     #    and [DANE-SMTP]).
-    # TODO 
-    #
+
+    $val .=  $text{'EV-subject-host'} if ($checks{'hostname'}->{val} ne "");
+
     # 6.2.  AES-GCM
-    #
+    # FIXME: implement
+
     # 6.3.  Forward Secrecy
     #    ... therefore advocates strict use of forward-secrecy-only ciphers.
-    #
+    # FIXME: implement
+
     # 6.4.  Diffie-Hellman Exponent Reuse
-    #
+    # FIXME: implement
+
     # 6.5.  Certificate Revocation
     #    ... servers SHOULD support the following as a best practice
     #    OCSP [RFC6960]
     #    The OCSP stapling extension defined in [RFC6961]
-    #
-    my $val = "";
 
-    #! 3.1.1.  SSL/TLS Protocol Versions
-    $val  = " <<not TLSv12>>" if ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/);
-    $val .= " SSLv2"   if ( $prot{'SSLv2'}->{'cnt'}  > 0);
-    $val .= " SSLv3"   if ( $prot{'SSLv3'}->{'cnt'}  > 0);
-    $val .= " TLSv1"   if (($prot{'TLSv11'}->{'cnt'} + $prot{'TLSv12'}->{'cnt'}) > 0);
-    $val .= " TLSv11"  if (($prot{'TLSv11'}->{'cnt'} > 0) and ($prot{'TLSv12'}->{'cnt'} > 0));
-
-    #! 3.1.2.  DTLS Protocol Versions
-    $val .= " DTLSv1"  if ( $prot{'DTLSv1'}->{'cnt'} > 0);
-    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
-
-    #! 3.1.3.  Fallback to Lower Versions
-    # no checks, as already covered by 3.1.1 checks
-
-    #! 3.2.  STARTTLS
-    # FIXME: what to check here?
-    #! 3.2.  Strict TLS
-    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
-    # TODO: strict TLS checks are for STARTTLS only, not necessary here
-    checkhttp($host, $port);    # need http_sts
-    $val .= " <<no HSTS>>" if ($checks{'hsts_sts'} eq "");
-
-    #! 3.3.  Compression
-    $val .= _iscrime($data{'compression'}->{val}($host)); # misuse _iscrime() to check if TLS compression is enabled
-
-    #! 3.4.  TLS Session Resumption
-    if ($data{'resumption'}->{val}($host) eq "") {
-        $val .= " <<insecure resumption>>";
-        $val .= " <<missing session ticket>>"    if ($data{'session_ticket'}->{val}($host) eq "");
-        $val .= " <<session ticket not random>>" if ($data{'session_random'}->{val}($host) ne "");
-        # TODO: session ticket must be random
-        # FIXME: session ticket must be authenticated and encrypted
-    }
-
-    #! 3.5.  TLS Renegotiation
-    $val .= " <<missing renegotiation_info extension>>" if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
-    $val .= " <<insecure renegotiation>>"        if ($data{'renegotiation'}->{val}($host)  eq "");
-
-    #! 3.6.  Server Name Indication
-    checksni($host, $port);    # need sni
-    # FIXME: need a reliable check if SNI is supported
-    # $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
-
-    #! 4.1.  General Guidelines
-    #! 4.2.  Recommended Cipher Suites
-    #  ==> done in checkcipher() with _isrfc7525
-
-    #! 4.3.  Public Key Length
-    check_dh($host, $port);    # need DH Parameter
-    # $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
-    if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) { 
-        $val .= " <<insecure DH Parameter: $checks{'ecdh_256'}->{val}>>" if ($checks{'ecdh_256'}->{val} ne "");
-    } else {
-        $val .= " <<insecure DH Parameter: $checks{'dh_2048'}->{val}>>"  if ($checks{'dh_2048'}->{val} ne "");
-    }
-
-    #! 4.5.  Truncated HMAC
-    $val .= " <<has truncated HMAC extension>>"  if ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i);
-    #$val .= " <<missing session ticket extension>>" if ($data{'tlsextensions'}->{val}($host, $port) !~ m/session.*ticket/);
-    #$val .= " <<missing session ticket lifetime extension>>" if ($data{'session_lifetime'}->{val}($host, $port) eq "");
-
-    #! 6.1.  Host Name Validation
-    $val .=  $text{'EV-subject-host'}            if ($checks{'hostname'}->{val} ne "");
-
-    #! 6.2.  AES-GCM
-    #! 6.3.  Forward Secrecy
-    #! 6.4.  Diffie-Hellman Exponent Reuse
-# FIXME: 3 above
-
-    #! 6.5.  Certificate Revocation
-    $val .= _subst($text{'missing'}, 'OCSP')     if ($checks{'ocsp'}->{val}     ne "");
+    $val .= _subst($text{'missing'}, 'OCSP') if ($checks{'ocsp'}->{val}  ne "");
     $val .= _subst($text{'missing'}, 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
 
-    $checks{'rfc7525'}->{val} .= $val;
+    # All checks for ciphers were done in _isrfc7525() and already stored in
+    # $checks{'rfc7525'}. Because it may be a huge list, it is appended.
+    $checks{'rfc7525'}->{val} = $val . " " . $checks{'rfc7525'}->{val};
 
     return;
 } # check7525
@@ -4198,8 +4183,6 @@ sub checkssl($$)  {
     # and check02102(); some more are done in checkhttp()
     # now do remaining for %checks
     checkdest( $host, $port);
-    my $txt = $checks{'hsts_sts'}->{val};
-    $checks{'rfc7525'}->{val} .= _subst($text{'missing'}, 'STS') if ($txt ne "");
 
 # TODO: folgende Checks implementieren
     foreach my $key (qw(verify_hostname verify_altname verify dates fingerprint)) {
