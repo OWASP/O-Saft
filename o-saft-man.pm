@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.103 16/04/15 19:05:38";
+my  $man_SID= "@(#) o-saft-man.pm 1.104 16/04/16 02:03:12";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -550,6 +550,7 @@ our %man_text = (
     #                TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA 
         '2818'  => [ "HTTP Over TLS" ],
         '2712'  => [ "TLSKRB: Addition of Kerberos Cipher Suites to TLS" ],
+        '2945'  => [ "SRP Authentication & Key Exchange System" ],
         '2986'  => [ "PKCS#10" ],
         '5967'  => [ "PKCS#10" ],
         '3268'  => [ "TLSAES: Advanced Encryption Standard (AES) Ciphersuites for TLS" ],
@@ -579,8 +580,10 @@ our %man_text = (
         '5764'  => [ "TLS Extension: SRTP" ],
         '5929'  => [ "TLS Extension: Channel Bindings", "tls-unique" ],
         '6066'  => [ "TLS Extension: Extension Definitions" ],
-                   # Certificate Status Request
                    # PkiPath
+                   # Truncated CA keys (value 3)
+                   # Truncated HMAC (value 4)
+                   # (Certificate) Status Request (value 5)
         '6520'  => [ "TLS Extensions: Heartbeat" ],
         '6961'  => [ "TLS Multiple Certificate Status Request Extension" ],
         '7507'  => [ "TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks" ],
@@ -3374,25 +3377,63 @@ CHECKS
         (following headlines are taken from there)
 
         3.1.1.  SSL/TLS Protocol Versions
+
+          SSLv2 and SSLv3 must not be supportetd.
+          TLSv1 should only be supported if there is no TLSv1.1 or TLSv1.2.
+          Either TLSv1.1 or TLSv1.2 must be supported, prefered is TLSv1.2.
+
         3.1.2.  DTLS Protocol Versions
+
+          DTLSv1 and DTLSv1.1 must not be supported.
+
+        3.1.3.  Fallback to Lower Versions
+
+          (check implezitely done by 3.1.1, see above)
+
         3.2.  Strict TLS
+          (STARTTLS check NOT YET IMPLEMENTED).
+
         3.3.  Compression
+
+          Compression onTLS must not be supported.
+
         3.4.  TLS Session Resumption
+
+          Server must support resumtion and random session tickets.
+          (randomnes of session tickets NOT YET exerimental).
+
         3.5.  TLS Renegotiation
         3.6.  Server Name Indication
+
         4.  Recommendations: Cipher Suites
+
         4.1.  General Guidelines
         4.2.  Recommended Cipher Suites
+
+          Check for recommendet ciphers.
+
         4.3.  Public Key Length
+
+          DH parameter must be at least 256 bits or 2048 its with EC.
+
         4.5.  Truncated HMAC
+
+          TLS extension "truncated hmac" must not be used.
+
         6.  Security Considerations
         6.1.  Host Name Validation
-          (NOT YET IMPLEMENTED).
+
+          Given hostname must matches hostname in certificate's subject.
+
         6.3.  Forward Secrecy
         6.4.  Diffie-Hellman Exponent Reuse
           (NOT YET IMPLEMENTED).
+
         6.5.  Certificate Revocation
-          (NOT YET IMPLEMENTED).
+
+          OCSP and CRL Distrbution Point in cetificate must be defined.
+          Checking the validity of the links or if they are reachable is NOT
+          YET IMPLEMENTED.
 
 
 # score will be removed, so don't anounce it
