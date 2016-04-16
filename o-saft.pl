@@ -3637,7 +3637,7 @@ sub check7525($$) {
     #    TLS implementations MUST support the Server Name Indication (SNI)
 
     checksni($host, $port);    # need sni
-    $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
+    $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val} eq "");
     # TODO: need a reliable check if SNI is supported
 
     # 4.  Recommendations: Cipher Suites
