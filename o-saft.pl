@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.461 16/04/16 09:59:26",
+    SID         => "@(#) yeast.pl 1.462 16/04/16 14:40:46",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2381,8 +2381,10 @@ sub __SSLinfo($$$)     {
     return $val;
 }; # __SSLinfo
 
-sub _subst($$)         { my $is=shift; $is=~s/@@/$_[0]/;  return $is; }
+sub _subst($$)         { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
     # return given text with '@@' replaced by given value
+sub _get_text($$)      { my ($is,$txt)=@_; return _subst($text{$is}, $txt); }
+    # for given index of %text return text with '@@' replaced by given value
 sub _need_this($)      {
     # returns >0 if any of the given commands is listed in $cfg{'$_'}
     my $key = shift;
@@ -2995,7 +2997,7 @@ sub checkciphers($$) {
     # BEAST check
     if ($prot{'SSLv3'}->{'cnt'} <= 0) {
         # if SSLv3 was disabled, check for BEAST is incomplete; inform about that
-        $checks{'beast'}->{val} .= " " . _subst($text{'disabled'}, "--no-SSLv3");
+        $checks{'beast'}->{val} .= " " . _get_text('disabled', "--no-SSLv3");
     }
     $checks{'breach'}->{val}     = "<<NOT YET IMPLEMENTED>>";
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
@@ -3227,7 +3229,7 @@ sub checkcert($$) {
         $subject =  $data{$label}->{val}($host);
         $subject =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
         if ($subject =~ m!$cfg{'regex'}->{'notEV-chars'}!) {
-            $txt = _subst($text{'cert-chars'}, $label);
+            $txt = _get_text('cert-chars', $label);
             $checks{'ev-chars'}->{val} .= $txt;
             $checks{'ev+'}->{val}      .= $txt;
             $checks{'ev-'}->{val}      .= $txt;
@@ -3352,13 +3354,13 @@ sub check02102($$) {
     $checks{'bsi-tr-02102+'}->{val}.= $text{'no-reneg'}   if ($checks{'renegotiation'}->{val} ne "");
 
     #! TR-02102-2 3.4 Zertifikate und Zertifikatsverifikation
-    $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val});
+    $txt = _get_text('cert-valid', $data{'valid-years'}->{val});
     $checks{'bsi-tr-02102+'}->{val}.= $txt                if ($data{'valid-years'}->{val} > 3);
     $checks{'bsi-tr-02102+'}->{val}.= $text{'cert-dates'} if ($checks{'dates'}->{val} ne "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'missing'}, 'CRL')  if ($checks{'crl'}->{val} ne "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'missing'}, 'AIA')  if ($data{'ext_authority'}->{val}($host) eq "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'missing'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
-    $checks{'bsi-tr-02102+'}->{val}.= _subst($text{'wildcards'}, $checks{'wildcard'}->{val}) if ($checks{'wildcard'}->{val} ne "");
+    $checks{'bsi-tr-02102+'}->{val}.= _get_text('missing', 'CRL')  if ($checks{'crl'}->{val} ne "");
+    $checks{'bsi-tr-02102+'}->{val}.= _get_text('missing', 'AIA')  if ($data{'ext_authority'}->{val}($host) eq "");
+    $checks{'bsi-tr-02102+'}->{val}.= _get_text('missing', 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
+    $checks{'bsi-tr-02102+'}->{val}.= _get_text('wildcards', $checks{'wildcard'}->{val}) if ($checks{'wildcard'}->{val} ne "");
 
     #! TR-02102-2 3.5 Domainparameter und Schlüssellängen
 # FIXME:
@@ -3396,7 +3398,7 @@ sub check03116($$) {
         # TLS Session darf eine Lebensdauer von 2 Tagen nicht überschreiten
     #! TR-03116-4 2.1.4.2 Encrypt-then-MAC-Extension
     #! TR-03116-4 2.1.4.3 OCSP-Stapling
-    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'missing'}, 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
+    $checks{'bsi-tr-03116+'}->{val} .= _get_text('missing', 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
 
     #! TR-03116-4 4.1.1 Zertifizierungsstellen/Vertrauensanker
         # muss für die Verifikation von Zertifikaten einen oder mehrere Vertrauensanker vorhalten
@@ -3417,18 +3419,18 @@ sub check03116($$) {
         # * Zertifikate dürfen keine Wildcards CommonName des Subject oder
         #   SubjectAltName enthalten.
         # Verwendung von Extended-Validation-Zertifikaten wird empfohlen
-    $txt = _subst($text{'cert-valid'}, $data{'valid-years'}->{val}); # NOTE: 'valid-years' is special value
+    $txt = _get_text('cert-valid', $data{'valid-years'}->{val}); # NOTE: 'valid-years' is special value
     $checks{'bsi-tr-03116+'}->{val} .= $txt                if ($data{'valid-years'}->{val} > 3);
 # FIXME: cert itself and CA-cert have different validity: 3 vs. 5 years
     $txt = $checks{'wildcard'}->{val};
     if (($data{'ext_crl'}->{val}($host) eq "") && ($data{'ext_authority'}->{val}($host) eq "")) {
-        $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'missing'}, 'AIA or CRL');
+        $checks{'bsi-tr-03116+'}->{val} .= _get_text('missing', 'AIA or CRL');
     }
 # FIXME: need to verify provided CRL and OCSP
-    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'wildcards'}, $txt) if ($txt ne "");
+    $checks{'bsi-tr-03116+'}->{val} .= _get_text('wildcards', $txt) if ($txt ne "");
     # _getwilds() checks for CN and subjectAltname only, we need Subject also
     $txt = $data{'subject'}->{val}($host);
-    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'wildcards'}, "Subject:$txt") if ($txt =~ m/[*]/);
+    $checks{'bsi-tr-03116+'}->{val} .= _get_text('wildcards', "Subject:$txt") if ($txt =~ m/[*]/);
 # FIXME: need to check wildcards in all certificates
 
     #! TR-03116-4 4.1.3 Zertifikatsverifikation
@@ -3439,9 +3441,9 @@ sub check03116($$) {
         # * Prüfung auf Gültigkeit (Ausstellungs- und Ablaufdatum)
         # * Rückrufprüfung aller Zertifikate
     $txt = $checks{'dates'}->{val};
-    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'cert-dates'}, $txt) if ($txt ne "");
+    $checks{'bsi-tr-03116+'}->{val} .= _get_text('cert-dates', $txt) if ($txt ne "");
     $txt = $checks{'expired'}->{val};
-    $checks{'bsi-tr-03116+'}->{val} .= _subst($text{'cert-valid'}, $txt) if ($txt ne "");
+    $checks{'bsi-tr-03116+'}->{val} .= _get_text('cert-valid', $txt) if ($txt ne "");
 
     #! TR-03116-4 4.1.4 Domainparameter und Schlüssellängen
         # ECDSA 224 Bit; DSA 2048 Bit; RSASSA-PSS 2048 Bit; alle SHA-224
@@ -3597,7 +3599,7 @@ sub check7525($$) {
 
     $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
     checkhttp($host, $port);    # need http_sts
-    $val .= _subst($text{'missing'}, 'STS') if ($checks{'hsts_sts'} eq "");
+    $val .= _get_text('missing', 'STS') if ($checks{'hsts_sts'} eq "");
     # TODO: strict TLS checks are for STARTTLS only, not necessary here
 
     # 3.3.  Compression
@@ -3617,9 +3619,9 @@ sub check7525($$) {
     #    a reasonable duration (e.g., half as long as ticket key validity).
 
     if ($data{'resumption'}->{val}($host) eq "") {
-        $val .= _subst($text{'insecure'}, 'resumption');
-        $val .= _subst($text{'missing'},  'session ticket') if ($data{'session_ticket'}->{val}($host) eq "");
-        $val .= _subst($text{'insecure'}, 'randomness of session') if ($data{'session_random'}->{val}($host) ne "");
+        $val .= _get_text('insecure', 'resumption');
+        $val .= _get_text('missing',  'session ticket') if ($data{'session_ticket'}->{val}($host) eq "");
+        $val .= _get_text('insecure', 'randomness of session') if ($data{'session_random'}->{val}($host) ne "");
     }
     # TODO: session ticket must be random
     # FIXME: session ticket must be authenticated and encrypted
@@ -3628,8 +3630,8 @@ sub check7525($$) {
     #    ... both clients and servers MUST implement the renegotiation_info
     #    extension, as defined in [RFC5746].
 
-    $val .= _subst($text{'missing'},  'renegotiation_info extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
-    $val .= _subst($text{'insecure'}, 'renegotiation') if ($data{'renegotiation'}->{val}($host)  eq "");
+    $val .= _get_text('missing',  'renegotiation_info extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
+    $val .= _get_text('insecure', 'renegotiation') if ($data{'renegotiation'}->{val}($host)  eq "");
 
     # 3.6.  Server Name Indication
     #    TLS implementations MUST support the Server Name Indication (SNI)
@@ -3665,9 +3667,9 @@ sub check7525($$) {
     check_dh($host, $port);    # need DH Parameter
     # $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
     if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) { 
-        $val .= _subst($text{'insecure'}, "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
+        $val .= _get_text('insecure', "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
     } else {
-        $val .= _subst($text{'insecure'}, "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
+        $val .= _get_text('insecure', "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
     }
     # TODO: is this a reliable check?
 
@@ -3675,9 +3677,9 @@ sub check7525($$) {
     #    Implementations MUST NOT use the Truncated HMAC extension, defined in
     #    Section 7 of [RFC6066].
 
-    $val .= _subst($text{'missing'}, 'truncated HMAC extension') if ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i);
-    #$val .= _subst($text{'missing'}, 'session ticket extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/session.*ticket/);
-    #$val .= _subst($text{'missing'}, 'session ticket lifetime extension') if ($data{'session_lifetime'}->{val}($host, $port) eq "");
+    $val .= _get_text('missing', 'truncated HMAC extension') if ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i);
+    #$val .= _get_text('missing', 'session ticket extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/session.*ticket/);
+    #$val .= _get_text('missing', 'session ticket lifetime extension') if ($data{'session_lifetime'}->{val}($host, $port) eq "");
 
     # 6.  Security Considerations
     # 6.1.  Host Name Validation
@@ -3705,8 +3707,8 @@ sub check7525($$) {
     #    OCSP [RFC6960]
     #    The OCSP stapling extension defined in [RFC6961]
 
-    $val .= _subst($text{'missing'}, 'OCSP') if ($checks{'ocsp'}->{val}  ne "");
-    $val .= _subst($text{'missing'}, 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
+    $val .= _get_text('missing', 'OCSP') if ($checks{'ocsp'}->{val}  ne "");
+    $val .= _get_text('missing', 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
 
     # All checks for ciphers were done in _isrfc7525() and already stored in
     # $checks{'rfc7525'}. Because it may be a huge list, it is appended.
@@ -3740,14 +3742,14 @@ sub checkdv($$) {
 
     # required CN=
     if ($cn =~ m/^\s*$/) {
-        $checks{'dv'}->{val} .= _subst($text{'missing'}, "Common Name");
+        $checks{'dv'}->{val} .= _get_text('missing', "Common Name");
         return; # .. as all other checks will fail too now
     }
 
     # CN= in subject or subjectAltname
     if (($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#)
     and ($altname !~ m#/$cfg{'regex'}->{$oid}=([^\s\n]*)#)) {
-        $checks{'dv'}->{val} .= _subst($text{'missing'}, $data_oid{$oid}->{txt});
+        $checks{'dv'}->{val} .= _get_text('missing', $data_oid{$oid}->{txt});
         return; # .. as ..
     }
     $txt = $1;  # $1 is matched FQDN
@@ -3839,42 +3841,42 @@ sub checkev($$) {
             _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1\n");
             #dbx# _dbx "L:$oid: $1";
         } else {
-            _v2print("EV: " . _subst($text{'missing'}, $cfg{'regex'}->{$oid}) . "; required\n");
-            $txt = _subst($text{'missing'}, $data_oid{$oid}->{txt});
+            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required\n");
+            $txt = _get_text('missing', $data_oid{$oid}->{txt});
             $checks{'ev+'}->{val} .= $txt;
             $checks{'ev-'}->{val} .= $txt;
         }
     }
     $oid = '1.3.6.1.4.1.311.60.2.1.2'; # or /ST=
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
-        $txt = _subst($text{'missing'}, $data_oid{$oid}->{txt});
+        $txt = _get_text('missing', $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
         $oid = '2.5.4.8'; # or /ST=
         if ($subject =~ m#/$cfg{'regex'}->{'2.5.4.8'}=([^/\n]*)#) {
             $data_oid{$oid}->{val} = $1;
         } else {
             $checks{'ev-'}->{val} .= $txt;
-            _v2print("EV: " . _subst($text{'missing'}, $cfg{'regex'}->{$oid}) . "; required\n");
+            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required\n");
         }
     }
     $oid = '2.5.4.9'; # may be missing
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=(?:[^/\n]*)#) {
-        $txt = _subst($text{'missing'}, $data_oid{$oid}->{txt});
+        $txt = _get_text('missing', $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
         _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing+\n");
-        _v2print("EV: " . _subst($text{'missing'}, $cfg{'regex'}->{$oid}) . "; required\n");
+        _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required\n");
     }
     # optional OID
     foreach my $oid (qw(2.5.4.6 2.5.4.17)) {
     }
     if (64 < length($data_oid{'2.5.4.10'}->{val})) {
-        $txt = _subst($text{'EV-large'}, "64 < " . $data_oid{$oid}->{txt});
+        $txt = _get_text('EV-large', "64 < " . $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
         _v2print("EV: " . $txt . "\n");
     }
     # validity <27 months
     if ($data{'valid-months'}->{val} > 27) {
-        $txt = _subst($text{'cert-valid'}, "27 < " . $data{'valid-months'}->{val});
+        $txt = _get_text('cert-valid', "27 < " . $data{'valid-months'}->{val});
         $checks{'ev+'}->{val} .= $txt;
         _v2print("EV: " . $txt . "\n");
     }
@@ -3966,8 +3968,8 @@ sub checkprot($$) {
         # If the protocol  is supported by the target,  at least  one cipher
         # must be accpted. So the amount of ciphers must be > 0.
     if ($cfg{'SSLv2'} == 0) {
-        $checks{'hassslv2'}->{val}  = _subst($text{'disabled'}, "--no-SSLv2");
-        $checks{'drown'}->{val}     = _subst($text{'disabled'}, "--no-SSLv2");
+        $checks{'hassslv2'}->{val}  = _get_text('disabled', "--no-SSLv2");
+        $checks{'drown'}->{val}     = _get_text('disabled', "--no-SSLv2");
     } else {
         if ($prot{'SSLv2'}->{'cnt'} > 0) {
             $checks{'hassslv2'}->{val}  = " " if ($cfg{'nullssl2'} == 1);   # SSLv2 enabled, but no ciphers
@@ -3975,8 +3977,8 @@ sub checkprot($$) {
         }
     }
     if ($cfg{'SSLv3'} == 0) {
-        $checks{'hassslv3'}->{val}  = _subst($text{'disabled'}, "--no-SSLv3");
-        $checks{'poodle'}  ->{val}  = _subst($text{'disabled'}, "--no-SSLv3");
+        $checks{'hassslv3'}->{val}  = _get_text('disabled', "--no-SSLv3");
+        $checks{'poodle'}  ->{val}  = _get_text('disabled', "--no-SSLv3");
     } else {    # SSLv3 enabled, check if there are ciphers
         if ($prot{'SSLv3'}->{'cnt'} > 0) {
             $checks{'hassslv3'}->{val}  = " ";  # POODLE if SSLv3 and ciphers
@@ -4282,7 +4284,7 @@ sub printfooter($)  {
 sub printtitle($$$$) {
     #? print title according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
-    my $txt     = _subst($text{'out-ciphers'}, $ssl);
+    my $txt     = _get_text('out-ciphers', $ssl);
     local    $\ = "\n";
     if ($legacy eq 'sslyze')    {
         my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
@@ -4558,7 +4560,7 @@ sub print_ciphertotals($$$$) {
         printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
     if ($legacy =~ /(full|compact|simple|quick)/) {
-        printheader(_subst($text{'out-summary'}, $ssl), "");
+        printheader(_get_text('out-summary', $ssl), "");
         _trace_cmd('%checks');
         foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
             print_line($legacy, $host, $port, "$ssl-$key", $prot_txt{$key}, $prot{$ssl}->{$key});
@@ -4993,7 +4995,7 @@ sub printciphers() {
     my $ciphers     = "";
        $ciphers     = Net::SSLinfo::cipher_local() if ($cfg{'verbose'} > 0);
 
-    printheader(_subst($text{'out-list'}, $0), "");
+    printheader(_get_text('out-list', $0), "");
     # all following headers printed directly instead of using printheader()
 
     if ($cfg{'legacy'} eq "ssltest") {        # output looks like: ssltest --list
@@ -6227,7 +6229,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host: $host {\n");
     _resetchecks();
-    printheader(_subst($text{'out-target'}, "$host:$port"), "");
+    printheader(_get_text('out-target', "$host:$port"), "");
 
     # prepare DNS stuff
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
@@ -6237,7 +6239,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # if a proxy is used, DNS might not work at all, or be done by the
         # proxy (which even may return other results than the local client)
         # so we set corresponding values to a warning
-        $fail = _subst($text{'disabled'}, "--proxyhost=$cfg{'proxyhost'}");
+        $fail = _get_text('disabled', "--proxyhost=$cfg{'proxyhost'}");
         $cfg{'rhost'}   = $fail;
         $cfg{'DNS'}     = $fail;
         $cfg{'IP'}      = $fail;
@@ -6443,7 +6445,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
         }
         if ($_printtitle > 0) { # if we checked for ciphers
-            printheader("\n" . _subst($text{'out-summary'}, ""), "");
+            printheader("\n" . _get_text('out-summary', ""), "");
             printprotocols($legacy, $host, $port);
             printruler() if ($quick == 0);
         }
