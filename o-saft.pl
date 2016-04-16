@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.459 16/04/15 20:55:45",
+    SID         => "@(#) yeast.pl 1.460 16/04/16 02:01:41",
     STR_VERSION => "16.04.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -898,8 +898,8 @@ our %shorttexts = (
     'dates'         => "Validity (date)",
     'before'        => "Valid since",
     'after'         => "Valid until",
-    'tlsextdebug'   => "SSL Extensions (debug)",
-    'tlsextensions' => "SSL Extensions",
+    'tlsextdebug'   => "TLS Extensions (debug)",
+    'tlsextensions' => "TLS Extensions",
     'extensions'    => "Extensions",
     'heartbeat'     => "Heartbeat",     # not realy a `key', but a extension
     'aux'           => "Trust",
@@ -3559,13 +3559,13 @@ sub check7525($$) {
     #    Implementations SHOULD NOT negotiate TLS version 1.1 [RFC4346];
     #    the only exception is when no higher version is available in the
     #    negotiation.
-    # TODO for lazy check
+    # TODO: for lazy check
     #
     # 3.1.2.  DTLS Protocol Versions
     #    Implementations SHOULD NOT negotiate DTLS version 1.0 [RFC4347].
     #    Implementations MUST support and MUST prefer to negotiate DTLS
     #    version 1.2 [RFC6347].
-    # TODO o-saft currently (5/2015) does not support DTLSv1x
+    # TODO: we currently (5/2015) do not support DTLSv1x
     #
     # 3.2.  Strict TLS
     #    ... TLS-protected traffic (such as STARTTLS),
@@ -3587,7 +3587,7 @@ sub check7525($$) {
     #    Ticket keys MUST be changed regularly, e.g., once every week, ...
     #    For similar reasons, session ticket validity SHOULD be limited to
     #    a reasonable duration (e.g., half as long as ticket key validity).
-    # TODO 
+    # TODO: 
     #
     # 3.5.  TLS Renegotiation
     #    ... both clients and servers MUST implement the renegotiation_info
@@ -3605,7 +3605,7 @@ sub check7525($$) {
     #  ==> done in checkcipher() with _isrfc7525
     #    Implementations SHOULD NOT negotiate cipher suites that use
     #    algorithms offering less than 128 bits of security.
-    # TODO for lazy check
+    # TODO: for lazy check
     #    Implementations SHOULD NOT negotiate cipher suites based on RSA
     #    key transport, a.k.a. "static RSA".
     #  ==> done in checkcipher() with _isrfc7525
@@ -3638,6 +3638,8 @@ sub check7525($$) {
     #    and [DANE-SMTP]).
     # TODO 
     #
+    # 6.2.  AES-GCM
+    #
     # 6.3.  Forward Secrecy
     #    ... therefore advocates strict use of forward-secrecy-only ciphers.
     #
@@ -3664,6 +3666,8 @@ sub check7525($$) {
     #! 3.1.3.  Fallback to Lower Versions
     # no checks, as already covered by 3.1.1 checks
 
+    #! 3.2.  STARTTLS
+    # FIXME: what to check here?
     #! 3.2.  Strict TLS
     $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
     # TODO: strict TLS checks are for STARTTLS only, not necessary here
@@ -3676,13 +3680,15 @@ sub check7525($$) {
     #! 3.4.  TLS Session Resumption
     if ($data{'resumption'}->{val}($host) eq "") {
         $val .= " <<insecure resumption>>";
-        $val .= " <<missing session ticket>>" if ($data{'session_ticket'}->{val}($host) eq "");
-        # FIXME: session ticket must be authenticated and encrypted, and must be random
+        $val .= " <<missing session ticket>>"    if ($data{'session_ticket'}->{val}($host) eq "");
+        $val .= " <<session ticket not random>>" if ($data{'session_random'}->{val}($host) ne "");
+        # TODO: session ticket must be random
+        # FIXME: session ticket must be authenticated and encrypted
     }
 
     #! 3.5.  TLS Renegotiation
     $val .= " <<missing renegotiation_info extension>>" if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
-    $val .= " <<insecure renegotiation>>" if ($data{'renegotiation'}->{val}($host) eq "");
+    $val .= " <<insecure renegotiation>>"        if ($data{'renegotiation'}->{val}($host)  eq "");
 
     #! 3.6.  Server Name Indication
     checksni($host, $port);    # need sni
@@ -3703,12 +3709,21 @@ sub check7525($$) {
     }
 
     #! 4.5.  Truncated HMAC
-    #! 4.5.  Truncated HMAC
+    $val .= " <<has truncated HMAC extension>>"  if ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i);
+    #$val .= " <<missing session ticket extension>>" if ($data{'tlsextensions'}->{val}($host, $port) !~ m/session.*ticket/);
+    #$val .= " <<missing session ticket lifetime extension>>" if ($data{'session_lifetime'}->{val}($host, $port) eq "");
+
     #! 6.1.  Host Name Validation
+    $val .=  $text{'EV-subject-host'}            if ($checks{'hostname'}->{val} ne "");
+
+    #! 6.2.  AES-GCM
     #! 6.3.  Forward Secrecy
     #! 6.4.  Diffie-Hellman Exponent Reuse
+# FIXME: 3 above
+
     #! 6.5.  Certificate Revocation
-# FIXME: all above
+    $val .= _subst($text{'missing'}, 'OCSP')     if ($checks{'ocsp'}->{val}     ne "");
+    $val .= _subst($text{'missing'}, 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
 
     $checks{'rfc7525'}->{val} .= $val;
 
