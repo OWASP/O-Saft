@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.467 16/04/17 23:10:00",
+    SID         => "@(#) yeast.pl 1.468 16/04/17 23:41:57",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -550,8 +550,9 @@ my %check_cert = (  ## certificate data
     'zlib'          => {'txt' => "Certificate has (TLS extension) compression"},
     'lzo'           => {'txt' => "Certificate has (GnuTLS extension) compression"},
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
-    'ocsp_valid'    => {'txt' => "Certificate has valid OCSP"},
-    'crl_valid'     => {'txt' => "Certificate has valid CRL"},
+    'ocsp_valid'    => {'txt' => "Certificate has valid OCSP URL"},
+    'cps_valid'     => {'txt' => "Certificate has valid CPS URL"},
+    'crl_valid'     => {'txt' => "Certificate has valid CRL URL"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
@@ -773,6 +774,7 @@ our %shorttexts = (
     'sgc'           => "SGC supported",
     'cps'           => "CPS supported",
     'crl'           => "CRL supported",
+    'cps_valid'     => "CPS valid",
     'crl_valid'     => "CRL valid",
     'dv'            => "DV supported",
     'ev+'           => "EV supported (strict)",
@@ -2438,6 +2440,7 @@ sub __SSLinfo($$$)     {
             # FIXME: the regex should match OIDs also
             # FIXME: otherwise OID extensions are added as value to the
             #        preceding extension, see example above (4/2016)
+        # FIXME: replace following list of regex with a loop ober the extensions
         $ext = $val;
         $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
         $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
@@ -3583,6 +3586,7 @@ sub checksizes($$) {
     $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
     $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001) or prime256v1
     if ($value =~ m/prime/i) {  # public key uses EC with primes
+        $value =~ s/\n */ /msg;
         $checks{'modulus_exp_size'}->{val}  = "<<N/A $value>>";
         $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
     } else  {                   # only traditional exponent needs to be checked
@@ -6482,8 +6486,12 @@ foreach my $key (@{$cfg{'ignore-out'}}) {
 }
 if ($fail > 0) {
     _warn("$fail data and check outputs are disbaled due to use of '--no-out':");
-    _warn("  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
-    _warn("  given:  +" . join(" +", @{$cfg{'do'}}));
+    if ($cfg{'verbose'} >  0) {
+        _warn("  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
+        _warn("  given:  +" . join(" +", @{$cfg{'do'}}));
+    } else {
+        print STR_HINT . "use  '--v'  for more information";
+    }
     print STR_HINT . "do not use '--ignore-out=*' or '--no-out=*' options\n";
         # It's not simple to identify the given command, as $cfg{'do'} may
         # contain a list of commands. So the hint is a bit vage.
