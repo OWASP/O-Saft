@@ -430,7 +430,7 @@ our %data   = (     # connection and certificate details
     'ext_subjectkeyid'=>{'val'=> sub { __SSLinfo('ext_subjectkeyid',$_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
     'ext_cps_cps'   => {'val' => sub { __SSLinfo('ext_cps_cps',     $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: CPS"},
     'ext_crl'       => {'val' => sub { __SSLinfo('ext_crl',         $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points"},
-    'ext_crl_crl'   => {'val' => sub { __SSLinfo('ext_crl_crL',     $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points: Full Name"},
+#   'ext_crl_crl'   => {'val' => sub { __SSLinfo('ext_crl_crL',     $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points: Full Name"},
     'ext_keyusage'  => {'val' => sub { __SSLinfo('ext_keyusage',    $_[0], $_[1])}, 'txt' => "Certificate extensions Key Usage"},
     'ext_extkeyusage'=>{'val' => sub { __SSLinfo('ext_extkeyusage', $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
     'ext_certtype'  => {'val' => sub { __SSLinfo('ext_certtype',    $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
@@ -2353,12 +2353,14 @@ sub __SSLinfo($$$)     {
         $val =~ s#.*?Certificate Policies:$rex#$1#ms            if ($cmd =~ /ext_cps/);
         $val =~ s#.*?CPS\s*:\s*([^\s\n]*).*#$1#ms               if ($cmd eq 'ext_cps_cps');
         $val =~ s#.*?Policy\s*:\s*(.*?)(?:CPS|User).*#$1#ims    if ($cmd eq 'ext_cps_policy');
-        $val =~ s#.*?CRL Distribution Points:$rex#$1#ms         if ($cmd =~ /ext_crl/);
+        $val =~ s#.*?CRL Distribution Points:$rex#$1#ms         if ($cmd eq 'ext_crl');
         $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
-        #$val =~ s#.*?(URI\s*:.*)#$1#ms                          if ($cmd eq 'ext_crl_crl');
-# TODO: previous fails, reason unknown
+        if ($cmd eq 'ext_crl') {
+            $val =~ s#\s*Full Name:\s*##ims;
+            $val =~ s#(\s*URI\s*:)##ms;   
+        }
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
     }
 # TODO: move code for formatting to print*()
