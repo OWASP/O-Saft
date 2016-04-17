@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.464 16/04/17 10:56:44",
+    SID         => "@(#) yeast.pl 1.465 16/04/17 11:33:16",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1602,7 +1602,8 @@ our %cmd = (
         'rc-file'   => 0,
         'init_all'  => 0,
         'arg_cmds'  => [],      # contains all commands given as argument
-         # all following need to be reset for each host
+         # all following need to be reset for each host, which is done in
+         # _resetchecks()  by matching the key against ^check or ^cipher
         'ciphers_all'   => 0,
         'ciphers_get'   => 0,
         'checkciphers'  => 0,   # not used, as it's called multiple times
@@ -1623,6 +1624,7 @@ our %cmd = (
         'checkdv'   => 0,
         'checkev'   => 0,
         'check_dh'  => 0,
+        'check_certchars' => 0,
      },
     'extension' => {            # TLS extensions
         '00000'     => "renegotiation info length",     # 0x0000 ??
@@ -3081,6 +3083,47 @@ sub check_dh($$) {
     return;
 } # check_dh
 
+sub check_certchars($$) {
+    #? check for invalid characters in certificate
+    my ($host, $port) = @_;
+    _y_CMD("check_certchars() ". $cfg{'done'}->{'check_certchars'});
+    $cfg{'done'}->{'check_certchars'}++;
+    return if ($cfg{'done'}->{'check_certchars'} > 1);
+    my $value;
+    my $txt;
+
+    # check vor invald charaters
+    foreach my $label (@{$cfg{'need_checkchr'}}, qw(email aux)) {
+        $value = $data{$label}->{val}($host);
+        if ($value ne "") {
+            $checks{'nonprint'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'nonprint'}/);
+            $checks{'crnlnull'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'crnlnull'}/);
+        }
+    }
+
+    # valid characters (probably only relevant for DV and EV)
+    #_dbx "EV: keys: " . join(" ", @{$cfg{'need_checkchr'}} . "extensions";
+    #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
+    # not checked explicitely: CN, O, U (should already be part of others, like subject)
+    foreach my $label (@{$cfg{'need_checkchr'}}, qw(extensions)) {
+        $value =  $data{$label}->{val}($host);
+        $value =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
+        if ($value =~ m/$cfg{'regex'}->{'notEV-chars'}/) {
+            $txt = _get_text('cert-chars', $label);
+            $checks{'ev-chars'}->{val} .= $txt;
+            $checks{'ev+'}->{val}      .= $txt;
+            $checks{'ev-'}->{val}      .= $txt;
+            $checks{'dv'}->{val}       .= $txt;
+             if ($cfg{'verbose'} > 0) {
+                 $value =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
+                 _v2print("EV:  wrong characters in $label: $value" . "\n");
+             }
+        }
+    }
+
+    return;
+} # check_certchars
+
 sub checkbleed($$) {
     #? check if target supports TLS extension 15 (hearbeat)
     my ($host, $port) = @_;
@@ -3166,7 +3209,7 @@ sub checkdates($$) {
 sub checkcert($$) {
     #? check certificate settings
     my ($host, $port) = @_;
-    my ($value, $label, $subject, $txt);
+    my ($value, $label);
     _y_CMD("checkcert() " . $cfg{'done'}->{'checkcert'});
     $cfg{'done'}->{'checkcert'}++;
     return if ($cfg{'done'}->{'checkcert'} > 1);
@@ -3188,13 +3231,7 @@ sub checkcert($$) {
     # TODO: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
-    foreach my $label (@{$cfg{'need_checkchr'}}, qw(email aux)) { # CRL
-        $value = $data{$label}->{val}($host);
-        if ($value ne "") {
-            $checks{'nonprint'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'nonprint'}/);
-            $checks{'crnlnull'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'crnlnull'}/);
-        }
-    }
+    check_certchars($host, $port);
 
     # certificate
     if ($cfg{'verbose'} > 0) { # TODO
@@ -3229,26 +3266,6 @@ sub checkcert($$) {
 
 # TODO: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
-    # valid characters (most likely only relevant for EV)
-    #_dbx "EV: keys: " . join(" ", @{$cfg{'need_checkchr'}} . "extensions";
-    #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
-    # not checked explicitely: CN, O, U (should already be part of others, like subject)
-    foreach my $label (@{$cfg{'need_checkchr'}}, qw(extensions)) { # CRL
-        $subject =  $data{$label}->{val}($host);
-        $subject =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
-        if ($subject =~ m/$cfg{'regex'}->{'notEV-chars'}/) {
-            $txt = _get_text('cert-chars', $label);
-            $checks{'ev-chars'}->{val} .= $txt;
-            $checks{'ev+'}->{val}      .= $txt;
-            $checks{'ev-'}->{val}      .= $txt;
-            $checks{'dv'}->{val}       .= $txt;
-             if ($cfg{'verbose'} > 0) {
-                 $subject =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
-                 _v2print("EV:  wrong characters in $label: $subject" . "\n");
-             }
-        }
-    }
-
 # TODO: check: serialNumber: Positive number up to a maximum of 20 octets.
 # TODO: check: Signature: Must be the same OID as that defined in SignatureAlgorithm below.
 # TODO: check: Version
@@ -3268,6 +3285,7 @@ sub checksni($$) {
     _y_CMD("checksni() "  . $cfg{'done'}->{'checksni'});
     $cfg{'done'}->{'checksni'}++;
     return if ($cfg{'done'}->{'checksni'} > 1);
+
     if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
         if ($data{'cn_nosni'}->{val} eq $host) {
             $checks{'sni'}->{val}   = "";
@@ -3344,7 +3362,7 @@ sub check02102($$) {
     $cfg{'done'}->{'check02102'}++;
     return if ($cfg{'done'}->{'check02102'} > 1);
     my $txt = "";
-    #
+
     # description (see CHECK in o-saft-man.pm) ...
     # lines starting with #! are headlines from TR-02102-2
 
@@ -3731,7 +3749,7 @@ sub checkdv($$) {
     _y_CMD("checkdv() "   . $cfg{'done'}->{'checkdv'});
     $cfg{'done'}->{'checkdv'}++;
     return if ($cfg{'done'}->{'checkdv'} > 1);
-    #
+
     # DV certificates must have:
     #    CN= value in either the subject or subjectAltName
     #    C=, ST=, L=, OU= or O= should be either blank or contain appropriate
@@ -3747,6 +3765,8 @@ sub checkdv($$) {
        # following checks work like:
        #   for each check add descriptive failture text (from %text)
        #   to $checks{'dv'}->{val} if check fails
+
+    check_certchars($host, $port);      # should already be done in checkcert()
 
     # required CN=
     if ($cn =~ m/^\s*$/) {
@@ -3786,7 +3806,7 @@ sub checkev($$) {
     _y_CMD("checkev() "   . $cfg{'done'}->{'checkev'});
     $cfg{'done'}->{'checkev'}++;
     return if ($cfg{'done'}->{'checkev'} > 1);
-    #
+
     # most information must be provided in `subject' field
     # unfortunately the specification is a bit vague which X509  keywords
     # must be used, hence we use RegEx to math the keyword assigned value
@@ -3824,7 +3844,7 @@ sub checkev($$) {
     # Issuer Domain Component: issuer:domainComponent (OID 0.9.2342.19200300.100.1.25)
     #
     # See also: http://www.evsslcertificate.com
-    #
+
     my $oid     = "";
     my $subject = $data{'subject'}->{val}($host);
     my $cn      = $data{'cn'}->{val}($host);
@@ -3836,6 +3856,7 @@ sub checkev($$) {
        #   for each check add descriptive failture text (from %text)
        #   to $checks{'ev+'}->{val} if check fails
 
+    check_certchars($host, $port);      # should already be done in checkcert()
     checkdv($host, $port);
     $checks{'ev+'}->{val} = $checks{'dv'}->{val}; # wrong for DV then wrong for EV too
 
@@ -3847,7 +3868,6 @@ sub checkev($$) {
         if ($subject =~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
             $data_oid{$oid}->{val} = $1;
             _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1\n");
-            #dbx# _dbx "L:$oid: $1";
         } else {
             _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required\n");
             $txt = _get_text('missing', $data_oid{$oid}->{txt});
@@ -3888,7 +3908,6 @@ sub checkev($$) {
         $checks{'ev+'}->{val} .= $txt;
         _v2print("EV: " . $txt . "\n");
     }
-    # valid characters already don in checkcert()
 
     # TODO: wildcard no, SAN yes
     # TODO: cipher 2048 bit?
@@ -3963,6 +3982,7 @@ sub checkprot($$) {
     _y_CMD("checkprot() " . $cfg{'done'}->{'checkprot'});
     $cfg{'done'}->{'checkprot'}++;
     return if ($cfg{'done'}->{'checkprot'} > 1);
+
     # check SSL version support
     # NOTE: the check is adapted to the text in $%check_dest{'hassslv2'}->{txt}
     $checks{'hassslv2'}->{val}      = " " if ($prot{'SSLv2'}->{'cnt'}  >  0);
