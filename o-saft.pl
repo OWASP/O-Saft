@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.466 16/04/17 12:42:45",
+    SID         => "@(#) yeast.pl 1.467 16/04/17 23:10:00",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -430,7 +430,6 @@ our %data   = (     # connection and certificate details
     'ext_subjectkeyid'=>{'val'=> sub { __SSLinfo('ext_subjectkeyid',$_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
     'ext_cps_cps'   => {'val' => sub { __SSLinfo('ext_cps_cps',     $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: CPS"},
     'ext_crl'       => {'val' => sub { __SSLinfo('ext_crl',         $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points"},
-#   'ext_crl_crl'   => {'val' => sub { __SSLinfo('ext_crl_crL',     $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points: Full Name"},
     'ext_keyusage'  => {'val' => sub { __SSLinfo('ext_keyusage',    $_[0], $_[1])}, 'txt' => "Certificate extensions Key Usage"},
     'ext_extkeyusage'=>{'val' => sub { __SSLinfo('ext_extkeyusage', $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
     'ext_certtype'  => {'val' => sub { __SSLinfo('ext_certtype',    $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
@@ -551,6 +550,8 @@ my %check_cert = (  ## certificate data
     'zlib'          => {'txt' => "Certificate has (TLS extension) compression"},
     'lzo'           => {'txt' => "Certificate has (GnuTLS extension) compression"},
     'open_pgp'      => {'txt' => "Certificate has (TLS extension) authentication"},
+    'ocsp_valid'    => {'txt' => "Certificate has valid OCSP"},
+    'crl_valid'     => {'txt' => "Certificate has valid CRL"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
@@ -755,6 +756,7 @@ our %shorttexts = (
     'sha2signature' => "Signature is SHA2",
     'rootcert'      => "Not root CA",
     'ocsp'          => "OCSP supported",
+    'ocsp_valid'    => "OCSP valid",
     'hassslv2'      => "No SSLv2",
     'hassslv3'      => "No SSLv3",
     'hastls10'      => "TLSv1",
@@ -771,6 +773,7 @@ our %shorttexts = (
     'sgc'           => "SGC supported",
     'cps'           => "CPS supported",
     'crl'           => "CRL supported",
+    'crl_valid'     => "CRL valid",
     'dv'            => "DV supported",
     'ev+'           => "EV supported (strict)",
     'ev-'           => "EV supported (lazy)",
@@ -1624,6 +1627,7 @@ our %cmd = (
         'checkdv'   => 0,
         'checkev'   => 0,
         'check_dh'  => 0,
+        'check_url' => 0,       # not used, as it's called multiple times
         'check_certchars' => 0,
      },
     'extension' => {            # TLS extensions
@@ -2341,9 +2345,99 @@ sub __SSLinfo($$$)     {
         # except following:
         #    Authority Information Access
         #    Netscape Cert Type
-        # these are handled in regex below which matches next extension, if any.
-        $val .= " X509";# add string to match last extenion also
-        my $rex = '\s*(.*?)(?:X509|Authority|Netscape).*';
+        #    CT Precertificate SCTs
+        #
+        # Example www.microsoft.com
+        #    X509v3 extensions:
+        #        X509v3 Subject Alternative Name: 
+        #            DNS:privacy.microsoft.com, DNS:www.microsoft.com, DNS:wwwqa.microsoft.com
+        #        X509v3 Basic Constraints: 
+        #            CA:FALSE
+        #        X509v3 Key Usage: critical
+        #            Digital Signature, Key Encipherment
+        #        X509v3 Extended Key Usage: 
+        #            TLS Web Server Authentication, TLS Web Client Authentication
+        #        X509v3 Certificate Policies: 
+        #            Policy: 2.16.840.1.113733.1.7.23.6
+        #              CPS: https://d.symcb.com/cps
+        #              User Notice:
+        #                Explicit Text: https://d.symcb.com/rpa
+        #        X509v3 Authority Key Identifier: 
+        #            keyid:0159ABE7DD3A0B59A66463D6CF200757D591E76A
+        #        X509v3 CRL Distribution Points: 
+        #            Full Name:
+        #              URI:http://sr.symcb.com/sr.crl
+        #        Authority Information Access: 
+        #            OCSP - URI:http://sr.symcd.com
+        #            CA Issuers - URI:http://sr.symcb.com/sr.crt
+        #        CT Precertificate SCTs: 
+        #            Signed Certificate Timestamp:
+        #                Version   : v1(0)
+        #                Log ID    : DDEB1D2B7A0D4FA6208B81AD8168707E:
+        #                            2E8E9D01D55C888D3D11C4CDB6ECBECC
+        #                Timestamp : Mar 24 212018.939 2016 GMT
+        #                Extensions: none
+        #                Signature : ecdsa-with-SHA256
+        #                            304602210095B30A493A8E8B253004AD:
+        #                            A971E0106BE0CC97B6FF2908FDDBBB3D:
+        #                            B8CEBFFCF8022100F37AA34DE5BE38D8:
+        #                            5A03EE8B3AAE451C0014A802C079AA34:
+        #                            9C20BAF44C54CF36
+        #            Signed Certificate Timestamp:
+        #                Version   : v1(0)
+        #                Log ID    : A4B90990B418581487BB13A2CC67700A:
+        #                            3C359804F91BDFB8E377CD0EC80DDC10
+        #                Timestamp : Mar 24 212018.983 2016 GMT
+        #                Extensions: none
+        #                Signature : ecdsa-with-SHA256
+        #                            3046022100C877DC1DBBDA2FBC7E5E63:
+        #                            60A7EAB31EED42066F91C724963EE0CE:
+        #                            80C8EBCE8C022100D5865704F32487CF:
+        #                            FF021F1C8A955303E496630CAE3C0F18:
+        #                            B8CDDFD4798365FD
+        #        ...
+        #
+        # Example microsoft.com
+        #    X509v3 extensions:
+        #        X509v3 Key Usage: 
+        #            Digital Signature, Key Encipherment, Data Encipherment
+        #        X509v3 Extended Key Usage: 
+        #            TLS Web Server Authentication, TLS Web Client Authentication
+        #        S/MIME Capabilities: 
+        #            0000 - 30 69 30 0e 06 08 2a 86-48 86 f7 0d 03   0i0...*.H....
+        #            000d - 02 02 02 00 80 30 0e 06-08 2a 86 48 86   .....0...*.H.
+        #            001a - f7 0d 03 04 02 02 00 80-30 0b 06 09 60   ........0...`
+        #            0027 - 86 48 01 65 03 04 01 2a-30 0b 06 09 60   .H.e...*0...`
+        #            0034 - 86 48 01 65 03 04 01 2d-30 0b 06 09 60   .H.e...-0...`
+        #            0041 - 86 48 01 65 03 04 01 02-30 0b 06 09 60   .H.e....0...`
+        #            004e - 86 48 01 65 03 04 01 05-30 07 06 05 2b   .H.e....0...+
+        #            005b - 0e 03 02 07 30 0a 06 08-2a 86 48 86 f7   ....0...*.H..
+        #            0068 - 0d 03 07                                 ...
+        #        X509v3 Subject Key Identifier: 
+        #            84C60E3B0FA69BF6EE0640CB02041B5F59340F73
+        #        X509v3 Authority Key Identifier: 
+        #            keyid:51AF24269CF468225780262B3B4662157B1ECCA5
+        #        X509v3 CRL Distribution Points: 
+        #            Full Name:
+        #              URI:http://mscrl.microsoft.com/pki/mscorp/crl/msitwww2.crl
+        #              URI:http://crl.microsoft.com/pki/mscorp/crl/msitwww2.crl
+        #        Authority Information Access: 
+        #            CA Issuers - URI:http://www.microsoft.com/pki/mscorp/msitwww2.crt
+        #            OCSP - URI:http://ocsp.msocsp.com
+        #        X509v3 Certificate Policies: 
+        #            Policy: 1.3.6.1.4.1.311.42.1
+        #              CPS: http://www.microsoft.com/pki/mscorp/cps
+        #        1.3.6.1.4.1.311.21.10: 
+        #            0000 - 30 18 30 0a 06 08 2b 06-01 05 05 07 03   0.0...+......
+        #            000d - 01 30 0a 06 08 2b 06 01-05 05 07 03 02   .0...+.......
+        #        ...
+        #
+        # handled in regex below which matches next extension, if any.
+        $val .= " X509";# add string to match last extension also
+        my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
+            # FIXME: the regex should match OIDs also
+            # FIXME: otherwise OID extensions are added as value to the
+            #        preceding extension, see example above (4/2016)
         $ext = $val;
         $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
         $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
@@ -2352,14 +2446,15 @@ sub __SSLinfo($$$)     {
         $val =~ s#.*?Subject Key Identifier:$rex#$1#ms          if ($cmd eq 'ext_subjectkeyid');
         $val =~ s#.*?Certificate Policies:$rex#$1#ms            if ($cmd =~ /ext_cps/);
         $val =~ s#.*?CPS\s*:\s*([^\s\n]*).*#$1#ms               if ($cmd eq 'ext_cps_cps');
-        $val =~ s#.*?Policy\s*:\s*(.*?)(?:CPS|User).*#$1#ims    if ($cmd eq 'ext_cps_policy');
+        $val =~ s#.*?Policy\s*:\s*(.*?)(?:\n|CPS|User).*#$1#ims if ($cmd eq 'ext_cps_policy');
+        $val =~ s#.*?User\s*Notice:\s*(.*?)(?:\n|CPS|Policy).*#$1#ims  if ($cmd eq 'ext_cps_notice');
         $val =~ s#.*?CRL Distribution Points:$rex#$1#ms         if ($cmd eq 'ext_crl');
         $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
         if ($cmd eq 'ext_crl') {
             $val =~ s#\s*Full Name:\s*##ims;
-            $val =~ s#(\s*URI\s*:)##ms;   
+            $val =~ s#(\s*URI\s*:)# #msg;
         }
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
     }
@@ -3030,6 +3125,138 @@ sub check_dh($$) {
     return;
 } # check_dh
 
+sub check_url($$) {
+    #? request given URL and check if it is a valid CRL or OCSP site
+    #? returns result of check; empty string if anything OK
+    my ($uri, $type) = @_;  # type is 'ext_crl' or 'ocsp_uri'
+    _y_CMD("check_url() ". $cfg{'done'}->{'check_url'});
+    $cfg{'done'}->{'check_url'}++;
+    _trace("check_url($uri, $type)");
+
+    return " " if ($uri =~ m#^\s*$#);  # no URI, no more checks
+
+    # Net::SSLeay::get_http() is used as we already include Net::SSLeay
+    # NOTE: must be rewritten if Net::SSLeay is removed
+
+    # Note: all following examples show only the headers checked herein
+    # for CRL  we expect something like:
+    # example: http://crl.entrust.net/level1k.crl
+    #     HTTP/1.1 200 OK
+    #     Accept-Ranges: bytes
+    #     Content-Type: application/x-pkcs7-crl
+    #     Content-Length: 1101367
+    #
+    # example: http://pki.google.com/GIAG2.crl
+    #     HTTP/1.1 200 OK
+    #     Accept-Ranges: none
+    #     Transfer-Encoding: chunked
+    #     Content-Type: application/pkix-crl
+    #
+    # bad example: http://pki.google.com
+    #     HTTP/1.1 200 OK
+    #     Accept-Ranges: none
+    #     Transfer-Encoding: chunked
+    #     Content-Type: text/html
+    #
+    # example: http://crl.startssl.com/crt2-crl.crl
+    #     HTTP/1.1 200 OK
+    #     Accept-Ranges: bytes
+    #     Content-Type: application/pkix-crl
+    #     Content-Length: 58411
+    #
+    # example: http://mscrl.microsoft.com/pki/mscorp/crl/msitwww2.crl
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/pkix-crl
+    #     Content-Length: 179039
+    #     Accept-Ranges: bytes
+    #
+    # for OCSP we expect something like:
+    # example: http://sr.symcd.com
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/ocsp-response
+    #     Content-Length: 5
+    #     content-transfer-encoding: binary
+    #
+    # bad example: http://clients1.google.com/ocsp
+    #     HTTP/1.1 404 Not Found
+    #     Date: Sun, 17 Apr 2016 10:24:46 GMT
+    #     Content-Type: text/html; charset=UTF-8
+    #     Content-Length: 1565
+    #
+    # bad example: http://ocsp.entrust.net
+    #     HTTP/1.1 200 OK
+    #     Content-Type: text/html
+    #     Content-Length: 68
+    #
+    #     meta HTTP-EQUIV="REFRESH" content="0; url=http://www.entrust.net">
+    #
+    # example: http://ocsp.msocsp.com
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/ocsp-response
+    #     Content-Length: 5
+    #
+    # for AIA we expect something like:
+    # example: http://www.microsoft.com/pki/mscorp/msitwww2.crt
+    #      HTTP/1.1 200 OK
+    #      Accept-Ranges: bytes
+    #      Content-Type: application/x-x509-ca-cert
+    #      Content-Length: 1418
+    #
+
+    my ($accept, $binary, $ctype, $chunk, $length);
+    my $txt = "<<unexpected type: $type>>"; # this is a programming error
+    my $src = 'Net::SSLeay::get_http()';
+    # got an URI, extract host, port and URL
+       $uri =~ m#^\s*(?:https?:)?//([^/]+)(/.*)?$#;
+    my $host=  $1;
+    my $url =  $2 || "/";
+       $host=~ m#^([^:]+)(?::[0-9]{1-5})?#;
+       $host=  $1;
+    my $port=  $2 || 80;  $port =~ s/^://;
+    _trace2("check_url: get_http($host, $port, $url)");
+    my ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
+            Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
+    );
+    _trace2("check_url: STATUS: $status");
+
+    if ($status !~ m#^HTTP/... ([1234][0-9][0-9]|500) #) {
+        return "<<connection to '$url' failed>>";
+    }
+    _trace2("check_url: header: #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
+    if ($status =~ m#^HTTP/... 200 #) {
+        $accept = $headers{(grep{/^Accept-Ranges$/i}     keys %headers)[0] || ""};
+        $ctype  = $headers{(grep{/^Content-Type$/i}      keys %headers)[0] || ""};
+        $length = $headers{(grep{/^Content-Length$/i}    keys %headers)[0] || ""};
+        $binary = $headers{(grep{/^Content-transfer-encoding$/i} keys %headers)[0] || ""};
+        $chunk  = $headers{(grep{/^Transfer-Encoding$/i} keys %headers)[0] || ""};
+    } else {
+        return "<<unexpected response: $status>>";
+    }
+    # FIXME: 30x status codes are ok; we should then call ourself again
+
+    if ($type eq 'ocsp_uri') {
+        _trace2("check_url: ocsp_uri ...");
+        return  _get_text('invalid', "Content-Type: $ctype")   if ($ctype !~ m:application/ocsp-response:i);
+        return  _get_text('invalid', "Content-Length: $ctype") if ($length < 4);
+        return ""; # valid
+    } # OCSP
+
+    if ($type eq 'ext_crl') {
+        _trace2("check_url: ext_crl ...");
+        if ($accept !~ m/bytes/i) {
+            if (($accept !~ m/^none/i) && ($chunk !~ m/^chunked/i)) {
+                return _get_text('invalid', "Accept-Ranges: $accept");
+            }
+        }
+        if ($ctype !~ m#application/(?:pkix-crl|x-pkcs7-crl)#i) {
+                return _get_text('invalid', "Content-Type: $ctype");
+        }
+        return ""; # valid
+    } # CRL
+
+    return $txt;
+} # check_url
+
 sub checkcipher($$) {
     #? test given cipher and add result to %checks and %prot
     my ($ssl, $c) = @_;
@@ -3228,6 +3455,21 @@ sub checkcert($$) {
     $checks{'ocsp'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
     $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host)  eq "");
+    if ($cfg{'usehttp'} > 0) {
+        # at least 'ext_crl' may contain more than one URL
+        $checks{'crl_valid'}->{val} = "";
+        foreach my $url (split(/\s+/, $data{'ext_crl'}->{val}($host))) {
+            next if ($url =~ m/^\s*$/);     # skip empty url
+            $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl');
+        }
+        foreach my $url (split(/\s+/, $data{'ocsp_uri'}->{val}($host))) {
+            next if ($url =~ m/^\s*$/);     # skip empty url
+            $checks{'ocsp_valid'}->{val} .= check_url($url, 'ocsp_uri');
+        }
+    } else {
+        $checks{'crl_valid'}->{val} = _get_text('disabled', "--no-http");
+        $checks{'ocsp_valid'}->{val}= _get_text('disabled', "--no-http");
+    }
     $value = $data{'ext_constraints'}->{val}($host);
     $checks{'constraints'}->{val}   = " "    if ($value eq "");
     $checks{'constraints'}->{val}   = $value if ($value !~ m/CA:FALSE/i);
