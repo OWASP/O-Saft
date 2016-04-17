@@ -2496,13 +2496,14 @@ sub _istr03116_lazy($$) {
 sub _isrfc7525($$) {
     # return given cipher if it is not RFC 7525 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
-    my $bit   = get_cipher_bits($cipher) + 0;
-    return $cipher if ($bit < 128);
+    my $bit = get_cipher_bits($cipher);
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
    # /notRFC7525/;
     return $cipher if ($cipher =~ /NULL/);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+    return ""      if ($bit =~ m/^\s*$/);   # avoid perl warnings if $bit empty
+    return $cipher if ($bit < 128);
     return "";
 } # _isrfc7525
 sub _isfips($$) {
