@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.462 16/04/16 14:40:46",
+    SID         => "@(#) yeast.pl 1.464 16/04/17 10:56:44",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1316,6 +1316,9 @@ our %cmd = (
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
                        ],
+    'need_checkchr' => [        # commands which always need checking various characters
+                        qw(cn subject issuer altname ext_crl ocsp_uri),
+                       ],
     'data_hex'      => [        # data values which are in hex values
                                 # used in conjunction with --format=hex
                                 # not usefull in this list: serial extension
@@ -1467,6 +1470,10 @@ our %cmd = (
         'notPCI'    => '(?:NULL|(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON)|(?:^DES|[_-]DES)[_-]CBC|EXP(?:ORT)?(?:40|56|1024)?)[_-])',
         'notFIPS-140'=>'(?:(?:ARC(?:4|FOUR)|RC4)|MD5|IDEA)',
         'FIPS-140'  => '(?:(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)|AES)', # these are compiant
+
+        # Regex for checking invalid characers (used in compliance and EV checks)
+        'nonprint'  => '/[\x00-\x1f\x7f-\xff]+/',          # not printable;  m/[:^print:]/
+        'crnlnull'  => '/[\r\n\t\v\0]+/',                  # CR, NL, TABS and NULL
 
         # Regex for checking EV-SSL
         # they should matching:   /key=value/other-key=other-value
@@ -3173,19 +3180,19 @@ sub checkcert($$) {
     #dbx# _dbx "S " .$data{'issuer'}->{val}($host);
 
     $checks{'ocsp'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
-    $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host) eq "");
-    $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host) eq "");
+    $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
+    $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host)  eq "");
     $value = $data{'ext_constraints'}->{val}($host);
     $checks{'constraints'}->{val}   = " "    if ($value eq "");
     $checks{'constraints'}->{val}   = $value if ($value !~ m/CA:FALSE/i);
     # TODO: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
 
-    foreach my $label (qw(cn subject issuer email aux ocsp_uri altname)) {
+    foreach my $label (@{$cfg{'need_checkchr'}}, qw(email aux)) { # CRL
         $value = $data{$label}->{val}($host);
         if ($value ne "") {
-            $checks{'nonprint'}{val} .= " $label" if ($value =~ m/[\x00-\x1f\x7f-\xff]+/); # m/[:^print:]/);
-            $checks{'crnlnull'}{val} .= " $label" if ($value =~ m/[\r\n\t\v\0]+/);
+            $checks{'nonprint'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'nonprint'}/);
+            $checks{'crnlnull'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'crnlnull'}/);
         }
     }
 
@@ -3199,14 +3206,14 @@ sub checkcert($$) {
 # FIXME:  $data{'verify'} $data{'error_verify'} $data{'error_depth'}
 #   if (_is_do('verify')) {
 #       print "";
-#       print "Hostname validity:       "      . Net::SSLinfo::verify_hostname($host, $port);
-#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
+#       print "Hostname validity:       "  . $data{'verify_hostname'}->{val}($host);
+#       print "Alternate name validity: "  . $data{'verify_altname'}->{val}( $host);
 #   }
 #
 #   if (_is_do('altname')) {
 #       print "";
-#       print "Certificate AltNames:    "      . Net::SSLinfo::altname($host, $port);
-#       print "Alternate name validity: "      . Net::SSLinfo::verify_altname($host, $port);
+#       print "Certificate AltNames:    "  . $data{'altname'}->{val}(        $host);
+#       print "Alternate name validity: "  . $data{'verify_altname'}->{val}( $host);
 #   }
         }
     }
@@ -3223,12 +3230,13 @@ sub checkcert($$) {
 # TODO: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
     # valid characters (most likely only relevant for EV)
+    #_dbx "EV: keys: " . join(" ", @{$cfg{'need_checkchr'}} . "extensions";
     #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
-    foreach my $label (qw(cn subject altname extensions ext_crl ocsp_uri)) { # CRL
-        # also (should already be part of others): CN, O, U
+    # not checked explicitely: CN, O, U (should already be part of others, like subject)
+    foreach my $label (@{$cfg{'need_checkchr'}}, qw(extensions)) { # CRL
         $subject =  $data{$label}->{val}($host);
         $subject =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
-        if ($subject =~ m!$cfg{'regex'}->{'notEV-chars'}!) {
+        if ($subject =~ m/$cfg{'regex'}->{'notEV-chars'}/) {
             $txt = _get_text('cert-chars', $label);
             $checks{'ev-chars'}->{val} .= $txt;
             $checks{'ev+'}->{val}      .= $txt;
