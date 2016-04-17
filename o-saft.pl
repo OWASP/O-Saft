@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.465 16/04/17 11:33:16",
+    SID         => "@(#) yeast.pl 1.466 16/04/17 12:42:45",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2937,6 +2937,96 @@ sub ciphers_get($$$$) {
     return @res;
 } # ciphers_get
 
+sub check_certchars($$) {
+    #? check for invalid characters in certificate
+    my ($host, $port) = @_;
+    _y_CMD("check_certchars() ". $cfg{'done'}->{'check_certchars'});
+    $cfg{'done'}->{'check_certchars'}++;
+    return if ($cfg{'done'}->{'check_certchars'} > 1);
+    my $value;
+    my $txt;
+
+    # check vor invald charaters
+    foreach my $label (@{$cfg{'need_checkchr'}}, qw(email aux)) {
+        $value = $data{$label}->{val}($host);
+        if ($value ne "") {
+            $checks{'nonprint'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'nonprint'}/);
+            $checks{'crnlnull'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'crnlnull'}/);
+        }
+    }
+
+    # valid characters (probably only relevant for DV and EV)
+    #_dbx "EV: keys: " . join(" ", @{$cfg{'need_checkchr'}} . "extensions";
+    #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
+    # not checked explicitely: CN, O, U (should already be part of others, like subject)
+    foreach my $label (@{$cfg{'need_checkchr'}}, qw(extensions)) {
+        $value =  $data{$label}->{val}($host);
+        $value =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
+        if ($value =~ m/$cfg{'regex'}->{'notEV-chars'}/) {
+            $txt = _get_text('cert-chars', $label);
+            $checks{'ev-chars'}->{val} .= $txt;
+            $checks{'ev+'}->{val}      .= $txt;
+            $checks{'ev-'}->{val}      .= $txt;
+            $checks{'dv'}->{val}       .= $txt;
+             if ($cfg{'verbose'} > 0) {
+                 $value =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
+                 _v2print("EV:  wrong characters in $label: $value" . "\n");
+             }
+        }
+    }
+
+    return;
+} # check_certchars
+
+sub check_dh($$) {
+    #? check if target is vulnerable to Logjam attack
+    my ($host, $port) = @_;
+    _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
+    $cfg{'done'}->{'check_dh'}++;
+    return if ($cfg{'done'}->{'check_dh'} > 1);
+
+    checkciphers($host, $port); # need EXPORT ciphers
+
+    # Logjam check is a bit ugly: DH Parameter may be missing
+    # TODO: implement own check for DH parameters instead relying on openssl
+    my $txt = $data{'dh_parameter'}->{val}($host);
+    my $exp = $checks{'logjam'}->{val};
+    if ($txt eq "") {
+        $txt = "<<openssl did not return DH Paramter>>";
+        $checks{'logjam'}->{val}   .=  $txt;
+        $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
+        $checks{'dh_512'}->{val}    =  $txt;
+        $checks{'dh_2048'}->{val}   =  $txt;
+        $checks{'ecdh_256'}->{val}  =  $txt;
+        $checks{'ecdh_512'}->{val}  =  $txt;
+        return; # no more checks possible
+    }
+    my $dh  = $txt;
+       $dh  =~ s/.*?[^\d]*(\d+) *bits.*/$1/i;   # just get number
+       # DH, 512 bits
+       # DH, 1024 bits
+       # DH, 2048 bits
+       # ECDH, P-256, 128 bits
+       # ECDH, P-256, 256 bits
+       # ECDH, P-384, 384 bits
+       # TODO: ECDH should also have 256 bits or more
+    if ($dh =~ m/^\d+$/) {      # a number, check size
+        if ($txt !~ m/ECDH/) { 
+            $checks{'dh_512'}->{val}    =  $txt if ($dh < 512);
+            $checks{'dh_2048'}->{val}   =  $txt if ($dh < 2048);
+        } else {                # ECDH is different
+            $checks{'ecdh_256'}->{val}  =  $txt if ($dh < 256);
+            $checks{'ecdh_512'}->{val}  =  $txt if ($dh < 512);
+        }
+        # lazy check: logjam if bits < 256 only
+        my $val = $checks{'dh_512'}->{val} . $checks{'dh_2048'}->{val} . $checks{'ecdh_256'}->{val};
+        $checks{'logjam'}->{val} = $val if ($val ne "");
+    } else {                    # not a number, probably suspicious
+        $checks{'logjam'}->{val}=  $txt;
+    }
+    return;
+} # check_dh
+
 sub checkcipher($$) {
     #? test given cipher and add result to %checks and %prot
     my ($ssl, $c) = @_;
@@ -3033,96 +3123,6 @@ sub checkciphers($$) {
     _trace("checkciphers() }");
     return;
 } # checkciphers
-
-sub check_dh($$) {
-    #? check if target is vulnerable to Logjam attack
-    my ($host, $port) = @_;
-    _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
-    $cfg{'done'}->{'check_dh'}++;
-    return if ($cfg{'done'}->{'check_dh'} > 1);
-
-    checkciphers($host, $port); # need EXPORT ciphers
-
-    # Logjam check is a bit ugly: DH Parameter may be missing
-    # TODO: implement own check for DH parameters instead relying on openssl
-    my $txt = $data{'dh_parameter'}->{val}($host);
-    my $exp = $checks{'logjam'}->{val};
-    if ($txt eq "") {
-        $txt = "<<openssl did not return DH Paramter>>";
-        $checks{'logjam'}->{val}   .=  $txt;
-        $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
-        $checks{'dh_512'}->{val}    =  $txt;
-        $checks{'dh_2048'}->{val}   =  $txt;
-        $checks{'ecdh_256'}->{val}  =  $txt;
-        $checks{'ecdh_512'}->{val}  =  $txt;
-        return; # no more checks possible
-    }
-    my $dh  = $txt;
-       $dh  =~ s/.*?[^\d]*(\d+) *bits.*/$1/i;   # just get number
-       # DH, 512 bits
-       # DH, 1024 bits
-       # DH, 2048 bits
-       # ECDH, P-256, 128 bits
-       # ECDH, P-256, 256 bits
-       # ECDH, P-384, 384 bits
-       # TODO: ECDH should also have 256 bits or more
-    if ($dh =~ m/^\d+$/) {      # a number, check size
-        if ($txt !~ m/ECDH/) { 
-            $checks{'dh_512'}->{val}    =  $txt if ($dh < 512);
-            $checks{'dh_2048'}->{val}   =  $txt if ($dh < 2048);
-        } else {                # ECDH is different
-            $checks{'ecdh_256'}->{val}  =  $txt if ($dh < 256);
-            $checks{'ecdh_512'}->{val}  =  $txt if ($dh < 512);
-        }
-        # lazy check: logjam if bits < 256 only
-        my $val = $checks{'dh_512'}->{val} . $checks{'dh_2048'}->{val} . $checks{'ecdh_256'}->{val};
-        $checks{'logjam'}->{val} = $val if ($val ne "");
-    } else {                    # not a number, probably suspicious
-        $checks{'logjam'}->{val}=  $txt;
-    }
-    return;
-} # check_dh
-
-sub check_certchars($$) {
-    #? check for invalid characters in certificate
-    my ($host, $port) = @_;
-    _y_CMD("check_certchars() ". $cfg{'done'}->{'check_certchars'});
-    $cfg{'done'}->{'check_certchars'}++;
-    return if ($cfg{'done'}->{'check_certchars'} > 1);
-    my $value;
-    my $txt;
-
-    # check vor invald charaters
-    foreach my $label (@{$cfg{'need_checkchr'}}, qw(email aux)) {
-        $value = $data{$label}->{val}($host);
-        if ($value ne "") {
-            $checks{'nonprint'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'nonprint'}/);
-            $checks{'crnlnull'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'crnlnull'}/);
-        }
-    }
-
-    # valid characters (probably only relevant for DV and EV)
-    #_dbx "EV: keys: " . join(" ", @{$cfg{'need_checkchr'}} . "extensions";
-    #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
-    # not checked explicitely: CN, O, U (should already be part of others, like subject)
-    foreach my $label (@{$cfg{'need_checkchr'}}, qw(extensions)) {
-        $value =  $data{$label}->{val}($host);
-        $value =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
-        if ($value =~ m/$cfg{'regex'}->{'notEV-chars'}/) {
-            $txt = _get_text('cert-chars', $label);
-            $checks{'ev-chars'}->{val} .= $txt;
-            $checks{'ev+'}->{val}      .= $txt;
-            $checks{'ev-'}->{val}      .= $txt;
-            $checks{'dv'}->{val}       .= $txt;
-             if ($cfg{'verbose'} > 0) {
-                 $value =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
-                 _v2print("EV:  wrong characters in $label: $value" . "\n");
-             }
-        }
-    }
-
-    return;
-} # check_certchars
 
 sub checkbleed($$) {
     #? check if target supports TLS extension 15 (hearbeat)
