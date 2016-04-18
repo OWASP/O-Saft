@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.105 16/04/18 12:59:32";
+my  $man_SID= "@(#) o-saft-man.pm 1.106 16/04/19 00:44:15";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2920,7 +2920,7 @@ LAZY SYNOPSIS
           * --port=PORT
 
         This applies to most such options,  --port  is just an example.  When
-        used in the RC-FILE, the  --OPTION=VALUE  variant must be used.
+        used in the  RC-FILE, the  --OPTION=VALUE  variant must be used.
 # does not apply to --trace option
 
       Option Names
@@ -2947,8 +2947,7 @@ LAZY SYNOPSIS
 
 CHECKS
 
-        All SSL related check performed by the tool will be described here in
-        the near future (Any help appreciated ...).
+        All SSL related check performed by the tool will be described here.
 
     General Checks
 
@@ -3213,16 +3212,25 @@ CHECKS
       Note that it is not possible to satisfy all following compliances. Best
       match is: 'PSF' and 'ISM' and 'PCI' and 'lazy BSI TR-02102-2'.
 # example: fancyssl.hboeck.de
+      In general it is difficult to  satisfy all conditions of a compliances,
+      and it is also difficult to check all these conditions. That's why some
+      of the compliances checks are  not completely implemented,  for details
+      please see blow.
+
+      Note that output of results of some checks is disabled in the  RC-FILE
+      by default. A  **Hint:  message will be printed, if any of these checks
+      are used.
 
           * FIPS-140
           * ISM
           * PCI
           * BSI TR-02102-2
           * BSI TR-03116-4
+          * RFC 6125
           * RFC 7525
 
 #   NSA Suite B
-      BSI TR-02102-2
+      BSI TR-02102-2 (+bsi-tr-02102+ +bsi-tr-02102-)
         Checks if connection and ciphers are compliant according TR-02102-2,
         see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
         /TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
@@ -3302,7 +3310,7 @@ CHECKS
 
           This requirement is not testable from remote.
 
-      BSI TR-03116-4
+      BSI TR-03116-4 (+bsi-tr-03116+ +bsi-tr-03116-)
         Checks if connection and ciphers are compliant according TR-03116-4,
         see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
         /TechnischeRichtlinien/TR03116/BSI-TR-03116-4.pdf?__blob=publicationFile
@@ -3370,7 +3378,15 @@ CHECKS
 
           This requirement is not testable from remote.
 
-      RFC 7525
+      RFC 6125 (+rfc6125)
+        Checks values 'CommonName', 'Subject' and 'SubjectAltname'  of the
+        certificate for:
+           * must all be valid characters for DNS
+           * must not contain more than one wildcards
+           * must not contain invalid wildcards
+           * must not contain invalid IDN characters
+
+      RFC 7525 (+rfc7525)
         Checks if connection and ciphers are compliant according RFC 7525.
         See http://tools.ietf.org/rfc/rfc7525.txt
         (following headlines are taken from there)
