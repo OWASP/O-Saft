@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.469 16/04/18 02:18:13",
+    SID         => "@(#) yeast.pl 1.470 16/04/19 00:52:52",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1268,6 +1268,13 @@ our %cmd = (
     'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
                         qw(zlib lzo open_pgp fallback closure order sgc scsv time),
                        ],
+    'cmd-HINT'      => [        # checks which are NOT YET fully implemented
+                                # these are mainly all commands for compliance
+                                # see also: cmd-bsi
+                        qw(rfc7525
+                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
+                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+                       )],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
     'cmd-drown'     => [qw(drown)],                 # commands for +drown
@@ -1290,6 +1297,7 @@ our %cmd = (
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
     'cmd-bsi'       => [                            # commands for +bsi
+                                                    # see also: cmd-HINT
                         qw(after dates crl rc4_cipher renegotiation
                            tr-02102            bsi-tr-02102+ bsi-tr-02102-
                            tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
@@ -3950,14 +3958,13 @@ sub check7525($$) {
     #    ... Curves of less than 192 bits SHOULD NOT be used.
 
     check_dh($host, $port);    # need DH Parameter
-    # $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val}   = "");
     if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) { 
         $val .= _get_text('insecure', "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
     } else {
         $val .= _get_text('insecure', "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
         # TODO: $check...{val} may already contain "<<...>>"; remove it
     }
-    # TODO: is this a reliable check?
+    # TODO: use get_dh_paramter() for more reliable check
 
     # 4.5.  Truncated HMAC
     #    Implementations MUST NOT use the Truncated HMAC extension, defined in
@@ -6494,8 +6501,8 @@ usr_pre_host();
 
 my $fail = 0;
 # check if output disabled for given/used commands
-foreach my $key (@{$cfg{'ignore-out'}}) {
-    $fail++ if (_is_do($key) > 0);
+foreach my $cmd (@{$cfg{'ignore-out'}}) {
+    $fail++ if (_is_do($cmd) > 0);
 }
 if ($fail > 0) {
     _warn("$fail data and check outputs are disbaled due to use of '--no-out':");
@@ -6509,6 +6516,13 @@ if ($fail > 0) {
         # It's not simple to identify the given command, as $cfg{'do'} may
         # contain a list of commands. So the hint is a bit vage.
         # _dbx "@{$cfg{'done'}->{'arg_cmds'}}"
+} else {
+    # print warnings and hints if necessary
+    foreach my $cmd (@{$cfg{'do'}}) {
+        if (_is_member($cmd, \@{$cfg{'cmd-HINT'}}) > 0) {
+            print STR_HINT . "+$cmd : please see  '$me --help=CHECKS'  for more information";
+        }
+    }
 }
 
 # run the appropriate SSL tests for each host (ugly code down here):
