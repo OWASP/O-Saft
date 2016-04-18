@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.468 16/04/17 23:41:57",
+    SID         => "@(#) yeast.pl 1.469 16/04/18 02:18:13",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2026,6 +2026,7 @@ our %text = (
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
     'missing'       => " <<missing @@>>",
     'insecure'      => " <<insecure @@>>",
+    'invalid'       => " <<invalid @@>>",
     'EV-large'      => " <<too large @@>>",
     'EV-subject-CN' => " <<missmatch: subject CN= and commonName>>",
     'EV-subject-host'=>" <<missmatch: subject CN= and given hostname>>",
@@ -3198,6 +3199,12 @@ sub check_url($$) {
     #     Content-Type: application/ocsp-response
     #     Content-Length: 5
     #
+    # example: http://sr.symcb.com/sr.crl
+    #     HTTP/1.1 200 OK
+    #     Content-Type: application/pkix-crl
+    #     Transfer-Encoding:  chunked
+    #     Connection: Transfer-Encoding
+    #
     # for AIA we expect something like:
     # example: http://www.microsoft.com/pki/mscorp/msitwww2.crt
     #      HTTP/1.1 200 OK
@@ -3246,9 +3253,11 @@ sub check_url($$) {
 
     if ($type eq 'ext_crl') {
         _trace2("check_url: ext_crl ...");
-        if ($accept !~ m/bytes/i) {
-            if (($accept !~ m/^none/i) && ($chunk !~ m/^chunked/i)) {
-                return _get_text('invalid', "Accept-Ranges: $accept");
+        if ((defined $accept) && (defined $chunk)) {
+            if ($accept !~ m/bytes/i) {
+                if (($accept !~ m/^none/i) && ($chunk !~ m/^chunked/i)) {
+                    return _get_text('invalid', "Accept-Ranges: $accept");
+                }
             }
         }
         if ($ctype !~ m#application/(?:pkix-crl|x-pkcs7-crl)#i) {
@@ -3463,11 +3472,12 @@ sub checkcert($$) {
         $checks{'crl_valid'}->{val} = "";
         foreach my $url (split(/\s+/, $data{'ext_crl'}->{val}($host))) {
             next if ($url =~ m/^\s*$/);     # skip empty url
-            $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl');
+            $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl') || "";
         }
+        $checks{'ocsp_valid'}->{val} = "";
         foreach my $url (split(/\s+/, $data{'ocsp_uri'}->{val}($host))) {
             next if ($url =~ m/^\s*$/);     # skip empty url
-            $checks{'ocsp_valid'}->{val} .= check_url($url, 'ocsp_uri');
+            $checks{'ocsp_valid'}->{val} .= check_url($url, 'ocsp_uri') || "";
         }
     } else {
         $checks{'crl_valid'}->{val} = _get_text('disabled', "--no-http");
@@ -3945,6 +3955,7 @@ sub check7525($$) {
         $val .= _get_text('insecure', "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
     } else {
         $val .= _get_text('insecure', "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
+        # TODO: $check...{val} may already contain "<<...>>"; remove it
     }
     # TODO: is this a reliable check?
 
@@ -3983,7 +3994,9 @@ sub check7525($$) {
     #    The OCSP stapling extension defined in [RFC6961]
 
     $val .= _get_text('missing', 'OCSP') if ($checks{'ocsp'}->{val}  ne "");
+    $val .= $checks{'ocsp_valid'}->{val};
     $val .= _get_text('missing', 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
+    $val .= $checks{'crl_valid'}->{val};
 
     # All checks for ciphers were done in _isrfc7525() and already stored in
     # $checks{'rfc7525'}. Because it may be a huge list, it is appended.
