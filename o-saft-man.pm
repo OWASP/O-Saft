@@ -1341,7 +1341,7 @@ QUICKSTART
           $0 +cipher-dh example.tld
 
         * Test all ciphers, even if not supported by local SSL implementation:
-          $0 +cipherraw example.tld
+          $0 +cipherall example.tld
 
         * Show details of certificate and connection of target:
           $0 +info example.tld
@@ -1353,7 +1353,7 @@ QUICKSTART
           $0 +vulns example.tld
 
         * Check for all known ciphers (independant of SSL library):
-          $0 example.tld --range=full
+          $0 +cipherall example.tld --range=full
           checkAllCiphers.pl example.tld
           checkAllCiphers.pl example.tld --range=full --v
 
@@ -1781,7 +1781,7 @@ COMMANDS
           with  --cipher=*  option.
 
           Note that ciphers not supported by the local SSL implementation are
-          not checked by default, use  +cipherraw  command for that.
+          not checked by default, use  +cipherall  command for that.
 
 # other names: +cipherall +allciphers +rawciphers
       +cipherall
@@ -1792,7 +1792,7 @@ COMMANDS
 
           In contrast to  +cipher  this command has some options to tweak the
           cipher tests, connection results and some strange behaviours of the
-          target. See  X&Options for cipherraw command&  for details.
+          target. See  X&Options for cipherall command&  for details.
 
       +cipher-SSL
 
@@ -2402,12 +2402,12 @@ OPTIONS
 
           Argument or option passed to openssl's  s_client  command.
 
-    Options for cipherraw command
+    Options for cipherall command
 
       --range=RANGE 
       --cipherrange=RANGE
 
-          Specify range of cipher constants to be tested by  +cipherraw.
+          Specify range of cipher constants to be tested by  +cipherall.
           Following RANGEs are supported (see also:  --cipherrange=RANGE):
           * 'rfc'               all ciphers defined in various RFCs
           * 'shifted'           'rfc', shifted by 64 bytes to the right
@@ -3757,7 +3757,7 @@ KNOWN PROBLEMS
         More details why the connection failed can be seen using  --trace=2 .
 
         If the targets supports SSL, it should be at least possible to check
-        for supported ciphers using  +cipherraw  instead of  +cipher .
+        for supported ciphers using  +cipherall  instead of  +cipher .
 
 
     Use of uninitialized value $headers in split ... do_httpx2.al)
@@ -4925,8 +4925,8 @@ EXAMPLES
           $0 +cipher --cipher=ADH-AES256-SHA some.tld
 
         * Test all ciphers, even if not supported by local SSL implementation
-          $0 +cipherraw some.tld
-          $0 +cipherraw some.tld --range=full
+          $0 +cipherall some.tld
+          $0 +cipherall some.tld --range=full
           checkAllCiphers.pl example.tld --range=full --v
 
         * Show supported (enabled) ciphers with their DH parameters:
