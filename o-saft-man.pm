@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.104 16/04/16 02:03:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.105 16/04/18 12:59:32";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1459,7 +1459,7 @@ TECHNICAL INFORMATION
           * --force-openssl
           * --exe-path=PATH --exe=PATH
 
-        Above applies to all commands except  +cipherraw  which uses no other
+        Above applies to all commands except  +cipherall  which uses no other
         libraries.
 
         OpenSSL is recommended to be used for libssl and libcrypto.  Versions
@@ -3373,7 +3373,6 @@ CHECKS
       RFC 7525
         Checks if connection and ciphers are compliant according RFC 7525.
         See http://tools.ietf.org/rfc/rfc7525.txt
-
         (following headlines are taken from there)
 
         3.1.1.  SSL/TLS Protocol Versions
@@ -3388,33 +3387,44 @@ CHECKS
 
         3.1.3.  Fallback to Lower Versions
 
-          (check implezitely done by 3.1.1, see above)
+          (check implecitely done by 3.1.1, see above)
 
         3.2.  Strict TLS
+
+          Check if server provides Strict Transport Security.
           (STARTTLS check NOT YET IMPLEMENTED).
 
         3.3.  Compression
 
-          Compression onTLS must not be supported.
+          Compression on TLS must not be supported.
 
         3.4.  TLS Session Resumption
 
           Server must support resumtion and random session tickets.
-          (randomnes of session tickets NOT YET exerimental).
+          (Randomnes of session tickets implemented YET experimental.)
+
+          Check if ticket is authenticated and encrypted NOT YET IMPLEMENTED.
 
         3.5.  TLS Renegotiation
+
+          Server must support renegotiation.
+
         3.6.  Server Name Indication
+
+          (Check for SNI support implemented experimental.)
 
         4.  Recommendations: Cipher Suites
 
         4.1.  General Guidelines
         4.2.  Recommended Cipher Suites
 
-          Check for recommendet ciphers.
+          Check for recommended ciphers.
 
         4.3.  Public Key Length
 
           DH parameter must be at least 256 bits or 2048 its with EC.
+          (Check currently, 4/2016, based on openssl which may not provide DH
+           parameters for all ciphers.)
 
         4.5.  Truncated HMAC
 
@@ -3425,6 +3435,7 @@ CHECKS
 
           Given hostname must matches hostname in certificate's subject.
 
+        6.2.  AES-GCM
         6.3.  Forward Secrecy
         6.4.  Diffie-Hellman Exponent Reuse
           (NOT YET IMPLEMENTED).
@@ -3432,8 +3443,6 @@ CHECKS
         6.5.  Certificate Revocation
 
           OCSP and CRL Distrbution Point in cetificate must be defined.
-          Checking the validity of the links or if they are reachable is NOT
-          YET IMPLEMENTED.
 
 
 # score will be removed, so don't anounce it
@@ -3833,6 +3842,12 @@ KNOWN PROBLEMS
         parameters and logkam attack cannot be done.
 
         Workaround: try to use  --openssl=TOOL  option.
+
+        This text may appears in any of the compliance checks (like +rfc7525)
+        which may be a false positive.  For these checks openssl is also used
+        to get the DH Parameter.
+
+        Workaround: not available yet
 
     No output with  +help  and/or  --help=todo
 
@@ -5102,6 +5117,14 @@ TODO
              the certificate chain.
           ** TR-03116-4: does not check data in certificate chain
           ** RFC 7525: does not check data in certificate chain
+          ** RFC 7525: 3.2.  Strict TLS (for STARTTLS)
+          ** RFC 7525: 3.4.  TLS Session Resumption (session ticket must be
+             authenticated and encrypted)
+          ** RFC 7525: 3.6.  Server Name Indication (more reliable check)
+          ** RFC 7525: 4.3.  Public Key Length (need more reliable check)
+          ** RFC 7525: 6.2.  AES-GCM
+          ** RFC 7525: 6.3.  Forward Secrecy
+          ** RFC 7525: 6.4.  Diffie-Hellman Exponent Reuse
 
         * vulnerabilities
           ** complete TIME, BREACH check
