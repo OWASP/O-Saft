@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.106 16/04/19 00:44:15";
+my  $man_SID= "@(#) o-saft-man.pm 1.107 16/04/20 23:33:46";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -460,6 +460,7 @@ our %man_text = (
         'SPKI'      => "Subject Public Key Infrastructure",
         'SPN'       => "Substitution-Permutation Network",
         'Square'    => "block cipher",
+        'SRI'       => "Subresource Integrity",
         'SRP'       => "Secure Remote Password protocol",
         'SRTP'      => "Secure RTP",
         'SSCD'      => "Secure Signature Creation Device",
@@ -672,6 +673,10 @@ our %man_text = (
     # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
     #
     # SCSV   https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
+    # SRI    Subresource Integrity: https://www.w3.org/TR/SRI/ 4/2016
+    #        see also: https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
+    #        supported by: Chrome 45, Firefox 43, Opera 32
+    #        Note that SRI is SSL/TLS-related but security-related
     # TS 102 042 : http://
 ); # %man_text
 
