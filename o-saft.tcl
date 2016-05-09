@@ -182,7 +182,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.60 Winter Edition 2015
+#?      @(#) 1.61 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -199,7 +199,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.60 16/05/09 21:40:47 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.61 16/05/09 22:29:04 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -710,6 +710,16 @@ proc create_text {parent txt} {
     return $this
 }; # create_text
 
+proc create_filter_head {parent txt tip col} {
+    #? create a cell for header line in the filter grid
+    # note: txt must be the index to cfg_label array, we cannot pass the value
+    #       directly because it then must be converted to an object name also,
+    #       see next setting of $this
+    set this $parent.$txt
+    grid [label $this -text [tip_text $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
+    create_tip  $this $tip
+}; # create_filter_head
+
 proc create_filtab {parent cmd} {
     #? create table with filter data
     global cfg aaa
@@ -732,24 +742,15 @@ Changes apply to next +command."
     # that of the column subject for resizing.  Sounds like a bug in grid, but
     # works here :-))
     # { set header line with descriptions
-        grid [label $this.k0 -text [tip_text f_key]   ] -row 0 -column 0
-        grid [label $this.x0 -text [tip_text f_moder] ] -row 0 -column 1
-        grid [label $this.e0 -text [tip_text f_modee] ] -row 0 -column 2
-        grid [label $this.l0 -text [tip_text f_chars] ] -row 0 -column 3
-        grid [label $this.r0 -text [tip_text f_regex] ] -row 0 -column 4
-        grid [label $this.f0 -text [tip_text f_fg]    ] -row 0 -column 5
-        grid [label $this.b0 -text [tip_text f_bg]    ] -row 0 -column 6
-        grid [label $this.s0 -text [tip_text f_font]  ] -row 0 -column 7
-        grid [label $this.u0 -text [tip_text f_u]     ] -row 0 -column 8
-        create_tip  $this.k0 $f_key(0)
-        create_tip  $this.x0 "$f_mod(0) (-regexp)"
-        create_tip  $this.e0 "$f_mod(0) (-exact)"
-        create_tip  $this.l0 $f_len(0)
-        create_tip  $this.r0 $f_rex(0)
-        create_tip  $this.f0 $f_fg(0)
-        create_tip  $this.b0 $f_bg(0)
-        create_tip  $this.s0 $f_fn(0)
-        create_tip  $this.u0 $f_un(0)
+        create_filter_head $this f_key    $f_key(0) 0
+        create_filter_head $this f_moder "$f_mod(0) (-regexp)" 1
+        create_filter_head $this f_modee "$f_mod(0) (-exact)"  2
+        create_filter_head $this f_chars  $f_len(0) 3
+        create_filter_head $this f_regex  $f_rex(0) 4
+        create_filter_head $this f_fg     $f_fg(0)  5
+        create_filter_head $this f_bg     $f_bg(0)  6
+        create_filter_head $this f_font   $f_fn(0)  7
+        create_filter_head $this f_u      $f_un(0)  8
     # }
     foreach {k key} [array get f_key] { # set all filter lines
         if {$k eq 0} { continue };
