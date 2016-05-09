@@ -43,12 +43,12 @@ use constant {
   # STR_VERSION => 'dd.mm.yy',  # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
-    STR_HINT    => "**Hint: ",
+    STR_HINT    => "!!Hint: ",
     STR_USAGE   => "**USAGE: ",
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.19 16/04/16 00:57:18',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.20 16/05/09 19:11:32',
 
 };
 
@@ -1231,6 +1231,19 @@ sub _prot_init_value() {
     }
     return;
 } # _prot_init_value
+
+
+=pod
+
+=head2 osaft_hint($cmd)
+
+Print hint for specified command.
+=cut
+
+sub osaft_hint($$) {
+    #? Print hint for specified command.
+    my $cmd = shift;
+} # osaft_hint
 
 sub osaft_sleep($) {
     #? wrapper for IO::select
