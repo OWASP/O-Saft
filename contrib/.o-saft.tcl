@@ -18,7 +18,7 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.1 16/04/20 01:32:02
+#?      @(#) .o-saft.tcl 1.2 16/05/09 21:42:41
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
@@ -48,7 +48,7 @@ array set cfg_color {
 #_____________________________________________ texts for labels and buttons __|
 
 array set cfg_label {
-    DESC_button {CONFIGURATION texts used in GUI for buttons or labels}
+    DESC        {CONFIGURATION texts used in GUI for buttons or labels}
     about       {About}
     close       {Close}
     closetab    {Close TAB}
@@ -71,11 +71,12 @@ array set cfg_label {
 #_______________________________________________________ texts for tooltips __|
 
 array set cfg_tipp {
-    DESC_tip    {CONFIGURATION texts used in GUI for tool tips}
+    DESC        {CONFIGURATION texts used in GUI for tool tips}
     minus       {Remove this line for a host}
     plus        {Add new line for a host}
     help        {Open window with complete help}
     closeme     {Close program}
+    closetab    {Close this TAB}
     closew      {Close window}
     saveto      {Save result to file}
     savetofile  {Save configuration to file}
@@ -83,6 +84,9 @@ array set cfg_tipp {
     resetfilterconfig "Reset configuration to values from $cfg(INIT)"
     hideline    {Hide complete line instead of pattern only}
     settings    {Open window with more settings}
+    choosecolor {Open window to choose a color}
+    choosefont  {Open window to choose a font}
+    choosen     {Choosen value}
     start       "Start $cfg(SAFT) with command "
 
     DESC_misc   {CONFIGURATION texts used in GUI for various other texts}
