@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.470 16/04/19 00:52:52",
+    SID         => "@(#) yeast.pl 1.471 16/05/09 19:19:26",
     STR_VERSION => "16.04.14",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1530,7 +1530,7 @@ our %cmd = (
         # first all that match a line at beginning:
         'error'     => qr(^\*\*ERR),            # see STR_ERROR
         'warning'   => qr(^\*\*WARN),           # see STR_WARN
-        'hint'      => qr(^\*\*Hint),           # see STR_HINT
+        'hint'      => qr(^\!\!Hint),           # see STR_HINT
         'dbx'       => qr(^#dbx#),              # see STR_DBX
         'headline'  => qr(^={1,3} ),            # headlines
         'keyline'   => qr(^#\[),                # dataline prefixed with key
