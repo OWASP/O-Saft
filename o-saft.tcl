@@ -46,6 +46,11 @@ exec wish "$0" --
 #?      Each TAB with results has a  Filter  button which opens a window where
 #?      the visibility of filtered texts (see Filter TAB) can be toggeled.
 #?      All results and settings (commands and options) can be saved to files.
+#?
+#?   Help
+#?      All functionallity is documented with ballon help on each checkbutton,
+#?      input field, button or table header line.
+#?
 #?   Examples for filter
 #?      Match complete line containing Certificate:
 #?         r=1 e=0 #=0 Regex=Certificate
@@ -53,11 +58,13 @@ exec wish "$0" --
 #?         r=0 e=1 #=6 Regex=Target
 #?      Match label text and emphase:
 #?         r=1 e=0 #=1 Regex=^[A-Za-z][^:]*\s* Font=osaftHead
+#?
 #?   Configuration
 #?      Some parts of the GUI, for example widget fonts or widget label texts,
-#?      can be customized in .o-saft.tcl. .o-saft.tcl  will be searched in the
-#?      user's  HOME directory and in the local directory.
-#?      For details, please see .o-saft.tcl itself.
+#?      can be customized in  .o-saft.tcl.  which  will be searched for in the
+#?      user's  HOME directory  and in the local directory.
+#?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
+#?      available in the contrib/ directpry.
 #?
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
@@ -70,7 +77,8 @@ exec wish "$0" --
 #?      them, just "highlight" texts of the results.
 #?
 #? ARGUMENTS
-#?      All arguments, except --help, are treated as a hostname to be checked.
+#?      All arguments, except  --help  and  --v,  are treated as a hostname to
+#?      be checked.
 #?
 #. LAYOUT
 #.           +---------------------------------------------------------------+
@@ -174,7 +182,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.59 Winter Edition 2015
+#?      @(#) 1.60 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -191,27 +199,9 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.59 16/04/20 01:28:08 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.60 16/05/09 21:40:47 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
-set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
-
-set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
-
-set cfg(PERL)   {};             # full path to perl; empty on *nix
-if {[regexp {indows} $tcl_platform(os)]} {
-    # Some platforms are too stupid to run our executable cfg(SAFT) directly,
-    # they need a proper perl executable to do it. We set a default path and
-    # then check if it is executable. If it is not, ask the user to choose a
-    # proper one.  There are no more checks for the selected file.  If it is
-    # wrong, the script will bail out with an error later.
-    set cfg(PERL)   {c:/programs/perl/perl/bin/perl.exe}
-    if {![file executable $cfg(PERL)]} {
-        set cfg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
-    }
-}
-# NOTE: as Tcl is picky about empty variables, we have to ensure later, that
-# $cfg(PERL) is evaluated propperly, in particular when it is empty.  We use
-# Tcl's  {*}  evaluation for that.
+set cfg(RC)     {.o-saft.tcl}
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -225,6 +215,19 @@ catch {
   set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
 }
 #-----------------------------------------------------------------------------}
+
+## configure GUI
+
+variable logo [image create photo -data {
+  R0lGODlhGAAYAOMOAAAAAAARAQASAQASAgATAQATAgBwLgCBNgCBNwCCNQCCNgCCNwCDNiZ/AP//
+  /////yH5BAEKAA8ALAAAAAAYABgAAASE8MlJq6o4W3W1fwvHfZ6oLKRmfkKLmcnTDlRrv6IEBC0g
+  2YXMStf7CWiPnETUqAl8suNylFROilHkanh9GpEME9cInU3EVvJ3gkB3umXppCHGYM2UeuUuP4/V
+  WRUJHAcZfEgpgHh5b3teUYsmTV1YBDYCfhwGTlgTA4iSFANQJAccKB8RADs=
+}]; # [!] 24x24
+
+set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
+
+set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
 
 set myX(DESC)   {CONFIGURATION window manager geometry}
 #   set minimal window sizes to be usable in a 1024x768 screen
@@ -261,7 +264,7 @@ array set cfg_color {
 }
 
 array set cfg_label {
-    DESC_button {CONFIGURATION texts used in GUI for buttons or labels}
+    DESC        {CONFIGURATION texts used in GUI for buttons or labels}
     about       About
     close       Close
     closetab    {Close TAB}
@@ -281,11 +284,12 @@ array set cfg_label {
 }
 
 array set cfg_tipp {
-    DESC_tip    {CONFIGURATION texts used in GUI for tool tips}
+    DESC        {CONFIGURATION texts used in GUI for tool tips}
     minus       {Remove this line for a host}
     plus        {Add new line for a host}
     help        {Open window with complete help}
     closeme     {Close program}
+    closetab    {Close this TAB}
     closew      {Close window}
     saveto      {Save result to file}
     savetofile  {Save configuration to file}
@@ -293,8 +297,11 @@ array set cfg_tipp {
     resetfilterconfig "Reset configuration to values from $cfg(INIT)"
     hideline    {Hide complete line instead of pattern only}
     settings    {Open window with more settings}
+    choosecolor {Open window to choose a color}
+    choosefont  {Open window to choose a font}
+    choosen     {Choosen value for}
     start       "Start $cfg(SAFT) with command "
-        # FIXME: $cfg(SAFT) may be changed when reading .o-saft.tcl below
+        # FIXME: $cfg(SAFT) may be changed when reading $cfg(RC) below
 
     DESC_misc   {CONFIGURATION texts used in GUI for various other texts}
     f_key       Key
@@ -307,6 +314,22 @@ array set cfg_tipp {
     f_font      Font
     f_u         u
 }
+
+set cfg(PERL)   {};             # full path to perl; empty on *nix
+if {[regexp {indows} $tcl_platform(os)]} {
+    # Some platforms are too stupid to run our executable cfg(SAFT) directly,
+    # they need a proper perl executable to do it.  We set a default path and
+    # then check if it is executable.  If it is not, ask the user to choose a
+    # proper one. There are  no more checks  for the selected file.  If it is
+    # wrong, the script will bail out with an error later.
+    set cfg(PERL)   {c:/programs/perl/perl/bin/perl.exe}
+    if {![file executable $cfg(PERL)]} {
+        set cfg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
+    }
+}
+# NOTE:  as Tcl is picky about empty variables, we have to ensure later, that
+# $cfg(PERL) is evaluated propperly,  in particular when it is empty.  We use
+# Tcl's  {*}  evaluation for that.
 
 set cfg(CONF)   {internal data storage}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
@@ -353,8 +376,19 @@ set tab(0)      ""; # contains results of cfg(SAFT)
 #_____________________________________________________________________________
 #_______________________________________________________ filter definitions __|
 
+#   array name  {description of element used in header line in Filter tab}
+set f_key(0)    {Unique key for regex}
+set f_mod(0)    {Modifier how to use regex}
+set f_len(0)    {Length to be matched (0 for complete line)}
+set f_bg(0)     {Background color used for matching text (empty: don't change)}
+set f_fg(0)     {Foreground color used for matching text (empty: don't change)}
+set f_fn(0)     {Font used for matching text (empty: don't change)}
+set f_un(0)     {Underline matching text (0 or 1)}
+set f_rex(0)    {Regex to match text}
+set f_cmt(0)    {Description of regex}
+
 proc txt2arr {str} {
-    #? convert string to arrays
+    #? convert string with filter definitions to arrays
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     set k 0
     foreach line [split $str "\n"] {
@@ -375,21 +409,11 @@ proc txt2arr {str} {
     }
 }; # txt2arr
 
-#   array name  {description of element used in header line in Filter tab}
-set f_key(0)    {Unique key for regex}
-set f_mod(0)    {Modifier how to use regex}
-set f_len(0)    {Length to be matched (0 for complete line)}
-set f_bg(0)     {Background color used for matching text (empty: don't change)}
-set f_fg(0)     {Foreground color used for matching text (empty: don't change)}
-set f_fn(0)     {Font used for matching text (empty: don't change)}
-set f_un(0)     {Underline matching text (0 or 1)}
-set f_rex(0)    {Regex to match text}
-set f_cmt(0)    {Description of regex}
-
-#   Filters to match results, defined as tabular text.
+#   Filters to match results are defined as tabular text.
 #   For better readability we do not use output of  "o-saft.pl +help=ourstr".
-#   We use a tabular string, which is better to maintain than Tcl arrays. Then
-#   we convert this string to multiple arrays for simple access in Tcl.
+#   A tabular string is used, which is better to maintain than  Tcl arrays.
+#   This string is converted to multiple arrays (one array for each line in
+#   the string), these array can be simple accessed in Tcl.
 #   A filter consist of all elements with same index in each array.
 #   This also allows to extend the arrays dynamically.
 #   First (0) index in each array is description.
@@ -411,7 +435,7 @@ txt2arr [string map "
 #     a # anywhere else is part of the string in corresponding column
 #   - columns *must* be separated by exactly one TAB
 #   - empty strings in columns must be written as {}
-#   - strings *must not* enclosed in "" or {}
+#   - strings *must not* be enclosed in "" or {}
 #   - variables must be defined in map above and used accordingly
 #   - lines without regex (column f_rex contains {}) will not be applied
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
@@ -592,10 +616,12 @@ proc create_selected {title val} {
     global __var;   # must be global
     set w    .selected
     toplevel $w
-    wm title $w $title
-    wm geometry $w 200x50
+    wm title $w "$cfg(TITLE): $title"
+    wm geometry  $w 200x50
     pack [entry  $w.e -textvariable __var -relief flat]
     pack [button $w.q -text [btn_text close] -command "destroy $w" -bg [get_color close]] -side right -padx $myX(rpad)
+    create_tip   $w.e "[tip_text choosen] $title"
+    create_tip   $w.q [tip_text closew]
     set __var "$val"
     return 1
 }; # create_selected
@@ -606,7 +632,7 @@ proc create_window {title size} {
     set this    .[str2obj $title]
     if {[winfo exists $this]}  { return ""; }; # do nothing
     toplevel    $this
-    wm title    $this "O-Saft: $title"
+    wm title    $this "$cfg(TITLE): $title"
     wm iconname $this "o-saft: $title"
     wm geometry $this $size
     pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
@@ -770,11 +796,13 @@ Changes apply to next +command."
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
     grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work 
     catch { # silently ignore if systems has no fontchooser
-    tk fontchooser config -command {create_selected "Font:"}; # what to do with selection
+    tk fontchooser config -command {create_selected "Font"}; # what to do with selection
+        # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
     pack [button $parent.fc -text [btn_text font]  -command {tk fontchooser show}] -side right
     }
-    pack [button $parent.cc -text [btn_text color] -command {create_selected "Color:" [tk_chooseColor]} ] -side right
-        # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
+    pack [button $parent.cc -text [btn_text color] -command {create_selected "Color" [tk_chooseColor]} ] -side right
+    create_tip  $parent.cc [tip_text choosecolor]
+    create_tip  $parent.fc [tip_text choosefont]
 }; # create_filtab
 
 proc create_filter {txt cmd} {
@@ -1217,13 +1245,13 @@ proc osaft_save {type nr} {
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
     global cfg tab
     if {$type eq "TAB"} {
-        set name [tk_getSaveFile -confirmoverwrite true -title [tip_text saveto] -initialfile "$cfg(SAFT)--$nr.log"]
+        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [tip_text saveto]"     -initialfile "$cfg(SAFT)--$nr.log"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         puts $fid $tab($nr)
     }
     if {$type eq "CFG"} {
-        set name [tk_getSaveFile -confirmoverwrite true -title [tip_text savetofile] -initialfile ".$cfg(SAFT)--new"]
+        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [tip_text savetofile]" -initialfile ".$cfg(SAFT)--new"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         foreach {idx val} [array get cfg] { # collect selected options
@@ -1282,7 +1310,7 @@ proc osaft_exec {parent cmd} {
     pack [button $tab_run.bs -text [btn_text save]     -bg [get_color save]  -command "osaft_save {TAB} $cfg(EXEC)"] -side left
     pack [button $tab_run.bf -text [btn_text filter]                         -command "create_filter $txt $cmd"] -side left
     pack [button $tab_run.bq -text [btn_text closetab] -bg [get_color close] -command "destroy $tab_run"] -side right
-    create_tip   $tab_run.bq [tip_text closew]
+    create_tip   $tab_run.bq [tip_text closetab]
     create_tip   $tab_run.bs [tip_text saveto]
     create_tip   $tab_run.bf [tip_text showfilterconfig]
     apply_filter $txt ;        # text placed in pane, now do some markup
@@ -1305,13 +1333,6 @@ foreach arg $argv {
     }
 }
 
-variable logo [image create photo -data {
-  R0lGODlhGAAYAOMOAAAAAAARAQASAQASAgATAQATAgBwLgCBNgCBNwCCNQCCNgCCNwCDNiZ/AP//
-  /////yH5BAEKAA8ALAAAAAAYABgAAASE8MlJq6o4W3W1fwvHfZ6oLKRmfkKLmcnTDlRrv6IEBC0g
-  2YXMStf7CWiPnETUqAl8suNylFROilHkanh9GpEME9cInU3EVvJ3gkB3umXppCHGYM2UeuUuP4/V
-  WRUJHAcZfEgpgHh5b3teUYsmTV1YBDYCfhwGTlgTA4iSFANQJAccKB8RADs=
-}]; # [!] 24x24
-
 font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
 font create osaftBold   {*}[font config TkDefaultFont] -weight bold
 font create osaftSlant  {*}[font config TkDefaultFont] -slant italic
@@ -1319,12 +1340,12 @@ option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
 
-## read .o-saft.tcl if any
+## read $cfg(RC) if any
 #  this may redefine some previous settings
 #  if the file does not exist, the error is silently catched and ignored
-set rcfile [file join $env(HOME) {.o-saft.tcl}]
+set rcfile [file join $env(HOME) $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
-set rcfile [file join {./}       {.o-saft.tcl}]
+set rcfile [file join {./}       $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 
 # get information from O-Saft; it's a performance penulty, but simple ;-)
