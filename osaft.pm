@@ -48,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.20 16/05/09 19:11:32',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.21 16/05/10 10:58:40',
 
 };
 
@@ -63,7 +63,7 @@ use constant {
 
 =head1 NAME
 
-o-saft-cfg -- common perl modul for O-Saft and related tools
+o-saft-lib -- common perl modul for O-Saft and related tools
 
 =head1 SYNOPSIS
 
