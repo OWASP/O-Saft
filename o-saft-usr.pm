@@ -98,8 +98,6 @@ They must be defined as `our' in L<o-saft.pl>:
 
 =item $VERSION
 
-=item $me   $mename   $mepath
-
 =item %data
 
 =item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, verbose
@@ -124,7 +122,7 @@ Call:  usr_version()
 use strict;
 use warnings;
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.18 16/04/08 03:34:12";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.19 16/05/11 00:20:15";
 
 no warnings 'redefine';
    # must be herein, as most subroutines are already defined in main
