@@ -13,8 +13,8 @@ use warnings;
 no warnings qw(once);
 
 use constant {
-    OSAFT_VERSION   => '16.04.07',
-  # STR_VERSION => 'dd.mm.yy',  # must be defined in calling program
+    OSAFT_VERSION   => '16.05.10',  # offizial verion number of tis file
+  # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "!!Hint: ",
@@ -22,7 +22,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.23 16/05/10 22:55:40',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.24 16/05/11 00:14:27',
 
 };
 
@@ -350,6 +350,19 @@ our %tls_extensions = ( # RFC 6066
    35 => [qw(SessionTicket)             ],  # RFC4507
 65535 => [qw(65535)  ],
 ); # %tls_extensions
+
+my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_extensions above
+    'extension' => {            # TLS extensions
+        '00000'     => "renegotiation info length",     # 0x0000 ??
+        '00001'     => "renegotiation length",          # 0x0001 ??
+        '00010'     => "elliptic curves",               # 0x000a length=4
+        '00011'     => "EC point formats",              # 0x000b length=2
+        '00015'     => "heartbeat",                     # 0x000f length=1
+        '00035'     => "session ticket",                # 0x0023 length=0
+        '13172'     => "next protocol",                 # 0x3374 length=NNN
+        '65281'     => "renegotiation info",            # 0xff01 length=1
+    },
+); # %tls_extensions__text
 
 # Torsten: %ECCURVE_TYPE
 our %tls_curve_types = ( # RFC 4492 
@@ -1512,16 +1525,6 @@ our %cfg = (
         # will be initialized from %prot
      },
     'done'      => {},          # defined in caller
-    'extension' => {            # TLS extensions
-        '00000'     => "renegotiation info length",     # 0x0000 ??
-        '00001'     => "renegotiation length",          # 0x0001 ??
-        '00010'     => "elliptic curves",    # 0x000a length=4
-        '00011'     => "EC point formats",   # 0x000b length=2
-        '00015'     => "heartbeat",          # 0x000f length=1
-        '00035'     => "session ticket",     # 0x0023 length=0
-        '13172'     => "next protocol",      # 0x3374 length=NNN
-        '65281'     => "renegotiation info", # 0xff01 length=1
-    },
    #------------------+---------+----------------------------------------------
 ); # %cfg
 
