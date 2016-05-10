@@ -1,36 +1,10 @@
-#! /usr/bin/perl
+#!/usr/bin/perl
 ## PACKAGE {
 
-################
-#
-# sobald in o-saft.pl eingebaut, Folgendes pruefen/aendern:
-#	1. FIXME (10) in yeast.pl   auch Variablen *dbx* ueberdenken
-#	2. alles was mit $cfg{'trace'} in o-saft-dbx.pm
-#	3. in o-saft-dbx.pm  _vprintme:  @ARGV ersetzen
-#	4. alles was mit $cfg{'trace'} in yeast.pl
-#
-#     OID aus named_curves in %data_oid eintragen: key=OID, val="curve (NIST-Name)"
-#
-#    require "o-saft-lib" "full";  # oder "raw"
-#	full: alles für osaft.pl; raw teilweise für SSLhello.pm
-#
-################
-
-# TODO
-
-# in o-saft.pl
-## Option: mit installiertem und mit --openssl version testen (beides)
-## Ausgabe waehrend den check, per Option steueren (SSL2 ausgeben, sslv3 pruefen)
-### TODO:  --sni  anschauen wenn 0
-### TODO: --proxy* auch bei openssl verwenden (ist z.Zt Bug)
-
-### bei %cipher_names (siehe Kommentar)
-
-# in sub _useopenssl() :
-########### --> Aendern:  s_client als Variable uebergeben, damit dahinter 
-###########     mehr Optionen angegebn werden koennen: -starttls  -proxy*  usw.
-
-################
+# TODO: implement
+#    require "o-saft-lib" "full";  # or "raw"
+#	full: anything for o-saft.pl; raw partial for SSLhello.pm
+# TODO: see comment at %cipher_names
 
 package osaft;
 
@@ -48,7 +22,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.22 16/05/10 17:53:58',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.23 16/05/10 22:55:40',
 
 };
 
@@ -1012,10 +986,11 @@ my $me =  $0;
 
 our %cfg = (
     'me'            => $me,
+    'mename'        => "O-Saft ", # my name pretty printed
     'ARG0'          => $0,
     'ARGV'          => [@ARGV], # arguments passed on command line
     'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
-    'RC-FILE'       => "./.$me",# our RC-FILE
+    'RC-FILE'       => "./.$me",# our RC-FILE, search in pwd only!
 
    # config. key        default   description
    #------------------+---------+----------------------------------------------
