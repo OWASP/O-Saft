@@ -48,7 +48,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.21 16/05/10 10:58:40',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.22 16/05/10 17:53:58',
 
 };
 
@@ -186,7 +186,9 @@ Following functions (methods) must be defined in the calling program:
 ## no critic qw(Modules::ProhibitAutomaticExportation)
 # FIXME: perlcritic complains to use @EXPORT_OK instead of @EXPORT, but that
 #        is not possible as long as constants are exported;
-#        should be changed when "use constnt" is replaced by "use Readonly"
+#        should be changed when "use constant" is replaced by "use Readonly"
+
+# See NOTES below also.
 
 use Exporter qw(import);
 our @ISA        = qw(Exporter);
@@ -235,7 +237,6 @@ our @EXPORT     = qw(
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
 # :r !sed -ne 's/^ *\(STR_[A-Z][^ ]*\).*/\t\t\1/p' %
-
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -1006,11 +1007,547 @@ our @cipher_results = [
 
 ]; # @cipher_results
 
+my $me =  $0;
+   $me =~ s#.*[/\\]##;
 
 our %cfg = (
+    'me'            => $me,
+    'ARG0'          => $0,
+    'ARGV'          => [@ARGV], # arguments passed on command line
+    'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
+    'RC-FILE'       => "./.$me",# our RC-FILE
+
    # config. key        default   description
    #------------------+---------+----------------------------------------------
-# ...
+    'try'           => 0,       # 1: do not execute openssl, just show
+    'exec'          => 0,       # 1: if +exec command used
+    'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLinfo also
+    'traceME'       => 0,       # 1: trace yeast only, but no modules
+                                # -1: trace modules only, but not yeast
+    'traceARG'      => 0,       # 1: trace yeast's argument processing
+    'traceCMD'      => 0,       # 1: trace command processing
+    'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
+    'traceTIME'     => 0,       # 1: (trace) print additiona time for benchmarking
+    'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
+    'verbose'       => 0,       # used for --v
+    'warning'       => 1,       # 1: print warnings; 0: don't print warnings
+    'proxyhost'     => "",      # FQDN or IP of proxy to be used
+    'proxyport'     => 0,       # port for proxy
+    'proxyauth'     => "",      # authentication string used for proxy
+    'proxyuser'     => "",      # username for proxy authentication (Basic or Digest Auth)
+    'proxypass'     => "",      # password for proxy authentication (Basic or Digest Auth)
+    'starttls'      => "",      # use STARTTLS if not empty
+                                # protocol to be used with STARTTLS; default: SMTP
+                                # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
+    'slowServerDelay'   => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
+    'starttlsDelay' => 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
+    'starttls_phase'=> [],      # STARTTLS: Array for customized STARTTLS sequences
+    'starttls_error'=> [],      # STARTTLS: Array for customized STARTTLS sequences error handling
+    'enabled'       => 0,       # 1: only print enabled ciphers
+    'disabled'      => 0,       # 1: only print disabled ciphers
+    'nolocal'       => 0,
+    'experimental'  => 0,       # 1: use experimental functionality
+    'ignore_no_conn'=> 0,       # 1: ignore warnings if connection fails, check target anyway
+    'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
+    'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
+    'usesni'        => 1,       # 0: do not make connection in SNI mode;
+                                # 3: test with and without SNI mode (used with +cipherraw only)
+    'usedns'        => 1,       # 1: make DNS reverse lookup
+    'usemx'         => 0,       # 1: make MX-Record DNS lookup
+    'usehttp'       => 1,       # 1: make HTTP request
+    'use_md5cipher' => 1,       # 0: do not use *-MD5 ciphers except for SSLv2 with +cipher
+    'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
+    'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
+    'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
+    'slowly'        => 0,       # passed to Net::SSLeay::slowly
+    'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
+                                # NOTE: default=1 as this is behaviour for Net::SSLinfo < 1.85
+    'sclient_opt'   => "",      # argument or option passed to openssl s_client command
+    'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
+    'no_cert_txt'   => "",      # change default text if no data from cert retrieved
+    'ca_depth'      => undef,   # depth of peer certificate verification verification
+    'ca_crl'        => undef,   # URL where to find CRL file
+    'ca_file'       => undef,   # PEM format file with CAs
+    'ca_path'       => undef,   # path to directory with PEM files for CAs
+                                # see Net::SSLinfo why undef as default
+    'ca_paths'      => [qw(/etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL)],
+                                # common paths to PEM files for CAs
+    'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
+                                # common PEM filenames for CAs
+    'openssl_env'   => undef,   # environment variable OPENSSL if defined
+    'openssl_cnf'   => undef,   # full path with openssl's openssl.cnf
+    'openssl_cnfs'  => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
+    'openssl_fips'  => undef,   # NOT YET USED
+    'openssl_msg'   => "",      # '-msg': option needed for openssl versions older than 1.0.2 to get the dh_parameter
+    'ignorecase'    => 1,       # 1: compare some strings case insensitive
+    'shorttxt'      => 0,       # 1: use short label texts
+    'version'       => [],      # contains the versions to be checked
+    'versions'      =>          # all supported versions
+                       # [reverse sort keys %prot], # do not use generic list 'cause the want special order
+                       [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
+    'DTLS_versions' => [qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
+                                # temporary list 'cause DTLS not supported by openssl (6/2015)
+    'ssl_lazy'      => 0,       # 1: lazy check for available SSL protocol functionality
+    'SSLv2'         => 1,       # 1: check this SSL version
+    'SSLv3'         => 1,       # 1:   "
+    'TLSv1'         => 1,       # 1:   "
+    'TLSv11'        => 1,       # 1:   "
+    'TLSv12'        => 1,       # 1:   "
+    'TLSv13'        => 1,       # 1:   "
+                                # NOTE: DTLS currently (6/2015) disabled by default 'cause not supported by openssl
+    'DTLSv09'       => 0,       # 1:   "
+    'DTLSv1'        => 0,       # 1:   "
+    'DTLSv11'       => 0,       # 1:   "
+    'DTLSv12'       => 0,       # 1:   "
+    'DTLSv13'       => 0,       # 1:   "
+    'TLS1FF'        => 0,       # dummy for future use
+    'DTLSfamily'    => 0,       # dummy for future use
+    'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
+    'cipher'        => [],      # ciphers we got with --cipher=
+    'cipherpattern' => "ALL:NULL:eNULL:aNULL:LOW:EXP", # openssl pattern for all ciphers
+                                # TODO: must be same as in Net::SSLinfo or used from there
+    'ciphers'       => [],      # contains all ciphers to be tested
+    'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
+    'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
+                    # Technical (perl) note for definition of these ranges:
+                    # Each range is defined as a string like  key=>"2..5, c..f"
+                    # instead of an array like  key=>[2..5, c..f]  which would
+                    # result in  key=>[2 3 4 5 c d e f] .
+                    # This expansion of the range is done at compile time  and 
+                    # so will consume a huge amount of memory at runtime.
+                    # Using a string instead of the expanded array reduces the
+                    # memory footprint,  but requires use of  eval()  when the
+                    # range is needed:  eval($cfg{cipherranges}->{rfc})
+                    # Each string must be syntax for perl's range definition.
+        'yeast'     => "",      # internal list, computed later ...
+                                # push(@all, @{$_}[0]) foreach (values %cipher_names);
+        'rfc'       =>          # constants for ciphers defined in various RFCs
+                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                       ",
+        'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
+                       "0x03000100 .. 0x0300013F,
+                        0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                       ",
+        'long'      =>          # more lazy list of constants for cipher
+                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
+                       ",
+        'huge'      =>          # huge range of constants for cipher
+                       "0x03000000 .. 0x0300FFFF,
+                       ",
+        'safe'      =>          # safe full range of constants for cipher
+                                # because some network stack (NIC) will crash for 0x033xxxxx
+                       "0x03000000 .. 0x032FFFFF,
+                       ",
+        'full'      =>          # full range of constants for cipher
+                       "0x03000000 .. 0x03FFFFFF,
+                       ",
+# TODO:                 0x03000000,   0x03FFFFFF,   # used as return by microsoft testserver and also by SSL-honeypot (US)
+        'SSLv2'     =>          # constants for ciphers according RFC for SSLv2
+                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                        0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
+                        0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,
+                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
+# TODO:                 0x02000000,   0x02FFFFFF,   # increment even only
+# TODO:                 0x03000000,   0x03FFFFFF,   # increment  odd only
+                       ",
+        'SSLv2_long'=>          # more lazy list of constants for ciphers for SSLv2
+                       "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
+                        0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,
+                        0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
+                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
+                       ",
+    }, # cipherranges
+    'ciphers-v'     => 0,       # as: openssl ciphers -v
+    'ciphers-V'     => 0,       # as: openssl ciphers -V
+    'do'            => [],      # the commands to be performed, any of commands
+    'commands'      => [],      # contains all commands, constructed below
+    'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
+                    # Results of these commands are not printed in output.
+                    # Purpose is to avoid output of noicy commands  (like some
+                    # +bsi*).  All data collections and checks are still done,
+                    # just output of results is omitted.
+                    # Technically these commands are not removed from cfg{do},
+                    # but just skipped in printdata() and printchecks(), which
+                    # makes implementation much easier.
+    'cmd-intern'    => [        # add internal commands
+                    # these have no key in %data or %checks
+                        qw(
+                         check cipher dump check_sni exec help info info--v http
+                         quick list libversion sizes s_client version quit
+                         sigkey bsi ev cipherraw cipher-dh
+                        ),
+                    # internal (debugging) commands
+                      # qw(options cert_type),  # will be seen with +info--v only
+                    # keys not used as command
+                        qw(cn_nosni valid-years valid-months valid-days)
+                       ],
+    'cmd-experiment'=> [        # experimental commands
+                        qw(sloth),
+                       ],
+    'cmd-NL'        => [        # commands which need NL when printed
+                                # they should be available with +info --v only 
+                        qw(certificate extensions pem pubkey sigdump text chain chain_verify)
+                       ],
+    'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
+                        qw(zlib lzo open_pgp fallback closure order sgc scsv time),
+                       ],
+    'cmd-HINT'      => [        # checks which are NOT YET fully implemented
+                                # these are mainly all commands for compliance
+                                # see also: cmd-bsi
+                        qw(rfc7525
+                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
+                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+                       )],
+    'cmd-beast'     => [qw(beast)],                 # commands for +beast
+    'cmd-crime'     => [qw(crime)],                 # commands for +crime
+    'cmd-drown'     => [qw(drown)],                 # commands for +drown
+    'cmd-freak'     => [qw(freak)],                 # commands for +freak
+    'cmd-lucky13'   => [qw(lucky13)],               # commands for +lucky13
+    'cmd-http'      => [],      # commands for +http, computed below
+    'cmd-hsts'      => [],      # commands for +hsts, computed below
+    'cmd-info'      => [],      # commands for +info, simply anything from %data
+    'cmd-info--v'   => [],      # commands for +info --v
+    'cmd-check'     => [],      # commands for +check, simply anything from %checks
+    'cmd-sizes'     => [],      # commands for +sizes
+    'cmd-quick'     => [        # commands for +quick
+                        qw(
+                         selected cipher fingerprint_hash fp_not_md5 
+                         sha2signature pub_encryption pub_enc_known email
+                         serial subject dates verify expansion compression hostname
+                         beast crime drown freak export rc4_cipher rc4 pfs_cipher crl
+                         hassslv2 hassslv3 poodle sloth
+                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- rfc7525 hsts_sts
+                       )],
+    'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
+    'cmd-bsi'       => [                            # commands for +bsi
+                                                    # see also: cmd-HINT
+                        qw(after dates crl rc4_cipher renegotiation
+                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
+                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+                       )],
+    'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],   # commands for +pfs
+    'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
+    'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
+    'cmd-vulns'     => [                            # commands for checking known vulnerabilities
+                        qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth time hassslv2 hassslv3 pfs_cipher session_random)
+                       #qw(resumption renegotiation) # die auch?
+                       ],
+    'cmd-prots'     => [                            # commands for checking protocols
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn alpn npn session_protocol protocols https_protocols http_protocols https_svc http_svc)
+                       ],
+                    # need_* lists used to improve performance
+    'need_cipher'   => [        # commands which need +cipher
+                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
+                       ],
+    'need_default'  => [        # commands which need selected cipher
+                        qw(check cipher pfs_cipher selected),
+                        qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
+                                # following checks may cause errors because
+                                # missing functionality (i.e in openssl) # 10/2015
+                        qw(sslv2  tlsv13  dtlsv09 dtlvs1 dtlsv11 dtlsv12 dtlsv13)
+                       ],
+    'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
+                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
+                       ],
+    'need_checkchr' => [        # commands which always need checking various characters
+                        qw(cn subject issuer altname ext_crl ocsp_uri),
+                       ],
+    'data_hex'      => [        # data values which are in hex values
+                                # used in conjunction with --format=hex
+                                # not usefull in this list: serial extension
+                        qw(
+                         fingerprint fingerprint_hash fingerprint_sha1 fingerprint_md5
+                         sigkey_value pubkey_value modulus
+                         master_key session_id session_ticket
+                       )],      # fingerprint is special, see _ishexdata()
+    'opt-v'         => 0,       # 1 when option -v was given
+    'opt-V'         => 0,       # 1 when option -V was given
+    'format'        => "",      # empty means some slightly adapted values (no \s\n)
+    'formats'       => [qw(csv html json ssv tab xml fullxml raw hex 0x esc)],
+    'out_header'    => 0,       # print header lines in output
+    'out_score'     => 0,       # print scoring; default for +check
+    'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
+    'pass_options'  => "",      # options to be passeed thru to other programs
+    'mx_domains'    => [],      # list of mx-domain:port to be processed
+    'hosts'         => [],      # list of host:port to be processed
+    'host'          => "",      # currently scanned host
+    'ip'            => "",      # currently scanned host's IP (machine readable format)
+    'IP'            => "",      # currently scanned host's IP (human readable, doted octed)
+    'rhost'         => "",      # currently scanned host's reverse resolved name
+    'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
+    'port'          => 443,     # port for currently used connections
+    'timeout'       => 2,       # default timeout in seconds for connections
+                                # NOTE that some servers do not connect SSL within this time
+                                #      this may result in ciphers marked as  "not supported"
+                                #      it's recommended to set timeout to 3 or higher, which
+                                #      results in a performance bottleneck, obviously
+    'sslhello' => {    # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
+        'timeout'   => 2,       # timeout to receive ssl-answer
+        'retry'     => 2,       # number of retry when timeout
+        'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
+        'useecc'    => 1,       # 1: use supported elliptic curves
+        'useecpoint'=> 1,       # 1: use ec_point_formats extension
+        'usereneg'  => 0,       # 1: secure renegotiation
+        'double_reneg'  => 0,   # 0: do not send reneg_info extension if the cipher_spec already includes SCSV
+                                #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
+        'nodatanocipher'=> 1,   # 1: do not abort testing next cipher for some TLS intolerant Servers 'NoData or Timeout Equals to No Cipher'
+    },
+    'legacy'        => "simple",
+    'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan ssltest
+                        ssltest-g sslyze testsslserver thcsslcheck openssl
+                        simple full compact quick key)],
+                       # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
+    'showhost'      => 0,       # 1: prefix printed line with hostname
+    'usr-args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
+   #------------------+---------+----------------------------------------------
+   #------------------+--------------------------------------------------------
+    'regex' => {
+        # First some basic RegEx used later on, either in following RegEx or
+        # as $cfg{'regex'}->{...}  itself.
+        '_or-'      => '[\+_-]',
+                       # tools use _ or - as separator character; + used in openssl
+        'ADHorDHA'  => '(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON))[_-]',
+                       # Anonymous DH has various acronyms:
+                       #     ADH, ANON_DH, DHA, DH-ANON, DH_Anon, ...
+        'RC4orARC4' => '(?:ARC(?:4|FOUR)|RC4)',
+                       # RC4 has other names due to copyright problems:
+                       #     ARC4, ARCFOUR, RC4
+        '3DESorCBC3'=> '(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)',
+                       # Tripple DES is used as 3DES-CBC, 3DES-EDE-CBC, or DES-CBC3
+        'DESor3DES' => '(?:[_-]3DES|DES[_-]_192)',
+                       # Tripple DES is used as 3DES or DES_192
+        'DHEorEDH'  => '(?:DHE|EDH)[_-]',
+                       # DHE and EDH are 2 acronyms for the same thing
+        'EC-DSA'    => 'EC(?:DHE|EDH)[_-]ECDSA',
+        'EC-RSA'    => 'EC(?:DHE|EDH)[_-]RSA',
+                       # ECDHE-RSA or ECDHE-ECDSA
+        'EC'        => 'EC(?:DHE|EDH)[_-]',
+        'EXPORT'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
+                       # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
+        'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
+                       # FORTEZZA has abbreviations FZA and FRZ
+                       # unsure about FORTEZZA_KEA
+        'SHA2'      => 'sha(2|224|256|384|512)',
+                       # any SHA2, just sha2 is too lazy
+        'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
+                       # Numerous protocol prefixes are in use:
+                       #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
+        'aliases'   => '(?:(?:DHE|DH[_-]ANON|DSS|RAS|STANDARD)[_-]|EXPORT_NONE?[_-]?XPORT|STRONG|UNENCRYPTED)',
+                       # various variants for aliases to select cipher groups
+        'compression'   =>'(?:DEFLATE|LZO)',    # if compression available
+        'nocompression' =>'(?:NONE|NULL|^\s*$)',# if no compression available
+        'encryption'    =>'(?:encryption|ecPublicKey)', # anything containing this string
+        'encryption_ok' =>'(?:(?:(?:(?:md[245]|ripemd160|sha(?:1|224|256|384|512))with)?[rd]saencryption)|id-ecPublicKey)',
+                       # well known strings to identify signature and public key encryption
+                       # rsaencryption, dsaencryption, md[245]withrsaencryption, 
+                       # ripemd160withrsa shaXXXwithrsaencryption
+                       # id-ecPublicKey
+        'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
+                       # rsa, rsassapss, sha1withrsa, dsawithsha*, dsa_with_sha256
+        'isIP'          => '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)',
+        'isDNS'         => '(?:[a-z0-9.-]+)',
+        'isIDN'         => '(?:xn--)',
+        'leftwild'      => '^\*(?:[a-z0-9.-]+)',
+        'doublewild'    => '(?:[a-z0-9.-]+\*[a-z0-9-]+\*)', # x*x or x*.x*
+        'invalidwild'   => '(?:\.\*\.)',            # no .*.
+        'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
+
+        # RegEx containing pattern to identify vulnerable ciphers
+            #
+            # In a perfect (perl) world we can use negative lokups like
+            #     (ABC)(?!XYZ)
+            # which means: contains `ABC' but not `XYZ' where `XYZ' could be
+            # to the right or left of `ABC'.
+            # But in real world some perl implementations fail to match such
+            # pattern correctly. Hence we use two pattern:  one for positive
+            # match and second for the negative (not) match. Both patterns
+            # must be used programatically.
+            # Key 'TYPE' must match and key 'notTYPE' must not match.
+        # The following RegEx define what is "vulnerable":
+        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?(?:ARC(?:4|FOUR)|RC4)',
+#       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
+        'FREAK'     => '^(?:SSL[23]?)?(?:EXP(?:ORT)?(?:40|56|1024)?[_-])',
+                       # EXP? is same as regex{EXPORT} above
+        'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
+#       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
+        'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',
+        'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',    # match against cipher
+                       # Logjam is same as regex{EXPORT} above
+        'SLOTH'     => '(?:(EXP(?:ORT)?|NULL).*MD5$|EC(?:DHE|EDH)[_-]ECDSA[_-].*(?:MD5|SHA)$)',
+        # The following RegEx define what is "not vulnerable":
+        'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
+
+        'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]',
+                       # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA
+                       # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exist, hence lazy regex above
+        'notTR-02102'     => '[_-]SHA$',
+                       # ciphers with SHA1 hash are not allowed
+        'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
+                       # if PFS not possible, see TR-02102-2 3.2.1
+        'TR-03116+' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES128[_-](?:GCM[_-])?SHA256',
+        'TR-03116-' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES(?:128|256)[_-](?:GCM[_-])?SHA(?:256|384)',
+                       # in strict mode only:
+                       #  ECDHE-ECDSA-AES128.*SHA256 ECDHE-RSA-AES128.*SHA256 RSA-PSK-AES128-SHA256 ECDHE-PSK-AES128-SHA256
+                       # in lazy mode (for curiosity) we also allow:
+                       #  ECDHE-ECDSA-AES256.*SHA256 ECDHE-RSA-AES256.*SHA256
+                       #  ECDHE-ECDSA-AES256.*SHA384 ECDHE-RSA-AES256.*SHA384
+        'notTR-03116'     => '(?:PSK[_-]AES256|[_-]SHA$)',
+                       # NOTE: for curiosity again, notTR-03116 is for strict mode only
+        'RFC7525'   => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES128[_-](?:GCM[_-])?SHA256',
+        '1.3.6.1.5.5.7.1.1'  =>  '(?:1\.3\.6\.1\.5\.5\.7\.1\.1|authorityInfoAccess)',
+        'NSA-B'     =>'(?:ECD(?:H|SA).*?AES.*?GCM.*?SHA(?:256|384|512))',
+
+        # Regex containing pattern for compliance checks
+        # The following RegEx define what is "not compliant":
+        'notISM'    => '(?:NULL|A(?:NON[_-])?DH|DH(?:A|[_-]ANON)[_-]|(?:^DES|[_-]DES)[_-]CBC[_-]|MD5|RC)',
+        'notPCI'    => '(?:NULL|(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON)|(?:^DES|[_-]DES)[_-]CBC|EXP(?:ORT)?(?:40|56|1024)?)[_-])',
+        'notFIPS-140'=>'(?:(?:ARC(?:4|FOUR)|RC4)|MD5|IDEA)',
+        'FIPS-140'  => '(?:(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)|AES)', # these are compiant
+
+        # Regex for checking invalid characers (used in compliance and EV checks)
+        'nonprint'  => '/[\x00-\x1f\x7f-\xff]+/',          # not printable;  m/[:^print:]/
+        'crnlnull'  => '/[\r\n\t\v\0]+/',                  # CR, NL, TABS and NULL
+
+        # Regex for checking EV-SSL
+        # they should matching:   /key=value/other-key=other-value
+        '2.5.4.10'  => '(?:2\.5\.4\.10|organizationName|O)',
+        '2.5.4.11'  => '(?:2\.5\.4\.1?|organizationalUnitName|OU)',
+        '2.5.4.15'  => '(?:2\.5\.4\.15|businessCategory)',
+        '2.5.4.3'   => '(?:2\.5\.4\.3|commonName|CN)',
+        '2.5.4.5'   => '(?:2\.5\.4\.5|serialNumber)',
+        '2.5.4.6'   => '(?:2\.5\.4\.6|countryName|C)',
+        '2.5.4.7'   => '(?:2\.5\.4\.7|localityName|L)',
+        '2.5.4.8'   => '(?:2\.5\.4\.8|stateOrProvinceName|SP|ST)', # TODO: is ST a bug?
+        '2.5.4.9'   => '(?:2\.5\.4\.9|street(?:Address)?)', # '/street=' is very lazy
+        '2.5.4.17'  => '(?:2\.5\.4\.17|postalCode)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|domainComponent|DC)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|surname|SN)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|givenName|GN)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|pseudonym)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|initiala)',
+#       '?.?.?.?'   => '(?:?\.?\.?\.?|title)',
+        '1.3.6.1.4.1.311.60.2.1.1' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.1|jurisdictionOfIncorporationLocalityName)',
+        '1.3.6.1.4.1.311.60.2.1.2' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.2|jurisdictionOfIncorporationStateOrProvinceName)',
+        '1.3.6.1.4.1.311.60.2.1.3' => '(?:1\.3\.6\.1\.4\.1\.311\.60\.2\.1\.3|jurisdictionOfIncorporationCountryName)',
+
+        'EV-chars'  => '[a-zA-Z0-9,./:= @?+\'()-]',         # valid characters in EV definitions
+        'notEV-chars'=>'[^a-zA-Z0-9,./:= @?+\'()-]',        # not valid characters in EV definitions
+        'EV-empty'  => '^(?:n\/a|(?:in|not )valid)\s*$',    # empty string, or "invalid" or "not valid"
+
+        # Regex for matching commands
+        'cmd-http'  => '^h?(?:ttps?|sts)_',     # match keys for HTTP
+        'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
+        'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
+        'cmd-intern'=> '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
+
+        # Regex for matching SSL protocol keys in %data and %checks
+        'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
+
+    }, # regex
+   #------------------+--------------------------------------------------------
+    'ourstr' => {
+        # regex to match strings of our own output, see OUTPUT in o-saft-man.pm
+        # first all that match a line at beginning:
+        'error'     => qr(^\*\*ERR),            # see STR_ERROR
+        'warning'   => qr(^\*\*WARN),           # see STR_WARN
+        'hint'      => qr(^\!\!Hint),           # see STR_HINT
+        'dbx'       => qr(^#dbx#),              # see STR_DBX
+        'headline'  => qr(^={1,3} ),            # headlines
+        'keyline'   => qr(^#\[),                # dataline prefixed with key
+        'verbose'   => qr(^#[^[]),              # verbose output
+        # matches somewhere in the line:
+        'undef'     => qr(\<\<undef),           # see STR_UNDEF
+        'yeast'     => qr(\<\<.*?\>\>),         # additional informations
+        'na'        => qr(N\/A),                # N/A
+        'yes'       => qr(:\s*yes),             # good check result; # TODO: : needs to be $text{separator}
+        'no'        => qr(:\s*no ),             # bad check result
+    }, # ourstr
+   #------------------+--------------------------------------------------------
+    'compliance' => {           # description of RegEx above for compliance checks
+        'TR-02102'  => "no RC4, only eclipic curve, only SHA256 or SHA384, need CRL and AIA, no wildcards, and verifications ...",
+        'TR-03116'  => "TLSv1.2, only ECDSA, RSA or PSK ciphers, only eclipic curve, only SHA224 or SHA256, need OCSP-Stapling CRL and AIA, no wildcards, and verifications ...",
+        'ISM'       => "no NULL cipher, no Anonymous Auth, no single DES, no MD5, no RC ciphers",
+        'PCI'       => "no NULL cipher, no Anonymous Auth, no single DES, no Export encryption, DH > 1023",
+        'FIPS-140'  => "must be TLSv1 or 3DES or AES, no IDEA, no RC4, no MD5",
+        'FIPS-140-2'=> "-- NOT YET IMPLEMENTED --",      # TODO:
+        'RFC7525'   => "TLS 1.2; AES with GCM; ECDHE and SHA256 or SHA384; HSTS",
+        #
+        # NIST SP800-52 recommendations for clients (best first):
+        #   TLS_DHE_DSS_WITH_AES_256_CBC_SHA
+        #   TLS_DHE_RSA_WITH_AES_256_CBC_SHA
+        #   TLS_RSA_WITH_AES_256_CBC_SHA
+        #   TLS_DH_DSS_WITH_AES_256_CBC_SHA
+        #   TLS_DH_RSA_WITH_AES_256_CBC_SHA
+        #   TLS_DHE_DSS_WITH_AES_128_CBC_SHA
+        #   TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+        #   TLS_RSA_WITH_AES_128_CBC_SHA
+        #   TLS_DH_DSS_WITH_AES_128_CBC_SHA
+        #   TLS_DH_RSA_WITH_AES_128_CBC_SHA
+        #   TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
+        #   TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA
+        #   TLS_RSA_WITH_3DES_EDE_CBC_SHA
+        #   TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA
+        #   TLS_DH_RSA_WITH_3DES_EDE_CBC
+        #   TLS_RSA_WITH_RC4_128_SHA2
+        #
+        # NIST SP800-52 recommendations for server (best first):
+        #    same as above except TLS_RSA_WITH_RC4_128_SHA2
+        #
+        # Supported by (most) browsers (see SSL_comp_report2011.pdf):
+        #    TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384_P384  (IE8 only)
+        #    TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA*
+        #    TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA*
+        #    TLS_DHE_RSA_WITH_AES_256_CBC_SHA
+        #    TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+        #    TLS_RSA_WITH_RC4_128_SHA
+        #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
+        #
+        # NIST SP800-57 recommendations for key management (part 1):
+        'NSA-B'     => "must be AES with CTR or GCM; ECDSA or ECDH and SHA256 or SHA512",
+    },
+    'sig_algorithms' => [       # signature algorithms; (2016) not yet used
+        qw(
+           dsaEncryption dsaEncryption-old dsaWithSHA dsaWithSHA1 dsa_With_SHA256
+           ecdsa-with-SHA256
+           md2WithRSAEncryption    md4WithRSAEncryption  md5WithRSAEncryption
+           None   ripemd160WithRSA rsa  rsaEncryption    rsassapss
+           shaWithRSAEncryption    sha1WithRSAEncryption sha1WithRSA
+           sha224WithRSAEncryption sha256WithRSAEncryption
+           sha384WithRSAEncryption sha512WithRSAEncryption
+        ),
+           "rsassapss (invalid pss parameters)"
+    ],
+    'sig_algorithm_common' => [ # most common signature algorithms; (2016) not yet used
+        qw(None ecdsa-with-SHA256
+           sha1WithRSAEncryption   sha256WithRSAEncryption
+           sha384WithRSAEncryption sha512WithRSAEncryption
+        )
+    ],
+    'openssl_option_map' => {   # map our internal option to openssl option; used our Net:SSL*
+        # will be initialized from %prot
+     },
+    'openssl_version_map' => {  # map our internal option to openssl version (hex value); used our Net:SSL*
+        # will be initialized from %prot
+     },
+    'done'      => {},          # defined in caller
+    'extension' => {            # TLS extensions
+        '00000'     => "renegotiation info length",     # 0x0000 ??
+        '00001'     => "renegotiation length",          # 0x0001 ??
+        '00010'     => "elliptic curves",    # 0x000a length=4
+        '00011'     => "EC point formats",   # 0x000b length=2
+        '00015'     => "heartbeat",          # 0x000f length=1
+        '00035'     => "session ticket",     # 0x0023 length=0
+        '13172'     => "next protocol",      # 0x3374 length=NNN
+        '65281'     => "renegotiation info", # 0xff01 length=1
+    },
+   #------------------+---------+----------------------------------------------
 ); # %cfg
 
 
@@ -1213,7 +1750,7 @@ sub get_dh_paramter($$) {
     return $dh;
 }; # get_dh_paramter
 
-# methods
+# internal methods
 
 sub _prot_init_value() {
     #? initialize default values in %prot
@@ -1231,6 +1768,18 @@ sub _prot_init_value() {
     }
     return;
 } # _prot_init_value
+
+sub _cfg_init() {
+    #? initialize dynamic settings in %cfg, copy data from %prot
+    $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot);
+    $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot);
+    # incorporate some environment variables
+    $cfg{'openssl_env'} = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
+    $cfg{'openssl_cnf'} = $ENV{'OPENSSL_CONF'} if (defined $ENV{'OPENSSL_CONF'});
+    $cfg{'openssl_fips'}= $ENV{'OPENSSL_FIPS'} if (defined $ENV{'OPENSSL_FIPS'});
+
+    return;
+} # _cfg_init
 
 
 =pod
@@ -1255,6 +1804,7 @@ sub osaft_sleep($) {
 sub _osaft_init() {
     #? additional generic initializations for data structures
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
+    _cfg_init();        # initallize dynamic data in %cfh
     foreach my $k (keys %data_oid) {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
@@ -1280,8 +1830,9 @@ _osaft_init();
 
 =head1 NOTES
 
-It's often recommended not to export constants and variables from modules. The
-main purpose of this module is defining variables. Hence we export them.
+It's often recommended not to export constants and variables from modules, see
+for example  http://perldoc.perl.org/Exporter.html#Good-Practices . The main
+purpose of this module is defining variables. Hence we export them.
 
 =head1 SEE ALSO
 
