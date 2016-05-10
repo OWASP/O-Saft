@@ -40,8 +40,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.472 16/05/10 17:55:23",
-    STR_VERSION => "16.04.14",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.474 16/05/11 00:18:30",
+    STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -116,11 +116,10 @@ _y_EXIT("exit=INIT0 - initialization start");
 #________________________________________________________________ variables __|
 
 our $VERSION= STR_VERSION;
-our $me     = $0; $me     =~ s#.*[/\\]##;
+our $me     = $cfg{'me'};       # use a short and easy to remember variable name
 our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
-our $mename = "yeast  ";
-    $mename = "O-Saft " if ($me !~ /yeast/);
+$cfg{'mename'} = "yeast  " if ($me =~ /yeast/); # want to see if in develop mode
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -229,11 +228,10 @@ sub _load_file($$) {
 _y_TIME("cfg{");
 _y_EXIT("exit=CONF0 - RC-FILE start");
 my @rc_argv = "";
-$arg = "./.$me";    # check in pwd only
 if ((grep{/(:?--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
-    if (open(my $rc, '<:encoding(UTF-8)', "$arg")) {
-        push(@dbxfile, $arg);
-        _print_read("$arg", "RC-FILE done");
+    if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
+        push(@dbxfile, $cfg{'RC-FILE'});
+        _print_read(  "$cfg{'RC-FILE'}", "RC-FILE done");
         ## no critic qw(ControlStructures::ProhibitMutatingListFunctions)
         #  NOTE: the purpose here is to *change the source array"
         @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
@@ -243,7 +241,7 @@ if ((grep{/(:?--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         push(@argv, @rc_argv);
         #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
     } else {
-        _print_read("$arg", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);;
+        _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);;
     }
 }
 _y_EXIT("exit=CONF1 - RC-FILE end");
@@ -358,8 +356,6 @@ usr_pre_init();
 #!#
 #!# Here's an overview of the used global variables (mostly defined in o-saft-lib.pm):
 #!#   $me             - the program name or script name with path stripped off
-#!#   $mepath         - the path where program or script ($me) is located
-#!#   $mename         - my name pretty printed
 #!#   %prot           - collected data per protocol (from Net::SSLinfo)
 #!#   %prot_txt       - labes for %prot
 #!#   @results        - where we store the results as:  [SSL, cipher, "yes|no"]
@@ -4577,7 +4573,6 @@ sub printversionmismatch() {
 sub printversion() {
     #? print program and module versions
     local $\ = "\n";
-    print '# Path = ' . $mepath if ($cfg{'verbose'} > 1);
     print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
     print "=== $0 $VERSION ===";
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
@@ -4851,7 +4846,7 @@ sub printciphers() {
             print "Supported Ciphers:        ",  $have_cipher;
             print "Unsupported Ciphers:      ",  $miss_cipher;
             print "Testable Ciphers:         ",  scalar(@test);
-            print "Ciphers missing in $mename:", scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
+            print "Ciphers missing in $me: ",    scalar(@miss), "  ", join(" ", @miss) if (scalar(@miss) > 0);
             print "Ciphers in alias list:    ",  scalar(keys %cipher_alias); # FIXME: need to count values
         }
     }
@@ -5435,7 +5430,7 @@ while ($#argv >= 0) {
         # this command is just documentation, no need to care about other options
         ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
         #  NOTE: false positive from perlcritic, as the strings is passed to exec()
-        print "# $mename  list of internal functions:\n";
+        print "# $cfg{'mename'}  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
           ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
           ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
@@ -5525,7 +5520,8 @@ if (_is_do('ciphers')) {
     $cfg{'out_header'}  = 0 if ((grep{/--header/} @argv) <= 0);
     $cfg{'ciphers-v'}   = $cfg{'opt-v'};
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
-    $cfg{'legacy'}      = "openssl";
+    #$cfg{'legacy'}      = "openssl";
+# FIXME: legacy=openssl only if -v or -V  ??
     $text{'separator'}  = " " if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # space if not set
 } else {
     # not +ciphers command, then  -V  is for compatibility
@@ -5639,7 +5635,7 @@ foreach my $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
     if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
         if ($ssl eq 'DTLSv1') {
-            _warn("SSL version '$ssl': not supported by '$mename +cipherraw'; not checked");
+            _warn("SSL version '$ssl': not supported by '$me +cipherraw'; not checked");
             next;
         }
         push(@{$cfg{'version'}}, $ssl);
