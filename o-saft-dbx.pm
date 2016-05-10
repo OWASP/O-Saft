@@ -54,8 +54,6 @@ They must be defined as `our' in L<o-saft.pl>:
 
 =item $VERSION
 
-=item $me   $mename   $mepath
-
 =item %data
 
 =item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, verbose
@@ -85,7 +83,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 ## no critic qw(TestingAndDebugging::RequireUseStrict)
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.40 16/04/10 01:41:43";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.41 16/05/11 00:15:53";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -98,10 +96,10 @@ no warnings 'redefine';
 
 # debug functions
 sub _y_ts     { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
-sub _yeast($) { local $\ = "\n"; print "#" . $mename . ": " . $_[0]; return; }
-sub _y_ARG    { local $\ = "\n"; print "#" . $mename . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); return; }
-sub _y_CMD    { local $\ = "\n"; print "#" . $mename . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
-sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $mename, $_[0], $_[1]); return; }
+sub _yeast($) { local $\ = "\n"; print "#" . $cfg{'mename'} . ": " . $_[0]; return; }
+sub _y_ARG    { local $\ = "\n"; print "#" . $cfg{'mename'} . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); return; }
+sub _y_CMD    { local $\ = "\n"; print "#" . $cfg{'mename'} . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
+sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $cfg{'mename'}, $_[0], $_[1]); return; }
 sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); return; }
 sub _y_ARR(@) { return join(" ", "[", @_, "]"); }
 sub _yeast_trac($$){}   # forward declaration
@@ -200,11 +198,11 @@ sub _yeast_init() {
     _yeast("  default port= $cfg{'port'} (last specified)");
     _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
     foreach my $key (qw(out_header format legacy usehttp usedns usemx starttls starttlsDelay cipherrange)) {
-        printf("#%s: %14s= %s\n", $mename, $key, $cfg{$key});
+        printf("#%s: %14s= %s\n", $cfg{'mename'}, $key, $cfg{$key});
            # cannot use _yeast() 'cause of pretty printing
     }
     _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
-    printf("#%s: %14s= %s", $mename, "SSL versions", "[ ");
+    printf("#%s: %14s= %s", $cfg{'mename'}, "SSL versions", "[ ");
     printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
     printf("]\n");
     _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
@@ -252,23 +250,23 @@ sub _yeast_args() {
     return;
 } # _yeast_args
 
-sub _v_print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} >  0); return; }
-sub _v2print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 2); return; } # must provide \n if wanted
-sub _v3print  { local $\ = "\n"; print "# "     . join(" ", @_) if ($cfg{'verbose'} == 3); return; }
-sub _v4print  { local $\ = "";   print "# "     . join(" ", @_) if ($cfg{'verbose'} == 4); return; }
-sub _trace($) { print "#" . $mename . "::" . $_[0]         if ($cfg{'trace'} > 0); return; }
-sub _trace0($){ print "#" . $mename . "::"                 if ($cfg{'trace'} > 0); return; }
-sub _trace1($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 1); return; }
-sub _trace2($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 2); return; }
-sub _trace3($){ print "#" . $mename . "::" . join(" ", @_) if ($cfg{'trace'} > 3); return; }
+sub _v_print  { local $\ = "\n"; print "# "       . join(" ", @_) if ($cfg{'verbose'} >  0); return; }
+sub _v2print  { local $\ = "";   print "# "       . join(" ", @_) if ($cfg{'verbose'} == 2); return; } # must provide \n if wanted
+sub _v3print  { local $\ = "\n"; print "# "       . join(" ", @_) if ($cfg{'verbose'} == 3); return; }
+sub _v4print  { local $\ = "";   print "# "       . join(" ", @_) if ($cfg{'verbose'} == 4); return; }
+sub _trace($) { print "#" . $cfg{'mename'} . "::" . $_[0]         if ($cfg{'trace'} > 0); return; }
+sub _trace0($){ print "#" . $cfg{'mename'} . "::"                 if ($cfg{'trace'} > 0); return; }
+sub _trace1($){ print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 1); return; }
+sub _trace2($){ print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 2); return; }
+sub _trace3($){ print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 3); return; }
 sub _trace_($){ local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); return; }
 # if --trace-arg given
-sub _trace_cmd($) { printf("#%s %s->\n", $mename, join(" ",@_))if ($cfg{'traceCMD'} > 0); return; }
+sub _trace_cmd($) { printf("#%s %s->\n", $cfg{'mename'}, join(" ",@_))if ($cfg{'traceCMD'} > 0); return; }
 
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
     _v_print("$0 " . $VERSION);
-    _v_print("$0 " . join(" ", @ARGV));
+    _v_print("$0 " . join(" ", @{$cfg{'ARGV'}}));
     _v_print("$0 " . sprintf("%02s.%02s.%s %02s:%02s:%02s", $mday, ($mon +1), ($year +1900), $h, $m, $s));
     return;
 } # _vprintme
