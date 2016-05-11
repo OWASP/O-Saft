@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.108 16/05/09 19:05:02";
+my  $man_SID= "@(#) o-saft-man.pm 1.109 16/05/11 20:38:07";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1278,10 +1278,24 @@ printhelp($ARGV[0]) unless (defined caller);
 #   Referenzes to titles are written in all upper case characters and prefixed
 #   and suffixed with 2 spaces.
 #
+#   There is only one special markup used:
+#   X&Some title here&
+#       which referes to sub-titles, it must be used to properly markup internal
+#       links to sub-sections if the title is not written in all upper case.
+#
 #   All head lines for sections (see TITLE above) are preceeded by 2 empty lines
 #   All head lines for commands and options should contain just this command
 #   or option, aliases should be written in their own line (to avoid confusion
 #   in some other parsers, like Tcl).
+#
+# Special markups for o-saft.tcl:
+#   - the sub-titles in the COMMANDS and OPTIONS sections must look like:
+#       Commands for whatever text
+#       Commands to whatever text
+#       Options for whatever text
+#     means that the prefixes  "Commands for"  and  "Options for"  are used to
+#     identify groups of commands and options. If a sub-title does not start
+#     with these prefixes, all following commands and options are ignored
 #
 # Initilly the documentation was done using perl's doc format (perldoc, POD).
 # The advantage having a well formated output available on various platforms,
@@ -1632,6 +1646,15 @@ COMMANDS
         Note that some commands may be a combination of other commands, see:
           $0 --header --help=intern
 
+        The following sub-sections only describe the commands,  which do more
+        than giving a simple information from the target.  All other commands
+        can be listed with:
+          $0 --header --help=commands
+
+        The final sub-sections  X&Notes about commands&  describes some notes
+        about special commands and related commands.
+        
+
     Commands for information about this tool
 
         All these commands will exit after execution (cannot be used together
@@ -1642,7 +1665,8 @@ COMMANDS
           Show ciphers offered by local SSL implementation.
 
           This commands prints the ciphers in a format like "openssl ciphers"
-          does. It also accepts the  -v  and  -V  option.
+          does. It also accepts the  -v  and  -V  option. The  --legacy=TYPE 
+          option can be used as described for  +list  command.
           Use  +list  command for more information according ciphers.
 
       +list
@@ -1815,6 +1839,19 @@ COMMANDS
 
         Please see:
           $0 --help=commands
+
+    Notes about commands
+
+      +extensions vs. +tlsextensions
+
+          +extensions  shows the "Certificate extensions" and  +tlsextensions
+          will show the TLS protocol extensions.
+          Use  +tlsextdebug  to show more informations about the TLS protocol
+          extensions.
+
+      +http2 +spdy +spdy3 +spdy31 +spdy4 +prots
+
+          These commands are just an alias for the  +protocols  command.
 
 
 OPTIONS
