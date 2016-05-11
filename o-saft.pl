@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.474 16/05/11 00:18:30",
+    SID         => "@(#) yeast.pl 1.475 16/05/11 10:19:54",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5520,8 +5520,7 @@ if (_is_do('ciphers')) {
     $cfg{'out_header'}  = 0 if ((grep{/--header/} @argv) <= 0);
     $cfg{'ciphers-v'}   = $cfg{'opt-v'};
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
-    #$cfg{'legacy'}      = "openssl";
-# FIXME: legacy=openssl only if -v or -V  ??
+    $cfg{'legacy'}      = "openssl" if (($cfg{'opt-v'} + $cfg{'opt-V'}) > 0);
     $text{'separator'}  = " " if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # space if not set
 } else {
     # not +ciphers command, then  -V  is for compatibility
