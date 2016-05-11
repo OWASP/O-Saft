@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.475 16/05/11 10:19:54",
+    SID         => "@(#) yeast.pl 1.476 16/05/11 10:43:14",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4744,19 +4744,24 @@ sub printciphers() {
     printheader(_get_text('out-list', $0), "");
     # all following headers printed directly instead of using printheader()
 
-    if ($cfg{'legacy'} eq "ssltest") {        # output looks like: ssltest --list
+    if ($cfg{'legacy'} eq "ssltest") {      # output looks like: ssltest --list
         _warn("not all ciphers listed");
         foreach my $ssl (qw(SSLv2 SSLv3 TLSv1)) {# SSLv3 and TLSv1 are the same, hence search both
           print "SSLv2 Ciphers Supported..."       if ($ssl eq 'SSLv2');
           print "SSLv3/TLSv1 Ciphers Supported..." if ($ssl eq 'SSLv3');
           foreach my $c (sort keys %ciphers) {
             next if ($ssl ne get_cipher_ssl($c));
-            # FIXME: sprintf below gives warning if $bits == 0
-            $bit =  get_cipher_bits($c); $bit =  sprintf("%03d", $bit) if ($bit ne '-?-');
             $aut =  get_cipher_auth($c); $aut =  "No" if ($aut =~ /none/i);
             $key =  get_cipher_keyx($c); $key =~ s/[()]//g;
             $mac =  get_cipher_mac($c);
             $enc =  get_cipher_enc($c);
+            $bit =  get_cipher_bits($c);
+            if ($bit =~ m/\d+/) {           # avoid perl warning "Argument isn't numeric" 
+                $bit = sprintf("%03d", $bit);
+            } else {                        # pretty print
+                $bit = '-?-';
+                $bit = '000' if ($enc =~ m/None/i);
+            }
             printf("   %s, %s %s bits, %s Auth, %s MAC, %s Kx\n",
                 $c, $enc, $bit, $aut, $mac, $key,
             );
@@ -4764,7 +4769,7 @@ sub printciphers() {
         }
     }
 
-    if ($cfg{'legacy'} eq "openssl") {        # output looks like: openssl ciphers -[v|V]
+    if ($cfg{'legacy'} eq "openssl") {      # output looks like: openssl ciphers -[v|V]
         foreach my $c (sort keys %ciphers) {
             $hex = _hex_like_openssl(get_cipher_hex($c)) if ($cfg{'ciphers-V'} > 0); # -V
             $ssl =  get_cipher_ssl($c);  $ssl =~ s/^(TLSv1)(\d)$/$1.$2/;   # openssl has a .
