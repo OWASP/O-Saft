@@ -16,7 +16,7 @@ binmode(STDERR, ":unix");
 #        However, the code herein is just for our own documentation ...
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
 
-my  $man_SID= "@(#) o-saft-man.pm 1.109 16/05/11 20:38:07";
+my  $man_SID= "@(#) o-saft-man.pm 1.110 16/05/12 01:10:57";
 our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -860,11 +860,11 @@ sub man_table($) {
     _man_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
     if ($typ eq 'rfc')   { _man_opt("RFC $_", $sep, $man_text{'rfc'}->{$_}[0] . "\n\t\t\t$man_text{'rfc'}->{url}[1]/html/rfc$_") foreach (sort keys %{$man_text{'rfc'}}); }
     if ($typ eq 'abbr')  { _man_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $man_text{'glossar'}->{$_}) foreach (sort keys %{$man_text{'glossar'}}); }
-    if ($typ eq 'regex') { _man_opt($_, $sep, $cfg{'regex'}->{$_}) foreach (sort keys %{$cfg{'regex'}}); }
-    if ($typ eq 'ourstr'){ _man_opt($_, $sep, $cfg{'ourstr'}->{$_}) foreach (sort keys %{$cfg{'ourstr'}}); }
-    if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_}) foreach (sort keys %{$cfg{'compliance'}}); }
+    if ($typ eq 'regex') { _man_opt($_, $sep, $cfg{'regex'}->{$_})         foreach (sort keys %{$cfg{'regex'}}); }
+    if ($typ eq 'ourstr'){ _man_opt($_, $sep, $cfg{'ourstr'}->{$_})        foreach (sort keys %{$cfg{'ourstr'}}); }
+    if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
     if ($typ eq 'score') { _man_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
-   #if ($typ eq 'range') { _man_arr($_, $sep, $cfg{'cipherranges'}->{$_}) foreach (sort keys %{$cfg{'cipherranges'}}); }
+   #if ($typ eq 'range') { _man_arr($_, $sep, $cfg{'cipherranges'}->{$_})  foreach (sort keys %{$cfg{'cipherranges'}}); }
         # above prints > 65.000 hex values, not very usefull ...
     if ($typ eq 'range') { print qx(\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0); } # TODO: quick&dirty backticks
     if ($typ eq 'intern') {
@@ -971,6 +971,57 @@ EoHelp
     print "\n";
     return;
 } # man_commands
+
+sub man_alias() {
+    #? print alias and short description (if available)
+    #
+    # Aliases are extracted from the source code. All lines handling aliases
+    # for commands or options are marked with the pattern  # alias:
+    # From these lines we extract the regex, the real option or command and
+    # the comment.
+    #
+    #                 /------- regex -------\         /--- command ----\  /pattern\ /--- comment ---
+    # Examples of lines to match:
+    #    if ($arg eq  '--nosslnodataeqnocipher'){$arg='--nodatanocipher';} # alias:
+    #    if ($arg =~ /^--ca(?:cert(?:ificate)?)$/i)  { $arg = '--cafile';} # alias: curl, openssl, wget, ...
+    #    if ($arg =~ /^--cadirectory$/i)     { $arg = '--capath';        } # alias: curl, openssl, wget, ...
+    #    if ($arg eq  '-c')                  { $arg = '--capath';        } # alias: ssldiagnose.exe
+    #   #if ($arg eq  '--protocol')          { $arg = '--SSL';           } # alias: ssldiagnose.exe
+    #
+    print "\n";
+    _man_head("Alias (regex)", "command or option   # used by ...");
+    my $fh;
+    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
+        while(<$fh>) {
+            if (m(# alias:)) {
+                if (m|^\s*#?if[^/']*.([^/']+).[^/']+.([^/']+).[^#]*#\s*alias:\s*(.*)?|) {
+                    my $commt =  $3;
+                    my $alias =  $2;
+                    my $regex =  $1;
+                    # simplify regex for better (human) readability
+                    $regex =~ s/^\^//;      # remove leading ^
+                    $regex =~ s/^\\//;      # remove leading \ 
+                    $regex =~ s/\$$//;      # remove trailing $
+                    $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
+                    if (length($regex) < 17) {
+                        printf("%-17s%-21s# %s\n", $regex, $alias, $commt);
+                    } else {
+                        # pretty print if regex is to large for first column
+                        printf("%s\n", $regex);
+                        printf("%-17s%-21s# %s\n", "", $alias, $commt);
+                    }
+                }
+            }
+        }
+        close($fh);
+    }
+    print "
+= Note that - or _ characters used in the option name are not shown,
+= they are stripped anyway.
+";
+    print "\n";
+    return;
+} # man_alias
 
 sub man_html() {
     #? print complete HTML page for o-saft.pl --help=gen-html
@@ -1200,8 +1251,9 @@ sub printhelp($) {
         # causes some   Use of uninitialized value within %cfg 
         # when called as  gen-CGI  it will not be called from within
         # BEGIN amd hence %cfg is defined and will not result in warnings
-    # anything below requires data defined in parent
+    man_alias(),                return if ($hlp =~ /^alias$/);
     man_commands(),             return if ($hlp =~ /^commands?$/);
+    # anything below requires data defined in parent
     man_table('rfc'),           return if ($hlp =~ /^rfc$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/);
     man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range|ourstr)(?:iance)?s?$/i);
@@ -1898,6 +1950,10 @@ OPTIONS
       --help=intern
 
           Show internal commands.
+
+      --help=alias
+
+          Show alias for commands and options.
 
       --help=range
 
@@ -2684,39 +2740,17 @@ OPTIONS
         Note that only the long form options are accepted  as most short form
         options are ambiguous.
 
+        Following list contains only those options not shown with:
+
+          $0 --help=alias
+
             Tool's Option       (Tool)          $0 Option
           #--------------------+---------------+----------------------------#
-          * --capath DIR        (curl)          same as  --ca-path DIR
-          * --CApath=DIR        (openssl)       same as  --ca-path DIR
-          * --ca-directory=DIR  (wget)          same as  --ca-path DIR
-          * --cacert FILE       (curl)          same as  --ca-file DIR
-          * --CAfile=FILE       (openssl)       same as  --ca-file DIR
-          * --ca-certificate=FILE (wget)        same as  --ca-path DIR
-          * -c PATH             (ssldiagnos)    same as  --ca-path DIR
           * --checks CMD        (TLS-Check.pl)  same as  +CMD
-          * --hide_rejected_ciphers (sslyze)    same as  --disabled
-          * --http_get          (ssldiagnos)    same as  --http
-          * --printcert         (ssldiagnos)    same as  +ciphers
-          * --protocol SSL      (ssldiagnos)    same as  --SSL
-          * --UDP               (ssldiagnos)    same as  --udp
-          * --serverbname=NAME  (openssl)       same as  --sni-name=NAME
-          * --no-failed         (sslscan)       same as  --disabled
-          * --regular           (sslyze)        same as  --http
-          * --reneg             (sslyze)        same as  +renegotiation
-          * --resum             (sslyze)        same as  +resumtion
-          * --compression       (testssl.sh)    same as  +compression +CRIME
-          * --crime,  -C        (testssl.sh)    same as  +compression +CRIME
-          * --heartbleed, -B    (testssl.sh)    same as  +heartbleed
-          * --pfs,  -fs,  --nsa (testssl.sh)    same as  +pfs
-          * --rc4,  -appelbaum  (testssl.sh)    same as  +rc4
-          * --renegotiation, -R (testssl.sh)    same as  +renegotiation
-          * --spdy              (testssl.sh)    same as  +spdy
           * -h, -h=HOST         (various tools) same as  --host HOST
           * -p, -p=PORT         (various tools) same as  --port PORT
           * -t HOST             (ssldiagnos)    same as  --host HOST
-          * --fips              (??)            same as  +fips
-          * --ism               (ssltest.pl)    same as  +ism
-          * --pci               (ssltest.pl)    same as  +pci
+          * --UDP               (ssldiagnos)    same as  --udp
           * --timeout, --grep   (ssltest.pl)    ignored
           * -r,  -s,  -t,  -x   (ssltest.pl)    ignored
           * --insecure          (cnark.pl)      ignored
