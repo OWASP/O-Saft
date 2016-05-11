@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.476 16/05/11 10:43:14",
+    SID         => "@(#) yeast.pl 1.477 16/05/11 14:14:21",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -450,10 +450,11 @@ our %data   = (     # connection and certificate details
     'ext_authorityid'=>{'val' => sub { __SSLinfo('ext_authorityid', $_[0], $_[1])}, 'txt' => "Certificate extensions Authority key Identifier"},
     'ext_constraints'=>{'val' => sub { __SSLinfo('ext_constraints', $_[0], $_[1])}, 'txt' => "Certificate extensions Basic Constraints"},
     'ext_cps'       => {'val' => sub { __SSLinfo('ext_cps',         $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies"},
-    'ext_cps_policy'=> {'val' => sub { __SSLinfo('ext_cps_policy',  $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
-    'ext_subjectkeyid'=>{'val'=> sub { __SSLinfo('ext_subjectkeyid',$_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
     'ext_cps_cps'   => {'val' => sub { __SSLinfo('ext_cps_cps',     $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: CPS"},
+    'ext_cps_policy'=> {'val' => sub { __SSLinfo('ext_cps_policy',  $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: Policy"},
+    'ext_cps_notice'=> {'val' => sub { __SSLinfo('ext_cps_notice',  $_[0], $_[1])}, 'txt' => "Certificate extensions Certificate Policies: User Notice"},
     'ext_crl'       => {'val' => sub { __SSLinfo('ext_crl',         $_[0], $_[1])}, 'txt' => "Certificate extensions CRL Distribution Points"},
+    'ext_subjectkeyid'=>{'val'=> sub { __SSLinfo('ext_subjectkeyid',$_[0], $_[1])}, 'txt' => "Certificate extensions Subject Key Identifier"},
     'ext_keyusage'  => {'val' => sub { __SSLinfo('ext_keyusage',    $_[0], $_[1])}, 'txt' => "Certificate extensions Key Usage"},
     'ext_extkeyusage'=>{'val' => sub { __SSLinfo('ext_extkeyusage', $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
     'ext_certtype'  => {'val' => sub { __SSLinfo('ext_certtype',    $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
@@ -1893,13 +1894,41 @@ sub __SSLinfo($$$)     {
         #            000d - 01 30 0a 06 08 2b 06 01-05 05 07 03 02   .0...+.......
         #        ...
         #
+        # Example bsi.bund.de
+        #    X509v3 extensions:
+        #        X509v3 Authority Key Identifier: 
+        #            keyid:5404296FA293C6903145C03DDE2BE20A6980925F
+        #        X509v3 Key Usage: critical
+        #            Digital Signature, Key Encipherment
+        #        X509v3 Extended Key Usage: 
+        #            TLS Web Client Authentication, TLS Web Server Authentication
+        #        X509v3 Subject Key Identifier: 
+        #            1BA42D9746798AE2AE91D60AA60BE40FAA8A299E
+        #        X509v3 Certificate Policies: 
+        #            Policy: 1.3.6.1.4.1.7879.13.2
+        #              CPS: http://www.telesec.de/serverpass/cps.html
+        #            Policy: 2.23.140.1.2.2
+        #        X509v3 CRL Distribution Points: 
+        #            Full Name:
+        #              URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
+        #            Full Name:
+        #              URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
+        #        Authority Information Access: 
+        #            OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
+        #            CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
+        #            CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
+        #        X509v3 Basic Constraints: critical
+        #            CA:FALSE
+        #        X509v3 Subject Alternative Name: 
+        #            DNS:www.bsi.bund.de
+        #
         # handled in regex below which matches next extension, if any.
         $val .= " X509";# add string to match last extension also
         my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
             # FIXME: the regex should match OIDs also
             # FIXME: otherwise OID extensions are added as value to the
             #        preceding extension, see example above (4/2016)
-        # FIXME: replace following list of regex with a loop ober the extensions
+        # FIXME: replace following list of regex with a loop over the extensions
         $ext = $val;
         $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
         $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
@@ -5160,6 +5189,9 @@ while ($#argv >= 0) {
     #!#--------+------------------------+---------------------------+----------
     #!#           option to check        what to do                  comment
     #!#--------+------------------------+---------------------------+----------
+# TODO: all options and commands as alias should be first in sequence here
+    if ($arg =~ /^--httpstunnel/i)      { $arg = '--proxyhost';     } # alias, used by sslyze
+    if ($arg =~ /^--fuzz/i)             { $arg = '--cipherrange'; unshift(@argv, 'huge'); } # alias, used by sslmap
     # options for trace and debug
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        }
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
@@ -5171,10 +5203,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^--traceme/i)          { $cfg{'traceME'}++;        } # ..
     if ($arg =~ /^--tracenotme/i)       { $cfg{'traceME'}--;        } # ..
     if ($arg =~ /^--tracetime/i)        { $cfg{'traceTIME'}++;      } # ..
-    if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # ..
+    if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # alias
     if ($arg eq  '--trace')             { $typ = 'TRACE';           }
-    if ($arg eq  '--linux_debug')       { $cfg{'--linux_debug'}++;  }
-    if ($arg eq  '--quit')              { $arg = '+quit';           }
+    if ($arg eq  '--linuxdebug')        { $cfg{'--linux_debug'}++;  }
+    if ($arg eq  '--quit')              { $arg = '+quit';           } # alias
     if ($arg eq  '--slowly')            { $cfg{'slowly'}    = 1;    }
     if ($arg =~ /^--exp(erimental)?$/)  { $cfg{'experimental'} = 1; }
     if ($arg =~ /^--noexp(erimental)?$/){ $cfg{'experimental'} = 0; }
@@ -5196,34 +5228,35 @@ while ($#argv >= 0) {
     if ($arg =~ /^--starttlsphase4$/i)  { $typ = 'STARTTLSP4';      }
     if ($arg =~ /^--starttlsphase5$/i)  { $typ = 'STARTTLSP5';      }
     # options form other programs for compatibility
-    if ($arg =~ /^--?nofailed$/)        { $cfg{'enabled'}   = 0;    } # sslscan
-    if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # ssltest.pl
-    if ($arg eq  '--httpget')           { $cfg{'usehttp'}++;        } # ssltest.pl
-    if ($arg eq  '--version')           { $arg = '+version';        }
+    if ($arg =~ /^--?nofailed$/)        { $arg = '--enabled';       } # alias, used by sslscan
+    if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # alias, used by sslyze
+    if ($arg eq  '--httpget')           { $arg = '--http';          } # alias, used by sslyze
+    if ($arg eq  '--version')           { $arg = '+version';        } # alias, used by various programs
     if ($arg eq  '-v')                  { $cfg{'opt-v'}     = 1;    } # openssl, sets ciphers-v, see below
     if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # openssl, sets ciphers-V, see below
     if ($arg eq  '--V')                 { $cfg{'opt-V'}     = 1;    } # for lazy people, not documented
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg =~ /^--checks?$/)          { $typ = 'DO';              } # tls-check.pl
-    if ($arg eq  '--list')              { $arg = '+list';           } # no next!
-    if ($arg eq  '--chain')             { $arg = '+chain';          } # as these
-    if ($arg eq  '--default')           { $arg = '+default';        } # should
-    if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';    } # become
-    if ($arg =~ /^--resum(?:ption)?$/)  { $arg = '+resumption';     } # commands
-    if ($arg =~ /^--reneg(?:otiation)?/){ $arg = '+renegotiation';  } # ..
-    if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # ssldiagnose.exe
-    if ($arg eq  '--printcert')         { $arg = '+text';           } # ..
-    if ($arg eq  '-i')                  { $arg = '+issuer';         } # ssl-cert-check
-    if ($arg eq  '-B')                  { $arg = '+heartbleed';     } # testssl.sh
-    if ($arg =~ /^-(C|-compression|-crime)$/) { $arg = '+compression';# testssl.sh
+    #  following have no next statement, as the option becomes a command
+    if ($arg eq  '--list')              { $arg = '+list';           } # alias, used by ssltest.pl
+    if ($arg eq  '--chain')             { $arg = '+chain';          } # alias
+    if ($arg eq  '--default')           { $arg = '+default';        } # alias
+    if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';    } # alias
+    if ($arg =~ /^--resum(?:ption)?$/)  { $arg = '+resumption';     } # alias, used by sslyze
+    if ($arg =~ /^--reneg(?:otiation)?/){ $arg = '+renegotiation';  } # alias, used by sslyze
+    if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # alias, used by ssldiagnose.exe
+    if ($arg eq  '--printcert')         { $arg = '+text';           } # alias, used by ssldiagnose.exe
+    if ($arg eq  '-i')                  { $arg = '+issuer';         } # alias, used by ssl-cert-check
+    if ($arg eq  '-B')                  { $arg = '+heartbleed';     } # alias, used by testssl.sh
+    if ($arg =~ /^-(C|-compression|-crime)$/) { $arg = '+compression';# alias, used by testssl.sh
                                           push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); }
-    if ($arg eq  '-R')                  { $arg = '+renegotiation';  } # testssl.sh
-    if ($arg =~  /^--(p?fs|nsa)$/)      { $arg = '+pfs';            } # testssl.sh
-    if ($arg =~  /^--(rc4|appelbaum)$/) { $arg = '+pfs';            } # testssl.sh
-    if ($arg eq  '--spdy')              { $arg = '+spdy';           } # testssl.sh
-    if ($arg eq  '--fips')              { $arg = '+fips';           } # 
-    if ($arg eq  '--ism')               { $arg = '+ism';            } # ssltest.pl
-    if ($arg eq  '--pci')               { $arg = '+pci';            } # ssltest.pl
+    if ($arg eq  '-R')                  { $arg = '+renegotiation';  } # alias, used by testssl.sh
+    if ($arg =~  /^--(p?fs|nsa)$/)      { $arg = '+pfs';            } # alias, used by testssl.sh
+    if ($arg =~  /^--(rc4|appelbaum)$/) { $arg = '+pfs';            } # alias, used by testssl.sh
+    if ($arg eq  '--spdy')              { $arg = '+spdy';           } # alias, used by testssl.sh
+    if ($arg eq  '--fips')              { $arg = '+fips';           } # alias
+    if ($arg eq  '--ism')               { $arg = '+ism';            } # alias, used by ssltest.pl
+    if ($arg eq  '--pci')               { $arg = '+pci';            } # alias, used by ssltest.pl
     if ($arg =~ /^--(fips|ism|pci)$/i)  {}
     # options to handle external openssl
     if ($arg eq  '--openssl')           { $typ = 'OPENSSL';         }
@@ -5242,7 +5275,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # some options are for compatibility with other programs
     #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
-    if ($arg eq  '--regular')           { $cfg{'usehttp'}++;        } # sslyze
+    if ($arg eq  '--regular')           { $arg = '--http';          } # alias, used by sslyze
     if ($arg eq  '--forcesni')          { $cfg{'forcesni'}  = 1;    }
     if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'ignore_no_conn'}= 1;}
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
@@ -5279,9 +5312,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tcp/i)              { $cfg{$_} = 1 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
     if ($arg =~ /^--noudp/i)            { $cfg{$_} = 0 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
     if ($arg =~ /^--udp/i)              { $cfg{$_} = 1 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
-    if ($arg eq  '-b')                  { $cfg{'out_header'}= 1;    } # ssl-cert-check
-    if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # ssl-cert-check; will be out_header, see below
-#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
+    if ($arg eq  '-b')                  { $arg = '--enabled';       } # alias, used by ssl-cert-check
+    if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # alias, used by ssl-cert-check; will be out_header, see below
+#   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # alias, used by ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
     # our options
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
@@ -5304,6 +5337,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'} = 1;}
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
+    #if($arg eq  '--protocol')          { $arg = '--SSL';           } # alias, used by ssldiagnose.exe
+    # \-- previous line is a dummy for extracting aliases
+    # /-- next line will be used
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
@@ -5312,48 +5348,50 @@ while ($#argv >= 0) {
     if ($arg =~ /^--lib(?:path)?$/)     { $typ = 'LIB';             }
     if ($arg eq  '--envlibvar')         { $typ = 'ENV';             }
     if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
-    if ($arg =~ /^--(?:no|ignore)cmd$/) { $typ = 'NO_OUT';          } # alias ...
+    if ($arg =~ /^--(?:no|ignore)cmd$/) { $typ = 'NO_OUT';          } # alias
     if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
+    if ($arg eq  '--range')             { $arg = '--cipherrange';   } # alias
     if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
-    if ($arg eq  '--range')             { $typ = 'CRANGE';          }
     if ($arg eq  '--format')            { $typ = 'FORMAT';          }
     if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             }
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
-    if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # ssldiagnos.exe
+    if ($arg =~ /^--?interval$/)        { $typ = 'TIMEOUT';         } # alias, used by ssldiagnos.exe
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     if ($arg =~ /^--sniname/i)          { $typ = 'SNINAME';         }
-    if ($arg =~ /^--?servername/i)      { $typ = 'SNINAME';         } # -servername for openssl
+    if ($arg =~ /^--?servername/i)      { $typ = 'SNINAME';         } # alias, used by openssl
     # options for Net::SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
     if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
-    if ($arg eq  '--nossluseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; } # alias ...
-    if ($arg eq  '--sslnouseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; }
+    if ($arg eq  '--nossluseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; }
+    if ($arg eq  '--sslnouseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; } # alias
     if ($arg eq  '--ssluseecc')         { $cfg{'sslhello'}->{'useecc'}   = 1; }
-    if ($arg eq  '--nossluseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; } # alias ...
-    if ($arg eq  '--sslnouseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; }
+    if ($arg eq  '--nossluseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; }
+    if ($arg eq  '--sslnouseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; } # alias
     if ($arg eq  '--ssluseecpoint')     { $cfg{'sslhello'}->{'useecpoint'} = 1; }
-    if ($arg eq  '--nosslusereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; } # alias ...
-    if ($arg eq  '--sslnousereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; }
+    if ($arg eq  '--nosslusereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; }
+    if ($arg eq  '--sslnousereneg')     { $cfg{'sslhello'}->{'usereneg'} = 0; } # alias
     if ($arg eq  '--sslusereneg')       { $cfg{'sslhello'}->{'usereneg'} = 1; }
-    if ($arg eq  '--nossldoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; } # alias ...
-    if ($arg eq  '--sslnodoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; }
+    if ($arg eq  '--nossldoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; }
+    if ($arg eq  '--sslnodoublereneg')  { $cfg{'sslhello'}->{'double_reneg'}   = 0; } # alias
     if ($arg eq  '--ssldoublereneg')    { $cfg{'sslhello'}->{'double_reneg'}   = 1; }
-    if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 1; } # alias ...
-    if ($arg eq  '--sslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 1; }
-    if ($arg eq  '--sslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 1; }
+    if ($arg eq  '--nodataeqnocipher')  { $cfg{'sslhello'}->{'nodatanocipher'} = 1; }
+    if ($arg eq  '--sslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 1; } # alias
+    if ($arg eq  '--sslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 1; } # alias
     if ($arg eq  '--nosslnodatanocipher') { $cfg{'sslhello'}->{'nodatanocipher'} = 0; }
-    if ($arg eq  '--nosslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 0; }
+    if ($arg eq  '--nosslnodataeqnocipher'){$cfg{'sslhello'}->{'nodatanocipher'} = 0; } # alias
     #!#--------+------------------------+---------------------------+----------
+    if ($arg =~ /^--ca(?:cert(?:ificate)?)$/i)  { $arg = '--cafile';} # alias, used by curl, openssl, wget, ...
+    if ($arg =~ /^--cadirectory$/i)     { $arg = '--capath';        } # alias, used by curl, openssl, wget, ...
+    if ($arg eq  '-c')                  { $arg = '--capath';        } # alias, used by ssldiagnose.exe
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
-    if ($arg =~ /^--ca(?:cert(?:ificate)?|file)$/i){ $typ ='CAFILE';} # curl, openssl, wget, ...
-    if ($arg =~ /^--ca(?:directory|path)$/i)       { $typ ='CAPATH';} # curl, openssl, wget, ...
-    if ($arg eq  '-c')                  { $typ = 'CAPATH';          } # ssldiagnose.exe
+    if ($arg =~ /^--cafile$/i)          { $typ = 'CAFILE';          }
+    if ($arg =~ /^--capath$/i)          { $typ = 'CAPATH';          }
     if ($arg =~ /^--winCR/i)            { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); }
     # ignored options
     if ($arg =~ /^-connect$/)           {}
@@ -5372,7 +5410,11 @@ while ($#argv >= 0) {
 
     #{ COMMANDS
     _y_ARG("command? $arg");
-    # You may read the lines as table with colums like:
+    # The following sequence of conditions is important: commands which are an
+    # alias for another command are listed first. These aliases should contain
+    # the comment  "# alias"  somewhere in the line, so it can be extracted by
+    # other tools easily.
+    # You may read the lines as table with columns like:
     #!#+---------+----------------------+-----------------------+-----------------
     #!#           command to check       aliased to              comment/traditional name
     #!#+---------+----------------------+-----------------------+-----------------
@@ -5380,21 +5422,21 @@ while ($#argv >= 0) {
     if ($arg eq  '+info')               { $info   = 1;          } # needed 'cause +info and ..
     if ($arg eq  '+quick')              { $quick  = 1;          } # .. +quick convert to list of commands
     if ($arg eq  '+sni')                { $cmdsni = 1;          }
-    if ($arg eq  '+http2')              { $arg = '+protocols';  } # HTTP/2.0; TODO: may be changed in future
-    if ($arg eq  '+spdy')               { $arg = '+protocols';  } # spdy; TODO: may be changed in future
-    if ($arg eq  '+spdy3')              { $arg = '+protocols';  } # SPDY/3.0; TODO: may be changed in future
-    if ($arg eq  '+spdy31')             { $arg = '+protocols';  } # SPDY/3.1; TODO: may be changed in future
-    if ($arg eq  '+spdy4')              { $arg = '+protocols';  } # SPDY/4.0; TODO: may be changed in future
+    if ($arg eq  '+http2')              { $arg = '+protocols';  } # alias HTTP/2.0; TODO: may be changed in future
+    if ($arg eq  '+spdy')               { $arg = '+protocols';  } # alias spdy; TODO: may be changed in future
+    if ($arg eq  '+spdy3')              { $arg = '+protocols';  } # alias SPDY/3.0; TODO: may be changed in future
+    if ($arg eq  '+spdy31')             { $arg = '+protocols';  } # alias SPDY/3.1; TODO: may be changed in future
+    if ($arg eq  '+spdy4')              { $arg = '+protocols';  } # alias SPDY/4.0; TODO: may be changed in future
     if ($arg eq  '+prots')              { $arg = '+protocols';  } # alias
     if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';      } # alias
     if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';     } # alias
-    if ($arg eq  '+owner')              { $arg = '+subject';    } # subject
-    if ($arg eq  '+authority')          { $arg = '+issuer';     } # issuer
-    if ($arg eq  '+expire')             { $arg = '+after';      }
-    if ($arg eq  '+extension')          { $arg = '+extensions'; }
-    if ($arg eq  '+sts')                { $arg = '+hsts';       }
-    if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # sigdump
-    if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # signame
+    if ($arg eq  '+owner')              { $arg = '+subject';    } # alias
+    if ($arg eq  '+authority')          { $arg = '+issuer';     } # alias
+    if ($arg eq  '+expire')             { $arg = '+after';      } # alias
+    if ($arg eq  '+extension')          { $arg = '+extensions'; } # alias
+    if ($arg eq  '+sts')                { $arg = '+hsts';       } # alias
+    if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # alias
+    if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # alias
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias
     if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; TODO until check is improved (6/2015)
     if ($arg =~ /^\+modulus_exponent_size/)         { $arg = '+modulus_exp_size'; } # alias
@@ -5407,15 +5449,15 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sig(key)?_enc(?:ryption)?_known/){$arg = '+sig_enc_known'; } # alias
     if ($arg =~ /^\+server[_-]?(?:temp)?[_-]?key/)  { $arg = '+dh_parameter';  } # alias
     if ($arg =~ /^\+reused?/i)          { $arg = '+resumption'; } # alias
-    if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         }
-    if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';        } # PEM
-    if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     }  # issuer
-    if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';    }  # subject
-    if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature'; }    # alias
+    if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         } # alias
+    if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';        } # alias
+    if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     } # alias
+    if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';    } # alias
+    if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature'; } # alias
     if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';  }
     if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
-    if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # AIA is a common acronym ...
-    if ($arg =~ /\+vulnerabilit(y|ies)/){ $arg = '+vulns';      } # vulns
+    if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # alias; AIA is a common acronym ...
+    if ($arg =~ /\+vulnerabilit(y|ies)/){ $arg = '+vulns';      } # alias
     if ($arg =~ /^\+selected[_-]?ciphers?$/){$arg= '+selected'; } # alias
     if ($arg =~ /^\+session[_-]?ciphers?$/) {$arg= '+selected'; } # alias
     if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw';} # alias
