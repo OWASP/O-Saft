@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.27 16/05/15 17:09:08',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.28 16/05/15 17:15:00',
 
 };
 
@@ -1779,11 +1779,12 @@ sub _cfg_init() {
 
 sub _dbx_init() {
     #? initialize settings for debugging
-
     $dbx{'cmd-check'} => $cfg{'cmd-check'},
     $dbx{'cmd-http'}  => $cfg{'cmd-http'},
     $dbx{'cmd-info'}  => $cfg{'cmd-info'},
     $dbx{'cmd-quick'} => $cfg{'cmd-quick'},
+    push(@{$dbx{file}}, "osaft.pm");    # set myself
+    return;
 } # _dbx_init
 
 
