@@ -63,7 +63,7 @@ They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 
 =item %checks
 
-=item %org
+=item %dbx
 
 =back
 
@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.42 16/05/15 11:18:41";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.43 16/05/15 17:10:41";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -195,7 +195,7 @@ sub _yeast_init() {
     }
     # now user friendly informations
     _yline(" cmd {");
-    _yeast("# " . join(", ", @dbxexe));
+    _yeast("# " . join(", ", @{$dbx{'file'}}));
     _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
     _yeast("          libs= " . _y_ARR(@{$cmd{'libs'}}));
     _yeast("     envlibvar= $cmd{'envlibvar'}");
@@ -255,9 +255,10 @@ sub _yeast_args() {
     _y_ARG("           collected hosts= " . _y_ARR(@{$cfg{'hosts'}}));
     if ($cfg{'verbose'} > 1) {
     _y_ARG(" #--v { processed files, arguments and options");
-    _y_ARG("processed  exec  arguments= ". _y_ARR(@dbxexe));
-    _y_ARG("processed normal arguments= ". _y_ARR(@dbxarg));
-    _y_ARG("processed config arguments= ". _y_ARR(map{"`".$_."'"} @dbxcfg));
+    _y_ARG("    read files and modules= ". _y_ARR(@{$dbx{file}}));
+    _y_ARG("processed  exec  arguments= ". _y_ARR(@{$dbx{exe}}));
+    _y_ARG("processed normal arguments= ". _y_ARR(@{$dbx{argv}}));
+    _y_ARG("processed config arguments= ". _y_ARR(map{"`".$_."'"} @{$dbx{cfg}}));
     _y_ARG(" #--v }");
     }
     _yline(" ARGV }");
@@ -322,12 +323,12 @@ sub _yeast_data() {
             (defined $data{$key})       ? __data( $key) : " ",
             (defined $shorttexts{$key}) ?          "*"  : " ",
             (defined $checks{$key})     ?          "*"  : " ",
-            ((_is_member($key, \@{$org{'cmd-check'}}) > 0)
+            ((_is_member($key, \@{$dbx{'cmd-check'}}) > 0)
             || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)) ? "*"  : "!",
             (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
             );
     }
-# FIXME: FIXME: @{$org{'cmd-check'}} is incomplete when o-saft-dbx.pm is 
+# FIXME: FIXME: @{$dbx{'cmd-check'}} is incomplete when o-saft-dbx.pm is 
 #               `require'd in main; some checks above fail (mainly those
 #               those matching $cfg{'regex'}->{'SSLprot'}, hence the dirty
 #               additional  || ($key =~ /$cfg{'regex'}->{'SSLprot'}/)
