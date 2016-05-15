@@ -476,8 +476,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     foreach my $ssl (@{$cfg{'version'}}) {
         my @accepted = (); # List of all Ciphers that are supported by the server with the tested Protocol
         my @testing  = ();
-        my $range = $cfg{'cipherrange'};            # use specified range of constants
-           $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
+        my $range = $cfg{'cipherrange'};                        # use specified range of constants
+           $range = 'SSLv2_long' if ($ssl eq 'SSLv2');          # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
         ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
         #  NOTE: this eval must not use the block form because the value needs to be evaluated
         push(@testing, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
