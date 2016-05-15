@@ -37,10 +37,7 @@ use Carp;           #replaces warn and die
 
 use osaft;
 
-# FIXME: brauchen wir das noch? (05/2016)
-$cfg{'openssl_version_map'}{'SCSV'} = $cfg{'openssl_version_map'}{'TLS1FF'};
-
-my $VERSION = "16.04.10";
+my $VERSION = "16.05.15";
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
