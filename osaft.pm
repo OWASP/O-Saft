@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.28 16/05/15 17:15:00',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.29 16/05/15 21:32:58',
 
 };
 
@@ -1060,6 +1060,7 @@ our %cfg = (
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
     'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
                                 # NOTE: default=1 as this is behaviour for Net::SSLinfo < 1.85
+    'use_sni_name'  => 0,       # 0: use hostname; 1: use name provided by --sni-name
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
