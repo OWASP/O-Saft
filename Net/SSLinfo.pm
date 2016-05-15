@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.129 16/05/15 07:28:56',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.130 16/05/15 21:58:54',
 };
 
 ######################################################## public documentation #
@@ -488,7 +488,7 @@ $Net::SSLinfo::slowly      = 0; # passed to Net::SSLeay::slowly
 
 $Net::SSLeay::slowly = 0;
 
-my $dum      = $Net::SSLinfo::linux_debug;  # avoid warning: "used only once: ..."
+my $dumm_once= $Net::SSLinfo::linux_debug;  # avoid warning: "used only once: ..."
 my $trace    = $Net::SSLinfo::trace;
 
 # forward declarations
@@ -1121,12 +1121,12 @@ sub do_ssl_open($$$@) {
             #  4 = SSL_VERIFY_CLIENT_ONCE
         $src = "Net::SSLeay::CTX_load_verify_locations()";
         $cafile = $Net::SSLinfo::ca_file || "";
-        if ($cafile !~ m#^([a-zA-Z0-9_,.\\/()-])*$#) {
+        if ($cafile !~ m#^(?:[a-zA-Z0-9_,.\\/()-])*$#) {
             $err = "invalid characters for " . '$Net::SSLinfo::ca_file; not used';
             last;
         }
         $capath = $Net::SSLinfo::ca_path || "";
-        if ($capath !~ m#^([a-zA-Z0-9_,.\\/()-]*)$#) {
+        if ($capath !~ m#^(?:[a-zA-Z0-9_,.\\/()-]*)$#) {
             $err = "invalid characters for " . '$Net::SSLinfo::ca_path; not used';
             last;
         }
