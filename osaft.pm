@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.26 16/05/15 11:21:57',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.27 16/05/15 17:09:08',
 
 };
 
@@ -127,6 +127,8 @@ Following functions (methods) must be defined in the calling program:
 
 =item %cfg
 
+=item %dbx
+
 =item %prot
 
 =item %prot_txt
@@ -191,6 +193,7 @@ our @EXPORT     = qw(
                 %tls_curve_types
                 %tls_curves
                 %data_oid
+                %dbx
                 %cfg
                 %ciphers_desc
                 %ciphers
@@ -1535,6 +1538,14 @@ our %cfg = (
    #------------------+---------+----------------------------------------------
 ); # %cfg
 
+our %dbx = (    # save hardcoded settings (command lists, texts), and debugging data
+                # used in o-saft-dbx.pm only
+    'argv'      => undef,       # normal options and arguments
+    'cfg'       => undef,       # config options and arguments
+    'exe'       => undef,       # executable, library, environment
+    'file'      => undef,       # read files
+); # %dbx
+
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -1766,6 +1777,15 @@ sub _cfg_init() {
     return;
 } # _cfg_init
 
+sub _dbx_init() {
+    #? initialize settings for debugging
+
+    $dbx{'cmd-check'} => $cfg{'cmd-check'},
+    $dbx{'cmd-http'}  => $cfg{'cmd-http'},
+    $dbx{'cmd-info'}  => $cfg{'cmd-info'},
+    $dbx{'cmd-quick'} => $cfg{'cmd-quick'},
+} # _dbx_init
+
 
 =pod
 
@@ -1791,7 +1811,8 @@ sub osaft_sleep($) {
 sub _osaft_init() {
     #? additional generic initializations for data structures
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
-    _cfg_init();        # initallize dynamic data in %cfh
+    _cfg_init();        # initallize dynamic data in %cfg
+    _dbx_init();        # initallize debugging data in %dbx
     foreach my $k (keys %data_oid) {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
