@@ -6,22 +6,36 @@
 
 package main;   # ensure that main:: variables are used
 
-## no critic qw(TestingAndDebugging::RequireUseStrict)
+## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
+# FIXME: we have a lot of comman separated statements to simplify the code.
+#        needs to be changed in future to keep perlcritic happy.
+#        However, the code herein is just for our own documentation ...
+
+## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+# NOTE:  This often happens in comman separated statements, see above.
+#        It may also happen after postfix statements.
+#        Need to check regularily for this problem ...
+
+## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+# NOTE:  Yes, we have very complex regex here.
+
+## no critic qw(InputOutput::RequireBriefOpen)
+#        we always close our filehandles, perlcritic is too stupid to read over 15 lines
+
+## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
+#        we have a lot of single character strings, herein, that's ok
+
+use strict;
 use warnings;
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-# FIXME: we have a lot of comman separated statements to somplify the code.
-#        needs to be chage in future to keep perlcritic happy.
-#        However, the code herein is just for our own documentation ...
-## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
-
-my  $man_SID= "@(#) o-saft-man.pm 1.111 16/05/15 07:26:15";
-our $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
+my  $man_SID= "@(#) o-saft-man.pm 1.112 16/05/15 10:53:05";
+my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
-our $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
-our $ich    = $wer;
+my  $wer    = (caller(1))[1];           # tricky to get filename of myself when called from BEGIN
+my  $ich    = $wer;
     $ich    = "o-saft-man.pm" if (! defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
     $wer    = $ich if -e $ich;          # check if exists, otherwise use what caller() provided
@@ -35,10 +49,10 @@ if (! defined $wer) {                   # still nothing found, try parent
     }
     print "**WARNING: no '$wer' found" if ! -e $wer;
 }
-our $version= "$man_SID";               # version of myself
+my  $version= "$man_SID";               # version of myself
     $version= _VERSION() if (defined &_VERSION); # or parent's if available
 my  $skip   = 1;
-our $egg    = "";
+my  $egg    = "";
 our @DATA;
 my  $cfg_header = 0;                   # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1 if ((grep{/^--header/} @ARGV)>0);
@@ -58,8 +72,8 @@ if (open($fh, '<:encoding(UTF-8)', $wer)) {
         $skip = 2, next if (/^#begin/);
         $skip = 0, next if (/^#end/);
         $skip = 0, next if (/^__DATA__/);
-        $egg .= $_,next if ($skip eq 2);
-        next if ($skip ne 0);
+        $egg .= $_,next if ($skip == 2);
+        next if ($skip == 0);
         next if (/^#/);                 # remove comments
         next if (/^\s*#.*#$/);          # remove formatting lines
         s/^([A-Z].*)/=head1 $1/;
@@ -103,7 +117,7 @@ local $\ = "";
 
 #| definitions: more documentations as data
 #| -------------------------------------
-our %man_text = (
+my %man_text = (
     # short list of used terms and acronyms, always incomplete ...
     'glossar' => {
         'AA'        => "Attribute Authority",
@@ -742,7 +756,7 @@ EoHTML
 sub _man_html_chck($){
     #? same as _man_html_cbox() but without lable and only if passed parameter start with - or +
     my $n = shift || "";
-    return "" if ($n !~ m/^(-|\+)+/);
+    return "" if ($n !~ m/^(?:-|\+)+/);
     return sprintf("<input type=checkbox name='%s' value='' >&#160;", scalar((split(/\s+/,$n))[0]));
 }
 sub _man_name_ankor($){
@@ -790,7 +804,7 @@ sub _man_html($$) {
         s!^\s+($parent .*)!<div class=c >$1</div>!; # example line
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
-        s/^(=[^ ]+ )//;                             # remove remaining markup
+        s/^(?:=[^ ]+ )//;                           # remove remaining markup
         s/^\s*$/<p>/;                               # add paragraph for formatting
         print;
     }
@@ -833,8 +847,9 @@ sub _man_usr_value($)   {
 #| definitions: print functions for help and information
 #| -------------------------------------
 
-sub man_table($) {
+sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
+    #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
     my $typ = shift;
     my %types = (
         # typ        header left    separator  header right
@@ -908,13 +923,14 @@ sub man_table($) {
 sub man_commands() {
     #? print commands and short description
     # data is extracted from $parents internal data structure
-    my $skip = 1;
+    local $skip = 1;
+    local $fh   = undef;
     _man_dbx("man_commands($parent) ...");
     # first print general commands, manually crafted here
     # TODO needs to be computed, somehow ...
     print "\n";
     _man_head("Command", "Description");
-    print <<EoHelp;
+    print <<"EoHelp";
                   Commands for information about this tool
 +dump             Dumps internal data for SSL connection and target certificate.
 +exec             Internal command; should not be used directly.
@@ -944,7 +960,7 @@ sub man_commands() {
 +cipherraw        Check target for all possible ciphers.
 
 EoHelp
-    my $fh;
+
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
             # find start of data structure
@@ -990,7 +1006,7 @@ sub man_alias() {
     #
     print "\n";
     _man_head("Alias (regex)", "command or option   # used by ...");
-    my $fh;
+    local $fh   = undef;
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
             if (m(# alias:)) {
@@ -1220,13 +1236,14 @@ sub man_help($) {
     return;
 } # man_help
 
-sub printhelp($) {
+sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
+    #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
     _man_dbx("printhelp($hlp) ...");
     # Note: some lower case strings are special
-    man_help('NAME'),           return if ($hlp =~ /^$/);
-    man_help('TODO'),           return if ($hlp =~ /^todo$/i);
+    man_help('NAME'),           return if ($hlp =~ /^$/);           ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
+    man_help('TODO'),           return if ($hlp =~ /^todo$/i);      ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_help('KNOWN PROBLEMS'), return if ($hlp =~ /^(err(?:or)?|warn(?:ing)?|problem)s?$/i);
     if ($hlp =~ /^faq/i) {
         man_help('KNOWN PROBLEMS');
@@ -1251,11 +1268,11 @@ sub printhelp($) {
         # causes some   Use of uninitialized value within %cfg 
         # when called as  gen-CGI  it will not be called from within
         # BEGIN amd hence %cfg is defined and will not result in warnings
-    man_alias(),                return if ($hlp =~ /^alias$/);
+    man_alias(),                return if ($hlp =~ /^alias(es)?$/);
     man_commands(),             return if ($hlp =~ /^commands?$/);
     # anything below requires data defined in parent
-    man_table('rfc'),           return if ($hlp =~ /^rfc$/);
-    man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/);
+    man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
+    man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/); ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range|ourstr)(?:iance)?s?$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|text)s?[_-]?cfg$/i);
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|text)s?$/i);
@@ -1278,16 +1295,17 @@ sub printhelp($) {
     }
     if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description, is not yet public
         # quick&dirty hack, may be improved in future ...
-        $skip = 1;
-        my $fh;
-        open($fh, '<:encoding(UTF-8)', $wer) or die(STR_ERROR, "$!");
-        while (<$fh>) {
-            $skip = 0 if (/^#\s+Program Code/);
-            next if ($skip gt 0);
-            last if (($skip eq 0) and (/^$/));
-            print;
+        local $skip = 1;
+        local $fh   = undef;
+        if (open($fh, '<:encoding(UTF-8)', $wer)) {
+            while (<$fh>) {
+                $skip = 0 if (/^#\s+Program Code/);
+                next if ($skip > 0);
+                last if (($skip == 0) and (/^$/));  ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
+                print;
+            }
+            close($fh);
         }
-        close($fh);
         return;
     }
     # nothing matched so far, try to find special section and only print that
