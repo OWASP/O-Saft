@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.127 16/04/09 19:06:12',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.129 16/05/15 07:28:56',
 };
 
 ######################################################## public documentation #
@@ -309,7 +309,6 @@ follow the rules describend above.
 
 ############################################################## initialization #
 
-
 use Exporter qw(import);
 our $VERSION   = SSLINFO_VERSION;
 our @ISA       = qw(Exporter);
@@ -508,7 +507,7 @@ sub _settrace {
     return;
 }
 
-sub _trace($) { local $\ = "\n"; print '#' . SSLINFO . '::' . $_[0] if ($trace > 0); return; }
+sub _trace($) { my $txt = shift; local $\ = "\n"; print '#' . SSLINFO . '::' . $txt if ($trace > 0); return; }
 
 # define some shortcuts to avoid $Net::SSLinfo::*
 my $_echo    = "";              # dangerous if aliased or wrong one found
@@ -778,7 +777,12 @@ $line
 } # test_ssleay
 
 
-sub _dump($$$) { return sprintf("#{ %-12s:%s%s #}\n", $_[0], $_[1], ($_[2] || "<<undefined>>")); }
+sub _dump($$$) {
+    my $key = shift;
+    my $txt = shift;
+    my $val = shift;
+    return sprintf("#{ %-12s:%s%s #}\n", $key, $txt, ($val || "<<undefined>>"));
+} # _dump
     # my ($label, $separator, $value) = @_;
 sub datadump() {
     #? return internal data structure
@@ -1092,7 +1096,9 @@ sub do_ssl_open($$$@) {
                 # DNS and also has the routes to the host
                 ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or {$err = $!} and last;
             }
+            ## no critic qw(InputOutput::ProhibitOneArgSelect)
             select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
+            ## use critic
             $Net::SSLinfo::socket = $socket;
         } else {
             $socket = $Net::SSLinfo::socket;
@@ -1403,7 +1409,7 @@ sub do_ssl_open($$$@) {
         chomp $fingerprint;
         $_SSLinfo{'fingerprint_text'}   = $fingerprint;
         $_SSLinfo{'fingerprint'}        = $fingerprint; #alias
-       ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split('=', $fingerprint);
+       ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split(/=/, $fingerprint);
         $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/;
         $_SSLinfo{'fingerprint_hash'}   = "" if (!defined $_SSLinfo{'fingerprint_hash'});
         $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
@@ -2384,7 +2390,7 @@ sub verify_altname($$) {
     return "No alternate name defined in certificate" if ($cname eq '');
     _trace("verify_altname: $cname");
     foreach my $alt (split(' ', $cname)) {
-        my ($type, $name) = split(':', $alt);
+        my ($type, $name) = split(/:/, $alt);
 # TODO: implement IP and URI
 #dbx print "# ($type, $name)";
         push(@{$_SSLinfo{'errors'}}, "verify_altname() $type not supported in SNA") if ($type !~ m/DNS/i);
