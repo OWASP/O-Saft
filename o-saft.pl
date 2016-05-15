@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.481 16/05/15 13:10:12",
+    SID         => "@(#) yeast.pl 1.483 16/05/15 21:34:34",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -122,8 +122,8 @@ _y_EXIT("exit=INIT0 - initialization start");
 #________________________________________________________________ variables __|
 
 our $VERSION= STR_VERSION;
-our $me     = $cfg{'me'};       # use a short and easy to remember variable name
-our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
+my  $me     = $cfg{'me'};       # use a short and easy to remember variable name
+my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 $cfg{'mename'} = "yeast  " if ($me =~ /yeast/); # want to see if in develop mode
 
@@ -138,10 +138,6 @@ my  $arg    = "";
 my  @argv   = ();   # all options, including those from RC-FILE
                     # will be used when ever possible instead of @ARGV
 # arrays to collect data for debugging, they are global!
-our @dbxarg;        # normal options and arguments
-our @dbxcfg;        # config options and arguments
-our @dbxexe;        # executable, library, environment
-our @dbxfile;       # read files
 our $warning= 1;    # print warnings; need this variable very early
 
 binmode(STDOUT, ":unix");
@@ -159,7 +155,7 @@ if (open(my $rc, '<', "o-saft-README")) { print <$rc>; close($rc); exit 0; };
 
 #| CGI
 #| -------------------------------------
-our $cgi  = 0;
+my  $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
@@ -224,7 +220,7 @@ sub _load_file($$) {
         $txt = "$txt failed";
         $fil = "<<no $fil>>";
     }
-    push(@dbxfile, $fil);
+    push(@{$dbx{file}}, $fil);
     _print_read($fil, $txt);
     return $err;
 } # _load_file
@@ -236,7 +232,7 @@ _y_EXIT("exit=CONF0 - RC-FILE start");
 my @rc_argv = "";
 if ((grep{/(:?--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
-        push(@dbxfile, $cfg{'RC-FILE'});
+        push(@{$dbx{file}}, $cfg{'RC-FILE'});
         _print_read(  "$cfg{'RC-FILE'}", "RC-FILE done");
         ## no critic qw(ControlStructures::ProhibitMutatingListFunctions)
         #  NOTE: the purpose here is to *change the source array"
@@ -538,7 +534,7 @@ our %data   = (     # connection and certificate details
 
 # add keys from %prot to %data,
 foreach my $ssl (keys %prot) {
-    $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
+    my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
     $data{$key}->{val} = sub {    return $prot{$ssl}->{'default'}; };
     $data{$key}->{txt} = "Target default $prot{$ssl}->{txt} cipher";
 }
@@ -1583,14 +1579,6 @@ $cmd{'extopenssl'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 
-# save hardcoded settings (command lists, texts); used in o-saft-dbx.pm
-our %org = (
-    'cmd-check' => $cfg{'cmd-check'},
-    'cmd-http'  => $cfg{'cmd-http'},
-    'cmd-info'  => $cfg{'cmd-info'},
-    'cmd-quick' => $cfg{'cmd-quick'},
-); # %org
-
 #| incorporate some environment variables
 #| -------------------------------------
 # all OPENSSL* environment variables are checked and assigned in o-saft-lib.pm
@@ -1707,7 +1695,7 @@ sub _cfg_set($$)       {
         #       is a flse positive because perlcritic seems not to understand
         #       the logic of "open() && do{}; warn();"
         if (open($fh, '<:encoding(UTF-8)', $arg)) {
-            push(@dbxfile, $arg);
+            push(@{$dbx{file}}, $arg);
             _print_read("$arg", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
             while ($line = <$fh>) {
                 #
@@ -4068,13 +4056,13 @@ sub printfooter($)  {
 sub printtitle($$$$) {
     #? print title according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
-    my $txt     = _get_text('out-ciphers', $ssl);
     local    $\ = "\n";
     if ($legacy eq 'sslyze')    {
-        local $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
+        my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
         print "$txt";
         print " " . "-" x length($txt);
     }
+    my $txt     = _get_text('out-ciphers', $ssl);
     if ($legacy eq 'sslaudit')  {} # no title
     if ($legacy eq 'sslcipher') { print "Testing $host ..."; }
     if ($legacy eq 'ssldiagnos'){
@@ -4533,7 +4521,7 @@ sub printchecks($$$) {
     printheader($text{'out-checks'}, $text{'desc-check'});
     _trace_cmd(' printchecks: %checks');
     if (_is_do('selected')) {           # value is special
-        $key = $checks{'selected'}->{val};
+        my $key = $checks{'selected'}->{val};
         print_line($legacy, $host, $port, 'selected', $checks{'selected'}->{txt}, "$key " . get_cipher_sec($key));
     }
     _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
@@ -4938,8 +4926,8 @@ push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
     $arg = shift @argv;
     _y_ARG($arg);
-    push(@dbxarg, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
-    push(@dbxcfg, $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
+    push(@{$dbx{argv}}, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
+    push(@{$dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
 
     # First check for arguments of options.
     # Options are not case sensitive.  Options may contain  .  and  -  and  _
@@ -4970,7 +4958,7 @@ while ($#argv >= 0) {
         # Note that $arg already contains the argument
         # hence `next' at end of surrounding if()
         _y_ARG("argument? $arg, typ= $typ");
-        push(@dbxexe, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
+        push(@{$dbx{exe}}, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
         #  $typ = '????'; # expected next argument
         #  +---------+----------+------------------------------+--------------------
         #   argument to process   what to do                    expect next argument
@@ -5153,7 +5141,8 @@ while ($#argv >= 0) {
         if (defined $2) {
             $arg = $2 if ($2 !~ /^\s*$/);   # if it was --help=*
         }
-        require "o-saft-man.pm";    # include if necessary only; dies if missing
+        require q{o-saft-man.pm};   # include if necessary only; dies if missing
+        #require "o-saft-man.pm";    # include if necessary only; dies if missing
         printhelp($arg);
         exit 0;
     }
@@ -5364,6 +5353,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'} = 1;}
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
+#   if ($arg eq  '--sniname')           { $cfg{'use_sni_name'}  = 1;} # violates historic usage
+    if ($arg eq  '--nosniname')         { $cfg{'use_sni_name'}  = 0;}
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
