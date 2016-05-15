@@ -11,6 +11,7 @@
 #?      --n     - nix machen, nur zeigen
 #?      --      - alle weiteren Argumenta an perlcritic übergeben
 #?      --v     - alias für:  --verbose 10
+#?      --all   - Aufruf von perlcritic für alle Quelldateien
 #?      --doc   - wird direkt an perlcritic durchgereicht
 #?      <mode>
 #?          only     - perlcritic mit  --verbose 10 --single-policy  aufrufen
@@ -28,6 +29,7 @@
 #?      --force      - ignoriere "## no critic" Annotationen im Source-Code
 #?      --nocolor    - Ausgabe nicht farblich markieren
 #?      --verbose 10 - gibt zu allen Findings die Beschreibung aus
+#?      --exclude PATTERN  - dieses PATTERN nicht prüfen
 #?
 #? BESCHREIBUNG
 #?      Wrapper-Script zum vereinfachten  Aufruf von perlcritic.
@@ -62,12 +64,19 @@
 #?      * nur Beschreibung für PATTERN ausgeben
 #?          $0 --doc ValuesAndExpressions::RequireNumberSeparators
 #?
+#?      * alle Dateien des Projektes mit Severity 5, 4 und 3 prüfen
+#?          $0 --all
+#?
 #? EINSCHRÄNKUNGEN
 #?      Wenn es eine Datei gibt, die genauso heisst, wie eine Policy, dann wird
 #?      dieses Argument immer als Dateiname und nie als Policy-Name benutzt.
 #?
+#? SIEHE AUCH
+#?      perlcriticrc(1)
+#?      .perlcriticrc
+#?
 #? VERSION
-#?      @(#) critic.sh 1.4 16/05/15 10:54:05
+#?      @(#) critic.sh 1.5 16/05/15 13:23:08
 #?
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -77,6 +86,11 @@
 ich=${0##*/}
 try=''
 mode="--include";       # oder --single-policy oder leer
+opts=""
+
+our_sources="\
+    osaft.pm o-saft-dbx.pm o-saft-man.pm o-saft-usr.pm \
+    Net/SSLhello.pm Net/SSLinfo.pm checkAllCiphers.pl"
 
 while [ $# -gt 0 ]; do
 	arg="$1"
@@ -95,7 +109,9 @@ while [ $# -gt 0 ]; do
 		;;
 	 '-1'  | '-2'  | '-3'  | '-4'  | '-5')  opts="$arg"; ;;
 	 '--1' | '--2' | '--3' | '--4' | '--5') opts="$arg"; ;; # for lazy people
-	 '--doc')      opts="$arg"; mode=""; break; ;;
+	 '--doc')                               opts="$arg"; mode=""; break; ;;
+	 '--all'   | '--all-o-saft')            mode="ALLE"; files="o-saft.pl $our_sources"; break; ;;
+	 '--yeast' | '--all-yeast')             mode="ALLE"; files="yeast.pl  $our_sources"; break; ;;
 	 '--')  break; ;;               # alle weiteren Argumnta für perlcritic
 	 *)     # es kann kommen:
 		#    * Dateiname
@@ -129,6 +145,34 @@ while [ $# -gt 0 ]; do
 		;;
 	esac
 done
+
+if [ "$mode" = "ALLE" ]; then
+	echo "# [$ich] alle Dateien: $files"
+	echo "# [$ich] Statistik"
+	for serverity in -5 -4 -3; do
+		echo
+		echo "# [$ich] $serverity {############################################################"
+		echo "# perlcritic $serverity --count           $files $opts"
+		$try   \perlcritic $serverity --count           $files $opts
+		echo
+		echo "# perlcritic $serverity --statistics-only $files $opts"
+		$try   \perlcritic $serverity --statistics-only $files $opts
+		echo "# [$ich] $serverity }"
+	done
+	echo
+	echo "# [$ich] Violations"
+	for serverity in -5 -4 -3; do
+		echo
+		echo "# [$ich] $serverity {############################################################"
+		for file in $files; do
+			echo
+			echo "# perlcritic $serverity $file $opts"
+			$try   \perlcritic $serverity $file $opts
+		done
+		echo "# [$ich] $serverity }"
+	done
+	exit 0
+fi
 
 [ "$mode" = "--single-policy" ] && opts="--verbose 10 $opts"
 if [ -n "$pols" ]; then
