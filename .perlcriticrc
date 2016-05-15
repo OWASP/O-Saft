@@ -43,7 +43,7 @@
 #?      contrib/critick.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.4 16/05/15 13:22:02
+#?      @(#) .perlcriticrc 1.5 16/05/15 19:31:34
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -339,6 +339,17 @@ verbose     = 8
     # CHECK DISABLED
 	# NOTE:  Following this critism violates Variables::ProhibitReusedNames
 	#        we prefer to check for reused variables
+
+
+[Variables::ProhibitPackageVars]
+    add_packages = Net::SSLinfo Net::SSLhello
+
+    # Message
+	# Package variable declared or used at line ...
+
+    # CHECK adapted
+	# Add our private modules, this leaves unwanted global variables to
+	# be reported only.
 
 
 [Variables::ProhibitPunctuationVars]
