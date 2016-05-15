@@ -4,6 +4,9 @@
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
+## no critic qw(Documentation::RequirePodSections)
+#  our POD below is fine, perlcritic (severity 2) is too pedantic here.
+
 =pod
 
 =head1 NAME
@@ -16,7 +19,7 @@ require "o-saft-dbx.pm";
 
 =head1 DESCRIPTION
 
-Defines all function needed for trace and debug output in  L<o-saft.pl>.
+Defines all function needed for trace and debug output in  L<o-saft.pl|o-saft.pl>.
 
 =head2 Functions defined herein
 
@@ -48,7 +51,7 @@ Defines all function needed for trace and debug output in  L<o-saft.pl>.
 
 =head2 Variables which may be used herein
 
-They must be defined as `our' in L<o-saft.pl>:
+They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 
 =over 4
 
@@ -64,7 +67,7 @@ They must be defined as `our' in L<o-saft.pl>:
 
 =back
 
-Functions being used in L<o-saft.pl> shoudl be defined as empty stub there.
+Functions being used in L<o-saft.pl|o-saft.pl> shoudl be defined as empty stub there.
 For example:
 
     sub _yeast_init() {}
@@ -72,27 +75,34 @@ For example:
 =head1 SPECIALS
 
 If you want to do special debugging, you can define proper functions here.
-They don't need to be defined in L<o-saft.pl> if they are used only here.
+They don't need to be defined in L<o-saft.pl|o-saft.pl> if they are used only here.
 In that case simply call the function in C<_yeast_init> or C<_yeast_exit>
-they are called at beginning and end of L<o-saft.pl>.
-It's just important that  L<o-saft.pl>  was called with either the I<--v>
+they are called at beginning and end of L<o-saft.pl|o-saft.pl>.
+It's just important that  L<o-saft.pl|o-saft.pl>  was called with either the I<--v>
 or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
 ## no critic qw(TestingAndDebugging::RequireUseStrict)
+#  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.41 16/05/11 00:15:53";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.42 16/05/15 11:18:41";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
-no warnings 'redefine';
+no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
+no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+   # "... used only once: possible typo ..." appears when called as main only
 
-# parameters ar ok for trace output, hence
 ## no critic qw(Subroutines::RequireArgUnpacking)
+#        parameters are ok for trace output
+
+## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
+#        we have a lot of single character strings, herein, that's ok
+
 
 # debug functions
 sub _y_ts     { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
@@ -107,10 +117,14 @@ sub _yeast_trac($$){
     #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
     my $ref  = shift;   # must be a hash reference
     my $key  = shift;
-    _yTRAC($key, "<<null>>"), return if (! defined $ref->{$key});   # undef is special, avoid perl warnings
+    if (! defined $ref->{$key}) {
+        # undef is special, avoid perl warnings
+        _yTRAC($key, "<<null>>");
+        return;
+    }
     SWITCH: for (ref($ref->{$key})) {   # ugly but save use of $_ here
+        /^$/    && do { _yTRAC($key, $ref->{$key}); last SWITCH; }; ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
         /CODE/  && do { _yTRAC($key, "<<code>>");   last SWITCH; };
-        /^$/    && do { _yTRAC($key, $ref->{$key}); last SWITCH; };
         /SCALAR/&& do { _yTRAC($key, $ref->{$key}); last SWITCH; };
         /ARRAY/ && do { _yTRAC($key, _y_ARR(@{$ref->{$key}})); last SWITCH; };
         /HASH/  && do { last SWITCH if ($ref->{'trace'} <= 2);      # print hashes for full trace only
