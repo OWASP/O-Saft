@@ -27,6 +27,7 @@
 #?      --noprofile  - .perlcriticrc ignorieren
 #?      --force      - ignoriere "## no critic" Annotationen im Source-Code
 #?      --nocolor    - Ausgabe nicht farblich markieren
+#?      --verbose 10 - gibt zu allen Findings die Beschreibung aus
 #?
 #? BESCHREIBUNG
 #?      Wrapper-Script zum vereinfachten  Aufruf von perlcritic.
@@ -66,7 +67,7 @@
 #?      dieses Argument immer als Dateiname und nie als Policy-Name benutzt.
 #?
 #? VERSION
-#?      @(#) critic.sh 1.3 16/05/15 10:19:26
+#?      @(#) critic.sh 1.4 16/05/15 10:54:05
 #?
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -87,13 +88,13 @@ while [ $# -gt 0 ]; do
 		;;
 	 '-n' | '--n') try=echo; ;;
 	 '-v' | '--v') opts="--verbose 10 $opts"; ;;
-	 '--only'     | 'only')
-		mode="--single-policy"
-		;;
+	 '--only'     | 'only')                 mode="--single-policy"; ;;
 	 '--disabled' | 'disabled')
 		mode="--single-policy"
 		pols="`perl -lne '/^\[-/ && do {$_=~s/\[-([^\]]*).*/$1/;$\=q( );print}' .perlcriticrc`"
 		;;
+	 '-1'  | '-2'  | '-3'  | '-4'  | '-5')  opts="$arg"; ;;
+	 '--1' | '--2' | '--3' | '--4' | '--5') opts="$arg"; ;; # for lazy people
 	 '--doc')      opts="$arg"; mode=""; break; ;;
 	 '--')  break; ;;               # alle weiteren Argumnta für perlcritic
 	 *)     # es kann kommen:
@@ -141,5 +142,7 @@ echo "# [$ich] Policys:  $policy $excl"
 echo "# [$ich] Optionen: $opts"
 echo "# [$ich] Optionen: $@"
 echo ""
-$try \perlcritic $files $policy $excl $opts $@
+echo \perlcritic $files $policy $excl $opts $@
+[ -n "$try" ] && exit 0
+\perlcritic $files $policy $excl $opts $@
 
