@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.483 16/05/15 21:34:34",
+    SID         => "@(#) yeast.pl 1.484 16/05/15 22:20:58",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5864,6 +5864,11 @@ if ($cmd{'extopenssl'} == 1) {
     $Net::SSLinfo::ca_file          = $cfg{'ca_file'};
     $Net::SSLinfo::ca_path          = $cfg{'ca_path'};
     $Net::SSLinfo::ca_depth         = $cfg{'ca_depth'};
+    $Net::SSLinfo::starttls         = $cfg{'starttls'};
+    $Net::SSLinfo::proxyhost        = $cfg{'proxyhost'};
+    $Net::SSLinfo::proxyport        = $cfg{'proxyport'};
+    $Net::SSLinfo::proxypass        = $cfg{'proxypass'};
+    $Net::SSLinfo::proxyuser        = $cfg{'proxyuser'};
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
     $Net::SSLinfo::use_http         = 0; # if only +cipher given don't use http 'cause it may cause erros
