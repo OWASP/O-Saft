@@ -220,6 +220,10 @@ my %text = (
     'separator' => ":", # separator character between label and value
 );
 
+# set some default cfg values different to osaft
+$cfg{'legacy'}                  = "compact";                    # used for sub printCipherStringArray
+$cfg{'sslhello'}{'maxciphers'}  = 64;                           # configurations for TCP SSL protocol$: number of ciphers sent in SSL3/TLS Client-Hello
+
 # scan options and arguments
 # -------------------------------------
 while ($#argv >= 0) {
