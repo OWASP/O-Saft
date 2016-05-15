@@ -40,7 +40,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.478 16/05/12 01:09:03",
+    SID         => "@(#) yeast.pl 1.479 16/05/15 07:23:55",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4145,7 +4145,7 @@ sub print_data($$$$)    {
         # hence the final : is converted to =
         # (seems to happen on Windows only; reason yet unknown)
         $value =~ s/([Mm]odulus):/$1=/; #
-        my ($k, $v) = split("=", $value);
+        my ($k, $v) = split(/=/, $value);
         if (defined $v) {       # i.e SHA Fingerprint=
             $k .= "=";
         } else {
@@ -4620,7 +4620,7 @@ sub printversion() {
     print "= openssl =";
     print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
     my $openssl = $cmd{'openssl'};
-    foreach my $p ("", split(":", $ENV{'PATH'})) { # try to find path
+    foreach my $p ("", split(/:/, $ENV{'PATH'})) { # try to find path
         # "" above ensures that full path in $cmd{'openssl'} will be checked
         $openssl = "$p/$cmd{'openssl'}";
         last if (-e $openssl);
@@ -4849,7 +4849,7 @@ sub printciphers() {
         foreach my $c (sort keys %ciphers) {
             my $can = " "; # FIXME
             if ($cfg{'verbose'} > 0) {
-                if (0 >= (grep{$_ eq $c} split(":", $ciphers))) {
+                if (0 >= (grep{$_ eq $c} split(/:/, $ciphers))) {
                     $can = "#";
                     $miss_cipher++;
                 } else {
@@ -4869,7 +4869,7 @@ sub printciphers() {
             my @miss = ();
             my @test = ();
             my $dupl = ""; # need to identify duplicates as we don't have List::MoreUtils
-            foreach my $c (split(':', $ciphers)) {
+            foreach my $c (split(/:/, $ciphers)) {
                 next if ($c eq $dupl);
                 push(@test, $c) if (  defined $ciphers{$c});
                 push(@miss, $c) if (! defined $ciphers{$c});
@@ -6028,7 +6028,7 @@ $port = ($cfg{'port'}||"");     # defensive programming
 foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     $cfg{'host'}      = $host;
     if ($host =~ m#.*?:\d+#) {  # split host:port
-       ($host, $port) = split(":", $host);
+       ($host, $port) = split(/:/, $host);
         $cfg{'port'}  = $port;  #
         $cfg{'host'}  = $host;
     }
