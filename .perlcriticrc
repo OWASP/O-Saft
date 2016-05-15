@@ -43,7 +43,7 @@
 #?      contrib/critick.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.3 16/04/10 01:46:59
+#?      @(#) .perlcriticrc 1.4 16/05/15 13:22:02
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -64,6 +64,7 @@ verbose     = 8
     allow   = if unless
     #allow  = foreach
 	# as the severity is already 2, its okay to report foreach violations
+
 
     # Message
 	# Postfix control "if" used at line ...
@@ -193,12 +194,20 @@ verbose     = 8
 	# NOTE: perlcritic has a lot of false negatives!
 
 
+[Modules::ProhibitExcessMainComplexity]
+
+    # Message
+	# Main code has high complexity score (NN) at line ...
+
+    # CHECK ENABLED
+
+
 [-Subroutines::ProhibitUnusedPrivateSubroutines]
 
     # Message
 	# Private subroutine/method 'XXXX' declared but not used at line ...
 
-    # CHECK DIABLED
+    # CHECK DISABLED
 
 
 [-RegularExpressions::RequireDotMatchAnything]
@@ -322,6 +331,16 @@ verbose     = 8
     # CHECK ENABLED
 
 
+[-Variables::ProhibitLocalVars]
+
+    # Message
+	# Variable declared as "local" at line ...
+
+    # CHECK DISABLED
+	# NOTE:  Following this critism violates Variables::ProhibitReusedNames
+	#        we prefer to check for reused variables
+
+
 [Variables::ProhibitPunctuationVars]
     allow = $@ $! $? $0 $. $^O $\
 
@@ -338,6 +357,45 @@ verbose     = 8
 	# @ENV must be changed globally (at least in o-saft.pl)
 	# TODO: need to verify if @INC should be allowed too
 	# perlcritic seems to be buggy as it does not honor the allow option
+	# hence an annotation is used in o-saft.pl
+
+
+[Variables::ProhibitReusedNames]
+    allow   = $host $port $legacy $arg
+
+    # Message
+	# Reused variable name in lexical scope: ...
+
+    # CHECK adapted
+	# These variables are often used in subs, but also in main, hence
+	# we allow them for reuse.
+
+
+[Variables::RequireInitializationForLocalVars]
+
+    # Message
+	# "local" variable not initialized at line ...
+
+    # CHECK ENABLED
+
+
+[RegularExpressions::ProhibitCaptureWithoutTest]
+
+    # Message
+	# Capture variable used outside conditional at line ...
+
+    # CHECK ENABLED
+
+	# Workaround: disable selectively where appropriate with:
+
+
+#[RegularExpressions::ProhibitComplexRegexes]
+
+    # Message
+	# Split long regexps into smaller qr// chunks at line ...
+
+	# FIXME: to be discussed
+	# Workaround: disable selectively where appropriate with:
 
 
 [ValuesAndExpressions::ProhibitConstantPragma]
@@ -346,7 +404,7 @@ verbose     = 8
 	# Pragma "constant" used at line ...
 
     # CHECK ENABLED
-	# FIXME: constant should be reeplaced by Readonly
+	# FIXME: constant should be replaced by Readonly
 	#  but need to check if Readonly.pm is available on ancient systems
 
 
@@ -382,16 +440,85 @@ verbose     = 8
 	# yes, there are a lot of constructs using nwelines in texts, that's ok
 
 
-#[ValuesAndExpressions::ProhibitMagicNumbers]
+[ValuesAndExpressions::ProhibitMagicNumbers]
+    allowed_values = 0..99
 
+    # allowed_types  =
+    # constant_creator_subroutines = 
 	# FIXME: to be discussed
 	# Workaround: disable selectively where appropriate with:
 		## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
 
+    # CHECK adapted
+	# we use some integers
 
-#[]
+
+[ValuesAndExpressions::ProhibitMismatchedOperators]
 
     # Message
+	# Mismatched operator at line ...
+
+    # CHECK ENABLED
+
+
+[ValuesAndExpressions::RequireNumberSeparators]
+    min_value = 100_000
+	# severity is 2
+
+    # Message
+	#
+
+    # CHECK adapted
+	# we use some integers
+
+
+
+[ValuesAndExpressions::RequireQuotedHeredocTerminator]
+
+    # Message
+	# Heredoc terminator must be quoted at line ...
+
+    # CHECK ENABLED
+	# Workaround: disable selectively where appropriate
+
+
+[-ValuesAndExpressions::RequireUpperCaseHeredocTerminator]
+
+    # Message
+	# Heredoc terminator not alphanumeric and upper-case at line ...
+
+    # CHECK DISABLED
+	# other people, other opinions
+
+[RegularExpressions::ProhibitUnusedCapture]
+
+    # Message
+	# Only use a capturing group if you plan to use the captured value at line ...
+
+    # CHECK ENABLED
+
+
+#[RegularExpressions::ProhibitFixedStringMatches]
+
+    # Message
+	# Use 'eq' or hash instead of fixed-pattern regexps at line ...
+
+	# FIXME: to be discussed
+	# we often use something like:  if (m/^$/)
+	# which is hard to be expressed as a hash
+
+
+[-BuiltinFunctions::ProhibitBooleanGrep]
+
+    # Message
+	# "grep" used in boolean context at line  ...
+
+    # CHECK DISABLED
+	# is too noicy and may have false positives, see its own description:
+	#    perlcritic --doc BuiltinFunctions::ProhibitBooleanGrep
+
+
+
 	# "grep" used in void context at line  ...
 
 
@@ -464,3 +591,14 @@ verbose     = 8
 	# violation is printed only once. Then we can enable it again.
     	
 
+[BuiltinFunctions::ProhibitStringySplit]
+
+    # Message:
+	# String delimiter used with "split" at line ...
+
+    # CHECK ENABLED
+
+
+[Miscellanea::ProhibitUnrestrictedNoCritic]
+
+	# does not make sense to disable it, can even not be disabled :-/
