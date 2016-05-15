@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.25 16/05/15 07:44:55',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.26 16/05/15 11:21:57',
 
 };
 
@@ -161,15 +161,12 @@ Following functions (methods) must be defined in the calling program:
 
 =cut
 
-## no critic qw(Modules::ProhibitAutomaticExportation Variables::ProhibitPackageVars)
+## no critic qw(Modules::ProhibitAutomaticExportation, Variables::ProhibitPackageVars)
 # FIXME: perlcritic complains to use @EXPORT_OK instead of @EXPORT, but that
 #        is not possible as long as constants are exported;
 #        should be changed when "use constant" is replaced by "use Readonly"
 # FIXME: perlcritic complains to not declare (global) package variables, but
 #        the purpose of this module is to do that. This may change in future.
-
-## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers ValuesAndExpressions::RequireNumberSeparators)
-# TODO:  not sure if we want to follow this pedantic critism (severity 2).
 
 # See NOTES below also.
 
@@ -1648,7 +1645,7 @@ sub get_cipher_name($) {
 
 =head2 get_openssl_version($cmd)
 
-Call external $cmd (which is a full path for L<openssl (1)>, usually) executable
+Call external $cmd (which is a full path for L<openssl|openssl>, usually) executable
 to retrive its version. Returns version string.
 =cut
 
