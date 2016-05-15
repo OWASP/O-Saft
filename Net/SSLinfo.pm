@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.132 16/05/15 22:22:44',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.133 16/05/15 22:27:33',
 };
 
 ######################################################## public documentation #
@@ -152,23 +152,23 @@ Value will not be used at all if set C<undef>.
 
 =item $Net::SSLinfo::proxyhost
 
-FQDN or IP of proxy to be used.
+FQDN or IP of proxy to be used; default: ''.
 
 =item $Net::SSLinfo::proxyport
 
-Port for proxy.
+Port for proxy; default: ''.
 
 =item $Net::SSLinfo::proxypass
 
-Username for proxy authentication (Basic or Digest Auth).
+Username for proxy authentication (Basic or Digest Auth); default: ''.
 
 =item $Net::SSLinfo::proxyuser
 
-Password for proxy authentication (Basic or Digest Auth).
+Password for proxy authentication (Basic or Digest Auth); default: ''.
 
 =item $Net::SSLinfo::proxyauth
 
-Authentication string used for proxy.
+Authentication string used for proxy; default: ''.
 
 =item $Net::SSLinfo::socket
 
@@ -520,7 +520,12 @@ $Net::SSLinfo::slowly      = 0; # passed to Net::SSLeay::slowly
 
 $Net::SSLeay::slowly = 0;
 
-my $dumm_once= $Net::SSLinfo::linux_debug;  # avoid warning: "used only once: ..."
+# avoid perl warning "... used only once: possible typo ..."
+my $dumm_1   = $Net::SSLinfo::linux_debug;
+my $dumm_2   = $Net::SSLinfo::proxyport;
+my $dumm_3   = $Net::SSLinfo::proxypass;
+my $dumm_4   = $Net::SSLinfo::proxyuser;
+my $dumm_5   = $Net::SSLinfo::proxyauth;
 my $trace    = $Net::SSLinfo::trace;
 
 # forward declarations
