@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.130 16/05/15 21:58:54',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.131 16/05/15 22:18:40',
 };
 
 ######################################################## public documentation #
@@ -148,11 +148,35 @@ Depth of peer certificate verification; default: 9
 
 Value will not be used at all if set C<undef>.
 
+=item $Net::SSLinfo::proxyhost
+
+FQDN or IP of proxy to be used.
+
+=item $Net::SSLinfo::proxyport
+
+Port for proxy.
+
+=item $Net::SSLinfo::proxypass
+
+Username for proxy authentication (Basic or Digest Auth).
+
+=item $Net::SSLinfo::proxyuser
+
+Password for proxy authentication (Basic or Digest Auth).
+
+=item $Net::SSLinfo::proxyauth
+
+Authentication string used for proxy.
+
 =item $Net::SSLinfo::socket
 
 Socket to be used for connection.  This must be a file descriptor and
 it's assumed to be an AF_INET or AF_INET6 TCP STREAM type connection.
 Note: the calling application is responsible for closing the socket.
+
+=item $Net::SSLinfo::starttls
+
+Use STARTTLS if not empty.
 
 =item $Net::SSLinfo::openssl
 
@@ -472,6 +496,12 @@ $Net::SSLinfo::protocols   = 'h2,h2-15,h2-14,spdy/4a4,spdy/4a2,spdy/3.1,spdy/3,s
                                 # protocols may have prefix `exp' which should not be checked by server
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
+$Net::SSLinfo::starttls    = "";# use STARTTLS if not empty
+$Net::SSLinfo::proxyhost   = "";# FQDN or IP of proxy to be used
+$Net::SSLinfo::proxyport   = "";# port for proxy
+$Net::SSLinfo::proxypass   = "";# username for proxy authentication (Basic or Digest Auth)
+$Net::SSLinfo::proxyuser   = "";# password for proxy authentication (Basic or Digest Auth)
+$Net::SSLinfo::proxyauth   = "";# authentication string used for proxy
 $Net::SSLinfo::socket   = undef;# socket to be used for connection
 $Net::SSLinfo::ca_crl   = undef;# URL where to find CRL file
 $Net::SSLinfo::ca_file  = undef;# PEM format file with CAs
@@ -1078,7 +1108,7 @@ sub do_ssl_open($$$@) {
     TRY: {
         #1. open TCP connection
         if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
-            unless (($main::cfg{'starttls'}) || ($main::cfg{'proxyhost'})) { # $cfg{'proxyport'} was already checked in main
+            unless (($Net::SSLinfo::starttls) || ($Net::SSLinfo::proxyhost)) { # $Net::SSLinfo::proxyport was already checked in main
                 #1a. no proxy and not starttls
                 $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
                 $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
