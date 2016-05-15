@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.131 16/05/15 22:18:40',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.132 16/05/15 22:22:44',
 };
 
 ######################################################## public documentation #
@@ -58,6 +58,8 @@ use constant {
 # FIXME: there're still some warn (3/2015)
 
 =pod
+
+=encoding utf8
 
 =head1 NAME
 
