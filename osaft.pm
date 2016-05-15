@@ -1544,6 +1544,10 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
     'cfg'       => undef,       # config options and arguments
     'exe'       => undef,       # executable, library, environment
     'file'      => undef,       # read files
+    'cmd-check' => undef,
+    'cmd-http'  => undef,
+    'cmd-info'  => undef,
+    'cmd-quick' => undef,
 ); # %dbx
 
 
@@ -1779,10 +1783,10 @@ sub _cfg_init() {
 
 sub _dbx_init() {
     #? initialize settings for debugging
-    $dbx{'cmd-check'} => $cfg{'cmd-check'},
-    $dbx{'cmd-http'}  => $cfg{'cmd-http'},
-    $dbx{'cmd-info'}  => $cfg{'cmd-info'},
-    $dbx{'cmd-quick'} => $cfg{'cmd-quick'},
+    $dbx{'cmd-check'} = $cfg{'cmd-check'};
+    $dbx{'cmd-http'}  = $cfg{'cmd-http'};
+    $dbx{'cmd-info'}  = $cfg{'cmd-info'};
+    $dbx{'cmd-quick'} = $cfg{'cmd-quick'};
     push(@{$dbx{file}}, "osaft.pm");    # set myself
     return;
 } # _dbx_init
