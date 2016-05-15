@@ -35,11 +35,16 @@ use strict;
 use warnings;
 use Carp;           #replaces warn and die
 
+use osaft;
+
+# FIXME: brauchen wir das noch? (05/2016)
+$cfg{'openssl_version_map'}{'SCSV'} = $cfg{'openssl_version_map'}{'TLS1FF'};
+
 my $VERSION = "16.04.10";
-our $me     = $0; $me     =~ s#.*(?:/|\\)##;
-our $mepath = $0; $mepath =~ s#/[^/\\]*$##;
+my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
+my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
-our $mename = "checkAllCiphers";
+my  $mename = "checkAllCiphers";
     $mename = "O-Saft " if ($me !~ /checkAllCiphers/);
 
 sub printhelp {
@@ -180,12 +185,6 @@ if (! eval {require Net::SSLhello;} ) {
 }
 
 my $arg = "";
-# array to collect data fordebugging, they are global!
-our @dbxarg;    # normal options and arguments
-our @dbxcfg;    # config options and arguments
-our @dbxexe;    # executable, library, environment
-our @dbxfile;   # read files
-
 my @argv = grep {/--trace.?arg/} @ARGV;# preserve --tracearg option
 push(@argv, @ARGV);
 #dbx# _dbx "ARG: " . join(" ", @argv);
@@ -205,7 +204,7 @@ if ($#dbx >= 0) {
         # Note: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
     }
-    push(@dbxfile, $arg);
+    push(@{$dbx{file}}, $arg);
     printf("=== reading trace file ===\n") if(grep {/(:?--no.?header)/i} @ARGV <= 0);
     require $arg;   # `our' variables are available there
 }
@@ -217,153 +216,6 @@ my $port    = 443;  # the port currently used in main
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
 
-our %cfg = ( # from o-saft (only relevant parts)
-   # config. key        default   description
-   #------------------+---------+----------------------------------------------
-    'try'           => 0,       # 1: do not execute openssl, just show
-    'exec'          => 0,       # 1: if +exec command used
-    'experimental'  => 0,       # 1: if experimental functions should be used
-    'trace'         => 0,       # 1: trace yeast, 2=trace Net::SSLeay and Net::SSLhello also
-    'traceARG'      => 0,       # 1: trace yeast's argument processing
-    'traceCMD'      => 0,       # 1: trace command processing
-    'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
-    'traceTIME'     => 0,       # 1: (trace) print additional time for benchmarking
-    'verbose'       => 0,       # used for --v
-    'proxyhost'     => "",      # FQDN or IP of proxy to be used
-    'proxyport'     => 0,       # port for proxy
-    'proxyauth'     => "",      # authentication string used for proxy
-    'proxyuser'     => "",      # username for proxy authentication (Basic or Digest Auth)
-    'proxypass'     => "",      # password for proxy authentication (Basic or Digest Auth)
-    'enabled'       => 0,       # 1: only print enabled ciphers
-    'disabled'      => 0,       # 1: only print disabled ciphers
-    'nolocal'       => 0,
-    'usedns'        => 1,       # 1: make DNS reverse lookup
-    'usemx'         => 0,       # 1: make MX-Record DNS lookup
-    'usehttp'       => 1,       # 1: make HTTP request
-    'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
-    'usesni'        => 1,       # 0: do not make connection in SNI mode, 1: use SNI extension (if protocol >= tlsv1), 2: toggle-sni (check without and with SNI)
-    'use_sni_name'  => 0,       # 0: use hostname (default), 1: use sni_name for SNI mode connections
-    'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if usesni=1; temp/tbd: Default is "1" until migration of o-saft.pl to additionally set 'use_sni_name'=1 will be done
-    'version'       => [],      # contains the versions to be checked
-    'versions'      => [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)], #added TLSv13
-    'SSLv2'         => 1,       # 1: check this SSL version
-    'SSLv3'         => 1,       # 1:   "
-    'TLSv1'         => 1,       # 1:   "
-    'TLSv11'        => 1,       # 1:   "
-    'TLSv12'        => 1,       # 1:   "
-    'TLSv13'        => 1,       # 1:   " # added
-    'DTLSv09'       => 0,       # 1:   "TBD: different to o-saft, change it there TBD!!
-    'DTLSv1'        => 0,       # 1:   "TBD: different to o-saft, change it there TBD
-    'DTLSv11'       => 0,       # 1:   "
-    'DTLSv12'       => 0,       # 1:   "
-    'DTLSv13'       => 0,       # 1:   "
-    'nullssl2'      => 0,       # 1: complain if SSLv2 enabled but no ciphers accepted
-    'cipherrange'   => 'rfc',   # the range to be used from 'cipherranges'
-    'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
-                                # Technical (perl) note for definition of these ranges:
-                                # Each range is defined as a string like  key=>"2..5, c..f"
-                                # instead of an array like  key=>[2..5, c..f]  which would
-                                # result in  key=>[2 3 4 5 c d e f].
-                                # This expansion of the range is done at compile time  and
-                                # so will consume a huge amount of memory at runtime.
-                                # Using a string instead of the expanded array reduces the
-                                # memory footprint,  but requires use of  eval()  when the
-                                # range is needed:  eval($cfg{cipherranges}->{rfc})
-                                # Each string must be syntax for perl's range definition.
-        'yeast'     => "",      # internal list, computed later ...
-                                # push(@all, @{$_}[0]) foreach (values %cipher_names);
-        'rfc'       =>          # constants for ciphers defined in various RFCs
-                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-                       ",
-        'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
-                       "0x03000100 .. 0x0300013F, 0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                        0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-                       ",
-        'long'      =>          # more lazy list of constants for cipher
-                       "0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300FFFF,
-                       ",
-        'full'      =>          # full range of constants for cipher
-                       "0x03000000 .. 0x0300FFFF,
-                       ",
-        'SSLv2'     =>          # constants for ciphers according RFC for SSLv2
-                       "0x02010080,   0x02020080, 0x02030080, 0x02040080, 0x02050080,
-                        0x02060040,   0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,             # obsolete SSLv2 Ciphers
-                        0x03000000 .. 0x0300002C, 0x030000FF,             # old SSLv3 Cuiphers
-                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS Ciphers
-                       ",
-        'SSLv2_long'=>          # more lazy list of constants for ciphers for SSLv2
-                       "0x02010080,   0x02020080, 0x02030080, 0x02040080, 0x02050080,
-                        0x02060040,   0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,             # obsolete SSLv2 Ciphers
-                        0x03000000 .. 0x0300002F, 0x030000FF,             # old SSLv3 Cuiphers 
-                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS Ciphers
-                       ",
-    }, # cipherranges
-
-    'out_header'       => 0,    # print header lines in output
-    'mx_domains'       => [],   # list of mx-domains:port to be processed
-    'hosts'            => [],   # list of hosts:port to be processed
-    'host'             => "",   # currently scanned host
-    'ip'               => "",   # currently scanned host's IP
-    'IP'               => "",   # currently scanned host's IP (human readable, doted octed)
-    'rhost'            => "",   # currently scanned host's reverse resolved name
-    'DNS'              => "",   # currently scanned host's other IPs and names (DNS aliases)
-    'port'             => 443,  # port for currently used connections
-    'timeout'          => 2,    # default timeout in seconds for connections
-                                # NOTE that some servers do not connect SSL within this time
-                                #      this may result in ciphers marked as  "not supported"
-                                #      it's recommended to set timeout to 3 or higher, which
-                                #      results in a performance bottleneck, obviously
-    'slowServerDelay'  => 0,    # time to wait in seconds after a connection via proxy or before starting the STARTTLS sequence
-    'starttlsDelay'    => 0,    # STARTTLS: time to wait in seconds (to slow down the requests)
-    'starttlsPhaseArray' => [], # STARTTLS: Array for CUSTOMized starttls sequences including error handling)
-    #} +---------+----------------------+-------------------------
-    'sslhello' => {    # configurations for TCP SSL protocol
-        'timeout'      => 2,    # timeout to receive ssl-answer
-        'retry'        => 2,    # number of retry when timeout
-        'maxciphers'   => 64,   # number of ciphers sent in SSL3/TLS Client-Hello
-        'usereneg'     => 0,    # 0: do not send reneg_info Extension
-        'useecc'       => 1,    # 1: use supported elliptic curves
-        'useecpoint'   => 1,    # 1: use ec_point_formats extension
-        'double_reneg' => 0,    # 0: do not send reneg_info Extension if the cipher_spec already includes SCSV (be polite according RFC5746)
-                                #    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" {0x00, 0xFF}
-        'noDataEqNoCipher'=> 1, # 1: no Data is Equal to no (supported) Cipher in ServerHellos
-    },
-    'legacy'        => "compact", # FIXME: simple
-    'legacys'       => [qw(cnark sslaudit sslcipher ssldiagnos sslscan
-                        ssltest ssltest-g sslyze testsslserver tchsslcheck
-                        simple full compact quick)],
-    'showhost'      => 0,       # 1: prefix printed line with hostname
-   #------------------+---------+----------------------------------------------
-    'openssl_option_map' => {   # map our internal option to openssl option
-        'SSLv2'     => "-ssl2",
-        'SSLv3'     => "-ssl3",
-        'TLSv1'     => "-tls1",
-        'TLSv11'    => "-tls1_1",
-        'TLSv12'    => "-tls1_2",
-        'TLSv13'    => "-tls1_3",
-        'DTLSv1'    => "-dtls1",
-        'DTLSv11'   => "-dtls1_1",
-        'DTLSv12'   => "-dtls1_2",
-        'DTLSv13'   => "-dtls1_3",
-     },
-    'openssl_version_map' => {  # map our internal option to openssl version (hex value)
-        'SSLv2'     => 0x0002,
-        'SSLv3'     => 0x0300,
-        'TLSv1'     => 0x0301,
-        'TLSv11'    => 0x0302,
-        'TLSv12'    => 0x0303,
-        'TLSv13'    => 0x0304,
-        'DTLSv1'    => 0xFEFF,
-        'DTLSv11'   => 0xFEFE,
-        'DTLSv12'   => 0xFEFD,
-        'DTLSv13'   => 0xFEFC,
-        'SCSV'      => 0x03FF,
-     },
-);
-
 my %text = (
     'separator' => ":", # separator character between label and value
 );
@@ -372,8 +224,8 @@ my %text = (
 # -------------------------------------
 while ($#argv >= 0) {
     $arg = shift @argv;
-    push(@dbxarg, $arg) if (($arg !~ m/^--cfg_/) && ($arg =~ m/^[+-]/));
-    push(@dbxcfg, $arg) if  ($arg =~ m/^--cfg_/);    # both aprox. match are sufficient for debugging
+    push(@{$dbx{argv}}, $arg) if (($arg !~ m/^--cfg_/) && ($arg =~ m/^[+-]/));
+    push(@{$dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg_/);    # both aprox. match are sufficient for debugging
     if ($arg !~ /(?:[+]|--)(?:cmd|host|port|exe|lib|cipher|format|legacy|timeout|url)=/) {
         $arg =~ s/=+$//;                    # remove trailing = (for CGI mode)
     }
@@ -411,8 +263,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--starttls$/i)                        { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}='SMTP'; next; }  # starttls, starttlsType=SMTP(=0)
     if ($arg =~ /^--starttls=(\w+)$/i)                  { $cfg{'starttls'}  = 1; $cfg{'starttlsType'}=uc($1); next;} # starttls, starttlsType=Typ (EXPERIMENTAL!!) ##Early Alpha!! 2xIMAP to test!
                                                         # 9 Types defined: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP, CUSTOM
-    if ($arg =~ /^--starttls[_-]?phase(\d)=(.+)$/i){ $cfg{'starttlsPhaseArray'}[$1] = $2 if (($1 >0) && ($1<=5)); next; } # starttl, CUSTOM starttls-sequence 
-    if ($arg =~ /^--starttls[_-]?err(?:or)?(\d)=(.+)$/i){ $cfg{'starttlsPhaseArray'}[($1+5)] = $2 if (($1 >0) && ($1<=3)); next; } # starttls, error-handling for CUSTOMized starttls
+    if ($arg =~ /^--starttls[_-]?phase(\d)=(.+)$/i){ $cfg{'starttls_phase'}[$1] = $2 if (($1 >0) && ($1<=5)); next; } # starttl, CUSTOM starttls-sequence 
+    if ($arg =~ /^--starttls[_-]?err(?:or)?(\d)=(.+)$/i){ $cfg{'starttls_error'}[($1)] = $2 if (($1 >0) && ($1<=3)); next; } # starttls, error-handling for CUSTOMized starttls
     if ($arg =~ /^--starttls[_-]?delay=(\d+)$/i)        {$cfg{'starttlsDelay'}=$1; next;}
     # option
     if ($arg =~ /^--sni$/i)                             { $cfg{'usesni'}    = 1; next; }
@@ -490,12 +342,12 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ssl[_-]?double[_-]?reneg$/i)        { $cfg{'sslhello'}->{'double_reneg'}     = 1; next; }
     if ($arg =~ /^--no[_-]?ssl[_-]?doublereneg$/i)      { $cfg{'sslhello'}->{'double_reneg'}     = 0; next; } # alias ...
     if ($arg =~ /^--ssl[_-]?no[_-]?doublereneg$/i)      { $cfg{'sslhello'}->{'double_reneg'}     = 0; next; }
-    if ($arg =~ /^--no[_-]?nodata(?:eq)?nocipher$/i)    { $cfg{'sslhello'}->{'noDataEqNoCipher'} = 0; next; } # alias ...
-    if ($arg =~ /^--no[_-]?ssl[_-]?nodata(?:eq)?nocipher$/i){ $cfg{'sslhello'}->{'noDataEqNoCipher'} = 0; next; }
-    if ($arg =~ /^--ssl[_-]?nodataneqnocipher$/i)       { $cfg{'sslhello'}->{'noDataEqNoCipher'} = 0; next; } # alias ...
-    if ($arg =~ /^--nodataneqnocipher$/i)               { $cfg{'sslhello'}->{'noDataEqNoCipher'} = 0; next; } # alias
-    if ($arg =~ /^--ssl[_-]?nodata(?:eq)?nocipher$/i)   { $cfg{'sslhello'}->{'noDataEqNoCipher'} = 1; next; }
-    if ($arg =~ /^--nodata(?:eq)?nocipher$/i)           { $cfg{'sslhello'}->{'noDataEqNoCipher'} = 1; next; } # alias
+    if ($arg =~ /^--no[_-]?nodata(?:eq)?nocipher$/i)    { $cfg{'sslhello'}->{'nodatanocipher'}   = 0; next; } # alias ...
+    if ($arg =~ /^--no[_-]?ssl[_-]?nodata(?:eq)?nocipher$/i){ $cfg{'sslhello'}->{'nodatanocipher'} = 0; next; }
+    if ($arg =~ /^--ssl[_-]?nodataneqnocipher$/i)       { $cfg{'sslhello'}->{'nodatanocipher'}   = 0; next; } # alias ...
+    if ($arg =~ /^--nodataneqnocipher$/i)               { $cfg{'sslhello'}->{'nodatanocipher'}   = 0; next; } # alias
+    if ($arg =~ /^--ssl[_-]?nodata(?:eq)?nocipher$/i)   { $cfg{'sslhello'}->{'nodatanocipher'}   = 1; next; }
+    if ($arg =~ /^--nodata(?:eq)?nocipher$/i)           { $cfg{'sslhello'}->{'nodatanocipher'}   = 1; next; } # alias
     if ($arg =~ /^--?experimental$/i)                   { $cfg{'experimental'}                   = 1; next; }
     #} +---------+----------------------+-------------------------
 
@@ -517,12 +369,16 @@ while ($#argv >= 0) {
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
     $Net::SSLhello::starttls        = $cfg{'starttls'};
     $Net::SSLhello::starttlsType    = $cfg{'starttlsType'}; 
-    @Net::SSLhello::starttlsPhaseArray  = @{$cfg{'starttlsPhaseArray'}};
+    @Net::SSLhello::starttlsPhaseArray  = @{$cfg{'starttls_phase'}};
+    # add 'starttls_error' array elements according Net::SSLhello's internal
+    # representation
+    push(@Net::SSLhello::starttlsPhaseArray, @{$cfg{'starttls_error'}}[1..3]);
     if ($cfg{'trace'} > 3) {
-        for my $i (1..8) {
-            _trace ("  \$cfg{'starttlsPhaseArray'}[$i]=$cfg{'starttlsPhaseArray'}[$i]\n") if ( ($i <=5) && (defined($cfg{'starttlsPhaseArray'}[$i])) );
-            _trace ("  \$cfg{'starttlsErrorArray'}[".($i-5)."]=$cfg{'starttlsPhaseArray'}[$i] =  starttlsPhaseArray[$i] (internally)\n") if ( ($i >5) && (defined($cfg{'starttlsPhaseArray'}[$i])) );
-            _trace ("  -> starttlsPhaseArray[$i]=$Net::SSLhello::starttlsPhaseArray[$i]\n")  if (defined($Net::SSLhello::starttlsPhaseArray[$i]));
+        for my $i (1..5) {
+            _trace ("  \$cfg{'starttls_phase'}[$i]=$cfg{'starttls_phase'}[$i]\n") if (defined($cfg{'starttls_phase'}[$i]));
+        }
+        for my $i (1..3) {
+            _trace ("  \$cfg{'starttls_error'}[$i]=$cfg{'starttls_error'}[$i]\n") if (defined($cfg{'starttls_error'}[$i]));
         }
     }
     $Net::SSLhello::starttlsDelay       = $cfg{'starttlsDelay'}; #reset to original value for each host (same as some lines later to prevent 'used only once' warning) 
@@ -538,7 +394,7 @@ while ($#argv >= 0) {
     $Net::SSLhello::max_ciphers     = $cfg{'sslhello'}->{'maxciphers'};
     $Net::SSLhello::cipherrange     = $cfg{'cipherrange'};
     $Net::SSLhello::experimental    = $cfg{'experimental'};
-    $Net::SSLhello::noDataEqNoCipher    = $cfg{'sslhello'}->{'noDataEqNoCipher'};
+    $Net::SSLhello::noDataEqNoCipher    = $cfg{'sslhello'}->{'nodatanocipher'};
 }
 
 print "##############################################################################\n";
