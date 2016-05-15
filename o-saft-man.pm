@@ -27,10 +27,11 @@ package main;   # ensure that main:: variables are used
 
 use strict;
 use warnings;
+use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars)
 binmode(STDOUT, ":unix");
 binmode(STDERR, ":unix");
 
-my  $man_SID= "@(#) o-saft-man.pm 1.112 16/05/15 10:53:05";
+my  $man_SID= "@(#) o-saft-man.pm 1.113 16/05/15 16:20:47";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -51,13 +52,13 @@ if (! defined $wer) {                   # still nothing found, try parent
 }
 my  $version= "$man_SID";               # version of myself
     $version= _VERSION() if (defined &_VERSION); # or parent's if available
-my  $skip   = 1;
+my  $jump   = 1;
 my  $egg    = "";
 our @DATA;
 my  $cfg_header = 0;                   # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1 if ((grep{/^--header/} @ARGV)>0);
-my  $fh;
-if (open($fh, '<:encoding(UTF-8)', $wer)) {
+my  $file   = undef;
+if (open($file, '<:encoding(UTF-8)', $wer)) {
     # If this module is used in parent's BEGIN{} section, we don't have any
     # file descriptor, in particular nothing beyond __DATA__. Hence we need
     # to read the file --this one-- manually, and strip off anything before
@@ -68,12 +69,12 @@ if (open($fh, '<:encoding(UTF-8)', $wer)) {
     # &  was choosen because it rarely appears in texts and  is not  a meta
     # character in any of the supported  output formats (text, wiki, html),
     # and also causes no problems inside regex.
-    while (<$fh>) {
-        $skip = 2, next if (/^#begin/);
-        $skip = 0, next if (/^#end/);
-        $skip = 0, next if (/^__DATA__/);
-        $egg .= $_,next if ($skip == 2);
-        next if ($skip == 0);
+    while (<$file>) {
+        $jump = 2, next if (/^#begin/);
+        $jump = 0, next if (/^#end/);
+        $jump = 0, next if (/^__DATA__/);
+        $egg .= $_,next if ($jump == 2);
+        next if ($jump != 0);
         next if (/^#/);                 # remove comments
         next if (/^\s*#.*#$/);          # remove formatting lines
         s/^([A-Z].*)/=head1 $1/;
@@ -111,7 +112,7 @@ if (open($fh, '<:encoding(UTF-8)', $wer)) {
         s# \$0# $parent#g;              # my name
         push(@DATA, $_);
     }
-    close($fh);
+    close($file);
 }
 local $\ = "";
 
@@ -923,8 +924,8 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
 sub man_commands() {
     #? print commands and short description
     # data is extracted from $parents internal data structure
-    local $skip = 1;
-    local $fh   = undef;
+    my $skip = 1;
+    my $fh   = undef;
     _man_dbx("man_commands($parent) ...");
     # first print general commands, manually crafted here
     # TODO needs to be computed, somehow ...
@@ -1006,7 +1007,7 @@ sub man_alias() {
     #
     print "\n";
     _man_head("Alias (regex)", "command or option   # used by ...");
-    local $fh   = undef;
+    my $fh   = undef;
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
             if (m(# alias:)) {
@@ -1295,8 +1296,8 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
     if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description, is not yet public
         # quick&dirty hack, may be improved in future ...
-        local $skip = 1;
-        local $fh   = undef;
+        my $skip = 1;
+        my $fh   = undef;
         if (open($fh, '<:encoding(UTF-8)', $wer)) {
             while (<$fh>) {
                 $skip = 0 if (/^#\s+Program Code/);
