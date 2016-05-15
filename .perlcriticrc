@@ -43,7 +43,7 @@
 #?      contrib/critick.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.5 16/05/15 19:31:34
+#?      @(#) .perlcriticrc 1.6 16/05/15 22:48:03
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -342,7 +342,7 @@ verbose     = 8
 
 
 [Variables::ProhibitPackageVars]
-    add_packages = Net::SSLinfo Net::SSLhello
+    add_packages = Net::SSLinfo Net::SSLhello Net::SSLeay
 
     # Message
 	# Package variable declared or used at line ...
@@ -350,6 +350,7 @@ verbose     = 8
     # CHECK adapted
 	# Add our private modules, this leaves unwanted global variables to
 	# be reported only.
+	# Net::SSLeay is configured using its private variables.
 
 
 [Variables::ProhibitPunctuationVars]
