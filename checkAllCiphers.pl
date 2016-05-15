@@ -172,10 +172,10 @@ EoT
 return;
 } # printhelp
 
-if (! eval {require 'o-saft-dbx.pm';} ) {
-    # o-saft-dbx.pm may not be installed, try to find in program's directory
+if (! eval {require 'o-saft-dbx';} ) {
+    # o-saft-dbx may not be installed, try to find in program's directory
     push(@INC, $mepath);
-    require("o-saft-dbx.pm");
+    require("o-saft-dbx");
 }
 
 if (! eval {require Net::SSLhello;} ) {
@@ -316,11 +316,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^--no[_-]?dns$/i)                      { $cfg{'usedns'}    = 0; next; }
     if ($arg =~ /^--dns$/i)                             { $cfg{'usedns'}    = 1; next; }
     if ($arg =~ /^--no[_-]?(?:dns[_-]?)?mx$/i)          { $cfg{'usemx'}     = 0; next; }
-    if ($arg =~ /^--(?:dns[_-]?)?mx$/i)                 { local $@="";
-                                                          eval {require Net::DNS;};       # this command needs an additional Perl Module
-                                                          unless ($@) { $cfg{'usemx'}= 1; # no error
-                                                                      } else { carp ("$me: Perl Module 'NET::DNS' is not installed, opition '$arg' ignored: $@");
-                                                                      }         next; }
+    if ($arg =~ /^--(?:dns[_-]?)?mx$/i)                 { local $@="";        # this command needs an additional Perl Module
+                                                          eval {
+                                                            require Net::DNS;
+                                                            $cfg{'usemx'}= 1; # no error
+                                                            1;
+                                                          } or do {           # error handling
+                                                            carp ("$me: Perl Module 'NET::DNS' is not installed, opition '$arg' ignored: $@");
+                                                          };                     next; }
     if ($arg =~ /^--enabled$/i)                         { $cfg{'enabled'}   = 1; next; }
     if ($arg =~ /^--disabled$/i)                        { $cfg{'disabled'}  = 1; next; }
     if ($arg =~ /^--printavailable$/i)                  { $cfg{'enabled'}   = 1; next; } # ssldiagnos
