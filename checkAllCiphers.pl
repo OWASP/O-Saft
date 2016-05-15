@@ -172,11 +172,14 @@ EoT
 return;
 } # printhelp
 
-if (! eval {require 'o-saft-dbx';} ) {
+##no critic qw(Modules::RequireBarewordIncludes)
+# Modul name includes a hyphen -> '' and .pm are necessary
+if (! eval {require 'o-saft-dbx.pm';} ) {
     # o-saft-dbx may not be installed, try to find in program's directory
     push(@INC, $mepath);
-    require("o-saft-dbx");
+    require("o-saft-dbx.pm");
 }
+##use critic
 
 if (! eval {require Net::SSLhello;} ) {
     # Net::SSLhello may not be installed, try to find in program's directory
