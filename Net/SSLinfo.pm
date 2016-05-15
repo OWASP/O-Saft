@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.133 16/05/15 22:27:33',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.134 16/05/15 22:35:12',
 };
 
 ######################################################## public documentation #
@@ -336,8 +336,8 @@ follow the rules describend above.
 ############################################################## initialization #
 
 use Exporter qw(import);
+use base qw(Exporter);
 our $VERSION   = SSLINFO_VERSION;
-our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(
         net_sslinfo_done
         test_ssleay
@@ -462,7 +462,6 @@ our $HAVE_XS = eval {
             1;
         } or do {
             require DynaLoader;
-            push @ISA, 'DynaLoader';
             bootstrap Net::SSLinfo $VERSION;
             1;
         };
