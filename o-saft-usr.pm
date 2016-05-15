@@ -4,6 +4,10 @@
 #!# Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
+## no critic qw(Documentation::RequirePodSections)
+#  our POD below is fine, perlcritic (severity 2) is too pedantic here.
+
+
 =pod
 
 =head1 NAME
@@ -92,7 +96,7 @@ Right before program exit.
 
 =head2 Variables which may be used herein
 
-They must be defined as `our' in L<o-saft.pl>:
+They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 
 =over 4
 
@@ -108,7 +112,7 @@ They must be defined as `our' in L<o-saft.pl>:
 
 =back
 
-Functions being used in L<o-saft.pl> shoudl be defined as empty stub there.
+Functions being used in L<o-saft.pl|o-saft.pl> shoudl be defined as empty stub there.
 For example:
 
     sub usr_pre_args() {}
@@ -122,9 +126,9 @@ Call:  usr_version()
 use strict;
 use warnings;
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.19 16/05/11 00:20:15";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.20 16/05/15 11:02:13";
 
-no warnings 'redefine';
+no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
    # warnings pragma is local to this file!
 package main;   # ensure that main:: variables are used
