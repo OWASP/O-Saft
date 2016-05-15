@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #?
 #? NAME
 #?      $0 - postprocess to colourize output of o-saft.pl
@@ -26,18 +26,26 @@
 #       Feel free to write your own code. You just need to add/modify the code
 #       following "main" below.
 #
-#       How it workd, see function  testeme  below calling with  $0 --test
+#       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.4 16/04/06 19:58:34
+#?      @(#) bunt.pl 1.6 16/05/15 06:39:13
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
 #?
 # -----------------------------------------------------------------------------
 
-$::ich   = $0; $::ich =~ s#.*[/\\]##;
-sub _warn($) { print STDERR "[$::ich]: **", @_, "\n"; }
+use strict;
+use warnings;
+use charnames qw( :full );
+
+our ($VERSION) = -1;   # dummy assignment to keep `perlcritic -s ...' silent
+
+## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers)
+
+my $ich   = $0; $ich =~ s#.*[/\\]##;
+sub _warn(@) { my @args = @_; print STDERR "[$ich]: **", @args, "\n"; return; }
 
 if (defined $ENV{TERM}) {
 	_warn("WARNING: 'TERM=screen'; take care ...") if ($ENV{TERM} eq 'screen');
@@ -54,7 +62,7 @@ my $_LEN    = 80;       # default: 80 characters per line; -1 for unsupported te
 my $cols = $_LEN;
 
 # check terminal width
-if (defined $ENV{ComSpec}) {    # supported system do not have it, usually ...
+if (defined $ENV{ComSpec}) {    # supported systems do not have it, usually ..
 	# Note that  cmd.exe and command.exe  do not support colours, at least
 	# not per word or line. There exists some alternates like  ansicmd.exe
 	# or  cecho.exe,  which are not supported herein (not tested if loaded
@@ -78,7 +86,13 @@ if (defined $ENV{ComSpec}) {    # supported system do not have it, usually ...
 	if (eval { require Win32::Console; }) {
 		($cols, $rows) = Win32::Console::Size();
 	} else {
-	  if (eval { require Term::Size; }) {
+	  if (eval {require Term::Size;}) {
+                ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+                #  NOTE: we need "no strict" here to avoid perl warning:
+		#       Bareword "Term::Size::chars" not allowed ...
+		#  Term::Size::chars is only called when the module was successfully loaded.
+		no strict 'subs';
+                ## use critic
 		($cols, $rows) = Term::Size::chars *STDOUT{IO};
 		#($x, $y) = Term::Size::pixels;
 	  } # else ... gave up; feel free to try harder on dumb system
@@ -97,7 +111,7 @@ if (defined $ENV{COLUMNS}) {
 }
 $_LEN = $cols;
 
-%::map = (
+my %map = (
 	# colours  # escape sequence to be used
 	#----------+----------------------------------------
 	'black'  => '0;30m',    'dark_gray'    => '1;30m',
@@ -122,16 +136,16 @@ sub colour ($$$) {
 	$bg = $map{$bg};
 	$fg = $map{$fg};
 	$bg =~ s#;3#;4#    if ($bg ne "");
-	$bg = "\033[${bg}" if ($bg ne "");
-	$fg = "\033[${fg}" if ($fg ne "");
-	return "$fg$bg$txt\033[0m";
+	$bg = "\N{ESCAPE}[${bg}" if ($bg ne "");
+	$fg = "\N{ESCAPE}[${fg}" if ($fg ne "");
+	return "$fg$bg$txt\N{ESCAPE}[0m";
 }
-sub colour_reset () { print colour('off', '', ''); }
+sub colour_reset () { print colour('off', '', ''); return; }
 
 sub deco ($$) {
 	my ($mm, $txt) = @_;
 	return $txt if (!defined $ENV{TERM});
-	return "\033[$mm$txt\033[0m";
+	return "\N{ESCAPE}[$mm$txt\N{ESCAPE}[0m";
 }
 sub bold ($)      { return deco('1m', shift); }
 sub dim ($)       { return deco('2m', shift); }
@@ -174,67 +188,72 @@ sub pad_right ($) {
 	return "$txt";
 }
 
-sub testeme () {
+sub testme () {
 	my ($txt, $and, $t2, $t3);
-	$txt = pad_right "  line padded"; print reversebg "$txt\n";
-	$and = reversebg "and";
-	print red     " line  red\n";
-	print green   " line  green\n";
-	print brown   " line  brown\n";
-	print blue    " line  blue\n";
-	print purple  " line  purple\n";
-	print cyan    " line  cyan\n";
-	print gray    " line  gray\n";
-	print black   " line  black\n";
-	print white   " line  white\n";
-	print yellow  " line  yellow\n";
-	print underline " line  underlined\n";
-	print strike  " line  striked\n";
-	print bold    " line  bold\n";
-	print italic  " line  italic\n";
-	print something " line  something\n";
-		$txt = red    "red";
-		$t2  = green  "green";
-		$t3  = underline "underlined";
+	$txt = pad_right("  line padded"); print reversebg("$txt\n");
+	$and = reversebg("and");
+	print red(     " line  red\n");
+	print green(   " line  green\n");
+	print brown(   " line  brown\n");
+	print blue(    " line  blue\n");
+	print purple(  " line  purple\n");
+	print cyan(    " line  cyan\n");
+	print gray(    " line  gray\n");
+	print black(   " line  black\n");
+	print white(   " line  white\n");
+	print yellow(  " line  yellow\n");
+	print underline(" line  underlined\n");
+	print strike(  " line  striked\n");
+	print bold(    " line  bold\n");
+	print italic(  " line  italic\n");
+	print something( " line  something\n");
+		$txt = red(   "red");
+		$t2  = green( "green");
+		$t3  = underline("underlined");
 	print " line with $txt word\n";
 	print " line with $txt $and $t2 $and $t3 word\n";
-		$txt = bold   "bold";
-		$t2  = dim    "dimmed";
-		$t3  = strike "striked";
+		$txt = bold(  "bold");
+		$t2  = dim(   "dimmed");
+		$t3  = strike("striked");
 	print " line with $txt $and $t2 $and $t3 word\n";
-		$txt = bold   "striked bold green";
-		$txt = strike "$txt";
-		$txt = green  "$txt";
+		$txt = bold(  "striked bold green");
+		$txt = strike("$txt");
+		$txt = green( "$txt");
 	print " line with $txt word\n";
-	print reversebg " line reverse\n";
+	print reversebg(" line reverse\n");
 	print italic_label "label with italic text:\t\tnormal text \n";
-	background 'cyan';		# FIXME: does not yet work proper
+	background('cyan');                    # FIXME: does not yet work proper
 	print colour('black', 'cyan', " line  black\n");
 	print colour('green', 'cyan', " line  green\n");
 	print " line\n";
-	background 'off';
-	print boldred " line bold red\n";
+	background('off');
+	print boldred(" line bold red\n");
 	colour_reset;    # no reset background completely;
-	print green "done\n";
+	print green("done\n");
+	return;
 }
 
 # --------------------------------------------- options
 while ( $#ARGV >= 0 ) {
 	my $arg = shift;
+	my $fh;
+	my $dumm;
 	if ($arg =~ m/--?h(elp)/) {
-		open(FID, $0) || die "[$0]: **ERROR: cannot read myself.\n";
-		grep { s/\$0/$::ich/g; /#\?(.*)$/ && print "$1\n"; } (<FID>);
+		open($fh, '<:encoding(UTF-8)', $0) || die "[$0]: **ERROR: cannot read myself.\n";
+		$dumm = grep { my $l; $l = $_; $l =~ s/\$0/$ich/g; /#\?(.*)$/ && print "$1\n"; } (<$fh>);
+		close($fh);
 		exit 0;
 	}
 	if ($arg =~ m/--version/) {
-		open(FID, $0) || die "$0: WARNING: cannot read myself.\n";
-		grep { /^#\?\s*@\(#\)/ && s/#\?// && print } (<FID>);
+		open($fh, '<:encoding(UTF-8)', $0) || die "$0: WARNING: cannot read myself.\n";
+		$dumm = grep { my $l; $l = $_; $l =~ /^#\?\s*@\(#\)/ && $l =~ s/#\?// && print } (<$fh>);
+		close($fh);
 		exit 0;
 	}
 	if ($arg =~ m/--line/)   { $mode='line'; $italic=0; }
 	if ($arg =~ m/--word/)   { $mode='word'; }
 	if ($arg =~ m/--italic/) { $mode='word'; $italic=1; }
-	if ($arg =~ m/--test/)   { testeme; exit 0; }
+	if ($arg =~ m/--test/)   { testme; exit 0; }
 	if ($arg =~ m/--(\d+)/)  {
 		my $num = $1;
 		_warn("WARNING: given width '$num' larger than computed size '$_LEN'") if ($num > $_LEN);
@@ -248,64 +267,69 @@ while ( $#ARGV >= 0 ) {
 #	o-saft.pl --help=ourstr
 
 sub bgcyan ($) {
-	background "cyan";
-	print gray shift;
+	background("cyan");
+	print gray(shift);
 	colour_reset;    # FIXME: does not yet work proper
+	return;
 }
 
+## no critic qw(InputOutput::ProhibitInteractiveTest)
+#  it's the authors opinion that the perlish  -t  is better (human) readable
 if (-t STDIN) {
 	_warn("ERROR text on STDIN expected; exit");
 	exit 2;
 }
+## use critic
 
-while ($line = <STDIN>) {
+my $txt = "";
+while (my $line = <STDIN>) {
 	$_ = $line; # = $_;
 	if ("$line" =~ m/^\s*$/) { print "\n"; next; } # speed!
 	#{ all modes
-	  /^\#\[/	&& last;
-	  /^##yeast*CMD:/ && do {     bgcyan  "$line";   next; };
-	  /^\#/		&& do { print blue    "$line";   next; };
-	  /^\*\*HINT/	&& do { print purple  "$line";   next; };
-	  /^\*\*WARN/	&& do { print boldpurple "$line";next; };
-	  /^\*\*ERROR/	&& do { print boldred "$line";   next; };
+	  /^\#\[/       && last;
+	  /^##yeast*CMD:/ && do {     bgcyan( "$line");   next; };
+	  /^\#/         && do { print blue(   "$line");   next; };
+	  /^\*\*HINT/   && do { print purple( "$line");   next; };
+	  /^\*\*WARN/   && do { print boldpurple("$line");next; };
+	  /^\*\*ERROR/  && do { print boldred("$line");   next; };
 	  /^=+/ && do {
 		chomp $line;
-		$txt = pad_right "$line"; print reversebg "$txt\n";
+		$txt = pad_right("$line"); print reversebg("$txt\n");
 		next;
 		};
-	  /^Use of .*perl/ && do { print purple "$line"; next; };
+	  /^Use of .*perl/      && do { print purple("$line"); next; };
 	#} all modes
 
 	if ($mode eq "line") {
-		/<<[^>]*>>/	&& do {	print cyan  "$line"; next; };
-		/yes.*WEAK/i	&& do {	print red   "$line"; next; };
-		/yes.*LOW/i	&& do {	print red   "$line"; next; };
-		/yes.*MEDIU/i	&& do {	print brown "$line"; next; };
-		/yes.*HIGH/i	&& do {	print green "$line"; next; };
-		/yes$/	&& do {	print green "$line"; next; };
-		/no$/		&& do {	print brown "$line"; next; };
-		/no .*/	&& do {	print red   "$line"; next; };
+		/<<[^>]*>>/     && do { print cyan( "$line"); next; };
+		/yes.*WEAK/i    && do { print red(  "$line"); next; };
+		/yes.*LOW/i     && do { print red(  "$line"); next; };
+		/yes.*MEDIU/i   && do { print brown("$line"); next; };
+		/yes.*HIGH/i    && do { print green("$line"); next; };
+		/yes$/          && do { print green("$line"); next; };
+		/no$/           && do { print brown("$line"); next; };
+		/no .*/         && do { print red(  "$line"); next; };
 		print "$line"; next;
 	}
 
 	if ($mode eq "word") {
-		/yes\s*(LOW|WEAK|MEDIUM|HIGH)$/i && do {
-			s/(LOW)$/    red   $1;/ie;
-			s/(WEAK)$/   red   $1;/ie;
-			s/(MEDIUM)$/ brown $1;/ie;
-			s/(HIGH)$/   green $1;/ie;
+		/yes\s*(?:LOW|WEAK|MEDIUM|HIGH)$/i && do {
+			s/(LOW)$/    red(  $1);/ie;
+			s/(WEAK)$/   red(  $1);/ie;
+			s/(MEDIUM)$/ brown($1);/ie;
+			s/(HIGH)$/   green($1);/ie;
 			print "$_";
 			next;
 		};
 		s/^([^:]+:)/italic $1; /e if ($italic == 1);
-		#/yes\s*$/	&& do { s/(yes)\s*$/   green  $1/ie; print "$_\n"; next; };
-		s/(yes\s*$)/     green  $1/ie && print && next;
-		s/(no\s*$)/      brown  $1/ie && print && next;
-		s/(no\s+\(.*\))/ yellow $1/ie && print && next;
-		s/(#\[[^\]]*])/  cyan   $1/ie && print && next;
+		#/yes\s*$/       && do { s/(yes)\s*$/   green  $1/ie; print "$_\n"; next; };
+		s/(yes\s*$)/     green( $1);/ie && print && next;
+		s/(no\s*$)/      brown( $1);/ie && print && next;
+		s/(no\s+\(.*\))/ yellow($1);/ie && print && next;
+		s/(#\[[^\]]*])/  cyan(  $1);/ie && print && next;
 		print;
         }
 
 }
 
-exit 0
+exit 0;
