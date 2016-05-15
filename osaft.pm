@@ -10,7 +10,6 @@ package osaft;
 
 use strict;
 use warnings;
-no warnings qw(once);
 
 use constant {
     OSAFT_VERSION   => '16.05.10',  # offizial verion number of tis file
@@ -22,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.24 16/05/11 00:14:27',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.25 16/05/15 07:44:55',
 
 };
 
@@ -30,6 +29,9 @@ use constant {
 #_____________________________________________________ public documentation __|
 
 # more public documentation, see start of methods section, and at end of file.
+
+## no critic qw(Documentation::RequirePodSections)
+#  our POD below is fine, perlcritic (severity 2) is too pedantic here.
 
 =pod
 
@@ -74,6 +76,8 @@ and variables:
 
 None of the constants, variables, or methods should be defined in the caller,
 otherwise the calling script must handle warnings properly.
+
+=head1 OPTIONS
 
 =head1 DESCRIPTION
 
@@ -157,15 +161,21 @@ Following functions (methods) must be defined in the calling program:
 
 =cut
 
-## no critic qw(Modules::ProhibitAutomaticExportation)
+## no critic qw(Modules::ProhibitAutomaticExportation Variables::ProhibitPackageVars)
 # FIXME: perlcritic complains to use @EXPORT_OK instead of @EXPORT, but that
 #        is not possible as long as constants are exported;
 #        should be changed when "use constant" is replaced by "use Readonly"
+# FIXME: perlcritic complains to not declare (global) package variables, but
+#        the purpose of this module is to do that. This may change in future.
+
+## no critic qw(ValuesAndExpressions::ProhibitMagicNumbers ValuesAndExpressions::RequireNumberSeparators)
+# TODO:  not sure if we want to follow this pedantic critism (severity 2).
 
 # See NOTES below also.
 
 use Exporter qw(import);
-our @ISA        = qw(Exporter);
+use base qw(Exporter);
+#our @ISA        = qw(Exporter);
 our $VERSION    = OSAFT_VERSION;
 our @EXPORT     = qw(
                 STR_ERROR
@@ -1638,7 +1648,7 @@ sub get_cipher_name($) {
 
 =head2 get_openssl_version($cmd)
 
-Call external $cmd (which is a full path for L<openssl>, usually) executable
+Call external $cmd (which is a full path for L<openssl (1)>, usually) executable
 to retrive its version. Returns version string.
 =cut
 
@@ -1695,7 +1705,7 @@ sub get_dh_paramter($$) {
     $data =~ s/\s+/ /gi;          # squeeze multible spaces
     $data =~ s/[^0-9a-f_]//gi;    # remove all none hex characters and non seperator
     my ($lenStr, $len) = 0;
-    ($lenStr, $data) = split('_', $data);   # 2 strings with Hex Octetts!
+    ($lenStr, $data) = split(/_/, $data);   # 2 strings with Hex Octetts!
     _trace3("get_dh_paramter: #{ DHE RAW data): len: $lenStr\n$data\n#}\n");
     $len = hex($lenStr);
     my $message = pack("H*", $data);
@@ -1767,9 +1777,11 @@ sub _cfg_init() {
 Print hint for specified command.
 =cut
 
-sub osaft_hint($$) {
+sub osaft_hint($) {
     #? Print hint for specified command.
     my $cmd = shift;
+    print STR_HINT, $cmd;
+    return;
 } # osaft_hint
 
 sub osaft_sleep($) {
