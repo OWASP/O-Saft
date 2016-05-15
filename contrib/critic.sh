@@ -11,6 +11,7 @@
 #?      --n     - nix machen, nur zeigen
 #?      --      - alle weiteren Argumenta an perlcritic übergeben
 #?      --v     - alias für:  --verbose 10
+#?      --doc   - wird direkt an perlcritic durchgereicht
 #?      <mode>
 #?          only     - perlcritic mit  --verbose 10 --single-policy  aufrufen
 #?        --only     - Alias für  only
@@ -22,6 +23,7 @@
 #?   Nützliche Optionen von perlcritic
 #?      -5 | -4 | -3 | -2 | -1
 #?                   - Severity-Level der Prüfung
+#?      --doc PATTERN- Beschreibung für PATTERN ausgeben
 #?      --noprofile  - .perlcriticrc ignorieren
 #?      --force      - ignoriere "## no critic" Annotationen im Source-Code
 #?      --nocolor    - Ausgabe nicht farblich markieren
@@ -56,12 +58,15 @@
 #?      * nur deaktivierte Policy prüfen mit ausführlicher Erklärung:
 #?          $0 datei  --disabled
 #?
+#?      * nur Beschreibung für PATTERN ausgeben
+#?          $0 --doc ValuesAndExpressions::RequireNumberSeparators
+#?
 #? EINSCHRÄNKUNGEN
 #?      Wenn es eine Datei gibt, die genauso heisst, wie eine Policy, dann wird
 #?      dieses Argument immer als Dateiname und nie als Policy-Name benutzt.
 #?
 #? VERSION
-#?      @(#) critic.sh 1.2 16/04/09 20:35:16
+#?      @(#) critic.sh 1.3 16/05/15 10:19:26
 #?
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -89,6 +94,7 @@ while [ $# -gt 0 ]; do
 		mode="--single-policy"
 		pols="`perl -lne '/^\[-/ && do {$_=~s/\[-([^\]]*).*/$1/;$\=q( );print}' .perlcriticrc`"
 		;;
+	 '--doc')      opts="$arg"; mode=""; break; ;;
 	 '--')  break; ;;               # alle weiteren Argumnta für perlcritic
 	 *)     # es kann kommen:
 		#    * Dateiname
