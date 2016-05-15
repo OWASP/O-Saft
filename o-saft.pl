@@ -37,10 +37,16 @@
 #       included as needed. This keeps away noisy messages and allows to be run
 #       and print some information even if installed incompletely.
 
+## no critic qw(Variables::RequireLocalizedPunctuationVars)
+#  NOTE: perlcritic seems to be buggy as it does not honor the allow option for
+#        this policy (see our .perlcriticrc), it even doesn't honor the setting
+#        here, hence it's disabled at each line using  $ENV{} = ...
+
+
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.479 16/05/15 07:23:55",
+    SID         => "@(#) yeast.pl 1.480 16/05/15 12:22:44",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5597,8 +5603,8 @@ if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs_cipherall') if (!_is_do('pfs_ciph
 # resort for all configurations.
 # As we do not use  req  or  ca  sub commands (11/2015),  this setting is
 # just to avoid noicy warnings from openssl.
-$ENV{'OPENSSL_CONF'} = $cfg{'openssl_cnf'}  if (defined $cfg{'openssl_cnf'});
-$ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'});
+$ENV{'OPENSSL_CONF'} = $cfg{'openssl_cnf'}  if (defined $cfg{'openssl_cnf'});  ## no critic qw(Variables::RequireLocalizedPunctuationVars
+$ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); ## no critic qw(Variables::RequireLocalizedPunctuationVars
 
 _yeast_args();
 _vprintme();
@@ -5625,9 +5631,9 @@ if ($cfg{'exec'} == 0) {
         my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
         my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
         local $\ = "\n";
-        $ENV{PATH} = join($chr, @{$cmd{'path'}}, $ENV{PATH})  if ($#{$cmd{'path'}} >= 0);
-        $ENV{PATH} = join($chr, @{$cmd{'libs'}}, $ENV{PATH})  if ($#{$cmd{'libs'}} >= 0);
-        $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0);
+        $ENV{PATH} = join($chr, @{$cmd{'path'}}, $ENV{PATH})  if ($#{$cmd{'path'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+        $ENV{PATH} = join($chr, @{$cmd{'libs'}}, $ENV{PATH})  if ($#{$cmd{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+        $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars
         $ENV{$cmd{envlibvar}} .= $chr . $lib if ($lib);
         if ($verbose > 0) {
             _yeast("exec: envlibvar=$cmd{envlibvar}");
