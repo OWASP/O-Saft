@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.480 16/05/15 12:22:44",
+    SID         => "@(#) yeast.pl 1.481 16/05/15 13:10:12",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -395,7 +395,7 @@ usr_pre_init();
 #     references to $arr->{'val') are most often simplified as $arr->{val)
 #     same applies to 'txt', 'typ' and 'score'
 
-my ($key,$sec,$ssl);# some temporary variables used in main
+# some temporary variables used in main
 my $host    = "";   # the host currently processed in main
 my $port    = "";   # the port currently used in main
 my $legacy  = "";   # the legacy mode used in main
@@ -1115,12 +1115,12 @@ our %cmd = (
 
 #| construct list for special commands: 'cmd-*'
 #| -------------------------------------
-my $old = "";
-my $rex = join("|", @{$cfg{'versions'}});   # these are data only, not commands
+my $old   = "";
+my $regex = join("|", @{$cfg{'versions'}}); # these are data only, not commands
 foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
     next if ($key eq $old); # unique
-    $old = $key;
-    push(@{$cfg{'commands'}},  $key) if ($key !~ m/^(?:$rex)/);
+    $old  = $key;
+    push(@{$cfg{'commands'}},  $key) if ($key !~ m/^(?:$regex)/);
     push(@{$cfg{'cmd-hsts'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-hsts'}/i);
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
@@ -1706,7 +1706,7 @@ sub _cfg_set($$)       {
         # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
         #       is a flse positive because perlcritic seems not to understand
         #       the logic of "open() && do{}; warn();"
-        open($fh, '<:encoding(UTF-8)', $arg) && do {
+        if (open($fh, '<:encoding(UTF-8)', $arg)) {
             push(@dbxfile, $arg);
             _print_read("$arg", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
             while ($line = <$fh>) {
@@ -2135,7 +2135,8 @@ sub _readframe($) {
     my @msg;
     if ( $type == 22 ) {
         while ( length($buf)>=4 ) {
-            my ($ht,$len) = unpack("Ca3",substr($buf,0,4,''));
+            my $ht;
+            ($ht,$len) = unpack("Ca3",substr($buf,0,4,''));
             $len = unpack("N","\0$len");
             push @msg,[ $ht,substr($buf,0,$len,'') ];
             _v_print sprintf("...ssl received type=%d ver=0x%x ht=0x%x size=%d", $type,$ver,$ht,length($msg[-1][1]));
@@ -2322,15 +2323,15 @@ sub _isccs($$$) {
 sub _getwilds($$) {
     # compute usage of wildcard in CN and subjectAltname
     my ($host, $port) = @_;
-    my ($value, $regex);
+    my ($value, $rex);
     $value = $data{'cn'}->{val}($host);
     $checks{'wildcard'}->{val} = "<<CN:>>$value" if ($value =~ m/[*]/);
     foreach my $value (split(" ", $data{'altname'}->{val}($host))) {
             $value =~ s/.*://;      # strip prefix
         if ($value =~ m/\*/) {
             $checks{'wildcard'}->{val} .= " " . $value;
-            ($regex = $value) =~ s/[*]/.*/;   # make regex (miss dots is ok)
-            $checks{'wildhost'}->{val}  = $value if ($host =~ m/$regex/);
+            ($rex = $value) =~ s/[*]/.*/;   # make regex (miss dots is ok)
+            $checks{'wildhost'}->{val}  = $value if ($host =~ m/$rex/);
             $checks{'cnt_wildcard'}->{val}++;
         }
         $checks{'cnt_altname'}->{val}++;
@@ -2711,18 +2712,19 @@ sub check_url($$) {
     my $src = 'Net::SSLeay::get_http()';
     # got an URI, extract host, port and URL
        $uri =~ m#^\s*(?:https?:)?//([^/]+)(/.*)?$#;
-    my $host=  $1;
-    my $url =  $2 || "/";
+      #  NOTE: it's ok here
+    my $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    my $url =  $2 || "/";                   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
        $host=~ m#^([^:]+)(?::[0-9]{1-5})?#;
-       $host=  $1;
-    my $port=  $2 || 80;  $port =~ s/^://;
+       $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     _trace2("check_url: get_http($host, $port, $url)");
     my ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
             Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
     );
     _trace2("check_url: STATUS: $status");
 
-    if ($status !~ m#^HTTP/... ([1234][0-9][0-9]|500) #) {
+    if ($status !~ m#^HTTP/... (?:[1234][0-9][0-9]|500) #) {
         return "<<connection to '$url' failed>>";
     }
     _trace2("check_url: header: #{ " .  join(": ", %headers) . " }"); # a bit ugly :-(
@@ -3528,13 +3530,13 @@ sub checkdv($$) {
         return; # .. as all other checks will fail too now
     }
 
-    # CN= in subject or subjectAltname
+    # CN= in subject or subjectAltname,  $1 is matched FQDN
     if (($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#)
     and ($altname !~ m#/$cfg{'regex'}->{$oid}=([^\s\n]*)#)) {
         $checks{'dv'}->{val} .= _get_text('missing', $data_oid{$oid}->{txt});
         return; # .. as ..
     }
-    $txt = $1;  # $1 is matched FQDN
+    $txt = $1;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
 
 # TODO: %data_oid not yet used
     $data_oid{$oid}->{val} = $txt if ($txt !~ m/^\s*$/);
@@ -3630,7 +3632,7 @@ sub checkev($$) {
         }
     }
     $oid = '1.3.6.1.4.1.311.60.2.1.2'; # or /ST=
-    if ($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
+    if ($subject !~ m#/$cfg{'regex'}->{$oid}=(?:[^/\n]*)#) {
         $txt = _get_text('missing', $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
         $oid = '2.5.4.8'; # or /ST=
@@ -4069,7 +4071,7 @@ sub printtitle($$$$) {
     my $txt     = _get_text('out-ciphers', $ssl);
     local    $\ = "\n";
     if ($legacy eq 'sslyze')    {
-        my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
+        local $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
         print "$txt";
         print " " . "-" x length($txt);
     }
@@ -4143,7 +4145,7 @@ sub print_data($$$$)    {
             return;
         }
     # }
-    if ((1 eq _is_hexdata($key)) && ($value !~ m/^\s*$/)) {
+    if ((1 == _is_hexdata($key)) && ($value !~ m/^\s*$/)) {
         # check for empty $value to avoid warnings with -w
         # pubkey_value may look like:
         #   Subject Public Key Info:Public Key Algorithm: rsaEncryptionPublic-Key: (2048 bit)Modulus=00c11b:...
