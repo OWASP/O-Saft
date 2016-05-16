@@ -181,7 +181,7 @@ my %err_hash = (
         message   => OERR_UNDEFINED_TXT,
         print     => 0,
         warn      => 0,
-        debug     => 1,
+        trace     => 1,
 );
 
 
@@ -208,7 +208,7 @@ sub _compile_err_str {
 
     unless (defined ($arg_ref) && ($arg_ref)) {                 # use \$err_hash if $arg_ref is not defined (default)
         $arg_ref = \%err_hash;
-    }  elsif ($err_hash{debug}) {
+    }  elsif ($err_hash{trace}) {
         print "    \$arg_ref defined: $arg_ref\n";
     }
 
@@ -244,7 +244,7 @@ sub new {
     # undefined/unknown error type in static err_hash
     unless ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) ) {
         $tmp_err_str = _compile_err_str();
-        print "OSaft::error_handler->new: internal error: unknown error type in \"$tmp_err_str\"." if ($err_hash{debug});
+        print "OSaft::error_handler->new: internal error: unknown error type in \"$tmp_err_str\"." if ($err_hash{trace});
         carp ("OSaft::error_handler->new: internal error: unknown error type in \"$tmp_err_str\".");
         $err_hash{type} = OERR_UNKNOWN_TYPE;                    # overwrite error type to 'unknown', which is the most fatal
     } else {
@@ -255,21 +255,21 @@ sub new {
             $arg_ref->{sub}     = 'new';
             $arg_ref->{message} = "internal error: undefined \$arg_ref";
             $tmp_err_str        = _compile_err_str($arg_ref);
-            print "$tmp_err_str" if ($err_hash{debug});
+            print "$tmp_err_str" if ($err_hash{trace});
             carp ($tmp_err_str);
             return 0;
         }
         # undefined/unknown Error Type in new $arg_ref->{type}
         unless ( (exists ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) ) {
             $tmp_err_str = _compile_err_str($arg_ref);
-            print "OSaft::error_handler->new: internal error: unknown new error type in \"$tmp_err_str\"." if ($err_hash{debug});
+            print "OSaft::error_handler->new: internal error: unknown new error type in \"$tmp_err_str\"." if ($err_hash{trace});
             carp ("OSaft::error_handler->new: internal error: unknown new error type in \"$tmp_err_str\".");
             $arg_ref->{type} = OERR_UNKNOWN_TYPE;               # define error type to 'unknown', which is the most fatal
         }
         if ($arg_ref->{type} > $err_hash{type}) {               # New Error is less important than the previous
              my $old_err_str =  _compile_err_str();
              $tmp_err_str =     _compile_err_str($arg_ref);
-             print ("OSaft::error_handler->new: new error type in \"$tmp_err_str\" is less important than the previous \"$old_err_str\".") if ($err_hash{debug});
+             print ("OSaft::error_handler->new: new error type in \"$tmp_err_str\" is less important than the previous \"$old_err_str\".") if ($err_hash{trace});
              carp ("OSaft::error_handler->new: new error type in \"$tmp_err_str\" is less important than the previous \"$old_err_str\".");
              return 0;
         }
@@ -299,14 +299,14 @@ sub reset_err {
         message   => OERR_UNKNOWN_TXT,
         print     => 0,
         warn      => 0,
-        debug     => 1,
+        trace     => 1,
     );
     %err_hash = (
         %err_hash,                                              # previous keys and values
         %$arg_ref                                               # keys and values overwrite the previous if $arg_ref is defined and not empty
     ) if ($arg_ref);
 
-    if (($err_hash{print}) || ($err_hash{debug})) {
+    if (($err_hash{print}) || ($err_hash{trace})) {
         my $err_str = _compile_err_str();
         print "$err_str\n";
     }
@@ -323,7 +323,7 @@ sub is_err {
     } else { # internal error: no type defined
        my $err_str = "OSaft::error_handler->is_err: internal error: undefined error type in \$error_hash: ";
        $err_str .= _compile_err_str();
-       print "$err_str\n" if ($err_hash{debug});
+       print "$err_str\n" if ($err_hash{trace});
        carp ($err_str);
        return (1);
    }
@@ -338,7 +338,7 @@ sub get_err_type {
         return ($err_hash {type}, $ERROR_TYPE_RHASH_REF->{$err_hash{type}}) if ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) );
         return ($err_hash {type}, OERR_UNKNOWN_TXT);
     } else {
-        print "Error type is ".OERR_UNDEFINED_TXT if ($err_hash{debug});
+        print "Error type is ".OERR_UNDEFINED_TXT if ($err_hash{trace});
         carp ("Error type is ".OERR_UNDEFINED_TXT);
     }
     return (undef, OERR_UNDEFINED_TXT);
@@ -365,7 +365,7 @@ sub get_err_val {
 sub get_err_str {
     unless ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) ) { # undefined Error Type
         my $tmp_err_str = _compile_err_str();
-        print ("OSaft::error_handler->get_err_str: internal error: unknown error type in \"$tmp_err_str\".\n") if ($err_hash{debug});
+        print ("OSaft::error_handler->get_err_str: internal error: unknown error type in \"$tmp_err_str\".\n") if ($err_hash{trace});
         carp ("OSaft::error_handler->get_err_str: internal error: unknown error type in \"$tmp_err_str\".\n");
         $err_hash{type} = OERR_UNKNOWN_TYPE;                    # overwrite error type to unknown, which is the most fatal
     }
@@ -386,7 +386,7 @@ sub get_err_hash {
     my $err_hash_str                = "";
     $prefix =   ""         if (!defined($prefix));              # default is no indent
     $hash_ref = \%err_hash if (!defined($hash_ref));            # default is the error_hash
-    print ">get_err_hash\n" if ($err_hash{debug});
+    print ">get_err_hash\n" if ($err_hash{trace});
     #_trace "\n\$class =   $class\n";
     #_trace "\$hash_ref = ".\%$err_hash."\n";
     foreach my $err_key (sort (keys(%$hash_ref)) ) {
@@ -406,7 +406,7 @@ sub get_err_hash {
 sub get_all_err_types {
     my ($class, $prefix) = @_;
     my $err_types_str="";
-    print ">get_all_err_types\n" if ($err_hash{debug});
+    print ">get_all_err_types\n" if ($err_hash{trace});
     foreach my $key (sort {$a <=> $b} (keys(%$ERROR_TYPE_RHASH_REF)) ) {
         $err_types_str .= $prefix if ($err_types_str !~ /^$/);  # not the first line
         $err_types_str .= "ERROR_TYPE_RHASH_REF\{$key\} => ".$ERROR_TYPE_RHASH_REF->{$key}."\n";
