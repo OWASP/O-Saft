@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.485 16/05/17 00:12:14",
+    SID         => "@(#) yeast.pl 1.486 16/05/17 01:14:19",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1549,6 +1549,11 @@ our %text = (
     },
     # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
 
+    # texts used for hints, key must be same as a command (without +)
+    'hint' => {
+        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746",
+    },
+
     'mnemonic'      => { # NOT YET USED
         'example'   => "TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA",
         'description'=> "TLS Version _ key establishment algorithm _ digital signature algorithm _ WITH _ confidentility algorithm _ hash function",
@@ -1635,6 +1640,7 @@ sub _init_all()        {
     _trace("_init_all(){}");
     _initchecks_score();
     _initchecks_val();
+    $cfg{'hint'}->{$_} = $text{'hint'}->{$_} foreach (keys %{$text{'hint'}});
     return;
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
@@ -4191,6 +4197,7 @@ sub print_check($$$$$)  {
     my $label = "";
     $label = $checks{$key}->{txt} if ($legacy ne 'key');
     print_line($legacy, $host, $port, $key, $label, $value);
+    osaft::printhint($key);
     return;
 } # print_check
 
@@ -5453,6 +5460,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sig(key)?_enc(?:ryption)?/)     { $arg = '+sig_encryption';} # alias:
     if ($arg =~ /^\+sig(key)?_enc(?:ryption)?_known/){$arg = '+sig_enc_known'; } # alias:
     if ($arg =~ /^\+server[_-]?(?:temp)?[_-]?key/)  { $arg = '+dh_parameter';  } # alias:
+    if ($arg =~ /^\+reneg/)             { $arg = '+renegotiation'; } # alias:
     if ($arg =~ /^\+reused?/i)          { $arg = '+resumption'; } # alias:
     if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         } # alias:
     if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';        } # alias:
