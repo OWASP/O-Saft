@@ -1373,16 +1373,16 @@ sub checkSSLciphers ($$$@) {
                         _trace ("**WARNING: checkSSLciphers => Exit loop (1.1): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
-                    } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
-                        _trace2 ("checkSSLciphers (1.2): '$@'\n"); 
+                    } elsif ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL)) || ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
+                        _trace2 ("checkSSLciphers (1.2): '$@'\n") if ($@);
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
                     } elsif ( ($@ =~ /target.*?ignored/) || ($@ =~ /protocol.*?ignored/) ) {   #### Fatal Errors -> Useless to check more ciphers
-                        _trace2 ("checkSSLciphers (1.3): \'$@\'\n"); 
+                        _trace2 ("checkSSLciphers (1.3): \'$@\'\n") if ($@);
                         carp ("**WARNING: checkSSLciphers => Exit Loop (1.3)");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
-                    } elsif ( $@ =~ /\-> Received NO Data/) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
+                    } elsif ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_CIPHERS)) || ($@ =~ /\-> Received NO Data/)) { # some servers 'Respond' by closing the TCP connection => check each cipher individually
                         if ($Net::SSLhello::noDataEqNoCipher == 1) { # ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported
                             _trace2 ("checkSSLciphers (1.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
                             @cipherSpecArray =(); # => empty @cipherSpecArray
@@ -1392,13 +1392,19 @@ sub checkSSLciphers ($$$@) {
                             _trace2 ("checkSSLciphers (1.5): \'$@\', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
                             carp ("**WARNING: checkSSLciphers (1.5): \'$@\', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported."); 
                         }
-                    } elsif ($@ =~ /Error 1: too many requests/) {   #### Too many connections: Automatic suspension and higher timeout did not help
+                    } elsif ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_RECORD)) || ($@ =~ /Error 1: too many requests/)) {   #### Too many connections: Automatic suspension and higher timeout did not help
                         _trace2 ("checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down\n");
                         carp ("**WARNING: checkSSLciphers (1.6): \'$@\', => Please use the option \'--starttls_delay=SEC\' to slow down");
                         next;
-                    } elsif ($@) { # Error found
-                         _trace2 ("checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n");
-                         carp ("checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n"); 
+                    } elsif ((OSaft::error_handler->is_err) || $@) { # Error found
+                        unless (OSaft::error_handler->is_err) { # no error set, but no socket obtaied
+                            OSaft::error_handler->new( {
+                                type    => (OERR_SSLHELLO_ERROR_MESSAGE_IGNORED),
+                                id      => '(1.9)',
+                                message => "Unexpected Error Messagege ignored: \'$@\'",
+                                warn    => 1,
+                            } );
+                        }
                         $@=""; # reset Error-Msg
                         #reset error_handler and set basic information for this sub
                         OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
@@ -2098,9 +2104,13 @@ sub openTcpSSLconnection ($$) {
                             }
                             next;   # next retry
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) { # did receive a Protocol Error Message
-                            $@ = "STARTTLS (Phase 1): Error 2: unsupported Protocol: $host:$port \'$input\' -> protocol_version not supported";
-                            _trace2  ("openTcpSSLconnection: $@\n");
-                            close ($socket) or carp("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                            OSaft::error_handler->new( {
+                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                id      => 'STARTTLS (Phase 1): Error 2',
+                                message => "unsupported Protocol: $host:$port \'$input\'",
+                                warn    => 0,
+                            } );
+                            close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!"); 
                             last;
                         } elsif ( ($starttls_matrix[$starttlsType][8]) && ($input =~ /$starttls_matrix[$starttlsType][8]/) ) { # did receive a Fatal Error Message
                             $@ = "STARTTLS (Phase 1): Error 3: Fatal Error: $host:$port \'$input\' -> target $host:$port ignored";
@@ -2195,9 +2205,13 @@ sub openTcpSSLconnection ($$) {
                             }
                             next;
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) { # did receive a Protocol Error Message
-                            $@ = "STARTTLS (Phase 3): Error 2: unsupported Protocol: $host:$port \'$input\' -> protocol_version not supported";
-                            _trace2  ("openTcpSSLconnection: $@\n");
-                            close ($socket) or carp("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                            OSaft::error_handler->new( {
+                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                id      => 'STARTTLS (Phase 3): Error 2',
+                                message => "unsupported Protocol: $host:$port \'$input\'",
+                                warn    => 0,
+                            } );
+                            close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!"); 
                             last;
                         } elsif ( ($starttls_matrix[$starttlsType][8]) && ($input =~ /$starttls_matrix[$starttlsType][8]/) ) { # did receive a fatal error message
                             $@ = "STARTTLS (Phase 3): Error 3: Fatal Error: $host:$port \'$input\' -> target $host:$port ignored";
@@ -2292,9 +2306,13 @@ sub openTcpSSLconnection ($$) {
                             }
                             next;
                         } elsif ( ($starttls_matrix[$starttlsType][7]) && ($input =~ /$starttls_matrix[$starttlsType][7]/) ) { # did receive a Protocol Error Message
-                            $@ = "STARTTLS (Phase 5): Error 2: unsupported Protocol: $host:$port \'$input\' -> protocol_version not supported";
-                            _trace2  ("openTcpSSLconnection: $@\n");
-                            close ($socket) or carp("**WARNING: STARTTLS: $@; Can't close socket, too: $!");
+                            OSaft::error_handler->new( {
+                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                id      => 'STARTTLS (Phase 5): Error 2',
+                                message => "unsupported Protocol: $host:$port \'$input\'",
+                                warn    => 0,
+                            } );
+                            close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!"); 
                             last;
                         } elsif ( ($starttls_matrix[$starttlsType][8]) && ($input =~ /$starttls_matrix[$starttlsType][8]/) ) { # did receive a Fatal Error Message
                             $@ = "STARTTLS (Phase 5): Error 3: Fatal Error: $host:$port \'$input\' -> target $host:$port ignored";
@@ -2465,6 +2483,16 @@ sub _doCheckSSLciphers ($$$$;$$) {
         ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
         ($input, $recordType, $recordVersion, $recordLen, $recordData, $recordEpoch, $recordSeqNr) = _readRecord ($socket, $isUdp, $host, $port, $protocol);
         # Error-Handling
+        if ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL)) {
+            if ((OSaft::error_handler->get_err_type()) == (OERR_SSLHELLO_RETRY_HOST)) { # no more retries
+                OSaft::error_handler->new( {
+                    type     => (OERR_SSLHELLO_ABORT_HOST),
+#                   warn     => 1,
+                } );
+            }
+            _trace ("**WARNING: ".OSaft::error_handler->get_err_str."\n");
+            return ("");
+        }
         if ( ($@) && ((length($input)==0) && ($Net::SSLhello::noDataEqNoCipher==0)) ) {
             _trace2 ("_doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n");
             carp ("**WARNING: _doCheckSSLciphers: ... Received Data: Got a timeout receiving Data from $host:$port (Protocol: $ssl ".sprintf ("(0x%04X)",$protocol).", ".length($input)." Bytes): Eval-Message: >$@<\n"); 
@@ -2508,6 +2536,16 @@ sub _doCheckSSLciphers ($$$$;$$) {
         if (length($input) >0) {
             _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes\n"); 
             ($acceptedCipher, $lastMsgType, $dtlsNewCookieLen, $dtlsNewCookie) = parseHandshakeRecord ($host, $port, $recordType, $recordVersion, $recordLen, $recordData, "", $protocol);
+            if ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL)) {
+                if ((OSaft::error_handler->get_err_type()) == (OERR_SSLHELLO_RETRY_HOST)) { # no more retries
+                    OSaft::error_handler->new( {
+                        type     => (OERR_SSLHELLO_ABORT_HOST),
+#                       warn     => 1,
+                    } );
+                }
+                _trace ("**WARNING: ".OSaft::error_handler->get_err_str."\n");
+                return ("");
+            }
 
             if ( ($acceptedCipher ne "") && ($parseAllRecords > 0) && ($lastMsgType != $HANDSHAKE_TYPE {'server_hello_done'}) ) { 
                 _trace2 ("_doCheckSSLciphers: Try to get and parse next Records\n"); 
@@ -2566,11 +2604,6 @@ sub _doCheckSSLciphers ($$$$;$$) {
   } else { # original old code: ### TBD TBD this section will be deleted after migration to new code and tests TBD TBD #####
     #### Compile ClientHello
     $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtls_epoch, $dtlsSequence++); 
-    if ($@) { #Error
-        $@ .= " -> Fatal Exit of openTcpSSLconnection";
-        _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
-        return ("");
-    }
 
     #### Send ClientHello
     _trace3 ("_doCheckSSLciphers: sending Client_Hello\n      >".hexCodedString(substr($clientHello,0,64),"        ")." ...< (".length($clientHello)." Bytes)\n\n");
@@ -2757,6 +2790,9 @@ sub _readRecord ($$;$$$) {
     my $success=0;
     $select->add($socket) if ($Net::SSLhello::trace > 0);
 
+    #reset error_handler and set basic information for this sub
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => '_readRecord', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+
     ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
     while ( ( (length($input) < $pduLen) || ($input eq "") ) && ($retryCnt++ < $Net::SSLhello::retry) ) {
@@ -2934,11 +2970,20 @@ sub _readRecord ($$;$$$) {
                         $ssl_server ="--unknown Protocol--";
                     }
                     if ($recordVersion == 0) { # some servers respond with the dummy protocol '0x0000' if they do *not* support the requested protocol 
-                        $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': requested Protocol $ssl_client (0x%04X) is not supported by the Server (the server answered with the Protocol 0x%04X) -> protocol_version recognized but not supported!", $client_protocol, $recordVersion);
+                        OSaft::error_handler->new( {
+                            type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                            id      => 'check record protocol (1)',
+                            message => sprintf ("unsupported Protocol $ssl_client (0x%04X) by $host:$port, answered with (0x%04X)", $client_protocol, $recordVersion),
+                            warn    => 0,
+                        } );
                     } else { # unknown protocol
-                        $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> unknown protocol_version is not supported!", $recordVersion, $client_protocol);
+                        OSaft::error_handler->new( {
+                            type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                            id      => 'check record protocol (2)',
+                            message => sprintf ("unsupported Protocol $ssl_client (0x%04X) by $host:$port, answered with $ssl_server (0x%04X)", $client_protocol, $recordVersion),
+                            warn    => 0,
+                        } );
                     }
-                    _trace2("$@\n"); 
                     return ($input, $recordType, $recordVersion, 0, "", $recordEpoch, $recordSeqNr);
                 }
             }
@@ -3794,6 +3839,9 @@ sub parseHandshakeRecord ($$$$$$$;$) {
     my %rhash = reverse %PROTOCOL_VERSION;
     my $ssl_client = $rhash{$client_protocol};
 
+    #reset error_handler and set basic information for this sub
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'parseHandshakeRecord', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+
     $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
     unless ($Net::SSLhello::use_sni_name) {
         $sni = "'$host'" if ($Net::SSLhello::use_sni_name); # Server Name, should be a Name no IP
@@ -4021,9 +4069,13 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                 if ($recordVersion == 0x0000) { # some servers use this dummy version to indicate that the requested version is not supported
                     if (! defined $ssl_client) {
                         $ssl_client ="--unknown Protocol--";
-                    } 
-                    $@ = sprintf ("parseHandshakeRecord: Server '$host:$port': requested Protocol $ssl_client (0x%04X) is not supported by the Server (the server answered with the Protocol 0x%04X) -> protocol_version recognized but not supported!", $client_protocol, $recordVersion);
-                    _trace2 ("$@\n");
+                    }
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                        id      => 'parse alert record (1)',
+                        message => sprintf ("unsupported Protocol $ssl_client (0x%04X) by $host:$port, answered with (0x%04X)", $client_protocol, $recordVersion),
+                        warn    => 0,
+                    } );
                     return ("", $lastMsgType, 0 , "");
                 }
 #                Error-Handling according to # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv                
@@ -4047,9 +4099,14 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                         }
                     } elsif ($serverHello{'level'} == 2) { # fatal
                         if ($serverHello{'description'} == 70) { # protocol_version(70): (old) protocol recognized but not supported, is suppressed
-                            $@ = sprintf ("parseHandshakeRecord: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> protocol_version recognized but not supported!\n");
+                            OSaft::error_handler->new( {
+                                type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                                id      => 'parse alert record (2)',
+                                message => sprintf ("unsupported Protocol $ssl_client (0x%04X) by $host:$port: received a SSL/TLS-Warning: Description: $description ($serverHello{'description'})", $client_protocol),
+                                warn    => 0,
+                            } );
+                        } else {
                             _trace4 ($@);
-                        } else {                            _trace4 ($@);
                             carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': received fatal SSL/TLS-Error (2): Description: $description ($serverHello{'description'})\n");
                         }
                     } else { # unknown
@@ -4368,10 +4425,13 @@ sub parseTLS_ServerHello {
     my $rest ="";
     my $rest2 ="";
     my %serverHello;
-    
+
     $serverHello{'cipher_spec'} = "";
     $serverHello{'extensions_len'} = 0;
-    
+
+    #reset error_handler and set basic information for this sub
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'parseTLS_ServerHello', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+
     if (defined $client_protocol) {
         _trace3("parseTLS_ServerHello: Server '$host:$port': (expected Protocol=".sprintf ("%04X", $client_protocol).",\n     ".hexCodedString (substr($buffer,0,48),"       ")."...)\n");
     } else {
@@ -4402,11 +4462,20 @@ sub parseTLS_ServerHello {
                     $ssl_server ="--unknown Protocol--";
                 }
                 if ($serverHello{'version'} == 0) { # some servers respond with the dummy prtotocol '0x0000' if they do *not* support the requested protocol 
-                    $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': requested Protocol $ssl_client (0x%04X) is not supported by the Server (the server answered with the Protocol 0x%04X -> protocol_version recognized but not supported!", $client_protocol, $serverHello{'version'});
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                        id      => 'check record protocol (1)',
+                        message => sprintf ("unsupported Protocol $ssl_client (0x%04X) by $host:$port, answered with $ssl_server (0x%04X)", $client_protocol, $serverHello{'version'}),
+                        warn    => 0,
+                    } );
                 } else { # unknown protocol
-                    $@ = sprintf ("parseTLS_ServerHello: Server '$host:$port': Server Protocol $ssl_server (0x%04X) is NOT the same as the client reqested $ssl_client (0x%04X) -> answer ignored!", $serverHello{'version'}, $client_protocol);
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_ABORT_PROTOCOL),
+                        id      => 'check record protocol (2)',
+                        message => sprintf ("unsupported Protocol $ssl_client (0x%04X) by $host:$port, answered with $ssl_server (0x%04X)", $client_protocol, $serverHello{'version'}),
+                        warn    => 0,
+                    } );
                 }
-                _trace2("$@\n"); 
                 return ("");
             }    
         } else {
