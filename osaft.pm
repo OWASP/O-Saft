@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.29 16/05/15 21:32:58',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.30 16/05/17 01:04:41',
 
 };
 
@@ -161,6 +161,9 @@ Following functions (methods) must be defined in the calling program:
 
 =head1 METHODS
 
+Only getter and setter methods are exported. All other methods must be used
+with the full package name.
+
 =cut
 
 ## no critic qw(Modules::ProhibitAutomaticExportation, Variables::ProhibitPackageVars)
@@ -214,7 +217,6 @@ our @EXPORT     = qw(
                 get_cipher_name
                 get_openssl_version
                 get_dh_paramter
-                osaft_sleep
                 osaft_done
 );
 # insert above in vi with:
@@ -1795,17 +1797,17 @@ sub _dbx_init() {
 
 =pod
 
-=head2 osaft_hint($cmd)
+=head2 osaft::printhint($cmd)
 
 Print hint for specified command.
 =cut
 
-sub osaft_hint($) {
+sub printhint($) {
     #? Print hint for specified command.
     my $cmd = shift;
-    print STR_HINT, $cmd;
+    print STR_HINT, $cfg{'hint'}->{$cmd} if (defined $cfg{'hint'}->{$cmd});
     return;
-} # osaft_hint
+} # printhint
 
 sub osaft_sleep($) {
     #? wrapper for IO::select
