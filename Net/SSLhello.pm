@@ -3397,7 +3397,7 @@ sub compileClientHello ($$$$;$$$$) {
             _trace ("compileClientHello: WARNING: Server $host (Protocol: $ssl): use of ClintHellos > $Net::SSLhello::max_sslHelloLen Bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
         } else { # use of experimental functions is not permitted (option is not activated)
             $@ = "**WARNING: compileClientHello: Server $host: the ClientHello is longer than $Net::SSLhello::max_sslHelloLen Bytes, this caused sometimes virtual servers to stall, e.g. 256 Bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
-            warn ($@);
+            carp ($@);
         }
     }
     return ($clientHello);
@@ -4600,7 +4600,7 @@ sub parseTLS_Extension {
 
 
 sub _timedOut {
-    die "NET::SSLhello: Receive data timed out -> Received NO data (timeout)";
+    croak "NET::SSLhello: Receive data timed out -> Received NO data (timeout)";
 }
 
 sub _chomp_r { # chomp \r\n
