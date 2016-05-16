@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.484 16/05/15 22:20:58",
+    SID         => "@(#) yeast.pl 1.485 16/05/17 00:12:14",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4355,22 +4355,25 @@ sub _is_print($$$) {
 
 ## no critic qw(Subroutines::RequireArgUnpacking)
 #  NOTE: perlcritic's violation for next 2 subs are false positives
-sub _print_results($$$$@) {
-    #? print all ciphers from @results if match $ssl and $yesno
+sub _print_results($$$$$@) {
+    #? print all ciphers from @results if match $ssl and $yesno; returns number of checked ciphers for $ssl
+    my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
     my $port    = shift;
     my $yesno   = shift; # only print these results, all if empty
     my @results = @_;
     my $print   = 0; # default: do not print
+    my $total   = 0;
     local    $\ = "\n";
     foreach my $c (@results) {
         next if  (${$c}[0] ne $ssl);
+        $total++;
         next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
-        print_cipherline($cfg{'legacy'}, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
+        print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
     }
-    return;
+    return $total;
 } # _print_results
 
 sub printciphercheck($$$$$@)    {
@@ -4381,27 +4384,28 @@ sub printciphercheck($$$$$@)    {
     my $port    = shift;
     my $count   = shift; # print title line if 0
     my @results = @_;
+    my $total   = 0;
     local    $\ = "\n";
     print_cipherhead( $legacy) if ($count == 0);
     print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslaudit');
 
     if ($legacy ne 'sslyze') {
-        _print_results($ssl, $host, $port, "", @results);
+        $total = _print_results($legacy, $ssl, $host, $port, "", @results);
         print_cipherruler() if ($legacy eq 'simple');
+        print_check($legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
     } else {
         print "\n  * $ssl Cipher Suites :";
         print_cipherdefault($legacy, $ssl, $host, $port);
         if (($cfg{'enabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Accepted Cipher Suites:";
-            _print_results($ssl, $host, $port, "yes", @results);
+            $total = _print_results($legacy, $ssl, $host, $port, "yes", @results);
         }
         if (($cfg{'disabled'} == 1) or ($cfg{'disabled'} == $cfg{'enabled'})) {
             print "\n      Rejected Cipher Suites:";
-            _print_results($ssl, $host, $port, "no", @results);
+            $total = _print_results($legacy, $ssl, $host, $port, "no", @results);
         }
     }
     #print_ciphertotals($legacy, $ssl, $host, $port);  # up to version 15.10.15
-    print_check($legacy, $host, $port, 'cnt_totals', $#results) if ($cfg{'verbose'} > 0);
     printfooter($legacy);
     return;
 } # printciphercheck
@@ -6141,8 +6145,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     usr_pre_info();
 
-    _y_CMD("get no SNI ..");
 # FIXME: some servers do not respond for following
+#        reason seams to be SSLv2 or SSLv3 without SNI
+    _y_CMD("get no SNI ..");
     # check if SNI supported, also copy some data to %data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
@@ -6256,6 +6261,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         if ($_printtitle > 0) { # if we checked for ciphers
             printheader("\n" . _get_text('out-summary', ""), "");
+            print_check($legacy, $host, $port, 'cnt_totals', scalar @results) if ($cfg{'verbose'} > 0);
             printprotocols($legacy, $host, $port);
             printruler() if ($quick == 0);
         }
