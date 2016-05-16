@@ -1288,6 +1288,8 @@ sub checkSSLciphers ($$$@) {
     my $maxCiphers = $Net::SSLhello::max_ciphers;
     local $\ = ""; # no auto '\n' at the end of the line
     local $@ = ""; # Error handling uses $@ in this and all sub function (TBD: new error handling)
+    #reset error_handler and set basic information for this sub
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
 
     if ($Net::SSLhello::trace > 0) { 
         _trace("checkSSLciphers ($host, $port, $ssl, Cipher-Strings:");
@@ -1339,6 +1341,8 @@ sub checkSSLciphers ($$$@) {
             $arrayLen = @cipherSpecArray;
             if ( $arrayLen >= $maxCiphers) { # test up to ... ciphers ($Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
                 $@=""; # reset Error-Msg
+                #reset error_handler and set basic information for this sub
+                OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
                 $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round
                 
                 if ($Net::SSLhello::trace > 1) { #Print ciphers that are tested this round:
@@ -1363,9 +1367,10 @@ sub checkSSLciphers ($$$@) {
                     push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the List of accepted ciphers 
                 } else { # no ciphers accepted
                     _trace1_ ("=> no Cipher found\n");
-                    if ( ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more ciphers
-                        _trace ("checkSSLciphers (1.1): '$@'\n"); 
-                        carp ("**WARNING: checkSSLciphers => Exit Loop (1.1)");
+                if ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) || ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more protocols
+
+                        _trace ("checkSSLciphers (1.1): '$@'\n") if ($@);
+                        _trace ("**WARNING: checkSSLciphers => Exit loop (1.1): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
                     } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
@@ -1395,13 +1400,15 @@ sub checkSSLciphers ($$$@) {
                          _trace2 ("checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n");
                          carp ("checkSSLciphers (1.9): Unexpected Error Messagege ignored: \'$@\'\n"); 
                         $@=""; # reset Error-Msg
+                        #reset error_handler and set basic information for this sub
+                        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
                     } # else: no cipher accepted but no error
                     @cipherSpecArray =(); # => Empty @cipherSpecArray
                 } # end: if 'no ciphers accepted'
             } # end: test ciphers
         } # end: foreach my $cipher_str...
 
-        while ( (@cipherSpecArray > 0) && (!$@) ) { # there are still ciphers to test in this last round
+        while ( (@cipherSpecArray > 0) && (!OSaft::error_handler->is_err) && (!$@) ) { # there are still ciphers to test in this last round
             $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round;
             if ($Net::SSLhello::trace > 1) { #print ciphers that are tested this round:
                 $i = 0;
@@ -1826,6 +1833,8 @@ sub openTcpSSLconnection ($$) {
     }
     do {{ # connect to #server:port (via proxy) and open a ssl connection (use STARTTLS if activated)
         $@ ="";
+        #reset error_handler and set basic information for this sub
+        OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
         $input="";
         $input2="";
         alarm (0); # switch off alarm (e.g. for  next retry )
@@ -1845,82 +1854,139 @@ sub openTcpSSLconnection ($$) {
             _trace2 ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n");
             sleep ($sleepSecs);
         }
-        eval  {
-            local $SIG{ALRM}= "Net::SSLhello::_timedOut";
-            alarm($alarmTimeout); # set Alarm for get-socket and set-socketoptions->timeout(s)        
-            socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
-            setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
-            setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
-            alarm (0);             #clear alarm
-        }; # Do NOT forget the ;
-        next if ($@); # Error -> next retry
+        { # >> start a block
+            # local $@; TBD TBD
+            my $tmp_err="";
+            eval  {
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut";
+                alarm($alarmTimeout);   # set Alarm for get-socket and set-socketoptions->timeout(s)
+                socket($socket,PF_INET,SOCK_STREAM,(getprotobyname('tcp'))[2]) or croak "Can't create a socket \'$!\' -> target $host:$port ignored ";
+                setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
+                setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
+                alarm (0);      # clear alarm
+            };                  # Do NOT forget the;
+            $tmp_err= $@;      # save the error message as soon as possible
+            alarm (0);          # clear alarm if not done before
+            if ($tmp_err) {
+                OSaft::error_handler->new( {
+                    type    => (OERR_SSLHELLO_RETRY_HOST),
+                    id      => 'socket (1)',
+                    message => $tmp_err,
+                    warn    => 0,
+                } );
+            }
+            next if ($tmp_err); # Error -> next retry
+        } # << end a block
 
         ######## Connection via a Proxy ########
         if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via Proxy
-            eval {
-                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($alarmTimeout); # set Alarm for Connect
-                $connect2ip = inet_aton($Net::SSLhello::proxyhost);
-                if (!defined ($connect2ip) ) {
-                    $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
-                    croak "Can't get the IP-Address of the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+            { # >> start a block
+                # local $@; TBD TBD
+                my $tmp_err="";
+                eval {
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($alarmTimeout); # set Alarm for Connect
+                    $connect2ip = inet_aton($Net::SSLhello::proxyhost);
+                    if (!defined ($connect2ip) ) {
+                        $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
+                        croak "Can't get the IP-Address of the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+                    }
+                    connect($socket, pack_sockaddr_in($Net::SSLhello::proxyport, $connect2ip) ) or croak "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
+                    # TBD will be: TBD
+                    # $sock = new IO::Socket::INET(
+                    #   Proto     => "tcp",
+                    #   PeerAddr => "$Net::SSLhello::proxyhost:$Net::SSLhello::proxyport",
+                    #   Blocking  => 1, # Default
+                    #   Timeout => $timeout,
+                    # ) or die "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport ($@, $!) -> target $host:$port ignored"; # Error-Handling
+                    alarm (0);
+                }; # Do NOT forget the ;
+                $tmp_err= $@;      # save the error message as soon as possible
+                alarm (0);          # clear alarm if not done before
+                if ($tmp_err) {
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        id      => 'connection via proxy (1)',
+                        message => $tmp_err,
+                        warn    => 0,
+                    } );
+                    close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!"); #tbd löschen ###
+                    #_trace2 ("openTcpSSLconnection: $@ -> Fatal Exit in openTcpSSLconnection");
+                    sleep (1);
+                    # last; # no retry
+                    next; # next retry
                 }
-                connect($socket, pack_sockaddr_in($Net::SSLhello::proxyport, $connect2ip) ) or croak "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport -> target $host:$port ignored";
-                # TBD will be: TBD
-                # $sock = new IO::Socket::INET(
-                #   Proto     => "tcp",
-                #   PeerAddr => "$Net::SSLhello::proxyhost:$Net::SSLhello::proxyport",
-                #   Blocking  => 1, # Default
-                #   Timeout => $timeout,
-                # ) or die "Can't make a connection to Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport ($@, $!) -> target $host:$port ignored"; # Error-Handling
-                alarm (0);
-            }; # Do NOT forget the ;
-            if ($@) { # no Connect
-                alarm (0);
-                close ($socket) or carp("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!"); #tbd löschen ###
-                _trace2 ("openTcpSSLconnection: $@ -> Fatal Exit in openTcpSSLconnection");
-                sleep (1);
-                last; # no retry
-            }
-            eval {
-                $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
-                _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
-                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($alarmTimeout); # set Alarm for Connect
-                defined(send($socket, $proxyConnect, 0)) || croak "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
-                alarm (0);
-            }; # Do NOT forget the ;
-            if ($@) { # no Connect
-                _trace2 ("openTcpSSLconnection: ... Could not send a CONNECT-Command to the Proxy: $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport\n"); 
-                close ($socket) or carp("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
-                next; # retry
-            } 
-            alarm (0);
-            if (defined($slowServerDelay) && ($slowServerDelay>0)) {
-                _trace2 ("openTcpSSLconnection: via Proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
-                sleep ($slowServerDelay);
-            }
-            # CONNECT via Proxy
-            eval {
-                $input="";
-                _trace2 ("openTcpSSLconnection ## CONNECT via Proxy: try to receive the Connected-Message from the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
-                # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($alarmTimeout);
-                recv ($socket, $input, 32767, 0); 
-                if (length ($input)==0) { # did not receive a Message ## unless seems to work better than if!!
-                    _trace4 ("openTcpSSLconnection: ... Received Connected-Message from Proxy (1a): received NO Data\n");
-                    sleep(1) if ($retryCnt > 0);
-                    # Sleep for 250 milliseconds
-                    osaft_sleep (_SLEEP_B4_2ND_READ);
-                    # select(undef, undef, undef, _SLEEP_B4_2ND_READ);
-                    recv ($socket, $input, 32767, 0); # 2nd try 
+            } # << end a block
+
+            { # >> start a block
+                # local $@; TBD TBD
+                my $tmp_err="";
+                eval {
+                    $proxyConnect=_PROXY_CONNECT_MESSAGE1.$host.":".$port._PROXY_CONNECT_MESSAGE2;
+                    _trace4 ("openTcpSSLconnection: ## ProxyConnect-Message: >$proxyConnect<\n");
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($alarmTimeout); # set Alarm for Connect
+                    defined(send($socket, $proxyConnect, 0)) || croak "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
+                    alarm (0);
+                }; # Do NOT forget the ;
+                $tmp_err= $@;      # save the error message as soon as possible
+                alarm (0);          # clear alarm if not done before
+                if ($tmp_err) { # no Connect
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        id      => 'connection via proxy (2)',
+                        message => $tmp_err,
+                        warn    => 0,
+                    } );
+                    close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
+                    if (defined($slowServerDelay) && ($slowServerDelay>0)) {
+                        _trace2 ("openTcpSSLconnection: via Proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
+                        sleep ($slowServerDelay);
+                    }
+                    next; # retry
                 }
-                alarm (0);
-            };
-            next if ($@); # Error -> next retry
-            alarm (0);
+            } # << end a block
+
+            { # start a block
+                # local $@; TBD TBD
+                my $tmp_err="";
+                # CONNECT via Proxy
+                eval {
+                    $input="";
+                    _trace2 ("openTcpSSLconnection ## CONNECT via Proxy: try to receive the Connected-Message from the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
+                    # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($alarmTimeout);
+                    recv ($socket, $input, 32767, 0); 
+                    if (length ($input)==0) { # did not receive a Message
+                        _trace4 ("openTcpSSLconnection: ... Received Connected-Message from Proxy (1a): received NO Data\n");
+                        sleep(1) if ($retryCnt > 0);
+                        # Sleep for 250 milliseconds
+                        osaft_sleep (_SLEEP_B4_2ND_READ);
+                        # select(undef, undef, undef, _SLEEP_B4_2ND_READ);
+                        recv ($socket, $input, 32767, 0); # 2nd try 
+                    }
+                    alarm (0);
+                };
+                $tmp_err= $@;      # save the error message as soon as possible
+                alarm (0);          # clear alarm if not done before
+                if ($tmp_err) {    # no Cionnect Message
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        id      => 'connection via proxy (3)',
+                        message => $tmp_err,
+                        warn    => 0,
+                    } );
+                    close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
+                    if (defined($slowServerDelay) && ($slowServerDelay>0)) {
+                        _trace2 ("openTcpSSLconnection: via Proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
+                        sleep ($slowServerDelay);
+                    }
+                    next; # retry
+                }
+            } # << end a block
+
             if (length ($input) >0) { # got Data
                 _trace3 ("openTcpSSLconnection: ... Received Data via Proxy: ".length($input)." Bytes\n          >".substr(_chomp_r($input),0,64)."< ...\n");
                 _trace4 ("openTcpSSLconnection: ... Received Data via Proxy: ".length($input)." Bytes\n          >"._chomp_r($input)."<\n"); 
@@ -1932,41 +1998,59 @@ sub openTcpSSLconnection ($$) {
                         $input =~ /^((?:.+?(?:\r?\n|$)){1,4})/; #maximal 4 lines
                         $input = _chomp_r($1);
                     }
-                    $@ = "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored. Proxy-Error: ".$input; #error-message received from the proxy
-                    _trace2 ("openTcpSSLconnection: $@\n");
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        id      => 'connection via proxy (4)',
+                        message => "Can't make a connection to $host:$port via Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport; target ignored. Proxy-Error: ".$input, #error-message received from the proxy
+                        warn    => 0,
+                    } );
+                    close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
+                    if (defined($slowServerDelay) && ($slowServerDelay>0)) {
+                        _trace2 ("openTcpSSLconnection: via Proxy $host:$port: wait $slowServerDelay sec(s) to wait for slow proxies\n");
+                        sleep ($slowServerDelay);
+                    }
                     next;
                 }
             }
         } else { #### no Proxy ####
-            eval {
-                local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
-                alarm($alarmTimeout); # set Alarm for Connect
-                $connect2ip = inet_aton($host);
-                if (!defined ($connect2ip) ) {
-                    $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
-                     $@ = "Can't get the IP-Address of $host -> target $host:$port ignored";
-                     croak "Can't get the IP-Address of $host -> target $host:$port ignored";
-                }
-                connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak "Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ";
-                alarm (0);
-            }; # Do NOT forget the ;
-            if ($@) { # no Connect
-                if (defined ($connect2ip) ) {
-                    $@ .= " -> No connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored in openTcpSSLconnection";
+            { # >> start a block
+                # local $@; TBD TBD
+                my $tmp_err="";
+                eval {
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
+                    alarm($alarmTimeout); # set Alarm for Connect
+                    $connect2ip = inet_aton($host);
+                    if (!defined ($connect2ip) ) {
+                        $retryCnt = $Net::SSLhello::retry; #Fatal Error NO retry
+                        $@ = "Can't get the IP-Address of $host -> target $host:$port ignored";
+                        croak "Can't get the IP-Address of $host -> target $host:$port ignored";
+                    }
+                    connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak "Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ";
+                    alarm (0);
+                }; # Do NOT forget the;
+                $tmp_err= $@;      # save the error message as soon as possible
+                alarm (0);          # clear alarm if not done before
+                if ($tmp_err) {    # no Connecton
+                    if (defined ($connect2ip) ) {
+                        $tmp_err .= " -> No connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored in openTcpSSLconnection";
+                    } else {
+                        $tmp_err .= " -> No connection to $host:$port; -> target ignored in openTcpSSLconnection";
+                    }
+                    OSaft::error_handler->new( {
+                        type    => (OERR_SSLHELLO_RETRY_HOST),
+                        id      => 'connect (1)',
+                        message => $tmp_err,
+                        warn    => 0,
+                    } );
+                    close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
+                    next; # retry
                 } else {
-                    $@ .= " -> No connection to $host:$port; -> target ignored in openTcpSSLconnection";
+                    _trace2 ("openTcpSSLconnection: Connected to Server $host:$port\n");
                 }
-                _trace2 ("openTcpSSLconnection: $@\n");
-                alarm (0); ## switch off alarm 
-                close ($socket) or carp("**WARNING: openTcpSSLconnection: $@; Can't close socket, too: $!");
-                next; # next retry
-            } else {
-                _trace2 ("openTcpSSLconnection: Connected to Server $host:$port\n");
-            }
-            alarm (0);
+            } # << end a block
         }
 
-        if ( !($@) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
+        if ( !(OSaft::error_handler->is_err) && ($Net::SSLhello::starttls) )  { # no Error and starttls ###############  Begin STARTTLS Support #############  
             _trace2 ("openTcpSSLconnection: try to STARTTLS using the ".$starttls_matrix[$starttlsType][0]."-Protocol for Server $host:$port, Retry = $retryCnt\n");
             # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
             if (($slowServerDelay > 0) || ($retryCnt > 0)) { # slow server or retry: sleep some s
@@ -2307,30 +2391,50 @@ sub _doCheckSSLciphers ($$$$;$$) {
 
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
     $@ =""; # reset Error-String
+    #reset error_handler and set basic information for this sub
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => '_doCheckSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
     
     $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLSv09'})  ); # udp for DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
 
     unless ($isUdp) { # NO UDP = TCP
         #### Open TCP connection (direct or via a proxy) and do STARTTLS if requested  
         $socket=openTcpSSLconnection ($host, $port); # open TCP/IP, connect to the server (via proxy if needes) and STARTTLS if nedded
-        if ( (!defined ($socket)) || ($@) ) { # no SSL connection 
-            $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@); # generic error message
-            carp ("**WARNING: _doCheckSSLciphers: no TCP-Socket \'$@\'\n"); 
-            _trace2 ("_doCheckSSLciphers: Fatal Exit _doCheckSSLciphers (tcp)}\n");
+        if ( (!defined ($socket)) || (OSaft::error_handler->is_err()) || ($@) ) { # no SSL connection
+            if ((OSaft::error_handler->get_err_type) == OERR_SSLHELLO_RETRY_HOST) { # no more retries
+                OSaft::error_handler->new( {
+                   type     => (OERR_SSLHELLO_ABORT_HOST),
+#                   warn     => 1,
+                } );
+            }
+            unless (OSaft::error_handler->is_err) { # no error set, but no socket obtaied
+                OSaft::error_handler->new( {
+                    type    => (OERR_SSLHELLO_ABORT_HOST),
+                    id      => 'open TCP SSL connection (1)',
+                    message => "WARNING: Did not get a valid SSL-socket from function openTcpSSLconnection -> fatal exit of openTcpSSLconnection", # generic error message
+#                    warn    => 1,
+                } );
+            }
             return ("");
         }
     } else { # udp (no proxy nor STARTTLS)
-        $socket = IO::Socket::INET->new (
-            Proto    => "udp",
-            PeerAddr => "$host:$port",
-            Timeout  => $Net::SSLhello::timeout,
-            #Blocking  => 1, #Default
-        ) or $@ = " \'$@\', \'$!\'";
-        if ( (!defined ($socket)) || ($@) ) { # no UDP socket 
-            carp ("**WARNING: _doCheckSSLciphers: no UDP socket: $@\n");
-            _trace2 ("_doCheckSSLciphers: Fatal Exit _doCheckSSLciphers (udp) }\n");
-            return ("");
-        };
+        { # >> start a block
+            my $tmp_err="";
+            $socket = IO::Socket::INET->new (
+                Proto    => "udp",
+                PeerAddr => "$host:$port",
+                Timeout  => $Net::SSLhello::timeout,
+                #Blocking  => 1, #Default
+            ) or $tmp_err = " \'$@\', \'$!\'";
+            if ( (!defined ($socket)) || ($tmp_err) ) { # no UDP socket 
+                OSaft::error_handler->new( {
+                    type    => (OERR_SSLHELLO_ABORT_HOST),
+                    id      => 'open UDP socket (1)',
+                    message => "WARNING: Did not get a valid socket for UDP: $tmp_err -> fatal exit of _doCheckSSLciphers (udp)",
+#                    warn    => 1,
+                } );
+                return ("");
+            }
+        } # << end a block
         _trace4 ("_doCheckSSLciphers: ## New UDP socket to >$host:$port<\n"); 
     }
 
@@ -2341,11 +2445,6 @@ sub _doCheckSSLciphers ($$$$;$$) {
     while ($retryCnt++ < $Net::SSLhello::retry) { # no error and still retries to go
         #### Compile ClientHello
         $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtls_epoch, $dtlsSequence++, $dtlsCookieLen, $dtlsCookie); 
-        if ($@) { #Error
-            $@ .= " -> Fatal Exit of openTcpSSLconnection";
-            _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
-            return ("");
-        }
 
         #### Send ClientHello
         _trace3 ("_doCheckSSLciphers: sending Client_Hello\n      >".hexCodedString(substr($clientHello,0,64),"        ")." ...< (".length($clientHello)." Bytes)\n\n");
