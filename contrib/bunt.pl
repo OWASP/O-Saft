@@ -29,7 +29,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.6 16/05/15 06:39:13
+#?      @(#) bunt.pl 1.7 16/05/17 01:09:26
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -289,6 +289,7 @@ while (my $line = <STDIN>) {
 	  /^\#\[/       && last;
 	  /^##yeast*CMD:/ && do {     bgcyan( "$line");   next; };
 	  /^\#/         && do { print blue(   "$line");   next; };
+	  /^\!\!Hint/   && do { print purple( "$line");   next; };
 	  /^\*\*HINT/   && do { print purple( "$line");   next; };
 	  /^\*\*WARN/   && do { print boldpurple("$line");next; };
 	  /^\*\*ERROR/  && do { print boldred("$line");   next; };
