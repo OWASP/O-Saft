@@ -5509,7 +5509,8 @@ Generated with:
 # 
 # Disclaimer: No offence meant anyhow, neither against any analyzing tool nor
 # against anyone using them. It is just a reminder to use the tools and their
-# results in a wise manner. Measuring quality is more than just statistics!
+# results in a wise manner. Measuring quality is more than just automatically
+# generated statistics!
 
 # end woodoo
 
