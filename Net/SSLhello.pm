@@ -1056,8 +1056,6 @@ my %cipherHexHash = (
 my $TLS_CLIENT_HELLO    = 1;
 my $TLS_SERVER_HELLO    = 2;
 
-my $input="";
-
 my %SSL2_CIPHER_STRINGS = (
   '0x020700C0'=> [qw(DES_192_EDE3_CBC_WITH_MD5                DES-CBC3-MD5       SSL_CK_DES_192_EDE3_CBC_WITH_MD5)],
   '0x020701C0'=> [qw(DES_192_EDE3_CBC_WITH_SHA                DES-CBC3-SHA)],
@@ -2259,7 +2257,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     my $port         = shift || 443;
     my $protocol     = shift || 0;  # 0x0002, 0x3000, 0x0301, 0x0302, 0x0303, etc
     my $cipher_spec  = shift || "";
-    my $dtlsEpoch    = shift || 0;  # optional, used in DTLS only
+    my $dtls_epoch   = shift || 0;  # optional, used in DTLS only
     my $parseAllRecords = shift || 0; # Option to read, parse and Analyze all received Records (-> 1)
     my $socket;
     my $connect2ip;
@@ -2332,7 +2330,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     $@=""; # reset error message
     while ($retryCnt++ < $Net::SSLhello::retry) { # no error and still retries to go
         #### Compile ClientHello
-        $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtlsEpoch, $dtlsSequence++, $dtlsCookieLen, $dtlsCookie); 
+        $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtls_epoch, $dtlsSequence++, $dtlsCookieLen, $dtlsCookie); 
         if ($@) { #Error
             $@ .= " -> Fatal Exit of openTcpSSLconnection";
             _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
@@ -2447,7 +2445,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             my $level = 2; #fatal
             my $description = 90; #### selected Alert 90: user_canceled [RFC5246]
             alarm($alarmTimeout); # set Alarm for Connect
-            defined(send($socket, compileAlertRecord ($protocol, $host, $level, $description, $dtlsEpoch, $dtlsSequence++), 0)) || die "Could *NOT* send an Alert-Record to $host:$port; $! -> Error ignored\n";
+            defined(send($socket, compileAlertRecord ($protocol, $host, $level, $description, $dtls_epoch, $dtlsSequence++), 0)) || die "Could *NOT* send an Alert-Record to $host:$port; $! -> Error ignored\n";
             alarm (0);
         }; # Do NOT forget the ;
         if ($@) {
@@ -2458,7 +2456,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     }
   } else { # original old code: ### TBD TBD this section will be deleted after migration to new code and tests TBD TBD #####
     #### Compile ClientHello
-    $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtlsEpoch, $dtlsSequence++); 
+    $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtls_epoch, $dtlsSequence++); 
     if ($@) { #Error
         $@ .= " -> Fatal Exit of openTcpSSLconnection";
         _trace2 ("openTcpSSLconnection: Fatal Exit _doCheckSSLciphers }\n"); 
@@ -3229,8 +3227,6 @@ sub compileClientHello ($$$$;$$$$) {
 
         _trace4 (sprintf ("compileClientHello (%04X)\n          >",$record_version).hexCodedString ($clientHello,"           ")."<\n");
     } else {
-        my %rhash = reverse %PROTOCOL_VERSION;
-        my $ssl = $rhash{$record_version};
         if (! defined $ssl) {
             $ssl ="--unknown Protocol--";
         }
@@ -3239,8 +3235,6 @@ sub compileClientHello ($$$$;$$$$) {
         carp($@);
     }
     if ( ($Net::SSLhello::max_sslHelloLen > 0) && (length($clientHello) > $Net::SSLhello::max_sslHelloLen) ) { # According RFC: 16383+5 Bytes; handshake messages between 256 and 511 bytes in length caused sometimes virtual servers to stall, cf.: https://code.google.com/p/chromium/issues/detail?id=245500
-        my %rhash = reverse %PROTOCOL_VERSION;
-        my $ssl = $rhash{$record_version};
         if (! defined $ssl) {
             $ssl ="--unknown Protocol--";
         }
@@ -3399,8 +3393,6 @@ sub compileAlertRecord ($$$$;$$) {
     
         _trace4 (sprintf ("compileAlertRecord (%04X)\n          >",$record_version).hexCodedString ($alertRecord,"           ")."<\n");
     } else {
-        my %rhash = reverse %PROTOCOL_VERSION;
-        my $ssl = $rhash{$record_version};
         if (! defined $ssl) {
             $ssl ="--unknown Protocol--";
         }
@@ -3409,8 +3401,6 @@ sub compileAlertRecord ($$$$;$$) {
         carp($@);
     }
     if ( ($Net::SSLhello::max_sslHelloLen > 0) && (length($alertRecord) > $Net::SSLhello::max_sslHelloLen) ) { # According RFC: 16383+5 Bytes; handshake messages between 256 and 511 bytes in length caused sometimes virtual servers to stall, cf.: https://code.google.com/p/chromium/issues/detail?id=245500
-        my %rhash = reverse %PROTOCOL_VERSION;
-        my $ssl = $rhash{$record_version};
         if (! defined $ssl) {
             $ssl ="--unknown Protocol--";
         }
@@ -3692,6 +3682,9 @@ sub parseHandshakeRecord ($$$$$$$;$) {
     $@="";
 
     my $sni = "";
+    my %rhash = reverse %PROTOCOL_VERSION;
+    my $ssl_client = $rhash{$client_protocol};
+
     $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
     unless ($Net::SSLhello::use_sni_name) {
         $sni = "'$host'" if ($Net::SSLhello::use_sni_name); # Server Name, should be a Name no IP
@@ -3917,8 +3910,6 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                 _trace2_ ("# -->      Description: $serverHello{'description'} ($description)\n"); 
 
                 if ($recordVersion == 0x0000) { # some servers use this dummy version to indicate that the requested version is not supported
-                    my %rhash = reverse %PROTOCOL_VERSION;
-                    my $ssl_client = $rhash{$client_protocol};
                     if (! defined $ssl_client) {
                         $ssl_client ="--unknown Protocol--";
                     } 
@@ -3933,7 +3924,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                         ) ) {
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
-                            my $sni = "";
+                            $sni = "";
                             unless ($Net::SSLhello::use_sni_name) { 
                                 $sni = "'$host'" if ($Net::SSLhello::usesni); # Server Name, should be a Name no IP
                             } else { # different sni_name
