@@ -1127,7 +1127,7 @@ sub version { # version of SSLhello
     #? prints the official version number of SSLhello (yy-mm-dd)
 
     local $\ = ""; # no auto '\n' at the end of the line
-    print "NET::SSLhello_$VERSION\n";
+    print "NET::SSLhello        ($VERSION)\n";
     return;
 }
 
