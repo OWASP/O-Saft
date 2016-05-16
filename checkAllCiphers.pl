@@ -33,11 +33,12 @@
 
 use strict;
 use warnings;
-use Carp;           #replaces warn and die
+use Carp;                                                       #replaces warn and die
+use OSaft::error_handler qw (:sslhello_contants);               # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung OSaft::error_handler-><sub>)$
 
 use osaft;
 
-my $VERSION = "16.05.15";
+my $VERSION = "16.05.16";
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -405,10 +406,18 @@ while ($#argv >= 0) {
 }
 
 print "##############################################################################\n";
-print "# '$me' (part of OWASP project 'O-Saft'), Version (yy.mm.dd): $VERSION\n";
-print "# using module: O-Saft::";
+print "# '$me' (part of OWASP project 'O-Saft'),\n";
+print "#     Version (yy.mm.dd):           $VERSION\n";
+print "# using (internal) modules:\n";
+print "#     O-Saft::";
 Net::SSLhello::version();
+print "#     O-Saft::";
+OSaft::error_handler::version();
 print "##############################################################################\n\n";
+
+#reset error_handler and set basic information for this sub$
+OSaft::error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
+
 Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
 
 my $protocols;
@@ -468,6 +477,9 @@ if ($cfg{'usemx'}) { # get mx-records
 }
 
 foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
+    #reset error_handler and set basic information for this sub$
+    OSaft::error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
+
     if ($host =~ m#.*?:\d+#) { 
        ($host, $port) = split(":", $host);
         $cfg{'port'}  = $port;  #
@@ -481,6 +493,10 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         my @testing  = ();
         my $range = $cfg{'cipherrange'};                        # use specified range of constants
            $range = 'SSLv2_long' if ($ssl eq 'SSLv2');          # but SSLv2 needs its own list: SSLV2+SSLV3-Ciphers
+
+        #reset error_handler and set basic information for this sub$
+        OSaft::error_handler->reset_err( {module => $me, sub => '', print => ($cfg{'trace'} > 0), trace => $cfg{'trace'}} );
+
         ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
         #  NOTE: this eval must not use the block form because the value needs to be evaluated
         push(@testing, sprintf("0x%08X",$_)) foreach (eval($cfg{'cipherranges'}->{$range}));
@@ -489,6 +505,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             if ( ($Net::SSLhello::usesni > 1) || ($ssl eq 'SSLv2') || ($ssl eq 'SSLv3') ) { # toggle SNI (2): test first without sni, old protocols: test solely without SNI
                 $Net::SSLhello::usesni = 0;
                 @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
+                if ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
+                    _trace ("**WARNING: checkAllCiphers (1.1): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
+                    carp   ("**WARNING: checkAllCiphers (1.1): -> Abort '$host:$port'");
+                    last;
+                }
                 _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
                 _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
                 _trace("accepted ciphers: @accepted\n");
@@ -500,6 +521,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 #            next if ($ssl eq 'DTLSv09');# DTLSv09 has originally no SNI(??)
         }
         @accepted = Net::SSLhello::checkSSLciphers ($host, $port, $ssl, @testing);
+        if ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) { # severe error
+            _trace ("**WARNING: checkAllCiphers (1.2): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
+            carp   ("**WARNING: checkAllCiphers (1.2): -> Abort '$host:$port'");
+            last;
+        }
         _trace(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) . "\n");  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
         _v_print(" $ssl: tested ciphers: " . scalar(@testing) . ", accepted: " . (scalar(@accepted) - (scalar(@accepted) >= 2  && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an Order by the Server)
         _trace("accepted ciphers: @accepted\n");
