@@ -82,7 +82,7 @@ use Exporter qw(import);
 
 use constant {
     # the version number of this package
-    OERR_VERSION                                    => '16-05-15',
+    OERR_VERSION                                    => '16-05-16',
 
     # error types (general)
     OERR_NO_ERROR                                   =>     1,   # no error
@@ -93,6 +93,7 @@ use constant {
     OERR_UNKNOWN_TXT                                => "<<unknown>>",
 
     #special error types for SSLhello, the smaller value is more severe (they may be changed here if needed)
+    OERR_SSLHELLO_ABORT_PROGRAM                     => -9000,   # error: abort running this program -> exit
     OERR_SSLHELLO_ABORT_HOST                        =>   -99,   # error: abort testing this host
     OERR_SSLHELLO_RETRY_HOST                        =>   -94,   # error: retry testing this host
     OERR_SSLHELLO_ABORT_PROTOCOL                    =>   -89,   # error: abort testing this protocol for this host
@@ -114,6 +115,7 @@ our @EXPORT_OK =  ( qw(
     OERR_NO_ERROR
     OERR_UNDEFINED_TXT
     OERR_UNKNOWN_TXT
+    OERR_SSLHELLO_ABORT_PROGRAM
     OERR_SSLHELLO_ABORT_HOST
     OERR_SSLHELLO_RETRY_HOST
     OERR_SSLHELLO_ABORT_PROTOCOL
@@ -131,14 +133,15 @@ our @EXPORT_OK =  ( qw(
 
 our %EXPORT_TAGS =  (
     subs =>             [qw(new is_err get_err_str reset_err get_err_val 
-                            get_err_type get_err_hash get_all_err_types version
-    )],
+                            get_err_type get_err_hash get_all_err_types
+    )],                                                         #all subs besides 'version'
     sslhello_contants => [qw(
         OERR_VERSION
         OERR_NO_ERROR
         OERR_UNKNOWN_TYPE
         OERR_UNDEFINED_TXT
         OERR_UNKNOWN_TXT
+        OERR_SSLHELLO_ABORT_PROGRAM
         OERR_SSLHELLO_ABORT_HOST
         OERR_SSLHELLO_RETRY_HOST
         OERR_SSLHELLO_ABORT_PROTOCOL
@@ -158,6 +161,7 @@ our %EXPORT_TAGS =  (
 my $ERROR_TYPE_RHASH_REF = { 
    (OERR_NO_ERROR)                                  => 'OERR_NO_ERROR',
    (OERR_UNKNOWN_TYPE)                              => 'OERR_UNKNOWN_TYPE',
+   (OERR_SSLHELLO_ABORT_PROGRAM)                    => 'OERR_SSLHELLO_ABORT_PROGRAM',
    (OERR_SSLHELLO_ABORT_HOST)                       => 'OERR_SSLHELLO_ABORT_HOST',
    (OERR_SSLHELLO_RETRY_HOST)                       => 'OERR_SSLHELLO_RETRY_HOST',
    (OERR_SSLHELLO_ABORT_PROTOCOL)                   => 'OERR_SSLHELLO_ABORT_PROTOCOL',
@@ -216,16 +220,21 @@ sub _compile_err_str {
     $err_str  = $arg_ref->{module}                          if ( (exists ($arg_ref->{module}))  && (defined ($arg_ref->{module}))  );
     $err_str .= "::".$arg_ref->{sub}                        if ( (exists ($arg_ref->{sub}))     && (defined ($arg_ref->{sub}))     );
     $err_str .= " (".$arg_ref->{id}."):"                    if ( (exists ($arg_ref->{id}))      && (defined ($arg_ref->{id}))      );
-    if ( (exists ($arg_ref->{type})) && (defined ($arg_ref->{type})) ) {
+    $err_str .= " ".$arg_ref->{message}                     if ( (exists ($arg_ref->{message})) && (defined ($arg_ref->{message})) );
+    if ( (exists ($arg_ref->{type})) && (defined ($arg_ref->{type})) ) {    # type key is used
+        # check if is type is known (defind in the reverse hash):
         if ( (exists ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) ) {
-            $err_str .= " Type=".$ERROR_TYPE_RHASH_REF->{$arg_ref->{type}}."(".$arg_ref->{type}.")";
-        } else {                                                #unknown type (not defined in ERROR_TYPE_RHASH_REF)
-            $err_str .= " Type= ".(OERR_UNKNOWN_TXT)." (".$arg_ref->{type}.")";
+            if ( (exists ($arg_ref->{trace})) && ($arg_ref->{trace}>0) ) {  # show the type if trace is used
+                $err_str .= " [Type=".$ERROR_TYPE_RHASH_REF->{$arg_ref->{type}};
+                $err_str .= "(".$arg_ref->{type}.")"        if ( $arg_ref->{trace}>2 );
+                $err_str .= "]";
+            } # end trace
+        } else {                                                            # unknown type (not defined in ERROR_TYPE_RHASH_REF)
+            $err_str .= " [Type= ".(OERR_UNKNOWN_TXT)." (".$arg_ref->{type}.")]";
         }
-    } else {
-        $err_str .= " Type=".(OERR_UNDEFINED_TXT);
+    } else {                                                                # undefined type
+        $err_str .= " [Type=".(OERR_UNDEFINED_TXT)."]";
     }
-        $err_str .= " Message='".$arg_ref->{message}."'"    if ( (exists ($arg_ref->{message})) && (defined ($arg_ref->{message})) );
     return ($err_str);
 }
 
@@ -306,7 +315,7 @@ sub reset_err {
         %$arg_ref                                               # keys and values overwrite the previous if $arg_ref is defined and not empty
     ) if ($arg_ref);
 
-    if (($err_hash{print}) || ($err_hash{trace})) {
+    if ($err_hash{trace}>2) {
         my $err_str = _compile_err_str();
         print "$err_str\n";
     }
@@ -323,7 +332,7 @@ sub is_err {
     } else { # internal error: no type defined
        my $err_str = "OSaft::error_handler->is_err: internal error: undefined error type in \$error_hash: ";
        $err_str .= _compile_err_str();
-       print "$err_str\n" if ($err_hash{trace});
+       print "$err_str\n" if ($err_hash{trace}>2);
        carp ($err_str);
        return (1);
    }
@@ -386,7 +395,7 @@ sub get_err_hash {
     my $err_hash_str                = "";
     $prefix =   ""         if (!defined($prefix));              # default is no indent
     $hash_ref = \%err_hash if (!defined($hash_ref));            # default is the error_hash
-    print ">get_err_hash\n" if ($err_hash{trace});
+    print ">get_err_hash\n" if ($err_hash{trace}>2);
     #_trace "\n\$class =   $class\n";
     #_trace "\$hash_ref = ".\%$err_hash."\n";
     foreach my $err_key (sort (keys(%$hash_ref)) ) {
