@@ -55,7 +55,8 @@
 #?     error_handler->reset_err(<hash_ref (optional)>):
 #?                                                reset the last error, optionally set a new error using hash_ref
 #?     error_handler->is_err():                   returns '1' if an error has occured
-#?     error_handler->get_err_type():             get number and name of the last error type
+#?     error_handler->get_err_type():             get (internal) number of the last error type
+#?     error_handler->get_err_type_name():        get name of the last error type
 #?     error_handler->get_err_val():              get a value of the error hash
 #?     error_handler->get_err_str():              get and print an error message
 #?
@@ -82,7 +83,7 @@ use Exporter qw(import);
 
 use constant {
     # the version number of this package
-    OERR_VERSION                                    => '16-05-16',
+    OERR_VERSION                                    => '16.05.16',
 
     # error types (general)
     OERR_NO_ERROR                                   =>     1,   # no error
@@ -106,10 +107,11 @@ use constant {
     OERR_SSLHELLO_RETRY_RECORD                      =>   -49,   # error: retry to send this record (e.g. DTLS)
     OERR_SSLHELLO_MERGE_RECORD_FRAGMENTS            =>   -39,   # try to merge fragmented record
     OERR_SSLHELLO_MERGE_DTLS                        =>   -29,   # try to merge fragmented DTLS packets
+    OERR_SSLHELLO_ERROR_MESSAGE_IGNORED             =>    -1,   # error message ignored
 };
 
 our @EXPORT_OK =  ( qw(
-    new is_err get_err_str reset_err get_err_val get_err_type get_err_hash get_all_err_types version
+    new is_err get_err_str reset_err get_err_val get_err_type get_err_type _name get_err_hash get_all_err_types version
     OERR_VERSION
     OERR_UNKNOWN_TYPE
     OERR_NO_ERROR
@@ -133,7 +135,7 @@ our @EXPORT_OK =  ( qw(
 
 our %EXPORT_TAGS =  (
     subs =>             [qw(new is_err get_err_str reset_err get_err_val 
-                            get_err_type get_err_hash get_all_err_types
+                            get_err_type get_err_type_name get_err_hash get_all_err_types
     )],                                                         #all subs besides 'version'
     sslhello_contants => [qw(
         OERR_VERSION
@@ -341,16 +343,30 @@ sub is_err {
 
 #?---------------------------------------------------------------------------------------
 #? sub get_err_type():
-#? get error type: number and Name
+#? get error type (number)
 sub get_err_type {
     if ( (exists ($err_hash {type})) && (defined ($err_hash {type})) ) {
-        return ($err_hash {type}, $ERROR_TYPE_RHASH_REF->{$err_hash{type}}) if ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) );
-        return ($err_hash {type}, OERR_UNKNOWN_TXT);
+        return ($err_hash {type});
     } else {
         print "Error type is ".OERR_UNDEFINED_TXT if ($err_hash{trace});
         carp ("Error type is ".OERR_UNDEFINED_TXT);
     }
-    return (undef, OERR_UNDEFINED_TXT);
+    return (undef);
+}
+
+
+#?---------------------------------------------------------------------------------------
+#? sub get_err_type_name():
+#? get error type ame
+sub get_err_type_name {
+    if ( (exists ($err_hash {type})) && (defined ($err_hash {type})) ) {
+        return ($ERROR_TYPE_RHASH_REF->{$err_hash{type}}) if ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) );
+        return (OERR_UNKNOWN_TXT);
+    } else {
+        print "Error type is ".OERR_UNDEFINED_TXT if ($err_hash{trace});
+        carp ("Error type is ".OERR_UNDEFINED_TXT);
+    }
+    return (OERR_UNDEFINED_TXT);
 }
 
 
