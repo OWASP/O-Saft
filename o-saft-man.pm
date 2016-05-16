@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.114 16/05/16 23:21:51";
+my  $man_SID= "@(#) o-saft-man.pm 1.115 16/05/16 23:32:30";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1133,7 +1133,8 @@ Generated with:
 # 
 # Disclaimer: No offence meant anyhow, neither against any analyzing tool nor
 # against anyone using them. It is just a reminder to use the tools and their
-# results in a wise manner. Measuring quality is more than just statistics!
+# results in a wise manner. Measuring quality is more than just automatically
+# generated statistics!
 
 # end woodoo
 
