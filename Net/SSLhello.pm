@@ -40,14 +40,15 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {
-    SSLHELLO_VERSION=> '16.04.10',
-    SSLHELLO        => 'O-Saft::Net::SSLhello ',
+    SSLHELLO_VERSION=> '16.05.16',
+    SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.16 16/04/10 02:57:12',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
 #require IO::Select if ($main::cfg{'trace'} > 1);
 use Carp;
+use OSaft::error_handler qw (:sslhello_contants);               # use internal error_handler, get all constants used for SSLHELLO, for subs the full names will be used (includung OSaft::error_handler-><sub>)
 
 ######################################################## public documentation #
 
@@ -1760,13 +1761,15 @@ sub openTcpSSLconnection ($$) {
 
     my %startTlsTypeHash;
     $@ ="";
+    #reset error_handler and set basic information for this sub
+    OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
     if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via proxy
         _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
     } else {
         _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port\n");
     }    
     $retryCnt = 0;
-    if ($Net::SSLhello::starttls)  { # starttls -> find starttls-Type 
+    if ($Net::SSLhello::starttls)  {                            # starttls -> find starttls-Type
         $startTlsTypeHash{$starttls_matrix[$_][0]} = $_ for 0 .. scalar(@starttls_matrix) - 1;
         _trace4 ("openTcpSSLconnection: nr of Elements in starttlsTypeMatrix: ".scalar(@starttls_matrix)."; looking for starttlsType $Net::SSLhello::starttlsType\n");
 
@@ -1774,19 +1777,26 @@ sub openTcpSSLconnection ($$) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)}; 
             _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
             if ( grep {/^$starttlsType$/} ('12', '13', '14','15') ) { # ('12', '13', ...) -> Use of an experimental starttls-Type
-                if  ($Net::SSLhello::experimental >0) { # experimental function is are  activated
+                if  ($Net::SSLhello::experimental >0) {         # experimental function is are  activated
                     _trace_("\n");
                     _trace ("openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
-                } else { # use of experimental functions is not permitted (option is not activated)
+                } else {                                        # use of experimental functions is not permitted (option is not activated)
                     if ( grep {/^$starttlsType$/} ('12', '13', '14', '15') ) { # experimental and untested
-                        $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
-                    } else { # tested, but still experimental # experimental but tested 
-                        $@ = "openTcpSSLconnection: WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option \'--experimental\' to use it. Please send us your feedback to o-saft (at) lists.owasp.org\n";
+                        OSaft::error_handler->new( {
+                            type    => (OERR_SSLHELLO_ABORT_PROGRAM),
+                            id      => 'ckeck starttls type (1)',
+                            message => "WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental and *untested*!! Please take care! Please add option '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org",
+                            warn    => 1,
+                        } );
+                    } else {                                    # tested, but still experimental # experimental but tested
+                        OSaft::error_handler->new( {
+                            type    => (OERR_SSLHELLO_ABORT_PROGRAM),
+                            id      => 'ckeck starttls type (2)',
+                            message => "WARNING: use of STARTTLS-Type $starttls_matrix[$starttlsType][0] is experimental! Please add option '--experimental' to use it. Please send us your feedback to o-saft (at) lists.owasp.org",
+                            warn    => 1,
+                        } );
                     }
-                    #$retryCnt = $Net::SSLhello::retry; #No more retries
-                    #last;
-                    carp ($@);
-                    exit (1); #stop program
+                    exit (1);                                   # stop program
                 }
             }
             if ($starttls_matrix[$starttlsType][0] eq 'CUSTOM') { # customize the starttls_matrix 
