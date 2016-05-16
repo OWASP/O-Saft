@@ -1,0 +1,4032 @@
+#!/usr/binenv perldoc
+
+=pod
+
+=encoding utf8
+
+
+
+=head1 NAME
+
+O-Saft - OWASP SSL advanced forensic tool
+OWASP SSL audit for testers
+
+
+=head1 DESCRIPTION
+
+This tools lists  information  about remote target's  SSL certificate
+and tests the remote target according given list of ciphers.
+
+Note:  Throughout this description  C<$0>  is used as an alias for the
+program name  C<o-saft.pl>.
+
+
+=head1 SYNOPSIS
+
+         o-saft.pl [COMMANDS ..] [OPTIONS ..] target [target target ...]
+
+where  [COMMANDS]  and  [OPTIONS]  are described below  and target is
+a hostname either as full qualified domain name or as IP address.
+Multiple commands and targets may be combined.
+
+All  commands  and  options  can also be specified in a  rc-file, see
+L</RC-FILE>  below.
+
+
+=head1 QUICKSTART
+
+Before going into  a detailed description  of the  purpose and usage,
+here are some examples of the most common use cases:
+
+=item         * Show supported (enabled) ciphers of target:
+
+         o-saft.pl +cipher --enabled example.tld
+
+=item         * Show supported (enabled) ciphers with their DH parameters:
+
+         o-saft.pl +cipher-dh example.tld
+
+=item         * Test all ciphers, even if not supported by local SSL implementation:
+
+         o-saft.pl +cipherall example.tld
+
+=item         * Show details of certificate and connection of target:
+
+         o-saft.pl +info example.tld
+
+=item         * Check certificate, ciphers and SSL connection of target:
+
+         o-saft.pl +check example.tld
+
+=item         * Check connection to target for vulnerabilities:
+
+         o-saft.pl +vulns example.tld
+
+=item         * Check for all known ciphers (independant of SSL library):
+
+         o-saft.pl +cipherall example.tld --range=full
+         checkAllCiphers.pl example.tld
+         checkAllCiphers.pl example.tld I<--range=full> I<--v>
+
+=item         * Get the certificate's Common Name for a bunch of servers:
+
+         o-saft.pl +cn example.tld some.tld other.tld
+
+=item         * List more usage examples
+
+         o-saft.pl --help=examples
+
+=item         * List all available commands:
+
+         o-saft.pl --help=commands
+
+=item         * Get table of contents for complete help
+
+         o-saft.pl --help=toc
+
+=item         * Show just one section, for example SECURITY, from help
+
+         o-saft.pl --help=SECURITY
+
+=item         * Start the simple GUI
+
+         o-saft.tcl
+
+For more specialised test cases, refer to the  L</COMMANDS>  and  L</OPTIONS> 
+sections below. For more examples please refer to  L</EXAMPLES>  section.
+
+For more details, please see  L</Requirements>  and  L</INSTALLATION>  below.
+
+
+=head1 WHY?
+
+Why a new tool for checking SSL security and configuration  when there
+are already a dozen or more such good tools in existence (circa 2012)?
+
+Unique features:
+
+=item           * working in closed environments, i.e. without internet connection
+
+
+=item           * checking availability of ciphers independent of installed library
+
+
+=item           * checking for all possible ciphers (up to 65535 per SSL protocol)
+
+
+=item           * mainly same results on all platforms.
+
+
+Currently available tools suffer from some or all of following issues:
+
+=item           * lack of tests of unusual SSL certificate configurations
+
+
+=item           * may return different results for the same checks on given target
+
+
+=item           * missing tests for modern SSL/TLS functionality
+
+
+=item           * missing tests for specific, known SSL/TLS vulnerabilities
+
+
+=item           * no support for newer, advanced, features e.g. CRL, OCSP, EV
+
+
+=item           * limited capability to create your own customised tests
+
+
+Other  reasons or problems  are that other tools are either binary or
+use additional binaries and hence not portable to other platforms.
+
+In contrast to (all?) most other tools, including L<openssl(1)|openssl(1)>, it can
+be used to "ask simple questions" like "does target support STS" just
+by calling:
+         o-saft.pl +hsts_sts example.tld
+
+For more, please see  L</EXAMPLES>  section below.
+
+
+=head1 SECURITY
+
+This tool is designed to be used by people doing security or forensic
+analyses. Hence no malicious input is expected.
+
+There are no special security checks implemented. Some parameters are
+roughly sanatised according unwanted characters.  In particular there
+are no checks according any kind of code injection.
+
+Care should be taken, when additional tools and modules are installed
+as described in  L</INSTALLATION>  below.  In particular  we recommend to
+do such installations into directoies specially prepared for use with
+         o-saft.pl . No other tools of your system should use these installations
+i.e. by accident or because your environment variables point to them.
+
+Note that compilation and installation of additional tools  (openssl, 
+Net::SSLeay, etc.) uses known insecure configurations and features!
+This is essential to make o-saft.pl able to check for such insecurities.
+
+It is  highly recommended to do these installations and use the tools
+on a separate testing system.
+
+B<DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYTEMS.>
+
+
+=head1 TECHNICAL INFORMATION
+
+It is important to understand, which provided information is based on
+data returned by underlaying (used) libraries and the information 
+computed directly.
+
+=head2 openssl, libssl, libcrypto
+
+In general the tool uses perl's L<Net::SSLeay(1)|Net::SSLeay(1)> module  which itself
+is based on libssl and/or libssleay library of the operating system.
+It's possible to use other versions of these libraries, see options:
+
+=item           * --exe-path=PATH --exe=PATH
+
+
+=item           * --lib-path=PATH --lib=PATH
+
+
+=item           * --envlibvar=NAME
+
+
+The external L<openssl(1)|openssl(1)> is called to extract  some information from
+its output.  The version of openssl can be controlled  with following
+options:
+
+=item           * --openssl=TOOL
+
+
+=item           * --no-openssl
+
+
+=item           * --force-openssl
+
+
+=item           * --exe-path=PATH --exe=PATH
+
+
+Above applies to all commands except  I<+cipherall>  which uses no other
+libraries.
+
+OpenSSL is recommended to be used for libssl and libcrypto.  Versions
+0.9.8k to 1.0.2e (Jan. 2016) are known to work. However, versions be-
+for 1.0.0 may not provide all informations.
+LibreSSL is not recommended, because  some functionallity  considered
+insecure, has been removed.
+For more details, please see  L</INSTALLATION>  below.
+
+
+=head2 Certificates and CA
+
+All checks according the validity of the certificate chain  are based
+on the root CAs installed on the system. NOTE that L<Net::SSLeay(1)|Net::SSLeay(1)> and
+L<openssl(1)|openssl(1)> may have their own rules where to find the root CAs.
+Please refer to the documentation on your system for these tools.
+However, there are folloing options to tweak these rules:
+
+=item           * --ca-file=FILE
+
+
+=item           * --ca-path=DIR
+
+
+=item           * --ca-depth=INT
+
+
+=head2 Commands and options
+
+All arguments  starting with  C<+>  are considered  L</COMMANDS>  for this
+tool. All arguments starting with  C<-->  are considered  L</OPTIONS>  for
+this tool.
+
+Reading any data from STDIN or here-documents is not yet supported.
+It's reserved for future use.
+
+=head2 Environment variables
+
+Following environment variables are incorporated:
+
+=item           * LD_LIBRARY_PATH - used and extended with definitions from options
+
+
+=item           * OPENSSL         - if set, full path to openssl executable
+
+
+=item           * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
+
+directory where to find openssl.cnf
+
+
+=head2 Requirements
+
+For checking all ciphers and all protocols with  I<+cipherall>  command,
+just perl (5.x) without any modules is required.
+
+For  I<+info>  and  I<+check>  (and all related) commands,  perl (5.x) with
+following modules (minimal version) is required:
+
+=item           * IO              1.25 (2011)
+
+=item           * IO::Socket::SSL 1.37 (2011)
+
+=item           * IO::Socket::SSL 1.90 (2013)
+
+=item           * Net::DNS        0.66 (2011)
+
+=item           * Net::SSLeay     1.49 (2012)
+
+
+However, it is recommended to use the most recent version of the mod-
+ules which then gives more accurate results and less warnings. If the
+modules are missing, they can be installed i.e. with:
+
+cpan Net::SSLeay
+
+Note: if you want to use advanced features of openssl or Net::SSLeay,
+please see  INSTALLTION  section how to compile and install the tools
+fully customized.
+
+Also an openssl executable should be available, but is not mandatory.
+
+For checking DH parameters of ciphers, openssl 1.0.2  or newer should
+be available. If an older version of openssl is found, we try hard to
+extract  the DH parameters from the  data returned by the server, see
+I<+cipher-dh>  command.
+
+
+=head1 RESULTS
+
+All output is designed to be easily parsed by postprocessors.  Please
+see  L</OUTPUT>  section below for details.
+
+For the results,  we have to distinguish  those  returned by  I<+cipher>
+command  and those from  all other tests and checks like   I<+check>  or
+I<+info>  command.
+
+=head3 +cipher
+
+The cipher checks will return  one line for each  tested cipher. It
+contains at least the cipher name,  C<yes>  or  C<no>  whether  it is
+supported or not, and a security qualification. It may look like:
+               C<AES256-SHA       yes    HIGH>
+               C<NULL-SHA         no     weak>
+
+Depending on the used  I<--legacy=*>  option the format may differ and
+also contain more information.  For details see  I<--legacy=*>  option
+below.
+
+The text for security qualifications are (mainly) those returned by
+openssl (version 1.0.1): LOW, MEDIUM, HIGH and WEAK.
+The same texts, but with all lower case characters, are used if the
+qualification was adapted herein. Following rules for adjusting the
+qualification were used:
+
+=item             * weak:
+
+=item               ** all *NULL* ciphers
+
+=item               ** all *RC4*  ciphers
+
+=item               ** all *EXPORT*  ciphers
+
+=item               ** all *anon* (aka ADH aka DHA) ciphers
+
+=item             * low:
+
+=item               ** all *CBC*  ciphers
+
+=item             * high:
+
+=item               ** all *CBC3* (aka 3DES) ciphers
+
+=item               ** all *AES(128|256)* ciphers
+
+=item               ** all *CAMELLIA* ciphers
+
+
+=head3 +check
+
+These tests return a line with  a label  describing the test  and a
+test result for it. The  idea is to report  C<yes>  if the result is
+considered "secure"  otherwise report  C<no>  followed by the reason
+why it's considered insecure. Example of a check considered secure:
+               C<Label of the performed check:           yes>
+
+Example of a check considered insecure:
+               C<Label of the performed check:           no (reason why)>
+
+Note  that there are tests where the results  appear confusing when
+first viewed, like for www.wi.ld:
+               C<Certificate is valid according given hostname:  no (*.wi.ld)>
+               C<Certificate's wildcard does not match hostname: yes>
+
+This can for example occur with:
+               C<Certificate Common Name:                *.wi.ld>
+               C<Certificate Subject's Alternate Names:  DNS:www.wi.ld>
+
+Please check the result with the  I<+info>  command also to  verify if
+the check sounds reasonable.
+
+=head3 +info
+
+The test result contains detailed information. The labels there are
+mainly the same as for the  I<+check>  command.
+
+
+=head1 COMMANDS
+
+There are commands for various tests according the  SSL connection to
+the target, the targets certificate and the used ciphers.
+
+All commands are preceded by a  C<+>  to easily distinguish from other
+arguments and options. However, some I<--OPTIONS> options are treated as
+commands for historical reason or compatibility to other programs.
+
+The most important commands are (in alphabetical order):
+I<+check> I<+cipher> I<+info> I<+http> I<+list> I<+quick> I<+sni> I<+sni_check> I<+version>
+
+A list of all available commands will be printed with:
+         o-saft.pl --help=cmd
+
+The description of all other commands will be printed with:
+         o-saft.pl --header --help=commands
+
+The summary and internal commands return requested information or the
+results of checks. These are described below.
+
+Note that some commands may be a combination of other commands, see:
+         o-saft.pl --header --help=intern
+
+The following sub-sections only describe the commands,  which do more
+than giving a simple information from the target.  All other commands
+can be listed with:
+         o-saft.pl --header --help=commands
+
+The final sub-sections  L</Notes about commands>  describes some notes
+about special commands and related commands.
+
+=head2 Commands for information about this tool
+
+All these commands will exit after execution (cannot be used together
+with other commands).
+
+=head3 +ciphers
+
+Show ciphers offered by local SSL implementation.
+
+This commands prints the ciphers in a format like "openssl ciphers"
+does. It also accepts the  -v  and  -V  option. The  I<--legacy=TYPE> 
+option can be used as described for  I<+list>  command.
+Use  I<+list>  command for more information according ciphers.
+
+=head3 +list
+
+Show all ciphers supported by this tool. This includes cryptogrphic
+details of the cipher and some internal details about the rating.
+
+In contrast to the  I<+ciphers>  command,  I<+list>  uses  TAB characters
+instead of spaces to seperate columns.  It also prints table header
+lines by default.
+
+Different output formats are used for the  I<--legacy>  option:
+
+=item             * --legacy=simple   tabular output of cipher values
+
+
+=item             * --legacy=full     as --legacy=simple but more data
+
+
+=item             * --legacy=openssl  output like with +ciphers command
+
+
+=item             * --legacy=ssltest  output like "ssltest --list"
+
+
+
+=head3 +VERSION
+
+Just show version and exit.
+
+=head3 +version
+
+Show version information for both the program and the  Perl modules
+that it uses, then exit.
+
+Use  I<--v>  option to show more details.
+
+=head3 +libversion
+
+Show version of openssl.
+
+=head3 +quit
+
+Show internal data and exit, used for debugging only.
+
+=head2 Commands to check SSL details
+
+Following (summary and internal) commands are simply a shortcut for a
+list of other commands. For details of the list use:
+         o-saft.pl --help=intern
+
+=head3 +check
+
+Check the SSL connection for security issues. This is the same as:
+               C<+info +cipher +sizes --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12>
+but also gives some kind of scoring for security issues if any.
+
+=head3 +http
+
+Perform HTTP checks (like STS, redirects etc.).
+
+=head3 +info
+
+Overview of most important details of the SSL connection.
+
+Use  I<--v>  option to show details also, which span multiple lines.
+
+=head3 +info--v
+
+Overview of all details of the SSL connection. It is a shortcut for
+all commands listed below but not including  I<+cipher>.
+
+This command is intended for debugging as it prints some details of
+the used L<Net::SSLinfo|Net::SSLinfo> module.
+
+=head3 +quick
+
+Quick overview of checks. Implies  I<--enabled>  and  I<--short>.
+
+=head3 +pfs
+
+Check if servers offers ciphers with prefect forward secrecy (PFS).
+
+=head3 +sts
+=head3 +hsts
+
+Various checks according STS HTTP header.
+This option implies  I<--http>,  means that  I<--no-http> is ignored.
+
+=head3 +sni
+
+Check for Server Name Indication (SNI) usage.
+
+=head3 +sni_check
+=head3 +check_sni
+
+Check for Server Name Indication (SNI) usage  and  validity  of all
+names (CN, subjectAltName, FQDN, etc.).
+
+=head3 +bsi
+
+Various checks according BSI TR-02102-2 and TR-03116-4 compliance.
+
+=head3 +ev
+
+Various checks according certificate's extended Validation (EV).
+
+Hint: use option  I<--v> I<--v>  to get information about failed checks.
+
+=head3 +sizes
+
+Check length, size and count of some values in the certificate.
+
+=head3 +s_client
+
+Dump data retrieved from  "openssl s_client ..."  call. This should
+be used for debugging only.
+It can be used just like openssl itself, for example:
+               C<openssl s_client -connect host:443 -no_sslv2>
+
+=head3 +dump
+
+Dumps internal data for SSL connection and target certificate. This
+is mainly for debugging and  should not be used together with other
+commands (except I<+cipher>).
+Each key-value pair is enclosed in  #{  and  #} .
+
+Using  I<--trace> I<--trace>  dumps data of L<Net::SSLinfo|Net::SSLinfo> too.
+
+=head3 +exec
+
+Command used internally when requested to use other libraries.
+This command should not be used directly.
+
+
+=head2 Commands to test target's ciphers
+
+=head3 +cipher
+
+Check target for ciphers,  either all ciphers, or ciphers specified
+with  I<--cipher=*>  option.
+
+Note that ciphers not supported by the local SSL implementation are
+not checked by default, use  I<+cipherall>  command for that.
+
+=head3 +cipherall
+=head3 +cipherraw
+
+Check target for all possible ciphers.
+Does not depend on local SSL implementation.
+
+In contrast to  I<+cipher>  this command has some options to tweak the
+cipher tests, connection results and some strange behaviours of the
+target. See  L</Options for cipherall command>  for details.
+
+=head3 +cipher-SSL
+
+Get default cipher for protocol SSL.
+
+=item           * SSL         can be any of:
+
+sslv2, sslv3, tls1, tls11, tls12, tls13, dtls1
+
+=head2 Commands to test SSL connection to target
+
+Please see:
+         o-saft.pl --help=commands
+
+=head2 Commands to show details of the target's certificate
+
+Please see:
+         o-saft.pl --help=commands
+
+=head2 Notes about commands
+
+=head3 +extensions vs. +tlsextensions
+
+I<+extensions>  shows the "Certificate extensions" and  I<+tlsextensions>
+will show the TLS protocol extensions.
+Use  I<+tlsextdebug>  to show more informations about the TLS protocol
+extensions.
+
+=head3 +http2 +spdy +spdy3 +spdy31 +spdy4 +prots
+
+These commands are just an alias for the  I<+protocols>  command.
+
+
+=head1 OPTIONS
+
+All options are written in lowercase. Words written in all capital in
+the description here is text provided by the user.
+
+=head2 Options for help and documentation
+
+=head3 --h
+
+=head3 --help
+
+B<WYSIWYG>
+
+=head3 --help=cmd
+
+Show available commands; short form.
+
+=head3 --help=commands
+
+Show available commands with short description.
+
+=head3 --help=opt
+
+Show available options; short form.
+
+=head3 --help=options
+
+Show available options with their description.
+
+=head3 --help=checks
+
+Show available checks.
+
+=head3 --help=legacy
+
+Show possible legacy formats (used as value in  I<--legacy=TOOL>).
+
+=head3 --help=compliance
+
+Show available compliance checks.
+
+=head3 --help=intern
+
+Show internal commands.
+
+=head3 --help=alias
+
+Show alias for commands and options.
+
+=head3 --help=range
+
+Show list of cipherranges (see  I<--cipherrange=RANGE>).
+
+=head3 --help=score
+
+Show score value for each check.
+Value is printed in format to be used for  I<--cfg-score=KEY=SCORE>.
+
+Note that the  sequence  of options  is important.  Use the options
+I<--trace>  and/or  I<--cfg-score=KEY=SCORE>  before  I<--help=score>.
+
+=head3 --help=toc
+=head3 --help=content
+
+Show headlines from help text. Useful to get an overview.
+
+=head3 --help=SECTION
+
+Show  <SECTION>  from documentation, see  I<--help=toc>  for a list.
+Example:
+               C<o-saft.pl --help=EXAMPLES>
+
+=head3 --help=text
+
+Show texts used in various messages.
+
+=head3 --help=cfg-check
+
+Show texts used as labels in output for checks (see  I<+check>)  ready
+for use in  L</RC-FILE>  or as option.
+
+=head3 --help=cfg-data
+
+Show texts used  as labels in output for  data  (see  I<+info>)  ready
+for use in  L</RC-FILE>  or as option.
+
+=head3 --help=cfg-text
+=head3 --help=text-cfg
+
+Show texts used in various messages ready for use in  L</RC-FILE>  or
+as option.
+
+=head3 --help=ourstr
+
+Show regular expressions to match our own strings used in output.
+
+=head3 --help=regex
+
+Show regular expressions used internally.
+
+=head3 --help=gen-html
+
+Print documentation in HTML format.
+
+=head3 --help=gen-wiki
+
+Print documentation in mediawiki format.
+
+=head3 --help=gen-cgi
+
+Print documentation in format to be used for CGI.
+
+=head3 --help=error
+=head3 --help=warning
+=head3 --help=problem
+
+Show  KNOWN PROBLEMS  section with  description of known  error and
+warning messages.
+
+=head3 --help=faq
+
+Show  KNOWN PROBLEMS  and  L</LIMITATIONS>  section.
+
+=head3 --help=glossar
+
+Show common abbreviation used in the world of security.
+
+=head3 --help=todo
+
+Show known problems and bugs.
+
+=head3 --help=program.code
+
+For developers.
+
+=head2 Options for all commands (general)
+
+=head3 --no-rc
+
+Do not read  L</RC-FILE>.
+
+=head3 --dns
+
+Do DNS lookups to map given hostname to IP, do a reverse lookup.
+
+=head3 --no-dns
+
+Do not make DNS lookups.
+Note  that the corresponding IP and reverse hostname may be missing
+in some messages then.
+
+=head3 --host=HOST
+
+Specify HOST as target to be checked. Legacy option.
+
+=head3 --port=PORT
+
+Specify PORT of target to be used. Legacy option.
+
+=head3 --host=HOST and --port=PORT and HOST:PORT and HOST
+
+When giving more than one HOST argument,  the sequence of the given
+HOST argument and the given  I<--port=PORT>  and the given I<--host=HOST>
+options are important.
+The rule how ports and hosts are mapped is as follows:
+HOST:PORT arguments are used as is (connection to HOST on PORT)
+only HOST is given, then previous specified  I<--port=PORT>  is used
+Note that URLs are treated as HOST:PORT, if they contain a port.
+Example:
+               C<o-saft.pl +cmd host-1 --port 23 host-2 host-3:42 host-4>
+will connect to:
+
+=item             * host-1:443
+
+
+=item             * host-2:23
+
+
+=item             * host-3:42
+
+
+=item             * host-4:23
+
+
+=head3 --proxyhost=PROXYHOST --proxy=PROXYHOST:PROXYPORT
+
+Make all connection to target using PROXYHOST.
+
+Also possible is: I<--proxy=PROXYUSER:PROXYPASS@PROXYHOST:PROXYPORT>
+
+=head3 --proxyport=PROXYPORT
+
+Make all connection to target using PROXYHOST:PROXYPORT.
+
+=head3 --proxyuser=PROXYUSER
+
+Specify username for proxy authentication.
+
+=head3 --proxypass=PROXYPASS
+
+Specify password for proxy authentication.
+
+=head3 --starttls
+
+Use C<STARTTLS> command to start a TLS connection via SMTP.
+This option is a shortcut for  I<--starttls=SMTP> .
+
+=head3 --starttls=SMTP
+=head3 --starttls=PROT
+
+Use C<STARTTLS> command to start a TLS connection via protocol. PORT
+PORT may be any of: C<SMTP>, C<IMAP>, C<IMAP2>, C<POP3>, C<FTPS>, C<RDP>,
+C<LDAP> or C<XMPP>
+
+For  I<--starttls=SMTP>  see  I<--dns-mx>  also to use MX records instead
+of host
+
+=head3 --starttls-delay=SEC
+
+Number of seconds to wait before sending a packet, to slow down the
+C<STARTTLS> requests. Default is 0.
+This may prevent blocking of requests by the target due to too much
+or too fast connections.
+Note:  In this case there is an automatic suspension and retry with
+a longer delay.
+
+=head3 --cgi
+=head3 --cgi-exec
+
+Internal use for CGI mode only.
+
+=head2 Options for SSL tool
+
+=head3 --s_client
+
+Use  "openssl s_slient ..."  call to retrieve more information from
+the SSL connection.  This is disabled by default on Windows because
+of performance problems. Without this option (default on Windows !)
+following informations are missing on Windows:
+               C<compression, expansion, renegotiation, resumption,>
+               C<selfsigned, verify, chain, protocols, DH parameters>
+See L<Net::SSLinfo|Net::SSLinfo> for details.
+
+If used together with  I<--trace>, s_client  data will also be printed
+in debug output of L<Net::SSLinfo|Net::SSLinfo>.
+
+=head3 --no-openssl
+
+Do not use external "openssl"  tool to retrieve information. Use of
+"openssl" is disabled by default on Windows.
+Note that this results in some missing informations, see above.
+
+=head3 --openssl=TOOL
+
+C<TOOL>        can be a path to openssl executable; default: openssl
+
+=head3 --openssl-cnf=FILE --openssl-conf=FILE
+
+C<FILE>        path of directory or full path of openssl.cnf
+
+If set, environment variable OPENSSL_CONF will be set to given path
+(or file) when L<openssl(1)|openssl(1)> is started. Please see openssl's man page
+for details about specifying alternate  openssl.cnf  files.
+
+=head3 --force-openssl
+
+Use openssl to check for supported ciphers;  default: L<IO::Socket(1)|IO::Socket(1)>
+
+This option forces to use  "openssl s_slient -connect CIPHER .." to
+check if a cipher is supported by the remote target. This is useful
+if the  I<--lib=PATH>  option doesn't work (for example due to changes
+of the API or other incompatibilities).
+
+=head3 --exe-path=PATH
+=head3 --exe=PATH
+
+C<PATH>        is a full path where to find openssl.
+
+=head3 --lib-path=PATH
+=head3 --lib=PATH
+
+C<PATH>        is a full path where to find libssl.so and libcrypto.so
+
+See L</HACKER's INFO> below for a detailed description how it works.
+
+=head3 --envlibvar=NAME
+
+C<NAME>  is the name of a environment variable containing additional
+paths for searching dynamic shared libraries.
+Default is LD_LIBRARY_PATH.
+
+Check your system for the proper name, i.e.:
+               C<DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH.>
+
+=head3 --ssl-lazy
+
+I.g. this tools tries to identify available functionality according
+SSL versions from the underlaying libraries.  Unsupported  versions
+are then disables and a warning is shown.
+Unfortunately some libraries have  not implemented all functions to
+check availability of a specific SSL version, which then results in
+a compile error. 
+
+This option disables the strict check of availability.
+If the underlaying library doesn't support the required SSL version
+at all, following error may occour:
+               C<Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...>
+
+See L</Note on SSL versions>  for a general note about SSL versions.
+A more detailled description of the problem and how Net::SSLeay be-
+haves, can be found in the source of  o-saft.pl ,
+see section starting at
+               C<#| check for supported SSL versions>
+
+
+=head3 --call=METHOD
+
+C<METHOD>      method to be used for specific functionality
+
+Available methods:
+
+=item           * info-socket         use internal socket to retrieve information
+
+
+=item           * info-openssl        use external openssl to retrieve information
+
+
+=item           * info-user           use usr_getinfo() to retrieve information
+
+
+=item           * cipher-socket       use internal socket to ckeck for ciphers
+
+
+=item           * cipher-openssl      use external openssl to ckeck for ciphers
+
+
+=item           * cipher-user         use usr_getciphers() to ckeck for ciphers
+
+Method names starting with:
+
+=item           * info-       are responsible to retrieve information about the SSL
+
+connection  and the target certificate (i.g. what the
+I<+info>  command provides)
+
+=item           * cipher-     are responsible to connect to the target  and test if
+
+it supports the specified ciphers  (i.g. what I<+cipher>
+command provides)
+
+=item           * check-      are responsible for performing the checks  (i.e. what
+
+is shown with  I<+check>  command)
+
+=item           * score-      are responsible to compute  the score based on  check
+
+results
+The second part of the name denotes which kind of method to call:
+
+=item           * socket      the internal functionality with sockets is used
+
+
+=item           * openssl     the exteranl openssl executable is used
+
+
+=item           * user        the external special function, as specified in user's
+
+L<o-saft-usr.pm|o-saft-usr.pm>,  is used.
+
+Example:
+               C<--call=cipher-openssl>
+
+will use the external L<openssl(1)|openssl(1)> executable to check the target for
+supported ciphers.
+
+Default settings are:
+               C<--call=info-socket --call=cipher-socket --call=check-socket>
+
+Just for curiosity, instead of using:
+               C<o-saft.pl --call=info-user --call=cipher-user --call=check-user --call=score-user ...>
+
+consider to use your own script like:
+               C<#!/usr/bin/env perl>
+               C<usr_getinfo();usr_getciphers();usr_checkciphers();usr_score();>
+
+:-))
+
+=head3 -v
+
+Print list of ciphers in style like: "openssl ciphers -v".
+Option used with  I<+ciphers>  command only.
+
+=head3 -V
+
+Print list of ciphers in style like: "openssl ciphers -V".
+Option used with  I<+ciphers>  command only.
+
+=head2 Options for SSL connection to target
+
+=head3 --cipher=CIPHER
+
+=item           * C<CIPHER>    can be any string accepeted by openssl or following:
+
+=item           * C<yeast>     use all ciphers from list defined herein, see  +list
+
+
+Beside the cipher names accepted by openssl, CIPHER can be the name
+of the constant or the (hex) value as defined in openssl's files.
+Currently supported are the names and constants of openssl 1.0.1k.
+Example:
+
+=item             * --cipher=DHE_DSS_WITH_RC4_128_SHA
+
+
+=item             * --cipher=0x03000066
+
+
+=item             * --cipher=66
+
+will be mapped to   DHE-DSS-RC4-SHA
+
+Note: if more than one cipher matches, just one will be selected.
+
+Default is C<ALL:NULL:eNULL:aNULL:LOW> as specified in L<Net::SSLinfo|Net::SSLinfo>.
+
+=head3 --ignore-no-connect
+
+A simple check if the target can be connected  will be performed by
+default.  If this check fails, the target will be ignored, means no
+more reuqested checks will be done.  As this connection check some-
+times fails due to various reasons, the check can be disabled using
+this option.
+
+=head3 --no-md5-cipher
+
+Do not use *-MD5 ciphers for other protocols than SSLv2.
+This option is only effective with  I<+cipher>  command.
+
+The purpose is to avoid warnings from L<IO::Socket::SSL(1)|IO::Socket::SSL(1)> like:
+               C<Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.>
+which occours with some versions of L<IO::Socket::SSL(1)|IO::Socket::SSL(1)> when a *-MD5
+ciphers will be used with other protocols than SSLv2.
+
+Note that these ciphers will be checked for SSLv2 only.
+
+
+=head3 --sslv2
+=head3 --sslv3
+=head3 --tlsv1
+=head3 --tlsv11
+=head3 --tlsv12
+=head3 --tlsv13
+=head3 --dtlsv09
+=head3 --dtlsv1
+=head3 --dtlsv11
+=head3 --dtlsv12
+=head3 --dtlsv13
+=head3 --SSL, -protocol SSL
+
+=head3 --no-sslv2
+=head3 --no-sslv3
+=head3 --no-tlsv1
+=head3 --no-tlsv11
+=head3 --no-tlsv12
+=head3 --no-tlsv13
+=head3 --no-dtlsv09
+=head3 --no-dtlsv1
+=head3 --no-dtlsv11
+=head3 --no-dtlsv12
+=head3 --no-dtlsv13
+=head3 --no-SSL
+
+=item           * C<SSL>       can be any of:
+
+ssl, ssl2, ssl3, sslv2, sslv3, tls1, tls1, tls11,
+tls1.1, tls1-1, tlsv1, tlsv11, tlsv1.1, tlsv1-1
+(and similar variants for tlsv1.2).
+For example:  I<--tls1>  I<--tlsv1>  I<--tlsv1_1>  are all the same.
+
+(--SSL variants):    Test ciphers for this SSL/TLS version.
+(--no-SSL variants): Don't test ciphers for this SSL/TLS version.
+
+=head3 --no-tcp
+
+Shortcut for:
+I<--no-sslv2> I<--no-sslv3> I<--no-tlsv1> I<--no-tlsv11> I<--no-tlsv12> I<--no-tlsv13>
+
+=head3 --tcp
+
+Shortcut for:  I<--sslv2> I<--sslv3> I<--tlsv1> I<--tlsv11> I<--tlsv12> I<--tlsv13>
+
+=head3 --no-udp
+
+Shortcut for:
+I<--no-dtlsv09> I<--no-dtlsv1> I<--no-dtlsv11> I<--no-dtlsv12> I<--no-dtlsv13>
+
+=head3 --udp
+
+Shortcut for:  I<--dtlsv09> I<--dtlsv1> I<--dtlsv11> I<--dtlsv12> I<--dtlsv13>
+
+=head3 --nullsslv2
+
+This option  forces  to assume that  SSLv2  is enabled  even if the
+target does not accept any ciphers.
+
+The target server may accept connections with  SSLv2  but not allow
+any cipher. Some checks verify if  SSLv2  is enabled at all,  which
+then would result in a failed test.
+The default behaviour is to assume that  SSLv2 is not enabled if no
+ciphers are accepted.
+
+=head3 --http
+
+Make a HTTP request if cipher is supported.
+
+If used twice debugging will be enabled using  environment variable
+C<HTTPS_DEBUG>.
+
+=head3 --no-http
+
+Do not make HTTP request.
+
+=head3 --sni
+
+Make SSL connection in SNI mode.
+
+=head3 --no-sni
+
+Do not make SSL connection in SNI mode (default: SNI mode).
+
+=head3 --sni-toggle
+=head3 --toggle-sni
+
+Test with and witout SNI mode.
+
+=head3 --force-sni
+
+Do not check if SNI seems to be supported by L<Net::SSLeay(1)|Net::SSLeay(1)>.
+Older versions of openssl and its libries do not support SNI or the
+SNI support is implemented buggy. By default it's checked if SNI is
+properly supported. With this option this check can be disabled.
+
+Be warned that this may result in improper results.
+
+=head3 --servername=NAME
+=head3 --sni-name=NAME
+
+Use NAME instead of given hostname to connect to target in SNI mode
+By  default, NAME is automatically set to the given FQDN.
+This is insufficient, when an IP instead of a FQDN was given,  then
+the connection needs to specify the correct hostname (i.g. a FQDN).
+
+For historical reason, the value C<1> is the same as if the the real
+FQDN (given hostname) has been used.  If the value is empty, or the
+value C<0> is given, no SNI name will be used.
+
+Note: i.g. there is no need to use this option,  as a correct value
+for the SNI name will be choosen automatically (except for IPs).
+However, it's kind of fuzzing ...
+
+=head3 --no-cert
+
+Do not get data from target's certificate, return empty string.
+
+=head3 --no-cert --no-cert
+
+Do not get data from  target's certificate,  return  default string
+of L<Net::SSLinfo|Net::SSLinfo> (see  I<--no-cert-text=TEXT>  option).
+
+=head3 --no-cert-text=TEXT
+
+Set C<TEXT> to be returned from L<Net::SSLinfo|Net::SSLinfo> if no certificate data
+is collected due to use of  I<--no-cert>.
+
+=head3 --ca-depth=INT
+
+Check certificate chain to depth C<INT> (like openssl's -verify).
+
+=head3 --ca-file=FILE
+
+Use C<FILE> with bundle of CAs to verify target's certificate chain.
+
+=head3 --ca-path=DIR
+
+Use C<DIR> where to find CA certificates in PEM format.
+
+=head3 --ca-force
+=head3 --force-ca
+
+B<NOT YET IMPLEMENTED>
+I. g. openssl uses default settings where to find certificate files.
+When  I<--ca-file=FILE>  and/or  I<--ca-path=DIR>  was used,  this default
+will be overwritten by appropriate options passed to openssl. If the
+default does not work as expected,  I<--force-ca>  can be used to force
+setting of proper values according well known common defaults. See:
+               C<o-saft.pl +version>
+               C<o-saft.pl +version --force-ca>
+to see the used settings.
+
+
+=head3 --no-nextprotoneg
+
+Do not use  -nextprotoneg  option for openssl.
+
+=head3 --no-reconnect
+
+Do not use  -reconnect  option for openssl.
+
+=head3 --no-tlsextdebug
+
+Do not use  -tlsextdebug  option for openssl.
+
+=head3 --sclient-opt=VALUE
+
+Argument or option passed to openssl's  s_client  command.
+
+=head2 Options for cipherall command
+
+=head3 --range=RANGE 
+=head3 --cipherrange=RANGE
+
+Specify range of cipher constants to be tested by  I<+cipherall>.
+Following RANGEs are supported (see also:  I<--cipherrange=RANGE>):
+
+=item           * C<rfc>               all ciphers defined in various RFCs
+
+
+=item           * C<shifted>           C<rfc>, shifted by 64 bytes to the right
+
+
+=item           * C<long>              like C<rfc> but more lazy list of constants
+
+
+=item           * C<huge>              all constants  0x03000000 .. 0x0300FFFF
+
+
+=item           * C<safe>              all constants  0x03000000 .. 0x032FFFFF
+
+
+=item           * C<full>              all constants  0x03000000 .. 0x03FFFFFF
+
+
+=item           * C<SSLv2>             all ciphers according RFC for SSLv2
+
+
+=item           * C<SSLv2_long>        more lazy list of constants for SSLv2 ciphers
+
+
+Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
+It does not make sense to use it for other protocols; however ...
+
+=head3 --slow-server-delay=SEC 
+
+Additional delay in seconds  after the server is connected  using a
+proxy or before starting STARTTLS.
+This is useful when connecting via  slow proxy chains or connecting
+to slow servers before sending the STARTTLS sequence.
+
+=head3 --ssl-maxciphers=CNT 
+
+Maximal number of ciphers sent in a sslhello (default: 32).
+
+=head3 --ssl-double-reneg
+
+Send SSL extension  C<reneg_info>  even if list of ciphers includes
+TLS_EMPTY_RENEGOTIATION_INFO_SCSV (default: do not include)
+
+=head3 --ssl-nodata-nocipher
+
+Some servers do not answer  (i.g. they disconnect) if  none of  the
+offered ciphers is supported by the server.
+
+Continue testing with next ciphers  when the target  disconnects or
+does not send data within specified timeout (see I<--timeout>).
+Useful for TLS intolerant servers.
+
+=head3 --no-ssl-nodata-nocipher
+
+Abort testing with next ciphers when the target disconnects.
+
+=head3 --ssl-use-ecc
+
+Use supported elliptic curves.  Default on.
+
+=head3 --ssl-use-ec-point
+
+Use TLS C<ec_point_formats> extension.  Default on.
+
+=head3 --ssl-use-reneg
+
+Test for ciphers with "secure renegotiation" flag set.
+Default: don't set "secure renegotiation" flag.
+
+=head3 --ssl-retry=CNT
+
+Number of retries when connection timed-out (default: 2).
+
+=head3 --ssl-timeout=SEC
+
+Number of seconds to wait until connection is qualified as timeout.
+
+=head3 --dns-mx
+=head3 --mx
+
+Get DNS MX records for given target and check the returned targets.
+(only useful with  I<--starttls=SMTP>).
+
+=head2 Options for checks and results
+
+Options used for  I<+check>  command:
+
+=head3 --enabled
+
+Only print result for ciphers accepted by target.
+
+=head3 --disabled
+
+Only print result for ciphers not accepted by target.
+
+=head3 --ignorecase
+
+Checks are done case insensitive.
+
+=head3 --no-ignorecase
+
+Checks are done case sensitive. Default: case insensitive.
+Currently only checks according CN, alternate names in the target's
+certificate compared to the given hostname are effected.
+
+=head2 Options for output format
+
+=head3 --short
+
+Use short, less descriptive, text labels for  I<+check>  and  I<+info>
+command.
+
+=head3 --legacy=TOOL
+
+For compatibility with other tools,  the output format used for the
+result of the  I<+cipher>  command can be adjusted to mimic the format
+of other SSL testing tools.
+
+The argument to the  I<--legacy=TOOL>  option  is the name of the tool
+to be simulated.
+
+Following TOOLs are supported:
+
+=item           * C<sslaudit>          format of output similar to  sslaudit
+
+
+=item           * C<sslcipher>         format of output similar to  ssl-cipher-check
+
+
+=item           * C<ssldiagnos>        format of output similar to  ssldiagnos
+
+
+=item           * C<sslscan>           format of output similar to  sslscan
+
+
+=item           * C<ssltest>           format of output similar to  ssltest
+
+
+=item           * C<ssltestg>          format of output similar to  ssltest -g
+
+
+=item           * C<ssltest-g>         format of output similar to  ssltest -g
+
+
+=item           * C<sslyze>            format of output similar to  sslyze
+
+
+=item           * C<ssl-cipher-check>  same as sslcipher
+
+
+=item           * C<ssl-cert-check>    format of output similar to  ssl-cert-check
+
+
+=item           * C<testsslserver>     format of output similar to  TestSSLServer.jar
+
+
+=item           * C<thcsslcHeck>       format of output similar to  THCSSLCheck
+
+
+Note that these legacy formats only apply to  output of the checked
+ciphers. Other texts like headers and footers are adapted slightly.
+
+Please do not expect identical output as the TOOL  when using these
+options, it's a best guess and should be parsable in a very similar
+way.
+
+=head3 --legacy=compact
+
+Internal format: mainly avoid tabs and spaces format is as follows:
+Some Label:<-- anything right of colon is data
+
+=head3 --legacy=full
+
+Internal format: pretty print each label in its own line,  followed
+by data prepended by tab character (useful for  I<+info>  only).
+
+=head3 --legacy=quick
+
+Internal format: use tab as separator; ciphers are printed with bit
+length (implies I<--tab>).
+
+=head3 --legacy=simple
+
+Internal default format.
+
+=head3 --legacy=key
+
+Internal format: print name of key instead of text as label. Key is
+that of the internal data structure(s).  For ciphers and protocols,
+the corresponding hex value is used as key.  Note that these values
+are unique.
+
+=head3 --format=0x
+=head3 --format=\x
+=head3 --format=/x
+=head3 --format=hex
+=head3 --format=raw
+
+=item           * C<raw>       Print raw data as passed from L<Net::SSLinfo|Net::SSLinfo>.
+
+Note:  all data will be printed as is,  without  additional label
+or formatting. It's recommended to use the  option in conjunction
+with exactly one command.  Otherwise the user needs  to know  how
+to "read"  the printed data.
+
+=item           * C<hex>       Convert some data to hex: 2 bytes separated by C<:>.
+
+=item           * C<0x>        Convert some data with hex values:
+
+2 bytes preceded by C<0x> and separated by a space.
+
+=item           * C</x>        Same as  --format=\x
+
+
+=item           * C<\x>        Convert some data with hex values:
+
+2 bytes preceded by C<\x> and no separating char.
+
+=head3 --header
+
+Print formatting header.  Default for  I<+check>,  I<+info>,  I<+quick>  and
+and  I<+cipher>  only.
+
+=head3 --no-header
+
+Do not print formatting header.
+Usefull if raw output should be passed to other programs.
+
+Note: must be used on command line to inhibit all header lines.
+
+=head3 --ignore-cmd=CMD
+=head3 --ignore-output=CMD
+=head3 --no-cmd=CMD
+=head3 --no-output=CMD
+
+Do not print output (data or check result) for command C<CMD>. C<CMD>
+is any valid command, see  L</COMMANDS> ,  without leading C<+>.
+Option can be used multiple times.
+
+=head3 --score
+
+Print scoring results. Default for  I<+check>.
+
+=head3 --no-score
+
+Do not print scoring results.
+
+=head3 --separator=CHAR
+=head3 --sep=CHAR
+
+C<CHAR>    will be used as separator between  label and value of the
+printed results. Default is  C<:>.
+
+=head3 --tab
+
+C<TAB> character (0x09, \t)  will be used as separator between label
+and value of the printed results.
+As label and value are already separated by a  TAB  character, this
+options is only useful in conjunction with the  I<--legacy=compact>
+option.
+
+=head3 --showhost
+
+Prefix each printed line with the given hostname (target).
+The hostname will be followed by the separator character.
+
+
+=head3 --win-CR
+
+Print windows-Style with CR LF as end of line. Default is NL only.
+
+=head2 Options for compatibility with other programs
+
+Please see other programs for detailed description (if not obvious:).
+Note that only the long form options are accepted  as most short form
+options are ambiguous.
+
+Following list contains only those options not shown with:
+
+         o-saft.pl --help=alias
+
+Tool's Option       (Tool)          o-saft.pl Option
+
+=item           * --checks CMD        (TLS-Check.pl)  same as  +CMD
+
+
+=item           * -h, -h=HOST         (various tools) same as  --host HOST
+
+
+=item           * -p, -p=PORT         (various tools) same as  --port PORT
+
+
+=item           * -t HOST             (ssldiagnos)    same as  --host HOST
+
+
+=item           * --UDP               (ssldiagnos)    same as  --udp
+
+
+=item           * --timeout, --grep   (ssltest.pl)    ignored
+
+
+=item           * -r,  -s,  -t,  -x   (ssltest.pl)    ignored
+
+
+=item           * --insecure          (cnark.pl)      ignored
+
+
+=item           * --nopct --nocolor   (ssldiagnos)    ignored
+
+
+=item           * -connect, -H, -u, -url, -U          ignored
+
+
+=item           * -noSSL                              same as  --no-SSL
+
+
+=item           * -no_SSL                             same as  --no-SSL
+
+
+For definition of  C<SSL>  see  I<--SSL<  and  I|  and  I>--no-SSL>  above.
+
+=head2 Options for customization
+
+For general descriptions please see  L</CUSTOMIZATION>  section below.
+
+=head3 --cfg_cmd=CMD=LIST
+=head3 --cfg-cmd=CMD=LIST
+
+Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
+are written without the leading  C<+>.
+CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
+Example:  I<--cfg-cmd=sni="sni> hostname"
+
+To get a list of commands and their settings, use:
+               C<o-saft.pl --help=intern>
+
+Main purpose is to reduce list of commands or print them sorted.
+
+=head3 --cfg-score=KEY=SCORE
+
+Redefine value for scoring. Sets  %checks{KEY}{score}  to  SCORE.
+Most score values are set to 10 by default. Values C<0> .. C<100> are
+allowed.
+
+To get a list of current score settings, use:
+               C<o-saft.pl --help=score>
+
+For deatils how scoring works, please see  L</SCORING>  section.
+
+Use the  I<--trace-key>  option for the  I<+info>  and/or  I<+check> command
+to get the values for  KEY.
+
+=head3 --cfg_checks=KEY=TEXT
+=head3 --cfg-checks=KEY=TEXT
+=head3 --cfg_data=KEY=TEXT
+=head3 --cfg-data=KEY=TEXT
+
+Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
+%checks{KEY}{txt}  to  TEXT.
+
+To get a list of preconfigured labels, use:
+               C<o-saft.pl --help=cfg-checks>
+               C<o-saft.pl --help=cfg-data>
+
+=head3 --cfg_text=KEY=TEXT
+=head3 --cfg-text=KEY=TEXT
+
+Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
+
+To get a list of preconfigured texts, use:
+               C<o-saft.pl --help=cfg-text>
+
+Note that \n, \r and \t are replaced by the corresponding character
+when read from L</RC-FILE>.
+
+=head3 --call=METHOD
+
+See  L</Options for SSL tool>.
+
+=head3 --usr
+
+Execute functions defined in L<o-saft-usr.pm|o-saft-usr.pm>.
+
+=head3 --usr-*, --user-*
+
+Options ignored, but stored as is internal in  $cfg{usr-args} .
+These options can be used in L<o-saft-usr.pm|o-saft-usr.pm> or L<o-saft-dbx.pm|o-saft-dbx.pm>.
+
+=head3 --experimental
+
+Use experimental functionality.
+Some functionality of this tool is  under development and only used
+when this option is given.
+
+=head2 Options for tracing and debugging
+
+=head3 --n
+
+Do not execute, just show commands (only useful in conjunction with
+using openssl).
+
+=head3 Difference --trace vs. --v
+
+While  I<--v>  is used to print more data,  I<--trace>  is used to  print
+more information about internal data such as procedure names and/or
+variable names and program flow.
+
+=head3 --v
+
+=head3 --verbose
+
+Print more information about checks.
+
+Note that this option should be first otherwise some debug messages
+are missing.
+
+Note that  I<--v>  is different from  -v  (see above).
+
+=head3 --v --v
+
+Print remotely checked ciphers.
+
+=head3 --v --v --v
+
+Print remotely checked ciphers one per line.
+
+=head3 --v --v --v --v
+
+Print processed ciphers (check, skip, etc.).
+
+=head3 --trace
+
+Print debugging messages.
+
+=head3 --trace --trace
+
+Print more debugging messages and pass C<trace=2> to Net::SSLeay and
+L<Net::SSLinfo|Net::SSLinfo>.
+
+=head3 --trace --trace --trace
+
+Print more debugging messages and pass C<trace=3> to Net::SSLeay and
+L<Net::SSLinfo|Net::SSLinfo>.
+
+=head3 --trace --trace --trace --trace
+
+Print processing of all command line arguments.
+
+=head3 --trace-arg, --trace--
+
+Print command line argument processing.
+
+
+=head3 --trace-cmd
+
+Trace execution of command processing (those given as  I<+*>).
+
+=head3 --trace-key, --trace@
+
+Print some internal variable names in output texts (labels).
+Variable names are prefixed to printed line and enclosed in  # .
+Example without I<--trace-key> :
+               C<Certificate Serial Number:          deadbeef>
+
+Example with    I<--trace-key> :
+               C<#serial#          Certificate Serial Number:          deadbeef>
+
+=head3 --trace=VALUE
+
+Trace Option        Alias Option
+
+=item           * --trace=1           same as  --trace
+
+
+=item           * --trace=2           same as  --trace --trace
+
+
+=item           * --trace=arg         same as  --trace-arg
+
+
+=item           * --trace=cmd         same as  --trace-cmd
+
+
+=item           * --trace=key         same as  --trace-key
+
+
+=head3 --trace-time
+
+Prints timestamp in trace output (implies I<--trace-cmd>).
+
+=head3 --trace=FILE
+
+Use FILE instead of the default rc-file (.o-saft.pl, see L</RC-FILE>).
+
+=head3 --trace-me
+
+Print debugging messages for o-saft.pl only, but not any modules.
+
+=head3 --trace-not-me
+
+Print debugging messages for modules only, but not o-saft.pl istself.
+
+=head3 --trace-sub
+=head3 +traceSUB
+
+Print formatted list of internal functions with their description.
+Not to be intended in conjunction with any target check.
+
+=head3 --warning
+
+Print warning messages (**WARNING:).
+
+=head3 --no-warning
+
+Do not print warning messages (**WARNING:).
+
+=head3 --exit=KEY
+
+For debugging only: terminate o-saft.pl at specified C<KEY>.
+For C<KEY> please see:  C<grep exit= o-saft.pl>
+
+=head2 Options vs. Commands
+
+For compatibility with other programs and lazy users,  some arguments
+looking like options are silently taken as commands.  This means that
+I<--THIS>  becomes  I<+THIS>  then. These options are:
+
+=item           * --help
+
+
+=item           * --abbr
+
+
+=item           * --todo
+
+
+=item           * --chain
+
+
+=item           * --default
+
+
+=item           * --fingerprint
+
+
+=item           * --list
+
+
+=item           * --version
+
+
+Take care that this behaviour may be removed in future versions as it
+conflicts with those options and commands which actually exist, like:
+
+I<--sni>  vs.  I<+sni>
+
+
+=head1 LAZY SYNOPSIS
+
+=head2 Commands
+
+Following strings are treated as a command instead of target names:
+
+=item           * ciphers
+
+
+=item           * s_client
+
+
+=item           * version
+
+
+A warning will be printed.
+
+=head2 Options
+
+We support following options, which are all identical, for lazy users
+and for compatibility with other programs.
+
+=head3 Option Variants
+
+=item           * --port PORT
+
+=item           * --port=PORT
+
+
+This applies to most such options,  I<--port>  is just an example.  When
+used in the  L</RC-FILE>, the  I<--OPTION=VALUE>  variant must be used.
+
+=head3 Option Names
+
+Dash C<->, dot C<.> and/or underscore C<_> in option names are optional,
+all following are the same:
+
+=item           * --no.dns
+
+
+=item           * --no-dns
+
+
+=item           * --no_dns
+
+
+=item           * --nodns
+
+
+This applies to all such options,  I<--no-dns>  is just an example.
+
+=head2 Targets
+
+Following syntax is supported also:
+         o-saft.pl http://some.tld other.tld:3889/some/path?a=b
+
+Note that only the hostname and the port are used from an URL.
+
+=head2 Options vs. Commands
+
+See  L</Options vs. Commands>  in  L</OPTIONS>  section above
+
+=head1 CHECKS
+
+All SSL related check performed by the tool will be described here.
+
+=head2 General Checks
+
+Lookup the IP of the given hostname (FQDN), and then tries to reverse
+resolve the FQDN again.
+
+=head2 SSL Ciphers
+
+Check which ciphers are supported by target. Please see  L</RESULTS>  for
+details of this check.
+
+=head2 SSL Connection
+
+=head3 heartbeat
+
+Check if heartbeat extension is supported by target.
+
+=head3 poodle
+
+Check if target is vulnerable to POODLE attack (SSLv3 enabled).
+
+=head3 sloth
+
+Check if target is vulnerable to SLOTH attack  (server offers RSA-MD5
+or ECDSA-MD5 ciphers).
+
+=head3 ALPN
+
+Check if target supports ALPN. Following messages are evaluated:
+ALPN protocol: h2-14
+No ALPN negotiated
+
+=head2 SSL Vulnerabilities
+
+=head3 ADH
+
+Check if ciphers for anonymous key exchange are supported: ADH|DHA.
+Such key exchanges can be sniffed.
+
+=head3 EDH
+
+Check if ephemeral ciphers are supported: DHE|EDH.
+They are necessary to support Perfect Forward Secrecy (PFS).
+
+=head3 BEAST
+
+Currently (2015) only a simple check is used: RC4 or CBC ciphers used.
+Which is any cipher with RC4, ARC4 or ARCFOUR or with CBC.
+TLSv1.2 checks are not yet implemented.
+
+=head3 CRIME
+
+Connection is vulnerable if target supports SSL-level compression.
+
+=head3 DROWN
+
+Connection is vulnerable if target supports SSLv2.
+
+=head3 FREAK
+
+Attack Against SSL/TLS to downgrade to EXPORT ciphers.
+Currently (2015) a simple check is used:   SSLv3 enabled and EXPORT
+ciphers supported by server.
+See CVE-2015-0204 and https://freakattack.com/ .
+
+=head3 HEARTBLEED
+
+Check if target is vulnerable to heartbleed attack, see CVE-2014-0160
+and http://heartbleed.com/ .
+
+=head3 KCI
+
+To perform a MiTM attack with Key Compromise Impersonation, the atta-
+cker needs to engage the victim to install and use a client certificate.
+This is considered a low risk and hence not tested here.
+
+=head3 Logjam
+
+Check if target is vulenerable to Logjam attack.
+Check if target suports  EXPORT ciphers  and/or  DH Parameter is less
+than 2048 bits. ECDH must be greater to 511 bits.
+
+=head3 Lucky 13
+
+Check if CBC ciphers are offered.
+NOTE the recommendation to be safe againts  Lucky 13  was to use  RC4
+ciphers. But they are also subjetc to attacks (see below).  Hence the
+check is only for CBC ciphers.
+
+=head3 RC4
+
+Check if RC4 ciphers are supported.
+They are assumed to be broken.
+Note that  I<+rc4>  reports the vulnerabilitiy to the  RC4 Attack, while
+I<+rc4_cipher>  simply reports if  RC4 ciphers are offered.  However the
+check, and hence the result, is the same.
+
+=head3 PFS
+
+Check if DHE ciphers are used.  Checks also if the TLS session ticket
+is random or not used at all.
+Currently (2015) only a simple check is used: only DHE ciphers used.
+Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
+TLSv1.2 checks are not yet implemented.
+
+=head3 POODLE
+
+Check if target is vulnerable to  POODLE attack (just check if  SSLv3
+is enabled).
+
+=head3 Practical Invalid Curve Attack
+
+This attack allows an attacker to read the servers private key if the
+server does not check properly the passed points for a ecliptic curve
+when EDH ciphers are used.
+
+This check will not send multiple invalid points,  but only checks if
+the server closes the connection or responds with no matching cipher.
+
+
+=head3 SLOTH
+
+Currently (2016) we check for ciphers with  ECDSA, RSA-MD5.
+Checking the TLS extension C<tls-unique> is not yet implemented.
+
+=head2 Target (server) Configuration and Support
+
+=head3 BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4, SLOTH
+
+See above.
+
+=head3 Renegotiation
+
+Check if the server allows client-side initiated renegotiation.
+
+=head3 Version rollback attacks
+
+B<NOT YET IMPLEMENTED>
+Check if the server allows changing the protocol.
+
+=head3 DH Parameter
+
+Check if target's DH Parameter is less 512 or 2048 bits.
+
+=head2 Target (server) Certificate
+
+=head3 Certificate Hashes
+
+Check that fingerprint is not MD5.
+Check that certificate private key signature is SHA2 or better.
+
+=head3 Root CA
+
+Provided certificate by target should not be a Root CA.
+
+=head3 Self-signed Certificate
+
+Certificate should not be self-signed.
+
+=head3 IP in CommonName or subjectAltname (RFC6125)
+
+B<NOT YET IMPLEMENTED>
+
+=head3 Basic Constraints
+
+Certificate extension Basic Constraints should be CA:FALSE.
+
+=head3 OCSP, CRL, CPS
+
+Certificate should contain URL for OCSP and CRL.
+
+=head3 Private Key encyption
+
+Certificates signature key supports encryption.
+
+=head3 Private Key encyption well known
+
+Certificates signature key encryption algorithm is well known.
+
+=head3 Public Key encyption
+
+Certificates public key supports encryption.
+
+=head3 Public Key encyption well known
+
+Certificates public key encryption algorithm is well known.
+
+=head3 Public Key Modulus size
+
+Some (historic) SSL implementations are subject to buffer overflow if
+the key exceeds 16384 or 32768 bits. The check is against 16384 bits.
+
+=head3 Public Key Modulus Exponent size
+
+The modulus exponent should be <= 65536 as some (mainly historic) SSL
+implementations may have problems to connect.
+
+=head3 Sizes and Lengths of Certificate Settings
+
+Serial Number <= 20 octets (RFC5280, 4.1.2.2.  Serial Number)
+
+B<...>
+
+=head3 DV-SSL - Domain Validation Certificate
+
+The Certificate must provide:
+
+=item           * Common Name C</CN=> field
+
+
+=item           * Common Name C</CN=> in C<subject> or C<subjectAltname> field
+
+
+=item           * Domain name in C<commonName> or C<altname> field
+
+
+=head3 EV-SSL - Extended Validation Certificate
+
+This check is performed according the requirements defined by the CA/
+Browser Forum  https://www.cabforum.org/contents.html .
+The certificate must provide:
+
+=item           * DV - Domain Validation Certificate (see above)
+
+
+=item           * Organization name C</O=> or C<subject> field
+
+
+=item           * Organization name must be less to 64 characters
+
+
+=item           * Business Category C</businessCategory=> in C<subject> field
+
+
+=item           * Registration Number C</serialNumber=> in C<subject> field
+
+
+=item           * Address of Place of Business in C<subject> field
+
+
+Required are: C</C=>, C</ST=>, C</L=>
+
+Optional are: C</street=>, C</postalCode=>
+
+=item           * Validation period does not exceed 27 month
+
+
+See  L</LIMITATIONS>  also.
+
+=head2 Target (server) HTTP(S) Support
+
+=head3 STS header
+
+Using STS is no perfect security.  While the very first request using
+http: is always prone to a MiTM attack, MiTM is possible to following
+requests again, if STS is not well implemented on the server.
+
+=item           * Request with http: should be redirected to https:
+
+
+=item           * Redirects should use status code 301 (even others will work)
+
+
+=item           * Redirect's Location header must contain schema https:
+
+
+=item           * Redirect's Location header must redirect to same FQDN
+
+
+=item           * Redirect may use Refresh instead of Location header (not RFC6797)
+
+
+=item           * Redirects from HTTP must not contain STS header
+
+
+=item           * Answer from redirected page (HTTPS) must contain STS header
+
+
+=item           * Answer from redirected page for IP must not contain STS header
+
+
+=item           * STS header must contain includeSubDirectoy directive
+
+
+=item           * STS header max-age should be less than 1 month
+
+
+=head3 Public Key Pins header
+TBD - to be described ...
+
+=head2 Compliances
+
+=head3 Note that it is not possible to satisfy all following compliances. Best
+=head3 match is: C<PSF> and C<ISM> and C<PCI> and C<lazy BSI TR-02102-2>.
+=head3 In general it is difficult to  satisfy all conditions of a compliances,
+=head3 and it is also difficult to check all these conditions. That's why some
+=head3 of the compliances checks are  not completely implemented,  for details
+=head3 please see blow.
+
+=head3 Note that output of results of some checks is disabled in the  RC-FILE
+=head3 by default. A C<!!Hint:> message will be printed, if any of these checks
+=head3 are used.
+
+=item           * FIPS-140
+
+=item           * ISM
+
+=item           * PCI
+
+=item           * BSI TR-02102-2
+
+=item           * BSI TR-03116-4
+
+=item           * RFC 6125
+
+=item           * RFC 7525
+
+
+=head3 BSI TR-02102-2 (+bsi-tr-02102+ +bsi-tr-02102-)
+Checks if connection and ciphers are compliant according TR-02102-2,
+see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
+/TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
+
+(following headlines are taken from there)
+
+3.2.1 Empfohlene Cipher Suites
+
+3.2.2 Übergangsregelungen
+
+RC4 allowed temporary for TLS 1.0. Only if  TLS 1.1  and  TLS 1.2
+cannot be supported.
+
+3.2.3 Mindestanforderungen für Interoperabilität
+
+Must at least support: ECDHE-ECDSA-* and ECDHE-RSA-*
+
+3.3 Session Renegotation
+
+Only server-side (secure) renegotiation allowed (see RFC 5280).
+
+3.4 Zertifikate und Zertifikatsverifikation
+
+Must have C<CRLDistributionPoint> or C<AuthorityInfoAccess>.
+
+MUST have C<OCSP URL>.
+
+C<PrivateKeyUsage> must not exceed three years for certificate and
+must not exceed five years for CA certificates.
+
+C<Subject>,  C<CommonName>  and  C<SubjectAltName>  must not contain
+a wildcard.
+
+Certificate itself must be valid according dates if validity.
+Note that  the validity check relies on the years provided by the
+C<before> and C<after>  values of the certificate only. For example
+a certificate having  "from Jan 2013 to Mar 2016"  is  considered
+valid even the validity is more than three years.
+
+All certificates in the chain must be valid.
+**NOT YET IMPLEMENTED**
+
+Above conditions are not required for lazy checks.
+
+3.5 Domainparameter und Schlüssellängen
+
+**NOT YET IMPLEMENTED**
+
+
+3.6 Schlüsselspeicherung
+
+This requirement is not testable from remote.
+
+3.7 Umgang mit Ephemeralschlüsseln
+
+This requirement is not testable from remote.
+
+3.8 Zufallszahlen
+
+This requirement is not testable from remote.
+
+=head3 BSI TR-03116-4 (+bsi-tr-03116+ +bsi-tr-03116-)
+Checks if connection and ciphers are compliant according TR-03116-4,
+see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
+/TechnischeRichtlinien/TR03116/BSI-TR-03116-4.pdf?__blob=publicationFile
+
+(following headlines are taken from there)
+
+2.1.1 TLS-Versionen und Sessions
+
+Allows only TLS 1.2.
+
+2.1.2 Cipher Suites
+
+Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265. 
+For curiosity, stronger cipher suites with AES256 and/or SHA384 are
+not not allowed. To follow this curiosity the I<+bsi-tr-03116-> (lazy)
+check allows the stronger cipher suites ;-)
+
+2.1.1 TLS-Versionen und Sessions
+
+The TLS session lifetime must not exceed 2 days.
+
+2.1.4.2 Encrypt-then-MAC-Extension
+
+2.1.4.3 OCSP-Stapling
+
+MUST have C<OCSP Stapling URL>.
+
+4.1.1 Zertifizierungsstellen/Vertrauensanker
+
+Certificate must provide all root CAs. (NOT YET IMPLEMENTED).
+
+Should use a small certificate trust chain.
+
+4.1.2 Zertifikate
+
+Must have C<CRLDistributionPoint> or C<AuthorityInfoAccess>.
+
+End-user certificate must not be valid longer than 3 years.
+Root-CA certificate must not be valid longer than 5 years.
+
+Certificate extension C<pathLenConstraint> must exist, and should be
+a small value ("small" is not defined).
+
+All certificates must contain the extension C<KeyUsage>.
+
+Wildcards for C<CN> or C<Subject> or C<SubjectAltName> are not allowed
+in any certificate.
+
+EV certificates are recommended (NOT YET checked properly).
+
+4.1.3 Zertifikatsverifikation
+
+Must verify all certificates in the chain down to their root-CA.
+(NOT YET IMPLEMENTED).
+
+Certificate must be valid according issue and expire date.
+
+All Checks must be doen for all certificates in the chain.
+
+4.1.4 Domainparameter und Schlüssellängen
+
+This requirement is not testable from remote.
+
+4 5.2 Zufallszahlen
+
+This requirement is not testable from remote.
+
+=head3 RFC 6125 (+rfc6125)
+Checks values C<CommonName>, C<Subject> and C<SubjectAltname>  of the
+certificate for:
+
+=item            * must all be valid characters for DNS
+
+
+=item            * must not contain more than one wildcards
+
+
+=item            * must not contain invalid wildcards
+
+
+=item            * must not contain invalid IDN characters
+
+
+=head3 RFC 7525 (+rfc7525)
+Checks if connection and ciphers are compliant according RFC 7525.
+See http://tools.ietf.org/rfc/rfc7525.txt
+(following headlines are taken from there)
+
+3.1.1.  SSL/TLS Protocol Versions
+
+SSLv2 and SSLv3 must not be supportetd.
+TLSv1 should only be supported if there is no TLSv1.1 or TLSv1.2.
+Either TLSv1.1 or TLSv1.2 must be supported, prefered is TLSv1.2.
+
+3.1.2.  DTLS Protocol Versions
+
+DTLSv1 and DTLSv1.1 must not be supported.
+
+3.1.3.  Fallback to Lower Versions
+
+(check implecitely done by 3.1.1, see above)
+
+3.2.  Strict TLS
+
+Check if server provides Strict Transport Security.
+(STARTTLS check NOT YET IMPLEMENTED).
+
+3.3.  Compression
+
+Compression on TLS must not be supported.
+
+3.4.  TLS Session Resumption
+
+Server must support resumtion and random session tickets.
+(Randomnes of session tickets implemented YET experimental.)
+
+Check if ticket is authenticated and encrypted NOT YET IMPLEMENTED.
+
+3.5.  TLS Renegotiation
+
+Server must support renegotiation.
+
+3.6.  Server Name Indication
+
+(Check for SNI support implemented experimental.)
+
+4.  Recommendations: Cipher Suites
+
+4.1.  General Guidelines
+4.2.  Recommended Cipher Suites
+
+Check for recommended ciphers.
+
+4.3.  Public Key Length
+
+DH parameter must be at least 256 bits or 2048 its with EC.
+(Check currently, 4/2016, based on openssl which may not provide DH
+
+=item *            parameters for all ciphers.)
+
+
+4.5.  Truncated HMAC
+
+TLS extension "truncated hmac" must not be used.
+
+6.  Security Considerations
+6.1.  Host Name Validation
+
+Given hostname must matches hostname in certificate's subject.
+
+6.2.  AES-GCM
+6.3.  Forward Secrecy
+6.4.  Diffie-Hellman Exponent Reuse
+(NOT YET IMPLEMENTED).
+
+6.5.  Certificate Revocation
+
+OCSP and CRL Distrbution Point in cetificate must be defined.
+
+=head1 OUTPUT
+
+All output is designed to make it  easily parsable by postprocessors.
+Following rules are used:
+
+=item           * Lines for formatting or header lines start with  C<=>.
+
+=item           * Lines for verbosity or tracing start with  C<#>.
+
+=item           * Errors and warnings start with  C<**>.
+
+=item           * Empty lines are comments ;-)
+
+=item           * Label texts end with a separation character; default is  C<:>.
+
+=item           * Label and value for all checks are separated by at least one  TAB
+
+character.
+
+=item           * Texts for additional information are enclosed in C<<<>  and  C<>>>.
+
+=item           * C<N/A>  is used when no proper informations was found or provided.
+
+Replace  C<N/A>  by whatever you think is adequate:  "No answer",
+"Not available",  "Not applicable",  ...
+
+When used in  I<--legacy=full>  or I<--legacy=simple>  mode, the output may
+contain formatting lines for better (human) readability.
+
+=head2 Postprocessing Output
+
+It is recommended to use the   I<--legacy=quick>   option, if the output
+should be postprocessed, as it omits the default separation character
+(C<:> , see above) and just uses on single tab character (0x09, \t  or
+TAB) to separate the label text from the text of the result. Example:
+               C<Label of the performed checkTABresult>
+
+More examples for postprocessing the output can be found here:
+               C<https://github.com/OWASP/O-Saft/blob/master/contrib>
+
+=head1 CUSTOMIZATION
+
+This tools can be customized as follows:
+
+=item         * Using command line options
+
+This is a simple way to redefine  specific settings.  Please  see
+L</CONFIGURATION OPTIONS>  below.
+
+=item         * Using Configuration file
+
+A configuration file can contain multiple configuration settings.
+Syntax is simply  KEY=VALUE. Please see L</CONFIGURATION FILE> below.
+
+=item         * Using resource files
+
+A resource file can contain multiple command line options. Syntax
+is the same as for command line options iteself.  Each  directory
+may contain its own resource file. Please see  L</RC-FILE>  below.
+
+=item         * Using debugging files
+
+These files are - nomen est omen - used for debugging purposes.
+However, they can be (mis-)used to redefine all settings too.
+Please see  L</DEBUG-FILE>  below.
+
+=item         * Using user specified code
+
+This file contains  user specified  program code.  It can also be
+(mis-)used to redefine all settings. Please see L</USER-FILE>  below.
+
+Customization is done by redefining values in internal data structure
+which are:  %cfg,  %data,  %checks,  %text,  %scores.
+
+Unless used in  L</DEBUG-FILE>  or  L</USER-FILE>,  there is  no need to know
+these internal data structures or the names of variables; the options
+will set the  proper values.  The key names being part of the option,
+are printed in output with the  I<--trace-key>  option.
+
+I.g. texts (values) of keys in  %data are those used in output of the
+"Information" section. Texts of keys in  %checks  are used for output
+in "Performed Checks" section.  And texts of keys in  %text  are used
+for additional information lines or texts (mainly beginning with C<=>).
+
+=head3 Configuration File vs. RC-FILE vs. DEBUG-FILE
+
+=item         * CONFIGURATION FILE
+
+Configuration files must be specified with one of the  I<--cfg-*>
+options. The specified file can be a valid path. Please note that
+only the characters:  a-zA-Z_0-9,.\/()-  are allowed as pathname.
+Syntax in configuration file is:  C<KEY=VALUE>  where C<KEY> is any
+key as used in internal data structure.
+
+=item         * RC-FILE
+
+Resource files are searched for and used automatically.
+For details see  L</RC-FILE>  below.
+
+=item         * DEBUG-FILE
+
+Debug files are searched for and used automatically.
+For details see  L</DEBUG-FILE>  below.
+
+=item         * USER-FILE
+
+The user program file is included only  if the  I<--usr>  option was
+used. For details see  L</USER-FILE>  below.
+
+=head2 CONFIGURATION OPTIONS
+
+Configuration options are used to redefine  texts and labels or score
+settings used in output. The options are:
+
+=item           * --cfg-cmd=KEY=LIST
+
+=item           * --cfg-score=KEY=SCORE
+
+=item           * --cfg-checks=KEY=TEXT
+
+=item           * --cfg-data=KEY=TEXT
+
+=item           * --cfg-text=KEY=TEXT
+
+KEY  is the key used in the internal data structure, and  TEXT is the
+value to be set for this key.  Note that unknown keys will be ignored
+silently.
+
+If KEY=TEXT is an exiting filename, all lines from that file are read
+and set. For details see  L</CONFIGURATION FILE>  below.
+
+=head2 CONFIGURATION FILE
+
+Note that the file can contain KEY=TEXT pairs for any kind of the
+configuration as given by the  I<--cfg-CFG>  option.
+
+For example  when used with  I<--cfg-text=file>  only values for  %text
+will be set, when used with  I<--cfg-data=file>  only values for  %data
+will be set, and so on. KEY is not used  when KEY=TEXT is an existing
+filename. Though, it's recommended to use a non-existing key, i.e.:
+I<--cfg-text=my_file=some/path/to/private/file> .
+
+=head2 RC-FILE
+
+The rc-file will be searched for in the working directory only.
+
+The name of the rc-file is the name of the program file prefixed by a
+C<.>  (dot),  for example:  C<.o-saft.pl>.
+
+A  rc-file  can contain any of the commands and options valid for the
+tool itself. The syntax for them is the same as on command line. Each
+command or option must be in a single line. Any empty or comment line
+will be ignored. Comment lines start with  C<#>  or  C<=>.
+
+Note that options with arguments must be used as  C<KEY=VALUE> instead
+of  C<KEY VALUE>.
+
+Configurations options must be written like C<--cfg-CFG=KEY=VALUE>.
+Where C<CFG> is any of:  cmd, check, data, text  or score and C<KEY> is
+any key from internal data structure (see above).
+
+All commands and options given on command line will  overwrite  those
+found in the rc-file.
+
+=head2 DEBUG-FILE
+
+All debugging functionality is defined in L<o-saft-dbx.pm|o-saft-dbx.pm> , which will
+be searched for using paths available in  C<@INC>  variable.
+
+Syntax in this file is perl code.  For details see  L</DEBUG>  below.
+
+=head2 USER-FILE
+
+All user functionality is defined in  L<o-saft-usr.pm|o-saft-usr.pm> ,  which will be
+searched for using paths available in  C<@INC>  variable.
+
+Syntax in this file is perl code.
+
+All functions defined in  L<o-saft-usr.pm|o-saft-usr.pm>  are called when the option
+I<--usr>  was given.  The functions are defined as empty stub,  any code
+can be inserted as need.  Please see   perldoc L<o-saft-usr.pm|o-saft-usr.pm>  to see
+when and how these functions are called.
+
+=head2 SHELL TWEAKS
+
+Configurering the shell environment where the tool is startet, is not
+not really a task for the tool itself, but it can simplify your life,
+somehow.
+
+There exist customizations for some commonly used shells,  please see
+the files in the ./contrib/ directory.
+
+=head1 CIPHER NAMES
+
+While the SSL/TLS protocol uses integer numbers to identify  ciphers,
+almost all tools use some kind of  "human readable"  texts for cipher
+names. 
+
+These numbers (which are most likely written  as hex values in source
+code and documentations) are the only true identifier, and we have to
+rely on the tools that they use the proper integers.
+
+As such integer or hex numbers are difficult to handle by humans,  we
+decided to use human readable texts. Unfortunately no common standard
+exists how to construct the names and map them to the correct number.
+Some, but by far not all, oddities are described in  L</Name Rodeo>.
+
+The rules for specifying cipher names are:
+
+=item *           1) textual names as defined by IANA (see [IANA])
+
+=item *           2) mapping of names and numbers as defined by IANA (see [IANA])
+
+=item *           3) C<->  and  C<_>  are treated the same
+
+=item *           4) abbreviations are allowed, as long as they are unique
+
+=item *           5) beside IANA, openssl's cipher names are preferred
+
+=item *           6) name variants are supported, as long as they are unique
+
+=item *           7) hex numbers can be used
+
+[IANA]    http://www.iana.org/assignments/tls-parameters/tls-parameters.txt September 2013
+
+[openssl] ... openssl 1.0.1
+
+If in any doubt, use  I<+list> I<--v>  to get an idea about the mapping.
+Use  I<--help=regex>  to see which regex are used to handle all variants
+herein.
+
+Mind the traps and dragons with cipher names and what number they are
+actually mapped to. In particular when  I<--lib>,  I<--exe>  or  I<--openssl> 
+options are in use. Always use these options with  I<+list> command too.
+
+=head2 Name Rodeo
+
+As said above, the  SSL/TLS protocol uses integer numbers to identify
+ciphers, but almost all tools use some kind of  human readable  texts
+for cipher names. 
+
+For example the cipher commonly known as C<DES-CBC3-SHA> is identified
+by C<0x020701c0> (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
+as constant name. A definition is missing in IANA, but there is 
+C<TLS_RSA_WITH_3DES_EDE_CBC_SHA>.
+It's the responsibility of each tool to map the human readable cipher
+name to the correct (hex, integer) identifier.
+
+For example Firefox uses  C<dhe_dss_des_ede3_sha>,  which is what?
+
+Furthermore, there are different acronyms for the same thing in use.
+For example  C<DHE>  and  C<EDH>  both mean "Ephemeral Diffie-Hellman".
+Comments in the L<openssl(1)|openssl(1)> sources mention this.  And for curiosity
+these sources use both in cypher names, but allow  C<EDH>  as shortcut
+only in openssl's "ciphers"  command. Wonder about (up to 1.0.1h):
+               C<openssl ciphers -V EDH>
+               C<openssl ciphers -V DHE>
+               C<openssl ciphers -V EECDH>
+               C<openssl ciphers -V ECDHE>
+
+Next example is  C<ADH>  which is also known as  C<DH_anon> or C<DHAnon>
+or  C<DHA>  or  C<ANON_DH>. 
+
+You think this is enough? Then have a look how many acronyms are used
+for  "Tripple DES".
+
+Compared to above, the interchangeable use of  C<->  vs.  C<_> in human
+readable cipher names is just a very simple one. However, see openssl
+again what following means (returns):
+               C<openssl ciphers -v RC4-MD5>
+               C<openssl ciphers -v RC4+MD5>
+               C<openssl ciphers -v RC4:-MD5>
+               C<openssl ciphers -v RC4:!MD5>
+               C<openssl ciphers -v RC4!MD5>
+
+Looking at all these oddities, it would be nice to have a common unique
+naming scheme for cipher names. We have not.  As the SSL/TLS protocol
+just uses a number, it would be natural to use the number as uniq key
+for all cipher names, at least as key in our internal sources.
+
+Unfortunately, the assignment of ciphers to numbers  changed over the
+years, which means that the same number refers to a  different cipher
+depending on the standard, and/or tool, or version of a tool you use.
+
+As a result, we cannot use human readable cipher names as  identifier
+(aka unique key), as there are  to many aliases  for the same cipher.
+And also the number  cannot be used  as unique key, as a key may have
+multiple ciphers assigned.
+
+=head1 KNOWN PROBLEMS
+
+This section describes knwon problems, and known error messages which
+may occour when using o-saft.pl. This sections can be used as FAQ too
+as it gives hints and workarounds.
+
+=head2 Segmentation fault
+
+Sometimes  the program terminates with a  C<Segmentation fault>.  This
+mainly happens if the target does not return certificate information.
+If so, the  I<--no-cert>  option may help.
+
+=head2 **WARNING: empty result from openssl; ignored at ...
+
+This most likely occurs when the  provided cipher is  not accepted by
+the server, or the server expects client certificates.
+
+=head2 **WARNING: unknown result from openssl; ignored at ...
+
+This most likely occurs when the L<openssl(1)|openssl(1)> executable is used with a
+very slow connection. Typically the reason is a connection timeout.
+Try to use  I<--timeout=SEC>  option.
+To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
+
+=head2 **WARNING: undefined cipher description
+
+May occour if ciphers are checked, but no description is available for
+them herein. This results in printed cipher checks like:
+               C<EXP-KRB5-RC4-MD5                no>
+
+instead of:
+               C<EXP-KRB5-RC4-MD5                no       weak>
+
+=head2 **WARNING: Can't make a connection to your.tld:443; no initial data
+=head2 **WARNING: Can't make a connection to your.tld:443; target ignored
+
+This message occours if the underlaying  SSL library (i.e. libssl.a)
+was not able to connect to the target. Known observed reasons are:
+
+=item           * target does not support SSL protocol on specified port
+
+=item           * target expects a client certificate in ClientHello message
+
+More details why the connection failed can be seen using  I<--trace=2> .
+
+If the targets supports SSL, it should be at least possible to check
+for supported ciphers using  I<+cipherall>  instead of  I<+cipher> .
+
+
+=head2 Use of uninitialized value $headers in split ... do_httpx2.al)
+
+The warning message (like follows or similar):
+
+               C<Use of uninitialized value $headers in split at blib/lib/Net/SSLeay.pm>
+               C<(autosplit into blib/lib/auto/Net/SSLeay/do_httpx2.al) line 1290.>
+
+occurs if the target refused a connection on port 80.
+This is considered a bug in L<Net::SSLeay(1)|Net::SSLeay(1)>.
+Workaround to get rid of this message: use  I<--no-http>  option.
+
+=head2 invalid SSL_version specified at ... IO/Socket/SSL.pm
+
+This error may occur on systems where a specific  SSL version is not
+supported. Subject are mainly  SSLv2, SSLv3 TLSv1.3 and DTLSv1.
+For DTLSv1 the full message looks like:
+               C<invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.>
+See also  L</Note on SSL versions> .
+
+Workaround: use option: I<--no-sslv2> I<--no-sslv3> I<--no-tlsv13> I<--no-dtlsv1>
+
+=head2 Use of uninitialized value $_[0] in length at (eval 4) line 1.
+
+This warning occours with IO::Socket::SSL 1.967, reason is unknown.
+It seems not to harm functionality, hence no workaround, just ignore.
+
+=head2 Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
+
+Some versions of  IO::Socket::SSL return this error message if  *-MD5
+ciphers are used with other protocols than SSLv2.
+
+Workaround: use  I<--no-md5-cipher>  option.
+
+=head2 Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
+
+Underlaying library doesn't support the required SSL version.
+See also  L</Note on SSL versions> .
+
+Workaround: use  I<--ssl-lazy> option, or corresponding I<--no-SSL> option.
+
+=head2 Read error: Connection reset by peer (,199725) at blib/lib/Net/SSLeay.pm\
+=head2 (autosplit into blib/lib/auto/Net/SSLeay/tcp_read_all.al) line 535.
+
+Error reported by some Net::SSLeay versions. Reason may be a timeout.
+This error cannot be omitted or handled properly.
+
+Workaround: try to use same call again (no guarantee, unfortunatelly)
+
+=head2 openssl: ...some/path.../libssl.so.1.0.0: no version information available (required by openssl)
+
+Mismatch of  openssl executable  and loaded underlaying library. This
+most likely happens when options  I<--lib=PATH>  and/or  I<--exe=PATH>  are
+used.  See also  L</Note on SSL versions> .
+
+Hint: use following commands to get information about used libraries:
+         o-saft.pl +version
+         o-saft.pl --v --v +version
+
+=head2 Integer overflow in hexadecimal number at ...
+
+This error message may occour on  32-bit systems if perl was not com-
+piled with proper options. I.g. perl automatically converts the value
+to a floating pont number.
+Please report a bug with output of following command:
+         o-saft.pl +s_client +dump your.tld
+
+=head2 <<openssl did not return DH Paramter>>
+
+Text may be part of a value. This means that all checks according  DH
+parameters and logkam attack cannot be done.
+
+Workaround: try to use  I<--openssl=TOOL>  option.
+
+This text may appears in any of the compliance checks (like I<+rfc7525>)
+which may be a false positive.  For these checks openssl is also used
+to get the DH Parameter.
+
+Workaround: not available yet
+
+=head2 No output with  +help  and/or  --help=todo
+
+On some (mainly Windows-based) systems using
+         o-saft.pl +help
+         o-saft.pl --help
+does not print anything.
+
+Workaround: use  I<--v>  option.
+         o-saft.pl +help --v
+or
+         o-saft.pl +help | more
+
+=head2 **WARNING: on MSWin32 additional option  --v  required, sometimes ...
+
+On some (mainly Windows-based) systems  this may happen  when calling
+for example:
+         o-saft.pl --help=FAQ
+which then may produce:
+ **WARNING: on MSWin32 additional option  I<--v>  required, sometimes ...
+
+ === reading: ./.o-saft.pl (RC-FILE done) ===
+
+ === reading: Net/SSLinfo.pm (O-Saft module done) ===
+ **USAGE: no command given
+ # most common usage:
+         o-saft.pl I<+info>   your.tld
+         o-saft.pl I<+check>  your.tld
+         o-saft.pl I<+cipher> your.tld
+ # for more help use:
+         o-saft.pl I<--help>
+
+Workaround: use full path to perl.exe, for example
+ C:\Programs\perl\bin\perl.exe o-saft.pl I<--help=FAQ>
+
+
+=head2 Performance Problems
+
+There are various reasons when the program responds slow, or seems to
+hang. Beside the problems described below performance issues are most
+likely a target-side problem. Most common reasons are:
+
+=item *           a) DNS resolver problems
+
+Try with  I<--no-dns>
+
+=item *           b) target does not accept connections for https
+
+Try with  I<--no-http>
+
+=item *           c) target's certificate is not valid
+
+Try with  I<--no-cert>
+
+=item *           d) target expects that the client provides a client certificate
+
+No option provided yet ...
+
+=item *           e) target does not handle Server Name Indication (SNI)
+
+Try with  I<--no-sni>
+
+=item *           f) use of external L<openssl(1)|openssl(1)> executable
+
+Use  I<--no-openssl>
+
+Other options which may help to get closer to the problem's cause:
+I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>
+
+=head1 LIMITATIONS
+
+=head2 Commands
+
+Some commands cannot be used together with others, for example:
+I<+cipher>,  I<+ciphers>,  I<+list>,  I<+libversion>,  I<+version>,  I<+check>,  I<+help>,
+I<+protocols> .
+I<+quick>  should not be used together with other commands, it returns
+strange output then.
+
+I<+protocols>  requires L<openssl(1)|openssl(1)> with support for  C<-nextprotoneg>
+option. Otherwise the value will be empty.
+
+=head2 Options
+
+The option  I<--port=PORT>  must preceed  I<--host=HOST>  for a target like
+HOST:PORT  .
+
+The characters  C<+> and C<=>  cannot be used for  I<--separator>  option.
+
+Following strings should not be used in any value for options:
+C<+check>, C<+info>, C<+quick>, C<--header>
+as they my trigger the  I<--header>   option unintentional.
+
+The used L<timeout(1)|timeout(1)> command cannot be defined with a full path like
+L<openssl(1)|openssl(1)> can with the  I<--openssl=path/to/openssl> .
+
+I<--cfg-text=file>  cannot be used to redefine the texts  C<yes> and C<no>
+as used in the output for  I<+cipher>  command.
+
+=head2 Checks (general)
+
+=head3 +constraints
+
+This check is only done for the certificate provided by the target.
+All other certificate in the chain are not checked.
+
+This is currently (2015) a limitation in o-saft.pl.
+
+=head2 Broken pipe
+
+This error message most likely means that the connection to specified
+target was not possible (firewall or whatever reason).
+
+=head2 Target Certificate Chain Verification
+
+The systems default capabilities i.e. libssl.so, openssl, are used to
+verify the target's certificate chain.  Unfortunately various systems
+have implemented different  approaches and rules how identify and how
+to report a successful verification.  As a consequence  this tool can
+only return the  same information about the chain verification as the
+used underlying tools.  If that information is trustworthy depends on
+how trustworthy the tools are.
+
+These limitations apply to following commands:
+
+=item           * +verify
+
+=item           * +selfsigned
+
+Following commands and options are useful to get more information:
+
+=item           * +chain_verify,  +verify,  +error_verify,  +chain,  +s_client
+
+=item           * --ca-file,  --ca-path,  --ca-depth
+
+=head2 User Provided Files
+
+Please note that there cannot be any guarantee that the code provided
+in the  L</DEBUG-FILE> L<o-saft-dbx.pm|o-saft-dbx.pm> or  L</USER-FILE> L<o-saft-usr.pm|o-saft-usr.pm> will
+work flawless. Obviously this is the user's responsibility.
+
+=head2 Problems and Errors
+
+Checking the target for supported ciphers may return that a cipher is
+not supported by the server  misleadingly.  Reason is most likely  an
+improper timeout for the connection. See  I<--timeout=SEC>  option.
+
+If the specified targets accepts connections but does not speak  SSL,
+the connection will be closed after the system's TCP/IP-timeout. This
+script will hang (about 2-3 minutes).
+
+If reverse DNS lookup fails, an error message is returned as hostname,
+like:  C<<<gethostbyaddr() failed>>>.
+Workaround to get rid of this message: use  I<--no-dns>  option.
+
+All checks for EV are solely based on the information provided by the
+certificate.
+
+Some versions of openssl (< 1.x) may not support all required options
+which results in various error messages,  or  more worse,  may not be
+visibale at all.
+Following table shows the openssl option and how to disbale it within
+o-saft:
+
+=item           * nextprotoneg        --no-nextprotoneg
+
+=item           * reconnect           --no-reconnect
+
+=item           * tlsextdebug         --no-tlsextdebug
+
+=head2 Poor Systems
+
+Use of L<openssl(1)|openssl(1)> is disabled by default on  Windows due to various
+performance problems. It needs to be enabled with  I<--openssl>  option.
+
+On Windows the usage of  "openssl s_client" needs to be enabled using
+I<--s_client>  option.
+
+On Windows it's a pain to specify the path for  I<--openssl=>..  option.
+Variants are:
+
+=item           * --openssl=/path/to/openssl.exe
+
+=item           * --openssl=X:/path/to/openssl.exe
+
+=item           * --openssl=\path\to\openssl.exe
+
+=item           * --openssl=X:\path\to\openssl.exe
+
+=item           * --openssl=\\path\\to\\openssl.exe
+
+=item           * --openssl=X:\\path\\to\\openssl.exe
+
+You have to fiddle around to find the proper one.
+
+=head2 Debug and Trace Output
+
+When both  I<--trace=key>  and  I<--trace=cmd>  options are used, output is
+mixed, obviously. Hint: output for I<--trace=cmd> always contains "CMD".
+
+=head1 DEPENDENCIES
+
+All perl modules and all  private moduels and files  will be searched
+for using paths  available in the  C<@INC>  variable.  C<@INC>  will be
+prepended by following paths:
+
+=item           * .
+
+=item           * ./lib
+
+=item           * INSTALL_PATH
+
+=item           * INSTALL_PATH/lib
+
+Where  C<INSTALL_PATH>  is the path where the tool is installed.
+To see which files have been included use:
+         o-saft.pl +version --v --user
+
+=head2 Perl Modules
+
+=item         * L<IO::Socket::SSL(1)|IO::Socket::SSL(1)>
+
+=item         * L<IO::Socket::INET(1)|IO::Socket::INET(1)>
+
+=item         * L<Net::SSLeay(1)|Net::SSLeay(1)>
+
+=item         * L<Net::SSLinfo|Net::SSLinfo>
+
+=item         * L<Net::SSLhello|Net::SSLhello>
+
+=head2 Additional files used if requested
+
+=item         * .o-saft.pl
+
+=item         * L<o-saft-dbx.pm|o-saft-dbx.pm>
+
+=item         * L<o-saft-man.pm|o-saft-man.pm>
+
+=item         * L<o-saft-usr.pm|o-saft-usr.pm>
+
+=item         * L<o-saft-README|o-saft-README>
+
+=head1 INSTALLATION
+
+The tool can be installed in any path. It just requres the modules as
+described in  DEPENDENCIES  above. However, it's recommended that the
+modules L<Net::SSLhello|Net::SSLhello> and L<Net::SSLinfo|Net::SSLinfo> are found in the directory
+C<./Net/>  where  o-saft.pl  is installed.
+
+For security reasons, most modern libraries  disabled or even removed
+insecure or "dirty" functionality.  As the purpose of this tool is to
+detect such insecure settings, functions, etc.,  it needs these dirty
+things enabled. It needs (incomplete list):
+
+=item           * insecure protocols like SSLv2, SSLv3
+
+=item           * more ciphers enabled, like NULL-MD5, AECDH-NULL-SHA, etc.
+
+=item           * some SSL extensions and options
+
+Therefore we recommend to compile and install at least following:
+
+=item           * OpenSSL  with SSLv2, SSLv3 and more ciphers enabled
+
+=item           * Net::SSLeay  compiled with openssl version as described before.
+
+Please read the  SECURITY  section first before following the install
+instructions below.
+
+=head2 OpenSSL
+
+Currently it is recommend to use either the openssl version from
+https://github.com/PeterMosmans/openssl/ which requires compilation,
+see  L</Example: Compile OpenSSL>, or use any of the precomiled versions
+which are available for several platforms at https://testssl.sh/ .
+
+The sources are available at
+
+=item           * https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.zip
+
+The precomiled static versions are available at
+
+=item           * https://github.com/drwetter/testssl.sh/tree/master/bin
+
+For all following installation examples we assume:
+
+=item           * openssl-1.0.2-chacha.zip or openssl-1.0.2d.tar.gz
+
+=item           * /usr/local as base installation directory
+
+=item           * a bourne shell (sh) compatible shell
+
+=head2 Example: Precompiled OpenSSL
+
+Simply download the tarball or zip file for your platform, unpack it,
+and install (copy) the binaries into a directory of your choice.
+
+=head2 Example: Compile OpenSSL
+
+OpenSSL can be used from http://openssl.org/ or, as recommended, from
+https://github.com/PeterMosmans/openssl/ .
+
+OpenSSL-chacha
+Compiling and installing the later is as simple as:
+
+               C<unzip openssl-1.0.2-chacha.zip>
+               C<cd openssl-1.0.2-chacha>
+               C<./config --shared -Wl,-rpath=/usr/local/lib>
+               C<make>
+               C<make test>
+               C<make install>
+
+which will install openssl, libssl.so, libcrypto.so  and some include
+files as well as the include files in  /usr/local/ .
+The shared version of the libraries are necessary for  Net::SSLeay.
+
+OpenSSL.org
+Building openssl from the offical  openssl.org  sources requires some
+patching before compiling and installing the libraries and binaries.
+
+Example with openssl-1.0.2d:
+
+               C<echo == unpack tarball>
+               C<tar xf openssl-1.0.2d.tar.gz>
+               C<cd openssl-1.0.2d>
+
+               C<echo == backup files to be modified>
+               C<cp ssl/s2_lib.c{,.bak}>
+               C<cp ssl/s3_lib.c{,.bak}>
+               C<cp ssl/ssl3.h{,.bak}>
+               C<cp ssl/tls1.h{,.bak}>
+
+               C<echo == patch files>
+               C<vi ssl/tls1.h         +/TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES/>
+ # define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
+               C<vi ssl/ssl3.h ssl/s{2,3}_lib.c   +"/# *if 0/">
+ #==> remove all   # if 0  and corresponding  #endif 
+ #    except if lines contain:
+ #        _FZA
+ #        /* Fortezza ciphersuite from SSL 3.0
+ #        /* Do not set the compare functions,
+ #        if (s->shutdown & SSL_SEND_SHUTDOWN)
+
+               C<echo == configure with static libraries>
+               C<echo omitt the zlib options if zlib-1g-dev is not installed>
+               C<echo omitt the krb5 options if no kerberos libraries available>
+               C<./config --prefix=/usr/local --openssldir=/usr/local/ssl \>
+ enable-zlib zlib zlib-dynamic enable-ssl2 \
+ enable-krb5 I<--with-krb5-flavor=MIT> \
+ enable-mdc2 enable-md2 enable-rc5  enable-rc2 \
+ enable-cms  enable-ec  enable-ec2m enable-ecdh enable-ecdsa \
+ enable-gost enable-seed enable-idea enable-camellia \
+ enable-rfc3779 enable-ec_nistp_64_gcc_128 \
+ experimental-jpake -fPIC \
+ -DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES \
+ shared
+
+               C<echo == make binaries and libraries>
+               C<make depend>
+               C<make>
+               C<make test>
+               C<make install>
+
+               C<echo == if you want static binaries and libraries>
+               C<make clean>
+               C<echo same ./config as before but without shared option>
+               C<./config --prefix=/usr/local --openssldir=/usr/local/ssl \>
+ enable-zlib zlib zlib-dynamic enable-ssl2 \
+ enable-krb5 I<--with-krb5-flavor=MIT> \
+ enable-mdc2 enable-md2 enable-rc5  enable-rc2 \
+ enable-cms  enable-ec  enable-ec2m enable-ecdh enable-ecdsa \
+ enable-gost enable-seed enable-idea enable-camellia \
+ enable-rfc3779 enable-ec_nistp_64_gcc_128 \
+ experimental-jpake -fPIC  -static \
+ -DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
+               C<make depend>
+               C<make>
+               C<make test>
+               C<echo next make will overwrite the previously installed dynamic>
+               C<echo shared openssl binary with the static openssl binary>
+               C<make install>
+
+=head2 Example: Compile Net::SSLeay
+
+To enable support for ancient protocol versions,  Net::SSLeay must be
+compiled manually after patching C<SSLeay.xs> (see below).
+Reason is, that  Net::SSLeay  enables some functionality for  SSL/TLS
+according the identified openssl version. There is, currently (2015),
+no possibility to enable this functionality  by passing options on to
+the configuration script C<perl Makefile.PL>.
+
+Building our own library and module (with openssl from C</usr/local>):
+
+               C<echo == unpack tarball>
+               C<tar xf Net-SSLeay-1.72.tar.gz>
+               C<cd Net-SSLeay-1.72>
+
+               C<echo == patch files>
+               C<echo "edit SSLeay.xs and change some #if as described below">
+               C<env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \>
+INC=/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
+               C<make>
+               C<make install>
+               C<cd /tmp >& o-saft.pl +version&
+
+SSLeay.xs needs to be changed as follows:
+
+=item           * search for
+
+               C<#ifndef OPENSSL_NO_SSL2>
+               C<#if OPENSSL_VERSION_NUMBER < 0x10000000L>
+
+               C<const SSL_METHOD *>
+               C<SSLv2_method()>
+
+               C<#endif>
+               C<#endif>
+
+               C<#ifndef OPENSSL_NO_SSL3>
+               C<#if OPENSSL_VERSION_NUMBER < 0x10002000L>
+
+               C<const SSL_METHOD *>
+               C<SSLv3_method()>
+
+               C<#endif>
+               C<#endif>
+=item           * and replace by
+
+               C<const SSL_METHOD *>
+               C<SSLv2_method()>
+
+               C<const SSL_METHOD *>
+               C<SSLv3_method()>
+
+Note that  Net::SSLeay  will be installed in C</usr/local/> then. This
+can be adapted to your needs by passing another path to the  C<PREFIX>
+and  C<DESTDIR>  parameter.
+
+Following command can be used to check  which methods are avilable in
+Net::SSLeay, hence above patches can be verified:
+
+               C<perl -ML>Net::SSLinfo& -le 'print L&Net::SSLinfo&::test_ssleay();'&
+
+=head2 Testing OpenSSL
+
+After installation as descibed above finished, openssl may be tested:
+
+               C<echo already installed openssl (found with PATH environment)>
+               C<openssl ciphers -v>
+               C<openssl ciphers -V -ssl2>
+               C<openssl ciphers -V -ssl3>
+               C<openssl ciphers -V ALL>
+               C<openssl ciphers -V ALL:COMPLEMENTOFALL>
+               C<openssl ciphers -V ALL:eNULL:EXP>
+
+               C<echo own compiled and installed openssl>
+               C</usr/local/openssl ciphers -v>
+               C</usr/local/openssl ciphers -V -ssl2>
+               C</usr/local/openssl ciphers -V -ssl3>
+               C</usr/local/openssl ciphers -V ALL>
+               C</usr/local/openssl ciphers -V ALL:COMPLEMENTOFALL>
+               C</usr/local/openssl ciphers -V ALL:eNULL:EXP>
+
+The difference should be obvious.
+Note, the commands using  "ALL:COMPLEMENTOFALL"  and  "ALL:eNULL:EXP"
+should return the same result.
+
+=head2 Testing Net::SSLeay
+
+As we want to test the separately installed  Net::SSLeay,  it is best
+to do it with  o-saft.pl  itself:
+
+               C<o-saft.pl +version>
+
+we should see a line similar to follwong at the end of the output:
+Net::SSLeay   1.72  /usr/local/lib/x86_64-linux-gnu/perl/5.20.2/Net/SSLeay.pm
+
+Now check for supported (known) ciphers:
+
+               C<o-saft.pl ciphers -V>
+
+we should see lines similar to those of the last C</usr/local/openssl>
+call. However, it should contain more cipher lines.
+
+=head2 Stand-alone Executable
+
+Some people asked for a stand-alone executable (mainly for Windows).
+Even perl is a scripting language there are situations where a stand-
+alone executable would be nice, for example if the installed perl and
+its libraries are outdated, or if perl is missing at all.
+
+Currently (2016) there a at least following possibilities to generate
+a stand-alone executable:
+
+=item           * perl with PAR::Packer module
+
+               C<pp -C -c o-saft.pl>
+               C<pp -C -c o-saft.pl -M Net::DNS -M Net::SSLeay -M IO::Socket \>
+-M L<Net::SSLinfo|Net::SSLinfo> -M L<Net::SSLhello|Net::SSLhello>
+               C<pp -C -c checkAllCiphers.pl>
+               C<pp -C -c checkAllCiphers.pl -M Net::DNS>
+
+=item           * ActiveState perl with its perlapp
+
+               C<perlapp --clean o-saft.pl>
+               C<perlapp --clean o-saft.pl -M Net::DNS -M Net::SSLeay -M IO::Socket \>
+-M L<Net::SSLinfo|Net::SSLinfo> -M L<Net::SSLhello|Net::SSLhello>
+               C<perlapp --clean checkAllCiphers.pl>
+               C<perlapp --clean checkAllCiphers.pl -M Net::DNS>
+
+=item           * perl2exe from IndigoSTar
+
+               C<perl2exe o-saft.pl>
+               C<perl2exe checkAllCiphers.pl>
+
+For details  on building the executable,  for example how to include
+all required modules, please refer to the documentation of the tool.
+
+=item            * http://search.cpan.org/~rschupp/PAR-Packer-1.030/lib/PAR/Packer.pm
+
+=item            * http://docs.activestate.com/pdk/6.0/PerlApp.html
+
+=item            * http://www.indigostar.com 
+
+Note that  pre-build executables (build by perlapp, perl2exe) cannot
+be provided due to licence problems.
+Also note that using stand-alone executable have not been tested the
+same way as the o-saft.pl itself. Use them at your own risk.
+
+=head1 SEE ALSO
+
+=item         * L<openssl(1)|openssl(1)>, L<Net::SSLeay(1)|Net::SSLeay(1)>, L<Net::SSLhello|Net::SSLhello>, L<Net::SSLinfo|Net::SSLinfo>, L<timeout(1)|timeout(1)>
+
+=item         * http://www.openssl.org/docs/apps/ciphers.html
+
+=item         * L<IO::Socket::SSL(1)|IO::Socket::SSL(1)>, L<IO::Socket::INET(1)|IO::Socket::INET(1)>
+
+=head1 HACKER's INFO
+
+=head2 Note on SSL versions
+
+Automatically detecting the supported SSL versions of the underlaying
+system is a hard job and not always possible. Reasons could be:
+
+=item         * used perl modules (Socket::SSL, Net::SSLeay) does not handle errors
+
+properly. Erros may be:
+               C<invalid SSL_version specified at ... IO/Socket/SSL.pm>
+               C<Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm>
+
+There're some workarounds implemented since version 15.11.15 .
+
+=item         * the underlaying libssl does not support the version, which then may
+
+result in segmentation fault
+
+=item         * the underlaying libssl is newer than the perl module and the module
+
+has not been reinstalled. This most often happens with  Net::SSLeay
+This can be detected with (see version numbers for Net::SSLeay):
+               C<o-saft.pl +version>
+
+=item         * perl (in particular a used module, see above)  may bail out  with a
+
+compile error, like
+               C<Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...>
+
+There're some workarounds implemented since version 15.11.15 .
+
+We try to detect unsupported versions and disable them automatically,
+a warning like follwoing is shown then:
+               C<**WARNING: SSL version 'SSLv2': not supported by openssl>
+All such warnings look like:
+               C<**WARNING: SSL version 'SSLv2': ...>
+
+If problems occour with  SSL versions, following commands and options
+may help to get closer to the reason or can be used as workaround:
+               C<o-saft.pl +version>
+               C<o-saft.pl +version --v>
+               C<o-saft.pl +version | grep versions>
+               C<o-saft.pl +version | grep 0x>
+               C<o-saft.pl +protocols your.tld>
+               C<o-saft.pl +protocols your.tld --no-rc>
+
+Checking for SSL version is done at one place in the code, search for
+               C<supported SSL versions>
+
+However, there are some dirty hacks where  SSLv2 and SSLv3 is checked
+again.
+
+=head2 Using private libssl.so and libcrypt.so
+
+For all  cryptographic functionality  the libraries  installed on the
+system will be used. In particular perl's L<Net::SSLeay(1)|Net::SSLeay(1)> module, the
+system's  libssl.so and libcrypt.so  and the L<openssl(1)|openssl(1)> executable.
+
+It is possible to provide your own libraries, if the  perl module and
+the executable are  linked using  dynamic shared objects  (aka shared
+library, position independent code).
+The appropriate option is  I<--lib=PATH>.
+
+On most systems these libraries are loaded at startup of the program.
+The runtime loader uses a preconfigured list of directories  where to
+find these libraries. Also most systems provide a special environment
+variable to specify  additional paths  to directories where to search
+for libraries, for example the  LD_LIBRARY_PATH environment variable.
+This is the default environment variable used herein.  If your system
+uses  another name it must be specified with the  I<--envlibvar=NAME> 
+option, where  NAME  is the name of the environment variable.
+
+=head2 Understanding  --exe=PATH, --lib=PATH, --openssl=FILE
+
+If any of  I<--exe=PATH>  or  I<--lib=PATH>  is provided, the pragram calls
+(C<exec>) itself recursively with all given options, except the option
+itself. The environment variables  C<LD_LIBRARY_PATH>  and C<PATH>  are
+set before executing as follows:
+
+=item           * prepend  C<PATH>  with all values given with  --exe=PATH
+
+=item           * prepend  C<LD_LIBRARY_PATH>  with all values given with --lib=PATH
+
+This is exactly, what L</Cumbersome Approach> below describes. So these
+option simply provide a shortcut for that.
+
+Note that  I<--openssl=FILE>  is a full path to the  openssl  executable
+and will not be changed.  However, if it is a relative path, it might
+be searched for using the previously set  C<PATH>  (see above).
+
+Note that  C<LD_LIBRARY_PATH>  is the default.  It can be changed with
+the  I<--envlibvar=NAME>  option.
+
+While  I<--exe>  mainly impacts the L<openssl(1)|openssl(1)> executable,  I<--lib>  also
+impacts o-saft.pl itself, as it loads other shared libraries if found.
+
+Bear in mind that  all these options  can affect the behaviour of the
+openssl subsystem,  influencing both  which executable is called  and
+which shared libraries will be used.
+
+NOTE that no checks are done if the options are set proper. To verify
+the settings, following commands may be used:
+         o-saft.pl --lib=YOU-PATH --exe=YOUE-EXE +version
+         o-saft.pl --lib=YOU-PATH --exe=YOUE-EXE --v +version
+         o-saft.pl --lib=YOU-PATH --exe=YOUE-EXE --v --v +version
+
+Why so many options?  Exactly as described above, these options allow
+the users to tune the behaviour of the tool to their needs.  A common
+use case is to enable the use of a separate openssl build independent
+of the openssl package used by the operating system.  This allows the
+user fine grained control over openssl's encryption suites  which are
+compiled/available, without affecting the core system.
+
+=head2 Caveats
+
+Depending on your system and the used modules and executables, it can
+be tricky to replace the configured shared libraries with own ones.
+Reasons are:
+
+=item *           a) the linked library name contains a version number,
+
+=item *           b) the linked library uses a fixed path,
+
+=item *           c) the linked library is searched at a predefined path,
+
+=item *           d) the executable checks the library version when loaded.
+
+
+Only the first one a) can be circumvented.  The last one d) can often
+be ignored as it only prints a warning or error message.
+
+To circumvent the "name with version number" problem try following:
+
+=item *         1) use L<ldd(1)|ldd(1)> (or a similar tool) to get the names used by openssl:
+
+
+ ldd /usr/bin/openssl
+
+which returns something like:
+
+ libssl.so.0.9.8 => /lib/libssl.so.0.9.8 (0x00007f940cb6d000)
+ libcrypto.so.0.9.8 => /lib/libcrypto.so.0.9.8 (0x00007f940c7de000)
+ libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f940c5d9000)
+ libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f940c3c1000)
+ libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f940c02c000)
+ /lib64/ld-linux-x86-64.so.2 (0x00007f940cdea000)
+
+Here only the first two libraries are important.  Both,  libcrypto.so
+and libssl.so  need to be version "0.9.8" (in this example).
+
+=item *         2) create a directory for your libraries, i.e.:
+
+
+ mkdir /tmp/dada
+
+=item *         3) place your libraries there, assuming they are:
+
+
+ /tmp/dada/libssl.so.1.42
+ /tmp/dada/libcrypto.so.1.42
+
+=item *         4) create symbolic links in that directory:
+
+
+ ln -s libssl.so.1.42    libssl.so.0.9.8
+ ln -s libcrypto.so.1.42 libcrypto.so.0.9.8
+
+=item *         5) test program with following option:
+
+
+         o-saft.pl +libversion --lib=/tmp/dada
+         o-saft.pl +list --v   --lib=/tmp/dada
+
+or:
+
+         o-saft.pl +libversion --lib=/tmp/dada -exe=/path/to-openssl
+         o-saft.pl +list --v   --lib=/tmp/dada -exe=/path/to-openssl
+
+=item *         6) start program with your options, i.e.:
+
+
+         o-saft.pl --lib=/tmp/dada +ciphers
+
+This works if L<openssl(1)|openssl(1)> uses the same shared libraries as
+L<Net::SSLeay(1)|Net::SSLeay(1)>,  which most likely is the case.
+
+It's tested with Unix/Linux only. It may work on other platforms also
+if they support such an environment variable and the installed
+L<Net::SSLeay(1)|Net::SSLeay(1)> and L<openssl(1)|openssl(1)> are linked using dynamic shared
+objects.
+
+Depending on  compile time settings  and/or  the location of the used
+tool or lib, a warning like following may occur:
+
+               C<WARNING: can't open config file: /path/to/openssl/ssl/openssl.cnf>
+
+This warning can be ignored, usually as  req  or  ca  sub commands of
+openssl is not used here. 
+To fix the problem, either use  I<--openssl-cnf=FILE>  option or set the
+the environment variable OPENSSL_CONF properly.
+
+=head3 Cumbersome Approach
+
+A more cumbersome approach to call  this program is to set  following
+environment variables in your shell:
+
+               C<PATH=/tmp/dada-1.42/apps:$PATH>
+               C<LD_LIBRARY_PATH=/tmp/dada-1.42>
+
+=head3 Windows Caveats
+
+I.g. the used libraries on Windows are libeay32.dll and ssleay32.dll.
+
+Windows also supports the LD_LIBRARY_PATH environment variable. If it
+does not work as expected with that variable, it might be possible to
+place the libs in the same directory as the  corresponding executable
+(which is found by the PATH environment variable).
+
+=head2 Using CGI mode
+
+This script can be used as  CGI application. Output is the same as in
+common CLI mode, using  C<Content-Type:text/plain>.  Keep in mind that
+the used modules like L<Net::SSLeay(1)|Net::SSLeay(1)> will write some debug messages
+on  STDERR instead  STDOUT.  Therefore multiple  I<--v>  and/or  I<--trace> 
+options behave slightly different.
+
+No additional external files like  L</RC-FILE>  or  L</DEBUG-FILE>  are read
+in CGI mode; they are silently ignored.
+Some options are disabled in CGI mode  because they are dangerous  or
+don't make any sense.
+
+=head3 WARNING
+
+There are  no  input data validation checks implemented herein. All 
+input data is url-decoded once and then used verbatim.
+More advanced checks must be done outside before calling this tool.
+
+It is not recommended to run this tool in CGI mode.
+You have been warned!
+
+
+=head2 Using user specified code
+
+There are some functions called within the program flow, which can be
+filled with any perl code.  Empty stubs of the functions are prepared
+in L<o-saft-usr.pm|o-saft-usr.pm>.  See also  L</USER-FILE>.
+
+
+
+=head1 DEBUG
+
+=head2 Debugging, Tracing
+
+Following  options and commands  are useful for hunting problems with
+SSL connections and/or this tool. Note that some options can be given
+multiple times to increase amount of listed information. Also keep in
+mind that it's best to specify  I<--v>  as very first argument.
+
+Note that the file L<o-saft-dbx.pm|o-saft-dbx.pm> is required,  if any  I<--trace*>  or
+I<--v>   option is used.
+
+=head3 Commands
+
+=item           * +dump
+
+=item           * +libversion
+
+=item           * +s_client
+
+=item           * +todo
+
+=item           * +version
+
+
+=head3 Options
+
+=item           * --v
+
+=item           * --v--
+
+=item           * --trace
+
+=item           * --trace-arg
+
+=item           * --trace-cmd
+
+=item           * --trace-key
+
+
+Empty or undefined strings are written as  C<<<undefined>>>  in texts.
+Some parameters, in particular those of  HTTP responses,  are written
+as  C<<<response>>>.  Long parameter lists are abbreviated with C<...>.
+
+=head3 Output
+
+When using  I<--v>  and/or  I<--trace>  options,  additional output will be
+prefixed with a  C<#>  (mainly as first, left-most character.
+Following formats are used:
+
+=item *            #<space>
+
+Addition text for verbosity (--v options).
+
+=item *            #[variable name]<TAB>
+
+Internal variable name (--trace-key options).
+
+=item *            #o-saft.pl::
+
+=item *            #L<Net::SSLinfo|Net::SSLinfo>::
+
+Trace information for I<--trace>  options.
+
+=item *            #{
+
+Trace information from  NET::SSLinfo  for  I<--trace>  options.
+these are data lines in the format:
+#{ variable name : value #}
+Note that C<value>  here can span multiple lines and ends with
+#}
+
+
+=head1 EXAMPLES
+
+($0 in all following examples is the name of the tool)
+
+=head2 General
+
+         o-saft.pl +cipher some.tld
+         o-saft.pl +info   some.tld
+         o-saft.pl +check  some.tld
+         o-saft.pl +quick  some.tld
+         o-saft.pl +help=commands
+         o-saft.pl +certificate  some.tld
+         o-saft.pl +fingerprint  some.tld 444
+         o-saft.pl +after +dates some.tld
+         o-saft.pl +version
+         o-saft.pl +version --v
+         o-saft.pl +list
+         o-saft.pl +list    --v
+
+=head2 Some specials
+
+=item         * Get an idea how messages look like
+
+         o-saft.pl +check --cipher=RC4 some.tld
+
+=item         * Check for Server Name Indication (SNI) usage only
+
+         o-saft.pl +sni some.tld
+
+=item         * Check for SNI and print certificate's subject and altname
+
+         o-saft.pl +sni +cn +altname some.tld
+
+=item         * Check for all SNI, certificate's subject and altname issues
+
+         o-saft.pl +sni_check some.tld
+
+=item         * Only print supported ciphers
+
+         o-saft.pl +cipher --enabled some.tld
+
+=item         * Only print unsupported ciphers
+
+         o-saft.pl +cipher --disabled some.tld
+
+=item         * Test for a specific ciphers
+
+         o-saft.pl +cipher --cipher=ADH-AES256-SHA some.tld
+
+=item         * Test all ciphers, even if not supported by local SSL implementation
+
+         o-saft.pl +cipherall some.tld
+         o-saft.pl +cipherall some.tld --range=full
+         checkAllCiphers.pl example.tld I<--range=full> I<--v>
+
+=item         * Show supported (enabled) ciphers with their DH parameters:
+
+         o-saft.pl +cipher-dh some.tld
+
+=item         * Test using a private libssl.so, libcrypto.so and openssl
+
+         o-saft.pl +cipher --lib=/foo/bar-1.42 --exe=/foo/bar-1.42/apps some.tld
+
+=item         * Test using a private openssl
+
+         o-saft.pl +cipher --openssl=/foo/bar-1.42/openssl some.tld
+
+=item         * Test using a private openssl also for testing supported ciphers
+
+         o-saft.pl +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
+
+
+=item         * Use your private texts in output
+
+         o-saft.pl +check some.tld --cfg-text=desc="my special description"
+
+=item         * Use your private texts from RC-FILE
+
+         o-saft.pl --help=cfg-text >> .o-saft.pl
+edit as needed: .o-saft.pl
+         o-saft.pl +check some.tld
+
+=item         * Get the certificate's Common Name for a bunch of servers:
+
+         o-saft.pl +cn example.tld some.tld other.tld
+         o-saft.pl +cn example.tld some.tld other.tld --showhost --no-header
+
+=item         * Generate simple parsable output
+
+         o-saft.pl --legacy=quick --no-header +info  some.tld
+         o-saft.pl --legacy=quick --no-header +check some.tld
+         o-saft.pl --legacy=quick --no-header --trace-key +info  some.tld
+         o-saft.pl --legacy=quick --no-header --trace-key +check some.tld
+
+=item         * Generate simple parsable output for multiple hosts
+
+         o-saft.pl --legacy=quick --no-header --trace-key --showhost +check some.tld other.tld
+
+=item         * Just for curiosity
+
+         o-saft.pl some.tld +fingerprint --format=raw
+         o-saft.pl some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
+
+=head2 Special for hunting problems with connections etc.
+
+=item         * Do not read RC-FILE .o-saft.pl
+
+         o-saft.pl +info some.tld --no-rc
+
+=item         * Show command line argument processing
+
+         o-saft.pl +info some.tld --trace-arg
+
+=item         * Simple tracing
+
+         o-saft.pl +cn   some.tld --trace
+         o-saft.pl +info some.tld --trace
+
+=item         * A bit more tracing
+
+         o-saft.pl +cn   some.tld --trace --trace
+
+=item         * Show internal variable names in output
+
+         o-saft.pl +info some.tld --trace-key
+
+=item         * Show internal argument processeing
+
+         o-saft.pl +info --trace-arg some.tld
+
+=item         * Show internal control flow and timing
+
+         o-saft.pl +info some.tld --trace-time
+
+=item         * List checked ciphers
+
+         o-saft.pl +cipher some.tld --v --v
+
+=item         * List checked ciphers one per line
+
+         o-saft.pl +cipher some.tld --v --v --v
+
+=item         * Show processing of ciphers
+
+         o-saft.pl +cipher some.tld --v --v --v --v
+
+=item         * Show values retrieved from target certificate directly
+
+         o-saft.pl +info some.tld --no-cert --no-cert --no-cert-text=Value-from-Certificate
+
+=item         * Show certificate CA verifications
+
+         o-saft.pl some.tld +chain_verify +verify +error_verify +chain
+
+=item         * Avoid most performance and timeout problems (don't use  --v)
+
+         o-saft.pl +info some.tld --no-cert --no-dns --no-http --no-openssl --no-sni
+
+
+
+=head1 ATTRIBUTION
+
+Based on ideas (in alphabetical order) of:
+cnark.pl, SSLAudit.pl sslscan, ssltest.pl, sslyze.py, testssl.sh
+
+O-Saft - OWASP SSL advanced forensic tool
+Thanks to Gregor Kuznik for this title.
+
+I<+cipherraw> and some proxy functionality implemented by Torsten Gigler.
+
+For re-writing some docs in proper English, thanks to Robb Watson.
+
+Code to check heartbleed vulnerability adapted from
+Steffen Ullrich (08. April 2014):
+https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
+
+Colouration inspired by https://testssl.sh/ .
+
+
+=head1 VERSION
+
+@(#) 16.04.07
+
+=head1 AUTHOR
+
+31. July 2012 Achim Hoffmann (at) sicsec de
+
+Project Home: https://www.owasp.org/index.php/O-Saft
+
+
+=head1 TODO
+
+
+=item         * new features
+
+=item           ** client certificate
+
+=item           ** some STRATTLS need : HELP STARTTLS HELP as output of HELPs are different
+
+=item           ** support: PCT protocol
+
+=item           ** Checking fallback from TLS 1.1 to TLS 1.0 (see ssl-cipher-check.pl)
+
+=item           ** Minimal encryption strength: weak encryption (40-bit) (TestSSLServer.jar)
+
+=item           ** check dynamic HTTP Public Key Pinning (HPKP)
+
+
+=item         * missing checks
+
+=item           ** SSL_honor_cipher_order => 1
+
+=item           ** implement TLSv1.2 checks
+
+=item           ** DNSEC and TLSA
+
+=item           ** checkcert(): KeyUsage, keyCertSign, BasicConstraints
+
+=item           ** DV and EV miss some minor checks; see checkdv() and checkev()
+
+=item           ** +constraints does not check +constraints in the certificate of
+
+the certificate chain.
+
+=item           ** TR-03116-4: does not check data in certificate chain
+
+
+=item           ** RFC 7525: does not check data in certificate chain
+
+
+=item           ** RFC 7525: 3.2.  Strict TLS (for STARTTLS)
+
+
+=item           ** RFC 7525: 3.4.  TLS Session Resumption (session ticket must be
+
+authenticated and encrypted)
+
+=item           ** RFC 7525: 3.6.  Server Name Indication (more reliable check)
+
+
+=item           ** RFC 7525: 4.3.  Public Key Length (need more reliable check)
+
+
+=item           ** RFC 7525: 6.2.  AES-GCM
+
+
+=item           ** RFC 7525: 6.3.  Forward Secrecy
+
+
+=item           ** RFC 7525: 6.4.  Diffie-Hellman Exponent Reuse
+
+
+=item         * vulnerabilities
+
+=item           ** complete TIME, BREACH check
+
+=item           ** is DHE-DSS-RC4-SHA also weak?
+
+=item           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
+
+
+=item         * verify CA chain:
+
+=item           ** L<Net::SSLinfo|Net::SSLinfo>.pm implement verify*
+
+=item           ** implement +check_chain (see L<Net::SSLinfo|Net::SSLinfo>.pm implement verify* also)
+
+=item           ** implement +ca = +verify +chain +rootcert +expired +fingerprint
+
+
+=item         * postprocessing
+
+Remove all options for output formatting. Use a "postprocess" script
+instead.
+
+=item           ** scoring
+
+implement score for PFS; lower score if not all ciphers support PFS
+make clear usage of score from %checks
+
+=item           ** write postprocessor for tabular data, like
+
+ssl-cert-check -p 443 -s mail.google.com -i -V
+
+=item         * Net::SSLeay
+
+=item           ** remove all warn() as Net::SSLeay should be silent
+
+=item           ** L<Net::SSLinfo|Net::SSLinfo>.pm Net::SSLeay::ctrl()  sometimes fails, but doesn't
+
+return error message
+
+=item           ** Net::SSLeay::CTX_clear_options()
+
+Need to check the difference between the  SSL_OP_LEGACY_SERVER_CONNECT  and
+SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;  see also SSL_clear_options().
+see https://www.openssl.org/docs/ssl/SSL_CTX_set_options.html
+
+=item           ** Net::SSLeay::do_ssl_close()  does not realy work
+
+
+=item         * Windows
+
+=item           ** Unicode:
+
+try: cmd /K chcp 65001
+or:  chcp 65001
+or:  reg add hklm\system\currentcontrolset\control\nls\codepage -v oemcp -d 65001
+
+=item           ** perl
+
+perl 5.10.x from PortableApps does not work, cause it misses
+IO/Socket/SSL.pm, however, checkAllCiphers.pl works.
+perl from older PortableApps/xampp (i.e. 1.7.x) does not work, cause
+IO/Socket/SSL.pm is too old (1.37).
+
+=item           ** Windows
+
+on Windows print of strings > 32k does not work.
+Ugly workaround using I<--v> implemented in L<o-saft-man.pm|o-saft-man.pm> only.
+
+=item         * internal
+
+=item           ** use qr() for defining regex, see $cfg{C<regex>}
+
+=item           ** print_line() hase ugly code for legacy=cipher
+
+=item           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
+
+=item           ** make a clear concept how to handle +CMD whether they report
+
+checks or informations (aka %data vs. %check_*)
+currently (2015) each single command returns all values
+
+=item           ** client certificates not yet implemented in _usesocket() _useopenssl(),
+
+see t.client-cert.txt
+
+=item           ** (nicht wichtig, aber sauber programmieren)
+
+_get_default(): L<Net::SSLinfo|Net::SSLinfo>::default() benutzen
+
+=head1 END # mandatory to keep some grep happy
+
+=begin woodoo
+
+# This file is generated from data in o-saft-man.pl. It is in POD format and
+# should be detected as such by proper tools. The purpose of this file is to
+# produce comment lines from our description, which is most often treated as
+# "data" and hence not counted as source lines, not as comment lines, not as
+# documentation lines.
+# Some poeple believe in statistic generated by magic tools. They use such a
+# statistic to measure for example code quality. Here we go ... 
+# Generated with:  o-saft.pl --no-warnings --no-header --help=gen-pod
+
+=end woodoo
+
+=cut
+
