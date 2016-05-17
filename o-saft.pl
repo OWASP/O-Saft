@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.486 16/05/17 01:14:19",
+    SID         => "@(#) yeast.pl 1.487 16/05/17 08:55:40",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -67,8 +67,6 @@ sub _y_EXIT($) { # exit if parameter matches given argument in @ARGV
     }
     return;
 }
-
-use osaft;          # get most of our configuration
 
 BEGIN {
     _y_TIME("BEGIN{");
@@ -117,6 +115,8 @@ BEGIN {
 } # BEGIN
 _y_TIME("BEGIN}");                  # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 _y_EXIT("exit=INIT0 - initialization start");
+
+use osaft;          # get most of our configuration
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
