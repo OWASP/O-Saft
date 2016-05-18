@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.32 16/05/18 08:59:54',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.33 16/05/18 19:44:07',
 
 };
 
@@ -1551,10 +1551,9 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
     'cmd-http'  => undef,
     'cmd-info'  => undef,
     'cmd-quick' => undef,
-    'data50'    => ';enod;redner_;))++B((;"}yppaH{$}C{$H}X{$;}Y{$[e\" en- ohce;)"C$" "yppaH$" "Y$" "X$" "}]@[yad{$"(=yad;"}]86723/MODNAR*}]@[C_T#{$[C_T{$"=C;1=Y;))}yppaH#{$-1+86723/MODNAR*WT(($=X;"}]86723/MODNAR*}]@[TXT#{$[TXT{$"=yppaH;case;;tixe_)C|B|e|Q|c|b|e|q ni "k$" esac;k 1.0 t- 1 n- daer od;: elihw;0=B;"J2[e\" en- ohce;)(=yad;TNI tixe_ part;MRET tixe_ part;};0 tixe;"K0[e\H1;}HT{$[e\" en- ohce;enod;50.0 peels;"m0[e\}TT{$m1;33[e\H}v{$;}h{$[e\" en- ohce;1 redner_ od;)))3+h(=h;2/HT=<h;1=h(( rof;))2/)}TT#{$-WT((($=v;"  !!!b$ h$  "=TT;yadhtriB=b;yppaH=h {)(tixe_;};enod;))++i((;"}yppaH{$}C{$H}X{$;}Y{$[e\" en- ohce;}]3+N*)1-i([yad{$=C;}]2+N*)1-i([yad{$=yppaH;}]1+N*)1-i([yad{$=Y;}]N*)1-i([yad{$=X;if;if;eunitnoc;))--B((;)"}N*)i-B(:N*i:]@[yad{$" "}N*)1-i(:0:]@[yad{$"(=yad neht;))HT > ]1+N*)1-i([yad++((fi neht ;))05 < 86723/MODNAR*001(( && ]] "1$" z- [[ fi od;))B=<i(( elihw;1=i;"J2[e\" en- ohce {)(redner_;)senil tupt($=HT;)sloc tupt($=WT;4=N;)"m1;23[e\" "m23[e\" "m1;13[e\" "m13[e\"(=C_T;)"etuG" "sellA" "muz" ".05" "QQQ" "OOO" "GGG"(=TXT',
-); # %dbx
-#$t=~s/OOO/♥/;$t=~s/QQQ/♡/;
-if ((grep{/(:?--50)/} @ARGV)>0){my$t=scalar reverse$dbx{data50};$t=~s/OOO/\x{2741}/;$t=~s/QQQ/\x{273d}/;$t=~s/GGG/\x{2740}/;system("bash","-c","$t");exit;}
+    'data50'    => ';enod;done_;))++B((;"}yppaH{$}C{$H}X{$;}Y{$[e\"Sen-Se$;)"C$"S"yppaH$"S"Y$"S"X$"S"}]@[yad{$"(=yad;"}]86723/MODNAR*}]@[C_T#{$[C_T{$"=C;1=Y;))}yppaH#{$-1+86723/MODNAR*WT(($=X;"}]86723/MODNAR*}]@[TXT#{$[TXT{$"=yppaH;case;;tixe_)C|B|e|Q|c|b|e|qSniS"k$"Sesac;kS1.0St-S1Sn-SdaerSod;:Selihw;0=B;"J2[e\"Sen-Se$;)(=yad;TNIStixe_Spart;MRETStixe_Spart;};0Stixe;"K0[e\H1;}HT{$[e\"Sen-Se$;enod;50.0Speels;"m0[e\}TT{$m1;33[e\H}v{$;}h{$[e\"Sen-Se$;1Sdone_Sod;)))3+h(=h;2/HT=<h;1=h((Srof;))2/)}TT#{$-WT((($=v;"SS!!!b$Sh$SS"=TT;yadhtriB=b;yppaH=hS{)(tixe_;};enod;))++i((;"}yppaH{$}C{$H}X{$;}Y{$[e\"Sen-Se$;}]3+N*)1-i([yad{$=C;}]2+N*)1-i([yad{$=yppaH;}]1+N*)1-i([yad{$=Y;}]N*)1-i([yad{$=X;if;if;eunitnoc;))--B((;)"}N*)i-B(:N*i:]@[yad{$"S"}N*)1-i(:0:]@[yad{$"(=yadSneht;))HTS>S]1+N*)1-i([yad++((fiSnehtS;))05S<S86723/MODNAR*001((S&&S]]S"1$"Sz-S[[SfiSod;))B=<i((Selihw;1=i;"J2[e\"Sen-Se$S{)(done_;)senilStupt($=HT;)slocStupt($=WT;4=N;)"m1;23[e\"S"m23[e\"S"m1;13[e\"S"m13[e\"(=C_T;ohce=e;)".05"S"muz"S"etuG"S"sellA"S"QQQ"S"OOO"S"GGG"(=TXT',
+); # %dbx #$t=~s/OOO/♥/;$t=~s/QQQ/♡/; # all data hardcoded
+if((grep{/(:?[+]50)/}@ARGV)<=0){my($x,$y)=(localtime)[3,4];if($y==4&&17<$x&&$x<25){my$t=scalar reverse$dbx{data50};$t=~s/S/\x20/g;$t=~s/OOO/\x{2741}/;$t=~s/QQQ/\x{273d}/;$t=~s/GGG/\x{2740}/;system("bash","-c","$t");exit;}}
 
 
 #_____________________________________________________________________________
