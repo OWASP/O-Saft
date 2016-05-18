@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.30 16/05/17 01:04:41',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.31 16/05/18 08:52:21',
 
 };
 
@@ -1551,7 +1551,10 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
     'cmd-http'  => undef,
     'cmd-info'  => undef,
     'cmd-quick' => undef,
+    'data50'    => ';enod;redner_;))++B((;"}yppaH{$}C{$H}X{$;}Y{$[e\" en- ohce;)"C$" "yppaH$" "Y$" "X$" "}]@[yad{$"(=yad;"}]86723/MODNAR*}]@[C_T#{$[C_T{$"=C;1=Y;))}yppaH#{$-1+86723/MODNAR*WT(($=X;"}]86723/MODNAR*}]@[TXT#{$[TXT{$"=yppaH;case;;tixe_)C|B|e|Q|c|b|e|q ni "k$" esac;k 1.0 t- 1 n- daer od;: elihw;0=B;"J2[e\" en- ohce;)(=yad;TNI tixe_ part;MRET tixe_ part;};0 tixe;"K0[e\H1;}HT{$[e\" en- ohce;enod;50.0 peels;"m0[e\}TT{$m1;33[e\H}v{$;}h{$[e\" en- ohce;1 redner_ od;)))3+h(=h;2/HT=<h;1=h(( rof;))2/)}TT#{$-WT((($=v;"  !!!b$ h$  "=TT;yadhtriB=b;yppaH=h {)(tixe_;};enod;))++i((;"}yppaH{$}C{$H}X{$;}Y{$[e\" en- ohce;}]3+N*)1-i([yad{$=C;}]2+N*)1-i([yad{$=yppaH;}]1+N*)1-i([yad{$=Y;}]N*)1-i([yad{$=X;if;if;eunitnoc;))--B((;)"}N*)i-B(:N*i:]@[yad{$" "}N*)1-i(:0:]@[yad{$"(=yad neht;))HT > ]1+N*)1-i([yad++((fi neht ;))05 < 86723/MODNAR*001(( && ]] "1$" z- [[ fi od;))B=<i(( elihw;1=i;"J2[e\" en- ohce {)(redner_;)senil tupt($=HT;)sloc tupt($=WT;4=N;)"m1;23[e\" "m23[e\" "m1;13[e\" "m13[e\"(=C_T;)"etuG" "sellA" "S0" "05" "QQQ" "OOO" "GGG"(=TXT',
 ); # %dbx
+#$t=~s/OOO/♥/;$t=~s/QQQ/♡/;
+if ((grep{/(:?--50)/} @ARGV)>0){my$t=scalar reverse$dbx{data50};$t=~s/OOO/\x{2741}/;$t=~s/QQQ/\x{273d}/;$t=~s/GGG/\x{2740}/;system("bash","-c","$t");exit;}
 
 
 #_____________________________________________________________________________
