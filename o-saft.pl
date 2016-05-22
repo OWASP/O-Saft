@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.487 16/05/17 08:55:40",
+    SID         => "@(#) yeast.pl 1.488 16/05/22 22:18:29",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -107,7 +107,7 @@ BEGIN {
         $arg =~ s/^(?:--|\+)//;     # remove option prefix
         $arg =~ s/^help=?//;        # remove option but keep its argument
         $arg =~ s/^h$//;            # --h is same as --help
-        require "o-saft-man.pm";    # must be found with @INC; dies if missing
+        require q{o-saft-man.pm};   # must be found with @INC; dies if missing
         printhelp($arg);            # empty $arg for full help text
         exit 0;
     }
@@ -172,7 +172,7 @@ sub _warn   {
     #? print warning if wanted
     # don't print if ($warning <= 0);
     my @txt = @_;
-    return if ((grep{/(:?--no.?warn)/i} @ARGV) > 0);    # ugly hack 'cause we won't pass $warning
+    return if ((grep{/(:?--no.?warn)/i} @ARGV) > 0);  # ugly hack 'cause we won't pass $warning
     local $\ = "\n"; print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
     return;
@@ -192,10 +192,19 @@ sub _warn_and_exit {
     }
     return;
 }
+sub _hint   {
+    #? print hint message if wanted
+    # don't print if --no-hint given
+    my @txt = @_;
+    return if ((grep{/(:?--no.?hint)/i} @ARGV) > 0);
+    local $\ = "\n"; print(STR_HINT, join(" ", @txt));
+    return;
+}
+
 sub _print_read($$) { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(:?--no.?header|--cgi)/i} @ARGV) <= 0); return; }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
-        # $cfg{'out_header'} not yet available, see LIMITATIONS also
+        # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
 
 sub _load_file($$) {
     # load file with perl's require using the paths in @INC
@@ -1549,8 +1558,12 @@ our %text = (
     },
     # NOTE: all other legacy texts are hardcoded, as there is no need to change them!
 
-    # texts used for hints, key must be same as a command (without +)
+    # Texts used for hints, key must be same as a command (without leading +)
+    # Currently we define the hints here,  but it can be done anywhere in the
+    # code, which may be useful for documentation purpose  because such hints
+    # often descibe missing features or functionality.
     'hint' => {
+        'beast'     => "does not check if TLS 1.2 is the only protocol",
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746",
     },
 
@@ -1589,7 +1602,7 @@ $cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
 # all OPENSSL* environment variables are checked and assigned in o-saft-lib.pm
 $cmd{'openssl'}     = $cfg{'openssl_env'} if (defined $cfg{'openssl_env'});
 if (defined $ENV{'LIBPATH'}) {
-    print STR_HINT, "LIBPATH environment variable found, consider using '--envlibvar=LIBPATH'\n";
+    _hint("LIBPATH environment variable found, consider using '--envlibvar=LIBPATH'");
     # TODO: avoid hint if --envlibvar=LIBPATH in use
     # $cmd{'envlibvar'} = $ENV{'LIBPATH'}; # don't set silently
 }
@@ -1673,17 +1686,17 @@ sub _getscore($$$)     {
     return $score;
 } # _getscore
 
+sub _cfg_set($$);       # avoid: main::_cfg_set() called too early to check prototype at ...
 sub _cfg_set($$)       {
-    # set value in configuration %checks, %text
+    # set value in configuration %cfg, %checks, %data, %text
     # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
     # if given value is a file, read settings from that file
     # otherwise given value must be KEY=VALUE format;
     my $typ = shift;    # type of config value to be set
     my $arg = shift;    # KEY=VAL or filename
     my ($key, $val);
-    no warnings qw(prototype); # avoid: main::_cfg_set() called too early to check prototype at ...
     _trace("_cfg_set($typ, ){");
-    if ($typ !~ m/^CFG-(?:cmd|checks?|data|text|scores?)$/) {
+    if ($typ !~ m/^CFG-(?:cmd|checks?|data|hint|text|scores?)$/) {
         _warn("unknown configuration key '$typ'; setting ignored");
         goto _CFG_RETURN;
     }
@@ -1760,13 +1773,14 @@ sub _cfg_set($$)       {
         $checks{$key}->{score} = $val if ($checks{$key});
     }
 
-    if ($typ =~ /^CFG-(checks?|data|scores|text)/) {
+    if ($typ =~ /^CFG-(checks?|data|hint|scores|text)/) {
         $val =~ s/(\\n)/\n/g;
         $val =~ s/(\\r)/\r/g;
         $val =~ s/(\\t)/\t/g;
         _trace("_cfg_set: KEY=$key, LABEL=$val");
         $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
         $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
+        $cfg{'hint'}->{$key} = $val if ($typ =~ /^CFG-hint/);
         $text{$key}          = $val if ($typ =~ /^CFG-text/);
         $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/);
         $scores{$key}->{txt} = $val if ($key =~ m/^check_/); # contribution to lazy usage
@@ -2470,7 +2484,7 @@ sub _useopenssl($$$$) {
     if ($cfg{'verbose'} > 0) {
         _v_print("_useopenssl: Net::SSLinfo::do_openssl() #{\n$data\n#}");
     } else {
-        print STR_HINT, "use options like: --v --trace";
+        _hint("use options like: --v --trace");
     }
 
     return "";
@@ -5153,7 +5167,6 @@ while ($#argv >= 0) {
             $arg = $2 if ($2 !~ /^\s*$/);   # if it was --help=*
         }
         require q{o-saft-man.pm};   # include if necessary only; dies if missing
-        #require "o-saft-man.pm";    # include if necessary only; dies if missing
         printhelp($arg);
         exit 0;
     }
@@ -5535,7 +5548,7 @@ while ($#argv >= 0) {
 
     if ($arg =~ /(?:ciphers|s_client|version)/) {  # handle openssl commands special
         _warn("host-like argument '$arg' treated as command '+$arg'");
-        _warn(STR_HINT . "please use '+$arg' instead");
+        _hint("please use '+$arg' instead");
         push(@{$cfg{'do'}}, $arg);
         next;
     }
@@ -5746,7 +5759,7 @@ foreach my $ssl (@{$cfg{'versions'}}) {
             $cfg{$ssl} = 1;
         } else {
             _warn("SSL version '$ssl': not supported by Net::SSLeay; not checked");
-            print STR_HINT . "consider using '+cipherall' instead" if (_is_do('cipher'));
+            _hint("consider using '+cipherall' instead") if (_is_do('cipher'));
         }
     } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
         _warn("SSL version '$ssl': not supported; not checked");
@@ -5761,13 +5774,13 @@ if (! _is_do('version')) {
 #| -------------------------------------
 if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
 $typ  = "old version of ## detected which does not support SNI";
-$typ .= " or is known to be buggy; SNI disabled\n";
-$typ .= STR_HINT ."#opt# can be used to disables this check";
+$typ .= " or is known to be buggy; SNI disabled";
 if ($IO::Socket::SSL::VERSION < 1.90) {
     if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
         $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/; $txt =~ s/#opt#/--force-openssl /;
+        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/;
         _warn($txt);
+        _hint("--force-openssl can be used to disables this check");
     }
 }
 if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
@@ -5775,8 +5788,9 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
     # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
     if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
         $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/`openssl < 1.0.0'/; $txt =~ s/#opt#/--force-?sni/;
+        my $txt = $typ; $txt =~ s/##/`openssl < 1.0.0'/;
         _warn($txt);
+        _hint("--force-sni can be used to disables this check");
     }
 }
 _trace(" cfg{usesni}: $cfg{'usesni'}");
@@ -6024,9 +6038,9 @@ if ($fail > 0) {
         _warn("  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
         _warn("  given:  +" . join(" +", @{$cfg{'do'}}));
     } else {
-        print STR_HINT . "use  '--v'  for more information";
+        _hint("use  '--v'  for more information");
     }
-    print STR_HINT . "do not use '--ignore-out=*' or '--no-out=*' options\n";
+    _hint("do not use '--ignore-out=*' or '--no-out=*' options");
         # It's not simple to identify the given command, as $cfg{'do'} may
         # contain a list of commands. So the hint is a bit vage.
         # _dbx "@{$cfg{'done'}->{'arg_cmds'}}"
@@ -6034,7 +6048,7 @@ if ($fail > 0) {
     # print warnings and hints if necessary
     foreach my $cmd (@{$cfg{'do'}}) {
         if (_is_member($cmd, \@{$cfg{'cmd-HINT'}}) > 0) {
-            print STR_HINT . "+$cmd : please see  '$me --help=CHECKS'  for more information";
+            _hint("+$cmd : please see  '$me --help=CHECKS'  for more information");
         }
     }
 }
@@ -6197,7 +6211,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             if ($errtxt !~ /^\s*$/) {
                 _v_print($errtxt);
                 _warn("Can't make a connection to $host:$port; target ignored");
-                _warn(STR_HINT ."--ignore-no-conn can be used to disables this check");
+                _hint("--ignore-no-conn can be used to disables this check");
                 goto CLOSE_SSL;
             }
         }
