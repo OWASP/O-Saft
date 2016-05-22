@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.488 16/05/22 22:18:29",
+    SID         => "@(#) yeast.pl 1.489 16/05/22 23:04:42",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1687,6 +1687,41 @@ sub _getscore($$$)     {
 } # _getscore
 
 sub _cfg_set($$);       # avoid: main::_cfg_set() called too early to check prototype at ...
+sub _cfg_set_from_file($$) {
+    # read values to be set in configuration from file
+    my $typ = shift;    # type of config value to be set
+    my $fil = shift;    # filename
+    _trace("_cfg_set: read $fil \n");
+    my $line ="";
+    my $fh;
+    # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
+    #       is a false positive because perlcritic seems not to understand
+    #       the logic of "open() && do{}; warn();", hence changed to if-condition
+    if (open($fh, '<:encoding(UTF-8)', $fil)) {
+        push(@{$dbx{file}}, $fil);
+        _print_read("$fil", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
+        while ($line = <$fh>) {
+            #
+            # format of each line in file must be:
+            #    Lines starting with  =  are comments and ignored.
+            #    Anthing following (and including) a hash is a comment
+            #    and ignored. Empty lines are ignored.
+            #    Settings must be in format:  key=value
+            #       where white spaces are allowed arround =
+            chomp $line;
+            $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
+                # remove trailing comments, but CFG-text may contain hash (#)
+            next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
+            next if ($line =~ m/^\s*$/);# ignore empty lines
+            _trace("_cfg_set: set $line ");
+            _cfg_set($typ, $line);
+        }
+        close($fh);
+    };
+    _warn("cannot open '$fil': $! ; file ignored");
+    return;
+} #  _cfg_set_from_file
+
 sub _cfg_set($$)       {
     # set value in configuration %cfg, %checks, %data, %text
     # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
@@ -1696,7 +1731,7 @@ sub _cfg_set($$)       {
     my $arg = shift;    # KEY=VAL or filename
     my ($key, $val);
     _trace("_cfg_set($typ, ){");
-    if ($typ !~ m/^CFG-(?:cmd|checks?|data|hint|text|scores?)$/) {
+    if ($typ !~ m/^CFG-$cfg{'regex'}->{'cmd-cfg'}/) {
         _warn("unknown configuration key '$typ'; setting ignored");
         goto _CFG_RETURN;
     }
@@ -1707,36 +1742,8 @@ sub _cfg_set($$)       {
             _warn("configuration files are not read in CGI mode; ignored");
             return;
         }
-        _trace("_cfg_set: read $arg \n");
-        my $line ="";
-        my $fh;
-        # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
-        #       is a flse positive because perlcritic seems not to understand
-        #       the logic of "open() && do{}; warn();"
-        if (open($fh, '<:encoding(UTF-8)', $arg)) {
-            push(@{$dbx{file}}, $arg);
-            _print_read("$arg", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
-            while ($line = <$fh>) {
-                #
-                # format of each line in file must be:
-                #    Lines starting with  =  are comments and ignored.
-                #    Anthing following (and including) a hash is a comment
-                #    and ignored. Empty lines are ignored.
-                #    Settings must be in format:  key=value
-                #       where white spaces are allowed arround =
-                chomp $line;
-                $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
-                    # remove trailing comments, but CFG-text may contain hash (#)
-                next if ($line =~ m/^\s*=/);# ignore our header lines (since 13.12.11)
-                next if ($line =~ m/^\s*$/);# ignore empty lines
-                _trace("_cfg_set: set $line ");
-                _cfg_set($typ, $line);
-            }
-            close($fh);
-            goto _CFG_RETURN;
-        };
-        _warn("cannot open '$arg': $! ; file ignored");
-        return;
+        _cfg_set_from_file($typ, $arg);
+        goto _CFG_RETURN;
     } # read file
 
     ($key, $val) = split(/=/, $arg, 2); # left of first = is key
@@ -1773,18 +1780,16 @@ sub _cfg_set($$)       {
         $checks{$key}->{score} = $val if ($checks{$key});
     }
 
-    if ($typ =~ /^CFG-(checks?|data|hint|scores|text)/) {
-        $val =~ s/(\\n)/\n/g;
-        $val =~ s/(\\r)/\r/g;
-        $val =~ s/(\\t)/\t/g;
-        _trace("_cfg_set: KEY=$key, LABEL=$val");
-        $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
-        $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
-        $cfg{'hint'}->{$key} = $val if ($typ =~ /^CFG-hint/);
-        $text{$key}          = $val if ($typ =~ /^CFG-text/);
-        $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/);
-        $scores{$key}->{txt} = $val if ($key =~ m/^check_/); # contribution to lazy usage
-    }
+    $val =~ s/(\\n)/\n/g;
+    $val =~ s/(\\r)/\r/g;
+    $val =~ s/(\\t)/\t/g;
+    _trace("_cfg_set: KEY=$key, LABEL=$val");
+    $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
+    $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
+    $cfg{'hint'}->{$key} = $val if ($typ =~ /^CFG-hint/);
+    $text{$key}          = $val if ($typ =~ /^CFG-text/);
+    $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/);
+    $scores{$key}->{txt} = $val if ($key =~ m/^check_/); # contribution to lazy usage
 
     _CFG_RETURN:
     _trace("_cfg_set() }");
@@ -4964,7 +4969,7 @@ while ($#argv >= 0) {
     # the default, are handled at the begining here (right below). After pro-
     # cessing the argument, $typ is set to HOST again  and next argument will
     # be taken from command line.
-    # $typ='HOST' is handles at end of loop, as it may appear anywhere in the
+    # $typ='HOST' is handled at end of loop, as it may appear anywhere in the
     # command line and does not require an option.
     # Commands are case sensitive  because they are used directly as key in a
     # hash (see %_SSLinfo Net::SSLinfo.pm). Just commands for the tool itself
