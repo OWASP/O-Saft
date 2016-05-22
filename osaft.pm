@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.35 16/05/22 22:08:38',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.36 16/05/22 22:36:56',
 
 };
 
@@ -1447,6 +1447,7 @@ our %cfg = (
         'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
         'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
         'cmd-intern'=> '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
+        'cmd-cfg'   => '(?:cmd|checks?|data|hint|text|scores?)',# --cfg-* commands
 
         # Regex for matching SSL protocol keys in %data and %checks
         'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
