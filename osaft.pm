@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.34 16/05/18 19:47:44',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.35 16/05/22 22:08:38',
 
 };
 
@@ -1453,6 +1453,15 @@ our %cfg = (
 
     }, # regex
    #------------------+--------------------------------------------------------
+    'hint' => {
+        # Texts used for hints, key must be same as a command (without leading +)
+        # How it works:
+        #   Each hint can be any text. Hint texts can be defined for any valid
+        #   command. print_check() will automatically print such hint texts if
+        #   any.  However, hint texts can be  defined anywhere in the code and
+        #   printed using printhint(),
+    }, # hint
+   #------------------+--------------------------------------------------------
     'ourstr' => {
         # regex to match strings of our own output, see OUTPUT in o-saft-man.pm
         # first all that match a line at beginning:
@@ -1799,15 +1808,15 @@ sub _dbx_init() {
 
 =pod
 
-=head2 osaft::printhint($cmd)
+=head2 osaft::printhint($cmd,@text)
 
-Print hint for specified command.
+Print hint for specified command, additionl text will be appended.
 =cut
 
-sub printhint($) {
+sub printhint($@) {
     #? Print hint for specified command.
     my $cmd = shift;
-    print STR_HINT, $cfg{'hint'}->{$cmd} if (defined $cfg{'hint'}->{$cmd});
+    print STR_HINT, $cfg{'hint'}->{$cmd}, join(" ", @_) if (defined $cfg{'hint'}->{$cmd});
     return;
 } # printhint
 
