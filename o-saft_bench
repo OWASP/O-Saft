@@ -11,7 +11,7 @@
 #?      localhost is used as target for testing, can be passed as parameter. 
 #?
 
-  SID="@(#) o-saft_bench 1.10 16/01/10 22:47:33"
+  SID="@(#) o-saft_bench 1.11 16/05/23 23:59:14"
 
 
   ich=${0##*/}
@@ -22,7 +22,7 @@ yeast=./yeast.pl
   out=./${ich}.times
   cnt=4   # additional 4 lines which are the table header and footer line
 
-[ $# > -gt 0 ] && host="$1"
+[ $# -gt 0 ] && host="$1"
 
 (echo
  echo -n "# " && date
