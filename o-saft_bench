@@ -11,7 +11,7 @@
 #?      localhost is used as target for testing, can be passed as parameter. 
 #?
 
-  SID="@(#) o-saft_bench 1.11 16/05/23 23:59:14"
+  SID="@(#) o-saft_bench 1.12 16/05/24 00:23:41"
 
 
   ich=${0##*/}
@@ -26,7 +26,7 @@ yeast=./yeast.pl
 
 (echo
  echo -n "# " && date
- echo -n "# $SID"
+ echo    "# $SID"
  echo -n "# o-saft.pl +VERSION: " && $yeast +VERSION --norc
  echo -n "# System (uname -a):  " && uname -a
  echo -n "# Perl   (perl -v):   " && perl -v|grep This
