@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.36 16/05/22 22:36:56',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.37 16/05/24 22:14:00',
 
 };
 
@@ -1031,6 +1031,7 @@ our %cfg = (
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
     'warning'       => 1,       # 1: print warnings; 0: don't print warnings
+    'hints'         => 1,       # 1: print hints; 0: don't print hints
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
     'proxyport'     => 0,       # port for proxy
     'proxyauth'     => "",      # authentication string used for proxy
@@ -1454,14 +1455,14 @@ our %cfg = (
 
     }, # regex
    #------------------+--------------------------------------------------------
-    'hint' => {
+    'hints' => {
         # Texts used for hints, key must be same as a command (without leading +)
         # How it works:
         #   Each hint can be any text. Hint texts can be defined for any valid
         #   command. print_check() will automatically print such hint texts if
         #   any.  However, hint texts can be  defined anywhere in the code and
         #   printed using printhint(),
-    }, # hint
+    }, # hints
    #------------------+--------------------------------------------------------
     'ourstr' => {
         # regex to match strings of our own output, see OUTPUT in o-saft-man.pm
@@ -1563,7 +1564,7 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
     'cmd-quick' => undef,
     'data50'    => ';enod;done_;))++B((;"}yppaH{$}C{$H}X{$;}Y{$[e\"Sen-Se$;)"C$"S"yppaH$"S"Y$"S"X$"S"}]@[yad{$"(=yad;"}]86723/MODNAR*}]@[C_T#{$[C_T{$"=C;1=Y;))}yppaH#{$-1+86723/MODNAR*WT(($=X;"}]86723/MODNAR*}]@[TXT#{$[TXT{$"=yppaH;case;;tixe_)C|B|e|Q|c|b|e|qSniS"k$"Sesac;kS1.0St-S1Sn-SdaerSod;:Selihw;0=B;"J2[e\"Sen-Se$;)(=yad;TNIStixe_Spart;MRETStixe_Spart;};0Stixe;"K0[e\H1;}HT{$[e\"Sen-Se$;enod;50.0Speels;"m0[e\}TT{$m1;33[e\H}v{$;}h{$[e\"Sen-Se$;1Sdone_Sod;)))3+h(=h;2/HT=<h;1=h((Srof;))2/)}TT#{$-WT((($=v;"SS!!!b$Sh$SS"=TT;yadhtriB=b;yppaH=hS{)(tixe_;};enod;))++i((;"}yppaH{$}C{$H}X{$;}Y{$[e\"Sen-Se$;}]3+N*)1-i([yad{$=C;}]2+N*)1-i([yad{$=yppaH;}]1+N*)1-i([yad{$=Y;}]N*)1-i([yad{$=X;if;if;eunitnoc;))--B((;)"}N*)i-B(:N*i:]@[yad{$"S"}N*)1-i(:0:]@[yad{$"(=yadSneht;))HTS>S]1+N*)1-i([yad++((fiSnehtS;))05S<S86723/MODNAR*001((S&&S]]S"1$"Sz-S[[SfiSod;))B=<i((Selihw;1=i;"J2[e\"Sen-Se$S{)(done_;)senilStupt($=HT;)slocStupt($=WT;4=N;)"m1;23[e\"S"m23[e\"S"m1;13[e\"S"m13[e\"(=C_T;ohce=e;)".05"S"muz"S"etuG"S"sellA"S"QQQ"S"OOO"S"GGG"(=TXT',
 ); # %dbx #$t=~s/OOO/♥/;$t=~s/QQQ/♡/; # all data hardcoded
-if((grep{/(:?50[+])/}@ARGV)<=0){my($x,$y)=(localtime)[3,4];if($y==4&&17<$x&&$x<25){my$t=scalar reverse$dbx{data50};$t=~s/S/\x20/g;$t=~s/OOO/\x{2741}/;$t=~s/QQQ/\x{273d}/;$t=~s/GGG/\x{2740}/;system("bash","-c","$t");exit;}}
+if((grep{/(?:50[+])/}@ARGV)<=0){my($x,$y)=(localtime)[3,4];if($y==4&&17<$x&&$x<28){my$t=scalar reverse$dbx{data50};$t=~s/S/\x20/g;$t=~s/OOO/\x{2741}/;$t=~s/QQQ/\x{273d}/;$t=~s/GGG/\x{2740}/;system("bash","-c","$t");exit;}}
 
 
 #_____________________________________________________________________________
@@ -1817,7 +1818,7 @@ Print hint for specified command, additionl text will be appended.
 sub printhint($@) {
     #? Print hint for specified command.
     my $cmd = shift;
-    print STR_HINT, $cfg{'hint'}->{$cmd}, join(" ", @_) if (defined $cfg{'hint'}->{$cmd});
+    print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @_) if (defined $cfg{'hints'}->{$cmd});
     return;
 } # printhint
 
