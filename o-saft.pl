@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.490 16/05/24 22:16:16",
+    SID         => "@(#) yeast.pl 1.491 16/05/25 00:57:16",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -97,20 +97,8 @@ BEGIN {
 
     # handle simple help very quickly
     if ((grep{/^(?:--|\+)VERSION/} @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
+    # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
-        # be smart to users if systems behave strange :-/
-    # get first matching argument
-    my ($arg) = grep{ /^(?:--h(?:elp)?|\+help|(?:--|\+)help=?(?:gen-)?(?:opts?|commands?|cgi|html|wiki|abbr|abk|glossar|[A-Z]+))$/} @ARGV;
-        # we allow:  --h  or  --help  or  +help  or  +help=SOMETHING
-        # for historic reason this allows: +abbr +abk +glossar +todo
-    if (defined $arg) {
-        $arg =~ s/^(?:--|\+)//;     # remove option prefix
-        $arg =~ s/^help=?//;        # remove option but keep its argument
-        $arg =~ s/^h$//;            # --h is same as --help
-        require q{o-saft-man.pm};   # must be found with @INC; dies if missing
-        printhelp($arg);            # empty $arg for full help text
-        exit 0;
-    }
     _y_EXIT("exit=BEGIN1 - BEGIN end");
 } # BEGIN
 _y_TIME("BEGIN}");                  # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
@@ -1786,10 +1774,10 @@ sub _cfg_set($$)       {
     _trace("_cfg_set: KEY=$key, LABEL=$val");
     $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
     $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
-    $cfg{'hints'}->{$key}= $val if ($typ =~ /^CFG-hint/);
-    $text{$key}          = $val if ($typ =~ /^CFG-text/);
-    $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/);
-    $scores{$key}->{txt} = $val if ($key =~ m/^check_/); # contribution to lazy usage
+    $cfg{'hints'}->{$key}= $val if ($typ =~ /^CFG-hint/);   # allows CFG-hints also
+    $text{$key}          = $val if ($typ =~ /^CFG-text/);   # allows CFG-texts also
+    $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/); # BUT: CFG-score is different
+    $scores{$key}->{txt} = $val if ($key =~ m/^check_/);    # contribution to lazy usage
 
     _CFG_RETURN:
     _trace("_cfg_set() }");
@@ -5164,12 +5152,14 @@ while ($#argv >= 0) {
         next;
     }
 
-    # --h --help and --help=gen-* are already handled in BEGIN {}
-    # other --help=* options are special as they require settings in %cfg
-    if ($arg =~ /^(?:--|\+)(todo|help)=?(.*)?$/) {
-        $arg = $1;
-        if (defined $2) {
-            $arg = $2 if ($2 !~ /^\s*$/);   # if it was --help=*
+    # all options starting with  --h or --help or +help  are not handled herein
+    if ($arg =~ /^(?:--|\+)h(?:elp)?$/)          { $arg = "--help=NAME"; }# --h  or --help
+    if ($arg =~ /^\+(abbr|abk|glossar|todo)$/i)  { $arg = "--help=$1"; }  # for historic reason
+    # get matching string right of =
+    if ($arg =~ /^(?:--|\+)help=?(.*)?$/) {
+        # we allow:  --help=SOMETHING  or  +help=SOMETHING
+        if (defined $1) {
+            $arg = $1 if ($1 !~ /^\s*$/);   # if it was --help=*
         }
         require q{o-saft-man.pm};   # include if necessary only; dies if missing
         printhelp($arg);
