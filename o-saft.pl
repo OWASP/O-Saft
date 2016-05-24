@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.489 16/05/22 23:04:42",
+    SID         => "@(#) yeast.pl 1.490 16/05/24 22:16:16",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1562,7 +1562,7 @@ our %text = (
     # Currently we define the hints here,  but it can be done anywhere in the
     # code, which may be useful for documentation purpose  because such hints
     # often descibe missing features or functionality.
-    'hint' => {
+    'hints' => {
         'beast'     => "does not check if TLS 1.2 is the only protocol",
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746",
     },
@@ -1653,7 +1653,7 @@ sub _init_all()        {
     _trace("_init_all(){}");
     _initchecks_score();
     _initchecks_val();
-    $cfg{'hint'}->{$_} = $text{'hint'}->{$_} foreach (keys %{$text{'hint'}});
+    $cfg{'hints'}->{$_} = $text{'hints'}->{$_} foreach (keys %{$text{'hints'}});
     return;
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
@@ -1786,7 +1786,7 @@ sub _cfg_set($$)       {
     _trace("_cfg_set: KEY=$key, LABEL=$val");
     $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
     $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
-    $cfg{'hint'}->{$key} = $val if ($typ =~ /^CFG-hint/);
+    $cfg{'hints'}->{$key}= $val if ($typ =~ /^CFG-hint/);
     $text{$key}          = $val if ($typ =~ /^CFG-text/);
     $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/);
     $scores{$key}->{txt} = $val if ($key =~ m/^check_/); # contribution to lazy usage
