@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.116 16/05/26 12:08:13";
+my  $man_SID= "@(#) o-saft-man.pm 1.117 16/05/26 13:05:12";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1384,7 +1384,6 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|hint|text)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
-print "y $hlp\n";
     if ($hlp =~ /^cmds?$/i)     { # print program's commands
         print "# $parent commands:\t+"     . join(" +", @{$cfg{'commands'}});
         return;
