@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.115 16/05/16 23:32:30";
+my  $man_SID= "@(#) o-saft-man.pm 1.116 16/05/26 12:08:13";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -865,12 +865,18 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
         'range' => ["range name",    " - ",  "hex values in this range"],
         'rfc'   => ["Number",        " - ",  "Title"],
-        'data'  => ["key",    "=",   "text"],
         'check' => ["key",    "=",   "text"],
+        'data'  => ["key",    "=",   "text"],
+        'hint'  => ["key",    " - ", "text"],
         'text'  => ["key",    "=",   "text"],
+        # the pupose of cfg_* is to print the results in a format so that they
+        # can be used with copy&paste as command line arguments
         'cfg_check' =>["N/A", "=",   "N/A"],
         'cfg_data'  =>["N/A", "=",   "N/A"],
         'cfg_text'  =>["N/A", "=",   "N/A"],
+        'cfg_texts' =>["N/A", "=",   "N/A"],    # alias
+        'cfg_hint'  =>["N/A", "=",   "N/A"],
+        'cfg_hints' =>["N/A", "=",   "N/A"],    # alias
     );
     my $txt ="";
     my $sep = $types{$typ}->[1];
@@ -901,6 +907,12 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if ($typ =~ m/data/) {
         foreach my $key (sort keys %data) {
             $txt =  $data{$key}->{txt};
+            _man_cfg($typ, $key, $sep, $txt);
+        }
+    }
+    if ($typ =~ m/hint/) {
+        foreach my $key (sort keys %{$cfg{'hints'}}) {
+            $txt =  $cfg{'hints'}->{$key};
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
@@ -1077,7 +1089,7 @@ sub man_pod() {
     my $empty = 0;  # 1 if last printed line was empty
     while ($_ = shift @DATA) {          # @DATA already looks like POD
         last if m/^(?:=head[1] )?END\s+#/;# very last line in this file
-        m/^$/ && do {
+        m/^$/ && do {  ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
             if ($empty == 0)  { print; $empty++; }  # empty line, but only one
             next;
         };
@@ -1360,17 +1372,19 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # Note: gen-cgi is called from within parent's BEGIN and hence
         # causes some   Use of uninitialized value within %cfg 
         # when called as  gen-CGI  it will not be called from within
-        # BEGIN amd hence %cfg is defined and will not result in warnings
+        # BEGIN and hence %cfg is defined and will not result in warnings
     man_alias(),                return if ($hlp =~ /^alias(es)?$/);
     man_commands(),             return if ($hlp =~ /^commands?$/);
     # anything below requires data defined in parent
     man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/); ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-    man_table(lc($1)),          return if ($hlp =~ /^(compl|intern|regex|score|data|check|text|range|ourstr)(?:iance)?s?$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|text)s?[_-]?cfg$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|text)s?$/i);
+    man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?)s?$/i);
+    man_table(lc($1)),          return if ($hlp =~ /^(check|data|hint|text|range|regex|score|ourstr)s?$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|hint|text)s?[_-]?cfg$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|hint|text)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
+print "y $hlp\n";
     if ($hlp =~ /^cmds?$/i)     { # print program's commands
         print "# $parent commands:\t+"     . join(" +", @{$cfg{'commands'}});
         return;
@@ -2935,6 +2949,13 @@ OPTIONS
           Note that \n, \r and \t are replaced by the corresponding character
           when read from RC-FILE.
 
+      --cfg-hint=KEY=TEXT
+
+          Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  TEXT.
+
+          To get a list of preconfigured texts, use:
+              $0 --help=cfg-hint
+
       --call=METHOD
 
           See  X&Options for SSL tool&.
@@ -3768,9 +3789,9 @@ CUSTOMIZATION
         Configuration options are used to redefine  texts and labels or score
         settings used in output. The options are:
           * --cfg-cmd=KEY=LIST
-          * --cfg-score=KEY=SCORE
           * --cfg-checks=KEY=TEXT
           * --cfg-data=KEY=TEXT
+          * --cfg-hint=KEY=TEXT
           * --cfg-text=KEY=TEXT
 
         KEY  is the key used in the internal data structure, and  TEXT is the
@@ -3779,6 +3800,9 @@ CUSTOMIZATION
 
         If KEY=TEXT is an exiting filename, all lines from that file are read
         and set. For details see  CONFIGURATION FILE  below.
+
+        NOTE that such configuration options should be used before any --help 
+        or  --help=*  option, otherwise the changed setting is not visible.
 
     CONFIGURATION FILE
 
@@ -5192,6 +5216,9 @@ EXAMPLES
           $0 --help=cfg-text >> .o-saft.pl
             edit as needed: .o-saft.pl
           $0 +check some.tld
+
+        * Use your private hint texts in output
+          $0 +check some.tld --cfg-hint=renegotiation="my special hint text"
 #
 #        * Use your private score settings from a file
 #          $0 --help=score > magic.score
