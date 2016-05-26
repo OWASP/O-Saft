@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.37 16/05/24 22:14:00',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.38 16/05/26 11:24:01',
 
 };
 
@@ -1031,7 +1031,7 @@ our %cfg = (
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
     'warning'       => 1,       # 1: print warnings; 0: don't print warnings
-    'hints'         => 1,       # 1: print hints; 0: don't print hints
+    'hint'          => 1,       # 1: print hints; 0: don't print hints
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
     'proxyport'     => 0,       # port for proxy
     'proxyauth'     => "",      # authentication string used for proxy
@@ -1455,13 +1455,25 @@ our %cfg = (
 
     }, # regex
    #------------------+--------------------------------------------------------
-    'hints' => {
-        # Texts used for hints, key must be same as a command (without leading +)
-        # How it works:
-        #   Each hint can be any text. Hint texts can be defined for any valid
-        #   command. print_check() will automatically print such hint texts if
-        #   any.  However, hint texts can be  defined anywhere in the code and
-        #   printed using printhint(),
+    'hints' => {       # texts used for hints
+	#   'key'   => "any string, may contain \t and \n",
+        #
+        # Key can be any string.  If key is same as a  valid command (without
+        # leading +), such hints are printed automatically (see below).
+        # Hint texts can be defined here or anywhere in the code, for example
+        # right at the place where they are used. A definition somewhere else
+        # in the code should look like:
+        #   $cfg{'hints'}->{'your-key'} = "your text\nwith a newline";
+        # This allows that the texts can be customised using the option:
+        #   --cfg-hints=your-key="other text"
+        # How automatic printing works:
+        #   Hint texts can be defined for any valid command (see abobe). When
+        #   results are printed,  print_check() will automatically print such
+        #   hint texts if any.
+        # However, hint texts can be printed anywhere at anytime using:
+        #   printhint('your-key'),
+        # It is not recommended to use:
+        #   print STR_HINT, "my text";
     }, # hints
    #------------------+--------------------------------------------------------
     'ourstr' => {
@@ -1817,6 +1829,7 @@ Print hint for specified command, additionl text will be appended.
 
 sub printhint($@) {
     #? Print hint for specified command.
+    return if ($cfg{'hint'} <= 0);
     my $cmd = shift;
     print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @_) if (defined $cfg{'hints'}->{$cmd});
     return;
