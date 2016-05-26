@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.491 16/05/25 00:57:16",
+    SID         => "@(#) yeast.pl 1.492 16/05/26 11:17:27",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5261,6 +5261,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        }
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
     if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
+    if ($arg =~ /^--hints?$/)           { $cfg{'hint'}++;           }
+    if ($arg =~ /^--nohints?$/)         { $cfg{'hint'}      = 0;    }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
