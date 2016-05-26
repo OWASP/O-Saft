@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.117 16/05/26 13:05:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.118 16/05/26 20:16:10";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -818,7 +818,13 @@ sub _man_head(@) {
     my @args = @_;
     _man_dbx("_man_head(..) ...");
     return if ($cfg_header < 1);
-    printf("=%14s | %s\n", @args); printf("=%s+%s\n", '-'x15, '-'x60);
+    printf("=%14s | %s\n", @args);
+    printf("=%s+%s\n", '-'x15, '-'x60);
+    return;
+}
+sub _man_foot() {
+    return if ($cfg_header < 1);
+    printf("=%s+%s\n", '-'x15, '-'x60);
     return;
 }
 sub _man_opt(@) { my @args = @_; printf("%16s%s%s\n", @args); return; }
@@ -852,50 +858,71 @@ sub _man_usr_value($)   {
 
 sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
+    #? header of table is not printed if $typ is cfg-*
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
     my $typ = shift;
     my %types = (
         # typ        header left    separator  header right
         #-----------+---------------+-------+-------------------------------
-        'score' => ["key",           "=",    "SCORE\t# Description"],
-        'regex' => ["key",           " => ", " Regular Expressions used internally"],
-        'ourstr'=> ["key",           " => ", " Regular Expressions to match own output"],
-        'abbr'  => ["Abbrevation",   " - ",  "Description"],
+        'score' => ["key",           " - ",  " SCORE\t# Description"],
+        'regex' => ["key",           " - ",  " Regular Expressions used internally"],
+        'ourstr'=> ["key",           " - ",  " Regular Expressions to match own output"],
+        'abbr'  => ["Abbrevation",   " - ",  " Description"],
         'intern'=> ["Command",       "    ", " list of commands"],
-        'compl' => ["Compliance",    " - ",  "brief description of performed checks"],
-        'range' => ["range name",    " - ",  "hex values in this range"],
-        'rfc'   => ["Number",        " - ",  "Title"],
-        'check' => ["key",    "=",   "text"],
-        'data'  => ["key",    "=",   "text"],
-        'hint'  => ["key",    " - ", "text"],
-        'text'  => ["key",    "=",   "text"],
-        # the pupose of cfg_* is to print the results in a format so that they
-        # can be used with copy&paste as command line arguments
-        'cfg_check' =>["N/A", "=",   "N/A"],
-        'cfg_data'  =>["N/A", "=",   "N/A"],
-        'cfg_text'  =>["N/A", "=",   "N/A"],
-        'cfg_texts' =>["N/A", "=",   "N/A"],    # alias
-        'cfg_hint'  =>["N/A", "=",   "N/A"],
-        'cfg_hints' =>["N/A", "=",   "N/A"],    # alias
+        'compl' => ["Compliance",    " - ",  " Brief description of performed checks"],
+        'range' => ["range name",    " - ",  " hex values in this range"],
+        'rfc'   => ["Number",        " - ",  " RFC Title and URL"],
+        'check' => ["key",           " - ",  " Label text"],
+        'data'  => ["key",           " - ",  " Label text"],
+        'hint'  => ["key",           " - ",  " Hint text"],
+        'text'  => ["key",           " - ",  " text"],
     );
-    my $txt ="";
-    my $sep = $types{$typ}->[1];
+    my $txt = "";
+    my $sep = "\t";
+    if (defined $types{$typ}) { # defensive programming
+       $sep = $types{$typ}->[1];
+    } else {
+       $sep = "=" if ($typ =~ m/(?:^cfg[_-]|[_-]cfg$)/);
+            # the purpose of cfg_* is to print the results in a format so that
+            # they can be used with copy&paste as command line arguments
+            # simply change the separator to =  while other headers are unused
+            # (because no header printed at all)
+    }
     _man_dbx("man_table($typ) ...");
     _man_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
+
+    # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
     if ($typ eq 'rfc')   { _man_opt("RFC $_", $sep, $man_text{'rfc'}->{$_}[0] . "\n\t\t\t$man_text{'rfc'}->{url}[1]/html/rfc$_") foreach (sort keys %{$man_text{'rfc'}}); }
     if ($typ eq 'abbr')  { _man_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $man_text{'glossar'}->{$_}) foreach (sort keys %{$man_text{'glossar'}}); }
-    if ($typ eq 'regex') { _man_opt($_, $sep, $cfg{'regex'}->{$_})         foreach (sort keys %{$cfg{'regex'}}); }
-    if ($typ eq 'ourstr'){ _man_opt($_, $sep, $cfg{'ourstr'}->{$_})        foreach (sort keys %{$cfg{'ourstr'}}); }
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
-    if ($typ eq 'score') { _man_opt($_, $sep .  $checks{$_}->{score}, "\t# " . $checks{$_}->{txt}) foreach (sort keys %checks); }
-   #if ($typ eq 'range') { _man_arr($_, $sep, $cfg{'cipherranges'}->{$_})  foreach (sort keys %{$cfg{'cipherranges'}}); }
-        # above prints > 65.000 hex values, not very usefull ...
-    if ($typ eq 'range') { print qx(\\sed -ne '/^ *.cipherrange. /,/^ *., # cipherranges/p' $0); } # TODO: quick&dirty backticks
     if ($typ eq 'intern') {
         foreach my $key (sort keys %cfg) {
             next if ($key eq 'cmd-intern'); # don't list myself
             next if ($key !~ m/^cmd-(.*)/);
             _man_opt("cmd-" . $1, $sep, "+" . join(" +", @{$cfg{$key}}));
+        }
+    }
+
+    # now all lists, which can be redefined with --cfg-*=
+    # _man_cfg() prints different data for  --help=TYP and --help=TYP-cfg
+    if ($typ =~ m/(hint|ourstr|range|regex)/) {
+        my $list = $1;
+           $list =~ s/^cfg[._-]?//;
+           $list =~ s/[._-]?cfg$//;
+           $list =  'hints' if ($list =~ m/hint/);  # the key in %cfg is 'hints'; 'hint' is different
+           $list =  'cipherranges' if ($list =~ m/range/);
+        # TODO: --cfg_range=* and --cfg-regex=*  are not yet implemented
+        #       however, we can print it using --help=cfg-regex
+        foreach my $key (sort keys %{$cfg{$list}}) {
+            $txt =  $cfg{$list}->{$key};
+            _man_cfg($typ, $key, $sep, $txt);
+        }
+    }
+    if ($typ =~ m/score/) {
+        foreach my $key (sort keys %checks) {
+            $txt =  $checks{$key}->{score} . "\t# " . $checks{$key}->{txt};
+            $txt =  $checks{$key}->{score} if ($typ =~ m/cfg/);
+            _man_cfg($typ, $key, $sep, $txt);
         }
     }
     if ($typ =~ m/check/) {
@@ -910,12 +937,6 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
-    if ($typ =~ m/hint/) {
-        foreach my $key (sort keys %{$cfg{'hints'}}) {
-            $txt =  $cfg{'hints'}->{$key};
-            _man_cfg($typ, $key, $sep, $txt);
-        }
-    }
     if ($typ =~ m/text/) {
         foreach my $key (sort keys %text) {
             next if (ref($text{$key}) ne ""); # skip except string
@@ -925,12 +946,20 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
             $txt =~ s/(\t)/\\t/g;
             _man_cfg($typ, $key, $sep, $txt);
         }
-        return if ($cfg_header < 1);
+    }
+    if ($typ !~ m/cfg/) {
+        _man_foot();
+    } else {
+        # additional message here is like a WARNING or Hint,
+        # do not print it if any of them is disabled
+        return if (($cfg{'warning'} + $cfg{'hint'}) < 2);
+        my $q = '"';
         print "
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
-= The string  @@  inside texts is used as placeholder.
 = (Don't be confused about multiple  =  as they are part of  TEXT.)
-    " if ($typ !~ m/^cfg/);
+= The string  @@  inside texts is used as placeholder.
+= NOTE: $q are not escaped!
+";
     }
     return;
 } # man_table
@@ -999,6 +1028,7 @@ EoHelp
         }
         close($fh);
     }
+    _man_foot();
     print "\n";
     return;
 } # man_commands
@@ -1046,6 +1076,7 @@ sub man_alias() {
         }
         close($fh);
     }
+    _man_foot();
     print "
 = Note that - or _ characters used in the option name are not shown,
 = they are stripped anyway.
@@ -1132,8 +1163,8 @@ Generated with:
 # begin woodoo
 
 # O-Saft documentation is plain text, which is DATA in perl sources. As such,
-# it is  not detected as source,  not as comment, and not as documentation by
-# most tools analyzing the source code.
+# it is  not detected as source,  not as comment,  and  not as documentation
+# by most tools analyzing the source code.
 # Unfortunately, some people solely believe in statistics generated by  magic
 # tools. They use such statistics to measure for example code quality without
 # looking themself at the code.
@@ -1286,15 +1317,20 @@ Content of this wiki page generated with:
     return;
 } # man_wiki
 
-sub man_toc() {
+sub man_toc($) {
     #? print help table of content
+    my $typ     = lc(shift) || "";      # || to avoid uninitialized value
     _man_dbx("man_toc() ..");
-    foreach my $txt (grep{/^=head. /} @DATA) {
+    foreach my $txt (grep{/^=head. /} @DATA) {  # note: @DATA is in POD format
         next if ($txt !~ m/^=head/);
         next if ($txt =~ m/^=head. *END/);  # skip last line
-        $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
+        if ($typ =~ m/cfg/) {
+            $txt =~ s/^=head1 *(.*)/{print "--help=$1\n"}/e;
+        } else {
             # print =head1 and =head2
             # just =head1 is lame, =head1 and =head2 and =head3 is too much
+            $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
+        }
     }
     return;
 } # man_toc
@@ -1364,7 +1400,7 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # However, note that  --help=chec  already behaves the  same way as
         # --help=CHECKS  while  --help=check  prints the labels. Means that
         # this special condition (match CHECKS) is just for commodity.
-    man_toc(),                  return if ($hlp =~ /^toc|content/i);
+    man_toc($1),                return if ($hlp =~ /^((?:toc|content)(?:.cfg)?)/i);
     man_html(),                 return if ($hlp =~ /^(gen-)?html$/);
     man_wiki('colon'),          return if ($hlp =~ /^(gen-)?wiki$/);
     man_pod(),                  return if ($hlp =~ /^(gen-)?pod$/i);
@@ -1380,8 +1416,8 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/); ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(check|data|hint|text|range|regex|score|ourstr)s?$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|hint|text)s?[_-]?cfg$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|hint|text)s?$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|hint|text|range|regex|score|ourstr)s?[_-]?cfg$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|hint|text|range|regex|score|ourstr)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
     if ($hlp =~ /^cmds?$/i)     { # print program's commands
@@ -2065,6 +2101,42 @@ OPTIONS
 
           Show available checks.
 
+      --help=check-cfg
+      --help=cfg-check
+
+          Show texts used as labels in output for checks (see  +check)  ready
+          for use in  RC-FILE  or as option.
+
+      --help=data
+
+          Show available informations.
+
+      --help=data-cfg
+      --help=cfg-data
+
+          Show texts used  as labels in output for  data  (see  +info)  ready
+          for use in  RC-FILE  or as option.
+
+      --help=hint
+
+          Show texts used in hint messages.
+
+      --help=hint-cfg
+      --help=cfg-hint
+
+          Show texts used in hint messages ready for use in  RC-FILE  or as
+          option.
+
+      --help=text
+
+          Show texts used in various messages.
+
+      --help=text-cfg
+      --help=cfg-text
+
+          Show texts used in various messages ready for use in  RC-FILE  or
+          as option.
+
       --help=legacy
 
           Show possible legacy formats (used as value in  --legacy=TOOL).
@@ -2103,26 +2175,6 @@ OPTIONS
           Show  <SECTION>  from documentation, see  --help=toc  for a list.
           Example:
               $0 --help=EXAMPLES
-
-      --help=text
-
-          Show texts used in various messages.
-
-      --help=cfg-check
-
-          Show texts used as labels in output for checks (see  +check)  ready
-          for use in  RC-FILE  or as option.
-
-      --help=cfg-data
-
-          Show texts used  as labels in output for  data  (see  +info)  ready
-          for use in  RC-FILE  or as option.
-
-      --help=cfg-text
-      --help=text-cfg
-
-          Show texts used in various messages ready for use in  RC-FILE  or
-          as option.
 
       --help=ourstr
 
