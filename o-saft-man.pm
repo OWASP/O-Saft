@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.118 16/05/26 20:16:10";
+my  $man_SID= "@(#) o-saft-man.pm 1.119 16/05/27 13:46:57";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -827,7 +827,13 @@ sub _man_foot() {
     printf("=%s+%s\n", '-'x15, '-'x60);
     return;
 }
-sub _man_opt(@) { my @args = @_; printf("%16s%s%s\n", @args); return; }
+sub _man_opt(@) {
+    my @args = @_;
+    my $len  = 16;
+       $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
+    printf("%${len}s%s%s\n", @args);
+    return;
+}
 sub _man_arr($$$) {
     my ($ssl, $sep, $dumm) = @_;
     my @all = ();
@@ -3131,6 +3137,14 @@ OPTIONS
 
           Print formatted list of internal functions with their description.
           Not to be intended in conjunction with any target check.
+
+      --hint
+
+          Print hint messages (!!Hint:). 
+
+      --no-hint
+
+          Do not print hint messages (!!Hint:). 
 
       --warning
 
