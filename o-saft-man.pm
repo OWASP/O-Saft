@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.120 16/05/27 17:31:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.121 16/05/27 17:42:20";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -447,6 +447,7 @@ my %man_text = (
         'SCSU'      => "Standard Compression Scheme for Unicode (compressed UTF-16)",
         'SCSV'      => "Signaling Cipher Suite Value",
         'SCVP'      => "Server-Based Certificate Validation Protocol",
+        'SCT'       => "Signed Certificate Timestamp",
         'SDES'      => "Security Description Protokol",
         'SEED'      => "128-bit Symmetric Block Cipher",
         'Serpent'   => "symmetric key block cipher (128 bit)",
@@ -489,6 +490,7 @@ my %man_text = (
         'SSP'       => "Security Support Provider",
         'SSPI'      => "Security Support Provider Interface",
         'SST'       => "Serialized Certificate Store format",
+        'SCT'       => "Signed Certificate Timestamp",
         'STS'       => "Strict Transport Security",
         'STS '      => "Station-to-Station protocol",
         'TACK'      => "Trust Assertions for Certificate Keys",
@@ -648,12 +650,14 @@ my %man_text = (
                    # Identity within Internet Public Key Infrastructure Using X.509 (PKIX)
                    # Certificates in the Context of Transport Layer Security (TLS)
         '6797'  => [ "HTTP Strict Transport Security (HSTS)" ],
+        '6962'  => [ "Certificate Transparency" ],
         '7457'  => [ "Summarizing Known Attacks on TLS and DTLS" ],
         '7469'  => [ "Public Key Pinning Extension for HTTP" ],
         '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
         #----------+----------------------------------------+-----------------------+
     },
 
+    # CT   : http://ctwatch.net/
     # AIA  : http://www.startssl.com/certs/sub.class4.server.ca.crt
     # CDP  : http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl
     # OCSP : http://ocsp.startssl.com/sub/class4/server/ca
