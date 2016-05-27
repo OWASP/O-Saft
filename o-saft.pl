@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.492 16/05/26 11:17:27",
+    SID         => "@(#) yeast.pl 1.493 16/05/27 17:32:38",
     STR_VERSION => "16.05.10",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6059,6 +6059,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         $cfg{'port'}  = $port;  #
         $cfg{'host'}  = $host;
     }
+    _y_EXIT("exit=HOST0 - perform host start");
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host: $host {\n");
     _resetchecks();
@@ -6352,7 +6353,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     CLOSE_SSL:
-    _y_CMD("host}");
+    _y_CMD("host " . ($host||"") . ":$port }");
     {
       no warnings qw(once);
       if (defined $Net::SSLinfo::socket) { # check to avoid: WARNING undefined Net::SSLinfo::socket
@@ -6363,11 +6364,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
+    _y_EXIT("exit=HOST1 - perform host end");
 
 } # foreach host
 
 usr_pre_exit();
 _yeast_exit();
+_y_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
 exit 0; # main
 
 __END__
