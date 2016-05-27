@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.119 16/05/27 13:46:57";
+my  $man_SID= "@(#) o-saft-man.pm 1.120 16/05/27 17:31:12";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -410,6 +410,7 @@ my %man_text = (
         'PRF'       => "pseudo-random function",
         'PRNG'      => "pseudo-random number generator",
         'PSK'       => "Pre-shared Key",
+        'PWKE'      => "Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography",
         'QUIC'      => "Quick UDP Internet Connection",
         'RA'        => "Registration Authority (aka Registration CA)",
         'Rabbit'    => "stream cipher algorithm",
@@ -555,6 +556,7 @@ my %man_text = (
         '3987'  => [ "Internationalized Resource Identifiers (IRIs)" ],
         '4518'  => [ "Internationalized String Preparation in LDAP" ],
         '3986'  => [ "Uniform Resource Identifier (URI): Generic Syntax" ],
+        '2104'  => [ "HMAC: Keyed-Hashing for Message Authentication" ],
         '2412'  => [ "AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')",
                      "http://en.wikipedia.org/wiki/Perfect_forward_secrecy"
                    ],
@@ -567,21 +569,14 @@ my %man_text = (
     #                TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
     #                TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA 
         '2818'  => [ "HTTP Over TLS" ],
-        '2712'  => [ "TLSKRB: Addition of Kerberos Cipher Suites to TLS" ],
         '2945'  => [ "SRP Authentication & Key Exchange System" ],
         '2986'  => [ "PKCS#10" ],
         '5967'  => [ "PKCS#10" ],
-        '3268'  => [ "TLSAES: Advanced Encryption Standard (AES) Ciphersuites for TLS" ],
-        '4279'  => [ "TLSPSK: Pre-Shared Key Ciphersuites for TLS" ],
-        '4492'  => [ "TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS" ],
         '5081'  => [ "TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication" ],
         '4309'  => [ "AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)" ],
         '5116'  => [ "An Interface and Algorithms for Authenticated Encryption (AEAD)" ],
         '3749'  => [ "TLS Compression Method" ],
         '3943'  => [ "TLS Protocol Compression Using Lempel-Ziv-Stac (LZS)" ],
-        '3268'  => [ "TLS Version 1 AES" ],
-        '4132'  => [ "TLS Version 1 Camellia" ],
-        '4162'  => [ "TLS Version 1 SEED" ],
         '3546'  => [ "TLS Extensions", "obsolete" ],
         '4366'  => [ "TLS Extensions" ],
                    # AKID - authority key identifier
@@ -604,7 +599,6 @@ my %man_text = (
                    # (Certificate) Status Request (value 5)
         '6520'  => [ "TLS Extensions: Heartbeat" ],
         '6961'  => [ "TLS Multiple Certificate Status Request Extension" ],
-        '7507'  => [ "TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks" ],
         '7627'  => [ "TLS Session Hash and Extended Master Secret Extension" ],
         '6460'  => [ "NSA Suite B Profile for TLS" ],
         '2560'  => [ "Online Certificate Status Protocol (OCSP)", "obsolete" ],
@@ -618,12 +612,37 @@ my %man_text = (
         '5280'  => [ "X509 PKI Certificate and Certificate Revocation List (CRL) Profile" ],
         '6960'  => [ "X509 Online Certificate Status Protocol (OCSP)",
                      "http://en.wikipedia.org/wiki/OCSP_stapling" ],
+                   #
+       #'2246'  => [ "TLS Version 1.0"  ], # with Cipher Suites
+        '2712'  => [ "TLSKRB: Addition of Kerberos Cipher Suites to TLS" ],
+        '3268'  => [ "TLSAES: Advanced Encryption Standard (AES) Cipher Suites for TLS" ],
+        '4132'  => [ "Addition of Camellia Cipher Suites to TLS" ],
+        '4162'  => [ "Addition of SEED Cipher Suites to TLS" ],
+        '4279'  => [ "TLSPSK: Pre-Shared Key Ciphersuites for TLS" ],
+       #'4346'  => [ "TLS Version 1.1"  ], # with Cipher Suites
+        '4357'  => [ "Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms" ],
         '4491'  => [ "Using the GOST Algorithms with X509" ],
                    # GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94
+        '4492'  => [ "TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS" ],
+        '4785'  => [ "Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS" ],
+        '5054'  => [ "Secure Remote Password (SRP) Protocol for TLS Authentication" ],
+       #'5246'  => [ "TLS Version 1.2"  ], # with Cipher Suites
+        '5288'  => [ "AES Galois Counter Mode (GCM) Cipher Suites for TLS" ],
+        '5289'  => [ "TLS Elliptic Curve Cipher Suites with SHA-256/384 and AES Galois Counter Mode (GCM)" ],
+        '5430'  => [ "Suite B Profile for TLS" ],
+        '5487'  => [ "Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode" ],
+        '5489'  => [ "ECDHE_PSK Cipher Suites for TLS" ],
+        '5589'  => [ "Session Initiation Protocol (SIP) Call Control - Transfer" ],
+        '5932'  => [ "Camellia Cipher Suites for TLS" ],
+        '6209'  => [ "Addition of the ARIA Cipher Suites to TLS" ],
+        '6367'  => [ "Addition of the Camellia Cipher Suites to TLS" ],
+        '6655'  => [ "AES-CCM Cipher Suites for TLS" ],
+        '7251'  => [ "AES-CCM Elliptic Curve Cryptography (ECC) Cipher Suites for TLS" ],
+        '7507'  => [ "TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks" ],
+                   #
         '5055'  => [ "Server-Based Certificate Validation Protocol (SCVP)" ],
         '5019'  => [ "simplified RFC 2560" ],
         '5705'  => [ "Keying Material Exporters for TLS" ],
-        '6655'  => [ "AES-CCM Cipher Suites for TLS" ],
         '6125'  => [ "Representation and Verification of Domain-Based Application Service (PKIX) for TLS" ],
                    # Representation and Verification of Domain-Based Application Service
                    # Identity within Internet Public Key Infrastructure Using X.509 (PKIX)
