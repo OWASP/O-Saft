@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.41 16/05/29 12:05:51',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.42 16/05/29 12:16:43',
 
 };
 
@@ -1664,6 +1664,8 @@ sub _trace0(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::Require
 sub _trace1(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 sub _trace2(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 sub _trace3(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+
+sub _warn(@)    { ::_warn(@_);  return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
 =pod
 
