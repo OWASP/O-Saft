@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.39 16/05/26 13:08:40',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.41 16/05/29 12:05:51',
 
 };
 
@@ -376,6 +376,45 @@ my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_
     },
 ); # %tls_extensions__text
 
+our %ec_point_formats = ( # RFC 4492
+    # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
+    #----+-----------------------------+----+---+------------------------------
+    # ID      name                      RFC  DTLS other names
+    #----+-----------------------------+----+---+------------------------------
+    0 => [qw( uncompressed              4492  Y   )],
+    1 => [qw( ansiX962_compressed_prime 4492  Y   )],
+    2 => [qw( ansiX962_compressed_char2 4492  Y   )],
+  248 => [qw( reserved_248              4492  N   )],
+  249 => [qw( reserved_249              4492  N   )],
+  250 => [qw( reserved_250              4492  N   )],
+  251 => [qw( reserved_251              4492  N   )],
+  252 => [qw( reserved_252              4492  N   )],
+  253 => [qw( reserved_253              4492  N   )],
+  254 => [qw( reserved_254              4492  N   )],
+  255 => [qw( reserved_255              4492  N   )],
+    #----+-----------------------------+----+---+------------------------------
+); # ec_point_formats
+
+our %ec_curve_types = ( # RFC 4492
+    # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
+    #----+-----------------------------+----+---+------------------------------
+    # ID      name                      RFC  DTLS other names
+    #----+-----------------------------+----+---+------------------------------
+    0 => [qw( unassigned                4492  N   )],
+    1 => [qw( explicit_prime            4492  Y   )],
+    2 => [qw( explicit_char2            4492  Y   )],
+    3 => [qw( named_curve               4492  Y   )],
+  248 => [qw( reserved_248              4492  N   )],
+  249 => [qw( reserved_249              4492  N   )],
+  250 => [qw( reserved_250              4492  N   )],
+  251 => [qw( reserved_251              4492  N   )],
+  252 => [qw( reserved_252              4492  N   )],
+  253 => [qw( reserved_253              4492  N   )],
+  254 => [qw( reserved_254              4492  N   )],
+  255 => [qw( reserved_255              4492  N   )],
+    #----+-----------------------------+----+---+------------------------------
+); # ec_curve_types
+
 # Torsten: %ECCURVE_TYPE
 our %tls_curve_types = ( # RFC 4492 
     'explicit_prime'        => 1,
@@ -394,90 +433,94 @@ our %tls_curve_types = ( # RFC 4492
 # Torsten: %ECC_NAMED_CURVE = 
 # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 # Value =>   Description bits(added) DTLS-OK Reference
+# our %named_curves =
 our %tls_curves = (
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
     #----+-------------+-------+----+--+----+----------------------+-------------------------
-    # ID   name         NIST   bits DTLD RFC OID                    other name
+    # ID   name         NIST   bits DTLS RFC OID                    other name
     #----+-------------+-------+----+--+----+----------------------+-------------------------
-    0 => [qw(unassigned -          0  N IANA -                    )],
-    1 => [qw(sect163k1  K-163    163  Y 4492 1.3.132.0.1          )],
-    2 => [qw(sect163r1  -        163  Y 4492 1.3.132.0.2          )],
-    3 => [qw(sect163r2  B-163    163  Y 4492 1.3.132.0.15         )],
-    4 => [qw(sect193r1  -        193  Y 4492 1.3.132.0.24         )],
-    5 => [qw(sect193r2  -        193  Y 4492 1.3.132.0.25         )],
-    6 => [qw(sect233k1  K-233    233  Y 4492 1.3.132.0.26         )],
-    7 => [qw(sect233r1  B-233    233  Y 4492 1.3.132.0.27         )],
-    8 => [qw(sect239k1  -        239  Y 4492 1.3.132.0.3          )],
-    9 => [qw(sect283k1  K-283    283  Y 4492 1.3.132.0.16         )],
-   10 => [qw(sect283r1  B-283    283  Y 4492 1.3.132.0.17         )],
-   11 => [qw(sect409k1  K-409    409  Y 4492 1.3.132.0.36         )],
-   12 => [qw(sect409r1  B-409    409  Y 4492 1.3.132.0.37         )],
-   13 => [qw(sect571k1  K-571    571  Y 4492 1.3.132.0.38         )],
-   14 => [qw(sect571r1  B-571    571  Y 4492 1.3.132.0.39         )],
-   15 => [qw(secp160k1  -        160  Y 4492 1.3.132.0.9          )],
-   16 => [qw(secp160r1  -        160  Y 4492 1.3.132.0.8          )],
-   17 => [qw(secp160r2  -        160  Y 4492 1.3.132.0.30         )],
-   18 => [qw(secp192k1  -        192  Y 4492 1.3.132.0.31         )], # ANSI X9.62 prime192v1, NIST P-192, 
-   19 => [qw(secp192r1  P-192    192  Y 4492 1.2.840.10045.3.1.1  )], # ANSI X9.62 prime192v1
-   20 => [qw(secp224k1  -        224  Y 4492 1.3.132.0.32         )],
-   21 => [qw(secp224r1  P-224    224  Y 4492 1.3.132.0.33         )],
-   22 => [qw(secp256k1  P-256    256  Y 4492 1.3.132.0.10         )],
-   23 => [qw(secp256r1  P-256    256  Y 4492 1.2.840.10045.3.1.7  )], # ANSI X9.62 prime256v1
-   24 => [qw(secp384r1  P-384    384  Y 4492 1.3.132.0.34         )],
-   25 => [qw(secp521r1  P-521    521  Y 4492 1.3.132.0.35         )],
-   26 => [qw(brainpoolP256r1  -  256  Y 7027 1.3.36.3.3.2.8.1.1.7 )],
-   27 => [qw(brainpoolP384r1  -  384  Y 7027 1.3.36.3.3.2.8.1.1.11)],
-   28 => [qw(brainpoolP512r1  -  512  Y 7027 1.3.36.3.3.2.8.1.1.13)],
-#  28 => [qw(brainpoolP521r1  -  521  Y 7027 1.3.36.3.3.2.8.1.1.13)], # ACHTUNG: in manchen Beschreibungen dieser falsche String
-   29 => [qw(ecdh_x25519      -  255  Y 4492bis -                 )], # [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
-   30 => [qw(ecdh_x448        -  448  Y 4492bis -                 )], # -"-
-#  31 => [qw(eddsa_ed25519    -  448  Y 4492bis 1.3.101.100       )], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
-#  32 => [qw(eddsa_ed448      -  448  Y 4492bis 1.3.101.101       )], # -"-
-
-  256 => [qw(ffdhe2048        - 2048  Y ietf-tls-negotiated-ff-dhe-10)],
-  257 => [qw(ffdhe3072        - 3072  Y ietf-tls-negotiated-ff-dhe-10)],
-  258 => [qw(ffdhe4096        - 4096  Y ietf-tls-negotiated-ff-dhe-10)],
-  259 => [qw(ffdhe6144        - 6144  Y ietf-tls-negotiated-ff-dhe-10)],
-  260 => [qw(ffdhe8192        - 8192  Y ietf-tls-negotiated-ff-dhe-10)],
-65281 => [qw(arbitrary_explicit_prime_curves - ?  Y 4492 -        )], # 0xFF01
-65282 => [qw(arbitrary_explicit_char2_curves - ?  Y 4492 -        )], # 0xFF02
+    0 => [qw( unassigned      -    0  N IANA -                    )],
+    1 => [qw( sect163k1   K-163  163  Y 4492 1.3.132.0.1          )],
+    2 => [qw( sect163r1       -  163  Y 4492 1.3.132.0.2          )],
+    3 => [qw( sect163r2   B-163  163  Y 4492 1.3.132.0.15         )],
+    4 => [qw( sect193r1       -  193  Y 4492 1.3.132.0.24         )],
+    5 => [qw( sect193r2       -  193  Y 4492 1.3.132.0.25         )],
+    6 => [qw( sect233k1   K-233  233  Y 4492 1.3.132.0.26         )],
+    7 => [qw( sect233r1   B-233  233  Y 4492 1.3.132.0.27         )],
+    8 => [qw( sect239k1       -  239  Y 4492 1.3.132.0.3          )],
+    9 => [qw( sect283k1   K-283  283  Y 4492 1.3.132.0.16         )],
+   10 => [qw( sect283r1   B-283  283  Y 4492 1.3.132.0.17         )],
+   11 => [qw( sect409k1   K-409  409  Y 4492 1.3.132.0.36         )],
+   12 => [qw( sect409r1   B-409  409  Y 4492 1.3.132.0.37         )],
+   13 => [qw( sect571k1   K-571  571  Y 4492 1.3.132.0.38         )],
+   14 => [qw( sect571r1   B-571  571  Y 4492 1.3.132.0.39         )],
+   15 => [qw( secp160k1       -  160  Y 4492 1.3.132.0.9          )],
+   16 => [qw( secp160r1       -  160  Y 4492 1.3.132.0.8          )],
+   17 => [qw( secp160r2       -  160  Y 4492 1.3.132.0.30         )],
+   18 => [qw( secp192k1       -  192  Y 4492 1.3.132.0.31         )], # ANSI X9.62 prime192v1, NIST P-192, 
+   19 => [qw( secp192r1   P-192  192  Y 4492 1.2.840.10045.3.1.1  )], # ANSI X9.62 prime192v1
+   20 => [qw( secp224k1       -  224  Y 4492 1.3.132.0.32         )],
+   21 => [qw( secp224r1   P-224  224  Y 4492 1.3.132.0.33         )],
+   22 => [qw( secp256k1   P-256  256  Y 4492 1.3.132.0.10         )],
+   23 => [qw( secp256r1   P-256  256  Y 4492 1.2.840.10045.3.1.7  )], # ANSI X9.62 prime256v1
+   24 => [qw( secp384r1   P-384  384  Y 4492 1.3.132.0.34         )],
+   25 => [qw( secp521r1   P-521  521  Y 4492 1.3.132.0.35         )],
+   26 => [qw( brainpoolP256r1 -  256  Y 7027 1.3.36.3.3.2.8.1.1.7 )],
+   27 => [qw( brainpoolP384r1 -  384  Y 7027 1.3.36.3.3.2.8.1.1.11)],
+   28 => [qw( brainpoolP512r1 -  512  Y 7027 1.3.36.3.3.2.8.1.1.13)],
+#  28 => [qw( brainpoolP521r1 -  521  Y 7027 1.3.36.3.3.2.8.1.1.13)], # ACHTUNG: in manchen Beschreibungen dieser falsche String
+   29 => [qw( ecdh_x25519     -  255  Y 4492bis -                 )], # [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
+   30 => [qw( ecdh_x448       -  448  Y 4492bis -                 )], # -"-
+#  31 => [qw( eddsa_ed25519   -  448  Y 4492bis 1.3.101.100       )], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
+#  32 => [qw( eddsa_ed448     -  448  Y 4492bis 1.3.101.101       )], # -"-
+ 
+  256 => [qw( ffdhe2048       - 2048  Y ietf-tls-negotiated-ff-dhe-10)],
+  257 => [qw( ffdhe3072       - 3072  Y ietf-tls-negotiated-ff-dhe-10)],
+  258 => [qw( ffdhe4096       - 4096  Y ietf-tls-negotiated-ff-dhe-10)],
+  259 => [qw( ffdhe6144       - 6144  Y ietf-tls-negotiated-ff-dhe-10)],
+  260 => [qw( ffdhe8192       - 8192  Y ietf-tls-negotiated-ff-dhe-10)],
+65281 => [qw( arbitrary_explicit_prime_curves - ?  Y 4492 -        )], # 0xFF01
+65282 => [qw( arbitrary_explicit_char2_curves - ?  Y 4492 -        )], # 0xFF02
     #----+-------------+-------+----+--+----+----------------------+-------------------------
-42001 => [qw(Curve3617        -   -1  n ? -                       )],
-42002 => [qw(secp112r1        -   -1  n ? 1.3.132.0.6             )],
-42003 => [qw(secp112r2        -   -1  n ? 1.3.132.0.7             )],
-42004 => [qw(secp113r1        -   -1  n ? 1.3.132.0.4             )],
-42005 => [qw(secp113r2        -   -1  n ? 1.3.132.0.5             )],
-42006 => [qw(secp131r1        -   -1  n ? 1.3.132.0.22            )],
-42007 => [qw(secp131r2        -   -1  n ? 1.3.132.0.23            )],
-42008 => [qw(secp128r1        -   -1  n ? 1.3.132.0.28            )],
-42009 => [qw(secp128r2        -   -1  n ? 1.3.132.0.29            )],
-42011 => [qw(ed25519    Ed25519   -1  n 1.3.6.1.4.1.11591.15.1    )], # PGP
-42012 => [qw(brainpoolp160r1  -   -1  n ? 1.3.36.3.3.2.8.1.1.1    )],
-42013 => [qw(brainpoolp192r1  -   -1  n ? 1.3.36.3.3.2.8.1.1.3    )],
-42014 => [qw(brainpoolp224r1  -   -1  n ? 1.3.36.3.3.2.8.1.1.5    )],
-42015 => [qw(brainpoolp320r1  -   -1  n ? 1.3.36.3.3.2.8.1.1.9    )],
-42016 => [qw(brainpoolp512r1  -   -1  n ? 1.3.36.3.3.2.8.1.1.13   )], # same as brainpoolP521r142001 => [qw(
-42020 => [qw(GOST2001-test    -   -1  n ? 1.2.643.2.2.35.0        )],
-42021 => [qw(GOST2001-CryptoPro-A - -1 n ? 1.2.643.2.2.35.1       )],
-42022 => [qw(GOST2001-CryptoPro-B - -1 n ? 1.2.643.2.2.35.2       )],
-42023 => [qw(GOST2001-CryptoPro-C - -1 n ? 1.2.643.2.2.35.3       )],
-42024 => [qw(GOST2001-CryptoPro-A - -1 n ? - )], # GOST2001-CryptoPro-XchA
-42025 => [qw(GOST2001-CryptoPro-C - -1 n ? - )], # GOST2001-CryptoPro-XchB
-42026 => [qw(GOST2001-CryptoPro-A - -1 n ? 1.2.643.2.2.36.0       )],
-42027 => [qw(GOST2001-CryptoPro-C - -1 n ? 1.2.643.2.2.36.1       )],
-42031 => [qw(X9.62 prime192v2 -   -1  n ? 1.2.840.10045.3.1.2     )],
-42032 => [qw(X9.62 prime192v3 -   -1  n ? 1.2.840.10045.3.1.3     )],
-42033 => [qw(X9.62 prime239v1 -   -1  n ? 1.2.840.10045.3.1.4     )],
-42034 => [qw(X9.62 prime239v2 -   -1  n ? 1.2.840.10045.3.1.5     )],
-42035 => [qw(X9.62 prime239v3 -   -1  n ? 1.2.840.10045.3.1.6     )],
-42041 => [qw(X9.62 c2tnb191v1 -   -1  n ? 1.2.840.10045.3.0.5     )],
-42042 => [qw(X9.62 c2tnb191v2 -   -1  n ? 1.2.840.10045.3.0.6     )],
-42043 => [qw(X9.62 c2tnb191v3 -   -1  n ? 1.2.840.10045.3.0.7     )],
-42044 => [qw(X9.62 c2tnb239v1 -   -1  n ? 1.2.840.10045.3.0.11    )],
-42045 => [qw(X9.62 c2tnb239v2 -   -1  n ? 1.2.840.10045.3.0.12    )],
-42046 => [qw(X9.62 c2tnb239v3 -   -1  n ? 1.2.840.10045.3.0.13    )],
-42047 => [qw(X9.62 c2tnb359v1 -   -1  n ? 1.2.840.10045.3.0.18    )],
-42048 => [qw(X9.62 c2tnb431r1 -   -1  n ? 1.2.840.10045.3.0.20    )],
+    # following not from IANA
+    # ID   name         NIST   bits DTLS RFC OID                    other name
+    #----+-------------+-------+----+--+----+----------------------+-------------------------
+42001 => [qw( Curve3617       -   -1  n ?    -                     )],
+42002 => [qw( secp112r1       -   -1  n ?    1.3.132.0.6           )],
+42003 => [qw( secp112r2       -   -1  n ?    1.3.132.0.7           )],
+42004 => [qw( secp113r1       -   -1  n ?    1.3.132.0.4           )],
+42005 => [qw( secp113r2       -   -1  n ?    1.3.132.0.5           )],
+42006 => [qw( secp131r1       -   -1  n ?    1.3.132.0.22          )],
+42007 => [qw( secp131r2       -   -1  n ?    1.3.132.0.23          )],
+42008 => [qw( secp128r1       -   -1  n ?    1.3.132.0.28          )],
+42009 => [qw( secp128r2       -   -1  n ?    1.3.132.0.29          )],
+42011 => [qw( ed25519   Ed25519   -1  n ?    1.3.6.1.4.1.11591.15.1)], # PGP
+42012 => [qw( brainpoolp160r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.1  )],
+42013 => [qw( brainpoolp192r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.3  )],
+42014 => [qw( brainpoolp224r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.5  )],
+42015 => [qw( brainpoolp320r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.9  )],
+42016 => [qw( brainpoolp512r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.13 )], # same as brainpoolP521r142001 => [qw(
+42020 => [qw( GOST2001-test   -   -1  n ?    1.2.643.2.2.35.0      )],
+42021 => [qw( GOST2001-CryptoPro-A - -1 n ?  1.2.643.2.2.35.1      )],
+42022 => [qw( GOST2001-CryptoPro-B - -1 n ?  1.2.643.2.2.35.2      )],
+42023 => [qw( GOST2001-CryptoPro-C - -1 n ?  1.2.643.2.2.35.3      )],
+42024 => [qw( GOST2001-CryptoPro-A - -1 n ?  -                     )], # GOST2001-CryptoPro-XchA
+42025 => [qw( GOST2001-CryptoPro-C - -1 n ?  -                     )], # GOST2001-CryptoPro-XchB
+42026 => [qw( GOST2001-CryptoPro-A - -1 n ?  1.2.643.2.2.36.0      )],
+42027 => [qw( GOST2001-CryptoPro-C - -1 n ?  1.2.643.2.2.36.1      )],
+42031 => [qw( X9.62 prime192v2     - -1 n ?  1.2.840.10045.3.1.2   )],
+42032 => [qw( X9.62 prime192v3     - -1 n ?  1.2.840.10045.3.1.3   )],
+42033 => [qw( X9.62 prime239v1     - -1 n ?  1.2.840.10045.3.1.4   )],
+42034 => [qw( X9.62 prime239v2     - -1 n ?  1.2.840.10045.3.1.5   )],
+42035 => [qw( X9.62 prime239v3     - -1 n ?  1.2.840.10045.3.1.6   )],
+42041 => [qw( X9.62 c2tnb191v1     - -1 n ?  1.2.840.10045.3.0.5   )],
+42042 => [qw( X9.62 c2tnb191v2     - -1 n ?  1.2.840.10045.3.0.6   )],
+42043 => [qw( X9.62 c2tnb191v3     - -1 n ?  1.2.840.10045.3.0.7   )],
+42044 => [qw( X9.62 c2tnb239v1     - -1 n ?  1.2.840.10045.3.0.11  )],
+42045 => [qw( X9.62 c2tnb239v2     - -1 n ?  1.2.840.10045.3.0.12  )],
+42046 => [qw( X9.62 c2tnb239v3     - -1 n ?  1.2.840.10045.3.0.13  )],
+42047 => [qw( X9.62 c2tnb359v1     - -1 n ?  1.2.840.10045.3.0.18  )],
+42048 => [qw( X9.62 c2tnb431r1     - -1 n ?  1.2.840.10045.3.0.20  )],
 # fobidden curves
 42061 => [qw(X9.62 c2pnb163v1 -   -1  n ? 1.2.840.10045.3.0.1     )],
 42062 => [qw(X9.62 c2pnb163v2 -   -1  n ? 1.2.840.10045.3.0.2     )],
@@ -669,25 +712,35 @@ our %ciphers = (
 our %cipher_names = (
 ### Achtung: die hex-Wert sind intern, davon sind nur die letzten 4 oder 6
 ###          Stellen (je nach Protokoll) der eigentliche Wert.
-    # ADH_DES_192_CBC_SHA      # alias: DH_anon_WITH_3DES_EDE_CBC_SHA
-    # ADH_DES_40_CBC_SHA       # alias: DH_anon_EXPORT_WITH_DES40_CBC_SHA
-    # ADH_DES_64_CBC_SHA       # alias: DH_anon_WITH_DES_CBC_SHA
-    # ADH_RC4_40_MD5           # alias: DH_anon_EXPORT_WITH_RC4_40_MD5
-    # DHE_RSA_WITH_AES_128_SHA # alias: DHE_RSA_WITH_AES_128_CBC_SHA
-    # DHE_RSA_WITH_AES_256_SHA # alias: DHE_RSA_WITH_AES_256_CBC_SHA
     #
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name              # cipher suite value
     #!#----------+-------------------------------------+--------------------------+
-    '0x0300001B' => [qw(ADH-DES-CBC3-SHA                ADH_DES_192_CBC_SHA)],
+#       SSL2 ciphers?                                  # missing SSL_CK_ prefix
+    '0x02010080' => [qw(RC4-MD5                         RC4_128_WITH_MD5)],
+    '0x02020080' => [qw(EXP-RC4-MD5                     RC4_128_EXPORT40_WITH_MD5)],
+    '0x02030080' => [qw(RC2-CBC-MD5                     RC2_128_CBC_WITH_MD5)],
+    '0x02040080' => [qw(EXP-RC2-CBC-MD5                 RC2_128_CBC_EXPORT40_WITH_MD5)],
+    '0x02050080' => [qw(IDEA-CBC-MD5                    IDEA_128_CBC_WITH_MD5)],
+    '0x02060040' => [qw(DES-CBC-MD5                     DES_64_CBC_WITH_MD5)],
+    '0x02060140' => [qw(DES-CBC-SHA                     DES_64_CBC_WITH_SHA)],
+    '0x020700C0' => [qw(DES-CBC3-MD5                    DES_192_EDE3_CBC_WITH_MD5)],
+    '0x020701C0' => [qw(DES-CBC3-SHA                    DES_192_EDE3_CBC_WITH_SHA)],
+    '0x02080080' => [qw(RC4-64-MD5                      RC4_64_WITH_MD5)],
+    '0x02FF0800' => [qw(DES-CFB-M1                      DES_64_CFB64_WITH_MD5_1)],
+    '0x02FF0810' => [qw(NULL                            NULL)],
+#
     '0x03000019' => [qw(EXP-ADH-DES-CBC-SHA             ADH_DES_40_CBC_SHA)],
     '0x0300001A' => [qw(ADH-DES-CBC-SHA                 ADH_DES_64_CBC_SHA)],
-    '0x03000018' => [qw(ADH-RC4-MD5                     ADH_RC4_128_MD5)],
+    '0x0300001B' => [qw(ADH-DES-CBC3-SHA                ADH_DES_192_CBC_SHA)],
     '0x03000017' => [qw(EXP-ADH-RC4-MD5                 ADH_RC4_40_MD5)],
+    '0x03000018' => [qw(ADH-RC4-MD5                     ADH_RC4_128_MD5)],
     '0x030000A6' => [qw(ADH-AES128-GCM-SHA256           ADH_WITH_AES_128_GCM_SHA256)],
     '0x03000034' => [qw(ADH-AES128-SHA                  ADH_WITH_AES_128_SHA)],
     '0x0300006C' => [qw(ADH-AES128-SHA256               ADH_WITH_AES_128_SHA256)],
     '0x030000A7' => [qw(ADH-AES256-GCM-SHA384           ADH_WITH_AES_256_GCM_SHA384)],
+    '0x030000A8' => [qw(PSK-AES128-GCM-SHA256           PSK_WITH_AES_128_GCM_SHA256)],
+    '0x030000A8' => [qw(PSK-AES256-GCM-SHA384           PSK_WITH_AES_256_GCM_SHA384)],
     '0x0300003A' => [qw(ADH-AES256-SHA                  ADH_WITH_AES_256_SHA)],
     '0x0300006D' => [qw(ADH-AES256-SHA256               ADH_WITH_AES_256_SHA256)],
     '0x03000046' => [qw(ADH-CAMELLIA128-SHA             ADH_WITH_CAMELLIA_128_CBC_SHA)],
@@ -695,11 +748,6 @@ our %cipher_names = (
     '0x030000BF' => [qw(ADH-CAMELLIA128-SHA256          ADH_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x030000C5' => [qw(ADH-CAMELLIA256-SHA256          ADH_WITH_CAMELLIA_256_CBC_SHA256)],
     '0x0300009B' => [qw(ADH-SEED-SHA                    ADH_WITH_SEED_SHA)],
-    '0x020700c0' => [qw(DES-CBC3-MD5                    DES_192_EDE3_CBC_WITH_MD5)],
-    '0x020701c0' => [qw(DES-CBC3-SHA                    DES_192_EDE3_CBC_WITH_SHA)],
-    '0x02060040' => [qw(DES-CBC-MD5                     DES_64_CBC_WITH_MD5)],
-    '0x02060140' => [qw(DES-CBC-SHA                     DES_64_CBC_WITH_SHA)],
-    '0x02ff0800' => [qw(DES-CFB-M1                      DES_64_CFB64_WITH_MD5_1)],
     '0x03000063' => [qw(EXP1024-DHE-DSS-DES-CBC-SHA     DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA)],
     '0x03000065' => [qw(EXP1024-DHE-DSS-RC4-SHA         DHE_DSS_EXPORT1024_WITH_RC4_56_SHA)],
     '0x030000A2' => [qw(DHE-DSS-AES128-GCM-SHA256       DHE_DSS_WITH_AES_128_GCM_SHA256)],
@@ -714,51 +762,51 @@ our %cipher_names = (
     '0x030000C3' => [qw(DHE-DSS-CAMELLIA256-SHA256      DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256)],
     '0x03000066' => [qw(DHE-DSS-RC4-SHA                 DHE_DSS_WITH_RC4_128_SHA)],
     '0x03000099' => [qw(DHE-DSS-SEED-SHA                DHE_DSS_WITH_SEED_SHA)],
-    '0x0300009E' => [qw(DHE-RSA-AES128-GCM-SHA256       DHE_RSA_WITH_AES_128_GCM_SHA256)],
     '0x03000033' => [qw(DHE-RSA-AES128-SHA              DHE_RSA_WITH_AES_128_SHA)],
-    '0x03000067' => [qw(DHE-RSA-AES128-SHA256           DHE_RSA_WITH_AES_128_SHA256)],
-    '0x0300009F' => [qw(DHE-RSA-AES256-GCM-SHA384       DHE_RSA_WITH_AES_256_GCM_SHA384)],
     '0x03000039' => [qw(DHE-RSA-AES256-SHA              DHE_RSA_WITH_AES_256_SHA)],
+    '0x03000067' => [qw(DHE-RSA-AES128-SHA256           DHE_RSA_WITH_AES_128_SHA256)],
     '0x0300006B' => [qw(DHE-RSA-AES256-SHA256           DHE_RSA_WITH_AES_256_SHA256)],
+    '0x0300009E' => [qw(DHE-RSA-AES128-GCM-SHA256       DHE_RSA_WITH_AES_128_GCM_SHA256)],
+    '0x0300009F' => [qw(DHE-RSA-AES256-GCM-SHA384       DHE_RSA_WITH_AES_256_GCM_SHA384)],
     '0x03000045' => [qw(DHE-RSA-CAMELLIA128-SHA         DHE_RSA_WITH_CAMELLIA_128_CBC_SHA)],
     '0x03000088' => [qw(DHE-RSA-CAMELLIA256-SHA         DHE_RSA_WITH_CAMELLIA_256_CBC_SHA)],
     '0x030000BE' => [qw(DHE-RSA-CAMELLIA128-SHA256      DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x030000C4' => [qw(DHE-RSA-CAMELLIA256-SHA256      DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256)],
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], #
     '0x0300CCAA' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
     '0x0300CCAB' => [qw(PSK-CHACHA20-POLY1305-SHA256    PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300CCAC' => [qw(ECDHE-PSK-CHACHA20-POLY1305-SHA256 ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300CCAD' => [qw(DHE-PSK-CHACHA20-POLY1305-SHA256   DHE_PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300CCAE' => [qw(PSK-RSA-CHACHA20-POLY1305       RSA_PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300009A' => [qw(DHE-RSA-SEED-SHA                DHE_RSA_WITH_SEED_SHA)],
-    '0x030000BB' => [qw(DH-DSS-CAMELLIA128-SHA256       DH_DSS_WITH_CAMELLIA_128_CBC_SHA256)],
-    '0x030000C1' => [qw(DH-DSS-CAMELLIA256-SHA256       DH_DSS_WITH_CAMELLIA_256_CBC_SHA256)],
-    '0x0300000D' => [qw(DH-DSS-DES-CBC3-SHA             DH_DSS_DES_192_CBC3_SHA)],
-    '0x0300000B' => [qw(EXP-DH-DSS-DES-CBC-SHA          DH_DSS_DES_40_CBC_SHA)],
-    '0x0300000C' => [qw(DH-DSS-DES-CBC-SHA              DH_DSS_DES_64_CBC_SHA)],
-    '0x030000A4' => [qw(DH-DSS-AES128-GCM-SHA256        DH_DSS_WITH_AES_128_GCM_SHA256)],
-    '0x03000030' => [qw(DH-DSS-AES128-SHA               DH_DSS_WITH_AES_128_SHA)],
-    '0x0300003E' => [qw(DH-DSS-AES128-SHA256            DH_DSS_WITH_AES_128_SHA256)],
-    '0x030000A5' => [qw(DH-DSS-AES256-GCM-SHA384        DH_DSS_WITH_AES_256_GCM_SHA384)],
-    '0x03000036' => [qw(DH-DSS-AES256-SHA               DH_DSS_WITH_AES_256_SHA)],
-    '0x03000068' => [qw(DH-DSS-AES256-SHA256            DH_DSS_WITH_AES_256_SHA256)],
     '0x03000042' => [qw(DH-DSS-CAMELLIA128-SHA          DH_DSS_WITH_CAMELLIA_128_CBC_SHA)],
     '0x03000085' => [qw(DH-DSS-CAMELLIA256-SHA          DH_DSS_WITH_CAMELLIA_256_CBC_SHA)],
+    '0x030000BB' => [qw(DH-DSS-CAMELLIA128-SHA256       DH_DSS_WITH_CAMELLIA_128_CBC_SHA256)],
+    '0x030000C1' => [qw(DH-DSS-CAMELLIA256-SHA256       DH_DSS_WITH_CAMELLIA_256_CBC_SHA256)],
+    '0x0300000B' => [qw(EXP-DH-DSS-DES-CBC-SHA          DH_DSS_DES_40_CBC_SHA)],
+    '0x0300000C' => [qw(DH-DSS-DES-CBC-SHA              DH_DSS_DES_64_CBC_SHA)],
+    '0x0300000D' => [qw(DH-DSS-DES-CBC3-SHA             DH_DSS_DES_192_CBC3_SHA)],
+    '0x03000030' => [qw(DH-DSS-AES128-SHA               DH_DSS_WITH_AES_128_SHA)],
+    '0x03000036' => [qw(DH-DSS-AES256-SHA               DH_DSS_WITH_AES_256_SHA)],
+    '0x0300003E' => [qw(DH-DSS-AES128-SHA256            DH_DSS_WITH_AES_128_SHA256)],
+    '0x03000068' => [qw(DH-DSS-AES256-SHA256            DH_DSS_WITH_AES_256_SHA256)],
+    '0x030000A4' => [qw(DH-DSS-AES128-GCM-SHA256        DH_DSS_WITH_AES_128_GCM_SHA256)],
+    '0x030000A5' => [qw(DH-DSS-AES256-GCM-SHA384        DH_DSS_WITH_AES_256_GCM_SHA384)],
     '0x03000097' => [qw(DH-DSS-SEED-SHA                 DH_DSS_WITH_SEED_SHA)],
-    '0x03000010' => [qw(DH-RSA-DES-CBC3-SHA             DH_RSA_DES_192_CBC3_SHA)],
+    '0x03000098' => [qw(DH-RSA-SEED-SHA                 DH_RSA_WITH_SEED_SHA)],
     '0x0300000E' => [qw(EXP-DH-RSA-DES-CBC-SHA          DH_RSA_DES_40_CBC_SHA)],
     '0x0300000F' => [qw(DH-RSA-DES-CBC-SHA              DH_RSA_DES_64_CBC_SHA)],
-    '0x030000A0' => [qw(DH-RSA-AES128-GCM-SHA256        DH_RSA_WITH_AES_128_GCM_SHA256)],
+    '0x03000010' => [qw(DH-RSA-DES-CBC3-SHA             DH_RSA_DES_192_CBC3_SHA)],
     '0x03000031' => [qw(DH-RSA-AES128-SHA               DH_RSA_WITH_AES_128_SHA)],
-    '0x0300003F' => [qw(DH-RSA-AES128-SHA256            DH_RSA_WITH_AES_128_SHA256)],
-    '0x030000A1' => [qw(DH-RSA-AES256-GCM-SHA384        DH_RSA_WITH_AES_256_GCM_SHA384)],
     '0x03000037' => [qw(DH-RSA-AES256-SHA               DH_RSA_WITH_AES_256_SHA)],
+    '0x0300003F' => [qw(DH-RSA-AES128-SHA256            DH_RSA_WITH_AES_128_SHA256)],
     '0x03000069' => [qw(DH-RSA-AES256-SHA256            DH_RSA_WITH_AES_256_SHA256)],
+    '0x030000A0' => [qw(DH-RSA-AES128-GCM-SHA256        DH_RSA_WITH_AES_128_GCM_SHA256)],
+    '0x030000A1' => [qw(DH-RSA-AES256-GCM-SHA384        DH_RSA_WITH_AES_256_GCM_SHA384)],
     '0x03000043' => [qw(DH-RSA-CAMELLIA128-SHA          DH_RSA_WITH_CAMELLIA_128_CBC_SHA)],
     '0x03000086' => [qw(DH-RSA-CAMELLIA256-SHA          DH_RSA_WITH_CAMELLIA_256_CBC_SHA)],
     '0x030000BC' => [qw(DH-RSA-CAMELLIA128-SHA256       DH_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x030000C2' => [qw(DH-RSA-CAMELLIA256-SHA256       DH_RSA_WITH_CAMELLIA_256_CBC_SHA256)],
-    '0x03000098' => [qw(DH-RSA-SEED-SHA                 DH_RSA_WITH_SEED_SHA)],
     '0x0300C009' => [qw(ECDHE-ECDSA-AES128-SHA          ECDHE_ECDSA_WITH_AES_128_CBC_SHA)],
     '0x0300C02B' => [qw(ECDHE-ECDSA-AES128-GCM-SHA256   ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)],
     '0x0300C023' => [qw(ECDHE-ECDSA-AES128-SHA256       ECDHE_ECDSA_WITH_AES_128_SHA256)],
@@ -767,61 +815,60 @@ our %cipher_names = (
     '0x0300C024' => [qw(ECDHE-ECDSA-AES256-SHA384       ECDHE_ECDSA_WITH_AES_256_SHA384)],
     '0x03000072' => [qw(ECDHE-ECDSA-CAMELLIA128-SHA256  ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000073' => [qw(ECDHE-ECDSA-CAMELLIA256-SHA384  ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384)],
-    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], #
     '0x0300CCA9' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
-    '0x0300C008' => [qw(ECDHE-ECDSA-DES-CBC3-SHA        ECDHE_ECDSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C006' => [qw(ECDHE-ECDSA-NULL-SHA            ECDHE_ECDSA_WITH_NULL_SHA)],
     '0x0300C007' => [qw(ECDHE-ECDSA-RC4-SHA             ECDHE_ECDSA_WITH_RC4_128_SHA)],
+    '0x0300C008' => [qw(ECDHE-ECDSA-DES-CBC3-SHA        ECDHE_ECDSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C013' => [qw(ECDHE-RSA-AES128-SHA            ECDHE_RSA_WITH_AES_128_CBC_SHA)],
-    '0x0300C02F' => [qw(ECDHE-RSA-AES128-GCM-SHA256     ECDHE_RSA_WITH_AES_128_GCM_SHA256)],
-    '0x0300C027' => [qw(ECDHE-RSA-AES128-SHA256         ECDHE_RSA_WITH_AES_128_SHA256)],
     '0x0300C014' => [qw(ECDHE-RSA-AES256-SHA            ECDHE_RSA_WITH_AES_256_CBC_SHA)],
-    '0x0300C030' => [qw(ECDHE-RSA-AES256-GCM-SHA384     ECDHE_RSA_WITH_AES_256_GCM_SHA384)],
+    '0x0300C027' => [qw(ECDHE-RSA-AES128-SHA256         ECDHE_RSA_WITH_AES_128_SHA256)],
     '0x0300C028' => [qw(ECDHE-RSA-AES256-SHA384         ECDHE_RSA_WITH_AES_256_SHA384)],
+    '0x0300C02F' => [qw(ECDHE-RSA-AES128-GCM-SHA256     ECDHE_RSA_WITH_AES_128_GCM_SHA256)],
+    '0x0300C030' => [qw(ECDHE-RSA-AES256-GCM-SHA384     ECDHE_RSA_WITH_AES_256_GCM_SHA384)],
     '0x03000076' => [qw(ECDHE-RSA-CAMELLIA128-SHA256    ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000077' => [qw(ECDHE-RSA-CAMELLIA256-SHA384    ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384)],
-    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], #
     '0x0300CCA8' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
-    '0x0300C012' => [qw(ECDHE-RSA-DES-CBC3-SHA          ECDHE_RSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C010' => [qw(ECDHE-RSA-NULL-SHA              ECDHE_RSA_WITH_NULL_SHA)],
     '0x0300C011' => [qw(ECDHE-RSA-RC4-SHA               ECDHE_RSA_WITH_RC4_128_SHA)],
+    '0x0300C012' => [qw(ECDHE-RSA-DES-CBC3-SHA          ECDHE_RSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C004' => [qw(ECDH-ECDSA-AES128-SHA           ECDH_ECDSA_WITH_AES_128_CBC_SHA)],
-    '0x0300C02D' => [qw(ECDH-ECDSA-AES128-GCM-SHA256    ECDH_ECDSA_WITH_AES_128_GCM_SHA256)],
-    '0x0300C025' => [qw(ECDH-ECDSA-AES128-SHA256        ECDH_ECDSA_WITH_AES_128_SHA256)],
     '0x0300C005' => [qw(ECDH-ECDSA-AES256-SHA           ECDH_ECDSA_WITH_AES_256_CBC_SHA)],
-    '0x0300C02E' => [qw(ECDH-ECDSA-AES256-GCM-SHA384    ECDH_ECDSA_WITH_AES_256_GCM_SHA384)],
+    '0x0300C025' => [qw(ECDH-ECDSA-AES128-SHA256        ECDH_ECDSA_WITH_AES_128_SHA256)],
     '0x0300C026' => [qw(ECDH-ECDSA-AES256-SHA384        ECDH_ECDSA_WITH_AES_256_SHA384)],
+    '0x0300C02D' => [qw(ECDH-ECDSA-AES128-GCM-SHA256    ECDH_ECDSA_WITH_AES_128_GCM_SHA256)],
+    '0x0300C02E' => [qw(ECDH-ECDSA-AES256-GCM-SHA384    ECDH_ECDSA_WITH_AES_256_GCM_SHA384)],
     '0x03000074' => [qw(ECDH-ECDSA-CAMELLIA128-SHA256   ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000075' => [qw(ECDH-ECDSA-CAMELLIA256-SHA384   ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384)],
-    '0x0300C003' => [qw(ECDH-ECDSA-DES-CBC3-SHA         ECDH_ECDSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C001' => [qw(ECDH-ECDSA-NULL-SHA             ECDH_ECDSA_WITH_NULL_SHA)],
     '0x0300C002' => [qw(ECDH-ECDSA-RC4-SHA              ECDH_ECDSA_WITH_RC4_128_SHA)],
+    '0x0300C003' => [qw(ECDH-ECDSA-DES-CBC3-SHA         ECDH_ECDSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C00E' => [qw(ECDH-RSA-AES128-SHA             ECDH_RSA_WITH_AES_128_CBC_SHA)],
-    '0x0300C031' => [qw(ECDH-RSA-AES128-GCM-SHA256      ECDH_RSA_WITH_AES_128_GCM_SHA256)],
-    '0x0300C029' => [qw(ECDH-RSA-AES128-SHA256          ECDH_RSA_WITH_AES_128_SHA256)],
     '0x0300C00F' => [qw(ECDH-RSA-AES256-SHA             ECDH_RSA_WITH_AES_256_CBC_SHA)],
-    '0x0300C032' => [qw(ECDH-RSA-AES256-GCM-SHA384      ECDH_RSA_WITH_AES_256_GCM_SHA384)],
+    '0x0300C029' => [qw(ECDH-RSA-AES128-SHA256          ECDH_RSA_WITH_AES_128_SHA256)],
     '0x0300C02A' => [qw(ECDH-RSA-AES256-SHA384          ECDH_RSA_WITH_AES_256_SHA384)],
+    '0x0300C031' => [qw(ECDH-RSA-AES128-GCM-SHA256      ECDH_RSA_WITH_AES_128_GCM_SHA256)],
+    '0x0300C032' => [qw(ECDH-RSA-AES256-GCM-SHA384      ECDH_RSA_WITH_AES_256_GCM_SHA384)],
     '0x03000078' => [qw(ECDH-RSA-CAMELLIA128-SHA256     ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000079' => [qw(ECDH-RSA-CAMELLIA256-SHA384     ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384)],
-    '0x0300C00D' => [qw(ECDH-RSA-DES-CBC3-SHA           ECDH_RSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C00B' => [qw(ECDH-RSA-NULL-SHA               ECDH_RSA_WITH_NULL_SHA)],
     '0x0300C00C' => [qw(ECDH-RSA-RC4-SHA                ECDH_RSA_WITH_RC4_128_SHA)],
-    '0x0300C018' => [qw(AECDH-AES128-SHA                ECDH_anon_WITH_AES_128_CBC_SHA)],
-    '0x0300C019' => [qw(AECDH-AES256-SHA                ECDH_anon_WITH_AES_256_CBC_SHA)],
-    '0x0300C017' => [qw(AECDH-DES-CBC3-SHA              ECDH_anon_WITH_DES_192_CBC3_SHA)],
+    '0x0300C00D' => [qw(ECDH-RSA-DES-CBC3-SHA           ECDH_RSA_WITH_DES_192_CBC3_SHA)],
     '0x0300C015' => [qw(AECDH-NULL-SHA                  ECDH_anon_WITH_NULL_SHA)],
     '0x0300C016' => [qw(AECDH-RC4-SHA                   ECDH_anon_WITH_RC4_128_SHA)],
-    '0x03000013' => [qw(EDH-DSS-DES-CBC3-SHA            EDH_DSS_DES_192_CBC3_SHA)],
+    '0x0300C017' => [qw(AECDH-DES-CBC3-SHA              ECDH_anon_WITH_DES_192_CBC3_SHA)],
+    '0x0300C018' => [qw(AECDH-AES128-SHA                ECDH_anon_WITH_AES_128_CBC_SHA)],
+    '0x0300C019' => [qw(AECDH-AES256-SHA                ECDH_anon_WITH_AES_256_CBC_SHA)],
     '0x03000011' => [qw(EXP-EDH-DSS-DES-CBC-SHA         EDH_DSS_DES_40_CBC_SHA)],
     '0x03000012' => [qw(EDH-DSS-DES-CBC-SHA             EDH_DSS_DES_64_CBC_SHA)],
-    '0x03000016' => [qw(EDH-RSA-DES-CBC3-SHA            EDH_RSA_DES_192_CBC3_SHA)],
+    '0x03000013' => [qw(EDH-DSS-DES-CBC3-SHA            EDH_DSS_DES_192_CBC3_SHA)],
     '0x03000014' => [qw(EXP-EDH-RSA-DES-CBC-SHA         EDH_RSA_DES_40_CBC_SHA)],
     '0x03000015' => [qw(EDH-RSA-DES-CBC-SHA             EDH_RSA_DES_64_CBC_SHA)],
+    '0x03000016' => [qw(EDH-RSA-DES-CBC3-SHA            EDH_RSA_DES_192_CBC3_SHA)],
     '0x0300001D' => [qw(FZA-FZA-SHA                     FZA_DMS_FZA_SHA)],     # FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA
     '0x0300001C' => [qw(FZA-NULL-SHA                    FZA_DMS_NULL_SHA)],    # FORTEZZA_KEA_WITH_NULL_SHA
     '0x0300001e' => [qw(FZA-RC4-SHA                     FZA_DMS_RC4_SHA)],     # <== 1e so that it is its own hash entry in crontrast to 1E (duplicate constant definition in openssl)
-    '0x02050080' => [qw(IDEA-CBC-MD5                    IDEA_128_CBC_WITH_MD5)],
     '0x03000023' => [qw(KRB5-DES-CBC3-MD5               KRB5_DES_192_CBC3_MD5)],
     '0x0300001F' => [qw(KRB5-DES-CBC3-SHA               KRB5_DES_192_CBC3_SHA)],
     '0x03000029' => [qw(EXP-KRB5-DES-CBC-MD5            KRB5_DES_40_CBC_MD5)],
@@ -836,32 +883,26 @@ our %cipher_names = (
     '0x03000020' => [qw(KRB5-RC4-SHA                    KRB5_RC4_128_SHA)],
     '0x0300002B' => [qw(EXP-KRB5-RC4-MD5                KRB5_RC4_40_MD5)],
     '0x03000028' => [qw(EXP-KRB5-RC4-SHA                KRB5_RC4_40_SHA)],
-    '0x02ff0810' => [qw(NULL                            NULL)],
     '0x02000000' => [qw(NULL-MD5                        NULL_WITH_MD5)],
     '0x03000000' => [qw(NULL-MD5                        NULL_WITH_NULL_NULL)],
     '0x0300008A' => [qw(PSK-RC4-SHA                     PSK_WITH_RC4_128_SHA)],
     '0x0300008B' => [qw(PSK-3DES-EDE-CBC-SHA            PSK_WITH_3DES_EDE_CBC_SHA)],
     '0x0300008C' => [qw(PSK-AES128-CBC-SHA              PSK_WITH_AES_128_CBC_SHA)],
     '0x0300008D' => [qw(PSK-AES256-CBC-SHA              PSK_WITH_AES_256_CBC_SHA)],
-    '0x02010080' => [qw(RC4-MD5                         RC4_128_WITH_MD5)],
-    '0x02020080' => [qw(EXP-RC4-MD5                     RC4_128_EXPORT40_WITH_MD5)],
-    '0x02030080' => [qw(RC2-CBC-MD5                     RC2_128_CBC_WITH_MD5)],
-    '0x02040080' => [qw(EXP-RC2-CBC-MD5                 RC2_128_CBC_EXPORT40_WITH_MD5)],
-    '0x02080080' => [qw(RC4-64-MD5                      RC4_64_WITH_MD5)],
-    '0x0300000A' => [qw(DES-CBC3-SHA                    RSA_DES_192_CBC3_SHA)],
     '0x03000008' => [qw(EXP-DES-CBC-SHA                 RSA_DES_40_CBC_SHA)],
     '0x03000009' => [qw(DES-CBC-SHA                     RSA_DES_64_CBC_SHA)],
-    '0x03000062' => [qw(EXP1024-DES-CBC-SHA             RSA_EXPORT1024_WITH_DES_CBC_SHA)],
+    '0x0300000A' => [qw(DES-CBC3-SHA                    RSA_DES_192_CBC3_SHA)],
     '0x03000061' => [qw(EXP1024-RC2-CBC-MD5             RSA_EXPORT1024_WITH_RC2_CBC_56_MD5)],
+    '0x03000062' => [qw(EXP1024-DES-CBC-SHA             RSA_EXPORT1024_WITH_DES_CBC_SHA)],
     '0x03000060' => [qw(EXP1024-RC4-MD5                 RSA_EXPORT1024_WITH_RC4_56_MD5)],
     '0x03000064' => [qw(EXP1024-RC4-SHA                 RSA_EXPORT1024_WITH_RC4_56_SHA)],
     '0x03000007' => [qw(IDEA-CBC-SHA                    RSA_IDEA_128_SHA)],
     '0x03000001' => [qw(NULL-MD5                        RSA_NULL_MD5)],
     '0x03000002' => [qw(NULL-SHA                        RSA_NULL_SHA)],
-    '0x03000006' => [qw(EXP-RC2-CBC-MD5                 RSA_RC2_40_MD5)],
+    '0x03000003' => [qw(EXP-RC4-MD5                     RSA_RC4_40_MD5)],
     '0x03000004' => [qw(RC4-MD5                         RSA_RC4_128_MD5)],
     '0x03000005' => [qw(RC4-SHA                         RSA_RC4_128_SHA)],
-    '0x03000003' => [qw(EXP-RC4-MD5                     RSA_RC4_40_MD5)],
+    '0x03000006' => [qw(EXP-RC2-CBC-MD5                 RSA_RC2_40_MD5)],
     '0x0300009C' => [qw(AES128-GCM-SHA256               RSA_WITH_AES_128_GCM_SHA256)],
     '0x0300002F' => [qw(AES128-SHA                      RSA_WITH_AES_128_SHA)],
     '0x0300003C' => [qw(AES128-SHA256                   RSA_WITH_AES_128_SHA256)],
@@ -912,16 +953,20 @@ our %cipher_names = (
     '0x0300C09F' => [qw(DHE-RSA-AES256-CCM              DHE_RSA_WITH_AES_256_CCM)],
     '0x0300C0A4' => [qw(PSK-RSA-AES128-CCM              PSK_WITH_AES_128_CCM)],
     '0x0300C0A5' => [qw(PSK-RSA-AES256-CCM              PSK_WITH_AES_256_CCM)],
-    '0x0300C0AC' => [qw(ECDHE-RSA-AES128-CCM            ECDHE_ECDSA_WITH_AES_128_CCM)],
-    '0x0300C0AD' => [qw(ECDHE-RSA-AES256-CCM            ECDHE_ECDSA_WITH_AES_256_CCM)],
-    '0x0300C0A0' => [qw(RSA-AES128-CCM-8                RSA_WITH_AES_128_CCM_8)],
-    '0x0300C0A1' => [qw(RSA-AES256-CCM-8                RSA_WITH_AES_256_CCM_8)],
-    '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM-8            DHE_RSA_WITH_AES_128_CCM_8)],
-    '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM-8            DHE_RSA_WITH_AES_256_CCM_8)],
-    '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM-8            PSK_WITH_AES_128_CCM_8)],
-    '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8            PSK_WITH_AES_256_CCM_8)],
-    '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8          ECDHE_ECDSA_WITH_AES_128_CCM_8)],
-    '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8          ECDHE_ECDSA_WITH_AES_256_CCM_8)],
+    '0x0300C0A6' => [qw(DHE-PSK-RSA-AES128-CCM          DHE_PSK_WITH_AES_128_CCM)],
+    '0x0300C0A7' => [qw(DHE-PSK-RSA-AES256-CCM          DHE_PSK_WITH_AES_256_CCM)],
+    '0x0300C0AC' => [qw(ECDHE-RSA-AES128-CCM            ECDHE_ECDSA_WITH_AES_128_CCM)], # RFC 7251
+    '0x0300C0AD' => [qw(ECDHE-RSA-AES256-CCM            ECDHE_ECDSA_WITH_AES_256_CCM)], # RFC 7251
+    '0x0300C0A0' => [qw(RSA-AES128-CCM8                 RSA_WITH_AES_128_CCM_8)],
+    '0x0300C0A1' => [qw(RSA-AES256-CCM8                 RSA_WITH_AES_256_CCM_8)],
+    '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM8             DHE_RSA_WITH_AES_128_CCM_8)],
+    '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM8             DHE_RSA_WITH_AES_256_CCM_8)],
+    '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM8             PSK_WITH_AES_128_CCM_8)],
+    '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM8             PSK_WITH_AES_256_CCM_8)],
+    '0x0300C0AA' => [qw(DHE-PSK-RSA-AES128-CCM8         DHE_PSK_WITH_AES_128_CCM_8)],
+    '0x0300C0AB' => [qw(DHE-PSK-RSA-AES256-CCM8         DHE_PSK_WITH_AES_256_CCM_8)],
+    '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM8           ECDHE_ECDSA_WITH_AES_128_CCM_8)], # RFC 7251
+    '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM8           ECDHE_ECDSA_WITH_AES_256_CCM_8)], # RFC 7251
     '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME: according http://tools.ietf.org/html/7507.html
     '0x030000FF' => [qw(INFO_SCSV                       EMPTY_RENEGOTIATION_INFO_SCSV)],
     '0x0300C01C' => [qw(SRP-DSS-3DES-EDE-CBC-SHA        SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA)],
@@ -937,12 +982,17 @@ our %cipher_names = (
     '0x0300FEE1' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],
     '0x0300FEFE' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],
     '0x0300FEFF' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],
-    '0x03000080' => [qw(GOST94-GOST89-GOST89            GOSTR341094_WITH_28147_CNT_IMIT)],
-    '0x03000081' => [qw(GOST2001-GOST89-GOST89          GOSTR341001_WITH_28147_CNT_IMIT)],
-    '0x0300FF00' => [qw(GOST-MD5             -?-)],  # ??
-    '0x0300FF01' => [qw(GOST-GOST94          -?-)],  # ??
-    '0x0300FF00' => [qw(GOST94-NULL-GOST94   -?-)],  # ??
-    '0x0300FF01' => [qw(GOST2001-NULL-GOST94 -?-)],  # ??
+#
+    '0x03000080' => [qw(GOST94-GOST89-GOST89            GOSTR341094_WITH_28147_CNT_IMIT)], #ok
+    '0x03000081' => [qw(GOST2001-GOST89-GOST89          GOSTR341001_WITH_28147_CNT_IMIT)], #ok
+    '0x03000082' => [qw(GOST94-NULL-GOST94              GOSTR341094_WITH_NULL_GOSTR3411)], # unklar, siehe 0x0300FF00
+    '0x03000083' => [qw(GOST2001-NULL-GOST94            GOSTR341001_WITH_NULL_GOSTR3411)], # unklar, siehe 0x0300FF01
+#   '0x0300FF00' => [qw(GOST94-NULL-GOST94              GOSTR341001_WITH_NULL_GOSTR3411)], # unklar, siehe 0x03000082 und muesste sein  GOSTR341094_WITH_NULL_GOSTR3411
+    '0x0300FF00' => [qw(GOST-MD5                        GOSTR341094_RSA_WITH_28147_CNT_MD5)],
+    '0x0300FF01' => [qw(GOST-GOST94                     RSA_WITH_28147_CNT_GOST94)],
+#    '0x0300FF01' => [qw(GOST2001-NULL-GOST94           GOSTR341001_WITH_NULL_GOSTR3411)], # unklar da nummer doppelt
+    '0x0300FF02' => [qw(GOST-GOST89MAC                  -?-)],
+    '0x0300FF03' => [qw(GOST-GOST89STREAM               -?-)],
 # TODO:  following PCT...
     '0x00800001' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509)],
     '0x00800003' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509_CHAIN)],
@@ -969,15 +1019,40 @@ our %cipher_alias = ( # TODO: list not yet used
     '0x03000012' => [qw(EDH-DSS-CBC-SHA)],             # from sslaudit.ini and mozilla
     '0x0300001D' => [qw(FZA-FZA-CBC-SHA)],
     '0x03000032' => [qw(EDH-DSS-AES128-SHA)],          # from RSA BSAFE SSL-C
-    '0x03000033' => [qw(EDH-RSA-AES128-SHA)],          # from RSA BSAFE SSL-C
-    '0x03000038' => [qw(EDH-DSS-AES256-SHA)],          # from RSA BSAFE SSL-C
-    '0x03000039' => [qw(EDH-RSA-AES256-SHA)],          # from RSA BSAFE SSL-C
-    '0x03000062' => [qw(EXP-DES-56-SHA)],              # from RSA BSAFE SSL-C
-    '0x03000063' => [qw(EXP-EDH-DSS-DES-56-SHA)],      # from RSA BSAFE SSL-C
-    '0x03000064' => [qw(EXP-RC4-56-SHA)],              # from RSA BSAFE SSL-C
+    '0x0300002C' => [qw(PSK-NULL-SHA)],                # from openssl
+    '0x0300002D' => [qw(DHE-PSK-NULL-SHA)],
+    '0x0300002E' => [qw(RSA-PSK-NULL-SHA)],
+    '0x03000033' => [qw(EDH-RSA-AES128-SHA)],          # -"-
+    '0x03000038' => [qw(EDH-DSS-AES256-SHA)],          # -"-
+    '0x03000039' => [qw(EDH-RSA-AES256-SHA)],          # -"-
+    '0x03000062' => [qw(EXP-DES-56-SHA)],              # -"-
+    '0x03000063' => [qw(EXP-EDH-DSS-DES-56-SHA)],      # -"-
+    '0x03000064' => [qw(EXP-RC4-56-SHA)],              # -"-
     '0x03000065' => [qw(EXP-EDH-DSS-RC4-56-SHA)],
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
     '0x0300009B' => [qw(DHanon-SEED-SHA)],
+    '0x0300C0A0' => [qw(RSA-AES128-CCM-8)],            # ?? some java
+    '0x0300C0A1' => [qw(RSA-AES256-CCM-8)],            # -"-
+    '0x0300C0A2' => [qw(DHE-RSA-AES128-CCM-8)],        # -"-
+    '0x0300C0A3' => [qw(DHE-RSA-AES256-CCM-8)],        # -"-
+    '0x0300C0A8' => [qw(PSK-RSA-AES128-CCM-8)],        # -"-
+    '0x0300C0A9' => [qw(PSK-RSA-AES256-CCM-8)],        # -"-
+    '0x0300C0AE' => [qw(ECDHE-RSA-AES128-CCM-8)],      # -"-
+    '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM-8)],      # -"-
+
+# following are cipher suite values; alias for them not yet implemented
+#   '0x03000003' => [qw(RSA_WITH_RC4_40_MD5)],
+#   '0x03000004' => [qw(RSA_WITH_RC4_128_MD5)],
+#   '0x03000005' => [qw(RSA_WITH_RC4_128_SHA)],
+#   '0x03000006' => [qw(RSA_WITH_RC2_40_MD5)],
+#   '0x03000017' => [qw(DH_anon_EXPORT_WITH_RC4_40_MD5)],
+#   '0x03000019' => [qw(DH_anon_EXPORT_WITH_DES40_CBC_SHA)],
+#   '0x0300001A' => [qw(DH_anon_WITH_DES_CBC_SHA)],
+#   '0x0300001B' => [qw(DH_anon_WITH_3DES_EDE_CBC_SHA)],#
+#   '0x03000033' => [qw(DHE_RSA_WITH_AES_128_CBC_SHA)],
+#   '0x03000039' => [qw(DHE_RSA_WITH_AES_256_CBC_SHA)],
+#   '0x0300C0AA' => [qw(PSK_DHE_WITH_AES_128_CCM_8)],  # from openssl
+#   '0x0300C0AB' => [qw(PSK_DHE_WITH_AES_256_CCM_8)],  # from openssl
     #!#----------+-------------------------------------+--------------------------+
 ); # %cipher_alias
 
@@ -1149,19 +1224,22 @@ our %cfg = (
         'SSLv2'     =>          # constants for ciphers according RFC for SSLv2
                        "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
-                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
+                        0x02FF0810,   0x02FF0800, 0x02FFFFFF,
                         0x03000000 .. 0x03000002, 0x03000007 .. 0x0300002C, 0x030000FF,
-                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
+                        0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
+                       ",
+                       # 0x02FF0810,   0x02FF0800, 0x02FFFFFF,   # obsolete SSLv2 ciphers
+                       # 0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF, # obsolete FIPS ciphers
 # TODO:                 0x02000000,   0x02FFFFFF,   # increment even only
 # TODO:                 0x03000000,   0x03FFFFFF,   # increment  odd only
-                       ",
         'SSLv2_long'=>          # more lazy list of constants for ciphers for SSLv2
                        "0x02000000,   0x02010080, 0x02020080, 0x02030080, 0x02040080,
                         0x02050080,   0x02060040, 0x02060140, 0x020700C0, 0x020701C0,
                         0x02FF0810,   0x02FF0800, 0x02FFFFFF,
-                        0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
+                        0x03000000 .. 0x0300002F, 0x030000FF,
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
                        ",
+                       # 0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
     }, # cipherranges
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
@@ -1628,6 +1706,7 @@ sub get_cipher_tags($) { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$
 sub get_cipher_desc($) { my $c=shift;
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
+#print "# $c #\n";
 #       _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
 #       return STR_UNDEF;
     }
