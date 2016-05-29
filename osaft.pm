@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.42 16/05/29 12:16:43',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.43 16/05/29 12:42:28',
 
 };
 
@@ -1696,21 +1696,21 @@ Get information from internal C<%cipher> data structure.
 # some people prefer to use a getter function to get data from objects
 # each function returns a spcific value (column) from the %cipher table
 # see %ciphers_desc about description of the columns
-sub get_cipher_sec($)  { my $c=shift; return $ciphers{$c}[0] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_ssl($)  { my $c=shift; return $ciphers{$c}[1] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_enc($)  { my $c=shift; return $ciphers{$c}[2] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_bits($) { my $c=shift; return $ciphers{$c}[3] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_mac($)  { my $c=shift; return $ciphers{$c}[4] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_auth($) { my $c=shift; return $ciphers{$c}[5] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_keyx($) { my $c=shift; return $ciphers{$c}[6] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_score($){ my $c=shift; return $ciphers{$c}[7] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
-sub get_cipher_tags($) { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$c/} %ciphers)>0); return ""; }
+# returns STR_UNDEF if requested cipher is missing
+sub get_cipher_sec($)  { my $c=shift; return $ciphers{$c}[0] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_ssl($)  { my $c=shift; return $ciphers{$c}[1] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_enc($)  { my $c=shift; return $ciphers{$c}[2] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_bits($) { my $c=shift; return $ciphers{$c}[3] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_mac($)  { my $c=shift; return $ciphers{$c}[4] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_auth($) { my $c=shift; return $ciphers{$c}[5] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_keyx($) { my $c=shift; return $ciphers{$c}[6] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_score($){ my $c=shift; return $ciphers{$c}[7] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_tags($) { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
 sub get_cipher_desc($) { my $c=shift;
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
-#print "# $c #\n";
-#       _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
-#       return STR_UNDEF;
+       _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
+       return STR_UNDEF;
     }
     my @c = @{$ciphers{$c}};
     shift @c;
@@ -1744,7 +1744,7 @@ sub get_cipher_hex($)  {
 
 sub get_cipher_name($) {
     # check if given cipher name is a known cipher
-    # checks in %cipher_names if nof found in %ciphers
+    # checks in %ciphers if nof found in %cipher_names
     my $cipher  = shift;
     return $cipher if ((grep{/^$cipher/} %ciphers)>0);
     _trace("get_cipher_name: search $cipher");
