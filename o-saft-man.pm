@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.121 16/05/27 17:42:20";
+my  $man_SID= "@(#) o-saft-man.pm 1.122 16/05/29 12:41:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4073,7 +4073,7 @@ KNOWN PROBLEMS
 
         May occour if ciphers are checked, but no description is available for
         them herein. This results in printed cipher checks like:
-              EXP-KRB5-RC4-MD5                no
+              EXP-KRB5-RC4-MD5                no       <<undef>>
 
         instead of:
               EXP-KRB5-RC4-MD5                no       weak
