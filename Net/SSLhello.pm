@@ -1961,7 +1961,7 @@ sub openTcpSSLconnection ($$) {
                     $input="";
                     _trace2 ("openTcpSSLconnection ## CONNECT via Proxy: try to receive the Connected-Message from the Proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport, Retry = $retryCnt\n");
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); 
@@ -1969,7 +1969,7 @@ sub openTcpSSLconnection ($$) {
                         _trace4 ("openTcpSSLconnection: ... Received Connected-Message from Proxy (1a): received NO Data\n");
                         sleep(1) if ($retryCnt > 0);
                         # Sleep for 250 milliseconds
-                        osaft_sleep (_SLEEP_B4_2ND_READ);
+                        osaft::osaft_sleep (_SLEEP_B4_2ND_READ);
                         # select(undef, undef, undef, _SLEEP_B4_2ND_READ);
                         recv ($socket, $input, 32767, 0); # 2nd try 
                     }
@@ -2070,7 +2070,7 @@ sub openTcpSSLconnection ($$) {
                     $input="";
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1): try to receive the ".$starttls_matrix[$starttlsType][0]."-Ready-Message from the Server $host:$port\n");
                     #select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
-                    osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); #|| die "openTcpSSLconnection: STARTTLS (Phase 1aa): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port\n"; # did not receive a Message ## unless seems to work better than if!!
@@ -2155,9 +2155,9 @@ sub openTcpSSLconnection ($$) {
                 } 
                 # wait before next read
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                osaft_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
-                osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
             ### STARTTLS_Phase1 (receive)
             } else {
                 _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 2): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
@@ -2168,7 +2168,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input="";
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 3): try to receive the $starttls_matrix[$starttlsType][0] Hello Answer from the Server $host:$port\n"); 
-                    osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms                   
+                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms                   
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($alarmTimeout);
@@ -2256,9 +2256,9 @@ sub openTcpSSLconnection ($$) {
                     next; # next return
                 }
                 # wait before next read
-                osaft_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
+                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
-                osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
+                osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 1); # if retry: sleep some ms
              } else {
                 _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 4): Nothing to do for ".$starttls_matrix[$starttlsType][0]."\n");
@@ -2269,7 +2269,7 @@ sub openTcpSSLconnection ($$) {
                 eval {
                     $input="";
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 5): try to receive the $starttls_matrix[$starttlsType][0] STARTTLS Answer from the Server $host:$port\n");
-                    osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
+                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($retryCnt > 0); # if retry: sleep some ms
                     local $SIG{ALRM}= "Net::SSLhello::_timedOut"; 
                     alarm($alarmTimeout);
@@ -2582,7 +2582,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 $retryCnt--;
             }
             _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND." sec(s) after *NO* cipher found\n");
-            osaft_sleep (_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
+            osaft::osaft_sleep (_DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
             # select(undef, undef, undef, _DTLS_SLEEP_AFTER_NO_CIPHERS_FOUND); # sleep after NO cipher found
         }
     } # end while
@@ -2740,7 +2740,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     if (($isUdp) && (defined ($acceptedCipher) ) && ($acceptedCipher ne "") ) {
         _trace4 ("_doCheckSSLciphers: DTLS: sleep "._DTLS_SLEEP_AFTER_FOUND_A_CIPHER." sec(s) after received cipher >".hexCodedCipher($acceptedCipher)."<\n");
         # select(undef, undef, undef, _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
-        osaft_sleep ( _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
+        osaft::osaft_sleep ( _DTLS_SLEEP_AFTER_FOUND_A_CIPHER);
     }
     _trace2 ("_doCheckSSLciphers: }\n");
     return ($acceptedCipher);
@@ -2817,7 +2817,7 @@ sub _readRecord ($$;$$$) {
             _trace4 ("_readRecord: Server '$host:$port' -> Timeout (received Nor data NEITHER special event) while reading a recordi with".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n") if (! $isUdp);
             last if ($isUdp); # resend the UDP packet
             # select (undef, undef, undef, _SLEEP_B4_2ND_READ);
-            osaft_sleep ( _SLEEP_B4_2ND_READ);
+            osaft::osaft_sleep ( _SLEEP_B4_2ND_READ);
             next;
         }
         if (vec($rout, fileno($socket),1)) { # got data
@@ -2848,7 +2848,7 @@ sub _readRecord ($$;$$$) {
                     @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 1); ###additional debug (use IO::select needed)
                     _trace1 ("_readRecord can read (3): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
                     #select (undef, undef, undef, _SLEEP_B4_2ND_READ);
-                    osaft_sleep (_SLEEP_B4_2ND_READ);
+                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ);
                     next;
                 }
             }
