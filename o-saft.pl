@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.493 16/05/27 17:32:38",
+    SID         => "@(#) yeast.pl 1.495 16/05/31 09:28:28",
     STR_VERSION => "16.05.31",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6145,11 +6145,15 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             ## use critic
             printtitle($legacy, $ssl, $host, $port);
             _v_print("cipher range: $cfg{'cipherrange'}");
-            _v_print sprintf ("total number of ciphers to check: %4d", scalar(@all));
+            _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
             if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
                 $Net::SSLhello::usesni = 0;
                 @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
-                _v_print sprintf ("total number of accepted ciphers: %4d" , (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
+                # correct total number if first 2 ciphers are identical
+                # (this indicates cipher order by the server)
+                # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
+                _v_print(sprintf("total number of accepted ciphers: %4d",
+                                 (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
                 Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, 0, @accepted);
                 $Net::SSLhello::usesni = $cfg{'usesni'}; # restore
                 next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
@@ -6157,7 +6161,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 @accepted = ();             # reset accepted ciphers
             }
             @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
-            _v_print sprintf ("total number of accepted ciphers: %4d" , (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]) )) );  # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
+            _v_print(sprintf("total number of accepted ciphers: %4d",
+                             (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
             Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
         }
         next;
