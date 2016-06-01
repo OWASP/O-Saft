@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.122 16/05/29 12:41:17";
+my  $man_SID= "@(#) o-saft-man.pm 1.123 16/06/02 01:11:37";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1138,7 +1138,7 @@ sub man_pod() {
 # paragraphs. However, to avoid tools complaining about that,  =over and =back
 # are added to each  =item  to avoid error messages in the viewer tools.
 # Hence the additional identations for text following the =item are missing.
-# Tested viewers: podviewer, perldoc
+# Tested viewers: podviewer, perldoc, pod2usage, tkpod
 
 =pod
 
@@ -1826,7 +1826,7 @@ RESULTS
 
             * weak:
               ** all *NULL* ciphers
-              ** all *RC4*  ciphers
+              ** all *RC2* and  *RC4*  ciphers
               ** all *EXPORT*  ciphers
               ** all *anon* (aka ADH aka DHA) ciphers
             * low:
@@ -5461,7 +5461,6 @@ TODO
 
         * vulnerabilities
           ** complete TIME, BREACH check
-          ** is DHE-DSS-RC4-SHA also weak?
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
         * verify CA chain:
