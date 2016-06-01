@@ -46,8 +46,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.495 16/05/31 09:28:28",
-    STR_VERSION => "16.05.31",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.496 16/06/01 21:14:49",
+    STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -4981,11 +4981,9 @@ while ($#argv >= 0) {
         #  +---------+----------+------------------------------+--------------------
         #   argument to process   what to do                    expect next argument
         #  +---------+----------+------------------------------+--------------------
-        if ($typ =~ m/^CFG/)    { _cfg_set($typ, lc($arg));     $typ = 'HOST'; }
-           # lc($arg) is contribution to old keys (pre 14.10.13) where keys in
-           # our internal hashes %check etc. where case sensitive
-           # we don't want to force users to rewrite their existing .o-saft.pl
-           # hence we simply convert anything to lower case
+        if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; }
+           # backward compatibility removed to allow mixed case texts;
+           # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
         if ($typ eq 'DO')       { push(@{$cfg{'do'}}, $arg);    $typ = 'HOST'; } # treat as command,
         if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
