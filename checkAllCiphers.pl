@@ -31,6 +31,11 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
+BEGIN {
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, $_path, "/bin" ); # /bin for special installation on portable media
+}
+
 use strict;
 use warnings;
 use Carp;                                                       #replaces warn and die
