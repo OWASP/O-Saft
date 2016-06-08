@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.123 16/06/02 01:11:37";
+my  $man_SID= "@(#) o-saft-man.pm 1.124 16/06/08 23:45:42";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -635,6 +635,8 @@ my %man_text = (
         '5487'  => [ "Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode" ],
         '5489'  => [ "ECDHE_PSK Cipher Suites for TLS" ],
         '5589'  => [ "Session Initiation Protocol (SIP) Call Control - Transfer" ],
+        '5741'  => [ "RFC Streams, Headers, and Boilerplates" ],
+        '5794'  => [ "Description of the ARIA Encryption Algorithm" ],
         '5932'  => [ "Camellia Cipher Suites for TLS" ],
         '6209'  => [ "Addition of the ARIA Cipher Suites to TLS" ],
         '6367'  => [ "Addition of the Camellia Cipher Suites to TLS" ],
