@@ -29,7 +29,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.7 16/05/17 01:09:26
+#?      @(#) bunt.pl 1.8 16/06/12 10:30:38
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -285,10 +285,10 @@ my $txt = "";
 while (my $line = <STDIN>) {
 	$_ = $line; # = $_;
 	if ("$line" =~ m/^\s*$/) { print "\n"; next; } # speed!
+	#dbx print "DBX: $_";
 	#{ all modes
-	  /^\#\[/       && last;
 	  /^##yeast*CMD:/ && do {     bgcyan( "$line");   next; };
-	  /^\#/         && do { print blue(   "$line");   next; };
+	  /^\#[^[]/     && do { print blue(   "$line");   next; };
 	  /^\!\!Hint/   && do { print purple( "$line");   next; };
 	  /^\*\*HINT/   && do { print purple( "$line");   next; };
 	  /^\*\*WARN/   && do { print boldpurple("$line");next; };
@@ -315,6 +315,7 @@ while (my $line = <STDIN>) {
 
 	if ($mode eq "word") {
 		/yes\s*(?:LOW|WEAK|MEDIUM|HIGH)$/i && do {
+			# match cipher line with risk
 			s/(LOW)$/    red(  $1);/ie;
 			s/(WEAK)$/   red(  $1);/ie;
 			s/(MEDIUM)$/ brown($1);/ie;
@@ -322,12 +323,12 @@ while (my $line = <STDIN>) {
 			print "$_";
 			next;
 		};
-		s/^([^:]+:)/italic $1; /e if ($italic == 1);
-		#/yes\s*$/       && do { s/(yes)\s*$/   green  $1/ie; print "$_\n"; next; };
-		s/(yes\s*$)/     green( $1);/ie && print && next;
-		s/(no\s*$)/      brown( $1);/ie && print && next;
-		s/(no\s+\(.*\))/ yellow($1);/ie && print && next;
-		s/(#\[[^\]]*])/  cyan(  $1);/ie && print && next;
+		s/([[a-zA-Z0-9.-]+:[0-9]{1,5})/cyan($1);/ie && print && next; # leading host:port
+		s/(#\[(?:[^\]]*)])/ cyan(  $1);/ie && print && next;          # leading #[key]:
+		s/^([^:]+:)/italic $1; /e if ($italic == 1);                  # any other word:
+		s/(yes\s*$)/         green( $1);/ie && print && next;
+		s/(no\s*$)/          brown( $1);/ie && print && next;
+		s/(no\s+\(.*\))/     yellow($1);/ie && print && next;
 		print;
         }
 
