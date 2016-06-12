@@ -72,13 +72,13 @@ OPTIONS
                 make connection through proxy on PROXYHOST:PROXYPORT
     --proxyuser=PROXYUSER (not yet implemented)
                 user to authenticate at PROXYHOST
-    --proxypass=PROXYPASS (not yet implemented)S
+    --proxypass=PROXYPASS (not yet implemented)
                 passowrd to authenticate at PROXYUSER
     --mx        make a MX-Record DNS lookup for the mx-domain-name
                 (makes sense together with --STARTTLS=SMTP)
     --SSL       test for this SSL version
                 SSL is any of: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13, dtlsv09, dtlsv1, (dtlsv11), dtlsv12, dtlsv13
-                (e.g. --dtlsv12; default: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13)A
+                (e.g. --dtlsv12; default: sslv2, sslv3, tlsv1, tlsv11, tlsv12, tlsv13)
                 Remark: All DTLS-Protocols are experimental (see --experimental), DTLSv09 (=OpenSSL pre 0.9.8f),
                         DTLSv11 has never been released
     --no-SSL    do not test for this SSL version
@@ -115,11 +115,11 @@ OPTIONS
     --ssl-doubel-reneg
                 use renegotion SSL Extension also for SCSV (double send)
     --slow-server-delay=SEC
-                additional delay n secs after a server s connected via a proxy or before starting STARTTLS. 
+                additional delay n secs after a server s connected via a proxy or before starting STARTTLS.
                 This is useful for testing connections via slow proxy chains or slow servers before sending the STARTTLS sequence
     --starttls  Use STARTTLS to start a TLS connection via SMTP
     --starttls=STARTTLS_TYPE
-                Use STARTTLS to start TLS. 
+                Use STARTTLS to start TLS.
                 STARTTLS_TYPE is any of SMTP (SMTP_2), ACAP, IMAP (IMAP_2), IRC, POP3, FTPS, LDAP, RDP (RDP_SSL), XMPP, CUSTOM
                 (Notes: * SMTP_2 and IMAP_2 are second ways to use SMTP/IMAP, like RDP_SSL for RDP
                         * SMTP: use '--mx' for checking a mail-domain instead of a host)
