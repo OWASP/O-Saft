@@ -182,7 +182,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.61 Winter Edition 2015
+#?      @(#) 1.63 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -199,7 +199,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.61 16/05/09 22:29:04 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.63 16/06/12 02:20:28 Sommer Edition 2015}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -466,6 +466,39 @@ txt2arr [string map "
 
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
+
+# if {$cfg(TIP) == 1} { # package not available
+# from: http://wiki.tcl.tk/3060?redir=1954
+#
+# proc balloon {w help} {
+#     bind $w <Any-Enter> "after 1000 [list balloon:show %W [list $help]]"
+#     bind $w <Any-Leave> "destroy %W.balloon"
+# }
+# 
+# proc balloon:show {w arg} {
+#     if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
+#     set top $w.balloon
+#     catch {destroy $top}
+#     toplevel $top -bd 1 -bg black
+#     wm overrideredirect $top 1
+#     if {[string equal [tk windowingsystem] aqua]}  {
+#         ::tk::unsupported::MacWindowStyle style $top help none
+#     }   
+#     pack [message $top.txt -aspect 10000 -bg lightyellow \
+#         -font fixed -text $arg]
+#     set wmx [winfo rootx $w]
+#     set wmy [expr [winfo rooty $w]+[winfo height $w]]
+#     wm geometry $top [winfo reqwidth $top.txt]x[
+#         winfo reqheight $top.txt]+$wmx+$wmy
+#     raise $top
+# }
+# 
+# # Example:
+# button  .b -text Exit -command exit
+# balloon .b "Push me if you're done with this"
+# pack    .b
+#
+# }
 
 proc get_color {key} {
     #? return color name for key from global cfg_color variable
@@ -1348,6 +1381,9 @@ set rcfile [file join $env(HOME) $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 set rcfile [file join {./}       $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+
+# replace wrong string in cfg_tipp
+set cfg_tipp(start) [regsub -all {\$cfg.SAFT.} $cfg_tipp(start) $cfg(SAFT)]
 
 # get information from O-Saft; it's a performance penulty, but simple ;-)
 set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
