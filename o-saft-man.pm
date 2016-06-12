@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.124 16/06/08 23:45:42";
+my  $man_SID= "@(#) o-saft-man.pm 1.125 16/06/12 10:52:54";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1081,7 +1081,7 @@ sub man_alias() {
     #   #if ($arg eq  '--protocol')          { $arg = '--SSL';           } # alias: ssldiagnose.exe
     #
     print "\n";
-    _man_head("Alias (regex)", "command or option   # used by ...");
+    _man_head("Alias (regex)         ", "command or option   # used by ...");
     my $fh   = undef;
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
@@ -1095,12 +1095,12 @@ sub man_alias() {
                     $regex =~ s/^\\//;      # remove leading \ 
                     $regex =~ s/\$$//;      # remove trailing $
                     $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
-                    if (length($regex) < 17) {
-                        printf("%-17s%-21s# %s\n", $regex, $alias, $commt);
+                    if (length($regex) < 25) {
+                        printf("%-25s%-21s# %s\n", $regex, $alias, $commt);
                     } else {
                         # pretty print if regex is to large for first column
                         printf("%s\n", $regex);
-                        printf("%-17s%-21s# %s\n", "", $alias, $commt);
+                        printf("%-25s%-21s# %s\n", "", $alias, $commt);
                     }
                 }
             }
