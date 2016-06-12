@@ -4117,6 +4117,9 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                         } else {
                             _trace4 ($@);
                             carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': received fatal SSL/TLS-Error (2): Description: $description ($serverHello{'description'})\n");
+                            if ($serverHello{'description'} == 50) { # decode_error (50)
+                                _hint("The server may not support the extension for elliptic curves (ECC) nor discard it silently, consider adding the option '--ssl-nouseecc'.");
+                            }
                         }
                     } else { # unknown
                         carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': received unknown SSL/TLS-Error-Level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
@@ -4297,6 +4300,9 @@ sub parseServerHello ($$$;$) {
                             $@ = sprintf ("parseServerHello: Server '$host:$port': received SSL/TLS-Warning: Description: $description ($serverHello{'description'}) -> protocol_version recognized but not supported!\n");
                         } else {
                             carp ("**WARNING: parseServerHello: Server '$host:$port': received fatal SSL/TLS-Error (2): Description: $description ($serverHello{'description'})\n");
+                            if ($serverHello{'description'} == 50) { # decode_error (50)
+                                _hint("the server may not support the extension for elliptic curves (ECC) nor discard it silently, consider adding the option '--ssl-nouseecc'.");
+                            }
                         }
                     } else { # unknown
                         carp ("**WARNING: parseServerHello: Server '$host:$port': received unknown SSL/TLS-Error-Level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
