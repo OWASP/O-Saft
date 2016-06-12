@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.125 16/06/12 10:52:54";
+my  $man_SID= "@(#) o-saft-man.pm 1.126 16/06/12 11:01:33";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -775,7 +775,7 @@ sub _man_html_foot(){
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar ><button value="" />Download (stable)</button></a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
- <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2015</span></p>
+ <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2016</span></p>
 </body></html>
 EoHTML
     return;
@@ -5509,7 +5509,7 @@ TODO
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
           ** make a clear concept how to handle +CMD whether they report
              checks or informations (aka %data vs. %check_*)
-             currently (2015) each single command returns all values
+             currently (2016) each single command returns all values
           ** client certificates not yet implemented in _usesocket() _useopenssl(),
              see t.client-cert.txt
           ** (nicht wichtig, aber sauber programmieren)
