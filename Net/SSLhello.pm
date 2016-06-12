@@ -40,7 +40,7 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {
-    SSLHELLO_VERSION=> '16.05.16',
+    SSLHELLO_VERSION=> '16.06.12',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.16 16/04/10 02:57:12',
 };
@@ -348,6 +348,15 @@ sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messag
 sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 2); return }
 sub _trace3_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} ==3); return }
 sub _trace4_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 3); return }
+
+sub _hint   {
+    #? print hint message if wanted
+    # don't print if --no-hint given
+    my @txt = @_;
+    return if ((grep{/(:?--no.?hint)/i} @main::ARGV) > 0);
+    local $\ = "\n"; print(STR_HINT, join(" ", @txt));
+    return;
+}
 
 #if (! eval("require o-saft-dbx.pm;")) {
 #        # o-saft-dbx.pm may not be installed, try to find in program's directory
