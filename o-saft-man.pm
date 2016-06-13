@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.126 16/06/12 11:01:33";
+my  $man_SID= "@(#) o-saft-man.pm 1.127 16/06/13 15:36:49";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -203,6 +203,7 @@ my %man_text = (
         'CTL'       => "Certificate Trust Line",
         'CTR'       => "Counter Mode (sometimes: CM; block cipher mode)",
         'CTS'       => "Cipher Text Stealing",
+        'Curve25519'   => "signature algorithm by Dan J. Bernstein",
         'CWC'       => "CWC Mode (Carter-Wegman + CTR mode; block cipher mode)",
         'DAA'       => "Data Authentication Algorithm",
         'DAC'       => "Data Authentication Code",
@@ -257,6 +258,7 @@ my %man_text = (
         'ECMQV'     => "Elliptic Curve Menezes-Qu-Vanstone",
         'ECOH'      => "Elliptic Curve only hash",
 #       'ECRYPT'    => " ?? ",
+        'Ed25519'   => "alias for Curve25519",
         'EDE'       => "Encryption-Decryption-Encryption",
         'EDH'       => "Ephemeral Diffie-Hellman", # official acronym
         'EGADS'     => "Entropy Gathering and Distribution System",
@@ -656,9 +658,11 @@ my %man_text = (
         '7457'  => [ "Summarizing Known Attacks on TLS and DTLS" ],
         '7469'  => [ "Public Key Pinning Extension for HTTP" ],
         '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
+        '7539'  => [ "ChaCha20 and Poly1305 for IETF Protocols" ],
         #----------+----------------------------------------+-----------------------+
     },
 
+    # Additional informationes:
     # CT   : http://ctwatch.net/
     # AIA  : http://www.startssl.com/certs/sub.class4.server.ca.crt
     # CDP  : http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl
@@ -720,6 +724,14 @@ my %man_text = (
     #        supported by: Chrome 45, Firefox 43, Opera 32
     #        Note that SRI is SSL/TLS-related but security-related
     # TS 102 042 : http://
+    #
+    # Firefox Add-ons
+    #        https://calomel.org/firefox_ssl_validation.htm  Calomel SSL Validation
+    #        https://addons.mozilla.org/de/firefox/addon/cert-viewer-plus/   Cert Viewer Plus
+    #
+    #        http://patrol.psyced.org/       Certifiate Patrol
+    #        certwatch.simos.info            CertWatch
+    #
 ); # %man_text
 
 #| definitions: internal functions
