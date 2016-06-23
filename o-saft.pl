@@ -4302,7 +4302,7 @@ sub print_cipherline($$$$$$) {
         #    Rejected  SSLv3  256 bits  ADH-AES256-SHA
         #    Accepted  SSLv3  128 bits  AES128-SHA
         $bit = sprintf("%3s bits", $bit);
-        printf("    %s  %s  %s  %s\n", $yesno, $ssl, $bit, $cipher);
+        printf("    %s  %s  %s\n", $ssl, $bit, $cipher);
     }
     if ($legacy eq 'ssltest')   {
         # cipher, description, (supported)
