@@ -6288,10 +6288,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
         }
         if ($_printtitle > 0) { # if we checked for ciphers
+          if ($legacy =~ /(full|compact|simple|quick)/) {   # but only our formats
             printheader("\n" . _get_text('out-summary', ""), "");
             print_check($legacy, $host, $port, 'cnt_totals', scalar @results) if ($cfg{'verbose'} > 0);
             printprotocols($legacy, $host, $port);
             printruler() if ($quick == 0);
+          }
         }
     }
 
