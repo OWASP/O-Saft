@@ -6284,8 +6284,10 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             }
             printciphercheck($legacy, $ssl, $host, $port, ($legacy eq "sslscan")?($_printtitle):0, @results);
         }
-        my $ssl = ${$cfg{'version'}}[4];
+        if ($legacy eq 'sslscan') {
+            my $ssl = ${$cfg{'version'}}[4];
             print_cipherdefault($legacy, $ssl, $host, $port);
+            # TODO: there is only one $data('selected')
             #foreach my $ssl (@{$cfg{'version'}}) {
             #    print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
             #}
