@@ -4717,7 +4717,8 @@ sub printversion() {
         # we expect ::VERSION in all these modules
         ($d = $m) =~ s#::#/#g;  $d .= '.pm';   # convert string to key for %INC
         $v  = $m . "::VERSION";
-        printf("    %-22s %-9s%s\n", $m, $$v, $INC{$d});
+        printf("    %-22s %-9s%s\n", $m, ($$v || " "), ($INC{$d} || " "));
+           # use a single space if value is not defined
     }
     if ($cfg{'verbose'} > 0) {
         print "\n= Loaded Modules =";
