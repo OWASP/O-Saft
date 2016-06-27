@@ -182,7 +182,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.63 Winter Edition 2015
+#?      @(#) 1.64 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -199,7 +199,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.63 16/06/12 02:20:28 Sommer Edition 2015}
+set cfg(SID)    {@(#) o-saft.tcl 1.64 16/06/27 15:09:23 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -1387,8 +1387,25 @@ set cfg_tipp(start) [regsub -all {\$cfg.SAFT.} $cfg_tipp(start) $cfg(SAFT)]
 
 # get information from O-Saft; it's a performance penulty, but simple ;-)
 set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
+if {2 > [llength [split $cfg(HELP) "\n"]]} {
+    # exec call failed, probably because PATH does not contain .
+    # then cfg(SAFT) returns an error, most likely just on line, like:
+    #   couldn't execute "o-saft.pl": no such file or directory
+    # as this message depends on the lanuguage setting of the calling shell,
+    # we do not check for any string, but for more than on line, means that
+    # cfg(HELP) must be more than one line
+    set cfg(SAFT) [file join "." $cfg(SAFT)];     # try current directory also
+}
+set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
 set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
 set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
+
+if {2 > [llength [split $cfg(HELP) "\n"]]} {
+    # failed again, so we have no command and no options also, cant't continue
+    tk_messageBox -icon error \
+        -message "**ERROR: could not call $cfg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
+    exit 2
+}
 
 
 ## create toplevel window
