@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.496 16/06/01 21:14:49",
+    SID         => "@(#) yeast.pl 1.498 16/06/27 20:14:14",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -139,7 +139,9 @@ sub _is_member($$); #   "
 
 #| README if any
 #| -------------------------------------
-if (open(my $rc, '<', "o-saft-README")) { print <$rc>; close($rc); exit 0; };
+#if (open(my $rc, '<', "o-saft-README")) { print <$rc>; close($rc); exit 0; };
+    # 6/2016: o-saft-README disabled because most people asked how to remove it
+    # which is clearly described in o-saft-README itself. People won't read :-(
 
 #| CGI
 #| -------------------------------------
@@ -1181,7 +1183,7 @@ our %ciphers = (
         'DHE-DSS-AES256-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 DSS   DH        100 :)],
         'DHE-DSS-RC4-SHA'       => [qw(  weak SSLv3 RC4   128 SHA1 DSS   DH         20 :)],
             # see SSLlabs.com:
-            # https://www.ssllabs.com/ssltest/viewClient.html?name=IE&version=&platform=Win%208.1
+            # https://www.ssllabs.com/ssltest/viewClient.html?name=IE&version=11&platform=Win%208.1
             # ...  Cannot be used for Forward Secrecy because they require DSA
             #      keys, which are effectively limited to 1024 bits.
         'DHE-DSS-SEED-SHA'      => [qw(MEDIUM SSLv3 SEED  128 SHA1 DSS   DH         81 OSX)],
@@ -2961,8 +2963,6 @@ sub checkcert($$) {
     # $checks{'certfqdn'}->{val} ... done in checksni()
 
     $checks{'rootcert'}->{val}  = $data{'issuer'}->{val}($host) if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
-    #dbx# _dbx "S " .$data{'subject'}->{val}($host);
-    #dbx# _dbx "S " .$data{'issuer'}->{val}($host);
 
     $checks{'ocsp'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
@@ -4713,7 +4713,7 @@ sub printversion() {
     my ($d, $v, %p);
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
-    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello osaft)) {
+    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello Ciphers osaft)) {
         ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
         #  NOTE: we need "no strict" here!
         no strict 'refs';   # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
@@ -4722,7 +4722,7 @@ sub printversion() {
         ($d = $m) =~ s#::#/#g;  $d .= '.pm';   # convert string to key for %INC
         $v  = $m . "::VERSION";
         printf("    %-22s %-9s%s\n", $m, ($$v || " "), ($INC{$d} || " "));
-           # use a single space if value is not defined
+            # use a single space if value is not defined
     }
     if ($cfg{'verbose'} > 0) {
         print "\n= Loaded Modules =";
@@ -6289,7 +6289,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             print_cipherdefault($legacy, $ssl, $host, $port);
             # TODO: there is only one $data('selected')
             #foreach my $ssl (@{$cfg{'version'}}) {
-            #    print_cipherdefault($legacy, $ssl, $host, $port) if ($legacy eq 'sslscan');
+            #    print_cipherdefault($legacy, $ssl, $host, $port);
             #}
         }
         if ($_printtitle > 0) { # if we checked for ciphers
