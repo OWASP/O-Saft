@@ -48,7 +48,7 @@ exec wish "$0" --
 #?      All results and settings (commands and options) can be saved to files.
 #?
 #?   Help
-#?      All functionallity is documented with ballon help on each checkbutton,
+#?      All functionallity is documented with balloon help on each checkbutton,
 #?      input field, button or table header line.
 #?
 #?   Examples for filter
@@ -182,7 +182,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.64 Winter Edition 2015
+#?      @(#) 1.65 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -199,7 +199,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.64 16/06/27 15:09:23 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.65 16/06/27 16:58:25 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -467,35 +467,34 @@ txt2arr [string map "
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
 
-# if {$cfg(TIP) == 1} { # package not available
-# from: http://wiki.tcl.tk/3060?redir=1954
-#
-# proc balloon {w help} {
-#     bind $w <Any-Enter> "after 1000 [list balloon:show %W [list $help]]"
-#     bind $w <Any-Leave> "destroy %W.balloon"
-# }
-# 
-# proc balloon:show {w arg} {
-#     if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
-#     set top $w.balloon
-#     catch {destroy $top}
-#     toplevel $top -bd 1 -bg black
-#     wm overrideredirect $top 1
-#     if {[string equal [tk windowingsystem] aqua]}  {
-#         ::tk::unsupported::MacWindowStyle style $top help none
-#     }   
-#     pack [message $top.txt -aspect 10000 -bg lightyellow \
-#         -font fixed -text $arg]
-#     set wmx [winfo rootx $w]
-#     set wmy [expr [winfo rooty $w]+[winfo height $w]]
-#     wm geometry $top [winfo reqwidth $top.txt]x[
-#         winfo reqheight $top.txt]+$wmx+$wmy
-#     raise $top
-# }
+# if {$cfg(TIP) == 1} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
+
+proc tooltip {w help} {
+    bind $w <Any-Enter> "after 1000 [list tooltip:show %W [list $help]]"
+    bind $w <Any-Leave> "destroy %W.balloon"
+}; # tooltip
+
+proc tooltip:show {w arg} {
+    if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
+    set top $w.balloon
+    catch {destroy $top}
+    toplevel $top -bd 1 -bg black
+    wm overrideredirect $top 1
+    if {[string equal [tk windowingsystem] aqua]}  {
+        ::tk::unsupported::MacWindowStyle style $top help none
+    }   
+    pack [message $top.txt -aspect 10000 -bg lightyellow \
+        -font fixed -text $arg]
+    set wmx [winfo rootx $w]
+    set wmy [expr [winfo rooty $w]+[winfo height $w]]
+    wm geometry $top [winfo reqwidth $top.txt]x[
+        winfo reqheight $top.txt]+$wmx+$wmy
+    raise $top
+}; # tooltip:show
 # 
 # # Example:
 # button  .b -text Exit -command exit
-# balloon .b "Push me if you're done with this"
+# tootip  .b "Push me if you're done with this"
 # pack    .b
 #
 # }
@@ -686,9 +685,12 @@ proc create_window {title size} {
 proc create_tip {parent txt} {
     #? add tooltip message to given widget
     global cfg
-    if {$cfg(TIP) == 1} { return }; # package not available
-    set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
-    tooltip::tooltip $parent "$txt"
+    if {$cfg(TIP) == 1} {   # package tooltip not available, use own one
+        tooltip $parent "$txt"
+    } else {
+        set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
+        tooltip::tooltip $parent "$txt"
+    }
 }; # create_tip
 
 proc create_host {parent} {
@@ -1360,6 +1362,7 @@ set targets ""
 foreach arg $argv {
     switch -glob $arg {
         {--v}   { set cfg(VERB) 1; lappend cfg(FAST) {+quit} {+version}; }
+        {--tip} { set cfg(TIP)  1; } # use own tooltip
         {--h}   -
         {--help} { puts [osaft_about "HELP"]; exit; }
         *       { lappend targets $arg; }
@@ -1465,7 +1468,6 @@ pack [frame     $w.fl -relief sunken -borderwidth 1] -fill x
 pack [text      $w.fl.t -height 2 -relief flat -background [get_color status] ] -fill x
 set cfg(objS)   $w.fl.t
 $cfg(objS) config -state disabled
-if {$cfg(TIP) == 1} { update_status {**WARNING: Ballon help not available because package "tooltip" not installed} }
 
 ## add hosts from command line
 foreach host $targets {         # display hosts
