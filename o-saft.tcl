@@ -190,7 +190,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.68 Winter Edition 2015
+#?      @(#) 1.69 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -207,7 +207,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.68 16/06/28 22:26:17 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.69 16/06/28 22:52:21 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -690,9 +690,7 @@ proc create_window {title size} {
     if {[regexp {^Filter} $title]}             { return $this }
     # all other windows have a header line and a Save button
     pack [frame $this.f0   -relief sunken -borderwidth 1] -fill x -side top
-    pack [text  $this.f0.t -relief flat   -background [. cget -background] -height 1]  -side left -fill x
-    $this.f0.t insert end $title
-    $this.f0.t config -state disabled -font TkCaptionFont
+    pack [label $this.f0.t -relief flat   -text $title  ] -fill x -side left
     pack [button $this.f1.s -text [btn_text save] -bg [get_color save] -command {osaft_save "CFG" 0}] -side left
     create_tip   $this.f1.s [tip_text savetofile]
     return $this
@@ -775,9 +773,7 @@ proc create_filtertab {parent cmd} {
     #? create table with filter data
     global cfg aaa
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
-    pack [text $parent.text -height 4 -relief flat -background [$parent cget -background]]
-    $parent.text insert end [tip_text tabFILTER]
-    $parent.text config -state disabled
+    pack [label $parent.text -relief flat -text [tip_text tabFILTER]]
     set this $parent.g
     frame $this
     # grid makes nice layouts but is too stupid to resice (expand) the widgets
@@ -870,9 +866,7 @@ proc create_filter {txt cmd} {
     set this $cfg(winF)
     #dbx# puts "TXT $txt | $cmd | $myX(geoF)"
     pack [frame $this.f -relief sunken -borderwidth 1] -fill x
-    pack [text  $this.f.t -relief flat -background [. cget -background] -height 2 -width 16] -fill x
-    $this.f.t insert  end [btn_text c_toggle]
-    $this.f.t config -state disabled -font osaftBold
+    pack [label $this.f.t -relief flat -text [btn_text c_toggle]] -fill x
     pack [checkbutton $this.f.c -text [btn_text hideline] -variable filter_bool($txt,line)] -anchor w;
     create_tip $this.f.c [tip_text hideline]
     $this.f.c config -state disabled ; # TODO: not yet working, see FIXME in toggle_txt
