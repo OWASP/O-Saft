@@ -66,6 +66,14 @@ exec wish "$0" --
 #?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
 #?      available in the contrib/ directpry.
 #?
+#?   Copy Texts
+#?      All texts visible in the GUI,  wether a label, a button, an entry or a
+#?      text itself can be copied to the systems clipboard with:
+#?         <Control-ButtonPress-1>
+#?      For debugging  <Shift-Control-ButtonPress-1>   will prefix the text by
+#?      the pathname and the class of the object containing the text.
+#?      Keep in mind that it also copies the huge text in the help window.
+#?
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
 #?
@@ -182,7 +190,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.67 Winter Edition 2015
+#?      @(#) 1.68 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -199,7 +207,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.67 16/06/28 20:55:15 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.68 16/06/28 22:26:17 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -1379,6 +1387,26 @@ proc osaft_exec {parent cmd} {
     update_status "$do done."
 }; # osaft_exec
 
+proc copy2clipboard {w shift} {
+  #? copy visible text of object to clipboard
+  set klasse [winfo class $w]
+  set txt {}
+  if {$shift == 1} { set txt "$w $klasse: " }
+  switch $klasse {
+     Button      -
+     Label       -
+     Checkbutton -
+     Radiobutton { append txt [lindex [$w config -text] 4] }
+     Text        { append txt [string trim [$w get 1.0 end]]; }
+     Entry       { append txt [string trim [$w get]]; }
+     default     { puts "** unbekannte Klasse $klasse" }
+  }
+  #dbx# puts "W $w # K $shift # $txt"
+  clipboard clear
+  clipboard append -type STRING -format STRING -- $txt
+}; # copy2clipboard
+
+
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
@@ -1400,6 +1428,12 @@ font create osaftSlant  {*}[font config TkDefaultFont] -slant italic
 option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
+
+# bindings for simply copying text of any widget
+foreach klasse [list Button Label Entry Checkbutton Radiobutton Text] {
+    bind $klasse  <Control-ButtonPress-1>       { copy2clipboard %W 0 }
+    bind $klasse  <Shift-Control-ButtonPress-1> { copy2clipboard %W 1 }
+}
 
 
 ## read $cfg(RC) if any
