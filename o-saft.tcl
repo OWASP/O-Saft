@@ -182,7 +182,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.66 Winter Edition 2015
+#?      @(#) 1.67 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -199,7 +199,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.66 16/06/28 09:38:56 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.67 16/06/28 20:55:15 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -302,6 +302,12 @@ array set cfg_tipp {
     choosen     {Choosen value for}
     start       "Start $cfg(SAFT) with command "
         # FIXME: $cfg(SAFT) may be changed when reading $cfg(RC) below
+    tabCMD      {Configure commands}
+    tabOPT      {Configure options}
+    tabFILTER   "
+Configure filter for text markup: r, e and # specify how the Regex should work;
+Forground, Background, Font and u  specify the markup to apply to matched text.
+Changes apply to next +command."
 
     DESC_misc   {CONFIGURATION texts used in GUI for various other texts}
     f_key       Key
@@ -314,6 +320,8 @@ array set cfg_tipp {
     f_font      Font
     f_u         u
 }
+
+# Note: Text for tabFILTER must not exceed 80 characters per line
 
 set cfg(PERL)   {};             # full path to perl; empty on *nix
 if {[regexp {indows} $tcl_platform(os)]} {
@@ -755,15 +763,12 @@ proc create_filter_head {parent txt tip col} {
     create_tip  $this $tip
 }; # create_filter_head
 
-proc create_filtab {parent cmd} {
+proc create_filtertab {parent cmd} {
     #? create table with filter data
     global cfg aaa
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
     pack [text $parent.text -height 4 -relief flat -background [$parent cget -background]]
-    $parent.text insert end "
-Configure filter for text markup: r, e and # specify how the Regex should work;
-Forground, Background, Font and u  specify the markup to apply to matched text.
-Changes apply to next +command."
+    $parent.text insert end [tip_text tabFILTER]
     $parent.text config -state disabled
     set this $parent.g
     frame $this
@@ -799,7 +804,7 @@ Changes apply to next +command."
         set nr  $f_un($k)
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
-        if {$cfg(VERB)==1} { puts "create_filtab: .$key /$rex/" }
+        if {$cfg(VERB)==1} { puts "create_filtertab: .$key /$rex/" }
         grid [entry   $this.k$k -textvariable f_key($k) -width  8 ] -row $k -column 0
         grid [radiobutton $this.x$k -variable f_mod($k) -width  2 -value "-regexp"  ] -row $k -column 1
         grid [radiobutton $this.e$k -variable f_mod($k) -width  2 -value "-exact"   ] -row $k -column 2
@@ -839,7 +844,7 @@ Changes apply to next +command."
     pack [button $parent.cc -text [btn_text color] -command {create_selected "Color" [tk_chooseColor]} ] -side right
     create_tip  $parent.cc [tip_text choosecolor]
     create_tip  $parent.fc [tip_text choosefont]
-}; # create_filtab
+}; # create_filtertab
 
 proc create_filter {txt cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
@@ -1101,7 +1106,9 @@ proc create_win {parent cmd title} {
     set this $parent
     set win  $this
     set data $cfg(OPTS)
-    if {$cmd eq "CMD"} { set data $cfg(CMDS) }
+    if {$cmd eq "CMD"} {
+        set data $cfg(CMDS)
+    }
         # data is a huge list which contains commands or options grouped by a
         # header line. The window to be created just contains the lines which
         # follow the header line down to the next header line. $skip controls
@@ -1136,10 +1143,10 @@ proc create_win {parent cmd title} {
         set dat [string trim $l]
         if {[regexp {^(Commands|Options)} $dat]} { set skip 1; };    # next group starts
         if {"$title" eq "$dat"} {   # FIXME: scary comparsion, better use regex
+            # title matches: create a window for checkboxes and entries
             set skip 0;
-            # remove noicy prefix and make first character upper case
             if {$cfg(VERB)==1} { puts "create_win: $win $dat" }
-            set dat [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $dat ""]] 0 0]
+            set dat [string toupper [string trim $dat ] 0 0]
             set win [create_window $dat ""]
             if {$win eq ""} { return; };    # do nothing, even no: show_window $this;
             set this $win.g
@@ -1177,7 +1184,7 @@ proc create_win {parent cmd title} {
             if {$cfg(VERB)==1} {puts "**WARNING: create_win exists: $this.$name; ignored"};
             continue
         }
-        frame $this.$name
+        frame $this.$name;              # create frame for command' or options' checkbutton
         if {[regexp {=} $dat] == 0} {
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
@@ -1188,7 +1195,7 @@ proc create_win {parent cmd title} {
             $this.$name.l config -font TkDefaultFont;   # reset to default as Label is bold
         }
         grid $this.$name -sticky w
-        create_tip $this.$name "$tip";   # $tip may be empty, i.e. for options
+        create_tip $this.$name "$tip";  # $tip may be empty, i.e. for options
     }
     pack $this -fill both -expand 1
 
@@ -1209,7 +1216,7 @@ proc create_win {parent cmd title} {
     }
 }; # create_win
 
-proc create_button {parent cmd} {
+proc create_buttons {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
     # cmd must be "OPT" or "CMD" or "TRC"
@@ -1218,6 +1225,8 @@ proc create_button {parent cmd} {
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
         # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
 
+    set txt  [tip_text "tab$cmd"];      # tabCMD and tabOPT
+    pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -side top -anchor w
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
         if {[regexp {^(Commands|Options) } $txt] == 0} { continue }
@@ -1232,7 +1241,7 @@ proc create_button {parent cmd} {
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
         set name [str2obj $txt]
         set this $parent.$name
-        if {$cfg(VERB)==1} { puts "create_button .$name {$txt}" }
+        if {$cfg(VERB)==1} { puts "create_buttons .$name {$txt}" }
         pack [frame $this] -anchor c -padx 10 -pady 2
         pack [button $this.b -text $dat -width 58 -command "create_win .$name $cmd {$txt}" -bg [get_color button] ] \
              [button $this.h -text {?} -command "create_help {$txt}" ] \
@@ -1242,7 +1251,7 @@ proc create_button {parent cmd} {
 	# argh, some command sections are missing in HELP
         if {[regexp {^Commands to show } $txt] == 1} { $this.h config -state disable }
     }
-}; # create_button
+}; # create_buttons
 
 proc osaft_about {mode} {
     #? extract description from myself; returns text
@@ -1365,7 +1374,7 @@ proc osaft_exec {parent cmd} {
     create_tip   $tab_run.bs [tip_text saveto]
     create_tip   $tab_run.bf [tip_text showfilterconfig]
     apply_filter $txt ;        # text placed in pane, now do some markup
-    destroy $cfg(winF);        # workaround, see FIXME in create_filtab
+    destroy $cfg(winF);        # workaround, see FIXME in create_filtertab
     $cfg(objN) select $tab_run
     update_status "$do done."
 }; # osaft_exec
@@ -1391,6 +1400,7 @@ font create osaftSlant  {*}[font config TkDefaultFont] -slant italic
 option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
+
 
 ## read $cfg(RC) if any
 #  this may redefine some previous settings
@@ -1467,9 +1477,9 @@ pack $cfg(objN) -fill both -expand 1
 set tab_cmds    [create_note $cfg(objN) "Commands"]
 set tab_opts    [create_note $cfg(objN) "Options"]
 set tab_filt    [create_note $cfg(objN) "Filter"]
-create_button $tab_cmds {CMD}; # fill Commands pane
-create_button $tab_opts {OPT}; # fill Options pane
-create_filtab $tab_filt {FIL}; # fill Filter pane
+create_buttons  $tab_cmds {CMD}; # fill Commands pane
+create_buttons  $tab_opts {OPT}; # fill Options pane
+create_filtertab $tab_filt {FIL}; # fill Filter pane
 
 ## add Save and Reset button in Options pane
 pack [button    $tab_opts.bs -text [btn_text save]  -command {osaft_save "CFG" 0} -bg [get_color start] ] -side left
