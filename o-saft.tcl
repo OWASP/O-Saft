@@ -64,7 +64,7 @@ exec wish "$0" --
 #?      can be customized in  .o-saft.tcl.  which  will be searched for in the
 #?      user's  HOME directory  and in the local directory.
 #?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
-#?      available in the contrib/ directpry.
+#?      available in the contrib/ directory.
 #?
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
@@ -944,6 +944,9 @@ proc create_help {} {
     # as a command (not to be confused with commands of o-saft.pl).
     # Idea: probably "o-saft.pl --help=wiki" is better suitable for creating
     # the help text herein.
+    #
+    # TODO: some section lines are not detected properly and hence missing
+
     global cfg myX
     if {[winfo exists $cfg(winH)]}  { show_window $cfg(winH); return; }
     set this    [create_window {Help} $myX(geoO)]
@@ -1211,7 +1214,7 @@ proc create_button {parent cmd} {
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
         if {[regexp {^(Commands|Options) } $txt] == 0} { continue }
-            # buttons for Commands and options only
+            # buttons for Commands and Options only
         if {[regexp {^Options\s*for\s*(help|compatibility) } $txt] != 0} { continue }
             # we do not support these options in the GUI
         ## skipped general
