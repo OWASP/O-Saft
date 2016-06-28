@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.127 16/06/13 15:36:49";
+my  $man_SID= "@(#) o-saft-man.pm 1.128 16/06/28 08:19:15";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -659,6 +659,7 @@ my %man_text = (
         '7469'  => [ "Public Key Pinning Extension for HTTP" ],
         '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
         '7539'  => [ "ChaCha20 and Poly1305 for IETF Protocols" ],
+        '7905'  => [ "ChaCha20-Poly1305 Cipher Suites for TLS" ],
         #----------+----------------------------------------+-----------------------+
     },
 
