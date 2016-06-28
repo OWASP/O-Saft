@@ -64,7 +64,7 @@ exec wish "$0" --
 #?      can be customized in  .o-saft.tcl.  which  will be searched for in the
 #?      user's  HOME directory  and in the local directory.
 #?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
-#?      available in the contrib/ directory.
+#?      available in the contrib/ directpry.
 #?
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
@@ -182,7 +182,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.65 Winter Edition 2015
+#?      @(#) 1.66 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -199,7 +199,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.65 16/06/27 16:58:25 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.66 16/06/28 09:38:56 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -538,7 +538,7 @@ proc notTOC {str} {
     if {[regexp {^ *$} $str]}               { return 1; };  # skip empty
     #dbx# puts "TOC $str";
     return 0
-}; # isTOC
+}; # notTOC
 
 proc jumpto_mark {w txt} { catch { $w see [$w index $txt.first] } }
      # jump to mark in given text widget;
@@ -909,8 +909,9 @@ proc create_about {} {
     }
 }; # create_about
 
-proc create_help {} {
+proc create_help {sect} {
     #? create new window with complete help; store widget in cfg(winH)
+    #? if  sect  is given, jump to this section
     # uses plain text help text from "o-saft.pl --help"
     # This text is parsed for section header line (all capital characters)
     # which will be used as Table of Content and inserted before the text.
@@ -940,15 +941,20 @@ proc create_help {} {
         # ...
         #
     # In above example  QUICKSTART  and  OPTIONS  are the section headers,
-    # --help is an option  and the line starting with  o-saft.pl  will be
-    # as a command (not to be confused with commands of o-saft.pl).
+    # --help  is an option and the line starting with  o-saft.pl  will be
+    # a command (not to be confused with commands of o-saft.pl).
     # Idea: probably "o-saft.pl --help=wiki" is better suitable for creating
     # the help text herein.
     #
     # TODO: some section lines are not detected properly and hence missing
 
     global cfg myX
-    if {[winfo exists $cfg(winH)]}  { show_window $cfg(winH); return; }
+    if {[winfo exists $cfg(winH)]} {                    # if there is a window, just jump to text
+        wm deiconify $cfg(winH)
+        set name [str2obj [string trim $sect]]
+        jumpto_mark $cfg(winH).t "osaft-HEAD-$name"
+        return
+    }
     set this    [create_window {Help} $myX(geoO)]
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];# remove informal messages
     set txt     [create_text $this $help].t
@@ -992,6 +998,7 @@ proc create_help {} {
         $txt tag add  osaft-TOC    $b "$b + $e c"; # - 1 c";# do not markup leading spaces
         $txt tag add  osaft-TOC-$i $a "$a + $e c";      # but complete line is clickable
         $txt tag bind osaft-TOC-$i <ButtonPress> "jumpto_mark $txt {osaft-HEAD-$name}"
+        #dbxX puts "TAG: $txt {osaft-HEAD-$name}"
     }
 
 #    # 2a. search for all references to section head in text
@@ -1223,12 +1230,17 @@ proc create_button {parent cmd} {
         if {"OPTIONS" eq $txt}             { continue; }
         # remove noicy prefix and make first character upper case
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
-        set name [str2obj $dat]
+        set name [str2obj $txt]
         set this $parent.$name
         if {$cfg(VERB)==1} { puts "create_button .$name {$txt}" }
-        pack [button $this -text $dat -width 58 -command "create_win .$name $cmd {$txt}" -bg [get_color button] ] \
-                 -anchor c -padx 10 -pady 2
-        create_tip   $this [tip_text settings]
+        pack [frame $this] -anchor c -padx 10 -pady 2
+        pack [button $this.b -text $dat -width 58 -command "create_win .$name $cmd {$txt}" -bg [get_color button] ] \
+             [button $this.h -text {?} -command "create_help {$txt}" ] \
+        	-side left
+        create_tip   $this.b [tip_text settings]
+
+	# argh, some command sections are missing in HELP
+        if {[regexp {^Commands to show } $txt] == 1} { $this.h config -state disable }
     }
 }; # create_button
 
@@ -1436,7 +1448,7 @@ foreach b $cfg(FAST) {
     create_cmd $w.fc $b $c;
     if {[regexp {^\+[c]} $b] == 0} { incr c };  # command not starting with +c get a new color
 }
-pack [button    $w.fc.bh -text [btn_text quest] -command "create_help"] -side right -padx $myX(padx)
+pack [button    $w.fc.bh -text [btn_text quest] -command "create_help {}"] -side right -padx $myX(padx)
 create_tip      $w.fc.bh  [tip_text help]
 create_tip      $w.fc.bs "[tip_text start] selected in 'Commands' tab"
 create_tip      $w.fq.bq  [tip_text closeme]
