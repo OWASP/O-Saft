@@ -193,7 +193,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.70 Winter Edition 2015
+#?      @(#) 1.71 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -210,7 +210,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.70 16/06/29 08:48:07 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.71 16/06/29 09:09:57 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -707,9 +707,11 @@ proc create_window {title size} {
     if {$title eq "Help" || $title eq {About}} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
     # all other windows have a header line and a Save button
-    pack [frame $this.f0   -relief sunken -borderwidth 1] -fill x -side top
-    pack [label $this.f0.t -relief flat   -text $title  ] -fill x -side left
-    pack [button $this.f1.s -text [btn_text save] -bg [get_color save] -command {osaft_save "CFG" 0}] -side left
+    pack [frame $this.f0    -borderwidth 1 -relief sunken]     -fill x -side top
+    pack [label $this.f0.t  -text $title   -relief flat  ]     -fill x -side left
+    pack [button $this.f0.h -text {?} -command "create_help {$title}"] -side right
+    pack [button $this.f1.s -text [btn_text save] \
+                  -bg [get_color save] -command {osaft_save "CFG" 0}]  -side left
     create_tip   $this.f1.s [tip_text savetofile]
     return $this
 }; # create_window
@@ -974,6 +976,7 @@ proc create_help {sect} {
     # TODO: some section lines are not detected properly and hence missing
 
     global cfg myX
+    if {$cfg(VERB)==1} { puts "create_help($sect)" }
     if {[winfo exists $cfg(winH)]} {                    # if there is a window, just jump to text
         wm deiconify $cfg(winH)
         set name [str2obj [string trim $sect]]
@@ -1247,7 +1250,7 @@ proc create_buttons {parent cmd} {
         # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
 
     set txt  [tip_text "tab$cmd"];      # tabCMD and tabOPT
-    pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -side top -anchor w
+    pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
         if {[regexp {^(Commands|Options) } $txt]==0} { continue }
