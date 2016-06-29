@@ -73,6 +73,9 @@ exec wish "$0" --
 #?      For debugging  <Shift-Control-ButtonPress-1>   will prefix the text by
 #?      the pathname and the class of the object containing the text.
 #?      Keep in mind that it also copies the huge text in the help window.
+#?      The text will be copied to the (ICCCM) buffer CLIPBOARD.  This ensures
+#?      that it will not interfere with the usual copy&paste buffer  PRIMARY.
+#?      <ButtonPress-1> is the "select button", usually the left mouse button.
 #?
 #? OPTIONS
 #?      --v  print verbose messages (for debugging)
@@ -190,7 +193,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.69 Winter Edition 2015
+#?      @(#) 1.70 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -207,7 +210,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.69 16/06/28 22:52:21 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.70 16/06/29 08:48:07 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -258,6 +261,16 @@ if {$__y < $myX(miny)} { set myX(miny) $__y  }
 if {$__x < $myX(minx)} { set myX(minx) $__x  }
 if {$__x > 1000 }      { set myX(minx) "999" }
 set myX(geoS)   "$myX(minx)x$myX(miny)"
+
+#   myX(buffer) ... NOT YET USED
+set myX(buffer) PRIMARY;        # buffer to be used for copy&paste GUI texts
+                                # any ICCCM like: PRIMARY, SECONDARY or CLIPBOARD
+                                # or: CUT_BUFFER0 .. CUT_BUFFER7
+                                # Hint for X, in particular xterm: .Xresources:
+                                #     XTerm*VT100.Translations: #override \
+                                #         ... \
+                                #         <Btn2Up>: insert-selection(PRIMARY,CLIPBOARD) \
+                                #         ... \
 
 array set cfg_color {
     DESC        {CONFIGURATION colours used in GUI}
@@ -310,12 +323,17 @@ array set cfg_tipp {
     choosen     {Choosen value for}
     start       "Start $cfg(SAFT) with command "
         # FIXME: $cfg(SAFT) may be changed when reading $cfg(RC) below
-    tabCMD      {Configure commands}
-    tabOPT      {Configure options}
-    tabFILTER   "
+    tabCMD      {
+Select commands. All selected commands will be executed with the "Start" button.
+}
+    tabOPT      {
+Select and configure options. All options are used for any command button.
+}
+    tabFILTER   {
 Configure filter for text markup: r, e and # specify how the Regex should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
-Changes apply to next +command."
+Changes apply to next +command.
+}
 
     DESC_misc   {CONFIGURATION texts used in GUI for various other texts}
     f_key       Key
@@ -329,7 +347,7 @@ Changes apply to next +command."
     f_u         u
 }
 
-# Note: Text for tabFILTER must not exceed 80 characters per line
+# Note: Text for tab* contain new lines.
 
 set cfg(PERL)   {};             # full path to perl; empty on *nix
 if {[regexp {indows} $tcl_platform(os)]} {
@@ -483,7 +501,7 @@ txt2arr [string map "
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
 
-# if {$cfg(TIP) == 1} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
+# if {$cfg(TIP)==1} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
 
 proc tooltip {w help} {
     bind $w <Any-Enter> "after 1000 [list tooltip:show %W [list $help]]"
@@ -570,8 +588,8 @@ proc toggle_txt {txt tag val line} {
     #? toggle visability of text tagged with name $tag
     # note that complete line is tagged with name $tag.l (see apply_filter)
     global cfg
-    if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]"; }
-    #if {$line == 0} {
+    if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]" }
+    #if {$line==0} {
         #$txt tag config $tag   -elide [expr ! $val];  # "elide true" hides the text
     #}
     if {[regexp {\-(Label|#.KEY)} $tag]} {
@@ -614,7 +632,7 @@ proc apply_filter {txt} {
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
         if {$rex eq ""} { continue };   # invalid or disabled filter rules
-        if {$cfg(VERB)==1} {puts "apply_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"};
+        if {$cfg(VERB)==1} { puts "apply_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn" }
         # anf contains start, end corresponding end position of match
         set key [str2obj [string trim $key]]
         set anf [$txt search -all $mod -count end "$rex" 1.0] 
@@ -624,7 +642,7 @@ proc apply_filter {txt} {
             incr i
             if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # FIXME very dirty hack to beautify print
             $txt tag add    osaft-$key.l "$a linestart" "$a lineend"
-            if {$len == 0} {
+            if {$len==0} {
                $txt tag add osaft-$key    $a            "$a + 1 line - 1 char"
               #$txt tag add osaft-$key    $a            "$a lineend"; # does not work
             } else {
@@ -699,7 +717,7 @@ proc create_window {title size} {
 proc create_tip {parent txt} {
     #? add tooltip message to given widget
     global cfg
-    if {$cfg(TIP) == 1} {   # package tooltip not available, use own one
+    if {$cfg(TIP)==1} {     # package tooltip not available, use own one
         tooltip $parent "$txt"
     } else {
         set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
@@ -1155,7 +1173,7 @@ proc create_win {parent cmd title} {
             frame $this;    # frame for grid
             continue
         }
-        if {$skip == 1}                    { continue; }
+        if {$skip==1}                      { continue; }
         #dbx# puts "DATA $dat"
         ## skipped general
         if {$dat eq ""}                    { continue; }
@@ -1183,11 +1201,12 @@ proc create_win {parent cmd title} {
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
             # hence the warning is visible only in verbose mode
-            if {$cfg(VERB)==1} {puts "**WARNING: create_win exists: $this.$name; ignored"};
+            if {$cfg(VERB)==1} { puts "**WARNING: create_win exists: $this.$name; ignored" }
             continue
         }
         frame $this.$name;              # create frame for command' or options' checkbutton
-        if {[regexp {=} $dat] == 0} {
+### pack [button $this.$name.h -text {?} -command "create_help {$dat}" -borderwidth 1] -side left
+        if {[regexp {=} $dat]==0} {
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
             regexp {^([^=]*)=(.*)} $l dumm idx val
@@ -1231,7 +1250,7 @@ proc create_buttons {parent cmd} {
     pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -side top -anchor w
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
-        if {[regexp {^(Commands|Options) } $txt] == 0} { continue }
+        if {[regexp {^(Commands|Options) } $txt]==0} { continue }
             # buttons for Commands and Options only
         if {[regexp {^Options\s*for\s*(help|compatibility) } $txt] != 0} { continue }
             # we do not support these options in the GUI
@@ -1251,7 +1270,7 @@ proc create_buttons {parent cmd} {
         create_tip   $this.b [tip_text settings]
 
 	# argh, some command sections are missing in HELP
-        if {[regexp {^Commands to show } $txt] == 1} { $this.h config -state disable }
+        if {[regexp {^Commands to show } $txt]==1} { $this.h config -state disable }
     }
 }; # create_buttons
 
@@ -1354,7 +1373,7 @@ proc osaft_exec {parent cmd} {
         if {$val ne  ""} { lappend opt "$idx=$val"; };
     }
     foreach {i h} [array get hosts] {       # collect hosts
-        if {$i == 0}                { continue };   # first entry is counter
+        if {$i==0}                  { continue };   # first entry is counter
         if {[string trim $h] eq ""} { continue };   # skip empty entries
         lappend targets $h
     }
@@ -1382,22 +1401,23 @@ proc osaft_exec {parent cmd} {
 }; # osaft_exec
 
 proc copy2clipboard {w shift} {
-  #? copy visible text of object to clipboard
-  set klasse [winfo class $w]
-  set txt {}
-  if {$shift == 1} { set txt "$w $klasse: " }
-  switch $klasse {
-     Button      -
-     Label       -
-     Checkbutton -
-     Radiobutton { append txt [lindex [$w config -text] 4] }
-     Text        { append txt [string trim [$w get 1.0 end]]; }
-     Entry       { append txt [string trim [$w get]]; }
-     default     { puts "** unbekannte Klasse $klasse" }
-  }
-  #dbx# puts "W $w # K $shift # $txt"
-  clipboard clear
-  clipboard append -type STRING -format STRING -- $txt
+    #? copy visible text of object to clipboard
+    global cfg
+    set klasse [winfo class $w]
+    set txt {}
+    if {$shift==1} { set txt "$w $klasse: " }
+    switch $klasse {
+       Button       -
+       Label        -
+       Checkbutton  -
+       Radiobutton  { append txt [lindex [$w config -text] 4] }
+       Text         { append txt [string trim [$w get 1.0 end]]; }
+       Entry        { append txt [string trim [$w get]]; }
+       default      { puts "** unbekannte Klasse $klasse" }
+    }
+    if {$cfg(VERB)==1} { puts "copy2clipboard($w, $shift): $txt" }
+    clipboard clear
+    clipboard append -type STRING -format STRING -- $txt
 }; # copy2clipboard
 
 
@@ -1484,7 +1504,7 @@ pack [button    $w.fc.bs -text [btn_text start] -bg [get_color start] -command "
 set c 0; # used to change color
 foreach b $cfg(FAST) {
     create_cmd $w.fc $b $c;
-    if {[regexp {^\+[c]} $b] == 0} { incr c };  # command not starting with +c get a new color
+    if {[regexp {^\+[c]} $b]==0} { incr c };    # command not starting with +c get a new color
 }
 pack [button    $w.fc.bh -text [btn_text quest] -command "create_help {}"] -side right -padx $myX(padx)
 create_tip      $w.fc.bh  [tip_text help]
