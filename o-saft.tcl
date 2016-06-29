@@ -201,7 +201,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.73 Winter Edition 2015
+#?      @(#) 1.74 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -218,7 +218,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.73 16/06/29 23:29:46 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.74 16/06/29 23:35:14 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -872,9 +872,9 @@ proc create_filtertab {parent cmd} {
     tk fontchooser config -command {create_selected "Font"}; # what to do with selection
         # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
     pack [button $parent.fc -text [btn_text font]  -command {tk fontchooser show}] -side right
+    create_tip   $parent.fc [tip_text choosefont]
     }
     pack [button $parent.cc -text [btn_text color] -command {create_selected "Color" [tk_chooseColor]} ] -side right
-    create_tip   $parent.fc [tip_text choosefont]
     create_tip   $parent.cc [tip_text choosecolor]
 }; # create_filtertab
 
