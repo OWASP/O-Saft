@@ -18,7 +18,7 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.2 16/05/09 21:42:41
+#?      @(#) .o-saft.tcl 1.3 16/06/29 09:11:12
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
@@ -88,6 +88,17 @@ array set cfg_tipp {
     choosefont  {Open window to choose a font}
     choosen     {Choosen value}
     start       "Start $cfg(SAFT) with command "
+    tabCMD      {
+Select commands. All selected commands will be executed with the "Start" button.
+}
+    tabOPT      {
+Select and configure options. All options are used for any command button.
+}
+    tabFILTER   {
+Configure filter for text markup: r, e and # specify how the Regex should work;
+Forground, Background, Font and u  specify the markup to apply to matched text.
+Changes apply to next +command.
+}
 
     DESC_misc   {CONFIGURATION texts used in GUI for various other texts}
     f_key       {Key}
@@ -100,6 +111,8 @@ array set cfg_tipp {
     f_font      {Font}
     f_u         {u}
 }
+
+# Note: Text for tab* contain new lines.
 
 #_____________________________________________________________________________
 #_______________________________________________________ settings for sizes __|
