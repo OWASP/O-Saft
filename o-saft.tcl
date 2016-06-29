@@ -201,7 +201,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.72 Winter Edition 2015
+#?      @(#) 1.73 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -218,7 +218,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.72 16/06/29 23:22:53 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.73 16/06/29 23:29:46 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -541,6 +541,17 @@ proc tooltip:show {w arg} {
 #
 # }
 
+proc create_tip {parent txt} {
+    #? add tooltip message to given widget
+    global cfg
+    if {$cfg(TIP)==1} {     # package tooltip not available, use own one
+        tooltip $parent "$txt"
+    } else {
+        set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
+        tooltip::tooltip $parent "$txt"
+    }
+}; # create_tip
+
 proc get_color {key} {
     #? return color name for key from global cfg_color variable
     global cfg_color
@@ -724,17 +735,6 @@ proc create_window {title size} {
     return $this
 }; # create_window
 
-proc create_tip {parent txt} {
-    #? add tooltip message to given widget
-    global cfg
-    if {$cfg(TIP)==1} {     # package tooltip not available, use own one
-        tooltip $parent "$txt"
-    } else {
-        set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
-        tooltip::tooltip $parent "$txt"
-    }
-}; # create_tip
-
 proc create_host {parent} {
     #?  frame with label and entry for host:port; $nr is index to hosts()
     global cfg hosts myX
@@ -868,14 +868,14 @@ proc create_filtertab {parent cmd} {
     #grid rowconfigure    $this [expr $lastrow - 1] -weight 1
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
     grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work 
-    catch { # silently ignore if systems has no fontchooser
+    catch { # silently ignore if systems has no fontchooser (i.e. Mac OS X)
     tk fontchooser config -command {create_selected "Font"}; # what to do with selection
         # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
     pack [button $parent.fc -text [btn_text font]  -command {tk fontchooser show}] -side right
     }
     pack [button $parent.cc -text [btn_text color] -command {create_selected "Color" [tk_chooseColor]} ] -side right
-    create_tip  $parent.cc [tip_text choosecolor]
-    create_tip  $parent.fc [tip_text choosefont]
+    create_tip   $parent.fc [tip_text choosefont]
+    create_tip   $parent.cc [tip_text choosecolor]
 }; # create_filtertab
 
 proc create_filter {txt cmd} {
