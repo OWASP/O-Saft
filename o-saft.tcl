@@ -1,9 +1,6 @@
-#!/usr/bin/wish
+#!/bin/sh
 ## restarts using wish \
-exec wish "$0" --
-
-# above exec quick&dirt for Mac OS X, below would be better
-#  exec wish "$0" ${1+"$@"}
+exec wish "$0" ${1+"$@"}
 
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
@@ -141,6 +138,17 @@ exec wish "$0" --
 #.        source o-saft.tcl
 #.
 #. HACKER's INFO
+#.   Hash-bang line
+#.      The usual way on *IX systems to start a Tcl- script independent of the
+#.      platform and underlaying shell would be like:
+#.          #!/usr/bin/wish
+#.          exec wish "$0" ${1+"$@"}
+#.      but above exec will throw erros on Mac OS X, henc a quick&dirt version
+#.          exec wish "$0" --
+#.      need to be used.  Unfortunatelly this does not allow to pass arguments
+#.      on command line. Hence the initial hash-bang line uses   /bin/sh  .
+#.
+#.   Data used to build GUI
 #.      Generation of all objects (widgets in Tk slang) is done  based on data
 #.      provided by  o-saft.pl  itself, in praticular some  --help=*  options,
 #.      see  CONFIGURATION  below. Output of these  --help=*  must be one item
@@ -161,7 +169,7 @@ exec wish "$0" --
 #.          - all "--help*" options (as they make no sense here)
 #.          - "+cgi" and "+exec" command (they are for internal use only)
 #.
-#.      Some nameing conventions
+#.   Some nameing conventions
 #.       - procedures:
 #.          create_*    - create widget or window
 #.          osaft_*     - run external  o-saft.pl  (and process output)
@@ -178,7 +186,7 @@ exec wish "$0" --
 #.          cfg_tipp()  - global variable containing texts for tooltips
 #.          myX()       - global variable for windows and window manager
 #.
-#.      Notes about Tcl/Tk
+#.   Notes about Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions (2015) are
 #.      the perl executable and the start method of the external browser.
 #.      All external programs are started using Tcl's  {*}  syntax.
@@ -193,7 +201,7 @@ exec wish "$0" --
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.71 Winter Edition 2015
+#?      @(#) 1.72 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -210,7 +218,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.71 16/06/29 09:09:57 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.72 16/06/29 23:22:53 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
