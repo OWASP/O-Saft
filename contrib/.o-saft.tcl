@@ -18,12 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.3 16/06/29 09:11:12
+#?      @(#) .o-saft.tcl 1.4 16/06/30 22:18:09
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
+set cfg(RCSID)  {1.4};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -65,6 +66,9 @@ array set cfg_label {
     host        {Host[:Port]}
     hideline    {Hide complete line}
     c_toggle    "toggle visibility\nof various texts"
+    gohome      {^}
+    goback      {<}
+    goforward   {>}
 }
 
 #_____________________________________________________________________________
@@ -87,6 +91,9 @@ array set cfg_tipp {
     choosecolor {Open window to choose a color}
     choosefont  {Open window to choose a font}
     choosen     {Choosen value}
+    gohome      {Go to top of page}
+    goback      {Go back to previous position}
+    goforward   {Go forward to last position}
     start       "Start $cfg(SAFT) with command "
     tabCMD      {
 Select commands. All selected commands will be executed with the "Start" button.
