@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.128 16/06/28 08:19:15";
+my  $man_SID= "@(#) o-saft-man.pm 1.129 16/06/30 22:19:05";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1043,7 +1043,7 @@ sub man_commands() {
 +sni              Check for Server Name Indication (SNI) usage.
 +sts              Various checks according STS HTTP header.
 
-                  Commands to test target's ciphers
+                  Commands to test ciphers provided by target
 +cipher           Check target for ciphers (using libssl)
 +cipherraw        Check target for all possible ciphers.
 
@@ -1545,6 +1545,7 @@ printhelp($ARGV[0]) unless (defined caller);
 #   or option, aliases should be written in their own line (to avoid confusion
 #   in some other parsers, like Tcl).
 #   List items should be followed by an empty line.
+#   Texts in section headers should not contain any quote characters.
 #
 # Special markups for o-saft.tcl:
 #   - the sub-titles in the COMMANDS and OPTIONS sections must look like:
@@ -1719,7 +1720,7 @@ TECHNICAL INFORMATION
         data returned by underlaying (used) libraries and the information 
         computed directly.
 
-    openssl, libssl, libcrypto
+    OpenSSL, libssl, libcrypto
 
         In general the tool uses perl's  Net::SSLeay(1)  module  which itself
         is based on libssl and/or libssleay library of the operating system.
@@ -2060,7 +2061,7 @@ COMMANDS
           This command should not be used directly.
 
 
-    Commands to test target's ciphers
+    Commands to test ciphers provided by target
 
       +cipher
 
@@ -2093,7 +2094,7 @@ COMMANDS
         Please see:
           $0 --help=commands
 
-    Commands to show details of the target's certificate
+    Commands to show certificate details of the target
 
         Please see:
           $0 --help=commands
@@ -3861,7 +3862,7 @@ CUSTOMIZATION
         in "Performed Checks" section.  And texts of keys in  %text  are used
         for additional information lines or texts (mainly beginning with '=').
 
-      Configuration File vs. RC-FILE vs. DEBUG-FILE
+     Configuration File vs. RC-FILE vs. DEBUG-FILE
 
         * CONFIGURATION FILE
 
@@ -4919,7 +4920,7 @@ HACKER's INFO
 
         There are some functions called within the program flow, which can be
         filled with any perl code.  Empty stubs of the functions are prepared
-        in  o-saft-usr.pm.  See also  USER-FILE.
+        in  o-saft-usr.pm.  See also  USER-FILE .
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: '$0 --help=ProgramCode
@@ -5195,28 +5196,28 @@ DEBUG
         Note that the file  o-saft-dbx.pm  is required,  if any  --trace*  or
         --v   option is used.
 
-      Commands
+    Commands
 
-          * +dump
-          * +libversion
-          * +s_client
-          * +todo
-          * +version
+        * +dump
+        * +libversion
+        * +s_client
+        * +todo
+        * +version
 
-      Options
+    Options
 
-          * --v
-          * --v--
-          * --trace
-          * --trace-arg
-          * --trace-cmd
-          * --trace-key
+        * --v
+        * --v--
+        * --trace
+        * --trace-arg
+        * --trace-cmd
+        * --trace-key
 
         Empty or undefined strings are written as  '<<undefined>>'  in texts.
         Some parameters, in particular those of  HTTP responses,  are written
         as  '<<response>>'.  Long parameter lists are abbreviated with '...'.
 
-      Output
+    Output
 
         When using  --v  and/or  --trace  options,  additional output will be
         prefixed with a  '#'  (mainly as first, left-most character.
