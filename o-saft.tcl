@@ -599,9 +599,12 @@ proc notTOC {str} {
     return 0
 }; # notTOC
 
-proc jumpto_mark {w txt} { catch { $w see [$w index $txt.first] } }
-     # jump to mark in given text widget;
-     # we simply ignore any error if index is unknown
+proc jumpto_mark {w txt} {
+    # jump to mark in given text widget;
+    catch { $w see [$w index $txt.first] }; # simply ignore errors if index is unknown
+    # "see" sometimes places text to far on top, so we scroll up one line
+    $w yview scroll -1 units
+}; # jumpto_mark
 
 proc toggle_cfg {w opt val} {
     #? use widget config command to change options value
