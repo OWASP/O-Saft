@@ -725,6 +725,7 @@ proc create_window {title size} {
     create_tip   $this.f1.q [tip_text closew]
     if {$title eq "Help" || $title eq {About}} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
+
     # all other windows have a header line and a Save button
     pack [frame $this.f0    -borderwidth 1 -relief sunken]     -fill x -side top
     pack [label $this.f0.t  -text $title   -relief flat  ]     -fill x -side left
@@ -1027,6 +1028,7 @@ proc create_help {sect} {
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
+        #dbx# puts "2. TOC: $t"
         if {[notTOC $t]} { continue; };                 # skip some special strings
         incr i
         set name [str2obj [string trim $t]]
@@ -1034,7 +1036,6 @@ proc create_help {sect} {
         $txt tag add  osaft-TOC    $b "$b + $e c"; # - 1 c";# do not markup leading spaces
         $txt tag add  osaft-TOC-$i $a "$a + $e c";      # but complete line is clickable
         $txt tag bind osaft-TOC-$i <ButtonPress> "jumpto_mark $txt {osaft-HEAD-$name}"
-        #dbxX puts "TAG: $txt {osaft-HEAD-$name}"
     }
 
 #    # 2a. search for all references to section head in text
@@ -1063,8 +1064,9 @@ proc create_help {sect} {
         set r [regsub {[+]} $t {\\+}];  # need to escape +
         set r [regsub {[-]} $r {\\-}];  # need to escape -
         set name [str2obj [string trim $t]]
-        if {[regexp -lineanchor "\\s\\s+$r$" $l]} {     # FIXME: dos not match all line proper
-            # these matches are assumed the header lines
+        #dbx# puts "3. LNK: $i\tosaft-LNK-$name\t$t"
+        if {[regexp -lineanchor "\\s\\s+$r$" $l]} {     # FIXME: does not match all lines proper
+            # these matches are assumed to be the header lines
             $txt tag add    osaft-LNK-$name $a "$a + $e c";
             $txt tag add    osaft-LNK       $a "$a + $e c";
         } else {
@@ -1077,7 +1079,7 @@ proc create_help {sect} {
         incr i
     }
 
-    # 4. search for all examles and highlight them
+    # 4. search for all examples and highlight them
     set anf [$txt search -regexp -nolinestop -all -count end "$cfg(SAFT) \[^\\n\]+" 3.0] 
     set i 0
     foreach a $anf {
@@ -1103,7 +1105,14 @@ proc create_help {sect} {
     $txt tag config   osaft-LNK  -font osaftBold
     $txt tag config   osaft-CODE -background [get_color code]
 
+    #dbx# puts "MARK: [$txt mark names]"
+    #dbx# puts "TAGS: [$txt tag names]"
+
     set cfg(winH) $this
+    if {$sect ne ""} {
+        set name [str2obj [string trim $sect]]
+        jumpto_mark $cfg(winH).t "osaft-HEAD-$name"
+    }
 }; # create_help
 
 proc create_note {parent title} {
