@@ -201,7 +201,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.74 Winter Edition 2015
+#?      @(#) 1.75 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -218,7 +218,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.74 16/06/29 23:35:14 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.75 16/06/30 19:14:55 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 
@@ -1008,7 +1008,11 @@ proc create_help {sect} {
 
     # add additional buttons
     pack [button $this.f1.h -text [btn_text gohome] -command "jumpto_mark $txt {osaft-LNK-T}"] -side left -padx $myX(rpad)
+    pack [button $this.f1.b -text [btn_text goback] -command "jumpto_mark $txt {???}"] -side left ;# -padx $myX(rpad)
+    pack [button $this.f1.f -text [btn_text goforward] -command "jumpto_mark $txt {???}"] -side left ;# -padx $myX(rpad)
     create_tip   $this.f1.h [tip_text gohome]
+    create_tip   $this.f1.b [tip_text goback]
+    create_tip   $this.f1.f [tip_text goforward]
 
     # 1. search for section head lines, mark them and add (prefix) to text
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? ()=,:.-]+$} 1.0] 
