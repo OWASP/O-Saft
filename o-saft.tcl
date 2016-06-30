@@ -310,6 +310,9 @@ array set cfg_label {
     host        {Host[:Port]}
     hideline    {Hide complete line}
     c_toggle    "toggle visibility\nof various texts"
+    gohome      {^}
+    goback      {<}
+    goforward   {>}
 }
 
 array set cfg_tipp {
@@ -329,6 +332,9 @@ array set cfg_tipp {
     choosecolor {Open window to choose a color}
     choosefont  {Open window to choose a font}
     choosen     {Choosen value for}
+    gohome      {Go to top of page}
+    goback      {Go back to previous position}
+    goforward   {Go forward to last position}
     start       "Start $cfg(SAFT) with command "
         # FIXME: $cfg(SAFT) may be changed when reading $cfg(RC) below
     tabCMD      {
@@ -996,6 +1002,10 @@ proc create_help {sect} {
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];# remove informal messages
     set txt     [create_text $this $help].t
     set toc     {}
+
+    # add additional buttons
+    pack [button $this.f1.h -text [btn_text gohome] -command "jumpto_mark $txt {osaft-LNK-T}"] -side left -padx $myX(rpad)
+    create_tip   $this.f1.h [tip_text gohome]
 
     # 1. search for section head lines, mark them and add (prefix) to text
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? ()=,:.-]+$} 1.0] 
