@@ -998,7 +998,7 @@ proc create_help {sect} {
     set toc     {}
 
     # 1. search for section head lines, mark them and add (prefix) to text
-    set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? -]+$} 1.0] 
+    set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? ()=,:.-]+$} 1.0] 
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
@@ -1022,8 +1022,8 @@ proc create_help {sect} {
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
 
     # 2. search for all references to section head lines in TOC and add click event
-    set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_? -]+( |$)} 3.0 $nam] 
-    # FIXME: above regex fails for some lines in generated TOC, reason unknown.
+    # NOTE: used regex must be similar to the one used in 1. above !!
+    set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_? ()=,:.-]+( |$)} 3.0 $nam] 
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
