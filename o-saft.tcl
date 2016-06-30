@@ -201,7 +201,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.76 Winter Edition 2015
+#?      @(#) 1.77 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -218,7 +218,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.76 16/06/30 19:51:15 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.77 16/06/30 22:16:22 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -231,7 +231,7 @@ set cfg(ME)     [info script];  # set very early, as it may be missing later
 set cfg(DESC)   {CONFIGURATION o-saft.pl}
 set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
-set cfg(.CFG)   {}; # set below and processed in osaft_init
+set cfg(.CFG)   {}; # contains data from cfg(INIT) set below and processed in osaft_init
 catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
@@ -396,27 +396,6 @@ set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(DEBUG)  0;  # set to 1 to print debugging messages
 set cfg(browser) "";            # external browser program, set below
 
-#   search browser, first matching will be used
-set __native    "";
-switch [tk windowingsystem] {   # ugly workaround to detect special start methods
-    "aqua"  { set __native "open"  }
-    "Aqua"  { set __native "open"  }
-    "win32" { set __native "start" }
-    "win64" { set __native "start" }
-    *       { set __native ""      }
-}
-foreach b " $__native \
-            firefox chrome chromium iceweasel konqueror mozilla \
-            netscape opera safari webkit htmlview www-browser w3m \
-          " {
-    set binary [lindex [auto_execok $b] 0]; # search in $PATH
-    #dbx# puts "browser: $b $binary"
-    if {[string length $binary]} {
-        set cfg(browser) $binary
-        break
-    }
-}
-
 set cfg(AQUA)   "CONFIGURATION Aqua (Mac OS X)"
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
 #      myX(rpad)    # used as right padding for widgets in the lower right
@@ -529,7 +508,7 @@ proc putv {txt} {
 proc _dbx  {txt} {
     #? debug output
     global cfg
-    if {$cfg(VERB) < 1} { return }
+    if {$cfg(DEBUG) < 1} { return }
     # [lindex [info level 1] 0]; # would be simple, but returns wrong
     # name of procedure if it was call called within []
     # [info frame -1];           # better
@@ -618,13 +597,12 @@ proc notTOC {str} {
     #? return 0 if string should be part of TOC; 1 otherwise
     if {[regexp {^ *(NOT YET|WYSIW)} $str]} { return 1; };  # skip some special strings
     if {[regexp {^ *$} $str]}               { return 1; };  # skip empty
-    #dbx# puts "TOC $str";
+    _dbx " no: »$str«";
     return 0
 }; # notTOC
 
 proc jumpto_mark {w txt} {
     #? jump to mark in given text widget;
-    putv " $txt"
     _dbx " $txt"
     catch { $w see [$w index $txt.first] }; # simply ignore errors if index is unknown
     # "see" sometimes places text to far on top, so we scroll up one line
@@ -641,7 +619,7 @@ proc toggle_txt {txt tag val line} {
     #? toggle visability of text tagged with name $tag
     # note that complete line is tagged with name $tag.l (see apply_filter)
     global cfg
-    if {$cfg(VERB)==1} { puts "toggle_txt: $txt tag config $tag -elide [expr ! $val]" }
+    _dbx " $txt tag config $tag -elide [expr ! $val]"
     #if {$line==0} {
         #$txt tag config $tag   -elide [expr ! $val];  # "elide true" hides the text
     #}
@@ -685,7 +663,7 @@ proc apply_filter {txt} {
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
         if {$rex eq ""} { continue };   # invalid or disabled filter rules
-        if {$cfg(VERB)==1} { puts "apply_filter: $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn" }
+        _dbx " $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"
         # anf contains start, end corresponding end position of match
         set key [str2obj [string trim $key]]
         set anf [$txt search -all $mod -count end "$rex" 1.0] 
@@ -703,7 +681,7 @@ proc apply_filter {txt} {
             }
             $txt tag  raise osaft-$key.l osaft-$key
         }
-        #dbx# puts "$key: $rex F $fg B $bg U $nr font $fn"
+        _dbx " $key: $rex F $fg B $bg U $nr font $fn"
         if {$fg ne ""}  { $txt tag config osaft-$key -foreground $fg }
         if {$bg ne ""}  { $txt tag config osaft-$key -background $bg }
         if {$nr ne "0"} { $txt tag config osaft-$key -underline  $nr }
@@ -777,7 +755,7 @@ proc create_host {parent} {
     set leftx 0;    # for nice alignments (we do not use grid)
     incr hosts(0)
     if {$hosts(0)==1}  { set leftx 5 }
-    if {$cfg(VERB)==1} { puts "create_host: host($hosts(0)): $host" }
+    _dbx " host($hosts(0)): $host"
     set this $parent.ft$hosts(0)
           frame  $this
     pack [label  $this.lh -text [btn_text host]]       -side left
@@ -871,7 +849,7 @@ proc create_filtertab {parent cmd} {
         set nr  $f_un($k)
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
-        if {$cfg(VERB)==1} { puts "create_filtertab: .$key /$rex/" }
+        _dbx " .$key /$rex/"
         grid [entry   $this.k$k -textvariable f_key($k) -width  8 ] -row $k -column 0
         grid [radiobutton $this.x$k -variable f_mod($k) -width  2 -value "-regexp"  ] -row $k -column 1
         grid [radiobutton $this.e$k -variable f_mod($k) -width  2 -value "-exact"   ] -row $k -column 2
@@ -916,7 +894,7 @@ proc create_filtertab {parent cmd} {
 proc create_filter {txt cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
     global cfg f_key f_bg f_fg f_cmt filter_bool myX
-    if {$cfg(VERB)==1} { puts "create_filter: $txt $cmd"; }
+    putv "create_filter(»$txt« $cmd)"
     if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return; }
     set geo [split [winfo geometry .] {x+-}]
     set myX(geoF) +[expr [lindex $geo 2] + [lindex $geo 0]]+[expr [lindex $geo 3]+100]
@@ -927,7 +905,7 @@ proc create_filter {txt cmd} {
         # FIXME: only one variable for windows, need a variable for each window
         #        workaround see osaft_exec
     set this $cfg(winF)
-    #dbx# puts "TXT $txt | $cmd | $myX(geoF)"
+    _dbx " TXT: $txt | $cmd | $myX(geoF)"
     pack [frame $this.f -relief sunken -borderwidth 1] -fill x
     pack [label $this.f.t -relief flat -text [btn_text c_toggle]] -fill x
     pack [checkbutton $this.f.c -text [btn_text hideline] -variable filter_bool($txt,line)] -anchor w;
@@ -1019,7 +997,7 @@ proc create_help {sect} {
     # TODO: some section lines are not detected properly and hence missing
 
     global cfg myX
-    if {$cfg(VERB)==1} { puts "create_help($sect)" }
+    putv "create_help(»$sect«)"
     if {[winfo exists $cfg(winH)]} {                    # if there is a window, just jump to text
         wm deiconify $cfg(winH)
         set name [str2obj [string trim $sect]]
@@ -1047,6 +1025,7 @@ proc create_help {sect} {
         set t [$txt get $a "$a + $e c"];                # don't trim, we need leading spaces
         set l [string length $t]
         incr i
+        _dbx " 1. HEAD: $i\t$t"
         if {[notTOC $t]} { continue; };                 # skip some special strings
         if {[string trim $t] eq ""} { continue };       # skip empty entries
         if {[regexp {^[A-Z][A-Z_? -]+$} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
@@ -1070,7 +1049,7 @@ proc create_help {sect} {
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
-        #dbx# puts "2. TOC: $t"
+        _dbx " 2. TOC: $i\t$t"
         if {[notTOC $t]} { continue; };                 # skip some special strings
         incr i
         set name [str2obj [string trim $t]]
@@ -1106,7 +1085,7 @@ proc create_help {sect} {
         set r [regsub {[+]} $t {\\+}];  # need to escape +
         set r [regsub {[-]} $r {\\-}];  # need to escape -
         set name [str2obj [string trim $t]]
-        #dbx# puts "3. LNK: $i\tosaft-LNK-$name\t$t"
+        _dbx " 3. LNK: $i\tosaft-LNK-$name\t$t"
         if {[regexp -lineanchor "\\s\\s+$r$" $l]} {     # FIXME: does not match all lines proper
             # these matches are assumed to be the header lines
             $txt tag add    osaft-LNK-$name $a "$a + $e c";
@@ -1147,8 +1126,8 @@ proc create_help {sect} {
     $txt tag config   osaft-LNK  -font osaftBold
     $txt tag config   osaft-CODE -background [get_color code]
 
-    #dbx# puts "MARK: [$txt mark names]"
-    #dbx# puts "TAGS: [$txt tag names]"
+    _dbx " MARK: [$txt mark names]"
+    #_dbx " TAGS: [$txt tag names]"
 
     set cfg(winH) $this
     if {$sect ne ""} {
@@ -1184,6 +1163,7 @@ proc create_win {parent cmd title} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
     # title must be string of group of command or options
+    putv "create_win($cmd »$title«)"
     global cfg myX
     set this $parent
     set win  $this
@@ -1227,7 +1207,7 @@ proc create_win {parent cmd title} {
         if {"$title" eq "$dat"} {   # FIXME: scary comparsion, better use regex
             # title matches: create a window for checkboxes and entries
             set skip 0;
-            if {$cfg(VERB)==1} { puts "create_win: $win $dat" }
+            _dbx " create window: $win »$dat«"
             set dat [string toupper [string trim $dat ] 0 0]
             set win [create_window $dat ""]
             if {$win eq ""} { return; };    # do nothing, even no: show_window $this;
@@ -1258,12 +1238,12 @@ proc create_win {parent cmd title} {
         set tip [regsub {[^\s]+\s*} $dat {}]
         set dat [lindex [split $dat " "] 0]
 
-        if {$cfg(VERB)==1} { puts "create_win: create: $cmd >$dat<" }
+        _dbx "create_win: create: $cmd »$dat«"
         set name [str2obj $dat]
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
             # hence the warning is visible only in verbose mode
-            if {$cfg(VERB)==1} { puts "**WARNING: create_win exists: $this.$name; ignored" }
+            putv "**WARNING: create_win exists: $this.$name; ignored"
             continue
         }
         frame $this.$name;              # create frame for command' or options' checkbutton
@@ -1324,7 +1304,7 @@ proc create_buttons {parent cmd} {
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
         set name [str2obj $txt]
         set this $parent.$name
-        if {$cfg(VERB)==1} { puts "create_buttons .$name {$txt}" }
+        _dbx " .$name {$txt}"
         pack [frame $this] -anchor c -padx 10 -pady 2
         pack [button $this.b -text $dat -width 58 -command "create_win .$name $cmd {$txt}" -bg [get_color button] ] \
              [button $this.h -text {?} -command "create_help {$txt}" ] \
@@ -1375,11 +1355,14 @@ proc osaft_init {} {
         if {[regexp "^\s*(#|$)" $l]} { continue }; # skip comments
         if {[regexp {=} $l]} {
             regexp {^([^=]*)=(.*)} $l dumm idx val
-            #dbx# puts "K $idx XXX $val"
-            set cfg([string trim $idx]) $val
+# FIXME: need to handle --cfg_cmd=KKK=VVV
+            set idx [string trim $idx]
         } else {
-            set cfg([string trim $l]) 1
+            set idx [string trim $l]
+            set val 1
         }
+        _dbx " cfg($idx) = »$val«"
+        set cfg($idx) $val
     }
 }; # osaft_init
 
@@ -1475,9 +1458,9 @@ proc copy2clipboard {w shift} {
        Radiobutton  { append txt [lindex [$w config -text] 4] }
        Text         { append txt [string trim [$w get 1.0 end]]; }
        Entry        { append txt [string trim [$w get]]; }
-       default      { puts "** unbekannte Klasse $klasse" }
+       default      { puts "** unknownclass $klasse" }
     }
-    if {$cfg(VERB)==1} { puts "copy2clipboard($w, $shift): $txt" }
+    putv "copy2clipboard($w, $shift): {\\\n $txt\n#}"
     clipboard clear
     clipboard append -type STRING -format STRING -- $txt
 }; # copy2clipboard
@@ -1513,6 +1496,26 @@ foreach klasse [list Button Label Entry Checkbutton Radiobutton Text] {
     bind $klasse  <Shift-Control-ButtonPress-1> { copy2clipboard %W 1 }
 }
 
+#   search browser, first matching will be used
+set __native    "";
+switch [tk windowingsystem] {   # ugly workaround to detect special start methods
+    "aqua"  { set __native "open"  }
+    "Aqua"  { set __native "open"  }
+    "win32" { set __native "start" }
+    "win64" { set __native "start" }
+    *       { set __native ""      }
+}
+foreach b " $__native \
+            firefox chrome chromium iceweasel konqueror mozilla \
+            netscape opera safari webkit htmlview www-browser w3m \
+          " {
+    set binary [lindex [auto_execok $b] 0]; # search in $PATH
+    _dbx " browser: $b $binary"
+    if {[string length $binary]} {
+        set cfg(browser) $binary
+        break
+    }
+}
 
 ## read $cfg(RC) if any
 #  this may redefine some previous settings
@@ -1616,28 +1619,43 @@ foreach host $targets {         # display hosts
 ## add one Host: line  with  +  and  !  button
 create_host $w
 
+_dbx " hosts: $hosts(0)"
+
 ## some verbose output
 # must be at end when window was created, otherwise wm data is missing or mis-leading
-if {$cfg(VERB)==1} {
-    puts "PRG $argv0"
-    puts "CFG"
-    puts " |  browser:   $cfg(browser)"
-    puts "TCL version:   $::tcl_patchLevel"
-    puts " |  library:   $::tcl_library"
-    puts " |  platform:  $::tcl_platform(platform)"
-    puts " |  os:        $::tcl_platform(os)"
-    puts " |  osVersion: $::tcl_platform(osVersion)"
-    puts " |  byteOrder: $::tcl_platform(byteOrder)"
-    puts " |  wordSize:  $::tcl_platform(wordSize)"
-    puts "TCL rcFileName:$::tcl_rcFileName"
-    puts "Tk version:    $::tk_patchLevel"
-    puts " |  library:   $::tk_library"
-    puts " |  strictMotif: $::tk_strictMotif"
-    puts "WM:            [wm frame .]"
-    puts " |  geometry:  [wm geometry   .]"
-    puts " |  maxsize:   [wm maxsize    .]"
-    puts " |  focusmodel:[wm focusmodel .]"
-    puts " |  system:    [tk windowingsystem]"; # we believe this a window manager property
-    if {[info exists geometry]==1} { puts " |  geometry:  $geometry" }
+if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
+    # cfg(RCSID) set in RC-file
+    set rc  "not found"; if {[info exists cfg(RCSID)]==1} { set rc  "found" };
+    set ini "not found"; if {$cfg(.CFG) ne ""}            { set ini "found" };
+    set tip "not used";  if {$cfg(TIP)  == 0 }            { set tip "used" };
+    set geo "";          if {[info exists geometry]==1}   { set geo "$geometry" }
+
+    puts "
+PRG $argv0
+ |  RC:        $cfg(RC)\t$rc
+ |  INIT:      $cfg(INIT)\t$ini
+CFG
+ |  TITLE:     $cfg(TITLE)
+ |  browser:   $cfg(browser)
+ |  tooltip:   tooltip package\t$tip
+TCL version:   $::tcl_patchLevel
+ |  library:   $::tcl_library
+ |  platform:  $::tcl_platform(platform)
+ |  os:        $::tcl_platform(os)
+ |  osVersion: $::tcl_platform(osVersion)
+ |  byteOrder: $::tcl_platform(byteOrder)
+ |  wordSize:  $::tcl_platform(wordSize)
+ |  rcFileName:$::tcl_rcFileName
+Tk  version:   $::tk_patchLevel
+ |  library:   $::tk_library
+ |  strictMotif: $::tk_strictMotif
+WM  :          [wm frame      .]
+ |  geometry:  [wm geometry   .]
+ |  maxsize:   [wm maxsize    .]
+ |  focusmodel:[wm focusmodel .]
+ |  system:    [tk windowingsystem]
+ |  geometry:  $geo
+_/"
+    #          [tk windowingsystem] # we believe this a window manager property
 }
 
