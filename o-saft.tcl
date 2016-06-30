@@ -84,6 +84,9 @@ exec wish "$0" ${1+"$@"}
 #?      Note that the markup is independent of the results and does not change
 #?      them, just "highlight" texts of the results.
 #?
+#?      All  --cfg-*  settings from .o-saft.pl are not handled properly in the
+#?      GUI herein.
+#?
 #? ARGUMENTS
 #?      All arguments, except  --help  and  --v,  are treated as a hostname to
 #?      be checked.
@@ -201,7 +204,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.77 Winter Edition 2015
+#?      @(#) 1.78 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -218,7 +221,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.77 16/06/30 22:16:22 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.78 16/07/01 00:31:14 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -229,13 +232,20 @@ set cfg(ME)     [info script];  # set very early, as it may be missing later
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
 set cfg(DESC)   {CONFIGURATION o-saft.pl}
-set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
-set cfg(INIT)   {.o-saft.pl};   # name of O-Saft's startup file
-set cfg(.CFG)   {}; # contains data from cfg(INIT) set below and processed in osaft_init
+set cfg(SAFT)   {o-saft.pl};            # name of O-Saft executable
+set cfg(INIT)   {.o-saft.pl};           # name of O-Saft's startup file
+set cfg(.CFG)   {};                     # contains data from cfg(INIT)
+                                        # set below and processed in osaft_init
 catch {
   set fid [open $cfg(INIT) r]
   set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
 }
+# some regex to match output from o-saft.pl or data in .o-saft.pl
+# mainly used in create_win()
+set cfg(rexOPT-cfg)  {^([^=]*)=(.*)};   # match  --cfg-CONF=KEY=VAL
+set cfg(rexOUT-head) {^(==|\*\*)};      # match header lines starting with ==
+set cfg(rexOUT-int)  {^--(cgi|call)};   # use other tools for that
+set cfg(rexCMD-int)  {^\+(cgi|exec)};   # internal use only
 #-----------------------------------------------------------------------------}
 
 ## configure GUI
@@ -602,11 +612,15 @@ proc notTOC {str} {
 }; # notTOC
 
 proc jumpto_mark {w txt} {
-    #? jump to mark in given text widget;
+    #? jump to mark in given text widget
     _dbx " $txt"
-    catch { $w see [$w index $txt.first] }; # simply ignore errors if index is unknown
-    # "see" sometimes places text to far on top, so we scroll up one line
-    $w yview scroll -1 units
+    catch { $w see [$w index $txt.first] } err
+    if {$err eq ""} {
+        # "see" sometimes places text to far on top, so we scroll up one line
+        $w yview scroll -1 units
+    } else {
+        _dbx  " err: $err"
+    }
 }; # jumpto_mark
 
 proc toggle_cfg {w opt val} {
@@ -1215,18 +1229,18 @@ proc create_win {parent cmd title} {
             frame $this;    # frame for grid
             continue
         }
-        if {$skip==1}                      { continue; }
+        if {$skip==1}                        { continue; }
         #dbx# puts "DATA $dat"
         ## skipped general
-        if {$dat eq ""}                    { continue; }
-        if {[regexp {^(==|\*\*)}    $dat]} { continue; }; # header or Warning
+        if {$dat eq ""}                      { continue; }
+        if {[regexp $cfg(rexOUT-head) $dat]} { continue; }; # ignore header lines
         ## skipped commands
-        if {[regexp {^\+(cgi|exec)} $dat]} { continue; }; # internal use only
+        if {[regexp $cfg(rexCMD-int)  $dat]} { continue; }; # internal use only
         ## skipped options
-       #if {"OPTIONS" eq $dat}             { continue; }
-        if {[regexp {^--h$}         $dat]} { continue; }
-        if {[regexp {^--help}       $dat]} { continue; }
-        if {[regexp {^--(cgi|call)} $dat]} { continue; }; # use other tools for that
+       #if {"OPTIONS" eq $dat}               { continue; }
+        if {[regexp {^--h$}         $dat]}   { continue; }
+        if {[regexp {^--help}       $dat]}   { continue; }
+        if {[regexp $cfg(rexOUT-int) $dat]}  { continue; }; # use other tools for that
 
         # the line $l looks like:
         #    our_key   some descriptive text
@@ -1249,9 +1263,11 @@ proc create_win {parent cmd title} {
         frame $this.$name;              # create frame for command' or options' checkbutton
 ### pack [button $this.$name.h -text {?} -command "create_help {$dat}" -borderwidth 1] -side left
         if {[regexp {=} $dat]==0} {
+            #dbx# puts "create_win: check: $this.$name.c -variable cfg($dat)"
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
-            regexp {^([^=]*)=(.*)} $l dumm idx val
+            regexp $cfg(rexOPT-cfg) $l dumm idx val
+            #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
             pack [label  $this.$name.l -text $idx -width $myX(lenl)]    -side left -anchor w
             pack [entry  $this.$name.e -textvariable cfg($idx)] -fill x -side left -expand 1
             if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
@@ -1297,9 +1313,9 @@ proc create_buttons {parent cmd} {
         if {[regexp {^Options\s*for\s*(help|compatibility) } $txt] != 0} { continue }
             # we do not support these options in the GUI
         ## skipped general
-        if {$txt eq ""}                    { continue; }
-        if {[regexp {^(==|\*\*)}    $txt]} { continue; }; # header or Warning
-        if {"OPTIONS" eq $txt}             { continue; }
+        if {$txt eq ""}                      { continue; }
+        if {[regexp $cfg(rexOUT-head) $txt]} { continue; }; # header or Warning
+        if {"OPTIONS" eq $txt}               { continue; }
         # remove noicy prefix and make first character upper case
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
         set name [str2obj $txt]
@@ -1352,10 +1368,15 @@ proc osaft_init {} {
     #? set values from .o-saft.pl in cfg()
     global cfg
     foreach l [split $cfg(.CFG) "\r\n"] {
+        # expected lines look like:
+        #  --no-header
+        #  --cfg_cmd=bsi=xxx yyy
+        #
         if {[regexp "^\s*(#|$)" $l]} { continue }; # skip comments
         if {[regexp {=} $l]} {
-            regexp {^([^=]*)=(.*)} $l dumm idx val
-# FIXME: need to handle --cfg_cmd=KKK=VVV
+            regexp $cfg(rexOPT-cfg) $l dumm idx val
+            # FIXME: there may be multiple  --cfg_cmd=KKK=VVV  settings, but
+            #        there is only one variable in the GUU, so last one wins
             set idx [string trim $idx]
         } else {
             set idx [string trim $l]
