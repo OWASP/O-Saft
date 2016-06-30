@@ -201,7 +201,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.75 Winter Edition 2015
+#?      @(#) 1.76 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -218,9 +218,12 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.75 16/06/30 19:14:55 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.76 16/06/30 19:51:15 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
+set cfg(ICH)    [file tail $argv0]
+set cfg(ME)     [info script];  # set very early, as it may be missing later
+
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -390,6 +393,7 @@ set cfg(winH)   ""; # object name of Help   window
 set cfg(winF)   ""; # object name of Filter window
 set cfg(objS)   ""; # object name of status line
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
+set cfg(DEBUG)  0;  # set to 1 to print debugging messages
 set cfg(browser) "";            # external browser program, set below
 
 #   search browser, first matching will be used
@@ -515,6 +519,25 @@ txt2arr [string map "
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
 
+proc putv {txt} {
+    #? verbose output
+    global cfg
+    if {$cfg(VERB) <= 0} { return; }
+    puts stderr "#\[$cfg(ICH)\]:$txt";
+}; # putv
+
+proc _dbx  {txt} {
+    #? debug output
+    global cfg
+    if {$cfg(VERB) < 1} { return }
+    # [lindex [info level 1] 0]; # would be simple, but returns wrong
+    # name of procedure if it was call called within []
+    # [info frame -1];           # better
+    catch { dict get [info frame -1] proc } me; # name of procedure or error
+    if {[regexp {not known in dictionary} $me]} { set me "." }; # is toplevel
+    puts stderr "#dbx \[$cfg(ICH)\]$me$txt"
+}; # _dbx
+
 # if {$cfg(TIP)==1} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
 
 proc tooltip {w help} {
@@ -600,7 +623,9 @@ proc notTOC {str} {
 }; # notTOC
 
 proc jumpto_mark {w txt} {
-    # jump to mark in given text widget;
+    #? jump to mark in given text widget;
+    putv " $txt"
+    _dbx " $txt"
     catch { $w see [$w index $txt.first] }; # simply ignore errors if index is unknown
     # "see" sometimes places text to far on top, so we scroll up one line
     $w yview scroll -1 units
@@ -1464,8 +1489,10 @@ proc copy2clipboard {w shift} {
 set targets ""
 foreach arg $argv {
     switch -glob $arg {
-        {--v}   { set cfg(VERB) 1; lappend cfg(FAST) {+quit} {+version}; }
-        {--tip} { set cfg(TIP)  1; } # use own tooltip
+        {--dbx} -
+        {--d}   { set cfg(DEBUG) 1; }
+        {--v}   { set cfg(VERB)  1; lappend cfg(FAST) {+quit} {+version}; }
+        {--tip} { set cfg(TIP)   1; }  # use own tooltip
         {--h}   -
         {--help} { puts [osaft_about "HELP"]; exit; }
         *       { lappend targets $arg; }
