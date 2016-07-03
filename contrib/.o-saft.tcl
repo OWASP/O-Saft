@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.4 16/06/30 22:18:09
+#?      @(#) .o-saft.tcl 1.5 16/07/03 18:35:03
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.4};  # initial SID, do not remove
+set cfg(RCSID)  {1.5};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -67,8 +67,8 @@ array set cfg_label {
     hideline    {Hide complete line}
     c_toggle    "toggle visibility\nof various texts"
     gohome      {^}
-    goback      {<}
-    goforward   {>}
+    goprev      {<}
+    gonext      {>}
 }
 
 #_____________________________________________________________________________
