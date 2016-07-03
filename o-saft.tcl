@@ -204,7 +204,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.79 Winter Edition 2015
+#?      @(#) 1.80 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -221,7 +221,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.79 16/07/03 18:20:25 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.80 16/07/03 19:24:19 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -258,6 +258,8 @@ variable logo [image create photo -data {
 }]; # [!] 24x24
 
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
+set cfg(hist)   "osaft-LNK-T";  # positions in help text
+set cfg(curr)   0;              # current position (index) in cfg(help)
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
 
@@ -324,8 +326,8 @@ array set cfg_label {
     hideline    {Hide complete line}
     c_toggle    "toggle visibility\nof various texts"
     gohome      {^}
-    goback      {<}
-    goforward   {>}
+    goprev      {<}
+    gonext      {>}
 }
 
 array set cfg_tipp {
@@ -346,8 +348,8 @@ array set cfg_tipp {
     choosefont  {Open window to choose a font}
     choosen     {Choosen value for}
     gohome      {Go to top of page}
-    goback      {Go back to previous position}
-    goforward   {Go forward to last position}
+    goprev      {Go back to previous position}
+    gonext      {Go forward to last position}
     start       "Start $cfg(SAFT) with command "
         # FIXME: $cfg(SAFT) may be changed when reading $cfg(RC) below
     tabCMD      {
@@ -612,16 +614,40 @@ proc notTOC {str} {
 }; # notTOC
 
 proc jumpto_mark {w txt} {
-    #? jump to mark in given text widget
-    _dbx " $txt"
+    #? jump to mark in given text widget, remember mark
+    global cfg
     catch { $w see [$w index $txt.first] } err
     if {$err eq ""} {
         # "see" sometimes places text to far on top, so we scroll up one line
         $w yview scroll -1 units
+        if {$txt ne "" } {          # store mark in history
+            incr cfg(curr)
+            if {[llength $cfg(hist)] == $cfg(curr)} {
+                lappend cfg(hist) $txt
+            } else {
+                incr cfg(curr) -1
+            }
+        }
     } else {
         _dbx  " err: $err"
     }
 }; # jumpto_mark
+
+proc jumpto_prev {w} {
+    global cfg
+    if {[llength $cfg(hist)] > 0} {
+        incr cfg(curr) -1
+        jumpto_mark $w [lrange $cfg(hist) $cfg(curr) $cfg(curr)]
+    }
+}; # jumpto_prev
+
+proc jumpto_next {w} {
+    global cfg
+    if {[llength $cfg(hist)] > $cfg(curr)} {
+        incr cfg(curr)
+        jumpto_mark $w [lrange $cfg(hist) $cfg(curr) $cfg(curr)]
+    }
+}; # jumpto_next
 
 proc toggle_cfg {w opt val} {
     #? use widget config command to change options value
@@ -1025,11 +1051,11 @@ proc create_help {sect} {
 
     # add additional buttons
     pack [button $this.f1.h -text [btn_text gohome] -command "jumpto_mark $txt {osaft-LNK-T}"] -side left -padx $myX(rpad)
-    pack [button $this.f1.b -text [btn_text goback] -command "jumpto_mark $txt {???}"] -side left ;# -padx $myX(rpad)
-    pack [button $this.f1.f -text [btn_text goforward] -command "jumpto_mark $txt {???}"] -side left ;# -padx $myX(rpad)
+    pack [button $this.f1.b -text [btn_text goprev] -command "jumpto_prev $txt"] -side left ;# -padx $myX(rpad)
+    pack [button $this.f1.f -text [btn_text gonext] -command "jumpto_next $txt"] -side left ;# -padx $myX(rpad)
     create_tip   $this.f1.h [tip_text gohome]
-    create_tip   $this.f1.b [tip_text goback]
-    create_tip   $this.f1.f [tip_text goforward]
+    create_tip   $this.f1.b [tip_text goprev]
+    create_tip   $this.f1.f [tip_text gonext]
 
     # 1. search for section head lines, mark them and add (prefix) to text
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? ()=,:.-]+$} 1.0] 
@@ -1346,10 +1372,10 @@ proc create_buttons {parent cmd} {
         pack [frame $this] -anchor c -padx 10 -pady 2
         pack [button $this.b -text $dat -width 58 -command "create_win .$name $cmd {$txt}" -bg [get_color button] ] \
              [button $this.h -text {?} -command "create_help {$txt}" ] \
-        	-side left
+               -side left
         create_tip   $this.b [tip_text settings]
 
-	# argh, some command sections are missing in HELP
+        # argh, some command sections are missing in HELP
         if {[regexp {^Commands to show } $txt]==1} { $this.h config -state disable }
     }
 }; # create_buttons
