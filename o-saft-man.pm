@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.129 16/06/30 22:19:05";
+my  $man_SID= "@(#) o-saft-man.pm 1.130 16/07/03 20:45:02";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2288,7 +2288,7 @@ OPTIONS
 
           Specify PORT of target to be used. Legacy option.
 
-      --host=HOST and --port=PORT and HOST:PORT and HOST
+      --host=HOST --port=PORT HOST:PORT HOST
 
           When giving more than one HOST argument,  the sequence of the given
           HOST argument and the given  --port=PORT  and the given --host=HOST
@@ -3060,7 +3060,8 @@ OPTIONS
 
           Execute functions defined in  o-saft-usr.pm.
 
-      --usr-*, --user-*
+      --usr-*
+      --user-*
 
           Options ignored, but stored as is internal in  $cfg{usr-args} .
           These options can be used in  o-saft-usr.pm  or  o-saft-dbx.pm.
@@ -3125,7 +3126,8 @@ OPTIONS
 
           Print processing of all command line arguments.
 
-      --trace-arg, --trace--
+      --trace-arg
+      --trace--
 
           Print command line argument processing.
 
@@ -3135,7 +3137,8 @@ OPTIONS
 
           Trace execution of command processing (those given as  +*).
 
-      --trace-key, --trace@
+      --trace-key
+      --trace@
 
           Print some internal variable names in output texts (labels).
           Variable names are prefixed to printed line and enclosed in  # .
