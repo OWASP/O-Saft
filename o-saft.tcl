@@ -204,7 +204,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.78 Winter Edition 2015
+#?      @(#) 1.79 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -221,7 +221,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.78 16/07/01 00:31:14 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.79 16/07/03 18:20:25 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -1091,6 +1091,22 @@ proc create_help {sect} {
 
     # 3. search all commands and options and try to set click event
     set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0] 
+    # Now loop over all matches. The difficulty is to distinguish matches,
+    # which are the head lines like:
+    #   --v
+    #   +version
+    # and those inside the text, like:
+    #   ... option  --v  is used for ...
+    # The rules for head lines are:
+    #   start with spaces followed by + or - followed by word 'til end of line
+    # Anything else is most likely a reference, but there are exceptions like:
+    #   --v --v
+    # is a head line, and folling might be a reference:
+    #   +version.
+    # Unfortunately  --v  --v   (and similar examples) will not be detected as
+    # head line. This is due to the regex in "text search ...",  which doesn't
+    # allo spaces. # FIXME:
+
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
@@ -1119,6 +1135,8 @@ proc create_help {sect} {
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
+        set t [$txt get $a "$a + $e c"]
+        _dbx " 4. CODE: $i\tosaft-CODE\t$t"
         $txt tag add  osaft-CODE $a "$a + $e c"
         incr i
     }
@@ -1128,9 +1146,13 @@ proc create_help {sect} {
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
+        set t [$txt get $a "$a + $e c"]
+        _dbx " 5. CODE: $i\tosaft-CODE\t$t"
         $txt tag add  osaft-CODE $a "$a + $e c"
+        # FIXME: replacing quotes does no work yet
+        $txt replace  $a         "$a + 1 c"        { }
+        $txt replace "$a + $e c" "$a + $e c + 1 c" { }
         incr i
-        #regsub -start $a -all {'} $txt { }
     }
 
     # finaly global markups
@@ -1570,7 +1592,6 @@ if {2 > [llength [split $cfg(HELP) "\n"]]} {
         -message "**ERROR: could not call $cfg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
     exit 2
 }
-
 
 ## create toplevel window
 wm title        . $cfg(TITLE)
