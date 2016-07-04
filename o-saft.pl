@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.500 16/07/04 22:23:01",
+    SID         => "@(#) yeast.pl 1.501 16/07/04 22:37:07",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5451,7 +5451,7 @@ while ($#argv >= 0) {
     # The following sequence of conditions is important: commands which are an
     # alias for another command are listed first. These aliases should contain
     # the comment  "# alias"  somewhere in the line, so it can be extracted by
-    # other tools easily.
+    # other tools easily.  The comment  "# alias:"  is used by  --help=alias .
     # You may read the lines as table with columns like:
     #!#+---------+----------------------+-----------------------+-----------------
     #!#           command to check       aliased to              comment/traditional name
@@ -5477,6 +5477,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # alias:
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias:
     if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; # TODO until check is improved (6/2015)
+    if ($arg eq  '+rfc6797')            { $arg = '+hsts';       } # alias:
     if ($arg =~ /^\+modulus_exponent_size/)         { $arg = '+modulus_exp_size'; } # alias:
     if ($arg =~ /^\+pub(lic)?_enc(?:ryption)?/)     { $arg = '+pub_encryption';} # alias:
     if ($arg =~ /^\+pubkey_enc(?:ryption)?/)        { $arg = '+pub_encryption';} # alias:
