@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.136 16/07/04 16:36:48',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.137 16/07/04 21:57:22',
 };
 
 ######################################################## public documentation #
@@ -1354,7 +1354,8 @@ sub do_ssl_open($$$@) {
 #           ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
             $src = 'Net::SSLeay::read()';
-            $response = Net::SSLeay::read($ssl) || "<<GET failed>>";
+            # use ::ssl_read_all() instead of ::read() to get HTP body also
+            $response = Net::SSLeay::ssl_read_all($ssl) || "<<GET failed>>";
 # TODO: Net::SSLeay::read() fails sometimes, i.e. for fancyssl.hboeck.de
 # 03/2015: even using ssl_write_all() and ssl_read_all() does not help
 # TODO: reason unknown, happens probably if server requires SNI
@@ -1371,7 +1372,8 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'https_svc'}      =  _header_get('Alt-Svc',  $response);
             $_SSLinfo{'https_sts'}      =  _header_get('Strict-Transport-Security', $response);
             $_SSLinfo{'hsts_httpequiv'} =  $_SSLinfo{'https_body'};
-            $_SSLinfo{'hsts_httpequiv'} =~ s/.*?(http-equiv=["']?Strict-Transport-Secutity[^>]*).*/$1/ims;
+            $_SSLinfo{'hsts_httpequiv'} =~ s/.*?(http-equiv=["']?Strict-Transport-Security[^>]*).*/$1/ims;
+            $_SSLinfo{'hsts_httpequiv'} = "" if ($_SSLinfo{'hsts_httpequiv'} eq $_SSLinfo{'https_body'});
             $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'https_sts'};
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
             $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'https_sts'} =~ m/includeSubDomains/i);
@@ -2403,6 +2405,7 @@ sub http_location   { return _SSLinfo_get('http_location',    $_[0], $_[1]); }
 sub http_refresh    { return _SSLinfo_get('http_refresh',     $_[0], $_[1]); }
 sub http_sts        { return _SSLinfo_get('http_sts',         $_[0], $_[1]); }
 sub https_sts       { return _SSLinfo_get('https_sts',        $_[0], $_[1]); }
+sub hsts_httpequiv  { return _SSLinfo_get('hsts_httpequiv',   $_[0], $_[1]); }
 sub hsts_maxage     { return _SSLinfo_get('hsts_maxage',      $_[0], $_[1]); }
 sub hsts_subdom     { return _SSLinfo_get('hsts_subdom',      $_[0], $_[1]); }
 
