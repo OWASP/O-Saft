@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.498 16/06/27 20:14:14",
+    SID         => "@(#) yeast.pl 1.500 16/07/04 22:23:01",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -506,7 +506,9 @@ our %data   = (     # connection and certificate details
     'https_refresh' => {'val' => sub { Net::SSLinfo::https_refresh( $_[0], $_[1])}, 'txt' => "HTTPS Refresh header"},
     'https_alerts'  => {'val' => sub { Net::SSLinfo::https_alerts(  $_[0], $_[1])}, 'txt' => "HTTPS Error alerts"},
     'https_pins'    => {'val' => sub { Net::SSLinfo::https_pins(    $_[0], $_[1])}, 'txt' => "HTTPS Public Key Pins"},
+    'https_body'    => {'val' => sub { Net::SSLinfo::https_body(    $_[0], $_[1])}, 'txt' => "HTTPS Body"},
     'https_sts'     => {'val' => sub { Net::SSLinfo::https_sts(     $_[0], $_[1])}, 'txt' => "HTTPS STS header"},
+    'hsts_httpequiv'=> {'val' => sub { Net::SSLinfo::hsts_httpequiv($_[0], $_[1])}, 'txt' => "HTTPS STS in http-equiv"},
     'hsts_maxage'   => {'val' => sub { Net::SSLinfo::hsts_maxage(   $_[0], $_[1])}, 'txt' => "HTTPS STS MaxAge"},
     'hsts_subdom'   => {'val' => sub { Net::SSLinfo::hsts_subdom(   $_[0], $_[1])}, 'txt' => "HTTPS STS include sub-domains"},
     'http_protocols'=> {'val' => sub { Net::SSLinfo::http_protocols($_[0], $_[1])}, 'txt' => "HTTP Alternate-Protocol"},
@@ -754,6 +756,7 @@ my %check_http = (  ## HTTP vs. HTTPS data
     'hsts_refresh'  => {'txt' => "Target sends STS and no Refresh header"},
     'hsts_redirect' => {'txt' => "Target redirects HTTP without STS header"},
     'hsts_ip'       => {'txt' => "Target does not send STS header for IP"},
+    'hsts_httpequiv'=> {'txt' => "Target does not send STS in meta tag"},
     'pkp_pins'      => {'txt' => "Target sends Public Key Pins header"},
     #------------------+-----------------------------------------------------
 ); # %check_http
@@ -858,6 +861,7 @@ our %shorttexts = (
     'sts_maxagexy'  => "STS max-age < 1 year",
     'sts_expired'   => "STS max-age < certificate's validity",
     'sts_subdom'    => "STS includeSubdomain",
+    'hsts_httpequiv'=> "STS not in meta tag",
     'hsts_ip'       => "STS header not for IP",
     'hsts_location' => "STS and Location header",
     'hsts_refresh'  => "STS and no Refresh header",
@@ -965,6 +969,7 @@ our %shorttexts = (
     'fingerprint_md5'   => "Fingerprint  MD5",
     'fingerprint'       => "Fingerprint:",
     'https_protocols'   => "HTTPS Alternate-Protocol",
+    'https_body'    => "HTTPS Body",
     'https_svc'     => "HTTPS Alt-Svc header",
     'https_status'  => "HTTPS Status line",
     'https_server'  => "HTTPS Server banner",
@@ -2637,6 +2642,7 @@ sub check_url($$) {
     _y_CMD("check_url() ". $cfg{'done'}->{'check_url'});
     $cfg{'done'}->{'check_url'}++;
     _trace("check_url($uri, $type)");
+#dbx print("check_url($uri, $type)");
 
     return " " if ($uri =~ m#^\s*$#);  # no URI, no more checks
 
@@ -2721,6 +2727,8 @@ sub check_url($$) {
        $uri =~ m#^\s*(?:https?:)?//([^/]+)(/.*)?$#;
       #  NOTE: it's ok here
     my $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+#_dbx "URI: $uri";
+#_dbx "HST: $host";
     my $url =  $2 || "/";                   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
        $host=~ m#^([^:]+)(?::[0-9]{1-5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
@@ -2967,10 +2975,13 @@ sub checkcert($$) {
     $checks{'ocsp'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
     $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host)  eq "");
+#return;
     if ($cfg{'usehttp'} > 0) {
         # at least 'ext_crl' may contain more than one URL
         $checks{'crl_valid'}->{val} = "";
+#_dbx "ext_crl: " . $data{'ext_crl'}->{val}($host);
         foreach my $url (split(/\s+/, $data{'ext_crl'}->{val}($host))) {
+#_dbx "ext url: $url";
             next if ($url =~ m/^\s*$/);     # skip empty url
             $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl') || "";
         }
@@ -3892,6 +3903,8 @@ sub checkhttp($$) {
         $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
+        my $hsts_equiv = $data{'hsts_httpequiv'}->{val}($host);
+        $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
         # other sts_maxage* are done below as they change {val}
         checkdates($host,$port);    # computes check{'sts_exired'}
     } else {
