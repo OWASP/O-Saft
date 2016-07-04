@@ -6,7 +6,7 @@
 # paragraphs. However, to avoid tools complaining about that,  =over and =back
 # are added to each  =item  to avoid error messages in the viewer tools.
 # Hence the additional identations for text following the =item are missing.
-# Tested viewers: podviewer, perldoc
+# Tested viewers: podviewer, perldoc, pod2usage, tkpod
 
 =pod
 
@@ -263,7 +263,7 @@ It is important to understand, which provided information is based on
 data returned by underlaying (used) libraries and the information 
 computed directly.
 
-=head2 openssl, libssl, libcrypto
+=head2 OpenSSL, libssl, libcrypto
 
 In general the tool uses perl's L<Net::SSLeay(1)|Net::SSLeay(1)> module  which itself
 is based on libssl and/or libssleay library of the operating system.
@@ -481,7 +481,7 @@ qualification were used:
 
 =over
 
-=item ** all *RC4*  ciphers
+=item ** all *RC2* and  *RC4*  ciphers
 
 =back
 
@@ -763,7 +763,7 @@ Using  I<--trace> I<--trace>  dumps data of L<Net::SSLinfo|Net::SSLinfo> too.
 Command used internally when requested to use other libraries.
 This command should not be used directly.
 
-=head2 Commands to test target's ciphers
+=head2 Commands to test ciphers provided by target
 
 =head3 +cipher
 
@@ -802,7 +802,7 @@ Please see:
 
 	o-saft.pl --help=commands
 
-=head2 Commands to show details of the target's certificate
+=head2 Commands to show certificate details of the target
 
 Please see:
 
@@ -854,6 +854,46 @@ Show available options with their description.
 
 Show available checks.
 
+=head3 --help=check-cfg
+
+=head3 --help=cfg-check
+
+Show texts used as labels in output for checks (see  I<+check>)  ready
+for use in  L</RC-FILE>  or as option.
+
+=head3 --help=data
+
+Show available informations.
+
+=head3 --help=data-cfg
+
+=head3 --help=cfg-data
+
+Show texts used  as labels in output for  data  (see  I<+info>)  ready
+for use in  L</RC-FILE>  or as option.
+
+=head3 --help=hint
+
+Show texts used in hint messages.
+
+=head3 --help=hint-cfg
+
+=head3 --help=cfg-hint
+
+Show texts used in hint messages ready for use in  L</RC-FILE>  or as
+option.
+
+=head3 --help=text
+
+Show texts used in various messages.
+
+=head3 --help=text-cfg
+
+=head3 --help=cfg-text
+
+Show texts used in various messages ready for use in  L</RC-FILE>  or
+as option.
+
 =head3 --help=legacy
 
 Show possible legacy formats (used as value in  I<--legacy=TOOL>).
@@ -894,27 +934,6 @@ Show  <SECTION>  from documentation, see  I<--help=toc>  for a list.
 Example:
 
 	o-saft.pl --help=EXAMPLES
-
-=head3 --help=text
-
-Show texts used in various messages.
-
-=head3 --help=cfg-check
-
-Show texts used as labels in output for checks (see  I<+check>)  ready
-for use in  L</RC-FILE>  or as option.
-
-=head3 --help=cfg-data
-
-Show texts used  as labels in output for  data  (see  I<+info>)  ready
-for use in  L</RC-FILE>  or as option.
-
-=head3 --help=cfg-text
-
-=head3 --help=text-cfg
-
-Show texts used in various messages ready for use in  L</RC-FILE>  or
-as option.
 
 =head3 --help=ourstr
 
@@ -985,7 +1004,7 @@ Specify HOST as target to be checked. Legacy option.
 
 Specify PORT of target to be used. Legacy option.
 
-=head3 --host=HOST and --port=PORT and HOST:PORT and HOST
+=head3 --host=HOST --port=PORT HOST:PORT HOST
 
 When giving more than one HOST argument,  the sequence of the given
 HOST argument and the given  I<--port=PORT>  and the given I<--host=HOST>
@@ -2081,6 +2100,14 @@ To get a list of preconfigured texts, use:
 Note that \n, \r and \t are replaced by the corresponding character
 when read from L</RC-FILE>.
 
+=head3 --cfg-hint=KEY=TEXT
+
+Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  TEXT.
+
+To get a list of preconfigured texts, use:
+
+	o-saft.pl --help=cfg-hint
+
 =head3 --call=METHOD
 
 See  L</Options for SSL tool>.
@@ -2089,7 +2116,9 @@ See  L</Options for SSL tool>.
 
 Execute functions defined in L<o-saft-usr.pm|o-saft-usr.pm>.
 
-=head3 --usr-*, --user-*
+=head3 --usr-*
+
+=head3 --user-*
 
 Options ignored, but stored as is internal in  $cfg{usr-args} .
 These options can be used in L<o-saft-usr.pm|o-saft-usr.pm> or L<o-saft-dbx.pm|o-saft-dbx.pm>.
@@ -2154,7 +2183,9 @@ L<Net::SSLinfo|Net::SSLinfo>.
 
 Print processing of all command line arguments.
 
-=head3 --trace-arg, --trace--
+=head3 --trace-arg
+
+=head3 --trace--
 
 Print command line argument processing.
 
@@ -2162,7 +2193,9 @@ Print command line argument processing.
 
 Trace execution of command processing (those given as  I<+*>).
 
-=head3 --trace-key, --trace@
+=head3 --trace-key
+
+=head3 --trace@
 
 Print some internal variable names in output texts (labels).
 Variable names are prefixed to printed line and enclosed in  # .
@@ -2230,6 +2263,14 @@ Print debugging messages for modules only, but not o-saft.pl istself.
 
 Print formatted list of internal functions with their description.
 Not to be intended in conjunction with any target check.
+
+=head3 --hint
+
+Print hint messages (!!Hint:). 
+
+=head3 --no-hint
+
+Do not print hint messages (!!Hint:). 
 
 =head3 --warning
 
@@ -2678,7 +2719,7 @@ See  L</LIMITATIONS>  also.
 
 =head2 Target (server) HTTP(S) Support
 
-=head3 STS header
+=head3 STS header (see RFC 6797)
 
 Using STS is no perfect security.  While the very first request using
 http: is always prone to a MiTM attack, MiTM is possible to following
@@ -2744,6 +2785,12 @@ requests again, if STS is not well implemented on the server.
 
 =back
 
+=over
+
+=item * STS must not be set in http-equiv attribute of a meta TAG
+
+=back
+
 =head3 Public Key Pins header
 
 TBD - to be described ...
@@ -2794,6 +2841,12 @@ of these checks are used.
 =over
 
 =item * RFC 6125
+
+=back
+
+=over
+
+=item * RFC 6797
 
 =back
 
@@ -2962,6 +3015,10 @@ certificate for:
 =item * must not contain invalid IDN characters
 
 =back
+
+=head3 RFC 6797 (+rfc6797)
+
+Same as STS header  I<+hsts> .
 
 =head3 RFC 7525 (+rfc7525)
 
@@ -3181,7 +3238,7 @@ I.g. texts (values) of keys in  %data are those used in output of the
 in "Performed Checks" section.  And texts of keys in  %text  are used
 for additional information lines or texts (mainly beginning with C<=>).
 
-=head3 Configuration File vs. RC-FILE vs. DEBUG-FILE
+Configuration File vs. L</RC-FILE> vs. L</DEBUG-FILE>
 
 =over
 
@@ -3235,12 +3292,6 @@ settings used in output. The options are:
 
 =over
 
-=item * --cfg-score=KEY=SCORE
-
-=back
-
-=over
-
 =item * --cfg-checks=KEY=TEXT
 
 =back
@@ -3248,6 +3299,12 @@ settings used in output. The options are:
 =over
 
 =item * --cfg-data=KEY=TEXT
+
+=back
+
+=over
+
+=item * --cfg-hint=KEY=TEXT
 
 =back
 
@@ -3263,6 +3320,9 @@ silently.
 
 If KEY=TEXT is an exiting filename, all lines from that file are read
 and set. For details see  L</CONFIGURATION FILE>  below.
+
+NOTE that such configuration options should be used before any I<--help> 
+or  I<--help=*>  option, otherwise the changed setting is not visible.
 
 =head2 CONFIGURATION FILE
 
@@ -3481,7 +3541,7 @@ To get more information, use  I<--v> I<--v>  and/or  I<--trace>  also.
 May occour if ciphers are checked, but no description is available for
 them herein. This results in printed cipher checks like:
 
-	EXP-KRB5-RC4-MD5                no
+	EXP-KRB5-RC4-MD5                no       <<undef>>
 
 instead of:
 
@@ -4671,7 +4731,7 @@ You have been warned!
 
 There are some functions called within the program flow, which can be
 filled with any perl code.  Empty stubs of the functions are prepared
-in L<o-saft-usr.pm|o-saft-usr.pm>.  See also  L</USER-FILE>.
+in L<o-saft-usr.pm|o-saft-usr.pm>.  See also  L</USER-FILE> .
 
 =head1 DEBUG
 
@@ -4685,7 +4745,7 @@ mind that it's best to specify  I<--v>  as very first argument.
 Note that the file L<o-saft-dbx.pm|o-saft-dbx.pm> is required,  if any  I<--trace*>  or
 I<--v>   option is used.
 
-=head3 Commands
+=head2 Commands
 
 =over
 
@@ -4717,7 +4777,7 @@ I<--v>   option is used.
 
 =back
 
-=head3 Options
+=head2 Options
 
 =over
 
@@ -4759,7 +4819,7 @@ Empty or undefined strings are written as  C<<<undefined>>>  in texts.
 Some parameters, in particular those of  HTTP responses,  are written
 as  C<<<response>>>.  Long parameter lists are abbreviated with C<...>.
 
-=head3 Output
+=head2 Output
 
 When using  I<--v>  and/or  I<--trace>  options,  additional output will be
 prefixed with a  C<#>  (mainly as first, left-most character.
@@ -4947,6 +5007,14 @@ Note that C<value>  here can span multiple lines and ends with:
 edit as needed: .o-saft.pl
 
 	o-saft.pl +check some.tld
+
+=over
+
+=item * Use your private hint texts in output
+
+=back
+
+	o-saft.pl +check some.tld --cfg-hint=renegotiation="my special hint text"
 
 =over
 
@@ -5139,7 +5207,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 16.04.07
+@(#) 16.06.01
 
 =head1 AUTHOR
 
@@ -5305,12 +5373,6 @@ authenticated and encrypted)
 
 =over
 
-=item ** is DHE-DSS-RC4-SHA also weak?
-
-=back
-
-=over
-
 =item ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
 =back
@@ -5468,7 +5530,7 @@ Ugly workaround using I<--v> implemented in L<o-saft-man.pm|o-saft-man.pm> only.
 =back
 
 checks or informations (aka %data vs. %check_*)
-currently (2015) each single command returns all values
+currently (2016) each single command returns all values
 
 =over
 
@@ -5496,8 +5558,8 @@ Generated with:
 # begin woodoo
 
 # O-Saft documentation is plain text, which is DATA in perl sources. As such,
-# it is  not detected as source,  not as comment, and not as documentation by
-# most tools analyzing the source code.
+# it is  not detected as source,  not as comment,  and  not as documentation
+# by most tools analyzing the source code.
 # Unfortunately, some people solely believe in statistics generated by  magic
 # tools. They use such statistics to measure for example code quality without
 # looking themself at the code.
