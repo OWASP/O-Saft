@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.131 16/07/04 22:08:05";
+my  $man_SID= "@(#) o-saft-man.pm 1.132 16/07/04 22:49:18";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3523,7 +3523,7 @@ CHECKS
 
     Target (server) HTTP(S) Support
 
-      STS header
+      STS header (see RFC 6797)
 
         Using STS is no perfect security.  While the very first request using
         http: is always prone to a MiTM attack, MiTM is possible to following
@@ -3538,6 +3538,7 @@ CHECKS
           * Answer from redirected page for IP must not contain STS header
           * STS header must contain includeSubDirectoy directive
           * STS header max-age should be less than 1 month
+          * STS must not be set in http-equiv attribute of a meta TAG
 
       Public Key Pins header
         TBD - to be described ...
@@ -3562,6 +3563,7 @@ CHECKS
           * BSI TR-02102-2
           * BSI TR-03116-4
           * RFC 6125
+          * RFC 6797
           * RFC 7525
 
 #   NSA Suite B
@@ -3720,6 +3722,9 @@ CHECKS
            * must not contain more than one wildcards
            * must not contain invalid wildcards
            * must not contain invalid IDN characters
+
+      RFC 6797 (+rfc6797)
+        Same as STS header  +hsts .
 
       RFC 7525 (+rfc7525)
         Checks if connection and ciphers are compliant according RFC 7525.
