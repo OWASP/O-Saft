@@ -204,7 +204,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.81 Winter Edition 2015
+#?      @(#) 1.82 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -221,7 +221,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.81 16/07/04 20:39:56 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.82 16/07/04 20:41:29 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -388,12 +388,11 @@ if {[regexp {indows} $tcl_platform(os)]} {
     # There are  no more checks  for the selected file. If it is # wrong, the
     # script will bail out with an error later.
     foreach p [split $env(PATH) ";"] {
-        puts "p $p"
         set p [file join $p "perl.exe"]
         if {[file isdirectory $p]} { continue }
-        if {[file executable $p]} {
-            set cfg(PERL)   $p
-            #break
+        if {[file executable  $p]} {
+            set cfg(PERL)     $p
+            break
         }
     }
     if {![file executable $cfg(PERL)]} {
