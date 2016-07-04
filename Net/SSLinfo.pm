@@ -31,11 +31,11 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.04.05',
+    SSLINFO_VERSION => '16.06.01',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.134 16/05/15 22:35:12',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.136 16/07/04 16:36:48',
 };
 
 ######################################################## public documentation #
@@ -404,6 +404,7 @@ our @EXPORT_OK = qw(
         keyusage
         https_protocols
         https_svc
+        https_body
         https_status
         https_server
         https_alerts
@@ -417,6 +418,7 @@ our @EXPORT_OK = qw(
         http_refresh
         http_sts
         hsts
+        hsts_httpequiv
         hsts_maxage
         hsts_subdom
         verify_hostname
@@ -710,6 +712,7 @@ my %_SSLinfo= ( # our internal data structure
     # following from HTTP(S) request
     'https_protocols'   => "",  # HTTPS Alternate-Protocol header
     'https_svc'         => "",  # HTTPS Alt-Svc header
+    'https_body'        => "",  # HTTPS response (HTML body)
     'https_status'      => "",  # HTTPS response (aka status) line
     'https_server'      => "",  # HTTPS Server header
     'https_alerts'      => "",  # HTTPS Alerts send by server
@@ -723,6 +726,7 @@ my %_SSLinfo= ( # our internal data structure
     'http_refresh'      => "",  # HTTP Refresh header send by server
     'http_sts'          => "",  # HTTP Strict-Transport-Security header send by server (whish is very bad)
     'https_sts'         => "",  # complete STS header
+    'hsts_httpequiv'    => "",  # http-equiv meta tag in HTTP body
     'hsts_maxage'       => "",  # max-age attribute of STS header
     'hsts_subdom'       => "",  # includeSubDomains attribute of STS header
 ); # %_SSLinfo
@@ -1355,6 +1359,8 @@ sub do_ssl_open($$$@) {
 # 03/2015: even using ssl_write_all() and ssl_read_all() does not help
 # TODO: reason unknown, happens probably if server requires SNI
 # $t2 = time(); set error = "<<timeout: Net::SSLeay::read()>>";
+            $_SSLinfo{'https_body'}     =  $response;
+            $_SSLinfo{'https_body'}     =~ s/.*?\r\n\r\n(.*)/$1/ms;
             $_SSLinfo{'https_status'}   =  $response;
             $_SSLinfo{'https_status'}   =~ s/[\r\n].*$//ms; # get very first line
             $_SSLinfo{'https_server'}   =  _header_get('Server',   $response);
@@ -1364,6 +1370,8 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'https_protocols'}=  _header_get('Alternate-Protocol', $response);
             $_SSLinfo{'https_svc'}      =  _header_get('Alt-Svc',  $response);
             $_SSLinfo{'https_sts'}      =  _header_get('Strict-Transport-Security', $response);
+            $_SSLinfo{'hsts_httpequiv'} =  $_SSLinfo{'https_body'};
+            $_SSLinfo{'hsts_httpequiv'} =~ s/.*?(http-equiv=["']?Strict-Transport-Secutity[^>]*).*/$1/ims;
             $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'https_sts'};
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
             $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'https_sts'} =~ m/includeSubDomains/i);
@@ -2233,6 +2241,10 @@ Get HTTPS Alterenate-Protocol header.
 
 Get HTTPS Alt-Svc header.
 
+=head2 https_body( )
+
+Get HTTPS response (body)
+
 =head2 https_status( )
 
 Get HTTPS response (aka status) line.
@@ -2272,6 +2284,10 @@ Get HTTP Refresh header.
 =head2 http_sts( )
 
 Get HTTP Strict-Transport-Security header, if any.
+
+=head2 hsts_httpequiv( )
+
+Get hhtp-equiv=Strict-Transport-Security attribute from HTML body, if any.
 
 =head2 hsts( )
 
@@ -2372,6 +2388,7 @@ sub resumption      { return _SSLinfo_get('resumption',       $_[0], $_[1]); }
 sub dh_parameter    { return _SSLinfo_get('dh_parameter',     $_[0], $_[1]); }
 sub selfsigned      { return _SSLinfo_get('selfsigned',       $_[0], $_[1]); }
 sub https_protocols { return _SSLinfo_get('https_protocols',  $_[0], $_[1]); }
+sub https_body      { return _SSLinfo_get('https_body',       $_[0], $_[1]); }
 sub https_svc       { return _SSLinfo_get('https_svc',        $_[0], $_[1]); }
 sub https_status    { return _SSLinfo_get('https_status',     $_[0], $_[1]); }
 sub https_server    { return _SSLinfo_get('https_server',     $_[0], $_[1]); }
