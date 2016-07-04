@@ -204,7 +204,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.80 Winter Edition 2015
+#?      @(#) 1.81 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -221,7 +221,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.80 16/07/03 19:24:19 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.81 16/07/04 20:39:56 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -379,13 +379,23 @@ Changes apply to next +command.
 # Note: Text for tab* contain new lines.
 
 set cfg(PERL)   {};             # full path to perl; empty on *nix
+
 if {[regexp {indows} $tcl_platform(os)]} {
     # Some platforms are too stupid to run our executable cfg(SAFT) directly,
-    # they need a proper perl executable to do it.  We set a default path and
-    # then check if it is executable.  If it is not, ask the user to choose a
-    # proper one. There are  no more checks  for the selected file.  If it is
-    # wrong, the script will bail out with an error later.
-    set cfg(PERL)   {c:/programs/perl/perl/bin/perl.exe}
+    # they need a proper  perl executable to do it. Check for perl.exe in all
+    # directories of the  PATH environment variable. If no executable will be
+    # found, ask the user to choose a proper one.
+    # There are  no more checks  for the selected file. If it is # wrong, the
+    # script will bail out with an error later.
+    foreach p [split $env(PATH) ";"] {
+        puts "p $p"
+        set p [file join $p "perl.exe"]
+        if {[file isdirectory $p]} { continue }
+        if {[file executable $p]} {
+            set cfg(PERL)   $p
+            #break
+        }
+    }
     if {![file executable $cfg(PERL)]} {
         set cfg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
     }
