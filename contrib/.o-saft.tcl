@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.5 16/07/03 18:35:03
+#?      @(#) .o-saft.tcl 1.6 16/07/05 20:27:16
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.5};  # initial SID, do not remove
+set cfg(RCSID)  {1.6};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -69,6 +69,7 @@ array set cfg_label {
     gohome      {^}
     goprev      {<}
     gonext      {>}
+    search      {>>}
 }
 
 #_____________________________________________________________________________
@@ -95,6 +96,7 @@ array set cfg_tipp {
     goback      {Go back to previous position}
     goforward   {Go forward to last position}
     start       "Start $cfg(SAFT) with command "
+    search      {Search for text}
     tabCMD      {
 Select commands. All selected commands will be executed with the "Start" button.
 }
