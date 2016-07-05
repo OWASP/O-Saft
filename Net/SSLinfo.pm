@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.137 16/07/04 21:57:22',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.138 16/07/05 21:06:55',
 };
 
 ######################################################## public documentation #
@@ -421,6 +421,7 @@ our @EXPORT_OK = qw(
         hsts_httpequiv
         hsts_maxage
         hsts_subdom
+        hsts_preload
         verify_hostname
         verify_altname
         verify_alias
@@ -729,6 +730,7 @@ my %_SSLinfo= ( # our internal data structure
     'hsts_httpequiv'    => "",  # http-equiv meta tag in HTTP body
     'hsts_maxage'       => "",  # max-age attribute of STS header
     'hsts_subdom'       => "",  # includeSubDomains attribute of STS header
+    'hsts_preload'      => "",  # preload attribute of STS header
 ); # %_SSLinfo
 
 sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
@@ -1377,6 +1379,7 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'hsts_maxage'}    =  $_SSLinfo{'https_sts'};
             $_SSLinfo{'hsts_maxage'}    =~ s/.*?max-age=([^;" ]*).*/$1/i;
             $_SSLinfo{'hsts_subdom'}    = 'includeSubDomains' if ($_SSLinfo{'https_sts'} =~ m/includeSubDomains/i);
+            $_SSLinfo{'hsts_preload'}   = 'preload' if ($_SSLinfo{'https_sts'} =~ m/preload/i);
 # TODO:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
 # TODO: HTTP header:
 #    X-Firefox-Spdy: 3.1
@@ -2303,6 +2306,10 @@ Get max-age attribute of STS header.
 
 Get includeSubDomains attribute of STS header.
 
+=head2 hsts_preload( )
+
+Get preload attribute of STS header.
+
 =head2 https_pins( )
 
 Get pins attribute of STS header.
@@ -2408,6 +2415,7 @@ sub https_sts       { return _SSLinfo_get('https_sts',        $_[0], $_[1]); }
 sub hsts_httpequiv  { return _SSLinfo_get('hsts_httpequiv',   $_[0], $_[1]); }
 sub hsts_maxage     { return _SSLinfo_get('hsts_maxage',      $_[0], $_[1]); }
 sub hsts_subdom     { return _SSLinfo_get('hsts_subdom',      $_[0], $_[1]); }
+sub hsts_preload    { return _SSLinfo_get('hsts_preload',     $_[0], $_[1]); }
 
 =pod
 
