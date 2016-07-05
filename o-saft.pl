@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.501 16/07/04 22:37:07",
+    SID         => "@(#) yeast.pl 1.502 16/07/05 21:18:44",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -511,6 +511,7 @@ our %data   = (     # connection and certificate details
     'hsts_httpequiv'=> {'val' => sub { Net::SSLinfo::hsts_httpequiv($_[0], $_[1])}, 'txt' => "HTTPS STS in http-equiv"},
     'hsts_maxage'   => {'val' => sub { Net::SSLinfo::hsts_maxage(   $_[0], $_[1])}, 'txt' => "HTTPS STS MaxAge"},
     'hsts_subdom'   => {'val' => sub { Net::SSLinfo::hsts_subdom(   $_[0], $_[1])}, 'txt' => "HTTPS STS include sub-domains"},
+    'hsts_preload'  => {'val' => sub { Net::SSLinfo::hsts_preload(  $_[0], $_[1])}, 'txt' => "HTTPS STS preload"},
     'http_protocols'=> {'val' => sub { Net::SSLinfo::http_protocols($_[0], $_[1])}, 'txt' => "HTTP Alternate-Protocol"},
     'http_svc'      => {'val' => sub { Net::SSLinfo::http_svc(      $_[0], $_[1])}, 'txt' => "HTTP Alt-Svc header"},
     'http_status'   => {'val' => sub { Net::SSLinfo::http_status(   $_[0], $_[1])}, 'txt' => "HTTP Status line"},
@@ -980,6 +981,7 @@ our %shorttexts = (
     'https_sts'     => "HTTPS STS header",
     'hsts_maxage'   => "HTTPS STS MaxAge",
     'hsts_subdom'   => "HTTPS STS sub-domains",
+    'hsts_preload'  => "HTTPS STS preload",
     'hsts_is301'    => "HTTP Status code is 301",
     'hsts_is30x'    => "HTTP Status code not 30x",
     'http_protocols'=> "HTTP Alternate-Protocol",
