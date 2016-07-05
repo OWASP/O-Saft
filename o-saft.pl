@@ -3180,6 +3180,7 @@ sub check02102($$) {
 
 sub check03116($$) {
     #? check if target is compliant to BSI TR-03116-4
+    my ($host, $port) = @_;
     # BSI TR-03116-4 is similar to BSI TR-02102-2
     _y_CMD("check03116() " . $cfg{'done'}->{'check03116'});
     $cfg{'done'}->{'check03116'}++;
@@ -3264,6 +3265,7 @@ sub check03116($$) {
 
 sub check6125($$) {
     #? check if certificate identifiers are RFC 6125 compliant
+    my ($host, $port) = @_;
     _y_CMD("check6125() " . $cfg{'done'}->{'check6125'});
     $cfg{'done'}->{'check6125'}++;
     return if ($cfg{'done'}->{'check6125'} > 1);
@@ -3353,6 +3355,7 @@ sub check6125($$) {
 
 sub check7525($$) {
     #? check if target is RFC 7525 compliant
+    my ($host, $port) = @_;
     _y_CMD("check7525() " . $cfg{'done'}->{'check7525'});
     $cfg{'done'}->{'check7525'}++;
     return if ($cfg{'done'}->{'check7525'} > 1);
