@@ -204,7 +204,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.82 Winter Edition 2015
+#?      @(#) 1.83 Winter Edition 2015
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -221,7 +221,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.82 16/07/04 20:41:29 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.83 16/07/05 20:30:26 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -260,6 +260,8 @@ variable logo [image create photo -data {
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 set cfg(hist)   "osaft-LNK-T";  # positions in help text
 set cfg(curr)   0;              # current position (index) in cfg(help)
+set cfg(last)   "";             # search position (index) in cfg(help)
+set cfg(see)    "";             # last search index in cfg(help)
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
 
@@ -328,6 +330,7 @@ array set cfg_label {
     gohome      {^}
     goprev      {<}
     gonext      {>}
+    search      {>>}
 }
 
 array set cfg_tipp {
@@ -350,6 +353,7 @@ array set cfg_tipp {
     gohome      {Go to top of page}
     goprev      {Go back to previous position}
     gonext      {Go forward to last position}
+    search      {Search for text}
     start       "Start $cfg(SAFT) with command "
         # FIXME: $cfg(SAFT) may be changed when reading $cfg(RC) below
     tabCMD      {
@@ -629,7 +633,7 @@ proc jumpto_mark {w txt} {
     if {$err eq ""} {
         # "see" sometimes places text to far on top, so we scroll up one line
         $w yview scroll -1 units
-        if {$txt ne "" } {          # store mark in history
+        if {$txt ne "" } {              # store mark in history
             incr cfg(curr)
             if {[llength $cfg(hist)] == $cfg(curr)} {
                 lappend cfg(hist) $txt
@@ -657,6 +661,53 @@ proc jumpto_next {w} {
         jumpto_mark $w [lrange $cfg(hist) $cfg(curr) $cfg(curr)]
     }
 }; # jumpto_next
+
+proc search_highlight {w txt pos} {
+    #? remove highlight at pos, search next pos and highlight
+    set anf  [$w search -regexp -nocase -count end "$txt" $pos] 
+    $w tag delete osaft-CURRENT $pos
+    $w tag add    osaft-CURRENT $anf "$anf + $end c"
+    $w tag config osaft-CURRENT -font osaftBold
+}; # search_highlight
+
+proc search_next {w txt} {
+    #? jump to next search text in help window
+    global cfg
+    _dbx " curr: $cfg(see)"
+    $w tag config osaft-CURRENT -font TkFixedFont; # remove highlighting
+    set next [lindex [$w tag nextrange osaft-SEARCH $cfg(see)] 1]
+    if {$next eq ""} {                  # reached end of range, switch to beginning
+        set next [lindex [$w tag ranges osaft-SEARCH] 0]
+    }
+    if {$next eq ""} { return };        # may happen if nothing matched
+    $w see $next
+    search_highlight $w $txt $next
+    #$w yview scroll 1 units;           # somtimes necessary, but difficult to decide when
+    set cfg(see) $next
+}; # search_next
+
+proc search_help {w txt} {
+    #? search given text in help window
+    global cfg
+    if {$txt eq $cfg(last)} { search_next $w $txt; return; }
+    set cfg(last) $txt
+    $w tag delete osaft-SEARCH;         # get all matches
+    set anf [$w search -all -regexp -nocase -count end "$txt" 1.0] 
+    if {$anf eq ""} { return };         # nothing matched
+    set i 0
+    foreach a $anf {                    # tag matches
+        set e [lindex $end $i];
+        incr i
+        $w tag add   osaft-SEARCH $a "$a + $e c"
+        _dbx " osaft-SEARCH tag:  $a - $a + $e c"
+    }
+    set tags [$w tag ranges osaft-SEARCH]
+    _dbx " osaft-SEARCH tags: $tags"
+    set cfg(see)  [lindex $tags 0];     # remember current position
+    $w tag config osaft-SEARCH -background black -foreground white
+    search_highlight $w $txt $cfg(see)
+    $w see $cfg(see)
+}; # search_help
 
 proc toggle_cfg {w opt val} {
     #? use widget config command to change options value
@@ -1059,19 +1110,27 @@ proc create_help {sect} {
     set toc     {}
 
     # add additional buttons
-    pack [button $this.f1.h -text [btn_text gohome] -command "jumpto_mark $txt {osaft-LNK-T}"] -side left -padx $myX(rpad)
-    pack [button $this.f1.b -text [btn_text goprev] -command "jumpto_prev $txt"] -side left ;# -padx $myX(rpad)
-    pack [button $this.f1.f -text [btn_text gonext] -command "jumpto_next $txt"] -side left ;# -padx $myX(rpad)
+    pack [button $this.f1.h -text [btn_text gohome] -command "jumpto_mark $txt {osaft-LNK-T}"] \
+         [button $this.f1.b -text [btn_text goprev] -command "jumpto_prev $txt"] \
+         [button $this.f1.f -text [btn_text gonext] -command "jumpto_next $txt"] \
+         [label  $this.f1.l -text " | " ] \
+         [entry  $this.f1.e -textvariable cfg(search) ] \
+         [button $this.f1.s -text [btn_text search] -command "search_help $txt \$cfg(search)"] \
+        -side left
+    pack config  $this.f1.h $this.f1.l -padx $myX(rpad)
     create_tip   $this.f1.h [tip_text gohome]
     create_tip   $this.f1.b [tip_text goprev]
     create_tip   $this.f1.f [tip_text gonext]
+    create_tip   $this.f1.e [tip_text search]
+    create_tip   $this.f1.s [tip_text search]
+         bind    $this.f1.e <Return> "search_help $txt \$cfg(search)"
 
     # 1. search for section head lines, mark them and add (prefix) to text
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? ()=,:.-]+$} 1.0] 
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
-        set t [$txt get $a "$a + $e c"];                # don't trim, we need leading spaces
+        set t [$txt get $a "$a + $e c"];# don't trim, we need leading spaces
         set l [string length $t]
         incr i
         _dbx " 1. HEAD: $i\t$t"
