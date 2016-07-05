@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.502 16/07/05 21:18:44",
+    SID         => "@(#) yeast.pl 1.503 16/07/05 21:45:08",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -745,6 +745,7 @@ my %check_http = (  ## HTTP vs. HTTPS data
     'sts_maxage1m'  => {'txt' => "STS max-age less than one month"}, # low
     'sts_maxage1y'  => {'txt' => "STS max-age less than one year"},  # medium
     'sts_maxagexy'  => {'txt' => "STS max-age more than one year"},  # high
+    'sts_maxage18'  => {'txt' => "STS max-age more than 18 weeks"},  #
     'sts_expired'   => {'txt' => "STS max-age < certificate's validity"},
     'hsts_sts'      => {'txt' => "Target sends STS header"},
     'sts_maxage'    => {'txt' => "Target sends STS header with proper max-age"},
@@ -859,7 +860,8 @@ our %shorttexts = (
     'sts_maxage1d'  => "STS max-age < 1 day",
     'sts_maxage1m'  => "STS max-age < 1 month",
     'sts_maxage1y'  => "STS max-age < 1 year",
-    'sts_maxagexy'  => "STS max-age < 1 year",
+    'sts_maxagexy'  => "STS max-age > 1 year",
+    'sts_maxage18'  => "STS max-age > 18 weeks",
     'sts_expired'   => "STS max-age < certificate's validity",
     'sts_subdom'    => "STS includeSubdomain",
     'hsts_httpequiv'=> "STS not in meta tag",
@@ -1624,6 +1626,7 @@ sub _initchecks_score() {
     $checks{'sts_maxage1m'}->{score} =  20; # low
     $checks{'sts_maxage1y'}->{score} =  70; # medium
     $checks{'sts_maxagexy'}->{score} = 100; # high
+    $checks{'sts_maxage18'}->{score} = 100; # high
     foreach (keys %checks) {
         $checks{$_}->{score} = 90 if (m/WEAK/i);
         $checks{$_}->{score} = 30 if (m/LOW/i);
@@ -1641,6 +1644,7 @@ sub _initchecks_val()  {
     $checks{'sts_maxage1m'}->{val}  =  2592000; # month
     $checks{'sts_maxage1y'}->{val}  = 31536000; # year
     $checks{'sts_maxagexy'}->{val}  = 99999999;
+    $checks{'sts_maxage18'}->{val}  = 10886400; # 18 weeks
     foreach (keys %checks) {
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$_}->{val}   =  0 if (m/$cfg{'regex'}->{'SSLprot'}/);
@@ -3905,12 +3909,14 @@ sub checkhttp($$) {
         $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
+        $checks{'sts_maxage18'} ->{val} = ($hsts_maxage > $checks{'sts_maxage18'}->{val}) ? "" : "< ".$checks{'sts_maxage18'}->{val};
         my $hsts_equiv = $data{'hsts_httpequiv'}->{val}($host);
         $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
         # other sts_maxage* are done below as they change {val}
         checkdates($host,$port);    # computes check{'sts_exired'}
     } else {
         $checks{'sts_maxagexy'} ->{val} = $text{'no-STS'};
+        $checks{'sts_maxage18'} ->{val} = $text{'no-STS'};
         foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_sts sts_subdom sts_maxage)) {
             $checks{$key}->{val}    = $text{'no-STS'};
         }
