@@ -740,7 +740,7 @@ my %check_http = (  ## HTTP vs. HTTPS data
     # score are absolute values here, they are set to 100 if attribute is found
     # key must have prefix (hsts|sts); see $cfg{'regex'}->{'cmd-http'}
     #------------------+-----------------------------------------------------
-    'sts_maxage0d'  => {'txt' => "STS max-age not set"},             # very weak
+    'sts_maxage0d'  => {'txt' => "STS max-age not reset"},           # max-age=0 is bad
     'sts_maxage1d'  => {'txt' => "STS max-age less than one day"},   # weak
     'sts_maxage1m'  => {'txt' => "STS max-age less than one month"}, # low
     'sts_maxage1y'  => {'txt' => "STS max-age less than one year"},  # medium
@@ -856,7 +856,7 @@ our %shorttexts = (
     'renegotiation' => "Renegotiation",     # NOTE used in %data and %check_dest
     'hsts_sts'      => "STS header",
     'sts_maxage'    => "STS long max-age",
-    'sts_maxage0d'  => "STS max-age not set",
+    'sts_maxage0d'  => "STS max-age not reset",
     'sts_maxage1d'  => "STS max-age < 1 day",
     'sts_maxage1m'  => "STS max-age < 1 month",
     'sts_maxage1y'  => "STS max-age < 1 year",
@@ -1639,7 +1639,7 @@ sub _initchecks_val()  {
     # set all default check values here
     $checks{$_}->{val}   = "" foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
-    $checks{'sts_maxage0d'}->{val}  =        0;
+    $checks{'sts_maxage0d'}->{val}  =        1;
     $checks{'sts_maxage1d'}->{val}  =    86400; # day
     $checks{'sts_maxage1m'}->{val}  =  2592000; # month
     $checks{'sts_maxage1y'}->{val}  = 31536000; # year
@@ -3913,6 +3913,7 @@ sub checkhttp($$) {
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
         $checks{'sts_maxage18'} ->{val} = ($hsts_maxage > $checks{'sts_maxage18'}->{val}) ? "" : "< ".$checks{'sts_maxage18'}->{val};
+        $checks{'sts_maxage0d'} ->{val} = "0" if ($hsts_maxage == 0);
         my $hsts_equiv = $data{'hsts_httpequiv'}->{val}($host);
         $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
         # other sts_maxage* are done below as they change {val}
@@ -3920,6 +3921,7 @@ sub checkhttp($$) {
     } else {
         $checks{'sts_maxagexy'} ->{val} = $text{'no-STS'};
         $checks{'sts_maxage18'} ->{val} = $text{'no-STS'};
+        $checks{'sts_maxage0d'} ->{val} = $text{'no-STS'};
         foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_sts sts_subdom sts_maxage)) {
             $checks{$key}->{val}    = $text{'no-STS'};
         }
@@ -3932,7 +3934,7 @@ sub checkhttp($$) {
     $notxt = $text{'no-STS'};
     $notxt = $text{'no-http'} if ($cfg{'usehttp'} < 1);
     # NOTE: following sequence is important!
-    foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d sts_maxage0d)) {
+    foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
         if ($data{'https_sts'}->{val}($host) ne "") {
             $checks{'sts_maxage'}->{score} = $checks{$key}->{score} if ($hsts_maxage < $checks{$key}->{val});
             $checks{$key}->{val}    = ($hsts_maxage < $checks{$key}->{val}) ? "" : "> ".$checks{$key}->{val};
