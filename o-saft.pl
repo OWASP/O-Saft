@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.503 16/07/05 21:45:08",
+    SID         => "@(#) yeast.pl 1.504 16/07/07 20:36:11",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -757,6 +757,7 @@ my %check_http = (  ## HTTP vs. HTTPS data
     'hsts_location' => {'txt' => "Target sends STS and no Location header"},
     'hsts_refresh'  => {'txt' => "Target sends STS and no Refresh header"},
     'hsts_redirect' => {'txt' => "Target redirects HTTP without STS header"},
+    'hsts_samehost' => {'txt' => "Target redirects HTTP to HTTPS same host"},
     'hsts_ip'       => {'txt' => "Target does not send STS header for IP"},
     'hsts_httpequiv'=> {'txt' => "Target does not send STS in meta tag"},
     'pkp_pins'      => {'txt' => "Target sends Public Key Pins header"},
@@ -986,6 +987,7 @@ our %shorttexts = (
     'hsts_preload'  => "HTTPS STS preload",
     'hsts_is301'    => "HTTP Status code is 301",
     'hsts_is30x'    => "HTTP Status code not 30x",
+    'hsts_samehost' => "HTTP redirect to same host",
     'http_protocols'=> "HTTP Alternate-Protocol",
     'http_svc'      => "HTTP Alt-Svc header",
     'http_status'   => "HTTP Status line",
@@ -3893,7 +3895,8 @@ sub checkhttp($$) {
     my $notxt = " "; # use a variable to make assignments below more human readable
     my $http_sts      = $data{'http_sts'}     ->{val}($host) || ""; # value may be undefined, avoid perl error
     my $http_location = $data{'http_location'}->{val}($host) || ""; #  "
-    my $hsts_maxage   = $data{'hsts_maxage'}  ->{val}($host) || -1;
+    my $hsts_maxage   = $data{'hsts_maxage'}  ->{val}($host);       # 0 is valid here, hence || does not work
+       $hsts_maxage   = -1 if ($data{'hsts_maxage'}->{val}($host) =~ m/^\s*$/);
     my $hsts_fqdn     = $http_location;
        $hsts_fqdn     =~ s|^(?:https:)?//([^/]*)|$1|i; # get FQDN even without https:
 
@@ -3903,10 +3906,13 @@ sub checkhttp($$) {
     $checks{'http_https'}->{val} = $notxt if ($http_location eq "");  # HTTP Location is there
     $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne ""); 
     if ($data{'https_sts'}->{val}($host) ne "") {
+        my $fqdn =  $hsts_fqdn;
+           $fqdn =~ s|/.*$||;
         $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host) if ($data{'https_location'}->{val}($host) ne "");
         $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host) if ($data{'https_refresh'} ->{val}($host) ne "");
         $checks{'hsts_ip'}      ->{val} = $host        if ($host =~ m/\d+\.\d+\.\d+\.\d+/); # RFC6797 requirement
         $checks{'hsts_fqdn'}    ->{val} = $hsts_fqdn   if ($http_location !~ m|^https://$host|i);
+        $checks{'hsts_samehost'}->{val} = $hsts_fqdn   if ($fqdn ne $host);
         $checks{'hsts_sts'}     ->{val} = $notxt       if ($data{'https_sts'}  ->{val}($host) eq "");
         $checks{'sts_subdom'}   ->{val} = $notxt       if ($data{'hsts_subdom'}->{val}($host) eq "");
         $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
@@ -3919,10 +3925,10 @@ sub checkhttp($$) {
         # other sts_maxage* are done below as they change {val}
         checkdates($host,$port);    # computes check{'sts_exired'}
     } else {
-        $checks{'sts_maxagexy'} ->{val} = $text{'no-STS'};
-        $checks{'sts_maxage18'} ->{val} = $text{'no-STS'};
-        $checks{'sts_maxage0d'} ->{val} = $text{'no-STS'};
-        foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_sts sts_subdom sts_maxage)) {
+        foreach my $key (qw(sts_subdom sts_maxage sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
+            $checks{$key}->{val}    = $text{'no-STS'};
+        }
+        foreach my $key (qw(hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts)) {
             $checks{$key}->{val}    = $text{'no-STS'};
         }
     }
