@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.504 16/07/07 20:36:11",
+    SID         => "@(#) yeast.pl 1.505 16/07/08 00:11:53",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1835,7 +1835,7 @@ sub __SSLinfo($$$)     {
         #    Netscape Cert Type
         #    CT Precertificate SCTs
         #
-        # Example www.microsoft.com
+        # Example www.microsoft.com (03/2016)
         #    X509v3 extensions:
         #        X509v3 Subject Alternative Name: 
         #            DNS:privacy.microsoft.com, DNS:www.microsoft.com, DNS:wwwqa.microsoft.com
@@ -1920,7 +1920,7 @@ sub __SSLinfo($$$)     {
         #            000d - 01 30 0a 06 08 2b 06 01-05 05 07 03 02   .0...+.......
         #        ...
         #
-        # Example bsi.bund.de
+        # Example bsi.bund.de (03/2016)
         #    X509v3 extensions:
         #        X509v3 Authority Key Identifier: 
         #            keyid:5404296FA293C6903145C03DDE2BE20A6980925F
@@ -1948,6 +1948,19 @@ sub __SSLinfo($$$)     {
         #        X509v3 Subject Alternative Name: 
         #            DNS:www.bsi.bund.de
         #
+        # Example www.bsi.de (06/2016)
+        #    X509v3 CRL Distribution Points: 
+        #
+        #         Full Name:
+        #           URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
+        #
+        #         Full Name:
+        #           URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
+        #     Authority Information Access: 
+        #         OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
+        #         CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
+        #         CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
+        #
         # handled in regex below which matches next extension, if any.
         $val .= " X509";# add string to match last extension also
         my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
@@ -1970,7 +1983,7 @@ sub __SSLinfo($$$)     {
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
         if ($cmd eq 'ext_crl') {
-            $val =~ s#\s*Full Name:\s*##ims;
+            $val =~ s#\s*Full Name:\s*##imsg;       # multiple occourances possible
             $val =~ s#(\s*URI\s*:)# #msg;
         }
         $val =  "" if ($ext eq $val);    # nothing changed, then expected pattern is missing
@@ -2732,11 +2745,9 @@ sub check_url($$) {
     my $txt = "<<unexpected type: $type>>"; # this is a programming error
     my $src = 'Net::SSLeay::get_http()';
     # got an URI, extract host, port and URL
-       $uri =~ m#^\s*(?:https?:)?//([^/]+)(/.*)?$#;
+       $uri =~ m#^\s*(?:(?:http|ldap)s?:)?//([^/]+)(/.*)?$#;
       #  NOTE: it's ok here
     my $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-#_dbx "URI: $uri";
-#_dbx "HST: $host";
     my $url =  $2 || "/";                   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
        $host=~ m#^([^:]+)(?::[0-9]{1-5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
@@ -2979,17 +2990,14 @@ sub checkcert($$) {
     # $checks{'certfqdn'}->{val} ... done in checksni()
 
     $checks{'rootcert'}->{val}  = $data{'issuer'}->{val}($host) if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
-
     $checks{'ocsp'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
     $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host)  eq "");
-#return;
+
     if ($cfg{'usehttp'} > 0) {
         # at least 'ext_crl' may contain more than one URL
         $checks{'crl_valid'}->{val} = "";
-#_dbx "ext_crl: " . $data{'ext_crl'}->{val}($host);
         foreach my $url (split(/\s+/, $data{'ext_crl'}->{val}($host))) {
-#_dbx "ext url: $url";
             next if ($url =~ m/^\s*$/);     # skip empty url
             $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl') || "";
         }
