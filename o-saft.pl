@@ -3913,7 +3913,7 @@ sub checkhttp($$) {
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
         $checks{'sts_maxage18'} ->{val} = ($hsts_maxage > $checks{'sts_maxage18'}->{val}) ? "" : "< ".$checks{'sts_maxage18'}->{val};
-        $checks{'sts_maxage0d'} ->{val} = "0" if ($hsts_maxage == 0);
+        $checks{'sts_maxage0d'} ->{val} = ($hsts_maxage == 0) ? "0" : "";
         my $hsts_equiv = $data{'hsts_httpequiv'}->{val}($host);
         $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
         # other sts_maxage* are done below as they change {val}
