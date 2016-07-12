@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.505 16/07/08 00:11:53",
+    SID         => "@(#) yeast.pl 1.506 16/07/13 00:27:59",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6302,7 +6302,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         foreach my $ssl (@{$cfg{'version'}}) {
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-                push(@results, [$ssl, $c, ((grep{/^$c/} @supported)>0) ? "yes" : "no"]);
+                push(@results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
                 $checks{'cnt_totals'}->{val}++;
             }
         }
