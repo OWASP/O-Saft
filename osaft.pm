@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.47 16/07/17 12:05:04',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.48 16/07/17 13:29:43',
 
 };
 
@@ -1881,6 +1881,13 @@ sub _cfg_init() {
     return;
 } # _cfg_init
 
+sub _cmd_init() {
+    #? initialize dynamic settings in %cfg for commands
+    foreach my $key (keys %cfg) {       # well-known "summary" commands
+        push(@{$cfg{'commands-CMD'}}, $key) if ($key =~ m/^cmd-/);
+    } 
+} # _cmd_init
+
 sub _dbx_init() {
     #? initialize settings for debugging
     $dbx{'cmd-check'} = $cfg{'cmd-check'};
@@ -1918,24 +1925,17 @@ sub _osaft_init() {
     #? additional generic initializations for data structures
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
     _cfg_init();        # initallize dynamic data in %cfg
+    _cmd_init();        # initallize dynamic commands in %cfg
     _dbx_init();        # initallize debugging data in %dbx
     foreach my $k (keys %data_oid) {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
-
-    # complete initialization of %cfg data
-   #foreach my $k (keys %prot); # copy to %cfg
-   #    $cfg{'openssl_option_map'}->{$k}  = $prot{$k}->{'opt'}; # copy to %cfg
-   #    $cfg{'openssl_version_map'}->{$k} = $prot{$k}->{'hex'}; # copy to %cfg
-   #}
-
     return;
 }; # _osaft_init
 
-sub osaft_done() {};            # dummy to check successful include
+sub osaft_done() {};    # dummy to check successful include
 
-# complete initializations
-_osaft_init();
+_osaft_init();          # complete initializations
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
