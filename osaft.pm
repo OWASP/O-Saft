@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.43 16/05/29 12:42:28',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.46 16/07/17 11:18:45',
 
 };
 
@@ -304,63 +304,66 @@ our %tls_record_type = (
 ); # %tls_record_type
 
 our %tls_error_alerts = ( # mainly RFC6066
-    #----+-------------------------------------+--+----+---------------
-    # ID      name                             DTLD RFC OID
-    #----+-------------------------------------+--+----+---------------
-     0 => [qw(close_notify                      Y  6066 -)],
-    10 => [qw(unexpected_message                Y  6066 -)],
-    20 => [qw(bad_record_mac                    Y  6066 -)],
-    21 => [qw(decryption_failed                 Y  6066 -)],
-    22 => [qw(record_overflow                   Y  6066 -)],
-    30 => [qw(decompression_failure             Y  6066 -)],
-    40 => [qw(handshake_failure                 Y  6066 -)],
-    41 => [qw(no_certificate_RESERVED           Y  5246 -)],
-    42 => [qw(bad_certificate                   Y  6066 -)],
-    43 => [qw(unsupported_certificate           Y  6066 -)],
-    44 => [qw(certificate_revoked               Y  6066 -)],
-    45 => [qw(certificate_expired               Y  6066 -)],
-    46 => [qw(certificate_unknown               Y  6066 -)],
-    47 => [qw(illegal_parameter                 Y  6066 -)],
-    48 => [qw(unknown_ca                        Y  6066 -)],
-    49 => [qw(access_denied                     Y  6066 -)],
-    50 => [qw(decode_error                      Y  6066 -)],
-    51 => [qw(decrypt_error                     Y  6066 -)],
-    60 => [qw(export_restriction_RESERVED       Y  6066 -)],
-    70 => [qw(protocol_version                  Y  6066 -)],
-    71 => [qw(insufficient_security             Y  6066 -)],
-    80 => [qw(internal_error                    Y  6066 -)],
-    86 => [qw(inappropriate_fallback            Y  RFC5246_update-Draft-2014-05-31 -)], # added according 'https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1'
-    90 => [qw(user_canceled                     Y  6066 -)],
-   100 => [qw(no_renegotiation                  Y  6066 -)],
-   110 => [qw(unsupported_extension             Y  6066 -)],
-   111 => [qw(certificate_unobtainable          Y  6066 -)],
-   112 => [qw(unrecognized_name                 Y  6066 -)],
-   113 => [qw(bad_certificate_status_response   Y  6066 -)],
-   114 => [qw(bad_certificate_hash_value        Y  6066 -)],
-   115 => [qw(unknown_psk_identity              Y  4279 -)],
-    #----+-------------------------------------+--+----+---------------
+    #----+-------------------------------------+----+--+---------------
+    # ID      name                              RFC DTLS OID
+    #----+-------------------------------------+----+--+---------------
+    0 => [qw( close_notify                      6066  Y  -)],
+   10 => [qw( unexpected_message                6066  Y  -)],
+   20 => [qw( bad_record_mac                    6066  Y  -)],
+   21 => [qw( decryption_failed                 6066  Y  -)],
+   22 => [qw( record_overflow                   6066  Y  -)],
+   30 => [qw( decompression_failure             6066  Y  -)],
+   40 => [qw( handshake_failure                 6066  Y  -)],
+   41 => [qw( no_certificate_RESERVED           5246  Y  -)],
+   42 => [qw( bad_certificate                   6066  Y  -)],
+   43 => [qw( unsupported_certificate           6066  Y  -)],
+   44 => [qw( certificate_revoked               6066  Y  -)],
+   45 => [qw( certificate_expired               6066  Y  -)],
+   46 => [qw( certificate_unknown               6066  Y  -)],
+   47 => [qw( illegal_parameter                 6066  Y  -)],
+   48 => [qw( unknown_ca                        6066  Y  -)],
+   49 => [qw( access_denied                     6066  Y  -)],
+   50 => [qw( decode_error                      6066  Y  -)],
+   51 => [qw( decrypt_error                     6066  Y  -)],
+   60 => [qw( export_restriction_RESERVED       6066  Y  -)],
+   70 => [qw( protocol_version                  6066  Y  -)],
+   71 => [qw( insufficient_security             6066  Y  -)],
+   80 => [qw( internal_error                    6066  Y  -)],
+   86 => [qw( inappropriate_fallback            RFC5246_update-Draft-2014-05-31  Y  -)], # added according 'https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1'
+   90 => [qw( user_canceled                     6066  Y  -)],
+  100 => [qw( no_renegotiation                  6066  Y  -)],
+  110 => [qw( unsupported_extension             6066  Y  -)],
+  111 => [qw( certificate_unobtainable          6066  Y  -)],
+  112 => [qw( unrecognized_name                 6066  Y  -)],
+  113 => [qw( bad_certificate_status_response   6066  Y  -)],
+  114 => [qw( bad_certificate_hash_value        6066  Y  -)],
+  115 => [qw( unknown_psk_identity              4279  Y  -)],
+    #----+-------------------------------------+----+--+---------------
 ); # %tls_error_alerts
 
 our %tls_extensions = ( # RFC 6066
-    0 => [qw(server_name)               ],
-    1 => [qw(max_fragment_length)       ],
-    2 => [qw(client_certificate_url)    ],
-    3 => [qw(trusted_ca_keys)           ],
-    4 => [qw(truncated_hmac)            ],
-    5 => [qw(status_request)            ],
-    6 => [qw(user_mapping)              ],  # RFC????
-    7 => [qw(reserved_7)                ],  # -"-
-    8 => [qw(reserved_8)                ],  # -"-
-    9 => [qw(cert_tape)                 ],  # RFC5081
-   10 => [qw(ecliptic_curves)           ],  # RFC4492
-   11 => [qw(ec_point_formats)          ],  # RFC4492
-   12 => [qw(srp)                       ],  # RFC5054
-   13 => [qw(signature_algorithms)      ],  # RFC5246; also supported_algorithms
-#  14 => [qw(unassigned)                ],  # -"-
+    #----+-----------------------------+----+---+------------------------------
+    # ID      name                      RFC DTLS other names
+    #----+-----------------------------+----+---+------------------------------
+    0 => [qw( server_name               ????  -   )],
+    1 => [qw( max_fragment_length       ????  -   )],
+    2 => [qw( client_certificate_url    ????  -   )],
+    3 => [qw( trusted_ca_keys           ????  -   )],
+    4 => [qw( truncated_hmac            ????  -   )],
+    5 => [qw( status_request            ????  -   )],
+    6 => [qw( user_mapping              ????  -   )],
+    7 => [qw( reserved_7                ????  -   )],
+    8 => [qw( reserved_8                ????  -   )],
+    9 => [qw( cert_tape                 5081  -   )],
+   10 => [qw( ecliptic_curves           4492  -   )],
+   11 => [qw( ec_point_formats          4492  -   )],
+   12 => [qw( srp                       5054  -   )],
+   13 => [qw( signature_algorithms      5246  -   )],
+#  14 => [qw( unassigned                5246  -   )],
 #  ...
-#  34 => [qw(unassigned)                ],  # -"-
-   35 => [qw(SessionTicket)             ],  # RFC4507
-65535 => [qw(65535)  ],
+#  34 => [qw( unassigned                5246  -   )],
+   35 => [qw( SessionTicket             4507  -   )],
+65535 => [qw( 65535                     ????  -   )],
 ); # %tls_extensions
 
 my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_extensions above
@@ -395,10 +398,11 @@ our %ec_point_formats = ( # RFC 4492
     #----+-----------------------------+----+---+------------------------------
 ); # ec_point_formats
 
+# Torsten: %ECCURVE_TYPE
 our %ec_curve_types = ( # RFC 4492
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
     #----+-----------------------------+----+---+------------------------------
-    # ID      name                      RFC  DTLS other names
+    # ID      name                      RFC DTLS other names
     #----+-----------------------------+----+---+------------------------------
     0 => [qw( unassigned                4492  N   )],
     1 => [qw( explicit_prime            4492  Y   )],
@@ -415,147 +419,132 @@ our %ec_curve_types = ( # RFC 4492
     #----+-----------------------------+----+---+------------------------------
 ); # ec_curve_types
 
-# Torsten: %ECCURVE_TYPE
-our %tls_curve_types = ( # RFC 4492 
-    'explicit_prime'        => 1,
-    'explicit_char2'        => 2,
-    'named_curve'           => 3,
-    'reserved_248'          => 248,
-    'reserved_249'          => 249,
-    'reserved_250'          => 250,
-    'reserved_251'          => 251,
-    'reserved_252'          => 252,
-    'reserved_253'          => 253,
-    'reserved_254'          => 254,
-    'reserved_255'          => 255,
-); # %tls_curve_types
-
 # Torsten: %ECC_NAMED_CURVE = 
 # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 # Value =>   Description bits(added) DTLS-OK Reference
 # our %named_curves =
 our %tls_curves = (
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
-    #----+-------------+-------+----+--+----+----------------------+-------------------------
-    # ID   name         NIST   bits DTLS RFC OID                    other name
-    #----+-------------+-------+----+--+----+----------------------+-------------------------
-    0 => [qw( unassigned      -    0  N IANA -                    )],
-    1 => [qw( sect163k1   K-163  163  Y 4492 1.3.132.0.1          )],
-    2 => [qw( sect163r1       -  163  Y 4492 1.3.132.0.2          )],
-    3 => [qw( sect163r2   B-163  163  Y 4492 1.3.132.0.15         )],
-    4 => [qw( sect193r1       -  193  Y 4492 1.3.132.0.24         )],
-    5 => [qw( sect193r2       -  193  Y 4492 1.3.132.0.25         )],
-    6 => [qw( sect233k1   K-233  233  Y 4492 1.3.132.0.26         )],
-    7 => [qw( sect233r1   B-233  233  Y 4492 1.3.132.0.27         )],
-    8 => [qw( sect239k1       -  239  Y 4492 1.3.132.0.3          )],
-    9 => [qw( sect283k1   K-283  283  Y 4492 1.3.132.0.16         )],
-   10 => [qw( sect283r1   B-283  283  Y 4492 1.3.132.0.17         )],
-   11 => [qw( sect409k1   K-409  409  Y 4492 1.3.132.0.36         )],
-   12 => [qw( sect409r1   B-409  409  Y 4492 1.3.132.0.37         )],
-   13 => [qw( sect571k1   K-571  571  Y 4492 1.3.132.0.38         )],
-   14 => [qw( sect571r1   B-571  571  Y 4492 1.3.132.0.39         )],
-   15 => [qw( secp160k1       -  160  Y 4492 1.3.132.0.9          )],
-   16 => [qw( secp160r1       -  160  Y 4492 1.3.132.0.8          )],
-   17 => [qw( secp160r2       -  160  Y 4492 1.3.132.0.30         )],
-   18 => [qw( secp192k1       -  192  Y 4492 1.3.132.0.31         )], # ANSI X9.62 prime192v1, NIST P-192, 
-   19 => [qw( secp192r1   P-192  192  Y 4492 1.2.840.10045.3.1.1  )], # ANSI X9.62 prime192v1
-   20 => [qw( secp224k1       -  224  Y 4492 1.3.132.0.32         )],
-   21 => [qw( secp224r1   P-224  224  Y 4492 1.3.132.0.33         )],
-   22 => [qw( secp256k1   P-256  256  Y 4492 1.3.132.0.10         )],
-   23 => [qw( secp256r1   P-256  256  Y 4492 1.2.840.10045.3.1.7  )], # ANSI X9.62 prime256v1
-   24 => [qw( secp384r1   P-384  384  Y 4492 1.3.132.0.34         )],
-   25 => [qw( secp521r1   P-521  521  Y 4492 1.3.132.0.35         )],
-   26 => [qw( brainpoolP256r1 -  256  Y 7027 1.3.36.3.3.2.8.1.1.7 )],
-   27 => [qw( brainpoolP384r1 -  384  Y 7027 1.3.36.3.3.2.8.1.1.11)],
-   28 => [qw( brainpoolP512r1 -  512  Y 7027 1.3.36.3.3.2.8.1.1.13)],
-#  28 => [qw( brainpoolP521r1 -  521  Y 7027 1.3.36.3.3.2.8.1.1.13)], # ACHTUNG: in manchen Beschreibungen dieser falsche String
-   29 => [qw( ecdh_x25519     -  255  Y 4492bis -                 )], # [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
-   30 => [qw( ecdh_x448       -  448  Y 4492bis -                 )], # -"-
-#  31 => [qw( eddsa_ed25519   -  448  Y 4492bis 1.3.101.100       )], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
-#  32 => [qw( eddsa_ed448     -  448  Y 4492bis 1.3.101.101       )], # -"-
+    #----+-------------------------------------+----+--+-------+---+-------------------------
+    # ID      name                              RFC DTLS NIST  bits OID
+    #----+-------------------------------------+----+--+-------+---+------------------------
+    0 => [qw( unassigned              N         IANA  -      -    0                      )],
+    1 => [qw( sect163k1               Y         4492  Y  K-163  163 1.3.132.0.1          )],
+    2 => [qw( sect163r1               Y         4492  Y      -  163 1.3.132.0.2          )],
+    3 => [qw( sect163r2               Y         4492  Y  B-163  163 1.3.132.0.15         )],
+    4 => [qw( sect193r1               Y         4492  Y      -  193 1.3.132.0.24         )],
+    5 => [qw( sect193r2               Y         4492  Y      -  193 1.3.132.0.25         )],
+    6 => [qw( sect233k1               Y         4492  Y  K-233  233 1.3.132.0.26         )],
+    7 => [qw( sect233r1               Y         4492  Y  B-233  233 1.3.132.0.27         )],
+    8 => [qw( sect239k1               Y         4492  Y      -  239 1.3.132.0.3          )],
+    9 => [qw( sect283k1               Y         4492  Y  K-283  283 1.3.132.0.16         )],
+   10 => [qw( sect283r1               Y         4492  Y  B-283  283 1.3.132.0.17         )],
+   11 => [qw( sect409k1               Y         4492  Y  K-409  409 1.3.132.0.36         )],
+   12 => [qw( sect409r1               Y         4492  Y  B-409  409 1.3.132.0.37         )],
+   13 => [qw( sect571k1               Y         4492  Y  K-571  571 1.3.132.0.38         )],
+   14 => [qw( sect571r1               Y         4492  Y  B-571  571 1.3.132.0.39         )],
+   15 => [qw( secp160k1               Y         4492  Y      -  160 1.3.132.0.9          )],
+   16 => [qw( secp160r1               Y         4492  Y      -  160 1.3.132.0.8          )],
+   17 => [qw( secp160r2               Y         4492  Y      -  160 1.3.132.0.30         )],
+   18 => [qw( secp192k1               Y         4492  Y      -  192 1.3.132.0.31         )], # ANSI X9.62 prime192v1, NIST P-192, 
+   19 => [qw( secp192r1               Y         4492  Y  P-192  192 1.2.840.10045.3.1.1  )], # ANSI X9.62 prime192v1
+   20 => [qw( secp224k1               Y         4492  Y       - 224 1.3.132.0.32         )],
+   21 => [qw( secp224r1               Y         4492  Y  P-224  224 1.3.132.0.33         )],
+   22 => [qw( secp256k1               Y         4492  Y  P-256  256 1.3.132.0.10         )],
+   23 => [qw( secp256r1               Y         4492  Y  P-256  256 1.2.840.10045.3.1.7  )], # ANSI X9.62 prime256v1
+   24 => [qw( secp384r1               Y         4492  Y  P-384  384 1.3.132.0.34         )],
+   25 => [qw( secp521r1               Y         4492  Y  P-521  521 1.3.132.0.35         )],
+   26 => [qw( brainpoolP256r1         Y         7027  Y      -  256 1.3.36.3.3.2.8.1.1.7 )],
+   27 => [qw( brainpoolP384r1         Y         7027  Y      -  384 1.3.36.3.3.2.8.1.1.11)],
+   28 => [qw( brainpoolP512r1         Y         7027  Y      -  512 1.3.36.3.3.2.8.1.1.13)],
+#  28 => [qw( brainpoolP521r1         Y         7027  Y      -  521 1.3.36.3.3.2.8.1.1.13)], # ACHTUNG: in manchen Beschreibungen dieser falsche String
+   29 => [qw( ecdh_x25519             Y         4492bis Y    -  225                      )], # [draft-ietf-tls-tls][draft-ietf-tls-rfc4492bis])], #TEMPORARY-registered_2016-02-29,_expires 2017-03-01,
+   30 => [qw( ecdh_x448               Y         4492bis Y    -  448                      )], # -"-
+#  31 => [qw( eddsa_ed25519           Y         4492bis Y    -  448 1.3.101.100          )], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
+#  32 => [qw( eddsa_ed448             Y         4492bis Y    -  448 1.3.101.101          )], # -"-
  
-  256 => [qw( ffdhe2048       - 2048  Y ietf-tls-negotiated-ff-dhe-10)],
-  257 => [qw( ffdhe3072       - 3072  Y ietf-tls-negotiated-ff-dhe-10)],
-  258 => [qw( ffdhe4096       - 4096  Y ietf-tls-negotiated-ff-dhe-10)],
-  259 => [qw( ffdhe6144       - 6144  Y ietf-tls-negotiated-ff-dhe-10)],
-  260 => [qw( ffdhe8192       - 8192  Y ietf-tls-negotiated-ff-dhe-10)],
-65281 => [qw( arbitrary_explicit_prime_curves - ?  Y 4492 -        )], # 0xFF01
-65282 => [qw( arbitrary_explicit_char2_curves - ?  Y 4492 -        )], # 0xFF02
-    #----+-------------+-------+----+--+----+----------------------+-------------------------
+  256 => [qw( ffdhe2048               Y         ietf-tls-negotiated-ff-dhe-10 Y - 2048   )],
+  257 => [qw( ffdhe3072               Y         ietf-tls-negotiated-ff-dhe-10 Y - 3072   )],
+  258 => [qw( ffdhe4096               Y         ietf-tls-negotiated-ff-dhe-10 Y - 4096   )],
+  259 => [qw( ffdhe6144               Y         ietf-tls-negotiated-ff-dhe-10 Y - 6144   )],
+  260 => [qw( ffdhe8192               Y         ietf-tls-negotiated-ff-dhe-10 Y - 8192   )],
+65281 => [qw( arbitrary_explicit_prime_curves   4492  Y      -    ?                      )], # 0xFF01
+65282 => [qw( arbitrary_explicit_char2_curves   4492  Y      -    ?                      )], # 0xFF02
+    #----+-------------------------------------+----+--+-------+---+------------------------
     # following not from IANA
-    # ID   name         NIST   bits DTLS RFC OID                    other name
-    #----+-------------+-------+----+--+----+----------------------+-------------------------
-42001 => [qw( Curve3617       -   -1  n ?    -                     )],
-42002 => [qw( secp112r1       -   -1  n ?    1.3.132.0.6           )],
-42003 => [qw( secp112r2       -   -1  n ?    1.3.132.0.7           )],
-42004 => [qw( secp113r1       -   -1  n ?    1.3.132.0.4           )],
-42005 => [qw( secp113r2       -   -1  n ?    1.3.132.0.5           )],
-42006 => [qw( secp131r1       -   -1  n ?    1.3.132.0.22          )],
-42007 => [qw( secp131r2       -   -1  n ?    1.3.132.0.23          )],
-42008 => [qw( secp128r1       -   -1  n ?    1.3.132.0.28          )],
-42009 => [qw( secp128r2       -   -1  n ?    1.3.132.0.29          )],
-42011 => [qw( ed25519   Ed25519   -1  n ?    1.3.6.1.4.1.11591.15.1)], # PGP
-42012 => [qw( brainpoolp160r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.1  )],
-42013 => [qw( brainpoolp192r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.3  )],
-42014 => [qw( brainpoolp224r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.5  )],
-42015 => [qw( brainpoolp320r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.9  )],
-42016 => [qw( brainpoolp512r1 -   -1  n ?    1.3.36.3.3.2.8.1.1.13 )], # same as brainpoolP521r142001 => [qw(
-42020 => [qw( GOST2001-test   -   -1  n ?    1.2.643.2.2.35.0      )],
-42021 => [qw( GOST2001-CryptoPro-A - -1 n ?  1.2.643.2.2.35.1      )],
-42022 => [qw( GOST2001-CryptoPro-B - -1 n ?  1.2.643.2.2.35.2      )],
-42023 => [qw( GOST2001-CryptoPro-C - -1 n ?  1.2.643.2.2.35.3      )],
-42024 => [qw( GOST2001-CryptoPro-A - -1 n ?  -                     )], # GOST2001-CryptoPro-XchA
-42025 => [qw( GOST2001-CryptoPro-C - -1 n ?  -                     )], # GOST2001-CryptoPro-XchB
-42026 => [qw( GOST2001-CryptoPro-A - -1 n ?  1.2.643.2.2.36.0      )],
-42027 => [qw( GOST2001-CryptoPro-C - -1 n ?  1.2.643.2.2.36.1      )],
-42031 => [qw( X9.62 prime192v2     - -1 n ?  1.2.840.10045.3.1.2   )],
-42032 => [qw( X9.62 prime192v3     - -1 n ?  1.2.840.10045.3.1.3   )],
-42033 => [qw( X9.62 prime239v1     - -1 n ?  1.2.840.10045.3.1.4   )],
-42034 => [qw( X9.62 prime239v2     - -1 n ?  1.2.840.10045.3.1.5   )],
-42035 => [qw( X9.62 prime239v3     - -1 n ?  1.2.840.10045.3.1.6   )],
-42041 => [qw( X9.62 c2tnb191v1     - -1 n ?  1.2.840.10045.3.0.5   )],
-42042 => [qw( X9.62 c2tnb191v2     - -1 n ?  1.2.840.10045.3.0.6   )],
-42043 => [qw( X9.62 c2tnb191v3     - -1 n ?  1.2.840.10045.3.0.7   )],
-42044 => [qw( X9.62 c2tnb239v1     - -1 n ?  1.2.840.10045.3.0.11  )],
-42045 => [qw( X9.62 c2tnb239v2     - -1 n ?  1.2.840.10045.3.0.12  )],
-42046 => [qw( X9.62 c2tnb239v3     - -1 n ?  1.2.840.10045.3.0.13  )],
-42047 => [qw( X9.62 c2tnb359v1     - -1 n ?  1.2.840.10045.3.0.18  )],
-42048 => [qw( X9.62 c2tnb431r1     - -1 n ?  1.2.840.10045.3.0.20  )],
+    # ID      name                              RFC DTLS NIST  bits OID
+    #----+-------------------------------------+----+--+-------+---+------------------------
+42001 => [qw( Curve3617                         ????  N      -   -1                      )],
+42002 => [qw( secp112r1                         ????  N      -   -1 1.3.132.0.6          )],
+42003 => [qw( secp112r2                         ????  N      -   -1 1.3.132.0.7          )],
+42004 => [qw( secp113r1                         ????  N      -   -1 1.3.132.0.4          )],
+42005 => [qw( secp113r2                         ????  N      -   -1 1.3.132.0.5          )],
+42006 => [qw( secp131r1                         ????  N      -   -1 1.3.132.0.22         )],
+42007 => [qw( secp131r2                         ????  N      -   -1 1.3.132.0.23         )],
+42008 => [qw( secp128r1                         ????  N      -   -1 1.3.132.0.28         )],
+42009 => [qw( secp128r2                         ????  N      -   -1 1.3.132.0.29         )],
+42011 => [qw( ed25519                           ????  N Ed25519  -1 1.3.6.1.4.1.11591.15.1)], # PGP
+42012 => [qw( brainpoolp160r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.1 )],
+42013 => [qw( brainpoolp192r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.3 )],
+42014 => [qw( brainpoolp224r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.5 )],
+42015 => [qw( brainpoolp320r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.9 )],
+42016 => [qw( brainpoolp512r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.13)], # same as brainpoolP521r142001 => [qw(
+42020 => [qw( GOST2001-test                     ????  N      -   -1 1.2.643.2.2.35.0     )],
+42021 => [qw( GOST2001-CryptoPro-A              ????  N      -   -1 1.2.643.2.2.35.1     )],
+42022 => [qw( GOST2001-CryptoPro-B              ????  N      -   -1 1.2.643.2.2.35.2     )],
+42023 => [qw( GOST2001-CryptoPro-C              ????  N      -   -1 1.2.643.2.2.35.3     )],
+42024 => [qw( GOST2001-CryptoPro-A              ????  N      -   -1                      )], # GOST2001-CryptoPro-XchA
+42025 => [qw( GOST2001-CryptoPro-C              ????  N      -   -1                      )], # GOST2001-CryptoPro-XchB
+42026 => [qw( GOST2001-CryptoPro-A              ????  N      -   -1 1.2.643.2.2.36.0     )],
+42027 => [qw( GOST2001-CryptoPro-C              ????  N      -   -1 1.2.643.2.2.36.1     )],
+42031 => [qw( X9.62 prime192v2                  ????  N      -   -1 1.2.840.10045.3.1.2  )],
+42032 => [qw( X9.62 prime192v3                  ????  N      -   -1 1.2.840.10045.3.1.3  )],
+42033 => [qw( X9.62 prime239v1                  ????  N      -   -1 1.2.840.10045.3.1.4  )],
+42034 => [qw( X9.62 prime239v2                  ????  N      -   -1 1.2.840.10045.3.1.5  )],
+42035 => [qw( X9.62 prime239v3                  ????  N      -   -1 1.2.840.10045.3.1.6  )],
+42041 => [qw( X9.62 c2tnb191v1                  ????  N      -   -1 1.2.840.10045.3.0.5  )],
+42042 => [qw( X9.62 c2tnb191v2                  ????  N      -   -1 1.2.840.10045.3.0.6  )],
+42043 => [qw( X9.62 c2tnb191v3                  ????  N      -   -1 1.2.840.10045.3.0.7  )],
+42044 => [qw( X9.62 c2tnb239v1                  ????  N      -   -1 1.2.840.10045.3.0.11 )],
+42045 => [qw( X9.62 c2tnb239v2                  ????  N      -   -1 1.2.840.10045.3.0.12 )],
+42046 => [qw( X9.62 c2tnb239v3                  ????  N      -   -1 1.2.840.10045.3.0.13 )],
+42047 => [qw( X9.62 c2tnb359v1                  ????  N      -   -1 1.2.840.10045.3.0.18 )],
+42048 => [qw( X9.62 c2tnb431r1                  ????  N      -   -1 1.2.840.10045.3.0.20 )],
 # fobidden curves
-42061 => [qw(X9.62 c2pnb163v1 -   -1  n ? 1.2.840.10045.3.0.1     )],
-42062 => [qw(X9.62 c2pnb163v2 -   -1  n ? 1.2.840.10045.3.0.2     )],
-42063 => [qw(X9.62 c2pnb163v3 -   -1  n ? 1.2.840.10045.3.0.3     )],
-42064 => [qw(X9.62 c2pnb176w1 -   -1  n ? 1.2.840.10045.3.0.4     )],
-42065 => [qw(X9.62 c2pnb208w1 -   -1  n ? 1.2.840.10045.3.0.10    )],
-42066 => [qw(X9.62 c2pnb272w1 -   -1  n ? 1.2.840.10045.3.0.16    )],
-42067 => [qw(X9.62 c2pnb304w1 -   -1  n ? 1.2.840.10045.3.0.18    )],
-42068 => [qw(X9.62 c2pnb368w1 -   -1  n ? 1.2.840.10045.3.0.19    )],
+42061 => [qw( X9.62 c2pnb163v1                  ????  N      -   -1 1.2.840.10045.3.0.1  )],
+42062 => [qw( X9.62 c2pnb163v2                  ????  N      -   -1 1.2.840.10045.3.0.2  )],
+42063 => [qw( X9.62 c2pnb163v3                  ????  N      -   -1 1.2.840.10045.3.0.3  )],
+42064 => [qw( X9.62 c2pnb176w1                  ????  N      -   -1 1.2.840.10045.3.0.4  )],
+42065 => [qw( X9.62 c2pnb208w1                  ????  N      -   -1 1.2.840.10045.3.0.10 )],
+42066 => [qw( X9.62 c2pnb272w1                  ????  N      -   -1 1.2.840.10045.3.0.16 )],
+42067 => [qw( X9.62 c2pnb304w1                  ????  N      -   -1 1.2.840.10045.3.0.18 )],
+42068 => [qw( X9.62 c2pnb368w1                  ????  N      -   -1 1.2.840.10045.3.0.19 )],
 # unknown curves
-42101 => [qw(prime192v1       -  192  n ? -                       )], # X9.62/SECG curve over a 192 bit prime field
-42101 => [qw(prime192v2       -  192  n ? -                       )], # X9.62 curve over a 192 bit prime field
-42101 => [qw(prime192v3       -  192  n ? -                       )], # X9.62 curve over a 192 bit prime field
-42101 => [qw(prime239v1       -  239  n ? -                       )], # X9.62 curve over a 239 bit prime field
-42101 => [qw(prime239v2       -  239  n ? -                       )], # X9.62 curve over a 239 bit prime field
-42101 => [qw(prime239v3       -  239  n ? -                       )], # X9.62 curve over a 239 bit prime field
-42101 => [qw(prime256v1       -  256  n ? -                       )], # X9.62/SECG curve over a 256 bit prime field
-42101 => [qw(wap-wsg-idm-ecid-wtls1   -  113  n ? -               )], # WTLS curve over a 113 bit binary field
-42101 => [qw(wap-wsg-idm-ecid-wtls3   -  163  n ? -               )], # NIST/SECG/WTLS curve over a 163 bit binary field
-42101 => [qw(wap-wsg-idm-ecid-wtls4   -  113  n ? -               )], # SECG curve over a 113 bit binary field
-42101 => [qw(wap-wsg-idm-ecid-wtls5   -  163  n ? -               )], # X9.62 curve over a 163 bit binary field
-42101 => [qw(wap-wsg-idm-ecid-wtls6   -  112  n ? -               )], # SECG/WTLS curve over a 112 bit prime field
-42101 => [qw(wap-wsg-idm-ecid-wtls7   -  160  n ? -               )], # SECG/WTLS curve over a 160 bit prime field
-42101 => [qw(wap-wsg-idm-ecid-wtls8   -  112  n ? -               )], # WTLS curve over a 112 bit prime field
-42101 => [qw(wap-wsg-idm-ecid-wtls9   -  160  n ? -               )], # WTLS curve over a 160 bit prime field
-42101 => [qw(wap-wsg-idm-ecid-wtls10  -  233  n ? -               )], # NIST/SECG/WTLS curve over a 233 bit binary field
-42101 => [qw(wap-wsg-idm-ecid-wtls11  -  233  n ? -               )], # NIST/SECG/WTLS curve over a 233 bit binary field
-42101 => [qw(wap-wsg-idm-ecid-wtls12  -  224  n ? -               )], # WTLS curvs over a 224 bit prime field
-42101 => [qw(Oakley-EC2N-3    -  155  n ? -                       )], # IPSec/IKE/Oakley curve #3 over a 155 bit binary field.
-42101 => [qw(Oakley-EC2N-4    -  185  n ? -                       )], # IPSec/IKE/Oakley curve #4 over a 185 bit binary field
-#----+--------+------------+---------------------+-------------------------
-# numsp256d1
-# numsp256t1
-# Curve25519
-#----+--------+------------+---------------------+-------------------------
+42101 => [qw( prime192v1                        ????  N      -   92 )], # X9.62/SECG curve over a 192 bit prime field
+42101 => [qw( prime192v2                        ????  N      -   92 )], # X9.62 curve over a 192 bit prime field
+42101 => [qw( prime192v3                        ????  N      -   92 )], # X9.62 curve over a 192 bit prime field
+42101 => [qw( prime239v1                        ????  N      -   39 )], # X9.62 curve over a 239 bit prime field
+42101 => [qw( prime239v2                        ????  N      -   39 )], # X9.62 curve over a 239 bit prime field
+42101 => [qw( prime239v3                        ????  N      -   39 )], # X9.62 curve over a 239 bit prime field
+42101 => [qw( prime256v1                        ????  N      -   56 )], # X9.62/SECG curve over a 256 bit prime field
+42101 => [qw( wap-wsg-idm-ecid-wtls1            ???? N       -  113 )], # WTLS curve over a 113 bit binary field
+42101 => [qw( wap-wsg-idm-ecid-wtls3            ???? N       -  163 )], # NIST/SECG/WTLS curve over a 163 bit binary field
+42101 => [qw( wap-wsg-idm-ecid-wtls4            ???? N       -  112 )], # SECG curve over a 113 bit binary field
+42101 => [qw( wap-wsg-idm-ecid-wtls5            ???? N       -  163 )], # X9.62 curve over a 163 bit binary field
+42101 => [qw( wap-wsg-idm-ecid-wtls6            ???? N       -  112 )], # SECG/WTLS curve over a 112 bit prime field
+42101 => [qw( wap-wsg-idm-ecid-wtls7            ???? N       -  160 )], # SECG/WTLS curve over a 160 bit prime field
+42101 => [qw( wap-wsg-idm-ecid-wtls8            ???? N       -  112 )], # WTLS curve over a 112 bit prime field
+42101 => [qw( wap-wsg-idm-ecid-wtls9            ???? N       -  160 )], # WTLS curve over a 160 bit prime field
+42101 => [qw( wap-wsg-idm-ecid-wtls10           ???? N       -  233 )], # NIST/SECG/WTLS curve over a 233 bit binary field
+42101 => [qw( wap-wsg-idm-ecid-wtls11           ???? N       -  233 )], # NIST/SECG/WTLS curve over a 233 bit binary field
+42101 => [qw( wap-wsg-idm-ecid-wtls12           ???? N       -  224 )], # WTLS curvs over a 224 bit prime field
+42101 => [qw( Oakley-EC2N-3                     ???? N       -   55 )], # IPSec/IKE/Oakley curve #3 over a 155 bit binary field.
+42101 => [qw( Oakley-EC2N-4                     ???? N       -   85 )], # IPSec/IKE/Oakley curve #4 over a 185 bit binary field
+    #----+-------------------------------------+----+--+-------+---+------------------------
+# unknown curves
+#     => [qw( numsp256d1 )],
+#     => [qw( numsp256t1 )],
+#     => [qw( Curve25519 )],
 ); # %tls_curves
 
 ################
@@ -702,9 +691,9 @@ our %ciphers_desc = (   # description of following %ciphers table
 
 
 our %ciphers = (
-        #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
-        #'head'                 => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
-        #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
+    #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
+    # hex,hex               => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
+    #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
 # ...
 ); # %ciphers
 
@@ -929,7 +918,7 @@ our %cipher_names = (
     '0x03000094' => [qw(RSA-PSK-AES128-SHA              RSA_PSK_WITH_AES_128_CBC_SHA)],
 #   '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA          RSA_PSK_WITH_AES_128_CBC_SHA)],     # openssl 1.0.2
     '0x03000095' => [qw(RSA-PSK-AES256-SHA              RSA_PSK_WITH_AES_256_CBC_SHA)],
-#   '0x03000095' => [qw(RSA-PSK-AES128-CBC-SHA          RSA_PSK_WITH_AES_256_CBC_SHA)],     # openssl 1.0.2
+#   '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA          RSA_PSK_WITH_AES_256_CBC_SHA)],     # openssl 1.0.2
     '0x030000AA' => [qw(DHE-PSK-AES128-GCM-SHA256       DHE_PSK_WITH_AES_128_GCM_SHA256)],
     '0x030000AB' => [qw(DHE-PSK-AES256-GCM-SHA384       DHE_PSK_WITH_AES_256_GCM_SHA384)],
     '0x030000AC' => [qw(RSA-PSK-AES128-GCM-SHA256       RSA_PSK_WITH_AES_128_GCM_SHA256)],
@@ -1244,7 +1233,8 @@ our %cfg = (
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
     'do'            => [],      # the commands to be performed, any of commands
-    'commands'      => [],      # contains all commands, constructed below
+    'commands'      => [],      # contains all commands from %data, %checks and cmd-intern
+                                # will be constructed in main, see: construct list for special commands
     'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
                     # Results of these commands are not printed in output.
                     # Purpose is to avoid output of noicy commands  (like some
