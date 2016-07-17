@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.511 16/07/17 21:27:53",
+    SID         => "@(#) yeast.pl 1.512 16/07/17 22:06:31",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4570,7 +4570,7 @@ sub printdata($$$) {
     printheader($text{'out-infos'}, $text{'desc-info'});
     _trace_cmd('%data');
     foreach my $key (@{$cfg{'do'}}) {
-        next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
+        next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%data) < 1);
         if ($cfg{'experimental'} == 0) {
@@ -4611,7 +4611,7 @@ sub printchecks($$$) {
     _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
-        next if (_is_member( $key, \@{$cfg{'cmd-NOT_YET'}}) > 0);
+        next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%checks) < 1);
         next if (_is_intern( $key) > 0);# ignore aliases
@@ -5599,7 +5599,7 @@ while ($#argv >= 0) {
         if ($val =~ /^(bsi|TR-?0(2102|3116))$/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
         if (_is_member($val, \@{$cfg{'commands-USR'}}) == 1) {
                               push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});  next; }
-        if (_is_member($val, \@{$cfg{'cmd-NOT_YET'}}) > 0) {
+        if (_is_member($val, \@{$cfg{'commands-NOTYET'}}) > 0) {
             _warn("command not yet implemented '$val' may be ignored");
         }
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
@@ -6112,7 +6112,7 @@ if ($fail > 0) {
 } else {
     # print warnings and hints if necessary
     foreach my $cmd (@{$cfg{'do'}}) {
-        if (_is_member($cmd, \@{$cfg{'cmd-HINT'}}) > 0) {
+        if (_is_member($cmd, \@{$cfg{'commands-HINT'}}) > 0) {
             _hint("+$cmd : please see  '$me --help=CHECKS'  for more information");
         }
     }
