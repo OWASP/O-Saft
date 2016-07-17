@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.132 16/07/04 22:49:18";
+my  $man_SID= "@(#) o-saft-man.pm 1.133 16/07/17 22:39:27";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -951,9 +951,14 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if ($typ eq 'rfc')   { _man_opt("RFC $_", $sep, $man_text{'rfc'}->{$_}[0] . "\n\t\t\t$man_text{'rfc'}->{url}[1]/html/rfc$_") foreach (sort keys %{$man_text{'rfc'}}); }
     if ($typ eq 'abbr')  { _man_opt(do{(my $a=$_)=~s/ *$//;$a}, $sep, $man_text{'glossar'}->{$_}) foreach (sort keys %{$man_text{'glossar'}}); }
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
+
     if ($typ eq 'intern') {
+        # first list command with all internal commands-*
         foreach my $key (sort keys %cfg) {
-            next if ($key eq 'cmd-intern'); # don't list myself
+            next if ($key !~ m/^commands-(.*)/);
+            _man_opt($key, $sep, "+" . join(" +", @{$cfg{$key}}));
+        }
+        foreach my $key (sort keys %cfg) {
             next if ($key !~ m/^cmd-(.*)/);
             _man_opt("cmd-" . $1, $sep, "+" . join(" +", @{$cfg{$key}}));
         }
@@ -1270,7 +1275,7 @@ print << "EoHTML";
 EoHTML
     foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     print _man_html_br();
-    print _man_html_span('check cipher quick info info--v vulns dump check_sni help http list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # similar to @{$cfg{'cmd-intern'}}
+    print _man_html_span('check cipher quick info info--v vulns dump check_sni help http list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # similar to @{$cfg{'commands-INT'}}
     foreach my $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
                      no-sni sni no-http http BR
                      no-dns dns no-cert BR
@@ -1425,7 +1430,7 @@ sub man_help($) {
     if ($label =~ m/^todo/i)    {
         print "\n  NOT YET IMPLEMENTED\n";
         foreach my $label (sort keys %checks) {
-            next if (_is_member($label, \@{$cfg{'cmd-NOT_YET'}}) <= 0);
+            next if (_is_member($label, \@{$cfg{'commands-NOTYET'}}) <= 0);
             print "        $label\t- " . $checks{$label}->{txt} . "\n";
         }
     }
@@ -3011,14 +3016,16 @@ OPTIONS
       --cfg-cmd=CMD=LIST
 
           Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
-          are written without the leading  '+'.
-          CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
+          can be written without the leading  '+'.
+          If  CMD  is any of the known internal commands, it will be redifned.
+          If  CMD  is a unknown command, it will be created.
+
           Example:  --cfg-cmd=sni="sni hostname"
 
           To get a list of commands and their settings, use:
               $0 --help=intern
 
-          Main purpose is to reduce list of commands or print them sorted.
+          Main purpose is to reduce list of commands or to print them sorted.
 
       --cfg-score=KEY=SCORE
 
@@ -3988,6 +3995,13 @@ CUSTOMIZATION
 
         There exist customizations for some commonly used shells,  please see
         the files in the ./contrib/ directory.
+
+    COMMANDS
+
+        The option  --cfg-cmd=CMD=LIST  can be used to define own commands.
+        When configuring own commands,  CMD  must not be  one of the commands
+        listed with  --help=intern  and CMD  must constist only of digits and
+        letters.
 
 
 CIPHER NAMES
