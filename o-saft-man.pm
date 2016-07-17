@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.133 16/07/17 22:39:27";
+my  $man_SID= "@(#) o-saft-man.pm 1.134 16/07/17 23:14:13";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3989,9 +3989,9 @@ CUSTOMIZATION
 
     SHELL TWEAKS
 
-        Configurering the shell environment where the tool is startet, is not
-        not really a task for the tool itself, but it can simplify your life,
-        somehow.
+        Configuring the shell environment where the tool is startet,  must be 
+        done before the tools starts.  It is  not really  a task for the tool
+        itself, but it can simplify your life, somehow.
 
         There exist customizations for some commonly used shells,  please see
         the files in the ./contrib/ directory.
