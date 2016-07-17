@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.512 16/07/17 22:06:31",
+    SID         => "@(#) yeast.pl 1.513 16/07/18 00:51:04",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -750,6 +750,7 @@ my %check_http = (  ## HTTP vs. HTTPS data
     'hsts_sts'      => {'txt' => "Target sends STS header"},
     'sts_maxage'    => {'txt' => "Target sends STS header with proper max-age"},
     'sts_subdom'    => {'txt' => "Target sends STS header with includeSubdomain"},
+    'sts_preload'   => {'txt' => "Target sends STS header with preload"},
     'hsts_is301'    => {'txt' => "Target redirects with status code 301"}, # RFC6797 requirement
     'hsts_is30x'    => {'txt' => "Target redirects not with 30x status code"}, # other than 301, 304
     'hsts_fqdn'     => {'txt' => "Target redirect matches given host"},
@@ -865,6 +866,7 @@ our %shorttexts = (
     'sts_maxage18'  => "STS max-age > 18 weeks",
     'sts_expired'   => "STS max-age < certificate's validity",
     'sts_subdom'    => "STS includeSubdomain",
+    'sts_preload'   => "STS preload",
     'hsts_httpequiv'=> "STS not in meta tag",
     'hsts_ip'       => "STS header not for IP",
     'hsts_location' => "STS and Location header",
@@ -1792,7 +1794,7 @@ sub _cfg_set($$)       {
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
                     # whitelust check for valid characters; avoid injections
                     push(@{$cfg{'commands-USR'}}, $key);
-                    _warn("command '$key' specified by user");
+                    _warn("command '+$key' specified by user") if ((grep{/--v/i} @ARGV) > 0);;
                 }
             }
         }
@@ -3943,8 +3945,9 @@ sub checkhttp($$) {
         $checks{'hsts_ip'}      ->{val} = $host        if ($host =~ m/\d+\.\d+\.\d+\.\d+/); # RFC6797 requirement
         $checks{'hsts_fqdn'}    ->{val} = $hsts_fqdn   if ($http_location !~ m|^https://$host|i);
         $checks{'hsts_samehost'}->{val} = $hsts_fqdn   if ($fqdn ne $host);
-        $checks{'hsts_sts'}     ->{val} = $notxt       if ($data{'https_sts'}  ->{val}($host) eq "");
-        $checks{'sts_subdom'}   ->{val} = $notxt       if ($data{'hsts_subdom'}->{val}($host) eq "");
+        $checks{'hsts_sts'}     ->{val} = $notxt       if ($data{'https_sts'}   ->{val}($host) eq "");
+        $checks{'sts_subdom'}   ->{val} = $notxt       if ($data{'hsts_subdom'} ->{val}($host) eq "");
+        $checks{'sts_preload'}  ->{val} = $notxt       if ($data{'hsts_preload'}->{val}($host) eq "");
         $checks{'sts_maxage'}   ->{val} = $hsts_maxage if (($hsts_maxage > $checks{'sts_maxage1m'}->{val}) or ($hsts_maxage < 1));
         $checks{'sts_maxage'}   ->{val}.= " = " . int($hsts_maxage / $checks{'sts_maxage1d'}->{val}) . " days" if ($checks{'sts_maxage'}->{val} ne ""); # pretty print
         $checks{'sts_maxagexy'} ->{val} = ($hsts_maxage > $checks{'sts_maxagexy'}->{val}) ? "" : "< ".$checks{'sts_maxagexy'}->{val};
@@ -3953,7 +3956,7 @@ sub checkhttp($$) {
         my $hsts_equiv = $data{'hsts_httpequiv'}->{val}($host);
         $checks{'hsts_httpequiv'}->{val} = $hsts_equiv if ($hsts_equiv ne ""); # RFC6797 requirement
         # other sts_maxage* are done below as they change {val}
-        checkdates($host,$port);    # computes check{'sts_exired'}
+        checkdates($host,$port);    # computes check{'sts_expired'}
     } else {
         foreach my $key (qw(sts_subdom sts_maxage sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
             $checks{$key}->{val}    = $text{'no-STS'};
