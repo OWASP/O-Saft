@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.43 16/05/15 17:10:41";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.44 16/07/17 14:14:30";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -137,7 +137,7 @@ sub _yeast_trac($$){
                         last SWITCH;
                     };
         # DEFAULT
-                        warn STR_WARN . " user defined type '$_' skipped";
+                        _yeast(STR_WARN . " user defined type '$_' skipped");
     } # SWITCH
 
     return;
@@ -152,8 +152,9 @@ sub _yeast_init() {
     _yTRAC("_yeast_init::SID", $DBX_SID) if ($cfg{'trace'} > 2);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
     _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
-    ## no critic qw(Variables::ProhibitPackageVars)
-    if ($cfg{'trace'} > 1) {
+    if ($cfg{'trace'} <= 1) {
+        _yeast("!Hint: use --trace=2  to see Net::SSLinfo variables");
+    } else {
         _yline(" Net::SSLinfo {");
         _yTRAC("::trace",         $Net::SSLinfo::trace);
         _yTRAC("::linux_debug",   $Net::SSLinfo::linux_debug);
@@ -174,11 +175,12 @@ sub _yeast_init() {
         _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
         _yline(" Net::SSLinfo }");
     }
-    ## use critic
     _yTRAC("verbose", $cfg{'verbose'});
     _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
     # more detailed trace first
-    if ($cfg{'trace'} > 1){
+    if ($cfg{'trace'} <= 1) {
+        _yeast("!Hint: use --trace=2  to see external commands");
+    } else {
         _yline(" %cmd {");
         foreach my $key (sort keys %cmd) {
             _yeast_trac(\%cmd, $key);
@@ -186,9 +188,6 @@ sub _yeast_init() {
         _yline(" %cmd }");
         _yline(" complete %cfg {");
         foreach my $key (sort keys %cfg) {
-            if ($cfg{'trace'} <= 2){
-                next if $key =~ /^cmd-/; # print internal list of command for full trace only
-            }
             _yeast_trac(\%cfg, $key);
         }
         _yline(" %cfg }");
@@ -217,10 +216,11 @@ sub _yeast_init() {
     }
     _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
     printf("#%s: %14s= %s", $cfg{'mename'}, "SSL versions", "[ ");
-    printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});
+    printf("%s=%s ", $_, $cfg{$_}) foreach (@{$cfg{'versions'}});   ## no critic qw(ControlStructures::ProhibitPostfixControls)
     printf("]\n");
     _yeast(" special SSLv2= null-sslv2=$cfg{'nullssl2'}, ssl-lazy=$cfg{'ssl_lazy'}");
     _yeast(" ignore output= " . _y_ARR(@{$cfg{'ignore-out'}}));
+    _yeast(" user commands= " . _y_ARR(@{$cfg{'commands-USR'}}));
     _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
     _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
     _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
@@ -232,7 +232,7 @@ sub _yeast_init() {
 sub _yeast_exit() {
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
-    _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}});
+    _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}}); ## no critic qw(ControlStructures::ProhibitPostfixControls)
     _y_CMD("cfg'done'}");
     return;
 } # _yeast_exit
@@ -247,8 +247,8 @@ sub _yeast_args() {
     _y_ARG("                   RC-FILE= " . $cfg{'RC-FILE'});
     _y_ARG("      from RC-FILE RC-ARGV= ($#{$cfg{'RC-ARGV'}} more args ...)");
     if ($cfg{'verbose'} <= 0) {
-    _y_ARG("      # hint: use --v to get the list of all RC-ARGV");
-    _y_ARG("      # hint: use --v --v to see the processed RC-ARGV");
+    _y_ARG("      !Hint:  use --v to get the list of all RC-ARGV");
+    _y_ARG("      !Hint:  use --v --v to see the processed RC-ARGV");
                   # NOTE: ($cfg{'trace'} does not work here
     }
     _y_ARG("      from RC-FILE RC-ARGV= " . _y_ARR(@{$cfg{'RC-ARGV'}})) if ($cfg{'verbose'} > 0);
