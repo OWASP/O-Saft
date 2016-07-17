@@ -204,7 +204,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.83 Winter Edition 2015
+#?      @(#) 1.84 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -221,7 +221,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.83 16/07/05 20:30:26 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.84 16/07/17 23:31:15 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(ICH)    [file tail $argv0]
@@ -500,11 +500,11 @@ txt2arr [string map "
   no	-regexp	1	{}	{}	{}	0	no\s*(LO|WE|we|ME|HI)	word 'no' followed by LOW|WEAK|MEDIUM|HIGH
 # NOTE   no  has no colours, otherwhise it would mix with filters below
 # FIXME  no  must be first regex in liste here, but still causes problems in toggle_txt
-  LOW	-exact	3	red	{}	{}	0	LOW	word  LOW   anywhere
+  LOW	-regexp	3	red	{}	{}	0	(LOW|low)	word  LOW   anywhere
   WEAK	-exact	4	red	{}	{}	0	WEAK	word  WEAK  anywhere
   weak	-exact	4	red	{}	{}	0	weak	word  weak  anywhere
- MEDIUM	-exact	6	yellow	{}	{}	0	MEDIUM	word MEDIUM anywhere
-  HIGH	-exact	4	_lGreen	{}	{}	0	HIGH	word  HIGH  anywhere
+ MEDIUM	-regexp	6	yellow	{}	{}	0	(MEDIUM|medium)	word MEDIUM anywhere
+  HIGH	-regexp	4	_lGreen	{}	{}	0	(HIGH|high)	word  HIGH  anywhere
  **WARN	-exact	0	_lBlue	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
   NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
   YES	-regexp	3	_lGreen	{}	{}	0	yes	word  yes  at end of line
