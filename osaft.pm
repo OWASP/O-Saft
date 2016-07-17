@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.49 16/07/17 14:17:37',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.50 16/07/17 17:09:37',
 
 };
 
@@ -1233,15 +1233,15 @@ our %cfg = (
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
     'do'            => [],      # the commands to be performed, any of commands
-    'commands'      => [],      # contains all commands from %data, %checks and cmd-intern
+    'commands'      => [],      # contains all commands from %data, %checks and commands-INT
                                 # will be constructed in main, see: construct list for special commands
     'commands-CMD'  => [],      # contains all cmd-* commands from below
     'commands-USR'  => [],      # contains all commands defined by user with
                                 # option --cfg-cmd=* ; see _cfg_set()
-    'cmd-experiment'=> [        # experimental commands
+    'commands-EXP'  => [        # experimental commands
                         qw(sloth),
                        ],
-    'cmd-intern'    => [        # add internal commands
+    'commands-INT'  => [        # add internal commands
                     # these have no key in %data or %checks
                         qw(
                          check cipher dump check_sni exec help info info--v http
@@ -1518,8 +1518,8 @@ our %cfg = (
         'cmd-http'  => '^h?(?:ttps?|sts)_',     # match keys for HTTP
         'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
         'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
-        'cmd-intern'=> '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
         'cmd-cfg'   => '(?:cmd|checks?|data|hint|text|scores?)',# --cfg-* commands
+        'commands-INT'  => '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
 
         # Regex for matching SSL protocol keys in %data and %checks
         'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
