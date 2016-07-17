@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.50 16/07/17 17:09:37',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.51 16/07/17 22:03:27',
 
 };
 
@@ -1232,7 +1232,16 @@ our %cfg = (
     }, # cipherranges
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
-    'do'            => [],      # the commands to be performed, any of commands
+
+   # following keys for commands, nameing scheme:
+   #     do         - the list off all commands to be performed
+   #     commands-* - internal list for various types of commands
+   #     cmd-*      - list for "summary" commands, can be redifined by user
+   #     need_*     - list of commands which need a speciphic check
+   #
+   # config. key        list      description
+   #------------------+---------+----------------------------------------------
+    'do'            => [],      # commands to be performed
     'commands'      => [],      # contains all commands from %data, %checks and commands-INT
                                 # will be constructed in main, see: construct list for special commands
     'commands-CMD'  => [],      # contains all cmd-* commands from below
@@ -1241,18 +1250,28 @@ our %cfg = (
     'commands-EXP'  => [        # experimental commands
                         qw(sloth),
                        ],
+    'commands-NOTYET'=>[        # commands and checks NOT YET IMPLEMENTED
+                        qw(zlib lzo open_pgp fallback closure order sgc scsv time),
+                       ],
     'commands-INT'  => [        # add internal commands
-                    # these have no key in %data or %checks
+                                # these have no key in %data or %checks
                         qw(
                          check cipher dump check_sni exec help info info--v http
                          quick list libversion sizes s_client version quit
                          sigkey bsi ev cipherraw cipher-dh
                         ),
-                    # internal (debugging) commands
+                                # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
-                    # keys not used as command
+                                # keys not used as command
                         qw(cn_nosni valid-years valid-months valid-days)
                        ],
+    'commands-HINT' => [        # checks which are NOT YET fully implemented
+                                # these are mainly all commands for compliance
+                                # see also: cmd-bsi
+                        qw(rfc7525
+                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
+                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+                       )],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
     'cmd-drown'     => [qw(drown)],                 # commands for +drown
@@ -1267,15 +1286,15 @@ our %cfg = (
     'cmd-quick'     => [        # commands for +quick
                         qw(
                          selected cipher fingerprint_hash fp_not_md5 
-                         sha2signature pub_encryption pub_enc_known email
-                         serial subject dates verify expansion compression hostname
+                         sha2signature pub_encryption pub_enc_known email serial
+                         subject dates verify expansion compression hostname
                          beast crime drown freak export rc4_cipher rc4 pfs_cipher crl
                          hassslv2 hassslv3 poodle sloth
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- rfc7525 hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
-    'cmd-bsi'       => [                            # commands for +bsi
-                                                    # see also: cmd-HINT
+    'cmd-bsi'       => [        # commands for +bsi
+                                # see also: commands-HINT
                         qw(after dates crl rc4_cipher renegotiation
                            tr-02102            bsi-tr-02102+ bsi-tr-02102-
                            tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
@@ -1283,11 +1302,11 @@ our %cfg = (
     'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
-    'cmd-vulns'     => [                            # commands for checking known vulnerabilities
+    'cmd-vulns'     => [        # commands for checking known vulnerabilities
                         qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth time hassslv2 hassslv3 pfs_cipher session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
-    'cmd-prots'     => [                            # commands for checking protocols
+    'cmd-prots'     => [        # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn alpn npn session_protocol protocols https_protocols http_protocols https_svc http_svc)
                        ],
     'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
@@ -1303,16 +1322,6 @@ our %cfg = (
                                 # they should be available with +info --v only 
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
-    'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
-                        qw(zlib lzo open_pgp fallback closure order sgc scsv time),
-                       ],
-    'cmd-HINT'      => [        # checks which are NOT YET fully implemented
-                                # these are mainly all commands for compliance
-                                # see also: cmd-bsi
-                        qw(rfc7525
-                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
-                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
-                       )],
     'need_cipher'   => [        # commands which need +cipher
                         qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
@@ -1340,6 +1349,10 @@ our %cfg = (
                          sigkey_value pubkey_value modulus
                          master_key session_id session_ticket
                        )],      # fingerprint is special, see _ishexdata()
+   #------------------+---------+----------------------------------------------
+
+   # option key        default   description
+   #------------------+---------+----------------------------------------------
     'opt-v'         => 0,       # 1 when option -v was given
     'opt-V'         => 0,       # 1 when option -V was given
     'format'        => "",      # empty means some slightly adapted values (no \s\n)
