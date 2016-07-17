@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.508 16/07/17 13:27:57",
+    SID         => "@(#) yeast.pl 1.509 16/07/17 16:43:52",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1757,10 +1757,13 @@ sub _cfg_set($$)       {
     ($key, $val) = split(/=/, $arg, 2); # left of first = is key
     $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanatize key
     $val =  "" if (!defined $val);      # avoid warnings when not KEY=VALUE
+    $val =~ s/^[+]//;                   # remove first + in command liss
+    $val =~ s/ [+]/ /g;                 # remove + in commands
 
     if ($typ eq 'CFG-cmd') {            # set new list of commands $arg
         $typ = 'cmd-' . $key ;# the command to be set, i.e. cmd-http, cmd-sni, ...
         _trace("_cfg_set: cfg{$typ}, KEY=$key, CMD=$val");
+        _dbx("_cfg_set: cfg{$typ}, KEY=$key, CMD=$val");
         @{$cfg{$typ}} = ();
         push(@{$cfg{$typ}}, split(/\s+/, $val));
         foreach my $key (@{$cfg{$typ}}){# check for mis-spelled commands
