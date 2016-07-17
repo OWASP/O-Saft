@@ -97,6 +97,26 @@
 --ignore-output=https_body
 
 ###
+### define new command +preload
+###
+# STS header preload attribute
+#       To satisfy the requirements on  https://hstspreload.appspot.com/  the
+#       HSTS header must:
+#         * have the max-age with at least 18 weeks (10886400 seconds)
+#         * have the includeSubDomains attribute
+#         * have the preload attribute
+#         * redirect to https first, then to sub-domains (if redirected)
+#         * have an HSTS header in each redirect to https.
+#
+#       Additionally, the site must have:
+#         * a valid certificate
+#         * serve all subdomains over https.
+#
+#       Except the last requirement, following  +preload  will do the checks.
+#
+--cfg_cmd=preload=sts_maxage18 sts_subdom sts_preload hsts_is301 hsts_samehost hsts_httpequiv expired hsts_maxage hsts_subdom hsts_preload
+
+###
 ### reconfigure list of check for special commands (+http +check ...)
 ###
 # The default behaviour to print the results is to loop over the list of hash
