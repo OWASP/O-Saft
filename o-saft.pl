@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.506 16/07/13 00:27:59",
+    SID         => "@(#) yeast.pl 1.507 16/07/17 12:03:41",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1131,6 +1131,9 @@ foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
 }
+foreach my $key (keys %cfg) {               # well-known "summary" commands
+    push(@{$cfg{'commands-CMD'}}, $key) if ($key =~ m/^cmd-/);
+}
 
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
 push(@{$cfg{'cmd-info--v'}}, 'dump');       # more information
@@ -1759,7 +1762,7 @@ sub _cfg_set($$)       {
 
     if ($typ eq 'CFG-cmd') {            # set new list of commands $arg
         $typ = 'cmd-' . $key ;# the command to be set, i.e. cmd-http, cmd-sni, ...
-        _trace("_cfg_set: KEY=$key, CMD=$val");
+        _trace("_cfg_set: cfg{$typ}, KEY=$key, CMD=$val");
         @{$cfg{$typ}} = ();
         push(@{$cfg{$typ}}, split(/\s+/, $val));
         foreach my $key (@{$cfg{$typ}}){# check for mis-spelled commands
