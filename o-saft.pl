@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.507 16/07/17 12:03:41",
+    SID         => "@(#) yeast.pl 1.508 16/07/17 13:27:57",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1131,9 +1131,6 @@ foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
 }
-foreach my $key (keys %cfg) {               # well-known "summary" commands
-    push(@{$cfg{'commands-CMD'}}, $key) if ($key =~ m/^cmd-/);
-}
 
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
 push(@{$cfg{'cmd-info--v'}}, 'dump');       # more information
@@ -1737,6 +1734,7 @@ sub _cfg_set($$)       {
     # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
     # if given value is a file, read settings from that file
     # otherwise given value must be KEY=VALUE format;
+    # NOTE: may define new commands for CFG-cmd
     my $typ = shift;    # type of config value to be set
     my $arg = shift;    # KEY=VAL or filename
     my ($key, $val);
@@ -1776,6 +1774,25 @@ sub _cfg_set($$)       {
                 next;
             }
             _warn("unknown command '+$key' for '$typ'; setting ignored");
+        }
+        # check if it is a known command, otherwise add it and print warning
+        if ((_is_member($key, \@{$cfg{'commands'}})
+           + _is_member($key, \@{$cfg{'commands-CMD'}})
+           + _is_member($key, \@{$cfg{'cmd-intern'}})
+            ) < 1) {
+            # NOTE: new commands are added only if they are not yet defined,
+            # wether as internal, as summary or as (previously defined) user
+            # command. The new command must also consists only of  a-z0-9_.-
+            # charchters.  If any of these conditions fail, the command will
+            # be ignored silently.
+            if (_is_member("cmd-$key", \@{$cfg{'commands-CMD'}}) == 0) {
+                # needed more checks, as these commands are defined as cmd-*
+                if ($key =~ m/^([a-z0-9_.-]+)$/) {
+                    # whitelust check for valid characters; avoid injections
+                    push(@{$cfg{'commands-USR'}}, $key);
+                    _warn("command '$key' specified by user");
+                }
+            }
         }
     }
 
@@ -5578,6 +5595,8 @@ while ($#argv >= 0) {
         if ($val eq 'sni')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sni'}});   next; }
         if ($val eq 'ev')   { push(@{$cfg{'do'}}, @{$cfg{'cmd-ev'}});    next; }
         if ($val =~ /^(bsi|TR-?0(2102|3116))$/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
+        if (_is_member($val, \@{$cfg{'commands-USR'}}) == 1) {
+                              push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});  next; }
         if (_is_member($val, \@{$cfg{'cmd-NOT_YET'}}) > 0) {
             _warn("command not yet implemented '$val' may be ignored");
         }
