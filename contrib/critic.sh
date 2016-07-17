@@ -32,7 +32,7 @@
 #?      --exclude PATTERN  - dieses PATTERN nicht prüfen
 #?
 #? BESCHREIBUNG
-#?      Wrapper-Script zum vereinfachten  Aufruf von perlcritic.
+#?      Wrapper-Script zum vereinfachten Aufruf von  perlcritic.
 #?      Werden nur Dateinamen als Argumente angegeben, dann wird perlcritic mit
 #?      nur diesen aufgerufen. Bei allen anderen Argumenent wird geprüft, ob es
 #?      eine Option (siehe oben) ist,  wenn nicht wird es an perlcritic überge-
@@ -43,6 +43,9 @@
 #?      der Option  --include  an perlcritic übergeben.
 #?      Werden Policys mit -<policy>  angegeben, dann werden sie mit der Option
 #?      --exclude  an perlcritic übergeben.
+#?
+#?      Alle Ausgaben von  $0  selbst beginnen mit  # (hash), alle anderen Aus-
+#?      gaben kommen von  perlcritic.
 #?
 #? BEISPIELE
 #?      * normaler Aufruf (identisch zu perlcritic direkt):
@@ -71,12 +74,15 @@
 #?      Wenn es eine Datei gibt, die genauso heisst, wie eine Policy, dann wird
 #?      dieses Argument immer als Dateiname und nie als Policy-Name benutzt.
 #?
+#?      Dateien in den Verzeichnissen: .git  .svn  CVS  RCS  SCCS  werden nicht
+#?      bearbeitet, es wird eine Warnung ausgegeben.
+#?
 #? SIEHE AUCH
 #?      perlcriticrc(1)
 #?      .perlcriticrc
 #?
 #? VERSION
-#?      @(#) critic.sh 1.5 16/05/15 13:23:08
+#?      @(#) critic.sh 1.6 16/07/17 10:59:20
 #?
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -91,6 +97,21 @@ opts=""
 our_sources="\
     osaft.pm o-saft-dbx.pm o-saft-man.pm o-saft-usr.pm \
     Net/SSLhello.pm Net/SSLinfo.pm checkAllCiphers.pl"
+
+_isrepository () {
+    #? check if path is a potentially a repository directory
+    #? returns 0 if it is, 1 otherwise
+    arg="$1"
+    dir=${path%/*}
+    case "$dir" in
+	.git | .svn | CVS | RCS | SCCS )
+		#echo "# [$ich] **WARNING: $arg seems to be a repository file; skipped"
+		echo "# [$ich] **WARNING: $arg scheint eine Repository-Datei zu sein; ignoriert"
+		return 0
+		break;
+    esac
+    return 1
+}; # _isrepository
 
 while [ $# -gt 0 ]; do
 	arg="$1"
@@ -165,6 +186,7 @@ if [ "$mode" = "ALLE" ]; then
 		echo
 		echo "# [$ich] $serverity {############################################################"
 		for file in $files; do
+			_isrepository $file && continue
 			echo
 			echo "# perlcritic $serverity $file $opts"
 			$try   \perlcritic $serverity $file $opts
@@ -186,7 +208,11 @@ echo "# [$ich] Policys:  $policy $excl"
 echo "# [$ich] Optionen: $opts"
 echo "# [$ich] Optionen: $@"
 echo ""
-echo \perlcritic $files $policy $excl $opts $@
-[ -n "$try" ] && exit 0
-\perlcritic $files $policy $excl $opts $@
+for file in $files; do
+    _isrepository $file && continue
+    echo \perlcritic $file $policy $excl $opts $@
+    [ -n "$try" ] && continue
+         \perlcritic $file $policy $excl $opts $@
+    [ $? -ne 0 ]   && echo $file critique 
+done
 
