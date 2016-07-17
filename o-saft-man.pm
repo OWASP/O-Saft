@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.134 16/07/17 23:14:13";
+my  $man_SID= "@(#) o-saft-man.pm 1.135 16/07/18 01:03:45";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3021,6 +3021,7 @@ OPTIONS
           If  CMD  is a unknown command, it will be created.
 
           Example:  --cfg-cmd=sni="sni hostname"
+          An example  +preload  can be found in  .o-saft.pl .
 
           To get a list of commands and their settings, use:
               $0 --help=intern
@@ -3546,6 +3547,23 @@ CHECKS
           * STS header must contain includeSubDirectoy directive
           * STS header max-age should be less than 1 month
           * STS must not be set in http-equiv attribute of a meta TAG
+
+      STS header preload attribute (+preload)
+
+        To satisfy the requirements on  https://hstspreload.appspot.com/  the
+        HSTS header must:
+          * have the max-age with at least 18 weeks (10886400 seconds)
+          * have the includeSubDomains attribute
+          * have the preload attribute
+          * redirect to https first, then to sub-domains (if redirected)
+          * have an HSTS header in each redirect to https.
+
+        Additionally, the site must have:
+          * a valid certificate
+          * serve all subdomains over https.
+
+        Except the last requirement,  +preload  will do the checks.
+        Note that  +preload  is defined in  .o-saft.pl  only.
 
       Public Key Pins header
         TBD - to be described ...
