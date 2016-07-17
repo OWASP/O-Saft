@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.510 16/07/17 16:54:38",
+    SID         => "@(#) yeast.pl 1.511 16/07/17 21:27:53",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1123,7 +1123,7 @@ our %cmd = (
 #| -------------------------------------
 my $old   = "";
 my $regex = join("|", @{$cfg{'versions'}}); # these are data only, not commands
-foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'cmd-intern'}}) {
+foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'commands-INT'}}) {
     next if ($key eq $old); # unique
     $old  = $key;
     push(@{$cfg{'commands'}},  $key) if ($key !~ m/^(?:$regex)/);
@@ -1780,7 +1780,7 @@ sub _cfg_set($$)       {
         # check if it is a known command, otherwise add it and print warning
         if ((_is_member($key, \@{$cfg{'commands'}})
            + _is_member($key, \@{$cfg{'commands-CMD'}})
-           + _is_member($key, \@{$cfg{'cmd-intern'}})
+           + _is_member($key, \@{$cfg{'commands-INT'}})
             ) < 1) {
             # NOTE: new commands are added only if they are not yet defined,
             # wether as internal, as summary or as (previously defined) user
@@ -2057,7 +2057,7 @@ sub _need_checkssl()   { return _need_this('need_checkssl'); };
 sub _is_hashkey($$)    { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
 sub _is_do($)          { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
-sub _is_intern($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'cmd-intern'}}); }
+sub _is_intern($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'commands-INT'}}); }
 sub _is_hexdata($)     { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});   }
 sub _is_call($)        { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
@@ -4574,12 +4574,12 @@ sub printdata($$$) {
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%data) < 1);
         if ($cfg{'experimental'} == 0) {
-            next if (_is_member( $key, \@{$cfg{'cmd-experiment'}}) > 0);
+            next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
         }
         # special handling vor +info--v
         if (_is_do('info--v') > 0) {
             next if ($key eq 'info--v');
-            next if ($key =~ m/$cfg{'regex'}->{'cmd-intern'}/i);
+            next if ($key =~ m/$cfg{'regex'}->{'commands-INT'}/i);
         } else {
             next if (_is_intern( $key) > 0);
         }
@@ -4618,7 +4618,7 @@ sub printchecks($$$) {
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
         next if ($key eq 'selected');   # done above
         if ($cfg{'experimental'} == 0) {
-            next if (_is_member( $key, \@{$cfg{'cmd-experiment'}}) > 0);
+            next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
         }
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) { # sizes are special
