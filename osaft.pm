@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.48 16/07/17 13:29:43',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.49 16/07/17 14:17:37',
 
 };
 
@@ -1238,14 +1238,9 @@ our %cfg = (
     'commands-CMD'  => [],      # contains all cmd-* commands from below
     'commands-USR'  => [],      # contains all commands defined by user with
                                 # option --cfg-cmd=* ; see _cfg_set()
-    'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
-                    # Results of these commands are not printed in output.
-                    # Purpose is to avoid output of noicy commands  (like some
-                    # +bsi*).  All data collections and checks are still done,
-                    # just output of results is omitted.
-                    # Technically these commands are not removed from cfg{do},
-                    # but just skipped in printdata() and printchecks(), which
-                    # makes implementation much easier.
+    'cmd-experiment'=> [        # experimental commands
+                        qw(sloth),
+                       ],
     'cmd-intern'    => [        # add internal commands
                     # these have no key in %data or %checks
                         qw(
@@ -1258,23 +1253,6 @@ our %cfg = (
                     # keys not used as command
                         qw(cn_nosni valid-years valid-months valid-days)
                        ],
-    'cmd-experiment'=> [        # experimental commands
-                        qw(sloth),
-                       ],
-    'cmd-NL'        => [        # commands which need NL when printed
-                                # they should be available with +info --v only 
-                        qw(certificate extensions pem pubkey sigdump text chain chain_verify)
-                       ],
-    'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
-                        qw(zlib lzo open_pgp fallback closure order sgc scsv time),
-                       ],
-    'cmd-HINT'      => [        # checks which are NOT YET fully implemented
-                                # these are mainly all commands for compliance
-                                # see also: cmd-bsi
-                        qw(rfc7525
-                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
-                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
-                       )],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
     'cmd-drown'     => [qw(drown)],                 # commands for +drown
@@ -1312,7 +1290,29 @@ our %cfg = (
     'cmd-prots'     => [                            # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn alpn npn session_protocol protocols https_protocols http_protocols https_svc http_svc)
                        ],
+    'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
+                    # Results of these commands are not printed in output.
+                    # Purpose is to avoid output of noicy commands  (like some
+                    # +bsi*).  All data collections and checks are still done,
+                    # just output of results is omitted.
+                    # Technically these commands are not removed from cfg{do},
+                    # but just skipped in printdata() and printchecks(), which
+                    # makes implementation much easier.
                     # need_* lists used to improve performance
+    'cmd-NL'        => [        # commands which need NL when printed
+                                # they should be available with +info --v only 
+                        qw(certificate extensions pem pubkey sigdump text chain chain_verify)
+                       ],
+    'cmd-NOT_YET'   => [        # commands and checks NOT YET IMPLEMENTED
+                        qw(zlib lzo open_pgp fallback closure order sgc scsv time),
+                       ],
+    'cmd-HINT'      => [        # checks which are NOT YET fully implemented
+                                # these are mainly all commands for compliance
+                                # see also: cmd-bsi
+                        qw(rfc7525
+                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
+                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+                       )],
     'need_cipher'   => [        # commands which need +cipher
                         qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
