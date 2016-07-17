@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.46 16/07/17 11:18:45',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.47 16/07/17 12:05:04',
 
 };
 
@@ -1235,6 +1235,9 @@ our %cfg = (
     'do'            => [],      # the commands to be performed, any of commands
     'commands'      => [],      # contains all commands from %data, %checks and cmd-intern
                                 # will be constructed in main, see: construct list for special commands
+    'commands-CMD'  => [],      # contains all cmd-* commands from below
+    'commands-USR'  => [],      # contains all commands defined by user with
+                                # option --cfg-cmd=* ; see _cfg_set()
     'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
                     # Results of these commands are not printed in output.
                     # Purpose is to avoid output of noicy commands  (like some
