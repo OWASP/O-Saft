@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.513 16/07/18 00:51:04",
+    SID         => "@(#) yeast.pl 1.514 16/07/19 00:15:15",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1570,7 +1570,6 @@ our %text = (
     # code, which may be useful for documentation purpose  because such hints
     # often descibe missing features or functionality.
     'hints' => {
-        'beast'     => "does not check if TLS 1.2 is the only protocol",
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746",
     },
 
@@ -2323,7 +2322,7 @@ sub _isccs($$$) {
 #################
 # $ccs = _isccs($host, $port, $ssl);
 #    'openssl_version_map' => {  # map our internal option to openssl version (hex value)
-#        'SSLv2'=> 0x0002, 'SSLv3'=> 0x0300, 'TLSv1'=> 0x0301, 'TLSv11'=> 0x0302, 'TLSv12'=> 0x0303, 'TLSv13'=> 0x0304,
+#        'SSLv2'=> 0x0002, 'SSLv3'=> 0x0300, 'TLSv1'=> 0x0301, 'TLSv11'=> 0x0302, 'TLSv12'=> 0x0303, 'TLSv13'=> 0x0304,  }
 #################
 #\x14\x03\tls_version\x00\x01\x01    sed 's/tls_version/'"$2"'/g'
 #\x01    # ist TLSv1
@@ -2376,6 +2375,27 @@ sub _isccs($$$) {
     close($cl);
     return $ret;
 } # _isccs
+
+sub _istls12only($$) {
+    #? returns empty string if TLS 1.2 is the only protocol used,
+    #? returns all used protocols otherwise
+    my ($host, $port) = @_;
+    my @ret;
+    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1 TLSv11)) {
+        # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
+        # If the protocol  is supported by the target,  at least  one cipher
+        # must be accpted. So the amount of ciphers must be > 0.
+        if ($prot{$ssl}->{'cnt'}  >  0) {
+            push(@ret, $ssl);
+        }
+        if ($cfg{$ssl} == 0) {
+            # this condition is never true if ciphers have been detected
+            push(@ret, _get_text('disabled', "--no-$ssl"));
+        }
+    }
+_dbx ": TLS  " . join(" ", @ret);
+    return join(" ", @ret);
+} # _istls12only
 
 sub _getwilds($$) {
     # compute usage of wildcard in CN and subjectAltname
@@ -2888,12 +2908,10 @@ sub checkciphers($$) {
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
 
-    # BEAST check
-    if ($prot{'SSLv3'}->{'cnt'} <= 0) {
-        # if SSLv3 was disabled, check for BEAST is incomplete; inform about that
-        $checks{'beast'}->{val} .= " " . _get_text('disabled', "--no-SSLv3");
-    }
-    $checks{'breach'}->{val}     = "<<NOT YET IMPLEMENTED>>";
+    # additionalBEAST check: is TLS 1.2 the only protocol used?
+    $checks{'beast'}->{val} .= " " . _istls12only($host, $port);
+
+    $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
