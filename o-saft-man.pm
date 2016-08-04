@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.135 16/07/18 01:03:45";
+my  $man_SID= "@(#) o-saft-man.pm 1.136 16/08/04 23:25:25";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -312,6 +312,7 @@ my %man_text = (
         'HC128'     => "stream cipher",
         'HC256'     => "stream cipher",
         'HEARTBLEED'=> "attack against TLS extension heartbeat",
+        'HEIST'     => "HTTP Encrypted Information can be Stolen through TCP-windows",
         'HIBE'      => "hierarchical identity-based encryption",
         'HMAC'      => "keyed-Hash Message Authentication Code",
         'HMQV'      => "h? Menezes-Qu-Vanstone",
