@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.136 16/08/04 23:25:25";
+my  $man_SID= "@(#) o-saft-man.pm 1.137 16/08/26 11:20:06";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -506,6 +506,9 @@ my %man_text = (
         'SCT'       => "Signed Certificate Timestamp",
         'STS'       => "Strict Transport Security",
         'STS '      => "Station-to-Station protocol",
+        'Sweet32'   => "Sweet32: Birthday attacks on 64-bit block ciphers in TLS
+                    #  https://sweet32.info/
+and OpenVPN",
         'TACK'      => "Trust Assertions for Certificate Keys",
         'TCB'       => "Trusted Computing Base",
         'TDEA'      => "Tripple DEA",
@@ -3318,6 +3321,11 @@ CHECKS
         Check if target is vulnerable to SLOTH attack  (server offers RSA-MD5
         or ECDSA-MD5 ciphers).
 
+      sweet32
+
+        Check if target is vulnerable to Sweet32 attack  (server offers 3DES
+        ciphers).
+
       ALPN
 
         Check if target supports ALPN. Following messages are evaluated:
@@ -3422,9 +3430,14 @@ CHECKS
         Currently (2016) we check for ciphers with  ECDSA, RSA-MD5.
         Checking the TLS extension 'tls-unique' is not yet implemented.
 
+      Sweet32
+
+        Currently (2016) we check for ciphers with  3DES.
+
     Target (server) Configuration and Support
 
-      BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4, SLOTH
+      BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4,
+      SLOTH, Sweet32
 
         See above.
 
