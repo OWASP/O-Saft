@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.137 16/08/26 11:20:06";
+my  $man_SID= "@(#) o-saft-man.pm 1.138 16/08/26 12:00:11";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3325,6 +3325,9 @@ CHECKS
 
         Check if target is vulnerable to Sweet32 attack  (server offers 3DES
         ciphers).
+
+        Note that FIPS-140 compliance requires 3DES ciphers, hence compliant
+        systems are then vulnerable to Sweet32 attacks.
 
       ALPN
 
