@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.51 16/07/17 22:03:27',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.52 16/08/26 11:25:50',
 
 };
 
@@ -1277,6 +1277,7 @@ our %cfg = (
     'cmd-drown'     => [qw(drown)],                 # commands for +drown
     'cmd-freak'     => [qw(freak)],                 # commands for +freak
     'cmd-lucky13'   => [qw(lucky13)],               # commands for +lucky13
+    'cmd-sweet32'   => [qw(sweet32)],               # commands for +sweet32
     'cmd-http'      => [],      # commands for +http, computed below
     'cmd-hsts'      => [],      # commands for +hsts, computed below
     'cmd-info'      => [],      # commands for +info, simply anything from %data
@@ -1288,8 +1289,9 @@ our %cfg = (
                          selected cipher fingerprint_hash fp_not_md5 
                          sha2signature pub_encryption pub_enc_known email serial
                          subject dates verify expansion compression hostname
-                         beast crime drown freak export rc4_cipher rc4 pfs_cipher crl
-                         hassslv2 hassslv3 poodle sloth
+                         beast crime drown freak export rc4_cipher rc4 
+                         pfs_cipher crl
+                         hassslv2 hassslv3 poodle sloth sweet32
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- rfc7525 hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
@@ -1303,7 +1305,7 @@ our %cfg = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [        # commands for checking known vulnerabilities
-                        qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth time hassslv2 hassslv3 pfs_cipher session_random)
+                        qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 time hassslv2 hassslv3 pfs_cipher session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [        # commands for checking protocols
@@ -1323,7 +1325,7 @@ our %cfg = (
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'need_cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth cipher cipher-dh),
+                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
