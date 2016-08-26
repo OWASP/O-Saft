@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.514 16/07/19 00:15:15",
+    SID         => "@(#) yeast.pl 1.515 16/08/26 11:54:33",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -646,6 +646,7 @@ my %check_conn = (  ## connection data
     'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
     'rc4'           => {'txt' => "Connection is safe against RC4 attack"},
     'sloth'         => {'txt' => "Connection is safe against SLOTH attack"},
+    'sweet32'       => {'txt' => "Connection is safe against Sweet32 attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
     'selected'      => {'txt' => "Selected cipher by server"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
@@ -825,6 +826,7 @@ our %shorttexts = (
     'poodle'        => "Safe to POODLE",
     'rc4'           => "Safe to RC4 attack",
     'sloth'         => "Safe to SLOTH",
+    'sweet32'       => "Safe to Sweet32",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'modulus_size'  => "Modulus <16385 bits",
@@ -2113,6 +2115,12 @@ sub _issloth($$) {
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
     return "";
 } # _issloth
+sub _issweet($$) {
+    # return given cipher if vulnerable to Sweet32 attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Sweet32'}/);
+    return "";
+} # _issweet
 sub _ispfs($$)  { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  ""  : $c; }
     # return given cipher if it does not support forward secret connections (PFS)
 sub _isrc4($)   { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
@@ -2393,7 +2401,7 @@ sub _istls12only($$) {
             push(@ret, _get_text('disabled', "--no-$ssl"));
         }
     }
-_dbx ": TLS  " . join(" ", @ret);
+#_dbx ": TLS  " . join(" ", @ret);
     return join(" ", @ret);
 } # _istls12only
 
@@ -2870,6 +2878,7 @@ sub checkcipher($$) {
     $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
     $checks{'lucky13'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islucky($c));
     $checks{'sloth'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _issloth($ssl, $c));
+    $checks{'sweet32'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _issweet($ssl, $c));
     push(@{$prot{$ssl}->{'pfs_ciphers'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
     # counters
     $prot{$ssl}->{'-?-'}++      if ($risk =~ /-\?-/);       # private marker
@@ -5611,6 +5620,7 @@ while ($#argv >= 0) {
         if ($val eq 'drown'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-drown'}}); next; }
         if ($val eq 'freak'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-freak'}}); next; }
         if ($val eq 'lucky13'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
+        if ($val eq 'sweet32'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sweet32'}}); next; }
         if ($val eq 'sizes'){ push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}}); next; }
         if ($val eq 'hsts') { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});  next; }
         if ($val eq 'http') { push(@{$cfg{'do'}}, @{$cfg{'cmd-http'}});  next; }
