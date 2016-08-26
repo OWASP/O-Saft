@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.138 16/08/26 12:00:11";
+my  $man_SID= "@(#) o-saft-man.pm 1.139 16/08/26 12:04:30";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3372,6 +3372,13 @@ CHECKS
 
         Check if target is vulnerable to heartbleed attack, see CVE-2014-0160
         and http://heartbleed.com/ .
+
+      HEIST
+
+        Not implemented.
+
+        There are no checks for the HEIST attack implemented, because this is
+        an attack on TCP/IP rather than SSL/TLS on top of TCP/IP.
 
       KCI
 
