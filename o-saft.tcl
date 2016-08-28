@@ -205,7 +205,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.86 Summer Edition 2016
+#?      @(#) 1.87 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -222,7 +222,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.86 16/08/28 14:43:48 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.87 16/08/28 15:17:22 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -431,11 +431,15 @@ proc cfg_update   {} {
     # below).
     # Finally we remove the variables set by cfg(RC).
     #
+    putv "()"
     global cfg
-    if {$cfg(RCmin) > $cfg(RCSID)} {
+    if {[info exists cfg(RCSID)]==1} {
         # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
-        tk_messageBox -icon warning -title "$cfg(RC) veriosn $cfg(RCSID)" \
-            -message "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
+        _dbx " RCmin$cfg(RCmin) > RCSID$cfg(RCSID) ?"
+        if {$cfg(RCmin) > $cfg(RCSID)} {
+            tk_messageBox -icon warning -title "$cfg(RC) veriosn $cfg(RCSID)" \
+                -message "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
+        }
     }
     global cfg_colors cfg_color
     foreach key [array names cfg_color] {
