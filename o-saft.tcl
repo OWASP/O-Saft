@@ -58,10 +58,10 @@ exec wish "$0" ${1+"$@"}
 #?
 #?   Configuration
 #?      Some parts of the GUI, for example widget fonts or widget label texts,
-#?      can be customized in  .o-saft.tcl.  which  will be searched for in the
+#?      can be customized in  .o-saft.tcl , which  will be searched for in the
 #?      user's  HOME directory  and in the local directory.
 #?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
-#?      available in the contrib/ directpry.
+#?      available in the contrib/ directory.
 #?
 #?   Copy Texts
 #?      All texts visible in the GUI,  wether a label, a button, an entry or a
@@ -75,7 +75,7 @@ exec wish "$0" ${1+"$@"}
 #?      <ButtonPress-1> is the "select button", usually the left mouse button.
 #?
 #? OPTIONS
-#?      --v  print verbose messages (for debugging)
+#?      --v     print verbose messages (for debugging)
 #?
 #? KNOWN PROBLEMS
 #?      The markup defined in the filters (see Filter TAB) may not yet produce
@@ -416,7 +416,7 @@ foreach key [array names cfg_buttons] {
 }
 
 proc cfg_update   {} {
-    #? legacy conversion of old (pre 1.86) keys from CFG(RC) aka .o-saft.tcl
+    #? legacy conversion of old (pre 1.86) keys from cfg(RC) aka .o-saft.tcl
     #
     # Until version 1.84, respectively 1.6 of cfg(RC), the variables in cfg(RC)
     # were identical to the ones used herein:
@@ -1709,7 +1709,7 @@ proc copy2clipboard {w shift} {
        Entry        { append txt [string trim [$w get]]; }
        default      { puts "** unknownclass $klasse" }
     }
-    putv "copy2clipboard($w, $shift): {\\\n $txt\n#}"
+    putv "copy2clipboard($w, $shift): {\n $txt\n#}"
     clipboard clear
     clipboard append -type STRING -format STRING -- $txt
 }; # copy2clipboard
