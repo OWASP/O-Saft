@@ -7,7 +7,7 @@
 #?      source .o-saft.tcl
 #?
 #? DESCRIPTION
-#?      This is the user-configuration file for O-Saft's GUI  o-saft.tcl.
+#?      This is the user-configuration file for O-Saft's GUI  o-saft.tcl .
 #?
 #? USAGE
 #?      This file is in O-Saft's  contrib  directory and must be copied to the
@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.6 16/07/05 20:27:16
+#?      @(#) .o-saft.tcl 1.7 16/08/28 15:07:30
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.6};  # initial SID, do not remove
+set cfg(RCSID)  {1.7};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -33,72 +33,94 @@ set cfg(TITLE)  {O-Saft}
 #_____________________________________________________________________________
 #_____________________________________________________ settings for colours __|
 
-array set cfg_color {
-    DESC        {CONFIGURATION colours used in GUI}
+array set cfg_color "
+    DESC        {-- CONFIGURATION colours used for buttons -------------------}
+    closeme     orange
+    closetab    orange
+    closewin    orange
+    cmdstart    yellow
+    cmdcheck    #ffd800
+    cmdcipher   #ffd000
+    saveresult  lightgreen
+    saveconfig  lightgreen
+    reset       lightblue
+    filter      lightblue
+    DESC_other  {-- CONFIGURATION colours used for other objects -------------}
     osaft       gold
-    close       orange
-    start       yellow
-    save        lightgreen
     button      lightyellow
     code        lightgray
     link        blue
     status      wheat
-}
+";
 
 #_____________________________________________________________________________
 #_____________________________________________ texts for labels and buttons __|
 
-array set cfg_label {
-    DESC        {CONFIGURATION texts used in GUI for buttons or labels}
-    about       {About}
-    close       {Close}
+array set cfg_label "
+    DESC        {-- CONFIGURATION texts used in GUI for buttons --------------}
+    about       {!}
+    help        {?}
+    closeme     {Quit}
+    closewin    {Close}
     closetab    {Close TAB}
-    color       {Color Chooser}
-    font        {Font Chooser}
-    filter      {Filter}
-    minus       {-}
-    plus        {+}
-    quest       {?}
-    quit        {Exit}
+    saveresult  {Save}
+    saveconfig  {Save}
     reset       {Reset}
-    start       {Start}
-    save        {Save}
-    host        {Host[:Port]}
+    filter      {Filter}
+    tkcolor     {Color Chooser}
+    tkfont      {Font Chooser}
+    host_del    {-}
+    host_add    {+}
+    help_home   {^}
+    help_prev   {<}
+    help_next   {>}
+    helpsearch  {>>}
+    cmdstart    {Start}
+    cmdcheck    {+check}
+    cmdcipher   {+cipher}
+    cmdinfo     {+info}
+    cmdquick    {+quick}
+    cmdquit     {+quit}
+    cmdprotocols {+protocols}
+    cmdvulns    {+vulns}
+    cmdversion  {+version}
+    DESC_other  {-- CONFIGURATION texts used in GUI for labels ---------------}
+    host        {Host\[:Port\]}
     hideline    {Hide complete line}
-    c_toggle    "toggle visibility\nof various texts"
-    gohome      {^}
-    goprev      {<}
-    gonext      {>}
-    search      {>>}
-}
+    c_toggle    {toggle visibility\nof various texts}
+";
 
 #_____________________________________________________________________________
 #_______________________________________________________ texts for tooltips __|
 
-array set cfg_tipp {
-    DESC        {CONFIGURATION texts used in GUI for tool tips}
-    minus       {Remove this line for a host}
-    plus        {Add new line for a host}
+array set cfg_tipp "
+    DESC        {-- CONFIGURATION texts used for tool tips on buttons --------}
     help        {Open window with complete help}
     closeme     {Close program}
     closetab    {Close this TAB}
-    closew      {Close window}
-    saveto      {Save result to file}
-    savetofile  {Save configuration to file}
+    closewin    {Close window}
+    saveresult  {Save result to file}
+    saveconfig  {Save configuration to file}
     showfilterconfig {Show configuration for filtering results}
-    resetfilterconfig "Reset configuration to values from $cfg(INIT)"
-    hideline    {Hide complete line instead of pattern only}
+    resetfilterconfig {Reset configuration to values from $cfg(INIT)}
     settings    {Open window with more settings}
-    choosecolor {Open window to choose a color}
-    choosefont  {Open window to choose a font}
+    host_del    {Remove this line for a host}
+    host_add    {Add new line for a host}
+    tkcolor     {Open window to choose a color}
+    tkfont      {Open window to choose a font}
+    help_home   {Go to top of page}
+    help_prev   {Go back to previous position}
+    help_next   {Go forward to last position}
+    helpsearch  {Search for text}
+    cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tabs }
+    cmdcheck    {Execute $cfg(SAFT) +check}}
+    cmdcipher   {Execute $cfg(SAFT) +cipher}}
+    DESC_other  {-- CONFIGURATION texts used for tool tips on other objects --}
     choosen     {Choosen value}
-    gohome      {Go to top of page}
-    goback      {Go back to previous position}
-    goforward   {Go forward to last position}
-    start       "Start $cfg(SAFT) with command "
-    search      {Search for text}
+    hideline    {Hide complete line instead of pattern only}
+    show_hide   {show/hide: }
     tabCMD      {
-Select commands. All selected commands will be executed with the "Start" button.
+Select commands. All selected commands will be executed with the 'Start' button.
 }
     tabOPT      {
 Select and configure options. All options are used for any command button.
@@ -108,8 +130,7 @@ Configure filter for text markup: r, e and # specify how the Regex should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
 Changes apply to next +command.
 }
-
-    DESC_misc   {CONFIGURATION texts used in GUI for various other texts}
+    DESC_misc   {-- CONFIGURATION texts used in GUI for various texts --------}
     f_key       {Key}
     f_moder     {r}
     f_modee     {e}
@@ -119,24 +140,27 @@ Changes apply to next +command.
     f_bg        {Background}
     f_font      {Font}
     f_u         {u}
-}
+";
 
 # Note: Text for tab* contain new lines.
 
 #_____________________________________________________________________________
 #_______________________________________________________ settings for sizes __|
 
-set myX(DESC)   {CONFIGURATION window manager geometry}
-#   set minimal window sizes to be usable in a 1024x768 screen
-#   windows will be larger if the screen supports it (we rely on "wm maxsize")
+#----------------------------------------------------- window manager geometry
+    # set minimal window sizes to be usable in a 1024x768 screen
+    # windows will be larger if the screen supports it (we rely on "wm maxsize")
+
 set myX(geoO)   "600x720-0+0";  # geometry and position of Help    window
-set myX(geo-)   "";             # 
-#set myX(geoS)  "700x720";      # geometry and position of O-Saft  window
+set myX(geo-)   "";             # (reserved for future use)
+#et myX(geoS)  "700x720";       # geometry and position of O-Saft  window
 set myX(geoA)   "600x610";      # geometry and position of About   window
 set myX(geoF)   "";             # geometry and position of Filter  window (computed dynamically)
 set myX(geoT)   "";             # 
 set myX(minx)   700;            # O-Saft  window min. width
 set myX(miny)   720;            # O-Saft  window min. height
+
+#---------------------------------------------------- some special GUI objects
 set myX(lenl)   15;             # fixed width of labels in Options window
 set myX(rpad)   15;             # right padding in the lower right corner
 set myX(padx)   5;              # padding to right border
@@ -152,7 +176,7 @@ set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 
 #--------------------------------- list of buttons for "quick access commands"
     # for each O-Saft command in this list a button will be created in
-    # the GUI 
+    # the GUI
     # NOTE that this must be commands for o-saft.pl, which usually start
     # with  +  character
 
@@ -164,7 +188,10 @@ set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
     # used, it can be set here.
     # Must be a full path or found with PATH environment variable.
 
-set cfg(browser) "";
+# set cfg(browser) "";
+
+#----------------------------------------- buttons style: simple text or image
+set cfg(bstyle) {image};        # button style: {image} or {text}
 
 #-------------------------------------------- set font for various tcl widgets
     # NOTE that setting other fonts may change the layout of the GUI, it
