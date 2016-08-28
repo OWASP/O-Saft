@@ -161,16 +161,17 @@ exec wish "$0" ${1+"$@"}
 #.          +command2   Command nr 2
 #.          Options for commands
 #.          --opt1      this options does something
-#.      This tools relies on the format of these lines. If the format changes
+#.      This tools relies on the format of these lines.  If the format changes
 #.      commands and options may be missing in the generated GUI.
-#.      Following options are used:  --help  --help=opt  --help=commands
+#.      Following options of  o-saft.pl  are used:
+#.          --help  --help=opt  --help=commands
 #.      A detailed example of the format can be found in  proc create_win().
 #.
 #.      The tool will only work if o-saft.pl is available and executes without
 #.      errors. All commands and options of  o-saft.pl  will be available from
 #.      herein, except:
-#.          - all "--help*" options (as they make no sense here)
-#.          - "+cgi" and "+exec" command (they are for internal use only)
+#.          - all  "--help*"  options (as they make no sense here)
+#.          - "+cgi"  and  "+exec"  command (they are for internal use only)
 #.
 #.   Some nameing conventions
 #.       - procedures:
@@ -204,7 +205,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) %I% Summer Edition 2016
+#?      @(#) 1.86 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -221,11 +222,12 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) %M% %I% %E% %U% Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.86 16/08/28 14:43:48 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
+set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
 set cfg(ICH)    [file tail $argv0]
-set cfg(ME)     [info script];  # set very early, as it may be missing later
+set cfg(ME)     [info script];          # set very early, may be missing later
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -307,7 +309,7 @@ set my_bg       "[lindex [. config -bg] 4]";  # default background color
     #
     # This allows to generate the buttons without these attributes (-text, -bg,
     # -image, etc.), which simplifies the code.  These attributes are set later
-    # using theme_set(,) which then also takes care if there should be a simple
+    # using theme_set(), which then also takes care if there should be a simple
     # theme (just text and background) or a more sexy one using images.
     # Note:   the key (object name) in following table must be the last part of
     #         the object (widget) name of the button, example: .f.about  .
@@ -328,12 +330,12 @@ array set cfg_buttons "
     {filter}    {{Filter}   $my_bg  filter      {Show configuration for filtering results}}
     {tkcolor} {{Color Chooser}  $my_bg tkcolor  {Open window to choose a color}}
     {tkfont}  {{Font Chooser}   $my_bg tkfont   {Open window to choose a font}}
-    {hostadd}   {{+}        $my_bg  hostadd     {Add new line for a host}}
-    {hostdel}   {{-}        $my_bg  hostdel     {Remove this line for a host }}
-    {gohome}    {{^}        $my_bg  gohome      {Go to top of page}}
-    {goprev}    {{<}        $my_bg  goprev      {Go back to previous position}}
-    {gonext}    {{>}        $my_bg  gonext      {Go forward to next position }}
-    {gosearch}  {{>>}       $my_bg  gosearch    {Search for text}}
+    {host_add}  {{+}        $my_bg  host_add    {Add new line for a host}}
+    {host_del}  {{-}        $my_bg  host_del    {Remove this line for a host }}
+    {help_home} {{^}        $my_bg  help_home   {Go to top of page}}
+    {help_prev} {{<}        $my_bg  help_prev   {Go back to previous position}}
+    {help_next} {{>}        $my_bg  help_next   {Go forward to next position }}
+    {helpsearch}  {{>>}     $my_bg  helpsearch  {Search for text}}
     {cmdstart}  {{Start}    yellow  cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tab}}
     {cmdcheck}  {{+check}   #ffd800 cmdcheck    {Execute $cfg(SAFT) +check   }}
     {cmdcipher} {{+cipher}  #ffd000 cmdcipher   {Execute $cfg(SAFT) +cipher  }}
@@ -345,14 +347,14 @@ array set cfg_buttons "
     {cmdversion} {{+version} #fffa00cmdversion  {Execute $cfg(SAFT) +version }}
 ";  #----------+-----------+-------+-----------+-------------------------------
 
-    # Note: all buttons as described above, can be configured also by the user
-    # using  cfg(RC). Configurable are: text  (-text), background colour (-bg)
-    # and the tooltip. As configuering the above table is a bit cumbersome for
-    # most users, we provide simple lists, with  key=value  pairs. These lists
-    # are: cfg_colors, cfg_texts and cfg_tips. The settings here are defaults,
-    # and may be redifined in cfg(RC) using cfg_color, cfg_label and cfg_tipp.
-    # These lists (arrays in Tcl terms) contain not just the button values but
-    # also values for other objects. So the lists are initialized here for all
+    # Note: all buttons as described above,  can be configured also by the user
+    # using  cfg(RC).  Configurable are:  text (-text), background colour (-bg)
+    # and the tooltip. Because configuering the above table is a bit cumbersome
+    # for most users, we provide simple lists with key=value pairs. These lists
+    # are:  cfg_colors, cfg_texts and cfg_tips. The settings here are defaults,
+    # and may be redifined in cfg(RC) using  cfg_color, cfg_label and cfg_tipp.
+    # These lists (arrays in Tcl terms) contain not just the button values, but
+    # also values for other objects.  So the lists are initialized here for all
     # other values, and then the values from cfg_buttons are added.
 
 proc buttons_txt  {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 0]; }
@@ -430,7 +432,11 @@ proc cfg_update   {} {
     # Finally we remove the variables set by cfg(RC).
     #
     global cfg
-    # TODO: check $cfg(RCSID)
+    if {$cfg(RCmin) > $cfg(RCSID)} {
+        # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
+        tk_messageBox -icon warning -title "$cfg(RC) veriosn $cfg(RCSID)" \
+            -message "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
+    }
     global cfg_colors cfg_color
     foreach key [array names cfg_color] {
         set value $cfg_color($key)
@@ -438,11 +444,11 @@ proc cfg_update   {} {
         switch -exact $key {
           {start}       { set cfg_colors(cmdstart)  $value }
           {closew}      { set cfg_colors(closewin)  $value }
-          {search}      { set cfg_colors(gosearch)  $value }
+          {search}      { set cfg_colors(helpsearch) $value }
           {choosecolor} { set cfg_colors(tkcolor)   $value }
           {choosefont}  { set cfg_colors(tkfont)    $value }
-          {plus}        { set cfg_colors(hostadd)   $value }
-          {minus}       { set cfg_colors(hostdel)   $value }
+          {plus}        { set cfg_colors(host_add)  $value }
+          {minus}       { set cfg_colors(host_del)  $value }
           default       { set cfg_colors($key)      $value }
         }
     }
@@ -453,11 +459,11 @@ proc cfg_update   {} {
         switch -exact $key {
           {start}       { set cfg_texts(cmdstart)   $value }
           {close}       { set cfg_texts(closewin)   $value }
-          {search}      { set cfg_texts(gosearch)   $value }
+          {search}      { set cfg_texts(helpsearch) $value }
           {color}       { set cfg_texts(tkcolor)    $value }
           {font}        { set cfg_texts(tkfont)     $value }
-          {plus}        { set cfg_texts(hostadd)    $value }
-          {minus}       { set cfg_texts(hostdel)    $value }
+          {plus}        { set cfg_texts(host_add)   $value }
+          {minus}       { set cfg_texts(host_del)   $value }
           default       { set cfg_texts($key)       $value }
         }
     }
@@ -470,13 +476,13 @@ proc cfg_update   {} {
           {closew}      { set cfg_tips(closewin)    $value }
           {showfilterconfig}  { set cfg_tips(filter) $value }
           {resetfilterconfig} { set cfg_tips(reset)  $value }
-          {goback}      { set cfg_tips(goprev)      $value }
-          {goforward}   { set cfg_tips(gonext)      $value }
-          {search}      { set cfg_tips(gosearch)    $value }
+          {goback}      { set cfg_tips(help_prev)   $value }
+          {goforward}   { set cfg_tips(help_next)   $value }
+          {search}      { set cfg_tips(helpsearch)  $value }
           {choosecolor} { set cfg_tips(tkcolor)     $value }
           {choosefont}  { set cfg_tips(tkfont)      $value }
-          {plus}        { set cfg_tips(hostadd)     $value }
-          {minus}       { set cfg_tips(hostdel)     $value }
+          {plus}        { set cfg_tips(host_add)    $value }
+          {minus}       { set cfg_tips(host_del)    $value }
           default       { set cfg_tips($key)        $value }
         }
     }
@@ -961,10 +967,10 @@ proc create_host  {parent} {
           frame  $this
     pack [label  $this.lh -text [btn_text host]]       -side left
     pack [entry  $this.eh -textvariable hosts($hosts(0))]  -side left -fill x -expand 1
-    pack [button $this.bp -text [btn_text hostadd] -command "create_host {$parent};"] -side left
-    pack [button $this.bm -text [btn_text hostdel] -command "remove_host $this; set hosts($hosts(0)) {}"] -side left -padx "$leftx $myX(padx)"
-    create_tip   $this.bm [tip_text hostdel]
-    create_tip   $this.bp [tip_text hostadd]
+    pack [button $this.bp -text [btn_text host_add] -command "create_host {$parent};"] -side left
+    pack [button $this.bm -text [btn_text host_del] -command "remove_host $this; set hosts($hosts(0)) {}"] -side left -padx "$leftx $myX(padx)"
+    create_tip   $this.bm [tip_text host_del]
+    create_tip   $this.bp [tip_text host_add]
     if {$hosts(0)==1} {
         # do not remove the first one; instead change the {-} button to {about}
         global logo
@@ -1211,19 +1217,19 @@ proc create_help  {sect} {
     set toc     {}
 
     # add additional buttons
-    pack [button $this.f1.h -text [btn_text gohome] -command "jumpto_mark $txt {osaft-LNK-T}"] \
-         [button $this.f1.b -text [btn_text goprev] -command "jumpto_prev $txt"] \
-         [button $this.f1.f -text [btn_text gonext] -command "jumpto_next $txt"] \
+    pack [button $this.f1.h -text [btn_text help_home] -command "jumpto_mark $txt {osaft-LNK-T}"] \
+         [button $this.f1.b -text [btn_text help_prev] -command "jumpto_prev $txt"] \
+         [button $this.f1.f -text [btn_text help_next] -command "jumpto_next $txt"] \
          [label  $this.f1.l -text " | " ] \
          [entry  $this.f1.e -textvariable cfg(search) ] \
-         [button $this.f1.s -text [btn_text gosearch] -command "search_help $txt \$cfg(search)"] \
+         [button $this.f1.s -text [btn_text helpsearch] -command "search_help $txt \$cfg(search)"] \
         -side left
     pack config  $this.f1.h $this.f1.l -padx $myX(rpad)
-    create_tip   $this.f1.h [tip_text gohome]
-    create_tip   $this.f1.b [tip_text goprev]
-    create_tip   $this.f1.f [tip_text gonext]
-    create_tip   $this.f1.e [tip_text gosearch]
-    create_tip   $this.f1.s [tip_text gosearch]
+    create_tip   $this.f1.h [tip_text help_home]
+    create_tip   $this.f1.b [tip_text help_prev]
+    create_tip   $this.f1.f [tip_text help_next]
+    create_tip   $this.f1.e [tip_text helpsearch]
+    create_tip   $this.f1.s [tip_text helpsearch]
          bind    $this.f1.e <Return> "search_help $txt \$cfg(search)"
 
     # 1. search for section head lines, mark them and add (prefix) to text
@@ -1388,7 +1394,6 @@ proc create_cmd   {parent title color} {
     pack [button $this -text $title -bg "$basecolor$color" -command "osaft_exec $parent $title"] -side left
     set title [regsub {^\+} $title {cmd}];   # keys start with cmd instead of +
     create_tip   $this "[tip_text $title]"
-    #create_tip   $this "[buttons_tip $title]"
     return $this
 }; # create_cmd
 
