@@ -63,6 +63,16 @@ exec wish "$0" ${1+"$@"}
 #?      Please see  .o-saft.tcl  itself for details. A sample  .o-saft.tcl  is
 #?      available in the contrib/ directory.
 #?
+#?     Buttons
+#?      By default, an image will be used for most buttons.  Images looks more
+#?      modern than the standard Tcl/Tk buttons. Tcl/Tk does not support round
+#?      edges, images as background, or differnt look for activated buttons.
+#?      The images are read from a separate file: o-saft-img.tcl . If the file
+#?      is missing, no images will be used, but the simple texts.
+#?      For each button an image can be specified in o-saft-img.tcl , example:
+#?          set IMG(my-file) [image create photo -file path/to/your-file ]
+#?          set cfg_images(+info)  {my-file};# where +info is your command
+#?
 #?   Copy Texts
 #?      All texts visible in the GUI,  wether a label, a button, an entry or a
 #?      text itself can be copied to the systems clipboard with:
@@ -73,9 +83,15 @@ exec wish "$0" ${1+"$@"}
 #?      The text will be copied to the (ICCCM) buffer CLIPBOARD.  This ensures
 #?      that it will not interfere with the usual copy&paste buffer  PRIMARY.
 #?      <ButtonPress-1> is the "select button", usually the left mouse button.
+#?      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
+#?      (which is most likely the <left click>).
 #?
 #? OPTIONS
 #?      --v     print verbose messages (for debugging)
+#?      --img
+#?      --img   use images as defined in o-saft-img.tcl for buttons
+#?      --text  use simple texts as labels for buttons
+#.      --img   use own tooltip
 #?
 #? KNOWN PROBLEMS
 #?      The markup defined in the filters (see Filter TAB) may not yet produce
@@ -205,7 +221,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.87 Summer Edition 2016
+#?      @(#) 1.88 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -222,12 +238,13 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.87 16/08/28 15:17:22 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.88 16/08/29 01:22:54 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
 set cfg(ICH)    [file tail $argv0]
 set cfg(ME)     [info script];          # set very early, may be missing later
+set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -251,12 +268,16 @@ set cfg(rexCMD-int)  {^\+(cgi|exec)};   # internal use only
 
 ## configure GUI
 
-variable logo [image create photo -data {
+set IMG(!) [image create photo -data {
   R0lGODlhGAAYAOMOAAAAAAARAQASAQASAgATAQATAgBwLgCBNgCBNwCCNQCCNgCCNwCDNiZ/AP//
   /////yH5BAEKAA8ALAAAAAAYABgAAASE8MlJq6o4W3W1fwvHfZ6oLKRmfkKLmcnTDlRrv6IEBC0g
   2YXMStf7CWiPnETUqAl8suNylFROilHkanh9GpEME9cInU3EVvJ3gkB3umXppCHGYM2UeuUuP4/V
   WRUJHAcZfEgpgHh5b3teUYsmTV1YBDYCfhwGTlgTA4iSFANQJAccKB8RADs=
 }]; # [!] 24x24
+
+set IMG(help) ::tk::icons::question
+
+### IMG(...)  #  other images are defined in cfg(IMG)
 
 set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 set cfg(hist)   "osaft-LNK-T";  # positions in help text
@@ -319,8 +340,9 @@ set my_bg       "[lindex [. config -bg] 4]";  # default background color
     # name      -text       -bg     -image      create_tip()
     #----------+-----------+-------+-----------+-------------------------------
 array set cfg_buttons "
-    {about}     {{About}    $my_bg  about       {About $cfg(ICH)}}
-    {help}      {{?}        $my_bg  ::tk::icons::question  {Open window with complete help}}
+    {about}     {{!}        $my_bg  {!}         {About $cfg(ICH)}}
+    {help}      {{?}        $my_bg  help        {Open window with complete help}}
+    {help_me}   {{?}        $my_bg  {?}         {Open window with help for these settings}}
     {closeme}   {{Quit}     orange  quit        {Close program}}
     {closewin}  {{Close}    orange  close       {Close window}}
     {closetab} {{Close Tab} orange  closetab    {Close this TAB}}
@@ -330,21 +352,22 @@ array set cfg_buttons "
     {filter}    {{Filter}   $my_bg  filter      {Show configuration for filtering results}}
     {tkcolor} {{Color Chooser}  $my_bg tkcolor  {Open window to choose a color}}
     {tkfont}  {{Font Chooser}   $my_bg tkfont   {Open window to choose a font}}
-    {host_add}  {{+}        $my_bg  host_add    {Add new line for a host}}
-    {host_del}  {{-}        $my_bg  host_del    {Remove this line for a host }}
+    {host_add}  {{+}        $my_bg  {+}         {Add new line for a host}}
+    {host_del}  {{-}        $my_bg  {-}         {Remove this line for a host }}
     {help_home} {{^}        $my_bg  help_home   {Go to top of page}}
     {help_prev} {{<}        $my_bg  help_prev   {Go back to previous position}}
     {help_next} {{>}        $my_bg  help_next   {Go forward to next position }}
     {helpsearch}  {{>>}     $my_bg  helpsearch  {Search for text}}
     {cmdstart}  {{Start}    yellow  cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tab}}
-    {cmdcheck}  {{+check}   #ffd800 cmdcheck    {Execute $cfg(SAFT) +check   }}
-    {cmdcipher} {{+cipher}  #ffd000 cmdcipher   {Execute $cfg(SAFT) +cipher  }}
-    {cmdinfo}   {{+info}    #ffc800 cmdinfo     {Execute $cfg(SAFT) +info    }}
-    {cmdquit}   {{+quit}    #ffc800 cmdquit     {Execute $cfg(SAFT) +quit (debugging only)}}
-    {cmdquick}  {{+quick}   #ffc000 cmdquick    {Execute $cfg(SAFT) +quick   }}
-    {cmdprotocols} {{+protocols} #ffb800 cmdproto  {Execute $cfg(SAFT) +protocols }}
-    {cmdvulns}  {{+vulns}   #ffb000 cmdvulns    {Execute $cfg(SAFT) +vulns   }}
-    {cmdversion} {{+version} #fffa00cmdversion  {Execute $cfg(SAFT) +version }}
+    {cmdcheck}  {{+check}   #ffd800 +check    {Execute $cfg(SAFT) +check   }}
+    {cmdcipher} {{+cipher}  #ffd000 +cipher   {Execute $cfg(SAFT) +cipher  }}
+    {cmdinfo}   {{+info}    #ffc800 +info     {Execute $cfg(SAFT) +info    }}
+    {cmdquit}   {{+quit}    #ffc800 +quit     {Execute $cfg(SAFT) +quit (debugging only)}}
+    {cmdquick}  {{+quick}   #ffc000 +quick    {Execute $cfg(SAFT) +quick   }}
+    {cmdprotocols} {{+protocols} #ffb800 +protocols {Execute $cfg(SAFT) +protocols }}
+    {cmdvulns}  {{+vulns}   #ffb000 +vulns    {Execute $cfg(SAFT) +vulns   }}
+    {cmdversion} {{+version} #fffa00 +version {Execute $cfg(SAFT) +version }}
+    {img_txt}   {{image/text} $my_bg {img_txt}  {toggle buttons: text or image}}
 ";  #----------+-----------+-------+-----------+-------------------------------
 
     # Note: all buttons as described above,  can be configured also by the user
@@ -413,6 +436,7 @@ foreach key [array names cfg_buttons] {
     set cfg_colors($key) [buttons_bg  $key]
     set cfg_texts($key)  [buttons_txt $key]
     set cfg_tips($key)   [buttons_tip $key]
+    set cfg_images($key) [buttons_img $key]
 }
 
 proc cfg_update   {} {
@@ -431,7 +455,7 @@ proc cfg_update   {} {
     # below).
     # Finally we remove the variables set by cfg(RC).
     #
-    putv "()"
+    _dbx "()"
     global cfg
     if {[info exists cfg(RCSID)]==1} {
         # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
@@ -696,29 +720,16 @@ proc create_tip   {w txt} {
     }
 }; # create_tip
 
-proc get_color    {key} {
+proc get_color    {key} { global cfg_colors; return $cfg_colors($key) };
     #? return color name for key from global cfg_colors variable
-    global cfg_colors
-    return $cfg_colors($key)
-}; # get_color
-
-proc btn_text     {key} {
+proc get_text     {key} { global cfg_texts;  return $cfg_texts($key)  };
     #? return text string for key from global cfg_texts variable
-    global cfg_texts
-    return $cfg_texts($key)
-}; # btn_text
-
-proc tip_text     {key} {
+proc get_tipp     {key} { global cfg_tips;   return $cfg_tips($key)   };
     #? return text string for key from global cfg_tips variable
-    global cfg_tips
-    return $cfg_tips($key)
-}; # tip_text
-
-proc get_padx     {key} {
+proc get_image    {key} { global cfg_images; return $cfg_images($key) };
+    #? return image for key from global cfg_images variablle
+proc get_padx     {key} { global myX;        return $myX($key)        };
     #? return padx value for key from global myX variable
-    global myX
-    return $myX($key)
-}; # get_padx
 
 proc str2obj      {str} {
     #? convert string to valid Tcl object name; returns new string
@@ -736,6 +747,53 @@ proc notTOC       {str} {
     _dbx " no: »$str«";
     return 0
 }; # notTOC
+
+proc theme_set  {w} {
+    #? set attributes for specified object
+    # last part of the Tcl-widgets is key for array cfg_buttons
+    global cfg cfg_buttons IMG
+    set theme $cfg(bstyle)
+    _dbx "($w): $cfg(bstyle)"
+    # text and tip are always configured
+    set key [regsub {.*\.([^.]*)$} $w {\1}];    # get trailer of widget name
+    set val [get_tipp  $key]; if {$val ne ""} { create_tip   $w  $val }
+    set val [get_text  $key]; if {$val ne ""} { $w config -text  $val }
+    set val [get_image $key]; if {![info exists IMG($val)]} { set theme "text" }
+    _dbx " $w\t-> $key\t$theme\t-> $val"
+    if {$theme eq "text"} {
+        set val [get_color  $key];
+        if {$val ne ""} { $w config -bg    $val }
+    }
+    if {$theme eq "image"} {
+        if {$val ne ""} {
+            set h   30
+            if {![regexp {^::tk} $IMG($val)]} { set h 20 }
+            $w config -image $IMG($val) -relief flat
+            $w config -height $h;       # always set image height
+        }
+    }
+}; # theme_set
+
+proc theme_init {} {
+    #? configure buttons with simple text or graphics
+    global cfg_buttons
+    _dbx "()"
+    #? set attributes for buttons
+    ## Buttons mit Attributen versehen
+    #  dazu suchen wir alle Tcl-Widgets und prüfen, ob der Namensteil nach dem
+    #  letzten  .  einem der Keys im Array cfg_buttons entspricht. Dann werden die
+    #  Attribute auf die Werte gesetzt, die im Array stehen.
+    #  Zuerst Regex erzeugen, die alle Keys im Array cfg_buttons matched
+    set rex [join [array names cfg_buttons] "|"];   # build regex of all buttons
+    set rex [join [list {\.(} $rex {)$}] ""]
+    _dbx ": regex $rex"
+    foreach obj [info commands] {
+        if {![regexp {^\.}  $obj]}  { continue }
+        if {![regexp $rex   $obj]}  { continue }
+        if { [regexp {^\.$} $obj]}  { continue }
+        theme_set $obj
+    }
+}; # theme_init
 
 proc jumpto_mark  {w txt} {
     #? jump to mark in given text widget, remember mark
@@ -926,10 +984,10 @@ proc create_selected {title val} {
     toplevel $w
     wm title $w "$cfg(TITLE): $title"
     wm geometry  $w 200x50
-    pack [entry  $w.e -textvariable __var -relief flat]
-    pack [button $w.q -text [btn_text closewin] -command "destroy $w" -bg [get_color closewin]] -side right -padx $myX(rpad)
-    create_tip   $w.e "[tip_text choosen] $title"
-    create_tip   $w.q [tip_text closewin]
+    pack [entry  $w.choosen  -textvariable __var -relief flat]
+    pack [button $w.closewin -command "destroy $w"] -side right -padx $myX(rpad)
+    theme_set    $w.closewin
+    create_tip   $w.choosen "[get_tipp choosen] $title"
     set __var "$val"
     return 1
 }; # create_selected
@@ -939,23 +997,22 @@ proc create_window {title size} {
     global cfg myX
     set this    .[str2obj $title]
     if {[winfo exists $this]}  { return ""; }; # do nothing
-    toplevel    $this
-    wm title    $this "$cfg(TITLE): $title"
-    wm iconname $this "o-saft: $title"
-    wm geometry $this $size
-    pack [frame $this.f1  -relief sunken  -borderwidth 1] -fill x -side bottom
-    pack [button $this.f1.q -text [btn_text closewin] -bg [get_color closewin] -command "destroy $this"]    -side right -padx $myX(rpad)
-    create_tip   $this.f1.q [tip_text closewin]
+    toplevel     $this
+    wm title     $this "$cfg(TITLE): $title"
+    wm iconname  $this "o-saft: $title"
+    wm geometry  $this $size
+    pack [frame  $this.f1    -borderwidth 1 -relief sunken ]   -fill x -side bottom
+    pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
+    theme_set    $this.f1.closewin
     if {$title eq "Help" || $title eq {About}} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
 
     # all other windows have a header line and a Save button
-    pack [frame $this.f0    -borderwidth 1 -relief sunken]     -fill x -side top
-    pack [label $this.f0.t  -text $title   -relief flat  ]     -fill x -side left
+    pack [frame  $this.f0    -borderwidth 1 -relief sunken]    -fill x -side top
+    pack [label  $this.f0.t  -text $title   -relief flat  ]    -fill x -side left
     pack [button $this.f0.h -text {?} -command "create_help {$title}"] -side right
-    pack [button $this.f1.s -text [btn_text saveconfig] \
-                  -bg [get_color saveconfig] -command {osaft_save "CFG" 0}]  -side left
-    create_tip   $this.f1.s [tip_text saveconfig]
+    pack [button $this.f1.saveconfig  -command {osaft_save "CFG" 0}]   -side left
+    theme_set    $this.f1.saveconfig
     return $this
 }; # create_window
 
@@ -969,17 +1026,17 @@ proc create_host  {parent} {
     _dbx " host($hosts(0)): $host"
     set this $parent.ft$hosts(0)
           frame  $this
-    pack [label  $this.lh -text [btn_text host]]       -side left
-    pack [entry  $this.eh -textvariable hosts($hosts(0))]  -side left -fill x -expand 1
-    pack [button $this.bp -text [btn_text host_add] -command "create_host {$parent};"] -side left
-    pack [button $this.bm -text [btn_text host_del] -command "remove_host $this; set hosts($hosts(0)) {}"] -side left -padx "$leftx $myX(padx)"
-    create_tip   $this.bm [tip_text host_del]
-    create_tip   $this.bp [tip_text host_add]
+    pack [label  $this.lh -text [get_text host]]                   -side left
+    pack [entry  $this.eh -textvariable hosts($hosts(0))]  -fill x -side left -expand 1
+    pack [button $this.host_add -command "create_host {$parent};"] -side left
+    theme_set    $this.host_add
     if {$hosts(0)==1} {
-        # do not remove the first one; instead change the {-} button to {about}
-        global logo
-        $this.bm config -text {!} -command "create_about" -image $logo -relief flat
-        create_tip $this.bm "About $cfg(TITLE)"
+        # first line has no {-} but {about}
+    pack [button $this.about    -command "create_about"] -side left -padx "$leftx $myX(padx)"
+    theme_set    $this.about
+    } else {
+    pack [button $this.host_del -command "remove_host $this; set hosts($hosts(0)) {}"] -side left -padx "$leftx $myX(padx)"
+    theme_set    $this.host_del
     }
     set i [expr $hosts(0) - 1]
     set prev $parent.ft$i
@@ -1017,7 +1074,7 @@ proc create_filter_head {parent txt tip col} {
     #       directly because it then must be converted to an object name also,
     #       see next setting of $this
     set this $parent.$txt
-    grid [label $this -text [tip_text $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
+    grid [label $this -text [get_tipp $txt] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
     create_tip  $this $tip
 }; # create_filter_head
 
@@ -1025,7 +1082,7 @@ proc create_filtertab   {parent cmd} {
     #? create table with filter data
     global cfg aaa
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
-    pack [label $parent.text -relief flat -text [tip_text tabFILTER]]
+    pack [label $parent.text -relief flat -text [get_tipp tabFILTER]]
     set this $parent.g
     frame $this
     # grid makes nice layouts but is too stupid to resice (expand) the widgets
@@ -1095,11 +1152,11 @@ proc create_filtertab   {parent cmd} {
     catch { # silently ignore if systems has no fontchooser (i.e. Mac OS X)
     tk fontchooser config -command {create_selected "Font"}; # what to do with selection
         # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
-    pack [button $parent.fc -text [btn_text tkfont]  -command {tk fontchooser show}] -side right
-    create_tip   $parent.fc [tip_text tkfont]
+    pack [button $parent.tkfont  -command {tk fontchooser show}] -side right
+    theme_set    $parent.tkfont
     }
-    pack [button $parent.cc -text [btn_text tkcolor] -command {create_selected "Color" [tk_chooseColor]} ] -side right
-    create_tip   $parent.cc [tip_text tkcolor]
+    pack [button $parent.tkcolor -command {create_selected "Color" [tk_chooseColor]} ] -side right
+    theme_set    $parent.tkcolor
 }; # create_filtertab
 
 proc create_filter      {txt cmd} {
@@ -1118,9 +1175,9 @@ proc create_filter      {txt cmd} {
     set this $cfg(winF)
     _dbx " TXT: $txt | $cmd | $myX(geoF)"
     pack [frame $this.f -relief sunken -borderwidth 1] -fill x
-    pack [label $this.f.t -relief flat -text [btn_text c_toggle]] -fill x
-    pack [checkbutton $this.f.c -text [btn_text hideline] -variable filter_bool($txt,line)] -anchor w;
-    create_tip $this.f.c [tip_text hideline]
+    pack [label $this.f.t -relief flat -text [get_text c_toggle]] -fill x
+    pack [checkbutton $this.f.c -text [get_text hideline] -variable filter_bool($txt,line)] -anchor w;
+    create_tip $this.f.c [get_tipp hideline]
     $this.f.c config -state disabled ; # TODO: not yet working, see FIXME in toggle_txt
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
@@ -1138,7 +1195,7 @@ proc create_filter      {txt cmd} {
         # TODO: following "-fg white" makes check in checkbox invisible
         if {$fg ne ""}  { $this.x$key config -fg $fg }; # Tk is picky ..
         if {$bg ne ""}  { $this.x$key config -bg $bg }; # empty colour not allowd
-        create_tip $this.x$key "[tip_text show_hide] $f_cmt($k)";
+        create_tip $this.x$key "[get_tipp show_hide] $f_cmt($k)";
     }
 
 }; # create_filter
@@ -1221,19 +1278,19 @@ proc create_help  {sect} {
     set toc     {}
 
     # add additional buttons
-    pack [button $this.f1.h -text [btn_text help_home] -command "jumpto_mark $txt {osaft-LNK-T}"] \
-         [button $this.f1.b -text [btn_text help_prev] -command "jumpto_prev $txt"] \
-         [button $this.f1.f -text [btn_text help_next] -command "jumpto_next $txt"] \
+    pack [button $this.f1.h -text [get_text help_home] -command "jumpto_mark $txt {osaft-LNK-T}"] \
+         [button $this.f1.b -text [get_text help_prev] -command "jumpto_prev $txt"] \
+         [button $this.f1.f -text [get_text help_next] -command "jumpto_next $txt"] \
          [label  $this.f1.l -text " | " ] \
          [entry  $this.f1.e -textvariable cfg(search) ] \
-         [button $this.f1.s -text [btn_text helpsearch] -command "search_help $txt \$cfg(search)"] \
+         [button $this.f1.s -text [get_text helpsearch] -command "search_help $txt \$cfg(search)"] \
         -side left
     pack config  $this.f1.h $this.f1.l -padx $myX(rpad)
-    create_tip   $this.f1.h [tip_text help_home]
-    create_tip   $this.f1.b [tip_text help_prev]
-    create_tip   $this.f1.f [tip_text help_next]
-    create_tip   $this.f1.e [tip_text helpsearch]
-    create_tip   $this.f1.s [tip_text helpsearch]
+    create_tip   $this.f1.h [get_tipp help_home]
+    create_tip   $this.f1.b [get_tipp help_prev]
+    create_tip   $this.f1.f [get_tipp help_next]
+    create_tip   $this.f1.e [get_tipp helpsearch]
+    create_tip   $this.f1.s [get_tipp helpsearch]
          bind    $this.f1.e <Return> "search_help $txt \$cfg(search)"
 
     # 1. search for section head lines, mark them and add (prefix) to text
@@ -1384,28 +1441,25 @@ proc create_note  {parent title} {
     set alt  0
     if {[regexp {^\(} $title]} { set alt 1; }; # don't use (, but next charcter
     frame       $this
-    $parent add $this   -text $title -underline $alt
+    $parent add $this  -text $title -underline $alt
     return $this
 }; # create_note
 
-proc create_cmd   {parent title color} {
+proc create_cmd   {parent title} {
     #? create button to run O-Saft command; returns widget
     global cfg
-    set name [str2obj $title]
+    set name [regsub {^\+} $title {cmd}];   # keys start with cmd instead of +
     set this $parent.$name
-    if {$color < 1 || $color > 4} { set color ""}
-    set basecolor [get_color osaft]
-    pack [button $this -text $title -bg "$basecolor$color" -command "osaft_exec $parent $title"] -side left
-    set title [regsub {^\+} $title {cmd}];   # keys start with cmd instead of +
-    create_tip   $this "[tip_text $title]"
+    pack [button $this -text $title -command "osaft_exec $parent $title"] -side left
+    theme_set $this
     return $this
 }; # create_cmd
 
-proc create_win   {parent cmd title} {
+proc create_win   {parent title cmd} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
     # title must be string of group of command or options
-    putv "create_win($cmd »$title«)"
+    _dbx "create_win(»$title« $cmd)"
     global cfg myX
     set this $parent
     set win  $this
@@ -1480,7 +1534,7 @@ proc create_win   {parent cmd title} {
         set tip [regsub {[^\s]+\s*} $dat {}]
         set dat [lindex [split $dat " "] 0]
 
-        _dbx "create_win: create: $cmd »$dat«"
+        _dbx "create_win: create: »$dat« $cmd"
         set name [str2obj $dat]
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
@@ -1532,7 +1586,7 @@ proc create_buttons {parent cmd} {
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
         # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
 
-    set txt  [tip_text "tab$cmd"];      # tabCMD and tabOPT
+    set txt  [get_tipp "tab$cmd"];      # tabCMD and tabOPT
     pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
@@ -1550,13 +1604,14 @@ proc create_buttons {parent cmd} {
         set this $parent.$name
         _dbx " .$name {$txt}"
         pack [frame $this] -anchor c -padx 10 -pady 2
-        pack [button $this.b -text $dat -width 58 -command "create_win .$name $cmd {$txt}" -bg [get_color button] ] \
-             [button $this.h -text {?} -command "create_help {$txt}" ] \
+        pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [get_color button] ] \
+             [button $this.help_me -command "create_help {$txt}" ] \
                -side left
-        create_tip   $this.b [tip_text settings]
+        theme_set    $this.help_me
+        create_tip   $this.b [get_tipp settings]
 
         # argh, some command sections are missing in HELP
-        if {[regexp {^Commands to show } $txt]==1} { $this.h config -state disable }
+        if {[regexp {^Commands to show } $txt]==1} { $this.help_me config -state disable }
     }
 }; # create_buttons
 
@@ -1620,13 +1675,13 @@ proc osaft_save   {type nr} {
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
     global cfg tab
     if {$type eq "TAB"} {
-        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [tip_text saveresult]"     -initialfile "$cfg(SAFT)--$nr.log"]
+        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [get_tipp saveresult]"     -initialfile "$cfg(SAFT)--$nr.log"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         puts $fid $tab($nr)
     }
     if {$type eq "CFG"} {
-        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [tip_text saveconfig]" -initialfile ".$cfg(SAFT)--new"]
+        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [get_tipp saveconfig]" -initialfile ".$cfg(SAFT)--new"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         foreach {idx val} [array get cfg] { # collect selected options
@@ -1682,12 +1737,12 @@ proc osaft_exec   {parent cmd} {
     set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"
     set tab_run  [create_note $cfg(objN) "($cfg(EXEC)) $cmd"]
     set txt [create_text  $tab_run $tab($cfg(EXEC))].t ;    # <== ugly hardcoded .t
-    pack [button $tab_run.bs -text [btn_text saveresult] -bg [get_color saveresult] -command "osaft_save {TAB} $cfg(EXEC)"] -side left
-    pack [button $tab_run.bf -text [btn_text filter]                                -command "create_filter $txt $cmd"] -side left
-    pack [button $tab_run.bq -text [btn_text closetab]   -bg [get_color closewin]   -command "destroy $tab_run"] -side right
-    create_tip   $tab_run.bq [tip_text closetab]
-    create_tip   $tab_run.bs [tip_text saveresult]
-    create_tip   $tab_run.bf [tip_text filter]
+    pack [button $tab_run.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] -side left
+    pack [button $tab_run.filter     -command "create_filter $txt $cmd"    ] -side left
+    pack [button $tab_run.closetab   -command "destroy $tab_run"           ] -side right
+    theme_set    $tab_run.closetab
+    theme_set    $tab_run.saveresult
+    theme_set    $tab_run.filter
     apply_filter $txt ;        # text placed in pane, now do some markup
     destroy $cfg(winF);        # workaround, see FIXME in create_filtertab
     $cfg(objN) select $tab_run
@@ -1724,11 +1779,13 @@ foreach arg $argv {
         {--dbx} -
         {--d}   { set cfg(DEBUG) 1; }
         {--v}   { set cfg(VERB)  1; lappend cfg(FAST) {+quit} {+version}; }
-        {--tip} { set cfg(TIP)   1; }  # use own tooltip
+        {--img*} { set cfg(bstyle) "image"; }
+        {--text} { set cfg(bstyle) "text";  }
+        {--tip}  { set cfg(TIP)  1; }
         {--h}   -
         {--help} { puts [osaft_about "HELP"]; exit; }
-        *       { lappend targets $arg; }
-        default { puts "**WARNING: unknown parameter '$arg'; ignored" }
+        *        { lappend targets $arg; }
+        default  { puts "**WARNING: unknown parameter '$arg'; ignored" }
     }
 }
 
@@ -1774,6 +1831,15 @@ set rcfile [file join {./}       $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 cfg_update;                     # update configuration as needed
 
+## read $cfg(IMG) if any
+#  if the file does not exist, the error is silently catched and ignored
+if {$cfg(bstyle) eq "image"} {
+   set rcfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];  # must be same path
+   _dbx " IMG $rcfile"
+   if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+}
+
+
 # get information from O-Saft; it's a performance penulty, but simple ;-)
 set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
 if {2 > [llength [split $cfg(HELP) "\n"]]} {
@@ -1810,22 +1876,24 @@ if {$cfg(VERB)==1} {
     pack [button $w.fq.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
     # TODO: does not work proper 'cause passing --v fails
 }
-pack [button    $w.fq.bq -text [btn_text closeme]  -bg [get_color closeme]  -command {exit}] -side right -padx $myX(rpad)
+pack [button    $w.fq.closeme  -command {exit}] -side right -padx $myX(rpad)
 pack [frame     $w.fc] -fill x
-pack [button    $w.fc.bs -text [btn_text cmdstart] -bg [get_color cmdstart] -command "osaft_exec $w.fc {Start}"] -side left -padx 11
-set c 0; # used to change color
+pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -padx 11
 foreach b $cfg(FAST) {
-    create_cmd $w.fc $b $c;
-    if {[regexp {^\+[c]} $b]==0} { incr c };    # command not starting with +c get a new color
+    create_cmd  $w.fc $b;
 }
-pack [button    $w.fc.bh -text [btn_text help] -command "create_help {}"] -side right -padx $myX(padx)
-create_tip      $w.fc.bh  [tip_text help]
-create_tip      $w.fc.bs  [tip_text cmdstart]
-create_tip      $w.fq.bq  [tip_text closeme]
-set q ::tk::icons::question;    # add a nice icon, if it exists
-if {[regexp $q [image names]]} {
-    $w.fc.bh config -image $q -width 26 -height 26 -relief flat; # adapt size tologo
+pack [button    $w.fc.help -command "create_help {}"] -side right -padx $myX(padx)
+if {$cfg(VERB)==1} {
+    pack [checkbutton $w.fc.img_txt -variable cfg(img_txt) -command {
+            if {$cfg(img_txt)==1} { set cfg(bstyle) "image" }
+            if {$cfg(img_txt)==0} { set cfg(bstyle) "text"  }
+            _dbx "toggle: $cfg(img_txt) # $cfg(bstyle) "
+            # FIXME: theme_init  ; # funktioniert noch nicht, da Image noch da
+    } \
+    ] -side right
+    theme_set   $w.fc.img_txt
 }
+    # TODO: does not work proper 'cause passing --v fails
 
 ## create notebook object and set up Ctrl+Tab traversal
 set cfg(objN)   $w.note
@@ -1842,15 +1910,13 @@ create_buttons  $tab_opts {OPT}; # fill Options pane
 create_filtertab $tab_filt {FIL}; # fill Filter pane
 
 ## add Save and Reset button in Options pane
-pack [button    $tab_opts.bs -text [btn_text saveresult] -command {osaft_save "CFG" 0} -bg [get_color cmdstart] ] -side left
-pack [button    $tab_opts.br -text [btn_text reset]      -command {osaft_reset; osaft_init;}                 ] -side left
+pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
+pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
 osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
-create_tip      $tab_opts.bs [tip_text saveconfig]
-create_tip      $tab_opts.br [tip_text reset]
 
 ## create status line
-pack [frame     $w.fl -relief sunken -borderwidth 1] -fill x
-pack [text      $w.fl.t -height 2 -relief flat -background [get_color status] ] -fill x
+pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
+pack [text      $w.fl.t -relief flat   -height 2 -background [get_color status] ] -fill x
 set cfg(objS)   $w.fl.t
 $cfg(objS) config -state disabled
 
@@ -1865,6 +1931,10 @@ foreach host $targets {         # display hosts
 create_host $w
 
 _dbx " hosts: $hosts(0)"
+
+
+## apply themes
+theme_init
 
 ## some verbose output
 # must be at end when window was created, otherwise wm data is missing or mis-leading
