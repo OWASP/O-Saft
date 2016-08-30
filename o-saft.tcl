@@ -221,7 +221,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.88 Summer Edition 2016
+#?      @(#) 1.89 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -238,7 +238,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.88 16/08/29 01:22:54 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.89 16/08/30 16:24:52 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1001,7 +1001,7 @@ proc create_window {title size} {
     wm title     $this "$cfg(TITLE): $title"
     wm iconname  $this "o-saft: $title"
     wm geometry  $this $size
-    pack [frame  $this.f1    -borderwidth 1 -relief sunken ]   -fill x -side bottom
+    pack [frame  $this.f1] -fill x -side bottom
     pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
     theme_set    $this.f1.closewin
     if {$title eq "Help" || $title eq {About}} { return $this }
