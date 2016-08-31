@@ -5,13 +5,16 @@
 #? SYNOPSIS
 #?      source o-saft-img.tcl
 #? VERSION                                                                     
-#?      @(#) o-saft-img.tcl 1.1 16/08/29 01:23:16
+#?      @(#) o-saft-img.tcl 1.2 16/08/31 23:43:23
 #? AUTHOR
 #? Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #? This  software is licensed under GPLv2. Please see o-saft.pl for details.
 #?      Project Home: https://www.owasp.org/index.php/O-Saft                   
 #?      Repository:   https://github.com/OWASP/O-Saft  
 
+if {[tk windowingsystem] == "aqua"} {   # grrr, ugly check to avoid Tcl errors
+    package require Img;        # some Mac OS X require it                     
+}
 
 # +_30x20_gray.png
 set IMG(+) [image create photo -data {
