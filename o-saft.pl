@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.515 16/08/26 11:54:33",
+    SID         => "@(#) yeast.pl 1.516 16/09/01 01:22:43",
     STR_VERSION => "16.06.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5767,7 +5767,10 @@ local $\ = "\n";
 #| -------------------------------------
 # Unfortunately `use autouse' is not possible as to much functions need to
 # be declared for that pragma then.
-use     IO::Socket::SSL 1.37;       # qw(debug2);
+use     IO::Socket::SSL;  # qw(debug2);
+if ($IO::Socket::SSL::VERSION < 1.37) {
+    warn STR_WARN, "IO::Socket::SSL $IO::Socket::SSL::VERSION  <  expected version 1.37";
+}
 use     IO::Socket::INET;
 if (_is_do('version') or ($cfg{'usemx'} > 0)) {
     eval {require Net::DNS;} or warn STR_ERROR, "'require Net::DNS' failed";
