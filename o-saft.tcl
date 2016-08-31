@@ -88,9 +88,9 @@ exec wish "$0" ${1+"$@"}
 #?
 #? OPTIONS
 #?      --v     print verbose messages (for debugging)
-#?      --img
-#?      --img   use images as defined in o-saft-img.tcl for buttons
 #?      --text  use simple texts as labels for buttons
+#?      --img   use images as defined in o-saft-img.tcl for buttons
+#?              (not recommended on Mac OS X, because aqua has nice buttons)
 #.      --tip   use own tooltip
 #?
 #? KNOWN PROBLEMS
@@ -214,6 +214,8 @@ exec wish "$0" ${1+"$@"}
 #.      texts are placed in Tk's text widget instead of a label widget, 'cause
 #.      text widgets allow selecting their content by default, while labels do
 #.      not.
+#.      Another exception (8/2016) is "package require Img" which is necessary
+#.      on some MacOS X.
 #.
 #.      This is no academically perfect code, but quick&dirty scripted:
 #.       - makes use of global variables instead of passing parameters etc..
@@ -221,7 +223,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.90 Summer Edition 2016
+#?      @(#) 1.91 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -238,7 +240,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.90 16/08/31 23:06:40 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.91 16/08/31 23:54:20 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -276,10 +278,8 @@ set IMG(!) [image create photo -data {
 }]; # [!] 24x24
 
 set IMG(help) ::tk::icons::question
-if { [regexp {::tk::icons::question} [image names]] == 0} {
-set IMG(help) "";                       # reset if no icons there, forces text
-};
-# reset if nothing there
+if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
+    # reset if no icons there, forces text (see cfg_buttons below)
 
 
 ### IMG(...)  #  other images are defined in cfg(IMG)
