@@ -157,6 +157,12 @@ exec wish "$0" ${1+"$@"}
 #.        source o-saft.tcl
 #.
 #. HACKER's INFO
+#.   TODO (8/2016):
+#.      - need to check if ugly hacks for Aqua (Mac OS X 10.6  with  Tk 8.5.7)
+#.        are still necessary on modern Macs, in particular:
+#.        * tk_getSaveFile -confirmoverwrite
+#.        * package require Img
+#.
 #.   Hash-bang line
 #.      The usual way on *IX systems to start a Tcl- script independent of the
 #.      platform and underlaying shell would be like:
@@ -223,7 +229,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.93 Summer Edition 2016
+#?      @(#) 1.94 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -240,7 +246,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.93 16/09/01 00:33:06 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.94 16/09/01 00:59:47 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -563,6 +569,7 @@ set cfg(browser) "";            # external browser program, set below
 
 set cfg(AQUA)   "CONFIGURATION Aqua (Mac OS X)"
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
+set cfg(confirm) {-confirmoverwrite true};  # must be reset on Aqua
 #      myX(rpad)    # used as right padding for widgets in the lower right
                     # corner where there is Aqua's resize icon
 
@@ -1680,13 +1687,13 @@ proc osaft_save   {type nr} {
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
     global cfg tab
     if {$type eq "TAB"} {
-        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [get_tipp saveresult]"     -initialfile "$cfg(SAFT)--$nr.log"]
+        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveresult]" -initialfile "$cfg(SAFT)--$nr.log"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         puts $fid $tab($nr)
     }
     if {$type eq "CFG"} {
-        set name [tk_getSaveFile -confirmoverwrite true -title "$cfg(TITLE): [get_tipp saveconfig]" -initialfile ".$cfg(SAFT)--new"]
+        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveconfig]" -initialfile ".$cfg(SAFT)--new"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         foreach {idx val} [array get cfg] { # collect selected options
@@ -1796,6 +1803,7 @@ foreach arg $argv {
 }
 if {$cfg(VERB) > 0} { lappend cfg(FAST) {+quit} {+version}; }
 if {[tk windowingsystem] == "aqua"} {
+    set cfg(confirm) {}; # Aqua's tk_save* has no  -confirmoverwrite
     if {$optimg == 1} {
         tk_messageBox -icon warning \
             -message "using images for buttons is not recomended on Aqua systems"
