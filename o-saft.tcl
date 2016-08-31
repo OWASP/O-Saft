@@ -223,7 +223,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.92 Summer Edition 2016
+#?      @(#) 1.93 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -240,7 +240,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.92 16/08/31 23:58:59 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.93 16/09/01 00:33:06 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1779,12 +1779,13 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________ main __|
 
 set targets ""
+set optimg  0
 foreach arg $argv {
     switch -glob $arg {
         {--dbx} -
         {--d}   { set cfg(DEBUG) 1; }
         {--v}   { set cfg(VERB)  1; }
-        {--img*} { set cfg(bstyle) "image"; }
+        {--img*} { set cfg(bstyle) "image"; set optimg 1; }
         {--text} { set cfg(bstyle) "text";  }
         {--tip}  { set cfg(TIP)  1; }
         {--h}   -
@@ -1794,6 +1795,14 @@ foreach arg $argv {
     }
 }
 if {$cfg(VERB) > 0} { lappend cfg(FAST) {+quit} {+version}; }
+if {[tk windowingsystem] == "aqua"} {
+    if {$optimg == 1} {
+        tk_messageBox -icon warning \
+            -message "using images for buttons is not recomended on Aqua systems"
+    } else {
+        set cfg(bstyle) "text"; # text by default, because Aqua looks nice
+    }
+}
 
 font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
 font create osaftBold   {*}[font config TkDefaultFont] -weight bold
