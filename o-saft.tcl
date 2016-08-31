@@ -91,7 +91,7 @@ exec wish "$0" ${1+"$@"}
 #?      --img
 #?      --img   use images as defined in o-saft-img.tcl for buttons
 #?      --text  use simple texts as labels for buttons
-#.      --img   use own tooltip
+#.      --tip   use own tooltip
 #?
 #? KNOWN PROBLEMS
 #?      The markup defined in the filters (see Filter TAB) may not yet produce
@@ -221,7 +221,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.89 Summer Edition 2016
+#?      @(#) 1.90 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -238,7 +238,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.89 16/08/30 16:24:52 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.90 16/08/31 23:06:40 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -276,6 +276,11 @@ set IMG(!) [image create photo -data {
 }]; # [!] 24x24
 
 set IMG(help) ::tk::icons::question
+if { [regexp {::tk::icons::question} [image names]] == 0} {
+set IMG(help) "";                       # reset if no icons there, forces text
+};
+# reset if nothing there
+
 
 ### IMG(...)  #  other images are defined in cfg(IMG)
 
