@@ -229,7 +229,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.95 Summer Edition 2016
+#?      @(#) 1.96 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -246,7 +246,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.95 16/09/03 14:14:36 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.96 16/09/03 15:34:59 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1558,7 +1558,7 @@ proc create_win   {parent title cmd} {
         } else {
             regexp $cfg(rexOPT-cfg) $l dumm idx val
             #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
-            pack [label  $this.$name.l -text $idx -width $myX(lenl)]    -side left -anchor w
+            pack [label  $this.$name.l -text $idx -width $myX(lenl)]    -fill x -side left -anchor w
             pack [entry  $this.$name.e -textvariable cfg($idx)] -fill x -side left -expand 1
             if {[regexp {^[a-z]*$} $l]} { set cfg($idx) $val };   # only set if all lower case
             $this.$name.l config -font TkDefaultFont;   # reset to default as Label is bold
@@ -1566,22 +1566,28 @@ proc create_win   {parent title cmd} {
         grid $this.$name -sticky w
         create_tip $this.$name "$tip";  # $tip may be empty, i.e. for options
     }
-    pack $this -fill both -expand 1
+    pack $this -fill both -expand 1;    # delayed pac for better performance
 
     # now arrange grid in rows and columns
     # idea: arrange widgets in at least 3 columns
     #       we can use 4 columns in Commands window because widgets are smaller
-    set cnt [llength [grid slaves $this]]
+    # sorting is vertical (horizontal sorting commented out)
+    set slaves [lsort -nocase [grid slaves $this]]
+    set cnt [llength $slaves]
     if {$cnt < 1} { return };   # avoid math errors, no need to resize window
-    set max 2;          # 3 columns: 0..2
-    if {$cmd eq "CMD"} { incr max };
+    set max 2;                          # 3 columns: 0..2
+    if {$cmd eq "CMD"} { incr max };    # 4 columns in Commands
+    set rows [expr $cnt / [expr $max + 1]]
+    _dbx "cnt/(max+1) = rows: $cnt/($max+1) = $rows"
     set col 0
     set row 0
-    set slaves [lsort -nocase [grid slaves $this]]
-    foreach s $slaves {
-        if {$col > $max} { incr row; set col 0 }
-        #grid config $s -row $row -column $col -padx 8
-        incr col
+    foreach slave $slaves {
+        #if {$col > $max} { incr row; set col 0 };  # horizontal sorting
+        if {$row > $rows} { incr col; set row 0 };  # vertical sorting
+
+        grid config $slave -row $row -column $col -padx 8
+        #incr col;   # horizontal
+        incr row;   # vertical
     }
 }; # create_win
 
