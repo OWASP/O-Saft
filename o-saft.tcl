@@ -229,7 +229,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.94 Summer Edition 2016
+#?      @(#) 1.95 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -246,7 +246,7 @@ package require Tk      8.5
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.94 16/09/01 00:59:47 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.95 16/09/03 14:14:36 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1038,18 +1038,23 @@ proc create_host  {parent} {
     _dbx " host($hosts(0)): $host"
     set this $parent.ft$hosts(0)
           frame  $this
-    pack [label  $this.lh -text [get_text host]]                   -side left
-    pack [entry  $this.eh -textvariable hosts($hosts(0))]  -fill x -side left -expand 1
-    pack [button $this.host_add -command "create_host {$parent};"] -side left
+    grid [label  $this.lh -text [get_text host]] \
+         [entry  $this.eh -textvariable hosts($hosts(0))] \
+         [button $this.host_add -command "create_host {$parent};"] \
+         [button $this.host_del -command "remove_host $this; set hosts($hosts(0)) {}"] \
+
     theme_set    $this.host_add
     if {$hosts(0)==1} {
         # first line has no {-} but {about}
-    pack [button $this.about    -command "create_about"] -side left -padx "$leftx $myX(padx)"
-    theme_set    $this.about
+       grid forget  $this.host_del
+       grid [button $this.about -command "create_about"] -row 0
+       grid config  $this.about -column 4 -sticky e  -padx "$leftx $myX(padx)"
+       theme_set    $this.about
     } else {
-    pack [button $this.host_del -command "remove_host $this; set hosts($hosts(0)) {}"] -side left -padx "$leftx $myX(padx)"
-    theme_set    $this.host_del
+       theme_set $this.host_del
     }
+    grid config  $this.eh -column 1 -sticky ew 
+    grid columnconfigure    $this 1 -weight 1
     set i [expr $hosts(0) - 1]
     set prev $parent.ft$i
     while {$i > 0} {    # check if previous frame exists, otherwise decrement
@@ -1096,16 +1101,7 @@ proc create_filtertab   {parent cmd} {
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
     pack [label $parent.text -relief flat -text [get_tipp tabFILTER]]
     set this $parent.g
-    frame $this
-    # grid makes nice layouts but is too stupid to resice (expand) the widgets
-    # in its cells. Ugly workaround would be to use the widget inside a frame,
-    # and this frame as a grid slave. The widget then can be packed inside the
-    # frame with the -exapnd and -fill option. A bit cumbersome ...
-    # We use another approach: all widgets get a fixed width, the widget which
-    # should be resized gets a huge width. This widget is in the column, which
-    # should be resized by the grid.  grid honors all specified widths, except
-    # that of the column subject for resizing.  Sounds like a bug in grid, but
-    # works here :-))
+    pack [frame $this] -fill x -fill both -expand 1
     # { set header line with descriptions
         create_filter_head $this f_key    $f_key(0) 0
         create_filter_head $this f_moder "$f_mod(0) (-regexp)" 1
@@ -1130,15 +1126,18 @@ proc create_filtertab   {parent cmd} {
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
         _dbx " .$key /$rex/"
-        grid [entry   $this.k$k -textvariable f_key($k) -width  8 ] -row $k -column 0
-        grid [radiobutton $this.x$k -variable f_mod($k) -width  2 -value "-regexp"  ] -row $k -column 1
-        grid [radiobutton $this.e$k -variable f_mod($k) -width  2 -value "-exact"   ] -row $k -column 2
-        grid [entry   $this.l$k -textvariable f_len($k) -width  2 ] -row $k -column 3
-        grid [entry   $this.r$k -textvariable f_rex($k) -width 65 ] -row $k -column 4
-        grid [entry   $this.f$k -textvariable f_fg($k)  -width  9 ] -row $k -column 5
-        grid [entry   $this.b$k -textvariable f_bg($k)  -width  9 ] -row $k -column 6
-        grid [entry   $this.s$k -textvariable f_fn($k)  -width 10 ] -row $k -column 7
-        grid [checkbutton $this.u$k -variable f_un($k)            ] -row $k -column 8
+        grid [entry   $this.k$k -textvariable f_key($k) -width  8] \
+             [radiobutton $this.x$k -variable f_mod($k) -value "-regexp"] \
+             [radiobutton $this.e$k -variable f_mod($k) -value "-exact" ] \
+             [entry   $this.l$k -textvariable f_len($k) -width  3] \
+             [entry   $this.r$k -textvariable f_rex($k) ] \
+             [entry   $this.f$k -textvariable f_fg($k)  -width 10] \
+             [entry   $this.b$k -textvariable f_bg($k)  -width 10] \
+             [entry   $this.s$k -textvariable f_fn($k)  -width 10] \
+             [checkbutton $this.u$k -variable f_un($k)           ] \
+
+        grid config $this.k$k $this.r$k -sticky ew 
+        grid config $this.f$k $this.b$k $this.s$k -sticky w
         create_tip  $this.k$k $f_cmt($k)
         create_tip  $this.r$k $f_cmt($k)
         # some entries apply setting to KEY entry
@@ -1156,11 +1155,8 @@ proc create_filtertab   {parent cmd} {
         #$this.b$k config -vcmd "set f_bg($k) [tk_chooseColor -title $f_bg(0)]; return 1" -validate focusin
         #$this.s$k config -vcmd "tk fontchooser config -command {set f_fn($k)}; tk_chooseColor -title $f_bg(0)]; return 1" -validate focusin
     }
-    pack $this -fill x -fill both -expand 1
-    set lastrow [lindex [grid size $this] 1]
-    #grid rowconfigure    $this [expr $lastrow - 1] -weight 1
     grid columnconfigure $this {0 1 2 3 5 6 7 8} -weight 0
-    grid columnconfigure $this 4 -minsize 20 -weight 1; # minsize does not work
+    grid columnconfigure $this 4   -minsize 20   -weight 1; # minsize does not work
     catch { # silently ignore if systems has no fontchooser (i.e. Mac OS X)
     tk fontchooser config -command {create_selected "Font"}; # what to do with selection
         # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
@@ -1532,9 +1528,9 @@ proc create_win   {parent title cmd} {
         if {[regexp $cfg(rexCMD-int)  $dat]} { continue; }; # internal use only
         ## skipped options
        #if {"OPTIONS" eq $dat}               { continue; }
-        if {[regexp {^--h$}         $dat]}   { continue; }
-        if {[regexp {^--help}       $dat]}   { continue; }
-        if {[regexp $cfg(rexOUT-int) $dat]}  { continue; }; # use other tools for that
+        if {[regexp {^--h$}           $dat]} { continue; }
+        if {[regexp {^--help}         $dat]} { continue; }
+        if {[regexp $cfg(rexOUT-int)  $dat]} { continue; }; # use other tools for that
 
         # the line $l looks like:
         #    our_key   some descriptive text
@@ -1542,8 +1538,8 @@ proc create_win   {parent title cmd} {
         # so all multiple white spaces are reduced, which results in first word
         # being $dat and all the rest will be $tip
         # multiple white spaces in descriptive text are lost, that's ok if any
-        set dat [regsub -all {\s+} $dat { }]
-        set tip [regsub {[^\s]+\s*} $dat {}]
+        set dat [regsub -all {\s+}    $dat { }]
+        set tip [regsub {[^\s]+\s*}   $dat {} ]
         set dat [lindex [split $dat " "] 0]
 
         _dbx "create_win: create: »$dat« $cmd"
@@ -1749,9 +1745,10 @@ proc osaft_exec   {parent cmd} {
     set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"
     set tab_run  [create_note $cfg(objN) "($cfg(EXEC)) $cmd"]
     set txt [create_text  $tab_run $tab($cfg(EXEC))].t ;    # <== ugly hardcoded .t
-    pack [button $tab_run.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] -side left
-    pack [button $tab_run.filter     -command "create_filter $txt $cmd"    ] -side left
-    pack [button $tab_run.closetab   -command "destroy $tab_run"           ] -side right
+    pack [button $tab_run.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] \
+         [button $tab_run.filter     -command "create_filter $txt $cmd"    ] \
+         -side left
+    pack [button $tab_run.closetab   -command "destroy $tab_run"] -side right
     theme_set    $tab_run.closetab
     theme_set    $tab_run.saveresult
     theme_set    $tab_run.filter
