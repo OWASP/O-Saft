@@ -229,7 +229,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.96 Summer Edition 2016
+#?      @(#) 1.97 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -244,9 +244,57 @@ package require Tcl     8.5
 package require Tk      8.5
 
 #_____________________________________________________________________________
+#___________________________________________________________ early bindings __|
+
+# Bindings for simply copying text of any widget.
+# To avoid conflicts with other common bindings, we use Ctrl + click to copy
+# the text.  Unfortunately this does not allow to select texts individually,
+# but only as a whole.
+# Bindings need to be done very early, so that they are active when Tcl/Tk's
+# wish uses dialogs (i.e. tk_messagebox). The called function copy2clipboard
+# might be defined later in the code, but it must be done before any usage.
+# Hence it's defined right below.
+
+foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
+                     TButton TCombobox TEntry TLabel TText \
+                     Checkbutton Radiobutton Dialog] {
+    bind $klasse  <Control-ButtonPress-1>       { copy2clipboard %W 0 }
+    bind $klasse  <Shift-Control-ButtonPress-1> { copy2clipboard %W 1 }
+}
+
+proc copy2clipboard {w shift} {
+    #? copy visible text of object to clipboard
+    global cfg
+    set klasse [winfo class $w]
+    set txt {}
+    if {$shift==1} { set txt "$w $klasse: " }
+    # TODO: Spinbox not complete; some classes are missing
+    switch $klasse {
+       Button       -
+       Combobox     -
+       Dialog       -
+       Label        -
+       Spinbox      -
+       TButton      -
+       TCombobox    -
+       TLabel       -
+       Checkbutton  -
+       Radiobutton  { append txt [lindex [$w config -text] 4] }
+       Entry        -
+       TEntry       { append txt [string trim [$w get]]; }
+       Text         -
+       TText        { append txt [string trim [$w get 1.0 end]]; }
+       default      { puts "** unknown class $klasse" }
+    }
+    putv "copy2clipboard($w, $shift): {\n $txt\n#}"
+    clipboard clear
+    clipboard append -type STRING -format STRING -- $txt
+}; # copy2clipboard
+
+#_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.96 16/09/03 15:34:59 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.97 16/09/07 23:53:35 Sommer Edition 2016}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1274,7 +1322,7 @@ proc create_help  {sect} {
 
     global cfg myX
     putv "create_help(»$sect«)"
-    if {[winfo exists $cfg(winH)]} {                    # if there is a window, just jump to text
+    if {[winfo exists $cfg(winH)]} {    # if there is a window, just jump to text
         wm deiconify $cfg(winH)
         set name [str2obj [string trim $sect]]
         jumpto_mark $cfg(winH).t "osaft-HEAD-$name"
@@ -1764,27 +1812,6 @@ proc osaft_exec   {parent cmd} {
     update_status "$do done."
 }; # osaft_exec
 
-proc copy2clipboard {w shift} {
-    #? copy visible text of object to clipboard
-    global cfg
-    set klasse [winfo class $w]
-    set txt {}
-    if {$shift==1} { set txt "$w $klasse: " }
-    switch $klasse {
-       Button       -
-       Label        -
-       Checkbutton  -
-       Radiobutton  { append txt [lindex [$w config -text] 4] }
-       Text         { append txt [string trim [$w get 1.0 end]]; }
-       Entry        { append txt [string trim [$w get]]; }
-       default      { puts "** unknownclass $klasse" }
-    }
-    putv "copy2clipboard($w, $shift): {\n $txt\n#}"
-    clipboard clear
-    clipboard append -type STRING -format STRING -- $txt
-}; # copy2clipboard
-
-
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
 
@@ -1821,12 +1848,6 @@ font create osaftSlant  {*}[font config TkDefaultFont] -slant italic
 option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
-
-# bindings for simply copying text of any widget
-foreach klasse [list Button Label Entry Checkbutton Radiobutton Text] {
-    bind $klasse  <Control-ButtonPress-1>       { copy2clipboard %W 0 }
-    bind $klasse  <Shift-Control-ButtonPress-1> { copy2clipboard %W 1 }
-}
 
 #   search browser, first matching will be used
 set __native    "";
