@@ -231,7 +231,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.100 Summer Edition 2016
+#?      @(#) 1.101 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -296,8 +296,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.100 16/09/10 15:47:48 Sommer Edition 2016}
-set cfg(VERSION) {1.100}
+set cfg(SID)    {@(#) o-saft.tcl 1.101 16/09/10 19:47:27 Sommer Edition 2016}
+set cfg(VERSION) {1.101}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -408,6 +408,7 @@ array set cfg_buttons "
     {closeme}   {{Quit}     orange  quit        {Close program}}
     {closewin}  {{Close}    orange  close       {Close window}}
     {closetab} {{Close Tab} orange  closetab    {Close this TAB}}
+    {loadresult}  {{Load}   lightgreen load     {Load results from file}}
     {saveresult}  {{Save}   lightgreen save     {Save results to file}}
     {saveconfig}  {{Save}   lightgreen save     {Save configuration to file  }}
     {reset}     {{Reset}    $my_bg  reset       {Reset configuration to defaults}}
@@ -994,8 +995,8 @@ proc update_status {val} {
 }
 
 proc apply_filter {txt} {
-    #? apply filters for markup in output
-    # set tag for all texts mtching pattern from each filter
+    #? apply filters for markup in output, data is in text widget $txt
+    # set tag for all texts matching pattern from each filter
     # also sets a tag for the complete line named with suffix .l
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
@@ -1520,6 +1521,22 @@ proc create_note  {parent title} {
     return $this
 }; # create_note
 
+proc create_tab   {parent cmd content} {
+    #? create new TAB in .note and set focus for it; returns text widget in TAB
+    global cfg
+    set tab [create_note $parent "($cfg(EXEC)) $cmd"];
+    set txt [create_text $tab $content].t ; # <== ugly hardcoded .t from .note
+    pack [button $tab.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] \
+         [button $tab.filter     -command "create_filter $txt $cmd"    ] \
+         -side left
+    pack [button $tab.closetab   -command "destroy $tab"] -side right
+    theme_set    $tab.closetab
+    theme_set    $tab.saveresult
+    theme_set    $tab.filter
+    $cfg(objN) select $tab
+    return $txt
+}; # create_tab
+
 proc create_cmd   {parent title} {
     #? create button to run O-Saft command; returns widget
     global cfg
@@ -1779,8 +1796,26 @@ proc osaft_save   {type nr} {
     update_status "saved to $name"
 }; # osaft_save
 
+proc osaft_load   {cmd} {
+    #? load results from file and create a new TAB for it
+    global cfg tab
+    set name [tk_getOpenFile -title "$cfg(TITLE): [get_tipp loadresult]"]
+    if {$name eq ""} { return }
+    incr cfg(EXEC)
+    set fid [open $name r]
+    set tab($cfg(EXEC)) [read $fid]
+    close $fid
+    set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
+    apply_filter $txt ;        # text placed in pane, now do some markup
+    #puts $fid $tab($nr)
+    update_cursor watch
+    update_status "loaded file: $name"
+    update_cursor {}
+}; # osaft_load
+
 proc osaft_exec   {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
+    # parent is a dummy here
     global cfg hosts tab
     update_cursor watch
     update_status "$cmd"
@@ -1816,19 +1851,10 @@ proc osaft_exec   {parent cmd} {
         set osaft [{*}$execme];   # Tcl > 8.4
     } exec_msg
     set execme [regsub "^\s*exec\s*" $execme {}];   # pretty print command
-    set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"
-    set tab_run  [create_note $cfg(objN) "($cfg(EXEC)) $cmd"]
-    set txt [create_text  $tab_run $tab($cfg(EXEC))].t ;    # <== ugly hardcoded .t
-    pack [button $tab_run.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] \
-         [button $tab_run.filter     -command "create_filter $txt $cmd"    ] \
-         -side left
-    pack [button $tab_run.closetab   -command "destroy $tab_run"] -side right
-    theme_set    $tab_run.closetab
-    theme_set    $tab_run.saveresult
-    theme_set    $tab_run.filter
+    set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"; # store result for later use
+    set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
     apply_filter $txt ;        # text placed in pane, now do some markup
     destroy $cfg(winF);        # workaround, see FIXME in create_filtertab
-    $cfg(objN) select $tab_run
     update_status "$do done."
     update_cursor {}
     return
@@ -1954,6 +1980,7 @@ pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -
 foreach b $cfg(FAST) {
     create_cmd  $w.fc $b;
 }
+pack [button    $w.fc.loadresult -command "osaft_load {Load}"] -side left -padx 11
 pack [button    $w.fc.help -command "create_help {}"] -side right -padx $myX(padx)
 if {$cfg(VERB)==1} {
     pack [checkbutton $w.fc.img_txt -variable cfg(img_txt) -command {
@@ -2009,7 +2036,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.100"
+update_status "o-saft.tcl 1.101"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
