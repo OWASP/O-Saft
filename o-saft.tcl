@@ -223,6 +223,10 @@ exec wish "$0" ${1+"$@"}
 #.      TBD ...
 #.
 #.   Codeing (GUI)
+#.      Images (i.e.for buttons) are defined in  o-saft-img.tcl, which must be
+#.      installed in same path as  o-saft.tcl  itself.  The definitions are in
+#.      a separate file to keep the code more clean herein.
+#.
 #.      All buttons for the GUI are defined in a tabular array,  where the key
 #.      is used as part of the object name. For details please see comments at
 #.          # define all buttons used in GUI
@@ -244,7 +248,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.102 Summer Edition 2016
+#?      @(#) 1.103 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -309,12 +313,13 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.102 16/09/10 21:45:36 Sommer Edition 2016}
-set cfg(VERSION) {1.102}
+set cfg(SID)    {@(#) o-saft.tcl 1.103 16/09/10 22:53:39 Sommer Edition 2016}
+set cfg(VERSION) {1.103}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
 set cfg(ICH)    [file tail $argv0]
+set cfg(DIR)    [file dirname $argv0];  # directory of cfg(ICH)   
 set cfg(ME)     [info script];          # set very early, may be missing later
 set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
 
@@ -537,7 +542,7 @@ proc cfg_update   {} {
         # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
         _dbx " RCmin$cfg(RCmin) > RCSID$cfg(RCSID) ?"
         if {$cfg(RCmin) > $cfg(RCSID)} {
-            tk_messageBox -icon warning -title "$cfg(RC) veriosn $cfg(RCSID)" \
+            tk_messageBox -icon warning -title "$cfg(RC) version $cfg(RCSID)" \
                 -message "converting data to new version ...\n\nplease update $cfg(RC) using 'contrib/$cfg(RC)'"
         }
     }
@@ -617,6 +622,23 @@ if {[regexp {indows} $tcl_platform(os)]} {
 # NOTE:  as Tcl is picky about empty variables, we have to ensure later, that
 # $cfg(PERL) is evaluated propperly,  in particular when it is empty.  We use
 # Tcl's  {*}  evaluation for that.
+
+## check if cfg(SAFT) exists in PATH, +VERSION just prints the version number
+catch { exec {*}$cfg(PERL) $cfg(SAFT) +VERSION } usage;                               
+if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} { # check other PATH
+    set osaft "$cfg(DIR)/$cfg(SAFT)";       # check in PATH of $argv0               
+    catch { exec {*}$cfg(PERL) $osaft +VERSION }  usage;                               
+    if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} {                             
+        tk_messageBox -icon warning -title "$cfg(SAFT) not found" -message "
+most parts of the GUI are missing!
+
+!!Hint:
+check PATH environment variable."
+
+    } else {                                                                   
+        set cfg(SAFT) $osaft;               # found
+    }                                                                          
+}
 
 set cfg(CONF)   {internal data storage}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
@@ -1396,7 +1418,6 @@ proc create_help  {sect} {
         set name [str2obj [string trim $t]]
         $txt tag add  osaft-HEAD       $a "$a + $e c"
         $txt tag add  osaft-HEAD-$name $a "$a + $e c"
-        #$txt insert $a "\n\[ ^ \]\n";                  # TODO: insert button to top
     }
     $txt config -state normal
     $txt insert 1.0 "\nCONTENT\n$toc\n"
@@ -1404,6 +1425,7 @@ proc create_help  {sect} {
     $txt tag     add  osaft-LNK-T  2.0 2.7;             #
     $txt config -state disabled
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
+    if {$nam eq ""} { return; };        # no text available; avoid Tcl errors
 
     # 2. search for all references to section head lines in TOC and add click event
     # NOTE: used regex must be similar to the one used in 1. above !!
@@ -1519,6 +1541,7 @@ proc create_help  {sect} {
         set name [str2obj [string trim $sect]]
         jumpto_mark $cfg(winH).t "osaft-HEAD-$name"
     }
+    return
 }; # create_help
 
 proc create_note  {parent title} {
@@ -1945,7 +1968,7 @@ cfg_update;                     # update configuration as needed
 ## read $cfg(IMG) if any
 #  if the file does not exist, the error is silently catched and ignored
 if {$cfg(bstyle) eq "image"} {
-   set rcfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];  # must be same path
+   set rcfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];   # must be same path
    _dbx " IMG $rcfile"
    if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 }
@@ -1966,12 +1989,13 @@ set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(
 set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
 set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 
-if {2 > [llength [split $cfg(HELP) "\n"]]} {
-    # failed again, so we have no command and no options also, can't continue
-    tk_messageBox -icon error \
-        -message "**ERROR: could not call $cfg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
-    exit 2
-}
+##if {2 > [llength [split $cfg(HELP) "\n"]]} {
+##    # failed again, so we have no command and no options also
+##    # would be better to exit here, however some parts of the GUI may work ...
+##    tk_messageBox -icon error \
+##        -message "**ERROR: could not call $cfg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
+##    exit 2
+##}
 
 ## create toplevel window
 wm title        . $cfg(TITLE)
@@ -2049,7 +2073,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.102"
+update_status "o-saft.tcl 1.103"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
