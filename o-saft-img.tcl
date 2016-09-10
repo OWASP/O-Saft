@@ -5,7 +5,7 @@
 #? SYNOPSIS
 #?      source o-saft-img.tcl
 #? VERSION                                                                     
-#?      @(#) o-saft-img.tcl 1.2 16/08/31 23:43:23
+#?      @(#) o-saft-img.tcl 1.3 16/09/10 19:44:07
 #? AUTHOR
 #? Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #? This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -455,6 +455,25 @@ set IMG(helpsearch) [image create photo -data {
   8XicUqlENpslGAx6ejc0IYSjHI1GNBoNdF2nUqmg6/ofJ4Tw9G4o4/HYccXz+ZxAIEAsFvsn7xo2
   DOOszXVtztpc/yUshHjg+tegF/eaEGIC5HwO32mWZX0BsoDiU/QE1BQpJf1+/yPwGdB8iL7P5/Pf
   lcdfn263+wb4ANwAl58Pd34BP4BasVi8B/gNJINTCcG8NKcAAAAASUVORK5CYII=
+}];
+
+# Load_64x20_green.png
+set IMG(load) [image create photo -data {
+  iVBORw0KGgoAAAANSUhEUgAAAEAAAAAUCAYAAAA9djs/AAADHUlEQVRYheXWbWiVZRgH8N/xnGml
+  SVNz1XS60lH2Mtv8IEliEBEM6lMlVrCixDAQEdK+9AK9GGQfIiiCqCUJtQwJpRClDyVbqHM6UUcz
+  deo8a3O5junyZXcf7rNOhEXrTM+qP9xcPNd1X//nf1/3fd3PI4QgDjUh+DIE6d9c/72RDsEXIZgz
+  4EiEEGQkXsUK/y+suFJ4LdER1GB9odUUAOcxO5VhcaGVFAhJLEtlqC60ksGgbTfzb2VcCRvTedPN
+  SWWY+E+zl91N02aWv8+9tXmL+Vs4lbUBmfzpJqdO5pF9Pmv7kA/PYNCXjDYM0TtT+VTxXNb2ufBu
+  nDlN/XM0fExvJ+NKmVvL/c+SKopzGuvZsIqOvYxIMWMetW9RfG2Md+7n3Sf4riHm35f9VvX/yTsH
+  i7wK8PsTcCGetxfQvI7R45k+l/Ym1j7P0f08VhfndB/n515mzad9B1s/41yCRZ/G+JsPc+Bbxkxg
+  bCl1S6J/iFrg4p2AH/bFxSdHsbSZqybRc5CVFTR+yF0vML6cmQupWhRz0nt4/WbatkS+Yy1x8cmR
+  LNlOcRlNH7HmkSEswMW6A77fGe3EW0hNivGRU7n6Jjp3sX8Ho8rZs46GN+jeR9+JLF8mzj/SFp9L
+  Kikqi77Se6JvWNwBf9UCv6Si/WOvDuScOs+B3XzyQOz9eau4YiLrH8rt7uns3JDMcfRl745h3wKj
+  q6LtauHYYcZM5uRhevZm4zM51Ih+xs9k2tN0fJXLz6Do+izHLrq6uWwC7Vuib1gUYGA3m1ay54Oc
+  f+oCpi1k6qMcXM3aasZV07Od/rOUPciI6SSzPzLHm9n0JJ2bSBTlFjeykuIqfmyi/naKK+luiDnD
+  ogADJyDTGscAxs6O4ma8R1E5R1aT3syoa7hhORUvxvjldzJlMUfqOLqBG1+h83O6NuYWV7mGnY9z
+  Yhu9bVTV0/IUZ3uHpgCJeUEaJUPA9W9EayrDNtQUWkmBsDVREdyBb5AotJpLjDO4LRFCcJ3EM3gZ
+  qQKLulQ4gyUdwjuJEAIYKzELSzEHUwoo7mLiEL7GSz8JrfArU1DPntC9igEAAAAASUVORK5CYII=
 }];
 
 # Save_64x20_gray.png
