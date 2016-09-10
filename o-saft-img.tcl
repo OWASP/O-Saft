@@ -5,12 +5,14 @@
 #? SYNOPSIS
 #?      source o-saft-img.tcl
 #? VERSION                                                                     
-#?      @(#) o-saft-img.tcl 1.3 16/09/10 19:44:07
+#?      @(#) o-saft-img.tcl 1.4 16/09/10 22:17:53
 #? AUTHOR
 #? Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #? This  software is licensed under GPLv2. Please see o-saft.pl for details.
 #?      Project Home: https://www.owasp.org/index.php/O-Saft                   
 #?      Repository:   https://github.com/OWASP/O-Saft  
+# -----------------------------------------------------------------------------
+set cfg(IMGSID) {16.09.09}; # initial SID, do not remove
 
 if {[tk windowingsystem] == "aqua"} {   # grrr, ugly check to avoid Tcl errors
     package require Img;        # some Mac OS X require it                     
@@ -36,6 +38,19 @@ set IMG(-) [image create photo -data {
   5rvjP7NczuB/OfEG98/gb1lrEXkHUs/wmzbG3APngPKEfgK1stayWq1ugTtAe0Cvsix7Ut9fn7Zt
   T4FrYAEcOQY/gBegzvN8DfAFUdVpEL9obbUAAAAASUVORK5CYII=
 }];
+
+# ?_30x20_gray.png 
+set IMG(?) [image create photo -data {                                      
+  iVBORw0KGgoAAAANSUhEUgAAAB4AAAAUCAYAAACaq43EAAABq0lEQVRIib2WvasaQRRHz+CCi5Uu
+  YmThkUbQMpAUgVdoHUHB0lYsJAQNgfAarUxCesXgf7AgFpLGDxAMKSSCpb4yNkZQ7MMMkyJYhjiy
+  7Knv3MNvuJcZobUG4Hw+54E3wDPgCf5yANZAOxaLfQcQWmuOx+Mn4MFn2b94iMfjn8V+v88DXwOS
+  AijgpaWUeh2gFCAEvLOklM8DFgPcW0qpxLXVs9kMz/PYbDacTicSiQTFYpF6vU4oFDIR31lKqaur
+  J5MJ8/mcdDpNKpVivV7T7XaJRCJUq1UTMZaU8uriRqNBrVbDdV0ABoMBrVaL3W6HSR8Ao8TRaBQA
+  pRSLxYJOp4PjOJTLZUz6gGHiC71ej36/Ty6Xo9ls4jiOcWKxWq20qTibzRIOhxmPxwghTI//FS+X
+  S2OxH9x01dvtFoBMJnO72HQoDocDlUoFIQSe55FMJm8Tmya2bRvXddFaY9u28VBdENPp9Bf+P4P/
+  49FSSq2AfMDiH5aU8iPwCrhtL8z5DbSF1prRaPQe+ABYAUjrhULhi7h8fYbD4QvgLXAPPPVZ+BP4
+  BrRLpdIjwB9dAqe4iEbEGAAAAABJRU5ErkJggg==
+}];                                                                            
 
 # Start_64x20_gold9.png
 set IMG(cmdstart) [image create photo -data {
@@ -522,17 +537,4 @@ set IMG(save) [image create photo -data {
   Eq9hEZJZJvVvoRnz+ggfJEKIP94GiZF4FaMxIIvkbiVOYCfeTgmV8De7v5MByjb9UQAAAABJRU5E
   rkJggg==
 }];
-
-# ?_30x20_gray.png 
-set IMG(?) [image create photo -data {                                      
-  iVBORw0KGgoAAAANSUhEUgAAAB4AAAAUCAYAAACaq43EAAABq0lEQVRIib2WvasaQRRHz+CCi5Uu
-  YmThkUbQMpAUgVdoHUHB0lYsJAQNgfAarUxCesXgf7AgFpLGDxAMKSSCpb4yNkZQ7MMMkyJYhjiy
-  7Knv3MNvuJcZobUG4Hw+54E3wDPgCf5yANZAOxaLfQcQWmuOx+Mn4MFn2b94iMfjn8V+v88DXwOS
-  AijgpaWUeh2gFCAEvLOklM8DFgPcW0qpxLXVs9kMz/PYbDacTicSiQTFYpF6vU4oFDIR31lKqaur
-  J5MJ8/mcdDpNKpVivV7T7XaJRCJUq1UTMZaU8uriRqNBrVbDdV0ABoMBrVaL3W6HSR8Ao8TRaBQA
-  pRSLxYJOp4PjOJTLZUz6gGHiC71ej36/Ty6Xo9ls4jiOcWKxWq20qTibzRIOhxmPxwghTI//FS+X
-  S2OxH9x01dvtFoBMJnO72HQoDocDlUoFIQSe55FMJm8Tmya2bRvXddFaY9u28VBdENPp9Bf+P4P/
-  49FSSq2AfMDiH5aU8iPwCrhtL8z5DbSF1prRaPQe+ABYAUjrhULhi7h8fYbD4QvgLXAPPPVZ+BP4
-  BrRLpdIjwB9dAqe4iEbEGAAAAABJRU5ErkJggg==
-}];                                                                            
 
