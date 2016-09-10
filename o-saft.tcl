@@ -170,7 +170,7 @@ exec wish "$0" ${1+"$@"}
 #.      platform and underlaying shell would be like:
 #.          #!/usr/bin/wish
 #.          exec wish "$0" ${1+"$@"}
-#.      but above exec will throw erros on Mac OS X, henc a quick&dirt version
+#.      but above exec throws erros on  Mac OS X,  hence a quick&dirt version
 #.          exec wish "$0" --
 #.      need to be used.  Unfortunatelly this does not allow to pass arguments
 #.      on command line. Hence the initial hash-bang line uses   /bin/sh  .
@@ -185,7 +185,7 @@ exec wish "$0" ${1+"$@"}
 #.          +command2   Command nr 2
 #.          Options for commands
 #.          --opt1      this options does something
-#.      This tools relies on the format of these lines.  If the format changes
+#.      This tools relies on the format of these lines. If the format changes,
 #.      commands and options may be missing in the generated GUI.
 #.      Following options of  o-saft.pl  are used:
 #.          --help  --help=opt  --help=commands
@@ -205,7 +205,7 @@ exec wish "$0" ${1+"$@"}
 #.          osaft-      - prefix used for all text tags
 #.          f_*         - prefix used for all filter list variables
 #.          txt         - a text widget
-#.          w           - any widget
+#.          w  or  obj  - any widget
 #.          parent      - parent widget (may be toplevel)
 #.          hosts()     - global variable with list of hosts to be checked
 #.          cfg()       - global variable containing most configurations
@@ -213,17 +213,30 @@ exec wish "$0" ${1+"$@"}
 #.          cfg_texts() - global variable containing texts for widgets
 #.          cfg_tips()  - global variable containing texts for tooltips
 #.          myX()       - global variable for windows and window manager
+#.          tab()       - global variable containing results of executions
 #.
+#.   Codeing (general)
+#.      Sequence of function definitions done to avoid forward declarations.
+#.      Following  grep command  will return a list of functions  with a brief
+#.      description for them:
+#.          egrep '(^proc| #\?)' o-saft.tcl
+#.      TBD ...
+#.
+#.   Codeing (GUI)
+#.      All buttons for the GUI are defined in a tabular array,  where the key
+#.      is used as part of the object name. For details please see comments at
+#.          # define all buttons used in GUI
+
 #.   Notes about Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions (2015) are
 #.      the perl executable and the start method of the external browser.
+#.      Another exception (8/2016) is "package require Img" which is necessary
+#.      on some MacOS X.
 #.      All external programs are started using Tcl's  {*}  syntax.
 #.      If there is any text visible, we want to copy&paste it.  Therfore most
 #.      texts are placed in Tk's text widget instead of a label widget, 'cause
 #.      text widgets allow selecting their content by default, while labels do
 #.      not.
-#.      Another exception (8/2016) is "package require Img" which is necessary
-#.      on some MacOS X.
 #.
 #.      This is no academically perfect code, but quick&dirty scripted:
 #.       - makes use of global variables instead of passing parameters etc..
@@ -231,7 +244,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.101 Summer Edition 2016
+#?      @(#) 1.102 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -296,8 +309,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.101 16/09/10 19:47:27 Sommer Edition 2016}
-set cfg(VERSION) {1.101}
+set cfg(SID)    {@(#) o-saft.tcl 1.102 16/09/10 21:45:36 Sommer Edition 2016}
+set cfg(VERSION) {1.102}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -388,7 +401,7 @@ set my_bg       "[lindex [. config -bg] 4]";  # default background color
 
 # define all buttons used in GUI
     # Following table defines the  label text, background colour, image and tip
-    # text for each button. Each key (object name) defines one button.
+    # text for each button. Each key is an object name and defines one button.
     #
     # This allows to generate the buttons without these attributes (-text, -bg,
     # -image, etc.), which simplifies the code.  These attributes are set later
@@ -812,7 +825,7 @@ proc notTOC       {str} {
     return 0
 }; # notTOC
 
-proc theme_set  {w} {
+proc theme_set    {w} {
     #? set attributes for specified object
     # last part of the Tcl-widgets is key for array cfg_buttons
     global cfg cfg_buttons IMG
@@ -838,17 +851,15 @@ proc theme_set  {w} {
     }
 }; # theme_set
 
-proc theme_init {} {
+proc theme_init   {} {
     #? configure buttons with simple text or graphics
     global cfg_buttons
     _dbx "()"
-    #? set attributes for buttons
-    ## Buttons mit Attributen versehen
-    #  dazu suchen wir alle Tcl-Widgets und prüfen, ob der Namensteil nach dem
-    #  letzten  .  einem der Keys im Array cfg_buttons entspricht. Dann werden die
-    #  Attribute auf die Werte gesetzt, die im Array stehen.
-    #  Zuerst Regex erzeugen, die alle Keys im Array cfg_buttons matched
-    set rex [join [array names cfg_buttons] "|"];   # build regex of all buttons
+    # Search for all Tcl widgets (aka commands), then check if tail of command
+    # (part right of right-most .) exists as key in array cfg_buttons.
+    # Then use values defined in cfg_buttons to set attributes of the widget.
+    # First build a regex which matches all widget names of buttons
+    set rex [join [array names cfg_buttons] "|"]
     set rex [join [list {\.(} $rex {)$}] ""]
     _dbx ": regex $rex"
     foreach obj [info commands] {
@@ -868,7 +879,7 @@ proc jumpto_mark  {w txt} {
         $w yview scroll -1 units
         if {$txt ne "" } {              # store mark in history
             incr cfg(curr)
-            if {[llength $cfg(hist)] == $cfg(curr)} {
+            if {[llength $cfg(hist)]==$cfg(curr)} {
                 lappend cfg(hist) $txt
             } else {
                 incr cfg(curr) -1
@@ -978,7 +989,7 @@ proc update_cursor {cursor} {
         foreach c "$w [info commands $w.*]" {
             if {$c eq ""}  { continue }
             if {[regexp -all {\.} $c] > 2} { continue };    # only first level
-            #if {[lindex [$c config -cursor] 4] == ""}
+            #if {[lindex [$c config -cursor] 4] eq ""}
             catch {  $c config -cursor $cursor };   # silently discard errors
         }
     }
@@ -1020,7 +1031,7 @@ proc apply_filter {txt} {
         foreach a $anf {
             set e [lindex $end $i];
             incr i
-            if {$key eq {NO} || $key eq {YES}} {incr e -1 }; # FIXME very dirty hack to beautify print
+            if {$key eq "NO" || $key eq "YES"} {incr e -1 }; # FIXME very dirty hack to beautify print
             $txt tag add    osaft-$key.l "$a linestart" "$a lineend"
             if {$len==0} {
                $txt tag add osaft-$key    $a            "$a + 1 line - 1 char"
@@ -1084,15 +1095,16 @@ proc create_window {title size} {
     pack [frame  $this.f1] -fill x -side bottom
     pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
     theme_set    $this.f1.closewin
-    if {$title eq "Help" || $title eq {About}} { return $this }
+    if {$title eq "Help" || $title eq "About"} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
 
     # all other windows have a header line and a Save button
     pack [frame  $this.f0    -borderwidth 1 -relief sunken]    -fill x -side top
     pack [label  $this.f0.t  -text $title   -relief flat  ]    -fill x -side left
-    pack [button $this.f0.h -text {?} -command "create_help {$title}"] -side right
+    pack [button $this.f0.help_me     -command "create_help {$title}"] -side right
     pack [button $this.f1.saveconfig  -command {osaft_save "CFG" 0}]   -side left
     theme_set    $this.f1.saveconfig
+    theme_set    $this.f0.help_me
     return $this
 }; # create_window
 
@@ -1100,9 +1112,7 @@ proc create_host  {parent} {
     #?  frame with label and entry for host:port; $nr is index to hosts()
     global cfg hosts myX
     set host  $hosts($hosts(0))
-    set leftx 0;    # for nice alignments (we do not use grid)
     incr hosts(0)
-    if {$hosts(0)==1}  { set leftx 5 }
     _dbx " host($hosts(0)): $host"
     set this $parent.ft$hosts(0)
           frame  $this
@@ -1114,12 +1124,12 @@ proc create_host  {parent} {
     theme_set    $this.host_add
     if {$hosts(0)==1} {
         # first line has no {-} but {about}
-       grid forget  $this.host_del
-       grid [button $this.about -command "create_about"] -row 0
-       grid config  $this.about -column 4 -sticky e  -padx "$leftx $myX(padx)"
-       theme_set    $this.about
+        grid forget  $this.host_del
+        grid [button $this.about -command "create_about"] -row 0
+        grid config  $this.about -column 4 -sticky e  -padx "1 $myX(padx)"
+        theme_set    $this.about
     } else {
-       theme_set $this.host_del
+        theme_set $this.host_del
     }
     grid config  $this.eh -column 1 -sticky ew 
     grid columnconfigure    $this 1 -weight 1
@@ -1235,11 +1245,12 @@ proc create_filtertab   {parent cmd} {
     theme_set    $parent.tkcolor
 }; # create_filtertab
 
-proc create_filter      {txt cmd} {
+proc create_filter      {parent cmd} {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
     global cfg f_key f_bg f_fg f_cmt filter_bool myX
-    putv "create_filter(»$txt« $cmd)"
+    putv "create_filter(»$parent« $cmd)"
     if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return; }
+    set obj $parent;    # we want to have a short variable name
     set geo [split [winfo geometry .] {x+-}]
     set myX(geoF) +[expr [lindex $geo 2] + [lindex $geo 0]]+[expr [lindex $geo 3]+100]
         # calculate new position: x(parent)+width(parent), y(parent)+100
@@ -1249,10 +1260,10 @@ proc create_filter      {txt cmd} {
         # FIXME: only one variable for windows, need a variable for each window
         #        workaround see osaft_exec
     set this $cfg(winF)
-    _dbx " TXT: $txt | $cmd | $myX(geoF)"
+    _dbx " parent: $obj | $cmd | $myX(geoF)"
     pack [frame $this.f -relief sunken -borderwidth 1] -fill x
     pack [label $this.f.t -relief flat -text [get_text c_toggle]] -fill x
-    pack [checkbutton $this.f.c -text [get_text hideline] -variable filter_bool($txt,line)] -anchor w;
+    pack [checkbutton $this.f.c -text [get_text hideline] -variable filter_bool($obj,line)] -anchor w;
     create_tip $this.f.c [get_tipp hideline]
     $this.f.c config -state disabled ; # TODO: not yet working, see FIXME in toggle_txt
     foreach {k key} [array get f_key] {
@@ -1261,10 +1272,10 @@ proc create_filter      {txt cmd} {
         set bg $f_bg($k)
         set fg $f_fg($k)
         set key [str2obj [string trim $key]]
-        set filter_bool($txt,osaft-$key) 1; # default: text is visible
+        set filter_bool($obj,osaft-$key) 1; # default: text is visible
         pack [checkbutton $this.x$key \
-                    -text $f_key($k) -variable filter_bool($txt,osaft-$key) \
-                    -command "toggle_txt $txt osaft-$key \$filter_bool($txt,osaft-$key) \$filter_bool($txt,line);" \
+                    -text $f_key($k) -variable filter_bool($obj,osaft-$key) \
+                    -command "toggle_txt $obj osaft-$key \$filter_bool($obj,osaft-$key) \$filter_bool($obj,line);" \
              ] -anchor w ;
         # note: useing $f_key($k) instead of $key as text
         # note: checkbutton value passed as reference
@@ -1281,7 +1292,7 @@ proc create_about {} {
     #  Show the text starting with  #?  from this file.
     global cfg myX
     if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return; }
-    set cfg(winA) [create_window {About} $myX(geoA)]
+    set cfg(winA) [create_window "About" $myX(geoA)]
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
     $txt config -bg [get_color osaft]
 
@@ -1794,6 +1805,7 @@ proc osaft_save   {type nr} {
     }
     close $fid
     update_status "saved to $name"
+    return
 }; # osaft_save
 
 proc osaft_load   {cmd} {
@@ -1801,6 +1813,7 @@ proc osaft_load   {cmd} {
     global cfg tab
     set name [tk_getOpenFile -title "$cfg(TITLE): [get_tipp loadresult]"]
     if {$name eq ""} { return }
+    update_cursor watch
     incr cfg(EXEC)
     set fid [open $name r]
     set tab($cfg(EXEC)) [read $fid]
@@ -1808,9 +1821,9 @@ proc osaft_load   {cmd} {
     set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
     apply_filter $txt ;        # text placed in pane, now do some markup
     #puts $fid $tab($nr)
-    update_cursor watch
     update_status "loaded file: $name"
     update_cursor {}
+    return
 }; # osaft_load
 
 proc osaft_exec   {parent cmd} {
@@ -1883,9 +1896,9 @@ foreach arg $argv {
     }
 }
 if {$cfg(VERB) > 0} { lappend cfg(FAST) {+quit} {+version}; }
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     set cfg(confirm) {}; # Aqua's tk_save* has no  -confirmoverwrite
-    if {$optimg == 1} {
+    if {$optimg==1} {
         tk_messageBox -icon warning \
             -message "using images for buttons is not recomended on Aqua systems"
     } else {
@@ -2036,7 +2049,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.101"
+update_status "o-saft.tcl 1.102"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
