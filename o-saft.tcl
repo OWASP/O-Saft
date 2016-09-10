@@ -92,6 +92,8 @@ exec wish "$0" ${1+"$@"}
 #?      --img   use images as defined in o-saft-img.tcl for buttons
 #?              (not recommended on Mac OS X, because aqua has nice buttons)
 #.      --tip   use own tooltip
+#?      --version   print version number
+#.      +VERSION    print version number (for compatibility with o-saft.pl)
 #?
 #? KNOWN PROBLEMS
 #?      The markup defined in the filters (see Filter TAB) may not yet produce
@@ -229,7 +231,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.98 Summer Edition 2016
+#?      @(#) 1.99 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -294,7 +296,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.98 16/09/07 23:56:39 Sommer Edition 2016}
+set cfg(SID)    {@(#) o-saft.tcl 1.99 16/09/10 12:17:49 Sommer Edition 2016}
+set cfg(VERSION) {1.99}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1819,6 +1822,9 @@ set targets ""
 set optimg  0
 foreach arg $argv {
     switch -glob $arg {
+        {+VERSION} -
+        {+VERSION}  { puts $cfg(VERSION); exit; }
+        {--version} { puts $cfg(SID);     exit; }
         {--dbx} -
         {--d}   { set cfg(DEBUG) 1; }
         {--v}   { set cfg(VERB)  1; }
@@ -1984,7 +1990,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.98"
+update_status "o-saft.tcl 1.99"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
