@@ -231,7 +231,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.99 Summer Edition 2016
+#?      @(#) 1.100 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -296,8 +296,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.99 16/09/10 12:17:49 Sommer Edition 2016}
-set cfg(VERSION) {1.99}
+set cfg(SID)    {@(#) o-saft.tcl 1.100 16/09/10 15:47:48 Sommer Edition 2016}
+set cfg(VERSION) {1.100}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -966,6 +966,22 @@ proc toggle_txt   {txt tag val line} {
     # Hence we only support hiding the complete line yet.
     $txt tag config $tag.l -elide [expr ! $val]
 }; # toggle_txt
+
+proc update_cursor {cursor} {
+    #? set cursor for toplevel and tab widgets and all other windows
+    global cfg
+    foreach w [list . objN objS winA winF winH] {
+        if {$w ne "."} { set w $cfg($w) }
+        if {$w eq ""}  { continue }
+        # now get all children too
+        foreach c "$w [info commands $w.*]" {
+            if {$c eq ""}  { continue }
+            if {[regexp -all {\.} $c] > 2} { continue };    # only first level
+            #if {[lindex [$c config -cursor] 4] == ""}
+            catch {  $c config -cursor $cursor };   # silently discard errors
+        }
+    }
+}; # update_cursor
 
 proc update_status {val} {
     #? add text to status line
@@ -1766,6 +1782,7 @@ proc osaft_save   {type nr} {
 proc osaft_exec   {parent cmd} {
     #? run $cfg(SAFT) with given command; write result to global $osaft
     global cfg hosts tab
+    update_cursor watch
     update_status "$cmd"
     set do  {};     # must be set to avoid tcl error
     set opt {};     # ..
@@ -1813,6 +1830,8 @@ proc osaft_exec   {parent cmd} {
     destroy $cfg(winF);        # workaround, see FIXME in create_filtertab
     $cfg(objN) select $tab_run
     update_status "$do done."
+    update_cursor {}
+    return
 }; # osaft_exec
 
 #_____________________________________________________________________________
@@ -1990,7 +2009,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.99"
+update_status "o-saft.tcl 1.100"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
