@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.139 16/08/26 12:04:30";
+my  $man_SID= "@(#) o-saft-man.pm 1.140 16/09/13 00:03:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1682,8 +1682,8 @@ QUICKSTART
 
 WHY?
 
-        Why a new tool for checking SSL security and configuration  when there
-        are already a dozen or more such good tools in existence (circa 2012)?
+        Why a new tool for checking SSL security and configuration when there
+        are already a dozen or more such good tools in existence (in 2012)?
 
         Unique features:
           * working in closed environments, i.e. without internet connection
@@ -1700,7 +1700,7 @@ WHY?
           * limited capability to create your own customised tests
 
         Other  reasons or problems  are that other tools are either binary or
-        use additional binaries and hence not portable to other platforms.
+        use additional binaries and hence are not portable to other platforms.
 
         In contrast to (all?) most other tools, including  openssl(1), it can
         be used to "ask simple questions" like "does target support STS" just
@@ -1708,6 +1708,8 @@ WHY?
           $0 +hsts_sts example.tld
 
         For more, please see  EXAMPLES  section below.
+        If it should run on systems with old software (perl or perl modules),
+        please see  DEBUG  section below.
 
 
 SECURITY
@@ -1733,6 +1735,16 @@ SECURITY
         on a separate testing system.
 
         DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYTEMS.
+
+
+CONCEPTS
+
+        The purpose of ''O-Saft'' is to do the work, not to force the user to
+        learn a new tool or to install "newer" software first.
+        However, the user "should do something" if necessary depending on the
+        reported results.
+
+        ... more comming soon ...
 
 
 TECHNICAL INFORMATION
@@ -1808,13 +1820,13 @@ TECHNICAL INFORMATION
         just perl (5.x) without any modules is required.
 
         For  +info  and  +check  (and all related) commands,  perl (5.x) with
-        following modules (minimal version) is required:
+        following modules (minimal version) is recommended:
 
-          * IO              1.25 (2011)
-          * IO::Socket::SSL 1.37 (2011)
-          * IO::Socket::SSL 1.90 (2013)
-          * Net::DNS        0.66 (2011)
-          * Net::SSLeay     1.49 (2012)
+          * IO               1.25 (2011)
+          * IO::Socket::INET 1.37 (2011)
+          * IO::Socket::SSL  1.90 (2013)
+          * Net::DNS         0.66 (2011)
+          * Net::SSLeay      1.49 (2012)
 
         However, it is recommended to use the most recent version of the mod-
         ules which then gives more accurate results and less warnings. If the
@@ -1832,6 +1844,9 @@ TECHNICAL INFORMATION
         be available. If an older version of openssl is found, we try hard to
         extract  the DH parameters from the  data returned by the server, see
         +cipher-dh  command.
+
+        If you need to run on systems with older perl or perl module versions
+        please refer to the  DEBUG  section for more inofrmation.
 
 
 RESULTS
@@ -4718,22 +4733,22 @@ INSTALLATION
         alone executable would be nice, for example if the installed perl and
         its libraries are outdated, or if perl is missing at all.
 
-        Currently (2016) there a at least following possibilities to generate
-        a stand-alone executable:
+        Currently (2016) there are following possibilities to generate such a
+        stand-alone executable:
 
           * perl with PAR::Packer module
               pp -C -c $0
               pp -C -c $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
-                          -M Net::SSLinfo -M Net::SSLhello
+                          -M Net::SSLinfo -M Net::SSLhello -M osaft
               pp -C -c checkAllCiphers.pl
               pp -C -c checkAllCiphers.pl -M Net::DNS
 
           * ActiveState perl with its perlapp
               perlapp --clean $0
               perlapp --clean $0 -M Net::DNS -M Net::SSLeay -M IO::Socket \
-                          -M Net::SSLinfo -M Net::SSLhello
+                          -M Net::SSLinfo -M Net::SSLhello -M osaft
               perlapp --clean checkAllCiphers.pl
-              perlapp --clean checkAllCiphers.pl -M Net::DNS
+              perlapp --clean checkAllCiphers.pl -M Net::DNS -M osaft
 
           * perl2exe from IndigoSTar
               perl2exe $0
@@ -5316,6 +5331,146 @@ DEBUG
 
              Note that 'value'  here can span multiple lines and ends with:
               #}
+
+    Using outdated modules
+
+        The tools was designed to work with old perl modules too.  When using
+        old modules, a proper  '**WARNING:'  will be printed. These warinings
+        cannot be switched of using  --no-warning  .
+        The warning also informs about the missing functionality or check.
+
+        I.g. it is best to install newer versions of the module if possible.
+	A good practice to check if modules are available in a proper version
+        is to call:
+
+          $0 +version
+          $0 +version --v --v
+
+        Following example shows the result without warnings:
+
+               === reading: ./.o-saft.pl (RC-FILE done) ===
+               === reading: Net/SSLhello.pm (O-Saft module done) ===
+               === reading: Net/SSLinfo.pm (O-Saft module done) ===
+               === ./o-saft.pl 16.09.09 ===
+                   Net::SSLeay::
+                      ::OPENSSL_VERSION_NUMBER()    0x268443744
+                      ::SSLeay()                    0x268443744
+                   Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
+               = openssl =
+                   version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
+                   external executable              /opt/openssl-chacha/bin/openssl
+                   used environment variable (name) LD_LIBRARY_PATH
+                   environment variable (content)   <<undef>>
+                   path to shared libraries         
+                   full path to openssl.cnf file    <<undef>>
+                   common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                                                    /etc/ssl/openssl.cnf \
+                                                    /System//Library/OpenSSL/openssl.cnf \
+                                                    /usr/ssl/openssl.cnf
+                   URL where to find CRL file       <<undef>>
+                   directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
+                   PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
+                   common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
+                                                     /System/Library/OpenSSL
+                   common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+                   number of supported ciphers      177
+                   openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
+                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                                                    DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+               = o-saft.pl +cipherall =
+                   default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                                                    0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+               = Required (and used) Modules =
+                   @INC                 ./ ./lib . /bin /usr/share/perl5 \
+                                        /usr/lib/x86_64-linux-gnu/perl5/5.20 \
+                                        /usr/lib/x86_64-linux-gnu/perl/5.20 \
+                                        /usr/share/perl/5.20 /usr/local/lib/site_perl .
+               =   module name            VERSION  found in
+               =   ----------------------+--------+------------------------------------------
+                   IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
+                   IO::Socket::SSL        2.002    /usr/share/perl5/IO/Socket/SSL.pm
+                   Net::DNS               0.81     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
+                   Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
+                   Net::SSLinfo           16.06.01 Net/SSLinfo.pm
+                   Net::SSLhello          16.05.16 Net/SSLhello.pm
+                   Ciphers                          
+                   osaft                  16.05.10 osaft.pm
+
+        Following example shows the result with warnings:
+
+            === reading: ./.o-saft.pl (RC-FILE done) ===
+            === reading: ./Net/SSLhello.pm (O-Saft module done) ===
+            **WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialize at /Net/SSLinfo.pm line 481.
+            === reading: ./Net/SSLinfo.pm (O-Saft module done) ===
+            **WARNING: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
+            **WARNING: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
+            **WARNING: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
+            **WARNING: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
+            !!Hint: --force-openssl can be used to disables this check
+            **WARNING: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
+            **WARNING: SSL version 'TLSv11': not supported by Net::SSLeay; not checked
+            **WARNING: SSL version 'TLSv12': not supported by Net::SSLeay; not checked
+            **WARNING: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
+            === o-saft.pl 16.09.09 ===
+                Net::SSLeay::
+                   ::OPENSSL_VERSION_NUMBER()    0x9470143
+            **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+                   ::SSLeay()                    0x1.35
+            **WARNING: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
+            = openssl =
+                version of external executable   OpenSSL 0.9.8y 5 Feb 2013
+                external executable              /usr/bin/openssl
+                used environment variable (name) LD_LIBRARY_PATH
+                environment variable (content)   <<undef>>
+                path to shared libraries         
+                full path to openssl.cnf file    <<undef>>
+                common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                                                 /etc/ssl/openssl.cnf \
+                                                 /System//Library/OpenSSL/openssl.cnf \
+                                                 /usr/ssl/openssl.cnf
+                URL where to find CRL file       <<undef>>
+                directory with PEM files for CAs /System/Library/OpenSSL/certs
+                PEM format file with CAs         <<undef>>
+                common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
+                common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+                number of supported ciphers      43
+                openssl supported SSL versions   SSLv2 SSLv3 TLSv1
+                o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                                                 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+            **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+            **WARNING: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
+            = o-saft.pl +cipherall =
+                default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                                                 0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+            = Required (and used) Modules =
+                @INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
+                                     /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                                     /System/Library/Perl/5.10.0 \
+                                     /Library/Perl/5.10.0/darwin-thread-multi-2level \
+                                     /Library/Perl/5.10.0 \
+                                     /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                                     /Network/Library/Perl/5.10.0 \
+                                     /Network/Library/Perl \
+                                     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
+                                     /System/Library/Perl/Extras/5.10.0 .
+            =   module name            VERSION  found in
+            =   ----------------------+--------+------------------------------------------
+                IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
+                IO::Socket::SSL        1.22     /System/Library/Perl/Extras/5.10.0/IO/Socket/SSL.pm
+                Net::DNS               0.65     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/DNS.pm
+                Net::SSLeay            1.35     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/SSLeay.pm
+                Net::SSLinfo           16.06.01 ./Net/SSLinfo.pm
+                Net::SSLhello          16.05.16 ./Net/SSLhello.pm
+                osaft                  16.05.10 /osaft.pm
+
+        Please keep in mind that the shown version numbers and the shown line
+        numbers are examples and may differ on your system.
+
+        When starting $0 with outdated modules, more '**WARNING:' will
+        be shown. The warnings depend on the installed version of the module.
+        $0 is known to work with at least:
+            IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
+            Net::SSLeay 1.30
 
 
 EXAMPLES
