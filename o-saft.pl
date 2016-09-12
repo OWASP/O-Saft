@@ -46,8 +46,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.516 16/09/01 01:22:43",
-    STR_VERSION => "16.06.01",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.517 16/09/12 07:49:52",
+    STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -104,7 +104,7 @@ BEGIN {
 _y_TIME("BEGIN}");                  # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 _y_EXIT("exit=INIT0 - initialization start");
 
-use osaft;          # get most of our configuration
+use osaft;          # get most of our configuration; it's ok to die if missing
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -167,7 +167,7 @@ sub _warn   {
     # TODO: in CGI mode warning must be avoided until HTTP header written
     return;
 }
-sub _warn_and_exit {
+sub _warn_and_exit      {
     #? print warning that --experimental option is required
     #-method:  name of function where this message is called
     #-command: name of command subject to this message
@@ -191,12 +191,12 @@ sub _hint   {
     return;
 }
 
-sub _print_read($$) { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(:?--no.?header|--cgi)/i} @ARGV) <= 0); return; }
+sub _print_read($$)     { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(:?--no.?header|--cgi)/i} @ARGV) <= 0); return; }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
 
-sub _load_file($$) {
+sub _load_file($$)      {
     # load file with perl's require using the paths in @INC
     # use `$0 +version --v'  to see which files are loaded
     my $fil = shift;
@@ -1622,6 +1622,64 @@ usr_pre_file();
 
 #| definitions: internal functions
 #| -------------------------------------
+sub _check_modules()    {
+    # check for minimal version of a module; verbose out but for --v=2
+    my %expected_versions = (
+        'IO::Socket::INET'  => "1.31",
+        'IO::Socket::SSL'   => "1.37",
+        'Net::SSLeay'       => "1.49",
+        'Net::DNS'          => "0.65",
+        # to simulate various error conditions, simply modify the module name
+        # and/or its expected version in above table;  these values are never
+        # used elsewhere
+    );
+    # Comparing version numbers is tricky, 'cause they are no natural numbers
+    # Consider for example 1.8 and 1.11 : where the numerical comapre returns
+    #   "1.8 > 1.11".
+    # perl has the Version module for this, but it's available for perl > 5.9
+    # only. For older perl, we warn that version checks may not be accurate.
+    # Please see "perldoc version" about the logic and syntax.
+    my $have_version = 1;
+    eval {require version; } or $have_version = 0;
+    $have_version = 0 if ($version::VERSION < 0.77);
+        # veriosn module too old, use natural number compare
+    if ($have_version==0) {
+        warn STR_WARN, "ancient perl has no 'version' module; version checks may not be accurate;";
+    }
+    if ($cfg{verbose} > 1) {
+        printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
+        printf "# %-21s\t%s\t%s\n", "module name", "VERSION", "> expected versions";
+        printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
+    }
+    foreach my $mod (keys %expected_versions) {
+        ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
+        no strict 'refs';   # avoid: Can't use string ("Net::DNS::VERSION") as a SCALAR ref while "strict refs" in use
+        ## use critic
+        my $expect = $expected_versions{$mod};
+        my $v  = $mod . "::VERSION";
+        my $ok = "yes";
+        # following eval is safe, as left side value cannot be injected
+        eval {$v = $$v;} or $v = 0;     # module was not loaded or has no VERSION
+        if ($have_version==1) {         # accurate checks with version module
+            # convert natural numbers to version objects
+            $v      = version->parse("v$v");
+            $expect = version->parse("v$expect");
+        }
+        if ($v < $expect) {
+            $ok = "no";
+            $ok = "missing" if ($v == 0);
+            # use warn() not _warn() here, see CONCEPTS
+            warn STR_WARN, "ancient $mod $v < $expect detected;";
+            # TODO: not sexy: warnings are inside tabular data for --v
+        }
+        if ($cfg{verbose} > 1) {
+            printf "# %-21s\t%s\t> %s\t%s\n", $mod, $v, $expect, $ok;
+        }
+    }
+    printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15 if ($cfg{verbose} > 1);
+    return;
+}; # _check_modules
+
 sub _initchecks_score() {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
@@ -1640,7 +1698,7 @@ sub _initchecks_score() {
     return;
 } # _initchecks_score
 
-sub _initchecks_val()  {
+sub _initchecks_val()   {
     # set all default check values here
     $checks{$_}->{val}   = "" foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
@@ -1657,7 +1715,7 @@ sub _initchecks_val()  {
     return;
 } # _initchecks_val
 
-sub _init_all()        {
+sub _init_all()         {
     # set all default values here
     $cfg{'done'}->{'init_all'}++;
     _trace("_init_all(){}");
@@ -1668,7 +1726,7 @@ sub _init_all()        {
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
 
-sub _resetchecks()     {
+sub _resetchecks()      {
     # reset values
     foreach (keys %{$cfg{'done'}}) {
         next if (!m/^check/);  # only reset check*
@@ -1680,11 +1738,11 @@ sub _resetchecks()     {
     return;
 }
 
-sub _prot_cipher($$)   { my @txt = @_; return " " . join(":", @txt); }
+sub _prot_cipher($$)    { my @txt = @_; return " " . join(":", @txt); }
     # return string consisting of given parameters separated by : and prefixed with a space
     # (mainly used to concatenate SSL Version and cipher suite name)
 
-sub _getscore($$$)     {
+sub _getscore($$$)      {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
     my $key     = shift;
     my $value   = shift || "";
@@ -1732,7 +1790,7 @@ sub _cfg_set_from_file($$) {
     return;
 } #  _cfg_set_from_file
 
-sub _cfg_set($$)       {
+sub _cfg_set($$)        {
     # set value in configuration %cfg, %checks, %data, %text
     # $typ must be any of: CFG-text, CFG-score, CFG-cmd-*
     # if given value is a file, read settings from that file
@@ -1829,7 +1887,7 @@ sub _cfg_set($$)       {
 } # _cfg_set
 
 # check functions for array members and hash keys
-sub __SSLinfo($$$)     {
+sub __SSLinfo($$$)      {
     # wrapper for Net::SSLinfo::*() functions
     # Net::SSLinfo::*() return raw data, depending on $cfg{'format'}
     # these values will be converted to o-saft's preferred format
@@ -2042,27 +2100,27 @@ sub __SSLinfo($$$)     {
     return $val;
 }; # __SSLinfo
 
-sub _subst($$)         { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
+sub _subst($$)          { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
     # return given text with '@@' replaced by given value
-sub _get_text($$)      { my ($is,$txt)=@_; return _subst($text{$is}, $txt); }
-    # for given index of %text return text with '@@' replaced by given value
-sub _need_this($)      {
+sub _get_text($$)       { my ($is,$txt)=@_; return _subst($text{$is}, $txt); }
+    # for given index o f %text return text with '@@' replaced by given value
+sub _need_this($)       {
     # returns >0 if any of the given commands is listed in $cfg{'$_'}
     my $key = shift;
     my $is  = join("|", @{$cfg{'do'}});
        $is  =~ s/\+/\\+/g;    # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
 }
-sub _need_cipher()     { return _need_this('need_cipher');   };
-sub _need_default()    { return _need_this('need_default');  };
-sub _need_checkssl()   { return _need_this('need_checkssl'); };
-    # returns >0 if any of the given commands is listed in $cfg{need_*}
-sub _is_hashkey($$)    { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
-sub _is_member($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
-sub _is_do($)          { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
-sub _is_intern($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'commands-INT'}}); }
-sub _is_hexdata($)     { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});   }
-sub _is_call($)        { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}}); }
+sub _need_cipher()      { return _need_this('need_cipher');   };
+sub _need_default()     { return _need_this('need_default');  };
+sub _need_checkssl()    { return _need_this('need_checkssl'); };
+    # returns >0 if any  of the given commands is listed in $cfg{need_*}
+sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
+sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
+sub _is_do($)           { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
+sub _is_intern($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'commands-INT'}}); }
+sub _is_hexdata($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});   }
+sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
 
 
@@ -2077,7 +2135,7 @@ sub _isbeast($$){
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
     return "";
 } # _isbeast
-### _isbreach($)       { return "NOT YET IMPLEMEMNTED"; }
+### _isbreach($)        { return "NOT YET IMPLEMEMNTED"; }
 sub _isbreach($){
     # return 'yes' if vulnerable to BREACH
     return "";
@@ -2125,7 +2183,7 @@ sub _ispfs($$)  { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/
     # return given cipher if it does not support forward secret connections (PFS)
 sub _isrc4($)   { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
     # return given cipher if it is RC4
-sub _istr02102($$) {
+sub _istr02102($$)      {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
@@ -2151,7 +2209,7 @@ sub _istr03116_lazy($$) {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
     return "";
 } # _istr03116_lazy
-sub _isrfc7525($$) {
+sub _isrfc7525($$)      {
     # return given cipher if it is not RFC 7525 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     my $bit = get_cipher_bits($cipher);
@@ -2164,7 +2222,7 @@ sub _isrfc7525($$) {
     return $cipher if ($bit < 128);
     return "";
 } # _isrfc7525
-sub _isfips($$) {
+sub _isfips($$)         {
     # return given cipher if it is not FIPS-140 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($ssl    ne "TLSv1");
@@ -2172,11 +2230,11 @@ sub _isfips($$) {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'FIPS-140'}/);
     return "";
 } # _isfips
-sub _isnsab($$) {
+sub _isnsab($$)         {
     # return given cipher if it is not NSA Suite B compliant, empty string otherwise
 # TODO:
 } # _isnsab
-sub _ispci($$)  {
+sub _ispci($$)          {
     # return given cipher if it is not PCI compliant, empty string otherwise
 # TODO: DH 1024+ is PCI compliant
     my ($ssl, $cipher) = @_;
@@ -2184,7 +2242,7 @@ sub _ispci($$)  {
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'notPCI'}/);
     return "";
 } # _ispci
-sub _readframe($) {
+sub _readframe($)       {
     # from https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
     my $cl  = shift;
     my $len = 5;
@@ -2211,7 +2269,7 @@ sub _readframe($) {
     }
     return ($type,$ver,@msg);
 } # _readframe
-sub _isbleed($$) {
+sub _isbleed($$)        {
     #? return "heartbleed" if target supports TLS extension 15 (heartbeat), empty string otherwise
     # http://heartbleed.com/
     # http://possible.lv/tools/hb/
@@ -2309,7 +2367,7 @@ sub _isbleed($$) {
     return $ret;
 } # _isbleed
 
-sub _isccs($$$) {
+sub _isccs($$$)         {
     #? return "ccs" if target is vulnerable to CCS Injection, empty string otherwise
     # parameter $ssl must be provided as binary value: 0x00, 0x01, 0x02, 0x03 or 0x04
     # http://ccsinjection.lepidum.co.jp/
@@ -2384,7 +2442,7 @@ sub _isccs($$$) {
     return $ret;
 } # _isccs
 
-sub _istls12only($$) {
+sub _istls12only($$)    {
     #? returns empty string if TLS 1.2 is the only protocol used,
     #? returns all used protocols otherwise
     my ($host, $port) = @_;
@@ -2405,7 +2463,7 @@ sub _istls12only($$) {
     return join(" ", @ret);
 } # _istls12only
 
-sub _getwilds($$) {
+sub _getwilds($$)       {
     # compute usage of wildcard in CN and subjectAltname
     my ($host, $port) = @_;
     my ($value, $rex);
@@ -2426,7 +2484,7 @@ sub _getwilds($$) {
     return;
 } # _getwilds
 
-sub _usesocket($$$$) {
+sub _usesocket($$$$)    {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers passed in
     # NOTE that this is used to check for supported ciphers only, hence no
@@ -2509,7 +2567,7 @@ sub _usesocket($$$$) {
     return $cipher;
 } # _usesocket
 
-sub _useopenssl($$$$) {
+sub _useopenssl($$$$)   {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers passed in
     # $ciphers must be colon (:) separated list
@@ -2567,7 +2625,7 @@ sub _useopenssl($$$$) {
     return "";
 } # _useopenssl
 
-sub _get_default($$$) {
+sub _get_default($$$)   {
     # return (default) offered cipher from target
     my ($ssl, $host, $port) = @_;
     my $cipher = "";
@@ -2591,7 +2649,7 @@ sub _get_default($$$) {
     return $cipher;
 } # _get_default
 
-sub ciphers_get($$$$) {
+sub ciphers_get($$$$)   {
     #? test target if given ciphers are accepted, returns array of accepted ciphers
     my ($ssl, $host, $port, $arr) = @_;
     my @ciphers = @{$arr};# ciphers to be checked
@@ -4811,8 +4869,8 @@ sub printversion() {
         no strict 'refs';   # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
         ## use critic
         # we expect ::VERSION in all these modules
-        ($d = $m) =~ s#::#/#g;  $d .= '.pm';   # convert string to key for %INC
-        $v  = $m . "::VERSION";
+        ($d = $m) =~ s#::#/#g;  $d .= '.pm';# convert string to key for %INC
+        $v  = $m . "::VERSION";             # compute module's VERSION variable
         printf("    %-22s %-9s%s\n", $m, ($$v || " "), ($INC{$d} || " "));
             # use a single space if value is not defined
     }
@@ -5768,9 +5826,6 @@ local $\ = "\n";
 # Unfortunately `use autouse' is not possible as to much functions need to
 # be declared for that pragma then.
 use     IO::Socket::SSL;  # qw(debug2);
-if ($IO::Socket::SSL::VERSION < 1.37) {
-    warn STR_WARN, "IO::Socket::SSL $IO::Socket::SSL::VERSION  <  expected version 1.37";
-}
 use     IO::Socket::INET;
 if (_is_do('version') or ($cfg{'usemx'} > 0)) {
     eval {require Net::DNS;} or warn STR_ERROR, "'require Net::DNS' failed";
@@ -5798,6 +5853,56 @@ if ($err ne "") {
     warn STR_ERROR, "$err";         # no reason to die for +version
 }
 _y_TIME("inc}");
+
+#| check for required module versions
+#| -------------------------------------
+#  check done after loading our own modules because they may require other
+#  common perl modules too; we may have detailed warnings berfore
+#  it is just a simple check, more detailed checks on version numbers will
+#  be done in the code with proper warning messages
+_check_modules();
+
+#| check if used software supports SNI properly
+#| -------------------------------------
+if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
+$typ  = "ancient version ## does not support SNI";
+$typ .= " or is known to be buggy; SNI disabled;";
+if ($IO::Socket::SSL::VERSION < 1.90) {
+    if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
+        $cfg{'usesni'} = 0;
+        my $txt = $typ; $txt =~ s/##/IO::Socket::SSL $IO::Socket::SSL::VERSION < 1.90/;
+        warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
+        _hint("--force-openssl can be used to disables this check");
+    }
+}
+if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
+    # same as  IO::Socket::SSL->can_client_sni()
+    # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
+    if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
+        $cfg{'usesni'} = 0;
+        my $v   = Net::SSLeay::OPENSSL_VERSION_NUMBER();
+        my $txt = $typ; $txt =~ s/##/openssl $v < 1.0.0/;
+        warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
+        _hint("--force-sni can be used to disables this check");
+    }
+}
+_trace(" cfg{usesni}: $cfg{'usesni'}");
+
+#| check if Net::SSLeay is usable
+#| -------------------------------------
+if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
+    die STR_ERROR, "Net::SSLeay not found, useless use of yet another SSL tool";
+    # TODO: this is not really true, i.e. if we use openssl instead Net::SSLeay
+}
+if (1.49 > $Net::SSLeay::VERSION) { # WARNING about ancient version already printed elswhere
+    # only check VERSION instead of requiring a specific version with perl's use
+    # this allows continueing to use this tool even if the version is too old
+    # but we shout out loud that the results are not reliable
+    my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49";
+       $txt .= "  may throw warnings and/or results may be missing;";
+    warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
+}
+} # ! +cipherraw
 
 #| check for supported SSL versions
 #| -------------------------------------
@@ -5868,47 +5973,6 @@ if (! _is_do('version')) {
     _v_print("supported SSL versions: @{$cfg{'versions'}}");
     _v_print("  checked SSL versions: @{$cfg{'version'}}");
 }
-
-#| check if used software supports SNI properly
-#| -------------------------------------
-if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
-$typ  = "old version of ## detected which does not support SNI";
-$typ .= " or is known to be buggy; SNI disabled";
-if ($IO::Socket::SSL::VERSION < 1.90) {
-    if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
-        $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/`IO::Socket::SSL < 1.90'/;
-        _warn($txt);
-        _hint("--force-openssl can be used to disables this check");
-    }
-}
-if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
-    # same as  IO::Socket::SSL->can_client_sni()
-    # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
-    if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
-        $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/`openssl < 1.0.0'/;
-        _warn($txt);
-        _hint("--force-sni can be used to disables this check");
-    }
-}
-_trace(" cfg{usesni}: $cfg{'usesni'}");
-
-#| check if Net::SSLeay is usable
-#| -------------------------------------
-if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
-    die STR_ERROR, "Net::SSLeay not found, useless use of yet another SSL tool";
-    # TODO: this is not really true, i.e. if we use openssl instead Net::SSLeay
-}
-if (1.49 > $Net::SSLeay::VERSION) {
-    # only check VERSION instead of requiring a specific version with perl's use
-    # this allows continueing to use this tool even if the version is too old
-    # but we shout out loud that the results are not reliable
-    _warn("ancient Net::SSLeay $Net::SSLeay::VERSION found");
-    _warn("$0 requires Net::SSLeay 1.49 or newer");
-    _warn("$0 may throw warnings and/or results may be missing");
-}
-} # ! +cipherraw
 
 #| set additional defaults if missing
 #| -------------------------------------
