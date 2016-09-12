@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.139 16/09/12 08:08:00',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.140 16/09/12 22:13:48',
 };
 
 ######################################################## public documentation #
@@ -1302,12 +1302,16 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
-        $_SSLinfo{'version'}    = _ssleay_get('version', $x509);
         $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
         $_SSLinfo{'issuer'}     = _ssleay_get('issuer',  $x509);
         $_SSLinfo{'before'}     = _ssleay_get('before',  $x509);
         $_SSLinfo{'after'}      = _ssleay_get('after',   $x509);
         $_SSLinfo{'policies'}   = _ssleay_get('policies',$x509);
+        if (1.45 <= $Net::SSLeay::VERSION) {
+            $_SSLinfo{'version'}= _ssleay_get('version', $x509);
+        } else {
+            warn "**WARNING: Net::SSLeay >= 1.45 required for getting version";
+        }
         if (1.33 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL,
             $_SSLinfo{'altname'}= _ssleay_get('altname', $x509);
         } else {
