@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.138 16/07/05 21:06:55',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.139 16/09/12 08:08:00',
 };
 
 ######################################################## public documentation #
@@ -53,9 +53,9 @@ use constant {
 #       instead.
 
 # NOTE: This module should not use any  print(), warn() or die() calls to avoid
-#       unexpected behaviours in the calling program. Only exception is print()
-#       when used in trace mode ($trace > 0).
-# FIXME: there're still some warn (3/2015)
+#       unexpected behaviours in the calling program. Exception are:
+#           warn()  when used to inform about ancient modules
+#           print() when used in trace mode ($trace > 0).
 
 =pod
 
@@ -477,7 +477,11 @@ BEGIN {
     Net::SSLeay::load_error_strings();
     Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
     Net::SSLeay::randomize();
-    Net::SSLeay::initialize();
+    if (1.45 > $Net::SSLeay::VERSION) {
+        warn "**WARNING: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize";
+    } else {
+        Net::SSLeay::initialize();
+    }
 }
 $Net::SSLinfo::timeout     = 'timeout'; # timeout executable
 $Net::SSLinfo::openssl     = 'openssl'; # openssl executable
