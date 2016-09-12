@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.517 16/09/12 07:49:52",
+    SID         => "@(#) yeast.pl 1.518 16/09/12 08:37:11",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4755,10 +4755,22 @@ sub printquit() {
     return;
 } # printquit
 
+sub __SSLeay() {
+    #? internal wrapper for Net::SSLeay::SSLeay()
+    if (1.49 > $Net::SSLeay::VERSION) {
+        my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
+           $txt .= " cannot compare SSLeay with openssl version";
+        warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
+        return "$Net::SSLeay::VERSION";
+    } else {
+        return Net::SSLeay::SSLeay();
+    }
+}; # __SSLeay
+
 sub printversionmismatch() {
     #? check if openssl and compiled SSLeay are of same version
     my $o = Net::SSLeay::OPENSSL_VERSION_NUMBER();
-    my $s = Net::SSLeay::SSLeay();
+    my $s = __SSLeay();
     if ($o ne $s) {
         _warn("used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
     }
@@ -4774,16 +4786,20 @@ sub printversion() {
     print "=== $0 $VERSION ===";
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
     print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
-    print "       ::SSLeay()                    0x" . Net::SSLeay::SSLeay();
-    if ($cfg{'verbose'} > 0) {
+    print "       ::SSLeay()                    0x" . __SSLeay();
+    if (1.49 > $Net::SSLeay::VERSION) {
+        warn STR_WARN, "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available";
+    } else {
+      if ($cfg{'verbose'} > 0) {
         # TODO: not all versions of Net::SSLeay have constants like 
         # Net::SSLeay::SSLEAY_CFLAGS, hence we use hardcoded integers
         print "       ::SSLEAY_DIR                  " . Net::SSLeay::SSLeay_version(5);
         print "       ::SSLEAY_BUILD_ON             " . Net::SSLeay::SSLeay_version(3);
         print "       ::SSLEAY_PLATFORM             " . Net::SSLeay::SSLeay_version(4);
         print "       ::SSLEAY_CFLAGS               " . Net::SSLeay::SSLeay_version(2);
+      }
+      print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
     }
-    print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
 
     print "= openssl =";
     print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
