@@ -154,8 +154,8 @@ For more details, please see  L</Requirements>  and  L</INSTALLATION>  below.
 
 =head1 WHY?
 
-Why a new tool for checking SSL security and configuration  when there
-are already a dozen or more such good tools in existence (circa 2012)?
+Why a new tool for checking SSL security and configuration when there
+are already a dozen or more such good tools in existence (in 2012)?
 
 Unique features:
 
@@ -222,7 +222,7 @@ Currently available tools suffer from some or all of following issues:
 =back
 
 Other  reasons or problems  are that other tools are either binary or
-use additional binaries and hence not portable to other platforms.
+use additional binaries and hence are not portable to other platforms.
 
 In contrast to (all?) most other tools, including L<openssl(1)|openssl(1)>, it can
 be used to "ask simple questions" like "does target support STS" just
@@ -231,6 +231,8 @@ by calling:
 	o-saft.pl +hsts_sts example.tld
 
 For more, please see  L</EXAMPLES>  section below.
+If it should run on systems with old software (perl or perl modules),
+please see  L</DEBUG>  section below.
 
 =head1 SECURITY
 
@@ -256,6 +258,15 @@ It is  highly recommended to do these installations and use the tools
 on a separate testing system.
 
 B<DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYTEMS.>
+
+=head1 CONCEPTS
+
+The purpose of C<>O-SaftC<> is to do the work, not to force the user to
+learn a new tool or to install "newer" software first.
+However, the user "should do something" if necessary depending on the
+reported results.
+
+... more comming soon ...
 
 =head1 TECHNICAL INFORMATION
 
@@ -390,35 +401,35 @@ For checking all ciphers and all protocols with  I<+cipherall>  command,
 just perl (5.x) without any modules is required.
 
 For  I<+info>  and  I<+check>  (and all related) commands,  perl (5.x) with
-following modules (minimal version) is required:
+following modules (minimal version) is recommended:
 
 =over
 
-=item * IO              1.25 (2011)
+=item * IO               1.25 (2011)
 
 =back
 
 =over
 
-=item * IO::Socket::SSL 1.37 (2011)
+=item * IO::Socket::INET 1.37 (2011)
 
 =back
 
 =over
 
-=item * IO::Socket::SSL 1.90 (2013)
+=item * IO::Socket::SSL  1.90 (2013)
 
 =back
 
 =over
 
-=item * Net::DNS        0.66 (2011)
+=item * Net::DNS         0.66 (2011)
 
 =back
 
 =over
 
-=item * Net::SSLeay     1.49 (2012)
+=item * Net::SSLeay      1.49 (2012)
 
 =back
 
@@ -438,6 +449,9 @@ For checking DH parameters of ciphers, openssl 1.0.2  or newer should
 be available. If an older version of openssl is found, we try hard to
 extract  the DH parameters from the  data returned by the server, see
 I<+cipher-dh>  command.
+
+If you need to run on systems with older perl or perl module versions
+please refer to the  L</DEBUG>  section for more inofrmation.
 
 =head1 RESULTS
 
@@ -2046,15 +2060,18 @@ For general descriptions please see  L</CUSTOMIZATION>  section below.
 =head3 --cfg-cmd=CMD=LIST
 
 Redefine list of commands. Sets  %cfg{cmd-CMD}  to  LIST.  Commands
-are written without the leading  C<+>.
-CMD       can be any of:  bsi, check, http, info, quick, sni, sizes
+can be written without the leading  C<+>.
+If  CMD  is any of the known internal commands, it will be redifned.
+If  CMD  is a unknown command, it will be created.
+
 Example:  I<--cfg-cmd=sni="sni> hostname"
+An example  I<+preload>  can be found in  .o-saft.pl .
 
 To get a list of commands and their settings, use:
 
 	o-saft.pl --help=intern
 
-Main purpose is to reduce list of commands or print them sorted.
+Main purpose is to reduce list of commands or to print them sorted.
 
 =head3 --cfg-score=KEY=SCORE
 
@@ -2464,6 +2481,19 @@ Check if target is vulnerable to POODLE attack (SSLv3 enabled).
 Check if target is vulnerable to SLOTH attack  (server offers RSA-MD5
 or ECDSA-MD5 ciphers).
 
+=head3 sweet32
+
+Check if target is vulnerable to Sweet32 attack  (server offers 3DES
+
+=over
+
+=item *         ciphers).
+
+=back
+
+Note that FIPS-140 compliance requires 3DES ciphers, hence compliant
+systems are then vulnerable to Sweet32 attacks.
+
 =head3 ALPN
 
 Check if target supports ALPN. Following messages are evaluated:
@@ -2508,6 +2538,13 @@ See CVE-2015-0204 and https://freakattack.com/ .
 
 Check if target is vulnerable to heartbleed attack, see CVE-2014-0160
 and http://heartbleed.com/ .
+
+=head3 HEIST
+
+Not implemented.
+
+There are no checks for the HEIST attack implemented, because this is
+an attack on TCP/IP rather than SSL/TLS on top of TCP/IP.
 
 =head3 KCI
 
@@ -2563,9 +2600,15 @@ the server closes the connection or responds with no matching cipher.
 Currently (2016) we check for ciphers with  ECDSA, RSA-MD5.
 Checking the TLS extension C<tls-unique> is not yet implemented.
 
+=head3 Sweet32
+
+Currently (2016) we check for ciphers with  3DES.
+
 =head2 Target (server) Configuration and Support
 
-=head3 BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4, SLOTH
+=head3 BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4,
+
+=head3 SLOTH, Sweet32
 
 See above.
 
@@ -2790,6 +2833,58 @@ requests again, if STS is not well implemented on the server.
 =item * STS must not be set in http-equiv attribute of a meta TAG
 
 =back
+
+=head3 STS header preload attribute (+preload)
+
+To satisfy the requirements on  https://hstspreload.appspot.com/  the
+HSTS header must:
+
+=over
+
+=item * have the max-age with at least 18 weeks (10886400 seconds)
+
+=back
+
+=over
+
+=item * have the includeSubDomains attribute
+
+=back
+
+=over
+
+=item * have the preload attribute
+
+=back
+
+=over
+
+=item * redirect to https first, then to sub-domains (if redirected)
+
+=back
+
+=over
+
+=item * have an HSTS header in each redirect to https.
+
+=back
+
+Additionally, the site must have:
+
+=over
+
+=item * a valid certificate
+
+=back
+
+=over
+
+=item * serve all subdomains over https.
+
+=back
+
+Except the last requirement,  I<+preload>  will do the checks.
+Note that  I<+preload>  is defined in  .o-saft.pl  only.
 
 =head3 Public Key Pins header
 
@@ -3378,12 +3473,19 @@ when and how these functions are called.
 
 =head2 SHELL TWEAKS
 
-Configurering the shell environment where the tool is startet, is not
-not really a task for the tool itself, but it can simplify your life,
-somehow.
+Configuring the shell environment where the tool is startet,  must be 
+done before the tools starts.  It is  not really  a task for the tool
+itself, but it can simplify your life, somehow.
 
 There exist customizations for some commonly used shells,  please see
 the files in the ./contrib/ directory.
+
+=head2 COMMANDS
+
+The option  I<--cfg-cmd=CMD=LIST>  can be used to define own commands.
+When configuring own commands,  CMD  must not be  one of the commands
+listed with  I<--help=intern>  and CMD  must constist only of digits and
+letters.
 
 =head1 CIPHER NAMES
 
@@ -4336,8 +4438,8 @@ Even perl is a scripting language there are situations where a stand-
 alone executable would be nice, for example if the installed perl and
 its libraries are outdated, or if perl is missing at all.
 
-Currently (2016) there a at least following possibilities to generate
-a stand-alone executable:
+Currently (2016) there are following possibilities to generate such a
+stand-alone executable:
 
 =over
 
@@ -4347,7 +4449,7 @@ a stand-alone executable:
 
 	pp -C -c o-saft.pl
 	pp -C -c o-saft.pl -M Net::DNS -M Net::SSLeay -M IO::Socket \
-             -M L<Net::SSLinfo|Net::SSLinfo> -M L<Net::SSLhello|Net::SSLhello>
+             -M L<Net::SSLinfo|Net::SSLinfo> -M L<Net::SSLhello|Net::SSLhello> -M osaft
 
 	pp -C -c checkAllCiphers.pl
 	pp -C -c checkAllCiphers.pl -M Net::DNS
@@ -4360,10 +4462,10 @@ a stand-alone executable:
 
 	perlapp --clean o-saft.pl
 	perlapp --clean o-saft.pl -M Net::DNS -M Net::SSLeay -M IO::Socket \
-             -M L<Net::SSLinfo|Net::SSLinfo> -M L<Net::SSLhello|Net::SSLhello>
+             -M L<Net::SSLinfo|Net::SSLinfo> -M L<Net::SSLhello|Net::SSLhello> -M osaft
 
 	perlapp --clean checkAllCiphers.pl
-	perlapp --clean checkAllCiphers.pl -M Net::DNS
+	perlapp --clean checkAllCiphers.pl -M Net::DNS -M osaft
 
 =over
 
@@ -4870,6 +4972,155 @@ Note that C<value>  here can span multiple lines and ends with:
 
 	#}
 
+=head2 Using outdated modules
+
+The tools was designed to work with old perl modules too.  When using
+old modules, a proper  C<**WARNING:>  will be printed. These warinings
+cannot be switched of using  I<--no-warning>  .
+The warning also informs about the missing functionality or check.
+
+I.g. it is best to install newer versions of the module if possible.
+	A good practice to check if modules are available in a proper version
+is to call:
+
+	o-saft.pl +version
+	o-saft.pl +version --v --v
+
+Following example shows the result without warnings:
+
+  === reading: ./.o-saft.pl (RC-FILE done) ===
+  === reading: Net/SSLhello.pm (O-Saft module done) ===
+  === reading: Net/SSLinfo.pm (O-Saft module done) ===
+  === ./o-saft.pl 16.09.09 ===
+      Net::SSLeay::
+         ::OPENSSL_VERSION_NUMBER()    0x268443744
+         ::SSLeay()                    0x268443744
+      Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
+  = openssl =
+      version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
+      external executable              /opt/openssl-chacha/bin/openssl
+      used environment variable (name) LD_LIBRARY_PATH
+      environment variable (content)   <<undef>>
+      path to shared libraries         
+      full path to openssl.cnf file    <<undef>>
+      common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                                       /etc/ssl/openssl.cnf \
+                                       /System//Library/OpenSSL/openssl.cnf \
+                                       /usr/ssl/openssl.cnf
+      URL where to find CRL file       <<undef>>
+      directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
+      PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
+      common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
+                                        /System/Library/OpenSSL
+      common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+      number of supported ciphers      177
+      openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
+
+	o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                                       DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+  = o-saft.pl I<+cipherall> =
+      default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                                       0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+  = Required (and used) Modules =
+      @INC                 ./ ./lib . /bin /usr/share/perl5 \
+                           /usr/lib/x86_64-linux-gnu/perl5/5.20 \
+                           /usr/lib/x86_64-linux-gnu/perl/5.20 \
+                           /usr/share/perl/5.20 /usr/local/lib/site_perl .
+  =   module name            VERSION  found in
+  =   I<----------------------+--------+------------------------------------------>
+      IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
+      IO::Socket::SSL        2.002    /usr/share/perl5/IO/Socket/SSL.pm
+      Net::DNS               0.81     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
+      Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
+     L<Net::SSLinfo|Net::SSLinfo>          16.06.01 Net/SSLinfo.pm
+     L<Net::SSLhello|Net::SSLhello>         16.05.16 Net/SSLhello.pm
+      Ciphers                          
+      osaft                  16.05.10 osaft.pm
+
+Following example shows the result with warnings:
+
+
+
+**WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialize at /Net/SSLinfo.pm line 481.
+
+
+**WARNING: ancient perl has no C<version> module; version checks may not be accurate; at o-saft.pl line 1662.
+**WARNING: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
+**WARNING: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
+**WARNING: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
+!!Hint: I<--force-openssl> can be used to disables this check
+**WARNING: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
+**WARNING: SSL version C<TLSv11>: not supported by Net::SSLeay; not checked
+**WARNING: SSL version C<TLSv12>: not supported by Net::SSLeay; not checked
+**WARNING: SSL version C<TLSv13>: not supported by Net::SSLeay; not checked
+
+
+   Net::SSLeay::
+      ::OPENSSL_VERSION_NUMBER()    0x9470143
+**WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+      ::SSLeay()                    0x1.35
+**WARNING: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
+
+
+   version of external executable   OpenSSL 0.9.8y 5 Feb 2013
+   external executable              /usr/bin/openssl
+   used environment variable (name) LD_LIBRARY_PATH
+   environment variable (content)   <<undef>>
+   path to shared libraries         
+   full path to openssl.cnf file    <<undef>>
+   common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                                    /etc/ssl/openssl.cnf \
+                                    /System//Library/OpenSSL/openssl.cnf \
+                                    /usr/ssl/openssl.cnf
+   URL where to find CRL file       <<undef>>
+   directory with PEM files for CAs /System/Library/OpenSSL/certs
+   PEM format file with CAs         <<undef>>
+   common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
+   common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+   number of supported ciphers      43
+   openssl supported SSL versions   SSLv2 SSLv3 TLSv1
+
+	o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                                    DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+**WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+**WARNING: used openssl version C<9470143> differs from compiled Net:SSLeay C<1.35>; ignored
+
+
+   default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                                    0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+
+
+   @INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
+                        /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                        /System/Library/Perl/5.10.0 \
+                        /Library/Perl/5.10.0/darwin-thread-multi-2level \
+                        /Library/Perl/5.10.0 \
+                        /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                        /Network/Library/Perl/5.10.0 \
+                        /Network/Library/Perl \
+                        /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
+                        /System/Library/Perl/Extras/5.10.0 .
+
+
+
+   IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
+   IO::Socket::SSL        1.22     /System/Library/Perl/Extras/5.10.0/IO/Socket/SSL.pm
+   Net::DNS               0.65     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/DNS.pm
+   Net::SSLeay            1.35     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/SSLeay.pm
+  L<Net::SSLinfo|Net::SSLinfo>          16.06.01 ./Net/SSLinfo.pm
+  L<Net::SSLhello|Net::SSLhello>         16.05.16 ./Net/SSLhello.pm
+   osaft                  16.05.10 /osaft.pm
+
+Please keep in mind that the shown version numbers and the shown line
+numbers are examples and may differ on your system.
+
+When starting o-saft.pl with outdated modules, more C<**WARNING:> will
+be shown. The warnings depend on the installed version of the module.
+
+	o-saft.pl is known to work with at least:
+IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
+Net::SSLeay 1.30
+
 =head1 EXAMPLES
 
 ($0 in all following examples is the name of the tool)
@@ -5207,7 +5458,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 16.06.01
+@(#) 16.09.09
 
 =head1 AUTHOR
 
