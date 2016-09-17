@@ -40,10 +40,10 @@
 #?      cause problems. Use list of files instead:   *.pl *.pm Net/*.pm
 #?
 #? SEE ALSO
-#?      contrib/critick.sh
+#?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.6 16/05/15 22:48:03
+#?      @(#) .perlcriticrc 1.7 16/09/17 12:22:14
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -156,6 +156,14 @@ verbose     = 8
 #[InputOutput::RequireCheckedOpen]
 #[InputOutput::RequireCheckedSyscalls]
 #[InputOutput::RequireEncodingWithUTF8Layer]
+
+
+[References::ProhibitDoubleSigils]
+
+    # Message
+	# Double-sigil dereference at line ...
+
+    # CHECK ENABLED
 
 
 [Modules::ProhibitAutomaticExportation]
@@ -298,7 +306,7 @@ verbose     = 8
 
     # CHECK DISABLED
 	# Contrary to BPB we think that all functions should use parentheses.
-	# Continous use of parentheses makes thir-party parsers happy.
+	# Continous use of parentheses makes third-party parsers happy.
 	# However: we miss parentheses, mainly for print builtin function.
 
 
@@ -438,11 +446,6 @@ verbose     = 8
     # CHECK ENABLED
 
 
-#[ValuesAndExpressions::ProhibitConstantPragma]
-
-	# FIXME: to be discussed
-
-
 [-ValuesAndExpressions::ProhibitImplicitNewlines]
 
     # Message
@@ -484,7 +487,6 @@ verbose     = 8
 	# we use some integers
 
 
-
 [ValuesAndExpressions::RequireQuotedHeredocTerminator]
 
     # Message
@@ -501,6 +503,7 @@ verbose     = 8
 
     # CHECK DISABLED
 	# other people, other opinions
+
 
 [RegularExpressions::ProhibitUnusedCapture]
 
