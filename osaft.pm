@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.55 16/09/18 16:15:52',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.56 16/09/18 16:21:54',
 
 };
 
@@ -1080,7 +1080,7 @@ our %cfg = (
     'ARGV'          => [@ARGV], # arguments passed on command line
     'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
     'RC-FILE'       => "./.$me",# our RC-FILE, search in pwd only!
-    'need_netdns    => 0,       # used for better error message handling only
+    'need_netdns'   => 0,       # used for better error message handling only
 
    # config. key        default   description
    #------------------+---------+----------------------------------------------
