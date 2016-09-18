@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.519 16/09/18 12:42:30",
+    SID         => "@(#) yeast.pl 1.520 16/09/18 15:48:37",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2111,10 +2111,10 @@ sub _need_this($)       {
        $is  =~ s/\+/\\+/g;    # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
 }
-sub _need_cipher()      { return _need_this('need_cipher');   };
-sub _need_default()     { return _need_this('need_default');  };
-sub _need_checkssl()    { return _need_this('need_checkssl'); };
-    # returns >0 if any  of the given commands is listed in $cfg{need_*}
+sub _need_cipher()      { return _need_this('need-cipher');   };
+sub _need_default()     { return _need_this('need-default');  };
+sub _need_checkssl()    { return _need_this('need-checkssl'); };
+    # returns >0 if any  of the given commands is listed in $cfg{need-*}
 sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
 sub _is_do($)           { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
@@ -2663,7 +2663,7 @@ sub ciphers_get($$$$)   {
             if (0 >= $cfg{'use_md5cipher'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
                 # detailled description see OPTION  --no-md5-cipher
-                _v_print("check cipher (MD5): $ssl:$c");
+                _v2print("check cipher (MD5): $ssl:$c\n");
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
             $supported = _usesocket( $ssl, $host, $port, $c);
@@ -2672,7 +2672,7 @@ sub ciphers_get($$$$)   {
         }
         push(@res, $c) if ($supported !~ /^\s*$/);
         my $yesno = ($supported eq "") ? "no" : "yes";
-        _v_print("check cipher: $ssl:$c\t$yesno");
+        _v2print("check cipher: $ssl:$c\t$yesno\n");
     } # foreach @ciphers
     _trace("ciphers_get()\t= " . $#res . " @res }");
     return @res;
@@ -2688,7 +2688,7 @@ sub check_certchars($$) {
     my $txt;
 
     # check vor invald charaters
-    foreach my $label (@{$cfg{'need_checkchr'}}, qw(email aux)) {
+    foreach my $label (@{$cfg{'need-checkchr'}}, qw(email aux)) {
         $value = $data{$label}->{val}($host);
         if ($value ne "") {
             $checks{'nonprint'}->{val} .= " $label" if ($value =~ m/$cfg{'regex'}->{'nonprint'}/);
@@ -2697,10 +2697,10 @@ sub check_certchars($$) {
     }
 
     # valid characters (probably only relevant for DV and EV)
-    #_dbx "EV: keys: " . join(" ", @{$cfg{'need_checkchr'}} . "extensions";
+    #_dbx "EV: keys: " . join(" ", @{$cfg{'need-checkchr'}} . "extensions";
     #_dbx "EV: regex:" . $cfg{'regex'}->{'notEV-chars'};
     # not checked explicitely: CN, O, U (should already be part of others, like subject)
-    foreach my $label (@{$cfg{'need_checkchr'}}, qw(extensions)) {
+    foreach my $label (@{$cfg{'need-checkchr'}}, qw(extensions)) {
         $value =  $data{$label}->{val}($host);
         $value =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
         if ($value =~ m/$cfg{'regex'}->{'notEV-chars'}/) {
