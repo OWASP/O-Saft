@@ -114,6 +114,7 @@ exec wish "$0" ${1+"$@"}
 #.       (H) | Host:Port [________________________________________]  [+] [-] |
 #.           |                                                               |
 #.       (C) | [Start] [+info] [+check] [+cipher] [+quick] [+vulns]      [?] |
+#.       (O) | [ ] --header  [ ] --enabled  [ ] --no-dns  [ ] -no-http  ...  |
 #.           |---------------------------------------------------------------|
 #.           | +----------++---------++----------++----------+               |
 #.       (T) | | Commands || Options || Filter || (n) +cmd || (m) +cmd |     |
@@ -128,6 +129,7 @@ exec wish "$0" ${1+"$@"}
 #.      Description
 #.       (H) - Frame containing hostnames to be checked
 #.       (C) - Buttons for most commonly used commands
+#.       (O) - CheckButtons for most commonly used options
 #.       (T) - Frame containing panes for commands, options, filter, results.
 #.       (S) - Frame containing Status messages
 #.
@@ -248,7 +250,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.105 Summer Edition 2016
+#?      @(#) 1.106 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -313,8 +315,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.105 16/09/18 20:58:01 Sommer Edition 2016}
-set cfg(VERSION) {1.105}
+set cfg(SID)    {@(#) o-saft.tcl 1.106 16/09/18 21:38:16 Sommer Edition 2016}
+set cfg(VERSION) {1.106}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -359,7 +361,8 @@ if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
 
 ### IMG(...)  #  other images are defined in cfg(IMG)
 
-set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
+set cfg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
+set cfg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}}; # quick access options
 set cfg(hist)   "osaft-LNK-T";  # positions in help text
 set cfg(curr)   0;              # current position (index) in cfg(help)
 set cfg(last)   "";             # search position (index) in cfg(help)
@@ -510,6 +513,14 @@ Changes apply to next +command.
     f_bg        Background
     f_font      Font
     f_u         u
+    DESC_opts   {-- CONFIGURATION texts used in GUI for option checkbuttons --}
+    --header    {print header line}
+    --enabled   {print only enabled ciphers}
+    --no-dns    {do not make DNS lookups}
+    --no-http   {do not make HTTP requests}
+    --no-sni    {do not make connections in SNI mode}
+    --no-sslv2  {do not check for SSLv2 ciphers}
+    --no-tlsv13 {do not check for TLSv13 ciphers}
 "; # cfg_tips; # Note: text for tab* contain new lines.
 
 # now add default to cfg_* as described before
@@ -1592,6 +1603,16 @@ proc create_cmd   {parent title} {
     return $this
 }; # create_cmd
 
+proc create_opt   {parent title} {
+    #? create checkbutton for O-Saft options; returns widget
+    global cfg
+    set name [regsub {^--} $title {cmd}];   # keys start with cmd instead of +
+    set this $parent.$name
+    pack [checkbutton $this -text $title -variable cfg($title)] -side left
+    create_tip   $this [get_tipp $title]
+    return $this
+}; # create_opt
+
 proc create_win   {parent title cmd} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
@@ -1929,7 +1950,7 @@ foreach arg $argv {
         default  { puts "**WARNING: unknown parameter '$arg'; ignored" }
     }
 }
-if {$cfg(VERB) > 0} { lappend cfg(FAST) {+quit} {+version}; }
+if {$cfg(VERB) > 0} { lappend cfg(Ocmd) {+quit} {+version}; }
 if {[tk windowingsystem] eq "aqua"} {
     set cfg(confirm) {}; # Aqua's tk_save* has no  -confirmoverwrite
     if {$optimg==1} {
@@ -2027,7 +2048,7 @@ if {$cfg(VERB)==1} {
 pack [button    $w.fq.closeme  -command {exit}] -side right -padx $myX(rpad)
 pack [frame     $w.fc] -fill x
 pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -padx 11
-foreach b $cfg(FAST) {
+foreach b $cfg(Ocmd) {
     create_cmd  $w.fc $b;
 }
 pack [button    $w.fc.loadresult -command "osaft_load {Load}"] -side left -padx 11
@@ -2043,6 +2064,13 @@ if {$cfg(VERB)==1} {
     theme_set   $w.fc.img_txt
 }
     # TODO: does not work proper 'cause passing --v fails
+
+## create option buttons for simple access
+pack [frame     $w.fo] -fill x
+pack [label     $w.fo.ol -text " "] -side left -padx 11
+foreach b $cfg(Oopt) {
+    create_opt  $w.fo $b;
+}
 
 ## create notebook object and set up Ctrl+Tab traversal
 set cfg(objN)   $w.note
@@ -2086,7 +2114,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.105"
+update_status "o-saft.tcl 1.106"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
