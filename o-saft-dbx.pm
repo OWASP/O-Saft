@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.45 16/09/18 16:00:51";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.46 16/09/18 16:29:31";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -106,14 +106,14 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 
 # debug functions
 sub _y_ts     { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
-sub _yeast($) { local $\ = "\n"; print "#" . $cfg{'mename'} . ": " . $_[0]; return; }
+sub _yeast    { local $\ = "\n"; print "#" . $cfg{'mename'} . ": " . $_[0]; return; }
 sub _y_ARG    { local $\ = "\n"; print "#" . $cfg{'mename'} . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); return; }
 sub _y_CMD    { local $\ = "\n"; print "#" . $cfg{'mename'} . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
-sub _yTRAC($$){ local $\ = "\n"; printf("#%s: %14s= %s\n", $cfg{'mename'}, $_[0], $_[1]); return; }
-sub _yline($) { _yeast("#----------------------------------------------------" . $_[0]); return; }
-sub _y_ARR(@) { return join(" ", "[", @_, "]"); }
-sub _yeast_trac($$){}   # forward declaration
-sub _yeast_trac($$){
+sub _yTRAC    { local $\ = "\n"; printf("#%s: %14s= %s\n", $cfg{'mename'}, $_[0], $_[1]); return; }
+sub _yline    { _yeast("#----------------------------------------------------" . $_[0]); return; }
+sub _y_ARR    { return join(" ", "[", @_, "]"); }
+sub _yeast_trac {}   # forward declaration
+sub _yeast_trac {
     #? print variable according its type, undertands: CODE, SCALAR, ARRAY, HASH
     my $ref  = shift;   # must be a hash reference
     my $key  = shift;
@@ -141,9 +141,9 @@ sub _yeast_trac($$){
     } # SWITCH
 
     return;
-} # _yeast_trac()
+} # _yeast_trac
 
-sub _yeast_init() {
+sub _yeast_init {
     #? print important content of %cfg and %cmd hashes
     #? more output if trace>1; full output if trace>2
     return if (($cfg{'trace'} + $cfg{'verbose'}) <= 0);
@@ -229,7 +229,7 @@ sub _yeast_init() {
     return;
 } # _yeast_init
 
-sub _yeast_exit() {
+sub _yeast_exit {
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
     _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}}); ## no critic qw(ControlStructures::ProhibitPostfixControls)
@@ -237,7 +237,7 @@ sub _yeast_exit() {
     return;
 } # _yeast_exit
 
-sub _yeast_args() {
+sub _yeast_args {
     return if ($cfg{'traceARG'} <= 0);
     # using _y_ARG() may be a performance penulty, but it's trace anyway ...
     _yline(" ARGV {");
@@ -286,8 +286,8 @@ sub _vprintme {
     return;
 } # _vprintme
 
-sub __data($) { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
-sub _yeast_data() {
+sub __data    { return (_is_member(shift, \@{$cfg{'commands'}}) > 0)   ? "*" : "?"; }
+sub _yeast_data {
     print "
 === _yeast_data: check internal data structure ===
 
@@ -354,7 +354,7 @@ sub _yeast_data() {
     print "\n";
     return;
 } # _yeast_data
-sub _yeast_prot() {
+sub _yeast_prot {
     #? print information about SSL/TLS protocols in various variables (hashes)
     #? this function is for internal use only
     local $\ = "\n";
@@ -391,13 +391,13 @@ sub _yeast_prot() {
     if (($cfg{'trace'} + $cfg{'verbose'}) >  0){
     }
     return;
-} # _yeast_prot()
+} # _yeast_prot
 
-sub _yeast_cipher() {
+sub _yeast_cipher {
 # TODO: %ciphers %cipher_names
 }
 
-sub o_saft_dbx_done() {};       # dummy to check successful include
+sub o_saft_dbx_done {};         # dummy to check successful include
 ## PACKAGE }
 
 unless (defined caller) {
