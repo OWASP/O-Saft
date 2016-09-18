@@ -248,7 +248,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.103 Summer Edition 2016
+#?      @(#) 1.104 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -313,8 +313,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.103 16/09/10 22:53:39 Sommer Edition 2016}
-set cfg(VERSION) {1.103}
+set cfg(SID)    {@(#) o-saft.tcl 1.104 16/09/18 12:17:45 Sommer Edition 2016}
+set cfg(VERSION) {1.104}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1332,6 +1332,17 @@ proc create_about {} {
         $txt tag bind   osaft-URL-$i <ButtonPress> "www_browser $t"
         if {$cfg(TIP)==0} { tooltip::tooltip $txt -tag osaft-URL-$i "Execute $cfg(browser) $t" }
     }
+
+    # search for section headers and mark them bold
+    set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-ZÄÖÜß ]+$} 1.0]
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i];
+        $txt tag add sektion  $a "$a + $e char"
+        incr i
+    }
+    $txt tag config sektion -font osaftBold 
+    return
 }; # create_about
 
 proc create_help  {sect} {
@@ -2073,7 +2084,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.103"
+update_status "o-saft.tcl 1.104"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
