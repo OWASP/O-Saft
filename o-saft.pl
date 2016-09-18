@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.520 16/09/18 15:48:37",
+    SID         => "@(#) yeast.pl 1.521 16/09/18 16:08:40",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -301,10 +301,10 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
 } else {
     # debug functions are defined in o-saft-dbx.pm and loaded on demand
     # they must be defined always as they are used wheter requested or not
-    sub _yeast_init() {}
-    sub _yeast_exit() {}
-    sub _yeast_args() {}
-    sub _yeast_data() {}
+    sub _yeast_init   {}
+    sub _yeast_exit   {}
+    sub _yeast_args   {}
+    sub _yeast_data   {}
     sub _yeast($)     {}
     sub _y_ARG        {}
     sub _y_CMD        {}
@@ -313,11 +313,11 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
     sub _v3print      {}
     sub _v4print      {}
     sub _vprintme     {}
-    sub _trace($)     {}
-    sub _trace1($)    {}
-    sub _trace2($)    {}
-    sub _trace3($)    {}
-    sub _trace_cmd($) {}
+    sub _trace        {}
+    sub _trace1       {}
+    sub _trace2       {}
+    sub _trace3       {}
+    sub _trace_cmd    {}
 }
 
 #| read USER-FILE, if any (source with user-specified code)
@@ -326,21 +326,21 @@ if ((grep{/--(?:use?r)/} @argv) > 0) { # must have any --usr option
     $err = _load_file("o-saft-usr.pm", "user file");
     if ($err ne "") {
         # continue without warning, it's already printed in "=== reading: " line
-        sub usr_version()   { return ""; }; # dummy stub, see o-saft-usr.pm
-        sub usr_pre_init()  {}; #  "
-        sub usr_pre_file()  {}; #  "
-        sub usr_pre_args()  {}; #  "
-        sub usr_pre_exec()  {}; #  "
-        sub usr_pre_cipher(){}; #  "
-        sub usr_pre_main()  {}; #  "
-        sub usr_pre_host()  {}; #  "
-        sub usr_pre_info()  {}; #  "
-        sub usr_pre_open()  {}; #  "
-        sub usr_pre_cmds()  {}; #  "
-        sub usr_pre_data()  {}; #  "
-        sub usr_pre_print() {}; #  "
-        sub usr_pre_next()  {}; #  "
-        sub usr_pre_exit()  {}; #  "
+        sub usr_version     { return ""; }; # dummy stub, see o-saft-usr.pm
+        sub usr_pre_init    {}; #  "
+        sub usr_pre_file    {}; #  "
+        sub usr_pre_args    {}; #  "
+        sub usr_pre_exec    {}; #  "
+        sub usr_pre_cipher  {}; #  "
+        sub usr_pre_main    {}; #  "
+        sub usr_pre_host    {}; #  "
+        sub usr_pre_info    {}; #  "
+        sub usr_pre_open    {}; #  "
+        sub usr_pre_cmds    {}; #  "
+        sub usr_pre_data    {}; #  "
+        sub usr_pre_print   {}; #  "
+        sub usr_pre_next    {}; #  "
+        sub usr_pre_exit    {}; #  "
     }
 }
 
@@ -2663,7 +2663,7 @@ sub ciphers_get($$$$)   {
             if (0 >= $cfg{'use_md5cipher'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
                 # detailled description see OPTION  --no-md5-cipher
-                _v2print("check cipher (MD5): $ssl:$c\n");
+                _v4print("check cipher (MD5): $ssl:$c\n");
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
             $supported = _usesocket( $ssl, $host, $port, $c);
@@ -2672,7 +2672,7 @@ sub ciphers_get($$$$)   {
         }
         push(@res, $c) if ($supported !~ /^\s*$/);
         my $yesno = ($supported eq "") ? "no" : "yes";
-        _v2print("check cipher: $ssl:$c\t$yesno\n");
+        _v2print("check cipher: $ssl:$c\t$yesno");
     } # foreach @ciphers
     _trace("ciphers_get()\t= " . $#res . " @res }");
     return @res;
@@ -2711,7 +2711,7 @@ sub check_certchars($$) {
             $checks{'dv'}->{val}       .= $txt;
              if ($cfg{'verbose'} > 0) {
                  $value =~ s#($cfg{'regex'}->{'EV-chars'}+)##msg;
-                 _v2print("EV:  wrong characters in $label: $value" . "\n");
+                 _v2print("EV:  wrong characters in $label: $value");
              }
         }
     }
@@ -3769,9 +3769,9 @@ sub checkev($$) {
         )) {
         if ($subject =~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#) {
             $data_oid{$oid}->{val} = $1;
-            _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1\n");
+            _v2print("EV: " . $cfg{'regex'}->{$oid} . " = $1");
         } else {
-            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required\n");
+            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
             $txt = _get_text('missing', $data_oid{$oid}->{txt});
             $checks{'ev+'}->{val} .= $txt;
             $checks{'ev-'}->{val} .= $txt;
@@ -3786,15 +3786,15 @@ sub checkev($$) {
             $data_oid{$oid}->{val} = $1;
         } else {
             $checks{'ev-'}->{val} .= $txt;
-            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required\n");
+            _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
         }
     }
     $oid = '2.5.4.9'; # may be missing
     if ($subject !~ m#/$cfg{'regex'}->{$oid}=(?:[^/\n]*)#) {
         $txt = _get_text('missing', $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
-        _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing+\n");
-        _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required\n");
+        _v2print("EV: " . $cfg{'regex'}->{$oid} . " = missing+");
+        _v2print("EV: " . _get_text('missing', $cfg{'regex'}->{$oid}) . "; required");
     }
     # optional OID
     foreach my $oid (qw(2.5.4.6 2.5.4.17)) {
@@ -3802,13 +3802,13 @@ sub checkev($$) {
     if (64 < length($data_oid{'2.5.4.10'}->{val})) {
         $txt = _get_text('EV-large', "64 < " . $data_oid{$oid}->{txt});
         $checks{'ev+'}->{val} .= $txt;
-        _v2print("EV: " . $txt . "\n");
+        _v2print("EV: " . $txt);
     }
     # validity <27 months
     if ($data{'valid-months'}->{val} > 27) {
         $txt = _get_text('cert-valid', "27 < " . $data{'valid-months'}->{val});
         $checks{'ev+'}->{val} .= $txt;
-        _v2print("EV: " . $txt . "\n");
+        _v2print("EV: " . $txt);
     }
 
     # TODO: wildcard no, SAN yes
