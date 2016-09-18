@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.521 16/09/18 16:08:40",
+    SID         => "@(#) yeast.pl 1.522 16/09/18 19:11:39",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -217,7 +217,6 @@ sub _load_file($$)      {
         $fil = $INC{$fil};
     } else {
         $txt = "$txt failed";
-        $fil = "<<no $fil>>";
     }
     push(@{$dbx{file}}, $fil);
     _print_read($fil, $txt);
@@ -305,7 +304,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
     sub _yeast_exit   {}
     sub _yeast_args   {}
     sub _yeast_data   {}
-    sub _yeast($)     {}
+    sub _yeast        {}
     sub _y_ARG        {}
     sub _y_CMD        {}
     sub _v_print      {}
@@ -1652,6 +1651,7 @@ sub _check_modules()    {
         printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
     }
     foreach my $mod (keys %expected_versions) {
+        next if (($cfg{'need_netdns'} == 0) and ($mod eq "Net::DNS"));# don't complain if not used
         ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
         no strict 'refs';   # avoid: Can't use string ("Net::DNS::VERSION") as a SCALAR ref while "strict refs" in use
         ## use critic
@@ -2658,11 +2658,11 @@ sub ciphers_get($$$$)   {
     my @res     = ();      # return accepted ciphers
     foreach my $c (@ciphers) {
         my $supported = "";
-#        if (1 == _is_call('cipher-socket'))
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'use_md5cipher'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
                 # detailled description see OPTION  --no-md5-cipher
+                #_hint("--no-md5-cipher can be used to disable checks with MD5 ciphers");
                 _v4print("check cipher (MD5): $ssl:$c\n");
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
@@ -5782,6 +5782,8 @@ if (_is_do('list')) {
 }
 if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs_cipherall') if (!_is_do('pfs_cipherall')); }
 
+if (_is_do('version') or ($cfg{'usemx'} > 0)) { $cfg{'need_netdns'} = 1; }
+
 # set environment
 # Note:  openssl  has no option to specify the path to its  configuration 
 # directoy.  However, some sub command (like req) do have -config option.
@@ -5843,13 +5845,13 @@ local $\ = "\n";
 #| -------------------------------------
 # Unfortunately `use autouse' is not possible as to much functions need to
 # be declared for that pragma then.
-use     IO::Socket::SSL;  # qw(debug2);
-use     IO::Socket::INET;
-if (_is_do('version') or ($cfg{'usemx'} > 0)) {
-    eval {require Net::DNS;} or warn STR_ERROR, "'require Net::DNS' failed";
-    if ($@ ne "") {
-        chomp $@;
-        _warn($@); _warn("--mx disabled");
+use IO::Socket::SSL;  # qw(debug2);
+use IO::Socket::INET;
+if ($cfg{'need_netdns'} > 0) {
+    $err = _load_file("Net/DNS.pm", "Net module");
+    if ($err ne "") {
+        warn STR_ERROR, "$err";
+        warn STR_WARN,  "--mx disabled";
         $cfg{'usemx'} = 0;
     }
 }
