@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.522 16/09/18 19:11:39",
+    SID         => "@(#) yeast.pl 1.523 16/09/18 19:58:11",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5268,19 +5268,19 @@ while ($#argv >= 0) {
         # and pass it to further examination if it not matches
         if ($typ eq 'TRACE')    {
             $typ = 'HOST';      # expect host as next argument
-            $cfg{'traceARG'}++   if ($arg =~ m#arg#i);
-            $cfg{'traceCMD'}++   if ($arg =~ m#cmd#i);
-            $cfg{'traceKEY'}++   if ($arg =~ m#key#i);
-            $cfg{'traceTIME'}++  if ($arg =~ m#time#i);
-            $cfg{'traceME'}++    if ($arg =~ m#^me(?:only)?#i);
-            $cfg{'traceME'}--    if ($arg =~ m#^notme#i);
-            $cfg{'trace'} = $arg if ($arg =~ m#\d+#i);
+            $cfg{'traceARG'}++   if ($arg =~ m#^ARG$#i);
+            $cfg{'traceCMD'}++   if ($arg =~ m#^CMD$#i);
+            $cfg{'traceKEY'}++   if ($arg =~ m#^KEY$#i);
+            $cfg{'traceTIME'}++  if ($arg =~ m#^TIME$#i);
+            $cfg{'traceME'}++    if ($arg =~ m#^ME(?:only)?#i);
+            $cfg{'traceME'}--    if ($arg =~ m#^notme$#i);
+            $cfg{'trace'} = $arg if ($arg =~ m#^\d+$#i);
             # now magic starts ...
             next if ($arg =~ m#^(ARG|CMD|KEY|ME|TIME|\d+)$#i); # matched before
             # if we reach here, argument did not match valid value for --trace,
-            # then simply increment trace level and process argument below
-            # FIXME: should push back arg if not a number
+            # then simply increment trace level and push back argument
             $cfg{'trace'}++;
+            unshift(@argv, $arg);
         } # else $typ handled before if-condition
         $typ = 'HOST';          # expect host as next argument
         next;
@@ -5297,6 +5297,7 @@ while ($#argv >= 0) {
         # so we cannot ignore all options with empty value, like: --header=
         # following regex contains those options, which have a value,  only
         # these are ignored if the value is empty
+        # TODO: either use a function or a regex in %cfg for following check
         if ($arg =~ /^(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)/) {
             _warn("option with empty argument '$arg'; option ignored") if ($cgi == 0);
             next;
@@ -6123,8 +6124,6 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
-# set environment
-
 #| first: all commands which do not make a connection
 #| -------------------------------------
 if (_is_do('list'))       { printciphers(); exit 0; }
@@ -6145,7 +6144,8 @@ if ($#{$cfg{'do'}} < 0) {
 
 usr_pre_cipher();
 
-# get list of ciphers available for tests
+#| get list of ciphers available for tests
+#| -------------------------------------
 if (_need_cipher() > 0) {
     _y_CMD("  get cipher list ..");
     my $pattern = $cfg{'cipherpattern'};# default pattern
