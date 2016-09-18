@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.518 16/09/12 08:37:11",
+    SID         => "@(#) yeast.pl 1.519 16/09/18 12:42:30",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2657,13 +2657,13 @@ sub ciphers_get($$$$)   {
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();      # return accepted ciphers
     foreach my $c (@ciphers) {
-    #    _v_print("check cipher: $ssl:$c");
         my $supported = "";
 #        if (1 == _is_call('cipher-socket'))
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'use_md5cipher'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
                 # detailled description see OPTION  --no-md5-cipher
+                _v_print("check cipher (MD5): $ssl:$c");
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
             $supported = _usesocket( $ssl, $host, $port, $c);
@@ -2671,6 +2671,8 @@ sub ciphers_get($$$$)   {
             $supported = _useopenssl($ssl, $host, $port, $c);
         }
         push(@res, $c) if ($supported !~ /^\s*$/);
+        my $yesno = ($supported eq "") ? "no" : "yes";
+        _v_print("check cipher: $ssl:$c\t$yesno");
     } # foreach @ciphers
     _trace("ciphers_get()\t= " . $#res . " @res }");
     return @res;
