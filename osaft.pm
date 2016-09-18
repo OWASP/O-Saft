@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.53 16/08/26 11:35:47',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.54 16/09/18 15:42:29',
 
 };
 
@@ -1237,7 +1237,7 @@ our %cfg = (
    #     do         - the list off all commands to be performed
    #     commands-* - internal list for various types of commands
    #     cmd-*      - list for "summary" commands, can be redifined by user
-   #     need_*     - list of commands which need a speciphic check
+   #     need-*     - list of commands which need a speciphic check
    #
    # config. key        list      description
    #------------------+---------+----------------------------------------------
@@ -1319,28 +1319,28 @@ our %cfg = (
                     # Technically these commands are not removed from cfg{do},
                     # but just skipped in printdata() and printchecks(), which
                     # makes implementation much easier.
-                    # need_* lists used to improve performance
+                    # need-* lists used to improve performance
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only 
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
-    'need_cipher'   => [        # commands which need +cipher
+    'need-cipher'   => [        # commands which need +cipher
                         qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
-    'need_default'  => [        # commands which need selected cipher
+    'need-default'  => [        # commands which need selected cipher
                         qw(check cipher pfs_cipher selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
                                 # missing functionality (i.e in openssl) # 10/2015
                         qw(sslv2  tlsv13  dtlsv09 dtlvs1 dtlsv11 dtlsv12 dtlsv13)
                        ],
-    'need_checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
+    'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
                        ],
-    'need_checkchr' => [        # commands which always need checking various characters
+    'need-checkchr' => [        # commands which always need checking various characters
                         qw(cn subject issuer altname ext_crl ocsp_uri),
                        ],
     'data_hex'      => [        # data values which are in hex values
