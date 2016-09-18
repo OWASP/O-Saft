@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.44 16/07/17 14:14:30";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.45 16/09/18 16:00:51";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -265,18 +265,18 @@ sub _yeast_args() {
     return;
 } # _yeast_args
 
-sub _v_print  { local $\ = "\n"; print "# "       . join(" ", @_) if ($cfg{'verbose'} >  0); return; }
-sub _v2print  { local $\ = "";   print "# "       . join(" ", @_) if ($cfg{'verbose'} == 2); return; } # must provide \n if wanted
-sub _v3print  { local $\ = "\n"; print "# "       . join(" ", @_) if ($cfg{'verbose'} == 3); return; }
-sub _v4print  { local $\ = "";   print "# "       . join(" ", @_) if ($cfg{'verbose'} == 4); return; }
-sub _trace($) { print "#" . $cfg{'mename'} . "::" . $_[0]         if ($cfg{'trace'} > 0); return; }
-sub _trace0($){ print "#" . $cfg{'mename'} . "::"                 if ($cfg{'trace'} > 0); return; }
-sub _trace1($){ print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 1); return; }
-sub _trace2($){ print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 2); return; }
-sub _trace3($){ print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 3); return; }
-sub _trace_($){ local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); return; }
+sub _v_print  { local $\ = "\n"; print "# "       . join(" ", @_) if ($cfg{'verbose'} > 0); return; }
+sub _v2print  { local $\ = "\n"; print "# "       . join(" ", @_) if ($cfg{'verbose'} > 1); return; }
+sub _v3print  { local $\ = "\n"; print "# "       . join(" ", @_) if ($cfg{'verbose'} > 2); return; }
+sub _v4print  { local $\ = "";   print "# "       . join(" ", @_) if ($cfg{'verbose'} > 3); return; }
+sub _trace    { print "#" . $cfg{'mename'} . "::" . $_[0]         if ($cfg{'trace'} > 0); return; }
+sub _trace0   { print "#" . $cfg{'mename'} . "::"                 if ($cfg{'trace'} > 0); return; }
+sub _trace1   { print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 1); return; }
+sub _trace2   { print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 2); return; }
+sub _trace3   { print "#" . $cfg{'mename'} . "::" . join(" ", @_) if ($cfg{'trace'} > 3); return; }
+sub _trace_   { local $\ = "";  print  " " . join(" ", @_) if ($cfg{'trace'} > 0); return; }
 # if --trace-arg given
-sub _trace_cmd($) { printf("#%s %s->\n", $cfg{'mename'}, join(" ",@_))if ($cfg{'traceCMD'} > 0); return; }
+sub _trace_cmd { printf("#%s %s->\n", $cfg{'mename'}, join(" ",@_))if ($cfg{'traceCMD'} > 0); return; }
 
 sub _vprintme {
     my ($s,$m,$h,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
