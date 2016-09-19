@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.8 16/09/19 19:55:04
+#?      @(#) .o-saft.tcl 1.9 16/09/19 19:57:57
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.8};  # initial SID, do not remove
+set cfg(RCSID)  {1.9};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -140,6 +140,14 @@ Changes apply to next +command.
     f_bg        {Background}
     f_font      {Font}
     f_u         {u}
+    DESC_opts   {-- CONFIGURATION texts used in GUI for option checkbuttons --}
+    --header    {print header line}                                            
+    --enabled   {print only enabled ciphers}                                   
+    --no-dns    {do not make DNS lookups}                                      
+    --no-http   {do not make HTTP requests}                                    
+    --no-sni    {do not make connections in SNI mode}                          
+    --no-sslv2  {do not check for SSLv2 ciphers}                               
+    --no-tlsv13 {do not check for TLSv13 ciphers}
 ";
 
 # Note: Text for tab* contain new lines.
