@@ -90,7 +90,7 @@ exec wish "$0" ${1+"$@"}
 #?      --v     print verbose messages (for debugging)
 #?      --text  use simple texts as labels for buttons
 #?      --img   use images as defined in o-saft-img.tcl for buttons
-#?              (not recommended on Mac OS X, because aqua has nice buttons)
+#?              (not recommended on Mac OS X, because Aqua has nice buttons)
 #.      --tip   use own tooltip
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
@@ -102,12 +102,15 @@ exec wish "$0" ${1+"$@"}
 #?      Note that the markup is independent of the results and does not change
 #?      them, just "highlight" texts of the results.
 #?
+#?      On Aqua (Mac OS X) warnings may be at end of all data in the  Commands
+#?      TAB.
+#?
 #?      All  --cfg-*  settings from .o-saft.pl are not handled properly in the
 #?      GUI herein.
 #?
 #? ARGUMENTS
-#?      All arguments, except  --help  and  --v,  are treated as a hostname to
-#?      be checked.
+#?      All arguments,  except the options described above,  are treated  as a
+#?      hostname to be checked.
 #?
 #. LAYOUT
 #.           +---------------------------------------------------------------+
@@ -250,7 +253,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.106 Summer Edition 2016
+#?      @(#) 1.107 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -315,8 +318,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.106 16/09/18 21:38:16 Sommer Edition 2016}
-set cfg(VERSION) {1.106}
+set cfg(SID)    {@(#) o-saft.tcl 1.107 16/09/19 10:34:26 Sommer Edition 2016}
+set cfg(VERSION) {1.107}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1608,7 +1611,7 @@ proc create_opt   {parent title} {
     global cfg
     set name [regsub {^--} $title {cmd}];   # keys start with cmd instead of +
     set this $parent.$name
-    pack [checkbutton $this -text $title -variable cfg($title)] -side left
+    pack [checkbutton $this -text $title -variable cfg($title)] -side left -padx 5
     create_tip   $this [get_tipp $title]
     return $this
 }; # create_opt
@@ -2114,7 +2117,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.106"
+update_status "o-saft.tcl 1.107"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
