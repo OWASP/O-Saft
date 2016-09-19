@@ -11,20 +11,20 @@
 #?
 #? USAGE
 #?      This file is in O-Saft's  contrib  directory and must be copied to the
-#?      user's  HOME  directory or the local directory where o-saft.pl will be
+#?      user's  HOME directory or the local directory where o-saft.tcl will be
 #?      started.
 #?
 #? SYNTAX
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.7 16/08/28 15:07:30
+#?      @(#) .o-saft.tcl 1.8 16/09/19 19:55:04
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.7};  # initial SID, do not remove
+set cfg(RCSID)  {1.8};  # initial SID, do not remove
 
 package require Tcl 8.5
 
