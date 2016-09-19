@@ -102,9 +102,6 @@ exec wish "$0" ${1+"$@"}
 #?      Note that the markup is independent of the results and does not change
 #?      them, just "highlight" texts of the results.
 #?
-#?      On Aqua (Mac OS X) warnings may be at end of all data in the  Commands
-#?      TAB.
-#?
 #?      All  --cfg-*  settings from .o-saft.pl are not handled properly in the
 #?      GUI herein.
 #?
@@ -235,7 +232,7 @@ exec wish "$0" ${1+"$@"}
 #.      All buttons for the GUI are defined in a tabular array,  where the key
 #.      is used as part of the object name. For details please see comments at
 #.          # define all buttons used in GUI
-
+#.
 #.   Notes about Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions (2015) are
 #.      the perl executable and the start method of the external browser.
@@ -253,7 +250,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.107 Summer Edition 2016
+#?      @(#) 1.108 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -318,8 +315,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.107 16/09/19 10:34:26 Sommer Edition 2016}
-set cfg(VERSION) {1.107}
+set cfg(SID)    {@(#) o-saft.tcl 1.108 16/09/19 12:59:46 Sommer Edition 2016}
+set cfg(VERSION) {1.108}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1914,7 +1911,11 @@ proc osaft_exec   {parent cmd} {
         if {[string trim $h] eq ""} { continue };   # skip empty entries
         lappend targets $h
     }
-    set execme [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+    set execme [list exec 2>@stdout {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+        # on some systems (i.e. Mac OS X) buffering of STDOUT and STDERR is not
+        # synchronized, hence we redirect STDERR to STDOUT, which is OK herein,
+        # because no other process can fetch STDERR or STDOUT.
+        # probaly we also need:  chan configure stdout -buffering none
     update_status "$execme"
     incr cfg(EXEC)
     catch {
@@ -2117,7 +2118,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.107"
+update_status "o-saft.tcl 1.108"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
