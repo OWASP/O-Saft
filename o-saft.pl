@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.523 16/09/18 19:58:11",
+    SID         => "@(#) yeast.pl 1.524 16/09/19 10:55:59",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4247,7 +4247,7 @@ sub printtitle($$$$) {
     if ($legacy eq 'ssltest-g') { print "Checking for Supported $ssl Ciphers on $host..."; }
     if ($legacy eq 'testsslserver') { print "Supported cipher suites (ORDER IS NOT SIGNIFICANT):\n  " . $ssl; }
     if ($legacy eq 'thcsslcheck'){print "\n[*] now testing $ssl\n" . "-" x 76; }
-    if ($legacy eq 'compact')   { print "Checking $ssl Ciphers ..."; }
+    if ($legacy eq 'compact')   { print "=== Checking $ssl Ciphers ..."; }
     if ($legacy eq 'quick')     { printheader($txt, ""); }
     if ($legacy eq 'simple')    { printheader($txt, ""); }
     if ($legacy eq 'full')      { printheader($txt, ""); }
