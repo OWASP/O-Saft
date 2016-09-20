@@ -36,7 +36,7 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.05.31';    # offizial verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.4 16/09/20 22:55:26';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.5 16/09/20 23:19:52';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 #_____________________________________________________________________________
@@ -151,14 +151,14 @@ our @EXPORT_OK  = qw(
 # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
 # TODO: interanl wrappers for main's methods
-sub _trace(@)   { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace0(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace1(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace2(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace3(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace      { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace0     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace1     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
-sub _warn(@)    { my @args = @_; carp("**WARNING: ", join(" ", @args)); return; }
-sub vprint(@)   { my @args = @_; print("# ", join(" ", @args) . "\n");  return; }
+sub _warn       { my @args = @_; carp("**WARNING: ", join(" ", @args)); return; }
+sub vprint      { my @args = @_; print("# ", join(" ", @args) . "\n");  return; }
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -239,6 +239,30 @@ our %cipher_alias = ( # TODO: list not yet used
 ); # %cipher_alias
 #  defined in OSaft/_ciphers_osaft.pm
 
+our @cipher_results = [
+# currently (12/2015)
+#   [ sslv3, rc4-md5, yes ]
+#   [ sslv3, NULL,    no ]
+
+# in future (01/2016)
+#   [ ssl, cipher, pos+cipher, pos+cipherraw, dh-bits, dh-param, "comment"]
+#
+#   # ssl      : SSLv2, SSLv3, TLS10, ...
+#   # cipher   : hex-Wert (als String)
+#   # pos+*    : -1 = undef (noch nicht berechnet), 0 = keine Reihenfolge
+#                       beim Server, 1 .. n wie vom Server ausgewaehlt
+#   # dh-bits  : DH Bits
+#   # dh-param : ECDH Kurve
+
+# dann können verschieden Algorithmen implementiert werden
+### 1. o-saft wie jetzt
+### 2. o-saft mit cipherraw wie jetzt
+### 3. cipherraw mit unterschiedlicher Anzahl Ciphers, z.B.:
+###      1, 8,9,15,16,17,32,64,48,49,127,128,129
+### 4. von cipherraw den selected Cipher geben lassen
+
+]; # @cipher_results
+
 #_____________________________________________________________________________
 #______________________________________________________ temporary variables __|
 
@@ -280,7 +304,7 @@ my %_ciphers_osaft = (
 eval {require qw{OSaft/_ciphers_osaft.pm}; } or _warn "cannot read OSaft/_ciphers_osaft.pm";
 
 ######################################################
-sub id2key ($) {
+sub id2key      {
     #? convert any hex or integer id to key used in internal data structure
 # Umrechnung:  0x0300C01C <--> 0xC0C1 <--> 0xC0,0x1C
     my $ssl_base    = 0x02000000;   #   33554432
@@ -293,36 +317,12 @@ sub id2key ($) {
     return;
 }; # id2key
 
-# sub is_auth($) { }
-# sub is_enc($) { }
-# sub is_ephermeral($) { }
-# sub is_export($) { }
+# sub is_auth   { }
+# sub is_enc    { }
+# sub is_ephermeral { }
+# sub is_export { }
 
 ######################################################
-
-our @cipher_results = [
-# currently (12/2015)
-#   [ sslv3, rc4-md5, yes ]
-#   [ sslv3, NULL,    no ]
-
-# in future (01/2016)
-#   [ ssl, cipher, pos+cipher, pos+cipherraw, dh-bits, dh-param, "comment"]
-#
-#   # ssl      : SSLv2, SSLv3, TLS10, ...
-#   # cipher   : hex-Wert (als String)
-#   # pos+*    : -1 = undef (noch nicht berechnet), 0 = keine Reihenfolge
-#                       beim Server, 1 .. n wie vom Server ausgewaehlt
-#   # dh-bits  : DH Bits
-#   # dh-param : ECDH Kurve
-
-# dann können verschieden Algorithmen implementiert werden
-### 1. o-saft wie jetzt
-### 2. o-saft mit cipherraw wie jetzt
-### 3. cipherraw mit unterschiedlicher Anzahl Ciphers, z.B.:
-###      1, 8,9,15,16,17,32,64,48,49,127,128,129
-### 4. von cipherraw den selected Cipher geben lassen
-
-]; # @cipher_results
 
 
 #_____________________________________________________________________________
@@ -364,25 +364,25 @@ Get information from internal C<%cipher> data structure.
 # each function returns a spcific value (column) from the %cipher table
 # see %ciphers_desc about description of the columns
 # returns STR_UNDEF if requested cipher is missing
-sub get_param($$) {
+sub get_param   {
     #? internal method to return required value from %cipher
     my ($cipher, $key) = @_;
     return $ciphers{$cipher}->{$key} || '' if ((grep{/^$cipher/} %ciphers)>0);
     return $STR_UNDEF;
 }; # get_param
-sub get_sec($)  { my $c=shift; return get_param($c, 'sec'); }
-sub get_ssl($)  { my $c=shift; return get_param($c, 'ssl'); }
-sub get_enc($)  { my $c=shift; return get_param($c, 'enc'); }
-sub get_bits($) { my $c=shift; return get_param($c, 'bit'); }
-sub get_mac($)  { my $c=shift; return get_param($c, 'mac'); }
-sub get_auth($) { my $c=shift; return get_param($c, 'au');  }
-sub get_keyx($) { my $c=shift; return get_param($c, 'kx');  }
-sub get_tags($) { my $c=shift; return get_param($c, 'tag'); }
-sub get_rfc($)  { my $c=shift; return get_param($c, 'rfc'); }
-sub get_dtls($) { my $c=shift; return get_param($c, 'dtls'); }
-sub get_score($){ my $c=shift; return $STR_UNDEF; } # obsolete since 16.06.16
+sub get_sec     { my $c=shift; return get_param($c, 'sec'); }
+sub get_ssl     { my $c=shift; return get_param($c, 'ssl'); }
+sub get_enc     { my $c=shift; return get_param($c, 'enc'); }
+sub get_bits    { my $c=shift; return get_param($c, 'bit'); }
+sub get_mac     { my $c=shift; return get_param($c, 'mac'); }
+sub get_auth    { my $c=shift; return get_param($c, 'au');  }
+sub get_keyx    { my $c=shift; return get_param($c, 'kx');  }
+sub get_tags    { my $c=shift; return get_param($c, 'tag'); }
+sub get_rfc     { my $c=shift; return get_param($c, 'rfc'); }
+sub get_dtls    { my $c=shift; return get_param($c, 'dtls'); }
+sub get_score   { my $c=shift; return $STR_UNDEF; } # obsolete since 16.06.16
 
-sub get_desc($) { my $c=shift;
+sub get_desc    { my $c=shift;
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
        _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
@@ -406,7 +406,7 @@ Check if given C<%cipher> name is a known cipher.
 
 =cut
 
-sub get_hex($)  {
+sub get_hex     {
     # find hex key for cipher in %cipher_names or %cipher_alias
     my $c = shift;
     foreach my $k (keys %cipher_names) { # database up to VERSION 14.07.14
@@ -418,7 +418,7 @@ sub get_hex($)  {
     return '';
 } # get_hex
 
-sub get_name($) {
+sub get_name    {
     # check if given cipher name is a known cipher
     # checks in %ciphers if nof found in %cipher_names
     my $cipher  = shift;
@@ -452,7 +452,7 @@ Supported formats are:
 
 =cut
 
-sub printciphers($) {
+sub printciphers {
     #? print internal list of ciphers in specified format
     my $format = shift;
 
@@ -517,7 +517,7 @@ sub printciphers($) {
     return;
 }; # printciphers
 
-sub print_desc_name() {
+sub print_desc_name {
     print  "= overview if cipher description and name exists in internal lists\n";
     printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
     printf("= %13s\t%s\t%s\t%s\t%s\n",  "",  "ciphers", "cipher_", "cipher_", "name +");
@@ -540,7 +540,7 @@ sub print_desc_name() {
     return;
 }; # print_desc_name
 
-sub print_const() {
+sub print_const {
     print  "= overview of various cipher suite constant names
 =   description of columns:
 =       key     - hex key for cipher suite
@@ -568,7 +568,7 @@ sub print_const() {
     return;
 }; # print_const
 
-sub print_names() {
+sub print_names {
     print  "= overview of various cipher suite names aaa
 =   description of columns:
 =       key     - hex key for cipher suite
@@ -620,7 +620,7 @@ sub print_names() {
 # }; # 
 ######################################################
 
-sub print_rfc() {
+sub print_rfc   {
     print  "= cipher suite and corresponding RFCs\n";
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
     printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
@@ -641,7 +641,7 @@ sub print_rfc() {
 
 # internal methods
 
-sub _ciphers_init() {
+sub _ciphers_init {
     #? additional initializations for data structures
     my @keys;   # for checking duplicates
 
@@ -712,7 +712,7 @@ sub _ciphers_init() {
     return;
 }; # _ciphers_init
 
-sub cipher_done() {};           # dummy to check successful include
+sub cipher_done {};             # dummy to check successful include
 
 # complete initializations
 _ciphers_init();
