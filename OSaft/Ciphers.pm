@@ -35,8 +35,8 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
-Readonly our $VERSION     => '16.05.31';    # offizial verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.5 16/09/20 23:19:52';
+Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.6 16/09/20 23:33:26';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 #_____________________________________________________________________________
@@ -96,7 +96,7 @@ Hash with all cipher suites and paramters of each suite. Indexed by cipher ID.
 
 =item %cipher_names
 
-Hash with various names, identifiers and constants for each cipher suites.
+Hash with various names, identifiers and constants for each cipher suite.
 Indexed by cipher ID.
 
 =item %cipher_alias
@@ -445,10 +445,10 @@ sub get_name    {
 Print C<%ciphers> data structure in specified format.
 
 Supported formats are:
-  openssl       - like openssl ciphers -V
-  osaft         - most important data
-  dump          - all available data
-  15.12.15      - format like in version 15.12.15 (for compatibility)
+* openssl       - like openssl ciphers -V
+* osaft         - most important data
+* dump          - all available data
+* 15.12.15      - format like in version 15.12.15 (for compatibility)
 
 =cut
 
@@ -712,6 +712,33 @@ sub _ciphers_init {
     return;
 }; # _ciphers_init
 
+sub _main       {
+    #? print own documentation
+    if ($#ARGV < 0) {       # no arguments given, print help
+        printf("# %s %s\n", __PACKAGE__, $VERSION);
+        if (eval {require POD::Perldoc;}) {
+            # pod2usage( -verbose => 1 );
+            exit( Pod::Perldoc->run(args=>[$0]) );
+        }
+        if (qx(perldoc -V)) {
+            # may return:  You need to install the perl-doc package to use this program.
+            #exec "perldoc $0"; # scary ...
+            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+        }
+        exit 0;
+    }
+
+    # got arguments, do something special
+    while (my $arg = shift @ARGV) {
+        print_rfc()       if ($arg =~ /^rfc/i);
+        print_desc_name() if ($arg =~ /^overview/);
+        print_names()     if ($arg =~ /^names/);
+        print_const()     if ($arg =~ /^const/);
+        printciphers($1)  if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
+    }
+    exit 0;
+}; # _main
+
 sub cipher_done {};             # dummy to check successful include
 
 # complete initializations
@@ -744,30 +771,7 @@ purpose of this module is defining variables. Hence we export them.
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-if (! defined caller) {     # print myself or open connection
-    if ($#ARGV < 0) {       # no arguments given, print help
-        printf("# %s %s\n", __PACKAGE__, $VERSION);
-        if (eval {require POD::Perldoc;}) {
-            # pod2usage( -verbose => 1 );
-            exit( Pod::Perldoc->run(args=>[$0]) );
-        }
-        if (qx(perldoc -V)) {
-            # may return:  You need to install the perl-doc package to use this program.
-            #exec "perldoc $0"; # scary ...
-            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        }
-        exit 0;
-    }
-
-    # got arguments, do something special
-    while (my $arg = shift @ARGV) {
-        print_rfc()       if ($arg =~ /^rfc/i);
-        print_desc_name() if ($arg =~ /^overview/);
-        print_names()     if ($arg =~ /^names/);
-        print_const()     if ($arg =~ /^const/);
-        printciphers($1)  if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
-    }
-}
+_main() if (! defined caller);
 
 1;
 
