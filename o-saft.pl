@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.525 16/09/19 12:43:30",
+    SID         => "@(#) yeast.pl 1.527 16/09/20 18:35:43",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1262,7 +1262,7 @@ our %ciphers = (
         'PSK-AES256-CBC-SHA'    => [qw(  weak SSLv3 AES   256 SHA1 PSK   PSK         0 :)],
         'RSA-PSK-RC4-SHA'       => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   RSAPSK     80 :)],
         'PSK-RC4-SHA'           => [qw(MEDIUM SSLv3 RC4   128 SHA1 PSK   PSK        80 :)],
-        'RC2-CBC-MD5'           => [qw(MEDIUM SSLv2 RC2   128 MD5  RSA   RSA        11 :)],
+        'RC2-CBC-MD5'           => [qw(  weak SSLv2 RC2   128 MD5  RSA   RSA         0 :)],
         'RC2-MD5'               => [qw(MEDIUM SSLv2 RC2   128 MD5  RSA   RSA        80 :)],
         'RC4-64-MD5'            => [qw(  weak SSLv2 RC4    64 MD5  RSA   RSA         3 :)],
         'RC4-MD5'               => [qw(  weak SSLv2 RC4   128 MD5  RSA   RSA         8 :)], #openssl: MEDIUM
@@ -1425,8 +1425,8 @@ our %ciphers = (
         'FZA-NULL-SHA'                  => [qw(  weak SSLv3 None     0 SHA1   KEA   FZA        11 :)],
         'FZA-FZA-SHA'                   => [qw(MEDIUM SSLv3 FZA      0 SHA1   KEA   FZA        81 :)],
         'FZA-RC4-SHA'                   => [qw(  WEAK SSLv3 RC4    128 SHA1   KEA   FZA        11 :)],
-        'RSA-FIPS-3DES-EDE-SHA'         => [qw(  high SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS  99 :)],
-        'RSA-FIPS-3DES-EDE-SHA'         => [qw(  high SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS  99 :)],
+        'RSA-FIPS-3DES-EDE-SHA'         => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
+        'RSA-FIPS-3DES-EDE-SHA'         => [qw(  weak SSLv3 3DES   168 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
 
@@ -1450,7 +1450,7 @@ our %ciphers = (
         'DHE-PSK-SHA'                   => [qw(   -?- -?-   -?-    -?- SHA1   PSK   DHE         1 :)],
         'RSA-PSK-SHA'                   => [qw(   -?- -?-   -?-    -?- SHA1   PSK   RSA         1 :)],
         'DHE-PSK-RC4-SHA'               => [qw(   -?- -?-   RC4    -?- SHA1   PSK   PSK         1 :)],
-        'DHE-PSK-3DES-SHA'              => [qw(   -?- -?-   3DES   -?- SHA1   PSK   PSK         1 :)],
+        'DHE-PSK-3DES-SHA'              => [qw( weak- -?-   3DES   -?- SHA1   PSK   PSK         0 :)],
         'DHE-PSK-AES128-SHA'            => [qw(   -?- -?-   AES    128 SHA1   PSK   PSK         1 :)],
         'DHE-PSK-AES256-SHA'            => [qw(   -?- -?-   AES    256 SHA1   PSK   PSK         1 :)],
         'DHE-PSK-AES128-GCM-SHA256'     => [qw(   -?- -?-   AES    128 SHA256 PSK   PSK         1 :)],
@@ -2977,7 +2977,7 @@ sub checkciphers($$) {
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
 
-    # additionalBEAST check: is TLS 1.2 the only protocol used?
+    # additional BEAST check: is TLS 1.2 the only protocol used?
     $checks{'beast'}->{val} .= " " . _istls12only($host, $port);
 
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
