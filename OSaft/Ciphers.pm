@@ -3,14 +3,15 @@
 
 ##################################  E X P E R I M E N T A L  #################
 
+#####
 # perlcritic -3 OSaft/Ciphers.pm # -verbose 10
-# test
-## OSaft/Ciphers.pm  overview
-## OSaft/Ciphers.pm  ciphers=osaft
-## OSaft/Ciphers.pm  ciphers=openssl
-## OSaft/Ciphers.pm  ciphers=dump
-## OSaft/Ciphers.pm  const
-## OSaft/Ciphers.pm  names
+## tests:
+#	OSaft/Ciphers.pm overview
+#	OSaft/Ciphers.pm const
+#	OSaft/Ciphers.pm names
+#	OSaft/Ciphers.pm ciphers=osaft
+#	OSaft/Ciphers.pm ciphers=openssl
+#	OSaft/Ciphers.pm ciphers=old
 
 # test resources with:
 ## /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  names
@@ -27,6 +28,8 @@
 
 # TODO: see comment at %cipher_names
 
+our $verbose = 0;    # >1: option --v
+
 package OSaft::Ciphers;
 
 use strict;
@@ -36,7 +39,7 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.6 16/09/20 23:33:26';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.7 16/09/21 01:33:05';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 #_____________________________________________________________________________
@@ -72,6 +75,14 @@ OSaft::Ciphers - common perl module for O-Saft ciphers
     use OSaft::Ciphers;     # from within perl code
 
 =head1 OPTIONS
+
+=over 4
+
+=item --v
+
+- print verbose messages (in CLI mode only).
+
+=back
 
 =head1 DESCRIPTION
 
@@ -158,7 +169,8 @@ sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::Require
 sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
 sub _warn       { my @args = @_; carp("**WARNING: ", join(" ", @args)); return; }
-sub vprint      { my @args = @_; print("# ", join(" ", @args) . "\n");  return; }
+sub vprint      { my @args = @_; return if ($verbose<1); print("# ", join(" ", @args) . "\n");  return; }
+sub v2print     { my @args = @_; return if ($verbose<2); print("# ", join(" ", @args) . "\n");  return; }
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -643,9 +655,15 @@ sub print_rfc   {
 
 sub _ciphers_init {
     #? additional initializations for data structures
+
+    # scan options, must be ckecked her also because this function will be
+    # called before _main()
+    foreach (@ARGV) {
+        $verbose++      if ($_ =~ /^--v$/);
+    }
     my @keys;   # for checking duplicates
 
-    #vprint "initialize from IANA tls-parameters.txt ...";
+    vprint "initialize from IANA tls-parameters.txt ...";
     foreach my $key (keys %OSaft::Ciphers::_ciphers_iana) {
         if (grep{/^$key$/} @keys) {
             _warn(" duplicate IANA key: »$key«");
@@ -663,13 +681,15 @@ sub _ciphers_init {
     foreach my $key (qw(0xA8 0xA9 0xAA 0xAB 0xAC 0xAD 0xAE)) {
         $ciphers{'0xCC,' . $key}->{'rfc'} = "7905";
     }
+    vprint "  keys:    " . ($#keys + 1);
+    vprint "  ciphers: " . scalar(keys %ciphers);
 
-    #vprint "initialize from OSaft settings ...";
+    vprint "initialize from OSaft settings ...";
     foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_osaft}) {
         if (grep{/^$key$/} @keys) {
-            #vprint(" duplicate O-Saft key: »$key«");
+            v2print("  found O-Saft key: »$key«");
         } else {
-            #vprint(" missing   O-Saft key: »$key«");
+            v2print("  new   O-Saft key: »$key«");
             push(@keys, $key);
         }
         $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_osaft{$key}[0] || '';
@@ -688,8 +708,10 @@ sub _ciphers_init {
     undef %OSaft::Ciphers::_ciphers_const;
     undef %OSaft::Ciphers::_ciphers_names;
     undef %OSaft::Ciphers::_ciphers_osaft;
+    #vprint "  keys:    " . ($#keys + 1);
+    vprint "  ciphers: " . scalar(keys %ciphers);
 
-    #vprint "initialize data from »openssl ciphers -V« ...";
+    vprint "initialize data from »openssl ciphers -V« ...";
     undef @keys;
     foreach my $key (keys %OSaft::Ciphers::_ciphers_openssl_all) {
         if (grep{/^$key$/} @keys) {
@@ -708,6 +730,7 @@ sub _ciphers_init {
         $cipher_names{$key}->{'openssl'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[6] || '';
         #$ciphers{$key}->{'sec'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[7];
     }
+    vprint "  ciphers: " . scalar(keys %ciphers);
 
     return;
 }; # _ciphers_init
@@ -730,11 +753,15 @@ sub _main       {
 
     # got arguments, do something special
     while (my $arg = shift @ARGV) {
-        print_rfc()       if ($arg =~ /^rfc/i);
-        print_desc_name() if ($arg =~ /^overview/);
-        print_names()     if ($arg =~ /^names/);
-        print_const()     if ($arg =~ /^const/);
-        printciphers($1)  if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
+        # ----------------------------- options
+        $verbose++          if ($arg =~ /^--v$/);
+        # ----------------------------- commands
+        print "$VERSION\n"  if ($arg =~ /^version/i);
+        print_rfc()         if ($arg =~ /^rfc/i);
+        print_desc_name()   if ($arg =~ /^overview/);
+        print_names()       if ($arg =~ /^names/);
+        print_const()       if ($arg =~ /^const/);
+        printciphers($1)    if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
     }
     exit 0;
 }; # _main
@@ -774,12 +801,3 @@ purpose of this module is defining variables. Hence we export them.
 _main() if (! defined caller);
 
 1;
-
-#####
-## Tests:
-#	OSaft/Ciphers.pm overview
-#	OSaft/Ciphers.pm const
-#	OSaft/Ciphers.pm names
-#	OSaft/Ciphers.pm ciphers=osaft
-#	OSaft/Ciphers.pm ciphers=openssl
-#	OSaft/Ciphers.pm ciphers=old
