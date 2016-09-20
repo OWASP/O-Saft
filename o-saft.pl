@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.527 16/09/20 18:35:43",
+    SID         => "@(#) yeast.pl 1.528 16/09/20 20:28:42",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1251,15 +1251,15 @@ our %ciphers = (
         'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA(512)    0 :)],
         'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA(512)    0 export)], # FIXME: same hash key as before
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
-        'RSA-PSK-AES128-CBC-SHA'=> [qw(  weak SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], 
-#       'RSA-PSK-AES128-SHA'    => [qw(  weak SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
-        'RSA-PSK-AES256-CBC-SHA'=> [qw(  weak SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
-#       'RSA-PSK-AES256-SHA    '=> [qw(  weak SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
+        'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], 
+#       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
+        'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
+#       'RSA-PSK-AES256-SHA    '=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
         'RSA-PSK-3DES-EDE-CBC-SHA'=>[qw( weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)],
 #       'RSA-PSK-3DES-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 RSA   RSAPSK      0 :)], # same as RSA-PSK-3DES-EDE-CBC-SHA
         'PSK-3DES-EDE-CBC-SHA'  => [qw(  weak SSLv3 3DES  168 SHA1 PSK   PSK         0 :)],
-        'PSK-AES128-CBC-SHA'    => [qw(  weak SSLv3 AES   128 SHA1 PSK   PSK         0 :)],
-        'PSK-AES256-CBC-SHA'    => [qw(  weak SSLv3 AES   256 SHA1 PSK   PSK         0 :)],
+        'PSK-AES128-CBC-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 PSK   PSK         0 :)],
+        'PSK-AES256-CBC-SHA'    => [qw(  HIGH SSLv3 AES   256 SHA1 PSK   PSK         0 :)],
         'RSA-PSK-RC4-SHA'       => [qw(MEDIUM SSLv3 RC4   128 SHA1 RSA   RSAPSK     80 :)],
         'PSK-RC4-SHA'           => [qw(MEDIUM SSLv3 RC4   128 SHA1 PSK   PSK        80 :)],
         'RC2-CBC-MD5'           => [qw(  weak SSLv2 RC2   128 MD5  RSA   RSA         0 :)],
@@ -1288,14 +1288,14 @@ our %ciphers = (
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
         #!# 'head'                      => [qw(  sec  ssl   enc   bits mac    auth  keyx    score tags)],
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
-        'SRP-AES-128-CBC-SHA'           => [qw(  weak SSLv3 AES    128 SHA1   None  SRP         0 :)], # openssl: HIGH
-        'SRP-AES-256-CBC-SHA'           => [qw(  weak SSLv3 AES    256 SHA1   None  SRP         0 :)], # openssl: HIGH
+        'SRP-AES-128-CBC-SHA'           => [qw(  HIGH SSLv3 AES    128 SHA1   None  SRP         0 :)], # openssl: HIGH
+        'SRP-AES-256-CBC-SHA'           => [qw(  HIGH SSLv3 AES    256 SHA1   None  SRP         0 :)], # openssl: HIGH
         'SRP-DSS-3DES-EDE-CBC-SHA'      => [qw(  weak SSLv3 3DES   168 SHA1   DSS   SRP         0 :)],
-        'SRP-DSS-AES-128-CBC-SHA'       => [qw(  weak SSLv3 AES    128 SHA1   DSS   SRP         0 :)],
-        'SRP-DSS-AES-256-CBC-SHA'       => [qw(  weak SSLv3 AES    256 SHA1   DSS   SRP         0 :)],
+        'SRP-DSS-AES-128-CBC-SHA'       => [qw(  HIGH SSLv3 AES    128 SHA1   DSS   SRP         0 :)],
+        'SRP-DSS-AES-256-CBC-SHA'       => [qw(  HIGH SSLv3 AES    256 SHA1   DSS   SRP         0 :)],
         'SRP-RSA-3DES-EDE-CBC-SHA'      => [qw(  weak SSLv3 3DES   168 SHA1   RSA   SRP         0 :)],
-        'SRP-RSA-AES-128-CBC-SHA'       => [qw(  weak SSLv3 AES    128 SHA1   RSA   SRP         0 :)],
-        'SRP-RSA-AES-256-CBC-SHA'       => [qw(  weak SSLv3 AES    256 SHA1   RSA   SRP         0 :)],
+        'SRP-RSA-AES-128-CBC-SHA'       => [qw(  HIGH SSLv3 AES    128 SHA1   RSA   SRP         0 :)],
+        'SRP-RSA-AES-256-CBC-SHA'       => [qw(  HIGH SSLv3 AES    256 SHA1   RSA   SRP         0 :)],
         'SRP-3DES-EDE-CBC-SHA'          => [qw(  weak SSLv3 3DES   168 SHA1   None  SRP         0 :)], # openssl: HIGH
         'ADH-AES128-SHA256'             => [qw( weak TLSv12 AES    128 SHA256 None  DH         10 :)], # openssl: HIGH
         'ADH-AES128-GCM-SHA256'         => [qw( weak TLSv12 AESGCM 128 AEAD   None  DH         10 :)], # openssl: HIGH
@@ -2176,6 +2176,7 @@ sub _issloth($$) {
 sub _issweet($$) {
     # return given cipher if vulnerable to Sweet32 attack, empty string otherwise
     my ($ssl, $cipher) = @_;
+    return ""      if ($cipher =~ /$cfg{'regex'}->{'notSweet32'}/);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Sweet32'}/);
     return "";
 } # _issweet
