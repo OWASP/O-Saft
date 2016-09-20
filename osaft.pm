@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.56 16/09/18 16:21:54',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.57 16/09/20 18:31:29',
 
 };
 
@@ -1470,7 +1470,7 @@ our %cfg = (
         'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',    # match against cipher
                        # Logjam is same as regex{EXPORT} above
         'SLOTH'     => '(?:(EXP(?:ORT)?|NULL).*MD5$|EC(?:DHE|EDH)[_-]ECDSA[_-].*(?:MD5|SHA)$)',
-        'Sweet32'   => '(?:[_-]3DES|DES[_-]_192)',          # same as DESor3DES
+        'Sweet32'   => '(?:[_-](?:CBC||CBC3|3DES|DES|192)[_-])',# match against cipher
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
 
