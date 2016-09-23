@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.532 16/09/23 16:35:36",
+    SID         => "@(#) yeast.pl 1.533 16/09/23 17:41:42",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6069,10 +6069,12 @@ if ($cmd{'extopenssl'} == 1) {
         $status = 0;  # avoid following warning
     } else {
         # process only if no errors to avoid "Use of uninitialized value"
+        my $openssldir = $arg;  chomp $openssldir;
         $arg =~ s#[^"]*"([^"]*)"#$1#;  chomp $arg;
         if (-e "$arg/certs") {
             $cfg{'ca_path'} = "$arg/certs";
         } else {    # no directory found, add path to common paths as last resort
+            print STR_WARN, "'openssl version -d' returned: '$openssldir'; ca_path not set .\n";
             unshift(@{$cfg{'ca_paths'}}, $arg);
         }
     }
