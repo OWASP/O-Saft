@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.529 16/09/23 10:23:44",
+    SID         => "@(#) yeast.pl 1.530 16/09/23 15:27:20",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1499,6 +1499,7 @@ our %text = (
     'no-tlsextdebug'=> "<<N/A as --no-tlsextdebug in use>>",
     'no-nextprotoneg'=>"<<N/A as --no-nextprotoneg in use>>",
     'no-resonnect'  => "<<N/A as --no-resonnect in use>>",
+    'no-openssl'    => "<<N/A as --no-openssl in use>>",
     'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'protocol'      => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
@@ -3221,7 +3222,6 @@ sub checksizes($$) {
     return if ($cfg{'done'}->{'checksizes'} > 1);
 
     checkcert($host, $port) if ($cfg{'no_cert'} == 0); # in case we missed it before
-# FIXME    return if ($cfg{'no_cert'} != 0); # dann die Werte auf CFG{no-cert} setzen
     $value =  $data{'pem'}->{val}($host);
     $checks{'len_pembase64'}->{val} = length($value);
     $value =~ s/(----.+----\n)//g;
@@ -3237,24 +3237,33 @@ sub checksizes($$) {
     $checks{'len_sernumber'}->{val} = int(length($data{'serial_hex'}->{val}($host)) / 2); # value are hex octets
         # Note: RFC5280 limits to 20 digit (integer), which is hard to check
         #       with the hex value, anyway it should not be more than 8 bytes
-    $value = $data{'modulus_len'}->{val}($host);
-    $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
-    $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001) or prime256v1
-    if ($value =~ m/prime/i) {  # public key uses EC with primes
-        $value =~ s/\n */ /msg;
-        $checks{'modulus_exp_size'}->{val}  = "<<N/A $value>>";
-        $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
-    } else  {                   # only traditional exponent needs to be checked
-        $value =~ s/^(\d+).*/$1/;
-        $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
-        $value = $data{'modulus'}->{val}($host); # value are hex digits
-        $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+
+    if ($cmd{'extopenssl'} == 1) {
+        # TODO: find a better way to do this ugly check
+        $value = $data{'modulus_len'}->{val}($host);
+        $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value);
+        $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001) or prime256v1
+        if ($value =~ m/prime/i) {  # public key uses EC with primes
+            $value =~ s/\n */ /msg;
+            $checks{'modulus_exp_size'}->{val}  = "<<N/A $value>>";
+            $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
+        } else  {                   # only traditional exponent needs to be checked
+            $value =~ s/^(\d+).*/$1/;
+            $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
+            $value = $data{'modulus'}->{val}($host); # value are hex digits
+            $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+        }
+        $value = $data{'serial_int'}->{val}($host);
+        $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
+        $value = $data{'sigkey_len'}->{val}($host);
+        $checks{'len_sigdump'}  ->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
+    } else { # missing without openssl
+        $checks{'sernumber'}    ->{val} = $text{'no-openssl'};
+        $checks{'len_sigdump'}  ->{val} = $text{'no-openssl'};
+        $checks{'len_publickey'}->{val} = $text{'no-openssl'};
+        $checks{'modulus_size'} ->{val} = $text{'no-openssl'};
+        $checks{'modulus_exp_size'}->{val} = $text{'no-openssl'};
     }
-    $value = $data{'serial_int'}->{val}($host);
-    #$value = 0 if($value =~ m/^\s*$/); # if value is empty, we might get: Argument "" isn't numeric in int
-    $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
-    $value = $data{'sigkey_len'}->{val}($host);
-    $checks{'len_sigdump'}  ->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
     return;
 } # checksizes
 
