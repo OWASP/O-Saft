@@ -5,7 +5,7 @@
 #? SYNOPSIS
 #?      source o-saft-img.tcl
 #? VERSION                                                                     
-#?      @(#) o-saft-img.tcl 1.4 16/09/10 22:17:53
+#?      @(#) o-saft-img.tcl 1.5 16/09/23 18:10:32
 #? AUTHOR
 #? Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #? This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -94,6 +94,29 @@ set IMG(+check) [image create photo -data {
 
 # +cipher_64x20_gold6.png
 set IMG(+cipher) [image create photo -data {
+  iVBORw0KGgoAAAANSUhEUgAAAEAAAAAUCAYAAAA9djs/AAAD6ElEQVRYheWYX0yVZRzHPy/nLEBp
+  Ch3g0DkK8UcFXBa0eRCyVQQTylpaVhfW2mpWNteczdY/c1aj1poXbjW7qIvarC66qKhcTg9OZ3LB
+  kCI4aKHTnUkaQ1mC5z2/Ln7v+cs5cCDwrPpuvz3P9/c8v7/v8z7v2UFEUKFVhO9E8IdV/z3xi9Au
+  Qn1IYYgImMbbwHb+X9iOTdoMGaMV+Drd2aQBJuCxY/JcujNJE2zA1gwC1BKA2RbPanC44ZQvdRtn
+  MRjzoKd79vNJIvV2TApmradRGB2FsTEIBtDDNh2YM7CZGRbZUwm0810dX9uWuucTHWCaYLMx7WJs
+  xvRtZoqMcLcnkQNelXj98EV4cjPkL4FsF1SvgvYfdM1ZCfZC6OlR7l6u+w56oaoOsm6E21tgYIAJ
+  T/zwESivhZzF0LQOzpyO7PnzAmzcBLmlkFcGrRvA54usOyuhYQ0c6oCyWnjsqSnqk3PIVHKHRyVe
+  f38zAkihA7m7AcldgPz0ra4VOnTtxAHlLqfy+dnIPasRd5FyT03EX8gmK1P9OfKUr2uZGPPeRuSZ
+  jYgtAykvQf46FfGRlYnk5yEZBvLs45PXhpxBEsneNg2USPa2If1enWdeh5zrVJsrAxH7cAP2Kw81
+  YPcbys93aaKA/PxjrM3Orcq/+UR5UYFynxXT5UTMQdU9slZ1+z+L9XFfIzLSm7i2aEl6B9RUw+tb
+  dP7xlzo+sT6y9mu/zpcvgSKHHqdMOxPf3WDoqCldebPy/IWwrAy6foGTv0FVWcTkrjrdU7FY+cgl
+  5b1WzLN+sBXHhvk99JpY2PY0XJ+dIJ842AkkacAyFYCDR3Xc8XxkffC0jgaQ0IdVMGbsemA8wiVo
+  bQnpLJsF85Qb0ckHIHhVp6WL4KVNseEabo31kZuTJK84pPQViCnGQqlLx55+8PvBmQ9XxmDkMhTc
+  EGUbvmyUeo9B/S3gH4Lek6pbWhLrO2wTjNVVW6dk6CI82Ah5C5VfHoWc+Ul8TIGUGvDpO1FOLayo
+  0ON8rBtqHoDqCujugz2vwvrmKONgrN0r78P3XvANwvhV9VFZEpdsyCauoHI3bFgD+9ph5UPQtAr8
+  f4C3E4aOxCUdFzcZUvoMuhwq8fqvdsPDzRAUOHQcioug6qaJiUfzPS/DhWEYvgSNHvjivcTFJjoB
+  mPDRDtj8qD71Dz/X4tfeOYmPKcSQLvxA4dS9+mdwN8HZ89C1D1YsnetoKaPPjkkn0Drnoaw7QK7d
+  z9xUcNxOgLeAFqwLfc4R91VII8aBXfqHyFHjReBNwJ7mpK4VxoEt1MkH2gCAw8ZtwAtAPVCc3PZf
+  jUGgA9hFg/QB/A006zCkHjUslgAAAABJRU5ErkJggg==
+}];
+
+# +ciphers_64x20_gold6.png
+set IMG(+ciphers) [image create photo -data {
   iVBORw0KGgoAAAANSUhEUgAAAEAAAAAUCAYAAAA9djs/AAAEaklEQVRYheWYf0zUZRzHX8fdAhRD
   8IAjQIwfyq9lgRsghNMIEgpbWmY/rNUsKxtrTkcr05zlqLWm02WZW67VpuWWm0blcnI4DaWNIYX8
   kESnu0kaoUzA+97TH5+7+973gAYJXT8+22fP8/48z/vz6/t8n+/tUEohSrlSfKMUDq/pv6cOpahR
