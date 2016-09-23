@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.531 16/09/23 15:59:02",
+    SID         => "@(#) yeast.pl 1.532 16/09/23 16:35:36",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3110,14 +3110,24 @@ sub checkcert($$) {
     if ($cfg{'usehttp'} > 0) {
         # at least 'ext_crl' may contain more than one URL
         $checks{'crl_valid'}->{val} = "";
-        foreach my $url (split(/\s+/, $data{'ext_crl'}->{val}($host))) {
-            next if ($url =~ m/^\s*$/);     # skip empty url
-            $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl') || "";
+        $value = $data{'ext_crl'}->{val}($host);
+        if ($value eq '<<openssl>>') { # TODO: <<openssl>> from Net::SSLinfo
+            $checks{'crl_valid'}->{val} = $text{'no-openssl'};
+        } else {
+            foreach my $url (split(/\s+/, $data{'ext_crl'}->{val}($host))) {
+                next if ($url =~ m/^\s*$/);     # skip empty url
+                $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl') || "";
+            }
         }
         $checks{'ocsp_valid'}->{val} = "";
-        foreach my $url (split(/\s+/, $data{'ocsp_uri'}->{val}($host))) {
-            next if ($url =~ m/^\s*$/);     # skip empty url
-            $checks{'ocsp_valid'}->{val} .= check_url($url, 'ocsp_uri') || "";
+        $value = $data{'ocsp_uri'}->{val}($host);
+        if ($value eq '<<openssl>>') {
+            $checks{'crl_valid'}->{val} = $text{'no-openssl'};
+        } else {
+            foreach my $url (split(/\s+/, $data{'ocsp_uri'}->{val}($host))) {
+                next if ($url =~ m/^\s*$/);     # skip empty url
+                $checks{'ocsp_valid'}->{val} .= check_url($url, 'ocsp_uri') || "";
+            }
         }
     } else {
         $checks{'crl_valid'}->{val} = _get_text('disabled', "--no-http");
@@ -3248,10 +3258,18 @@ sub checksizes($$) {
             $checks{'modulus_exp_size'}->{val}  = "<<N/A $value>>";
             $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
         } else  {                   # only traditional exponent needs to be checked
-            $value =~ s/^(\d+).*/$1/;
-            $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
+            if ($value eq '<<openssl>>') { # TODO: <<openssl>> from Net::SSLinfo
+                $checks{'modulus_exp_size'}->{val} = $text{'no-openssl'};
+            } else {
+                $value =~ s/^(\d+).*/$1/;
+                $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
+            }
             $value = $data{'modulus'}->{val}($host); # value are hex digits
-            $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+            if ($value eq '<<openssl>>') {
+                $checks{'modulus_size'} ->{val} = $text{'no-openssl'};
+            } else {
+                $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+            }
         }
         $value = $data{'serial_int'}->{val}($host);
         $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
