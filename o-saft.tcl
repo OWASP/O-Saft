@@ -155,10 +155,6 @@ exec wish "$0" ${1+"$@"}
 #.             example of a filter
 #.
 #. LIMITATIONS
-#.      Options do not work on Windows. Cumbersome workaround:
-#.        # edit o-saft.tcl and set cfg(VERB) 1
-#.        start wish
-#.        source o-saft.tcl
 #.
 #. HACKER's INFO
 #.   TODO (8/2016):
@@ -250,7 +246,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.108 Summer Edition 2016
+#?      @(#) 1.109 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -315,8 +311,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.108 16/09/19 12:59:46 Sommer Edition 2016}
-set cfg(VERSION) {1.108}
+set cfg(SID)    {@(#) o-saft.tcl 1.109 16/09/23 18:44:18 Sommer Edition 2016}
+set cfg(VERSION) {1.109}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -2118,10 +2114,11 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.108"
+update_status "o-saft.tcl 1.109"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
+    if {[info commands console] eq "console"} { console show }; # windows hack
     # cfg(RCSID) set in RC-file
     set rc  "not found"; if {[info exists cfg(RCSID)]==1} { set rc  "found" };
     set ini "not found"; if {$cfg(.CFG) ne ""}            { set ini "found" };
