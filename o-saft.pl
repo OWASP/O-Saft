@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.530 16/09/23 15:27:20",
+    SID         => "@(#) yeast.pl 1.531 16/09/23 15:59:02",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6045,6 +6045,7 @@ if ($cmd{'extopenssl'} == 1) {
             print STR_WARN, "using external programs disabled.\n";
             print STR_WARN, "data provided by external openssl may be shown as:  <<openssl>>\n";
         }
+        $cmd{'openssl'}    = "";
         $cmd{'extopenssl'} = 0;
         $cmd{'extsclient'} = 0;
         $status = 0;  # avoid following warning
@@ -6058,7 +6059,11 @@ if ($cmd{'extopenssl'} == 1) {
         }
     }
     if ($status != 0) {
+        # on Windoze status may be 256
+        $cmd{'openssl'}    = "";
         print STR_WARN, "perl returned status: '$status' ('" . ($status>>8) . "')\n";
+            # no other warning here, see "some checks are missing" later, 
+            # this is to avoid bothering the user with warnings, when not used
     }
     $arg = "";
 }
