@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.528 16/09/20 20:28:42",
+    SID         => "@(#) yeast.pl 1.529 16/09/23 10:23:44",
     STR_VERSION => "16.09.09",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1365,11 +1365,11 @@ our %ciphers = (
         'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # openssl 1.0.2 ECDHE-ECDSA-CHACHA20-POLY1305
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
 
-        # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2016)
+        # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2015)
         'PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
-        'ECDHE-PSK-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDH  PSK   1 :)],
-        'DHE-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD DH    PSK   1 :)],
-        'RSA-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   PSK   1 :)],
+        'ECDHE-PSK-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
+        'DHE-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD DHE   DHEPSK 1 :)],
+        'RSA-PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   RSAPSK 1 :)],
 
         # from http://tools.ietf.org/html/rfc6655
         'RSA-AES128-CCM'                => [qw( high TLSv12 AESCCM 128 AEAD   RSA   RSA        91 :)],
@@ -3191,6 +3191,11 @@ sub checksni($$) {
         }
     }
     # $checks{'certfqdn'} and $checks{'hostname'} are similar
+    if ($cfg{'no_cert'} != 0) {
+        $checks{'certfqdn'}->{val}  = $cfg{'no_cert_txt'};
+        $checks{'hostname'}->{val}  = $cfg{'no_cert_txt'};
+        return;
+    }
     if ($data{'cn'}->{val}($host) eq $host) {
         $checks{'certfqdn'}->{val}  = "";
         $checks{'hostname'}->{val}  = "";
@@ -3216,6 +3221,7 @@ sub checksizes($$) {
     return if ($cfg{'done'}->{'checksizes'} > 1);
 
     checkcert($host, $port) if ($cfg{'no_cert'} == 0); # in case we missed it before
+# FIXME    return if ($cfg{'no_cert'} != 0); # dann die Werte auf CFG{no-cert} setzen
     $value =  $data{'pem'}->{val}($host);
     $checks{'len_pembase64'}->{val} = length($value);
     $value =~ s/(----.+----\n)//g;
@@ -3254,7 +3260,7 @@ sub checksizes($$) {
 
 sub check02102($$) {
     #? check if target is compliant to BSI TR-02102-2
-    # assumes that checkssl() already done
+    # assumes that checkciphers() already done
     my ($host, $port) = @_;
     _y_CMD("check02102() " . $cfg{'done'}->{'check02102'});
     $cfg{'done'}->{'check02102'}++;
@@ -3310,7 +3316,7 @@ sub check03116($$) {
     my $txt = "";
 
     # All checks according ciphers already done in checkciphers() and stored
-    # in $checks{'tr-02102'}. We need to do checks according certificate and
+    # in $checks{'tr-03116'}. We need to do checks according certificate and
     # protocol and fill other %checks values according requirements.
 
     #! TR-03116-4 2.1.1 TLS-Versionen und Sessions
@@ -3548,7 +3554,7 @@ sub check7525($$) {
     if ($data{'resumption'}->{val}($host) eq "") {
         $val .= _get_text('insecure', 'resumption');
         $val .= _get_text('missing',  'session ticket') if ($data{'session_ticket'}->{val}($host) eq "");
-        $val .= _get_text('insecure', 'randomness of session') if ($data{'session_random'}->{val}($host) ne "");
+        $val .= _get_text('insecure', 'randomness of session') if ($checks{'session_random'}->{val} ne "");
     }
     # TODO: session ticket must be random
     # FIXME: session ticket must be authenticated and encrypted
@@ -6488,22 +6494,22 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     goto CLOSE_SSL if ((_is_do('cipher') > 0) and ($quick == 0));
 
+    # following sequence important!
+    _y_CMD("get checks ..");
+    checkhttp( $host, $port);
+    checksni(  $host, $port);
+    checksizes($host, $port);
+    checkdv(   $host, $port);
+    checkdest( $host, $port);
+    checkprot( $host, $port);
+    checkbleed($host, $port); # vulnerable TLS heartbeat extentions
+
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ..");
         _trace(" checkssl {");
         checkssl( $host, $port);
         _trace(" checkssl }");
      }
-
-    # following sequence important!
-    _y_CMD("get checks ..");
-    checkhttp( $host, $port); # may be already done in checkssl()
-    checksni(  $host, $port); #  "
-    checksizes($host, $port); #  "
-    checkdv(   $host, $port); #  "
-    checkdest( $host, $port);
-    checkprot( $host, $port);
-    checkbleed($host, $port); # vulnerable TLS heartbeat extentions
 
     usr_pre_print();
 
