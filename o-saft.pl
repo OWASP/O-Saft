@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.535 16/09/24 21:02:48",
+    SID         => "@(#) yeast.pl 1.536 16/09/24 23:29:52",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4370,7 +4370,6 @@ sub print_data($$$$)    {
         $value =~ s#\n\s+# #g;  # squeeze leading white spaces
         $value =~ s#[\n\r]#; #g;# join all lines
         $label =~ s#[\n]##g;
-        return;
     }
     if ($legacy eq 'full') {    # do some pretty printing
         if ($label =~ m/(^altname)/) { $value =~ s#^ ##;       $value =~ s# #\n\t#g; }
