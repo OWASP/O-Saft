@@ -31,11 +31,11 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.06.01',
+    SSLINFO_VERSION => '16.09.16',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.140 16/09/12 22:13:48',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.141 16/09/24 22:28:02',
 };
 
 ######################################################## public documentation #
@@ -499,8 +499,9 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
-$Net::SSLinfo::protocols   = 'h2,h2-15,h2-14,spdy/4a4,spdy/4a2,spdy/3.1,spdy/3,spdy/2,spdy/1,http/2.0,http/1.1';
+$Net::SSLinfo::protocols   = 'h2,h2-15,h2-14,spdy/4a4,spdy/4a2,spdy/3.1,spdy/3,spdy/2,spdy/1,npn-spdy/2,h2c,h2c-14,http/2.0,http/1.1';
                                 # next protocols not yet configurable
+                                # h2c*  - HTTP 2 Cleartext
                                 # protocols may have prefix `exp' which should not be checked by server
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
@@ -1380,6 +1381,7 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'https_pins'}     =  _header_get('Public-Key-Pins', $response);
             $_SSLinfo{'https_protocols'}=  _header_get('Alternate-Protocol', $response);
             $_SSLinfo{'https_svc'}      =  _header_get('Alt-Svc',  $response);
+            $_SSLinfo{'https_svc'}      .= _header_get('X-Firefox-Spdy',  $response);
             $_SSLinfo{'https_sts'}      =  _header_get('Strict-Transport-Security', $response);
             $_SSLinfo{'hsts_httpequiv'} =  $_SSLinfo{'https_body'};
             $_SSLinfo{'hsts_httpequiv'} =~ s/.*?(http-equiv=["']?Strict-Transport-Security[^>]*).*/$1/ims;
@@ -1391,6 +1393,7 @@ sub do_ssl_open($$$@) {
 # TODO:     $_SSLinfo{'hsts_alerts'}    =~ s/.*?((?:alert|error|warning)[^\r\n]*).*/$1/i;
 # TODO: HTTP header:
 #    X-Firefox-Spdy: 3.1
+#    X-Firefox-Spdy: h2             (seen at policy.mta-sts.google.com 9/2016)
             _trace("\n$response \n# do_ssl_open HTTPS }");
             _trace("do_ssl_open HTTP {");   # HTTP uses its own connection ...
             my %headers;
