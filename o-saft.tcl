@@ -246,7 +246,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.109 Summer Edition 2016
+#?      @(#) 1.110 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -311,8 +311,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.109 16/09/23 18:44:18 Sommer Edition 2016}
-set cfg(VERSION) {1.109}
+set cfg(SID)    {@(#) o-saft.tcl 1.110 16/09/24 12:11:09 Sommer Edition 2016}
+set cfg(VERSION) {1.110}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -1907,11 +1907,16 @@ proc osaft_exec   {parent cmd} {
         if {[string trim $h] eq ""} { continue };   # skip empty entries
         lappend targets $h
     }
-    set execme [list exec 2>@stdout {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+    if {[regexp {^win(32|64)} [tk windowingsystem]]} {
+        set execme [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+        # windows has no proper STDERR etc.
+    } else {
+        set execme [list exec 2>@stdout {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # on some systems (i.e. Mac OS X) buffering of STDOUT and STDERR is not
         # synchronized, hence we redirect STDERR to STDOUT, which is OK herein,
         # because no other process can fetch STDERR or STDOUT.
         # probaly we also need:  chan configure stdout -buffering none
+    }
     update_status "$execme"
     incr cfg(EXEC)
     catch {
@@ -1990,6 +1995,22 @@ foreach b " $__native \
         break
     }
 }
+
+### [tk windowingsystem]  eq "win32"
+# { geht nicht (mit ActiveTcl)
+## package require twapi_com                                                   
+## set ie [twapi::comobj InternetExplorer.Application]                         
+## puts "IE $ie"                                                               
+## $ie Visible true                                                            
+## set ie [twapi::comobj Firefox.Application]                                  
+## puts "IE $ie"                                                               
+## $ie Visible true                                                            
+#}
+# { geht (mit ActiveTcl)
+# folgendes funktioniert, aber IE läuft im Vordergrund, d.h. Rest fehlt
+## package require dde                                                            
+## dde execute iexplore WWW_OpenURL http://www.tcl.tk/ 
+#}
 
 ## read $cfg(RC) if any
 #  if the file does not exist, the error is silently catched and ignored
@@ -2114,7 +2135,7 @@ _dbx " hosts: $hosts(0)"
 theme_init
 
 ## some verbose output
-update_status "o-saft.tcl 1.109"
+update_status "o-saft.tcl 1.110"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
