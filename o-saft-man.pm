@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.142 16/09/24 12:50:09";
+my  $man_SID= "@(#) o-saft-man.pm 1.143 16/09/25 00:10:45";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3900,7 +3900,7 @@ OUTPUT
             Replace  'N/A'  by whatever you think is adequate:  "No answer",
             "Not available",  "Not applicable",  ...
 
-        Lines not described above, will have the form (be default):
+        Lines not described above, will have the form (by default):
               Label for information or check:  TABresult
 
         For more details on these lines, please refer to  RESULTS  above.
@@ -3918,6 +3918,17 @@ OUTPUT
 
         More examples for postprocessing the output can be found here:
               https://github.com/OWASP/O-Saft/blob/master/contrib
+
+#    Overview of Special Formattings
+#        #----------------------+---------------+----------------                       
+#                               |    label has      
+#        +cmd and/or --legacy=* |   :    spaces    TAB                                    
+#        #----------------------+-------+-------+----------------                       
+#          --legacy=simple      |  yes     yes     yes                                     
+#          --legacy=compact     |  yes      no      no                                     
+#          --legacy=quick       |   no      no     yes                                     
+#          +quick               |  yes     yes     yes                                     
+#        #----------------------+-------+-------+----------------
 
 
 CUSTOMIZATION
