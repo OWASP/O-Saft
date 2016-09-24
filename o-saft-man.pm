@@ -33,7 +33,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.140 16/09/13 00:03:44";
+my  $man_SID= "@(#) o-saft-man.pm 1.142 16/09/24 12:50:09";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -732,6 +732,16 @@ and OpenVPN",
     #         all the frontend machines, without being written to any kind of
     #         persistent storage, and frequently rotated."
     #        see also https://www.imperialviolet.org/2013/06/27/botchingpfs.html
+    #
+    # HPKP - "HTTP Public Key Pinning
+    #        https://timtaubert.de/blog/2014/10/http-public-key-pinning-explained/
+    #        https://blog.pregos.info/2015/02/23/http-public-key-pinning-hpkp-erklaerung-und-einrichtung/
+    #        https://blog.qualys.com/ssllabs/2016/09/06/is-http-public-key-pinning-dead
+    #        chrome://net-internals/#hsts    (show, reset pins in Chrome)
+    #
+    # TLS Server Identity Pinning with Tickets
+    #              draft-sheffer-tls-pinning-ticket-02
+    #        https://tools.ietf.org/id/draft-sheffer-tls-pinning-ticket-02.txt
     #
     # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
     #
@@ -1881,10 +1891,9 @@ RESULTS
               ** all *RC2* and  *RC4*  ciphers
               ** all *EXPORT*  ciphers
               ** all *anon* (aka ADH aka DHA) ciphers
+              ** all *CBC* and *CBC3* (aka 3DES) and DES ciphers
             * low:
-              ** all *CBC*  ciphers
             * high:
-              ** all *CBC3* (aka 3DES) ciphers
               ** all *AES(128|256)* ciphers
               ** all *CAMELLIA* ciphers
 
@@ -2106,6 +2115,8 @@ COMMANDS
 
           Note that ciphers not supported by the local SSL implementation are
           not checked by default, use  +cipherall  command for that.
+
+          Use  --v  option to see all ciphers being checked.
 
 # other names: +cipherall +allciphers +rawciphers
       +cipherall
@@ -3139,14 +3150,16 @@ OPTIONS
 
           Print remotely checked ciphers.
 
-      --v --v --v
-
-          Print remotely checked ciphers one per line.
-
-      --v --v --v --v
-
-          Print processed ciphers (check, skip, etc.).
-
+# following no longer implemented (8/2016)
+#
+#      --v --v --v
+#
+#          Print remotely checked ciphers one per line.
+#
+#      --v --v --v --v
+#
+#          Print processed ciphers (check, skip, etc.).
+#
       --trace
 
           Print debugging messages.
@@ -3338,8 +3351,8 @@ CHECKS
 
       sweet32
 
-        Check if target is vulnerable to Sweet32 attack  (server offers 3DES
-        ciphers).
+        Check if target is vulnerable to Sweet32 attack (server offers CBC or
+        CBC3 or DES or 3DES ciphers).
 
         Note that FIPS-140 compliance requires 3DES ciphers, hence compliant
         systems are then vulnerable to Sweet32 attacks.
@@ -3457,7 +3470,7 @@ CHECKS
 
       Sweet32
 
-        Currently (2016) we check for ciphers with  3DES.
+        Currently (2016) we check for ciphers with CBC or CBC3 or DES or 3DES.
 
     Target (server) Configuration and Support
 
@@ -3886,6 +3899,11 @@ OUTPUT
           * 'N/A'  is used when no proper informations was found or provided.
             Replace  'N/A'  by whatever you think is adequate:  "No answer",
             "Not available",  "Not applicable",  ...
+
+        Lines not described above, will have the form (be default):
+              Label for information or check:  TABresult
+
+        For more details on these lines, please refer to  RESULTS  above.
 
         When used in  --legacy=full  or --legacy=simple  mode, the output may
         contain formatting lines for better (human) readability.
@@ -5056,6 +5074,7 @@ HACKER's INFO
 #
 #        subs are defined with number and type of parameters to have a minimal
 #        syntax check at compile time.
+#        This will be changed in future.
 #
 #        The  code  mainly uses  'text enclosed in single quotes'  for program
 #        internal strings such as hash keys, and uses "double quoted text" for
@@ -5267,7 +5286,7 @@ HACKER's INFO
 #        likely obvious).
 #
 #        All documentation for the user is written in  plain ASCII text format
-#        at end of this file  o-saft-usr.pm.
+#        at end of the file  o-saft-usr.pm.
 #
 #        All documentation was initially written in perl's POD format. After 2
 #        years of development, it seems that POD wasn't the best decission, as
@@ -5599,14 +5618,14 @@ EXAMPLES
         * Show internal control flow and timing
           $0 +info some.tld --trace-time
 
-        * List checked ciphers
+        * Show checking ciphers
           $0 +cipher some.tld --v --v
-
-        * List checked ciphers one per line
-          $0 +cipher some.tld --v --v --v
-
-        * Show processing of ciphers
-          $0 +cipher some.tld --v --v --v --v
+#
+#        * List checked ciphers one per line
+#          $0 +cipher some.tld --v --v --v
+#
+#        * Show processing of ciphers
+#          $0 +cipher some.tld --v --v --v --v
 
         * Show values retrieved from target certificate directly
           $0 +info some.tld --no-cert --no-cert --no-cert-text=Value-from-Certificate
