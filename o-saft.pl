@@ -46,7 +46,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.534 16/09/24 20:37:28",
+    SID         => "@(#) yeast.pl 1.535 16/09/24 21:02:48",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4052,6 +4052,7 @@ sub checkhttp($$) {
        $hsts_maxage   = -1 if ($data{'hsts_maxage'}->{val}($host) =~ m/^\s*$/);
     my $hsts_fqdn     = $http_location;
        $hsts_fqdn     =~ s|^(?:https:)?//([^/]*)|$1|i; # get FQDN even without https:
+       $hsts_fqdn     =~ s|/.*$||;                     # remove trailing path
 
     $checks{'hsts_is301'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
     $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
@@ -4060,7 +4061,6 @@ sub checkhttp($$) {
     $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne ""); 
     if ($data{'https_sts'}->{val}($host) ne "") {
         my $fqdn =  $hsts_fqdn;
-           $fqdn =~ s|/.*$||;
         $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host) if ($data{'https_location'}->{val}($host) ne "");
         $checks{'hsts_refresh'} ->{val} = $data{'https_refresh'} ->{val}($host) if ($data{'https_refresh'} ->{val}($host) ne "");
         $checks{'hsts_ip'}      ->{val} = $host        if ($host =~ m/\d+\.\d+\.\d+\.\d+/); # RFC6797 requirement
