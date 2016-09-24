@@ -513,25 +513,19 @@ qualification were used:
 
 =over
 
+=item ** all *CBC* and *CBC3* (aka 3DES) and DES ciphers
+
+=back
+
+=over
+
 =item * low:
 
 =back
 
 =over
 
-=item ** all *CBC*  ciphers
-
-=back
-
-=over
-
 =item * high:
-
-=back
-
-=over
-
-=item ** all *CBC3* (aka 3DES) ciphers
 
 =back
 
@@ -786,6 +780,8 @@ with  I<--cipher=*>  option.
 
 Note that ciphers not supported by the local SSL implementation are
 not checked by default, use  I<+cipherall>  command for that.
+
+Use  I<--v>  option to see all ciphers being checked.
 
 =head3 +cipherall
 
@@ -2174,14 +2170,6 @@ Note that  I<--v>  is different from  -v  (see above).
 
 Print remotely checked ciphers.
 
-=head3 --v --v --v
-
-Print remotely checked ciphers one per line.
-
-=head3 --v --v --v --v
-
-Print processed ciphers (check, skip, etc.).
-
 =head3 --trace
 
 Print debugging messages.
@@ -2483,13 +2471,8 @@ or ECDSA-MD5 ciphers).
 
 =head3 sweet32
 
-Check if target is vulnerable to Sweet32 attack  (server offers 3DES
-
-=over
-
-=item *         ciphers).
-
-=back
+Check if target is vulnerable to Sweet32 attack (server offers CBC or
+CBC3 or DES or 3DES ciphers).
 
 Note that FIPS-140 compliance requires 3DES ciphers, hence compliant
 systems are then vulnerable to Sweet32 attacks.
@@ -2602,7 +2585,7 @@ Checking the TLS extension C<tls-unique> is not yet implemented.
 
 =head3 Sweet32
 
-Currently (2016) we check for ciphers with  3DES.
+Currently (2016) we check for ciphers with CBC or CBC3 or DES or 3DES.
 
 =head2 Target (server) Configuration and Support
 
@@ -3252,6 +3235,12 @@ character.
 
 Replace  C<N/A>  by whatever you think is adequate:  "No answer",
 "Not available",  "Not applicable",  ...
+
+Lines not described above, will have the form (by default):
+
+	Label for information or check:  TABresult
+
+For more details on these lines, please refer to  L</RESULTS>  above.
 
 When used in  I<--legacy=full>  or I<--legacy=simple>  mode, the output may
 contain formatting lines for better (human) readability.
@@ -5365,27 +5354,11 @@ edit as needed: .o-saft.pl
 
 =over
 
-=item * List checked ciphers
+=item * Show checking ciphers
 
 =back
 
 	o-saft.pl +cipher some.tld --v --v
-
-=over
-
-=item * List checked ciphers one per line
-
-=back
-
-	o-saft.pl +cipher some.tld --v --v --v
-
-=over
-
-=item * Show processing of ciphers
-
-=back
-
-	o-saft.pl +cipher some.tld --v --v --v --v
 
 =over
 
@@ -5458,7 +5431,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 16.09.09
+@(#) 16.09.16
 
 =head1 AUTHOR
 
