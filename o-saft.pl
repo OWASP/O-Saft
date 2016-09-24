@@ -46,8 +46,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.533 16/09/23 17:41:42",
-    STR_VERSION => "16.09.09",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.534 16/09/24 20:37:28",
+    STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -5927,7 +5927,7 @@ if ($IO::Socket::SSL::VERSION < 1.90) {
         $cfg{'usesni'} = 0;
         my $txt = $typ; $txt =~ s/##/IO::Socket::SSL $IO::Socket::SSL::VERSION < 1.90/;
         warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
-        _hint("--force-openssl can be used to disables this check");
+        _hint("--force-openssl can be used to disable this check");
     }
 }
 if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
@@ -5938,7 +5938,7 @@ if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
         my $v   = Net::SSLeay::OPENSSL_VERSION_NUMBER();
         my $txt = $typ; $txt =~ s/##/openssl $v < 1.0.0/;
         warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
-        _hint("--force-sni can be used to disables this check");
+        _hint("--force-sni can be used to disable this check");
     }
 }
 _trace(" cfg{usesni}: $cfg{'usesni'}");
@@ -6441,7 +6441,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             if ($errtxt !~ /^\s*$/) {
                 _v_print($errtxt);
                 _warn("Can't make a connection to $host:$port; target ignored");
-                _hint("--ignore-no-conn can be used to disables this check");
+                _hint("--ignore-no-conn can be used to disable this check");
                 goto CLOSE_SSL;
             }
         }
