@@ -246,7 +246,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.110 Summer Edition 2016
+#?      @(#) 1.111 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -311,8 +311,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.110 16/09/24 12:11:09 Sommer Edition 2016}
-set cfg(VERSION) {1.110}
+set cfg(SID)    {@(#) o-saft.tcl 1.111 16/09/24 22:54:07 Sommer Edition 2016}
+set cfg(VERSION) {1.111}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -783,6 +783,22 @@ proc _dbx         {txt} {
     puts stderr "#dbx \[$cfg(ICH)\]$me$txt"
 }; # _dbx
 
+proc read_images  {theme} {
+    #? read $cfg(IMG) if exists and not already done
+    global cfg IMG
+    _dbx "($theme)";
+    #  if the file does not exist, the error is silently catched and ignored
+    if [info exists cfg(IMGSID)] { puts "IMG da $cfg(IMGSID)" }
+    if [info exists cfg(IMGSID)] { return };# already there
+    if {$theme eq "image"} {
+       set rcfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];   # must be same path
+       _dbx " IMG $rcfile"
+       if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+    }
+    _dbx "IMG: [array names IMG]"
+    return
+}; # read_images
+
 # if {$cfg(TIP)==1} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
 
 proc tooltip      {w help} {
@@ -854,12 +870,11 @@ proc notTOC       {str} {
     return 0
 }; # notTOC
 
-proc theme_set    {w} {
+proc theme_set    {w theme} {
     #? set attributes for specified object
     # last part of the Tcl-widgets is key for array cfg_buttons
     global cfg cfg_buttons IMG
-    set theme $cfg(bstyle)
-    _dbx "($w): $cfg(bstyle)"
+    _dbx "($w, $theme)"
     # text and tip are always configured
     set key [regsub {.*\.([^.]*)$} $w {\1}];    # get trailer of widget name
     set val [get_tipp  $key]; if {$val ne ""} { create_tip   $w  $val }
@@ -869,6 +884,7 @@ proc theme_set    {w} {
     if {$theme eq "text"} {
         set val [get_color  $key];
         if {$val ne ""} { $w config -bg    $val }
+        $w config -image {} -height 1 -relief raised
     }
     if {$theme eq "image"} {
         if {$val ne ""} {
@@ -880,10 +896,10 @@ proc theme_set    {w} {
     }
 }; # theme_set
 
-proc theme_init   {} {
+proc theme_init   {theme} {
     #? configure buttons with simple text or graphics
     global cfg_buttons
-    _dbx "()"
+    _dbx "($theme)"
     # Search for all Tcl widgets (aka commands), then check if tail of command
     # (part right of right-most .) exists as key in array cfg_buttons.
     # Then use values defined in cfg_buttons to set attributes of the widget.
@@ -895,7 +911,7 @@ proc theme_init   {} {
         if {![regexp {^\.}  $obj]}  { continue }
         if {![regexp $rex   $obj]}  { continue }
         if { [regexp {^\.$} $obj]}  { continue }
-        theme_set $obj
+        theme_set $obj $theme
     }
 }; # theme_init
 
@@ -1106,7 +1122,7 @@ proc create_selected {title val} {
     wm geometry  $w 200x50
     pack [entry  $w.choosen  -textvariable __var -relief flat]
     pack [button $w.closewin -command "destroy $w"] -side right -padx $myX(rpad)
-    theme_set    $w.closewin
+    theme_set    $w.closewin $cfg(bstyle)
     create_tip   $w.choosen "[get_tipp choosen] $title"
     set __var "$val"
     return 1
@@ -1123,7 +1139,7 @@ proc create_window {title size} {
     wm geometry  $this $size
     pack [frame  $this.f1] -fill x -side bottom
     pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
-    theme_set    $this.f1.closewin
+    theme_set    $this.f1.closewin $cfg(bstyle)
     if {$title eq "Help" || $title eq "About"} { return $this }
     if {[regexp {^Filter} $title]}             { return $this }
 
@@ -1132,8 +1148,8 @@ proc create_window {title size} {
     pack [label  $this.f0.t  -text $title   -relief flat  ]    -fill x -side left
     pack [button $this.f0.help_me     -command "create_help {$title}"] -side right
     pack [button $this.f1.saveconfig  -command {osaft_save "CFG" 0}]   -side left
-    theme_set    $this.f1.saveconfig
-    theme_set    $this.f0.help_me
+    theme_set    $this.f1.saveconfig $cfg(bstyle)
+    theme_set    $this.f0.help_me    $cfg(bstyle)
     return $this
 }; # create_window
 
@@ -1150,15 +1166,15 @@ proc create_host  {parent} {
          [button $this.host_add -command "create_host {$parent};"] \
          [button $this.host_del -command "remove_host $this; set hosts($hosts(0)) {}"] \
 
-    theme_set    $this.host_add
+    theme_set    $this.host_add $cfg(bstyle)
     if {$hosts(0)==1} {
         # first line has no {-} but {about}
         grid forget  $this.host_del
         grid [button $this.about -command "create_about"] -row 0
         grid config  $this.about -column 4 -sticky e  -padx "1 $myX(padx)"
-        theme_set    $this.about
+        theme_set    $this.about $cfg(bstyle)
     } else {
-        theme_set $this.host_del
+        theme_set $this.host_del $cfg(bstyle)
     }
     grid config  $this.eh -column 1 -sticky ew 
     grid columnconfigure    $this 1 -weight 1
@@ -1268,10 +1284,10 @@ proc create_filtertab   {parent cmd} {
     tk fontchooser config -command {create_selected "Font"}; # what to do with selection
         # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
     pack [button $parent.tkfont  -command {tk fontchooser show}] -side right
-    theme_set    $parent.tkfont
+    theme_set    $parent.tkfont $cfg(bstyle)
     }
     pack [button $parent.tkcolor -command {create_selected "Color" [tk_chooseColor]} ] -side right
-    theme_set    $parent.tkcolor
+    theme_set    $parent.tkcolor $cfg(bstyle)
 }; # create_filtertab
 
 proc create_filter      {parent cmd} {
@@ -1582,9 +1598,9 @@ proc create_tab   {parent cmd content} {
          [button $tab.filter     -command "create_filter $txt $cmd"    ] \
          -side left
     pack [button $tab.closetab   -command "destroy $tab"] -side right
-    theme_set    $tab.closetab
-    theme_set    $tab.saveresult
-    theme_set    $tab.filter
+    theme_set    $tab.closetab   $cfg(bstyle)
+    theme_set    $tab.saveresult $cfg(bstyle)
+    theme_set    $tab.filter     $cfg(bstyle)
     $cfg(objN) select $tab
     return $txt
 }; # create_tab
@@ -1595,7 +1611,7 @@ proc create_cmd   {parent title} {
     set name [regsub {^\+} $title {cmd}];   # keys start with cmd instead of +
     set this $parent.$name
     pack [button $this -text $title -command "osaft_exec $parent $title"] -side left
-    theme_set $this
+    theme_set $this $cfg(bstyle)
     return $this
 }; # create_cmd
 
@@ -1767,7 +1783,7 @@ proc create_buttons {parent cmd} {
         pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [get_color button] ] \
              [button $this.help_me -command "create_help {$txt}" ] \
                -side left
-        theme_set    $this.help_me
+        theme_set    $this.help_me $cfg(bstyle)
         create_tip   $this.b [get_tipp settings]
 
         # argh, some command sections are missing in HELP
@@ -2020,14 +2036,8 @@ set rcfile [file join {./}       $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 cfg_update;                     # update configuration as needed
 
-## read $cfg(IMG) if any
-#  if the file does not exist, the error is silently catched and ignored
-if {$cfg(bstyle) eq "image"} {
-   set rcfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];   # must be same path
-   _dbx " IMG $rcfile"
-   if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
-}
-
+## read $cfg(IMG)               # must be read before any widget is created
+read_images $cfg(bstyle);       # more precisely: before first use of theme_set
 
 # get information from O-Saft; it's a performance penulty, but simple ;-)
 set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
@@ -2062,11 +2072,21 @@ pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
 
 ## create command buttons for simple commands and help
 pack [frame     $w.fq] -fill x -side bottom
-if {$cfg(VERB)==1} {
-    pack [button $w.fq.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
-    # TODO: does not work proper 'cause passing --v fails
-}
 pack [button    $w.fq.closeme  -command {exit}] -side right -padx $myX(rpad)
+if {$cfg(VERB)==1} {
+    #pack [button $w.fq.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
+    # TODO: does not work proper 'cause passing --v fails
+
+    pack [checkbutton $w.fq.img_txt -variable cfg(img_txt) -command {
+            if {$cfg(img_txt)==1} { set cfg(bstyle) "image" }
+            if {$cfg(img_txt)==0} { set cfg(bstyle) "text"  }
+            _dbx "toggle: $cfg(img_txt) # $cfg(bstyle) "
+            theme_init $cfg(bstyle)
+    } \
+    ] -side right
+    if {$cfg(bstyle) eq "image"} { $w.fq.img_txt select }
+    theme_set   $w.fq.img_txt $cfg(bstyle)
+}
 pack [frame     $w.fc] -fill x
 pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -padx 11
 foreach b $cfg(Ocmd) {
@@ -2074,17 +2094,6 @@ foreach b $cfg(Ocmd) {
 }
 pack [button    $w.fc.loadresult -command "osaft_load {Load}"] -side left -padx 11
 pack [button    $w.fc.help -command "create_help {}"] -side right -padx $myX(padx)
-if {$cfg(VERB)==1} {
-    pack [checkbutton $w.fc.img_txt -variable cfg(img_txt) -command {
-            if {$cfg(img_txt)==1} { set cfg(bstyle) "image" }
-            if {$cfg(img_txt)==0} { set cfg(bstyle) "text"  }
-            _dbx "toggle: $cfg(img_txt) # $cfg(bstyle) "
-            # FIXME: theme_init  ; # funktioniert noch nicht, da Image noch da
-    } \
-    ] -side right
-    theme_set   $w.fc.img_txt
-}
-    # TODO: does not work proper 'cause passing --v fails
 
 ## create option buttons for simple access
 pack [frame     $w.fo] -fill x
@@ -2132,10 +2141,10 @@ _dbx " hosts: $hosts(0)"
 
 
 ## apply themes
-theme_init
+theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.110"
+update_status "o-saft.tcl 1.111"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
