@@ -83,7 +83,7 @@ use Exporter qw(import);
 
 use constant {
     # the version number of this package
-    OERR_VERSION                                    => '16.05.16',
+    OERR_VERSION                                    => '16.09.16',
 
     # error types (general)
     OERR_NO_ERROR                                   =>     1,   # no error
@@ -109,6 +109,7 @@ use constant {
     OERR_SSLHELLO_MERGE_DTLS                        =>   -29,   # try to merge fragmented DTLS packets
     OERR_SSLHELLO_ERROR_MESSAGE_IGNORED             =>    -1,   # error message ignored
 };
+our $VERSION = OERR_VERSION;
 
 our @EXPORT_OK =  ( qw(
     new is_err get_err_str reset_err get_err_val get_err_type get_err_type _name get_err_hash get_all_err_types version
