@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 15.12.15  )
+                                                          Version: 16.09.16  )
         O-Saft  - OWASP SSL advanced forensic tool                          (
 	                                                                     )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -38,27 +38,33 @@
 (          Net::SSLeay          (prefered >= 1.51)
  )         IO::Socket::SSL      (prefered >= 1.37)
 (          IO::Socket::INET     (prefered >= 1.31)
- )         Net::DNS             (for --mx option only)
+ )         Net::DNS             (prefered >= 0.65, for --mx option only)
 (
+ )      O-Saft  can be executed from within the unpacked or cloned directory,
+(       installation is not necessary. However, a  INSTALL.sh  script will be
+ )      provided, which can be called as follows:
+(          INSTALL.sh
+ )         INSTALL.sh --clean
+(          INSTALL.sh --check
+ )         INSTALL.sh --n /path/to/install --force
+(          INSTALL.sh     /path/to/install --force
  )
 (       There're no dependencies to other perl modules for checkAllCiphers.pl
  )      so the test of all ciphers (aka +cipherall) will work with it.
 (       The modules Net::SSLinfo, Net::SSLhello are part of O-Saft and should
  )      be installed in ./Net .
-(       All dependencies for these modules must also be installed.
+(
  )
 (       Following files are optional:
  )          .o-saft.pl           (private user configuration)
 (           o-saft-dbx.pm        (for debugging, tracing)
- )          o-saft-man.pm        (documentation and generation functions)
-(           o-saft-usr.pm        (private functions, some kind of API)
- )          checkAllCiphers.pl   (simple script for +cipherall option)
-(
- )      .o-saft.pl is delivered as .o-saft.pl.sample to avoid destroying user
-(       configurations. It needs to be renamed before used.
- )
-(       o-saft.pl  reads  o-saft-README  if possible and exits.
- )      o-saft-README  must be renamed or removed to get  o-saft.pl  working.
+ )          o-saft-usr.pm        (private functions, some kind of API)
+(           o-saft-man.pm        (documentation and generation functions)
+ )          o-saft.pod           (documentation in POD format)
+(           checkAllCiphers.pl   (simple script for +cipherall option)
+ )          .o-saft.tcl          (private user configuration for GUI)
+(           o-saft-img.tcl       (images for buttons in GUI)
+ )          contrib/*            (additional programs and tools)
 (
  )  QUICK START
 (       o-saft.pl --help
@@ -69,7 +75,7 @@
  )      o-saft.pl +cipherall your.tld
 (       o-saft.pl --help=commands
  )
-(       o-saft.tcl      (very simple GUI; requires Tcl/Tk 8.5 or newer)
+(       o-saft.tcl      (simple GUI; requires Tcl/Tk 8.5 or newer)
  )
 (       Project home is https://www.owasp.org/index.php/O-Saft
  )      Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
@@ -88,6 +94,6 @@
 (       (tarball) version.
  )
 (       SHA256 checksum of o-saft.tgz
- )           f52e4a0f5511f236292e955b472c9a834ed5ae60fc6828c26903dd6c18c96f02 
+ )           81e241eff3844146bbeaa385059e0392f6730e5f436a81a71086e2b89983a676
 (
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/
