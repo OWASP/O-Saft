@@ -19,9 +19,42 @@
 #	shell	file to be used
 #	-------+-------------------------
 #	bash	bash_completion_o-saft
-#	fish	generate_fish_completion
+#	fish	fish_completion_o-saft
 #	tcsh	tcsh_completion_o-saft
 #	-------+-------------------------
+#
+# These files are located in the contrib/ directory. For installing and using
+# them, please see the files itself and the shell's manual pages.
+
+
+###############################################################################
+###
+### Postprocessing output
+###
+
+# All output is designed to be  easily  parsed by postprocessors. For details
+# please see:
+
+o-saft.pl --help=OUTPUT
+o-saft.pl --help=RESULTS
+
+# For converting (postprocessing)  the results to other formats,  some filter
+# scripts are provided in the  contrib/  directory. The usage i.g. is like:
+#	o-saft.pl ... | contrib/filter-script
+# for example:
+
+o-saft.pl +cipher --header --enabled your.tld | contrib/HTML-table.awk
+
+# If you write your own filter script, it's probably best to use  o-saft.pl's
+# --legacy=quick  option, which separates label and value by a TAB character.
+# However, it should be still possible to parse the default format of the
+# results, which is: 
+#	Text of label:	TABvalue
+# Where the  : (colon) terminates the label text, which is followed by spaces
+# to align in columns, followed by a TAB character (aka \t aka 0x09) followed
+# by the value (the result).
+#
+# For practical examples, please see  contrib/filter_examples .
 
 
 ###############################################################################
