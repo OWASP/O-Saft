@@ -1,7 +1,7 @@
 #!/usr/bin/gawk -f
 #?
 #? NAME
-#?      XML-attribut.awk  - formatting o-saft.pl's output as XML with attributes
+#?      XML-attribute.awk  - formatting o-saft.pl's output as XML with attributes
 #?
 #? SYNOPSIS
 #?      o-saft.pl ... | XML-attribute.awk
@@ -12,7 +12,7 @@
 #?          <info id="42" label="Common Name" value="*exacmle.tld" />
 #?
 #? VERSION
-#?      @(#) %M% %I% %E% %U%
+#?      @(#) XML-attribute.awk 1.2 16/09/25 13:42:31
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
