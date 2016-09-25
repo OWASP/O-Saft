@@ -6,7 +6,7 @@ echo "#   the installation directory, but to move it into a path found by your"
 echo "#   PATH  environment variable."
 
 mkdir release_information_only
-mv CHANGES openssl_h-to-perl_hash o-saft-README README o-saft.tgz release_information_only
+mv CHANGES openssl_h-to-perl_hash o-saft-README README o-saft.tgz .perlcriticrc release_information_only
 # do not move contrib/ as all examples expect contrib/ directory right here
 
 echo "# consider copying  .o-saft.pl  into your working directory"               
