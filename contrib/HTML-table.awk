@@ -1,9 +1,10 @@
-#!/usr/bin/gawk
+#!/usr/bin/gawk -f
 #?
 #? NAME
 #?      HTML-table.awk  - formatting o-saft.pl's output as HTML with table
 #?
 #? SYNOPSIS
+#?      o-saft.pl ... | HTML-table.awk
 #?      o-saft.pl ... | gawk -f HTML-table.awk
 #?
 #? DESCRIPTION
@@ -12,7 +13,7 @@
 #?          <tr><th>Common Name</th><td>example.tld</td></tr>
 #?
 #? VERSION
-#?      @(#) HTML-table.awk 1.1 16/06/11 12:36:47
+#?      @(#) HTML-table.awk 1.2 16/09/25 09:37:03
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -40,8 +41,9 @@ BEGIN {	FS="\t";
 /^\s*$/{ next; }
 ($1~/ reading/) { next; }
 ($1~/^**ERROR/) { $0 = sprintf("<span class=\"red\">%s</span>", $0); }
-($1~/^**HINT/)  { $0 = sprintf("<span class=\"blu\">%s</span>", $0); }
 ($1~/^**WARN/)  { $0 = sprintf("<span class=\"pink\">%s</span>", $0); }
+($1~/^**HINT/)  { $0 = sprintf("<span class=\"blu\">%s</span>", $0); }
+($1~/^!!Hint/)  { $0 = sprintf("<span class=\"blu\">%s</span>", $0); }
 ($3~/[Hh][Ii][Gg][Hh]/)   { $3 = sprintf("<span class=\"gr\">%s</span>", $3); }
 ($3~/[Mm][Ee][Dd][Ii]/)   { $3 = sprintf("<span class=\"ye\">%s</span>", $3); }
 ($3~/[Ll][Oo][Ww]/)       { $3 = sprintf("<span class=\"or\">%s</span>", $3); }
@@ -51,7 +53,8 @@ BEGIN {	FS="\t";
 ($1~/^===/ && $NF~/===/)  { gsub(/===/,""); printf("</table><h2>%s</h2>\n<table>", $0); next; }
 ($1~/^== /)  { printf("<tr><th colspan=2>%s</th></tr>\n", $0); next; }
 ($1~/^[#=]/) { print "<! "$0" -->"; next; }
-(NF == 2)    { printf(" <tr><th>%s</th><td>%s</td></tr>\n", $1, $2); }
-(NF == 3)    { printf(" <tr><th>%s</th><td>%s</td><td>%s</td></tr>\n", $1, $2, $3); }
+(NF == 2)    { printf(" <tr><th>%s</th><td>%s</td></tr>\n", $1, $2); next; }
+(NF == 3)    { printf(" <tr><th>%s</th><td>%s</td><td>%s</td></tr>\n", $1, $2, $3); next; }
+{	print; }
 END {	print "</table></body></html>"; }
 
