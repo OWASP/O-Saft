@@ -1,17 +1,18 @@
-#!/usr/bin/gawk
+#!/usr/bin/gawk -f
 #?
 #? NAME
-#?      XML-attribut.awk  - formatting o-saft.pl's output as XML with values
+#?      XML-value.awk  - formatting o-saft.pl's output as XML with values
 #?
 #? SYNOPSIS
-#?      o-saft.pl ... | gawk -f XML-attribut.awk
+#?      o-saft.pl ... | XML-value.awk
+#?      o-saft.pl ... | gawk -f XML-value.awk
 #?
 #? DESCRIPTION
 #?      Formats all output as XML with label and value as tag values:
 #?          <info><label>Common Name</label><value>*exacmle.tld</value></info>
 #?
 #? VERSION
-#?      @(#) XML-value.awk 1.1 16/06/11 12:36:55
+#?      @(#) XML-value.awk 1.2 16/09/25 13:40:43
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
