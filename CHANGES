@@ -1,4 +1,107 @@
 
+Version: 16.09.16
+  BUGFIX
+    * filter scripts contrib/* adapted to new formats; print all lines
+  CHANGES
+    * files removed: generate_ciphers_hash, openssl_h-to-perl_hash, INSTALL-devel.sh
+  NEW
+    * INSTALL.sh
+
+Version: 16.08.01
+  BUGFIX
+    * print warning if OPENSSLDIR is missing (see https://github.com/OWASP/O-Saft/issues/29 )
+    * remove trailing path when compareing FQDNs
+    * output for --legacy=compact corrected (bug since 1.407)
+    * handle arguments after --trace option correctly
+    * don't call openssl if not available
+    * avoid "uninitalited value" in checks if no certificate data is available
+  CHANGES
+    * --v print performed cipher checks
+    * better check of required versions; warning messages unified
+    * o-saft-man.pm: "Using outdated modules" section added; documentation improved
+  NEW
+    * o-saft.tcl: quick access for O-Saft options added
+    * Net::SSLinfo.pm: detect more SPDY protocols (h2c,npn-spdy/2) and X-Firefox-Spdy
+
+Version: 16.08.01
+  BUGFIX
+    * handle missing data in .o-saft.tcl properly
+    * bugfix: on some Mac OS X tk_getSaveFile has no -confirmoverwrite option
+  CHANGES
+    * use IO::Socket::SSL without version, but warn if not sufficient
+    * o-saft.tcl: layout improved
+  NEW
+    * Sweet32 implemented and added to glossar
+    * HEIST added to glossar
+
+Version: 16.06.01
+  BUGFIX
+    * check for supported ciphers uses full match
+    * parsing X509 data improved (avoids: Use of uninitialized value ...)
+    * missing host and port parameter added in some check* functions added
+    * +sts_maxage0d checks corrected (check if STS reset aka max-age=0)
+    * o-saft.tcl: do not set tooltip if fontchooser misses
+    * do not print Cipher Summary for legacy formats
+    * print selected ciphers from --legacy=format only once
+    * allow mixed case in customized texts (--cfg-*= options)
+    * --legacy=sslscan without perl warnings
+    * some texts corrected in o-saft.tcl
+  CHANGES
+    * o-saft.tcl: better detection of section header lines in help
+    * o-saft.tcl: context sensitive help buttons
+    * o-saft.tcl: hash-bang line improved
+    * o-saft-README disabled as most people are not willing to read it
+    * critic.sh: check for potential repository files and skipp check for them
+  NEW
+    * Sweet32 implemented and added to glossar
+    * HEIST added to glossar
+    * new commands can be added with --cfg-cmd=*
+    * +hsts_httpequiv +hsts_preload added
+    * o-saft.tcl: home, back, next button added
+
+Version: 16.05.10
+  BUGFIX
+    * print properly aligned text for --help=cfg-*
+    * output for "Total number of checked ciphers" corrected
+    * +ciphers command honors --legacy option
+    * avoid perl warning "Argument isn't numeric" when getting bits of a cipher
+  CHANGES
+    * --help=* simplified (formal change)
+    * printing of internal data with --help=* simplified and unified
+    * --cfg-* settings improved
+    * print Hint for +renegotiation check
+    * Net::SSLinfo.pm: new variables: starttls and proxy*
+  NEW
+    * --help=hint implemented
+    * --hint and --no-hint implemented
+    * man_alias() implemented for --help=alias
+    * man_pod() implemented for --help=gen-pod
+    *
+
+Version: 16.04.14
+  CHANGES
+    * %cfg no defined in osaft.pm only
+    * use !!Hint instead of **Hint
+    * description for compliance checks improved
+  NEW
+    * +crl_valid, +ocsp_valid: check if CRL and OSCP from certificate are valid
+    * +rfc7525 implemented
+    * contrib/.o-saft.tcl
+
+Version: 16.04.02
+  CHANGES
+    * perlcritic: eval, grep with block form
+    * perlcritic: use lexical loop iterator
+    * documentation improved
+    * o-saft.tcl: table of content improved for help
+    * o-saft.tcl: don't show button for empty configuration window
+  NEW
+    * --checks implemented (compatibility with TLS-Check.pl)
+    * osaft_sleep() as wrapper for IO::select added
+    * +sts_expired added: STS max-age < certificate's validity
+    * new options --starttls-phase* and --starttls-error*
+    * contrib/critic.sh added
+
 Version: 16.03.30
   BUGFIX
     * Net/SSLinfo.pm: prototypes for do_openssl() and do_ssl_open() corrected
@@ -1016,5 +1119,6 @@ Version: 13.03.31
     * --ignorecase implemented
     * --showhost implemented
     * scoring implemented (first simple attempt)
+
 
 
