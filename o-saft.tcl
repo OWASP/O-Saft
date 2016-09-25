@@ -105,6 +105,8 @@ exec wish "$0" ${1+"$@"}
 #?      All  --cfg-*  settings from .o-saft.pl are not handled properly in the
 #?      GUI herein.
 #?
+#?      The busy cursor does not work on Win32 and Win64 systems.
+#?
 #? ARGUMENTS
 #?      All arguments,  except the options described above,  are treated  as a
 #?      hostname to be checked.
@@ -246,7 +248,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.111 Summer Edition 2016
+#?      @(#) 1.112 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -311,8 +313,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.111 16/09/24 22:54:07 Sommer Edition 2016}
-set cfg(VERSION) {1.111}
+set cfg(SID)    {@(#) o-saft.tcl 1.112 16/09/25 08:50:51 Sommer Edition 2016}
+set cfg(VERSION) {1.112}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -2144,7 +2146,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.111"
+update_status "o-saft.tcl 1.112"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
