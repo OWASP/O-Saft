@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.58 16/09/20 20:25:27',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.59 16/09/24 13:54:02',
 
 };
 
@@ -873,7 +873,7 @@ our %cipher_names = (
     '0x0300002B' => [qw(EXP-KRB5-RC4-MD5                KRB5_RC4_40_MD5)],
     '0x03000028' => [qw(EXP-KRB5-RC4-SHA                KRB5_RC4_40_SHA)],
     '0x02000000' => [qw(NULL-MD5                        NULL_WITH_MD5)],
-    '0x03000000' => [qw(NULL-MD5                        NULL_WITH_NULL_NULL)],
+    '0x03000000' => [qw(NULL-NULL                       NULL_WITH_NULL_NULL)], # O-Saft dummy
     '0x0300008A' => [qw(PSK-RC4-SHA                     PSK_WITH_RC4_128_SHA)],
     '0x0300008B' => [qw(PSK-3DES-EDE-CBC-SHA            PSK_WITH_3DES_EDE_CBC_SHA)],
     '0x0300008C' => [qw(PSK-AES128-CBC-SHA              PSK_WITH_AES_128_CBC_SHA)],
