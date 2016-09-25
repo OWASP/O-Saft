@@ -8,6 +8,28 @@
 #?      o-saft.pl's output.
 #?      All examples should work just by copy&paste.
 #?
+#? LIMITATIONS
+#?      Some of the provided filter scripts are awk scripts. They most likely
+#?      require Gnu awk (or compatible) instead of the traditional AT&T awk.
+#?
+#?      Depending on the operating system and/or it's configuration,  the awk
+#?      scripts need to be used like:
+#?           gawk -f contrib/script
+#?      instead of (as shown in our examples):
+#?           contrib/script
+#?
+
+###############################################################################
+###
+### Using filters (overview)
+###
+
+o-saft.pl +cipher localhost | contrib/bunt.pl
+o-saft.pl +info   localhost | contrib/HTML-simple.awk
+o-saft.pl +check  localhost | contrib/HTML-table.awk
+o-saft.pl +info   localhost | contrib/XML-value.awk
+o-saft.pl +check  localhost | contrib/XML-attribute.awk
+
 
 ###############################################################################
 ###
@@ -17,7 +39,9 @@
 ### +info output: separate label and value, one per line
 
 o-saft.pl +info --legacy=quick localhost \
-| gawk -F'\t' 'BEGIN{print "<html><body><table>"}/^\s*$/{next}($1~/^[#=]/){next}{print $1","$2}END{}'
+| gawk -F'\t' '/^\s*$/{next}($1~/^[#=]/){next}{print $1","$2}'
+
+# or
 
 o-saft.pl +info localhost --legacy=compact --no-header --sep=,
 
@@ -29,6 +53,10 @@ o-saft.pl +info localhost --legacy=compact --no-header --sep=,
 
 ### +info output: label and value per line (full html)
 
+o-saft.pl +info localhost | contrib/HTML-simple.awk
+
+# or
+
 o-saft.pl +info --legacy=quick localhost \
 | gawk -F'\t' 'BEGIN{print "<html><body><table>"}(NF>0){gsub(/&/,"\\&amp;");gsub(/"/,"\\&quot;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{print " <tr><th>"$1"</th><td>"$2"</td></tr>"}END{print "</table></body></html>"}'
 
@@ -38,6 +66,10 @@ o-saft.pl +info --legacy=quick localhost \
 | gawk -F'\t' '/^\s*$/{next}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}($1~/^[#=]/){print "<! "$0" -->";next}{print " <tr><th>"$1"</th><td>"$2"</td></tr>"}'
 
 ### +check output: label and value in table; header lines
+
+o-saft.pl +check localhost | contrib/HTML-table.awk
+
+# or
 
 o-saft.pl +check --legacy=quick localhost \
 | gawk -F'\t' 'BEGIN{print "<html><body><table>"}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/ reading /){next;}($1~/^===/ && $NF~/===/){printf("</table><h2>%s</h2>\n<table>",$0);next}($1~/^== /){print "<tr><th colspan=2>"$0"</th></tr>";next;}($1~/^[#=]/){print "<! "$0" -->";next}{print " <tr><th>"$1"</th><td>"$2"</td></tr>"}END{print "</table></body></html>"}'
@@ -61,6 +93,10 @@ o-saft.pl +info --legacy=quick localhost \
 
 ### +info output: label and value per line
 
+o-saft.pl +info localhost | contrib/XML-value.awk
+
+# or
+
 o-saft.pl +info --legacy=quick localhost \
 | gawk -F'\t' 'BEGIN{print "<infos xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"SSLResults.xsd\" >"}(NF>0){gsub(/&/,"\\&amp;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{print " <info>\n  <label>"$1"</label>\n  <value>"$2"</value>\n </info>"}END{print "</info>"}'
 
@@ -77,6 +113,10 @@ o-saft.pl +info --legacy=quick localhost \
 
 
 ### +info output: one line per label and value as attribute
+
+o-saft.pl +info localhost | contrib/XML-attribute.awk
+
+# or
 
 o-saft.pl +info --legacy=quick localhost \
 | gawk -F'\t' 'BEGIN{print "<infos xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"SSLResults.xsd\" >"}(NF>0){gsub(/&/,"\\&amp;");gsub(/"/,"\\&quot;");gsub(/</,"\\&lt;");gsub(/>/,"\\&gt;");}/^\s*$/{next}($1~/^[#=]/){print "<! "$0" -->";next}{i++;printf(" <info id=\"%s\" label=\"%s\" value=\"%s\" />\n",i,$1,$2);}END{print "</info>"}'
@@ -97,6 +137,11 @@ o-saft.pl +cipher localhost --header --legacy=full
 ### +cipher output: all lines are prefixed with SSL protocol version
 
 o-saft.pl +cipher localhost --header --legacy=quick \
-| awk '/^=== schl/{p=$(NF-1)}/^/{printf"%s\t%s\n",p,$0;}'
+| awk '/^=== Ciphers:/{p=$(NF-1)}/^/{printf"%s\t%s\n",p,$0;}'
+
+### +cipher output: all lines are prefixed with SSL protocol version, no headers
+
+o-saft.pl +cipher localhost --header --legacy=quick \
+| awk '/^=== Ciphers:/{p=$(NF-1)}/^=/{next}/^/{printf"%s\t%s\n",p,$0;}'
 
 
