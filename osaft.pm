@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '16.05.10',  # offizial verion number of tis file
+    OSAFT_VERSION   => '16.05.10',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.59 16/09/24 13:54:02',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.60 16/09/26 23:16:38',
 
 };
 
@@ -1870,7 +1870,7 @@ sub get_dh_paramter($$) {
 
 # internal methods
 
-sub _prot_init_value() {
+sub _prot_init_value {
     #? initialize default values in %prot
     foreach my $ssl (keys %prot) {
         $prot{$ssl}->{'cnt'}        = 0;
@@ -1887,7 +1887,7 @@ sub _prot_init_value() {
     return;
 } # _prot_init_value
 
-sub _cfg_init() {
+sub _cfg_init   {
     #? initialize dynamic settings in %cfg, copy data from %prot
     $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot);
     $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot);
@@ -1899,14 +1899,15 @@ sub _cfg_init() {
     return;
 } # _cfg_init
 
-sub _cmd_init() {
+sub _cmd_init   {
     #? initialize dynamic settings in %cfg for commands
     foreach my $key (keys %cfg) {       # well-known "summary" commands
         push(@{$cfg{'commands-CMD'}}, $key) if ($key =~ m/^cmd-/);
     } 
+    return;
 } # _cmd_init
 
-sub _dbx_init() {
+sub _dbx_init   {
     #? initialize settings for debugging
     $dbx{'cmd-check'} = $cfg{'cmd-check'};
     $dbx{'cmd-http'}  = $cfg{'cmd-http'};
@@ -1916,30 +1917,7 @@ sub _dbx_init() {
     return;
 } # _dbx_init
 
-
-=pod
-
-=head2 osaft::printhint($cmd,@text)
-
-Print hint for specified command, additionl text will be appended.
-=cut
-
-sub printhint($@) {
-    #? Print hint for specified command.
-    return if ($cfg{'hint'} <= 0);
-    my $cmd = shift;
-    print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @_) if (defined $cfg{'hints'}->{$cmd});
-    return;
-} # printhint
-
-sub osaft_sleep($) {
-    #? wrapper for IO::select
-    my $wait = shift;
-    select( undef, undef, undef, $wait);
-    return;
-} # osaft_sleep
-
-sub _osaft_init() {
+sub _osaft_init {
     #? additional generic initializations for data structures
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
     _cfg_init();        # initallize dynamic data in %cfg
@@ -1950,6 +1928,34 @@ sub _osaft_init() {
     }
     return;
 }; # _osaft_init
+
+
+=pod
+
+=head2 osaft::printhint($cmd,@text)
+
+Print hint for specified command, additionl text will be appended.
+
+=head2 osaft::osaft_sleep($wait)
+
+Wrapper to simulate "slee" with perl's select.
+=cut
+
+sub printhint   {
+    #? Print hint for specified command.
+    my @args = @_;
+    return if ($cfg{'hint'} <= 0);
+    my $cmd = shift;
+    print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
+    return;
+} # printhint
+
+sub osaft_sleep {
+    #? wrapper for IO::select
+    my $wait = shift;
+    select( undef, undef, undef, $wait);
+    return;
+} # osaft_sleep
 
 sub osaft_done() {};    # dummy to check successful include
 
