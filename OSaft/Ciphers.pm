@@ -1,7 +1,19 @@
 #!/usr/bin/perl
 ## PACKAGE {
 
-##################################  E X P E R I M E N T A L  #################
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+OSaft::Ciphers - common perl module for O-Saft ciphers
+
+
+########################  E X P E R I M E N T A L  #######################
+######################  not used in O-Saft 16.09.16  #####################
+
+=cut
 
 #####
 # perlcritic -3 OSaft/Ciphers.pm # -verbose 10
@@ -24,11 +36,9 @@
 #   d.h. keys passen zu den Konstanten
 #############
 
-##################################  E X P E R I M E N T A L  #################
-
 # TODO: see comment at %cipher_names
 
-our $verbose = 0;    # >1: option --v
+########################  E X P E R I M E N T A L  #######################
 
 package OSaft::Ciphers;
 
@@ -39,8 +49,11 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.7 16/09/21 01:33:05';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.9 16/09/27 01:03:23';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
+
+our $VERBOSE = 0;    # >1: option --v
+   # VERBOSE instead of verbose because of perlcritic
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -62,32 +75,24 @@ Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 =pod
 
-=encoding utf8
-
-=head1 NAME
-
-OSaft::Ciphers - common perl module for O-Saft ciphers
-
 =head1 SYNOPSIS
 
     OSaft::Ciphers.pm       # on command line will print help
 
     use OSaft::Ciphers;     # from within perl code
 
-=head1 OPTIONS
-
-=over 4
-
-=item --v
-
-- print verbose messages (in CLI mode only).
-
-=back
-
 =head1 DESCRIPTION
 
 Utility package for O-Saft (o-saft.pl and related tools). This package declares
 and defines common L</VARIABLES> and L</METHODS> to be used in the calling tool.
+It contains the primary data structure for cipher suites.
+
+This documentaion is intended for developers. Users should read any of the help
+texts for example provided by O-Saft, i.e. C<o-saft.pl --help>.
+
+This module provides  additional functionality  to list and check the used data
+of the ciphers. All  L</COMMANDS> and L</OPTIONS>  are only for this additional 
+functionality, please descritions there.
 
 =head2 Used Functions
 
@@ -169,8 +174,8 @@ sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::Require
 sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
 sub _warn       { my @args = @_; carp("**WARNING: ", join(" ", @args)); return; }
-sub vprint      { my @args = @_; return if ($verbose<1); print("# ", join(" ", @args) . "\n");  return; }
-sub v2print     { my @args = @_; return if ($verbose<2); print("# ", join(" ", @args) . "\n");  return; }
+sub vprint      { my @args = @_; return if ($VERBOSE<1); print("# ", join(" ", @args) . "\n");  return; }
+sub v2print     { my @args = @_; return if ($VERBOSE<2); print("# ", join(" ", @args) . "\n");  return; }
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -292,7 +297,7 @@ my %_ciphers_openssl_all = (
 #   '0x00,0x05'  => [qw( SSLv3 RSA RSA  RC4   128 SHA1 RC4-SHA
     #-------------------+----+----+----+----+----+----+----+-------,
 ); # %_ciphers_openssl_all
-eval {require qw{OSaft/_ciphers_openssl_all.pm}; } or _warn "cannot read OSaft/_ciphers_openssl_bin.pm";
+eval {require qw{OSaft/_ciphers_openssl_all.pm}; } or _warn "cannot read OSaft/_ciphers_openssl_all.pm";
 
 my %_ciphers_openssl_inc = (
     #? internal list, generated from openssl source
@@ -581,7 +586,7 @@ sub print_const {
 }; # print_const
 
 sub print_names {
-    print  "= overview of various cipher suite names aaa
+    print  "= overview of various cipher suite names
 =   description of columns:
 =       key     - hex key for cipher suite
 =       OpenSSL - name of cipher suite used in openssl's *.h files
@@ -659,7 +664,7 @@ sub _ciphers_init {
     # scan options, must be ckecked her also because this function will be
     # called before _main()
     foreach (@ARGV) {
-        $verbose++      if ($_ =~ /^--v$/);
+        $VERBOSE++      if ($_ =~ /^--v$/);
     }
     my @keys;   # for checking duplicates
 
@@ -685,7 +690,8 @@ sub _ciphers_init {
     vprint "  ciphers: " . scalar(keys %ciphers);
 
     vprint "initialize from OSaft settings ...";
-    foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_osaft}) {
+    foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_osaft}) { ## no critic qw(Subroutines::ProtectPrivateSubs)
+print "K $key";
         if (grep{/^$key$/} @keys) {
             v2print("  found O-Saft key: »$key«");
         } else {
@@ -754,14 +760,15 @@ sub _main       {
     # got arguments, do something special
     while (my $arg = shift @ARGV) {
         # ----------------------------- options
-        $verbose++          if ($arg =~ /^--v$/);
+        $VERBOSE++          if ($arg =~ /^--v$/);
         # ----------------------------- commands
         print "$VERSION\n"  if ($arg =~ /^version/i);
         print_rfc()         if ($arg =~ /^rfc/i);
         print_desc_name()   if ($arg =~ /^overview/);
         print_names()       if ($arg =~ /^names/);
         print_const()       if ($arg =~ /^const/);
-        printciphers($1)    if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
+        #printciphers($1)    if ($arg =~ /^ciphers=(.*)$/);  # 15|16|dump|osaft|openssl
+        if ($arg =~ /^ciphers=(.*)$/) { printciphers($1); }  # same as above, but keeps perlcritic quiet
     }
     exit 0;
 }; # _main
@@ -775,6 +782,62 @@ _ciphers_init();
 #_____________________________________________________ public documentation __|
 
 =pod
+
+=head1 COMMANDS
+
+If called from command line, like
+
+  OSaft/Ciphers.pm [OPTIONS ..] [COMMANDS]
+
+this modules provides following commands:
+
+=over 4
+
+=item version
+
+- just print the module's version
+
+=item overview
+
+- print overview if cipher description and name exists in internal lists
+
+=item names
+
+- print overview of various cipher suite names
+
+=item const
+
+- print overview of various cipher suite constant names
+
+=item rfc
+
+- print cipher suite name and corresponding RFCs
+
+=item ciphers=dump
+
+- print internal lists of ciphers (all data, internal format)
+
+=item ciphers=osaft
+
+- print internal lists of ciphers (internal format)
+
+=item ciphers=openssl
+
+- print internal lists of ciphers (format like "openssl ciphers -V")
+
+=item ciphers=16
+
+=back
+
+=head1 OPTIONS
+
+=over 4
+
+=item --v
+
+- print verbose messages (in CLI mode only).
+
+=back
 
 =head1 NOTES
 
