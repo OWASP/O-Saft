@@ -126,7 +126,7 @@ Call:  usr_version()
 use strict;
 use warnings;
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.20 16/05/15 11:02:13";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.21 16/09/26 19:26:03";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
@@ -139,24 +139,24 @@ sub _usr_dbx { my @args = @_; _trace(join(" ", @args, "\n")); return; } # requir
 # -------------------------------------
 # These functions are called in o-saft.pl
 
-sub usr_version()   { return "14.07.26"; }
+sub usr_version     { return "16.09.16"; }
 
-sub usr_pre_init()  {
+sub usr_pre_init    {
     _usr_dbx("usr_pre_init ...");
     return;
 };
 
-sub usr_pre_file()  {
+sub usr_pre_file    {
     _usr_dbx("usr_pre_file ...");
     return;
 };
 
-sub usr_pre_args()  {
+sub usr_pre_args    {
     _usr_dbx("usr_pre_args ...");
     return;
 };
 
-sub usr_pre_exec()  {
+sub usr_pre_exec    {
     _usr_dbx("usr_pre_exec ...");
     # All arguments and options are parsed.
     # Unknown commands are not available with _is_do() but can be
@@ -166,27 +166,27 @@ sub usr_pre_exec()  {
     return;
 };
 
-sub usr_pre_cipher(){
+sub usr_pre_cipher  {
     _usr_dbx("usr_pre_cipher ...");
     return;
 };
 
-sub usr_pre_main()  {
+sub usr_pre_main    {
     _usr_dbx("usr_pre_main ...");
     return;
 };
 
-sub usr_pre_host()  {
+sub usr_pre_host    {
     _usr_dbx("usr_pre_host ...");
     return;
 };
 
-sub usr_pre_info()  {
+sub usr_pre_info    {
     _usr_dbx("usr_pre_info ...");
     return;
 };
 
-sub usr_pre_open()  {
+sub usr_pre_open    {
     _usr_dbx("usr_pre_open ...");
     ###
     ### sample code for using your own socket
@@ -197,32 +197,32 @@ sub usr_pre_open()  {
     return;
 };
 
-sub usr_pre_cmds()  {
+sub usr_pre_cmds    {
     _usr_dbx("usr_pre_cmds ...");
     return;
 };
 
-sub usr_pre_data()  {
+sub usr_pre_data    {
     _usr_dbx("usr_pre_data ...");
     return;
 };
 
-sub usr_pre_print() {
+sub usr_pre_print   {
     _usr_dbx("usr_pre_print ...");
     return;
 };
 
-sub usr_pre_next()  {
+sub usr_pre_next    {
     _usr_dbx("usr_pre_next ...");
     return;
 };
 
-sub usr_pre_exit()  {
+sub usr_pre_exit    {
     _usr_dbx("usr_pre_exit ...");
     return;
 };
 
-sub o_saft_usr_done() {};       # dummy to check successful include
+sub o_saft_usr_done {};         # dummy to check successful include
 ## PACKAGE }
 
 # local functions {
