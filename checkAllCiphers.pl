@@ -31,17 +31,17 @@
 #!# modified by humans (you:) easily.  Please see the documentation  in section
 #!# "Program Code" at the end of this file if you want to improve the program.
 
-BEGIN {
-    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
-    unshift(@INC, $_path, "/bin" ); # /bin for special installation on portable media
-}
-
 use strict;
 use warnings;
 use Carp;                                                       #replaces warn and die
 use OSaft::error_handler qw (:sslhello_contants);               # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung OSaft::error_handler-><sub>)$
 
 use osaft;
+
+BEGIN {
+    my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
+    unshift(@INC, $_path, "/bin" ); # /bin for special installation on portable media
+}
 
 my $VERSION = "16.05.16";
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
