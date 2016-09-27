@@ -7,7 +7,7 @@
 package main;   # ensure that main:: variables are used
 
 ## no critic qw(ValuesAndExpressions::ProhibitCommaSeparatedStatements)
-# FIXME: we have a lot of comman separated statements to simplify the code.
+# FIXME: We have a lot of comman separated statements to simplify the code.
 #        needs to be changed in future to keep perlcritic happy.
 #        However, the code herein is just for our own documentation ...
 
@@ -20,10 +20,15 @@ package main;   # ensure that main:: variables are used
 # NOTE:  Yes, we have very complex regex here.
 
 ## no critic qw(InputOutput::RequireBriefOpen)
-#        we always close our filehandles, perlcritic is too stupid to read over 15 lines
+#        We always close our filehandles, perlcritic is too stupid to read
+#        over 15 lines.
 
 ## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
-#        we have a lot of single character strings, herein, that's ok
+#        We have a lot of single character strings, herein, that's ok.
+
+## no critic qw(Modules::ProhibitExcessMainComplexity)
+#        It's the nature of translations to be complex, hence don't complain. 
+# NOTE: this expception fails, perlcritic still complains (probably a bug there)
 
 use strict;
 use warnings;
@@ -33,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.143 16/09/25 00:10:45";
+my  $man_SID= "@(#) o-saft-man.pm 1.144 16/09/27 22:50:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -969,7 +974,7 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if ($typ eq 'intern') {
         # first list command with all internal commands-*
         foreach my $key (sort keys %cfg) {
-            next if ($key !~ m/^commands-(.*)/);
+            next if ($key !~ m/^commands-(?:.*)/);
             _man_opt($key, $sep, "+" . join(" +", @{$cfg{$key}}));
         }
         foreach my $key (sort keys %cfg) {
