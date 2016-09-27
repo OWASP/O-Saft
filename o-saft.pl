@@ -42,11 +42,17 @@
 #        this policy (see our .perlcriticrc), it even doesn't honor the setting
 #        here, hence it's disabled at each line using  $ENV{} = ...
 
+## no critic qw(ErrorHandling::RequireCarping)
+#  NOTE: Using carp() is nice in modules,  as it also prints the calling stack.
+#        But here it is sufficient to see the line number, hence we use warn().
+
+## no critic qw(Subroutines::ProhibitExcessComplexity)
+#  NOTE: It's the nature of checks to be complex, hence don't complain.
 
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.536 16/09/24 23:29:52",
+    SID         => "@(#) yeast.pl 1.538 16/09/27 22:42:11",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -163,7 +169,8 @@ sub _warn   {
     # don't print if ($warning <= 0);
     my @txt = @_;
     return if ((grep{/(:?--no.?warn)/i} @ARGV) > 0);  # ugly hack 'cause we won't pass $warning
-    local $\ = "\n"; print(STR_WARN, join(" ", @txt));
+    local $\ = "\n";
+    print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
     return;
 }
@@ -358,7 +365,7 @@ usr_pre_init();
 #!#   $me             - the program name or script name with path stripped off
 #!#   %prot           - collected data per protocol (from Net::SSLinfo)
 #!#   %prot_txt       - labes for %prot
-#!#   @results        - where we store the results as:  [SSL, cipher, "yes|no"]
+#!#   @cipher_results - where we store the results as:  [SSL, cipher, "yes|no"]
 #!#   %data           - labels and correspondig value (from Net::SSLinfo)
 #!#   %checks         - collected and checked certificate data
 #!#                     collected and checked target (connection) data
@@ -401,7 +408,7 @@ my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
 
-our @results= ();   # list of checked ciphers: [PROT, ciper suite name, yes|no]
+our @cipher_results = ();   # list of checked ciphers: [PROT, ciper suite name, yes|no]
 
 our %data0  = ();   # same as %data but has 'val' only, no 'txt'
                     # contains values from first connection only
@@ -1653,9 +1660,8 @@ sub _check_modules()    {
     }
     foreach my $mod (keys %expected_versions) {
         next if (($cfg{'need_netdns'} == 0) and ($mod eq "Net::DNS"));# don't complain if not used
-        ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
-        no strict 'refs';   # avoid: Can't use string ("Net::DNS::VERSION") as a SCALAR ref while "strict refs" in use
-        ## use critic
+        no strict 'refs'; ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
+            # avoid: Can't use string ("Net::DNS::VERSION") as a SCALAR ref while "strict refs" in use
         my $expect = $expected_versions{$mod};
         my $v  = $mod . "::VERSION";
         my $ok = "yes";
@@ -2310,7 +2316,7 @@ sub _isbleed($$)        {
     # all following code stolen from Steffen Ullrich (08. April 2014):
     #   https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
     # code slightly adapted to our own variables: $host, $port, $cfg{'timeout'}
-    # also die() replaced by warn()
+    # also die() replaced by _warn()
 
     # client hello with heartbeat extension
     # taken from http://s3.jspenguin.org/ssltest.py
@@ -2953,7 +2959,7 @@ sub checkcipher($$) {
 
 sub checkciphers($$) {
     #? test target if given ciphers are accepted, results stored in global %checks
-    # checks are done with information from @results
+    # checks are done with information from @cipher_results
     my ($host, $port) = @_;     # not yet used
 
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
@@ -2965,7 +2971,7 @@ sub checkciphers($$) {
     my $cipher  = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    foreach my $c (@results) {  # check all accepted ciphers
+    foreach my $c (@cipher_results) {   # check all accepted ciphers
         # each $c looks like:  TLSv12  ECDHE-RSA-AES128-GCM-SHA256  yes
         my $yn  = ${$c}[2];
         $cipher = ${$c}[1];
@@ -3711,8 +3717,8 @@ sub checkdv($$) {
     }
 
     # CN= in subject or subjectAltname,  $1 is matched FQDN
-    if (($subject !~ m#/$cfg{'regex'}->{$oid}=([^/\n]*)#)
-    and ($altname !~ m#/$cfg{'regex'}->{$oid}=([^\s\n]*)#)) {
+    if (($subject !~ m#/$cfg{'regex'}->{$oid}=(?:[^/\n]*)#)
+    and ($altname !~ m#/$cfg{'regex'}->{$oid}=(?:[^\s\n]*)#)) {
         $checks{'dv'}->{val} .= _get_text('missing', $data_oid{$oid}->{txt});
         return; # .. as ..
     }
@@ -4186,7 +4192,7 @@ sub scoring($$) {
         next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); # FIXME: not yet scored
         next if ($key =~ m/^TLSv1[123]/); # FIXME:
         $value = $checks{$key}->{val};
-        # TODO: go through @results
+        # TODO: go through @cipher_results
 # TODO   foreach my $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
 # TODO       # keys in %prot look like 'SSLv2->LOW', 'TLSv11->HIGH', etc.
 # TODO       $key = $ssl . '-' . $sec;
@@ -4556,9 +4562,8 @@ sub _is_print($$$) {
     return 0;
 } # _is_print
 
-## no critic qw(Subroutines::RequireArgUnpacking)
 #  NOTE: perlcritic's violation for next 2 subs are false positives
-sub _print_results($$$$$@) {
+sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all ciphers from @results if match $ssl and $yesno; returns number of checked ciphers for $ssl
     my $legacy  = shift;
     my $ssl     = shift;
@@ -4579,7 +4584,7 @@ sub _print_results($$$$$@) {
     return $total;
 } # _print_results
 
-sub printciphercheck($$$$$@)    {
+sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all cipher check results according given legacy format
     my $legacy  = shift;
     my $ssl     = shift;
@@ -4612,7 +4617,6 @@ sub printciphercheck($$$$$@)    {
     printfooter($legacy);
     return;
 } # printciphercheck
-## use critic
 
 sub printciphers_dh($$$) {
     #? print ciphers and DH parameter from target
@@ -4813,7 +4817,7 @@ sub printversionmismatch() {
 } # printversionmismatch
 
 ## no critic qw(Subroutines::ProhibitExcessComplexity)
-#  NOTE: yes, it is high complecity, but that's the nature of printing all information
+#  NOTE: yes, it is high complexity, but that's the nature of printing all information
 sub printversion() {
     #? print program and module versions
     local $\ = "\n";
@@ -4915,10 +4919,8 @@ sub printversion() {
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
     foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Net::DNS Net::SSLeay Net::SSLinfo Net::SSLhello Ciphers osaft)) {
-        ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
-        #  NOTE: we need "no strict" here!
-        no strict 'refs';   # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
-        ## use critic
+        no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
+            # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
         # we expect ::VERSION in all these modules
         ($d = $m) =~ s#::#/#g;  $d .= '.pm';# convert string to key for %INC
         $v  = $m . "::VERSION";             # compute module's VERSION variable
@@ -4932,8 +4934,8 @@ sub printversion() {
             $d = $INC{$m}; $d =~ s#$m$##; $p{$d} = 1;
         }
         print "\n= Loaded Module Versions =";
-        ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-        no strict 'refs';   # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
+        no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
+            # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
         foreach my $m (sort keys %main:: ) {
             next if $m !~ /::/;
             $d = "?";       # beat the "Use of uninitialized value" dragon
@@ -5107,7 +5109,6 @@ sub printciphers() {
 
     return;
 } # printciphers
-## use critic
 
 sub printopenssl() {
     #? print openssl version
@@ -5366,7 +5367,8 @@ while ($#argv >= 0) {
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # if it was --help=*
         }
-        require q{o-saft-man.pm};   # include if necessary only; dies if missing
+        require q{o-saft-man.pm};   ## no critic qw(Modules::RequireBarewordIncludes)
+            # include if necessary only; dies if missing
         printhelp($arg);
         exit 0;
     }
@@ -5704,8 +5706,6 @@ while ($#argv >= 0) {
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
-        ## no critic qw(ValuesAndExpressions::ProhibitImplicitNewlines)
-        #  NOTE: false positive from perlcritic, as the strings is passed to exec()
         print "# $cfg{'mename'}  list of internal functions:\n";
         my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
           ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
@@ -6363,12 +6363,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             my $range = $cfg{'cipherrange'};            # use specified range of constants
                $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
             my @accepted = ();                          # accepted ciphers
-            ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
-            #  NOTE: this eval must not use the block form because the value needs to be evaluated
-            foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) {
+            #  NOTE: following eval must not use the block form because the
+            #        value needs to be evaluated
+            foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) {            ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
                 push(@all, sprintf("0x%08X",$c));
             }
-            ## use critic
             printtitle($legacy, $ssl, $host, $port);
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
@@ -6473,7 +6472,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("  need_cipher ..");
         _y_CMD("  use socket ..")  if (0 == $cmd{'extciphers'});
         _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
-        @results = ();          # new list for every host
+        @cipher_results = ();   # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
 #dbx# print "# C", @{$cfg{'ciphers'}};
 # FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
@@ -6484,7 +6483,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         foreach my $ssl (@{$cfg{'version'}}) {
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-                push(@results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
+                push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
                 $checks{'cnt_totals'}->{val}++;
             }
         }
@@ -6505,7 +6504,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
                 printtitle($legacy, $ssl, $host, $port);
             }
-            printciphercheck($legacy, $ssl, $host, $port, ($legacy eq "sslscan")?($_printtitle):0, @results);
+            printciphercheck($legacy, $ssl, $host, $port,
+                ($legacy eq "sslscan")?($_printtitle):0, @cipher_results);
         }
         if ($legacy eq 'sslscan') {
             my $ssl = ${$cfg{'version'}}[4];
@@ -6518,7 +6518,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         if ($_printtitle > 0) { # if we checked for ciphers
           if ($legacy =~ /(full|compact|simple|quick)/) {   # but only our formats
             printheader("\n" . _get_text('out-summary', ""), "");
-            print_check($legacy, $host, $port, 'cnt_totals', scalar @results) if ($cfg{'verbose'} > 0);
+            print_check($legacy, $host, $port, 'cnt_totals', scalar @cipher_results) if ($cfg{'verbose'} > 0);
             printprotocols($legacy, $host, $port);
             printruler() if ($quick == 0);
           }
