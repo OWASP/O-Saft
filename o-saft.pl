@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.538 16/09/27 22:42:11",
+    SID         => "@(#) yeast.pl 1.539 16/09/29 20:52:08",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3722,7 +3722,8 @@ sub checkdv($$) {
         $checks{'dv'}->{val} .= _get_text('missing', $data_oid{$oid}->{txt});
         return; # .. as ..
     }
-    $txt = $1;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    ($txt = $subject) =~ s#/.*?$cfg{'regex'}->{$oid}=##;
+    $txt = "" if not defined $txt;  # defensive programming: ..
 
 # TODO: %data_oid not yet used
     $data_oid{$oid}->{val} = $txt if ($txt !~ m/^\s*$/);
