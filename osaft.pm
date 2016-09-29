@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.60 16/09/26 23:16:38',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.61 16/09/29 21:05:05',
 
 };
 
@@ -1447,6 +1447,8 @@ our %cfg = (
         'doublewild'    => '(?:[a-z0-9.-]+\*[a-z0-9-]+\*)', # x*x or x*.x*
         'invalidwild'   => '(?:\.\*\.)',            # no .*.
         'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
+        'isSPDY3'       => '(?:spdy\/3)',           # match in protocols
+                       # TODO: lazy match as it matches spdy/3.1 also
 
         # RegEx containing pattern to identify vulnerable ciphers
             #
