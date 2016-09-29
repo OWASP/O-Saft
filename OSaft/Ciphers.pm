@@ -49,7 +49,7 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.9 16/09/27 01:03:23';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.10 16/09/29 18:44:24';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -658,15 +658,10 @@ sub print_rfc   {
 
 # internal methods
 
-sub _ciphers_init {
-    #? additional initializations for data structures
+our @_keys;
 
-    # scan options, must be ckecked her also because this function will be
-    # called before _main()
-    foreach (@ARGV) {
-        $VERBOSE++      if ($_ =~ /^--v$/);
-    }
-    my @keys;   # for checking duplicates
+sub _ciphers_init_iana {
+    my @keys;
 
     vprint "initialize from IANA tls-parameters.txt ...";
     foreach my $key (keys %OSaft::Ciphers::_ciphers_iana) {
@@ -688,15 +683,17 @@ sub _ciphers_init {
     }
     vprint "  keys:    " . ($#keys + 1);
     vprint "  ciphers: " . scalar(keys %ciphers);
+    return @keys;
+}; # _ciphers_init_iana
 
+sub _ciphers_init_osaft {
     vprint "initialize from OSaft settings ...";
     foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_osaft}) { ## no critic qw(Subroutines::ProtectPrivateSubs)
-print "K $key";
-        if (grep{/^$key$/} @keys) {
+        if (grep{/^$key$/} @_keys) {
             v2print("  found O-Saft key: »$key«");
         } else {
             v2print("  new   O-Saft key: »$key«");
-            push(@keys, $key);
+            push(@_keys, $key);
         }
         $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_osaft{$key}[0] || '';
         $ciphers{$key}->{'kx'}  = $OSaft::Ciphers::_ciphers_osaft{$key}[1] || '';
@@ -714,16 +711,18 @@ print "K $key";
     undef %OSaft::Ciphers::_ciphers_const;
     undef %OSaft::Ciphers::_ciphers_names;
     undef %OSaft::Ciphers::_ciphers_osaft;
-    #vprint "  keys:    " . ($#keys + 1);
+    #vprint "  keys:    " . ($#_keys + 1);
     vprint "  ciphers: " . scalar(keys %ciphers);
+    return;
+}; # _ciphers_init_osaft
 
+sub _ciphers_init_openssl {
     vprint "initialize data from »openssl ciphers -V« ...";
-    undef @keys;
     foreach my $key (keys %OSaft::Ciphers::_ciphers_openssl_all) {
-        if (grep{/^$key$/} @keys) {
+        if (grep{/^$key$/} @_keys) {
             _warn(" duplicate openssl key: »$key«");
         } else {
-            push(@keys, $key);
+            push(@_keys, $key);
         }
         #print $key;
         $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[0];
@@ -737,6 +736,26 @@ print "K $key";
         #$ciphers{$key}->{'sec'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[7];
     }
     vprint "  ciphers: " . scalar(keys %ciphers);
+    return;
+}; # _ciphers_init_openssl
+
+sub _ciphers_init_openssl_ {
+    return;
+}; # _ciphers_init_openssl_
+
+sub _ciphers_init {
+    #? additional initializations for data structures
+
+    # scan options, must be ckecked her also because this function will be
+    # called before _main()
+    foreach (@ARGV) {
+        $VERBOSE++      if ($_ =~ /^--v$/);
+    }
+
+    @_keys = _ciphers_init_iana();
+    _ciphers_init_osaft();
+    undef @_keys;
+    _ciphers_init_openssl();
 
     return;
 }; # _ciphers_init
