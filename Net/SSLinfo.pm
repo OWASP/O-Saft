@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.141 16/09/24 22:28:02',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.142 16/09/29 23:42:08',
 };
 
 ######################################################## public documentation #
@@ -499,7 +499,8 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
-$Net::SSLinfo::protocols   = 'h2,h2-15,h2-14,spdy/4a4,spdy/4a2,spdy/3.1,spdy/3,spdy/2,spdy/1,npn-spdy/2,h2c,h2c-14,http/2.0,http/1.1';
+$Net::SSLinfo::protocols   = 'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,h2-14,h2-15,http/2.0,h2';
+                                # NOTE: most weak protocol first, cause we check for vulnerabilities
                                 # next protocols not yet configurable
                                 # h2c*  - HTTP 2 Cleartext
                                 # protocols may have prefix `exp' which should not be checked by server
