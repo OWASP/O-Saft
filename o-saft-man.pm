@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.144 16/09/27 22:50:56";
+my  $man_SID= "@(#) o-saft-man.pm 1.145 16/09/29 22:06:37";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3388,7 +3388,12 @@ CHECKS
 
       CRIME
 
-        Connection is vulnerable if target supports SSL-level compression.
+        Connection is vulnerable if target supports SSL-level compression, or
+        supports SPDY/3 (because SPDY/3 uses compression).
+        See http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl 
+
+        Note: SPDY/3 is only possible if the client explicitely asks for this
+        alternate protocol (for example  "openssl ... -nextprotoneg spdy/3").
 
       DROWN
 
