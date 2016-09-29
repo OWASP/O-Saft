@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.539 16/09/29 20:52:08",
+    SID         => "@(#) yeast.pl 1.540 16/09/29 21:50:40",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2156,8 +2156,14 @@ sub _isbreach($){
     #      *  works against any cipher suite
     #      *  can be executed in under a minute
 } # _isbreach
-sub _iscrime($) { my $val=shift; return ($val =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $val . " "; }
-    # return compression if available, empty string otherwise
+sub _iscrime    {
+    # return compression or SPDY/3 if available, empty string otherwise
+    my ($val, $protocols) = @_;
+    my $ret  = ($val =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $val . " ";
+       $ret .= ($protocols =~ /$cfg{'regex'}->{'isSPDY3'}/) ? "SPDY/3 " : "";
+    #  http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
+    return $ret;
+} # _iscrime
 sub _islucky($) { my $val=shift; return ($val =~ /$cfg{'regex'}->{'Lucky13'}/) ? $val : ""; }
     # return given cipher if vulnerable to Lucky 13 attack, empty string otherwise
 sub _istime($)  { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
@@ -3574,7 +3580,9 @@ sub check7525($$) {
     #    the application protocol in question has been shown not to be open to
     #    such attacks.
 
-    $val .= _iscrime($data{'compression'}->{val}($host)); # misuse _iscrime() to check if TLS compression is enabled
+    if ($data{'compression'}->{val}($host) =~ /$cfg{'regex'}->{'nocompression'}/) {
+        $val .= $data{'compression'}->{val}($host);
+    }
 
     # 3.4.  TLS Session Resumption
     #    ... the resumption information MUST be authenticated and encrypted ..
@@ -4016,7 +4024,7 @@ sub checkdest($$) {
 
     # vulnerabilities
     check_dh($host,$port); # Logjam vulnerability
-    $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host));
+    $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host), $data{'protocols'}->{val}($host));
     foreach my $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
