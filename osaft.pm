@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.61 16/09/29 21:05:05',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.62 16/10/01 15:47:38',
 
 };
 
@@ -1290,7 +1290,7 @@ our %cfg = (
                          selected cipher fingerprint_hash fp_not_md5 
                          sha2signature pub_encryption pub_enc_known email serial
                          subject dates verify expansion compression hostname
-                         beast crime drown freak export rc4_cipher rc4 
+                         beast crime drown freak export cbc_cipher des_cipher rc4_cipher rc4 
                          pfs_cipher crl
                          hassslv2 hassslv3 poodle sloth sweet32
                          resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- rfc7525 hsts_sts
@@ -1326,7 +1326,7 @@ our %cfg = (
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'need-cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher-dh),
+                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher-dh),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
@@ -1338,7 +1338,7 @@ our %cfg = (
                         qw(sslv2  tlsv13  dtlsv09 dtlvs1 dtlsv11 dtlsv12 dtlsv13)
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall rc4_cipher rc4 selected ev+ ev-),
+                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected ev+ ev-),
                         qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
                        ],
     'need-checkchr' => [        # commands which always need checking various characters
