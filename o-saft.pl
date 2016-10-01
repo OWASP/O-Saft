@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.540 16/09/29 21:50:40",
+    SID         => "@(#) yeast.pl 1.541 16/10/01 15:51:22",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -676,6 +676,8 @@ my %check_dest = (  ## target (connection) data
     'adh'           => {'txt' => "Target does not accept ADH ciphers"},
     'null'          => {'txt' => "Target does not accept NULL ciphers"},
     'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
+    'cbc_cipher'    => {'txt' => "Target does not accept CBC ciphers"},
+    'des_cipher'    => {'txt' => "Target does not accept DES ciphers"},
     'rc4_cipher'    => {'txt' => "Target does not accept RC4 ciphers"},
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
@@ -810,6 +812,8 @@ our %shorttexts = (
     'edh'           => "EDH ciphers",
     'null'          => "No NULL ciphers",
     'export'        => "No EXPORT ciphers",
+    'cbc_cipher'    => "No CBC ciphers",
+    'des_cipher'    => "No DES ciphers",
     'rc4_cipher'    => "No RC4 ciphers",
     'sgc'           => "SGC supported",
     'cps'           => "CPS supported",
@@ -2935,6 +2939,8 @@ sub checkcipher($$) {
     $checks{'adh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
     $checks{'edh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
     $checks{'export'}->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
+    $checks{'cbc_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /CBC/);
+    $checks{'des_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /DES/);
     $checks{'rc4_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
