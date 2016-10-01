@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.146 16/10/01 16:18:34";
+my  $man_SID= "@(#) o-saft-man.pm 1.147 16/10/01 17:45:05";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4144,6 +4144,8 @@ CUSTOMIZATION
         When configuring own commands,  CMD  must not be  one of the commands
         listed with  --help=intern  and CMD  must constist only of digits and
         letters.
+
+        Examples in  '.o-saft.pl'  are  +preload  and  +ciphercheck .
 
 
 CIPHER NAMES
