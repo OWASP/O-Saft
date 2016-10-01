@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.145 16/09/29 22:06:37";
+my  $man_SID= "@(#) o-saft-man.pm 1.146 16/10/01 16:18:34";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1082,6 +1082,14 @@ sub man_commands() {
                   Commands to test ciphers provided by target
 +cipher           Check target for ciphers (using libssl)
 +cipherraw        Check target for all possible ciphers.
++null_cipher      Check if target accepts NULL ciphers.
++adh_cipher       Check if target accepts ciphers with anonymous key exchange.
++exp_cipher       Check if target accepts EXPORT ciphers.
++cbc_cipher       Check if target accepts CBC ciphers.
++des_cipher       Check if target accepts DES ciphers.
++rc4_cipher       Check if target accepts RC4 ciphers.
++edh_cipher       Check if target supports ephemeral ciphers.
++pfs_cipher       Check if target supports ciphers with PFS.
 
 EoHelp
 
@@ -2140,6 +2148,44 @@ COMMANDS
 
           * 'SSL'       can be any of:
                         sslv2, sslv3, tls1, tls11, tls12, tls13, dtls1
+
+      +null
+      +null_cipher
+
+          Check if target accepts NULL ciphers.
+
+      +adh
+      +adh_cipher
+
+          Check if target accepts ciphers with anonymous key exchange.
+
+      +export
+      +exp_cipher
+
+          Check if target accepts EXPORT ciphers.
+
+      +cbc
+      +cbc_cipher
+
+          Check if target accepts CBC ciphers.
+
+      +des
+      +des_cipher
+
+          Check if target accepts DES ciphers.
+
+      +rc4_cipher
+
+          Check if target accepts RC4 ciphers.
+
+      +edh
+      +edh_cipher
+
+          Check if target supports ephemeral ciphers.
+
+      +pfs_cipher
+
+          Check if target supports ciphers with PFS.
 
     Commands to test SSL connection to target
 
