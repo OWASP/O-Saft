@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.541 16/10/01 15:51:22",
+    SID         => "@(#) yeast.pl 1.542 16/10/01 17:00:00",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -664,7 +664,6 @@ my %check_dest = (  ## target (connection) data
     # collected and checked target (connection) data
     #------------------+-----------------------------------------------------
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
-    'edh'           => {'txt' => "Target supports EDH ciphers"},
     'hassslv2'      => {'txt' => "Target does not support SSLv2"},
     'hassslv3'      => {'txt' => "Target does not support SSLv3"},      # POODLE
     'hastls10'      => {'txt' => "Target supports TLSv1"},
@@ -673,12 +672,13 @@ my %check_dest = (  ## target (connection) data
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
     'hasalpn'       => {'txt' => "Target supports Application Layer Protocol Negotiation (ALPN)"},
     'npn'           => {'txt' => "Target supports Next Protocol Negotiation (NPN)"},
-    'adh'           => {'txt' => "Target does not accept ADH ciphers"},
-    'null'          => {'txt' => "Target does not accept NULL ciphers"},
-    'export'        => {'txt' => "Target does not accept EXPORT ciphers"},
+    'adh_cipher'    => {'txt' => "Target does not accept ADH ciphers"},
+    'null_cipher'   => {'txt' => "Target does not accept NULL ciphers"},
+    'exp_cipher'    => {'txt' => "Target does not accept EXPORT ciphers"},
     'cbc_cipher'    => {'txt' => "Target does not accept CBC ciphers"},
     'des_cipher'    => {'txt' => "Target does not accept DES ciphers"},
     'rc4_cipher'    => {'txt' => "Target does not accept RC4 ciphers"},
+    'edh_cipher'    => {'txt' => "Target supports EDH ciphers"},
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
     'order'         => {'txt' => "Target honors client's cipher order"},
@@ -808,13 +808,13 @@ our %shorttexts = (
     'hastls13'      => "TLSv1.3",
     'hasalpn'       => "Supports ALPN",
     'npn'           => "Supports NPN",
-    'adh'           => "No ADH ciphers",
-    'edh'           => "EDH ciphers",
-    'null'          => "No NULL ciphers",
-    'export'        => "No EXPORT ciphers",
+    'adh_cipher'    => "No ADH ciphers",
+    'null_cipher'   => "No NULL ciphers",
+    'exp_cipher'    => "No EXPORT ciphers",
     'cbc_cipher'    => "No CBC ciphers",
     'des_cipher'    => "No DES ciphers",
     'rc4_cipher'    => "No RC4 ciphers",
+    'edh_cipher'    => "EDH ciphers",
     'sgc'           => "SGC supported",
     'cps'           => "CPS supported",
     'crl'           => "CRL supported",
@@ -2935,13 +2935,13 @@ sub checkcipher($$) {
     # following checks add the "not compliant" or vulnerable ciphers
 
     # check weak ciphers
-    $checks{'null'}->{val}      .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
-    $checks{'adh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
-    $checks{'edh'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
-    $checks{'export'}->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
+    $checks{'null_cipher'}->{val} .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
+    $checks{'adh_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
+    $checks{'exp_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
     $checks{'cbc_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /CBC/);
     $checks{'des_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /DES/);
     $checks{'rc4_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+    $checks{'edh_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
@@ -3013,7 +3013,7 @@ sub checkciphers($$) {
         }
         $checks{'cnt_ciphers'}->{val}   += $prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
     }
-    $checks{'edh'}->{val} = "" if ($checks{'edh'}->{val} ne "");    # good if we have them
+    $checks{'edh_cipher'}->{val} = "" if ($checks{'edh_cipher'}->{val} ne "");  # good if we have them
 
     # 'sslversion' returns protocol as used in our data structure (like TLSv12)
     # 'session_protocol' retruns string used by openssl (like TLSv1.2)
@@ -5674,6 +5674,13 @@ while ($#argv >= 0) {
     if ($arg eq  '+prots')              { $arg = '+protocols';  } # alias:
     if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';      } # alias:
     if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';     } # alias:
+    if ($arg eq  '+adh')                { $arg = '+adh_cipher'; } # alias:
+    if ($arg eq  '+cbc')                { $arg = '+cbc_cipher'; } # alias:
+    if ($arg eq  '+des')                { $arg = '+des_cipher'; } # alias:
+    if ($arg eq  '+edh')                { $arg = '+edh_cipher'; } # alias:
+    if ($arg eq  '+exp')                { $arg = '+exp_cipher'; } # alias:
+    if ($arg eq  '+export')             { $arg = '+exp_cipher'; } # alias:
+    if ($arg eq  '+null')               { $arg = '+null_cipher'; } # alias:
     if ($arg eq  '+owner')              { $arg = '+subject';    } # alias:
     if ($arg eq  '+authority')          { $arg = '+issuer';     } # alias:
     if ($arg eq  '+expire')             { $arg = '+after';      } # alias:
