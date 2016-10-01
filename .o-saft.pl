@@ -117,6 +117,14 @@
 --cfg_cmd=preload=sts_maxage18 sts_subdom sts_preload hsts_is301 hsts_samehost hsts_httpequiv expired hsts_maxage hsts_subdom hsts_preload
 
 ###
+### define new command +ciphercheck
+###
+# +ciphers shows which ciphers are accepted/supported and shows the severity.
+# This command summarizes the other cipher checks.
+#
+--cfg_cmd=ciphercheck=selected order null_cipher adh_cipher exp_cipher cbc_cipher des_cipher rc4_cipher edh_cipher pfs_cipher pfs_cipherall cnt_ciphers cnt_totals
+
+###
 ### reconfigure list of check for special commands (+http +check ...)
 ###
 # The default behaviour to print the results is to loop over the list of hash
