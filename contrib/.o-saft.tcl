@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.9 16/09/19 19:57:57
+#?      @(#) .o-saft.tcl 1.10 16/10/04 09:47:21
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.9};  # initial SID, do not remove
+set cfg(RCSID)  {1.10};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -113,8 +113,8 @@ array set cfg_tipp "
     help_next   {Go forward to last position}
     helpsearch  {Search for text}
     cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tabs }
-    cmdcheck    {Execute $cfg(SAFT) +check}}
-    cmdcipher   {Execute $cfg(SAFT) +cipher}}
+    cmdcheck    {Execute $cfg(SAFT) +check}
+    cmdcipher   {Execute $cfg(SAFT) +cipher}
     DESC_other  {-- CONFIGURATION texts used for tool tips on other objects --}
     choosen     {Choosen value}
     hideline    {Hide complete line instead of pattern only}
