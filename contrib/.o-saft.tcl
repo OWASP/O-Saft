@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.10 16/10/04 09:47:21
+#?      @(#) .o-saft.tcl 1.11 16/10/04 10:18:42
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.10};  # initial SID, do not remove
+set cfg(RCSID)  {1.11};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -181,6 +181,26 @@ set myX(padx)   5;              # padding to right border
     # variable, a full path to o-saft.pl can be set here
 
 set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
+
+#--------------------------------------------------- viewer to show o-saft.pod
+    # o-saft.tcl uses built-in functionality to show its  documentation.  This
+    # documentation is available in POD format also: o-saft.pod.
+    # If this variable is set to the name of an external program, this program
+    # will be used to show the documentation.  It is recommended to use full a
+    # path to the program.
+    # Possible values, beside others, are:
+    #    O-Saft     - reserved for o-saft.tcl's built-in vierwer
+    #    tkpod      - Tcl/Tk-based viewer
+    #    podviewer  - GTK-based viewer
+    # Advantage of external viewers:
+    #    tkpod      + much better search capabilities
+    # Disadvantage of external viewers:
+    #    tkpod      - context-sensitive help used by o-saft.tcl not possible
+    #    podviewer  - context-sensitive help used by o-saft.tcl not possible
+    #    *          - all viewers must be started in background and will not be
+    #                 closed with o-saft.tcl itself
+
+set cfg(TKPOD)  {O-Saft};       # name of executable to view O-Saft's POD file
 
 #--------------------------------- list of buttons for "quick access commands"
     # for each O-Saft command in this list a button will be created in
