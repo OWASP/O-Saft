@@ -248,7 +248,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.112 Summer Edition 2016
+#?      @(#) 1.113 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -313,8 +313,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.112 16/09/25 08:50:51 Sommer Edition 2016}
-set cfg(VERSION) {1.112}
+set cfg(SID)    {@(#) o-saft.tcl 1.113 16/10/04 10:21:49 Sommer Edition 2016}
+set cfg(VERSION) {1.113}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -322,6 +322,8 @@ set cfg(ICH)    [file tail $argv0]
 set cfg(DIR)    [file dirname $argv0];  # directory of cfg(ICH)   
 set cfg(ME)     [info script];          # set very early, may be missing later
 set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
+set cfg(TKPOD)  {O-Saft};               # name of external viewer executable
+                                        # O-Saft means built-in
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -1370,9 +1372,31 @@ proc create_about {} {
     return
 }; # create_about
 
+proc create_pod   {sect} {
+    #? create new window with complete help using external viewer
+    # for advantages and disadvantages please see contrib/.o-saft.tcl
+    global cfg myX
+    # TODO: does probably not work on Windows
+    #tk_messageBox -icon warning -title " using $cfg(TKPOD)" \
+    #    -message "$cfg(TKPOD) will not be closed with $cfg(ICH)"
+    exec {*}$cfg(TKPOD) o-saft.pod -geo $myX(geoO) & ;
+    return
+}; # create_pod
+
 proc create_help  {sect} {
     #? create new window with complete help; store widget in cfg(winH)
     #? if  sect  is given, jump to this section
+
+    global cfg myX
+    putv "create_help(»$sect«)"
+
+    if {[info exists cfg(TKPOD)]==1} {
+        if {$cfg(TKPOD) ne "O-Saft"} {  # external viewer specified, use it ...
+            create_pod $sect ;
+            return;
+        }
+    }
+
     # uses plain text help text from "o-saft.pl --help"
     # This text is parsed for section header line (all capital characters)
     # which will be used as Table of Content and inserted before the text.
@@ -1409,8 +1433,6 @@ proc create_help  {sect} {
     #
     # TODO: some section lines are not detected properly and hence missing
 
-    global cfg myX
-    putv "create_help(»$sect«)"
     if {[winfo exists $cfg(winH)]} {    # if there is a window, just jump to text
         wm deiconify $cfg(winH)
         set name [str2obj [string trim $sect]]
@@ -2146,7 +2168,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.112"
+update_status "o-saft.tcl 1.113"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
