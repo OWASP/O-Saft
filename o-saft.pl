@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.543 16/10/01 20:15:33",
+    SID         => "@(#) yeast.pl 1.544 16/10/04 07:43:34",
     STR_VERSION => "16.09.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1484,7 +1484,6 @@ our %ciphers = (
         # from http://tools.ietf.org/html/rfc6209
         #!# 'head'                      => [qw(  sec  ssl   enc   bits   mac    auth  keyx    score tags)],
         #!#-----------------------------------+------+-----+------+-----+------+-----+--------+----+--------,
-        'RSA-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA     128 SHA256 RSA   RSA     11 :)],
         'RSA-ARIA128-SHA256'            => [qw(  -?- TLSv12 ARIA     128 SHA256 RSA   RSA     11 :)],
         'RSA-ARIA256-SHA384'            => [qw(  -?- TLSv12 ARIA     256 SHA384 RSA   RSA     11 :)],
         'DH_DSS-ARIA128-SHA256'         => [qw(  -?- TLSv12 ARIA     128 SHA256 DSS   DH      11 :)],
