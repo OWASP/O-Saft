@@ -52,13 +52,13 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.545 16/10/06 21:45:19",
-    STR_VERSION => "16.09.16",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.546 16/10/09 18:50:24",
+    STR_VERSION => "16.10.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
     my @txt = @_;
-    if ((grep{/(:?--trace.*time)/i} @ARGV) > 0) {
+    if ((grep{/(?:--trace.*time)/i} @ARGV) > 0) {
         printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @txt);
     }
     return;
@@ -67,7 +67,7 @@ sub _y_EXIT($) { # exit if parameter matches given argument in @ARGV
     my $txt =  shift;
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
-    if ((grep{/(:?([+]|--)$arg).*/i} @ARGV) > 0) {
+    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {
         printf STDERR ("#o-saft.pl  _y_EXIT $txt\n");
         exit 0;
     }
@@ -168,7 +168,7 @@ sub _warn   {
     #? print warning if wanted
     # don't print if ($warning <= 0);
     my @txt = @_;
-    return if ((grep{/(:?--no.?warn)/i} @ARGV) > 0);  # ugly hack 'cause we won't pass $warning
+    return if ((grep{/(?:--no.?warn)/i} @ARGV) > 0);  # ugly hack 'cause we won't pass $warning
     local $\ = "\n";
     print(STR_WARN, join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
@@ -180,7 +180,7 @@ sub _warn_and_exit      {
     #-command: name of command subject to this message
     my @txt = @_;
     local $\ = "\n";
-    if ((grep{/(:?--experimental)/i} @ARGV) > 0) {
+    if ((grep{/(?:--experimental)/i} @ARGV) > 0) {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @txt));
     } else {
@@ -193,12 +193,12 @@ sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
     my @txt = @_;
-    return if ((grep{/(:?--no.?hint)/i} @ARGV) > 0);
+    return if ((grep{/(?:--no.?hint)/i} @ARGV) > 0);
     local $\ = "\n"; print(STR_HINT, join(" ", @txt));
     return;
 }
 
-sub _print_read($$)     { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(:?--no.?header|--cgi)/i} @ARGV) <= 0); return; }
+sub _print_read($$)     { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(?:--no.?header|--cgi)/i} @ARGV) <= 0); return; }
     # print information what will be read
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
@@ -235,7 +235,7 @@ sub _load_file($$)      {
 _y_TIME("cfg{");
 _y_EXIT("exit=CONF0 - RC-FILE start");
 my @rc_argv = "";
-if ((grep{/(:?--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
+if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
         push(@{$dbx{file}}, $cfg{'RC-FILE'});
         _print_read(  "$cfg{'RC-FILE'}", "RC-FILE done");
