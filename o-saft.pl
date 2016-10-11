@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.548 16/10/11 23:39:22",
+    SID         => "@(#) yeast.pl 1.549 16/10/12 00:19:03",
     STR_VERSION => "16.10.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6718,7 +6718,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 usr_pre_exit();
 _yeast_exit();
 _y_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
-exit 0; # main
+
+if ($cfg{'exitcode'}==0) {
+    exit 0;
+} else {
+    exit $checks{'cnt_checks_no'}->{val};
+}
+exit 2; # main
 
 __END__
 __DATA__
