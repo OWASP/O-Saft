@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.147 16/10/01 17:45:05";
+my  $man_SID= "@(#) o-saft-man.pm 1.148 16/10/12 00:41:40";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2454,6 +2454,13 @@ OPTIONS
           Internal use for CGI mode only.
 
     Options for SSL tool
+
+      --exitcode
+
+          The exit status code will be greater 0, if any check returns  'no'.
+          In particular, the status code will be the number of 'no' checks.
+
+          Functionality implemented experimental, may change in future.
 
       --s_client
 
