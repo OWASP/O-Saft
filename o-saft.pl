@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.547 16/10/11 21:38:52",
+    SID         => "@(#) yeast.pl 1.548 16/10/11 23:39:22",
     STR_VERSION => "16.10.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -741,6 +741,8 @@ my %check_size = (  ## length and count data
     'cnt_chaindepth'=> {'txt' => "Certificate Chain Depth count"},  # == 1
     'cnt_ciphers'   => {'txt' => "Offered ciphers count"},          # <> 0
     'cnt_totals'    => {'txt' => "Total number of checked ciphers"},
+    'cnt_checks_no' => {'txt' => "Total number of check results 'no'"},
+    'cnt_checks_yes'=> {'txt' => "Total number of check results 'yes'"},
     #------------------+-----------------------------------------------------
 # TODO: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
@@ -936,6 +938,8 @@ our %shorttexts = (
     'cnt_chaindepth'=> "Count chain depth",
     'cnt_ciphers'   => "Count ciphers",
     'cnt_totals'    => "Checked ciphers",
+    'cnt_checks_no' => "Checks 'no'",
+    'cnt_checks_yes'=> "Checks 'yes'",
     #------------------+------------------------------------------------------
     # %data +command    short label text
     #------------------+------------------------------------------------------
@@ -1640,7 +1644,7 @@ our %text = (
     # code, which may be useful for documentation purpose  because such hints
     # often descibe missing features or functionality.
     'hints' => {
-        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746",
+        'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746 ",
     },
 
     'mnemonic'      => { # NOT YET USED
@@ -4816,6 +4820,7 @@ sub printdata($$$) {
 sub printchecks($$$) {
     #? print results stored in %checks
     my ($legacy, $host, $port) = @_;
+    my $value = "";
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
     _trace_cmd(' printchecks: %checks');
@@ -4835,11 +4840,15 @@ sub printchecks($$$) {
         if ($cfg{'experimental'} == 0) {
             next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
         }
+        $value = _setvalue($checks{$key}->{val});
         _y_CMD("(%checks) +" . $key);
         if ($key =~ /$cfg{'regex'}->{'cmd-sizes'}/) { # sizes are special
             print_size($legacy, $host, $port, $key) if ($cfg{'no_cert'} <= 0);
         } else {
-            print_check($legacy, $host, $port, $key, _setvalue($checks{$key}->{val}));
+            # increment counter only here, avoids counting the counter itself
+            $checks{'cnt_checks_yes'}->{val}++ if ($value eq "yes");
+            $checks{'cnt_checks_no'} ->{val}++ if ($value =~ /^no/);
+            print_check($legacy, $host, $port, $key, $value);
         }
     }
     return;
@@ -5624,8 +5633,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
+    if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
+    if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    }
     if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    } # allow case insensitive
-    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    }
+    if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    } # -"-
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    }
     if ($arg =~ /^--?tlsv?11$/i)        { $cfg{'TLSv11'}    = 1;    }
     if ($arg =~ /^--?tlsv?12$/i)        { $cfg{'TLSv12'}    = 1;    }
