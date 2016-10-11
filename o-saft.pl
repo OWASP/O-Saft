@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.546 16/10/09 18:50:24",
+    SID         => "@(#) yeast.pl 1.547 16/10/11 21:38:52",
     STR_VERSION => "16.10.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1690,6 +1690,13 @@ usr_pre_file();
 
 #| definitions: internal functions
 #| -------------------------------------
+sub _isnummber          {
+    # return 1 if given parameter is a number; return 0 otherwise
+    my $val = shift;
+    return 0 if not defined $val;
+    return 0 if $val eq '';
+    return ($val ^ $val) ? 0 : 1
+}
 sub _check_modules()    {
     # check for minimal version of a module; verbose out but for --v=2
     my %expected_versions = (
@@ -1709,8 +1716,17 @@ sub _check_modules()    {
     # Please see "perldoc version" about the logic and syntax.
     my $have_version = 1;
     eval {require version; } or $have_version = 0;
-    $have_version = 0 if ($version::VERSION < 0.77);
-        # veriosn module too old, use natural number compare
+        # $version::VERSION  may have one of 3 values now:
+        #   undef   - version module was not available or didn't define VERSION
+        #   string  - even "0.42" cannot be compared to integer, bad luck ...
+        #   integer - that's the usual and expected value
+    if (_isnummber($version::VERSION)==1) {
+        $have_version = 0 if ($version::VERSION < 0.77);
+            # veriosn module too old, use natural number compare
+    } else {
+        $have_version = 0;
+        $version::VERSION = ""; # defensive programming ..
+    }
     if ($have_version==0) {
         warn STR_WARN, "ancient perl has no 'version' module; version checks may not be accurate;";
     }
@@ -3794,7 +3810,7 @@ sub checkdv($$) {
         return; # .. as ..
     }
     ($txt = $subject) =~ s#/.*?$cfg{'regex'}->{$oid}=##;
-    $txt = "" if not defined $txt;  # defensive programming: ..
+    $txt = "" if not defined $txt;  # defensive programming ..
 
 # TODO: %data_oid not yet used
     $data_oid{$oid}->{val} = $txt if ($txt !~ m/^\s*$/);
@@ -4370,7 +4386,7 @@ sub print_line($$$$$$)  {
     #? print label and value separated by separator
     #? print hostname and key depending on --showhost and --trace-key option
     my ($legacy, $host, $port, $key, $text, $value) = @_;
-        $text   = STR_NOTXT if (! defined $text);   # defensive programming: ..
+        $text   = STR_NOTXT if (! defined $text);   # defensive programming ..
         $value  = STR_UNDEF if (! defined $value);  # .. missing variable declaration
     # general format of a line is:
     #       host:port:#[key]:label: \tvalue
@@ -4893,7 +4909,10 @@ sub printversionmismatch() {
 sub printversion() {
     #? print program and module versions
     local $\ = "\n";
-    print '# @INC = ' . join(" ", @INC) . "\n" if ($cfg{'verbose'} > 0);
+    if ($cfg{'verbose'} > 0) {
+        print "# perl $^V";
+        print '# @INC = ' . join(" ", @INC) . "\n";
+    }
     print "=== $0 $VERSION ===";
     print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
     print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
