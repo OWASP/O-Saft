@@ -1,5 +1,39 @@
 #!/usr/bin/perl
 
+### TODO: -nextprotoneg  funktioniert nur mit openssl, nicht mit socket
+### TODO: -nextprotoneg : openssl sollte für jedes Protokoll aufgeerufen werden,
+###        nicht alle zusammen (siehe Net::SSLinfo.pm)
+###       Hintergrund: encrypted.google.com nimmt das erste passende Protokoll
+###       liefert aber keine Liste wenn diese leer ist (siehe man openssl:
+###    -nextprotoneg protocols
+###        enable Next Protocol Negotiation TLS extension and provide a list
+###        of comma-separated protocol names that the client should advertise
+###        support for. The list should contain most wanted protocols first.
+###        Protocol names are printable ASCII strings, for example "http/1.1"
+###        or "spdy/3".  Empty list of protocols is treated specially and will
+###        cause the client to advertise support for the TLS extension but
+###        disconnect just after reciving ServerHello with a list of server
+###        supported protocols.
+###        )
+### TODO: -nextprotoneg  liefert:
+###        Next protocol: (1) spdy/3                                                      
+###  aber  Next protocol: (2) gibtsnicht
+### TODO: --proxy* auch bei openssl verwenden (ist z.Zt Bug)
+### TODO: +reneg; client-side renegotiation pruefen
+###.....   +scsv und +fallback fertig implementieren
+### TODO: +session_protocol richtig implementieren
+### TODO: check in printciphers_dh() implementieren
+### TODO: _isccs($$$) fertig implementieren
+### TODO: ext_authority_* filtern und dann in TR* prüfen
+### TODO: --sni  anschauen wenn 0
+### TODO: Option: mit installiertem und mit --openssl version testen (beides)
+### TODO: in sub _useopenssl() :
+###.....  --> Ändern:  s_client als Variable übergeben, damit dahinter
+###.....      mehr Optionen angegebn werden können: -starttls  -proxy*  usw.
+#-# TODO: Ausgabe während den checks, geht mit --v  ==> bei checkAll entsprechend einbauen
+#-# TODO: +rfc7525: get_dh_paramter() verwenden: geht nicht, da Cipher gebraucht
+#-#           wird und get_dh_paramter z.Zt. nur mit openssl geht
+
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
