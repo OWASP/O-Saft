@@ -248,7 +248,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.113 Summer Edition 2016
+#?      @(#) 1.115 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -313,8 +313,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.113 16/10/04 10:21:49 Sommer Edition 2016}
-set cfg(VERSION) {1.113}
+set cfg(SID)    {@(#) o-saft.tcl 1.115 16/10/29 22:07:32 Sommer Edition 2016}
+set cfg(VERSION) {1.115}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
@@ -324,6 +324,7 @@ set cfg(ME)     [info script];          # set very early, may be missing later
 set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
 set cfg(TKPOD)  {O-Saft};               # name of external viewer executable
                                         # O-Saft means built-in
+set cfg(HELP)   "";                     # O-Saft's complete help text
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -363,10 +364,6 @@ if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
 
 set cfg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
 set cfg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}}; # quick access options
-set cfg(hist)   "osaft-LNK-T";  # positions in help text
-set cfg(curr)   0;              # current position (index) in cfg(help)
-set cfg(last)   "";             # search position (index) in cfg(help)
-set cfg(see)    "";             # last search index in cfg(help)
 
 set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
 
@@ -665,6 +662,23 @@ set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(DEBUG)  0;  # set to 1 to print debugging messages
 set cfg(browser) "";            # external browser program, set below
 
+set cfg(hist)   "osaft-LNK-T";  # tag with search positions in help text
+set cfg(curr)   0;              # current position (index) in cfg(help)
+set cfg(last)   "";             # search position (index) in cfg(help)
+set cfg(see)    "";             # last search index in cfg(help)
+# tags used in help text cfg(HELP) aka (window) cfg(winH)
+    # osaft-SEARCH  y
+    # osaft-CURRENT tag assigned to currently highlighted search text
+    # osaft-LNK     tag assigned to all link texts
+    # osaft-LNK-T   tag assigned to all searched texts
+    # osaft-HEAD    tag assigned to all header texts (lines) 
+    # osaft-HEAD-*  individual tag for a header text
+    # osaft-TOC     tag assigned to all lines in table of content
+    # osaft-TOC-*   individual tag for a TOC line
+    # osaft-XXX
+    # osaft-XXX-*
+    # osaft-CODE    tag assigned to all code texts
+
 set cfg(AQUA)   "CONFIGURATION Aqua (Mac OS X)"
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
 set cfg(confirm) {-confirmoverwrite true};  # must be reset on Aqua
@@ -922,6 +936,7 @@ proc theme_init   {theme} {
 proc jumpto_mark  {w txt} {
     #? jump to mark in given text widget, remember mark
     global cfg
+    _dbx "($w,$txt)"
     catch { $w see [$w index $txt.first] } err
     if {$err eq ""} {
         # "see" sometimes places text to far on top, so we scroll up one line
@@ -941,6 +956,8 @@ proc jumpto_mark  {w txt} {
 
 proc jumpto_prev  {w} {
     global cfg
+    _dbx "($w)"
+    _dbx " curr: $cfg(curr)\thist: $cfg(hist)"
     if {[llength $cfg(hist)] > 0} {
         incr cfg(curr) -1
         jumpto_mark $w [lrange $cfg(hist) $cfg(curr) $cfg(curr)]
@@ -949,6 +966,8 @@ proc jumpto_prev  {w} {
 
 proc jumpto_next  {w} {
     global cfg
+    _dbx "($w)"
+    _dbx " curr: $cfg(curr)\thist: $cfg(hist)"
     if {[llength $cfg(hist)] > $cfg(curr)} {
         incr cfg(curr)
         jumpto_mark $w [lrange $cfg(hist) $cfg(curr) $cfg(curr)]
@@ -957,6 +976,7 @@ proc jumpto_next  {w} {
 
 proc search_highlight {w txt pos} {
     #? remove highlight at pos, search next pos and highlight
+    _dbx " ($w,»$txt«,$pos)"
     set anf  [$w search -regexp -nocase -count end "$txt" $pos]
     $w tag delete osaft-CURRENT $pos
     $w tag add    osaft-CURRENT $anf "$anf + $end c"
@@ -966,6 +986,7 @@ proc search_highlight {w txt pos} {
 proc search_next  {w txt} {
     #? jump to next search text in help window
     global cfg
+    _dbx " ($w,$txt)"
     _dbx " curr: $cfg(see)"
     $w tag config osaft-CURRENT -font TkFixedFont; # remove highlighting
     set next [lindex [$w tag nextrange osaft-SEARCH $cfg(see)] 1]
@@ -982,6 +1003,7 @@ proc search_next  {w txt} {
 proc search_help  {w txt} {
     #? search given text in help window
     global cfg
+    _dbx " ($w,»$txt«)"
     if {$txt eq $cfg(last)} { search_next $w $txt; return; }
     set cfg(last) $txt
     $w tag delete osaft-SEARCH;         # get all matches
@@ -1379,7 +1401,7 @@ proc create_pod   {sect} {
     # TODO: does probably not work on Windows
     #tk_messageBox -icon warning -title " using $cfg(TKPOD)" \
     #    -message "$cfg(TKPOD) will not be closed with $cfg(ICH)"
-    exec {*}$cfg(TKPOD) o-saft.pod -geo $myX(geoO) & ;
+    catch { exec {*}$cfg(TKPOD) o-saft.pod -geo $myX(geoO) & };
     return
 }; # create_pod
 
@@ -1922,7 +1944,7 @@ proc osaft_exec   {parent cmd} {
     # parent is a dummy here
     global cfg hosts tab
     update_cursor watch
-    update_status "$cmd"
+    update_status "#{ $cmd"
     set do  {};     # must be set to avoid tcl error
     set opt {};     # ..
     set targets {}; # ..
@@ -1948,27 +1970,45 @@ proc osaft_exec   {parent cmd} {
         lappend targets $h
     }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
-        set execme [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+        set execcmd [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # windows has no proper STDERR etc.
     } else {
-        set execme [list exec 2>@stdout {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+        set execcmd [list exec 2>@stdout {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # on some systems (i.e. Mac OS X) buffering of STDOUT and STDERR is not
         # synchronized, hence we redirect STDERR to STDOUT, which is OK herein,
         # because no other process can fetch STDERR or STDOUT.
         # probaly we also need:  chan configure stdout -buffering none
     }
-    update_status "$execme"
+    # sanatize $execcmd for printing in status line and results TAB
+    # Tcl uses {} to quote strings, which need to be '' for a shell
+    # finally we use $execcmd for execution and $exectxt for print
+    set exectxt $execcmd
+    set exectxt [regsub {^\s*exec\s*.*?stdout\s*} $exectxt {}]; # remove exec ..
+    set exectxt [regsub -all {[\}\{]} $exectxt {'}];            # replace {}
+    update_status "$exectxt"
     incr cfg(EXEC)
-    catch {
-       #set osaft [eval $execme]; # Tcl < 8.5
-        set osaft [{*}$execme];   # Tcl > 8.4
-    } exec_msg
-    set execme [regsub "^\s*exec\s*" $execme {}];   # pretty print command
-    set tab($cfg(EXEC)) "\n$execme\n\n$exec_msg\n"; # store result for later use
+    set result  ""
+    set status  0
+    if {[catch { {*}$execcmd } result errors]} {
+        # exited abnormaly, get status and sanatize result
+        # dict get $errors --errorcode   looks like:  CHILDSTATUS 9498 42
+        # dict get $errors --errorinfo   returns same as we have in $results
+        # because STDERR was redirected to STDOUT
+        # Tcl's exec added  "child process exited abnormally"  to the result
+        _dbx "error: [dict get $errors -errorcode]"
+        set status [lindex [dict get $errors -errorcode] 2]
+        set result [regsub {child process exited abnormally$} $result ""]
+        # more pedantic check:
+        #if {[lindex [dict get $errors -errorcode] 0] eq "CHILDSTATUS"} {
+        #    # do something ...
+        #}
+    #else: nothing to do, everything in $result
+    }
+    set tab($cfg(EXEC)) "\n$exectxt\n\n$result\n";   # store result for later use
     set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
     apply_filter $txt ;        # text placed in pane, now do some markup
     destroy $cfg(winF);        # workaround, see FIXME in create_filtertab
-    update_status "$do done."
+    update_status "#} $do done (status=$status).";   # status not yet used ...
     update_cursor {}
     return
 }; # osaft_exec
@@ -2147,7 +2187,7 @@ osaft_init;     # initialise options from .-osaft.pl (values shown in Options ta
 
 ## create status line
 pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
-pack [text      $w.fl.t -relief flat   -height 2 -background [get_color status] ] -fill x
+pack [text      $w.fl.t -relief flat   -height 3 -background [get_color status] ] -fill x
 set cfg(objS)   $w.fl.t
 $cfg(objS) config -state disabled
 
@@ -2168,7 +2208,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.113"
+update_status "o-saft.tcl 1.115"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
