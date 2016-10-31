@@ -212,6 +212,7 @@ exec wish "$0" ${1+"$@"}
 #.          cfg_colors()- global variable containing colours for widgets
 #.          cfg_texts() - global variable containing texts for widgets
 #.          cfg_tips()  - global variable containing texts for tooltips
+#.          search()    - global variable containing texts used for searching
 #.          myX()       - global variable for windows and window manager
 #.          tab()       - global variable containing results of executions
 #.
@@ -248,7 +249,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.115 Summer Edition 2016
+#?      @(#) 1.117 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -313,13 +314,13 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.115 16/10/29 22:07:32 Sommer Edition 2016}
-set cfg(VERSION) {1.115}
+set cfg(SID)    {@(#) o-saft.tcl 1.117 16/10/31 23:24:37 Sommer Edition 2016}
+set cfg(VERSION) {1.117}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.7;                    # expected minimal version of cfg(RC)
 set cfg(ICH)    [file tail $argv0]
-set cfg(DIR)    [file dirname $argv0];  # directory of cfg(ICH)   
+set cfg(DIR)    [file dirname $argv0];  # directory of cfg(ICH)
 set cfg(ME)     [info script];          # set very early, may be missing later
 set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
 set cfg(TKPOD)  {O-Saft};               # name of external viewer executable
@@ -436,9 +437,9 @@ array set cfg_buttons "
     {host_add}  {{+}        $my_bg  {+}         {Add new line for a host}}
     {host_del}  {{-}        $my_bg  {-}         {Remove this line for a host }}
     {help_home} {{^}        $my_bg  help_home   {Go to top of page}}
-    {help_prev} {{<}        $my_bg  help_prev   {Go back to previous position}}
-    {help_next} {{>}        $my_bg  help_next   {Go forward to next position }}
-    {helpsearch}  {{>>}     $my_bg  helpsearch  {Search for text}}
+    {help_prev} {{<}        $my_bg  help_prev   {Search baskward for text}}
+    {help_next} {{>}        $my_bg  help_next   {Search forward for text}}
+    {helpsearch}  {{??}     $my_bg  helpsearch  {Text to be searched}}
     {cmdstart}  {{Start}    yellow  cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tab}}
     {cmdcheck}  {{+check}   #ffd800 +check    {Execute $cfg(SAFT) +check   }}
     {cmdcipher} {{+cipher}  #ffd000 +cipher   {Execute $cfg(SAFT) +cipher  }}
@@ -632,20 +633,20 @@ if {[regexp {indows} $tcl_platform(os)]} {
 # Tcl's  {*}  evaluation for that.
 
 ## check if cfg(SAFT) exists in PATH, +VERSION just prints the version number
-catch { exec {*}$cfg(PERL) $cfg(SAFT) +VERSION } usage;                               
+catch { exec {*}$cfg(PERL) $cfg(SAFT) +VERSION } usage;
 if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} { # check other PATH
-    set osaft "$cfg(DIR)/$cfg(SAFT)";       # check in PATH of $argv0               
-    catch { exec {*}$cfg(PERL) $osaft +VERSION }  usage;                               
-    if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} {                             
+    set osaft "$cfg(DIR)/$cfg(SAFT)";       # check in PATH of $argv0
+    catch { exec {*}$cfg(PERL) $osaft +VERSION }  usage;
+    if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} {
         tk_messageBox -icon warning -title "$cfg(SAFT) not found" -message "
 most parts of the GUI are missing!
 
 !!Hint:
 check PATH environment variable."
 
-    } else {                                                                   
+    } else {
         set cfg(SAFT) $osaft;               # found
-    }                                                                          
+    }
 }
 
 set cfg(CONF)   {internal data storage}
@@ -660,30 +661,35 @@ set cfg(winF)   ""; # object name of Filter window
 set cfg(objS)   ""; # object name of status line
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(DEBUG)  0;  # set to 1 to print debugging messages
-set cfg(browser) "";            # external browser program, set below
-
-set cfg(hist)   "osaft-LNK-T";  # tag with search positions in help text
-set cfg(curr)   0;              # current position (index) in cfg(help)
-set cfg(last)   "";             # search position (index) in cfg(help)
-set cfg(see)    "";             # last search index in cfg(help)
-# tags used in help text cfg(HELP) aka (window) cfg(winH)
-    # osaft-SEARCH  y
-    # osaft-CURRENT tag assigned to currently highlighted search text
-    # osaft-LNK     tag assigned to all link texts
-    # osaft-LNK-T   tag assigned to all searched texts
-    # osaft-HEAD    tag assigned to all header texts (lines) 
-    # osaft-HEAD-*  individual tag for a header text
-    # osaft-TOC     tag assigned to all lines in table of content
-    # osaft-TOC-*   individual tag for a TOC line
-    # osaft-XXX
-    # osaft-XXX-*
-    # osaft-CODE    tag assigned to all code texts
+set cfg(browser) "";        # external browser program, set below
 
 set cfg(AQUA)   "CONFIGURATION Aqua (Mac OS X)"
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
 set cfg(confirm) {-confirmoverwrite true};  # must be reset on Aqua
 #      myX(rpad)    # used as right padding for widgets in the lower right
                     # corner where there is Aqua's resize icon
+
+set search(text)    "";     # current search text
+set search(list)    "";     # list of search texts (managed by spinbox)
+set search(curr)     0;     # current index in search(list)
+set search(last)    "";     # last search text (used to avoid duplicates)
+set search(see)     "";     # current position to see, tuple like: 23.32 23.37
+#   variable names and function names used/capable for searching can be
+#   found with following pattern:  search.text  search.list  etc.
+# tags used in help text cfg(HELP) aka (window) cfg(winH)
+    # osaft-search-pos  tag contaning matching text positions (tuple: start end)
+    # osaft-search-mark tag assigned to currently marked search text
+    # osaft-search-box  tag assigned to currently paragraph with search text
+    # osaft-LNK     tag assigned to all link texts in text
+    # osaft-TOC-*   individual tag for a linked line
+    # osaft-LNK-T   tag assigned to top of text
+    # osaft-HEAD    tag assigned to all header texts (lines)
+    # osaft-HEAD-*  individual tag for a header text
+    # osaft-TOC     tag assigned to all lines in table of content
+    # osaft-TOC-*   individual tag for a TOC line
+    # osaft-XXX
+    # osaft-XXX-*
+    # osaft-CODE    tag assigned to all code texts
 
 set hosts(0)    0;  # array containing host:port; index 0 contains counter
 set tab(0)      ""; # contains results of cfg(SAFT)
@@ -912,6 +918,7 @@ proc theme_set    {w theme} {
             $w config -height $h;       # always set image height
         }
     }
+    return
 }; # theme_set
 
 proc theme_init   {theme} {
@@ -919,110 +926,120 @@ proc theme_init   {theme} {
     global cfg_buttons
     _dbx "($theme)"
     # Search for all Tcl widgets (aka commands), then check if tail of command
-    # (part right of right-most .) exists as key in array cfg_buttons.
-    # Then use values defined in cfg_buttons to set attributes of the widget.
-    # First build a regex which matches all widget names of buttons
+    # (part right of right-most .) exists as key in array  cfg_buttons.  If it
+    # exits, then use values defined in  cfg_buttons  to set attributes of the
+    # widget. First build a regex which matches all widget names of buttons.
     set rex [join [array names cfg_buttons] "|"]
     set rex [join [list {\.(} $rex {)$}] ""]
-    _dbx ": regex $rex"
+    _dbx ": regex: $rex"
     foreach obj [info commands] {
         if {![regexp {^\.}  $obj]}  { continue }
         if {![regexp $rex   $obj]}  { continue }
         if { [regexp {^\.$} $obj]}  { continue }
         theme_set $obj $theme
     }
+    return
 }; # theme_init
 
-proc jumpto_mark  {w txt} {
-    #? jump to mark in given text widget, remember mark
-    global cfg
-    _dbx "($w,$txt)"
-    catch { $w see [$w index $txt.first] } err
+proc search_show  {w mark} {
+    #? jump to mark in given text widget
+    _dbx "($w,$mark)"
+    catch { $w see [$w index $mark.first] } err
     if {$err eq ""} {
         # "see" sometimes places text to far on top, so we scroll up one line
         $w yview scroll -1 units
-        if {$txt ne "" } {              # store mark in history
-            incr cfg(curr)
-            if {[llength $cfg(hist)]==$cfg(curr)} {
-                lappend cfg(hist) $txt
-            } else {
-                incr cfg(curr) -1
-            }
-        }
     } else {
         _dbx  " err: $err"
     }
-}; # jumpto_mark
+    return
+}; # search_show
 
-proc jumpto_prev  {w} {
-    global cfg
-    _dbx "($w)"
-    _dbx " curr: $cfg(curr)\thist: $cfg(hist)"
-    if {[llength $cfg(hist)] > 0} {
-        incr cfg(curr) -1
-        jumpto_mark $w [lrange $cfg(hist) $cfg(curr) $cfg(curr)]
+proc search_mark  {w see} {
+    #? remove previous highlight, highlight at position see
+    _dbx "($w,$see)"
+    set anf  [lindex $see 0]
+    set end  [lindex $see 1]
+    # $see contains tuple with start and end position of matched text, now
+    # find complete surounding paragraph, a paragraph is enclosed in  \n\n
+    set box_anf [$w search -backward -regexp {\n\s*\n} $anf]
+    set box_end [$w search -forward  -regexp {\n\s*\n} $end]
+    _dbx " box_anf: $box_anf\tanf: $anf\tend: $end\tbox_end: $box_end"
+    $w tag delete osaft-search-box  $anf
+    $w tag add    osaft-search-box "$box_anf + 2 c" "$box_end + 1 c"
+    $w tag config osaft-search-box  -relief raised -borderwidth 1 -background #efe
+    $w tag delete osaft-search-mark $anf
+    $w tag add    osaft-search-mark $anf $end
+    $w tag config osaft-search-mark -font osaftBold
+    return
+}; # search_mark
+
+proc search_next  {w direction} {
+    #? show next search text in help window
+    # direction: + to search forward, - to search backward
+    global search
+    _dbx "($w,$direction)"
+    _dbx " see: $search(see)"
+    # nextrange, prevrange return a tuple like:         23.32 23.37
+    # osaft-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
+    switch $direction {
+        {+} { set see [$w tag nextrange osaft-search-pos [lindex $search(see) 1]] }
+        {-} { set see [$w tag prevrange osaft-search-pos [lindex $search(see) 0]] }
     }
-}; # jumpto_prev
-
-proc jumpto_next  {w} {
-    global cfg
-    _dbx "($w)"
-    _dbx " curr: $cfg(curr)\thist: $cfg(hist)"
-    if {[llength $cfg(hist)] > $cfg(curr)} {
-        incr cfg(curr)
-        jumpto_mark $w [lrange $cfg(hist) $cfg(curr) $cfg(curr)]
+    if {$see eq ""} {
+        # reached end of range, or range contains only one, switch to beginning
+        set see [lrange [$w tag ranges osaft-search-pos] 0 1];  # get first two from list
+        if {$see eq ""} { return };
+        # FIXME: round robin for + but not for -
     }
-}; # jumpto_next
-
-proc search_highlight {w txt pos} {
-    #? remove highlight at pos, search next pos and highlight
-    _dbx " ($w,»$txt«,$pos)"
-    set anf  [$w search -regexp -nocase -count end "$txt" $pos]
-    $w tag delete osaft-CURRENT $pos
-    $w tag add    osaft-CURRENT $anf "$anf + $end c"
-    $w tag config osaft-CURRENT -font osaftBold
-}; # search_highlight
-
-proc search_next  {w txt} {
-    #? jump to next search text in help window
-    global cfg
-    _dbx " ($w,$txt)"
-    _dbx " curr: $cfg(see)"
-    $w tag config osaft-CURRENT -font TkFixedFont; # remove highlighting
-    set next [lindex [$w tag nextrange osaft-SEARCH $cfg(see)] 1]
-    if {$next eq ""} {                  # reached end of range, switch to beginning
-        set next [lindex [$w tag ranges osaft-SEARCH] 0]
-    }
-    if {$next eq ""} { return };        # may happen if nothing matched
-    $w see $next
-    search_highlight $w $txt $next
+    $w see [lindex $see 0];             # show at start of match
+    search_mark $w "$see"
     #$w yview scroll 1 units;           # somtimes necessary, but difficult to decide when
-    set cfg(see) $next
+    set search(see)  $see
+    return
 }; # search_next
 
-proc search_help  {w txt} {
+proc search_text  {w search_text} {
     #? search given text in help window
-    global cfg
-    _dbx " ($w,»$txt«)"
-    if {$txt eq $cfg(last)} { search_next $w $txt; return; }
-    set cfg(last) $txt
-    $w tag delete osaft-SEARCH;         # get all matches
-    set anf [$w search -all -regexp -nocase -count end "$txt" 1.0]
+    global search
+    _dbx "($w,»$search_text«)"
+    if {$search_text eq $search(last)} { search_next $w {+}; return; }
+    # new text to be searched, initialize ...
+    set search(last) $search_text
+    $w tag delete osaft-search-pos;     # tag which contains all matches
+    set anf [$w search -all -regexp -nocase -count end "$search_text" 1.0]
     if {$anf eq ""} { return };         # nothing matched
     set i 0
-    foreach a $anf {                    # tag matches
+    foreach a $anf {                    # tag matches; store in osaft-search-pos
         set e [lindex $end $i];
         incr i
-        $w tag add   osaft-SEARCH $a "$a + $e c"
-        _dbx " osaft-SEARCH tag:  $a - $a + $e c"
+        $w tag add   osaft-search-pos $a  "$a + $e c"
+        _dbx " osaft-search-pos tag:  $a … $a + $e c"
     }
-    set tags [$w tag ranges osaft-SEARCH]
-    _dbx " osaft-SEARCH tags: $tags"
-    set cfg(see)  [lindex $tags 0];     # remember current position
-    $w tag config osaft-SEARCH -background black -foreground white
-    search_highlight $w $txt $cfg(see)
-    $w see $cfg(see)
-}; # search_help
+    set tags [$w tag ranges osaft-search-pos]
+    _dbx " osaft-search-pos: $tags"
+    set search(see)  [lrange $tags 0 1];# remember current position
+    $w tag config osaft-search-pos -background #afa
+    search_mark $w $search(see)
+    $w see [lindex $search(see) 0]
+    _dbx " see: $search(see)\tlast: $search(last)"
+    return
+}; # search_text
+
+proc search_list  {direction} {
+    #? get next or previous search text from search list (history)
+    global search
+    _dbx "($direction)"
+    set  len [llength $search(list)]
+    switch $direction {
+        {up}   { incr search(curr) +1 }
+        {down} { incr search(curr) -1 }
+    }
+    if {$search(curr) < 0} { set search(curr) [expr $len - 1] }
+    if {$search(curr) > [expr $len - 1]} { set search(curr) 0 }
+    set search(text) [lindex $search(list) $search(curr)]
+    _dbx " curr: $search(curr) of $len, »$search(text)«"
+    return
+}; # search_list
 
 proc toggle_cfg   {w opt val} {
     #? use widget config command to change options value
@@ -1030,16 +1047,16 @@ proc toggle_cfg   {w opt val} {
     return 1
 }; # toggle_cfg
 
-proc toggle_txt   {txt tag val line} {
+proc toggle_txt   {w tag val line} {
     #? toggle visability of text tagged with name $tag
     # note that complete line is tagged with name $tag.l (see apply_filter)
     global cfg
-    _dbx " $txt tag config $tag -elide [expr ! $val]"
+    _dbx " $w tag config $tag -elide [expr ! $val]"
     #if {$line==0} {
-        #$txt tag config $tag   -elide [expr ! $val];  # "elide true" hides the text
+        #$w tag config $tag   -elide [expr ! $val]; # "elide true" hides the text
     #}
     if {[regexp {\-(Label|#.KEY)} $tag]} {
-        $txt tag config $tag   -elide [expr ! $val];  # hide just this pattern
+        $w tag config $tag   -elide [expr ! $val];  # hide just this pattern
         # FIXME: still buggy (see below)
         return;
     }
@@ -1047,7 +1064,8 @@ proc toggle_txt   {txt tag val line} {
     # characters (which is obviously for $tag and $tag.l), then unhiding the
     # tag causes the $tag no longer accessable. Reason yet unknown.
     # Hence we only support hiding the complete line yet.
-    $txt tag config $tag.l -elide [expr ! $val]
+    $w tag config $tag.l -elide [expr ! $val]
+    return
 }; # toggle_txt
 
 proc update_cursor {cursor} {
@@ -1076,8 +1094,8 @@ proc update_status {val} {
     update idletasks;       # enforce display update
 }
 
-proc apply_filter {txt} {
-    #? apply filters for markup in output, data is in text widget $txt
+proc apply_filter {w} {
+    #? apply filters for markup in output, data is in text widget $w
     # set tag for all texts matching pattern from each filter
     # also sets a tag for the complete line named with suffix .l
     global cfg
@@ -1097,27 +1115,28 @@ proc apply_filter {txt} {
         _dbx " $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"
         # anf contains start, end corresponding end position of match
         set key [str2obj [string trim $key]]
-        set anf [$txt search -all $mod -count end "$rex" 1.0]
+        set anf [$w search -all $mod -count end "$rex" 1.0]
         set i 0
         foreach a $anf {
             set e [lindex $end $i];
             incr i
             if {$key eq "NO" || $key eq "YES"} {incr e -1 }; # FIXME very dirty hack to beautify print
-            $txt tag add    osaft-$key.l "$a linestart" "$a lineend"
+            $w tag add    osaft-$key.l "$a linestart" "$a lineend"
             if {$len==0} {
-               $txt tag add osaft-$key    $a            "$a + 1 line - 1 char"
-              #$txt tag add osaft-$key    $a            "$a lineend"; # does not work
+               $w tag add osaft-$key    $a            "$a + 1 line - 1 char"
+              #$w tag add osaft-$key    $a            "$a lineend"; # does not work
             } else {
-               $txt tag add osaft-$key    $a            "$a + $e c"
+               $w tag add osaft-$key    $a            "$a + $e c"
             }
-            $txt tag  raise osaft-$key.l osaft-$key
+            $w tag  raise osaft-$key.l osaft-$key
         }
         _dbx " $key: $rex F $fg B $bg U $nr font $fn"
-        if {$fg ne ""}  { $txt tag config osaft-$key -foreground $fg }
-        if {$bg ne ""}  { $txt tag config osaft-$key -background $bg }
-        if {$nr ne "0"} { $txt tag config osaft-$key -underline  $nr }
-        if {$fn ne ""}  { $txt tag config osaft-$key -font       $fn }
+        if {$fg ne ""}  { $w tag config osaft-$key -foreground $fg }
+        if {$bg ne ""}  { $w tag config osaft-$key -background $bg }
+        if {$nr ne "0"} { $w tag config osaft-$key -underline  $nr }
+        if {$fn ne ""}  { $w tag config osaft-$key -font       $fn }
     }
+    return
 }; # apply_filter
 
 proc www_browser  {url} {
@@ -1202,7 +1221,7 @@ proc create_host  {parent} {
     } else {
         theme_set $this.host_del $cfg(bstyle)
     }
-    grid config  $this.eh -column 1 -sticky ew 
+    grid config  $this.eh -column 1 -sticky ew
     grid columnconfigure    $this 1 -weight 1
     set i [expr $hosts(0) - 1]
     set prev $parent.ft$i
@@ -1285,7 +1304,7 @@ proc create_filtertab   {parent cmd} {
              [entry   $this.s$k -textvariable f_fn($k)  -width 10] \
              [checkbutton $this.u$k -variable f_un($k)           ] \
 
-        grid config $this.k$k $this.r$k -sticky ew 
+        grid config $this.k$k $this.r$k -sticky ew
         grid config $this.f$k $this.b$k $this.s$k -sticky w
         create_tip  $this.k$k $f_cmt($k)
         create_tip  $this.r$k $f_cmt($k)
@@ -1390,7 +1409,7 @@ proc create_about {} {
         $txt tag add sektion  $a "$a + $e char"
         incr i
     }
-    $txt tag config sektion -font osaftBold 
+    $txt tag config sektion -font osaftBold
     return
 }; # create_about
 
@@ -1409,7 +1428,7 @@ proc create_help  {sect} {
     #? create new window with complete help; store widget in cfg(winH)
     #? if  sect  is given, jump to this section
 
-    global cfg myX
+    global cfg myX search
     putv "create_help(»$sect«)"
 
     if {[info exists cfg(TKPOD)]==1} {
@@ -1458,29 +1477,34 @@ proc create_help  {sect} {
     if {[winfo exists $cfg(winH)]} {    # if there is a window, just jump to text
         wm deiconify $cfg(winH)
         set name [str2obj [string trim $sect]]
-        jumpto_mark $cfg(winH).t "osaft-HEAD-$name"
+        search_show $cfg(winH).t "osaft-HEAD-$name"
         return
     }
     set this    [create_window {Help} $myX(geoO)]
     set help    [regsub -all {===.*?===} $cfg(HELP) {}];# remove informal messages
-    set txt     [create_text $this $help].t
+    set txt     [create_text $this $help].t;            # $txt is a widget here
     set toc     {}
 
     # add additional buttons
-    pack [button $this.f1.h -text [get_text help_home] -command "jumpto_mark $txt {osaft-LNK-T}"] \
-         [button $this.f1.b -text [get_text help_prev] -command "jumpto_prev $txt"] \
-         [button $this.f1.f -text [get_text help_next] -command "jumpto_next $txt"] \
-         [label  $this.f1.l -text " | " ] \
-         [entry  $this.f1.e -textvariable cfg(search) ] \
-         [button $this.f1.s -text [get_text helpsearch] -command "search_help $txt \$cfg(search)"] \
+    pack [button $this.f1.h -text [get_text help_home] -command "search_show $txt {osaft-LNK-T}"] \
+        [spinbox $this.f1.s -textvariable search(text) -command "search_list %d" -values $search(list) -wrap 1] \
+         [label  $this.f1.l -text "  " ] \
+         [button $this.f1.p -text [get_text help_prev] -command "search_next $txt {-}"] \
+         [button $this.f1.n -text [get_text help_next] -command "search_next $txt {+}"] \
         -side left
     pack config  $this.f1.h $this.f1.l -padx $myX(rpad)
     create_tip   $this.f1.h [get_tipp help_home]
-    create_tip   $this.f1.b [get_tipp help_prev]
-    create_tip   $this.f1.f [get_tipp help_next]
-    create_tip   $this.f1.e [get_tipp helpsearch]
+    create_tip   $this.f1.n [get_tipp help_next]
+    create_tip   $this.f1.p [get_tipp help_prev]
     create_tip   $this.f1.s [get_tipp helpsearch]
-         bind    $this.f1.e <Return> "search_help $txt \$cfg(search)"
+    bind         $this.f1.s <Return> "
+           global search
+           if {\$search(last) != \$search(text)} {
+               lappend search(list) \$search(text);
+               incr    search(curr)
+           };
+           search_text $txt \$search(text);
+           "
 
     # 1. search for section head lines, mark them and add (prefix) to text
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? ()=,:.-]+$} 1.0]
@@ -1491,21 +1515,24 @@ proc create_help  {sect} {
         set l [string length $t]
         incr i
         _dbx " 1. HEAD: $i\t$t"
-        if {[notTOC $t]} { continue; };                 # skip some special strings
-        if {[string trim $t] eq ""} { continue };       # skip empty entries
+        if {[notTOC $t]} { continue; };             # skip some special strings
+        if {[string trim $t] eq ""} { continue };   # skip empty entries
         if {[regexp {^[A-Z][A-Z_? -]+$} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
-        set toc "$toc\n  $t";                           # prefix headline with spaces in TOC
+        set toc "$toc\n  $t";                       # prefix headline with spaces in TOC
         set name [str2obj [string trim $t]]
         $txt tag add  osaft-HEAD       $a "$a + $e c"
         $txt tag add  osaft-HEAD-$name $a "$a + $e c"
     }
     $txt config -state normal
     $txt insert 1.0 "\nCONTENT\n$toc\n"
-    $txt tag     add  osaft-LNK    2.0 2.7;             # add markup
-    $txt tag     add  osaft-LNK-T  2.0 2.7;             #
+    $txt tag     add  osaft-LNK    2.0 2.7;         # add markup
+    $txt tag     add  osaft-LNK-T  2.0 2.7;         #
     $txt config -state disabled
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
-    if {$nam eq ""} { return; };        # no text available; avoid Tcl errors
+    if {$nam eq ""} {
+        _dbx " no text available";                  # avoid Tcl errors
+        return;
+    };
 
     # 2. search for all references to section head lines in TOC and add click event
     # NOTE: used regex must be similar to the one used in 1. above !!
@@ -1515,13 +1542,13 @@ proc create_help  {sect} {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
         _dbx " 2. TOC: $i\t$t"
-        if {[notTOC $t]} { continue; };                 # skip some special strings
+        if {[notTOC $t]} { continue; };             # skip some special strings
         incr i
         set name [str2obj [string trim $t]]
         set b [$txt search -regexp {[A-Z]+} $a]
-        $txt tag add  osaft-TOC    $b "$b + $e c"; # - 1 c";# do not markup leading spaces
-        $txt tag add  osaft-TOC-$i $a "$a + $e c";      # but complete line is clickable
-        $txt tag bind osaft-TOC-$i <ButtonPress> "jumpto_mark $txt {osaft-HEAD-$name}"
+        $txt tag add  osaft-TOC    $b "$b + $e c";  # - 1 c";# do not markup leading spaces
+        $txt tag add  osaft-TOC-$i $a "$a + $e c";  # but complete line is clickable
+        $txt tag bind osaft-TOC-$i <ButtonPress> "search_show $txt {osaft-HEAD-$name}"
     }
 
 #    # 2a. search for all references to section head in text
@@ -1532,11 +1559,11 @@ proc create_help  {sect} {
 #        set e [lindex $end $i];
 #        set t [$txt get $a "$a + $e c"];
 #        incr i
-#        if {[regexp {^[A-Z_ -]+$} $t]} { continue };   # skip headlines itself
+#        if {[regexp {^[A-Z_ -]+$} $t]} { continue };# skip headlines itself
 #        if {[regexp {HIGH|MDIUM|LOW|WEAK|SSL|DHE} $t]} { continue };  # skip false matches
 #        if {[notTOC $t]} { continue; }; # skip some special strings
 #        $txt tag add    osaft-XXX $a "$a + $e c"
-#        $txt tag bind   osaft-XXX-$i <ButtonPress> "jumpto_mark $txt {osaft-LNK-$name}"
+#        $txt tag bind   osaft-XXX-$i <ButtonPress> "search_show $txt {osaft-LNK-$name}"
 #        $txt tag config osaft-XXX    -foreground [get_color link]
 #    }
 
@@ -1574,7 +1601,7 @@ proc create_help  {sect} {
         } else {
             # these matches are assumed references
             $txt tag add    osaft-LNK-$i $a "$a + $e c - 1 c"; # do not markup spaces
-            $txt tag bind   osaft-LNK-$i <ButtonPress> "jumpto_mark $txt {osaft-LNK-$name}"
+            $txt tag bind   osaft-LNK-$i <ButtonPress> "search_show $txt {osaft-LNK-$name}"
             $txt tag config osaft-LNK-$i -foreground [get_color link]
             $txt tag config osaft-LNK-$i -font osaftSlant
         }
@@ -1614,12 +1641,17 @@ proc create_help  {sect} {
     $txt tag config   osaft-CODE -background [get_color code]
 
     _dbx " MARK: [$txt mark names]"
-    #_dbx " TAGS: [$txt tag names]"
+    if {$cfg(DEBUG) > 1} {
+        #_dbx " TAGS: [$txt tag names]"; # huge output!!
+        foreach tag [list osaft-TOC osaft-HEAD osaft-CODE osaft-LNK osaft-LNK-T osaft-search-pos] {
+            _dbx " $tag:\t[$txt tag ranges $tag]"
+        }
+    }
 
     set cfg(winH) $this
     if {$sect ne ""} {
         set name [str2obj [string trim $sect]]
-        jumpto_mark $cfg(winH).t "osaft-HEAD-$name"
+        search_show $cfg(winH).t "osaft-HEAD-$name"
     }
     return
 }; # create_help
@@ -1629,7 +1661,7 @@ proc create_note  {parent title} {
     set name [str2obj $title]
     set this $parent.$name
     set alt  0
-    if {[regexp {^\(} $title]} { set alt 1; }; # don't use (, but next charcter
+    if {[regexp {^\(} $title]} { set alt 1; };  # don't use (, but next charcter
     frame       $this
     $parent add $this  -text $title -underline $alt
     return $this
@@ -2024,7 +2056,7 @@ foreach arg $argv {
         {+VERSION}  { puts $cfg(VERSION); exit; }
         {--version} { puts $cfg(SID);     exit; }
         {--dbx} -
-        {--d}   { set cfg(DEBUG) 1; }
+        {--d}   { incr cfg(DEBUG);  }
         {--v}   { set cfg(VERB)  1; }
         {--img*} { set cfg(bstyle) "image"; set optimg 1; }
         {--text} { set cfg(bstyle) "text";  }
@@ -2078,18 +2110,18 @@ foreach b " $__native \
 
 ### [tk windowingsystem]  eq "win32"
 # { geht nicht (mit ActiveTcl)
-## package require twapi_com                                                   
-## set ie [twapi::comobj InternetExplorer.Application]                         
-## puts "IE $ie"                                                               
-## $ie Visible true                                                            
-## set ie [twapi::comobj Firefox.Application]                                  
-## puts "IE $ie"                                                               
-## $ie Visible true                                                            
+## package require twapi_com
+## set ie [twapi::comobj InternetExplorer.Application]
+## puts "IE $ie"
+## $ie Visible true
+## set ie [twapi::comobj Firefox.Application]
+## puts "IE $ie"
+## $ie Visible true
 #}
 # { geht (mit ActiveTcl)
 # folgendes funktioniert, aber IE läuft im Vordergrund, d.h. Rest fehlt
-## package require dde                                                            
-## dde execute iexplore WWW_OpenURL http://www.tcl.tk/ 
+## package require dde
+## dde execute iexplore WWW_OpenURL http://www.tcl.tk/
 #}
 
 ## read $cfg(RC) if any
@@ -2208,7 +2240,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.115"
+update_status "o-saft.tcl 1.117"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
