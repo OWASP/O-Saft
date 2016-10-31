@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.11 16/10/04 10:18:42
+#?      @(#) .o-saft.tcl 1.12 16/11/01 00:52:23
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.11};  # initial SID, do not remove
+set cfg(RCSID)  {1.12};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -109,9 +109,9 @@ array set cfg_tipp "
     tkcolor     {Open window to choose a color}
     tkfont      {Open window to choose a font}
     help_home   {Go to top of page}
-    help_prev   {Go back to previous position}
-    help_next   {Go forward to last position}
-    helpsearch  {Search for text}
+    help_prev   {Search baskward for text}
+    help_next   {Search forward for text}
+    helpsearch  {Text to be searched}
     cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tabs }
     cmdcheck    {Execute $cfg(SAFT) +check}
     cmdcipher   {Execute $cfg(SAFT) +cipher}
