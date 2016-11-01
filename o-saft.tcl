@@ -86,6 +86,14 @@ exec wish "$0" ${1+"$@"}
 #?      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
 #?      (which is most likely the <left click>).
 #?
+#?   Help / Search
+#?      The help [?] button opens a new window with the complete documentation
+#?      of O-Saft (in particular the result of: o-saft.pl +help ).
+#?      The documentation contains clickable links (in blue) to other sections
+#?      in the text. Patterns may be specified to be searched for in the text.
+#?      Search can be done forward and backward to the current positions,  see
+#?      the  [<]  and  [>]  buttons at bottom of the window.
+#?
 #? OPTIONS
 #?      --v     print verbose messages (for debugging)
 #?      --d     print more verbose messages (for debugging)
@@ -251,7 +259,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.118 Summer Edition 2016
+#?      @(#) 1.119 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -316,11 +324,11 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.118 16/11/01 00:54:38 Sommer Edition 2016}
-set cfg(VERSION) {1.118}
+set cfg(SID)    {@(#) o-saft.tcl 1.119 16/11/01 13:50:10 Sommer Edition 2016}
+set cfg(VERSION) {1.119}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
-set cfg(RCmin)  1.12;                   # expected minimal version of cfg(RC)
+set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
 set cfg(ICH)    [file tail $argv0]
 set cfg(DIR)    [file dirname $argv0];  # directory of cfg(ICH)
 set cfg(ME)     [info script];          # set very early, may be missing later
@@ -438,7 +446,7 @@ array set cfg_buttons "
     {tkfont}  {{Font Chooser}   $my_bg tkfont   {Open window to choose a font}}
     {host_add}  {{+}        $my_bg  {+}         {Add new line for a host}}
     {host_del}  {{-}        $my_bg  {-}         {Remove this line for a host }}
-    {help_home} {{^}        $my_bg  help_home   {Go to top of page}}
+    {help_home} {{^}        $my_bg  help_home   {Go to top of page (start next search from there)}}
     {help_prev} {{<}        $my_bg  help_prev   {Search baskward for text}}
     {help_next} {{>}        $my_bg  help_next   {Search forward for text}}
     {helpsearch}  {{??}     $my_bg  helpsearch  {Text to be searched}}
@@ -498,6 +506,7 @@ Select commands. All selected commands will be executed with the 'Start' button.
     tabOPT      {
 Select and configure options. All options are used for any command button.
 }
+    helpclick   {Click to show in Help window}
     tabFILTER   {
 Configure filter for text markup: r, e and # specify how the Regex should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
@@ -677,6 +686,7 @@ set search(list)    "";     # list of search texts (managed by spinbox)
 set search(curr)     0;     # current index in search(list)
 set search(last)    "";     # last search text (used to avoid duplicates)
 set search(see)     "";     # current position to see, tuple like: 23.32 23.37
+set search(more)     5;     # show addition overview window when more than this search results
 #   variable names and function names used/capable for searching text in HELP
 #   can be found with following patterns:  search.text  search.list  etc.
 # tags used in help text cfg(HELP) aka (window) cfg(winH)
@@ -897,6 +907,9 @@ proc notTOC       {str} {
     return 0
 }; # notTOC
 
+proc count_tuples {str} { return  [expr [expr [llength $str] +1] / 2]  };
+    #? return number of touples in given list
+
 proc theme_set    {w theme} {
     #? set attributes for specified object
     # last part of the Tcl-widgets is key for array cfg_buttons
@@ -944,6 +957,46 @@ proc theme_init   {theme} {
     return
 }; # theme_init
 
+proc search_results {w search_text} {
+    #? show overview of search results in new window
+    # $w is the widget with O-Saft's help text, all matched texts are already
+    # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
+    # start and end position (index)
+    global search
+    _dbx "($w,»$search_text«)"
+    set matches [$w tag ranges HELP-search-pos];# get all match positions
+    set cnt  [count_tuples $matches]
+    set this [create_window "Search Results for ($cnt): »$search_text«" "600x720"]
+    set txt  [create_text $this ""].t
+    destroy $this.f1.saveconfig;# we don't need a save button here
+    $txt config -state normal
+    #_dbx " HELP-search-pos ([llength $matches]): $matches"
+    set i 0
+    while {$i < [llength $matches]} {
+        # Note: $anf and $end are positions in the window of $W
+        #       $tag_anf and $tag_end are positions in this window
+        set anf [lindex $matches $i]; incr i;
+        set end [lindex $matches $i]; incr i;
+        # compute surounding lines and insert in new window
+        set box_anf [$w search -backward -regexp {\n\s*\n} $anf]
+        set box_end [$w search -forward  -regexp {\n\s*\n} $end]
+        set tag_anf [$txt index end]
+        $txt insert end [$w get  $box_anf $box_end]
+        set tag_end [$txt index end]
+        # build tag for extracted text
+        $txt tag add    TAG-$i  "$tag_anf + 1 char" "$tag_end - 1 char"
+        $txt tag config TAG-$i  -relief raised -borderwidth 1
+        # bind events to highlight text
+        $txt tag bind   TAG-$i  <Any-Enter>  "$txt tag config TAG-$i -background [get_color osaft]"
+        $txt tag bind   TAG-$i  <Any-Leave>  "$txt tag config TAG-$i -background white"
+        $txt tag bind   TAG-$i <ButtonPress> "$w   see $anf; search_mark $w \"$anf $end\"";
+        create_tip $txt "[get_tipp helpclick]"
+        # TAG-$i  are never used again; new searches overwrite existing tags
+    }
+    $txt config -state disabled
+    return $this
+}; # search_results
+
 proc search_show  {w mark} {
     #? jump to mark in given text widget
     _dbx "($w,$mark)"
@@ -969,7 +1022,7 @@ proc search_mark  {w see} {
     _dbx " box_anf: $box_anf\tanf: $anf\tend: $end\tbox_end: $box_end"
     $w tag delete HELP-search-box  $anf
     $w tag add    HELP-search-box "$box_anf + 2 c" "$box_end + 1 c"
-    $w tag config HELP-search-box  -relief raised -borderwidth 1 -background #efe
+    $w tag config HELP-search-box  -relief raised -borderwidth 1 -background [get_color osaft]
     $w tag delete HELP-search-mark $anf
     $w tag add    HELP-search-mark $anf $end
     $w tag config HELP-search-mark -font osaftBold
@@ -1025,6 +1078,10 @@ proc search_text  {w search_text} {
     search_mark $w $search(see)
     $w see [lindex $search(see) 0]
     _dbx " see: $search(see)\tlast: $search(last)"
+    # show window with all search results (note: $anf contains tuples)
+    if {$search(more) < [count_tuples $anf]} {
+       search_results $w $search_text
+    }
     return
 }; # search_text
 
@@ -1283,7 +1340,7 @@ proc create_filter_head {parent txt tip col} {
 
 proc create_filtertab   {parent cmd} {
     #? create table with filter data
-    global cfg aaa
+    global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # filters
     pack [label $parent.text -relief flat -text [get_tipp tabFILTER]]
     set this $parent.g
@@ -1504,11 +1561,11 @@ proc create_help  {sect} {
     set toc     {}
 
     # add additional buttons
-    pack [button $this.f1.h -text [get_text help_home] -command "search_show $txt {HELP-LNK-T}"] \
-        [spinbox $this.f1.s -textvariable search(text) -command "search_list %d" -values $search(list) -wrap 1] \
-         [label  $this.f1.l -text "  " ] \
+    pack [button $this.f1.h -text [get_text help_home] -command "search_show $txt {HELP-LNK-T}; set search(curr) 0;"] \
          [button $this.f1.p -text [get_text help_prev] -command "search_next $txt {-}"] \
          [button $this.f1.n -text [get_text help_next] -command "search_next $txt {+}"] \
+        [spinbox $this.f1.s -textvariable search(text) -command "search_list %d" -values $search(list) -wrap 1 -width 23] \
+         [label  $this.f1.l -text "  " ] \
         -side left
     pack config  $this.f1.h $this.f1.l -padx $myX(rpad)
     create_tip   $this.f1.h [get_tipp help_home]
@@ -1525,7 +1582,7 @@ proc create_help  {sect} {
            "
 
     # 1. search for section head lines, mark them and add (prefix) to text
-    set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? ()=,:.-]+$} 1.0]
+    set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? '()=,:.-]+$} 1.0]
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
@@ -1554,7 +1611,7 @@ proc create_help  {sect} {
 
     # 2. search for all references to section head lines in TOC and add click event
     # NOTE: used regex must be similar to the one used in 1. above !!
-    set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_? ()=,:.-]+( |$)} 3.0 $nam]
+    set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_? '()=,:.-]+( |$)} 3.0 $nam]
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
@@ -2241,7 +2298,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.118"
+update_status "o-saft.tcl 1.119"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
