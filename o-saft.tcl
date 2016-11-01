@@ -281,7 +281,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.121 Summer Edition 2016
+#?      @(#) 1.122 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -346,8 +346,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.121 16/11/01 17:07:33 Sommer Edition 2016}
-set cfg(VERSION) {1.121}
+set cfg(SID)    {@(#) o-saft.tcl 1.122 16/11/02 00:55:41 Sommer Edition 2016}
+set cfg(VERSION) {1.122}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -471,6 +471,7 @@ array set cfg_buttons "
     {help_home} {{^}        $my_bg  help_home   {Go to top of page (start next search from there)}}
     {help_prev} {{<}        $my_bg  help_prev   {Search baskward for text}}
     {help_next} {{>}        $my_bg  help_next   {Search forward for text}}
+    {help_help} {{?}        $my_bg  {?}         {Show help about search functionality}}
     {helpsearch}  {{??}     $my_bg  helpsearch  {Text to be searched}}
     {cmdstart}  {{Start}    yellow  cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tab}}
     {cmdcheck}  {{+check}   #ffd800 +check    {Execute $cfg(SAFT) +check   }}
@@ -1440,19 +1441,21 @@ proc create_help  {sect} {
     set txt     [create_text $this $help].t;            # $txt is a widget here
     set toc     {}
 
-    # add additional buttons
-    pack [button $this.f1.h -text [get_text help_home] -command "search_show $txt {HELP-LNK-T}; set search(curr) 0;"] \
-         [button $this.f1.p -text [get_text help_prev] -command "search_next $txt {-}"] \
-         [button $this.f1.n -text [get_text help_next] -command "search_next $txt {+}"] \
-        [spinbox $this.f1.s -textvariable search(text) -command "search_list %d" -values $search(list) -wrap 1 -width 25] \
-         [label  $this.f1.l -text " " ] \
+    # add additional buttons for search
+    pack [button $this.f1.help_home -command "search_show $txt {HELP-LNK-T}; set search(curr) 0;"] \
+         [button $this.f1.help_prev -command "search_next $txt {-}"] \
+         [button $this.f1.help_next -command "search_next $txt {+}"] \
+        [spinbox $this.f1.s -textvariable search(text) -values $search(list) -command "search_list %d" -wrap 1 -width 25] \
         [spinbox $this.f1.m -textvariable search(mode) -values [list plain regex smart fuzzy] ] \
+         [button $this.f1.help_help -command {global cfg; create_about; $cfg(winA).t see 60.0} ] \
         -side left
     $this.f1.m config -state readonly -relief groove -wrap 1 -width 5
-    pack config  $this.f1.h $this.f1.l -padx $myX(rpad)
-    create_tip   $this.f1.h [get_tipp help_home]
-    create_tip   $this.f1.n [get_tipp help_next]
-    create_tip   $this.f1.p [get_tipp help_prev]
+    pack config  $this.f1.m  -padx 10
+    pack config  $this.f1.help_home   $this.f1.help_help -padx $myX(rpad)
+    theme_set    $this.f1.help_home   $cfg(bstyle)
+    theme_set    $this.f1.help_prev   $cfg(bstyle)
+    theme_set    $this.f1.help_next   $cfg(bstyle)
+    theme_set    $this.f1.help_help   $cfg(bstyle)
     create_tip   $this.f1.m [get_tipp help_mode]
     create_tip   $this.f1.s [get_tipp helpsearch]
     bind         $this.f1.s <Return> "
@@ -1870,7 +1873,11 @@ proc search_more  {w search_text} {
     set cnt  [count_tuples $matches]
     set this [create_window "Search Results for ($cnt): »$search_text«" "600x720"]
     set txt  [create_text $this ""].t
+    #{ adjust window, quick&dirty
     destroy $this.f1.saveconfig;# we don't need a save button here
+    $this.f0.help_me config -command {global cfg; create_about; $cfg(winA).t see 60.0}
+        # redifine help button to show About and scroll to Help description
+    #}
     $txt config -state normal
     #_dbx " HELP-search-pos ([llength $matches]): $matches"
     set i 0
@@ -2385,7 +2392,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.121"
+update_status "o-saft.tcl 1.122"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
