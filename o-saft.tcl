@@ -97,6 +97,22 @@ exec wish "$0" ${1+"$@"}
 #?      or previous search result will then  highlight the  complete paragraph
 #?      containing the matched text.
 #?
+#?      The search pattern can be used in following modes:
+#?        plain - use pattern as literal text
+#?        regex - use pattern as regular expression (proper syntax required)
+#?        smart - convert pattern to regex: each character may be optional
+#?        fuzzy - convert pattern to regex: each position may be optional
+#?      Example:
+#?        plain:  (adh|dha) - search for literal text  (adh|dha)
+#?        regex:  (adh|dha) - search for word  adh  or  word  dha
+#?        regex:  her.*list - search for text  her  followed by  list
+#?        regex:  (and      - fails, because of syntax error
+#?        smart:  and       - search for  and  or  a?nd  or  an?d  or  and?
+#?        fuzzy:  and       - search for  and  or  .?nd  or  a.?d  or  an.?
+#?
+#?      Note: regex are applied to lines only, pattern cannot span more than a
+#?            single line.
+#?
 #?      The GUI contains various [?] buttons. Clicking such a button will show
 #?      the corresponding section in the help window  context sensitive).
 #?
@@ -265,7 +281,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.120 Summer Edition 2016
+#?      @(#) 1.121 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -330,8 +346,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.120 16/11/01 14:30:58 Sommer Edition 2016}
-set cfg(VERSION) {1.120}
+set cfg(SID)    {@(#) o-saft.tcl 1.121 16/11/01 17:07:33 Sommer Edition 2016}
+set cfg(VERSION) {1.121}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -513,6 +529,7 @@ Select commands. All selected commands will be executed with the 'Start' button.
 Select and configure options. All options are used for any command button.
 }
     helpclick   {Click to show in Help window}
+    help_mode   {Mode how pattern is used for searching}
     tabFILTER   {
 Configure filter for text markup: r, e and # specify how the Regex should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
@@ -1427,13 +1444,16 @@ proc create_help  {sect} {
     pack [button $this.f1.h -text [get_text help_home] -command "search_show $txt {HELP-LNK-T}; set search(curr) 0;"] \
          [button $this.f1.p -text [get_text help_prev] -command "search_next $txt {-}"] \
          [button $this.f1.n -text [get_text help_next] -command "search_next $txt {+}"] \
-        [spinbox $this.f1.s -textvariable search(text) -command "search_list %d" -values $search(list) -wrap 1 -width 23] \
-         [label  $this.f1.l -text "  " ] \
+        [spinbox $this.f1.s -textvariable search(text) -command "search_list %d" -values $search(list) -wrap 1 -width 25] \
+         [label  $this.f1.l -text " " ] \
+        [spinbox $this.f1.m -textvariable search(mode) -values [list plain regex smart fuzzy] ] \
         -side left
+    $this.f1.m config -state readonly -relief groove -wrap 1 -width 5
     pack config  $this.f1.h $this.f1.l -padx $myX(rpad)
     create_tip   $this.f1.h [get_tipp help_home]
     create_tip   $this.f1.n [get_tipp help_next]
     create_tip   $this.f1.p [get_tipp help_prev]
+    create_tip   $this.f1.m [get_tipp help_mode]
     create_tip   $this.f1.s [get_tipp helpsearch]
     bind         $this.f1.s <Return> "
            global search
@@ -1839,31 +1859,6 @@ proc search_mark  {w see} {
     return
 }; # search_mark
 
-proc search_next  {w direction} {
-    #? show next search text in help window
-    # direction: + to search forward, - to search backward
-    global search
-    _dbx "($w,$direction)"
-    _dbx " see: $search(see)"
-    # nextrange, prevrange return a tuple like:        23.32 23.37
-    # HELP-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
-    switch $direction {
-        {+} { set see [$w tag nextrange HELP-search-pos [lindex $search(see) 1]] }
-        {-} { set see [$w tag prevrange HELP-search-pos [lindex $search(see) 0]] }
-    }
-    if {$see eq ""} {
-        # reached end of range, or range contains only one, switch to beginning
-        set see [lrange [$w tag ranges HELP-search-pos] 0 1];  # get first two from list
-        if {$see eq ""} { return };
-        # FIXME: round robin for + but not for -
-    }
-    $w see [lindex $see 0];             # show at start of match
-    search_mark $w "$see"
-    #$w yview scroll 1 units;           # somtimes necessary, but difficult to decide when
-    set search(see)  $see
-    return
-}; # search_next
-
 proc search_more  {w search_text} {
     #? show overview of search results in new window
     # $w is the widget with O-Saft's help text, all matched texts are already
@@ -1904,6 +1899,31 @@ proc search_more  {w search_text} {
     return $this
 }; # search_more
 
+proc search_next  {w direction} {
+    #? show next search text in help window
+    # direction: + to search forward, - to search backward
+    global search
+    _dbx "($w,$direction)"
+    _dbx " see: $search(see)"
+    # nextrange, prevrange return a tuple like:        23.32 23.37
+    # HELP-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
+    switch $direction {
+        {+} { set see [$w tag nextrange HELP-search-pos [lindex $search(see) 1]] }
+        {-} { set see [$w tag prevrange HELP-search-pos [lindex $search(see) 0]] }
+    }
+    if {$see eq ""} {
+        # reached end of range, or range contains only one, switch to beginning
+        set see [lrange [$w tag ranges HELP-search-pos] 0 1];  # get first two from list
+        if {$see eq ""} { return };
+        # FIXME: round robin for + but not for -
+    }
+    $w see [lindex $see 0];             # show at start of match
+    search_mark $w "$see"
+    #$w yview scroll 1 units;           # somtimes necessary, but difficult to decide when
+    set search(see)  $see
+    return
+}; # search_next
+
 proc search_text  {w search_text} {
     #? search given text in help window
     global search
@@ -1912,8 +1932,68 @@ proc search_text  {w search_text} {
     # new text to be searched, initialize ...
     set search(last) $search_text
     $w tag delete HELP-search-pos;      # tag which contains all matches
-    set anf [$w search -all -regexp -nocase -count end "$search_text" 1.0]
+    _dbx " mode: $search(mode)"
+    set regex $search_text
+    set rex   "";   # will be computed below
+    # prepare regex according mode: smart and fuzzy build a regex 
+    switch $search(mode) {
+        {smart} {
+                # each char optional
+                set i 0
+                foreach c [lindex [split $regex ""]] {
+                    append rex "|" [join [lreplace [split $regex ""] $i $i "$c?"] ""]
+                    incr i
+                }
+            }
+        {fuzzy} {
+                # each char as optional wildcard
+                set i 0
+                foreach c [lindex [split $regex ""]] {
+                    # only replace well known characters, leave meta as is
+                    if {[regexp {[A-Za-z0-9 _#'"$%&/;,-]} $c]} {
+                        append rex "|" [join [lreplace [split $regex ""] $i $i ".?"] ""]
+                    }
+                    incr i
+                }
+            }
+    }
+    if {$rex ne ""} {   # got alternates
+        set regex "(?:$regex$rex)"; # $rex has already leading |
+            # we have the original search_text as first alternate, and various
+            # variants following in a non-capture group
+    }
+    _dbx " $search(mode) regex: $regex";
+    # now handle common mistakes (all modes except plain)
+    switch $search(mode) {
+        {smart} -
+        {fuzzy} -
+        {regex} {
+            # simply catch compile errors using a similar call as for matching
+            set err ""
+            catch { $w search -regexp -all -nocase "$regex" 1.0 } err
+            if {$err ne ""} {
+                _dbx " **ERROR: $err"
+                # most likely regex failed, try to sanatize most common mistakes
+                # leading - is Tcl special, as it will be an option for regex
+                # Note: Tcl is picky about character classes, need \\ inside []
+                set regex [regsub {^(\\)}     $regex {\\\1}];   # leading \ is bad
+                set regex [regsub {^([|*+-])} $regex {[\1]}];   # as leading char is bad
+                set regex [regsub {([|])$}    $regex {[\1]}];   # trailing | is bad
+                set regex [regsub {(\\)$}     $regex {\\\1}];   # trailing \ is bad
+                _dbx " sanatized regex: $regex"; # no more checks
+            }
+            # else { regex OK }
+            }
+    }
+    # ready to fire ...
+    switch $search(mode) {
+        {smart} -
+        {fuzzy} -
+        {regex} { set anf [$w search -regexp -all -nocase -count end "$regex" 1.0] }
+        {plain} { set anf [$w search         -all -nocase -count end "$regex" 1.0] }
+    }
     if {$anf eq ""} { return };         # nothing matched
+    # got all matches, tag them
     set i 0
     foreach a $anf {                    # tag matches; store in HELP-search-pos
         set e [lindex $end $i];
@@ -2305,7 +2385,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.120"
+update_status "o-saft.tcl 1.121"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
