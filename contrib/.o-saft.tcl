@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.12 16/11/01 00:52:23
+#?      @(#) .o-saft.tcl 1.13 16/11/01 17:08:52
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.12};  # initial SID, do not remove
+set cfg(RCSID)  {1.13};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -108,7 +108,7 @@ array set cfg_tipp "
     host_add    {Add new line for a host}
     tkcolor     {Open window to choose a color}
     tkfont      {Open window to choose a font}
-    help_home   {Go to top of page}
+    help_home   {Go to top of page (start next search from there)}
     help_prev   {Search baskward for text}
     help_next   {Search forward for text}
     helpsearch  {Text to be searched}
@@ -119,6 +119,8 @@ array set cfg_tipp "
     choosen     {Choosen value}
     hideline    {Hide complete line instead of pattern only}
     show_hide   {show/hide: }
+    help_mode   {Mode how pattern is used for searching}
+    helpclick   {Click to show in Help window}
     tabCMD      {
 Select commands. All selected commands will be executed with the 'Start' button.
 }
@@ -228,4 +230,7 @@ set cfg(bstyle) {image};        # button style: {image} or {text}
 # option add *Button.font Bold;
 # option add *Label.font  Bold;
 # option add *Text.font   mono;
+
+#------------------------------------- when to show overview of search results
+set search(more) 5;         # show overview when more than this search results
 
