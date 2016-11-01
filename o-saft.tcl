@@ -91,8 +91,14 @@ exec wish "$0" ${1+"$@"}
 #?      of O-Saft (in particular the result of: o-saft.pl +help ).
 #?      The documentation contains clickable links (in blue) to other sections
 #?      in the text. Patterns may be specified to be searched for in the text.
+#?      All texts matching the pattern are highligted.
 #?      Search can be done forward and backward to the current positions,  see
-#?      the  [<]  and  [>]  buttons at bottom of the window.
+#?      the  [<]  and  [>]  buttons at bottom of the window. Going to the next
+#?      or previous search result will then  highlight the  complete paragraph
+#?      containing the matched text.
+#?
+#?      The GUI contains various [?] buttons. Clicking such a button will show
+#?      the corresponding section in the help window  context sensitive).
 #?
 #? OPTIONS
 #?      --v     print verbose messages (for debugging)
@@ -259,7 +265,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.119 Summer Edition 2016
+#?      @(#) 1.120 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -324,8 +330,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.119 16/11/01 13:50:10 Sommer Edition 2016}
-set cfg(VERSION) {1.119}
+set cfg(SID)    {@(#) o-saft.tcl 1.120 16/11/01 14:30:58 Sommer Edition 2016}
+set cfg(VERSION) {1.120}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -687,6 +693,7 @@ set search(curr)     0;     # current index in search(list)
 set search(last)    "";     # last search text (used to avoid duplicates)
 set search(see)     "";     # current position to see, tuple like: 23.32 23.37
 set search(more)     5;     # show addition overview window when more than this search results
+set search(mode)    "regex";# search pattern is plain text, or regex, or fuzzy
 #   variable names and function names used/capable for searching text in HELP
 #   can be found with following patterns:  search.text  search.list  etc.
 # tags used in help text cfg(HELP) aka (window) cfg(winH)
@@ -956,150 +963,6 @@ proc theme_init   {theme} {
     }
     return
 }; # theme_init
-
-proc search_results {w search_text} {
-    #? show overview of search results in new window
-    # $w is the widget with O-Saft's help text, all matched texts are already
-    # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
-    # start and end position (index)
-    global search
-    _dbx "($w,»$search_text«)"
-    set matches [$w tag ranges HELP-search-pos];# get all match positions
-    set cnt  [count_tuples $matches]
-    set this [create_window "Search Results for ($cnt): »$search_text«" "600x720"]
-    set txt  [create_text $this ""].t
-    destroy $this.f1.saveconfig;# we don't need a save button here
-    $txt config -state normal
-    #_dbx " HELP-search-pos ([llength $matches]): $matches"
-    set i 0
-    while {$i < [llength $matches]} {
-        # Note: $anf and $end are positions in the window of $W
-        #       $tag_anf and $tag_end are positions in this window
-        set anf [lindex $matches $i]; incr i;
-        set end [lindex $matches $i]; incr i;
-        # compute surounding lines and insert in new window
-        set box_anf [$w search -backward -regexp {\n\s*\n} $anf]
-        set box_end [$w search -forward  -regexp {\n\s*\n} $end]
-        set tag_anf [$txt index end]
-        $txt insert end [$w get  $box_anf $box_end]
-        set tag_end [$txt index end]
-        # build tag for extracted text
-        $txt tag add    TAG-$i  "$tag_anf + 1 char" "$tag_end - 1 char"
-        $txt tag config TAG-$i  -relief raised -borderwidth 1
-        # bind events to highlight text
-        $txt tag bind   TAG-$i  <Any-Enter>  "$txt tag config TAG-$i -background [get_color osaft]"
-        $txt tag bind   TAG-$i  <Any-Leave>  "$txt tag config TAG-$i -background white"
-        $txt tag bind   TAG-$i <ButtonPress> "$w   see $anf; search_mark $w \"$anf $end\"";
-        create_tip $txt "[get_tipp helpclick]"
-        # TAG-$i  are never used again; new searches overwrite existing tags
-    }
-    $txt config -state disabled
-    return $this
-}; # search_results
-
-proc search_show  {w mark} {
-    #? jump to mark in given text widget
-    _dbx "($w,$mark)"
-    catch { $w see [$w index $mark.first] } err
-    if {$err eq ""} {
-        # "see" sometimes places text to far on top, so we scroll up one line
-        $w yview scroll -1 units
-    } else {
-        _dbx  " err: $err"
-    }
-    return
-}; # search_show
-
-proc search_mark  {w see} {
-    #? remove previous highlight, highlight at position see
-    _dbx "($w,$see)"
-    set anf  [lindex $see 0]
-    set end  [lindex $see 1]
-    # $see contains tuple with start and end position of matched text, now
-    # find complete surounding paragraph, a paragraph is enclosed in  \n\n
-    set box_anf [$w search -backward -regexp {\n\s*\n} $anf]
-    set box_end [$w search -forward  -regexp {\n\s*\n} $end]
-    _dbx " box_anf: $box_anf\tanf: $anf\tend: $end\tbox_end: $box_end"
-    $w tag delete HELP-search-box  $anf
-    $w tag add    HELP-search-box "$box_anf + 2 c" "$box_end + 1 c"
-    $w tag config HELP-search-box  -relief raised -borderwidth 1 -background [get_color osaft]
-    $w tag delete HELP-search-mark $anf
-    $w tag add    HELP-search-mark $anf $end
-    $w tag config HELP-search-mark -font osaftBold
-    return
-}; # search_mark
-
-proc search_next  {w direction} {
-    #? show next search text in help window
-    # direction: + to search forward, - to search backward
-    global search
-    _dbx "($w,$direction)"
-    _dbx " see: $search(see)"
-    # nextrange, prevrange return a tuple like:        23.32 23.37
-    # HELP-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
-    switch $direction {
-        {+} { set see [$w tag nextrange HELP-search-pos [lindex $search(see) 1]] }
-        {-} { set see [$w tag prevrange HELP-search-pos [lindex $search(see) 0]] }
-    }
-    if {$see eq ""} {
-        # reached end of range, or range contains only one, switch to beginning
-        set see [lrange [$w tag ranges HELP-search-pos] 0 1];  # get first two from list
-        if {$see eq ""} { return };
-        # FIXME: round robin for + but not for -
-    }
-    $w see [lindex $see 0];             # show at start of match
-    search_mark $w "$see"
-    #$w yview scroll 1 units;           # somtimes necessary, but difficult to decide when
-    set search(see)  $see
-    return
-}; # search_next
-
-proc search_text  {w search_text} {
-    #? search given text in help window
-    global search
-    _dbx "($w,»$search_text«)"
-    if {$search_text eq $search(last)} { search_next $w {+}; return; }
-    # new text to be searched, initialize ...
-    set search(last) $search_text
-    $w tag delete HELP-search-pos;      # tag which contains all matches
-    set anf [$w search -all -regexp -nocase -count end "$search_text" 1.0]
-    if {$anf eq ""} { return };         # nothing matched
-    set i 0
-    foreach a $anf {                    # tag matches; store in HELP-search-pos
-        set e [lindex $end $i];
-        incr i
-        $w tag add   HELP-search-pos $a  "$a + $e c"
-        _dbx " HELP-search-pos tag:  $a … $a + $e c"
-    }
-    set tags [$w tag ranges HELP-search-pos]
-    _dbx " HELP-search-pos: $tags"
-    set search(see)  [lrange $tags 0 1];# remember current position
-    $w tag config HELP-search-pos -background #afa
-    search_mark $w $search(see)
-    $w see [lindex $search(see) 0]
-    _dbx " see: $search(see)\tlast: $search(last)"
-    # show window with all search results (note: $anf contains tuples)
-    if {$search(more) < [count_tuples $anf]} {
-       search_results $w $search_text
-    }
-    return
-}; # search_text
-
-proc search_list  {direction} {
-    #? get next or previous search text from search list (history)
-    global search
-    _dbx "($direction)"
-    set  len [llength $search(list)]
-    switch $direction {
-        {up}   { incr search(curr) +1 }
-        {down} { incr search(curr) -1 }
-    }
-    if {$search(curr) < 0} { set search(curr) [expr $len - 1] }
-    if {$search(curr) > [expr $len - 1]} { set search(curr) 0 }
-    set search(text) [lindex $search(list) $search(curr)]
-    _dbx " curr: $search(curr) of $len, »$search(text)«"
-    return
-}; # search_list
 
 proc toggle_cfg   {w opt val} {
     #? use widget config command to change options value
@@ -1944,6 +1807,150 @@ proc create_buttons {parent cmd} {
     }
 }; # create_buttons
 
+proc search_show  {w mark} {
+    #? jump to mark in given text widget
+    _dbx "($w,$mark)"
+    catch { $w see [$w index $mark.first] } err
+    if {$err eq ""} {
+        # "see" sometimes places text to far on top, so we scroll up one line
+        $w yview scroll -1 units
+    } else {
+        _dbx  " err: $err"
+    }
+    return
+}; # search_show
+
+proc search_mark  {w see} {
+    #? remove previous highlight, highlight at position see
+    _dbx "($w,$see)"
+    set anf  [lindex $see 0]
+    set end  [lindex $see 1]
+    # $see contains tuple with start and end position of matched text, now
+    # find complete surounding paragraph, a paragraph is enclosed in  \n\n
+    set box_anf [$w search -backward -regexp {\n\s*\n} $anf]
+    set box_end [$w search -forward  -regexp {\n\s*\n} $end]
+    _dbx " box_anf: $box_anf\tanf: $anf\tend: $end\tbox_end: $box_end"
+    $w tag delete HELP-search-box  $anf
+    $w tag add    HELP-search-box "$box_anf + 2 c" "$box_end + 1 c"
+    $w tag config HELP-search-box  -relief raised -borderwidth 1 -background [get_color osaft]
+    $w tag delete HELP-search-mark $anf
+    $w tag add    HELP-search-mark $anf $end
+    $w tag config HELP-search-mark -font osaftBold
+    return
+}; # search_mark
+
+proc search_next  {w direction} {
+    #? show next search text in help window
+    # direction: + to search forward, - to search backward
+    global search
+    _dbx "($w,$direction)"
+    _dbx " see: $search(see)"
+    # nextrange, prevrange return a tuple like:        23.32 23.37
+    # HELP-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
+    switch $direction {
+        {+} { set see [$w tag nextrange HELP-search-pos [lindex $search(see) 1]] }
+        {-} { set see [$w tag prevrange HELP-search-pos [lindex $search(see) 0]] }
+    }
+    if {$see eq ""} {
+        # reached end of range, or range contains only one, switch to beginning
+        set see [lrange [$w tag ranges HELP-search-pos] 0 1];  # get first two from list
+        if {$see eq ""} { return };
+        # FIXME: round robin for + but not for -
+    }
+    $w see [lindex $see 0];             # show at start of match
+    search_mark $w "$see"
+    #$w yview scroll 1 units;           # somtimes necessary, but difficult to decide when
+    set search(see)  $see
+    return
+}; # search_next
+
+proc search_more  {w search_text} {
+    #? show overview of search results in new window
+    # $w is the widget with O-Saft's help text, all matched texts are already
+    # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
+    # start and end position (index)
+    global search
+    _dbx "($w,»$search_text«)"
+    set matches [$w tag ranges HELP-search-pos];# get all match positions
+    set cnt  [count_tuples $matches]
+    set this [create_window "Search Results for ($cnt): »$search_text«" "600x720"]
+    set txt  [create_text $this ""].t
+    destroy $this.f1.saveconfig;# we don't need a save button here
+    $txt config -state normal
+    #_dbx " HELP-search-pos ([llength $matches]): $matches"
+    set i 0
+    while {$i < [llength $matches]} {
+        # Note: $anf and $end are positions in the window of $W
+        #       $tag_anf and $tag_end are positions in this window
+        set anf [lindex $matches $i]; incr i;
+        set end [lindex $matches $i]; incr i;
+        # compute surounding lines and insert in new window
+        set box_anf [$w search -backward -regexp {\n\s*\n} $anf]
+        set box_end [$w search -forward  -regexp {\n\s*\n} $end]
+        set tag_anf [$txt index end]
+        $txt insert end [$w get  $box_anf $box_end]
+        set tag_end [$txt index end]
+        # build tag for extracted text
+        $txt tag add    TAG-$i  "$tag_anf + 1 char" "$tag_end - 1 char"
+        $txt tag config TAG-$i  -relief raised -borderwidth 1
+        # bind events to highlight text
+        $txt tag bind   TAG-$i  <Any-Enter>  "$txt tag config TAG-$i -background [get_color osaft]"
+        $txt tag bind   TAG-$i  <Any-Leave>  "$txt tag config TAG-$i -background white"
+        $txt tag bind   TAG-$i <ButtonPress> "$w   see $anf; search_mark $w \"$anf $end\"";
+        create_tip $txt "[get_tipp helpclick]"
+        # TAG-$i  are never used again; new searches overwrite existing tags
+    }
+    $txt config -state disabled
+    return $this
+}; # search_more
+
+proc search_text  {w search_text} {
+    #? search given text in help window
+    global search
+    _dbx "($w,»$search_text«)"
+    if {$search_text eq $search(last)} { search_next $w {+}; return; }
+    # new text to be searched, initialize ...
+    set search(last) $search_text
+    $w tag delete HELP-search-pos;      # tag which contains all matches
+    set anf [$w search -all -regexp -nocase -count end "$search_text" 1.0]
+    if {$anf eq ""} { return };         # nothing matched
+    set i 0
+    foreach a $anf {                    # tag matches; store in HELP-search-pos
+        set e [lindex $end $i];
+        incr i
+        $w tag add   HELP-search-pos $a  "$a + $e c"
+        _dbx " HELP-search-pos tag:  $a … $a + $e c"
+    }
+    set tags [$w tag ranges HELP-search-pos]
+    _dbx " HELP-search-pos: $tags"
+    set search(see)  [lrange $tags 0 1];# remember current position
+    $w tag config HELP-search-pos -background [get_color osaft]
+    search_mark $w $search(see)
+    $w see [lindex $search(see) 0]
+    _dbx " see: $search(see)\tlast: $search(last)"
+    # show window with all search results (note: $anf contains tuples)
+    if {$search(more) < [count_tuples $anf]} {
+       search_more $w $search_text
+    }
+    return
+}; # search_text
+
+proc search_list  {direction} {
+    #? get next or previous search text from search list (history)
+    global search
+    _dbx "($direction)"
+    set  len [llength $search(list)]
+    switch $direction {
+        {up}   { incr search(curr) +1 }
+        {down} { incr search(curr) -1 }
+    }
+    if {$search(curr) < 0} { set search(curr) [expr $len - 1] }
+    if {$search(curr) > [expr $len - 1]} { set search(curr) 0 }
+    set search(text) [lindex $search(list) $search(curr)]
+    _dbx " curr: $search(curr) of $len, »$search(text)«"
+    return
+}; # search_list
+
 proc osaft_about  {mode} {
     #? extract description from myself; returns text
     global arrv argv0
@@ -2298,7 +2305,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.119"
+update_status "o-saft.tcl 1.120"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
