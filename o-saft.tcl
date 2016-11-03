@@ -222,6 +222,10 @@ exec wish "$0" ${1+"$@"}
 #.          --help  --help=opt  --help=commands
 #.      A detailed example of the format can be found in  proc create_win().
 #.
+#.      When building the complete documention (help window),  additional text
+#.      documentation (beside that provided by +help) will be added before the
+#.      ATTRIBUTION  section.  Hence ATTRIBUTION must exist as section header.
+#.
 #.      The tool will only work if o-saft.pl is available and executes without
 #.      errors. All commands and options of  o-saft.pl  will be available from
 #.      herein, except:
@@ -281,7 +285,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.122 Summer Edition 2016
+#?      @(#) 1.123 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -346,8 +350,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.122 16/11/02 00:55:41 Sommer Edition 2016}
-set cfg(VERSION) {1.122}
+set cfg(SID)    {@(#) o-saft.tcl 1.123 16/11/03 10:48:05 Sommer Edition 2016}
+set cfg(VERSION) {1.123}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1394,6 +1398,44 @@ proc create_help  {sect} {
         }
     }
 
+    # collect more documentations with --help=*
+    set help ""
+    foreach key [list alias data checks regex rfc glossar] {
+        # missing: text ourstr
+        set txt ""
+        catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=$key } txt
+        if {2 < [llength [split $txt "\n"]]} {
+            set txt [regsub -all       {[&]} $txt {\\&}];   # avoid interpretation by regexp
+            # add section header, hardcoded (stolen from o-saft-man.pm)
+            switch $key {
+              {alias}   { set head "Aliases for commands and options"
+                          set txt [regsub -all -line {\n}  $txt "\n        "]
+                        }
+              {data}    { set head "Available informations"
+                          set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
+                              # each key (left) is a command, hence add +
+                        }
+              {checks}  { set head "Available checks"
+                          set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
+                              # each key (left) is a command, hence add +
+                        }
+              {regex}   { set head "Regular expressions used internally"
+                          set txt [regsub -all -line {(\n)(\s*)([^ ]+)}  $txt {\1\2'\3'}]
+                        }
+              {rfc}     { set head "List of RFC related to SSL, TLS" }
+              {glossar} { set head "Glossar" }
+              {text}    { set head "Texts used in various messages" }
+              {ourstr}  { set head "Regular expressions to match our own strings" }
+              {range}   { set head "List of cipherranges" }
+              {compliance} { set head "INFO: Available compliance checks" }
+              {todo}    { set head "Known problems and bugs"              }
+            }
+            append help "\n\nINFO $head\n$txt"
+        }
+    }
+    # merge HELP and additional help texts
+    set help [regsub {(\n\nATTRIBUTION)} $cfg(HELP) "$help\n\nATTRIBUTION"];
+
     # uses plain text help text from "o-saft.pl --help"
     # This text is parsed for section header line (all capital characters)
     # which will be used as Table of Content and inserted before the text.
@@ -1437,8 +1479,8 @@ proc create_help  {sect} {
         return
     }
     set this    [create_window {Help} $myX(geoO)]
-    set help    [regsub -all {===.*?===} $cfg(HELP) {}];# remove informal messages
-    set txt     [create_text $this $help].t;            # $txt is a widget here
+    set help    [regsub -all {===.*?===} $help {}]; # remove informal messages
+    set txt     [create_text $this $help].t;        # $txt is a widget here
     set toc     {}
 
     # add additional buttons for search
@@ -1858,7 +1900,7 @@ proc search_mark  {w see} {
     $w tag config HELP-search-box  -relief raised -borderwidth 1 -background [get_color osaft]
     $w tag delete HELP-search-mark $anf
     $w tag add    HELP-search-mark $anf $end
-    $w tag config HELP-search-mark -font osaftBold
+    $w tag config HELP-search-mark -font osaftBold -background yellow
     return
 }; # search_mark
 
@@ -1942,6 +1984,7 @@ proc search_text  {w search_text} {
     _dbx " mode: $search(mode)"
     set regex $search_text
     set rex   "";   # will be computed below
+    set mode  "-regexp";                # mode (switch) for Tcl's "Text search"
     # prepare regex according mode: smart and fuzzy build a regex 
     switch $search(mode) {
         {smart} {
@@ -1964,20 +2007,27 @@ proc search_text  {w search_text} {
                 }
             }
     }
-    if {$rex ne ""} {   # got alternates
-        set regex "(?:$regex$rex)"; # $rex has already leading |
+    if {$rex ne ""} {   # got alternates above
+        set regex "(?:$regex$rex)"
             # we have the original search_text as first alternate, and various
             # variants following in a non-capture group
+            # Note: $rex has already leading | hence missing in concatenation
     }
     _dbx " $search(mode) regex: $regex";
-    # now handle common mistakes (all modes except plain)
+    # now handle common mistakes and set mode (switch) for Tcl's "text search"
     switch $search(mode) {
+        {plain} {
+                # Tcl's "text search" complains when pattern starts with -
+            set regex [regsub {^(-)} $regex {\\\1}];    # leading - is bad
+            set mode  "-exact"
+            }
         {smart} -
         {fuzzy} -
         {regex} {
             # simply catch compile errors using a similar call as for matching
+            set mode  "-regexp"
             set err ""
-            catch { $w search -regexp -all -nocase "$regex" 1.0 } err
+            catch { $w search -regexp -all -nocase $regex 1.0 } err
             if {$err ne ""} {
                 _dbx " **ERROR: $err"
                 # most likely regex failed, try to sanatize most common mistakes
@@ -1987,18 +2037,13 @@ proc search_text  {w search_text} {
                 set regex [regsub {^([|*+-])} $regex {[\1]}];   # as leading char is bad
                 set regex [regsub {([|])$}    $regex {[\1]}];   # trailing | is bad
                 set regex [regsub {(\\)$}     $regex {\\\1}];   # trailing \ is bad
-                _dbx " sanatized regex: $regex"; # no more checks
             }
             # else { regex OK }
             }
     }
+    _dbx " sanatized regex: $regex";
     # ready to fire ...
-    switch $search(mode) {
-        {smart} -
-        {fuzzy} -
-        {regex} { set anf [$w search -regexp -all -nocase -count end "$regex" 1.0] }
-        {plain} { set anf [$w search         -all -nocase -count end "$regex" 1.0] }
-    }
+    set anf [$w search $mode -all -nocase -count end $regex 1.0]
     if {$anf eq ""} { return };         # nothing matched
     # got all matches, tag them
     set i 0
@@ -2250,7 +2295,7 @@ if {[tk windowingsystem] eq "aqua"} {
 
 font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
 font create osaftBold   {*}[font config TkDefaultFont] -weight bold
-font create osaftSlant  {*}[font config TkDefaultFont] -slant italic
+font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
 option add *Button.font osaftBold;  # if we want buttons more exposed
 option add *Label.font  osaftBold;  # ..
 option add *Text.font   TkFixedFont;
@@ -2392,7 +2437,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.122"
+update_status "o-saft.tcl 1.123"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
