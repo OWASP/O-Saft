@@ -97,13 +97,18 @@ exec wish "$0" ${1+"$@"}
 #?      or previous search result will then  highlight the  complete paragraph
 #?      containing the matched text.
 #?
+#?      When more than 5 matches are found,  an additional window will display
+#?      all matches as an overview.  Click on a highligted match will show the
+#?      paragraph containing the match in the help window.
+#?      When multiple "overview" windows are open, each handles its matches.
+#?
 #?      The search pattern can be used in following modes:
-#?        plain - use pattern as literal text
+#?        exact - use pattern as literal text
 #?        regex - use pattern as regular expression (proper syntax required)
 #?        smart - convert pattern to regex: each character may be optional
 #?        fuzzy - convert pattern to regex: each position may be optional
 #?      Example:
-#?        plain:  (adh|dha) - search for literal text  (adh|dha)
+#?        exact:  (adh|dha) - search for literal text  (adh|dha)
 #?        regex:  (adh|dha) - search for word  adh  or  word  dha
 #?        regex:  her.*list - search for text  her  followed by  list
 #?        regex:  (and      - fails, because of syntax error
@@ -285,7 +290,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.123 Summer Edition 2016
+#?      @(#) 1.124 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -350,8 +355,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.123 16/11/03 10:48:05 Sommer Edition 2016}
-set cfg(VERSION) {1.123}
+set cfg(SID)    {@(#) o-saft.tcl 1.124 16/11/03 12:31:57 Sommer Edition 2016}
+set cfg(VERSION) {1.124}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -715,7 +720,7 @@ set search(curr)     0;     # current index in search(list)
 set search(last)    "";     # last search text (used to avoid duplicates)
 set search(see)     "";     # current position to see, tuple like: 23.32 23.37
 set search(more)     5;     # show addition overview window when more than this search results
-set search(mode)    "regex";# search pattern is plain text, or regex, or fuzzy
+set search(mode)    "regex";# search pattern is exact text, or regex, or fuzzy
 #   variable names and function names used/capable for searching text in HELP
 #   can be found with following patterns:  search.text  search.list  etc.
 # tags used in help text cfg(HELP) aka (window) cfg(winH)
@@ -1488,7 +1493,7 @@ proc create_help  {sect} {
          [button $this.f1.help_prev -command "search_next $txt {-}"] \
          [button $this.f1.help_next -command "search_next $txt {+}"] \
         [spinbox $this.f1.s -textvariable search(text) -values $search(list) -command "search_list %d" -wrap 1 -width 25] \
-        [spinbox $this.f1.m -textvariable search(mode) -values [list plain regex smart fuzzy] ] \
+        [spinbox $this.f1.m -textvariable search(mode) -values [list exact regex smart fuzzy] ] \
          [button $this.f1.help_help -command {global cfg; create_about; $cfg(winA).t see 60.0} ] \
         -side left
     $this.f1.m config -state readonly -relief groove -wrap 1 -width 5
@@ -2016,7 +2021,7 @@ proc search_text  {w search_text} {
     _dbx " $search(mode) regex: $regex";
     # now handle common mistakes and set mode (switch) for Tcl's "text search"
     switch $search(mode) {
-        {plain} {
+        {exact} {
                 # Tcl's "text search" complains when pattern starts with -
             set regex [regsub {^(-)} $regex {\\\1}];    # leading - is bad
             set mode  "-exact"
@@ -2437,7 +2442,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.123"
+update_status "o-saft.tcl 1.124"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
