@@ -290,7 +290,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.124 Summer Edition 2016
+#?      @(#) 1.125 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -355,8 +355,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.124 16/11/03 12:31:57 Sommer Edition 2016}
-set cfg(VERSION) {1.124}
+set cfg(SID)    {@(#) o-saft.tcl 1.125 16/11/03 21:49:43 Sommer Edition 2016}
+set cfg(VERSION) {1.125}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1909,7 +1909,7 @@ proc search_mark  {w see} {
     return
 }; # search_mark
 
-proc search_more  {w search_text} {
+proc search_more  {w search_text regex} {
     #? show overview of search results in new window
     # $w is the widget with O-Saft's help text, all matched texts are already
     # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
@@ -1918,8 +1918,9 @@ proc search_more  {w search_text} {
     _dbx "($w,»$search_text«)"
     set matches [$w tag ranges HELP-search-pos];# get all match positions
     set cnt  [count_tuples $matches]
-    set this [create_window "Search Results for ($cnt): »$search_text«" "600x720"]
+    set this [create_window "$cnt matches for: »$regex«" "600x720"]
     set txt  [create_text $this ""].t
+    wm title $this "Search Results for: $search_text"
     #{ adjust window, quick&dirty
     destroy $this.f1.saveconfig;# we don't need a save button here
     $this.f0.help_me config -command {global cfg; create_about; $cfg(winA).t see 60.0}
@@ -1990,7 +1991,7 @@ proc search_text  {w search_text} {
     set regex $search_text
     set rex   "";   # will be computed below
     set mode  "-regexp";                # mode (switch) for Tcl's "Text search"
-    # prepare regex according mode: smart and fuzzy build a regex 
+    # prepare regex according mode: smart and fuzzy build a regex
     switch $search(mode) {
         {smart} {
                 # each char optional
@@ -2001,22 +2002,35 @@ proc search_text  {w search_text} {
                 }
             }
         {fuzzy} {
-                # each char as optional wildcard
+                # some common synonyms, then each char as optional wildcard
+                set regex [regsub -all -nocase {ou} $regex {o}]
+                set regex [regsub -all -nocase {ph} $regex {f}]
+                set regex [regsub -all -nocase {qu} $regex {q}]
+                set regex [regsub -all -nocase {th} $regex {t}]
                 set i 0
                 foreach c [lindex [split $regex ""]] {
                     # only replace well known characters, leave meta as is
                     if {[regexp {[A-Za-z0-9 _#'"$%&/;,-]} $c]} {
-                        append rex "|" [join [lreplace [split $regex ""] $i $i ".?"] ""]
+                        # "'   quotes to balance last ones in regex
+                        set       replace {.?};
+                        switch [string tolower $c] {
+                          f { set replace {(?:ph|p|f)?} }
+                          o { set replace {(?:ou|o)?}   }
+                          q { set replace {(?:qu|q)?}   }
+                          t { set replace {(?:th|t)?}   }
+                        }
+                        # [csz]? and [iy]? and [dt]? is handled by .?
+                        append rex "|" [join [lreplace [split $regex ""] $i $i $replace] ""]
                     }
                     incr i
                 }
             }
     }
-    if {$rex ne ""} {   # got alternates above
-        set regex "(?:$regex$rex)"
-            # we have the original search_text as first alternate, and various
-            # variants following in a non-capture group
-            # Note: $rex has already leading | hence missing in concatenation
+    if {$search(mode) ne {exact}} {
+        # we have the original search_text as first alternate, and various
+        # variants following in a non-capture group
+        # Note: $rex has already leading | hence missing in concatenation
+        set regex "(?:$regex$rex)";
     }
     _dbx " $search(mode) regex: $regex";
     # now handle common mistakes and set mode (switch) for Tcl's "text search"
@@ -2067,7 +2081,7 @@ proc search_text  {w search_text} {
     _dbx " see: $search(see)\tlast: $search(last)"
     # show window with all search results (note: $anf contains tuples)
     if {$search(more) < [count_tuples $anf]} {
-       search_more $w $search_text
+       search_more $w $search_text $regex
     }
     return
 }; # search_text
@@ -2442,7 +2456,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.124"
+update_status "o-saft.tcl 1.125"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
