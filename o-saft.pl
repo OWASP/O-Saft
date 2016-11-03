@@ -1,39 +1,5 @@
 #!/usr/bin/perl
 
-### TODO: -nextprotoneg  funktioniert nur mit openssl, nicht mit socket
-### TODO: -nextprotoneg : openssl sollte für jedes Protokoll aufgeerufen werden,
-###        nicht alle zusammen (siehe Net::SSLinfo.pm)
-###       Hintergrund: encrypted.google.com nimmt das erste passende Protokoll
-###       liefert aber keine Liste wenn diese leer ist (siehe man openssl:
-###    -nextprotoneg protocols
-###        enable Next Protocol Negotiation TLS extension and provide a list
-###        of comma-separated protocol names that the client should advertise
-###        support for. The list should contain most wanted protocols first.
-###        Protocol names are printable ASCII strings, for example "http/1.1"
-###        or "spdy/3".  Empty list of protocols is treated specially and will
-###        cause the client to advertise support for the TLS extension but
-###        disconnect just after reciving ServerHello with a list of server
-###        supported protocols.
-###        )
-### TODO: -nextprotoneg  liefert:
-###        Next protocol: (1) spdy/3                                                      
-###  aber  Next protocol: (2) gibtsnicht
-### TODO: --proxy* auch bei openssl verwenden (ist z.Zt Bug)
-### TODO: +reneg; client-side renegotiation pruefen
-###.....   +scsv und +fallback fertig implementieren
-### TODO: +session_protocol richtig implementieren
-### TODO: check in printciphers_dh() implementieren
-### TODO: _isccs($$$) fertig implementieren
-### TODO: ext_authority_* filtern und dann in TR* prüfen
-### TODO: --sni  anschauen wenn 0
-### TODO: Option: mit installiertem und mit --openssl version testen (beides)
-### TODO: in sub _useopenssl() :
-###.....  --> Ändern:  s_client als Variable übergeben, damit dahinter
-###.....      mehr Optionen angegebn werden können: -starttls  -proxy*  usw.
-#-# TODO: Ausgabe während den checks, geht mit --v  ==> bei checkAll entsprechend einbauen
-#-# TODO: +rfc7525: get_dh_paramter() verwenden: geht nicht, da Cipher gebraucht
-#-#           wird und get_dh_paramter z.Zt. nur mit openssl geht
-
 #!#############################################################################
 #!#             Copyright (c) Achim Hoffmann, sic[!]sec GmbH
 #!#----------------------------------------------------------------------------
@@ -86,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.549 16/10/12 00:19:03",
+    SID         => "@(#) yeast.pl 1.550 16/11/03 12:20:15",
     STR_VERSION => "16.10.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6462,12 +6428,14 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # resolution.
         # When gethostbyaddr() fails, the connection to the target most likely
         # fails also, which produces more perl warnings later.
+        _y_CMD("test IP ...");
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
         if ($cfg{'usedns'} == 1) {  # following settings only with --dns
            ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
             $cfg{'rhost'}   = $fail if ($? != 0);
         }
         if ($cfg{'usedns'} == 1) {
+            _y_CMD("test DNS (disable with --no-dns) ...");
             my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
             my $i = 0;
             foreach my $ip (@ips) {
@@ -6534,13 +6502,15 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
         }
         next;
-    }
+    } # cipherraw
 
     usr_pre_info();
 
 # FIXME: some servers do not respond for following
 #        reason seams to be SSLv2 or SSLv3 without SNI
-    _y_CMD("get no SNI ..");
+# FIXME: cannot use:    if ($cfg{usesni} > 0) {
+#        need to review code forst for %data0 usage
+    _y_CMD("test without SNI (disable with --no-sni) ..");
     # check if SNI supported, also copy some data to %data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
@@ -6562,6 +6532,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
     $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
     _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
+# FIXME:    } # usesni
 
     usr_pre_open();
 
@@ -6577,6 +6548,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($cfg{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
+        _y_CMD("test connection (disable with  --ignore-no-conn) ...");
         if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
             my $errtxt = Net::SSLinfo::errors($host, $port);
             if ($errtxt !~ /^\s*$/) {
@@ -6653,7 +6625,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         if ($legacy eq 'sslscan') {
             my $ssl = ${$cfg{'version'}}[4];
             print_cipherdefault($legacy, $ssl, $host, $port);
-            # TODO: there is only one $data('selected')
+            # TODO: there is only one $data{'selected'}
             #foreach my $ssl (@{$cfg{'version'}}) {
             #    print_cipherdefault($legacy, $ssl, $host, $port);
             #}
