@@ -290,7 +290,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.125 Summer Edition 2016
+#?      @(#) 1.126 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -355,8 +355,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.125 16/11/03 21:49:43 Sommer Edition 2016}
-set cfg(VERSION) {1.125}
+set cfg(SID)    {@(#) o-saft.tcl 1.126 16/11/03 22:31:04 Sommer Edition 2016}
+set cfg(VERSION) {1.126}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1920,9 +1920,9 @@ proc search_more  {w search_text regex} {
     set cnt  [count_tuples $matches]
     set this [create_window "$cnt matches for: »$regex«" "600x720"]
     set txt  [create_text $this ""].t
-    wm title $this "Search Results for: $search_text"
     #{ adjust window, quick&dirty
-    destroy $this.f1.saveconfig;# we don't need a save button here
+    wm title $this "Search Results for: $search_text"
+    destroy  $this.f1.saveconfig;   # we don't need a save button here
     $this.f0.help_me config -command {global cfg; create_about; $cfg(winA).t see 60.0}
         # redifine help button to show About and scroll to Help description
     #}
@@ -1963,8 +1963,8 @@ proc search_next  {w direction} {
     # nextrange, prevrange return a tuple like:        23.32 23.37
     # HELP-search-pos contains something like: 2.1 2.7 23.32 23.37 42.23 42.28
     switch $direction {
-        {+} { set see [$w tag nextrange HELP-search-pos [lindex $search(see) 1]] }
-        {-} { set see [$w tag prevrange HELP-search-pos [lindex $search(see) 0]] }
+      {+} { set see [$w tag nextrange HELP-search-pos [lindex $search(see) 1]] }
+      {-} { set see [$w tag prevrange HELP-search-pos [lindex $search(see) 0]] }
     }
     if {$see eq ""} {
         # reached end of range, or range contains only one, switch to beginning
@@ -1980,7 +1980,7 @@ proc search_next  {w direction} {
 }; # search_next
 
 proc search_text  {w search_text} {
-    #? search given text in help window
+    #? search given text in help window' $w widget
     global search
     _dbx "($w,»$search_text«)"
     if {$search_text eq $search(last)} { search_next $w {+}; return; }
@@ -1989,48 +1989,49 @@ proc search_text  {w search_text} {
     $w tag delete HELP-search-pos;      # tag which contains all matches
     _dbx " mode: $search(mode)"
     set regex $search_text
-    set rex   "";   # will be computed below
-    set mode  "-regexp";                # mode (switch) for Tcl's "Text search"
-    # prepare regex according mode: smart and fuzzy build a regex
+    set words "";       # will be computed below
+    set rmode "-regexp";# mode (switch) for Tcl's "Text search"
+    # prepare regex according smart and fuzzy mode; builds a new regex
     switch $search(mode) {
         {smart} {
-                # each char optional
-                set i 0
-                foreach c [lindex [split $regex ""]] {
-                    append rex "|" [join [lreplace [split $regex ""] $i $i "$c?"] ""]
-                    incr i
-                }
+            # build pattern with each char optional
+            set i 0
+            foreach c [lindex [split $regex ""]] {
+                append words "|" [join [lreplace [split $regex ""] $i $i "$c?"] ""]
+                incr i
             }
+        }
         {fuzzy} {
-                # some common synonyms, then each char as optional wildcard
-                set regex [regsub -all -nocase {ou} $regex {o}]
-                set regex [regsub -all -nocase {ph} $regex {f}]
-                set regex [regsub -all -nocase {qu} $regex {q}]
-                set regex [regsub -all -nocase {th} $regex {t}]
-                set i 0
-                foreach c [lindex [split $regex ""]] {
-                    # only replace well known characters, leave meta as is
-                    if {[regexp {[A-Za-z0-9 _#'"$%&/;,-]} $c]} {
-                        # "'   quotes to balance last ones in regex
-                        set       replace {.?};
-                        switch [string tolower $c] {
-                          f { set replace {(?:ph|p|f)?} }
-                          o { set replace {(?:ou|o)?}   }
-                          q { set replace {(?:qu|q)?}   }
-                          t { set replace {(?:th|t)?}   }
-                        }
-                        # [csz]? and [iy]? and [dt]? is handled by .?
-                        append rex "|" [join [lreplace [split $regex ""] $i $i $replace] ""]
+            # some common synonyms, then each char as optional wildcard
+            set regex [regsub -all -nocase {ou} $regex {o}]
+            set regex [regsub -all -nocase {ph} $regex {f}]
+            set regex [regsub -all -nocase {qu} $regex {q}]
+            set regex [regsub -all -nocase {th} $regex {t}]
+            # now build a pattern for each character position
+            set i 0
+            foreach c [lindex [split $regex ""]] {
+                # only replace well known characters, leave meta as is
+                if {[regexp {[A-Za-z0-9 _#'"$%&/;,-]} $c]} {
+                    # "' quotes to balance those in regex (keeps editor happy:)
+                    set       replace {.?};
+                    switch [string tolower $c] {
+                      f { set replace {(?:ph|p|f)?} }
+                      o { set replace {(?:ou|o)?}   }
+                      q { set replace {(?:qu|q)?}   }
+                      t { set replace {(?:th|t)?}   }
                     }
-                    incr i
+                    # [csz]? and [iy]? and [dt]? is handled by .?
+                    append words "|" [join [lreplace [split $regex ""] $i $i $replace] ""]
                 }
+                incr i
             }
+        }
     }
     if {$search(mode) ne {exact}} {
         # we have the original search_text as first alternate, and various
         # variants following in a non-capture group
-        # Note: $rex has already leading | hence missing in concatenation
-        set regex "(?:$regex$rex)";
+        # Note: $words has already leading | hence missing in concatenation
+        set regex "(?:$regex$words)";
     }
     _dbx " $search(mode) regex: $regex";
     # now handle common mistakes and set mode (switch) for Tcl's "text search"
@@ -2038,13 +2039,13 @@ proc search_text  {w search_text} {
         {exact} {
                 # Tcl's "text search" complains when pattern starts with -
             set regex [regsub {^(-)} $regex {\\\1}];    # leading - is bad
-            set mode  "-exact"
+            set rmode "-exact"
             }
         {smart} -
         {fuzzy} -
         {regex} {
             # simply catch compile errors using a similar call as for matching
-            set mode  "-regexp"
+            set rmode "-regexp"
             set err ""
             catch { $w search -regexp -all -nocase $regex 1.0 } err
             if {$err ne ""} {
@@ -2062,7 +2063,7 @@ proc search_text  {w search_text} {
     }
     _dbx " sanatized regex: $regex";
     # ready to fire ...
-    set anf [$w search $mode -all -nocase -count end $regex 1.0]
+    set anf [$w search $rmode -all -nocase -count end $regex 1.0]
     if {$anf eq ""} { return };         # nothing matched
     # got all matches, tag them
     set i 0
@@ -2323,10 +2324,10 @@ option add *Text.font   TkFixedFont;
 set __native    "";
 # next switch is ugly workaround to detect special start methods ...
 switch [tk windowingsystem] {
-    "aqua"  { set __native "open"  }
-    "Aqua"  { set __native "open"  }
-    "win32" { set __native "start" }
-    "win64" { set __native "start" }
+    {aqua}  { set __native "open"  }
+    {Aqua}  { set __native "open"  }
+    {win32} { set __native "start" }
+    {win64} { set __native "start" }
 }
 foreach b " $__native \
             firefox chrome chromium iceweasel konqueror mozilla \
@@ -2456,7 +2457,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.125"
+update_status "o-saft.tcl 1.126"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
