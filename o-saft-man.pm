@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.149 16/11/03 12:22:07";
+my  $man_SID= "@(#) o-saft-man.pm 1.150 16/11/03 21:48:31";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2642,7 +2642,7 @@ OPTIONS
 
           A simple check if the target can be connected  will be performed by
           default.  If this check fails, the target will be ignored, means no
-          more reuqested checks will be done.  As this connection check some-
+          more requested checks will be done.  As this connection check some-
           times fails due to various reasons, the check can be disabled using
           this option.
 
