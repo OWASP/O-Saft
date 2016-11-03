@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.148 16/10/12 00:41:40";
+my  $man_SID= "@(#) o-saft-man.pm 1.149 16/11/03 12:22:07";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -299,6 +299,7 @@ my %man_text = (
         'FIPS197'   => "FIPS Advanced Encryption Standard (AES)",
         'FIPS198-1' => "FIPS The Keyed-Hash Message Authentication Code (HMAC)",
         'FREAK'     => "Factoring Attack on RSA-EXPORT Keys",
+                    #  https://mitls.org/pages/attacks/SMACK#freak
         'FQDN'      => "Fully-qualified Domain Name",
         'FSB'       => "Fast Syndrome Based Hash",
         'FSM'       => "Finite State Machine",
@@ -486,10 +487,12 @@ my %man_text = (
         'Skein'     => "hash function",
         'SKID'      => "subject key ID (certificate extension)",
         'SKIP'      => "Message Skipping Attacks on TLS",
+                    #  https://mitls.org/pages/attacks/SMACK
         'SKIP-TLS'  => "see SKIP",
         'Skipjack'  => "block cipher encryption algorithm specified as part of the Fortezza",
         'SLOTH'     => "Security Losses from Obsolete and Truncated Transcript Hashes",
         'SMACK'     => "State Machine AttaCKs",
+                    #  https://mitls.org/pages/attacks/SMACK
         'Snefu'     => "hash function",
         'SNI'       => "Server Name Indication",
         'SNOW'      => "word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )",
@@ -681,6 +684,7 @@ and OpenVPN",
         '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
         '7539'  => [ "ChaCha20 and Poly1305 for IETF Protocols" ],
         '7905'  => [ "ChaCha20-Poly1305 Cipher Suites for TLS" ],
+        '1135'  => [ "The Helminthiasis of the Internet" ], # 1989
         #----------+----------------------------------------+-----------------------+
     },
 
@@ -2353,6 +2357,10 @@ OPTIONS
       --help=glossar
 
           Show common abbreviation used in the world of security.
+
+      --help=rfc
+
+          Show list of RFC related to SSL/TLS.
 
       --help=todo
 
@@ -5362,7 +5370,7 @@ HACKER's INFO
 #        likely obvious).
 #
 #        All documentation for the user is written in  plain ASCII text format
-#        at end of the file  o-saft-usr.pm.
+#        at end of the file  o-saft-man.pm.
 #
 #        All documentation was initially written in perl's POD format. After 2
 #        years of development, it seems that POD wasn't the best decission, as
@@ -5435,7 +5443,7 @@ DEBUG
         The warning also informs about the missing functionality or check.
 
         I.g. it is best to install newer versions of the module if possible.
-	A good practice to check if modules are available in a proper version
+        A good practice to check if modules are available in a proper version
         is to call:
 
           $0 +version
@@ -5710,7 +5718,15 @@ EXAMPLES
           $0 some.tld +chain_verify +verify +error_verify +chain
 
         * Avoid most performance and timeout problems (don't use  --v)
-          $0 +info some.tld --no-cert --no-dns --no-http --no-openssl --no-sni
+          $0 +info some.tld --no-dns --no-sni --ignore-no-conn
+          $0 +info some.tld --no-dns --no-sni --no-cert --no-http --no-openssl
+
+        * Identify timeout problems
+          $0 +info some.tld --trace-cmd
+
+          this will show lines containing:
+          #O-Saft  CMD: test ...
+
 
 #begin --v --v
 .raw nerobeg
