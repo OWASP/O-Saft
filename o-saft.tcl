@@ -290,7 +290,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.126 Summer Edition 2016
+#?      @(#) 1.127 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -355,8 +355,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.126 16/11/03 22:31:04 Sommer Edition 2016}
-set cfg(VERSION) {1.126}
+set cfg(SID)    {@(#) o-saft.tcl 1.127 16/11/04 08:31:32 Sommer Edition 2016}
+set cfg(VERSION) {1.127}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1089,6 +1089,14 @@ proc apply_filter {w} {
     return
 }; # apply_filter
 
+proc show_window  {w} {
+    #? show window near current cursor position
+    set y   [winfo pointery $w]; incr y 23
+    set x   [winfo pointerx $w]; incr x 23
+    wm geometry  $w "+$x+$y"
+    wm deiconify $w
+}; # show_window
+
 proc www_browser  {url} {
     #? open URL in browser, uses system's native browser
     global cfg
@@ -1114,13 +1122,25 @@ proc www_browser  {url} {
         catch { exec {*}$cfg(browser) $url & }
 }; # www_browser
 
-proc show_window  {w} {
-    #? show window near current cursor position
-    set y   [winfo pointery $w]; incr y 23
-    set x   [winfo pointerx $w]; incr x 23
-    wm geometry  $w "+$x+$y"
-    wm deiconify $w
-}; # show_window
+proc bind_browser {w tagname} {
+    #? search for URLs in $w, mark them and bind key to open browser
+    global cfg
+    set anf [$w search -regexp -all -count end {\shttps?://[^\s]*} 1.0]
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i];
+        set t [string trim [$w get $a "$a + $e c"]];
+        set l [string length $t]
+        incr i
+        $w tag add    $tagname     $a "$a + $e c"
+        $w tag add    $tagname-$i  $a "$a + $e c"
+        $w tag config $tagname-$i -foreground [get_color link]
+        $w tag bind   $tagname-$i <ButtonPress> "www_browser $t"
+        if {$cfg(TIP)==0} { tooltip::tooltip $w -tag $tagname-$i "Open in browser: $t" }
+            # cannot use create_tip as we want to bind to $tagnmae and not $w
+    }
+    return
+}; # bind_browser
 
 proc create_selected {title val} {
     #? opens toplevel window with selectable text
@@ -1351,20 +1371,7 @@ proc create_about {} {
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
     $txt config -bg [get_color osaft]
 
-    # search for URLs, mark them and bind key to open browser
-    set anf [$txt search -regexp -all -count end {\shttps?://[^\s]*} 1.0]
-    set i 0
-    foreach a $anf {
-        set e [lindex $end $i];
-        set t [string trim [$txt get $a "$a + $e c"]];
-        set l [string length $t]
-        incr i
-        $txt tag add    HELP-URL     $a "$a + $e c"
-        $txt tag add    HELP-URL-$i  $a "$a + $e c"
-        $txt tag config HELP-URL-$i -foreground [get_color link]
-        $txt tag bind   HELP-URL-$i <ButtonPress> "www_browser $t"
-        if {$cfg(TIP)==0} { tooltip::tooltip $txt -tag HELP-URL-$i "Execute $cfg(browser) $t" }
-    }
+    bind_browser $txt ABOUT-URL
 
     # search for section headers and mark them bold
     set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-ZÄÖÜß ]+$} 1.0]
@@ -1641,12 +1648,16 @@ proc create_help  {sect} {
         incr i
     }
 
+    # 6. highlight all URLs and bind key
+    bind_browser $txt HELP-URL
+
     # finaly global markups
     $txt tag config   HELP-TOC  -foreground [get_color link]
     $txt tag config   HELP-HEAD -font osaftBold
     $txt tag config   HELP-TOC  -font osaftBold
     $txt tag config   HELP-LNK  -font osaftBold
     $txt tag config   HELP-CODE -background [get_color code]
+    $txt tag config   HELP-URL  -foreground [get_color link]
 
     _dbx " MARK: [$txt mark names]"
     if {$cfg(DEBUG) > 1} {
@@ -2457,7 +2468,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.126"
+update_status "o-saft.tcl 1.127"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
