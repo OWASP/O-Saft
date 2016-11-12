@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.550 16/11/03 12:20:15",
+    SID         => "@(#) yeast.pl 1.551 16/11/12 10:09:05",
     STR_VERSION => "16.10.08",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1564,6 +1564,7 @@ our %text = (
     'response'      => "<<response>>",
     'protocol'      => "<<protocol probably supported, but no ciphers accepted>>",
     'need-cipher'   => "<<check possible in conjunction with +cipher only>>",
+    'na'            => "<<N/A>>",
     'no-STS'        => "<<N/A as STS not set>>",
     'no-dns'        => "<<N/A as --no-dns in use>>",
     'no-cert'       => "<<N/A as --no-cert in use>>",
@@ -3080,15 +3081,15 @@ sub checkciphers($$) {
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
-        $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  "
+        $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  -"-
         # TR-02102-2, see 3.2.3
         if ($prot{$ssl}->{'cnt'} > 0) { # checks do not make sense if there're no ciphers
-            $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
-            $checks{'tr-02102'}->{val}  .= _prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
+            $checks{'tr-02102'} ->{val} .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
+            $checks{'tr-02102'} ->{val} .= _prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
             $checks{'tr-03116+'}->{val} .= $checks{'tr-02102'}->{val};  # same as TR-02102
-            $checks{'tr-03116-'}->{val} .= $checks{'tr-02102'}->{val};
+            $checks{'tr-03116-'}->{val} .= $checks{'tr-02102'}->{val};  # -"-
         }
-        $checks{'cnt_ciphers'}->{val}   += $prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
+        $checks{'cnt_ciphers'}  ->{val} += $prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
     }
     $checks{'edh_cipher'}->{val} = "" if ($checks{'edh_cipher'}->{val} ne "");  # good if we have them
 
@@ -3097,7 +3098,11 @@ sub checkciphers($$) {
     # we need our well known string, hence 'sslversion'
     $ssl    = $data{'sslversion'}->{val}($host, $port); # get selected protocol
     $cipher = $data{'selected'}->{val}($host, $port);   # get selected cipher
-    $checks{'pfs_cipherall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'pfs_ciphers'}});
+    if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'pfs_ciphers'})) {
+        $checks{'pfs_cipherall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'pfs_ciphers'}});
+    } else {
+        $checks{'pfs_cipherall'}->{val} = $text{'na'};
+    }
     #$checks{'pfs_cipher'}->{val} # done in checkdest()
     _trace("checkciphers() }");
     return;
@@ -3332,11 +3337,11 @@ sub checksizes($$) {
     $value =~ s/(----.+----\n)//g;
     chomp $value;
     $checks{'len_pembinary'}->{val} = sprintf("%d", length($value) / 8 * 6) + 1; # simple round()
-    $checks{'len_subject'}  ->{val} = length($data{'subject'}->{val}($host));
-    $checks{'len_issuer'}   ->{val} = length($data{'issuer'}->{val}($host));
-    $checks{'len_cps'}      ->{val} = length($data{'ext_cps'}->{val}($host));
-    $checks{'len_crl'}      ->{val} = length($data{'ext_crl'}->{val}($host));
-    #$checks{'len_crl_data'} ->{val} = length($data{'crl'}->{val}($host));
+    $checks{'len_subject'}  ->{val} = length($data{'subject'} ->{val}($host));
+    $checks{'len_issuer'}   ->{val} = length($data{'issuer'}  ->{val}($host));
+    $checks{'len_cps'}      ->{val} = length($data{'ext_cps'} ->{val}($host));
+    $checks{'len_crl'}      ->{val} = length($data{'ext_crl'} ->{val}($host));
+    #$checks{'len_crl_data'} ->{val} = length($data{'crl'}     ->{val}($host));
     $checks{'len_ocsp'}     ->{val} = length($data{'ocsp_uri'}->{val}($host));
     #$checks{'len_oids'}     ->{val} = length($data{'oids'}->{val}($host));
     $checks{'len_sernumber'}->{val} = int(length($data{'serial_hex'}->{val}($host)) / 2); # value are hex octets
@@ -3357,7 +3362,11 @@ sub checksizes($$) {
                 $checks{'modulus_exp_size'}->{val} = $text{'no-openssl'};
             } else {
                 $value =~ s/^(\d+).*/$1/;
-                $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
+                if ($value =~ m/\d+/) { # avoid perl warning "Argument isn't numeric" 
+                    $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
+                } else {
+                    $checks{'modulus_exp_size'}->{val}  = $text{'na'};
+                }
             }
             $value = $data{'modulus'}->{val}($host); # value are hex digits
             if ($value eq '<<openssl>>') {
@@ -4083,7 +4092,11 @@ sub checkdest($$) {
     #  it's ok if both are empty 'cause then no tickets are used
     $key   = 'session_ticket';
     $value = $data{$key}->{val}($host, $port);
-    $checks{'session_random'}->{val} = $value if ($value eq $data0{$key}->{val});
+    if (defined $data0{$key}->{val}) {  # avoid perl warning "Use uninitialized value in string"
+        $checks{'session_random'}->{val} = $value if ($value eq $data0{$key}->{val});
+    } else {
+        $checks{'session_random'}->{val} = $text{'na'};
+    }
 
     # check protocol support
     $key   = 'protocols';
@@ -4185,7 +4198,7 @@ sub checkhttp($$) {
         }
     }
 # TODO: invalid certs are not allowed for HSTS
-    $checks{'hsts_fqdn'}->{val} = "<<N/A>>" if ($http_location eq "");   # useless if no redirect
+    $checks{'hsts_fqdn'}->{val} = $text{'na'} if ($http_location eq "");  # useless if no redirect
     $checks{'pkp_pins'} ->{val} = $notxt if ($data{'https_pins'}->{val}($host) eq "");
 # TODO: pins= ==> fingerprint des Zertifikats
 
