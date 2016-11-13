@@ -31,11 +31,11 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.11.12',
+    SSLINFO_VERSION => '16.11.13',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.144 16/11/13 19:53:49',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.145 16/11/13 22:47:51',
 };
 
 ######################################################## public documentation #
@@ -975,6 +975,149 @@ sub _ssleay_get     {
     return $ret;
 } # _ssleay_get
 
+sub _ssleay_ctx_new {
+    #? get SSLeay CTX object; returns ctx object or undef
+    my $ctx     = undef;# CTX object to be created
+    my $ssl     = undef;
+    my $src     = "";   # function (name) where something failed
+    my $err     = "";
+    _settrace();
+    _trace("_ssleay_ctx_new()");
+    TRY: {
+        # prepare SSL's context object
+        ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
+            # CTX_v23_new() returns an object, errors are on error stack
+            # we use CTX_v23_new() 'cause of CTX_new() sets SSL_OP_NO_SSLv2
+            #
+        # set protocol options
+        ##########$ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
+        if (defined &Net::SSLeay::SSLv23_method) {
+            $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";   # set default SSL protocol
+            Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
+            # allow all protocols for backward compatibility; user specific
+            # restrictions are done later with  CTX_set_options()
+        } else {
+            $src = "Net::SSLeay::SSLv23_method()";
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
+            # if we don't have  SSLv23_method(), we better use the system's
+            # default behaviour, because anything else  would stick  on the
+            # specified protocol version, like SSLv3_method()
+        }
+        # Net::SSLeay::CTX_set_options(); # can not fail according description!
+        $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
+                Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
+# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
+# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
+        return $ctx;
+    } # TRY
+    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    _trace("_ssleay_ctx_new: $ctx.");
+    return undef;
+} # _ssleay_ctx_new
+
+sub _ssleay_ctx_ca  {
+    #? set certificate verify options (client mode); returns undef on failure
+    #  uses settings from $Net::SSLinfo::ca*
+    my $ctx     = shift;
+    my $ssl     = undef;
+    my $src     = "";   # function (name) where something failed
+    my $err     = "";
+    my $cafile  = "";
+    my $capath  = "";
+    _settrace();
+    _trace("_ssleay_ctx_ca($ctx)");
+    TRY: {
+        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
+            # we're in client mode where only  VERYFY_NONE  or  VERYFY_PEER  is
+            # used; as we want to get all informations,  even if something went
+            # wrong, we use VERIFY_NONE so we can proceed collecting data
+            # possible values:
+            #  0 = SSL_VERIFY_NONE
+            #  1 = SSL_VERIFY_PEER
+            #  2 = SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+            #  4 = SSL_VERIFY_CLIENT_ONCE
+        $src = "Net::SSLeay::CTX_load_verify_locations()";
+        $cafile = $Net::SSLinfo::ca_file || "";
+        if ($cafile !~ m#^(?:[a-zA-Z0-9_,.\\/()-])*$#) {
+            $err = "invalid characters for " . '$Net::SSLinfo::ca_file; not used';
+            last;
+        }
+        $capath = $Net::SSLinfo::ca_path || "";
+        if ($capath !~ m#^(?:[a-zA-Z0-9_,.\\/()-]*)$#) {
+            $err = "invalid characters for " . '$Net::SSLinfo::ca_path; not used';
+            last;
+        }
+        if (($capath . $cafile) ne "") { # CTX_load_verify_locations() fails if both are empty
+            Net::SSLeay::CTX_load_verify_locations($ctx, $cafile, $capath) or do {$err = $!} and last;
+            # CTX_load_verify_locations()  sets SSLeay's error stack,  which is
+            # roughly the same as $!
+        }
+        $src = "Net::SSLeay::CTX_set_verify_depth()";
+        if (defined $Net::SSLinfo::ca_depth) {
+            if ($Net::SSLinfo::ca_depth !~ m/^[0-9]$/) {
+                $err = "invalid value '$Net::SSLinfo::ca_depth' for " . '$Net::SSLinfo::ca_depth; not used';
+                last;
+            }
+            Net::SSLeay::CTX_set_verify_depth($ctx, $Net::SSLinfo::ca_depth);
+        }
+        # TODO: certificate CRL
+        # just code example, not yet tested
+        #
+        # enable Net::SSLeay CRL checking:
+        #   &Net::SSLeay::X509_STORE_set_flags
+        #       (&Net::SSLeay::CTX_get_cert_store($ssl),
+        #        &Net::SSLeay::X509_V_FLAG_CRL_CHECK);
+        return 1; # success
+    } # TRY
+    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    _trace("_ssleay_ctx_ca: undef.");
+    return undef;
+} # _ssleay_ctx_ca
+
+sub _ssleay_ssl_new {
+    #? create new SSL object; return SSL object or undef
+    #  uses $Net::SSLinfo::use_SNI
+    my $ctx     = shift;
+    my $host    = shift;
+    my $socket  = shift;
+    my $cipher  = shift;
+    my $ssl     = undef;
+    my $src     = "";   # function (name) where something failed
+    my $err     = "";
+    my $sniname = $Net::SSLinfo::use_SNI;
+       $sniname =~ s/\s//g; # ensure no spaces
+    _settrace();
+    _trace("_ssleay_ssl_new($ctx)");
+    TRY: {
+        #3. prepare SSL object
+        $src = 'Net::SSLeay::new()';
+        ($ssl=  Net::SSLeay::new($ctx))                        or {$err = $!} and last;
+        $src = 'Net::SSLeay::set_fd()';
+                Net::SSLeay::set_fd($ssl, fileno($socket))     or {$err = $!} and last;
+        $src = 'Net::SSLeay::set_cipher_list(' . $cipher .')';
+                Net::SSLeay::set_cipher_list($ssl, $cipher)    or {$err = $!} and last;
+        if ($sniname !~ m/^0?$/) {  # no SNI if 0 or empty string
+            _trace("do_ssl_open: SNI");
+           $sniname = $host if ($sniname =~ m/^1$/);# old style, Net::SSLinfo < 1.85
+            if (1.45 <= $Net::SSLeay::VERSION) {
+                $src = 'Net::SSLeay::set_tlsext_host_name()';
+                Net::SSLeay::set_tlsext_host_name($ssl, $sniname) or {$err = $!} and last;
+            } else {
+                # quick&dirty instead of:
+                #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
+                #  use constant TLSEXT_NAMETYPE_host_name    => 0
+                $src = 'Net::SSLeay::ctrl()';
+                Net::SSLeay::ctrl($ssl, 55, 0, $sniname)       or {$err = $!} and last;
+                # TODO: ctrl() sometimes fails but does not return errors, reason yet unknown
+            }
+        }
+        return $ssl;
+    } # TRY
+    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    _trace("_ssleay_ssl_new: undef.");
+    return undef;
+} # _ssleay_ssl_new
+
 sub _header_get     {
     #? get value for specified header from given HTTP response; empty if not exists
     my $head    = shift;   # header to search for
@@ -1120,8 +1263,6 @@ sub do_ssl_open($$$@) {
     my $err     = "";   # error string, if any, from sub-system $src
     my $ctx     = undef;
     my $ssl     = undef;
-    my $cafile  = "";
-    my $capath  = "";
     my $socket  = *FH;  # if we need it ...
     my $dum     = *FH;  # keep perl's -w quiet
        $dum     = undef;
@@ -1129,7 +1270,8 @@ sub do_ssl_open($$$@) {
     TRY: {
         #1. open TCP connection
         if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
-            unless (($Net::SSLinfo::starttls) || ($Net::SSLinfo::proxyhost)) { # $Net::SSLinfo::proxyport was already checked in main
+            unless (($Net::SSLinfo::starttls) || ($Net::SSLinfo::proxyhost)) {
+                   # $Net::SSLinfo::proxyport was already checked in main
                 #1a. no proxy and not starttls
                 $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
                 $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
@@ -1155,28 +1297,11 @@ sub do_ssl_open($$$@) {
             $socket = $Net::SSLinfo::socket;
         }
 
-        #2. prepare SSL's context object
-        ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
-            # CTX_v23_new() returns an object, errors are on error stack
-            # we use CTX_v23_new() 'cause of CTX_new() sets SSL_OP_NO_SSLv2
+        # TRY_PROTOCOL: {
+        #2. get SSL's context object
+        ($ctx = _ssleay_ctx_new())  or {$src = '_ssleay_ctx_new()'} and last;
 
-        #2a. set protocol options
-        $ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
-        if (defined &Net::SSLeay::SSLv23_method) {
-            $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";   # set default SSL protocol
-            Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
-            # allow all protocols for backward compatibility; user specific
-            # restrictions are done later with  CTX_set_options()
-        } else {
-            $src = "Net::SSLeay::SSLv23_method()";
-            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
-            # if we don't have  SSLv23_method(), we better use the system's
-            # default behaviour, because anything else  would stick  on the
-            # specified protocol version, like SSLv3_method()
-        }
-        $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
-                Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
-            # disable not specified SSL versions
+        #2a. disable not specified SSL versions
         foreach  my $ssl (keys %_SSLmap) {
             # $sslversions  passes the version which should be supported,  but
             # openssl and hence Net::SSLeay, configures what  should *not*  be
@@ -1188,83 +1313,19 @@ sub do_ssl_open($$$@) {
                 _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
                 Net::SSLeay::CTX_set_options($ctx, $bitmask);
             }
+            #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
+            #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
         }
-        $ssl = undef;
-
-# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
-# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
 # TODO: Client-Cert see smtp_tls_cert.pl
 # TODO: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
 ##print "#ERR: $!";
 
         #2b. set certificate verification options
-        Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
-            # we're in client mode where only  VERYFY_NONE  or  VERYFY_PEER  is
-            # used; as we want to get all informations,  even if something went
-            # wrong, we use VERIFY_NONE so we can proceed collecting data
-            # possible values:
-            #  0 = SSL_VERIFY_NONE
-            #  1 = SSL_VERIFY_PEER
-            #  2 = SSL_VERIFY_FAIL_IF_NO_PEER_CERT
-            #  4 = SSL_VERIFY_CLIENT_ONCE
-        $src = "Net::SSLeay::CTX_load_verify_locations()";
-        $cafile = $Net::SSLinfo::ca_file || "";
-        if ($cafile !~ m#^(?:[a-zA-Z0-9_,.\\/()-])*$#) {
-            $err = "invalid characters for " . '$Net::SSLinfo::ca_file; not used';
-            last;
-        }
-        $capath = $Net::SSLinfo::ca_path || "";
-        if ($capath !~ m#^(?:[a-zA-Z0-9_,.\\/()-]*)$#) {
-            $err = "invalid characters for " . '$Net::SSLinfo::ca_path; not used';
-            last;
-        }
-        if (($capath . $cafile) ne "") { # CTX_load_verify_locations() fails if both are empty
-            Net::SSLeay::CTX_load_verify_locations($ctx, $cafile, $capath) or do {$err = $!} and last;
-            # CTX_load_verify_locations()  sets SSLeay's error stack,  which is
-            # roughly the same as $!
-        }
-        $dum = $Net::SSLinfo::ca_crl;   # TODO: keep perl's -w quiet until used
-        $src = "Net::SSLeay::CTX_set_verify_depth()";
-        if (defined $Net::SSLinfo::ca_depth) {
-            if ($Net::SSLinfo::ca_depth !~ m/^[0-9]$/) {
-                $err = "invalid value '$Net::SSLinfo::ca_depth' for " . '$Net::SSLinfo::ca_depth; not used';
-                last;
-            }
-            Net::SSLeay::CTX_set_verify_depth($ctx, $Net::SSLinfo::ca_depth);
-        }
-        # TODO: certificate CRL
-        # just code example, not yet tested
-        #
-        # enable Net::SSLeay CRL checking:
-        #   &Net::SSLeay::X509_STORE_set_flags
-        #       (&Net::SSLeay::CTX_get_cert_store($ssl),
-        #        &Net::SSLeay::X509_V_FLAG_CRL_CHECK);
+        ($dum = _ssleay_ctx_ca($ctx))           or {$src = '_ssleay_ctx_ca()' } and last;
 
         #3. prepare SSL object
-        $src = 'Net::SSLeay::new()';
-        ($ssl=  Net::SSLeay::new($ctx))                        or {$err = $!} and last;
-        $src = 'Net::SSLeay::set_fd()';
-                Net::SSLeay::set_fd($ssl, fileno($socket))     or {$err = $!} and last;
-        $src = 'Net::SSLeay::set_cipher_list(' . $cipher .')';
-                Net::SSLeay::set_cipher_list($ssl, $cipher)    or {$err = $!} and last;
-        $Net::SSLinfo::use_SNI =~ s/\s//g;  # ensure no spaces
-        if ($Net::SSLinfo::use_SNI !~ m/^0?$/) {    # no SNI if 0 or empty string
-            _trace("do_ssl_open: SNI");
-            my $name = $Net::SSLinfo::use_SNI;
-               $name = $host if ($Net::SSLinfo::use_SNI =~ m/^1$/); # old style, Net::SSLinfo < 1.85
-            if (1.45 <= $Net::SSLeay::VERSION) {
-                $src = 'Net::SSLeay::set_tlsext_host_name()';
-                Net::SSLeay::set_tlsext_host_name($ssl, $name) or {$err = $!} and last;
-            } else {
-                # quick&dirty instead of:
-                #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
-                #  use constant TLSEXT_NAMETYPE_host_name    => 0
-                $src = 'Net::SSLeay::ctrl()';
-                Net::SSLeay::ctrl($ssl, 55, 0, $name)          or {$err = $!} and last;
-                # TODO: ctrl() sometimes fails but does not return errors, reason yet unknown
-            }
-        }
+        ($ssl = _ssleay_ssl_new($ctx, $host, $socket, $cipher)) or {$src = '_ssleay_ssl_new()'} and last;
 
         #4. connect SSL
         local $SIG{PIPE} = 'IGNORE';        # Avoid "Broken Pipe"
@@ -1277,8 +1338,7 @@ sub do_ssl_open($$$@) {
             $err  = $!;
             last;
         }
-        #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
-        #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
+        #} # TRY_PROTOCOL
 
         #5. SSL established, let's get informations
         # TODO: starting from here implement error checks
@@ -1552,7 +1612,7 @@ sub do_ssl_open($$$@) {
             #    0000 - 00 82 87 03 7b 42 7f b5-a2 fc 9a 95 9c 95 2c f3   ....{B........,.
             #    0010 - 69 91 54 a9 5b 7a 32 1c-08 b1 6e 3c 8c b7 b8 1f   i.T.[z2...n<....
             #    0020 - e4 89 63 3e 3c 0c aa bd-96 70 30 b2 cd 1e 2d c0   ..c><....p0...-.
-            #    0030 - e7 fe 10 cd d4 82 e9 8f-d8 ee 91 16 02 42 7b 93   .............B{.
+            #    0030 - e7 fe 10 cd d4 82 e9 8f-d8 ee 91 16 02 42 7b 93   .............B}.
             #    0040 - fc 93 82 c4 d3 fd 0a f3-c6 3d 77 ab 1d 25 4f 5a   .........=w..%OZ
             #    0050 - fc 44 9a 21 3e cb 18 e9-a4 44 1b 30 7c 98 4d 04   .D.!>....D.0|.M.
             #    0060 - bb 12 3e 67 c8 9a ad 99-b4 50 32 81 1e 54 70 2d   ..>g.....P2..Tp-
