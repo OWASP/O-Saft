@@ -31,11 +31,11 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.09.16',
+    SSLINFO_VERSION => '16.11.12',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.142 16/09/29 23:42:08',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.143 16/11/13 10:55:20',
 };
 
 ######################################################## public documentation #
@@ -541,7 +541,7 @@ sub do_ssl_open($$$@);
 sub do_ssl_close($$);
 sub do_openssl($$$$);
 
-sub _settrace {
+sub _settrace   {
     $trace = $Net::SSLinfo::trace;          # set global variable
     $Net::SSLeay::trace = $trace    if ($trace > 1);
         # must set $Net::SSLeay::trace here again as $Net::SSLinfo::trace
@@ -552,14 +552,14 @@ sub _settrace {
     return;
 }
 
-sub _trace($) { my $txt = shift; local $\ = "\n"; print '#' . SSLINFO . '::' . $txt if ($trace > 0); return; }
+sub _trace      { my $txt = shift; local $\ = "\n"; print '#' . SSLINFO . '::' . $txt if ($trace > 0); return; }
 
 # define some shortcuts to avoid $Net::SSLinfo::*
 my $_echo    = "";              # dangerous if aliased or wrong one found
 my $_timeout = undef;
 my $_openssl = undef;
 
-sub _setcmd() {
+sub _setcmd     {
     #? check for external commands and initialize if necessary
     return if (defined $_timeout);  # lazy check
     `$Net::SSLinfo::timeout --version 2>&1` and $_timeout = "$Net::SSLinfo::timeout $Net::SSLinfo::timeout_sec"; # without leading \, lazy
@@ -576,7 +576,7 @@ sub _setcmd() {
     return;
 } # _setcmd
 
-sub _traceSSL() {
+sub _traceSSLbitmasks {
     # print bitmasks of available SSL constants
     my $_op_sub;
     _settrace();
@@ -591,7 +591,7 @@ sub _traceSSL() {
         }
     }
     return;
-}
+} # _traceSSLbitmasks
 
 ##################################################### internal data structure #
 
@@ -631,6 +631,9 @@ $_SSLmap{'DTLSv1'} [1] = Net::SSLeay::OP_NO_DTLSv1()   if (eval {Net::SSLeay::OP
     #       we just need to check for undef then
 # TODO: %_SSLmap should be inherited from $cfg{openssl_version_map} or vice versa
 my %_SSLhex = map { $_SSLmap{$_}[0] => $_ } keys %_SSLmap;  # reverse map
+
+sub _SSLversion_get { return $_SSLmap{$_[0]}[0]; }
+sub _SSLbitmask_get { return $_SSLmap{$_[0]}[1]; }
 
 my %_SSLinfo= ( # our internal data structure
     'key'       => 'value',     # description
@@ -739,8 +742,8 @@ my %_SSLinfo= ( # our internal data structure
     'hsts_preload'      => "",  # preload attribute of STS header
 ); # %_SSLinfo
 
-sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
-    #? reset internal data structure
+sub _SSLinfo_reset  {
+    #? reset internal data structure%_SSLinfo ; for internal use only
     foreach my $key (keys %_SSLinfo) {
         $_SSLinfo{$key}     = "";
     }
@@ -758,8 +761,8 @@ sub _SSLinfo_reset() {  # reset %_SSLinfo, for internal use only
     return;
 } # _SSLinfo_reset
 
-sub test_ssleay() {
-    # availability and information about Net::SSLeay
+sub test_ssleay {
+    #? print availability and information about Net::SSLeay
     my $line = "#------------+-------------------+------------";
     my $data = "# Net::SSLeay{ function           1=available
 $line
@@ -825,14 +828,14 @@ $line
 } # test_ssleay
 
 
-sub _dump($$$) {
+sub _dump       {
     my $key = shift;
     my $txt = shift;
     my $val = shift;
     return sprintf("#{ %-12s:%s%s #}\n", $key, $txt, ($val || "<<undefined>>"));
 } # _dump
     # my ($label, $separator, $value) = @_;
-sub datadump() {
+sub datadump    {
     #? return internal data structure
     my $data = '';
     if ($Net::SSLinfo::use_sclient > 1) {
@@ -857,7 +860,7 @@ sub datadump() {
 
 ########################################################## internal functions #
 
-sub _SSLinfo_get($$$) {
+sub _SSLinfo_get    {
     # get specified value from %_SSLinfo, first parameter 'key' is mandatory
     my ($key, $host, $port) = @_;
     _settrace();
@@ -887,7 +890,7 @@ sub _SSLinfo_get($$$) {
 # general internal functions
 #
 
-sub _check_host($) {
+sub _check_host     {
     #? convert hostname to IP and store in $_SSLinfo{'host'}, returns 1 on success
     my $host = shift;
     _trace("_check_host($host)");
@@ -900,9 +903,9 @@ sub _check_host($) {
     }
     _trace("_check_host $_SSLinfo{'host'} $_SSLinfo{'ip'} .");
     return (defined $ip) ? 1 : undef;
-}
+} # _check_host
 
-sub _check_port($) {
+sub _check_port     {
     #? convert port name to number and store in $_SSLinfo{'port'}, returns 1 on success
     my $port = shift;
     _trace("_check_port($port)");
@@ -911,9 +914,9 @@ sub _check_port($) {
     $_SSLinfo{'port'} = $port if (defined $port);
     _trace("_check_port $port .");
     return (defined $port) ? 1 : undef;
-}
+} # _check_port
 
-sub _ssleay_get($$) {
+sub _ssleay_get     {
     #? get specified value from SSLeay certificate
         # wrapper to get data provided by certificate
         # note that all these function may produce "segmentation fault" or alike if
@@ -972,7 +975,7 @@ sub _ssleay_get($$) {
     return $ret;
 } # _ssleay_get
 
-sub _header_get($$) {
+sub _header_get     {
     #? get value for specified header from given HTTP response; empty if not exists
     my $head    = shift;   # header to search for
     my $response= shift; # response where to serach
@@ -985,7 +988,7 @@ sub _header_get($$) {
     return $value;
 } # _header_get
 
-sub _openssl_MS($$$$) {
+sub _openssl_MS     {
     #? wrapper to call external openssl executable on windows
     my $mode = shift;   # must be openssl command
     my $host = shift;   # '' if not used
@@ -1035,7 +1038,7 @@ sub _openssl_MS($$$$) {
     return $data;
 } # _openssl_MS
 
-sub _openssl_x509($$) {
+sub _openssl_x509   {
     #? call external openssl executable to retrive more data from PEM
     my $pem  = shift;
     my $mode = shift;   # must be one of openssl x509's options
@@ -1104,19 +1107,19 @@ sub do_ssl_open($$$@) {
     _settrace();
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
-    _traceSSL() if ($trace > 0);
-    #_SSLinfo_reset(); # <== does not work yet as it clears everything
+    _traceSSLbitmasks() if ($trace > 0);
 
+    #_SSLinfo_reset(); # <== does not work yet as it clears everything
     if ($cipher =~ m/^\s*$/) {
         $cipher = $_SSLinfo{'cipherlist'};
     } else {
         $_SSLinfo{'cipherlist'} = $cipher;
     }
     _trace("do_ssl_open cipherlist: $_SSLinfo{'cipherlist'}");
-    my $src;         # function where something failed
-    my $err = "";    # error string, if any, from sub-system $src
-    my $ctx = undef;
-    my $ssl = undef;
+    my $src;            # function (name) where something failed
+    my $err     = "";   # error string, if any, from sub-system $src
+    my $ctx     = undef;
+    my $ssl     = undef;
     my $cafile  = "";
     my $capath  = "";
     my $socket  = *FH;  # if we need it ...
@@ -1223,9 +1226,10 @@ sub do_ssl_open($$$@) {
             # supported, so we skip all versions found in  $sslversions
             next if ($sslversions =~ m/^\s*$/); # no version given, leave default
             next if (grep{/^$ssl$/} split(" ", $sslversions));
-            if (defined $_SSLmap{$ssl}[1]) {        # if there is a bitmask, disable this version
+            my $bitmask = _SSLbitmask_get($ssl);
+            if (defined $bitmask) {        # if there is a bitmask, disable this version
                 _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
-                Net::SSLeay::CTX_set_options($ctx, $_SSLmap{$ssl}[1]) if(defined $_SSLmap{$ssl}[1]);
+                Net::SSLeay::CTX_set_options($ctx, $bitmask);
             }
         }
         $ssl = undef;
@@ -1964,7 +1968,7 @@ Does not require connection to any target.
 
 =cut
 
-sub cipher_list {
+sub cipher_list     {
     my $pattern = shift || $_SSLinfo{'cipherlist'}; # use default if unset
     my ($ctx, $ssl, $cipher);
     my $priority = 0;
@@ -1983,7 +1987,7 @@ sub cipher_list {
     return (wantarray) ? @list : join(' ', @list);
 } # cipher_list
 
-sub cipher_local {
+sub cipher_local    {
     my $pattern = shift || $_SSLinfo{'cipherlist'}; # use default if unset
     my $list;
     _trace("cipher_local($pattern)");
@@ -1995,7 +1999,7 @@ sub cipher_local {
 } # cipher_local
 
 ## no critic qw(Subroutines::RequireArgUnpacking)
-sub ciphers {
+sub ciphers         {
     return cipher_list( @_) if ($Net::SSLinfo::use_openssl == 0);
     return cipher_local(@_);
 } # ciphers
@@ -2449,14 +2453,14 @@ sub verify_hostname {
     }
     $match = ($host eq $cname) ? 'matches' : 'does not match';
     return sprintf("Given hostname '%s' %s CN '%s' in certificate", $host, $match, $cname);
-}
+} # verify_hostname
 
 =head2 verify_altname( ), verify_alias( )
 
 Verify if given hostname matches alternate name (subjectAltNames) in certificate.
 =cut
 
-sub verify_altname($$) {
+sub verify_altname  {
     my ($host, $port) = @_;
     return if !defined do_ssl_open($host, $port, '');
     return $Net::SSLinfo::no_cert_txt if ($Net::SSLinfo::no_cert != 0);
@@ -2488,31 +2492,31 @@ sub verify_altname($$) {
     }
     _trace("verify_altname() done.");
     return sprintf("Given hostname '%s' %s alternate name '%s' in certificate", $host, $match, $cname);
-}
+} # verify_altname
 
-sub verify_alias { verify_altname($_[0], $_[1]); return; }
+sub verify_alias    { verify_altname($_[0], $_[1]); return; }
 
-sub _check_peer() {
+sub _check_peer     {
     # TBD
     my ($ok, $x509_store_ctx) = @_;
     _trace("_check_peer($ok, $x509_store_ctx)");
     $_SSLinfo{'verify_cnt'} += 1;
     return $ok;
-}
-sub _check_client_cert() {print "##check_client_cert\n"; return; }
+} # _check_peer
+sub _check_client_cert {print "##check_client_cert\n"; return; }
 #$my $err = Net::SSLeay::set_verify ($ssl, Net::SSLeay::VERIFY_CLIENT_ONCE, \&_check_client_cert );
 
-sub _check_crl($$) {
+sub _check_crl      {
     # TBD
     my $ssl = shift;
     _trace("_check_crl()");
     return;
-}
+} # _check_crl
 
 sub error($) {
     # TBD
     #return Net::SSLeay::ERR_get_error;
-}
+} # error
 
 =pod
 
@@ -2531,7 +2535,7 @@ L<Net::SSLeay(1)>
 
 =cut
 
-sub net_sslinfo_done() {};      # dummy to check successful include
+sub net_sslinfo_done {};        # dummy to check successful include
 ## PACKAGE }
 
 unless (defined caller) {       # print myself or open connection
