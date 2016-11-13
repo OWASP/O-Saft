@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.143 16/11/13 10:55:20',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.144 16/11/13 19:53:49',
 };
 
 ######################################################## public documentation #
@@ -1160,7 +1160,45 @@ sub do_ssl_open($$$@) {
             # CTX_v23_new() returns an object, errors are on error stack
             # we use CTX_v23_new() 'cause of CTX_new() sets SSL_OP_NO_SSLv2
 
-        #2a. set certificate verification options
+        #2a. set protocol options
+        $ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
+        if (defined &Net::SSLeay::SSLv23_method) {
+            $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";   # set default SSL protocol
+            Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
+            # allow all protocols for backward compatibility; user specific
+            # restrictions are done later with  CTX_set_options()
+        } else {
+            $src = "Net::SSLeay::SSLv23_method()";
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
+            # if we don't have  SSLv23_method(), we better use the system's
+            # default behaviour, because anything else  would stick  on the
+            # specified protocol version, like SSLv3_method()
+        }
+        $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
+                Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
+            # disable not specified SSL versions
+        foreach  my $ssl (keys %_SSLmap) {
+            # $sslversions  passes the version which should be supported,  but
+            # openssl and hence Net::SSLeay, configures what  should *not*  be
+            # supported, so we skip all versions found in  $sslversions
+            next if ($sslversions =~ m/^\s*$/); # no version given, leave default
+            next if (grep{/^$ssl$/} split(" ", $sslversions));
+            my $bitmask = _SSLbitmask_get($ssl);
+            if (defined $bitmask) {        # if there is a bitmask, disable this version
+                _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
+                Net::SSLeay::CTX_set_options($ctx, $bitmask);
+            }
+        }
+        $ssl = undef;
+
+# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
+# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
+# TODO: Client-Cert see smtp_tls_cert.pl
+# TODO: proxy settings work in HTTP mode only
+##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
+##print "#ERR: $!";
+
+        #2b. set certificate verification options
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
             # we're in client mode where only  VERYFY_NONE  or  VERYFY_PEER  is
             # used; as we want to get all informations,  even if something went
@@ -1202,44 +1240,6 @@ sub do_ssl_open($$$@) {
         #   &Net::SSLeay::X509_STORE_set_flags
         #       (&Net::SSLeay::CTX_get_cert_store($ssl),
         #        &Net::SSLeay::X509_V_FLAG_CRL_CHECK);
-
-        #2b. set protocol options
-        $ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
-        if (defined &Net::SSLeay::SSLv23_method) {
-            $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";   # set default SSL protocol
-            Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
-            # allow all protocols for backward compatibility; user specific
-            # restrictions are done later with  CTX_set_options()
-        } else {
-            $src = "Net::SSLeay::SSLv23_method()";
-            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
-            # if we don't have  SSLv23_method(), we better use the system's
-            # default behaviour, because anything else  would stick  on the
-            # specified protocol version, like SSLv3_method()
-        }
-        $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
-                Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL); # can not fail according description!
-            # disable not specified SSL versions
-        foreach  my $ssl (keys %_SSLmap) {
-            # $sslversions  passes the version which should be supported,  but
-            # openssl and hence Net::SSLeay, configures what  should *not*  be
-            # supported, so we skip all versions found in  $sslversions
-            next if ($sslversions =~ m/^\s*$/); # no version given, leave default
-            next if (grep{/^$ssl$/} split(" ", $sslversions));
-            my $bitmask = _SSLbitmask_get($ssl);
-            if (defined $bitmask) {        # if there is a bitmask, disable this version
-                _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
-                Net::SSLeay::CTX_set_options($ctx, $bitmask);
-            }
-        }
-        $ssl = undef;
-
-# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
-# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
-# TODO: Client-Cert see smtp_tls_cert.pl
-# TODO: proxy settings work in HTTP mode only
-##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
-##print "#ERR: $!";
 
         #3. prepare SSL object
         $src = 'Net::SSLeay::new()';
