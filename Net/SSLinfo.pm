@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.145 16/11/13 22:47:51',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.147 16/11/14 19:47:02',
 };
 
 ######################################################## public documentation #
@@ -340,7 +340,8 @@ use base qw(Exporter);
 our $VERSION   = SSLINFO_VERSION;
 our @EXPORT_OK = qw(
         net_sslinfo_done
-        test_ssleay
+        ssleay_methods
+        ssleay_test
         datadump
         do_ssl_open
         do_ssl_close
@@ -761,36 +762,72 @@ sub _SSLinfo_reset  {
     return;
 } # _SSLinfo_reset
 
-sub test_ssleay {
+sub ssleay_methods  {
+    #? returns list of available Net::SSLeay::*_method; most important first
+# TODO:  check for mismatch Net::SSLeay::*_method and Net::SSLeay::CTX_*_new
+    my @list;
+    # following sequence is important: most modern methods first; DTLS not yet important
+    push(@list, 'TLSv1_3_method'  ) if (defined &Net::SSLeay::TLSv1_3_method);  # Net::SSLeay > 1.72
+    push(@list, 'TLSv1_2_method'  ) if (defined &Net::SSLeay::TLSv1_2_method);
+    push(@list, 'TLSv1_1_method'  ) if (defined &Net::SSLeay::TLSv1_1_method);
+    push(@list, 'TLSv1_method'    ) if (defined &Net::SSLeay::TLSv1_method);
+    push(@list, 'SSLv23_method'   ) if (defined &Net::SSLeay::SSLv23_method);
+    push(@list, 'SSLv3_method'    ) if (defined &Net::SSLeay::SSLv3_method);
+    push(@list, 'SSLv2_method'    ) if (defined &Net::SSLeay::SSLv2_method);
+    push(@list, 'DTLSv1_3_method' ) if (defined &Net::SSLeay::DTLSv1_3_method); # Net::SSLeay > 1.72
+    push(@list, 'DTLSv1_2_method' ) if (defined &Net::SSLeay::DTLSv1_2_method); # Net::SSLeay > 1.72
+    push(@list, 'DTLSv1_1_method' ) if (defined &Net::SSLeay::DTLSv1_1_method); # Net::SSLeay > 1.72
+    push(@list, 'DTLSv1_method'   ) if (defined &Net::SSLeay::DTLSv1_method);   # Net::SSLeay > 1.72
+    push(@list, 'DTLS_method'     ) if (defined &Net::SSLeay::DTLS_method);     # Net::SSLeay > 1.72
+    push(@list, 'CTX_tlsv1_3_new' ) if (defined &Net::SSLeay::CTX_tlsv1_3_new);
+    push(@list, 'CTX_tlsv1_2_new' ) if (defined &Net::SSLeay::CTX_tlsv1_2_new);
+    push(@list, 'CTX_tlsv1_1_new' ) if (defined &Net::SSLeay::CTX_tlsv1_1_new);
+    push(@list, 'CTX_tlsv1_0_new' ) if (defined &Net::SSLeay::CTX_tlsv1_0_new);
+    push(@list, 'CTX_tlsv1_new'   ) if (defined &Net::SSLeay::CTX_tlsv1_new);
+    push(@list, 'CTX_v23_new'     ) if (defined &Net::SSLeay::CTX_v23_new);
+    push(@list, 'CTX_v3_new'      ) if (defined &Net::SSLeay::CTX_v3_new);
+    push(@list, 'CTX_v2_new'      ) if (defined &Net::SSLeay::CTX_v2_new);
+    push(@list, 'CTX_new_with_method') if (defined &Net::SSLeay::CTX_new_with_method);
+    push(@list, 'CTX_new'         ) if (defined &Net::SSLeay::CTX_new);
+    push(@list, 'CTX_dtlsv1_3_new') if (defined &Net::SSLeay::CTX_dtlsv1_3_new);
+    push(@list, 'CTX_dtlsv1_2_new') if (defined &Net::SSLeay::CTX_dtlsv1_2_new);
+    push(@list, 'CTX_dtlsv1_new'  ) if (defined &Net::SSLeay::CTX_dtlsv1_new);
+    push(@list, 'CTX_get_options' ) if (defined &Net::SSLeay::CTX_get_options);
+    return @list;
+} # ssleay_methods
+
+sub ssleay_test     {
     #? print availability and information about Net::SSLeay
-    my $line = "#------------+-------------------+------------";
+    my @list = ssleay_methods();
+    my $line = "#------------+------------------+-------------";
     my $data = "# Net::SSLeay{ function           1=available
 $line
-#            ::SSLv2_method     = " . ((defined &Net::SSLeay::SSLv2_method)     ? 1 : 0) . "
-#            ::SSLv3_method     = " . ((defined &Net::SSLeay::SSLv3_method)     ? 1 : 0) . "
-#            ::SSLv23_method    = " . ((defined &Net::SSLeay::SSLv23_method)    ? 1 : 0) . "
-#            ::TLSv1_method     = " . ((defined &Net::SSLeay::TLSv1_method)     ? 1 : 0) . "
-#            ::TLSv1_1_method   = " . ((defined &Net::SSLeay::TLSv1_1_method)   ? 1 : 0) . "
-#            ::TLSv1_2_method   = " . ((defined &Net::SSLeay::TLSv1_2_method)   ? 1 : 0) . "
+#            ::SSLv2_method     = " . ((grep{/^SSLv2_method$/}     @list) ? 1 : 0) . "
+#            ::SSLv3_method     = " . ((grep{/^SSLv3_method$/}     @list) ? 1 : 0) . "
+#            ::SSLv23_method    = " . ((grep{/^SSLv23_method$/}    @list) ? 1 : 0) . "
+#            ::TLSv1_method     = " . ((grep{/^TLSv1_method$/}     @list) ? 1 : 0) . "
+#            ::TLSv1_1_method   = " . ((grep{/^TLSv1_1_method$/}   @list) ? 1 : 0) . "
+#            ::TLSv1_2_method   = " . ((grep{/^TLSv1_2_method$/}   @list) ? 1 : 0) . "
 #{ following missing in Net::SSLeay (up to 1.72):
-#            ::TLSv1_3_method   = " . ((defined &Net::SSLeay::TLSv1_3_method)   ? 1 : 0) . "
-#            ::DTLSv1_method    = " . ((defined &Net::SSLeay::DTLSv1_method)    ? 1 : 0) . "
-#            ::DTLSv1_2_method  = " . ((defined &Net::SSLeay::DTLSv1_2_method)  ? 1 : 0) . "
-#            ::DTLS_method      = " . ((defined &Net::SSLeay::DTLS_method)      ? 1 : 0) . "
+#            ::TLSv1_3_method   = " . ((grep{/^TLSv1_3_method$/}   @list) ? 1 : 0) . "
+#            ::DTLSv1_method    = " . ((grep{/^DTLSv1_method$/}    @list) ? 1 : 0) . "
+#            ::DTLSv1_2_method  = " . ((grep{/^DTLSv1_2_method$/}  @list) ? 1 : 0) . "
+#            ::DTLS_method      = " . ((grep{/^DTLS_method$/}      @list) ? 1 : 0) . "
 #}
-#            ::CTX_new_with_method = " . ((defined &Net::SSLeay::CTX_new_with_method) ? 1 : 0) . "
-#            ::CTX_new          = " . ((defined &Net::SSLeay::CTX_new)          ? 1 : 0) . "
-#            ::CTX_v2_new       = " . ((defined &Net::SSLeay::CTX_v2_new)       ? 1 : 0) . "
-#            ::CTX_v3_new       = " . ((defined &Net::SSLeay::CTX_v3_new)       ? 1 : 0) . "
-#            ::CTX_v23_new      = " . ((defined &Net::SSLeay::CTX_v23_new)      ? 1 : 0) . "
-#            ::CTX_tlsv1_new    = " . ((defined &Net::SSLeay::CTX_tlsv1_new)    ? 1 : 0) . "
-#            ::CTX_tlsv1_0_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_0_new)  ? 1 : 0) . "
-#            ::CTX_tlsv1_1_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_1_new)  ? 1 : 0) . "
-#            ::CTX_tlsv1_2_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_2_new)  ? 1 : 0) . "
-#            ::CTX_tlsv1_3_new  = " . ((defined &Net::SSLeay::CTX_tlsv1_3_new)  ? 1 : 0) . "
-#            ::CTX_get_options  = " . ((defined &Net::SSLeay::CTX_get_options)  ? 1 : 0) . "
-#            ::CTX_dtlsv1_new   = " . ((defined &Net::SSLeay::CTX_dtlsv1_new)   ? 1 : 0) . "
-#            ::CTX_dtlsv1_2_new = " . ((defined &Net::SSLeay::CTX_dtlsv1_2_new) ? 1 : 0) . "
+#            ::CTX_new_with_method = " . ((grep{/^CTX_new_with_method$/} @list) ? 1 : 0) . "
+#            ::CTX_new          = " . ((grep{/^CTX_new$/}          @list) ? 1 : 0) . "
+#            ::CTX_v2_new       = " . ((grep{/^CTX_v2_new$/}       @list) ? 1 : 0) . "
+#            ::CTX_v3_new       = " . ((grep{/^CTX_v3_new$/}       @list) ? 1 : 0) . "
+#            ::CTX_v23_new      = " . ((grep{/^CTX_v23_new$/}      @list) ? 1 : 0) . "
+#            ::CTX_tlsv1_new    = " . ((grep{/^CTX_tlsv1_new$/}    @list) ? 1 : 0) . "
+#            ::CTX_tlsv1_0_new  = " . ((grep{/^CTX_tlsv1_0_new$/}  @list) ? 1 : 0) . "
+#            ::CTX_tlsv1_1_new  = " . ((grep{/^CTX_tlsv1_1_new$/}  @list) ? 1 : 0) . "
+#            ::CTX_tlsv1_2_new  = " . ((grep{/^CTX_tlsv1_2_new$/}  @list) ? 1 : 0) . "
+#            ::CTX_tlsv1_3_new  = " . ((grep{/^CTX_tlsv1_3_new$/}  @list) ? 1 : 0) . "
+#            ::CTX_dtlsv1_new   = " . ((grep{/^CTX_dtlsv1_new$/}   @list) ? 1 : 0) . "
+#            ::CTX_dtlsv1_2_new = " . ((grep{/^CTX_dtlsv1_2_new$/} @list) ? 1 : 0) . "
+#            ::CTX_dtlsv1_3_new = " . ((grep{/^CTX_dtlsv1_3_new$/} @list) ? 1 : 0) . "
+#            ::CTX_get_options  = " . ((grep{/^CTX_get_options$/}  @list) ? 1 : 0) . "
 $line
 # Net::SSLeay} function
 # Net::SSLeay{ constant           hex value
@@ -822,10 +859,16 @@ $line
 #            ::CTX_get_verify_mode(CTX) = " . sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode(Net::SSLeay::CTX_v23_new())) . "
 #            ::CTX_get_verify_depth(CTX)= " . Net::SSLeay::CTX_get_verify_depth(Net::SSLeay::CTX_v23_new()) . "
 # Net::SSLeay::CTX_v23_new }
+# Net::SSLeay::CTX_tlsv1_2_new {
+#            ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options(Net::SSLeay::CTX_tlsv1_2_new())) . "
+#            ::CTX_get_timeout(CTX)= " . Net::SSLeay::CTX_get_timeout(Net::SSLeay::CTX_tlsv1_2_new()) . "
+#            ::CTX_get_verify_mode(CTX) = " . sprintf('0x%08x', Net::SSLeay::CTX_get_verify_mode(Net::SSLeay::CTX_tlsv1_2_new())) . "
+#            ::CTX_get_verify_depth(CTX)= " . Net::SSLeay::CTX_get_verify_depth(Net::SSLeay::CTX_tlsv1_2_new()) . "
+# Net::SSLeay::CTX_tlsv1_2_new }
 # Net::SSLeay} call\n";
 
     return $data;
-} # test_ssleay
+} # ssleay_test
 
 
 sub _dump       {
@@ -1297,48 +1340,49 @@ sub do_ssl_open($$$@) {
             $socket = $Net::SSLinfo::socket;
         }
 
-        # TRY_PROTOCOL: {
-        #2. get SSL's context object
-        ($ctx = _ssleay_ctx_new())  or {$src = '_ssleay_ctx_new()'} and last;
+        TRY_PROTOCOL: {
+print "### " . join " ", ssleay_methods();
+            #2. get SSL's context object
+            ($ctx = _ssleay_ctx_new())  or {$src = '_ssleay_ctx_new()'} and last;
 
-        #2a. disable not specified SSL versions
-        foreach  my $ssl (keys %_SSLmap) {
-            # $sslversions  passes the version which should be supported,  but
-            # openssl and hence Net::SSLeay, configures what  should *not*  be
-            # supported, so we skip all versions found in  $sslversions
-            next if ($sslversions =~ m/^\s*$/); # no version given, leave default
-            next if (grep{/^$ssl$/} split(" ", $sslversions));
-            my $bitmask = _SSLbitmask_get($ssl);
-            if (defined $bitmask) {        # if there is a bitmask, disable this version
-                _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
-                Net::SSLeay::CTX_set_options($ctx, $bitmask);
+            #2a. disable not specified SSL versions
+            foreach  my $ssl (keys %_SSLmap) {
+                # $sslversions  passes the version which should be supported,  but
+                # openssl and hence Net::SSLeay, configures what  should *not*  be
+                # supported, so we skip all versions found in  $sslversions
+                next if ($sslversions =~ m/^\s*$/); # no version given, leave default
+                next if (grep{/^$ssl$/} split(" ", $sslversions));
+                my $bitmask = _SSLbitmask_get($ssl);
+                if (defined $bitmask) {        # if there is a bitmask, disable this version
+                    _trace("do_ssl_open: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
+                    Net::SSLeay::CTX_set_options($ctx, $bitmask);
+                }
+                #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
+                #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
             }
-            #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
-            #  or =3  or =10  seems not to work, reason unknown, hence CTX_set_options() above
-        }
 # TODO: Client-Cert see smtp_tls_cert.pl
 # TODO: proxy settings work in HTTP mode only
 ##Net::SSLeay::set_proxy('some.tld', 84, 'z00', 'pass');
 ##print "#ERR: $!";
 
-        #2b. set certificate verification options
-        ($dum = _ssleay_ctx_ca($ctx))           or {$src = '_ssleay_ctx_ca()' } and last;
+            #2b. set certificate verification options
+            ($dum = _ssleay_ctx_ca($ctx))           or {$src = '_ssleay_ctx_ca()' } and last;
 
-        #3. prepare SSL object
-        ($ssl = _ssleay_ssl_new($ctx, $host, $socket, $cipher)) or {$src = '_ssleay_ssl_new()'} and last;
+            #3. prepare SSL object
+            ($ssl = _ssleay_ssl_new($ctx, $host, $socket, $cipher)) or {$src = '_ssleay_ssl_new()'} and last;
 
-        #4. connect SSL
-        local $SIG{PIPE} = 'IGNORE';        # Avoid "Broken Pipe"
-        my $ret;
-        $src = 'Net::SSLeay::connect() ';
-        $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
-        if ($ret <= 0) {
-            $src .= " failed start"     if ($ret <  0); # i.e. no matching protocol
-            $src .= " failed handshake" if ($ret == 0);
-            $err  = $!;
-            last;
-        }
-        #} # TRY_PROTOCOL
+            #4. connect SSL
+            local $SIG{PIPE} = 'IGNORE';        # Avoid "Broken Pipe"
+            my $ret;
+            $src = 'Net::SSLeay::connect() ';
+            $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
+            if ($ret <= 0) {
+                $src .= " failed start"     if ($ret <  0); # i.e. no matching protocol
+                $src .= " failed handshake" if ($ret == 0);
+                $err  = $!;
+                last;
+            }
+        } # TRY_PROTOCOL
 
         #5. SSL established, let's get informations
         # TODO: starting from here implement error checks
@@ -2114,10 +2158,15 @@ Get version from certificate.
 
 =pod
 
-=head2 test_ssleay( )
+=head2 ssleay_methods( )
+
+Return list of available methods:  Net::SSLeay::*_method and 
+Net::SSLeay::CTX_*_new . Most important (newest) method first.
+
+=head2 ssleay_test( )
 
 Test availability and print information about Net::SSLeay:
-Example: C<perl -MNet::SSLinfo -le 'print Net::SSLinfo::test_ssleay();'>
+Example: C<perl -MNet::SSLinfo -le 'print Net::SSLinfo::ssleay_test();'>
 
 =head2 datadump( )
 
