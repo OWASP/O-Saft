@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.147 16/11/14 19:47:02',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.148 16/11/14 19:55:58',
 };
 
 ######################################################## public documentation #
@@ -633,8 +633,9 @@ $_SSLmap{'DTLSv1'} [1] = Net::SSLeay::OP_NO_DTLSv1()   if (eval {Net::SSLeay::OP
 # TODO: %_SSLmap should be inherited from $cfg{openssl_version_map} or vice versa
 my %_SSLhex = map { $_SSLmap{$_}[0] => $_ } keys %_SSLmap;  # reverse map
 
-sub _SSLversion_get { return $_SSLmap{$_[0]}[0]; }
-sub _SSLbitmask_get { return $_SSLmap{$_[0]}[1]; }
+sub _SSLversion_get { return $_SSLmap{$_[0]}[0]; }  ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _SSLbitmask_get { return $_SSLmap{$_[0]}[1]; }  ## no critic qw(Subroutines::RequireArgUnpacking)
+                                # for 'no critic' above, see comment far below
 
 my %_SSLinfo= ( # our internal data structure
     'key'       => 'value',     # description
@@ -1055,7 +1056,7 @@ sub _ssleay_ctx_new {
     } # TRY
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
     _trace("_ssleay_ctx_new: $ctx.");
-    return undef;
+    return;
 } # _ssleay_ctx_new
 
 sub _ssleay_ctx_ca  {
@@ -1114,7 +1115,7 @@ sub _ssleay_ctx_ca  {
     } # TRY
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
     _trace("_ssleay_ctx_ca: undef.");
-    return undef;
+    return;
 } # _ssleay_ctx_ca
 
 sub _ssleay_ssl_new {
@@ -1158,7 +1159,7 @@ sub _ssleay_ssl_new {
     } # TRY
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
     _trace("_ssleay_ssl_new: undef.");
-    return undef;
+    return;
 } # _ssleay_ssl_new
 
 sub _header_get     {
@@ -1341,7 +1342,6 @@ sub do_ssl_open($$$@) {
         }
 
         TRY_PROTOCOL: {
-print "### " . join " ", ssleay_methods();
             #2. get SSL's context object
             ($ctx = _ssleay_ctx_new())  or {$src = '_ssleay_ctx_new()'} and last;
 
