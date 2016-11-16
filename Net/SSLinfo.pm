@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.148 16/11/14 19:55:58',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.149 16/11/17 00:52:09',
 };
 
 ######################################################## public documentation #
@@ -794,6 +794,8 @@ sub ssleay_methods  {
     push(@list, 'CTX_dtlsv1_2_new') if (defined &Net::SSLeay::CTX_dtlsv1_2_new);
     push(@list, 'CTX_dtlsv1_new'  ) if (defined &Net::SSLeay::CTX_dtlsv1_new);
     push(@list, 'CTX_get_options' ) if (defined &Net::SSLeay::CTX_get_options);
+    push(@list, 'CTX_set_options' ) if (defined &Net::SSLeay::CTX_set_options);
+    push(@list, 'CTX_set_timeout' ) if (defined &Net::SSLeay::CTX_set_timeout);
     return @list;
 } # ssleay_methods
 
@@ -829,6 +831,8 @@ $line
 #            ::CTX_dtlsv1_2_new = " . ((grep{/^CTX_dtlsv1_2_new$/} @list) ? 1 : 0) . "
 #            ::CTX_dtlsv1_3_new = " . ((grep{/^CTX_dtlsv1_3_new$/} @list) ? 1 : 0) . "
 #            ::CTX_get_options  = " . ((grep{/^CTX_get_options$/}  @list) ? 1 : 0) . "
+#            ::CTX_set_options  = " . ((grep{/^CTX_set_options$/}  @list) ? 1 : 0) . "
+#            ::CTX_set_timeout  = " . ((grep{/^CTX_set_timeout$/}  @list) ? 1 : 0) . "
 $line
 # Net::SSLeay} function
 # Net::SSLeay{ constant           hex value
@@ -974,6 +978,8 @@ sub _ssleay_get     {
         return '';
     }
 
+# TODO: if ! $x509   to avoid "Segmentation fault" if $x509 empty
+
     return Net::SSLeay::X509_get_version(        $x509) + 1     if ($key eq 'version');
     return Net::SSLeay::X509_get_fingerprint(    $x509,  'md5') if ($key eq 'md5');
     return Net::SSLeay::X509_get_fingerprint(    $x509, 'sha1') if ($key eq 'sha1');
@@ -1021,41 +1027,134 @@ sub _ssleay_get     {
 
 sub _ssleay_ctx_new {
     #? get SSLeay CTX object; returns ctx object or undef
+    my $method  = shift;# CTX method to be used for creating object
     my $ctx     = undef;# CTX object to be created
     my $ssl     = undef;
     my $src     = "";   # function (name) where something failed
     my $err     = "";
     _settrace();
-    _trace("_ssleay_ctx_new()");
+    _trace("_ssleay_ctx_new($method)");
+    $src = "Net::SSLeay::$method";
+    _trace("_ssleay_ctx_new: $src");
+    $! = undef;         # avoid using cached error messages
     TRY: {
-        # prepare SSL's context object
-        ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
-            # CTX_v23_new() returns an object, errors are on error stack
+        # no proper generic way to replace following ugly SWITCH code, however: it's save
+        # calling function already checked for CTX_*  and  *_method, but we do
+        # not have the information (aka result from ssleay_methods()) here, so
+        # we need to check for existance of  *_method  again
+        # CTX_* (i.e. CTX_v23_new) returns an object, errors are on error stack
+        # last gets out of TRY block
+        $_   = $method; # { # SWITCH
+        /CTX_tlsv1_3_new/  && do {
+            # prepare SSL's context object
+            ($ctx = Net::SSLeay::CTX_tlsv1_3_new()) or last;# create object
+            # set protocol options
+            if (defined &Net::SSLeay::TLSv1_3_method) {     # set default SSL protocol
+                $src = "Net::SSLeay::CTX_set_ssl_version(TLSv1_3_method)";
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_3_method()) or do {$err = $!} and last;
+                # allow all protocols for backward compatibility; user specific
+                # restrictions are done later with  CTX_set_options()
+                $src = "";  # push error on error stack at end of SWITCH
+            } else {
+                $src = "Net::SSLeay::TLSv1_3_method()";
+            }
+        };
+        /CTX_tlsv1_2_new/  && do {
+            ($ctx = Net::SSLeay::CTX_tlsv1_2_new()) or last;
+            if (defined &Net::SSLeay::TLSv1_2_method) {
+                $src = "Net::SSLeay::CTX_set_ssl_version(TLSv1_2_method)";
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_2_method()) or do {$err = $!} and last;
+                $src = "";
+            } else {
+                $src = "Net::SSLeay::TLSv1_2_method()";
+            }
+            # default timeout is 7200
+        };
+        /CTX_tlsv1_1_new/  && do {
+            ($ctx = Net::SSLeay::CTX_tlsv1_1_new()) or last;
+            if (defined &Net::SSLeay::TLSv1_1_method) {
+                $src = "Net::SSLeay::CTX_set_ssl_version(TLSv1_1_method)";
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_1_method()) or do {$err = $!} and last;
+                $src = "";
+            } else {
+                $src = "Net::SSLeay::TLSv1_1_method()";
+            }
+        };
+        /CTX_tlsv1_new/    && do {
+            ($ctx = Net::SSLeay::CTX_tlsv1_new()) or last;
+            if (defined &Net::SSLeay::TLSv1_method) {
+                $src = "Net::SSLeay::CTX_set_ssl_version(TLSv1_method)";
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_method())   or do {$err = $!} and last;
+                $src = "";
+            } else {
+                $src = "Net::SSLeay::TLSv1_2_method()";
+            }
+        };
+        /CTX_v23_new/      && do {
             # we use CTX_v23_new() 'cause of CTX_new() sets SSL_OP_NO_SSLv2
-            #
-        # set protocol options
-        ##########$ssl = (defined &Net::SSLeay::SSLv23_method) ? 1:0;
-        if (defined &Net::SSLeay::SSLv23_method) {
-            $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";   # set default SSL protocol
-            Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
-            # allow all protocols for backward compatibility; user specific
-            # restrictions are done later with  CTX_set_options()
-        } else {
-            $src = "Net::SSLeay::SSLv23_method()";
+            ($ctx = Net::SSLeay::CTX_v23_new()) or last;
+            if (defined &Net::SSLeay::SSLv23_method) {      # set default SSL protocol
+                $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
+                $src = "";
+            } else {
+                $src = "Net::SSLeay::SSLv23_method()";
+            }
+            # default timeout is 300
+        };
+        /CTX_v3_new/       && do {
+            ($ctx = Net::SSLeay::CTX_v3_new()) or last;
+            if (defined &Net::SSLeay::SSLv3_method) {      # set default SSL protocol
+                $src = "Net::SSLeay::CTX_set_ssl_version(SSLv3_method)";
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv3_method())  or do {$err = $!} and last;
+                $src = "";
+            } else {
+                $src = "Net::SSLeay::SSLv3_method()";
+            }
+        };
+        /CTX_v2_new/       && do {
+            ($ctx = Net::SSLeay::CTX_v2_new()) or last;
+            if (defined &Net::SSLeay::SSLv2_method) {      # set default SSL protocol
+                $src = "Net::SSLeay::CTX_set_ssl_version(SSLv2_method)";
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv2_method())  or do {$err = $!} and last;
+                $src = "";
+            } else {
+                $src = "Net::SSLeay::SSLv2_method()";
+            }
+        };
+        /CTX_dtlsv1_3_new/ && do {
+        };
+        /CTX_dtlsv1_2_new/ && do {
+        };
+        /CTX_dtlsv1_1_new/ && do {
+        };
+        /CTX_dtlsv1_new/   && do {
+        };
+        #} # SWITCH
+        return if (! $ctx); # no matching method, ready
+        if ($src ne "") {
+            # setting protocol options failed (see SWITCH above)
             push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
-            # if we don't have  SSLv23_method(), we better use the system's
+            # if we don't have proper  *_method(), we better use the system's
             # default behaviour, because anything else  would stick  on the
             # specified protocol version, like SSLv3_method()
         }
-        # Net::SSLeay::CTX_set_options(); # can not fail according description!
-        $src = 'Net::SSLeay::CTX_set_options()';       # now limit as specified by user
+        $src = 'Net::SSLeay::CTX_set_options()';
+            #   Net::SSLeay::CTX_set_options(); # can not fail according description!
+                Net::SSLeay::CTX_set_options($ctx, 0); # reset options
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
-# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_CIPHER_SERVER_PREFERENCE));
-# TODO:      Net::SSLeay::CTX_set_options($ctx, (Net::SSLeay::OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION));
+            # sets all options, even those for all protocols (which are removed later)
+            # OP_CIPHER_SERVER_PREFERENCE, OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+            # should also be set now
+        _trace("  ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options($ctx)));
+        _trace("  ::CTX_get_timeout(CTX)= " . Net::SSLeay::CTX_get_timeout($ctx));
+        _trace("  ::CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
+        _trace("_ssleay_ctx_new: $ctx");
         return $ctx;
     } # TRY
+    # reach here if ::CTX_* failed
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
-    _trace("_ssleay_ctx_new: $ctx.");
+    _trace("_ssleay_ctx_new: undef");
     return;
 } # _ssleay_ctx_new
 
@@ -1135,23 +1234,23 @@ sub _ssleay_ssl_new {
     TRY: {
         #3. prepare SSL object
         $src = 'Net::SSLeay::new()';
-        ($ssl=  Net::SSLeay::new($ctx))                        or {$err = $!} and last;
+        ($ssl=  Net::SSLeay::new($ctx))                        or do {$err = $!} and last;
         $src = 'Net::SSLeay::set_fd()';
-                Net::SSLeay::set_fd($ssl, fileno($socket))     or {$err = $!} and last;
+                Net::SSLeay::set_fd($ssl, fileno($socket))     or do {$err = $!} and last;
         $src = 'Net::SSLeay::set_cipher_list(' . $cipher .')';
-                Net::SSLeay::set_cipher_list($ssl, $cipher)    or {$err = $!} and last;
+                Net::SSLeay::set_cipher_list($ssl, $cipher)    or do {$err = $!} and last;
         if ($sniname !~ m/^0?$/) {  # no SNI if 0 or empty string
             _trace("do_ssl_open: SNI");
            $sniname = $host if ($sniname =~ m/^1$/);# old style, Net::SSLinfo < 1.85
             if (1.45 <= $Net::SSLeay::VERSION) {
                 $src = 'Net::SSLeay::set_tlsext_host_name()';
-                Net::SSLeay::set_tlsext_host_name($ssl, $sniname) or {$err = $!} and last;
+                Net::SSLeay::set_tlsext_host_name($ssl, $sniname) or do {$err = $!} and last;
             } else {
                 # quick&dirty instead of:
                 #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
                 #  use constant TLSEXT_NAMETYPE_host_name    => 0
                 $src = 'Net::SSLeay::ctrl()';
-                Net::SSLeay::ctrl($ssl, 55, 0, $sniname)       or {$err = $!} and last;
+                Net::SSLeay::ctrl($ssl, 55, 0, $sniname)       or do {$err = $!} and last;
                 # TODO: ctrl() sometimes fails but does not return errors, reason yet unknown
             }
         }
@@ -1204,14 +1303,14 @@ sub _openssl_MS     {
     _trace("_openssl_MS $mode $host$port: cmd.exe /D /C /S $tmp") if ($trace > 1);
     TRY: {
         my $fh;
-        open($fh, '>', $tmp)                or {$err = $!} and last;
+        open($fh, '>', $tmp)                or do {$err = $!} and last;
         print $fh "$text | $_openssl $mode $host$port 2>&1";
         close($fh);
         #dbx# print `cat $tmp`;
         $src = 'cmd.exe';
-        ($data =  `cmd.exe /D /S /C $tmp`) or {$err = $!} and last;
+        ($data =  `cmd.exe /D /S /C $tmp`)  or do {$err = $!} and last;
         $src = 'unlink';
-        unlink  $tmp                       or {$err = $!} and last;
+        unlink  $tmp                        or do {$err = $!} and last;
          $data =~ s#^[^)]*[^\r\n]*.##s;          # remove cmd.exe's output
          $data =~ s#WARN.*?openssl.cnf[\r\n]##;  # remove WARNINGs
         _trace("_openssl_MS $mode $host$port : $data #") if ($trace > 1);
@@ -1282,6 +1381,13 @@ Returns array with $ssl object and $ctx object.
 
 This method is called automatically by all other functions, hence no need to
 call it directly.
+
+This method tries to use the most modern methods provided by Net::SSLeay to
+establish the connections, i.e. CTX_tlsv1_2_new or CTX_v23_new. If a method
+is not available,  the next one will be used.  The sequence of used methods
+is hardcoded with most modern first. The current sequence can be seen with:
+
+C<perl -MNet::SSLinfo -le 'print join"\n",Net::SSLinfo::ssleay_methods();'>
 =cut
 
 # from openssl/x509_vfy.h
@@ -1320,9 +1426,9 @@ sub do_ssl_open($$$@) {
                 $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
                 $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
                 $src = 'socket()';
-                        socket( $socket, &AF_INET, &SOCK_STREAM, 0) or {$err = $!} and last;
+                        socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!} and last;
                 $src = 'connect()';
-                $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or {$err = $!} and last;
+                $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or do {$err = $!} and last;
             } else {
                 #1b. starttls or via proxy
                 require Net::SSLhello;      # ok here, as perl handles multiple includes proper
@@ -1331,7 +1437,7 @@ sub do_ssl_open($$$@) {
                 # open TCP connection via proxy and do STARTTLS if requested
                 # NOTE that $host cannot be checked here because the proxy does
                 # DNS and also has the routes to the host
-                ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or {$err = $!} and last;
+                ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or do {$err = $!} and last;
             }
             ## no critic qw(InputOutput::ProhibitOneArgSelect)
             select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
@@ -1341,11 +1447,29 @@ sub do_ssl_open($$$@) {
             $socket = $Net::SSLinfo::socket;
         }
 
-        TRY_PROTOCOL: {
-            #2. get SSL's context object
-            ($ctx = _ssleay_ctx_new())  or {$src = '_ssleay_ctx_new()'} and last;
+        # TRY_PROTOCOL: {
+        # After the TCP connection is established, the SSL connection needs to
+        # be initiated. This is done with Net::SSLeay's CTX_*_new and *_method
+        # methods (i.e. CTX_tlsv1_2_new and TLSv1_2_method).
+        # Remember the concepts: work with ancient (perl, openssl) installations
+        # Hence we try all known methods, starting with the most modern first.
+        # The list of methods and its sequence is provided by  ssleay_methods.
+        # We loop over this list of methods (aka protocols) until a valid  CTX
+        # object will be returned.
+        my @list = ssleay_methods();
+        foreach my $ctx_new (@list) {
+            next if ($ctx_new !~ m/^CTX_/);  
+            next if ($ctx_new =~ m/CTX_new$/);# CTX_new
+            next if ($ctx_new =~ m/_method$/);# may be CTX_new_with_method
+            next if ($ctx_new =~ m/_options$/);# CTX_get_options
+            # NOTE: _ssleay_ctx_new() gets $ctx_new but also needs  *_method
+            #       *_method is not passed as argument, hence _ssleay_ctx_new
+            #       needs to check for it again, ugly ...
 
-            #2a. disable not specified SSL versions
+            #2. get SSL's context object
+            ($ctx = _ssleay_ctx_new($ctx_new))  or do {$src = '_ssleay_ctx_new()'} and next;
+
+            #2a. disable not specified SSL versions, limit as specified by user
             foreach  my $ssl (keys %_SSLmap) {
                 # $sslversions  passes the version which should be supported,  but
                 # openssl and hence Net::SSLeay, configures what  should *not*  be
@@ -1366,10 +1490,10 @@ sub do_ssl_open($$$@) {
 ##print "#ERR: $!";
 
             #2b. set certificate verification options
-            ($dum = _ssleay_ctx_ca($ctx))           or {$src = '_ssleay_ctx_ca()' } and last;
+            ($dum = _ssleay_ctx_ca($ctx))       or do {$src = '_ssleay_ctx_ca()' } and next;
 
             #3. prepare SSL object
-            ($ssl = _ssleay_ssl_new($ctx, $host, $socket, $cipher)) or {$src = '_ssleay_ssl_new()'} and last;
+            ($ssl = _ssleay_ssl_new($ctx, $host, $socket, $cipher)) or {$src = '_ssleay_ssl_new()'} and next;
 
             #4. connect SSL
             local $SIG{PIPE} = 'IGNORE';        # Avoid "Broken Pipe"
@@ -1380,9 +1504,12 @@ sub do_ssl_open($$$@) {
                 $src .= " failed start"     if ($ret <  0); # i.e. no matching protocol
                 $src .= " failed handshake" if ($ret == 0);
                 $err  = $!;
-                last;
+                push(@{$_SSLinfo{'errors'}}, "do_ssl_open() $src: $err");
+                next;
             }
+            last;
         } # TRY_PROTOCOL
+        # last if ! $ctx; # TODO: not yet properly tested 11/2016
 
         #5. SSL established, let's get informations
         # TODO: starting from here implement error checks
