@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.149 16/11/17 00:52:09',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.150 16/11/17 01:15:18',
 };
 
 ######################################################## public documentation #
@@ -980,16 +980,21 @@ sub _ssleay_get     {
 
 # TODO: if ! $x509   to avoid "Segmentation fault" if $x509 empty
 
+    return Net::SSLeay::PEM_get_string_X509(     $x509) || ""   if ($key eq 'PEM');
     return Net::SSLeay::X509_get_version(        $x509) + 1     if ($key eq 'version');
     return Net::SSLeay::X509_get_fingerprint(    $x509,  'md5') if ($key eq 'md5');
     return Net::SSLeay::X509_get_fingerprint(    $x509, 'sha1') if ($key eq 'sha1');
-    return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_subject_name($x509)) if($key eq 'subject');
-    return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509)) if($key eq 'issuer');
-    return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if($key eq 'before');
-    return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if($key eq 'after');
-    return Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509)) if($key eq 'serial_hex');
+    return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_subject_name($x509)) if ($key eq 'subject');
+    return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509)) if ($key eq 'issuer');
+    return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if ($key eq 'before');
+    return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if ($key eq 'after');
+    return Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509)) if ($key eq 'serial_hex');
     return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
     return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_certificate_policies) if ($key eq 'policies');
+    return Net::SSLeay::X509_STORE_CTX_get_error_depth($x509) if ($key eq 'error_depth');
+    return Net::SSLeay::X509_certificate_type(         $x509) if ($key eq 'cert_type');
+    return Net::SSLeay::X509_subject_name_hash(        $x509) if ($key eq 'subject_hash');
+    return Net::SSLeay::X509_issuer_name_hash(         $x509) if ($key eq 'issuer_hash');
 
     my $ret = "";
     if ($key =~ 'serial') {
@@ -1515,6 +1520,8 @@ sub do_ssl_open($$$@) {
         # TODO: starting from here implement error checks
         $src ='Net::SSLeay::get_peer_certificate()';
         my $x509= Net::SSLeay::get_peer_certificate($ssl);
+            # $x509 may be undef or 0; this may cause "Segmentation fault"s in
+            # some Net::SSLeay::X509_* methods; hence we always use _ssleay_get
 
         #5a. get internal data
         $_SSLinfo{'ctx'}        = $ctx;
@@ -1536,7 +1543,7 @@ sub do_ssl_open($$$@) {
         #5c. store certificate informations
         $_SSLinfo{'certificate'}= Net::SSLeay::dump_peer_certificate($ssl);  # same as issuer + subject
         #$_SSLinfo{'master_key'} = Net::SSLeay::SESSION_get_master_key($ssl); # TODO: returns binary, hence see below
-        $_SSLinfo{'PEM'}        = Net::SSLeay::PEM_get_string_X509($x509) || "";
+        $_SSLinfo{'PEM'}        = _ssleay_get('PEM',     $x509);
             # 'PEM' set empty for example when $Net::SSLinfo::no_cert is in use
             # this inhibits warnings inside perl (see  NO Certificate  below)
         $_SSLinfo{'subject'}    = _ssleay_get('subject', $x509);
@@ -1570,11 +1577,11 @@ sub do_ssl_open($$$@) {
             #$_SSLinfo{'pubkey_value'}   = Net::SSLeay::X509_get_pubkey($x509);
                 # TODO: returns a structure, needs to be unpacked
             $_SSLinfo{'error_verify'}   = Net::SSLeay::X509_verify_cert_error_string(Net::SSLeay::get_verify_result($ssl));
-            $_SSLinfo{'error_depth'}    = Net::SSLeay::X509_STORE_CTX_get_error_depth($x509);
-            $_SSLinfo{'serial_hex'}     = _ssleay_get('serial_hex', $x509);
-            $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", Net::SSLeay::X509_certificate_type($x509));
-            $_SSLinfo{'subject_hash'}   = sprintf("%x", Net::SSLeay::X509_subject_name_hash($x509));
-            $_SSLinfo{'issuer_hash'}    = sprintf("%x", Net::SSLeay::X509_issuer_name_hash($x509));
+            $_SSLinfo{'error_depth'}    = _ssleay_get('error_depth', $x509);
+            $_SSLinfo{'serial_hex'}     = _ssleay_get('serial_hex',  $x509);
+            $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", _ssleay_get('cert_type', $x509));
+            $_SSLinfo{'subject_hash'}   = sprintf("%x", _ssleay_get('subject_hash', $x509));
+            $_SSLinfo{'issuer_hash'}    = sprintf("%x", _ssleay_get('issuer_hash',  $x509));
                 # previous two values are integers, need to be converted to
                 # hex, we omit a leading 0x so they can be used elswhere
         } else {
