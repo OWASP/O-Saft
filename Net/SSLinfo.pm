@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.150 16/11/17 01:15:18',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.151 16/11/17 01:55:14',
 };
 
 ######################################################## public documentation #
@@ -978,7 +978,10 @@ sub _ssleay_get     {
         return '';
     }
 
-# TODO: if ! $x509   to avoid "Segmentation fault" if $x509 empty
+    if (! $x509) {
+        # ugly check to avoid "Segmentation fault" if $x509 is empty or undef
+        return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type)/);
+    }
 
     return Net::SSLeay::PEM_get_string_X509(     $x509) || ""   if ($key eq 'PEM');
     return Net::SSLeay::X509_get_version(        $x509) + 1     if ($key eq 'version');
@@ -1506,15 +1509,15 @@ sub do_ssl_open($$$@) {
             $src = 'Net::SSLeay::connect() ';
             $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
             if ($ret <= 0) {
-                $src .= " failed start"     if ($ret <  0); # i.e. no matching protocol
-                $src .= " failed handshake" if ($ret == 0);
+                $src .= " failed start with $ctx_new()"     if ($ret <  0); # i.e. no matching protocol
+                $src .= " failed handshake with $ctx_new()" if ($ret == 0);
                 $err  = $!;
                 push(@{$_SSLinfo{'errors'}}, "do_ssl_open() $src: $err");
                 next;
             }
             last;
         } # TRY_PROTOCOL
-        # last if ! $ctx; # TODO: not yet properly tested 11/2016
+        #goto finished if (! $ctx); # TODO: not yet properly tested 11/2016
 
         #5. SSL established, let's get informations
         # TODO: starting from here implement error checks
@@ -1527,7 +1530,7 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'ctx'}        = $ctx;
         $_SSLinfo{'ssl'}        = $ssl;
         $_SSLinfo{'x509'}       = $x509;
-        $_SSLinfo{'_options'}  .= sprintf("0x%016x", Net::SSLeay::CTX_get_options($ctx));
+        $_SSLinfo{'_options'}  .= sprintf("0x%016x", Net::SSLeay::CTX_get_options($ctx)) if $ctx;
         $_SSLinfo{'SSLversion'} = $_SSLhex{Net::SSLeay::version($ssl)};
             # TODO: Net::SSLeay's documentation also has:
             #    get_version($ssl); get_cipher_version($ssl);
@@ -1579,9 +1582,9 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'error_verify'}   = Net::SSLeay::X509_verify_cert_error_string(Net::SSLeay::get_verify_result($ssl));
             $_SSLinfo{'error_depth'}    = _ssleay_get('error_depth', $x509);
             $_SSLinfo{'serial_hex'}     = _ssleay_get('serial_hex',  $x509);
-            $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", _ssleay_get('cert_type', $x509));
-            $_SSLinfo{'subject_hash'}   = sprintf("%x", _ssleay_get('subject_hash', $x509));
-            $_SSLinfo{'issuer_hash'}    = sprintf("%x", _ssleay_get('issuer_hash',  $x509));
+            $_SSLinfo{'cert_type'}      = sprintf("0x%x  <<experimental>>", _ssleay_get('cert_type', $x509) || 0);
+            $_SSLinfo{'subject_hash'}   = sprintf("%x", _ssleay_get('subject_hash', $x509) || 0);
+            $_SSLinfo{'issuer_hash'}    = sprintf("%x", _ssleay_get('issuer_hash',  $x509) || 0);
                 # previous two values are integers, need to be converted to
                 # hex, we omit a leading 0x so they can be used elswhere
         } else {
