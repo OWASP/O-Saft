@@ -31,11 +31,11 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.11.13',
+    SSLINFO_VERSION => '16.11.15',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.151 16/11/17 01:55:14',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.152 16/11/17 08:54:52',
 };
 
 ######################################################## public documentation #
@@ -63,7 +63,7 @@ use constant {
 
 =head1 NAME
 
-Net::SSLinfo -- perl extension for SSL certificates
+Net::SSLinfo -- perl extension for SSL connection and certificate data
 
 =head1 SYNOPSIS
 
@@ -233,7 +233,7 @@ abnormally with an error, then setting this value can help.
 If set to "0", collect data from target's certificate; this is default.
 If set to "1", don't collect data from target's certificate  and return an
 empty string.
-If set to "2", don't collect data from target's certificate and return the 
+If set to "2", don't collect data from target's certificate and return the
 string defined in  "$Net::SSLinfo::no_cert_txt".
 
 =item $Net::SSLinfo::no_cert_txt
@@ -256,6 +256,9 @@ this executable is used to find proper information. Hence some data may be
 missing or detected wrong due to different output formats of openssl.
 If in doubt use "$Net::SSLinfo::use_openssl = 0" to disable openssl usage.
 
+Port 443 is used when calling:
+    Net::SSLinfo.pm your.tld
+
 =head2 Threads
 
 This module is not thread-save as it only supports one internal object for
@@ -272,7 +275,7 @@ for our certificate chain verification.
 
 I.g. the root CAs can be provided in a single combined PEM format file, or
 in a directory containing one file per CA with a proper link which name is
-the CA's hash value. Therfor the library uses the  CAPFILE  and/or  CAPATH
+the CA's hash value. Therefore the library uses the  CAPFILE and/or CAPATH
 environment variable. The tools, like openssl, have options to pass proper
 values for the file and path.
 
@@ -285,7 +288,7 @@ Unfortunately the  default settings  for the libraries and tools differ on
 various platforms, so there is  no simple way to check if the verification
 was successful as expected.
 
-In particular the behaviour is unpredictable if the  environment variables 
+In particular the behaviour is unpredictable if the  environment variables
 are set and our internal variables (see above) too. Hence, we recommend to
 either ensure that  no environment variables are in use,  or our variables
 are set  C<undef>.
@@ -454,11 +457,12 @@ our @EXPORT_OK = qw(
         selfsigned
         s_client
         error
+        CTX_method
 );
     # insert above in vi with:
     # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
 
-our $HAVE_XS = eval { 
+our $HAVE_XS = eval {
         local $SIG{'__DIE__'} = 'DEFAULT';
         eval {
             require XSLoader;
@@ -535,6 +539,7 @@ my $dumm_2   = $Net::SSLinfo::proxyport;
 my $dumm_3   = $Net::SSLinfo::proxypass;
 my $dumm_4   = $Net::SSLinfo::proxyuser;
 my $dumm_5   = $Net::SSLinfo::proxyauth;
+my $dumm_6   = $Net::SSLinfo::ca_crl;
 my $trace    = $Net::SSLinfo::trace;
 
 # forward declarations
@@ -608,7 +613,7 @@ my %_SSLmap = ( # map libssl's constants to speaking names
     'TLSv11'    => [0x0302,  undef],                        # 0x08000000
     'TLSv12'    => [0x0303,  undef],                        # 0x10000000
     'TLSv13'    => [0x0304,  undef],                        # 0x10000000
-    'TLS1FF'    => [0x03FF,  undef],                        # 
+    'TLS1FF'    => [0x03FF,  undef],                        #
     'DTLSfamily'=> [0xFE00,  undef],                        #
     'DTLSv09'   => [0x0100,  undef],                        # 0xFEFF in some openssl versions
     'DTLSv1'    => [0xFEFF,  undef],                        # ??
@@ -979,7 +984,7 @@ sub _ssleay_get     {
     }
 
     if (! $x509) {
-        # ugly check to avoid "Segmentation fault" if $x509 is empty or undef
+        # ugly check to avoid "Segmentation fault" if $x509 is 0 or undef
         return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type)/);
     }
 
@@ -992,12 +997,14 @@ sub _ssleay_get     {
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if ($key eq 'before');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notAfter(    $x509)) if ($key eq 'after');
     return Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509)) if ($key eq 'serial_hex');
-    return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if($key eq 'cn');
-    return Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_certificate_policies) if ($key eq 'policies');
-    return Net::SSLeay::X509_STORE_CTX_get_error_depth($x509) if ($key eq 'error_depth');
-    return Net::SSLeay::X509_certificate_type(         $x509) if ($key eq 'cert_type');
-    return Net::SSLeay::X509_subject_name_hash(        $x509) if ($key eq 'subject_hash');
-    return Net::SSLeay::X509_issuer_name_hash(         $x509) if ($key eq 'issuer_hash');
+    return Net::SSLeay::X509_NAME_get_text_by_NID(
+                    Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_commonName) if ($key eq 'cn');
+    return Net::SSLeay::X509_NAME_get_text_by_NID(
+                    Net::SSLeay::X509_get_subject_name($x509), &Net::SSLeay::NID_certificate_policies) if ($key eq 'policies');
+    return Net::SSLeay::X509_STORE_CTX_get_error_depth($x509)   if ($key eq 'error_depth');
+    return Net::SSLeay::X509_certificate_type(         $x509)   if ($key eq 'cert_type');
+    return Net::SSLeay::X509_subject_name_hash(        $x509)   if ($key eq 'subject_hash');
+    return Net::SSLeay::X509_issuer_name_hash(         $x509)   if ($key eq 'issuer_hash');
 
     my $ret = "";
     if ($key =~ 'serial') {
@@ -1040,6 +1047,7 @@ sub _ssleay_ctx_new {
     my $ssl     = undef;
     my $src     = "";   # function (name) where something failed
     my $err     = "";
+    my $old     = "";
     _settrace();
     _trace("_ssleay_ctx_new($method)");
     $src = "Net::SSLeay::$method";
@@ -1054,10 +1062,10 @@ sub _ssleay_ctx_new {
         # last gets out of TRY block
         $_   = $method; # { # SWITCH
         /CTX_tlsv1_3_new/  && do {
-            # prepare SSL's context object
+            #2.1. prepare SSL's context object
             ($ctx = Net::SSLeay::CTX_tlsv1_3_new()) or last;# create object
-            # set protocol options
-            if (defined &Net::SSLeay::TLSv1_3_method) {     # set default SSL protocol
+            #2.2. set default protocol version
+            if (defined &Net::SSLeay::TLSv1_3_method) {
                 $src = "Net::SSLeay::CTX_set_ssl_version(TLSv1_3_method)";
                 Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_3_method()) or do {$err = $!} and last;
                 # allow all protocols for backward compatibility; user specific
@@ -1101,7 +1109,7 @@ sub _ssleay_ctx_new {
         /CTX_v23_new/      && do {
             # we use CTX_v23_new() 'cause of CTX_new() sets SSL_OP_NO_SSLv2
             ($ctx = Net::SSLeay::CTX_v23_new()) or last;
-            if (defined &Net::SSLeay::SSLv23_method) {      # set default SSL protocol
+            if (defined &Net::SSLeay::SSLv23_method) {
                 $src = "Net::SSLeay::CTX_set_ssl_version(SSLv23_method)";
                 Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
                 $src = "";
@@ -1112,7 +1120,7 @@ sub _ssleay_ctx_new {
         };
         /CTX_v3_new/       && do {
             ($ctx = Net::SSLeay::CTX_v3_new()) or last;
-            if (defined &Net::SSLeay::SSLv3_method) {      # set default SSL protocol
+            if (defined &Net::SSLeay::SSLv3_method) {
                 $src = "Net::SSLeay::CTX_set_ssl_version(SSLv3_method)";
                 Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv3_method())  or do {$err = $!} and last;
                 $src = "";
@@ -1122,7 +1130,7 @@ sub _ssleay_ctx_new {
         };
         /CTX_v2_new/       && do {
             ($ctx = Net::SSLeay::CTX_v2_new()) or last;
-            if (defined &Net::SSLeay::SSLv2_method) {      # set default SSL protocol
+            if (defined &Net::SSLeay::SSLv2_method) {
                 $src = "Net::SSLeay::CTX_set_ssl_version(SSLv2_method)";
                 Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv2_method())  or do {$err = $!} and last;
                 $src = "";
@@ -1140,6 +1148,7 @@ sub _ssleay_ctx_new {
         };
         #} # SWITCH
         return if (! $ctx); # no matching method, ready
+        $_SSLinfo{'CTX_method'} = $method;  # for debugging only
         if ($src ne "") {
             # setting protocol options failed (see SWITCH above)
             push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
@@ -1147,6 +1156,7 @@ sub _ssleay_ctx_new {
             # default behaviour, because anything else  would stick  on the
             # specified protocol version, like SSLv3_method()
         }
+        #2.3. set protocol options
         $src = 'Net::SSLeay::CTX_set_options()';
             #   Net::SSLeay::CTX_set_options(); # can not fail according description!
                 Net::SSLeay::CTX_set_options($ctx, 0); # reset options
@@ -1154,8 +1164,10 @@ sub _ssleay_ctx_new {
             # sets all options, even those for all protocols (which are removed later)
             # OP_CIPHER_SERVER_PREFERENCE, OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
             # should also be set now
+        $src = 'Net::SSLeay::CTX_set_timeout()';
+        ($old = Net::SSLeay::CTX_set_timeout($ctx, $Net::SSLinfo::timeout_sec)) or do {$err = $!; } and last;
         _trace("  ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options($ctx)));
-        _trace("  ::CTX_get_timeout(CTX)= " . Net::SSLeay::CTX_get_timeout($ctx));
+        _trace("  ::CTX_get_timeout(CTX)= $old -> " . Net::SSLeay::CTX_get_timeout($ctx));
         _trace("  ::CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
         _trace("_ssleay_ctx_new: $ctx");
         return $ctx;
@@ -1466,7 +1478,7 @@ sub do_ssl_open($$$@) {
         # object will be returned.
         my @list = ssleay_methods();
         foreach my $ctx_new (@list) {
-            next if ($ctx_new !~ m/^CTX_/);  
+            next if ($ctx_new !~ m/^CTX_/);
             next if ($ctx_new =~ m/CTX_new$/);# CTX_new
             next if ($ctx_new =~ m/_method$/);# may be CTX_new_with_method
             next if ($ctx_new =~ m/_options$/);# CTX_get_options
@@ -1778,7 +1790,7 @@ sub do_ssl_open($$$@) {
             #    Protocol  : TLSv1
             #    Cipher    : ECDHE-RSA-RC4-SHA
             #    Session-ID: 322193A0D243EDD1C07BA0B2E68D1044CDB06AF0306B67836558276E8E70655C
-            #    Session-ID-ctx: 
+            #    Session-ID-ctx:
             #    Master-Key: EAC0900291A1E5B73242C3C1F5DDCD4BAA7D9F8F4BC6E640562654B51E024143E5403716F9BF74672AF3703283456403
             #    Key-Arg   : None
             #    Krb5 Principal: None
@@ -1956,13 +1968,13 @@ sub do_ssl_open($$$@) {
             # beside regex above, which relies on strings returned from s_client
             # we can compare subject_hash and issuer_hash, which are eqal when
             # self-digned
-        
+
             # from s_client:
             # $_SSLinfo{'s_client'} grep
             #       Certificate chain
         $d = $data; $d =~ s/.*?Certificate chain[\r\n]+(.*?)[\r\n]+---[\r\n]+.*/$1/si;
         $_SSLinfo{'chain'}          = $d;
-        
+
             # from s_client:
             # $_SSLinfo{'s_client'} grep
             #       depth=  ... ---
@@ -2099,7 +2111,7 @@ sub do_openssl($$$$) {
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
-        if ($data =~ m/(\nusage:|unknown option)/s) { 
+        if ($data =~ m/(\nusage:|unknown option)/s) {
             _trace("do_openssl($mode): WARNING: openssl does not support -nextprotoneg option");
             $mode =  's_client -reconnect -connect';
             $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
@@ -2183,7 +2195,7 @@ Get dates when certificate is valid.
 Get issuer of certificate.
 
 =head2 subject( )
- 
+
 Get subject of certificate.
 
 =head2 selected( )
@@ -2297,7 +2309,7 @@ Get version from certificate.
 
 =head2 ssleay_methods( )
 
-Return list of available methods:  Net::SSLeay::*_method and 
+Return list of available methods:  Net::SSLeay::*_method and
 Net::SSLeay::CTX_*_new . Most important (newest) method first.
 
 =head2 ssleay_test( )
@@ -2455,7 +2467,7 @@ Get certificate's renegotiation support.
 Get certificate's resumption support.
 Some target servers respond with  `New' and `Reused'  connections in
 unexpected sequence. If `Reused' is found and less than 3 `New' then
-resumption is assumed. 
+resumption is assumed.
 
 If resumption is not detected, increasing the timeout with i.e.
 I<$Net::SSLinfo::timeout_sec = 5>  may return different results.
@@ -2576,6 +2588,10 @@ Get preload attribute of STS header.
 
 Get pins attribute of STS header.
 
+=head2 CTX_method( )
+
+Get used Net::SSLeay::CTX_*_new) method. Useful for debugging only.
+
 =cut
 
 sub errors          { return _SSLinfo_get('errors',           $_[0], $_[1]); }
@@ -2678,6 +2694,7 @@ sub hsts_httpequiv  { return _SSLinfo_get('hsts_httpequiv',   $_[0], $_[1]); }
 sub hsts_maxage     { return _SSLinfo_get('hsts_maxage',      $_[0], $_[1]); }
 sub hsts_subdom     { return _SSLinfo_get('hsts_subdom',      $_[0], $_[1]); }
 sub hsts_preload    { return _SSLinfo_get('hsts_preload',     $_[0], $_[1]); }
+sub CTX_method      { return _SSLinfo_get('CTX_method',       $_[0], $_[1]); }
 
 =pod
 
