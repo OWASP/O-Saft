@@ -3708,7 +3708,7 @@ CHECKS
           * FIPS-140
           * ISM
           * PCI
-          * BSI TR-02102-2
+          * BSI TR-02102-2 (2013-01)
           * BSI TR-03116-4
           * RFC 6125
           * RFC 6797
