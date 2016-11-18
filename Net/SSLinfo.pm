@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.152 16/11/17 08:54:52',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.153 16/11/18 21:02:32',
 };
 
 ######################################################## public documentation #
@@ -985,7 +985,7 @@ sub _ssleay_get     {
 
     if (! $x509) {
         # ugly check to avoid "Segmentation fault" if $x509 is 0 or undef
-        return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type)/);
+        return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type|serial|altname)/);
     }
 
     return Net::SSLeay::PEM_get_string_X509(     $x509) || ""   if ($key eq 'PEM');
@@ -1199,6 +1199,7 @@ sub _ssleay_ctx_ca  {
             #  1 = SSL_VERIFY_PEER
             #  2 = SSL_VERIFY_FAIL_IF_NO_PEER_CERT
             #  4 = SSL_VERIFY_CLIENT_ONCE
+# TODO: SSL_OCSP_NO_STAPLE
         $src = "Net::SSLeay::CTX_load_verify_locations()";
         $cafile = $Net::SSLinfo::ca_file || "";
         if ($cafile !~ m#^(?:[a-zA-Z0-9_,.\\/()-])*$#) {
