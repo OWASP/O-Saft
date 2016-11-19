@@ -31,11 +31,11 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.11.15',
+    SSLINFO_VERSION => '16.11.16',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.153 16/11/18 21:02:32',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.154 16/11/19 22:00:20',
 };
 
 ######################################################## public documentation #
@@ -240,6 +240,10 @@ string defined in  "$Net::SSLinfo::no_cert_txt".
 
 String to be used if "$Net::SSLinfo::no_cert" is set.
 Default is (same as openssl): "unable to load certificate"
+
+=item $Net::SSLinfo::method
+
+Will be set to the Net::SSLeay::*_method used to in do_ssl_open().
 
 =back
 
@@ -517,6 +521,7 @@ $Net::SSLinfo::proxyport   = "";# port for proxy
 $Net::SSLinfo::proxypass   = "";# username for proxy authentication (Basic or Digest Auth)
 $Net::SSLinfo::proxyuser   = "";# password for proxy authentication (Basic or Digest Auth)
 $Net::SSLinfo::proxyauth   = "";# authentication string used for proxy
+$Net::SSLinfo::method      = "";# used Net::SSLeay::*_method
 $Net::SSLinfo::socket   = undef;# socket to be used for connection
 $Net::SSLinfo::ca_crl   = undef;# URL where to find CRL file
 $Net::SSLinfo::ca_file  = undef;# PEM format file with CAs
@@ -1151,7 +1156,7 @@ sub _ssleay_ctx_new {
         $_SSLinfo{'CTX_method'} = $method;  # for debugging only
         if ($src ne "") {
             # setting protocol options failed (see SWITCH above)
-            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default");
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING '$src' not available, using system default for '$method'");
             # if we don't have proper  *_method(), we better use the system's
             # default behaviour, because anything else  would stick  on the
             # specified protocol version, like SSLv3_method()
@@ -1258,7 +1263,7 @@ sub _ssleay_ssl_new {
         ($ssl=  Net::SSLeay::new($ctx))                        or do {$err = $!} and last;
         $src = 'Net::SSLeay::set_fd()';
                 Net::SSLeay::set_fd($ssl, fileno($socket))     or do {$err = $!} and last;
-        $src = 'Net::SSLeay::set_cipher_list(' . $cipher .')';
+        $src = 'Net::SSLeay::set_cipher_list(' . 
                 Net::SSLeay::set_cipher_list($ssl, $cipher)    or do {$err = $!} and last;
         if ($sniname !~ m/^0?$/) {  # no SNI if 0 or empty string
             _trace("do_ssl_open: SNI");
@@ -1477,15 +1482,18 @@ sub do_ssl_open($$$@) {
         # The list of methods and its sequence is provided by  ssleay_methods.
         # We loop over this list of methods (aka protocols) until a valid  CTX
         # object will be returned.
+        # NOTE: _ssleay_ctx_new() gets $ctx_new but also needs *_method, which
+        #       is not passed as argument.  Hence  _ssleay_ctx_new()  needs to
+        #       check for it again, ugly ... may change in future ...
         my @list = ssleay_methods();
         foreach my $ctx_new (@list) {
             next if ($ctx_new !~ m/^CTX_/);
-            next if ($ctx_new =~ m/CTX_new$/);# CTX_new
-            next if ($ctx_new =~ m/_method$/);# may be CTX_new_with_method
-            next if ($ctx_new =~ m/_options$/);# CTX_get_options
-            # NOTE: _ssleay_ctx_new() gets $ctx_new but also needs  *_method
-            #       *_method is not passed as argument, hence _ssleay_ctx_new
-            #       needs to check for it again, ugly ...
+            next if ($ctx_new =~ m/CTX_new$/);  # CTX_new
+            next if ($ctx_new =~ m/_method$/);  # i.e. CTX_new_with_method
+            next if ($ctx_new =~ m/_options$/); # i.e. CTX_get_options
+            next if ($ctx_new =~ m/_timeout$/); # i.e. CTX_set_timeout
+            $Net::SSLinfo::method = $ctx_new;   # so caller can retrieve it ..
+            _trace("do_ssl_open: $Net::SSLinfo::method ...");
 
             #2. get SSL's context object
             ($ctx = _ssleay_ctx_new($ctx_new))  or do {$src = '_ssleay_ctx_new()'} and next;
@@ -1528,9 +1536,22 @@ sub do_ssl_open($$$@) {
                 push(@{$_SSLinfo{'errors'}}, "do_ssl_open() $src: $err");
                 next;
             }
+            $src = "";
             last;
         } # TRY_PROTOCOL
+        if ($src ne "") {
+            # connection failed (see TRY_PROTOCOL above)
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING connection failed in '$src': $err");
+            #dbx# print "$_" foreach @{$_SSLinfo{'errors'}};
+        }
         #goto finished if (! $ctx); # TODO: not yet properly tested 11/2016
+        _trace("do_ssl_open: $Net::SSLinfo::method");
+
+        # from here on mainly IO::Socket::SSL is used from within Net::SSLeay
+        # using Net::SSLeay::trace is most likely same as IO::Socket::SSL::DEBUG
+        #dbx# $Net::SSLeay::trace     = 2;
+        #dbx# $IO::Socket::SSL::DEBUG = 1;
+        #dbx# Net::SSLeay::print_errs();
 
         #5. SSL established, let's get informations
         # TODO: starting from here implement error checks
@@ -2040,6 +2061,7 @@ sub do_ssl_close($$) {
     Net::SSLeay::free($_SSLinfo{'ssl'})     if (defined $_SSLinfo{'ssl'}); # or warn "**WARNING: Net::SSLeay::free(): $!";
     Net::SSLeay::CTX_free($_SSLinfo{'ctx'}) if (defined $_SSLinfo{'ctx'}); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
     _SSLinfo_reset();
+    $Net::SSLinfo::method = "";
     if (defined $Net::SSLinfo::socket) {
         close($Net::SSLinfo::socket);
         $Net::SSLinfo::socket = undef;
