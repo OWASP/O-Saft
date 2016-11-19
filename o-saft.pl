@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.552 16/11/18 20:20:21",
-    STR_VERSION => "16.10.08",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.553 16/11/19 21:36:47",
+    STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -2584,18 +2584,19 @@ sub _usesocket($$$$)    {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers passed in
     # NOTE that this is used to check for supported ciphers only, hence no
-    # need for sophisticated options in new()
+    # need for sophisticated options in new() and no certificate checks
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $sni = ($cfg{'usesni'} == 1) ? $host : "";
-    my $cipher = "";
+    my $cipher  = "";   # to be returned
+    my $version = "";   # version used by IO::Socket::SSL-new (not yet used)
     my $sslsocket = undef;
     # TODO: dirty hack to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
     # these protocols. We only check for SSLv2 and SSLv3 as the *TLSX doesn't
     # produce such arnings. Sigh.
-    _trace1("_usesocket($host, $port, $ciphers){");
+    _trace1("_usesocket($ssl, $host, $port, $ciphers){ sni: $sni");
     if (($ssl eq "SSLv2") && (! defined &Net::SSLeay::CTX_v2_new)) {
         _warn("SSL version '$ssl': not supported by Net::SSLeay");
         return "";
@@ -2612,6 +2613,7 @@ sub _usesocket($$$$)    {
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
+            _trace1("_usesocket: using 'IO::Socket::SSL'");
             $sslsocket = IO::Socket::SSL->new(
                 PeerAddr        => $host,
                 PeerPort        => $port,
@@ -2654,8 +2656,10 @@ sub _usesocket($$$$)    {
         }
     }) {    # eval succeded
         if ($sslsocket) {
-            $cipher = $sslsocket->get_cipher();
+            $version = $sslsocket->get_sslversion();
+            $cipher  = $sslsocket->get_cipher();
             $sslsocket->close(SSL_ctx_free => 1);
+            _trace1("_usesocket: SSL version (for $ssl): " . $version);
         }
     }
     # else  # connect failed, cipher not accepted, or error in IO::Socket::SSL
@@ -6529,27 +6533,35 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 # FIXME: some servers do not respond for following
 #        reason seams to be SSLv2 or SSLv3 without SNI
 # FIXME: cannot use:    if ($cfg{usesni} > 0) {
-#        need to review code forst for %data0 usage
+#        need to review code first for %data0 usage
     _y_CMD("test without SNI (disable with --no-sni) ..");
     # check if SNI supported, also copy some data to %data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
         # finally we close the connection to be clean for all other tests
     _trace(" cn_nosni: {");
-    $Net::SSLinfo::use_SNI  = 0;
+    $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
     if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
+        _trace("cn_nosni: method: $Net::SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
-# FIXME: following disabled due to multipe openssl calls which may produce 
-#         unexpected results (10/2015) {
-#        foreach my $key (keys %data) { # copy to %data0
-#            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
-#        }
+# TODO:  following needs to be improved, because there are multipe openssl
+        # calls which may produce unexpected results (10/2015) {
+        foreach my $key (keys %data) { # copy to %data0
+            next if ($key =~ m/$cfg{'regex'}->{'commands-INT'}/i);
+            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+        }
 # }
-        Net::SSLinfo::do_ssl_close($host, $port);
     } else {
         _warn("Can't make a connection to $host:$port; no initial data");
     }
+    # now close connection, which also resets Net::SSLinfo's internal data
+    # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
+    # the connection failed and does nothing (except resetting data)
+    if ($cfg{'verbose'} >  0) {
+        _warn($_) foreach Net::SSLinfo::errors();
+    }
+    Net::SSLinfo::do_ssl_close($host, $port);
     $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
     _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
 # FIXME:    } # usesni
