@@ -80,13 +80,8 @@
 # Example: all commands for various BSI compliance checks 'cause these checks
 # are rarely used in practice and most likely produce a huge amount of data.
 
---ignore-output=tr-02102
 --ignore-output=tr-03116+
 --ignore-output=tr-03116-
---ignore-output=bsi-tr-02102+
---ignore-output=bsi-tr-02102-
---ignore-output=bsi-tr-03116+
---ignore-output=bsi-tr-03116-
 --ignore-output=rfc7525
 --ignore-output=ism
 --ignore-output=pci
@@ -154,7 +149,7 @@
 ###
 ### redefine command +check
 ###
---cfg_cmd=check=selected cnt_totals hassslv2 hassslv3 order adh_cipher exp_cipher null_cipher cbc_cipher des_cipher rc4_cipher edh_cipher pfs_cipher pfs_cipherall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ bsi-tr-03116+ bsi-tr-03116- rfc7525 beast breach crime time drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 sni hostname reversehost cps crl crl_valid ev+ ev- ev-chars crnlnull nonprint ocsp ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_size modulus_size expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_samehost hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random closure sgc zlib open_pgp lzo fallback renegotiation resumption srp scsv cnt_checks_yes cnt_checks_no cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+--cfg_cmd=check=selected cnt_totals hassslv2 hassslv3 order adh_cipher exp_cipher null_cipher cbc_cipher des_cipher rc4_cipher edh_cipher pfs_cipher pfs_cipherall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr-02102+ tr-02102- tr-03116+ tr-03116- rfc7525 beast breach crime time drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 sni hostname reversehost cps crl crl_valid ev+ ev- ev-chars crnlnull nonprint ocsp ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_size modulus_size expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_samehost hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random closure sgc zlib open_pgp lzo fallback renegotiation resumption srp scsv cnt_checks_yes cnt_checks_no cnt_altname cnt_chaindepth cnt_ciphers cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
 # useless for +check:    ip
 # don't use   +check:   (SSLv|TLSv)*
 
@@ -166,7 +161,7 @@
 ###
 ### redefine command +bsi
 ###
---cfg_cmd=bsi=after dates crl rc4_cipher renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+--cfg_cmd=bsi=after dates crl rc4_cipher renegotiation tr-02102+ tr-02102- tr-03116+ tr-03116-
 
 ###
 ### redefine command +pfs
