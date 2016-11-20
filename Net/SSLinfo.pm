@@ -35,7 +35,7 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.154 16/11/19 22:00:20',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.155 16/11/20 22:28:54',
 };
 
 ######################################################## public documentation #
@@ -2003,7 +2003,9 @@ sub do_ssl_open($$$@) {
         $d = $data; $d =~ s/.*?(depth=-?[0-9]+.*?)[\r\n]+---[\r\n]+.*/$1/si;
         $_SSLinfo{'chain_verify'}   = $d;
 
+        #dbx# print "TLS: $data\n";
             # from s_client -tlsextdebug -nextprotoneg
+            # TLS server extension "server name" (id=0), len=0
             # TLS server extension "renegotiation info" (id=65281), len=1
             # TLS server extension "session ticket" (id=35), len=0
             # TLS server extension "heartbeat" (id=15), len=1
