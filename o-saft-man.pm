@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.150 16/11/03 21:48:31";
+my  $man_SID= "@(#) o-saft-man.pm 1.151 16/11/20 22:25:54";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -471,6 +471,7 @@ my %man_text = (
         'SEED'      => "128-bit Symmetric Block Cipher",
         'Serpent'   => "symmetric key block cipher (128 bit)",
         'SGC'       => "Server-Gated Cryptography",
+        'SGCM'      => "Sophie Germain Counter Mode (block cipher mode)",
         'SHA'       => "Secure Hash Algorithm",
         'SHA-0'     => "Secure Hash Algorithm (insecure version before 1995)",
         'SHA-1'     => "Secure Hash Algorithm (since 1995)",
@@ -625,6 +626,7 @@ and OpenVPN",
                    # Truncated CA keys (value 3)
                    # Truncated HMAC (value 4)
                    # (Certificate) Status Request (value 5)
+        '6176'  => [ "Prohibiting Secure Sockets Layer (SSL) Version 2.0" ],
         '6520'  => [ "TLS Extensions: Heartbeat" ],
         '6961'  => [ "TLS Multiple Certificate Status Request Extension" ],
         '7627'  => [ "TLS Session Hash and Extended Master Secret Extension" ],
@@ -661,6 +663,8 @@ and OpenVPN",
         '5487'  => [ "Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode" ],
         '5489'  => [ "ECDHE_PSK Cipher Suites for TLS" ],
         '5589'  => [ "Session Initiation Protocol (SIP) Call Control - Transfer" ],
+        '5639'  => [ "Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve Generation" ],
+        '7027'  => [ "Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS" ],
         '5741'  => [ "RFC Streams, Headers, and Boilerplates" ],
         '5794'  => [ "Description of the ARIA Encryption Algorithm" ],
         '5932'  => [ "Camellia Cipher Suites for TLS" ],
@@ -679,10 +683,12 @@ and OpenVPN",
                    # Certificates in the Context of Transport Layer Security (TLS)
         '6797'  => [ "HTTP Strict Transport Security (HSTS)" ],
         '6962'  => [ "Certificate Transparency" ],
+        '7366'  => [ "Encrypt-then-MAC for TLS and DTLS" ],
         '7457'  => [ "Summarizing Known Attacks on TLS and DTLS" ],
         '7469'  => [ "Public Key Pinning Extension for HTTP" ],
         '7525'  => [ "Recommendations for Secure Use of TLS and DTLS" ],
         '7539'  => [ "ChaCha20 and Poly1305 for IETF Protocols" ],
+        '7627'  => [ "TLS Session Hash and Extended Master Secret Extension" ],
         '7905'  => [ "ChaCha20-Poly1305 Cipher Suites for TLS" ],
         '1135'  => [ "The Helminthiasis of the Internet" ], # 1989
         #----------+----------------------------------------+-----------------------+
@@ -3708,94 +3714,117 @@ CHECKS
           * FIPS-140
           * ISM
           * PCI
-          * BSI TR-02102-2 (2013-01)
+          * BSI TR-02102-2 (2016-01)
           * BSI TR-03116-4
           * RFC 6125
           * RFC 6797
           * RFC 7525
 
 #   NSA Suite B
-      BSI TR-02102-2 (+bsi-tr-02102+ +bsi-tr-02102-)
+      BSI TR-02102-2 (+tr-02102+ +tr-02102-)
         Checks if connection and ciphers are compliant according TR-02102-2,
         see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
         /TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
 
-        (following headlines are taken from there)
+        (following headlines are taken from TR-02102-2 Version 2016-01)
 
-        3.2.1 Empfohlene Cipher Suites
+        3.1.3 Schlüssellängen bei EC-Verfahren
+die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 in [TR-02102-1] .
 
-        3.2.2 Übergangsregelungen
+        3.2   SSL/TLS_Versionen
 
-          RC4 allowed temporary for TLS 1.0. Only if  TLS 1.1  and  TLS 1.2
-          cannot be supported.
+          Only TLSv1.2 allowed (except for +tr-02102-  which also allows
+          TLSv1.1)
 
-        3.2.3 Mindestanforderungen für Interoperabilität
+        3.3.1 Empfohlene Cipher Suites
 
-          Must at least support: ECDHE-ECDSA-* and ECDHE-RSA-*
+          Allows only *DHE-*-SHA256, *DHE-*-SHA384, *DH-*-SHA256 and
+          *DH-*-SHA384 ciphers and PSK ciphers with ephermeral keys.
+          For  +tr-02102+  they must be AES-GCM,  +tr02102- also allows
+          AES-CBC.
 
-        3.3 Session Renegotation
+        3.3.2 Übergangsregelungen
 
-          Only server-side (secure) renegotiation allowed (see RFC 5280).
+          SHA1 temporary allowed. SHA256 and SHA384 recommended.
+          RC4 not reocmmended.
+          Use of SHA1 will only be checked for  +tr-02102+
 
-        3.4 Zertifikate und Zertifikatsverifikation
+        3.4.1 Session Renegotation
 
-          Must have 'CRLDistributionPoint' or 'AuthorityInfoAccess'.
+          Only server-side (secure) renegotiation allowed (see RFC 5746).
 
-          MUST have 'OCSP URL'.
+        3.4.2 Verkürzung der HMAC-Ausgabe
 
-          'PrivateKeyUsage' must not exceed three years for certificate and
-          must not exceed five years for CA certificates.
+          Truncated HMAC according RFC 6066 not recommended.
 
-          'Subject',  'CommonName'  and  'SubjectAltName'  must not contain
-          a wildcard.
+        3.4.3 TLS-Kompression und der CRIME-Angriff
 
-          Certificate itself must be valid according dates if validity.
-          Note that  the validity check relies on the years provided by the
-          'before' and 'after'  values of the certificate only. For example
-          a certificate having  "from Jan 2013 to Mar 2016"  is  considered
-          valid even the validity is more than three years.
+          No TLS compression.
 
-          All certificates in the chain must be valid.
-          **NOT YET IMPLEMENTED**
+        3.4.4 Der Lucky 13-Angriff
+        3.4.5 Die "Encrypt-thn-MAC"-Erweiterung
 
-          Above conditions are not required for lazy checks.
+          Use of AES-GCM ciphers only.
+          Use of Encrypt-then-MAC according RFC 7366 cannot be checked.
 
-        3.5 Domainparameter und Schlüssellängen
+        3.4.6 Die Heartbeat-Erweiterung
 
-          **NOT YET IMPLEMENTED**
+          Target must not support the heartbeat extension.
+
+        3.4.7 Die Extended Master Secret Extension
+
+          Use of Extended Master Secret Extension according RFC 7627 cannot
+          be checked.
+
+        3.5 Authentisierung der Kommunikationspartner
+
+          Not checked as only applicable for VPN connections.
+
+        3.6 Domainparameter und Schlüssellängen
+
+          Check if signature key is > 2048 bits.
 
 #        --------------+---------------+--------
 #                Minimale
 # Algorithmus    Schlüssellänge  Verwendung bis
 #        --------------+---------------+--------
 # Signaturschlüssel für Zertifikate und Schlüsseleinigung
-#   ECDSA        224 Bit         2015
-#   ECDSA        250 Bit         2019+
-#     DSS        2000 Bit3       2019+
-#     RSA        2000 Bit3       2019+
+#   ECDSA         224 Bit       2015
+#   ECDSA         250 Bit       2022+
+#   DSS          2000 Bit       2022+
+#   RSA          2000 Bit       2022+
 # Statische Diffie-Hellman Schlüssel
-#          CDH        224 Bit         2015
-#          CDH        250 Bit         2019+
-#      DH        2000 Bit        2019+
+#   ECDH          224 Bit       2015
+#   ECDH          250 Bit       2022+
+#   DH           2000 Bit       2022+
 # Ephemerale Diffie-Hellman Schlüssel
-#          CDH        224 Bit         2015
-#          CDH        250 Bit         2019+
-#      DH        2000 Bit        2019+
+#   ECDH          224 Bit       2015
+#   ECDH          250 Bit       2022+
+#   DH           2000 Bit       2022+
 #        --------------+---------------+--------
 
-        3.6 Schlüsselspeicherung
+        3.6.1 Verwendung von elliptischen Kurven
+
+          **NOT YET IMPLEMENTED**
+
+          Use only following curves according RFC 5639 and RFC 7027:
+          brainpoolP256r1, brainpoolP384r1, brainpoolP512r1
+
+          Use of secp256r1 and secp384r1  temporary allowed.
+
+        4.1 Schlüsselspeicherung
 
           This requirement is not testable from remote.
 
-        3.7 Umgang mit Ephemeralschlüsseln
+        4.2 Umgang mit Ephemeralschlüsseln
 
           This requirement is not testable from remote.
 
-        3.8 Zufallszahlen
+        4.3 Zufallszahlen
 
           This requirement is not testable from remote.
 
-      BSI TR-03116-4 (+bsi-tr-03116+ +bsi-tr-03116-)
+      BSI TR-03116-4 (+tr-03116+ +tr-03116-)
         Checks if connection and ciphers are compliant according TR-03116-4,
         see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
         /TechnischeRichtlinien/TR03116/BSI-TR-03116-4.pdf?__blob=publicationFile
@@ -3810,7 +3839,7 @@ CHECKS
 
           Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265. 
           For curiosity, stronger cipher suites with AES256 and/or SHA384 are
-          not not allowed. To follow this curiosity the +bsi-tr-03116- (lazy)
+          not not allowed. To follow this curiosity the  +tr-03116-  (lazy)
           check allows the stronger cipher suites ;-)
 
         2.1.1 TLS-Versionen und Sessions
@@ -4785,7 +4814,7 @@ INSTALLATION
         Following command can be used to check  which methods are avilable in
         Net::SSLeay, hence above patches can be verified:
 
-              perl -MNet::SSLinfo -le 'print Net::SSLinfo::test_ssleay();'
+              perl -MNet::SSLinfo -le 'print Net::SSLinfo::ssleay_test();'
 
     Testing OpenSSL
 
