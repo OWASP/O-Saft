@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.64 16/11/13 17:40:07',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.65 16/11/20 23:22:21',
 
 };
 
@@ -1324,10 +1324,8 @@ our %cfg = (
     'commands-HINT' => [        # checks which are NOT YET fully implemented
                                 # these are mainly all commands for compliance
                                 # see also: cmd-bsi
-                        qw(rfc7525
-                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
-                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
-                       )],
+                        qw(rfc7525 tr-02102+ tr-02102- tr-03116+ tr-03116-)
+                       ],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
     'cmd-drown'     => [qw(drown)],                 # commands for +drown
@@ -1348,14 +1346,13 @@ our %cfg = (
                          beast crime drown freak export cbc_cipher des_cipher rc4_cipher rc4 
                          pfs_cipher crl
                          hassslv2 hassslv3 poodle sloth sweet32
-                         resumption renegotiation tr-02102 bsi-tr-02102+ bsi-tr-02102- rfc7525 hsts_sts
+                         resumption renegotiation tr-02102+ tr-02102- rfc7525 hsts_sts
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
     'cmd-bsi'       => [        # commands for +bsi
                                 # see also: commands-HINT
                         qw(after dates crl rc4_cipher renegotiation
-                           tr-02102            bsi-tr-02102+ bsi-tr-02102-
-                           tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116-
+                           tr-02102+ tr-02102- tr-03116+ tr-03116- 
                        )],
     'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
@@ -1382,7 +1379,7 @@ our %cfg = (
                        ],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher-dh),
-                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525),
+                        qw(tr-02102+ tr-02102- tr-03116+ tr-03116- rfc7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need-default'  => [        # commands which need selected cipher
@@ -1394,7 +1391,7 @@ our %cfg = (
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected ev+ ev-),
-                        qw(tr-02102 bsi-tr-02102+ bsi-tr-02102- tr-03116+ tr-03116- bsi-tr-03116+ bsi-tr-03116- rfc7525 rfc6125_names),
+                        qw(tr-02102+ tr-02102- tr-03116+ tr-03116- rfc7525 rfc6125_names),
                        ],
     'need-checkchr' => [        # commands which always need checking various characters
                         qw(cn subject issuer altname ext_crl ocsp_uri),
@@ -1478,8 +1475,10 @@ our %cfg = (
         'FRZorFZA'  => '(?:FORTEZZA|FRZ|FZA)[_-]',
                        # FORTEZZA has abbreviations FZA and FRZ
                        # unsure about FORTEZZA_KEA
-        'SHA2'      => 'sha(2|224|256|384|512)',
+        'SHA2'      => 'sha(?:2|224|256|384|512)',
                        # any SHA2, just sha2 is too lazy
+        'AES-GCM'   => 'AES(?:128|256)[_-]GCM[_-]SHA(?:256|384|512)',
+                       # any AES128-GCM or AES256-GCM
         'SSLorTLS'  => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
                        # Numerous protocol prefixes are in use:
                        #     PTC, PCT1, SSL, SSL2, SSL3, TLS, TLS1, TLS2,
@@ -1531,14 +1530,13 @@ our %cfg = (
         'notSweet32'=> '(?:[_-]AES[_-])',                       # match against cipher
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
-
         'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK[_-])?(?:(?:EC)?[DR]S[AS])[_-]',
-                       # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA
+                       # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA PSK_ECDSS
                        # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exist, hence lazy regex above
         'notTR-02102'     => '[_-]SHA$',
                        # ciphers with SHA1 hash are not allowed
         'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
-                       # if PFS not possible, see TR-02102-2 3.2.1
+                       # if PFS not possible, see TR-02102-2_2016 3.3.1
         'TR-03116+' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES128[_-](?:GCM[_-])?SHA256',
         'TR-03116-' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES(?:128|256)[_-](?:GCM[_-])?SHA(?:256|384)',
                        # in strict mode only:
