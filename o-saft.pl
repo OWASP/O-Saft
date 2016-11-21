@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.555 16/11/21 08:35:52",
+    SID         => "@(#) yeast.pl 1.556 16/11/21 22:16:04",
     STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3146,6 +3146,21 @@ sub checkdates($$) {
     $cfg{'done'}->{'checkdates'}++;
     return if ($cfg{'done'}->{'checkdates'} > 1);
 
+    my $before= $data{'before'}->{val}($host);
+    my $after = $data{'after'} ->{val}($host);
+    my @since = split(/ +/, $before);
+    my @until = split(/ +/, $after);
+    if ($before . $after =~ m/^\s*$/) {
+        # if there's no data from the certificate, set undef values and return
+        $checks{'dates'}->{val}         = $text{'na'};
+        $checks{'expired'}->{val}       = $text{'na'};
+        $checks{'sts_expired'}->{val}   = $text{'na'};
+        $checks{'valid-years'}->{val}   = 0;
+        $checks{'valid-months'}->{val}  = 0;
+        $checks{'valid-days'}->{val}    = 0;
+        return;
+    }
+
    # Note about calculating dates:
    # Calculation should be done without using additional perl modules like
    #   Time::Local, Date::Calc, Date::Manip, ...
@@ -3157,21 +3172,19 @@ sub checkdates($$) {
    # The same format is used for the current date given by gmtime(), but
    # convertion is much simpler as no strings exist here.
     my @now = gmtime(time);
-    my $now = sprintf("%4d%02d%02d ", $now[5]+1900, $now[4]+1, $now[3]);
     my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
     my $m   = 0;
-    my @since = split(/ +/, $data{'before'}->{val}($host));
-    my @until = split(/ +/, $data{'after'} ->{val}($host));
     my $s_mon = 0; my $u_mon = 0;
-       map({$m++; $s_mon=$m if/$since[0]/} @mon); $m = 0;
-       map({$m++; $u_mon=$m if/$until[0]/} @mon); $m = 0;
-    my $start = sprintf("%s%02s%02s", $since[3], $s_mon, $since[1]);
-    my $end   = sprintf("%s%02s%02s", $until[3], $u_mon, $until[1]);
+    if (@since) { map({$m++; $s_mon=$m if/$since[0]/} @mon); $m = 0; }
+    if (@until) { map({$m++; $u_mon=$m if/$until[0]/} @mon); $m = 0; }
+    my $now   = sprintf("%4d%02d%02d", $now[5]+1900, $now[4]+1, $now[3]);
+    my $start = sprintf("%s%02s%02s",  $since[3], $s_mon, $since[1]);
+    my $end   = sprintf("%s%02s%02s",  $until[3], $u_mon, $until[1]);
     my $txt   = "";
     # end date magic, do checks ..
-    $checks{'dates'}->{val}         =          $data{'before'}->{val}($host) if ($now < $start);
-    $checks{'dates'}->{val}        .= " .. " . $data{'after'} ->{val}($host) if ($now > $end);
-    $checks{'expired'}->{val}       =          $data{'after'} ->{val}($host) if ($now > $end);
+    $checks{'dates'}->{val}         =          $before if ($now < $start);
+    $checks{'dates'}->{val}        .= " .. " . $after  if ($now > $end);
+    $checks{'expired'}->{val}       =          $after  if ($now > $end);
     $data{'valid-years'}->{val}     = ($until[3]       -  $since[3]);
     $data{'valid-months'}->{val}    = ($until[3] * 12) - ($since[3] * 12) + $u_mon - $s_mon;
     $data{'valid-days'}->{val}      = ($data{'valid-years'}->{val}  *  5) + ($data{'valid-months'}->{val} * 30); # approximately
@@ -3389,11 +3402,11 @@ sub checksizes($$) {
             $checks{'modulus_exp_size'}->{val}  = "<<N/A $value>>";
             $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
         } else  {                   # only traditional exponent needs to be checked
-            if ($value eq '<<openssl>>') { # TODO: <<openssl>> from Net::SSLinfo
+            if ($value eq '<<openssl>>') {  # TODO: <<openssl>> from Net::SSLinfo
                 $checks{'modulus_exp_size'}->{val} = $text{'no-openssl'};
             } else {
                 $value =~ s/^(\d+).*/$1/;
-                if ($value =~ m/\d+/) { # avoid perl warning "Argument isn't numeric" 
+                if ($value =~ m/^\d+$/) {   # avoid perl warning "Argument isn't numeric" 
                     $checks{'modulus_exp_size'}->{val}  = $value if ($value > 65536);
                 } else {
                     $checks{'modulus_exp_size'}->{val}  = $text{'na'};
@@ -6758,6 +6771,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     # following sequence important!
     _y_CMD("get checks ..");
+    checkdates($host, $port);
     checkhttp( $host, $port);
     checksni(  $host, $port);
     checksizes($host, $port);
