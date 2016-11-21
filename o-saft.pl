@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.554 16/11/20 23:30:10",
+    SID         => "@(#) yeast.pl 1.555 16/11/21 08:35:52",
     STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2891,7 +2891,6 @@ sub check_url($$) {
     _y_CMD("check_url() ". $cfg{'done'}->{'check_url'});
     $cfg{'done'}->{'check_url'}++;
     _trace("check_url($uri, $type)");
-#dbx print("check_url($uri, $type)");
 
     return " " if ($uri =~ m#^\s*$#);  # no URI, no more checks
 
@@ -2977,6 +2976,7 @@ sub check_url($$) {
       #  NOTE: it's ok here
     my $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $url =  $2 || "/";                   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    return "" if (! defined $host);         # wrong URI may be passed
        $host=~ m#^([^:]+)(?::[0-9]{1-5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
@@ -3235,8 +3235,13 @@ sub checkcert($$) {
         if ($value eq '<<openssl>>') { # TODO: <<openssl>> from Net::SSLinfo
             $checks{'crl_valid'}->{val} = $text{'no-openssl'};
         } else {
-            foreach my $url (split(/\s+/, $data{'ext_crl'}->{val}($host))) {
+            _trace("ext_crl: $value");  # may have something other than http://...
+            foreach my $url (split(/\s+/, $value)) {
                 next if ($url =~ m/^\s*$/);     # skip empty url
+                if ($url !~ m/^\s*http$/) {
+                    _trace("ext_uri skipped: $url");
+                    next;
+                }
                 $checks{'crl_valid'}->{val}  .= check_url($url, 'ext_crl') || "";
             }
         }
@@ -3245,8 +3250,13 @@ sub checkcert($$) {
         if ($value eq '<<openssl>>') {
             $checks{'crl_valid'}->{val} = $text{'no-openssl'};
         } else {
-            foreach my $url (split(/\s+/, $data{'ocsp_uri'}->{val}($host))) {
+            _trace("ocsp_uri: $value");
+            foreach my $url (split(/\s+/, $value)) {
                 next if ($url =~ m/^\s*$/);     # skip empty url
+                if ($url !~ m/^\s*http$/) {
+                    _trace("ocsp_uri skipped: $url");
+                    next;
+                }
                 $checks{'ocsp_valid'}->{val} .= check_url($url, 'ocsp_uri') || "";
             }
         }
@@ -6652,7 +6662,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($cfg{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
-        _y_CMD("test connection (disable with  --ignore-no-conn) ...");
+        _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
         if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
             my $errtxt = Net::SSLinfo::errors($host, $port);
             if ($errtxt !~ /^\s*$/) {
