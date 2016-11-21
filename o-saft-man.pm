@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.151 16/11/20 22:25:54";
+my  $man_SID= "@(#) o-saft-man.pm 1.152 16/11/22 00:01:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3721,7 +3721,7 @@ CHECKS
           * RFC 7525
 
 #   NSA Suite B
-      BSI TR-02102-2 (+tr-02102+ +tr-02102-)
+      BSI TR-02102-2 (+tr-02102+ +tr-02102- +bsi)
         Checks if connection and ciphers are compliant according TR-02102-2,
         see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
         /TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
@@ -3824,7 +3824,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
           This requirement is not testable from remote.
 
-      BSI TR-03116-4 (+tr-03116+ +tr-03116-)
+      BSI TR-03116-4 (+tr-03116+ +tr-03116- +bsi)
         Checks if connection and ciphers are compliant according TR-03116-4,
         see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
         /TechnischeRichtlinien/TR03116/BSI-TR-03116-4.pdf?__blob=publicationFile
