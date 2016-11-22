@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.556 16/11/21 22:16:04",
+    SID         => "@(#) yeast.pl 1.557 16/11/22 01:54:35",
     STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5955,9 +5955,8 @@ while ($#argv >= 0) {
         if ($val eq 'freak')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-freak'}});   next; }
         if ($val eq 'lucky13')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
         if ($val eq 'sweet32')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sweet32'}}); next; }
-        if ($val eq 'tr02102')  { push(@{$cfg{'do'}}, qw(tr-02102+ tr-02102-));next; }
-        if ($val eq 'tr03116')  { push(@{$cfg{'do'}}, qw(tr-03116+ tr-03116-));next; }
-        ## ($val =~ /^(bsi|TR-?0(2102|3116))$/i) { push(@{$cfg{'do'}}, @{$cfg{'cmd-bsi'}}); next; }
+        if ($val =~ /tr.?02102/){ push(@{$cfg{'do'}}, qw(tr-02102+ tr-02102-));next; }
+        if ($val =~ /tr.?03116/){ push(@{$cfg{'do'}}, qw(tr-03116+ tr-03116-));next; }
         if (_is_member($val, \@{$cfg{'commands-USR'}}) == 1) {
                                   push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});    next; }
         if (_is_member($val, \@{$cfg{'commands-NOTYET'}}) > 0) {
