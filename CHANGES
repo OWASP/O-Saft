@@ -1,4 +1,44 @@
 
+Version: 16.11.16
+  BUGFIX
+    * avoid perl warning when checking certificate dates
+    * better check for ext_crl and ocsp_uri (avoid perl warnings)
+    * osaft.pm: regex->TR-02102  corrected
+    * .o-saft.pl: cmd-info should not contain selected
+  CHANGES
+    * o-saft-man.pm: comments? description for TR-02102-2 (2016-01) instead of TR-02102-2 (2013-01)
+
+Version: 16.11.14
+  BUGFIX
+    * Net::SSLinfo.pm: avoid "Segmentation fault" if $x509 is empty or undef
+    * avoid "Use of uninitialized value ..." in some rare cases
+    * *ARIA-* cipher descriptions improved
+  CHANGES
+    * Net::SSLinfo.pm: support modern Net::SSLeay::CTX_* methods
+    * Net::SSLinfo.pm: better check if X509 certificate data is available
+    * Net::SSLinfo.pm: test_ssleay -> ssleay_test
+  NEW
+    * Net::SSLinfo.pm: new ssleay_methods()
+
+Version: 16.09.29
+  BUGFIX
+    * avoid "Use of uninitialized value ..." for $version::VERSION (see issue 51)    
+    * PSK-* cipher descriptions improved; PSK-* cipher descriptions improved
+    * check for CN improved (DV and EV certificates)
+    * contrib/.o-saft.tcl: syntax error corrected
+    * some regex non-capturing groups corrected (parsing options only)
+  CHANGES
+    * commands for cipher checks unified (+*_cipher); alias commands added
+    * check for CRIME improved (SPDY/3 is vulnerable) 
+    * Net/SSLinfo.pm: sequence for "nextprotoneg" reversed (weakest first)
+  NEW
+    * searching documentation improved
+    * return exit status for checks with result with option --exitcode
+    * +cnt_checks_no and +cnt_checks_yes implemented
+    * +cbc_cipher and +des_cipher command added
+    * ARIA ciphers descriptions added
+    * cfg(TKPOD) added (external viewer for POD files)
+
 Version: 16.09.16
   BUGFIX
     * filter scripts contrib/* adapted to new formats; print all lines
