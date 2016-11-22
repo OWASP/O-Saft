@@ -97,7 +97,7 @@ here are some examples of the most common use cases:
 
 	o-saft.pl +cipherall example.tld --range=full
 	checkAllCiphers.pl example.tld
-	checkAllCiphers.pl example.tld I--range=full& I&--v&&
+	checkAllCiphers.pl example.tld --range=full --v
 
 =over
 
@@ -806,6 +806,50 @@ Get default cipher for protocol SSL.
 
            sslv2, sslv3, tls1, tls11, tls12, tls13, dtls1
 
+=head3 +null
+
+=head3 +null_cipher
+
+Check if target accepts NULL ciphers.
+
+=head3 +adh
+
+=head3 +adh_cipher
+
+Check if target accepts ciphers with anonymous key exchange.
+
+=head3 +export
+
+=head3 +exp_cipher
+
+Check if target accepts EXPORT ciphers.
+
+=head3 +cbc
+
+=head3 +cbc_cipher
+
+Check if target accepts CBC ciphers.
+
+=head3 +des
+
+=head3 +des_cipher
+
+Check if target accepts DES ciphers.
+
+=head3 +rc4_cipher
+
+Check if target accepts RC4 ciphers.
+
+=head3 +edh
+
+=head3 +edh_cipher
+
+Check if target supports ephemeral ciphers.
+
+=head3 +pfs_cipher
+
+Check if target supports ciphers with PFS.
+
 =head2 Commands to test SSL connection to target
 
 Please see:
@@ -982,6 +1026,10 @@ Show  KNOWN PROBLEMS  and  L</LIMITATIONS>  section.
 
 Show common abbreviation used in the world of security.
 
+=head3 --help=rfc
+
+Show list of RFC related to SSL/TLS.
+
 =head3 --help=todo
 
 Show known problems and bugs.
@@ -1105,6 +1153,13 @@ a longer delay.
 Internal use for CGI mode only.
 
 =head2 Options for SSL tool
+
+=head3 --exitcode
+
+The exit status code will be greater 0, if any check returns  C<no>.
+In particular, the status code will be the number of C<no> checks.
+
+Functionality implemented experimental, may change in future.
 
 =head3 --s_client
 
@@ -1377,7 +1432,7 @@ Default is C<ALL:NULL:eNULL:aNULL:LOW> as specified in L<Net::SSLinfo|Net::SSLin
 
 A simple check if the target can be connected  will be performed by
 default.  If this check fails, the target will be ignored, means no
-more reuqested checks will be done.  As this connection check some-
+more requested checks will be done.  As this connection check some-
 times fails due to various reasons, the check can be disabled using
 this option.
 
@@ -2504,7 +2559,12 @@ TLSv1.2 checks are not yet implemented.
 
 =head3 CRIME
 
-Connection is vulnerable if target supports SSL-level compression.
+Connection is vulnerable if target supports SSL-level compression, or
+supports SPDY/3 (because SPDY/3 uses compression).
+See http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl 
+
+Note: SPDY/3 is only possible if the client explicitely asks for this
+alternate protocol (for example  "openssl ... -nextprotoneg spdy/3").
 
 =head3 DROWN
 
@@ -2906,7 +2966,7 @@ of these checks are used.
 
 =over
 
-=item * BSI TR-02102-2
+=item * BSI TR-02102-2 (2016-01)
 
 =back
 
@@ -2934,69 +2994,92 @@ of these checks are used.
 
 =back
 
-=head3 BSI TR-02102-2 (+bsi-tr-02102+ +bsi-tr-02102-)
+=head3 BSI TR-02102-2 (+tr-02102+ +tr-02102- +bsi)
 
 Checks if connection and ciphers are compliant according TR-02102-2,
 see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 /TechnischeRichtlinien/TR02102/BSI-TR-02102-2_pdf.pdf?__blob=publicationFile
 
-(following headlines are taken from there)
+(following headlines are taken from TR-02102-2 Version 2016-01)
 
-3.2.1 Empfohlene Cipher Suites
+3.1.3 Schlüssellängen bei EC-Verfahren
+die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 in [TR-02102-1] .
 
-3.2.2 Übergangsregelungen
+3.2   SSL/TLS_Versionen
 
-RC4 allowed temporary for TLS 1.0. Only if  TLS 1.1  and  TLS 1.2
-cannot be supported.
+Only TLSv1.2 allowed (except for I<+tr-02102->  which also allows
+TLSv1.1)
 
-3.2.3 Mindestanforderungen für Interoperabilität
+3.3.1 Empfohlene Cipher Suites
 
-Must at least support: ECDHE-ECDSA-* and ECDHE-RSA-*
+Allows only *DHE-*-SHA256, *DHE-*-SHA384, *DH-*-SHA256 and
+*DH-*-SHA384 ciphers and PSK ciphers with ephermeral keys.
+For  I<+tr-02102+>  they must be AES-GCM,  I<+tr02102-> also allows
+B<AES-CBC.>
 
-3.3 Session Renegotation
+3.3.2 Übergangsregelungen
 
-Only server-side (secure) renegotiation allowed (see RFC 5280).
+SHA1 temporary allowed. SHA256 and SHA384 recommended.
+RC4 not reocmmended.
+Use of SHA1 will only be checked for  I<+tr-02102+>
 
-3.4 Zertifikate und Zertifikatsverifikation
+3.4.1 Session Renegotation
 
-Must have C<CRLDistributionPoint> or C<AuthorityInfoAccess>.
+Only server-side (secure) renegotiation allowed (see RFC 5746).
 
-MUST have C<OCSP URL>.
+3.4.2 Verkürzung der HMAC-Ausgabe
 
-C<PrivateKeyUsage> must not exceed three years for certificate and
-must not exceed five years for CA certificates.
+Truncated HMAC according RFC 6066 not recommended.
 
-C<Subject>,  C<CommonName>  and  C<SubjectAltName>  must not contain
-a wildcard.
+3.4.3 TLS-Kompression und der CRIME-Angriff
 
-Certificate itself must be valid according dates if validity.
-Note that  the validity check relies on the years provided by the
-C<before> and C<after>  values of the certificate only. For example
-a certificate having  "from Jan 2013 to Mar 2016"  is  considered
-valid even the validity is more than three years.
+No TLS compression.
 
-All certificates in the chain must be valid.
+3.4.4 Der Lucky 13-Angriff
+3.4.5 Die "Encrypt-thn-MAC"-Erweiterung
+
+Use of AES-GCM ciphers only.
+Use of Encrypt-then-MAC according RFC 7366 cannot be checked.
+
+3.4.6 Die Heartbeat-Erweiterung
+
+Target must not support the heartbeat extension.
+
+3.4.7 Die Extended Master Secret Extension
+
+Use of Extended Master Secret Extension according RFC 7627 cannot
+be checked.
+
+3.5 Authentisierung der Kommunikationspartner
+
+Not checked as only applicable for VPN connections.
+
+3.6 Domainparameter und Schlüssellängen
+
+Check if signature key is > 2048 bits.
+
+3.6.1 Verwendung von elliptischen Kurven
+
 **NOT YET IMPLEMENTED**
 
-Above conditions are not required for lazy checks.
+Use only following curves according RFC 5639 and RFC 7027:
+brainpoolP256r1, brainpoolP384r1, brainpoolP512r1
 
-3.5 Domainparameter und Schlüssellängen
+Use of secp256r1 and secp384r1  temporary allowed.
 
-**NOT YET IMPLEMENTED**
-
-3.6 Schlüsselspeicherung
-
-This requirement is not testable from remote.
-
-3.7 Umgang mit Ephemeralschlüsseln
+4.1 Schlüsselspeicherung
 
 This requirement is not testable from remote.
 
-3.8 Zufallszahlen
+4.2 Umgang mit Ephemeralschlüsseln
 
 This requirement is not testable from remote.
 
-=head3 BSI TR-03116-4 (+bsi-tr-03116+ +bsi-tr-03116-)
+4.3 Zufallszahlen
+
+This requirement is not testable from remote.
+
+=head3 BSI TR-03116-4 (+tr-03116+ +tr-03116- +bsi)
 
 Checks if connection and ciphers are compliant according TR-03116-4,
 see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
@@ -3012,7 +3095,7 @@ Allows only TLS 1.2.
 
 Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265. 
 For curiosity, stronger cipher suites with AES256 and/or SHA384 are
-not not allowed. To follow this curiosity the I<+bsi-tr-03116-> (lazy)
+not not allowed. To follow this curiosity the  I<+tr-03116->  (lazy)
 check allows the stronger cipher suites ;-)
 
 2.1.1 TLS-Versionen und Sessions
@@ -3476,6 +3559,8 @@ When configuring own commands,  CMD  must not be  one of the commands
 listed with  I<--help=intern>  and CMD  must constist only of digits and
 letters.
 
+Examples in  C<.o-saft.pl>  are  I<+preload>  and  I<+ciphercheck> .
+
 =head1 CIPHER NAMES
 
 While the SSL/TLS protocol uses integer numbers to identify  ciphers,
@@ -3776,11 +3861,11 @@ which then may produce:
 	=== reading: Net/SSLinfo.pm (O-Saft module done) ===
 	**USAGE: no command given
 	# most common usage:
-	o-saft.pl I+info&   your.tld&
-	o-saft.pl I+check&  your.tld&
-	o-saft.pl I+cipher& your.tld&
+	o-saft.pl +info   your.tld
+	o-saft.pl +check  your.tld
+	o-saft.pl +cipher your.tld
 	# for more help use:
-	o-saft.pl I--help&&
+	o-saft.pl --help
 
 Workaround: use full path to perl.exe, for example
 C:\Programs\perl\bin\perl.exe o-saft.pl I<--help=FAQ>
@@ -4329,7 +4414,7 @@ Building our own library and module (with openssl from C</usr/local>):
 
 	make
 	make install
-	cd /tmp & o-saft.pl +version&
+	cd /tmp && o-saft.pl +version
 
 SSLeay.xs needs to be changed as follows:
 
@@ -4376,7 +4461,7 @@ and  C<DESTDIR>  parameter.
 Following command can be used to check  which methods are avilable in
 Net::SSLeay, hence above patches can be verified:
 
-	perl -MLNet::SSLinfo& -le 'print L&Net::SSLinfo&::test_ssleay();'&
+	perl -MNet::SSLinfo -le 'print Net::SSLinfo::ssleay_test();'
 
 =head2 Testing OpenSSL
 
@@ -4969,7 +5054,7 @@ cannot be switched of using  I<--no-warning>  .
 The warning also informs about the missing functionality or check.
 
 I.g. it is best to install newer versions of the module if possible.
-	A good practice to check if modules are available in a proper version
+A good practice to check if modules are available in a proper version
 is to call:
 
 	o-saft.pl +version
@@ -5195,7 +5280,7 @@ Net::SSLeay 1.30
 
 	o-saft.pl +cipherall some.tld
 	o-saft.pl +cipherall some.tld --range=full
-	checkAllCiphers.pl example.tld I--range=full& I&--v&&
+	checkAllCiphers.pl example.tld --range=full --v
 
 =over
 
@@ -5382,7 +5467,19 @@ edit as needed: .o-saft.pl
 
 =back
 
-	o-saft.pl +info some.tld --no-cert --no-dns --no-http --no-openssl --no-sni
+	o-saft.pl +info some.tld --no-dns --no-sni --ignore-no-conn
+	o-saft.pl +info some.tld --no-dns --no-sni --no-cert --no-http --no-openssl
+
+=over
+
+=item * Identify timeout problems
+
+=back
+
+	o-saft.pl +info some.tld --trace-cmd
+
+this will show lines containing:
+#O-Saft  CMD: test ...
 
 =head1 ATTRIBUTION
 
@@ -5431,7 +5528,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 16.09.16
+@(#) 16.11.16
 
 =head1 AUTHOR
 
