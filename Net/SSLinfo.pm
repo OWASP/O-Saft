@@ -552,7 +552,7 @@ sub do_ssl_open($$$@);
 sub do_ssl_close($$);
 sub do_openssl($$$$);
 
-sub _settrace   {
+sub _traceset   {
     $trace = $Net::SSLinfo::trace;          # set global variable
     $Net::SSLeay::trace = $trace    if ($trace > 1);
         # must set $Net::SSLeay::trace here again as $Net::SSLinfo::trace
@@ -590,7 +590,7 @@ sub _setcmd     {
 sub _traceSSLbitmasks {
     # print bitmasks of available SSL constants
     my $_op_sub;
-    _settrace();
+    _traceset();
     foreach my $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_TLSv1_3 OP_NO_DTLSv1)) {
         $_op_sub = \&{"Net::SSLeay::$op"};
         # cannot use _trace() 'cause we want our own formatting
@@ -921,7 +921,7 @@ sub datadump    {
 sub _SSLinfo_get    {
     # get specified value from %_SSLinfo, first parameter 'key' is mandatory
     my ($key, $host, $port) = @_;
-    _settrace();
+    _traceset();
     _trace("_SSLinfo_get('$key'," . ($host||'') . "," . ($port||'') . ")");
     if ($key eq 'ciphers_openssl') {
         _trace("_SSLinfo_get($key): WARNING: function obsolete, please use cipher_local()");
@@ -980,7 +980,7 @@ sub _ssleay_get     {
         # note that all these function may produce "segmentation fault" or alike if
         # the target does not have/use a certificate but allows connection with SSL
     my ($key, $x509) = @_;
-    _settrace();
+    _traceset();
     _trace("_ssleay_get('$key', x509)");
     if ($Net::SSLinfo::no_cert != 0) {
             _trace("_ssleay_get 'use_cert' $Net::SSLinfo::no_cert .");
@@ -1053,7 +1053,7 @@ sub _ssleay_ctx_new {
     my $src     = "";   # function (name) where something failed
     my $err     = "";
     my $old     = "";
-    _settrace();
+    _traceset();
     _trace("_ssleay_ctx_new($method)");
     $src = "Net::SSLeay::$method";
     _trace("_ssleay_ctx_new: $src");
@@ -1192,7 +1192,7 @@ sub _ssleay_ctx_ca  {
     my $err     = "";
     my $cafile  = "";
     my $capath  = "";
-    _settrace();
+    _traceset();
     _trace("_ssleay_ctx_ca($ctx)");
     TRY: {
         Net::SSLeay::CTX_set_verify($ctx, &Net::SSLeay::VERIFY_NONE, \&_check_peer);
@@ -1255,7 +1255,7 @@ sub _ssleay_ssl_new {
     my $err     = "";
     my $sniname = $Net::SSLinfo::use_SNI;
        $sniname =~ s/\s//g; # ensure no spaces
-    _settrace();
+    _traceset();
     _trace("_ssleay_ssl_new($ctx)");
     TRY: {
         #3. prepare SSL object
@@ -1423,7 +1423,7 @@ sub _FLAGS_ALLOW_SELFSIGNED () { return 0x00000001; }
 sub do_ssl_open($$$@) {
     my ($host, $port, $sslversions, $cipher) = @_;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
-    _settrace();
+    _traceset();
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
     _traceSSLbitmasks() if ($trace > 0);
