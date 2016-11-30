@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.157 16/11/30 22:01:25',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.158 16/11/30 22:32:03',
 };
 
 ######################################################## public documentation #
@@ -1597,7 +1597,6 @@ sub do_ssl_open($$$@) {
                 $src .= " failed handshake with $ctx_new()" if ($ret == 0);
                 $err  = $!;
                 push(@{$_SSLinfo{'errors'}}, "do_ssl_open() $src: $err");
-print "## $ctx_new";
                 next;
             }
             $src = "";
