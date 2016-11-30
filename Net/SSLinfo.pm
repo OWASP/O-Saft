@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.156 16/11/30 16:05:01',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.157 16/11/30 22:01:25',
 };
 
 ######################################################## public documentation #
@@ -177,6 +177,14 @@ Authentication string used for proxy; default: ''.
 Socket to be used for connection.  This must be a file descriptor and
 it's assumed to be an AF_INET or AF_INET6 TCP STREAM type connection.
 Note: the calling application is responsible for closing the socket.
+
+=item $Net::SSLinfo::socket_reuse
+
+If set to "1" sockets will be reused if a SSL connection fails and is
+opened again. The socket will be closed and reopend if set to "0".
+
+Background: some servers complain with an TLS Alert  if such a socket
+will be reused. In such cases the default "1" should be set to "0".
 
 =item $Net::SSLinfo::starttls
 
@@ -524,6 +532,7 @@ $Net::SSLinfo::proxypass   = "";# username for proxy authentication (Basic or Di
 $Net::SSLinfo::proxyuser   = "";# password for proxy authentication (Basic or Digest Auth)
 $Net::SSLinfo::proxyauth   = "";# authentication string used for proxy
 $Net::SSLinfo::method      = "";# used Net::SSLeay::*_method
+$Net::SSLinfo::socket_reuse= 1; # 0: close and reopen socket for each connection
 $Net::SSLinfo::socket   = undef;# socket to be used for connection
 $Net::SSLinfo::ca_crl   = undef;# URL where to find CRL file
 $Net::SSLinfo::ca_file  = undef;# PEM format file with CAs
@@ -1046,7 +1055,57 @@ sub _ssleay_get     {
     _trace("_ssleay_get: $ret.");  # or warn "**WARNING: wrong key '$key' given; ignored";
     return $ret;
 } # _ssleay_get
+ 
+sub _ssleay_socket  {
+    #? craete TLS socket or use given socket
+    my $host    = shift;
+    my $port    = shift;
+    my $src     = "";   # function (name) where something failed
+    my $err     = "";
+    my $dum     = "";
+    my $socket  = undef;
+    _traceset();
+    _trace("_ssleay_socket($host, $port)");
+    $! = undef;         # avoid using cached error messages
 
+    TRY: {
+        if ($Net::SSLinfo::socket_reuse > 0) {
+            return $Net::SSLinfo::socket if (defined $Net::SSLinfo::socket);
+        }
+        if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
+            unless (($Net::SSLinfo::starttls) || ($Net::SSLinfo::proxyhost)) {
+                   # $Net::SSLinfo::proxyport was already checked in main
+                #1a. no proxy and not starttls
+                $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
+                $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
+                $src = 'socket()';
+                        socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!} and last;
+                $src = 'connect()';
+                $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or do {$err = $!} and last;
+            } else {
+                #1b. starttls or via proxy
+                require Net::SSLhello;      # ok here, as perl handles multiple includes proper
+                Net::SSLhello::version() if ($trace > 1); # TODO: already done in _yeast_init()
+                $src = "Net::SSLhello::openTcpSSLconnection()";
+                # open TCP connection via proxy and do STARTTLS if requested
+                # NOTE that $host cannot be checked here because the proxy does
+                # DNS and also has the routes to the host
+                ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or do {$err = $!} and last;
+            }
+            ## no critic qw(InputOutput::ProhibitOneArgSelect)
+            select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
+            ## use critic
+            $Net::SSLinfo::socket = $socket;
+        } else {
+            $socket = $Net::SSLinfo::socket;
+        }
+        return $socket;
+    }; # TRY
+    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    _trace("_ssleay_socket: undef");
+    return undef;
+} # _ssleay_socket
+ 
 sub _ssleay_ctx_new {
     #? get SSLeay CTX object; returns ctx object or undef
     my $method  = shift;# CTX method to be used for creating object
@@ -1060,6 +1119,7 @@ sub _ssleay_ctx_new {
     $src = "Net::SSLeay::$method";
     _trace("_ssleay_ctx_new: $src");
     $! = undef;         # avoid using cached error messages
+
     TRY: {
         # no proper generic way to replace following ugly SWITCH code, however: it's save
         # calling function already checked for CTX_*  and  *_method, but we do
@@ -1486,41 +1546,17 @@ sub do_ssl_open($$$@) {
             $Net::SSLinfo::method = $ctx_new;   # so caller can retrieve it ..
             _trace("do_ssl_open: $Net::SSLinfo::method ...");
 
-            # first reset Net::SSLinfo objects if they exist
+            #0. first reset Net::SSLinfo objects if they exist
             # note that $ctx and $ssl is still local and not in %_SSLinfo
             Net::SSLeay::free($ssl)      if (defined $ssl);
             Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
-            close($Net::SSLinfo::socket) if (defined $Net::SSLinfo::socket);
-            $Net::SSLinfo::socket = undef;
-
-            #1. open TCP connection
-            if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
-                unless (($Net::SSLinfo::starttls) || ($Net::SSLinfo::proxyhost)) {
-                       # $Net::SSLinfo::proxyport was already checked in main
-                    #1a. no proxy and not starttls
-                    $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
-                    $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
-                    $src = 'socket()';
-                            socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!} and last;
-                    $src = 'connect()';
-                    $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or do {$err = $!} and last;
-                } else {
-                    #1b. starttls or via proxy
-                    require Net::SSLhello;      # ok here, as perl handles multiple includes proper
-                    Net::SSLhello::version() if ($trace > 1); # TODO: already done in _yeast_init()
-                    $src = "Net::SSLhello::openTcpSSLconnection()";
-                    # open TCP connection via proxy and do STARTTLS if requested
-                    # NOTE that $host cannot be checked here because the proxy does
-                    # DNS and also has the routes to the host
-                    ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or do {$err = $!} and last;
-                }
-                ## no critic qw(InputOutput::ProhibitOneArgSelect)
-                select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
-                ## use critic
-                $Net::SSLinfo::socket = $socket;
-            } else {
-                $socket = $Net::SSLinfo::socket;
+            if ($Net::SSLinfo::socket_reuse < 1) {
+                close($Net::SSLinfo::socket) if (defined $Net::SSLinfo::socket);
+                $Net::SSLinfo::socket = undef;
             }
+
+            #1. open TCP connection; no way to continue if it fails
+            ($socket = _ssleay_socket($host, $port)) or do {$src = '_ssleay_socket()'} and last TRY;
 
             #2. get SSL's context object
             ($ctx = _ssleay_ctx_new($ctx_new))  or do {$src = '_ssleay_ctx_new()'} and next;
@@ -2096,6 +2132,7 @@ sub do_ssl_close($$) {
     Net::SSLeay::free($_SSLinfo{'ssl'})     if (defined $_SSLinfo{'ssl'}); # or warn "**WARNING: Net::SSLeay::free(): $!";
     Net::SSLeay::CTX_free($_SSLinfo{'ctx'}) if (defined $_SSLinfo{'ctx'}); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
     _SSLinfo_reset();
+    # close explicitely called, hence $Net::SSLinfo::socket_reuse not important
     $Net::SSLinfo::method = "";
     if (defined $Net::SSLinfo::socket) {
         close($Net::SSLinfo::socket);
