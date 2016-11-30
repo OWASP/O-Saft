@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.558 16/11/30 10:51:01",
+    SID         => "@(#) yeast.pl 1.559 16/11/30 22:33:27",
     STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5814,6 +5814,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     if ($arg =~ /^--sniname/i)          { $typ = 'SNINAME';         }
+    if ($arg eq  '--socketreuse')       { $cfg{'socket_reuse'}  = 1;}
+    if ($arg eq  '--nosocketreuse')     { $cfg{'socket_reuse'}  = 0;}
     # options for Net::SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'usemx'}     = 0;    }
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'usemx'}     = 1;    }
@@ -6333,6 +6335,7 @@ if ($cmd{'extopenssl'} == 1) {
     $Net::SSLinfo::use_nextprot     = $cfg{'use_nextprot'};
     $Net::SSLinfo::use_extdebug     = $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect    = $cfg{'use_reconnect'};
+    $Net::SSLinfo::socket_reuse     = $cfg{'socket_reuse'};
     $Net::SSLinfo::slowly           = $cfg{'slowly'};
     $Net::SSLinfo::sclient_opt      = $cfg{'sclient_opt'};
     $Net::SSLinfo::timeout_sec      = $cfg{'timeout'};
