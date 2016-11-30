@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.557 16/11/22 01:54:35",
+    SID         => "@(#) yeast.pl 1.558 16/11/30 10:51:01",
     STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2672,7 +2672,10 @@ sub _usesocket($$$$)    {
         }
     }) {    # eval succeded
         if ($sslsocket) {
-            $version = $sslsocket->get_sslversion();
+            # FIXME: get_sslversion() not available in ancient versions of 
+            #        IO::Socket::SSL, hence we use it in trace mode only
+            # FIXME: will be improved if exact IO::Socket::SSL version known
+            $version = $sslsocket->get_sslversion() if ($cfg{'trace'} > 0);
             $cipher  = $sslsocket->get_cipher();
             $sslsocket->close(SSL_ctx_free => 1);
             _trace1("_usesocket: SSL version (for $ssl): " . $version);
