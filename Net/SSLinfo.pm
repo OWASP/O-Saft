@@ -35,7 +35,9 @@ use constant {
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.155 16/11/20 22:28:54',
+    SSLINFO_UNDEF   => '<<undefined>>',
+    SSLINFO_PEM     => '<<N/A (no PEM)>>',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.156 16/11/30 16:05:01',
 };
 
 ######################################################## public documentation #
@@ -1166,6 +1168,8 @@ sub _ssleay_ctx_new {
             #   Net::SSLeay::CTX_set_options(); # can not fail according description!
                 Net::SSLeay::CTX_set_options($ctx, 0); # reset options
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
+                #test# # quick$dirty disable SSL_OP_TLSEXT_PADDING 0x00000010L (see ssl.h)
+                #test# Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL ^ 0x00000010);
             # sets all options, even those for all protocols (which are removed later)
             # OP_CIPHER_SERVER_PREFERENCE, OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
             # should also be set now
@@ -1263,7 +1267,7 @@ sub _ssleay_ssl_new {
         ($ssl=  Net::SSLeay::new($ctx))                        or do {$err = $!} and last;
         $src = 'Net::SSLeay::set_fd()';
                 Net::SSLeay::set_fd($ssl, fileno($socket))     or do {$err = $!} and last;
-        $src = 'Net::SSLeay::set_cipher_list(' . 
+        $src = "Net::SSLeay::set_cipher_list($cipher)";
                 Net::SSLeay::set_cipher_list($ssl, $cipher)    or do {$err = $!} and last;
         if ($sniname !~ m/^0?$/) {  # no SNI if 0 or empty string
             _trace("do_ssl_open: SNI");
@@ -1361,6 +1365,13 @@ sub _openssl_x509   {
         _trace("_openssl_x509($mode): WARNING: no openssl");
         return SSLINFO_HASH;
     }
+    if ($pem eq '') {
+        # if PEM is empty, openssl may return an error like:
+        # unable to load certificate
+        # 140593914181264:error:0906D06C:PEM routines:PEM_read_bio:no start line:pem_lib.c:701:Expecting: TRUSTED CERTIFICATE
+        _trace("_openssl_x509($mode): WARNING: no PEM");
+        return $Net::SSLinfo::no_cert_txt;
+    }
 
     #if ($mode =~ m/^-(text|email|modulus|serial|fingerprint|subject_hash|trustout)$/) {
     #   # supported by openssl's x509 (0.9.8 and higher)
@@ -1444,38 +1455,10 @@ sub do_ssl_open($$$@) {
        $dum     = undef;
 
     TRY: {
-        #1. open TCP connection
-        if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
-            unless (($Net::SSLinfo::starttls) || ($Net::SSLinfo::proxyhost)) {
-                   # $Net::SSLinfo::proxyport was already checked in main
-                #1a. no proxy and not starttls
-                $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
-                $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
-                $src = 'socket()';
-                        socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!} and last;
-                $src = 'connect()';
-                $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or do {$err = $!} and last;
-            } else {
-                #1b. starttls or via proxy
-                require Net::SSLhello;      # ok here, as perl handles multiple includes proper
-                Net::SSLhello::version() if ($trace > 1); # TODO: already done in _yeast_init()
-                $src = "Net::SSLhello::openTcpSSLconnection()";
-                # open TCP connection via proxy and do STARTTLS if requested
-                # NOTE that $host cannot be checked here because the proxy does
-                # DNS and also has the routes to the host
-                ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or do {$err = $!} and last;
-            }
-            ## no critic qw(InputOutput::ProhibitOneArgSelect)
-            select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
-            ## use critic
-            $Net::SSLinfo::socket = $socket;
-        } else {
-            $socket = $Net::SSLinfo::socket;
-        }
 
         # TRY_PROTOCOL: {
-        # After the TCP connection is established, the SSL connection needs to
-        # be initiated. This is done with Net::SSLeay's CTX_*_new and *_method
+        # Open TCP connection and innitilize SSL connection.
+        # This nitialization is done with Net::SSLeay's CTX_*_new and *_method
         # methods (i.e. CTX_tlsv1_2_new and TLSv1_2_method).
         # Remember the concepts: work with ancient (perl, openssl) installations
         # Hence we try all known methods, starting with the most modern first.
@@ -1485,6 +1468,14 @@ sub do_ssl_open($$$@) {
         # NOTE: _ssleay_ctx_new() gets $ctx_new but also needs *_method, which
         #       is not passed as argument.  Hence  _ssleay_ctx_new()  needs to
         #       check for it again, ugly ... may change in future ...
+        #
+        # Some servers (godaddy.com 11/2016) behave strange if the socket will
+        # be reused. In particular they respond with an TLS Alert, complaining
+        # that the protocol is not allowed (alert message 70).  That's why the
+        # the socket is also closed (if it exists) and will be reopend.
+        # FIXME: 11/2016:  not tested if the $Net::SSLinfo::socket is provided
+        #        by the caller
+
         my @list = ssleay_methods();
         foreach my $ctx_new (@list) {
             next if ($ctx_new !~ m/^CTX_/);
@@ -1494,6 +1485,42 @@ sub do_ssl_open($$$@) {
             next if ($ctx_new =~ m/_timeout$/); # i.e. CTX_set_timeout
             $Net::SSLinfo::method = $ctx_new;   # so caller can retrieve it ..
             _trace("do_ssl_open: $Net::SSLinfo::method ...");
+
+            # first reset Net::SSLinfo objects if they exist
+            # note that $ctx and $ssl is still local and not in %_SSLinfo
+            Net::SSLeay::free($ssl)      if (defined $ssl);
+            Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
+            close($Net::SSLinfo::socket) if (defined $Net::SSLinfo::socket);
+            $Net::SSLinfo::socket = undef;
+
+            #1. open TCP connection
+            if (!defined $Net::SSLinfo::socket) {   # no filehandle, open our own one
+                unless (($Net::SSLinfo::starttls) || ($Net::SSLinfo::proxyhost)) {
+                       # $Net::SSLinfo::proxyport was already checked in main
+                    #1a. no proxy and not starttls
+                    $src = "_check_host($host)"; if (!defined _check_host($host)) { last; }
+                    $src = "_check_port($port)"; if (!defined _check_port($port)) { last; }
+                    $src = 'socket()';
+                            socket( $socket, &AF_INET, &SOCK_STREAM, 0) or do {$err = $!} and last;
+                    $src = 'connect()';
+                    $dum=()=connect($socket, sockaddr_in($_SSLinfo{'port'}, $_SSLinfo{'addr'})) or do {$err = $!} and last;
+                } else {
+                    #1b. starttls or via proxy
+                    require Net::SSLhello;      # ok here, as perl handles multiple includes proper
+                    Net::SSLhello::version() if ($trace > 1); # TODO: already done in _yeast_init()
+                    $src = "Net::SSLhello::openTcpSSLconnection()";
+                    # open TCP connection via proxy and do STARTTLS if requested
+                    # NOTE that $host cannot be checked here because the proxy does
+                    # DNS and also has the routes to the host
+                    ($socket = Net::SSLhello::openTcpSSLconnection($host, $port)) or do {$err = $!} and last;
+                }
+                ## no critic qw(InputOutput::ProhibitOneArgSelect)
+                select($socket); local $| = 1; select(STDOUT);  # Eliminate STDIO buffering
+                ## use critic
+                $Net::SSLinfo::socket = $socket;
+            } else {
+                $socket = $Net::SSLinfo::socket;
+            }
 
             #2. get SSL's context object
             ($ctx = _ssleay_ctx_new($ctx_new))  or do {$src = '_ssleay_ctx_new()'} and next;
@@ -1534,11 +1561,12 @@ sub do_ssl_open($$$@) {
                 $src .= " failed handshake with $ctx_new()" if ($ret == 0);
                 $err  = $!;
                 push(@{$_SSLinfo{'errors'}}, "do_ssl_open() $src: $err");
+print "## $ctx_new";
                 next;
             }
             $src = "";
             last;
-        } # TRY_PROTOCOL
+        } # TRY_PROTOCOL }
         if ($src ne "") {
             # connection failed (see TRY_PROTOCOL above)
             push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING connection failed in '$src': $err");
@@ -1546,6 +1574,8 @@ sub do_ssl_open($$$@) {
         }
         #goto finished if (! $ctx); # TODO: not yet properly tested 11/2016
         _trace("do_ssl_open: $Net::SSLinfo::method");
+
+#print "### ext: ". Net::SSLeay::get_tlsext_status_type($ssl);
 
         # from here on mainly IO::Socket::SSL is used from within Net::SSLeay
         # using Net::SSLeay::trace is most likely same as IO::Socket::SSL::DEBUG
@@ -1644,8 +1674,8 @@ sub do_ssl_open($$$@) {
 # $t1 = time();
 #           ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
-            $src = 'Net::SSLeay::read()';
-            # use ::ssl_read_all() instead of ::read() to get HTP body also
+            $src = 'Net::SSLeay::read_all()';
+            # use ::ssl_read_all() instead of ::read() to get HTTP body also
             $response = Net::SSLeay::ssl_read_all($ssl) || "<<GET failed>>";
 # TODO: Net::SSLeay::read() fails sometimes, i.e. for fancyssl.hboeck.de
 # 03/2015: even using ssl_write_all() and ssl_read_all() does not help
@@ -1750,8 +1780,9 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'fingerprint_text'}   = $fingerprint;
         $_SSLinfo{'fingerprint'}        = $fingerprint; #alias
        ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split(/=/, $fingerprint);
-        $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/;
-        $_SSLinfo{'fingerprint_hash'}   = "" if (!defined $_SSLinfo{'fingerprint_hash'});
+        $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/ if (defined $1);  # TODO: ugly check
+        $_SSLinfo{'fingerprint_type'}   = $Net::SSLinfo::no_cert_txt if (!defined $_SSLinfo{'fingerprint_type'});
+        $_SSLinfo{'fingerprint_hash'}   = $Net::SSLinfo::no_cert_txt if (!defined $_SSLinfo{'fingerprint_hash'});
         $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
         $_SSLinfo{'issuer_hash'}        = _openssl_x509($_SSLinfo{'PEM'}, '-issuer_hash');
         $_SSLinfo{'version'}            = _openssl_x509($_SSLinfo{'PEM'}, 'version');
@@ -1786,10 +1817,12 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'signame'}            =~ s/^[^:]*: //i;
         $_SSLinfo{'modulus_len'}        =  4 * length($_SSLinfo{'modulus'});
             # Note: modulus is hex value where 2 characters are 8 bit
-        $_SSLinfo{'sigkey_len'}         =  $_SSLinfo{'sigkey_value'};
-        $_SSLinfo{'sigkey_len'}         =~ s/[\s\n]//g;
-        $_SSLinfo{'sigkey_len'}         =~ s/[:]//g;
-        $_SSLinfo{'sigkey_len'}         =  4 * length($_SSLinfo{'sigkey_len'});
+        if ($_SSLinfo{'sigkey_value'} ne $Net::SSLinfo::no_cert_txt) {
+            $_SSLinfo{'sigkey_len'}     =  $_SSLinfo{'sigkey_value'};
+            $_SSLinfo{'sigkey_len'}     =~ s/[\s\n]//g;
+            $_SSLinfo{'sigkey_len'}     =~ s/[:]//g;
+            $_SSLinfo{'sigkey_len'}     =  4 * length($_SSLinfo{'sigkey_len'});
+        }
         chomp $_SSLinfo{'fingerprint_hash'};
         chomp $_SSLinfo{'modulus'};
         chomp $_SSLinfo{'pubkey'};
@@ -2095,6 +2128,7 @@ Examples for I<$command>:
 The value of I<$data>, if set, is piped to openssl.
 
 Returns retrieved data or '<<openssl>>' if openssl or s_client missing.
+Returns '<<undefined>>' if PEM missing.
 =cut
 
 sub do_openssl($$$$) {
