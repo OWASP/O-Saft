@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.66 16/11/21 23:58:40',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.67 16/11/30 22:16:46',
 
 };
 
@@ -1163,6 +1163,8 @@ our %cfg = (
     'starttlsDelay' => 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
     'starttls_phase'=> [],      # STARTTLS: Array for customized STARTTLS sequences
     'starttls_error'=> [],      # STARTTLS: Array for customized STARTTLS sequences error handling
+    'socket_reuse'  => 1,       # 0: close and reopen sockets when SSL connect fails
+                                # 1: reuse existing sockets, even if SSL connect failed
     'enabled'       => 0,       # 1: only print enabled ciphers
     'disabled'      => 0,       # 1: only print disabled ciphers
     'nolocal'       => 0,
