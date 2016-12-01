@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.158 16/11/30 22:32:03',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.159 16/12/01 01:18:20',
 };
 
 ######################################################## public documentation #
@@ -1545,6 +1545,7 @@ sub do_ssl_open($$$@) {
             next if ($ctx_new =~ m/_timeout$/); # i.e. CTX_set_timeout
             $Net::SSLinfo::method = $ctx_new;   # so caller can retrieve it ..
             _trace("do_ssl_open: $Net::SSLinfo::method ...");
+            $src = $ctx_new;
 
             #0. first reset Net::SSLinfo objects if they exist
             # note that $ctx and $ssl is still local and not in %_SSLinfo
@@ -1602,9 +1603,17 @@ sub do_ssl_open($$$@) {
             $src = "";
             last;
         } # TRY_PROTOCOL }
-        if ($src ne "") {
+        if ($src eq "") {
+            #if ($trace > 0);
+            #_trace("reset errors: " . join("\nreset errors: ", @{$_SSLinfo{'errors'}}));
+            _trace(join("\n" . SSLINFO_ERR . " ", "", @{$_SSLinfo{'errors'}}));
+            _trace(" errors reseted.");
+            @{$_SSLinfo{'errors'}} = ();        # messages no longer needed
+        } else {
             # connection failed (see TRY_PROTOCOL above)
-            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING connection failed in '$src': $err");
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() connection failed in '$src': $err");
+            $src = "do_ssl_open() connection failed in '$src': $err";
+            last;
             #dbx# print "$_" foreach @{$_SSLinfo{'errors'}};
         }
         #goto finished if (! $ctx); # TODO: not yet properly tested 11/2016
