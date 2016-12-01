@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.561 16/12/01 22:35:10",
-    STR_VERSION => "16.11.16",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.562 16/12/02 00:25:07",
+    STR_VERSION => "16.12.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -2743,23 +2743,39 @@ sub _useopenssl($$$$)   {
 
 sub _get_default($$$)   {
     # return (default) offered cipher from target
+
+    # To get the target's default cipher, all  known ciphers are send so that
+    # the target should select the most secure one.
+    # Both, openssl and sockets (IO::Socket::SSL), use the underlaying libssl
+    # which works with the compiled in ciphers only.  Hence all known ciphers
+    # (by libssl) are passed:  @{$cfg{'ciphers'}}, we cannot pass all ciphers
+    # like: keys %ciphers . +cipherraw command must be used, if other ciphers
+    # than the local available should be checked.
+
     my ($ssl, $host, $port) = @_;
     my $cipher = "";
     _trace("_get_default($ssl, $host, $port){");   # TODO: rejoin the trace?
     $cfg{'done'}->{'checkdefault'}++;
-#   #if (1 == _is_call('cipher-socket')) {}
     if (0 == $cmd{'extciphers'}) {
-        $cipher = _usesocket( $ssl, $host, $port, "");
+        $cipher = _usesocket( $ssl, $host, $port, join(":", @{$cfg{'ciphers'}}));
     } else { # force openssl
-        $cipher = _useopenssl($ssl, $host, $port, "");
+        $cipher = _useopenssl($ssl, $host, $port, join(":", @{$cfg{'ciphers'}}));
+           # NOTE: $ssl will be converted to corresponding option for openssl,
+           # for example: DTLSv1 becomes -dtlsv1
+           # unfortunately openssl (or Net::SSLinfo) returns a cipher even if
+           # the protocoll is not supported. Reason (aka bug) yet unknown.
+           # Hence the caller should ensure that openssl supports $ssl .
     }
     if ($cipher =~ m#^\s*$#) {
         # TODO: SSLv2 is special, see _usesocket "dirty hack"
+        my $txt = "SSL version '$ssl': cannot get default cipher; ignored";
         if ($ssl =~ m/SSLv[2]/) {
-            _warn("SSL version '$ssl': cannot get default cipher; ignored");
+            _warn($txt);
         } else {
-            _v_print("SSL version '$ssl': cannot get default cipher; ignored");
+            _v_print($txt);
         }
+    } else {
+        _v_print("default cipher: $ssl:\t$cipher");
     }
     _trace("_get_default()\t= $cipher }"); # TODO: trace a bit late
     return $cipher;
@@ -4874,7 +4890,7 @@ sub printprotocols($$$) {
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
     foreach my $ssl (@{$cfg{'versions'}}) {
         # $cfg{'versions'} is sorted in contrast to "keys %prot" 
-        next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # NOT YET implemented with verbose only
+        next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
@@ -6628,7 +6644,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if ((_need_default() > 0) or ($check > 0)) {
         _y_CMD("get default ..");
-        foreach my $ssl (keys %prot) { # all protocols, no need to sort them
+        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocols
             next if (!defined $prot{$ssl}->{opt});
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
