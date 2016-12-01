@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.559 16/11/30 22:33:27",
+    SID         => "@(#) yeast.pl 1.560 16/12/01 01:16:53",
     STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6682,10 +6682,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # to check the connection (hostname and port)
         _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
         if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
-            my $errtxt = Net::SSLinfo::errors($host, $port);
-            if ($errtxt !~ /^\s*$/) {
-                _v_print($errtxt);
+            my @errtxt = Net::SSLinfo::errors($host, $port);
+            if ($#errtxt > 0) {
+                _v_print(join("\n".STR_ERROR, @errtxt));
                 _warn("Can't make a connection to $host:$port; target ignored");
+                _hint("--v  will show more information");
+                _hint("--socket-reuse  may help in some cases");
                 _hint("--ignore-no-conn can be used to disable this check");
                 goto CLOSE_SSL;
             }
