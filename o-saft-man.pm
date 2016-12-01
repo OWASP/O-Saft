@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.152 16/11/22 00:01:16";
+my  $man_SID= "@(#) o-saft-man.pm 1.153 16/12/01 01:28:10";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2643,6 +2643,19 @@ OPTIONS
           Note: if more than one cipher matches, just one will be selected.
 
           Default is 'ALL:NULL:eNULL:aNULL:LOW' as specified in Net::SSLinfo.
+
+      --socket-reuse
+
+          TCP socket will be reused for  next connection attempt  even if SSL
+          connection failed.
+
+      --no-socket-reuse
+
+          Close TCP socket and then reopen for next connection attempt if SSL
+          connection failed.
+
+          This is useful for some servers which may return an "TLS alert"  if
+          the connection fails and then fail again on the same socket.
 
       --ignore-no-connect
 
