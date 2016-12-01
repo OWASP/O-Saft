@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.560 16/12/01 01:16:53",
+    SID         => "@(#) yeast.pl 1.561 16/12/01 22:35:10",
     STR_VERSION => "16.11.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2598,10 +2598,10 @@ sub _getwilds($$)       {
 
 sub _usesocket($$$$)    {
     # return cipher accepted by SSL connection
-    # should return the targets default cipher if no ciphers passed in
-    # NOTE that this is used to check for supported ciphers only, hence no
-    # need for sophisticated options in new() and no certificate checks
-    # $ciphers must be colon (:) separated list
+    # should return the targets default cipher if no ciphers (empty) passed in
+    # NOTE that this function is used to check for supported ciphers only,
+    # hence no need for sophisticated options in new() and no certificate
+    # checks, $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher  = "";   # to be returned
@@ -2611,7 +2611,7 @@ sub _usesocket($$$$)    {
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
     # these protocols. We only check for SSLv2 and SSLv3 as the *TLSX doesn't
-    # produce such arnings. Sigh.
+    # produce such warnings. Sigh.
     _trace1("_usesocket($ssl, $host, $port, $ciphers){ sni: $sni");
     if (($ssl eq "SSLv2") && (! defined &Net::SSLeay::CTX_v2_new)) {
         _warn("SSL version '$ssl': not supported by Net::SSLeay");
@@ -2672,10 +2672,7 @@ sub _usesocket($$$$)    {
         }
     }) {    # eval succeded
         if ($sslsocket) {
-            # FIXME: get_sslversion() not available in ancient versions of 
-            #        IO::Socket::SSL, hence we use it in trace mode only
-            # FIXME: will be improved if exact IO::Socket::SSL version known
-            $version = $sslsocket->get_sslversion() if ($cfg{'trace'} > 0);
+            $version = $sslsocket->get_sslversion() if ($IO::Socket::SSL::VERSION > 1.964);
             $cipher  = $sslsocket->get_cipher();
             $sslsocket->close(SSL_ctx_free => 1);
             _trace1("_usesocket: SSL version (for $ssl): " . $version);
@@ -2688,7 +2685,7 @@ sub _usesocket($$$$)    {
 
 sub _useopenssl($$$$)   {
     # return cipher accepted by SSL connection
-    # should return the targets default cipher if no ciphers passed in
+    # should return the targets default cipher if no ciphers (empty) passed in
     # $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
@@ -2792,6 +2789,7 @@ sub ciphers_get($$$$)   {
         push(@res, $c) if ($supported !~ /^\s*$/);
         my $yesno = ($supported eq "") ? "no" : "yes";
         _v2print("check cipher: $ssl:$c\t$yesno");
+        # TODO: should close dangling sockets here
     } # foreach @ciphers
     _trace("ciphers_get()\t= " . $#res . " @res }");
     return @res;
@@ -6628,6 +6626,75 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         next;
     } # cipherraw
 
+    if ((_need_default() > 0) or ($check > 0)) {
+        _y_CMD("get default ..");
+        foreach my $ssl (keys %prot) { # all protocols, no need to sort them
+            next if (!defined $prot{$ssl}->{opt});
+            next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
+            # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
+            my $cipher  = _get_default($ssl, $host, $port);
+            $prot{$ssl}->{'default'}    = $cipher;
+            $prot{$ssl}->{'pfs_cipher'} = $cipher if ("" eq _ispfs($ssl, $cipher));
+        }
+    }
+
+    if (_need_cipher() > 0) {
+        _y_CMD("  need_cipher ..");
+        _y_CMD("  use socket ..")  if (0 == $cmd{'extciphers'});
+        _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
+        @cipher_results = ();   # new list for every host
+        $checks{'cnt_totals'}->{val} = 0;
+#dbx# print "# C", @{$cfg{'ciphers'}};
+# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
+# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+# hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
+#    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
+# Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
+        foreach my $ssl (@{$cfg{'version'}}) {
+            my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
+            foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
+                push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
+                $checks{'cnt_totals'}->{val}++;
+            }
+        }
+        checkciphers($host, $port);
+     }
+
+    # check ciphers manually (required for +check also)
+    if (_is_do('cipher') or $check > 0) {
+        _y_CMD("+cipher");
+        _trace(" ciphers: @{$cfg{'ciphers'}}");
+        # TODO: for legacy==testsslserver we need a summary line like:
+        #      Supported versions: SSLv3 TLSv1.0
+        my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
+        foreach my $ssl (@{$cfg{'version'}}) {
+            $_printtitle++;
+            if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
+                printtitle($legacy, $ssl, $host, $port);
+            }
+            printciphercheck($legacy, $ssl, $host, $port,
+                ($legacy eq "sslscan")?($_printtitle):0, @cipher_results);
+        }
+        if ($legacy eq 'sslscan') {
+            my $ssl = ${$cfg{'version'}}[4];
+            print_cipherdefault($legacy, $ssl, $host, $port);
+            # TODO: there is only one $data{'selected'}
+            #foreach my $ssl (@{$cfg{'version'}}) {
+            #    print_cipherdefault($legacy, $ssl, $host, $port);
+            #}
+        }
+        if ($_printtitle > 0) { # if we checked for ciphers
+          if ($legacy =~ /(full|compact|simple|quick)/) {   # but only our formats
+            printheader("\n" . _get_text('out-summary', ""), "");
+            print_check($legacy, $host, $port, 'cnt_totals', scalar @cipher_results) if ($cfg{'verbose'} > 0);
+            printprotocols($legacy, $host, $port);
+            printruler() if ($quick == 0);
+          }
+        }
+    } # cipher
+
+    goto CLOSE_SSL if ((_is_do('cipher') > 0) and ($quick == 0));
+
     usr_pre_info();
 
 # FIXME: some servers do not respond for following
@@ -6694,18 +6761,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
     }
 
-    if ((_need_default() > 0) or ($check > 0)) {
-        _y_CMD("get default ..");
-        foreach my $ssl (keys %prot) { # all protocols, no need to sort them
-            next if (!defined $prot{$ssl}->{opt});
-            next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
-            # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
-            my $cipher  = _get_default($ssl, $host, $port);
-            $prot{$ssl}->{'default'}    = $cipher;
-            $prot{$ssl}->{'pfs_cipher'} = $cipher if ("" eq _ispfs($ssl, $cipher));
-        }
-    }
-
     usr_pre_cmds();
 
     if (_is_do('dump')) {
@@ -6717,64 +6772,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         printdump($legacy, $host, $port);
     }
 
-    if (_need_cipher() > 0) {
-        _y_CMD("  need_cipher ..");
-        _y_CMD("  use socket ..")  if (0 == $cmd{'extciphers'});
-        _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
-        @cipher_results = ();   # new list for every host
-        $checks{'cnt_totals'}->{val} = 0;
-#dbx# print "# C", @{$cfg{'ciphers'}};
-# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
-# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
-# hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
-#    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
-# Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
-        foreach my $ssl (@{$cfg{'version'}}) {
-            my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
-            foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-                push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
-                $checks{'cnt_totals'}->{val}++;
-            }
-        }
-        checkciphers($host, $port);
-     }
-
     usr_pre_data();
-
-    # check ciphers manually (required for +check also)
-    if (_is_do('cipher') or $check > 0) {
-        _y_CMD("+cipher");
-        _trace(" ciphers: @{$cfg{'ciphers'}}");
-        # TODO: for legacy==testsslserver we need a summary line like:
-        #      Supported versions: SSLv3 TLSv1.0
-        my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
-        foreach my $ssl (@{$cfg{'version'}}) {
-            $_printtitle++;
-            if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
-                printtitle($legacy, $ssl, $host, $port);
-            }
-            printciphercheck($legacy, $ssl, $host, $port,
-                ($legacy eq "sslscan")?($_printtitle):0, @cipher_results);
-        }
-        if ($legacy eq 'sslscan') {
-            my $ssl = ${$cfg{'version'}}[4];
-            print_cipherdefault($legacy, $ssl, $host, $port);
-            # TODO: there is only one $data{'selected'}
-            #foreach my $ssl (@{$cfg{'version'}}) {
-            #    print_cipherdefault($legacy, $ssl, $host, $port);
-            #}
-        }
-        if ($_printtitle > 0) { # if we checked for ciphers
-          if ($legacy =~ /(full|compact|simple|quick)/) {   # but only our formats
-            printheader("\n" . _get_text('out-summary', ""), "");
-            print_check($legacy, $host, $port, 'cnt_totals', scalar @cipher_results) if ($cfg{'verbose'} > 0);
-            printprotocols($legacy, $host, $port);
-            printruler() if ($quick == 0);
-          }
-        }
-    }
-
-    goto CLOSE_SSL if ((_is_do('cipher') > 0) and ($quick == 0));
 
     # following sequence important!
     _y_CMD("get checks ..");
