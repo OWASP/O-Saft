@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.67 16/11/30 22:16:46',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.68 16/12/05 00:49:01',
 
 };
 
@@ -217,6 +217,7 @@ our @EXPORT     = qw(
                 get_cipher_name
                 get_openssl_version
                 get_dh_paramter
+                sort_cipher_names
                 osaft_done
 );
 # insert above in vi with:
@@ -246,7 +247,9 @@ our %prot   = (     # collected data for protocols and ciphers
     'DTLSfamily'=> {'txt' => "--dummy--", 'hex' => 0xFE00,  'opt' => undef      },  #  "
    #'TLS_FALLBACK_SCSV'=>{'txt'=> "SCSV", 'hex' => 0x5600,  'opt' => undef      },
     #-----------------------+--------------+----------------+------------------+---+---+---+---
-    # "protocol"=> {cnt, WEAK, LOW, MEDIUM, HIGH, pfs, default, protocol} see _prot_init_value()
+    # see _prot_init_value() for following values in
+    #   "protocol"=> {cnt, -?-, WEAK, LOW, MEDIUM, HIGH, protocol}
+    #   "protocol"=> {pfs_cipher, pfs_ciphers, default, strong_cipher, weak_cipher}
     # Notes:
     #  TLS1FF   0x03FF  # last possible version of TLS1.x (not specified, used internal)
     #  DTLSv09: 0x0100  # DTLS, OpenSSL pre 0.9.8f, not finally standardized; some versions use 0xFEFF
@@ -1207,7 +1210,7 @@ our %cfg = (
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
     'versions'      =>          # all supported versions
-                       # [reverse sort keys %prot], # do not use generic list 'cause the want special order
+                       # [reverse sort keys %prot], # do not use generic list 'cause we want special order
                        [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
     'DTLS_versions' => [qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
                                 # temporary list 'cause DTLS not supported by openssl (6/2015)
@@ -1385,7 +1388,7 @@ our %cfg = (
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need-default'  => [        # commands which need selected cipher
-                        qw(check cipher pfs_cipher selected),
+                        qw(check cipher pfs_cipher order_cipher strong_cipher selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
                                 # missing functionality (i.e in openssl) # 10/2015
@@ -1925,21 +1928,138 @@ sub get_dh_paramter($$) {
     return $dh;
 }; # get_dh_paramter
 
+=pod
+
+=head2 sort_cipher_names(@ciphers)
+
+Sort given list of C<@ciphers> according their strength, most strongest first.
+returns sorted list of ciphers.
+
+C<@ciphers> is a list of cipher suite names. These names should be those used
+by  openssl(1)  .
+=cut
+
+sub sort_cipher_names   {
+    # cipher suites must be given as array
+    # NOTE: the returned list may not be exactly sorted according the cipher's
+    #       strength, just roughly
+    # known insecure, i.e. CBC, DES, NULL, etc. ciphers are added at the end
+    # all ciphers classified "insecure" are added to end of the result list,
+    # these (insecure) ciphers are not sorted according their strength as it
+    # doesn't make much sense to distinguish "more" or "less" insecure
+    my @ciphers = @_;
+    my @sorted  ;
+    my @latest  ;
+    my $cnt     = scalar @ciphers;  # number of passed ciphers; see check at end
+
+    # Algorithm:
+    #  1. remove all known @insecure ciphers from given list
+    #  2. start building new list with most @strength cipher first
+    #  3. add previously remove @insecure ciphers to new list
+
+    # define list of regex to match openssl cipher suite names
+    # each regex could be seen as a  class of ciphers with the same strength
+    # the list defines the strength in descending order, most strength first
+    # NOTE the list may contain pattern, which actually do not match a valid
+    # cipher suite name; doese't matter, but may avoid future adaptions, see
+    # warning at end also
+
+    my @insecure = (
+        qw((?:RC[24]))  ,               # all RC2 and RC4
+        qw((?:CBC|DES)) ,               # all CBC, DES, 3DES
+        qw((?:DSS))     ,               # all DSS
+        qw((?:MD[2345])),               # all MD
+        qw(DH.?(?i:anon)) ,             # Anon needs to be caseless
+        qw((?:NULL))    ,               # all NULL
+    );
+    my @strength = (
+        qw((?:ECDHE|EECDH).*?CHACHA)  , # 1. all ecliptical curve, ephermeral, GCM
+        qw((?:ECDHE|EECDH).*?512.GCM) , # .. sorts -ECDSA before -RSA
+        qw((?:ECDHE|EECDH).*?384.GCM) ,
+        qw((?:ECDHE|EECDH).*?256.GCM) ,
+        qw((?:ECDHE|EECDH).*?128.GCM) ,
+        qw((?:EDH|DHE).*?CHACHA)  ,     # 2. all ephermeral, GCM
+        qw((?:EDH|DHE).*?512.GCM) ,     # .. sorts AES before CAMELLIA
+        qw((?:EDH|DHE).*?384.GCM) ,
+        qw((?:EDH|DHE).*?256.GCM) ,
+        qw((?:EDH|DHE).*?128.GCM) ,
+        qw(ECDH[_-].*?CHACHA)   ,       # 3. all ecliptical curve, GCM
+        qw(ECDH[_-].*?512.GCM)  ,       # .. sorts -ECDSA before -RSA
+        qw(ECDH[_-].*?384.GCM)  ,
+        qw(ECDH[_-].*?256.GCM)  ,
+        qw(ECDH[_-].*?128.GCM)  ,
+        qw(ECDHE.*?CHACHA) ,            # 4. all remaining ecliptical curve, ephermeral
+        qw(ECDHE.*?512) ,
+        qw(ECDHE.*?384) ,
+        qw(ECDHE.*?256) ,
+        qw(ECDHE.*?128) ,
+        qw(ECDH[_-].*?CHACHA),          # 5. all remaining ecliptical curve
+        qw(ECDH[_-].*?512) ,
+        qw(ECDH[_-].*?384) ,
+        qw(ECDH[_-].*?256) ,
+        qw(ECDH[_-].*?128) ,
+        qw(AES) ,                       # 5. all AES
+        qw(SRP) ,
+        qw(PSK) ,
+        qw((?:EDH|DHE).*?CHACHA) ,      # 6. all DH
+        qw((?:EDH|DHE).*?512) ,
+        qw((?:EDH|DHE).*?384) ,
+        qw((?:EDH|DHE).*?256) ,
+        qw((?:EDH|DHE).*?128) ,
+        qw((?:EDH|DHE).*?(?:RSA|DSS)) ,
+        qw(CAMELLIA) ,                  # 7. unknown strength
+        qw((?:SEED|IDEA)) ,
+        qw(RSA[_-]) ,                   # 8.
+        qw(DH[_-])  ,
+        qw(RC)      ,
+        qw(EXP)     ,                   # 9. Export ...
+        qw(AEC.*?256) ,                 # insecure
+        qw(AEC.*?128) ,
+        qw(AEC)     ,
+        qw(ADH.*?256) ,                 # no encryption
+        qw(ADH.*?128) ,
+        qw(ADH)     ,
+    );
+    foreach my $rex (@insecure) {               # remove all known insecure suites
+        _trace2("sort_cipher_names: insecure regex\t= $rex }");
+        push(@latest, grep{ /$rex/} @ciphers);  # add matches to result
+        @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
+    }
+    foreach my $rex (@strength) {               # sort according strength
+        $rex = qr/^(?:(?:SSL|TLS)[_-])?$rex/;   # allow IANA constant names too
+        _trace2("sort_cipher_names: strong regex\t= $rex }");
+        push(@sorted, grep{ /$rex/} @ciphers);  # add matches to result
+        @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
+    }
+    push(@sorted, @latest);                     # add insecure ciphers again
+    my $num = scalar @sorted;
+    if ($cnt != $num) {
+        # print warning if above algorithm misses ciphers; uses perl's  warn()
+        # instead of our _warn() to clearly inform the user that the code here
+        # needs to be fixed
+        warn STR_WARN . "missing ciphers in sorted list: $num < $cnt";
+        #dbx# print "## ".@sorted . " # @ciphers";
+    }
+    return @sorted;
+} # sort_cipher_names
+
 # internal methods
 
 sub _prot_init_value {
     #? initialize default values in %prot
     foreach my $ssl (keys %prot) {
-        $prot{$ssl}->{'cnt'}        = 0;
-        $prot{$ssl}->{'-?-'}        = 0;
-        $prot{$ssl}->{'WEAK'}       = 0;
-        $prot{$ssl}->{'LOW'}        = 0;
-        $prot{$ssl}->{'MEDIUM'}     = 0;
-        $prot{$ssl}->{'HIGH'}       = 0;
-        $prot{$ssl}->{'protocol'}   = 0;
-        $prot{$ssl}->{'default'}    = STR_UNDEF;
-        $prot{$ssl}->{'pfs_cipher'} = STR_UNDEF;
-        $prot{$ssl}->{'pfs_ciphers'}= [];
+        $prot{$ssl}->{'cnt'}            = 0;
+        $prot{$ssl}->{'-?-'}            = 0;
+        $prot{$ssl}->{'WEAK'}           = 0;
+        $prot{$ssl}->{'LOW'}            = 0;
+        $prot{$ssl}->{'MEDIUM'}         = 0;
+        $prot{$ssl}->{'HIGH'}           = 0;
+        $prot{$ssl}->{'protocol'}       = 0;
+        $prot{$ssl}->{'pfs_ciphers'}    = [];
+        $prot{$ssl}->{'pfs_cipher'}     = STR_UNDEF;
+        $prot{$ssl}->{'default'}        = STR_UNDEF;
+        $prot{$ssl}->{'strong_cipher'}  = STR_UNDEF;
+        $prot{$ssl}->{'weak_cipher'}    = STR_UNDEF;
     }
     return;
 } # _prot_init_value
