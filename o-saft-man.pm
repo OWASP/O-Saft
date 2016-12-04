@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.153 16/12/01 01:28:10";
+my  $man_SID= "@(#) o-saft-man.pm 1.154 16/12/04 23:05:09";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -324,6 +324,7 @@ my %man_text = (
         'HMQV'      => "h? Menezes-Qu-Vanstone",
         'HSM'       => "Hardware Security Module",
         'HPKP'      => "HTTP Public Key Pinning",
+        'HSR'       => "Header + Secret + Random",
         'HSTS'      => "HTTP Strict Transport Security",
         'HTOP'      => "HMAC-Based One-Time Password",
         'IAPM'      => "Integrity Aware Parallelizable Mode (block cipher mode of operation)",
@@ -2208,6 +2209,57 @@ COMMANDS
           $0 --help=commands
 
     Notes about commands
+
+      +cipher vs. +cipherall
+
+          +cipher  can only check for ciphers - more precise: cipher suites -
+          provided by the local SSL implementation (i.e. libssl).
+          +cipherall  can check for any cipher,  as it just uses the cipher's
+          integer value in the range 0 .. 65532.
+
+      +cipher vs. +cipher-SSL
+
+          +cipher  lists a summary of ciphers selected by the server for each
+          protocol requested by the user (for example by using options like:
+          --sslv3 --tlsv1 etc.).  When the  --v  option is used, all selected
+          ciphers for all known protocols are listed.
+
+          +cipher-SSL  lists only the selected cipher for the protocol  SSL.
+
+      +selected vs. +cipher-SSL
+
+          +selected  lists the cipher selected by the server if no particular
+          protocol was specified and the system's default cipher list is send
+          in the ClientHello to the server.
+
+#     +strong-cipher vs. +cipher-order
+      +strong-cipher
+
+          It is not possible to check if a server uses 'SSLHonorCipherOrder'.
+          Even if it is used (switched on),  it is not possible to  check the
+          specified order of the ciphers. 
+
+          I. g. it is expected that the order is according the cipher suite's
+          strength, meaning the most strongest first, and the weakest last.
+          It does not make sense to use an order where a weak cipher preceeds
+          a stronger one. Such a (mis-)configuration should be detected.
+
+          Having this in mind, the algorithm to detect a  proper cipher order
+          is as simply as follows:
+            1. pass sorted cipher list with strongest cipher first
+            2. pass sorted cipher list with strongest cipher last
+          if the server returns the same cipher for both checks, it's assumed
+          that it prefers to use the most strongest cipher. In this case it's
+          obvious that 'SSLHonorCipherOrder' is set (exceptions see below).
+
+          +cipherall  uses a  more accurate algorithm  to detect the server's
+          cipher order.
+
+          Exceptions:
+          If either, the server or the client,  uses only one cipher suite in
+          the list, SSLHonorCipherOrder cannot be detected at all.
+          The same happens, if only one cipher in the client's list matches a
+          cipher in the server's list.
 
       +extensions vs. +tlsextensions
 
