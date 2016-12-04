@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.154 16/12/04 23:05:09";
+my  $man_SID= "@(#) o-saft-man.pm 1.155 16/12/04 23:48:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2131,6 +2131,9 @@ COMMANDS
 
 
     Commands to test ciphers provided by target
+
+          Beside the description of the commands itself here, please see also
+          X&Notes about commands&  below.
 
       +cipher
 
