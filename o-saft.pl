@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.563 16/12/05 01:31:31",
+    SID         => "@(#) yeast.pl 1.564 16/12/05 17:53:15",
     STR_VERSION => "16.12.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4907,6 +4907,28 @@ sub printciphers_dh($$$) {
     return;
 } # printciphers_dh
 
+sub printcipherdefaults {
+    #? print table with selected (default) cipher per protocol
+    my ($legacy, $host, $port) = @_;
+    local $\ = "\n";
+    if ($cfg{'out_header'}>0) {
+        printf("= prot.\t%-31s%s\n", "default cipher (strong first)", "default cipher (weak first)");
+        printf("=------+------------------------------+-------------------------------\n");
+    }
+    foreach my $ssl (@{$cfg{'versions'}}) {
+        next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
+        my $key = $ssl . $text{'separator'};
+           $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
+        printf("%-7s\t%-31s\t%s\n", $key,
+                $prot{$ssl}->{'strong_cipher'}, $prot{$ssl}->{'weak_cipher'},
+        );
+    }
+    if ($cfg{'out_header'}>0) {
+        printf("=------+------------------------------+-------------------------------\n");
+    }
+    return;
+} # printcipherdefaults
+
 sub printprotocols($$$) {
     #? print table with cipher informations per protocol
     # number of found ciphers, various risks ciphers, default and PFS cipher
@@ -5905,40 +5927,40 @@ while ($#argv >= 0) {
     # the comment  "# alias"  somewhere in the line, so it can be extracted by
     # other tools easily.  The comment  "# alias:"  is used by  --help=alias .
     # You may read the lines as table with columns like:
-    #!#+---------+----------------------+-----------------------+-----------------
-    #!#           command to check       aliased to              comment/traditional name
-    #!#+---------+----------------------+-----------------------+-----------------
-    if ($arg eq  '+check')              { $check  = 1;          }
-    if ($arg eq  '+info')               { $info   = 1;          } # needed 'cause +info and ..
-    if ($arg eq  '+quick')              { $quick  = 1;          } # .. +quick convert to list of commands
-    if ($arg eq  '+sni')                { $cmdsni = 1;          }
-    if ($arg eq  '+http2')              { $arg = '+protocols';  } # alias: HTTP/2.0; TODO: may be changed in future
-    if ($arg eq  '+spdy')               { $arg = '+protocols';  } # alias: spdy; TODO: may be changed in future
-    if ($arg eq  '+spdy3')              { $arg = '+protocols';  } # alias: SPDY/3.0; TODO: may be changed in future
-    if ($arg eq  '+spdy31')             { $arg = '+protocols';  } # alias: SPDY/3.1; TODO: may be changed in future
-    if ($arg eq  '+spdy4')              { $arg = '+protocols';  } # alias: SPDY/4.0; TODO: may be changed in future
-    if ($arg eq  '+prots')              { $arg = '+protocols';  } # alias:
-    if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';      } # alias:
-    if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';     } # alias:
-    if ($arg eq  '+adh')                { $arg = '+adh_cipher'; } # alias:
-    if ($arg eq  '+cbc')                { $arg = '+cbc_cipher'; } # alias:
-    if ($arg eq  '+des')                { $arg = '+des_cipher'; } # alias:
-    if ($arg eq  '+edh')                { $arg = '+edh_cipher'; } # alias:
-    if ($arg eq  '+exp')                { $arg = '+exp_cipher'; } # alias:
-    if ($arg eq  '+export')             { $arg = '+exp_cipher'; } # alias:
-    if ($arg eq  '+null')               { $arg = '+null_cipher';   }  # alias:
-    if ($arg =~ /^\+order.?cipher/)     { $arg = '+order_cipher';  }  # alias:
-    if ($arg =~ /^\+strong.?cipher/)    { $arg = '+strong_cipher'; }  # alias:
-    if ($arg eq  '+owner')              { $arg = '+subject';    } # alias:
-    if ($arg eq  '+authority')          { $arg = '+issuer';     } # alias:
-    if ($arg eq  '+expire')             { $arg = '+after';      } # alias:
-    if ($arg eq  '+extension')          { $arg = '+extensions'; } # alias:
-    if ($arg eq  '+sts')                { $arg = '+hsts';       } # alias:
-    if ($arg eq  '+sigkey')             { $arg = '+sigdump';    } # alias:
-    if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';    } # alias:
+    #!#+---------+----------------------+---------------------------+-------------
+    #!#           command to check       aliased to                  comment/traditional name
+    #!#+---------+----------------------+---------------------------+-------------
+    if ($arg eq  '+check')              { $check  = 1;              }
+    if ($arg eq  '+info')               { $info   = 1;              } # needed 'cause +info and ..
+    if ($arg eq  '+quick')              { $quick  = 1;              } # .. +quick convert to list of commands
+    if ($arg eq  '+sni')                { $cmdsni = 1;              }
+    if ($arg eq  '+http2')              { $arg = '+protocols';      } # alias: HTTP/2.0; TODO: may be changed in future
+    if ($arg eq  '+spdy')               { $arg = '+protocols';      } # alias: spdy; TODO: may be changed in future
+    if ($arg eq  '+spdy3')              { $arg = '+protocols';      } # alias: SPDY/3.0; TODO: may be changed in future
+    if ($arg eq  '+spdy31')             { $arg = '+protocols';      } # alias: SPDY/3.1; TODO: may be changed in future
+    if ($arg eq  '+spdy4')              { $arg = '+protocols';      } # alias: SPDY/4.0; TODO: may be changed in future
+    if ($arg eq  '+prots')              { $arg = '+protocols';      } # alias:
+    if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';          } # alias:
+    if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';         } # alias:
+    if ($arg eq  '+adh')                { $arg = '+adh_cipher';     } # alias:
+    if ($arg eq  '+cbc')                { $arg = '+cbc_cipher';     } # alias:
+    if ($arg eq  '+des')                { $arg = '+des_cipher';     } # alias:
+    if ($arg eq  '+edh')                { $arg = '+edh_cipher';     } # alias:
+    if ($arg eq  '+exp')                { $arg = '+exp_cipher';     } # alias:
+    if ($arg eq  '+export')             { $arg = '+exp_cipher';     } # alias:
+    if ($arg eq  '+null')               { $arg = '+null_cipher';    } # alias:
+    if ($arg =~ /^\+order.?cipher/)     { $arg = '+order_cipher';   } # alias:
+    if ($arg =~ /^\+strong.?cipher/)    { $arg = '+strong_cipher';  } # alias:
+    if ($arg eq  '+owner')              { $arg = '+subject';        } # alias:
+    if ($arg eq  '+authority')          { $arg = '+issuer';         } # alias:
+    if ($arg eq  '+expire')             { $arg = '+after';          } # alias:
+    if ($arg eq  '+extension')          { $arg = '+extensions';     } # alias:
+    if ($arg eq  '+sts')                { $arg = '+hsts';           } # alias:
+    if ($arg eq  '+sigkey')             { $arg = '+sigdump';        } # alias:
+    if ($arg eq  '+sigkey_algorithm')   { $arg = '+signame';        } # alias:
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias:
-    if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';    } # alias; # TODO until check is improved (6/2015)
-    if ($arg eq  '+rfc6797')            { $arg = '+hsts';       } # alias:
+    if ($arg eq  '+rfc6125')            { $arg = '+rfc6125_names';  } # alias; # TODO until check is improved (6/2015)
+    if ($arg eq  '+rfc6797')            { $arg = '+hsts';           } # alias:
     if ($arg =~ /^\+modulus_exponent_size/)         { $arg = '+modulus_exp_size'; } # alias:
     if ($arg =~ /^\+pub(lic)?_enc(?:ryption)?/)     { $arg = '+pub_encryption';} # alias:
     if ($arg =~ /^\+pubkey_enc(?:ryption)?/)        { $arg = '+pub_encryption';} # alias:
@@ -5948,21 +5970,23 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sig(key)?_enc(?:ryption)?/)     { $arg = '+sig_encryption';} # alias:
     if ($arg =~ /^\+sig(key)?_enc(?:ryption)?_known/){$arg = '+sig_enc_known'; } # alias:
     if ($arg =~ /^\+server[_-]?(?:temp)?[_-]?key/)  { $arg = '+dh_parameter';  } # alias:
-    if ($arg =~ /^\+reneg/)             { $arg = '+renegotiation'; } # alias:
-    if ($arg =~ /^\+reused?/i)          { $arg = '+resumption'; } # alias:
-    if ($arg =~ /^\+commonName/i)       { $arg = '+cn';         } # alias:
-    if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';        } # alias:
-    if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';     } # alias:
-    if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';    } # alias:
-    if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature'; } # alias:
-    if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';  }
-    if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';  }
-    if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority'; } # alias: AIA is a common acronym ...
-    if ($arg =~ /\+vulnerabilit(y|ies)/){ $arg = '+vulns';      } # alias:
-    if ($arg =~ /^\+selected[_-]?ciphers?$/){$arg= '+selected'; } # alias:
-    if ($arg =~ /^\+session[_-]?ciphers?$/) {$arg= '+selected'; } # alias:
-    if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw';} # alias:
-    if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw';} # alias:
+    if ($arg =~ /^\+reneg/)             { $arg = '+renegotiation';  } # alias:
+    if ($arg =~ /^\+reused?/i)          { $arg = '+resumption';     } # alias:
+    if ($arg =~ /^\+commonName/i)       { $arg = '+cn';             } # alias:
+    if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';            } # alias:
+    if ($arg =~ /^\+issuerX509/i)       { $arg = '+issuer';         } # alias:
+    if ($arg =~ /^\+subjectX509/i)      { $arg = '+subject';        } # alias:
+    if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature';  } # alias:
+    if ($arg =~ /^\+sni[_-]?check$/)    { $arg = '+check_sni';      }
+    if ($arg =~ /^\+check[_-]?sni$/)    { $arg = '+check_sni';      }
+    if ($arg =~ /^\+ext_aia/i)          { $arg = '+ext_authority';  } # alias: AIA is a common acronym ...
+    if ($arg =~ /\+vulnerabilit(y|ies)/){ $arg = '+vulns';          } # alias:
+    if ($arg =~ /^\+selected[_-]?ciphers?$/){$arg= '+selected';     } # alias:
+    if ($arg =~ /^\+session[_-]?ciphers?$/) {$arg= '+selected';     } # alias:
+    if ($arg =~ /^\+(?:all|raw)ciphers?$/){ $arg = '+cipherraw';    } # alias:
+    if ($arg =~ /^\+ciphers?(?:all|raw)$/){ $arg = '+cipherraw';    } # alias:
+    if ($arg =~ /^\+cipher[_-]?defaults?$/){$arg = '+cipher-default';}
+    #!#+---------+----------------------+---------------------------+-------------
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
     #  +---------+----------+-----------------------------------+----------------
@@ -6695,6 +6719,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             ##}
         }
         checkdefault($host, $port);
+    }
+
+    if (_is_do('cipher-default') and ($#{$cfg{'do'}} == 0)) {
+        # don't print if not a single command, because +check or +cipher do it
+        # in printptotocols() anyway
+        printcipherdefaults($legacy, $host, $port);
+        goto CLOSE_SSL; # next HOSTS
     }
 
     if (_need_cipher() > 0) {
