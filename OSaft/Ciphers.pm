@@ -9,26 +9,13 @@
 
 OSaft::Ciphers - common perl module to define O-Saft ciphers
 
+#####
+# perlcritic -3 OSaft/Ciphers.pm # -verbose 10
 
 ########################  E X P E R I M E N T A L  #######################
 ######################  not used in O-Saft 16.09.16  #####################
 
 =cut
-
-#####
-# perlcritic -3 OSaft/Ciphers.pm # -verbose 10
-## tests:
-#	OSaft/Ciphers.pm overview
-#	OSaft/Ciphers.pm const
-#	OSaft/Ciphers.pm names
-#	OSaft/Ciphers.pm rfc
-#	OSaft/Ciphers.pm alias
-#	OSaft/Ciphers.pm ciphers=osaft
-#	OSaft/Ciphers.pm ciphers=openssl
-#	OSaft/Ciphers.pm ciphers=old
-#	OSaft/Ciphers.pm ciphers_description
-#	OSaft/Ciphers.pm description
-#	OSaft/Ciphers.pm ciphers=dumptab > c.csv; libreoffice c.csv
 
 # test resources with:
 ## /usr/bin/time --quiet -a -f "%U %S %E %P %Kk %Mk" OSaft/Ciphers.pm  names
@@ -55,7 +42,7 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.14 16/12/05 00:51:12';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.15 16/12/05 23:03:09';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -479,7 +466,7 @@ Get information from internal C<%cipher> data structure.
 sub get_param   {
     #? internal method to return required value from %cipher
     my ($cipher, $key) = @_;
-    return $ciphers{$cipher}->{$key} || '' if ((grep{/^$cipher/} %ciphers)>0);
+    return $ciphers{$cipher}->{$key} || '' if ((grep{/^$cipher/i} %ciphers)>0);
     return $STR_UNDEF;
 }; # get_param
 sub get_ssl     { my $c=shift; return get_param($c, 'ssl'); }
@@ -520,8 +507,10 @@ Check if given C<%cipher> name is a known cipher.
 =cut
 
 sub get_hex     {
-    # find hex key for cipher in %ciphers_names or %ciphers_alias
+    #? find hex key for cipher in %ciphers_names or %ciphers_alias
+    #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
     my $c = shift;
+# FIXME: returns first matching even if more exist; example: RC4-MD5
     foreach my $k (keys %ciphers_names) { # database up to VERSION 14.07.14
         return $k if (($ciphers_names{$k}[0] eq $c) or ($ciphers_names{$k}[1] eq $c));
     }
@@ -533,10 +522,12 @@ sub get_hex     {
 
 
 sub get_key     {
-    # translate given string to valid hex key for %cipher; returns key if exists
+    #? translate given string to valid hex key for %cipher; returns key if exists
+    #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
     my $txt = shift;
     my $key = uc($txt);
        $key =~ s/X/x/g;
+# FIXME: returns first matching even if more exist; example: RC4-MD5
     return $key if defined $ciphers{$key};
     $key =  $txt;
     $key =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix;
@@ -552,8 +543,11 @@ print "#$ciphers_names{$k}->{$_}#\n" if ($ciphers_names{$k}->{$_} =~ m/$key/i);
 } # get_key
 
 sub get_name    {
-    # check if given cipher name is a known cipher
-    # checks in %ciphers if nof found in %ciphers_names
+    #? check if given cipher name is a known cipher
+    #  checks in %ciphers if nof found in %ciphers_names
+    #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES128-SHA256
+    # Note: duplicate name (like RC4_128_WITH_MD5) are no problem, because they
+    #       use the same cipher suite name (like RC4-MD5).
     my $cipher  = shift;
     return $cipher if ((grep{/^$cipher/} %ciphers)>0);
     _trace("get_name: search $cipher");
@@ -588,7 +582,8 @@ sub sort_cipher_names   {
     #       strength, just roughly
     # known insecure (i.e. CBC, DES, RC4) and NULL ciphers are added at the end
     my @ciphers = @_;
-    my @sorted ;
+    my @sorted  ;
+    my @latest  ;
     my $cnt     = scalar @ciphers;  # number of passed ciphers; see check at end
 
     # now define list of regex to match openssl cipher suite names
@@ -671,7 +666,8 @@ sub sort_cipher_names   {
         # print warning if above algorithm misses ciphers; uses perl's  warn()
         # instead of our _warn() to clearly inform the user that the code here
         # needs to be fixed
-        warn STR_WARN . "missing ciphers in sorted list: $num < $cnt";
+        #warn STR_WARN . "missing ciphers in sorted list: $num < $cnt";
+        warn "**WARNING: missing ciphers in sorted list: $num < $cnt";
         #dbx# print "## ".@sorted . " # @ciphers";
     }
     return @sorted;
@@ -681,7 +677,7 @@ sub sort_cipher_names   {
 #_________________________________________________________ internal methods __|
 
 sub show_getter03 {
-    #? show example for all getter functions for key 0x00,0x03
+    #? show hardcoded example for all getter functions for key 0x00,0x03
 
 #   0x00,0x03	RSA  40   N    RC4  RSA(512) MD5  4346,6347  0    WEAK SSLv3  export
 #   0x00,0x03   EXP-RC4-MD5    RSA_RC4_40_MD5
@@ -694,13 +690,13 @@ sub show_getter03 {
 #   printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_hex",  $cipher, "hex",  get_hex($cipher),  "?");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_dtls", $cipher, "dtls", get_dtls($cipher), "N");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_bits", $cipher, "bits", get_bits($cipher), "40");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_enc",  $cipher, "enc",  get_enc($cipher),  "RC4");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_enc",  $cipher, "enc",  get_enc( $cipher), "RC4");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_keyx", $cipher, "keyx", get_keyx($cipher), "RSA(512)");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_auth", $cipher, "auth", get_auth($cipher), "RSA");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_mac",  $cipher, "mac",  get_mac($cipher),  "MD5");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_rfc",  $cipher, "rfc",  get_rfc($cipher),  "4346,6347");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_sec",  $cipher, "sec",  get_sec($cipher),  "WEAK");
-    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",  $cipher, "ssl",  get_ssl($cipher),  "SSLv3");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_mac",  $cipher, "mac",  get_mac( $cipher), "MD5");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_rfc",  $cipher, "rfc",  get_rfc( $cipher), "4346,6347");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_sec",  $cipher, "sec",  get_sec( $cipher), "WEAK");
+    printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_ssl",  $cipher, "ssl",  get_ssl( $cipher), "SSLv3");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_tags", $cipher, "tags", get_tags($cipher), "export");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_name", $cipher, "name", get_name($cipher), "?");
     printf("%-8s %s\t%s\t%-14s\t# %s\n", "get_desc", $cipher, "desc", get_desc($cipher), "40 4346,6347 MD5 N RC4 RSA RSA(512) SSLv3 WEAK export");
@@ -711,6 +707,7 @@ sub show_getter03 {
 sub show_getter {
     #? show example for all getter functions
     my $cipher = shift;
+    printf("#%s:\n", (caller(0))[3]);
     if ($cipher !~ m/^[x0-9a-fA-F,]+$/) {   # no cipher given, print hardcoded example
         show_getter03;
         return;
@@ -721,13 +718,13 @@ sub show_getter {
 #   printf("%-8s %s\t%s\t%s\n", "get_hex",  $cipher, "hex",  get_hex($cipher)  );
     printf("%-8s %s\t%s\t%s\n", "get_dtls", $cipher, "dtls", get_dtls($cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_bits", $cipher, "bits", get_bits($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_enc",  $cipher, "enc",  get_enc($cipher)  );
+    printf("%-8s %s\t%s\t%s\n", "get_enc",  $cipher, "enc",  get_enc( $cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_keyx", $cipher, "keyx", get_keyx($cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_auth", $cipher, "auth", get_auth($cipher) );
-    printf("%-8s %s\t%s\t%s\n", "get_mac",  $cipher, "mac",  get_mac($cipher)  );
-    printf("%-8s %s\t%s\t%s\n", "get_rfc",  $cipher, "rfc",  get_rfc($cipher)  );
-    printf("%-8s %s\t%s\t%s\n", "get_sec",  $cipher, "sec",  get_sec($cipher)  );
-    printf("%-8s %s\t%s\t%s\n", "get_ssl",  $cipher, "ssl",  get_ssl($cipher)  );
+    printf("%-8s %s\t%s\t%s\n", "get_mac",  $cipher, "mac",  get_mac( $cipher) );
+    printf("%-8s %s\t%s\t%s\n", "get_rfc",  $cipher, "rfc",  get_rfc( $cipher) );
+    printf("%-8s %s\t%s\t%s\n", "get_sec",  $cipher, "sec",  get_sec( $cipher) );
+    printf("%-8s %s\t%s\t%s\n", "get_ssl",  $cipher, "ssl",  get_ssl( $cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_tags", $cipher, "tags", get_tags($cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_name", $cipher, "name", get_name($cipher) );
     printf("%-8s %s\t%s\t%s\n", "get_desc", $cipher, "desc", get_desc($cipher) );
@@ -739,6 +736,7 @@ sub show_key    {
     #? print hex key if found in internal data structure
     my $txt = shift;
     my $key = get_key($txt);
+    printf("#%s:\n", (caller(0))[3]);
     print "key for $txt : $key\n";
     return;
 } # show_key
@@ -746,6 +744,7 @@ sub show_key    {
 sub show_desc   {
     #? print textual description for %cipher hash
 
+    printf("#%s:\n", (caller(0))[3]);
     print  "\n# %ciphers : tabular description of one line:\n";
     printf("#-------+------+-----------------------+--------\n");
     printf("# [%s]\t%5s\t%16s\t%s\n", "nr", "key", "description", "example");
@@ -815,6 +814,7 @@ sub show_desc   {
 } # show_desc
 
 sub show_overview   {
+    printf("#%s:\n", (caller(0))[3]);
     print  "= overview if cipher description and name exists in internal data structure\n";
     print  "= Note: following columns should have a *\n";
     print  "=       ciphers_desc, ciphers_const, ciphers_name\n";
@@ -843,6 +843,7 @@ sub show_overview   {
 }; # show_overview
 
 sub show_const  {
+    printf("#%s:\n", (caller(0))[3]);
     print  "= overview of various cipher suite constant names
 =   description of columns:
 =       key     - hex key for cipher suite
@@ -870,6 +871,7 @@ sub show_const  {
 }; # show_const
 
 sub show_names  {
+    printf("#%s:\n", (caller(0))[3]);
     print  "= overview of various cipher suite names
 =   description of columns:
 =       key     - hex key for cipher suite
@@ -915,6 +917,7 @@ sub show_names  {
 ######################################################
 
 sub show_rfc    {
+    printf("#%s:\n", (caller(0))[3]);
     print  "= cipher suite and corresponding RFCs\n";
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
     printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
@@ -937,6 +940,7 @@ sub _show_tablehead {
     # print table headline according given format
     my $format = shift;
     my @values;
+    printf("#%s:\n", (caller(0))[3]);
 
     return if ($format =~ m/tab$/);
 
@@ -993,6 +997,7 @@ sub _show_tableline {
 sub show_ciphers    {
     #? print internal list of ciphers in specified format
     my $format = shift;
+    printf("#%s:\n", (caller(0))[3]);
 
     print  "= internal lists of ciphers\n" if ($format !~ m/tab$/);
 
@@ -1200,6 +1205,25 @@ sub _main       {
         if ($arg =~ /^ciphers=(.*)$/) { show_ciphers($1); } # same as above, but keeps perlcritic quiet
         if ($arg =~ /^getter=?(.*)/)  { show_getter($1);  }
         if ($arg =~ /^key=?(.*)/)     { show_key($1);  }
+
+        if ($arg =~ /^--h(?:elp)?/)   {
+            my $name = (caller(0))[1];
+            print "# commands to show internal cipher tables:\n";
+            foreach my $cmd (qw(overview names const alias rfc description)) {
+                printf("\t%s %s\n", $name, $cmd);
+            }
+            print "# commands to show ciphers based on origin:\n";
+            foreach my $cmd (qw(ciphers=osaft ciphers=openssl ciphers=iana ciphers=old)) {
+                printf("\t%s %s\n", $name, $cmd);
+            }
+            print "# various commands:\n";
+            foreach my $cmd (qw(ciphers=dumptab)) {
+                printf("\t%s %s\n", $name, $cmd);
+            }
+                printf("\t$name getter=KEY #(KEY: sec, bit, mac, ssl, auth, keyx, enc, name)\n");
+                printf("\t$name key=KEY #(KEY: )\n");
+                printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
+        } # help
     }
     exit 0;
 }; # _main
