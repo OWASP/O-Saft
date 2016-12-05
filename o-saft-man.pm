@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.155 16/12/04 23:48:44";
+my  $man_SID= "@(#) o-saft-man.pm 1.156 16/12/05 18:34:39";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2156,12 +2156,16 @@ COMMANDS
           cipher tests, connection results and some strange behaviours of the
           target. See  X&Options for cipherall command&  for details.
 
-      +cipher-SSL
+      +cipher-default
 
-          Get default cipher for protocol SSL.
+          Lists the cipher selected by the server for each protocol sometimes
+          referred to as "default cipher".
 
-          * 'SSL'       can be any of:
-                        sslv2, sslv3, tls1, tls11, tls12, tls13, dtls1
+          For each protocol the two selected ciphers are shown,  one returned
+          by the server if the cipher list in the  ClientHello is sorted with
+          the strongest cipher first, and one returned  if the cipher list in
+          the ClientHello is sorted with strongest cipher last.
+          See  X&Notes about commands&  for details.
 
       +null
       +null_cipher
@@ -2220,23 +2224,36 @@ COMMANDS
           +cipherall  can check for any cipher,  as it just uses the cipher's
           integer value in the range 0 .. 65532.
 
-      +cipher vs. +cipher-SSL
+      +cipher vs. +cipher-default
+
+          Both commands show the default cipher foreach protocol.
 
           +cipher  lists a summary of ciphers selected by the server for each
           protocol requested by the user (for example by using options like:
           --sslv3 --tlsv1 etc.).  When the  --v  option is used, all selected
-          ciphers for all known protocols are listed.
+          ciphers for all known protocols are listed. This summary focuses on
+          counts for various ciphers.
 
-          +cipher-SSL  lists only the selected cipher for the protocol  SSL.
+          +cipher-default  lists the  cipher selected  by the server for each
+          protocol.
 
-      +selected vs. +cipher-SSL
+      +selected vs. +cipher-default
 
           +selected  lists the cipher selected by the server if no particular
           protocol was specified and the system's default cipher list is send
           in the ClientHello to the server.
 
-#     +strong-cipher vs. +cipher-order
-      +strong-cipher
+          +cipher-default  lists the  cipher selected  by the server for each
+          protocol.
+
+# other names: SSLHonorCipherOrder prefer-server-ciphers PreferServerCipherSuites Server-Defined-Cipher-Order
+      +strong-cipher vs. +cipher-default
+
+          +strong-cipher  shows the result of the check if strong ciphers are
+          preferred by the server. It is a check command.
+
+          +cipher-default  lists the  cipher selected  by the server for each
+          protocol. It is a information command.
 
           It is not possible to check if a server uses 'SSLHonorCipherOrder'.
           Even if it is used (switched on),  it is not possible to  check the
