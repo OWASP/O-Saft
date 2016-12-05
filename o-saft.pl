@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.562 16/12/02 00:25:07",
+    SID         => "@(#) yeast.pl 1.563 16/12/05 01:31:31",
     STR_VERSION => "16.12.01",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -262,6 +262,7 @@ $cfg{'RC-ARGV'} = [@rc_argv];
         'arg_cmds'  => [],      # contains all commands given as argument
          # all following need to be reset for each host, which is done in
          # _resetchecks()  by matching the key against ^check or ^cipher
+        'default_get'   => 0,
         'ciphers_all'   => 0,
         'ciphers_get'   => 0,
         'checkciphers'  => 0,   # not used, as it's called multiple times
@@ -672,6 +673,8 @@ my %check_dest = (  ## target (connection) data
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
     'hasalpn'       => {'txt' => "Target supports Application Layer Protocol Negotiation (ALPN)"},
     'npn'           => {'txt' => "Target supports Next Protocol Negotiation (NPN)"},
+    'strong_cipher' => {'txt' => "Target selects strongest cipher"},
+    'order_cipher'  => {'txt' => "Target does not honors client's cipher order"}, # NOT YET USED
     'adh_cipher'    => {'txt' => "Target does not accept ADH ciphers"},
     'null_cipher'   => {'txt' => "Target does not accept NULL ciphers"},
     'exp_cipher'    => {'txt' => "Target does not accept EXPORT ciphers"},
@@ -681,7 +684,6 @@ my %check_dest = (  ## target (connection) data
     'edh_cipher'    => {'txt' => "Target supports EDH ciphers"},
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
-    'order'         => {'txt' => "Target honors client's cipher order"},
     'ism'           => {'txt' => "Target is ISM compliant (ciphers only)"},
     'pci'           => {'txt' => "Target is PCI compliant (ciphers only)"},
     'fips'          => {'txt' => "Target is FIPS-140 compliant"},
@@ -850,7 +852,8 @@ our %shorttexts = (
     'zlib'          => "ZLIB extension",
     'lzo'           => "GnuTLS extension",
     'open_pgp'      => "OpenPGP extension",
-    'order'         => "Client's cipher order",
+    'strong_cipher' => "Strongest cipher selected",
+    'order_cipher'  => "Client's cipher order",
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
     'pfs_cipher'    => "PFS (selected cipher)",
@@ -2741,8 +2744,12 @@ sub _useopenssl($$$$)   {
     return "";
 } # _useopenssl
 
-sub _get_default($$$)   {
-    # return (default) offered cipher from target
+sub _get_default($$$$)  {
+    # return list of offered (default) cipher from target
+    # mode defines how to retrive the default cipher
+    #   strong:  pass cipher list sorted with strongest first
+    #   weak:    pass cipher list sorted with weakest first
+    #   default: pass no cipher list which then uses system default
 
     # To get the target's default cipher, all  known ciphers are send so that
     # the target should select the most secure one.
@@ -2752,20 +2759,26 @@ sub _get_default($$$)   {
     # like: keys %ciphers . +cipherraw command must be used, if other ciphers
     # than the local available should be checked.
 
-    my ($ssl, $host, $port) = @_;
-    my $cipher = "";
-    _trace("_get_default($ssl, $host, $port){");   # TODO: rejoin the trace?
-    $cfg{'done'}->{'checkdefault'}++;
+    my ($ssl, $host, $port, $mode) = @_;
+    _trace("_get_default($ssl, $host, $port, $mode){");
+    $cfg{'done'}->{'default_get'}++;
+    my $cipher  = "";
+    my @list = ();   # mode == default
+       @list =         sort_cipher_names(@{$cfg{'ciphers'}}) ;#if ($mode eq 'strong');
+       @list = reverse sort_cipher_names(@{$cfg{'ciphers'}}) if ($mode eq 'weak');
+    my $cipher_list = join(":", @list);
+
     if (0 == $cmd{'extciphers'}) {
-        $cipher = _usesocket( $ssl, $host, $port, join(":", @{$cfg{'ciphers'}}));
+        $cipher = _usesocket( $ssl, $host, $port, $cipher_list);
     } else { # force openssl
-        $cipher = _useopenssl($ssl, $host, $port, join(":", @{$cfg{'ciphers'}}));
+        $cipher = _useopenssl($ssl, $host, $port, $cipher_list);
            # NOTE: $ssl will be converted to corresponding option for openssl,
            # for example: DTLSv1 becomes -dtlsv1
            # unfortunately openssl (or Net::SSLinfo) returns a cipher even if
            # the protocoll is not supported. Reason (aka bug) yet unknown.
            # Hence the caller should ensure that openssl supports $ssl .
     }
+
     if ($cipher =~ m#^\s*$#) {
         # TODO: SSLv2 is special, see _usesocket "dirty hack"
         my $txt = "SSL version '$ssl': cannot get default cipher; ignored";
@@ -2775,7 +2788,7 @@ sub _get_default($$$)   {
             _v_print($txt);
         }
     } else {
-        _v_print("default cipher: $ssl:\t$cipher");
+        _v2print("default cipher: $ssl:\t$cipher");
     }
     _trace("_get_default()\t= $cipher }"); # TODO: trace a bit late
     return $cipher;
@@ -3042,6 +3055,24 @@ sub check_url($$) {
 
     return $txt;
 } # check_url
+
+sub checkdefault    {
+    #? test if target prefers strong ciphers, aka SSLHonorCipherOrder
+    my ($host, $port) = @_;     # not yet used
+    _y_CMD("checkdefault() " . $cfg{'done'}->{'checkdefault'});
+    $cfg{'done'}->{'checkdefault'}++;
+    return if ($cfg{'done'}->{'checkdefault'} > 1);
+    _trace("checkdefault($host, $port){");
+    foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
+        my $strong = $prot{$ssl}->{'strong_cipher'};
+        my $weak   = $prot{$ssl}->{'weak_cipher'};
+        my $txt = "$strong,$weak";
+        $checks{'strong_cipher'}->{val} .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # FIXME: assumtion wrong if only one cipher accepted
+        $checks{'order_cipher'}->{val}  .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # NOT YET USED
+    }
+    _trace("checkdefault() }");
+    return;
+} # checkdefault
 
 sub checkcipher($$) {
     #? test given cipher and add result to %checks and %prot
@@ -4884,7 +4915,7 @@ sub printprotocols($$$) {
     local $\ = "\n";
     if ($cfg{'out_header'}>0) {
         printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=total amount  PFS=selected cipher with PFS\n") if ($verbose > 0);
-        printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot default PFS));
+        printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot default-strong-cipher PFS-cipher));
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
@@ -4898,8 +4929,9 @@ sub printprotocols($$$) {
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
                 $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
                 ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
-                $prot{$ssl}->{'default'}, $prot{$ssl}->{'pfs_cipher'}
+                $prot{$ssl}->{'strong_cipher'}, $prot{$ssl}->{'pfs_cipher'}
         );
+        # not yet printed: $prot{$ssl}->{'weak_cipher'}, $prot{$ssl}->{'default'}
     }
     if ($cfg{'out_header'}>0) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
@@ -5894,7 +5926,9 @@ while ($#argv >= 0) {
     if ($arg eq  '+edh')                { $arg = '+edh_cipher'; } # alias:
     if ($arg eq  '+exp')                { $arg = '+exp_cipher'; } # alias:
     if ($arg eq  '+export')             { $arg = '+exp_cipher'; } # alias:
-    if ($arg eq  '+null')               { $arg = '+null_cipher'; } # alias:
+    if ($arg eq  '+null')               { $arg = '+null_cipher';   }  # alias:
+    if ($arg =~ /^\+order.?cipher/)     { $arg = '+order_cipher';  }  # alias:
+    if ($arg =~ /^\+strong.?cipher/)    { $arg = '+strong_cipher'; }  # alias:
     if ($arg eq  '+owner')              { $arg = '+subject';    } # alias:
     if ($arg eq  '+authority')          { $arg = '+issuer';     } # alias:
     if ($arg eq  '+expire')             { $arg = '+after';      } # alias:
@@ -6433,7 +6467,7 @@ usr_pre_cipher();
 
 #| get list of ciphers available for tests
 #| -------------------------------------
-if (_need_cipher() > 0) {
+if ((_need_cipher() > 0) or (_need_default() > 0)) {
     _y_CMD("  get cipher list ..");
     my $pattern = $cfg{'cipherpattern'};# default pattern
        $pattern = join(":", @{$cfg{'cipher'}}) if (scalar(@{$cfg{'cipher'}}) > 0);
@@ -6453,6 +6487,7 @@ if (_need_cipher() > 0) {
             #    _trace(" cipher match: $pattern");
             #} else {
             #    _trace(" cipher privat: $pattern");
+            #}
 _dbx "\n########### fix this place (empty cipher list) ########\n";
 # TODO: #10jan14: reimplement this check when %ciphers has a new structure
             #10jan14        $new = get_cipher_name($c);
@@ -6462,7 +6497,7 @@ _dbx "\n########### fix this place (empty cipher list) ########\n";
         print "Errors: " . Net::SSLinfo::errors();
         die(STR_ERROR, "no ciphers found; may happen with openssl pre 1.0.0 according given pattern");
     }
-}
+} # _need_cipher or _need_default
 _v_print("cipher list: @{$cfg{'ciphers'}}");
 
 _y_EXIT("exit=MAIN  - start");
@@ -6648,10 +6683,18 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             next if (!defined $prot{$ssl}->{opt});
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
-            my $cipher  = _get_default($ssl, $host, $port);
-            $prot{$ssl}->{'default'}    = $cipher;
-            $prot{$ssl}->{'pfs_cipher'} = $cipher if ("" eq _ispfs($ssl, $cipher));
+            $prot{$ssl}->{'strong_cipher'}  = _get_default($ssl, $host, $port, 'strong');
+            $prot{$ssl}->{'weak_cipher'}    = _get_default($ssl, $host, $port, 'weak');
+            $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
+            my $cipher  = $prot{$ssl}->{'strong_cipher'};
+            $prot{$ssl}->{'pfs_cipher'}     = $cipher if ("" eq _ispfs($ssl, $cipher));
+            ##if (_is_do('selected') and ($#{$cfg{'do'}} == 0)) {
+            ##    # +selected command given, but no other commands; ready
+            ##    print_cipherdefault($legacy, $ssl, $host, $port); # need to check if $ssl available first
+            ##    next HOSTS; # TODO: foreach-loop for hosts misses label
+            ##}
         }
+        checkdefault($host, $port);
     }
 
     if (_need_cipher() > 0) {
