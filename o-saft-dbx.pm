@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.47 16/10/12 00:15:50";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.48 16/12/16 22:38:37";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -147,9 +147,12 @@ sub _yeast_init {
     #? print important content of %cfg and %cmd hashes
     #? more output if trace>1; full output if trace>2
     return if (($cfg{'trace'} + $cfg{'verbose'}) <= 0);
+    my $arg = " (does not exist)";
+    if (-f $cfg{'RC-FILE'}) { $arg = " (exists)"; }
     _yline("");
-    _yTRAC("$0", $VERSION);
+    _yTRAC("$0", $VERSION);     # $0 is same as $ARG0
     _yTRAC("_yeast_init::SID", $DBX_SID) if ($cfg{'trace'} > 2);
+    _yTRAC("::osaft",  $osaft::VERSION);
     _yTRAC("Net::SSLhello", $Net::SSLhello::VERSION) if defined($Net::SSLhello::VERSION);
     _yTRAC("Net::SSLinfo",  $Net::SSLinfo::VERSION);
     if ($cfg{'trace'} <= 1) {
@@ -175,6 +178,9 @@ sub _yeast_init {
         _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
         _yline(" Net::SSLinfo }");
     }
+    _yTRAC("RC-FILE", $cfg{'RC-FILE'} . $arg);
+    _yTRAC("--rc",    ((grep{/(?:--rc)$/i}     @ARGV) > 0)? 1 : 0);
+    _yTRAC("--no-rc", ((grep{/(?:--no.?rc)$/i} @ARGV) > 0)? 1 : 0);
     _yTRAC("verbose", $cfg{'verbose'});
     _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
     # more detailed trace first
