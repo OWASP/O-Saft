@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.564 16/12/05 17:53:15",
-    STR_VERSION => "16.12.01",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.565 16/12/16 22:42:47",
+    STR_VERSION => "16.12.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -234,6 +234,10 @@ sub _load_file($$)      {
 #| -------------------------------------
 _y_TIME("cfg{");
 _y_EXIT("exit=CONF0 - RC-FILE start");
+if ((grep{/(?:--rc)$/i} @ARGV) > 0) {           # default RC-File
+    $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
+    $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
+}
 my @rc_argv = "";
 if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
