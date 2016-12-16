@@ -12,6 +12,10 @@
 #?      they must be copied manually into ZAP's  config.xml
 #?      Copy all  <app>..</app>  scopes into the  <apps>  scope.
 #?
+#? NOTE
+#?      o-saft.pl  and  o-saft.tcl  must be found by the PATH environment
+#?      variable, or they must be specified with a full path here.
+#?
 #? AUTHOR
 #?      16-dec-14 Achim Hoffmann
 # _____________________________________________________________________________
