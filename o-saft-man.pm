@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.156 16/12/05 18:34:39";
+my  $man_SID= "@(#) o-saft-man.pm 1.157 16/12/16 22:47:08";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2449,6 +2449,10 @@ OPTIONS
           For developers.
 
     Options for all commands (general)
+
+      --rc
+
+          Read  RC-FILE  if exists, from directory where program was found.
 
       --no-rc
 
