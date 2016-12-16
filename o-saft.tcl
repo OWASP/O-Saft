@@ -290,7 +290,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.127 Summer Edition 2016
+#?      @(#) 1.129 Summer Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -355,8 +355,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.127 16/11/04 08:31:32 Sommer Edition 2016}
-set cfg(VERSION) {1.127}
+set cfg(SID)    {@(#) o-saft.tcl 1.129 16/12/16 13:07:39 Sommer Edition 2016}
+set cfg(VERSION) {1.129}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -471,6 +471,7 @@ array set cfg_buttons "
     {loadresult}  {{Load}   lightgreen load     {Load results from file}}
     {saveresult}  {{Save}   lightgreen save     {Save results to file}}
     {saveconfig}  {{Save}   lightgreen save     {Save configuration to file  }}
+    {ttyresult}   {{STDOUT} lightgreen stdout   {Print results on systems STDOUT}}
     {reset}     {{Reset}    $my_bg  reset       {Reset configuration to defaults}}
     {filter}    {{Filter}   $my_bg  filter      {Show configuration for filtering results}}
     {tkcolor} {{Color Chooser}  $my_bg tkcolor  {Open window to choose a color}}
@@ -1651,18 +1652,18 @@ proc create_help  {sect} {
     # 6. highlight all URLs and bind key
     bind_browser $txt HELP-URL
 
-    # finaly global markups
-    $txt tag config   HELP-TOC  -foreground [get_color link]
-    $txt tag config   HELP-HEAD -font osaftBold
-    $txt tag config   HELP-TOC  -font osaftBold
-    $txt tag config   HELP-LNK  -font osaftBold
+    # finally global markups
     $txt tag config   HELP-CODE -background [get_color code]
     $txt tag config   HELP-URL  -foreground [get_color link]
+    $txt tag config   HELP-TOC  -foreground [get_color link]
+    $txt tag config   HELP-TOC  -font osaftBold
+    $txt tag config   HELP-LNK  -font osaftBold
+    $txt tag config   HELP-HEAD -font osaftBold
 
     _dbx " MARK: [$txt mark names]"
     if {$cfg(DEBUG) > 1} {
         #_dbx " TAGS: [$txt tag names]"; # huge output!!
-        foreach tag [list HELP-TOC HELP-HEAD HELP-CODE HELP-LNK HELP-LNK-T HELP-search-pos] {
+        foreach tag [list HELP-TOC HELP-HEAD HELP-CODE HELP-URL HELP-LNK HELP-LNK-T HELP-search-pos] {
             _dbx " $tag:\t[$txt tag ranges $tag]"
         }
     }
@@ -1692,11 +1693,13 @@ proc create_tab   {parent cmd content} {
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
     set txt [create_text $tab $content].t ; # <== ugly hardcoded .t from .note
     pack [button $tab.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] \
+         [button $tab.ttyresult  -command "osaft_save {TTY} $cfg(EXEC)"    ] \
          [button $tab.filter     -command "create_filter $txt $cmd"    ] \
          -side left
     pack [button $tab.closetab   -command "destroy $tab"] -side right
     theme_set    $tab.closetab   $cfg(bstyle)
     theme_set    $tab.saveresult $cfg(bstyle)
+    theme_set    $tab.ttyresult  $cfg(bstyle)
     theme_set    $tab.filter     $cfg(bstyle)
     $cfg(objN) select $tab
     return $txt
@@ -2173,6 +2176,10 @@ proc osaft_save   {type nr} {
     #? save selected output to file; $nr used if $type == TAB
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
     global cfg tab
+    if {$type eq "TTY"} {
+        puts $tab($nr)
+        return;     # ready
+    }
     if {$type eq "TAB"} {
         set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveresult]" -initialfile "$cfg(SAFT)--$nr.log"]
         if {$name eq ""} { return }
@@ -2193,7 +2200,7 @@ proc osaft_save   {type nr} {
             }
         }
     }
-    close $fid
+    $fid
     update_status "saved to $name"
     return
 }; # osaft_save
@@ -2468,7 +2475,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.127"
+update_status "o-saft.tcl 1.129"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
