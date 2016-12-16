@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+#? NAME
+#?      zap_config.xml  -  example configurtation for ZAP Add-on
+#?
+#? DESCRIPTION
+#?      This files contains some simple examples to use O-Saft from ZAP's
+#?      context menu "External Program".
+#?
+#? USAGE
+#?      Unfortunately ZAP has no method to  "include" these settings.  So
+#?      they must be copied manually into ZAP's  config.xml
+#?      Copy all  <app>..</app>  scopes into the  <apps>  scope.
+#?
+#? AUTHOR
+#?      16-dec-14 Achim Hoffmann
+# _____________________________________________________________________________
+-->
+
+<config>
+<invoke>                                                                       
+<confirmRemoveApp>true</confirmRemoveApp>
+<apps>
+
+<app><name>O-Saft +info</name>
+<directory/>
+<command>o-saft.pl</command><parameters>%site% +info --header</parameters>
+<output>true</output><note>true</note>
+<enabled>true</enabled>
+</app>
+
+<app><name>O-Saft +cipher</name>
+<directory/>
+<command>o-saft.pl</command><parameters>%site% +cipher --header --enabled</parameters>
+<output>true</output><note>true</note>
+<enabled>true</enabled>
+</app>
+
+<app><name>O-Saft +check</name>
+<directory/>
+<command>o-saft.pl</command><parameters>%site% +check --header --enabled</parameters>
+<output>true</output><note>true</note>
+<enabled>true</enabled>
+</app>
+
+<app><name>O-Saft +vulns</name>
+<directory/>
+<command>o-saft.pl</command><parameters>%site% +vulns --header --enabled</parameters>
+<output>true</output><note>true</note>
+<enabled>true</enabled>
+</app>
+
+<app><name>O-Saft GUI</name>
+<directory/>
+<command>o-saft.tcl</command><parameters>%site%</parameters>
+<output>true</output><note>false</note>
+<enabled>true</enabled>
+</app>
+
+</apps>
+</invoke>
+</config>
