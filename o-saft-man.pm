@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.158 16/12/17 21:49:37";
+my  $man_SID= "@(#) o-saft-man.pm 1.159 16/12/17 23:39:48";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2175,6 +2175,12 @@ COMMANDS
           the ClientHello is sorted with strongest cipher last.
           See  X&Notes about commands&  for details.
 
+      +cipher-dh
+
+          Checked target for ciphers. All ciphers supported by the server are
+          printed with their DH or ECDH paramaters (if available).
+          ciphers.
+
       +null
       +null_cipher
 
@@ -2231,6 +2237,12 @@ COMMANDS
           provided by the local SSL implementation (i.e. libssl).
           +cipherall  can check for any cipher,  as it just uses the cipher's
           integer value in the range 0 .. 65532.
+
+      +cipher vs. +cipher-dh
+
+          While  +cipher  prints checked ciphers,  +cipher-dh  prints ciphers
+          with their DH or ECDH paramaters (if available)  only for supported
+          ciphers.
 
       +cipher vs. +cipher-default
 
@@ -5332,6 +5344,7 @@ HACKER's INFO
 #        additional dependency, in particular no dependency on versions beside
 #        the core language.  Currently some perl modules are an exception, and
 #        will be removed in future.
+#        However, libraries part of perl5 are assumed to be "core language".
 #
 #        Perl's  'die()'  is used whenever an unrecoverable error occurs.  The
 #        message printed will always start with '**ERROR: '.
@@ -5461,6 +5474,22 @@ HACKER's INFO
 #              print protocols
 #              print information
 #              print checks
+#
+#      Arguments (+commands and --options)
+#
+#        As described multiple times, it should be possible to mix options and
+#        commands and other arguments in any order. It is also possible to use
+#        various formats of commands and options.
+#        A simple method to allow variants of  a string (command or option) is
+#        to match it against regex.  Unfortunately it is hard to use a generic
+#        way to parse commands and options. perl's Getopt module would be nice
+#        but requires a hash with fixed keys.  Using a hash,  which conatins a
+#        proper regex for each command and option, could be done, but the code
+#        for such a sophisticated parser may be hard to understand.  So a loop
+#        over all arguments with a huge "switch" statment is implemented. Each
+#        "switch-case" matches a regex,  and then assign a proper value in the
+#        configuration. See the  "#{ COMMANDS"  and  "#{ OPTIONS"  sections in
+#        o-saft.pl.
 #
 #      Program flow
 #
