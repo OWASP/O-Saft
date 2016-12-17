@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.11.16',
+    SSLINFO_VERSION => '16.12.16',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.159 16/12/01 01:18:20',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.160 16/12/17 23:54:18',
 };
 
 ######################################################## public documentation #
@@ -373,6 +373,7 @@ our @EXPORT_OK = qw(
         fingerprint_hash
         fingerprint_text
         fingerprint_type
+        fingerprint_sha2
         fingerprint_sha1
         fingerprint_md5
         cert_type
@@ -715,6 +716,7 @@ my %_SSLinfo= ( # our internal data structure
     'fingerprint_text'  => "",  # the fingerprint text
     'fingerprint_type'  => "",  # just the fingerprint hash algorithm
     'fingerprint_hash'  => "",  # the fingerprint hash value
+    'fingerprint_sha2'  => "",  # SHA2 fingerprint (if available)
     'fingerprint_sha1'  => "",  # SHA1 fingerprint (if available)
     'fingerprint_md5'   => "",  # MD5  fingerprint (if available)
     'selected'          => "",  # cipher selected for session by server
@@ -1001,13 +1003,14 @@ sub _ssleay_get     {
 
     if (! $x509) {
         # ugly check to avoid "Segmentation fault" if $x509 is 0 or undef
-        return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type|serial|altname)/);
+        return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|sha2|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type|serial|altname)/);
     }
 
     return Net::SSLeay::PEM_get_string_X509(     $x509) || ""   if ($key eq 'PEM');
     return Net::SSLeay::X509_get_version(        $x509) + 1     if ($key eq 'version');
     return Net::SSLeay::X509_get_fingerprint(    $x509,  'md5') if ($key eq 'md5');
     return Net::SSLeay::X509_get_fingerprint(    $x509, 'sha1') if ($key eq 'sha1');
+    return Net::SSLeay::X509_get_fingerprint(  $x509, 'sha256') if ($key eq 'sha2');
     return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_subject_name($x509)) if ($key eq 'subject');
     return Net::SSLeay::X509_NAME_oneline(        Net::SSLeay::X509_get_issuer_name( $x509)) if ($key eq 'issuer');
     return Net::SSLeay::P_ASN1_UTCTIME_put2string(Net::SSLeay::X509_get_notBefore(   $x509)) if ($key eq 'before');
@@ -1681,6 +1684,7 @@ sub do_ssl_open($$$@) {
         if (1.45 <= $Net::SSLeay::VERSION) {
             $_SSLinfo{'fingerprint_md5'} = _ssleay_get('md5',  $x509);
             $_SSLinfo{'fingerprint_sha1'}= _ssleay_get('sha1', $x509);
+            $_SSLinfo{'fingerprint_sha2'}= _ssleay_get('sha2', $x509);
         } else {
             warn "**WARNING: Net::SSLeay >= 1.45 required for getting fingerprint_md5";
         }
@@ -2508,6 +2512,10 @@ Get  MD5 fingerprint if available (Net::SSLeay >= 1.49)
 
 Get SHA1 fingerprint if available (Net::SSLeay >= 1.49)
 
+=head2 fingerprint_sha2( )
+
+Get SHA2 fingerprint if available (Net::SSLeay >= 1.49)
+
 =head2 fingerprint_type( )
 
 Get certificate fingerprint hash algorithm.
@@ -2766,6 +2774,7 @@ sub session_protocol{ return _SSLinfo_get('session_protocol', $_[0], $_[1]); }
 sub fingerprint_hash{ return _SSLinfo_get('fingerprint_hash', $_[0], $_[1]); }
 sub fingerprint_text{ return _SSLinfo_get('fingerprint_text', $_[0], $_[1]); }
 sub fingerprint_type{ return _SSLinfo_get('fingerprint_type', $_[0], $_[1]); }
+sub fingerprint_sha2{ return _SSLinfo_get('fingerprint_sha2', $_[0], $_[1]); }
 sub fingerprint_sha1{ return _SSLinfo_get('fingerprint_sha1', $_[0], $_[1]); }
 sub fingerprint_md5 { return _SSLinfo_get('fingerprint_md5' , $_[0], $_[1]); }
 sub fingerprint     { return _SSLinfo_get('fingerprint',      $_[0], $_[1]); } # alias for fingerprint_text
