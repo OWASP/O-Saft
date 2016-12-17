@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.566 16/12/17 21:45:39",
+    SID         => "@(#) yeast.pl 1.567 16/12/17 23:55:19",
     STR_VERSION => "16.12.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -478,6 +478,7 @@ our %data   = (     # connection and certificate details
     'selfsigned'    => {'val' => sub { Net::SSLinfo::selfsigned(    $_[0], $_[1])}, 'txt' => "Certificate Validity (signature)"},
     'fingerprint_type'=>{'val'=> sub { Net::SSLinfo::fingerprint_type($_[0],$_[1])},'txt' => "Certificate Fingerprint Algorithm"},
     'fingerprint_hash'=>{'val'=> sub { __SSLinfo('fingerprint_hash',$_[0], $_[1])}, 'txt' => "Certificate Fingerprint Hash Value"},
+    'fingerprint_sha2'=>{'val'=> sub { __SSLinfo('fingerprint_sha2',$_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA2"},
     'fingerprint_sha1'=>{'val'=> sub { __SSLinfo('fingerprint_sha1',$_[0], $_[1])}, 'txt' => "Certificate Fingerprint SHA1"},
     'fingerprint_md5' =>{'val'=> sub { __SSLinfo('fingerprint_md5', $_[0], $_[1])}, 'txt' => "Certificate Fingerprint  MD5"},
     'fingerprint'   => {'val' => sub { __SSLinfo('fingerprint',     $_[0], $_[1])}, 'txt' => "Certificate Fingerprint"},
@@ -988,6 +989,7 @@ our %shorttexts = (
     'verify_altname'    => "AltNames valid",
     'fingerprint_hash'  => "Fingerprint Hash",
     'fingerprint_type'  => "Fingerprint Algorithm",
+    'fingerprint_sha2'  => "Fingerprint SHA2",
     'fingerprint_sha1'  => "Fingerprint SHA1",
     'fingerprint_md5'   => "Fingerprint  MD5",
     'fingerprint'       => "Fingerprint:",
@@ -1991,6 +1993,7 @@ sub __SSLinfo($$$)      {
     my $ext = "";
     $val =  Net::SSLinfo::fingerprint(      $host, $port) if ($cmd eq 'fingerprint');
     $val =  Net::SSLinfo::fingerprint_hash( $host, $port) if ($cmd eq 'fingerprint_hash');
+    $val =  Net::SSLinfo::fingerprint_sha2( $host, $port) if ($cmd eq 'fingerprint_sha2');
     $val =  Net::SSLinfo::fingerprint_sha1( $host, $port) if ($cmd eq 'fingerprint_sha1');
     $val =  Net::SSLinfo::fingerprint_md5(  $host, $port) if ($cmd eq 'fingerprint_md5');
     $val =  Net::SSLinfo::pubkey_value(     $host, $port) if ($cmd eq 'pubkey_value');
