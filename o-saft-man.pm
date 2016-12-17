@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.157 16/12/16 22:47:08";
+my  $man_SID= "@(#) o-saft-man.pm 1.158 16/12/17 21:49:37";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -894,34 +894,37 @@ sub _man_html($$) {
     return;
 } # _man_html
 
-sub _man_head(@) {
+sub _man_head   {
+    my $len1 = shift;   # expected length of first (left) string
     my @args = @_;
     _man_dbx("_man_head(..) ...");
     return if ($cfg_header < 1);
-    printf("=%14s | %s\n", @args);
-    printf("=%s+%s\n", '-'x15, '-'x60);
+    my $len0 = $len1 - 1;
+    printf("=%${len0}s | %s\n", @args);
+    printf("=%s+%s\n", '-'x  $len1, '-'x60);
     return;
 }
-sub _man_foot() {
+sub _man_foot   {
+    my $len1 = shift;   # expected length of first (left) string
     return if ($cfg_header < 1);
-    printf("=%s+%s\n", '-'x15, '-'x60);
+    printf("=%s+%s\n", '-'x $len1, '-'x60);
     return;
 }
-sub _man_opt(@) {
+sub _man_opt    {
     my @args = @_;
     my $len  = 16;
        $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
     printf("%${len}s%s%s\n", @args);
     return;
 }
-sub _man_arr($$$) {
+sub _man_arr    {
     my ($ssl, $sep, $dumm) = @_;
     my @all = ();
     push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$ssl}});
     printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
     return;
 }
-sub _man_cfg($$$$){
+sub _man_cfg    {
     #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
     $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
@@ -975,7 +978,7 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
             # (because no header printed at all)
     }
     _man_dbx("man_table($typ) ...");
-    _man_head($types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
+    _man_head(16, $types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
     if ($typ eq 'rfc')   { _man_opt("RFC $_", $sep, $man_text{'rfc'}->{$_}[0] . "\n\t\t\t$man_text{'rfc'}->{url}[1]/html/rfc$_") foreach (sort keys %{$man_text{'rfc'}}); }
@@ -1039,7 +1042,7 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         }
     }
     if ($typ !~ m/cfg/) {
-        _man_foot();
+        _man_foot(16);
     } else {
         # additional message here is like a WARNING or Hint,
         # do not print it if any of them is disabled
@@ -1064,7 +1067,7 @@ sub man_commands() {
     # first print general commands, manually crafted here
     # TODO needs to be computed, somehow ...
     print "\n";
-    _man_head("Command", "Description");
+    _man_head(15, "Command", "Description");
     print <<"EoHelp";
                   Commands for information about this tool
 +dump             Dumps internal data for SSL connection and target certificate.
@@ -1091,8 +1094,10 @@ sub man_commands() {
 +sts              Various checks according STS HTTP header.
 
                   Commands to test ciphers provided by target
-+cipher           Check target for ciphers (using libssl)
++cipher           Check target for ciphers (using libssl).
++cipher-dh        Check target for ciphers (using libssl), prints also DH parameter.
 +cipherraw        Check target for all possible ciphers.
++cipher-default   Check target for (default) selected cipher for each protocol.
 +null_cipher      Check if target accepts NULL ciphers.
 +adh_cipher       Check if target accepts ciphers with anonymous key exchange.
 +exp_cipher       Check if target accepts EXPORT ciphers.
@@ -1127,7 +1132,7 @@ EoHelp
         }
         close($fh);
     }
-    _man_foot();
+    _man_foot(15);
     print "\n";
     return;
 } # man_commands
@@ -1149,8 +1154,9 @@ sub man_alias() {
     #   #if ($arg eq  '--protocol')          { $arg = '--SSL';           } # alias: ssldiagnose.exe
     #
     print "\n";
-    _man_head("Alias (regex)         ", "command or option   # used by ...");
+    _man_head(27, "Alias (regex)         ", "command or option   # used by ...");
     my $fh   = undef;
+    my $p    = '[._-]'; # regex for separators as used in o-saft.pl
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
             if (m(# alias:)) {
@@ -1163,22 +1169,24 @@ sub man_alias() {
                     $regex =~ s/^\\//;      # remove leading \ 
                     $regex =~ s/\$$//;      # remove trailing $
                     $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
-                    if (length($regex) < 25) {
-                        printf("%-25s%-21s# %s\n", $regex, $alias, $commt);
+                    $regex =~ s/\$p\?/-/g;   # replace variable
+                    if (length($regex) < 29) {
+                        printf("%-29s%-21s# %s\n", $regex, $alias, $commt);
                     } else {
                         # pretty print if regex is to large for first column
                         printf("%s\n", $regex);
-                        printf("%-25s%-21s# %s\n", "", $alias, $commt);
+                        printf("%-29s%-21s# %s\n", "", $alias, $commt);
                     }
                 }
             }
         }
         close($fh);
     }
-    _man_foot();
+    _man_foot(27);
     print "
-= Note that - or _ characters used in the option name are not shown,
-= they are stripped anyway.
+= Note for names in  Alias  column:
+=   For option names  - or _ characters are not shown, they are stripped anyway.
+=   For command names - or _ characters are also possible, but only - is shown.
 ";
     print "\n";
     return;
