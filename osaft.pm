@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.69 16/12/05 17:54:54',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.70 16/12/17 20:38:06',
 
 };
 
@@ -1319,7 +1319,7 @@ our %cfg = (
                         qw(
                          check cipher dump check_sni exec help info info--v http
                          quick list libversion sizes s_client version quit
-                         sigkey bsi ev cipherraw cipher-dh cipher-default
+                         sigkey bsi ev cipherraw cipher_dh cipher_default
                         ),
                                 # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
@@ -1383,12 +1383,12 @@ our %cfg = (
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'need-cipher'   => [        # commands which need +cipher
-                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher-dh),
+                        qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher_dh),
                         qw(tr-02102+ tr-02102- tr-03116+ tr-03116- rfc7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need-default'  => [        # commands which need selected cipher
-                        qw(check cipher pfs_cipher order_cipher strong_cipher cipher-default selected),
+                        qw(check cipher pfs_cipher order_cipher strong_cipher cipher_default selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
                                 # missing functionality (i.e in openssl) # 10/2015
