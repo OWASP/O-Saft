@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.48 16/12/16 22:38:37";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.49 16/12/17 10:36:26";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -236,8 +236,10 @@ sub _yeast_init {
 } # _yeast_init
 
 sub _yeast_exit {
-    _yeast(" cfg'exitcode'= $cfg{'exitcode'}");
-    _yeast("   exit status= " . (($cfg{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
+    if ($cfg{'trace'} > 0) {
+        _yTRAC("cfg'exitcode'", $cfg{'exitcode'});
+        _yTRAC("exit status",   (($cfg{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
+    }
     _y_CMD("internal administration ..");
     _y_CMD("cfg'done'{");
     _y_CMD("  $_ : " . $cfg{'done'}->{$_}) foreach (sort keys %{$cfg{'done'}}); ## no critic qw(ControlStructures::ProhibitPostfixControls)
