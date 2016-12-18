@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.73 16/12/18 20:02:17',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.74 16/12/18 21:28:04',
 
 };
 
@@ -1993,6 +1993,8 @@ sub sort_cipher_names   {
         qw((?:NULL))    ,               # all NULL
     );
     my @strength = (
+        qw(CECPQ1[_-].*?CHACHA)       ,
+        qw(CECPQ1[_-].*?AES256.GCM)   ,
         qw((?:ECDHE|EECDH).*?CHACHA)  , # 1. all ecliptical curve, ephermeral, GCM
         qw((?:ECDHE|EECDH).*?512.GCM) , # .. sorts -ECDSA before -RSA
         qw((?:ECDHE|EECDH).*?384.GCM) ,
