@@ -290,7 +290,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.129 Summer Edition 2016
+#?      @(#) 1.130 Winter Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -355,8 +355,8 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
-set cfg(SID)    {@(#) o-saft.tcl 1.129 16/12/16 13:07:39 Sommer Edition 2016}
-set cfg(VERSION) {1.129}
+set cfg(SID)    {@(#) o-saft.tcl 1.130 16/12/18 23:58:44 Sommer Edition 2016}
+set cfg(VERSION) {1.130}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -2475,7 +2475,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.129"
+update_status "o-saft.tcl 1.130"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
