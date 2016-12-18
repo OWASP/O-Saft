@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.567 16/12/17 23:55:19",
+    SID         => "@(#) yeast.pl 1.568 16/12/18 14:30:30",
     STR_VERSION => "16.12.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -603,11 +603,11 @@ my %check_cert = (  ## certificate data
     'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
     'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
     'sig_enc_known' => {'txt' => "Certificate Private Key Encryption known"},
-    'rfc6125_names' => {'txt' => "Certificate Names compliant to RFC6125"},
+    'rfc_6125_names'=> {'txt' => "Certificate Names compliant to RFC6125"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
-    'ev-chars'      => {'txt' => "Certificate has no invalid characters in extensions"},
+    'ev_chars'      => {'txt' => "Certificate has no invalid characters in extensions"},
 # TODO: SRP is a target feature but also named a `Certificate (TLS extension)'
 #    'srp'           => {'txt' => "Certificate has (TLS extension) authentication"},
     #------------------+-----------------------------------------------------
@@ -693,11 +693,11 @@ my %check_dest = (  ## target (connection) data
     'pci'           => {'txt' => "Target is PCI compliant (ciphers only)"},
     'fips'          => {'txt' => "Target is FIPS-140 compliant"},
 #   'nsab'          => {'txt' => "Target is NSA Suite B compliant"},
-    'tr-02102+'     => {'txt' => "Target is strict TR-02102-2 compliant"},
-    'tr-02102-'     => {'txt' => "Target is  lazy  TR-02102-2 compliant"},
-    'tr-03116+'     => {'txt' => "Target is strict TR-03116-4 compliant"},
-    'tr-03116-'     => {'txt' => "Target is  lazy  TR-03116-4 compliant"},
-    'rfc7525'       => {'txt' => "Target is RFC 7525 compliant"},
+    'tr_02102+'     => {'txt' => "Target is strict TR-02102-2 compliant"},
+    'tr_02102-'     => {'txt' => "Target is  lazy  TR-02102-2 compliant"},
+    'tr_03116+'     => {'txt' => "Target is strict TR-03116-4 compliant"},
+    'tr_03116-'     => {'txt' => "Target is  lazy  TR-03116-4 compliant"},
+    'rfc_7525'      => {'txt' => "Target is RFC 7525 compliant"},
     'resumption'    => {'txt' => "Target supports Resumption"},
     'renegotiation' => {'txt' => "Target supports Secure Renegotiation"},
     'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
@@ -829,7 +829,7 @@ our %shorttexts = (
     'dv'            => "DV supported",
     'ev+'           => "EV supported (strict)",
     'ev-'           => "EV supported (lazy)",
-    'ev-chars'      => "No invalid characters in extensions",
+    'ev_chars'      => "No invalid characters in extensions",
     'beast'         => "Safe to BEAST (cipher)",
     'breach'        => "Safe to BREACH",
     'crime'         => "Safe to CRIME",
@@ -851,7 +851,7 @@ our %shorttexts = (
     'pub_enc_known' => "Public Key Encryption known",
     'sig_encryption'=> "Private Key with Encryption",
     'sig_enc_known' => "Private Key Encryption known",
-    'rfc6125_names' => "Names according RFC6125",
+    'rfc_6125_names'=> "Names according RFC6125",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -865,11 +865,11 @@ our %shorttexts = (
     'pfs_cipherall' => "PFS (all ciphers)",
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
-    'tr-02102+'     => "TR-02102-2 compliant (strict)",
-    'tr-02102-'     => "TR-02102-2 compliant (lazy)",
-    'tr-03116+'     => "TR-03116-4 compliant (strict)",
-    'tr-03116-'     => "TR-03116-4 compliant (lazy)",
-    'rfc7525'       => "RFC 7525 compliant",
+    'tr_02102+'     => "TR-02102-2 compliant (strict)",
+    'tr_02102-'     => "TR-02102-2 compliant (lazy)",
+    'tr_03116+'     => "TR-03116-4 compliant (strict)",
+    'tr_03116-'     => "TR-03116-4 compliant (lazy)",
+    'rfc_7525'      => "RFC 7525 compliant",
     'resumption'    => "Resumption",
     'renegotiation' => "Renegotiation",     # NOTE used in %data and %check_dest
     'hsts_sts'      => "STS header",
@@ -2858,7 +2858,7 @@ sub check_certchars($$) {
         $value =~ s#[\r\n]##g;         # CR and NL are most likely added by openssl
         if ($value =~ m/$cfg{'regex'}->{'notEV-chars'}/) {
             $txt = _get_text('cert-chars', $label);
-            $checks{'ev-chars'}->{val} .= $txt;
+            $checks{'ev_chars'}->{val} .= $txt;
             $checks{'ev+'}->{val}      .= $txt;
             $checks{'ev-'}->{val}      .= $txt;
             $checks{'dv'}->{val}       .= $txt;
@@ -3100,11 +3100,11 @@ sub checkcipher($$) {
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
     $checks{'pci'}->{val}       .= _prot_cipher($ssl, $c) if ("" ne _ispci( $ssl, $c));
     $checks{'fips'}->{val}      .= _prot_cipher($ssl, $c) if ("" ne _isfips($ssl, $c));
-    $checks{'rfc7525'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
-    $checks{'tr-02102+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr02102_strict($ssl, $c));
-    $checks{'tr-02102-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr02102_lazy(  $ssl, $c));
-    $checks{'tr-03116+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
-    $checks{'tr-03116-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy(  $ssl, $c));
+    $checks{'rfc_7525'}->{val}  .= _prot_cipher($ssl, $c) if ("" ne _isrfc7525($ssl, $c));
+    $checks{'tr_02102+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr02102_strict($ssl, $c));
+    $checks{'tr_02102-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr02102_lazy(  $ssl, $c));
+    $checks{'tr_03116+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
+    $checks{'tr_03116-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy(  $ssl, $c));
     # check attacks
     $checks{'rc4'}->{val}        = $checks{'rc4_cipher'}->{val}; # these are the same checks
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
@@ -3160,10 +3160,10 @@ sub checkciphers($$) {
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  -"-
         # TR-02102-2, see 3.2.3
         if ($prot{$ssl}->{'cnt'} > 0) { # checks do not make sense if there're no ciphers
-            $checks{'tr-02102+'}->{val} .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
-            $checks{'tr-02102+'}->{val} .= _prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
-            $checks{'tr-03116+'}->{val} .= $checks{'tr-02102+'}->{val}; # same as TR-02102
-            $checks{'tr-03116-'}->{val} .= $checks{'tr-02102-'}->{val}; # -"-
+            $checks{'tr_02102+'}->{val} .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
+            $checks{'tr_02102+'}->{val} .= _prot_cipher($ssl, $text{'miss-ECDSA'}) if ($hasecdsa{$ssl} != 1);
+            $checks{'tr_03116+'}->{val} .= $checks{'tr_02102+'}->{val}; # same as TR-02102
+            $checks{'tr_03116-'}->{val} .= $checks{'tr_02102-'}->{val}; # -"-
         }
         $checks{'cnt_ciphers'}  ->{val} += $prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
     }
@@ -3502,7 +3502,7 @@ sub check02102($$) {
     # lines starting with #! are headlines from TR-02102-2
 
     # All checks according ciphers already done in checkciphers() and stored
-    # in $checks{'tr-02102.'}. We need to do checks according certificate and
+    # in $checks{'tr_02102.'}. We need to do checks according certificate and
     # protocol and fill other %checks values according requirements.
 
     #! TR-02102-2 3.2 SSL/TLS-Versionen
@@ -3510,9 +3510,9 @@ sub check02102($$) {
     $val .= ($prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
     $val .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
     $val .= ($prot{'TLSv1'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol TLSv1") : "";
-    $checks{'tr-02102-'}->{val}.= $val;
+    $checks{'tr_02102-'}->{val}.= $val;
     $val .= ($prot{'TLSv11'}->{'cnt'} > 0) ? _get_text('insecure', "protocol TLSv11") : "";
-    $checks{'tr-02102+'}->{val}.= $val;
+    $checks{'tr_02102+'}->{val}.= $val;
 
     #! TR-02102-2 3.3.1 Empfohlene Cipher Suites
     #! TR-02102-2 3.3.2 Übergangsregelungen
@@ -3520,24 +3520,24 @@ sub check02102($$) {
 
     #! TR-02102-2 3.4.1 Session Renegotation
     $val = ($checks{'renegotiation'}->{val} ne "") ? $text{'no-reneg'} : "";
-    $checks{'tr-02102+'}->{val}.= $val;
-    $checks{'tr-02102-'}->{val}.= $val;
+    $checks{'tr_02102+'}->{val}.= $val;
+    $checks{'tr_02102-'}->{val}.= $val;
 
     #! TR-02102-2 3.4.2 Verkürzung der HMAC-Ausgabe
         # FIXME: cannot be tested because openssl does not suppot it (11/2016)
     $val = ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i) 
            ? _get_text('ext-enabled', 'truncated HMAC') : "" ;
-    $checks{'tr-02102+'}->{val}.= $val;
-    $checks{'tr-02102-'}->{val}.= $val;
+    $checks{'tr_02102+'}->{val}.= $val;
+    $checks{'tr_02102-'}->{val}.= $val;
 
     #! TR-02102-2 3.4.3 TLS-Kopression und CRIME
-    $checks{'tr-02102+'}->{val}.= $checks{'crime'}->{val};
-    $checks{'tr-02102-'}->{val}.= $checks{'crime'}->{val};
+    $checks{'tr_02102+'}->{val}.= $checks{'crime'}->{val};
+    $checks{'tr_02102-'}->{val}.= $checks{'crime'}->{val};
 
     #! TR-02102-2 3.4.4 Der Lucky 13-Angriff
     $val = $checks{'lucky13'}->{val};
     $val = ($val ne "") ? _get_text('insecure', "cipher $val; Lucky13") : "" ;
-    $checks{'tr-02102+'}->{val}.= $val;
+    $checks{'tr_02102+'}->{val}.= $val;
     # check for Lucky 13 in strict mode only (requires GCM)
 
     #! TR-02102-2 3.4.5 Die "Encrypt-then-MAC"-Erweiterung
@@ -3547,8 +3547,8 @@ sub check02102($$) {
     $val = "";
     $val = ($data{'heartbeat'}->{val}($host, $port) ne "")
            ? _get_text('ext-enabled', 'heartbeat') : "";
-    $checks{'tr-02102+'}->{val}.= $val;
-    $checks{'tr-02102-'}->{val}.= $val;
+    $checks{'tr_02102+'}->{val}.= $val;
+    $checks{'tr_02102-'}->{val}.= $val;
 
     #! TR-02102-2 3.4.7 Die Extended Master Secret Extension
         # FIXME: cannot be tested because openssl does not suppot it (11/2016)
@@ -3558,8 +3558,8 @@ sub check02102($$) {
 
     #! TR-02102-2 3.6 Domainparameter und Schlüssellängen
     $val = $checks{'len_sigdump'}->{val};
-    $checks{'tr-02102+'}->{val}.= _get_text('bit2048', $val) if ($val < 2000);
-    $checks{'tr-02102-'}->{val}.= _get_text('bit2048', $val) if ($val < 2000);
+    $checks{'tr_02102+'}->{val}.= _get_text('bit2048', $val) if ($val < 2000);
+    $checks{'tr_02102-'}->{val}.= _get_text('bit2048', $val) if ($val < 2000);
         # FIXME: lazy check does not honor used cipher
 
     #check_dh($host, $port);    # need DH Parameter
@@ -3589,7 +3589,7 @@ sub check03116($$) {
     my $txt = "";
 
     # All checks according ciphers already done in checkciphers() and stored
-    # in $checks{'tr-03116'}. We need to do checks according certificate and
+    # in $checks{'tr_03116'}. We need to do checks according certificate and
     # protocol and fill other %checks values according requirements.
 
     #! TR-03116-4 2.1.1 TLS-Versionen und Sessions
@@ -3599,18 +3599,18 @@ sub check03116($$) {
     $txt .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
     $txt .= ($prot{'TLSv1'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol TLSv1") : "";
     $txt .= ($prot{'TLSv11'}->{'cnt'} > 0) ? _get_text('insecure', "protocol TLSv11") : "";
-    $checks{'tr-03116-'}->{val}.= $txt;
-    $checks{'tr-03116+'}->{val}.= $txt;
+    $checks{'tr_03116-'}->{val}.= $txt;
+    $checks{'tr_03116+'}->{val}.= $txt;
 
     #! TR-03116-4 2.1.2 Cipher Suites
-    $checks{'tr-03116+'}->{val}.= $checks{'tr-03116+'}->{val};
-    $checks{'tr-03116-'}->{val}.= $checks{'tr-03116-'}->{val};
+    $checks{'tr_03116+'}->{val}.= $checks{'tr_03116+'}->{val};
+    $checks{'tr_03116-'}->{val}.= $checks{'tr_03116-'}->{val};
 
     #! TR-03116-4 2.1.1 TLS-Versionen und Sessions
         # TLS Session darf eine Lebensdauer von 2 Tagen nicht überschreiten
     #! TR-03116-4 2.1.4.2 Encrypt-then-MAC-Extension
     #! TR-03116-4 2.1.4.3 OCSP-Stapling
-    $checks{'tr-03116+'}->{val} .= _get_text('missing', 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
+    $checks{'tr_03116+'}->{val} .= _get_text('missing', 'OCSP') if ($data{'ocsp_uri'}->{val}($host)  eq "");
 
     #! TR-03116-4 4.1.1 Zertifizierungsstellen/Vertrauensanker
         # muss für die Verifikation von Zertifikaten einen oder mehrere Vertrauensanker vorhalten
@@ -3632,17 +3632,17 @@ sub check03116($$) {
         #   SubjectAltName enthalten.
         # Verwendung von Extended-Validation-Zertifikaten wird empfohlen
     $txt = _get_text('cert-valid', $data{'valid-years'}->{val}); # NOTE: 'valid-years' is special value
-    $checks{'tr-03116+'}->{val} .= $txt                if ($data{'valid-years'}->{val} > 3);
+    $checks{'tr_03116+'}->{val} .= $txt                if ($data{'valid-years'}->{val} > 3);
 # FIXME: cert itself and CA-cert have different validity: 3 vs. 5 years
     $txt = $checks{'wildcard'}->{val};
     if (($data{'ext_crl'}->{val}($host) eq "") && ($data{'ext_authority'}->{val}($host) eq "")) {
-        $checks{'tr-03116+'}->{val} .= _get_text('missing', 'AIA or CRL');
+        $checks{'tr_03116+'}->{val} .= _get_text('missing', 'AIA or CRL');
     }
 # FIXME: need to verify provided CRL and OCSP
-    $checks{'tr-03116+'}->{val} .= _get_text('wildcards', $txt) if ($txt ne "");
+    $checks{'tr_03116+'}->{val} .= _get_text('wildcards', $txt) if ($txt ne "");
     # _getwilds() checks for CN and subjectAltname only, we need Subject also
     $txt = $data{'subject'}->{val}($host);
-    $checks{'tr-03116+'}->{val} .= _get_text('wildcards', "Subject:$txt") if ($txt =~ m/[*]/);
+    $checks{'tr_03116+'}->{val} .= _get_text('wildcards', "Subject:$txt") if ($txt =~ m/[*]/);
 # FIXME: need to check wildcards in all certificates
 
     #! TR-03116-4 4.1.3 Zertifikatsverifikation
@@ -3653,9 +3653,9 @@ sub check03116($$) {
         # * Prüfung auf Gültigkeit (Ausstellungs- und Ablaufdatum)
         # * Rückrufprüfung aller Zertifikate
     $txt = $checks{'dates'}->{val};
-    $checks{'tr-03116+'}->{val} .= _get_text('cert-dates', $txt) if ($txt ne "");
+    $checks{'tr_03116+'}->{val} .= _get_text('cert-dates', $txt) if ($txt ne "");
     $txt = $checks{'expired'}->{val};
-    $checks{'tr-03116+'}->{val} .= _get_text('cert-valid', $txt) if ($txt ne "");
+    $checks{'tr_03116+'}->{val} .= _get_text('cert-valid', $txt) if ($txt ne "");
 
     #! TR-03116-4 4.1.4 Domainparameter und Schlüssellängen
         # ECDSA 224 Bit; DSA 2048 Bit; RSASSA-PSS 2048 Bit; alle SHA-224
@@ -3667,7 +3667,7 @@ sub check03116($$) {
     #! TR-03116-4 5.2 Zufallszahlen
         # these checks are not possible from remote
 
-    $checks{'tr-03116-'}->{val} .= $checks{'tr-03116+'}->{val};
+    $checks{'tr_03116-'}->{val} .= $checks{'tr_03116+'}->{val};
 
     return;
 } # check03116
@@ -3757,7 +3757,7 @@ sub check6125($$) {
         $val .= " <<7.2.o:altname $txt>>" if ($txt =~ m!$cfg{'regex'}->{'invalidIDN'}!);
         $val .= " <<7.3:altname $txt>>"   if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
     }
-    $checks{'rfc6125_names'}->{val} = $val;
+    $checks{'rfc_6125_names'}->{val} = $val;
 
     return;
 } # check6125
@@ -3771,7 +3771,7 @@ sub check7525($$) {
     my $val = "";
 
     # All checks according ciphers already done in checkciphers() and stored
-    # in $checks{'rfc7525'}.  We need to do checks according certificate and
+    # in $checks{'rfc_7525'}. We need to do checks according certificate and
     # protocol and fill other %checks values according requirements.
 
     # descriptions from: https://www.rfc-editor.org/rfc/rfc7525.txt
@@ -3929,8 +3929,8 @@ sub check7525($$) {
     $val .= $checks{'crl_valid'}->{val};
 
     # All checks for ciphers were done in _isrfc7525() and already stored in
-    # $checks{'rfc7525'}. Because it may be a huge list, it is appended.
-    $checks{'rfc7525'}->{val} = $val . " " . $checks{'rfc7525'}->{val};
+    # $checks{'rfc_7525'}. Because it may be a huge list, it is appended.
+    $checks{'rfc_7525'}->{val} = $val . " " . $checks{'rfc_7525'}->{val};
 
     return;
 } # check7525
@@ -4402,11 +4402,11 @@ sub checkssl($$)  {
             $checks{$key}->{val} = $cfg{'no_cert_txt'} if (_is_member($key, \@{$cfg{'check_cert'}}));
         }
         $checks{'hostname'} ->{val} = $cfg{'no_cert_txt'};
-        $checks{'tr-02102+'}->{val} = $cfg{'no_cert_txt'};
-        $checks{'tr-02102-'}->{val} = $cfg{'no_cert_txt'};
-        $checks{'tr-03116+'}->{val} = $cfg{'no_cert_txt'};
-        $checks{'tr-03116-'}->{val} = $cfg{'no_cert_txt'};
-        $checks{'rfc6125_names'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'tr_02102+'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'tr_02102-'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'tr_03116+'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'tr_03116-'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'rfc_6125_names'}->{val} = $cfg{'no_cert_txt'};
     }
 
     if ($cfg{'usehttp'} == 1) {
@@ -5503,8 +5503,8 @@ while ($#argv >= 0) {
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}              = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'TLSDELAY') { $cfg{'starttlsDelay'}         = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SLOWDELAY'){ $cfg{'slowServerDelay'}       = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'TLSDELAY') { $cfg{'starttls_delay'}        = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'SLOWDELAY'){ $cfg{'slow_server_delay'}     = $arg;     $typ = 'HOST'; }
         if ($typ eq 'STARTTLSE1'){$cfg{'starttls_error'}[1]     = $arg;     $typ = 'HOST'; }
         if ($typ eq 'STARTTLSE2'){$cfg{'starttls_error'}[2]     = $arg;     $typ = 'HOST'; }
         if ($typ eq 'STARTTLSE3'){$cfg{'starttls_error'}[3]     = $arg;     $typ = 'HOST'; }
@@ -5968,10 +5968,12 @@ while ($#argv >= 0) {
     if ($arg eq  '+extension')          { $arg = '+extensions';     } # alias:
     if ($arg eq  '+sts')                { $arg = '+hsts';           } # alias:
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';        } # alias:
-    if ($arg eq  '+sigkey$p?algorithm') { $arg = '+signame';        } # alias:
+    if ($arg =~ /^\+sigkey$p?algorithm/){ $arg = '+signame';        } # alias:
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias:
-    if ($arg =~ /^\+rfc$p?6125$/i)      { $arg = '+rfc6125_names';  } # alias; # TODO until check is improved (6/2015)
+    if ($arg =~ /^\+rfc$p?6125$/i)      { $arg = '+rfc_6125_names'; } # alias; # TODO until check is improved (6/2015)
+    if ($arg =~ /^\+rfc$p?6125$p?names/i){$arg = '+rfc_6125_names'; } # alias:
     if ($arg =~ /^\+rfc$p?6797$/i)      { $arg = '+hsts';           } # alias:
+    if ($arg =~ /^\+rfc$p?7525$/i)      { $arg = '+rfc_7525';       } # alias:
     if ($arg =~ /^\+fingerprint$p?(.+)$/)             { $arg = '+fingerprint_' . $1;} # alias:
     if ($arg =~ /^\+modulus$p?exponent$p?size$/)      { $arg = '+modulus_exp_size'; } # alias:
     if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
@@ -5986,8 +5988,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+reused?$/i)         { $arg = '+resumption';     } # alias:
     if ($arg =~ /^\+commonName$/i)      { $arg = '+cn';             } # alias:
     if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';            } # alias:
-    if ($arg =~ /^\+issuerX509$/i)      { $arg = '+issuer';         } # alias:
-    if ($arg =~ /^\+subjectX509$/i)     { $arg = '+subject';        } # alias:
+    if ($arg =~ /^\+issuer$p?X509$/i)   { $arg = '+issuer';         } # alias:
+    if ($arg =~ /^\+subject$p?X509$/i)  { $arg = '+subject';        } # alias:
     if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature';  } # alias:
     if ($arg =~ /^\+sni$p?check$/)      { $arg = '+check_sni';      }
     if ($arg =~ /^\+check$p?sni$/)      { $arg = '+check_sni';      }
@@ -6045,8 +6047,8 @@ while ($#argv >= 0) {
         if ($val eq 'freak')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-freak'}});   next; }
         if ($val eq 'lucky13')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
         if ($val eq 'sweet32')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sweet32'}}); next; }
-        if ($val =~ /tr$p?02102/){push(@{$cfg{'do'}}, qw(tr-02102+ tr-02102-));next; }
-        if ($val =~ /tr$p?03116/){push(@{$cfg{'do'}}, qw(tr-03116+ tr-03116-));next; }
+        if ($val =~ /tr$p?02102/){push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
+        if ($val =~ /tr$p?03116/){push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
         if (_is_member($val, \@{$cfg{'commands-USR'}}) == 1) {
                                   push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});    next; }
         if (_is_member($val, \@{$cfg{'commands-NOTYET'}}) > 0) {
@@ -6456,8 +6458,8 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
     $Net::SSLhello::starttls        = (($cfg{'starttls'} eq "") ? 0 : 1);
     $Net::SSLhello::starttlsType    = $cfg{'starttls'};
-    $Net::SSLhello::starttlsDelay   = $cfg{'starttlsDelay'};
-    $Net::SSLhello::slowServerDelay = $cfg{'slowServerDelay'};
+    $Net::SSLhello::starttlsDelay   = $cfg{'starttls_delay'};
+    $Net::SSLhello::slowServerDelay = $cfg{'slow_server_delay'};
     $Net::SSLhello::timeout         = $cfg{'sslhello'}->{'timeout'};
     $Net::SSLhello::retry           = $cfg{'sslhello'}->{'retry'};
     $Net::SSLhello::max_ciphers     = $cfg{'sslhello'}->{'maxciphers'};
