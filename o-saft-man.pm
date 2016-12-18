@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.160 16/12/18 12:05:38";
+my  $man_SID= "@(#) o-saft-man.pm 1.161 16/12/18 13:58:12";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -566,6 +566,7 @@ and OpenVPN",
         'XUDA'      => "Xcert Universal Database API",
         'XXTEA'     => "enhanced/corrected Tiny Encryption Algorithm",
         'ZLIB'      => "Lossless compression file format",
+        'ZRTP'      => "SRTP for VoIP",
         'ZSK'       => "Zone Signing Key", # DNSSEC
     },
 
@@ -587,6 +588,13 @@ and OpenVPN",
         '4518'  => [ "Internationalized String Preparation in LDAP" ],
         '3986'  => [ "Uniform Resource Identifier (URI): Generic Syntax" ],
         '2104'  => [ "HMAC: Keyed-Hashing for Message Authentication" ],
+        '2405'  => [ "The ESP DES-CBC Cipher Algorithm With Explicit IV" ],
+        '2406'  => [ "IP Encapsulating Security Payload (ESP)" ],
+        '2407'  => [ "The Internet IP Security Domain of Interpretation for ISAKMP" ],
+        '2408'  => [ "Internet Security Association and Key Management Protocol (ISAKMP)" ],
+        '2409'  => [ "The Internet Key Exchange (IKE) - 1998" ],
+        '4306'  => [ "The Internet Key Exchange (IKEv2) Protocol - 2005" ],
+        '4753'  => [ "ECP Groups for IKE and IKEv2" ],
         '2412'  => [ "AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')",
                      "http://en.wikipedia.org/wiki/Perfect_forward_secrecy"
                    ],
@@ -628,6 +636,8 @@ and OpenVPN",
                    # Truncated HMAC (value 4)
                    # (Certificate) Status Request (value 5)
         '6176'  => [ "Prohibiting Secure Sockets Layer (SSL) Version 2.0" ],
+        '3711'  => [ "The Secure Real-time Transport Protocol (SRTP)" ],
+        '6189'  => [ "ZRTP: Media Path Key Agreement for Unicast Secure RTP" ],
         '6520'  => [ "TLS Extensions: Heartbeat" ],
         '6961'  => [ "TLS Multiple Certificate Status Request Extension" ],
         '7627'  => [ "TLS Session Hash and Extended Master Secret Extension" ],
@@ -657,6 +667,7 @@ and OpenVPN",
         '4492'  => [ "TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS" ],
         '4785'  => [ "Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS" ],
         '5054'  => [ "Secure Remote Password (SRP) Protocol for TLS Authentication" ],
+        '5114'  => [ "Additional Diffie-Hellman Groups for Use with IETF Standards" ],
        #'5246'  => [ "TLS Version 1.2"  ], # with Cipher Suites
         '5288'  => [ "AES Galois Counter Mode (GCM) Cipher Suites for TLS" ],
         '5289'  => [ "TLS Elliptic Curve Cipher Suites with SHA-256/384 and AES Galois Counter Mode (GCM)" ],
@@ -665,7 +676,9 @@ and OpenVPN",
         '5489'  => [ "ECDHE_PSK Cipher Suites for TLS" ],
         '5589'  => [ "Session Initiation Protocol (SIP) Call Control - Transfer" ],
         '5639'  => [ "Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve Generation" ],
+        '5903'  => [ "Elliptic Curve Groups modulo a Prime (ECP Groups) for IKE and IKEv2" ],
         '7027'  => [ "Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS" ],
+        '7748'  => [ "Elliptic Curve for Security" ],
         '5741'  => [ "RFC Streams, Headers, and Boilerplates" ],
         '5794'  => [ "Description of the ARIA Encryption Algorithm" ],
         '5932'  => [ "Camellia Cipher Suites for TLS" ],
@@ -695,7 +708,7 @@ and OpenVPN",
         #----------+----------------------------------------+-----------------------+
     },
 
-    # Additional informationes:
+    # Additional informations:
     # CT   : http://ctwatch.net/
     # AIA  : http://www.startssl.com/certs/sub.class4.server.ca.crt
     # CDP  : http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl
@@ -767,6 +780,21 @@ and OpenVPN",
     #        supported by: Chrome 45, Firefox 43, Opera 32
     #        Note that SRI is SSL/TLS-related but security-related
     # TS 102 042 : http://
+    #
+    #        http://rsapss.hboeck.de/rsapss-1.0.1.pdf
+    #        https://www.bsi.bund.de/DE/Themen/weitereThemen/SINA/sina_node.html  
+    #        http://datatracker.ietf.org/doc/draft-eastlake-additional-xmlsec-uris/ 
+    # Elliptic Curve
+    #        https://en.wikipedia.org/wiki/Comparison_of_TLS_implementations#Supported_elliptic_curves
+    #        https://www.researchgate.net/profile/Johannes_Merkle/publication/260050106_Standardisierung_der_Brainpool-Kurven_fur_TLS_und_IPSec/links/00b7d52f36a0cc2fdd000000.pdf
+    #        http://www.teletrust.de/fileadmin/files/oid/ecgdsa_final.pdf  
+    #        https://datatracker.ietf.org/doc/draft-harkins-ikev3/ 
+    #        http://datatracker.ietf.org/doc/draft-mcgrew-tls-aes-ccm-ecc/ 
+    #        http://datatracker.ietf.org/doc/draft-merkle-ikev2-ke-brainpool/ 
+    #        http://datatracker.ietf.org/doc/draft-merkle-tls-brainpool/ 
+    #        http://datatracker.ietf.org/doc/draft-sheffer-ipsecme-dh-checks/ 
+    #        http://eprint.iacr.org/2007/286
+    #        https://tools.ietf.org/html/draft-josefsson-tls-curve25519-06
     #
     # Firefox Add-ons
     #        https://calomel.org/firefox_ssl_validation.htm  Calomel SSL Validation
