@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.70 16/12/17 20:38:06',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.71 16/12/18 11:15:18',
 
 };
 
@@ -1162,8 +1162,8 @@ our %cfg = (
     'starttls'      => "",      # use STARTTLS if not empty
                                 # protocol to be used with STARTTLS; default: SMTP
                                 # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
-    'slowServerDelay'   => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
-    'starttlsDelay' => 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
+    'slow_server_delay' => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
+    'starttls_delay'=> 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
     'starttls_phase'=> [],      # STARTTLS: Array for customized STARTTLS sequences
     'starttls_error'=> [],      # STARTTLS: Array for customized STARTTLS sequences error handling
     'socket_reuse'  => 1,       # 0: close and reopen sockets when SSL connect fails
@@ -1329,7 +1329,7 @@ our %cfg = (
     'commands-HINT' => [        # checks which are NOT YET fully implemented
                                 # these are mainly all commands for compliance
                                 # see also: cmd-bsi
-                        qw(rfc7525 tr-02102+ tr-02102- tr-03116+ tr-03116-)
+                        qw(rfc_7525 tr_02102+ tr_02102- tr_03116+ tr_03116-)
                        ],
     'cmd-beast'     => [qw(beast)],                 # commands for +beast
     'cmd-crime'     => [qw(crime)],                 # commands for +crime
@@ -1351,13 +1351,13 @@ our %cfg = (
                          beast crime drown freak export cbc_cipher des_cipher rc4_cipher rc4 
                          pfs_cipher crl
                          hassslv2 hassslv3 poodle sloth sweet32
-                         resumption renegotiation tr-02102+ tr-02102- rfc7525 hsts_sts
+                         resumption renegotiation tr_02102+ tr_02102- rfc_7525 hsts_sts
                        )],
-    'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev-chars)], # commands for +ev
+    'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev_chars)], # commands for +ev
     'cmd-bsi'       => [        # commands for +bsi
                                 # see also: commands-HINT
                         qw(after dates crl rc4_cipher renegotiation
-                           tr-02102+ tr-02102- tr-03116+ tr-03116- 
+                           tr_02102+ tr_02102- tr_03116+ tr_03116- 
                        )],
     'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
@@ -1384,7 +1384,7 @@ our %cfg = (
                        ],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check beast crime time breach drown freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected poodle logjam sloth sweet32 cipher cipher_dh),
-                        qw(tr-02102+ tr-02102- tr-03116+ tr-03116- rfc7525),
+                        qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need-default'  => [        # commands which need selected cipher
@@ -1396,7 +1396,7 @@ our %cfg = (
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected ev+ ev-),
-                        qw(tr-02102+ tr-02102- tr-03116+ tr-03116- rfc7525 rfc6125_names),
+                        qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 rfc_6125_names),
                        ],
     'need-checkchr' => [        # commands which always need checking various characters
                         qw(cn subject issuer altname ext_crl ocsp_uri),
