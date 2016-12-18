@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '16.11.16',  # official version number of tis file
+    OSAFT_VERSION   => '16.12.16',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.72 16/12/18 13:56:28',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.73 16/12/18 20:02:17',
 
 };
 
@@ -549,8 +549,8 @@ our %tls_curves = (
 41187 => [qw( Curve511157                       ????  N      -   -1 )], # -"- ; aka M511
 41417 => [qw( Curve41417                        ????  N      -   -1 )], # -"- ; aka Curve3617
 42213 => [qw( Curve2213                         ????  N      -   -1 )], # -"- ; aka M221
-42448 => [qw( Curve448                          ????  N      -   -1 )], # -"- ; aka Ed448-Goldilocks
-42519 => [qw( X25519                            ????  N      -   -1 )], # -"-
+42448 => [qw( Curve448                          ????  N      -   -1 )], # -"- ; aka Ed448-Goldilocks, aka ecdh_x448?
+42519 => [qw( X25519                            ????  N      -   -1 )], # -"- ; aka ecdh_x25519?
 42222 => [qw( E222                              ????  N      -   -1 )], # -"-
 42382 => [qw( E382                              ????  N      -   -1 )], # -"-
 42383 => [qw( E383                              ????  N      -   -1 )], # -"-
@@ -558,6 +558,7 @@ our %tls_curves = (
 42147 => [qw( GOST28147-89                      ????  N      -   -1 )], # -"-
 42147 => [qw( GOST-R34.11-94                    ????  N      -   -1 )], # -"-
     #----+-------------------------------------+----+--+-------+---+------------------------
+65165 => [qw( CurveCECPQ1                       ????  N      -   -1 )], # -"- ;
 # unknown curves
 #     => [qw( numsp256d1 )],
 #     => [qw( numsp256t1 )],
@@ -1063,6 +1064,11 @@ our %cipher_names = (
     '0x00842840' => [qw(PCT_SSL_CIPHER_TYPE_2ND_HALF    PCT1_ENC_BITS_40|PCT1_MAC_BITS_128)],
     '0x00848040' => [qw(PCT_SSL_CIPHER_TYPE_2ND_HALF    PCT1_ENC_BITS_128|PCT1_MAC_BITS_128)],
     '0x008f8001' => [qw(PCT_SSL_COMPAT                  PCT_VERSION_1)],
+    # from: https://chromium.googlesource.com/chromium/src/net/+/master/ssl/ssl_cipher_suite_names_unittest.cc
+    '0x030016B7' => [qw(CECPQ1-RSA-CHACHA20-POLY1305-SHA256   CECPQ1_RSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x030016B8' => [qw(CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256 CECPQ1_ECDSA_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x030016B9' => [qw(CECPQ1-RSA-AES256-GCM-SHA384    CECPQ1_RSA_WITH_AES_256_GCM_SHA384)],
+    '0x030016BA' => [qw(CECPQ1-ECDSA-AES256-GCM-SHA384  CECPQ1_ECDSA_WITH_AES_256_GCM_SHA384)],
     #!#----------+-------------------------------------+--------------------------+
 #
     # Note(c)
