@@ -159,6 +159,11 @@
 --cfg_cmd=quick=selected cipher sslversion hassslv2 hassslv3 adh_cipher null_cipher exp_cipher cbc_cipher des_cipher rc4_cipher pfs_cipher beast crime drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
 
 ###
+### redefine command +sizes
+###
+--cfg_cmd=sizes=cnt_chaindepth cnt_wildcard cnt_altname len_altname len_subject len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_sernumber len_chain len_cps len_crl len_crl_data len_ocsp len_oids
+
+###
 ### redefine command +bsi
 ###
 --cfg_cmd=bsi=after dates crl rc4_cipher renegotiation tr_02102+ tr_02102- tr_03116+ tr_03116-
