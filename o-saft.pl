@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.569 16/12/18 16:08:57",
+    SID         => "@(#) yeast.pl 1.570 16/12/18 21:21:27",
     STR_VERSION => "16.12.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1545,14 +1545,20 @@ our %ciphers = (
         'RSA_PSK-ARIA256-GCM-SHA384'    => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 PSK   RSA     11 :)],
         'ECDHE_PSK-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA     128 SHA256 PSK   ECDHE   11 :)],
 
+        # from: https://chromium.googlesource.com/chromium/src/net/+/master/ssl/ssl_cipher_suite_names_unittest.cc
+        'CECPQ1-RSA-CHACHA20-POLY1305_SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 RSA   CECPQ1 91 :)],
+        'CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 ECDSA CECPQ1 91 :)],
+        'CECPQ1-RSA-AES256-GCM-SHA384'          => [qw( HIGH TLSv12 AESGCM 256 SHA384 RSA   CECPQ1 91 :)],
+        'CECPQ1-ECDSA-AES256-GCM-SHA384'        => [qw( HIGH TLSv12 AESGCM 256 SHA384 ECDSA CECPQ1 91 :)],
+
     # === openssl ===
-    # above table (roughly) generated with:
+    # most of above table (roughly) generated with:
     #   openssl ciphers -v ALL:eNULL:aNULL | sort \
     #   | awk '{e=$7;printf("\t%26s => [%s, %s, %s, %s, %s, %s, %s],\n",$1,$2,substr($5,5),substr($5,index($5,"(")+1),substr($6,5),substr($4,4),substr($3,4),e)}'
     # or better
     #   | awk '{q="'"'"'";a=sprintf("%s%c",$1,q);e=$7;printf("\t%c%-26s => [qw( -?-\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t13 :)],\n",q,a,$2,substr($5,5),substr($5,index($5,"(")+1),substr($6,5),substr($4,4),substr($3,4),e)}' # )
     # === openssl 0.9.8o ===
-    # above table (roughly) generated with:
+    # most of above table (roughly) generated with:
     #   openssl ciphers -v ALL:eNULL:aNULL | sort
     #
     # NOTE: some openssl (0.9.8o on Ubuntu 11.10) fail to list ciphers with
