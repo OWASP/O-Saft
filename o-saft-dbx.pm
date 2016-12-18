@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.49 16/12/17 10:36:26";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.50 16/12/18 14:00:12";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -216,7 +216,7 @@ sub _yeast_init {
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$cfg{'sni_name'}");
     _yeast("  default port= $cfg{'port'} (last specified)");
     _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
-    foreach my $key (qw(out_header format legacy usehttp usedns usemx starttls starttlsDelay cipherrange)) {
+    foreach my $key (qw(out_header format legacy usehttp usedns usemx starttls starttls_delay slow_server_delay starttls_phase starttls_error cipherrange)) {
         printf("#%s: %14s= %s\n", $cfg{'mename'}, $key, $cfg{$key});
            # cannot use _yeast() 'cause of pretty printing
     }
