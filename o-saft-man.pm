@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.161 16/12/18 13:58:12";
+my  $man_SID= "@(#) o-saft-man.pm 1.162 16/12/19 00:28:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -922,9 +922,9 @@ sub _man_html($$) {
     return;
 } # _man_html
 
-sub _man_head   {
-    my $len1 = shift;   # expected length of first (left) string
-    my @args = @_;
+sub _man_head   {       ## no critic qw(Subroutines::RequireArgUnpacking)
+    my $len1 = shift;   # this line triggers perlcritic, stupid :-/
+    my @args = @_;      # .. hence "no critic" pragma in sub line
     _man_dbx("_man_head(..) ...");
     return if ($cfg_header < 1);
     my $len0 = $len1 - 1;
