@@ -23,6 +23,7 @@
 #?
 #? OPTIONS
 #?      --h     got it
+#?      --n     do not execute, just show
 #?      --force install .o-saft.pl  and  .o-saft.tcl  in  $HOME,  overwrites
 #?              existing ones
 #?
@@ -34,7 +35,7 @@
 #?      $0 /opt/bin/ --force
 #?
 #? VERSION
-#?      @(#) INSTALL.sh 1.1 16/09/25 20:42:12
+#?      @(#) INSTALL.sh 1.2 16/12/18 23:51:18
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann (at) sicsec .dot. de
@@ -84,6 +85,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
+	  '+VERSION')   echo 1.2 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; dest="$1";  ;;  # last one wins
 	esac
 	shift
@@ -101,7 +103,7 @@ if [ -z "$mode" ]; then
 #
 # If you want to run O-Saft from this directory, then consider calling:
 
-	$0 clean
+	$0 --clean
 
 # If you want to install O-Saft in a different directory, then please call:
 
@@ -110,7 +112,7 @@ if [ -z "$mode" ]; then
 
 # To check if O-Saft will work, you may use:
 
-	$0 check
+	$0 --check
 	o-saft_check_before_install.sh
 
 EoT
