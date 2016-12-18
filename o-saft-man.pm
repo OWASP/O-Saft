@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.159 16/12/17 23:39:48";
+my  $man_SID= "@(#) o-saft-man.pm 1.160 16/12/18 12:05:38";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4346,7 +4346,9 @@ CIPHER NAMES
         For example the cipher commonly known as 'DES-CBC3-SHA' is identified
         by '0x020701c0' (in openssl) and has 'SSL2_DES_192_EDE3_CBC_WITH_SHA'
         as constant name. A definition is missing in IANA, but there is 
-        'TLS_RSA_WITH_3DES_EDE_CBC_SHA'.
+        'TLS_RSA_WITH_3DES_EDE_CBC_SHA'.  Thers is also '0x000A' for the same
+        cipher 'DES-CBC3-SHA'.  Both are valid, first one if used with SSLv2,
+        and second one when used with SSLv3.
         It's the responsibility of each tool to map the human readable cipher
         name to the correct (hex, integer) identifier.
 
@@ -4390,6 +4392,12 @@ CIPHER NAMES
         (aka unique key), as there are  to many aliases  for the same cipher.
         And also the number  cannot be used  as unique key, as a key may have
         multiple ciphers assigned.
+
+        The default behaviour will be to use the cipher names like openssl(1)
+        does. If a name is ambigous, the first matching will be choosen. This
+        -first matching- only applies to names provided by the user by option
+        or whatever, internally the latest IANA number will be used,  because
+        they have the most less ambiguities.
 
 
 KNOWN PROBLEMS
