@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.568 16/12/18 14:30:30",
+    SID         => "@(#) yeast.pl 1.569 16/12/18 16:08:57",
     STR_VERSION => "16.12.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3205,7 +3205,7 @@ sub checkdates($$) {
     my $after = $data{'after'} ->{val}($host);
     my @since = split(/ +/, $before);
     my @until = split(/ +/, $after);
-    if ($before . $after =~ m/^\s*$/) {
+    if ("$before$after" =~ m/^\s*$/) {
         # if there's no data from the certificate, set undef values and return
         $checks{'dates'}->{val}         = $text{'na'};
         $checks{'expired'}->{val}       = $text{'na'};
