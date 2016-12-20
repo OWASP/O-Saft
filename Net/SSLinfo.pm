@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.160 16/12/17 23:54:18',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.162 16/12/20 19:39:00',
 };
 
 ######################################################## public documentation #
@@ -1069,7 +1069,7 @@ sub _ssleay_socket  {
     my $socket  = undef;
     _traceset();
     _trace("_ssleay_socket($host, $port)");
-    $! = undef;         # avoid using cached error messages
+    local $! = undef;   # avoid using cached error messages
 
     TRY: {
         if ($Net::SSLinfo::socket_reuse > 0) {
@@ -1106,7 +1106,7 @@ sub _ssleay_socket  {
     }; # TRY
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
     _trace("_ssleay_socket: undef");
-    return undef;
+    return;
 } # _ssleay_socket
  
 sub _ssleay_ctx_new {
@@ -1121,7 +1121,7 @@ sub _ssleay_ctx_new {
     _trace("_ssleay_ctx_new($method)");
     $src = "Net::SSLeay::$method";
     _trace("_ssleay_ctx_new: $src");
-    $! = undef;         # avoid using cached error messages
+    local $! = undef;   # avoid using cached error messages
 
     TRY: {
         # no proper generic way to replace following ugly SWITCH code, however: it's save
@@ -1828,6 +1828,7 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'fingerprint_text'}   = $fingerprint;
         $_SSLinfo{'fingerprint'}        = $fingerprint; #alias
        ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split(/=/, $fingerprint);
+        $_SSLinfo{'fingerprint_type'}   =~ s/\s+.*$//;
         $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/ if (defined $1);  # TODO: ugly check
         $_SSLinfo{'fingerprint_type'}   = $Net::SSLinfo::no_cert_txt if (!defined $_SSLinfo{'fingerprint_type'});
         $_SSLinfo{'fingerprint_hash'}   = $Net::SSLinfo::no_cert_txt if (!defined $_SSLinfo{'fingerprint_hash'});
