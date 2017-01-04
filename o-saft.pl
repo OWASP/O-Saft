@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.571 16/12/18 21:26:13",
+    SID         => "@(#) yeast.pl 1.573 17/01/04 02:16:41",
     STR_VERSION => "16.12.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -532,6 +532,7 @@ our %data   = (     # connection and certificate details
     'http_sts'      => {'val' => sub { Net::SSLinfo::http_sts(      $_[0], $_[1])}, 'txt' => "HTTP STS header"},
     #------------------+---------------------------------------+-------------------------------------------------------
     'options'       => {'val' => sub { Net::SSLinfo::options(       $_[0], $_[1])}, 'txt' => "<<internal>> used SSL options bitmask"},
+    'fallback_protocol' => {'val' => sub { return $prot{'fallback'}->{val}       }, 'txt' => "Target's fallback SSL Protocol"},
     #------------------+---------------------------------------+-------------------------------------------------------
     # following not printed by default, but can be used as command
 #   'PROT'          => {'val' => sub { return $prot{'PROT'}->{'default'}         }, 'txt' => "Target default PROT     cipher"}, #####
@@ -2616,7 +2617,7 @@ sub _getwilds($$)       {
 } # _getwilds
 
 sub _usesocket($$$$)    {
-    # return cipher accepted by SSL connection
+    # return protocol and cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers (empty) passed in
     # NOTE that this function is used to check for supported ciphers only,
     # hence no need for sophisticated options in new() and no certificate
@@ -2624,7 +2625,7 @@ sub _usesocket($$$$)    {
     my ($ssl, $host, $port, $ciphers) = @_;
     my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher  = "";   # to be returned
-    my $version = "";   # version used by IO::Socket::SSL-new (not yet used)
+    my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
     # TODO: dirty hack to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
@@ -2648,7 +2649,7 @@ sub _usesocket($$$$)    {
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
-            _trace1("_usesocket: using 'IO::Socket::SSL'");
+            _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
             $sslsocket = IO::Socket::SSL->new(
                 PeerAddr        => $host,
                 PeerPort        => $port,
@@ -2658,7 +2659,7 @@ sub _usesocket($$$$)    {
                 SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
                 SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
                 SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
-                SSL_version     => $ssl,    # default is SSLv23
+                SSL_version     => $ssl,    # default is SSLv23 (for empty $ssl)
                 SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
              # SSL_cipher_list => "$ciphers eNULL",
@@ -2691,6 +2692,7 @@ sub _usesocket($$$$)    {
         }
     }) {    # eval succeded
         if ($sslsocket) {
+            # see Note:Selected Protocol
             $version = $sslsocket->get_sslversion() if ($IO::Socket::SSL::VERSION > 1.964);
             $cipher  = $sslsocket->get_cipher();
             $sslsocket->close(SSL_ctx_free => 1);
@@ -2699,7 +2701,7 @@ sub _usesocket($$$$)    {
     }
     # else  # connect failed, cipher not accepted, or error in IO::Socket::SSL
     _trace1("_usesocket()\t= $cipher }");
-    return $cipher;
+    return $version, $cipher;
 } # _usesocket
 
 sub _useopenssl($$$$)   {
@@ -2711,23 +2713,26 @@ sub _useopenssl($$$$)   {
     my $sni  = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
-    $ssl = $cfg{'openssl_option_map'}->{$ssl};
+    $ssl = ($cfg{'openssl_option_map'}->{$ssl} || '');  # set empty if no protocol given
     my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers -connect", $host, $port, '');
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
     # also possible would be Cipher line from:
     #   SSL-Session:
+    #       Protocol  : TLSv1.2
     #       Cipher    : DES-CBC3-SHA
     _trace2("_useopenssl: data #{ $data }");
-    return "" if ($data =~ m#New,.*?Cipher is .?NONE#);
+    return [] if ($data =~ m#New,.*?Cipher is .?NONE#);
 
-    my $cipher = $data;
+    my $version = $data;# returned version
+       $version =~ s#^.*[\r\n]+ +Protocol\s*:\s*([^\r\n]*).*#$1#s;
+    my $cipher  = $data;
     if ($cipher =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
         $cipher =~ s#^.*[\r\n]+New,\s*##s;
         $cipher =~ s#[A-Za-z0-9/.,-]+ Cipher is\s*([^\r\n]*).*#$1#s;
         my $dh  = get_dh_paramter($cipher, $data);
         _trace1("_useopenssl()\t= $cipher $dh }");
-        return wantarray ? ($cipher, $dh) : $cipher;
+        return $version, $cipher, $dh;
     }
     # else check for errors ...
 
@@ -2744,7 +2749,7 @@ sub _useopenssl($$$$)   {
     #   # unknown messages: 139693193549472:error:1407F0E5:SSL routines:SSL2_WRITE:ssl handshake failure:s2_pkt.c:429:
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
-    return "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
+    return [] if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
     if ($data =~ m#^\s*$#) {
         _warn("SSL version '$ssl': empty result from openssl");
     } else {
@@ -2757,7 +2762,7 @@ sub _useopenssl($$$$)   {
         _hint("use options like: --v --trace");
     }
 
-    return "";
+    return [];
 } # _useopenssl
 
 sub _get_default($$$$)  {
@@ -2778,6 +2783,8 @@ sub _get_default($$$$)  {
     my ($ssl, $host, $port, $mode) = @_;
     _trace("_get_default($ssl, $host, $port, $mode){");
     $cfg{'done'}->{'default_get'}++;
+    my $dh      = "";   # returned DH parameters (not yet used)
+    my $version = "";   # returned protocol version
     my $cipher  = "";
     my @list = ();   # mode == default
        @list =         sort_cipher_names(@{$cfg{'ciphers'}}) ;#if ($mode eq 'strong');
@@ -2785,9 +2792,9 @@ sub _get_default($$$$)  {
     my $cipher_list = join(":", @list);
 
     if (0 == $cmd{'extciphers'}) {
-        $cipher = _usesocket( $ssl, $host, $port, $cipher_list);
+        ($version, $cipher)     = _usesocket( $ssl, $host, $port, $cipher_list);
     } else { # force openssl
-        $cipher = _useopenssl($ssl, $host, $port, $cipher_list);
+        ($version, $cipher, $dh)= _useopenssl($ssl, $host, $port, $cipher_list);
            # NOTE: $ssl will be converted to corresponding option for openssl,
            # for example: DTLSv1 becomes -dtlsv1
            # unfortunately openssl (or Net::SSLinfo) returns a cipher even if
@@ -2795,6 +2802,7 @@ sub _get_default($$$$)  {
            # Hence the caller should ensure that openssl supports $ssl .
     }
 
+    $cipher = "" if (not defined $cipher);
     if ($cipher =~ m#^\s*$#) {
         # TODO: SSLv2 is special, see _usesocket "dirty hack"
         my $txt = "SSL version '$ssl': cannot get default cipher; ignored";
@@ -2814,6 +2822,8 @@ sub ciphers_get($$$$)   {
     #? test target if given ciphers are accepted, returns array of accepted ciphers
     my ($ssl, $host, $port, $arr) = @_;
     my @ciphers = @{$arr};# ciphers to be checked
+    my $version = "";   # returned protocol version
+    my $dh      = "";   # returned DH parameters (not yet used)
 
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();      # return accepted ciphers
@@ -2827,11 +2837,19 @@ sub ciphers_get($$$$)   {
                 _v4print("check cipher (MD5): $ssl:$c\n");
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
-            $supported = _usesocket( $ssl, $host, $port, $c);
+            ($version, $supported)      = _usesocket( $ssl, $host, $port, $c);
         } else { # force openssl
-            $supported = _useopenssl($ssl, $host, $port, $c);
+            ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
         }
-        push(@res, $c) if ($supported !~ /^\s*$/);
+        $supported = "" if (not defined $supported);
+        if (($c !~ /(:?HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
+            if (($c !~ $supported)) {
+                # mismatch: name asked for and name returned by server
+                # this may indicate wrong cipher name in our configuration
+                warn STR_WARN, "checked cipher '$c' does not match 'returned cipher '$supported'";
+            }
+        }
+        push(@res, "$version:$supported") if ($supported ne "");
         my $yesno = ($supported eq "") ? "no" : "yes";
         _v2print("check cipher: $ssl:$c\t$yesno");
         # TODO: should close dangling sockets here
@@ -3178,9 +3196,7 @@ sub checkciphers($$) {
     }
     $checks{'edh_cipher'}->{val} = "" if ($checks{'edh_cipher'}->{val} ne "");  # good if we have them
 
-    # 'sslversion' returns protocol as used in our data structure (like TLSv12)
-    # 'session_protocol' retruns string used by openssl (like TLSv1.2)
-    # we need our well known string, hence 'sslversion'
+    # we need our well known string, hence 'sslversion'; see Note:Selected Protocol
     $ssl    = $data{'sslversion'}->{val}($host, $port); # get selected protocol
     $cipher = $data{'selected'}  ->{val}($host, $port); # get selected cipher
     if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'pfs_ciphers'})) {
@@ -3515,6 +3531,8 @@ sub check02102($$) {
     # protocol and fill other %checks values according requirements.
 
     #! TR-02102-2 3.2 SSL/TLS-Versionen
+    # use 'session_protocol' instead of 'sslversion' as its string matches the
+    # TR-02102 requirements better; see Note:Selected Protocol
     $val  = ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/) ? " <<not TLSv12>>" : "" ;
     $val .= ($prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
     $val .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
@@ -3603,6 +3621,9 @@ sub check03116($$) {
 
     #! TR-03116-4 2.1.1 TLS-Versionen und Sessions
         # muss mindestens die TLS-Version 1.2 unterstützt werden
+
+    # use 'session_protocol' instead of 'sslversion' as its string matches the
+    # TR-03116 requirements better; see Note:Selected Protocol
     $txt  = ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/) ? " <<not TLSv12>>" : "" ;
     $txt .= ($prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
     $txt .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
@@ -3793,6 +3814,8 @@ sub check7525($$) {
     #    negotiation.
     # TODO: for lazy check
 
+    # use 'session_protocol' instead of 'sslversion' as its string matches the
+    # RFC requirements better; see Note:Selected Protocol
     $val  = " <<not TLSv12>>" if ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/);
     $val .= " SSLv2"   if ( $prot{'SSLv2'}->{'cnt'}   > 0);
     $val .= " SSLv3"   if ( $prot{'SSLv3'}->{'cnt'}   > 0);
@@ -4234,6 +4257,7 @@ sub checkdest($$) {
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
 
+    # see also Note:Selected Protocol
     # get selected cipher and store in %checks, also check for PFS
     $cipher = $data{'selected'}->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
@@ -4898,7 +4922,7 @@ sub printciphers_dh($$$) {
         print_cipherhead( 'cipher_dh');
         foreach my $c (@{$cfg{'ciphers'}}) {
             #next if ($c !~ /$cfg{'regex'}->{'EC'}/);
-            my ($supported, $dh) = _useopenssl($ssl, $host, $port, $c);
+            my ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
             next if ($supported =~ /^\s*$/);
             # TODO: use print_cipherline();
             # TODO: perform check like check_dh()
@@ -5983,7 +6007,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+rfc$p?6125$p?names/i){$arg = '+rfc_6125_names'; } # alias:
     if ($arg =~ /^\+rfc$p?6797$/i)      { $arg = '+hsts';           } # alias:
     if ($arg =~ /^\+rfc$p?7525$/i)      { $arg = '+rfc_7525';       } # alias:
-    if ($arg =~ /^\+fingerprint$p?(.+)$/)             { $arg = '+fingerprint_' . $1;} # alias:
+    # do not match +fingerprints  in next line as it may be in .o-saft.pl
+    if ($arg =~ /^\+fingerprint$p?(.{2,})$/)          { $arg = '+fingerprint_' . $1;} # alias:
+    if ($arg eq  '+fingerprint_sha')                  { $arg = '+fingerprint_sha1'; } # alais:
     if ($arg =~ /^\+modulus$p?exponent$p?size$/)      { $arg = '+modulus_exp_size'; } # alias:
     if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
     if ($arg =~ /^\+public$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
@@ -6284,6 +6310,7 @@ _y_CMD("  check supported SSL versions ...");
 my @list = Net::SSLinfo::ssleay_methods();
     # method names do not literally match our version string, hence the
     # cumbersome code below
+_trace("SSLeay methods: " . join(" ", @list));
 foreach my $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
     if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
@@ -6725,6 +6752,19 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         next;
     } # cipherraw
 
+    if (_is_do('fallback_protocol')) {
+        _y_CMD("protocol fallback support ...");
+        # following similar to ciphers_get();
+        my ($version, $supported, $dh);
+        if (0 == $cmd{'extciphers'}) {
+            ($version, $supported)      = _usesocket( '', $host, $port, '');
+        } else { # force openssl
+            ($version, $supported, $dh) = _useopenssl('', $host, $port, '');
+        }
+        $prot{'fallback'}->{val} = $version;
+        _trace("fallback: $version $supported");
+    }
+
     if ((_need_default() > 0) or ($check > 0)) {
         _y_CMD("get default ..");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocols
@@ -6765,7 +6805,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
         foreach my $ssl (@{$cfg{'version'}}) {
+            _trace("ckecking ciphers for $ssl ...");
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
+            map({s/^[^:]*://} @supported);  # remove  protocol: in each item
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
                 push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
                 $checks{'cnt_totals'}->{val}++;
@@ -6982,3 +7024,28 @@ exit 2; # main
 __END__
 __DATA__
 documentation please see o-saft-man.pm
+
+
+=== Internal Notes ===
+
+== Note:Selected Protocol ==
+    'sslversion' returns protocol as used in our data structure (like TLSv12)
+    example (ouput from openssl):
+        New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES128-GCM-SHA256
+    example Net::SSLeay:
+        Net::SSLeay::version(..)
+
+    example (ouput from openssl):
+    'session_protocol' retruns string used by openssl (like TLSv1.2)
+        Protocol  : TLSv1.2
+
+    'fallback_protocol'
+        Note: ouput from openssl:       TLSv1.2
+        Note: output from Net::SSLeay:  TLSv1_2
+
+
+== Note:Selected Cipher ==
+    'selected' returns cipher as used in our data structure (like DHE-DES-CBC)
+    example (ouput from openssl):
+    example Net::SSLeay:
+	Net::SSLeay::get_cipher(..)
