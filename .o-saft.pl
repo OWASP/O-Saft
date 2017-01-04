@@ -176,7 +176,7 @@
 ###
 ### redefine command +protocols
 ###
---cfg_cmd=prots=hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn alpn npn session_protocol protocols https_protocols http_protocols https_svc http_svc
+--cfg_cmd=prots=hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn alpn npn session_protocol fallback_protocol protocols https_protocols http_protocols https_svc http_svc
 
 ###
 ### redefine command +vulns
