@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.74 16/12/18 21:28:04',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.75 17/01/04 02:08:05',
 
 };
 
@@ -245,6 +245,7 @@ our %prot   = (     # collected data for protocols and ciphers
     'DTLSv13'   => {'txt' => "DTLS 1.3",  'hex' => 0xFEFC,  'opt' => "-dtls1_3" },  #  "
     'TLS1FF'    => {'txt' => "--dummy--", 'hex' => 0x03FF,  'opt' => undef      },  #  "
     'DTLSfamily'=> {'txt' => "--dummy--", 'hex' => 0xFE00,  'opt' => undef      },  #  "
+    'fallback'  => {'txt' => "cipher",    'hex' => 0x0000,  'opt' => undef      },  #  "
    #'TLS_FALLBACK_SCSV'=>{'txt'=> "SCSV", 'hex' => 0x5600,  'opt' => undef      },
     #-----------------------+--------------+----------------+------------------+---+---+---+---
     # see _prot_init_value() for following values in
@@ -259,6 +260,7 @@ our %prot   = (     # collected data for protocols and ciphers
     #  DTLSv12  0xFEFD  # DTLS1.2 (udp)
     #  DTLSv13  0xFEFC  # DTLS1.3, NOT YET specified (udp)
     #  DTLSfamily       # DTLS1.FF, no defined PROTOCOL, for internal use only
+    #  fallback         # no defined PROTOCOL, for internal use only
     # 'hex' value will be copied to $cfg{'openssl_version_map'} below
     # 'opt' value will be copied to $cfg{'openssl_option_map'}  below
     # TODO: hex value should be same as %_SSLmap in Net::SSLinfo
