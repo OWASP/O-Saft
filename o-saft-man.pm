@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.162 16/12/19 00:28:56";
+my  $man_SID= "@(#) o-saft-man.pm 1.163 17/01/04 02:03:49";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -182,6 +182,8 @@ my %man_text = (
         'CFB'       => "Cipher Feedback",
         'CFB3'      => "Cipher Feedback",
         'CFBx'      => "Cipher Feedback x bit mode",
+        'ChaCha'    => "stream cipher algorithm",
+        'ChaCha-Poly1305' => "Authenticated Encryption with Associated Data (AEAD)",
         'CHAP'      => "Challenge Handshake Authentication Protocol",
         'CKA'       => "", # PKCS#11
         'CKK'       => "", # PKCS#11
@@ -270,6 +272,7 @@ my %man_text = (
         'ECOH'      => "Elliptic Curve only hash",
 #       'ECRYPT'    => " ?? ",
         'Ed25519'   => "alias for Curve25519",
+        'Ed448'     => "alias for Curve448",
         'EDE'       => "Encryption-Decryption-Encryption",
         'EDH'       => "Ephemeral Diffie-Hellman", # official acronym
         'EGADS'     => "Entropy Gathering and Distribution System",
@@ -308,6 +311,7 @@ my %man_text = (
         'GCM'       => "Galois/Counter Mode (block cipher mode)",
         'GHASH'     => "Hash funtion used in GCM",
         'GMAC'      => "MAC for GCM",
+        'Goldilocks'=> "see Curve448",
         'GOST'      => "Gossudarstwenny Standard (block cipher)",
         'Grainv1'   => "stream cipher (64-bit IV)",
         'Grainv128' => "stream cipher (96-bit IV)",
@@ -330,8 +334,12 @@ my %man_text = (
         'IAPM'      => "Integrity Aware Parallelizable Mode (block cipher mode of operation)",
         'ICM'       => "Integer Counter Mode (alias for CTR)",
         'IDEA'      => "International Data Encryption Algorithm (by James Massey and Xuejia Lai)",
+        'IESG'      => "Internet Engineering Steering Group",
+        'IETF'      => "Internet Engineering Task Force",
         'IFC'       => "Integer Factorization Cryptography",
         'IGE'       => "Infinite Garble Extension",
+        'IKE'       => "Internet Key Exchange",
+        'IKEv2'     => "IKE version 2",
         'IND-BACPA' => "Indistinguishability of encryptions under blockwise-adaptive chosen-plaintext attack",
         'IND-CCA'   => "Indistinguishability of encryptions under chosen-cipgertext attack",
         'IND-CPA'   => "Indistinguishability of encryptions under chosen-plaintext attack",
@@ -424,6 +432,7 @@ my %man_text = (
         'PM'        => "Policy Mappings (certificate extension)",
         'PMAC'      => "Parallelizable MAC (by Phillip Rogaway)",
         'PMS'       => "pre-master secret",
+        'Poly1305'  => "Authenticator",
         'Poly1305-AES'  => "MAC (by D. Bernstein)",
         'POP'       => "Proof of Possession",
         'POODLE'    => "Padding Oracle On Downgraded Legacy Encryption",
@@ -457,7 +466,7 @@ my %man_text = (
         'SA'        => "Subordinate Authority (aka Subordinate CA)",
         'SACL'      => "System Access Control List",
         'SAFER'     => "Secure And Fast Encryption Routine, block cipher",
-        'Salsa20'   => "stream cipher",
+        'Salsa20'   => "stream cipher (by D. Bernstein)",
         'SAM'       => "syriac abbreviation mark",
         'SAN'       => "Subject Alternate Name",
         'SAX'       => "Symmetric Authenticated eXchange",
@@ -483,6 +492,8 @@ my %man_text = (
         'SHA-512'   => "Secure Hash Algorithm (512 bit)",
         'SHA1'      => "alias for SHA-1 (160 bit)",
         'SHA2'      => "alias for SHA-2 (224, 256, 384 or 512 bit)",
+        'SPHINCS'   => "post-quantum hash function",
+        'SPHINCS-256'   => "alias for SPHINCS",
         'SHS'       => "Secure Hash Standard",
         'SIA'       => "Subject Information Access (certificate extension)",
         'SIC'       => "Segmented Integer Counter (alias for CTR)",
@@ -552,6 +563,7 @@ and OpenVPN",
         'WHIRLPOOL' => "hash function",
         'X.680'     => "X.680: ASN.1",
         'X.509'     => "X.509: The Directory - Authentication Framework",
+        'X25519'    => "alieas for Curve25519 ?",
         'X680'      => "X.680: ASN.1",
         'X509'      => "X.509: The Directory - Authentication Framework",
         'XCBC'      => "eXtended CBC-MAC",
@@ -561,6 +573,7 @@ and OpenVPN",
         'XMACC'     => "counter-based XOR-MAC",
         'XMACR'     => "radomized XOR-MAC",
         'XMLSIG'    => "XML-Signature Syntax and Processing",
+        'XMSS'      => "hash function",
         'XTEA'      => "extended Tiny Encryption Algorithm",
         'XTS'       => "XEX-based tweaked-codebook mode with ciphertext stealing",
         'XUDA'      => "Xcert Universal Database API",
@@ -568,7 +581,7 @@ and OpenVPN",
         'ZLIB'      => "Lossless compression file format",
         'ZRTP'      => "SRTP for VoIP",
         'ZSK'       => "Zone Signing Key", # DNSSEC
-    },
+    }, # glossar
 
     'rfc' => {
         # number   [ title / description                     additional information ],
@@ -594,6 +607,7 @@ and OpenVPN",
         '2408'  => [ "Internet Security Association and Key Management Protocol (ISAKMP)" ],
         '2409'  => [ "The Internet Key Exchange (IKE) - 1998" ],
         '4306'  => [ "The Internet Key Exchange (IKEv2) Protocol - 2005" ],
+        '7296'  => [ "The Internet Key Exchange Protocol 2 (IKEv2) - 2014" ],
         '4753'  => [ "ECP Groups for IKE and IKEv2" ],
         '2412'  => [ "AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec')",
                      "http://en.wikipedia.org/wiki/Perfect_forward_secrecy"
@@ -625,6 +639,8 @@ and OpenVPN",
                    # Truncated HMAC: truncated_hmac
                    # Certificate Status Request (i.e. OCSP stapling): status_request
                    # Error Alerts
+        '4868'  => [ "Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec" ],
+        '5116'  => [ "An Interface and Algorithms for Authenticated Encryption" ],
         '4749'  => [ "TLS Compression Methods" ],
         '5077'  => [ "TLS session resumption" ],
         '5746'  => [ "TLS Renegotiation Indication Extension" ],
@@ -706,7 +722,20 @@ and OpenVPN",
         '7905'  => [ "ChaCha20-Poly1305 Cipher Suites for TLS" ],
         '1135'  => [ "The Helminthiasis of the Internet" ], # 1989
         #----------+----------------------------------------+-----------------------+
-    },
+    }, # rfc
+
+    'links' => {    # TODO: not yet used (01/2017)
+        # name         [ title / description                     link ],
+        #--------------+------------------------------------+-----------------------+
+        'OWASP-CS'  => [ "OWASP TLS Cheat Sheet", "https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet" ],
+        'OWASP-PIN' => [ "OWASP Certificate and Public Key Pinning", "https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning" ],
+        'OWASP-STS' => [ "OWASP HTTP Strict Transport Security", "https://www.owasp.org/index.php/HTTP_Strict_Transport_Security" ],
+        'TR-02102'  => [ "BSI TR-02102 Teil 2", "https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR02102/BSI-TR-02102-2.pdf" ],
+        'ENISA_Report'  => [ "ENISA: Algorithms, Key Sizes and Parameters Report", "http://www.enisa.europa.eu/activities/identity-and-trust/library/deliverables/algorithms-key-sizes-and-parameters-report" ],
+        'EV-certs'  => [ "EV Certificate Guidelines", "https://www.cabforum.org/EV_Certificate_Guidelines.pdf" ],
+        'RFC-7525'  => [ "Recommendations for Secure Use of TLS and DTLS", "https://tools.ietf.org/html/rfc7525" ],
+        #--------------+------------------------------------+-----------------------+
+    }, # links
 
     # Additional informations:
     # CT   : http://ctwatch.net/
@@ -779,6 +808,7 @@ and OpenVPN",
     #        see also: https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
     #        supported by: Chrome 45, Firefox 43, Opera 32
     #        Note that SRI is SSL/TLS-related but security-related
+    # XMSS   https://eprint.iacr.org/2011/484.pdf
     # TS 102 042 : http://
     #
     #        http://rsapss.hboeck.de/rsapss-1.0.1.pdf
