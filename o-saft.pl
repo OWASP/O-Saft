@@ -2692,7 +2692,7 @@ sub _usesocket($$$$)    {
         }
     }) {    # eval succeded
         if ($sslsocket) {
-            # see Note:Selected Protocol
+            # SEE Note:Selected Protocol
             $version = $sslsocket->get_sslversion() if ($IO::Socket::SSL::VERSION > 1.964);
             $cipher  = $sslsocket->get_cipher();
             $sslsocket->close(SSL_ctx_free => 1);
@@ -3196,7 +3196,7 @@ sub checkciphers($$) {
     }
     $checks{'edh_cipher'}->{val} = "" if ($checks{'edh_cipher'}->{val} ne "");  # good if we have them
 
-    # we need our well known string, hence 'sslversion'; see Note:Selected Protocol
+    # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
     $ssl    = $data{'sslversion'}->{val}($host, $port); # get selected protocol
     $cipher = $data{'selected'}  ->{val}($host, $port); # get selected cipher
     if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'pfs_ciphers'})) {
@@ -3532,7 +3532,7 @@ sub check02102($$) {
 
     #! TR-02102-2 3.2 SSL/TLS-Versionen
     # use 'session_protocol' instead of 'sslversion' as its string matches the
-    # TR-02102 requirements better; see Note:Selected Protocol
+    # TR-02102 requirements better; SEE Note:Selected Protocol
     $val  = ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/) ? " <<not TLSv12>>" : "" ;
     $val .= ($prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
     $val .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
@@ -3623,7 +3623,7 @@ sub check03116($$) {
         # muss mindestens die TLS-Version 1.2 unterstützt werden
 
     # use 'session_protocol' instead of 'sslversion' as its string matches the
-    # TR-03116 requirements better; see Note:Selected Protocol
+    # TR-03116 requirements better; SEE Note:Selected Protocol
     $txt  = ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/) ? " <<not TLSv12>>" : "" ;
     $txt .= ($prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
     $txt .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
@@ -3815,7 +3815,7 @@ sub check7525($$) {
     # TODO: for lazy check
 
     # use 'session_protocol' instead of 'sslversion' as its string matches the
-    # RFC requirements better; see Note:Selected Protocol
+    # RFC requirements better; SEE Note:Selected Protocol
     $val  = " <<not TLSv12>>" if ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/);
     $val .= " SSLv2"   if ( $prot{'SSLv2'}->{'cnt'}   > 0);
     $val .= " SSLv3"   if ( $prot{'SSLv3'}->{'cnt'}   > 0);
