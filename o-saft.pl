@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.573 17/01/04 02:16:41",
+    SID         => "@(#) yeast.pl 1.574 17/01/06 22:18:55",
     STR_VERSION => "16.12.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1787,6 +1787,55 @@ sub _check_modules()    {
     return;
 }; # _check_modules
 
+sub _init_openssldir    {
+    # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
+    # resets cmd{'openssl'}, cmd{'extopenssl'} and cmd{'extsclient'} on error
+    # SEE Note:openssl CApath
+    my $dir = qx($cmd{'openssl'} version -d);   # get something like: OPENSSLDIR: "/usr/local/openssl"
+    chomp $dir;
+    my $status  = $?;
+    my $error   = $!;
+    my $capath  = "";
+    local   $\  = "\n";
+    _trace("_init_openssldir: $dir");
+    if (($error ne "") && ($status != 0)) { # we ignore error messages for status==0
+        # When there is a status and an error message, external call failed.
+        # Print error message and disable external openssl.
+        # In rare cases (i.e. VM with low memory) external call fails due to
+        # malloc() problems, in this case print an additional warning.
+        # Note that low memory affects external calls only *but not* further
+        # control flow herein as perl already managed to load the script.
+        print STR_WARN, "perl returned error: '$error'\n";
+        if ($error =~ m/allocate memory/) {
+            print STR_WARN, "using external programs disabled.\n";
+            print STR_WARN, "data provided by external openssl may be shown as:  <<openssl>>\n";
+        }
+        $cmd{'openssl'}    = "";
+        $cmd{'extopenssl'} = 0;
+        $cmd{'extsclient'} = 0;
+        $status = 0;  # avoid following warning below
+    } else {
+        # process only if no errors to avoid "Use of uninitialized value"
+        my $openssldir = $dir;
+        $dir =~ s#[^"]*"([^"]*)"#$1#;
+        if (-e "$dir/certs") {
+            $capath = "$dir/certs";
+        } else {    # no directory found, add path to common paths as last resort
+            print STR_WARN, "'openssl version -d' returned: '$openssldir'; ca_path not set .\n";
+            unshift(@{$cfg{'ca_paths'}}, $dir); # dirty hack (but dosn't harm:)
+        }
+    }
+    if ($status != 0) {                     # on Windoze status may be 256
+        $cmd{'openssl'}    = "";
+        print STR_WARN, "perl returned status: '$status' ('" . ($status>>8) . "')\n";
+            # no other warning here, see "some checks are missing" later, 
+            # this is to avoid bothering the user with warnings, when not used
+        # $capath = ""; # should still be empty
+    }
+    _trace("_init_openssldir: ca_path=$cfg{'ca_path'} .");
+    return $capath;
+}; # _init_openssldir
+
 sub _initchecks_score() {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
@@ -1829,6 +1878,9 @@ sub _init_all()         {
     _initchecks_score();
     _initchecks_val();
     $cfg{'hints'}->{$_} = $text{'hints'}->{$_} foreach (keys %{$text{'hints'}});
+    # _init_openssldir();
+        # not done here because it needs openssl command, which may be set by
+        # options, hence the call must be done after reading arguments
     return;
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
@@ -5734,6 +5786,8 @@ while ($#argv >= 0) {
     # first all aliases
     if ($arg eq  '-b')                  { $arg = '--enabled';       } # alias: ssl-cert-check
     if ($arg eq  '-c')                  { $arg = '--capath';        } # alias: ssldiagnose.exe
+    if ($arg =~ /^--?CApath/)           { $arg = '--capath';        } # alias: curl, openssl
+    if ($arg =~ /^--?CAfile/)           { $arg = '--cafile';        } # alias: openssl
     if ($arg =~ /^--ca(?:cert(?:ificate)?)$/i)  { $arg = '--cafile';} # alias: curl, openssl, wget, ...
     if ($arg =~ /^--cadirectory$/i)     { $arg = '--capath';        } # alias: curl, openssl, wget, ...
     if ($arg =~ /^--fuzz/i)             { $arg = '--cipherrange'; unshift(@argv, 'huge'); } # alias: sslmap
@@ -5750,8 +5804,6 @@ while ($#argv >= 0) {
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg =~ /^-(B|-heartbleed)$/)   { $arg = '+heartbleed';     } # alias: testssl.sh
     if ($arg =~ /^-(C|-compression|-crime)$/) { $arg = '+compression';# alias: testssl.sh
-    if ($arg =~ /^--?CApath/)           { $arg = '--capath';        } # alias: curl, openssl
-    if ($arg =~ /^--?CAfile/)           { $arg = '--cafile';        } # alias: openssl
     if ($arg eq  '--chain')             { $arg = '+chain';          } # alias:
     if ($arg eq  '--default')           { $arg = '+default';        } # alias:
     if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';    } # alias:
@@ -6183,6 +6235,8 @@ $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); #
 _yeast_args();
 _vprintme();
 
+#_init_openssldir();    # called later for performance reasons
+
 usr_pre_exec();
 
 #| call with other libraries
@@ -6219,6 +6273,16 @@ if ($cfg{'exec'} == 0) {
         exec $0, '+exec', @ARGV;
     }
 }
+
+#| add openssl-specific path for CAs
+#| -------------------------------------
+if ($cfg{'ca_path'} eq "") {            # not passed as option, use default
+    $cfg{'ca_path'} = _init_openssldir();# warnings already printed if empty
+}
+if ($cfg{'ca_path'} eq "") {
+    # TODO: probably search for a path from out list in $cfg{'ca_paths'}
+}
+
 _y_TIME("inc{");
 
 local $\ = "\n";
@@ -6399,49 +6463,6 @@ if ($quick == 1) {
     $cfg{'shorttxt'}= 1;
 }
 $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
-
-#| add openssl-specific path for CAs
-#| -------------------------------------
-if ($cmd{'extopenssl'} == 1) {
-    $arg = qx($cmd{'openssl'} version -d);     # get something like: OPENSSLDIR: "/usr/local/openssl"
-    my $status = $?;
-    my $error  = $!;
-    if (($error ne "") && ($status != 0)) {    # we ignore error messages for status==0
-        # When there is a status and an error message, external call failed.
-        # Print error message and disable external openssl.
-        # In rare cases (i.e. VM with low memory) external call fails due to
-        # malloc() problems, in this case print an additional warning.
-        # Note that low memory affects external calls only *but not* further
-        # control flow herein as perl already managed to load the script.
-        print STR_WARN, "perl returned error: '$error'\n";
-        if ($error =~ m/allocate memory/) {
-            print STR_WARN, "using external programs disabled.\n";
-            print STR_WARN, "data provided by external openssl may be shown as:  <<openssl>>\n";
-        }
-        $cmd{'openssl'}    = "";
-        $cmd{'extopenssl'} = 0;
-        $cmd{'extsclient'} = 0;
-        $status = 0;  # avoid following warning
-    } else {
-        # process only if no errors to avoid "Use of uninitialized value"
-        my $openssldir = $arg;  chomp $openssldir;
-        $arg =~ s#[^"]*"([^"]*)"#$1#;  chomp $arg;
-        if (-e "$arg/certs") {
-            $cfg{'ca_path'} = "$arg/certs";
-        } else {    # no directory found, add path to common paths as last resort
-            print STR_WARN, "'openssl version -d' returned: '$openssldir'; ca_path not set .\n";
-            unshift(@{$cfg{'ca_paths'}}, $arg);
-        }
-    }
-    if ($status != 0) {
-        # on Windoze status may be 256
-        $cmd{'openssl'}    = "";
-        print STR_WARN, "perl returned status: '$status' ('" . ($status>>8) . "')\n";
-            # no other warning here, see "some checks are missing" later, 
-            # this is to avoid bothering the user with warnings, when not used
-    }
-    $arg = "";
-}
 
 #| set defaults for Net::SSLinfo
 #| -------------------------------------
@@ -7029,6 +7050,15 @@ documentation please see o-saft-man.pm
 
 
 === Internal Notes ===
+
+== Note:openssl CApath ==
+    _init_openssldir() gets the configured directory for the certificate files
+    from the openssl executable. It is expected that openssl returns something
+    like:  OPENSSLDIR: "/usr/local/openssl"
+
+    Note that the returned OPENSSLDIR is a base-directory where the cert files
+    are found in the cert/ sub-directory. This cert/ is hardcoded herein.
+
 
 == Note:Selected Protocol ==
     'sslversion' returns protocol as used in our data structure (like TLSv12)
