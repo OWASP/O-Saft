@@ -5750,6 +5750,8 @@ while ($#argv >= 0) {
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg =~ /^-(B|-heartbleed)$/)   { $arg = '+heartbleed';     } # alias: testssl.sh
     if ($arg =~ /^-(C|-compression|-crime)$/) { $arg = '+compression';# alias: testssl.sh
+    if ($arg =~ /^--?CApath/)           { $arg = '--capath';        } # alias: curl, openssl
+    if ($arg =~ /^--?CAfile/)           { $arg = '--cafile';        } # alias: openssl
     if ($arg eq  '--chain')             { $arg = '+chain';          } # alias:
     if ($arg eq  '--default')           { $arg = '+default';        } # alias:
     if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';    } # alias:
