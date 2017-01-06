@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.162 16/12/20 19:39:00',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.163 17/01/06 23:09:04',
 };
 
 ######################################################## public documentation #
@@ -2207,8 +2207,8 @@ sub do_openssl($$$$) {
         # NOTE that openssl 1.x or later is required for -nextprotoneg
         $mode  = 's_client' . $Net::SSLinfo::sclient_opt;
 # FIXME: { following fixes general verify, but not self signed
-#        $mode .= ' -CApath ' . $capath if ($capath ne "");
-#        $mode .= ' -CAfile ' . $cafile if ($cafile ne "");
+        $mode .= ' -CApath ' . $capath if ($capath ne "");
+        $mode .= ' -CAfile ' . $cafile if ($cafile ne "");
 # }
         $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protocols if ($Net::SSLinfo::use_nextprot == 1);
         $mode .= ' -reconnect'   if ($Net::SSLinfo::use_reconnect == 1);
