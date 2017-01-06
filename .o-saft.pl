@@ -5,13 +5,21 @@
 #? DESCRIPTION
 #?      Contains arguments and options for o-saft.pl .
 #? SYNOPSIS
-#?      File must be located in current working directory or installation
+#?      File must be located in current working directory  or installation
 #?      directory of  o-saft.pl .
 #? SYNTAX
 #?      Empty lines are ignored.
 #?      Lines starting with  #  are ignored (comment lines).
 #?      Each other line will be passed as one single argument or option.
 #?      Note that all values for  --cfg-cmd=  are all lower case letters.
+#? NEW COMMANDS
+#?      New commands may be defined herein using  --cfg-cmd=  .
+#?      Please see example  +preload  below.
+#?      It is recommended to use a prefix in each private command to avoid
+#?      conflicts with existing (or future) commands in o-saft.pl itself.
+#?      Following prefixes (for commands) are not used by o-saft.pl:
+#?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
+#?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
 #?
 
 ###
@@ -23,7 +31,7 @@
 ### or
 #--lib=/usr/local/lib
 
-### disable special openssl options
+### disable special openssl options (if not supported by openssl)
 #--no-nextproto
 #--no-reconnect
 #--no-tlsextdebug
@@ -31,6 +39,7 @@
 ###
 ### specify CA bundle
 ###
+#--ca-path=/etc/ssl/certs/
 #--ca-file=/etc/ssl/certs/ca-certificates.crt
 #--ca-depth=4
 
