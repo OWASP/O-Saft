@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.163 17/01/06 23:09:04',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.164 17/01/08 23:05:56',
 };
 
 ######################################################## public documentation #
@@ -254,6 +254,12 @@ Default is (same as openssl): "unable to load certificate"
 =item $Net::SSLinfo::method
 
 Will be set to the Net::SSLeay::*_method used to in do_ssl_open().
+
+=item $Net::SSLinfo::file_sclient
+
+Use content of this file instead opening connection with openssl.
+Used for debugging.  Note: there are no checks if the content of this file
+matches the other parameters, in particular the host and port.
 
 =back
 
@@ -2058,10 +2064,17 @@ sub do_ssl_open($$$@) {
             #       verify error:num=20:unable to get local issuer certificate
             #       verify error:num=21:unable to verify the first certificate
             #       verify error:num=27:certificate not trusted
+            #
+            # s_client returns at end:
+            #       Verify return code: 0 (ok)
+            # or just one of following, even if more than one applies:
             #       Verify return code: 10 (certificate has expired)
             #       Verify return code: 19 (self signed certificate in certificate chain)
             #       Verify return code: 20 (unable to get local issuer certificate)
             #       Verify return code: 21 (unable to verify the first certificate)
+            #
+            # following matches any line, but return first only:
+            # TODO: need more extensive tests with different servers and openssl versions
         $d = $data; $d =~ s/.*?Verify (?:error|return code):\s*((?:num=)?[\d]*[^\n]*).*/$1/si;
         $_SSLinfo{'verify'}         = $d;
         # TODO: $_SSLinfo{'verify_host'}= $ssl->verify_hostname($host, 'http');  # returns 0 or 1
@@ -2197,6 +2210,16 @@ sub do_openssl($$$$) {
         return SSLINFO_HASH;
     }
     if ($mode =~ m/^-?(s_client)$/) {
+        if ($Net::SSLinfo::file_sclient !~ m/^\s*$/) {
+            if (open(my $fh, '<:encoding(UTF-8)', $Net::SSLinfo::file_sclient)) {
+                undef $/;   # get anything
+                $data = <$fh>;
+                close($fh);
+                return $data;
+            }
+            _trace("do_openssl($mode): WARNING: cannot open $Net::SSLinfo::file_sclient");
+            return SSLINFO_HASH;
+        }
         if ($Net::SSLinfo::use_sclient == 0) {
             _trace("do_openssl($mode): WARNING: no openssl s_client") if ($trace > 1);
             return SSLINFO_HASH;
