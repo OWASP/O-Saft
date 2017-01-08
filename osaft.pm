@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '16.12.16',  # official version number of tis file
+    OSAFT_VERSION   => '17.01.07',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.75 17/01/04 02:08:05',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.76 17/01/09 00:11:13',
 
 };
 
@@ -601,9 +601,11 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
 
 #   '1.3.6.1'                   => {iso(1) org(3) dod(6) iana(1)}
     '1.3.6.1'                   => {'txt' => "Internet OID"},
+#   '1.3.6.1.5.5.7.1'           => {'txt' => "Private Extensions"},
     '1.3.6.1.5.5.7.1.1'         => {'txt' => "Authority Information Access"}, # authorityInfoAccess
     '1.3.6.1.5.5.7.1.12'        => {'txt' => STR_UNDEF},
     '1.3.6.1.5.5.7.1.14'        => {'txt' => "Proxy Certification Information"},
+    '1.3.6.1.5.5.7.1.24'        => {'txt' => "id-pe-tlsfeature"},
     '1.3.6.1.5.5.7.3.1'         => {'txt' => "Server Authentication"},
     '1.3.6.1.5.5.7.3.2'         => {'txt' => "Client Authentication"},
     '1.3.6.1.5.5.7.3.3'         => {'txt' => "Code Signing"},
@@ -612,6 +614,8 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '1.3.6.1.5.5.7.3.6'         => {'txt' => "IPSec tunnel"},
     '1.3.6.1.5.5.7.3.7'         => {'txt' => "IPSec user"},
     '1.3.6.1.5.5.7.3.8'         => {'txt' => "Timestamping"},
+    '1.3.6.1.5.5.7.48.1'        => {'txt' => "ocsp"},
+    '1.3.6.1.5.5.7.48.2'        => {'txt' => "caIssuer"},
     '1.3.6.1.4.1.11129.2.5.1'   => {'txt' => STR_UNDEF},    # Certificate Policy?
     '1.3.6.1.4.1.14370.1.6'     => {'txt' => STR_UNDEF},    # Certificate Policy?
     '1.3.6.1.4.1.311.10.3.3'    => {'txt' => "Microsoft Server Gated Crypto"},
@@ -619,8 +623,11 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '1.3.6.1.4.1.311.10.11.11'  => {'txt' => "Microsoft Server: EV ??friendly name??"},
     '1.3.6.1.4.1.311.10.11.83'  => {'txt' => "Microsoft Server: EV ??root program??"},
     '1.3.6.1.4.1.4146.1.10'     => {'txt' => STR_UNDEF},    # Certificate Policy?
+    '1.3.6.1.5.5.7.8.7'         => {'txt' => "otherName"},
     '2.16.840.1.113730.4.1'     => {'txt' => "Netscape SGC"},
     '1.2.840.113549.1.1.1'      => {'txt' => "SubjectPublicKeyInfo"}, # ???
+    '1.2.840.113549.1.1.5'      => {'txt' => "SignatureAlgorithm"},
+#   '2.5.29'                    => {'txt' => "Standard Extensions according RFC 5280"},
     # EV: OIDs used in EV Certificates
     '2.5.4.10'                  => {'txt' => "EV Certificate: subject:organizationName"},
     '2.5.4.11'                  => {'txt' => "EV Certificate: subject:organizationalUnitName"},
@@ -659,6 +666,7 @@ our %data_oid = ( # TODO: nothing YET IMPLEMENTED except for EV
     '2.5.29.19'                 => {'txt' => "subject:basicConstraints"},     # Basic constraints
     '2.5.29.31'                 => {'txt' => "subject:crlDistributionPoints"},# CRL distribution points
     '2.5.29.32'                 => {'txt' => "subject:certificatePolicies"},  # Certificate Policies
+    '2.5.29.37'                 => {'txt' => "subject:extendedKeyUsage"},     # Extended key usage
     '2.16.840.1.113733.1.7.23.6'=> {'txt' => STR_UNDEF},    # Certificate Policy?
     '2.16.840.1.113733.1.7.48.1'=> {'txt' => STR_UNDEF},    #  ''
     '2.16.840.1.113733.1.7.54'  => {'txt' => STR_UNDEF},    #  ''
@@ -1474,6 +1482,14 @@ our %cfg = (
                        # SSLAudit, THCSSLCheck, TestSSLServer are converted using lc()
     'showhost'      => 0,       # 1: prefix printed line with hostname
     'usr-args'      => [],      # list of all arguments --usr* (to be used in o-saft-usr.pm)
+   #------------------+---------+----------------------------------------------
+    'data'  => {       # data provided (mainly used for testing and debugging)
+        'file_sclient'  => "",  # file containing data from "openssl s_client "
+        'file_ciphers'  => "",  # file containing data from "openssl ciphers"
+        'file_pem'      => "",  # file containing certificate(s) in PEM format
+        'file_pcap'     => "",  # file containing data in PCAP format
+                                # i.e. "openssl s_client -showcerts ..."
+    }, # data
    #------------------+---------+----------------------------------------------
    #------------------+--------------------------------------------------------
     'regex' => {
