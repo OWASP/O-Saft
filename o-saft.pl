@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.574 17/01/06 22:18:55",
-    STR_VERSION => "16.12.16",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.575 17/01/08 17:55:33",
+    STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -5567,7 +5567,7 @@ while ($#argv >= 0) {
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLCNF')   { $cfg{'openssl_cnf'}   = $arg; $typ = 'HOST'; }
         if ($typ eq 'SSLFIPS')  { $cfg{'openssl_fips'}  = $arg; $typ = 'HOST'; }
-        if ($typ eq 'NO_OUT')   { push(@{$cfg{'ignore-out'}}, $arg);$typ = 'HOST'; }
+        if ($typ eq 'NO_OUT')   { push(@{$cfg{'ignore-out'}}, $arg);        $typ = 'HOST'; }
         if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'CALL')     { push(@{$cmd{'call'}}, $arg);  $typ = 'HOST'; }
@@ -5584,6 +5584,10 @@ while ($#argv >= 0) {
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PAUTH')    { $cfg{'proxyauth'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SNINAME')  { $cfg{'sni_name'}  = $arg;     $typ = 'HOST'; }
+        if ($typ eq 'FILE_SCLIENT') { $cfg{'data'}->{'file_sclient'} = $arg;$typ = 'HOST'; }
+        if ($typ eq 'FILE_CIPHERS') { $cfg{'data'}->{'file_ciphers'} = $arg;$typ = 'HOST'; }
+        if ($typ eq 'FILE_PCAP')    { $cfg{'data'}->{'file_pcap'}    = $arg;$typ = 'HOST'; }
+        if ($typ eq 'FILE_PEM')     { $cfg{'data'}->{'file_pem'}     = $arg;$typ = 'HOST'; }
         if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
@@ -5855,6 +5859,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--slowly')            { $cfg{'slowly'}    = 1;    }
     if ($arg =~ /^--exp(erimental)?$/)  { $cfg{'experimental'} = 1; }
     if ($arg =~ /^--noexp(erimental)?$/){ $cfg{'experimental'} = 0; }
+    if ($arg eq  '--filesclient')       { $typ = 'FILE_SCLIENT';    }
+    if ($arg eq  '--fileciphers')       { $typ = 'FILE_CIPHERS';    }
+    if ($arg eq  '--filepcap')          { $typ = 'FILE_PCAP';       }
+    if ($arg eq  '--filepem')           { $typ = 'FILE_PEM';        }
     # proxy options
     if ($arg =~ /^--proxy(?:host)?$/)   { $typ = 'PHOST';           }
     if ($arg eq  '--proxyport')         { $typ = 'PPORT';           }
@@ -6497,6 +6505,8 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::proxyport        = $cfg{'proxyport'};
     $Net::SSLinfo::proxypass        = $cfg{'proxypass'};
     $Net::SSLinfo::proxyuser        = $cfg{'proxyuser'};
+    $Net::SSLinfo::file_sclient     = $cfg{'data'}->{'file_sclient'};
+    $Net::SSLinfo::file_pem         = $cfg{'data'}->{'file_pem'};
     $Net::SSLinfo::method           = "";
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
