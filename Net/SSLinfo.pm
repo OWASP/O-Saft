@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.164 17/01/08 23:05:56',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.165 17/01/09 00:43:50',
 };
 
 ######################################################## public documentation #
@@ -1456,7 +1456,12 @@ sub _openssl_x509   {
         $mode =~ s/$m//;
         $mode =~ s/,,/,/;  # need to remove , also, otherwise we get everything
     }
-    $mode = 'x509 -noout ' . $mode;
+    if ($mode =~ m/^-?ocsp/) {
+        $mode = "x509 $mode";
+        # openssl x509 -ocspid returns data only without noout, probably a bug
+    } else {
+        $mode = "x509 -noout $mode";
+    }
     _trace("_openssl_x509(openssl $mode).") if ($trace > 1);
     if ($^O !~ m/MSWin32/) {
         $data = `echo '$pem' | $_openssl $mode 2>&1`;
@@ -1464,9 +1469,10 @@ sub _openssl_x509   {
         $data = _openssl_MS($mode, '', '', $pem);
     }
     chomp $data;
+    $data =~ s/\n-----BEGIN.*//s if ( $mode =~ m/ -ocsp/); # see above
     $data =~ s/\s*$//;  # be sure ...
     $data =~ s/\s*Version:\s*//i if (($mode =~ m/ -text /) && ($mode !~ m/version,/)); # ugly test for version
-    #dbx# print "#3 $data \n#3";
+    #_dbx# print "#3 $data \n#3";
     return $data;
 } # _openssl_x509
 
