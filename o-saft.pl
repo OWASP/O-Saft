@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.575 17/01/08 17:55:33",
+    SID         => "@(#) yeast.pl 1.576 17/01/08 18:03:46",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3438,7 +3438,8 @@ sub checkcert($$) {
 #   }
         }
     }
-    $checks{'selfsigned'}    ->{val} = $data{'selfsigned'}->{val}($host);
+    $value = $data{'selfsigned'}->{val}($host); # may contain:  0 (ok)
+    $checks{'selfsigned'}    ->{val} = $value if ($value !~ m/^(?:0\s+.ok.)*$/);
     $checks{'fp_not_md5'}    ->{val} = $data{'fingerprint'} if ('MD5' eq $data{'fingerprint'});
     $value = $data{'signame'}->{val}($host);
     $checks{'sha2signature'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'SHA2'}/);
