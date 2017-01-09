@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.576 17/01/08 18:03:46",
+    SID         => "@(#) yeast.pl 1.577 17/01/09 08:14:48",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -473,6 +473,8 @@ our %data   = (     # connection and certificate details
     'ext_issuer'    => {'val' => sub { __SSLinfo('ext_issuer',      $_[0], $_[1])}, 'txt' => "Certificate extensions Issuer Alternative Name"},
     'ocsp_uri'      => {'val' => sub { Net::SSLinfo::ocsp_uri(      $_[0], $_[1])}, 'txt' => "Certificate OCSP Responder URL"},
     'ocspid'        => {'val' => sub { Net::SSLinfo::ocspid(        $_[0], $_[1])}, 'txt' => "Certificate OCSP Subject, Public Key Hash"},
+    'ocsp_subject_hash'   => {'val' => sub { __SSLinfo('ocsp_subject_hash', $_[0], $_[1])}, 'txt' => "Certificate OCSP Subject Hash"},
+    'ocsp_public_hash'    => {'val' => sub { __SSLinfo('ocsp_public_hash',  $_[0], $_[1])}, 'txt' => "Certificate OCSP Public Key Hash"},
     'subject_hash'  => {'val' => sub { Net::SSLinfo::subject_hash(  $_[0], $_[1])}, 'txt' => "Certificate Subject Name Hash"},
     'issuer_hash'   => {'val' => sub { Net::SSLinfo::issuer_hash(   $_[0], $_[1])}, 'txt' => "Certificate Issuer Name Hash"},
     'selfsigned'    => {'val' => sub { Net::SSLinfo::selfsigned(    $_[0], $_[1])}, 'txt' => "Certificate Validity (signature)"},
@@ -982,6 +984,8 @@ our %shorttexts = (
     'trustout'      => "Trusted",
     'ocsp_uri'      => "OCSP URL",
     'ocspid'        => "OCSP Hash",
+    'ocsp_subject_hash' => "OCSP Subject Hash",
+    'ocsp_public_hash'  => "OCSP Public Hash",
     'subject_hash'  => "Subject Hash",
     'issuer_hash'   => "Issuer Hash",
     'fp_not_md5'    => "Fingerprint not MD5",
@@ -2067,6 +2071,20 @@ sub __SSLinfo($$$)      {
         $val =  Net::SSLinfo::tlsextensions($host, $port);
         $val =~ s/^\s*//g;
         $val =~ s/\n/; /g;
+    }
+    # ::ocspid may return multiple lines, something like:
+    #   Subject OCSP hash: 57F4D68F870A1698065F803BE9D967B1B2B9E491
+    #   Public key OCSP hash: BF788D39424E219C62538F72701E1C87C4F667EA
+    # it's also assumed that both lines are present
+    if ($cmd =~ /ocsp_subject_hash/) {
+        $val =  Net::SSLinfo::ocspid($host, $port);
+        $val =~ s/^[^:]+:\s*//;
+        $val =~ s/.ublic[^:]+:\s*.*//;
+    }
+    if ($cmd =~ /ocsp_public_hash/) {
+        $val =  Net::SSLinfo::ocspid($host, $port);
+        $val =~ s/^[^:]+:\s*//;
+        $val =~ s/^[^:]+:\s*//; # TODO: quick&dirty
     }
     if ($cmd =~ m/ext_/) {
         # all following are part of Net::SSLinfo::extensions(), now extract parts
@@ -6072,12 +6090,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+rfc$p?7525$/i)      { $arg = '+rfc_7525';       } # alias:
     # do not match +fingerprints  in next line as it may be in .o-saft.pl
     if ($arg =~ /^\+fingerprint$p?(.{2,})$/)          { $arg = '+fingerprint_' . $1;} # alias:
-    if ($arg eq  '+fingerprint_sha')                  { $arg = '+fingerprint_sha1'; } # alais:
+    if ($arg =~ /^\+fingerprint$psha$/)               { $arg = '+fingerprint_sha1'; } # alais:
     if ($arg =~ /^\+modulus$p?exponent$p?size$/)      { $arg = '+modulus_exp_size'; } # alias:
     if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
     if ($arg =~ /^\+public$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
     if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$p?known/){ $arg = '+pub_enc_known';  } # alias:
     if ($arg =~ /^\+public$p?enc(?:ryption)?$p?known/){ $arg = '+pub_enc_known';  } # alias:
+    if ($arg =~ /^\+ocsp$p?public$p?hash$/)           { $arg = '+ocsp_public_hash'; }
+    if ($arg =~ /^\+ocsp$p?subject$p?hash$/)          { $arg = '+ocsp_subject_hash';}
     if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?$/)    { $arg = '+sig_encryption'; } # alias:
     if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?_known/){$arg ='+sig_enc_known';   } # alias:
     if ($arg =~ /^\+server$p?(?:temp)?$p?key$/)       { $arg = '+dh_parameter';   } # alias:
