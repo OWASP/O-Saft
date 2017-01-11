@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.166 17/01/11 07:45:49',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.167 17/01/11 21:08:03',
 };
 
 ######################################################## public documentation #
@@ -101,9 +101,9 @@ I<Net::SSLinfo::errors()> method.
 
 =head1 DEBUGGING
 
-Simple tracing can be activated with I<$Net::SSLinfo:trace=1>.
+Simple tracing can be activated with I<$Net::SSLinfo::trace=1>.
 
-I<$Net::SSLinfo:trace=2> or I<$Net::SSLinfo:trace=3> will be passed to
+I<$Net::SSLinfo::trace=2> or I<$Net::SSLinfo::trace=3> will be passed to
 I<$Net::SSLeay::trace>.
 I<$Net::SSLeay::linux_debug=1> will be set if trace > 2.
 
