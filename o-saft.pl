@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.579 17/01/11 01:06:31",
+    SID         => "@(#) yeast.pl 1.580 17/01/11 08:43:51",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -472,7 +472,7 @@ our %data   = (     # connection and certificate details
     'ext_certtype'  => {'val' => sub { __SSLinfo('ext_certtype',    $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
     'ext_issuer'    => {'val' => sub { __SSLinfo('ext_issuer',      $_[0], $_[1])}, 'txt' => "Certificate extensions Issuer Alternative Name"},
     'ocsp_uri'      => {'val' => sub { Net::SSLinfo::ocsp_uri(      $_[0], $_[1])}, 'txt' => "Certificate OCSP Responder URL"},
-    'ocspid'        => {'val' => sub { Net::SSLinfo::ocspid(        $_[0], $_[1])}, 'txt' => "Certificate OCSP Subject, Public Key Hash"},
+    'ocspid'        => {'val' => sub {       __SSLinfo('ocspid',    $_[0], $_[1])}, 'txt' => "Certificate OCSP Hashes"},
     'ocsp_subject_hash'   => {'val' => sub { __SSLinfo('ocsp_subject_hash', $_[0], $_[1])}, 'txt' => "Certificate OCSP Subject Hash"},
     'ocsp_public_hash'    => {'val' => sub { __SSLinfo('ocsp_public_hash',  $_[0], $_[1])}, 'txt' => "Certificate OCSP Public Key Hash"},
     'subject_hash'  => {'val' => sub { Net::SSLinfo::subject_hash(  $_[0], $_[1])}, 'txt' => "Certificate Subject Name Hash"},
@@ -984,7 +984,7 @@ our %shorttexts = (
     'sigkey_value'  => "Signature Key Value",
     'trustout'      => "Trusted",
     'ocsp_uri'      => "OCSP URL",
-    'ocspid'        => "OCSP Hash",
+    'ocspid'        => "OCSP Hashes",
     'ocsp_subject_hash' => "OCSP Subject Hash",
     'ocsp_public_hash'  => "OCSP Public Hash",
     'subject_hash'  => "Subject Hash",
@@ -2071,12 +2071,17 @@ sub __SSLinfo($$$)      {
     if ($cmd eq 'tlsextensions') {
         $val =  Net::SSLinfo::tlsextensions($host, $port);
         $val =~ s/^\s*//g;
-        $val =~ s/\n/; /g;
+        $val =~ s/([\n\r])/; /g;
     }
     # ::ocspid may return multiple lines, something like:
     #   Subject OCSP hash: 57F4D68F870A1698065F803BE9D967B1B2B9E491
     #   Public key OCSP hash: BF788D39424E219C62538F72701E1C87C4F667EA
     # it's also assumed that both lines are present
+    if ($cmd =~ /ocspid/) {
+        $val =  Net::SSLinfo::ocspid($host, $port);
+        $val =~ s/^\n?\s+//g;   # remove leading spaces
+        $val =~ s/([\n\r])/; /g;# remove newlines
+    }
     if ($cmd =~ /ocsp_subject_hash/) {
         $val =  Net::SSLinfo::ocspid($host, $port);
         $val =~ s/^[^:]+:\s*//;
@@ -2271,9 +2276,9 @@ sub __SSLinfo($$$)      {
 # TODO: move code for formatting to print*()
     if ($cfg{'format'} ne "raw") {
         $val =  "" if (!defined $val);  # avoid warnings
-        $val =~ s/\n\s+//g; # remove trailing spaces
+        $val =~ s/\n\s+//g;     # remove trailing spaces
         $val =~ s/\n/ /g;
-        $val =~ s/\s\s+//g; # remove multiple spaces
+        $val =~ s/\s\s+/ /g;    # remove multiple spaces
         $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
     }
     return $val;
