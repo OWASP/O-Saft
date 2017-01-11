@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.164 17/01/09 08:06:25";
+my  $man_SID= "@(#) o-saft-man.pm 1.165 17/01/12 00:20:18";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2632,10 +2632,38 @@ OPTIONS
 
       --exitcode
 
-          The exit status code will be greater 0, if any check returns  'no'.
-          In particular, the status code will be the number of 'no' checks.
+          The exit status code will be greater 0, if any of following applies:
+          * any check returns  'no'
+          * insecure protocols are available
+          * insecure ciphers are supported
+          * ciphers without PFS are supported (disable with --exitcode-cipher)
+          In particular, the status code will be the total count of all these
+          checks.
+
+          Parts of these checks can be diasabled,  see  --exitcode-*  options
+          below.
 
           Functionality implemented experimental, may change in future.
+
+      --exitcode-no-checks
+
+          Do not count checks with result 'no' for  --exitcode .
+
+      --exitcode-no-low  --exitcode-no-weak  --exitcode-no-medium
+
+          Do not count LOW, WEAK or MEDIUM security ciphers for  --exitcode .
+
+      --exitcode-no-ciphers
+
+          Do not count any ciphers for  --exitcode .
+
+      --exitcode-no-ciphers
+
+          Do not count any ciphers for  --exitcode .
+
+      --exitcode-no-pfs
+
+          Do not count ciphers without PFS for  --exitcode .
 
       --s_client
 
