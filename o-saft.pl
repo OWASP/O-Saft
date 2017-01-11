@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.581 17/01/11 08:59:35",
+    SID         => "@(#) yeast.pl 1.582 17/01/11 10:01:01",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7026,10 +7026,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     checkhttp( $host, $port);
     checksni(  $host, $port);
     checksizes($host, $port);
-    checkdv(   $host, $port);
-    checkdest( $host, $port);
-    checkprot( $host, $port);
-    checkbleed($host, $port) if ($info  == 0); # not for +info
+    if ($info == 0) {   # not for +info
+# TODO: probably subject for cfg{need-checkssl}
+        checkdv(   $host, $port);
+        checkdest( $host, $port);
+        checkprot( $host, $port);
+        checkbleed($host, $port);
+    }
 
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ..");
