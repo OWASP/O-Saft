@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.76 17/01/09 00:11:13',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.77 17/01/11 23:28:13',
 
 };
 
@@ -1236,10 +1236,18 @@ our %cfg = (
     'openssl_fips'  => undef,   # NOT YET USED
     'openssl_msg'   => "",      # '-msg': option needed for openssl versions older than 1.0.2 to get the dh_parameter
     'exitcode'      => 0,       # 1: exit with status code if any check is "no"
+    'exitcode_checks'   => 1,   # 0: do not count "no" checks for --exitcode
+    'exitcode_cipher'   => 1,   # 0: do not count any ciphers for --exitcode
+    'exitcode_medium'   => 1,   # 0: do not count MEDIUM ciphers for --exitcode
+    'exitcode_weak' => 1,       # 0: do not count  WEAK  ciphers for --exitcode
+    'exitcode_low'  => 1,       # 0: do not count  LOW   ciphers for --exitcode
+    'exitcode_pfs'  => 1,       # 0: do not count ciphers without PFS for --exitcode
+    'exitcode_prot' => 1,       # 0: do not count protocols other than TLSv12 for --exitcode
+    'exitcode_sizes'=> 1,       # 0: do not count size checks for --exitcode
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
-    'versions'      =>          # all supported versions
+    'versions'      =>          # all supported versions; SEE Note:%prot (in o-saft.pl)
                        # [reverse sort keys %prot], # do not use generic list 'cause we want special order
                        [qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
     'DTLS_versions' => [qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)],
