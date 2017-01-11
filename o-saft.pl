@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.580 17/01/11 08:43:51",
+    SID         => "@(#) yeast.pl 1.581 17/01/11 08:59:35",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3286,7 +3286,7 @@ sub checkciphers($$) {
 } # checkciphers
 
 sub checkbleed($$) {
-    #? check if target supports TLS extension 15 (hearbeat)
+    #? check if target supports vulnerable TLS extension 15 (hearbeat)
     my ($host, $port) = @_;
     _y_CMD("checkbleed() ". $cfg{'done'}->{'checkbleed'});
     $cfg{'done'}->{'checkbleed'}++;
@@ -7029,7 +7029,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     checkdv(   $host, $port);
     checkdest( $host, $port);
     checkprot( $host, $port);
-    checkbleed($host, $port); # vulnerable TLS heartbeat extentions
+    checkbleed($host, $port) if ($info  == 0); # not for +info
 
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ..");
