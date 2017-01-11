@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.578 17/01/09 13:55:35",
+    SID         => "@(#) yeast.pl 1.579 17/01/11 01:06:31",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -750,6 +750,7 @@ my %check_size = (  ## length and count data
     'cnt_totals'    => {'txt' => "Total number of checked ciphers"},
     'cnt_checks_no' => {'txt' => "Total number of check results 'no'"},
     'cnt_checks_yes'=> {'txt' => "Total number of check results 'yes'"},
+    'cnt_exitcode'  => {'txt' => "Total number of insecure checks"},# == 0
     #------------------+-----------------------------------------------------
 # TODO: cnt_ciphers, len_chain, cnt_chaindepth
 ); # %check_size
@@ -4534,6 +4535,37 @@ sub checkssl($$)  {
     return;
 } # checkssl
 
+sub check_exitcode  {
+    #? compute exitcode; returns number of failed checks or insecure settings
+    my $exitcode = $checks{'cnt_checks_no'}->{val};
+    my $cnt_prot = 0;   # number of insecure protocols
+                        # only TLSv12 is considered secure
+    my $cnt_ciph = 0;   # number of insecure ciphers per protocol
+    _v_print("---------------------------------------------------- exitcode {");
+    _v_print(sprintf("%s\t%3s %3s %3s %3s    %s", qw(protocol H M L W insecure)));
+    _v_print("-------------+---+---+---+---+------------");
+    foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
+        next if ($cfg{$ssl} == 0);  # not requested, don't count
+# TODO: counts protocol even if no cipher was supported, is this insecure?
+        $cnt_prot++ if ($cfg{$ssl} > 0);
+        $cnt_ciph  = $prot{$ssl}->{'MEDIUM'} + $prot{$ssl}->{'LOW'} + $prot{$ssl}->{'WEAK'};
+        $exitcode += $cnt_ciph;
+        _v_print(sprintf("%-7s\t%3s %3s %3s %3s\t\t%s", $ssl,
+                $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
+                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},  $cnt_ciph,
+        ));
+    }
+    _v_print("-------------+---+---+---+---+------------");
+    $cnt_prot-- if ($cfg{'TLSv12'} > 0);
+    $exitcode += $cnt_prot;
+    $checks{'cnt_exitcode'}->{val} = $exitcode;
+    _v_print(sprintf("%s\t%s", "Total number of insecure protocols", $cnt_prot));
+    _v_print(sprintf("%s\t%s", $checks{'cnt_checks_no'}->{txt}, $checks{'cnt_checks_no'}->{val}));
+    _v_print(sprintf("%s\t%s", $checks{'cnt_exitcode'}->{txt},  $checks{'cnt_exitcode'}->{val}));
+    _v_print("---------------------------------------------------- exitcode }");
+    return $checks{'cnt_exitcode'}->{val};
+} # check_exitcode
+
 sub scoring($$) {
     #? compute scoring of all checks; sets values in %scores
     my ($host, $port) = @_;
@@ -4578,7 +4610,7 @@ sub scoring($$) {
 #| definitions: print functions
 #| -------------------------------------
 
-sub _printdump($$) {
+sub _printdump($$)  {
     my ($label, $value) = @_;
         $label =~ s/\n//g;
         $label = sprintf("%s %s", $label, '_' x (75 -length($label)));
@@ -5026,7 +5058,7 @@ sub printcipherdefaults {
         printf("= prot.\t%-31s%s\n", "default cipher (strong first)", "default cipher (weak first)");
         printf("=------+------------------------------+-------------------------------\n");
     }
-    foreach my $ssl (@{$cfg{'versions'}}) {
+    foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
@@ -5052,8 +5084,7 @@ sub printprotocols($$$) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
-    foreach my $ssl (@{$cfg{'versions'}}) {
-        # $cfg{'versions'} is sorted in contrast to "keys %prot" 
+    foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
@@ -7071,9 +7102,9 @@ _y_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
 if ($cfg{'exitcode'}==0) {
     exit 0;
 } else {
-    exit $checks{'cnt_checks_no'}->{val};
+    exit check_exitcode();
 }
-exit 2; # main
+exit 2; # main; code never reached
 
 __END__
 __DATA__
@@ -7112,3 +7143,9 @@ documentation please see o-saft-man.pm
     example (ouput from openssl):
     example Net::SSLeay:
 	Net::SSLeay::get_cipher(..)
+
+== Note:%prot ==
+    using SSL/TLS protocols can either be done using %prot or $cfg{'versions'}
+    in contrast to "keys %prot"  $cfg{'versions'} is sorted according protocol 
+    like: SSLv2 SSLv3 TLSv1 ...
+
