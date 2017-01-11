@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.165 17/01/09 00:43:50',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.166 17/01/11 07:45:49',
 };
 
 ######################################################## public documentation #
@@ -1469,7 +1469,7 @@ sub _openssl_x509   {
         $data = _openssl_MS($mode, '', '', $pem);
     }
     chomp $data;
-    $data =~ s/\n-----BEGIN.*//s if ( $mode =~ m/ -ocsp/); # see above
+    $data =~ s/\n?-----BEGIN.*$//s if ( $mode =~ m/ -ocsp/); # see above
     $data =~ s/\s*$//;  # be sure ...
     $data =~ s/\s*Version:\s*//i if (($mode =~ m/ -text /) && ($mode !~ m/version,/)); # ugly test for version
     #_dbx# print "#3 $data \n#3";
