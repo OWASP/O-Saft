@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.583 17/01/11 23:26:15",
+    SID         => "@(#) yeast.pl 1.584 17/01/12 00:00:07",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4542,7 +4542,7 @@ sub checkssl($$)  {
 
 sub check_exitcode  {
     #? compute exitcode; returns number of failed checks or insecure settings
-    my $exitcode = $checks{'cnt_checks_no'}->{val};
+    my $exitcode = 0;   # total count
     my $cnt_prot = 0;   # number of insecure protocols
                         # only TLSv12 is considered secure
     my $cnt_ciph = 0;   # number of insecure ciphers per protocol
