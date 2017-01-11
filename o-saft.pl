@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.582 17/01/11 10:01:01",
+    SID         => "@(#) yeast.pl 1.583 17/01/11 23:26:15",
     STR_VERSION => "17.01.07",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4546,23 +4546,32 @@ sub check_exitcode  {
     my $cnt_prot = 0;   # number of insecure protocols
                         # only TLSv12 is considered secure
     my $cnt_ciph = 0;   # number of insecure ciphers per protocol
+    my $cnt_nopfs= 0;   # number ciphers without PFS
+    $exitcode = $checks{'cnt_checks_no'}->{val} if ($cfg{'exitcode_checks'} > 0);
+# TODO: $cfg{'exitcode_sizes'}
     _v_print("---------------------------------------------------- exitcode {");
-    _v_print(sprintf("%s\t%3s %3s %3s %3s    %s", qw(protocol H M L W insecure)));
-    _v_print("-------------+---+---+---+---+------------");
+    _v_print(sprintf("%s\t%3s %3s %3s %3s %3s %s", qw(protocol H M L W no-PFS insecure)));
+    _v_print("-------------+---+---+---+---+------+------------");
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if ($cfg{$ssl} == 0);  # not requested, don't count
 # TODO: counts protocol even if no cipher was supported, is this insecure?
         $cnt_prot++ if ($cfg{$ssl} > 0);
-        $cnt_ciph  = $prot{$ssl}->{'MEDIUM'} + $prot{$ssl}->{'LOW'} + $prot{$ssl}->{'WEAK'};
+        $cnt_nopfs = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'pfs_ciphers'}};
+        $exitcode += $cnt_nopfs              if ($cfg{'exitcode_pfs'}    > 0);
+        $cnt_ciph  = 0;
+        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if ($cfg{'exitcode_medium'} > 0);
+        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if ($cfg{'exitcode_weak'}   > 0);
+        $cnt_ciph += $prot{$ssl}->{'LOW'}    if ($cfg{'exitcode_low'}    > 0);
         $exitcode += $cnt_ciph;
-        _v_print(sprintf("%-7s\t%3s %3s %3s %3s\t\t%s", $ssl,
+        _v_print(sprintf("%-7s\t%3s %3s %3s %3s %3s\t%s", $ssl,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
-                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},  $cnt_ciph,
+                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
+                $cnt_nopfs, $cnt_ciph,
         ));
     }
-    _v_print("-------------+---+---+---+---+------------");
+    _v_print("-------------+---+---+---+---+------+------------");
     $cnt_prot-- if ($cfg{'TLSv12'} > 0);
-    $exitcode += $cnt_prot;
+    $exitcode += $cnt_prot if ($cfg{'exitcode_prot'} > 0);
     $checks{'cnt_exitcode'}->{val} = $exitcode;
     _v_print(sprintf("%s\t%s", "Total number of insecure protocols", $cnt_prot));
     _v_print(sprintf("%s\t%s", $checks{'cnt_checks_no'}->{txt}, $checks{'cnt_checks_no'}->{val}));
@@ -5957,8 +5966,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'} = 1;}
     if ($arg =~ /^--noreconnect$/)      { $cfg{'use_reconnect'} = 0;}
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
-    # some options are for compatibility with other programs
-    #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
+    # various options
     if ($arg eq  '--forcesni')          { $cfg{'forcesni'}  = 1;    }
     if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'ignore_no_conn'}= 1;}
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
@@ -5971,6 +5979,21 @@ while ($#argv >= 0) {
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
     if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
     if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    }
+    if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; }
+    if ($arg =~ /^--exitcodenomedium/)  { $cfg{'exitcode_medium'} = 0; }
+    if ($arg =~ /^--exitcodenoweak/)    { $cfg{'exitcode_weak'} = 0;}
+    if ($arg =~ /^--exitcodenolow/)     { $cfg{'exitcode_low'}  = 0;}
+    if ($arg =~ /^--exitcodenopfs/)     { $cfg{'exitcode_pfs'}  = 0;}
+    if ($arg =~ /^--exitcodenoprot/)    { $cfg{'exitcode_prot'} = 0;}
+    if ($arg =~ /^--exitcodenosizes/)   { $cfg{'exitcode_sizes'}= 0;}
+    if ($arg =~ /^--exitcodenociphers?/){   # shortcut options for following
+        $cfg{'exitcode_cipher'} = 0;
+        $cfg{'exitcode_medium'} = 0;
+        $cfg{'exitcode_weak'}   = 0;
+        $cfg{'exitcode_low'}    = 0;
+    }
+    # some options are for compatibility with other programs
+    #   example: -tls1 -tlsv1 --tlsv1 --tls1_1 --tlsv1_1 --tls11 -no_SSL2
     if ($arg =~ /^--?sslv?2$/i)         { $cfg{'SSLv2'}     = 1;    } # allow case insensitive
     if ($arg =~ /^--?sslv?3$/i)         { $cfg{'SSLv3'}     = 1;    } # -"-
     if ($arg =~ /^--?tlsv?1$/i)         { $cfg{'TLSv1'}     = 1;    }
