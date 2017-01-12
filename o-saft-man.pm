@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.165 17/01/12 00:20:18";
+my  $man_SID= "@(#) o-saft-man.pm 1.166 17/01/12 23:09:02";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3423,6 +3423,12 @@ OPTIONS
       --v --v
 
           Print remotely checked ciphers.
+
+      --v-cipher --cipher-v
+
+          Print remotely checked ciphers.
+          In contrast to  --v --v  above,  this just prints the ciphers while
+          while being checked, but no other verbose messages.
 
 # following no longer implemented (8/2016)
 #
