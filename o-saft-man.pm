@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.166 17/01/12 23:09:02";
+my  $man_SID= "@(#) o-saft-man.pm 1.167 17/01/12 23:38:42";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -5498,6 +5498,23 @@ HACKER's INFO
 #        Comments usually precede the code line(s) or are placed at end of the
 #        code line which they belong too. If the comments are placed after the
 #        code line which they belong too, the lines are idented.
+#
+#      Annotations
+#
+#        To reduce the huge amount of comments, and to write thme only once if
+#        multiple times,  an annotation section  have been added at the end of
+#        "o-saft.pl" file. In this section a title for the comment is followed
+#        by the comment's text. Example:
+#
+#          == Note:A Title
+#             Text for comment.
+#
+#        Such comments are refered to in the code by:
+#
+#          SEE Note:A Title
+#
+#        This is experimental, to see if it helps  to make the control flow of
+#        code more readable by humans, but keep the full documentation.
 #
 #      Variables
 #
