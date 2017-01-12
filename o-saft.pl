@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.584 17/01/12 00:00:07",
-    STR_VERSION => "17.01.07",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.585 17/01/12 22:55:54",
+    STR_VERSION => "17.01.11",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -5847,7 +5847,7 @@ while ($#argv >= 0) {
     _y_ARG("option?  $arg");
     #{ OPTIONS
     #  NOTE that strings miss - and _ characters (see normalization above)
-    #!# You may read the lines as table with columns like:
+    #!# You may read the lines as table with columns like: SEE Note:alias
     #!#--------+------------------------+---------------------------+----------
     #!#           option to check         alias for ...               # used by ...
     #!#--------+------------------------+---------------------------+----------
@@ -5907,6 +5907,8 @@ while ($#argv >= 0) {
     #!#--------+------------------------+---------------------------+----------
     # options for trace and debug
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        }
+    if ($arg =~ /^--v-ciphers?$/)       { $cfg{'v_cipher'}++;       }
+    if ($arg =~ /^--ciphers?--?v$/)     { $cfg{'v_cipher'}++;       } # alias:
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
     if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
     if ($arg =~ /^--hints?$/)           { $cfg{'hint'}++;           }
@@ -6178,6 +6180,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+ciphers?(?:all|raw)$/){$arg= '+cipherraw';      } # alias:
     if ($arg =~ /^\+cipher$p?defaults?$/) {$arg= '+cipher_default'; } # alias:
     if ($arg =~ /^\+cipher$p?dh?$/)     { $arg = '+cipher_dh';      } # alias:
+    if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
     #!#+---------+----------------------+---------------------------+-------------
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
@@ -6919,8 +6922,17 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
         foreach my $ssl (@{$cfg{'version'}}) {
             _trace("ckecking ciphers for $ssl ...");
+            my $__verbose   = $cfg{'verbose'};
+                # $cfg{'v_cipher'}  should only print cipher checks verbosely,
+                # ciphers_get()  uses  $cfg{'verbose'}, hence wee need to save
+                # the current value and reset after calling ciphers_get()
+            $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
-            map({s/^[^:]*://} @supported);  # remove  protocol: in each item
+            $cfg{'verbose'} = $__verbose if ($__verbose != 2);
+            # remove  protocol: in each item
+            foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; }
+                # map({s/^[^:]*://} @supported); # is the perlish way
+                # but discarted by perlcritic, hence the less readable foreach
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
                 push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
                 $checks{'cnt_totals'}->{val}++;
@@ -7143,6 +7155,14 @@ documentation please see o-saft-man.pm
 
 
 === Internal Notes ===
+
+== Note:alias
+    The code for parsing options and arguments uses some special syntax:
+    * following comment at end of the line:
+        # alias: any other text
+      is used for aliases of commands or options. These lines are extracted
+      by  --help=alias
+
 
 == Note:openssl CApath ==
     _init_openssldir() gets the configured directory for the certificate files
