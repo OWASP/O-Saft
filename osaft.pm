@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.01.07',  # official version number of tis file
+    OSAFT_VERSION   => '17.01.11',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.77 17/01/11 23:28:13',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.79 17/01/12 22:57:37',
 
 };
 
@@ -1182,6 +1182,7 @@ our %cfg = (
     'traceTIME'     => 0,       # 1: (trace) print additiona time for benchmarking
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
+    'v_cipher'      => 0,       # used for --v-cipher
     'warning'       => 1,       # 1: print warnings; 0: don't print warnings
     'hint'          => 1,       # 1: print hints; 0: don't print hints
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
