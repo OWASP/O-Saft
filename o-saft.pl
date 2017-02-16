@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.585 17/01/12 22:55:54",
+    SID         => "@(#) yeast.pl 1.587 17/02/16 11:19:22",
     STR_VERSION => "17.01.11",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1837,7 +1837,7 @@ sub _init_openssldir    {
             # this is to avoid bothering the user with warnings, when not used
         # $capath = ""; # should still be empty
     }
-    _trace("_init_openssldir: ca_path=$cfg{'ca_path'} .");
+    _trace("_init_openssldir: ca_path=$cfg{'ca_paths'} .");
     return $capath;
 }; # _init_openssldir
 
@@ -4542,6 +4542,7 @@ sub checkssl($$)  {
 
 sub check_exitcode  {
     #? compute exitcode; returns number of failed checks or insecure settings
+    # SEE Note:--exitcode
     my $exitcode = 0;   # total count
     my $cnt_prot = 0;   # number of insecure protocols
                         # only TLSv12 is considered secure
@@ -5980,14 +5981,14 @@ while ($#argv >= 0) {
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
     if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
-    if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    }
-    if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; }
-    if ($arg =~ /^--exitcodenomedium/)  { $cfg{'exitcode_medium'} = 0; }
-    if ($arg =~ /^--exitcodenoweak/)    { $cfg{'exitcode_weak'} = 0;}
-    if ($arg =~ /^--exitcodenolow/)     { $cfg{'exitcode_low'}  = 0;}
-    if ($arg =~ /^--exitcodenopfs/)     { $cfg{'exitcode_pfs'}  = 0;}
-    if ($arg =~ /^--exitcodenoprot/)    { $cfg{'exitcode_prot'} = 0;}
-    if ($arg =~ /^--exitcodenosizes/)   { $cfg{'exitcode_sizes'}= 0;}
+    if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    } # SEE Note:--exitcode
+    if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; } # -"-
+    if ($arg =~ /^--exitcodenomedium/)  { $cfg{'exitcode_medium'} = 0; } # -"-
+    if ($arg =~ /^--exitcodenoweak/)    { $cfg{'exitcode_weak'} = 0;} # -"-
+    if ($arg =~ /^--exitcodenolow/)     { $cfg{'exitcode_low'}  = 0;} # -"-
+    if ($arg =~ /^--exitcodenopfs/)     { $cfg{'exitcode_pfs'}  = 0;} # -"-
+    if ($arg =~ /^--exitcodenoprot/)    { $cfg{'exitcode_prot'} = 0;} # -"-
+    if ($arg =~ /^--exitcodenosizes/)   { $cfg{'exitcode_sizes'}= 0;} # -"-
     if ($arg =~ /^--exitcodenociphers?/){   # shortcut options for following
         $cfg{'exitcode_cipher'} = 0;
         $cfg{'exitcode_medium'} = 0;
@@ -7151,12 +7152,12 @@ exit 2; # main; code never reached
 
 __END__
 __DATA__
-documentation please see o-saft-man.pm
+user documentation please see o-saft-man.pm
 
 
-=== Internal Notes ===
+=== Annotations, Internal Notes ===
 
-== Note:alias
+== Note:alias ==
     The code for parsing options and arguments uses some special syntax:
     * following comment at end of the line:
         # alias: any other text
@@ -7195,8 +7196,15 @@ documentation please see o-saft-man.pm
     example Net::SSLeay:
 	Net::SSLeay::get_cipher(..)
 
+
 == Note:%prot ==
     using SSL/TLS protocols can either be done using %prot or $cfg{'versions'}
     in contrast to "keys %prot"  $cfg{'versions'} is sorted according protocol 
     like: SSLv2 SSLv3 TLSv1 ...
+
+
+== Note:--exitcode ==
+    Ideas and discussions see also: https://github.com/OWASP/O-Saft/issues/52
+    By default  --exitcode  counts all settings considered weak or insecure.
+    This behaviour can be controlled with the  --exitcode-no-*  options.
 
