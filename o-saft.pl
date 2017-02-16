@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.587 17/02/16 11:19:22",
-    STR_VERSION => "17.01.11",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.588 17/02/16 11:26:18",
+    STR_VERSION => "17.02.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -6368,11 +6368,11 @@ if ($cfg{'exec'} == 0) {
 
 #| add openssl-specific path for CAs
 #| -------------------------------------
-if ($cfg{'ca_path'} eq "") {            # not passed as option, use default
-    $cfg{'ca_path'} = _init_openssldir();# warnings already printed if empty
+if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
+    $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
 }
-if ($cfg{'ca_path'} eq "") {
-    # TODO: probably search for a path from out list in $cfg{'ca_paths'}
+if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
+    # TODO: probably search for a path from our list in $cfg{'ca_paths'}
 }
 
 _y_TIME("inc{");
