@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.167 17/01/12 23:38:42";
+my  $man_SID= "@(#) o-saft-man.pm 1.168 17/02/27 22:26:41";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -873,15 +873,18 @@ function t(id){id.display=(id.display=='none')?'block':'none';}
 </script>
 <style>
  .r{float:right;}
- .c{!font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
+ .c{font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
  p{margin-left:2em;margin-top:0;}
  h2, h3, h4, h5{margin-bottom:0.2em;}
  h2{margin-top:-0.5em;padding:1em;height:1.5em;background-color:black;color:white;}
  li{margin-left:2em;}
  div{padding:0.5em;border:1px solid green;}
- div[class=c]{padding:0pm;padding:0.1em;margin-left:4em;border:0px solid green;}
+ div[class=c]{padding:0.1em;margin-left:4em;border:0px solid green;}
+ div[class=n]{border:0px solid white;}
  form{padding:1em;}
- span{font-size:120%;border:1px solid green;}
+ span{font-size:120%;margin-bottom:2em;border:1px solid green;}
+ label[class=i]{min-width:80px;border:1px solid white;}
+ label:hover[class=i]{background-color:lightgray;border-bottom:1px solid green}
 </style>
 </head>
 <body>
@@ -895,7 +898,7 @@ sub _man_html_foot(){
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar ><button value="" />Download (stable)</button></a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
- <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2016</span></p>
+ <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2017</span></p>
 </body></html>
 EoHTML
     return;
@@ -923,10 +926,18 @@ sub _man_html_ankor($){
     }
     return $a;
 }
-sub _man_html_cbox($) { my $key = shift; return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $key, '"--' . $key . '"'); }
+#sub _man_html_cbox($) { my $key = shift; return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $key, '"--' . $key . '"'); }
+sub _man_html_cbox($) {
+    #? checkbox with clickable label and hover highlight
+    my $key = shift;
+       $key = '--' . $key;
+    my $id  = '"'  . $key . '"';
+    return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
+        "", $id, $id, $id, $key);
+}
 sub _man_html_text($) { my $key = shift; return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", $key, '"--' . $key . '"'); }
 sub _man_html_span($) { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
-sub _man_html_cmd($)  { my $key = shift; return sprintf("%9s+%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $key . '"'); }
+sub _man_html_cmd($)  { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $key . '"'); }
 
 sub _man_html_br()    { return sprintf("        <br>\n"); }
 
@@ -1361,18 +1372,23 @@ sub man_cgi() {
     #? print complete HTML page for o-saft.pl used as CGI
     #? recommended usage:   $0 --no-warning --no-header --help=gen-cgi
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
+    #
+    # <a href="$cgi?--cgi&--help=html"    target=_help ><button value="" />help (HTML format)</button></a>&#160;&#160;
+    # previous link not generated because it prints multiple HTTP headers
+    #
     _man_dbx("man_cgi() ...");
     my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
     _man_http_head();
     _man_html_head();
 print << "EoHTML";
- <a href="$cgi?--cgi&--help" target=_help ><button value="" />help</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help"         target=_help ><button value="" />help</button></a>&#160;&#160;
  <a href="$cgi?--cgi&--help=command" target=_help ><button value="" />commands</button></a>&#160;&#160;
  <a href="$cgi?--cgi&--help=checks"  target=_help ><button value="" />checks</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=score"   target=_help ><button value="" />score</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help=example" target=_help ><button value="" />examples</button></a>&#160;&#160;
  <a href="$cgi?--cgi&--help=regex"   target=_help ><button value="" />regex</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--abbr" target=_help ><button value="" />Glossar</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--todo" target=_help ><button value="" />ToDo</button></a><br>
+ <a href="$cgi?--cgi&--help=FAQ"     target=_help ><button value="" />FAQ</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help=abbr"    target=_help ><button value="" />Glossar</button></a>&#160;&#160;
+ <a href="$cgi?--cgi&--help=todo"    target=_help ><button value="" />ToDo</button></a><br>
  <form action="$cgi" method=GET >
   <input  type=hidden name="--cgi" value="" >
   <fieldset>
@@ -1382,11 +1398,13 @@ EoHTML
     print _man_html_text('port');
 print << "EoHTML";
     <div id=a style="display:block;">
-        <button class=r onclick="t(d('a'));t(d('b'));return false;">Full GUI</button><br>
+        <button class=r onclick="t(d('a'));t(d('b'));return false;" title="switch to full GUI">Full GUI</button><br>
 EoHTML
     foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     print _man_html_br();
+    print "        <div class=n>\n";
     print _man_html_span('check cipher quick info info--v vulns dump check_sni help http list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # similar to @{$cfg{'commands-INT'}}
+    print "        </div>\n";
     foreach my $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
                      no-sni sni no-http http BR
                      no-dns dns no-cert BR
@@ -1400,14 +1418,16 @@ EoHTML
     }
     foreach my $key (qw(separator timeout legacy)) { print _man_html_text($key); }
     print _man_html_br();
+    print "<div class=n>";
     print _man_html_span('cnark sslaudit sslcipher ssldiagnos sslscan ssltest ssltest-g sslyze testsslserver thcsslcheck openssl simple full compact quick'); # similar to @{$cfg{'legacys'}}
+    print "</div>";
     print _man_html_text("format");
     print _man_html_span('csv html json ssv tab xml fullxml raw hex'); # milar to @{$cfg{'formats'}}:
     print << "EoHTML";
         <br>
     </div>
     <div id=b style="display:none;">
-        <button class=r onclick="d('a').display='block';d('b').display='none';return false;">Simple GUI</button><br>
+        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI">Simple GUI</button><br>
         <input type=text     name=--cmds size=55 />&#160;
 EoHTML
 
@@ -1415,9 +1435,11 @@ EoHTML
     print << "EoHTML";
 </p>
     </div>
-        <input type=submit value="go" />
+        <input type=reset  value="clear" title="clear all settings"/>&#160;
+        <input type=submit value="go" title="execute o-saft.pl with selected commands and options"/>
   </fieldset>
  </form>
+ <hr>
 EoHTML
     _man_html_foot();
     return;
