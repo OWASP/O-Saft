@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.588 17/02/16 11:26:18",
+    SID         => "@(#) yeast.pl 1.589 17/02/27 21:59:02",
     STR_VERSION => "17.02.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -158,6 +158,8 @@ if ($me =~/\.cgi$/) {
     die STR_ERROR, "CGI mode requires strict settings" if ((grep{/--cgi=?/} @ARGV) <= 0);
     $cgi = 1;
 } # CGI
+# $me might not be .cgi but called with --cgi-exec option
+$cgi = 1 if ((grep{/(?:--cgi|--cgi-?exec)/i} @ARGV) > 0);
 
 #| definitions: debug and tracing
 #| -------------------------------------
