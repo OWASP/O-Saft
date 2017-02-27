@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.589 17/02/27 21:59:02",
+    SID         => "@(#) yeast.pl 1.590 17/02/28 00:57:20",
     STR_VERSION => "17.02.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2800,7 +2800,7 @@ sub _useopenssl($$$$)   {
     #       Protocol  : TLSv1.2
     #       Cipher    : DES-CBC3-SHA
     _trace2("_useopenssl: data #{ $data }");
-    return [] if ($data =~ m#New,.*?Cipher is .?NONE#);
+    return "", "", "" if ($data =~ m#New,.*?Cipher is .?NONE#);
 
     my $version = $data;# returned version
        $version =~ s#^.*[\r\n]+ +Protocol\s*:\s*([^\r\n]*).*#$1#s;
@@ -2827,7 +2827,7 @@ sub _useopenssl($$$$)   {
     #   # unknown messages: 139693193549472:error:1407F0E5:SSL routines:SSL2_WRITE:ssl handshake failure:s2_pkt.c:429:
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
-    return [] if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
+    return "", "", "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
     if ($data =~ m#^\s*$#) {
         _warn("SSL version '$ssl': empty result from openssl");
     } else {
@@ -2840,7 +2840,7 @@ sub _useopenssl($$$$)   {
         _hint("use options like: --v --trace");
     }
 
-    return [];
+    return "", "", "";
 } # _useopenssl
 
 sub _get_default($$$$)  {
