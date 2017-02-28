@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.168 17/02/27 22:26:41";
+my  $man_SID= "@(#) o-saft-man.pm 1.169 17/02/28 01:34:34";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -907,8 +907,16 @@ EoHTML
 sub _man_html_chck($){
     #? same as _man_html_cbox() but without lable and only if passed parameter start with - or +
     my $n = shift || "";
+    my $v = "";
     return "" if ($n !~ m/^(?:-|\+)+/);
-    return sprintf("<input type=checkbox name='%s' value='' >&#160;", scalar((split(/\s+/,$n))[0]));
+    if ($n =~ m/^(?:\+)/) { # is command
+        $v =  scalar((split(/\s+/,$n))[0]);
+        $n =  '--cmd';
+    } else { # is option
+        $v =  '';
+        $n =  scalar((split(/\s+/,$n))[0]);
+    }
+    return sprintf("<input type=checkbox name='%s' value='%s' >&#160;", $n, $v);
 }
 sub _man_name_ankor($){
     my $n = shift;
@@ -938,7 +946,7 @@ sub _man_html_cbox($) {
 sub _man_html_text($) { my $key = shift; return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", $key, '"--' . $key . '"'); }
 sub _man_html_span($) { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
 sub _man_html_cmd($)  { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $key . '"'); }
-
+sub _man_html_go()    { my $key = shift; return sprintf("%8s<input type=submit value=go title='execute o-saft.pl with selected commands and options'/>\n", ""); }
 sub _man_html_br()    { return sprintf("        <br>\n"); }
 
 sub _man_html($$) {
@@ -952,7 +960,7 @@ sub _man_html($$) {
         $h=0 if/^=head1 $end/;
         next if $h==0;                              # ignore "out of scope"
         m/^=head1 (.*)/   && do { printf("\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);next;};
-        m/^=head2 (.*)/   && do { printf("%s\n<h3>%s %s </h3> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
+        m/^=head2 (.*)/   && do { print _man_html_go(); printf("%s\n<h3>%s %s </h3> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
         m/^=head3 (.*)/   && do { printf("%s\n<h4>%s %s </h4> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
         m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
@@ -1431,12 +1439,14 @@ EoHTML
         <input type=text     name=--cmds size=55 />&#160;
 EoHTML
 
-    _man_html("COMMANDS", 'LAZY');
+    _man_html("COMMANDS", 'LAZY'); # print help starting at COMMANDS
     print << "EoHTML";
 </p>
     </div>
         <input type=reset  value="clear" title="clear all settings"/>&#160;
-        <input type=submit value="go" title="execute o-saft.pl with selected commands and options"/>
+EoHTML
+    print _man_html_go();
+    print << "EoHTML";
   </fieldset>
  </form>
  <hr>
