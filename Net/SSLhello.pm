@@ -2833,7 +2833,7 @@ sub _readRecord ($$;$$$) {
 
     ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
-    while ( ( (length($input) < $pduLen) || ($input eq "") ) && ($retryCnt++ < $Net::SSLhello::retry) ) {
+    while ( ( (length($input) < $pduLen) || ($input eq "") ) && ($retryCnt++ <= $Net::SSLhello::retry) ) {
         if ($isUdp) { # #still use select for udp
             $@ ="";
             eval { # check this for timeout, protect it against an unexpected Exit of the Program
