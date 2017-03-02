@@ -2493,8 +2493,8 @@ sub _doCheckSSLciphers ($$$$;$$) {
         _trace4 ("_doCheckSSLciphers: ## New UDP socket to >$host:$port<\n"); 
     }
 
-  ########## TBD TBD Temporary to use old code while new code is tested TBD TBD #########
-  if (($isUdp) || ($Net::SSLhello::experimental >0) ) { # TBD TBD delete this line for geneneral use TBD TBD ######
+  ########## TBD TBD Temporary to use new code and to keep old code as fallback if '--experimental' is set TBD TBD #########
+  if (($isUdp) || ($Net::SSLhello::experimental <=0) ) { # TBD TBD delete this line for geneneral use TBD TBD ###### 
     $retryCnt = 0;
     $@=""; # reset error message
     while ($retryCnt++ < $Net::SSLhello::retry) { # no error and still retries to go
@@ -2638,7 +2638,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         }
         alarm (0);   # race condition protection
     }
-  } else { # original old code: ### TBD TBD this section will be deleted after migration to new code and tests TBD TBD #####
+  } else { # original old code: ### TBD TBD this section will be deleted after migration to new code and tests TBD TBD ##### legacy code now '--experimental' to phase it out
     #### Compile ClientHello
     $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtls_epoch, $dtlsSequence++); 
 
@@ -2770,7 +2770,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
         _trace2 ("_doCheckSSLciphers: Total Data Received: ". length($input). " Bytes in $segmentCnt. TCP-segments\n"); 
         $acceptedCipher = parseServerHello ($host, $port, $input, $protocol);
     }
-  } # # end original. old Code ### TBD TBD the above section will be deleted after migration to new code and tests TBD TBD #####
+  } # # end original. old Code ### TBD TBD the above section will be deleted after more tests with new code TBD TBD #####
     unless ( close ($socket)  ) {
         carp("**WARNING: _doCheckSSLciphers: Can't close socket: $!");
     }
@@ -2820,6 +2820,7 @@ sub _readRecord ($$;$$$) {
     my $retryCnt = 0;
     my $segmentCnt = 0;
     my $input="";
+    my $input2="";
     my @socketsReady = ();
     require IO::Select if ($Net::SSLhello::trace > 0);
     my $select; #used for tracing only
@@ -2833,64 +2834,91 @@ sub _readRecord ($$;$$$) {
     ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello) 
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
     while ( ( (length($input) < $pduLen) || ($input eq "") ) && ($retryCnt++ < $Net::SSLhello::retry) ) {
-        $@ ="";
-        eval { # check this for timeout, protect it against an unexpected Exit of the Program
-            #Set alarm and timeout 
-            local $SIG{ALRM}= "Net::SSLhello::_timedOut";
-            alarm($alarmTimeout);
-            # Opimized with reference to 'https://github.com/noxxi/p5-ssl-tools/blob/master/check-ssl-heartbleed.pl'
-            $success = select($rout = $rin,undef,undef,$Net::SSLhello::timeout); 
-            alarm (0); #clear alarm
-        }; # end of eval select
-        alarm (0);   # race condition protection
-        if ($@) {
-            $@="_readRecord unknown Timeout-Error (1): $@";
-             carp ("_readRecord $@");
-             _trace4 ("_readRecord Server '$host:$port' -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
-             last;
-        }
-        if ( ! $success) { # nor data NEITHER special event => timeout
-            alarm (0); #clear alarm
-            _trace4 ("_readRecord: Server '$host:$port' -> Timeout (received Nor data NEITHER special event) while reading a recordi with".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n") if (! $isUdp);
-            last if ($isUdp); # resend the UDP packet
-            # select (undef, undef, undef, _SLEEP_B4_2ND_READ);
-            osaft::osaft_sleep ( _SLEEP_B4_2ND_READ);
-            next;
-        }
-        if (vec($rout, fileno($socket),1)) { # got data
+        if ($isUdp) { # #still use select for udp
+            $@ ="";
             eval { # check this for timeout, protect it against an unexpected Exit of the Program
                 #Set alarm and timeout 
                 local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);
-                @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed)
-                _trace4 ("_readRecord can read (1): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
-                $success = sysread ($socket, $input, $readLen - length($input), length($input)); #if NO success: EOF or other Error while reading Data
+                # Opimized with reference to 'https://github.com/noxxi/p5-ssl-tools/blob/master/check-ssl-heartbleed.pl'
+                $success = select($rout = $rin,undef,undef,$Net::SSLhello::timeout); 
+                alarm (0); #clear alarm
+            }; # end of eval select
+            alarm (0);   # race condition protection
+            if ($@) {
+                $@="_readRecord unknown Timeout-Error (1): $@";
+                carp ("_readRecord $@");
+                _trace4 ("_readRecord Server '$host:$port' -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                last;
+            }
+            if ( ! $success) { # nor data NEITHER special event => timeout
+                alarm (0); #clear alarm
+                _trace4 ("_readRecord: Server '$host:$port' -> Timeout (received Nor data NEITHER special event) while reading a record with".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n") if (! $isUdp);
+                last if ($isUdp); # resend the UDP packet
+                # select (undef, undef, undef, _SLEEP_B4_2ND_READ);
+                osaft::osaft_sleep ( _SLEEP_B4_2ND_READ);
+                next;
+            }
+            if (vec($rout, fileno($socket),1)) { # got data
+                eval { # check this for timeout, protect it against an unexpected Exit of the Program
+                    #Set alarm and timeout 
+                    local $SIG{ALRM}= "Net::SSLhello::_timedOut";
+                    alarm($alarmTimeout);
+                    @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed)
+                    _trace4 ("_readRecord can read (1): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
+                    $success = sysread ($socket, $input, $readLen - length($input), length($input)); #if NO success: EOF or other Error while reading Data
+                    alarm (0); #clear alarm
+                };
+                alarm (0);   # race condition protection
+                if ($@) {
+                    $@="_readRecord unknown Timeout-Error (2): $@";
+                    carp ("_readRecord $@");
+                    _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                    last;
+                }
+                @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed) 
+                _trace4 ("_readRecord can read (2): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
+                if (! $success ) { # EOF or other Error while reading Data
+                    if (length ($input) == 0) { # Disconnected, no Data
+                        _trace4 ("_readRecord: Server '$host:$port': received EOF (Disconnect), no Data\n");
+                        last;
+                    } else {
+                        _trace1 ("_readRecord: Server '$host:$port': No Data (EOF) after ".length($input)." of expected $pduLen Bytes: '$!' -> Retry to read\n");
+                        @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 1); ###additional debug (use IO::select needed)
+                        _trace1 ("_readRecord can read (3): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
+                        #select (undef, undef, undef, _SLEEP_B4_2ND_READ);
+                        osaft::osaft_sleep (_SLEEP_B4_2ND_READ);
+                        next;
+                    }
+                }
+            } else {# got NO data
+                    $@ = "Server '$host:$port': No Data in _readRecord after reading $len of $pduLen expected Bytes; $!";
+                    _trace1 ("_readRecord ... Received Data: $@\n");
+                    _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                last;
+            } ###  End got Data
+        } else { # TCP
+            eval { # check this for timeout, protect it against an unexpected Exit of the Program
+                #Set alarm and timeout 
+                local $SIG{ALRM}= "Net::SSLhello::_timedOut";
+                alarm($alarmTimeout);
+                _trace4 ("_readRecord try to recv (1): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n");
+                $success = recv ($socket, $input2, $readLen - length($input), 0); #if NO success: $success undefined
                 alarm (0); #clear alarm
             };
             alarm (0);   # race condition protection
             if ($@) {
                 $@="_readRecord unknown Timeout-Error (2): $@";
-                 carp ("_readRecord $@");
-                 _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
-                 last;
+                carp ("_readRecord $@");
+                _trace4 ("_readRecord recv (2) -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
+                last;
             }
-            @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed) 
-            _trace4 ("_readRecord can read (2): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
-            if (! $success ) { # EOF or other Error while reading Data
-                if (length ($input) == 0) { # Disconnected, no Data
-                    _trace4 ("_readRecord: Server '$host:$port': received EOF (Disconnect), no Data\n");
-                    last;
-                } else {
-                    _trace1 ("_readRecord: Server '$host:$port': No Data (EOF) after ".length($input)." of expected $pduLen Bytes: '$!' -> Retry to read\n");
-                    @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 1); ###additional debug (use IO::select needed)
-                    _trace1 ("_readRecord can read (3): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
-                    #select (undef, undef, undef, _SLEEP_B4_2ND_READ);
-                    osaft::osaft_sleep (_SLEEP_B4_2ND_READ);
-                    next;
-                }
-            }
-            $len = length($input);
-
+            $input  .= $input2;                     # append new input
+            $success = length ($input2);            # same usage as sysread
+            _trace4 ("_readRecord recv (2): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n");
+        }
+        $len = length($input);
+        if ($success) { # got new data
             if ($pduLen == 0) { # no PduLen decoded, yet
                 _trace4 ("_readRecord: Server '$host:$port': ... Received first $len Bytes to detect PduLen\n");
                 if ( (! $isUdp) && ($len >= 5) ) { # try to get the pduLen of the SSL/TLS Pdu (=protocol aware length detection)
@@ -2985,11 +3013,6 @@ sub _readRecord ($$;$$$) {
                 }
                 $readLen = $pduLen; #read only pduLen Octetts (-> only by one record)
                 $retryCnt = 0 if ($readLen > 0); # detection of the recordLen is no Retry -> reset Counter
-            } elsif ($len <= 0) { # Error no Data
-                $@ = "Server '$host:$port': NULL-Len-Data in _readRecord $!";
-                _trace1 ("_readRecord ... Received Data: $@\n");
-                _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
-                last;
             } else {
                 $segmentCnt++;
                 _trace4 ("_readRecord: Server '$host:$port': ... Received $len Bytes in $segmentCnt Segment(s)\n");
@@ -3024,11 +3047,6 @@ sub _readRecord ($$;$$$) {
                     return ($input, $recordType, $recordVersion, 0, "", $recordEpoch, $recordSeqNr);
                 }
             }
-        } else {# got NO data
-            $@ = "Server '$host:$port': No Data in _readRecord after reading $len of $pduLen expected Bytes; $!";
-           _trace1 ("_readRecord ... Received Data: $@\n");
-           _trace4 ("_readRecord -> LAST: received (Record-)Type $recordType, -Version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." Bytes (from $pduLen expected) after $retryCnt tries:\n");
-            last;
         }
     } # end while
     if (!($@) && (length($input) < $pduLen) ) { # no error, but the loop did *NOT* get all data within the maximal retries
@@ -3067,6 +3085,7 @@ sub _readText {
     my $MAXLEN= 32767;
     my $alarmTimeout = $Net::SSLhello::timeout +1; # 1 sec more than normal timeout as a time line of second protection
     my ($rin, $rout);
+    my $input2 = "";
     my $retryCnt = 0; # 1st read with up to 5 Bytes will be not counted
 
     ###### receive the answer 
@@ -3097,7 +3116,8 @@ sub _readText {
                 local $SIG{ALRM}= "Net::SSLhello::_timedOut";
                 alarm($alarmTimeout);
                 ## read only up to 5 Bytes in the first round, then up to the expected pduLen
-                recv($socket, $input, $MAXLEN - length($input), length($input) );  # EOF or other Error while reading Data
+                recv($socket, $input2, $MAXLEN - length($input), 0 );  # EOF or other Error while reading Data
+                $input .= $input2;
                 alarm (0); #clear alarm
             };
             if ($@) {
