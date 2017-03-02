@@ -3697,15 +3697,45 @@ sub _compileClientHelloExtensions ($$$$@) {
     my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
 
     # send always ECC extensions if not switched off manually
-    #if ( grep(/\xc0./, @cipherTable) || 1==1 ) { # found cipher C0xx, lazy check; ### TBD: check with a range of ECC-ciphers ###
-        if ($Net::SSLhello::useecc) { # use Elliptic Curves Extension
+    #if ( grep(/\xc0./, @cipherTable) || 1==1 ) {           # found cipher C0xx, lazy check; ### TBD: check with a range of ECC-ciphers ###
+        if ($Net::SSLhello::useecc) {                       # use Elliptic Curves Extension
             ### Data for Extension 'elliptic_curves' (in reverse order)
-            $clientHello{'extension_ecc_list'}               # TBD: should be altered to get all supported ECurves (not only the primary) 
-                = "\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08"
-                 ."\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00\x10"
-#                 ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16" # test to get different curves than 0x0017 (secp256r1), 0x0018 (secp384r1) use this line and set a '#' before next line for this manual test
-                 ."\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18"
-                 ."\x00\x19\x00\x1a\x00\x1b\x00\x1c\x00\x1d\x00\x1e\x00\x1f\x00\x20";   # ALL defined ECCs; TBD: hier, oder zentrale Definition?!
+            $clientHello{'extension_ecc_list'} = ""         # TBD: should be altered to get all supported ECurves (not only the primary) 
+#                # disable one line after the other to find manually the secondary, tertiary etc curve
+#                 ."\x00\x00" # 0x0000 (Unassigned_0)       ## disabled by default
+                 ."\x00\x01" # 0x0001 (sect163k1)
+                 ."\x00\x02" # 0x0002 (sect163r1)
+                 ."\x00\x03" # 0x0003 (sect163r2)
+                 ."\x00\x04" # 0x0004 (sect193r1)
+                 ."\x00\x05" # 0x0005 (sect193r2)
+                 ."\x00\x06" # 0x0006 (sect233k1)
+                 ."\x00\x07" # 0x0007 (sect233r1)
+                 ."\x00\x08" # 0x0008 (sect239k1)
+                 ."\x00\x09" # 0x0009 (sect283k1)
+                 ."\x00\x0a" # 0x000a (sect283r1)
+                 ."\x00\x0b" # 0x000b (sect409k1)
+                 ."\x00\x0c" # 0x000c (sect409r1)
+                 ."\x00\x0d" # 0x000d (sect571k1)
+                 ."\x00\x0e" # 0x000e (sect571r1)
+                 ."\x00\x0f" # 0x000f (secp160k1)
+                 ."\x00\x10" # 0x0010 (secp160r1)
+                 ."\x00\x11" # 0x0011 (secp160r2)
+                 ."\x00\x12" # 0x0012 (secp192k1)
+                 ."\x00\x13" # 0x0013 (secp192r1)
+                 ."\x00\x14" # 0x0014 (secp224k1)
+                 ."\x00\x15" # 0x0015 (secp224r1)
+                 ."\x00\x16" # 0x0016 (secp256k1)
+                 ."\x00\x17" # 0x0017 (secp256r1)           ## => common default curve 
+                 ."\x00\x18" # 0x0018 (secp384r1)
+                 ."\x00\x19" # 0x0019 (secp512r1)
+                 ."\x00\x1a" # 0x001a (brainpoolP256r1)
+                 ."\x00\x1b" # 0x001b (brainpoolP384r1)
+                 ."\x00\x1c" # 0x001c (brainpoolP512r1)
+                 ."\x00\x1d" # 0x001d (ecdh_x25519)
+                 ."\x00\x1e" # 0x001e (ecdh_x25519)
+                 ."\x00\x1f" # 0x001f (eddsa_ed25519)       ## Signature curves, vanished in  https://tools.ietf.org/html/draft-ietf-tls-tls13-12
+                 ."\x00\x20" # 0x0020 (eddsa_ed448)         ## Signature curves, vanished in  https://tools.ietf.org/html/draft-ietf-tls-tls13-12
+                 ."";   # ALL defined ECCs; TBD: move general list to osaft.pl TBD
             $clientHello{'extension_ecc_list_len'}            = length($clientHello{'extension_ecc_list'}); # len of ECC List  
             $clientHello{'extension_elliptic_curves_len'}     = $clientHello{'extension_ecc_list_len'}+2;   # len of ECC Extension
             $clientHello{'extension_type_elliptic_curves'}    = 0x000a; # Tbd: hier, oder zentrale Definition?!
@@ -3752,8 +3782,9 @@ sub _compileClientHelloExtensions ($$$$@) {
 
 =head2 parseServerKeyExchange( )
 
-Manually parse a Server Kex Exchange Packet from DHE handshake to detect the length of the DHparam (needed for openssl <= 1.0.1), e.g. dh, 2048 bits (dh in small letters to be different from openssl (large letters)
-TBD: parseServerKeyExchange: ECDH will follow later
+Manually parse a Server Kex Exchange Packet from 
+- DHE handshake to detect the length of the DHparam (needed for openssl <= 1.0.1), e.g. dh, 2048 bits (dh in small letters to be different from openssl (large letters)
+- ECDHE handshake to check for the most priorized Curve
 =cut
 
 sub parseServerKeyExchange($$$) {
