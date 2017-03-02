@@ -1372,7 +1372,12 @@ sub checkSSLciphers ($$$@) {
                 _trace2_ ("       ");
                 if ($acceptedCipher) { # received an accepted cipher
                     _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
-                    @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
+                    if (grep { $_ eq $acceptedCipher } @cipherSpecArray) { #accepted cipher that was in the checklist
+                        @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
+                    } else { # cipher was *NOT* in the checklist
+                        carp ("**WARNING: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (1): ('0x".hexCodedCipher($cipherSpecArray[0])." ... 0x".hexCodedCipher($cipherSpecArray[-1])."'."); 
+                        @cipherSpecArray = (); # => Empty @cipherSpecArray
+                     }
                     push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the List of accepted ciphers 
                 } else { # no ciphers accepted
                     _trace1_ ("=> no Cipher found\n");
@@ -1439,7 +1444,12 @@ sub checkSSLciphers ($$$@) {
             _trace2_ ("       ");
             if ($acceptedCipher) { # received an accepted cipher ## TBD: Error handling using `given'/`when' TBD
                 _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
-                @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
+                if (grep { $_ eq $acceptedCipher } @cipherSpecArray) { # accepted cipher that was in the checklist
+                    @cipherSpecArray = grep { $_ ne $acceptedCipher } @cipherSpecArray;    # delete accepted cipher from ToDo-Array '@cipherSpecArray'
+                } else { # cipher was *NOT* in the checklist
+                    carp ("**WARNING: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (2): ('0x".hexCodedCipher($cipherSpecArray[0])." ... 0x".hexCodedCipher($cipherSpecArray[-1])."'."); 
+                    @cipherSpecArray = (); # => Empty @cipherSpecArray
+                }
                 push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the list of accepted ciphers 
             } else { # no cipher accepted
                 _trace1_ ("=> no cipher found\n");
@@ -1531,7 +1541,7 @@ sub checkSSLciphers ($$$@) {
                 push (@acceptedCipherSortedArray, $acceptedCipher); # add found cipher to sorted List
                 $arrayLen = @acceptedCipherSortedArray;
                 if ( $arrayLen == 1) { # 1st cipher 
-                    if     ($acceptedCipher eq ($acceptedCipherArray[0])) { # is equal to 1st cipher of requested cipher_spec
+                    if ($acceptedCipher eq ($acceptedCipherArray[0])) { # is equal to 1st cipher of requested cipher_spec
                         _trace3    ("#   Got back 1st cipher of unsorted List => Check again with this Cipher >".hexCodedTLSCipher($acceptedCipher)."< at the end of the List\n");
                         shift (@acceptedCipherArray); # delete first cipher in this array
                         $cipher_str = join ("",@acceptedCipherArray).$acceptedCipher; # test again with the first cipher as the last 
@@ -1547,7 +1557,25 @@ sub checkSSLciphers ($$$@) {
                         push (@acceptedCipherSortedArray, $acceptedCipher); # add found cipher again to sorted List
                     }
                 } # not the first cipher
-                @acceptedCipherArray = grep { $_ ne $acceptedCipher } @acceptedCipherArray;    # delete accepted cipher in ToDo-Array '@acceptedCipherArray'
+                
+                if ( (grep { $_ eq $acceptedCipher } @acceptedCipherArray) || (($arrayLen == 1) && ($acceptedCipher eq $acceptedCipherSortedArray[1])) ) { # accepted cipher was in the checklist
+                    @acceptedCipherArray = grep { $_ ne $acceptedCipher } @acceptedCipherArray;    # delete accepted cipher in ToDo-Array '@acceptedCipherArray'
+                } else { # cipher was *NOT* in the checklist
+                    carp ("**WARNING: checkSSLciphers: Server replied (again) with cipher '0x".hexCodedCipher($acceptedCipher)."' that has not been requested this time (3): ('0x".hexCodedCipher($acceptedCipherArray[0])." ... 0x".hexCodedCipher($acceptedCipherArray[-1])."'. Untested Ciphers:");
+                    # list untested ciphers
+                    $i = 0;
+                    my $str=""; #output string with list of ciphers
+                    foreach my $cipher_str (compileTLSCipherArray (join ("",@acceptedCipherArray)) ) {
+                        if (($i++) != 0) { # not 1st element
+                            $str .= "\n  " if ($i %_MY_PRINT_CIPHERS_PER_LINE == 0); # 'print' up to '_MY_PRINT_CIPHERS_PER_LINE' ciphers per line
+                            $str .= " ";
+                        }
+                        $str .= ">" . $cipher_str . "<";
+                    }
+                    # End: list untested ciphers                    
+                    @acceptedCipherArray = (); # => Empty @cipherSpecArray
+                } # End cipher was *NOT* in the ckecklist
+
                 $cipher_str = join ("",@acceptedCipherArray); # check prio for next ciphers
             } else { # nothing received => lost connection
                 _trace2 ("checkSSLciphers (6): '$@'\n");
