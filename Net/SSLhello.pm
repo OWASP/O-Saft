@@ -42,7 +42,7 @@ use warnings;
 use constant {
     SSLHELLO_VERSION=> '17.03.02',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.16 16/04/10 02:57:12',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.20 17/03/03 11:26:20",
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
