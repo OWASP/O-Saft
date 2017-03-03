@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.590 17/02/28 00:57:20",
+    SID         => "@(#) yeast.pl 1.591 17/03/03 11:30:44",
     STR_VERSION => "17.02.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6385,7 +6385,17 @@ local $\ = "\n";
 #| -------------------------------------
 # Unfortunately `use autouse' is not possible as to much functions need to
 # be declared for that pragma then.
-use IO::Socket::SSL;  # qw(debug2);
+# we try to load modules at runtime with own _load_file() instead of perl's
+# "use" at compile time
+if (1 > 0) { # TODO: experimental code
+    $err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
+    warn STR_ERROR, "$err" if ($err ne "");
+    # cannot load IO::Socket::INET delayed because we use AF_INET,
+    # otherwise we get at startup: 
+    #    Bareword "AF_INET" not allowed while "strict subs" in use ...
+    #$err = _load_file("IO/Socket/INET.pm", "IO INET module");
+    #warn STR_ERROR, "$err" if ($err ne "");
+}
 use IO::Socket::INET;
 if ($cfg{'need_netdns'} > 0) {
     $err = _load_file("Net/DNS.pm", "Net module");
