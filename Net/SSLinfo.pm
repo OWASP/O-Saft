@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.167 17/01/11 21:08:03',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.168 17/03/05 21:01:26',
 };
 
 ######################################################## public documentation #
@@ -1114,7 +1114,7 @@ sub _ssleay_socket  {
     _trace("_ssleay_socket: undef");
     return;
 } # _ssleay_socket
- 
+
 sub _ssleay_ctx_new {
     #? get SSLeay CTX object; returns ctx object or undef
     my $method  = shift;# CTX method to be used for creating object
@@ -1599,6 +1599,12 @@ sub do_ssl_open($$$@) {
 
             #2b. set certificate verification options
             ($dum = _ssleay_ctx_ca($ctx))       or do {$src = '_ssleay_ctx_ca()' } and next;
+
+            #2c. set NPN option
+            my @npn;
+               @npn = split(",", $Net::SSLinfo::protocols) if ($Net::SSLinfo::use_nextprot == 1);
+            Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @npn);
+            # TODO: need to check which Net::SSLeay supports it
 
             #3. prepare SSL object
             ($ssl = _ssleay_ssl_new($ctx, $host, $socket, $cipher)) or {$src = '_ssleay_ssl_new()'} and next;
