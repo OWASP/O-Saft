@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.593 17/03/05 18:12:06",
+    SID         => "@(#) yeast.pl 1.594 17/03/05 21:03:31",
     STR_VERSION => "17.02.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -370,6 +370,7 @@ usr_pre_init();
 #!#
 #!# Here's an overview of the used global variables (mostly defined in o-saft-lib.pm):
 #!#   $me             - the program name or script name with path stripped off
+#!#   @npn            - list of protocolls for NPN
 #!#   %prot           - collected data per protocol (from Net::SSLinfo)
 #!#   %prot_txt       - labes for %prot
 #!#   @cipher_results - where we store the results as:  [SSL, cipher, "yes|no"]
@@ -2736,8 +2737,9 @@ sub _usesocket($$$$)    {
                 SSL_version     => $ssl,    # default is SSLv23 (for empty $ssl)
                 SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
-             # SSL_cipher_list => "$ciphers eNULL",
-                #SSL_ecdh_curve  => "prime256v1", # default is prime256v1
+              # SSL_cipher_list => "$ciphers eNULL",
+                #SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
+                SSL_npn_protocols => ($cfg{'use_nextprot'} == 1) ? [@npn] : [],
             );
         } else {
             # proxy or starttls
@@ -2758,6 +2760,7 @@ sub _usesocket($$$$)    {
                   SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
                   SSL_version     => $ssl,    # default is SSLv23
                   SSL_cipher_list => $ciphers,
+                  SSL_npn_protocols => ($cfg{'use_nextprot'} == 1) ? [@npn] : [],
                 ) or do {
                     _trace1("_usesocket: ssl handshake failed: $!");
                     return "";
