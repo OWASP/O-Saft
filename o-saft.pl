@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.591 17/03/03 11:30:44",
+    SID         => "@(#) yeast.pl 1.592 17/03/05 17:55:49",
     STR_VERSION => "17.02.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2481,11 +2481,7 @@ sub _readframe($)       {
 } # _readframe
 sub _isbleed($$)        {
     #? return "heartbleed" if target supports TLS extension 15 (heartbeat), empty string otherwise
-    # http://heartbleed.com/
-    # http://possible.lv/tools/hb/
-    # http://filippo.io/Heartbleed/
-    # https://github.com/proactiveRISK/Heartbleed
-    # https://www.cloudflarechallenge.com/heartbleed
+    # SEE Note:heartbleed
     my ($host, $port) = @_;
     my $heartbeats    = 1;
     my $cl  = undef; # TODO: =$Net::SSLinfo::socket;
@@ -3348,17 +3344,17 @@ sub checkdates($$) {
     $data{'valid-days'}->{val}      = ($data{'valid-years'}->{val}  *  5) + ($data{'valid-months'}->{val} * 30); # approximately
     $data{'valid-days'}->{val}      = ($until[1] - $since[1]) if ($data{'valid-days'}->{val} < 60); # more accurate
 
-    # To check if the STS max-age exceeds the certificate's expire date, we
-    # add the current timestamp to the  STS max-age. They are both given in
-    # epoch timestamp format.
-    # The certificate's 'after' value must be converted to  epoch timestamp
-    # format, and then can be compared to STS max-age.
-    # Unfortunately there exist  no simple method to convert human readable
-    # timestamps (like certificate's 'after') into epoch timestamp format.
-    # We use perl's Time::Local module for that in the hope that it is part
-    # of most perl installations.  If it is missing, we give up on checking
-    # the time difference. That's why we use eval() to load the Time::Local
-    # modul at runtime and not at startup with use.
+    # The current timestamp is added to the  STS max-age  to check if the STS
+    # max-age exceeds the certificate's expire date. All timestamps are given
+    # in epoch timestamp format.
+    # The  after  value from the certificate must be converted to epoch time-
+    # stamp format, and then can be compared to STS max-age.
+    # Unfortunately there exist  no simple method to convert a human readable
+    # timestamps (like certificate's  after) into epoch timestamp format.
+    # Perl's  Time::Local module is used for that in the hope that it is part
+    # of most perl installations. If it's missing, we give up on checking the
+    # time difference. That's why we use eval() to load the Time::Local modul
+    # at runtime and not at startup with use.
     MAXAGE_CHECK: {
         $txt = $text{'no-STS'};
         last MAXAGE_CHECK if ($data{'https_sts'}->{val}($host) eq "");
@@ -4226,55 +4222,7 @@ sub checkroot($$) {
     $cfg{'done'}->{'checkroot'}++;
     return if ($cfg{'done'}->{'checkroot'} > 1);
 
-# some texts from: http://www.zytrax.com/tech/survival/ssl.html
-# The term Certificate Authority is defined as being an entity which signs
-# certificates in which the following are true:
-#   * the issuer and subject fields are the same,
-#   * the KeyUsage field has keyCertSign set
-#   * and/or the basicConstraints field has the cA attribute set TRUE.
-# Typically, in chained certificates the root CA certificate is the topmost
-# in the chain but RFC 4210 defines a 'root CA' to be any issuer for which
-# the end-entity, for example, the browser has a certificate which was obtained
-# by a trusted out-of-band process. Since final authority for issuing any
-# certificate rest with this CA the terms and conditions of any intermediate
-# certificate may be modified by this entity.
-#
-# Subordinate Authority:
-# may be marked as CAs (the extension BasicContraints will be present and cA will be set True)
-#
-# Intermediate Authority (a.k.a. Intermediate CA):
-# Imprecise term occasionally used to define an entity which creates an
-# intermediate certificate and could thus encompass an RA or a subordinate CA.
-#
-# Cross certificates (a.k.a. Chain or Bridge certificate):
-# A cross-certificate is one in which the subject and the issuer are not the
-# same but in both cases they are CAs (BasicConstraints extension is present and has cA set True).
-#
-# Intermediate certificates (a.k.a. Chain certificates):
-# Imprecise term applied to any certificate which is not signed by a root CA.
-# The term chain in this context is meaningless (but sounds complicated and
-# expensive) and simply indicates that the certificate forms part of a chain.
-#
-# Qualified certificates: Defined in RFC 3739
-# the term Qualified certificates relates to personal certificates (rather than
-# server certificates) and references the European Directive on Electronic Signature (1999/93/EC)
-# see check02102() above
-#
-# Multi-host certificates (aka wildcard certificates)
-#
-# EV Certificates (a.k.a. Extended Certificates): Extended Validation (EV)
-# certificates are distinguished by the presence of the CertificatePolicies
-# extension containg a registered OID in the policyIdentifier field. 
-# see checkev() above
-#
-#
-
-# RFC 3280
-#  4.2.1.10  Basic Constraints
-#    X509v3 Basic Constraints:
-#        cA:FALSE
-#        pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
-# RFC 4158
+    # SEE Note:root-CA
 
     return;
 } # checkroot
@@ -5205,6 +5153,7 @@ sub printquit() {
     #      |egrep '^(--|\+)' \
     #      |egrep -v '^--[v-]-' \
     #      |egrep -v '--user-*' \
+    #      |egrep -v 'cipher=*' \
     #     ` \
     #     +quit --trace-key
     #
@@ -5768,11 +5717,8 @@ while ($#argv >= 0) {
     # such options are incorrectly used, or are passed in in CGI mode
     # NOTE: this means that we cannot have empty strings as value
     if ($arg =~ m/^-[^=]*=$/) {
-        # in CGI mode all options are passed with a trailing  =  even those
-        # which do not have an argument (value)
-        # so we cannot ignore all options with empty value, like: --header=
-        # following regex contains those options, which have a value,  only
-        # these are ignored if the value is empty
+        # SEE Note:CGI mode
+        # only options in regex are ignored if the value is empty
         # TODO: either use a function or a regex in %cfg for following check
         if ($arg =~ /^(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)/) {
             _warn("option with empty argument '$arg'; option ignored") if ($cgi == 0);
@@ -7211,7 +7157,7 @@ user documentation please see o-saft-man.pm
 
 == Note:%prot ==
     using SSL/TLS protocols can either be done using %prot or $cfg{'versions'}
-    in contrast to "keys %prot"  $cfg{'versions'} is sorted according protocol 
+    in contrast to "keys %prot"  $cfg{'versions'} is sorted according protocol
     like: SSLv2 SSLv3 TLSv1 ...
 
 
@@ -7219,4 +7165,72 @@ user documentation please see o-saft-man.pm
     Ideas and discussions see also: https://github.com/OWASP/O-Saft/issues/52
     By default  --exitcode  counts all settings considered weak or insecure.
     This behaviour can be controlled with the  --exitcode-no-*  options.
+
+
+== Note:heartbleed ==
+    http://heartbleed.com/
+    http://possible.lv/tools/hb/
+    http://filippo.io/Heartbleed/
+    https://github.com/proactiveRISK/Heartbleed
+    https://www.cloudflarechallenge.com/heartbleed
+
+
+== Note:ticketbleed ==
+
+
+== Note:CGI mode
+    In CGI mode all options are passed with a trailing  =  even those which do
+    not have an argument (value). This means that options cannot be ignored in
+    general, because they may occour at least in CGI mode, i.e.  --cmd=  .
+    The trailing  =  can always be removed, empty values are not possible.
+
+
+== Note:root-CA ==
+    some texts from: http://www.zytrax.com/tech/survival/ssl.html
+    The term Certificate Authority is defined as being an entity which signs
+    certificates in which the following are true:
+      * the issuer and subject fields are the same,
+      * the KeyUsage field has keyCertSign set
+      * and/or the basicConstraints field has the cA attribute set TRUE.
+    Typically, in chained certificates the root CA certificate is the topmost
+    in the chain but RFC 4210 defines a 'root CA' to be any issuer for which
+    the end-entity, for example, the browser has a certificate which was obtained
+    by a trusted out-of-band process. Since final authority for issuing any
+    certificate rest with this CA the terms and conditions of any intermediate
+    certificate may be modified by this entity.
+
+    Subordinate Authority:
+    may be marked as CAs (the extension BasicContraints will be present and cA will be set True)
+
+    Intermediate Authority (a.k.a. Intermediate CA):
+    Imprecise term occasionally used to define an entity which creates an
+    intermediate certificate and could thus encompass an RA or a subordinate CA.
+
+    Cross certificates (a.k.a. Chain or Bridge certificate):
+    A cross-certificate is one in which the subject and the issuer are not the
+    same but in both cases they are CAs (BasicConstraints extension is present and has cA set True).
+
+    Intermediate certificates (a.k.a. Chain certificates):
+    Imprecise term applied to any certificate which is not signed by a root CA.
+    The term chain in this context is meaningless (but sounds complicated and
+    expensive) and simply indicates that the certificate forms part of a chain.
+
+    Qualified certificates: Defined in RFC 3739
+    the term Qualified certificates relates to personal certificates (rather than
+    server certificates) and references the European Directive on Electronic Signature (1999/93/EC)
+    see check02102() above
+
+    Multi-host certificates (aka wildcard certificates)
+
+    EV Certificates (a.k.a. Extended Certificates): Extended Validation (EV)
+    certificates are distinguished by the presence of the CertificatePolicies
+    extension containg a registered OID in the policyIdentifier field. 
+    see checkev() above
+
+    RFC 3280
+     4.2.1.10  Basic Constraints
+       X509v3 Basic Constraints:
+           cA:FALSE
+           pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
+    RFC 4158
 
