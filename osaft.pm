@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.80 17/03/05 18:11:42',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.81 17/03/05 20:26:08',
 
 };
 
@@ -129,6 +129,8 @@ Following functions (methods) must be defined in the calling program:
 
 =item %dbx
 
+=item @npn
+
 =item %prot
 
 =item %prot_txt
@@ -187,6 +189,7 @@ our @EXPORT     = qw(
                 STR_DBX
                 STR_UNDEF
                 STR_NOTXT
+                @npn
                 %prot
                 %prot_txt
                 %tls_handshake_type
@@ -227,6 +230,11 @@ our @EXPORT     = qw(
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
+
+our @npn    = qw(http/1.1 h2c h2c-14
+                 spdy/1 npn-spdy/2 spdy/2 spdy/3 spdy/3.1 spdy/4a2 spdy/4a4
+                 h2-14 h2-15 http/2.0 h2
+                );      # NPN - Next Protocol Negotioation (most weak first)
 
 our %prot   = (     # collected data for protocols and ciphers
     # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
