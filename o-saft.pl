@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.592 17/03/05 17:55:49",
+    SID         => "@(#) yeast.pl 1.593 17/03/05 18:12:06",
     STR_VERSION => "17.02.16",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2230,13 +2230,13 @@ sub __SSLinfo($$$)      {
         #         CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
         #         CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
         #
-        # handled in regex below which matches next extension, if any.
+        # handled in RegEx below which matches next extension, if any.
         $val .= " X509";# add string to match last extension also
         my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
-            # FIXME: the regex should match OIDs also
+            # FIXME: the RegEx should match OIDs also
             # FIXME: otherwise OID extensions are added as value to the
             #        preceding extension, see example above (4/2016)
-        # FIXME: replace following list of regex with a loop over the extensions
+        # FIXME: replace following list of RegEx with a loop over the extensions
         $ext = $val;
         $val =~ s#.*?Authority Information Access:$rex#$1#ms    if ($cmd eq 'ext_authority');
         $val =~ s#.*?Authority Key Identifier:$rex#$1#ms        if ($cmd eq 'ext_authorityid');
@@ -2679,7 +2679,7 @@ sub _getwilds($$)       {
             $value =~ s/.*://;      # strip prefix
         if ($value =~ m/\*/) {
             $checks{'wildcard'}->{val} .= " " . $value;
-            ($rex = $value) =~ s/[*]/.*/;   # make regex (miss dots is ok)
+            ($rex = $value) =~ s/[*]/.*/;   # make RegEx (miss dots is ok)
             $checks{'wildhost'}->{val}  = $value if ($host =~ m/$rex/);
             $checks{'cnt_wildcard'}->{val}++;
         }
@@ -5718,9 +5718,8 @@ while ($#argv >= 0) {
     # NOTE: this means that we cannot have empty strings as value
     if ($arg =~ m/^-[^=]*=$/) {
         # SEE Note:CGI mode
-        # only options in regex are ignored if the value is empty
-        # TODO: either use a function or a regex in %cfg for following check
-        if ($arg =~ /^(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)/) {
+        # only options in RegEx are ignored if the value is empty
+        if ($arg =~ /$cfg{'regex'}->{'opt-empty'}/) {
             _warn("option with empty argument '$arg'; option ignored") if ($cgi == 0);
             next;
         }
@@ -5791,7 +5790,7 @@ while ($#argv >= 0) {
     $arg =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g if ($arg =~ /^-/);
     #_dbx("normalized= $arg");
 
-    # Following checks use exact matches with 'eq' or regex matches with '=~'
+    # Following checks use exact matches with 'eq' or RegEx matches with '=~'
 
     _y_ARG("option?  $arg");
     #{ OPTIONS
