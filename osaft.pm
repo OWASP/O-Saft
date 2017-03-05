@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.79 17/01/12 22:57:37',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.80 17/03/05 18:11:42',
 
 };
 
@@ -1502,6 +1502,20 @@ our %cfg = (
    #------------------+---------+----------------------------------------------
    #------------------+--------------------------------------------------------
     'regex' => {
+        # RegEx for matching commands and options
+        'cmd-http'  => '^h?(?:ttps?|sts)_',     # match keys for HTTP
+        'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
+        'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
+        'cmd-cfg'   => '(?:cmd|checks?|data|hint|text|scores?)',# --cfg-* commands
+        'commands-INT'  => '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
+        'opt-empty' => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
+                       # these options may have no value
+                       # i.e.  --cmd=   ; this may occour in CGI mode
+
+        # RegEx for matching SSL protocol keys in %data and %checks
+        'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
+
+        # RegEx for matching SSL protocol keys in %data and %checks
         # First some basic RegEx used later on, either in following RegEx or
         # as $cfg{'regex'}->{...}  itself.
         '_or-'      => '[\+_-]',
@@ -1584,7 +1598,7 @@ our %cfg = (
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
         'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK[_-])?(?:(?:EC)?[DR]S[AS])[_-]',
                        # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA PSK_ECDSS
-                       # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exist, hence lazy regex above
+                       # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exist, hence lazy RegEx above
         'notTR-02102'     => '[_-]SHA$',
                        # ciphers with SHA1 hash are not allowed
         'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
@@ -1602,18 +1616,18 @@ our %cfg = (
         '1.3.6.1.5.5.7.1.1'  =>  '(?:1\.3\.6\.1\.5\.5\.7\.1\.1|authorityInfoAccess)',
         'NSA-B'     =>'(?:ECD(?:H|SA).*?AES.*?GCM.*?SHA(?:256|384|512))',
 
-        # Regex containing pattern for compliance checks
+        # RegEx containing pattern for compliance checks
         # The following RegEx define what is "not compliant":
         'notISM'    => '(?:NULL|A(?:NON[_-])?DH|DH(?:A|[_-]ANON)[_-]|(?:^DES|[_-]DES)[_-]CBC[_-]|MD5|RC)',
         'notPCI'    => '(?:NULL|(?:A(?:NON[_-])?DH|DH(?:A|[_-]ANON)|(?:^DES|[_-]DES)[_-]CBC|EXP(?:ORT)?(?:40|56|1024)?)[_-])',
         'notFIPS-140'=>'(?:(?:ARC(?:4|FOUR)|RC4)|MD5|IDEA)',
         'FIPS-140'  => '(?:(?:3DES(?:[_-]EDE)[_-]CBC|DES[_-]CBC3)|AES)', # these are compliant
 
-        # Regex for checking invalid characers (used in compliance and EV checks)
+        # RegEx for checking invalid characers (used in compliance and EV checks)
         'nonprint'  => '/[\x00-\x1f\x7f-\xff]+/',          # not printable;  m/[:^print:]/
         'crnlnull'  => '/[\r\n\t\v\0]+/',                  # CR, NL, TABS and NULL
 
-        # Regex for checking EV-SSL
+        # RegEx for checking EV-SSL
         # they should matching:   /key=value/other-key=other-value
         '2.5.4.10'  => '(?:2\.5\.4\.10|organizationName|O)',
         '2.5.4.11'  => '(?:2\.5\.4\.1?|organizationalUnitName|OU)',
@@ -1639,16 +1653,6 @@ our %cfg = (
         'notEV-chars'=>'[^a-zA-Z0-9,./:= @?+\'()-]',        # not valid characters in EV definitions
         'EV-empty'  => '^(?:n\/a|(?:in|not )valid)\s*$',    # empty string, or "invalid" or "not valid"
 
-        # Regex for matching commands
-        'cmd-http'  => '^h?(?:ttps?|sts)_',     # match keys for HTTP
-        'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
-        'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
-        'cmd-cfg'   => '(?:cmd|checks?|data|hint|text|scores?)',# --cfg-* commands
-        'commands-INT'  => '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
-
-        # Regex for matching SSL protocol keys in %data and %checks
-        'SSLprot'   => '^(SSL|D?TLS)v[0-9]',    # match keys SSLv2, TLSv1, ...
-
     }, # regex
    #------------------+--------------------------------------------------------
     'hints' => {       # texts used for hints
@@ -1673,7 +1677,7 @@ our %cfg = (
     }, # hints
    #------------------+--------------------------------------------------------
     'ourstr' => {
-        # regex to match strings of our own output, see OUTPUT in o-saft-man.pm
+        # RegEx to match strings of our own output, see OUTPUT in o-saft-man.pm
         # first all that match a line at beginning:
         'error'     => qr(^\*\*ERR),            # see STR_ERROR
         'warning'   => qr(^\*\*WARN),           # see STR_WARN
@@ -1927,7 +1931,7 @@ sub get_dh_paramter($$) {
     # >>> TLS 1.2 ChangeCipherSpec [length 0001]
     return "" if ($data !~ m#ServerKeyExchange#);
 
-    # this is a long regex and cannot be chunked
+    # this is a long RegEx and cannot be chunked
     ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
     $data =~ s{
             .*?Handshake
@@ -2004,8 +2008,8 @@ sub sort_cipher_names   {
     #  2. start building new list with most @strength cipher first
     #  3. add previously remove @insecure ciphers to new list
 
-    # define list of regex to match openssl cipher suite names
-    # each regex could be seen as a  class of ciphers with the same strength
+    # define list of RegEx to match openssl cipher suite names
+    # each RegEx could be seen as a  class of ciphers with the same strength
     # the list defines the strength in descending order, most strength first
     # NOTE the list may contain pattern, which actually do not match a valid
     # cipher suite name; doese't matter, but may avoid future adaptions, see
