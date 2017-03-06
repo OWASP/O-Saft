@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.50 16/12/18 14:00:12";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.51 17/03/06 23:05:46";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -172,7 +172,7 @@ sub _yeast_init {
         _yTRAC("::use_http",      $Net::SSLinfo::use_http);
         _yTRAC("::no_cert",       $Net::SSLinfo::no_cert);
         _yTRAC("::no_cert_txt",   $Net::SSLinfo::no_cert_txt);
-        _yTRAC("::protocols",     $Net::SSLinfo::protocols);
+        _yTRAC("::next_prots",    $Net::SSLinfo::next_prots);
         _yTRAC("::sclient_opt",   $Net::SSLinfo::sclient_opt);
         _yTRAC("::ignore_case",   $Net::SSLinfo::ignore_case);
         _yTRAC("::timeout_sec",   $Net::SSLinfo::timeout_sec);
