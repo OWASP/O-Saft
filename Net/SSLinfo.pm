@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '16.12.16',
+    SSLINFO_VERSION => '17.03.17',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.168 17/03/05 21:01:26',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.169 17/03/06 23:03:50',
 };
 
 ######################################################## public documentation #
@@ -457,7 +457,7 @@ our @EXPORT_OK = qw(
         chain_verify
         compression
         expansion
-        protocols
+        next_protocols
         alpn
         no_alpn
         next_protocol
@@ -525,7 +525,7 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
-$Net::SSLinfo::protocols   = 'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,h2-14,h2-15,http/2.0,h2';
+$Net::SSLinfo::next_prots  = 'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,h2-14,h2-15,http/2.0,h2';
                                 # NOTE: most weak protocol first, cause we check for vulnerabilities
                                 # next protocols not yet configurable
                                 # h2c*  - HTTP 2 Cleartext
@@ -736,7 +736,7 @@ my %_SSLinfo= ( # our internal data structure
     'selfsigned'        => "",  # self-signed certificate
     'compression'       => "",  # compression supported
     'expansion'         => "",  # expansion supported
-    'protocols'         => "",  # Protocols advertised by server
+    'next_protocols'    => "",  # Protocols advertised by server
     'alpn'              => "",  # ALPN protocol
     'no_alpn'           => "",  # No ALPN negotiated
     'next_protocol'     => "",  # Next protocol
@@ -1144,7 +1144,7 @@ sub _ssleay_ctx_new {
             if (defined &Net::SSLeay::TLSv1_3_method) {
                 $src = "Net::SSLeay::CTX_set_ssl_version(TLSv1_3_method)";
                 Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::TLSv1_3_method()) or do {$err = $!} and last;
-                # allow all protocols for backward compatibility; user specific
+                # allow all versions for backward compatibility; user specific
                 # restrictions are done later with  CTX_set_options()
                 $src = "";  # push error on error stack at end of SWITCH
             } else {
@@ -1239,7 +1239,7 @@ sub _ssleay_ctx_new {
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
                 #test# # quick$dirty disable SSL_OP_TLSEXT_PADDING 0x00000010L (see ssl.h)
                 #test# Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL ^ 0x00000010);
-            # sets all options, even those for all protocols (which are removed later)
+            # sets all options, even those for all protocol versions (which are removed later)
             # OP_CIPHER_SERVER_PREFERENCE, OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
             # should also be set now
         $src = 'Net::SSLeay::CTX_set_timeout()';
@@ -1601,9 +1601,9 @@ sub do_ssl_open($$$@) {
             ($dum = _ssleay_ctx_ca($ctx))       or do {$src = '_ssleay_ctx_ca()' } and next;
 
             #2c. set NPN option
-            my @npn;
-               @npn = split(",", $Net::SSLinfo::protocols) if ($Net::SSLinfo::use_nextprot == 1);
-            Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @npn);
+            my @npns;
+               @npns = split(",", $Net::SSLinfo::next_prots) if ($Net::SSLinfo::use_nextprot == 1);
+            Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @npns);
             # TODO: need to check which Net::SSLeay supports it
 
             #3. prepare SSL object
@@ -1951,7 +1951,7 @@ sub do_ssl_open($$$@) {
             'alpn'             => "ALPN protocol:",
             'no_alpn'          => "No ALPN negotiated", # has no value, see below
             'next_protocol'    => "Next protocol:",
-            'protocols'        => "Protocols advertised by server:",
+            'next_protocols'   => "Protocols advertised by server:",
             'session_protocol' => "Protocol\\s+:",      # \s must be meta
             'session_timeout'  => "Timeout\\s+:",       # \s must be meta
             'session_lifetime' => "TLS session ticket lifetime hint:",
@@ -2245,7 +2245,7 @@ sub do_openssl($$$$) {
         $mode .= ' -CApath ' . $capath if ($capath ne "");
         $mode .= ' -CAfile ' . $cafile if ($cafile ne "");
 # }
-        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protocols if ($Net::SSLinfo::use_nextprot == 1);
+        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::next_prots if ($Net::SSLinfo::use_nextprot == 1);
         $mode .= ' -reconnect'   if ($Net::SSLinfo::use_reconnect == 1);
         $mode .= ' -tlsextdebug' if ($Net::SSLinfo::use_extdebug  == 1);
         $mode .= ' -connect';
@@ -2480,9 +2480,9 @@ Get target's compression support.
 
 Get target's exapansion support.
 
-=head2 protocols( )
+=head2 next_protocols( )
 
-Get protocols advertised by server,
+Get (NPN) protocols advertised by server,
 
 =head2 alpn( )
 
@@ -2792,7 +2792,8 @@ sub chain           { return _SSLinfo_get('chain',            $_[0], $_[1]); }
 sub chain_verify    { return _SSLinfo_get('chain_verify',     $_[0], $_[1]); }
 sub compression     { return _SSLinfo_get('compression',      $_[0], $_[1]); }
 sub expansion       { return _SSLinfo_get('expansion',        $_[0], $_[1]); }
-sub protocols       { return _SSLinfo_get('protocols',        $_[0], $_[1]); }
+sub next_protocols  { return _SSLinfo_get('next_protocols',   $_[0], $_[1]); }
+sub protocols       { return _SSLinfo_get('next_protocols',   $_[0], $_[1]); } # alias for backward compatibility (< 1.169)
 sub alpn            { return _SSLinfo_get('alpn',             $_[0], $_[1]); }
 sub no_alpn         { return _SSLinfo_get('no_alpn',          $_[0], $_[1]); }
 sub next_protocol   { return _SSLinfo_get('next_protocol',    $_[0], $_[1]); }
