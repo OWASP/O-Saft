@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.594 17/03/05 21:03:31",
-    STR_VERSION => "17.02.16",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.595 17/03/06 23:34:55",
+    STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -498,7 +498,7 @@ our %data   = (     # connection and certificate details
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
     'heartbeat'     => {'val' => sub {    __SSLinfo('heartbeat',    $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
-    'protocols'     => {'val' => sub { Net::SSLinfo::protocols(     $_[0], $_[1])}, 'txt' => "Target advertised protocols"},
+    'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target advertised protocols"},
     'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
     'no_alpn'       => {'val' => sub { Net::SSLinfo::no_alpn(       $_[0], $_[1])}, 'txt' => "Target's not ngotiated message (ALPN)"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
@@ -549,7 +549,7 @@ our %data   = (     # connection and certificate details
     'valid-months'  => {'val' =>  0, 'txt' => "certificate validity in months"},
     'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},  # approx. value, accurate if < 30
 ); # %data
-# need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|protocols|
+# need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|next_protocols|
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout
 
 # add keys from %prot to %data,
@@ -914,7 +914,7 @@ our %shorttexts = (
     'psk_hint'      => "PSK Identity Hint",
     'psk_identity'  => "PSK Identity",
     'srp'           => "SRP Username",
-    'protocols'     => "Protocols",
+    'next_protocols'=> "(NPN) Protocols",
     'alpn'          => "ALPN",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
@@ -2705,8 +2705,8 @@ sub _usesocket($$$$)    {
     # TODO: dirty hack to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
-    # these protocols. We only check for SSLv2 and SSLv3 as the *TLSX doesn't
-    # produce such warnings. Sigh.
+    # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSX
+    # doesn't produce such warnings. Sigh.
     _trace1("_usesocket($ssl, $host, $port, $ciphers){ sni: $sni");
     if (($ssl eq "SSLv2") && (! defined &Net::SSLeay::CTX_v2_new)) {
         _warn("SSL version '$ssl': not supported by Net::SSLeay");
@@ -4312,7 +4312,7 @@ sub checkdest($$) {
     }
 
     # check protocol support
-    $key   = 'protocols';
+    $key   = 'next_protocols';
     $value = $data{$key}->{val}($host, $port);
     $checks{'npn'}->{val}   = " " if ($value eq "");
     $key   = 'alpn';
@@ -4333,7 +4333,7 @@ sub checkdest($$) {
 
     # vulnerabilities
     check_dh($host,$port); # Logjam vulnerability
-    $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host), $data{'protocols'}->{val}($host));
+    $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host), $data{'next_protocols'}->{val}($host));
     foreach my $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val} = " " if ($value eq "");
@@ -4497,7 +4497,7 @@ sub check_exitcode  {
     #? compute exitcode; returns number of failed checks or insecure settings
     # SEE Note:--exitcode
     my $exitcode = 0;   # total count
-    my $cnt_prot = 0;   # number of insecure protocols
+    my $cnt_prot = 0;   # number of insecure protocol versions
                         # only TLSv12 is considered secure
     my $cnt_ciph = 0;   # number of insecure ciphers per protocol
     my $cnt_nopfs= 0;   # number ciphers without PFS
@@ -6144,6 +6144,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; }
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
+    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
         print "# $cfg{'mename'}  list of internal functions:\n";
@@ -6844,7 +6845,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if ((_need_default() > 0) or ($check > 0)) {
         _y_CMD("get default ..");
-        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocols
+        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             next if (!defined $prot{$ssl}->{opt});
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
@@ -7116,6 +7117,12 @@ user documentation please see o-saft-man.pm
 
 
 === Annotations, Internal Notes ===
+
+== Note:SSL protocol versions ==
+    The phrases 'SSL protocol versions', 'SSL protocols' or simply 'protocols'
+    are used through out the comments in the sources equal for  SSLv2,  SSLv3,
+    TLSv1 etc..
+
 
 == Note:alias ==
     The code for parsing options and arguments uses some special syntax:
