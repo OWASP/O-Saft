@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.595 17/03/06 23:34:55",
+    SID         => "@(#) yeast.pl 1.596 17/03/09 09:27:02",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1998,6 +1998,10 @@ sub _cfg_set($$)        {
             next if (_is_hashkey($key, \%data) > 0);
             next if (_is_intern( $key) > 0);
             next if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0);
+            if ($key eq 'protocols') {  # valid before 17.02.26; behave smart for old rc-files
+                push(@{$cfg{$typ}}, 'next_protocols');
+                next;
+            }
             if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
                 push(@{$cfg{$typ}}, 'selected');
                 _warn("please use '+selected' instead of '+$key'; setting ignored");
