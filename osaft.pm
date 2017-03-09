@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.81 17/03/05 20:26:08',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.82 17/03/09 14:04:57',
 
 };
 
@@ -1414,7 +1414,8 @@ our %cfg = (
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [        # commands for checking protocols
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn alpn npn session_protocol protocols https_protocols http_protocols https_svc http_svc)
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
+hasalpn alpn npn session_protocol next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
     'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
                     # Results of these commands are not printed in output.
@@ -1575,7 +1576,7 @@ our %cfg = (
         'doublewild'    => '(?:[a-z0-9.-]+\*[a-z0-9-]+\*)', # x*x or x*.x*
         'invalidwild'   => '(?:\.\*\.)',            # no .*.
         'invalidIDN'    => '(?:xn--[a-z0-9-]*\*)',  # no * right of xn--
-        'isSPDY3'       => '(?:spdy\/3)',           # match in protocols
+        'isSPDY3'       => '(?:spdy\/3)',           # match in protocols (NPN)
                        # TODO: lazy match as it matches spdy/3.1 also
 
         # RegEx containing pattern to identify vulnerable ciphers
