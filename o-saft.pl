@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.596 17/03/09 09:27:02",
+    SID         => "@(#) yeast.pl 1.597 17/03/09 14:30:40",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -500,7 +500,7 @@ our %data   = (     # connection and certificate details
     'heartbeat'     => {'val' => sub {    __SSLinfo('heartbeat',    $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
     'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target advertised protocols"},
     'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
-    'no_alpn'       => {'val' => sub { Net::SSLinfo::no_alpn(       $_[0], $_[1])}, 'txt' => "Target's not ngotiated message (ALPN)"},
+    'no_alpn'       => {'val' => sub { Net::SSLinfo::no_alpn(       $_[0], $_[1])}, 'txt' => "Target's not negotiated message (ALPN)"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
@@ -916,6 +916,7 @@ our %shorttexts = (
     'srp'           => "SRP Username",
     'next_protocols'=> "(NPN) Protocols",
     'alpn'          => "ALPN",
+    'no_alpn'       => "ALPN message",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
     'session_protocol'  => "Selected SSL Protocol",
@@ -928,6 +929,20 @@ our %shorttexts = (
     'dh_2048'       => "DH Parameter >= 2048",
     'ecdh_256'      => "DH Parameter >= 256 (ECDH)",
     'ecdh_512'      => "DH Parameter >= 512 (ECDH)",
+    'ext_authority' => "Authority Information Access",
+    'ext_authorityid'=>"Authority key Identifier",
+    'ext_constraints'=>"Basic Constraints",
+    'ext_cps'       => "Certificate Policies",
+    'ext_cps_cps'   => "Certificate Policies: CPS",
+    'ext_cps_policy'=> "Certificate Policies: Policy",
+    'ext_cps_notice'=> "Certificate Policies: User Notice",
+    'ext_crl'       => "CRL Distribution Points",
+    'ext_subjectkeyid'=>"Subject Key Identifier",
+    'ext_keyusage'  => "Key Usage",
+    'ext_extkeyusage'=>"Extended Key Usage",
+    'ext_certtype'  => "Netscape Cert Type",
+    'ext_issuer'    => "Issuer Alternative Name",
+    'fallback_protocol' => "Fallback SSL Protocol",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
     'len_subject'   => "Size subject",
@@ -1028,6 +1043,12 @@ our %shorttexts = (
     #------------------+------------------------------------------------------
     # more texts dynamically, see "adding more shorttexts" below
 ); # %shorttexts
+# add keys from %prot to %shorttext,
+foreach my $ssl (keys %prot) {
+    my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
+    $shorttexts{$key} = "Default $prot{$ssl}->{txt} cipher";
+}
+
 my %scores = (
     # keys starting with 'check_' are for total values
     # all other keys are for individual score values
