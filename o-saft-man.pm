@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.169 17/02/28 01:34:34";
+my  $man_SID= "@(#) o-saft-man.pm 1.171 17/03/10 12:31:35";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -872,7 +872,13 @@ function d(id){return document.getElementById(id).style;}
 function t(id){id.display=(id.display=='none')?'block':'none';}
 </script>
 <style>
+ .h{margin-left:1em;border:0px solid #fff;}
  .r{float:right;}
+ .b, div[class=h] > a{text-decoration:none; font-weight:bold; color:#000;      
+    border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666;    
+    padding:0px 0.5em 0px 0.5em; margin:0.1em;                                 
+    background:linear-gradient(#fff, #ddd); }
+ a[class="b r"]:hover, div[class=h] > a:hover { background:linear-gradient(#ddd, #fff); }
  .c{font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
  p{margin-left:2em;margin-top:0;}
  h2, h3, h4, h5{margin-bottom:0.2em;}
@@ -883,12 +889,14 @@ function t(id){id.display=(id.display=='none')?'block':'none';}
  div[class=n]{border:0px solid white;}
  form{padding:1em;}
  span{font-size:120%;margin-bottom:2em;border:1px solid green;}
- label[class=i]{min-width:80px;border:1px solid white;}
+ label[class=i]{min-width:80px;border:1px solid white;margin-right:1em;}
  label:hover[class=i]{background-color:lightgray;border-bottom:1px solid green}
+ input{margin-right:0.5em;}
 </style>
 </head>
 <body>
- <h2>O - S a f t &#160; &#151; &#160; OWASP SSL advanced forensic tool</h2><!-- hides unwanted text before <body> tag -->
+ <h2>O - S a f t &#160; &#151; &#160; OWASP SSL advanced forensic tool</h2>
+ <!-- hides unwanted text before <body> tag -->
 EoHTML
     return;
 }
@@ -896,7 +904,7 @@ sub _man_html_foot(){
     _man_dbx("_man_html_foot() ...");
     print << "EoHTML";
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
- <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar ><button value="" />Download (stable)</button></a><br>
+ <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
  <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2017</span></p>
 </body></html>
@@ -916,7 +924,7 @@ sub _man_html_chck($){
         $v =  '';
         $n =  scalar((split(/\s+/,$n))[0]);
     }
-    return sprintf("<input type=checkbox name='%s' value='%s' >&#160;", $n, $v);
+    return sprintf("<input type=checkbox name='%s' value='%s' >", $n, $v);
 }
 sub _man_name_ankor($){
     my $n = shift;
@@ -943,9 +951,9 @@ sub _man_html_cbox($) {
     return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
         "", $id, $id, $id, $key);
 }
-sub _man_html_text($) { my $key = shift; return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >&#160;\n", "", $key, '"--' . $key . '"'); }
+sub _man_html_text($) { my $key = shift; return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >\n", "", $key, '"--' . $key . '"'); }
 sub _man_html_span($) { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
-sub _man_html_cmd($)  { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >&#160;\n", "", "", '"--' . $key . '"'); }
+sub _man_html_cmd($)  { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go()    { my $key = shift; return sprintf("%8s<input type=submit value=go title='execute o-saft.pl with selected commands and options'/>\n", ""); }
 sub _man_html_br()    { return sprintf("        <br>\n"); }
 
@@ -1381,22 +1389,27 @@ sub man_cgi() {
     #? recommended usage:   $0 --no-warning --no-header --help=gen-cgi
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
     #
-    # <a href="$cgi?--cgi&--help=html"    target=_help ><button value="" />help (HTML format)</button></a>&#160;&#160;
+    # <a href="$cgi?--cgi&--help=html"    target=_help >help (HTML format)</a>
     # previous link not generated because it prints multiple HTTP headers
+    #
+    # From action= and a href= values (link) must be specified using the
+    # option  --usr-action=  at script start.
     #
     _man_dbx("man_cgi() ...");
     my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
     _man_http_head();
     _man_html_head();
 print << "EoHTML";
- <a href="$cgi?--cgi&--help"         target=_help ><button value="" />help</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=command" target=_help ><button value="" />commands</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=checks"  target=_help ><button value="" />checks</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=example" target=_help ><button value="" />examples</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=regex"   target=_help ><button value="" />regex</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=FAQ"     target=_help ><button value="" />FAQ</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=abbr"    target=_help ><button value="" />Glossar</button></a>&#160;&#160;
- <a href="$cgi?--cgi&--help=todo"    target=_help ><button value="" />ToDo</button></a><br>
+ <div class=h >
+  <a href="$cgi?--cgi&--help"         target=_help >help</a>
+  <a href="$cgi?--cgi&--help=command" target=_help >commands</a>
+  <a href="$cgi?--cgi&--help=checks"  target=_help >checks</a>
+  <a href="$cgi?--cgi&--help=example" target=_help >examples</a>
+  <a href="$cgi?--cgi&--help=regex"   target=_help >regex</a>
+  <a href="$cgi?--cgi&--help=FAQ"     target=_help >FAQ</a>
+  <a href="$cgi?--cgi&--help=abbr"    target=_help >Glossar</a>
+  <a href="$cgi?--cgi&--help=todo"    target=_help >ToDo</a><br>
+ </div>
  <form action="$cgi" method=GET >
   <input  type=hidden name="--cgi" value="" >
   <fieldset>
@@ -1436,14 +1449,14 @@ EoHTML
     </div>
     <div id=b style="display:none;">
         <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI">Simple GUI</button><br>
-        <input type=text     name=--cmds size=55 />&#160;
+        <input type=text     name=--cmds size=55 />
 EoHTML
 
     _man_html("COMMANDS", 'LAZY'); # print help starting at COMMANDS
     print << "EoHTML";
 </p>
     </div>
-        <input type=reset  value="clear" title="clear all settings"/>&#160;
+        <input type=reset  value="clear" title="clear all settings"/>
 EoHTML
     print _man_html_go();
     print << "EoHTML";
@@ -3789,6 +3802,13 @@ CHECKS
 
         Currently (2016) we check for ciphers with CBC or CBC3 or DES or 3DES.
 
+      Ticketbleed
+
+        NOT YET IMPLEMENTED
+        Check if target is vulnerable to ticketbleed, means that it returns
+        up to 31 random bytes from memory as Session Ticket, see CVE-2016-9244
+        and https://filippo.io/Ticketbleed/ .
+
     Target (server) Configuration and Support
 
       BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4,
@@ -6129,6 +6149,7 @@ TODO
           ** RFC 7525: 6.4.  Diffie-Hellman Exponent Reuse
 
         * vulnerabilities
+          ** Ticketbleed
           ** complete TIME, BREACH check
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
