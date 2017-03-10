@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.82 17/03/09 14:04:57',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.83 17/03/10 14:44:45',
 
 };
 
@@ -233,7 +233,7 @@ our @EXPORT     = qw(
 
 our @npn    = qw(http/1.1 h2c h2c-14
                  spdy/1 npn-spdy/2 spdy/2 spdy/3 spdy/3.1 spdy/4a2 spdy/4a4
-                 h2-14 h2-15 http/2.0 h2
+                 grpc-exp grpc -exph2-14 h2-15 http/2.0 h2
                 );      # NPN - Next Protocol Negotioation (most weak first)
 
 our %prot   = (     # collected data for protocols and ciphers
