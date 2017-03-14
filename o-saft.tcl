@@ -295,7 +295,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.133 Winter Edition 2016
+#?      @(#) 1.134 Winter Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -362,8 +362,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.133 17/03/14 15:17:57 Sommer Edition 2016}
-set cfg(VERSION) {1.133}
+set cfg(SID)    {@(#) o-saft.tcl 1.134 17/03/14 23:33:42 Sommer Edition 2016}
+set cfg(VERSION) {1.134}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -755,7 +755,7 @@ set tab(0)      ""; # contains results of cfg(SAFT)
 #   array name  {description of element used in header line in Filter tab}
 set f_key(0)    {Unique key for regex}
 set f_mod(0)    {Modifier how to use regex}
-set f_len(0)    {Length to be matched (0 for complete line)}
+set f_len(0)    {Length to be matched (0: all text; -1: complete line to right end)}
 set f_bg(0)     {Background color used for matching text (empty: don't change)}
 set f_fg(0)     {Foreground color used for matching text (empty: don't change)}
 set f_fn(0)     {Font used for matching text (empty: don't change)}
@@ -828,11 +828,11 @@ txt2arr [string map "
  **WARN	-exact	0	_lBlue	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
   NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
   YES	-regexp	3	_lGreen	{}	{}	0	yes	word  yes  at end of line
- == CMT	-regexp	0	gray	{}	__bold	1	^==*	line starting with  == (formatting lines)
+ == CMT	-regexp	-1	_lGray	{}	__bold	1	^==*	line starting with  == (formatting lines)
   # DBX	-regexp	0	{}	blue	{}	0	^#[^[]	line starting with  #  (verbose or debug lines)
- #[KEY]	-regexp	2	_lGray	{}	{}	0	^#\[[^:]+:\s*	line starting with  #[keyword:]
+ #[KEY]	-regexp	2	_lGray	gray	{}	0	^#\[[^:]+:\s*	line starting with  #[keyword:]
 # ___                                                                   but not:  # [keyword:
-  _ME_	-regexp	0	black	white	{}	0	.*?_ME_.*\n\n	lines contaning program name
+  _ME_	-regexp	-1	black	white	{}	0	.*?_ME_.*\n\n	lines contaning program name
  Label:	-regexp	1	{}	{}	__bold	0	^(#\[[^:]+:\s*)?[A-Za-z][^:]*:\s*	label of result string from start of line until :
   perl	-regexp	0	purple	{}	{}	0	^Use of .*perl	lines with perl warnings
   usr1	-regexp	0	{}	{}	{}	0	{}	{}
@@ -1060,16 +1060,17 @@ proc apply_filter {w} {
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
+        # extract values from filter table for easy use
         #set key $f_key($k)
         set mod $f_mod($k)
-        set len $f_len($k); # currenty used for 0 only
+        set len $f_len($k)
         set rex $f_rex($k)
         set fg  $f_fg($k)
         set bg  $f_bg($k)
         set nr  $f_un($k)
         set fn  $f_fn($k)
         if {$key eq ""} { continue };   # invalid or disabled filter rules
-        if {$rex eq ""} { continue };   # invalid or disabled filter rules
+        if {$rex eq ""} { continue };   # -"-
         _dbx " $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"
         # anf contains start, end corresponding end position of match
         set key [str2obj [string trim $key]]
@@ -1080,11 +1081,15 @@ proc apply_filter {w} {
             incr i
             if {$key eq "NO" || $key eq "YES"} {incr e -1 }; # FIXME very dirty hack to beautify print
             $w tag add    HELP-$key.l "$a linestart" "$a lineend"
-            if {$len==0} {
-               $w tag add HELP-$key    $a            "$a + 1 line - 1 char"
-              #$w tag add HELP-$key    $a            "$a lineend"; # does not work
+            if {$len<=0} {
+                if {$len<0} {
+                   $w tag add HELP-$key $a  "$a + 1 line"; # complete line to right end
+                } else {
+                   $w tag add HELP-$key $a  "$a + 1 line - 1 char"; # all text in the line
+                  #$w tag add HELP-$key $a  "$a lineend"; # does not work
+                }
             } else {
-               $w tag add HELP-$key    $a            "$a + $e c"
+               $w tag add HELP-$key     $a  "$a + $e c"
             }
             $w tag  raise HELP-$key.l HELP-$key
         }
@@ -2482,7 +2487,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.133"
+update_status "o-saft.tcl 1.134"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
