@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.597 17/03/09 14:30:40",
+    SID         => "@(#) yeast.pl 1.599 17/03/15 00:31:11",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -666,7 +666,7 @@ my %check_conn = (  ## connection data
     'sloth'         => {'txt' => "Connection is safe against SLOTH attack"},
     'sweet32'       => {'txt' => "Connection is safe against Sweet32 attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-    'selected'      => {'txt' => "Selected cipher by server"},
+    'selected'      => {'txt' => "Selected Cipher"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
     #------------------+-----------------------------------------------------
