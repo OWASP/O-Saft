@@ -132,6 +132,11 @@ exec wish "$0" ${1+"$@"}
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
 #?
 #? KNOWN PROBLEMS
+#?      Using option  -v  causes a Tcl error, like:
+#?         application-specific initialization failed: "-v" option requires an\
+#?         additional argument
+#?      This is a Tcl problem and cannot fixed herein.
+#?
 #?      The markup defined in the filters (see Filter TAB) may not yet produce
 #?      perfect layouts for the results and the help texts,  to be improved in
 #?      many ways.
@@ -290,7 +295,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.131 Winter Edition 2016
+#?      @(#) 1.132 Winter Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -357,8 +362,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.131 17/03/13 14:00:10 Sommer Edition 2016}
-set cfg(VERSION) {1.131}
+set cfg(SID)    {@(#) o-saft.tcl 1.132 17/03/14 15:12:33 Sommer Edition 2016}
+set cfg(VERSION) {1.132}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -2477,7 +2482,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.131"
+update_status "o-saft.tcl 1.132"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
