@@ -295,7 +295,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.132 Winter Edition 2016
+#?      @(#) 1.133 Winter Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -362,8 +362,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.132 17/03/14 15:12:33 Sommer Edition 2016}
-set cfg(VERSION) {1.132}
+set cfg(SID)    {@(#) o-saft.tcl 1.133 17/03/14 15:17:57 Sommer Edition 2016}
+set cfg(VERSION) {1.133}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -2482,7 +2482,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.132"
+update_status "o-saft.tcl 1.133"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
@@ -2497,6 +2497,7 @@ if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
     puts "
 PRG $argv0  -- $cfg(ICH)
  |  RC:        $cfg(RC)\t$rc
+ |  O-Saft:    $cfg(SAFT)
  |  INIT:      $cfg(INIT)\t$ini
 CFG
  |  TITLE:     $cfg(TITLE)
