@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.599 17/03/15 00:31:11",
+    SID         => "@(#) yeast.pl 1.600 17/03/15 00:39:56",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6152,6 +6152,7 @@ while ($#argv >= 0) {
     if ($arg =~ /\+vulnerabilit(y|ies)/)  {$arg= '+vulns';          } # alias:
     if ($arg =~ /^\+selected$p?ciphers?$/){$arg= '+selected';       } # alias:
     if ($arg =~ /^\+session$p?ciphers?$/) {$arg= '+selected';       } # alias:
+    if ($arg =~ /^\+selected$p?protocol$/){$arg= '+session_protocol';} # alias:
     if ($arg =~ /^\+(?:all|raw)ciphers?$/){$arg= '+cipherraw';      } # alias:
     if ($arg =~ /^\+ciphers?(?:all|raw)$/){$arg= '+cipherraw';      } # alias:
     if ($arg =~ /^\+cipher$p?defaults?$/) {$arg= '+cipher_default'; } # alias:
