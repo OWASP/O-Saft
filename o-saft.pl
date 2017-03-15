@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.603 17/03/15 09:06:00",
+    SID         => "@(#) yeast.pl 1.604 17/03/15 09:39:25",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1751,6 +1751,7 @@ sub _isnummber          {
 }
 sub _check_modules()    {
     # check for minimal version of a module; verbose out but for --v=2
+    # SEE Perl:import include
     my %expected_versions = (
         'IO::Socket::INET'  => "1.31",
         'IO::Socket::SSL'   => "1.37",
@@ -3384,6 +3385,7 @@ sub checkdates($$) {
     # Perl's  Time::Local module is used for that in the hope that it is part
     # of most perl installations. Existance of Time::Local module was already
     # done at startup with and +sts_expired disabled if missing.
+    # SEE Perl:import include
     MAXAGE_CHECK: {
         $txt = $text{'no-STS'};
         last MAXAGE_CHECK if ($data{'https_sts'}->{val}($host) eq "");
@@ -5328,6 +5330,7 @@ sub printversion() {
 #       versions differ
 
     # get a quick overview also
+    # SEE Perl:import include
     print "= Required (and used) Modules =";
     print '    @INC                 ', "@INC";
     my ($d, $v, %p);
@@ -6360,10 +6363,7 @@ local $\ = "\n";
 
 #| import common and private modules
 #| -------------------------------------
-# Unfortunately `use autouse' is not possible as to much functions need to
-# be declared for that pragma then.
-# we try to load modules at runtime with own _load_file() instead of perl's
-# "use" at compile time
+# SEE Perl:import include
 if (1 > 0) { # TODO: experimental code
     $err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
     warn STR_ERROR, "$err" if ($err ne "");
@@ -7153,6 +7153,21 @@ user documentation please see o-saft-man.pm
 
 
 === Annotations, Internal Notes ===
+
+== Perl:import include ==
+    Perl's recommend way to import modules is the `use' or `require' statement
+    Both methods have the disadvantage that this scripts fails  if a requested
+    module is missing.  The script fails immediately at startup if modules are
+    loaded with `use', or at runtime id loaded with `require'.
+    One goal is to be able to run on  ancient or incomplete configured systems
+    too. Hence we try to load all modules with our own function  _load_file(),
+    which uses `require' to load the module at runtime. This way it's possible
+    to selectively disable just some functionality if loading of a module fails
+    for various reasons (i.e. wrong version).
+    Perl's `use autouse' is also not possible, as to much functions need to be
+    declared for that pragma then.
+    Unfortunately some common Perl modules resist to be loaded with `require'.
+    They are still imported using  use  .
 
 == Note:SSL protocol versions ==
     The phrases 'SSL protocol versions', 'SSL protocols' or simply 'protocols'
