@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.600 17/03/15 00:39:56",
+    SID         => "@(#) yeast.pl 1.601 17/03/15 08:28:49",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3390,6 +3390,7 @@ sub checkdates($$) {
         last MAXAGE_CHECK if (!_is_do('sts_expired'));
         $txt = "<<need Time::Local module for this check>>";
         last MAXAGE_CHECK if (!eval {require Time::Local;});
+        $txt = "";  # reset
         # compute epoch timestamp from 'after'
         my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
         my $maxage = $data{'hsts_maxage'}->{val}($host);
