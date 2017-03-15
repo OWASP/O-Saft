@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.601 17/03/15 08:28:49",
+    SID         => "@(#) yeast.pl 1.602 17/03/15 09:00:49",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1756,6 +1756,7 @@ sub _check_modules()    {
         'IO::Socket::SSL'   => "1.37",
         'Net::SSLeay'       => "1.49",
         'Net::DNS'          => "0.65",
+        'Time::Local'       => "1.23",
         # to simulate various error conditions, simply modify the module name
         # and/or its expected version in above table;  these values are never
         # used elsewhere
@@ -1788,7 +1789,8 @@ sub _check_modules()    {
         printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
     }
     foreach my $mod (keys %expected_versions) {
-        next if (($cfg{'need_netdns'} == 0) and ($mod eq "Net::DNS"));# don't complain if not used
+        next if (($cfg{'need_netdns'}    == 0) and ($mod eq "Net::DNS"));# don't complain if not used
+        next if (($cfg{'need_timelocal'} == 0) and ($mod eq "Time::Local"));# -"-
         no strict 'refs'; ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
             # avoid: Can't use string ("Net::DNS::VERSION") as a SCALAR ref while "strict refs" in use
         my $expect = $expected_versions{$mod};
@@ -3380,17 +3382,14 @@ sub checkdates($$) {
     # Unfortunately there exist  no simple method to convert a human readable
     # timestamps (like certificate's  after) into epoch timestamp format.
     # Perl's  Time::Local module is used for that in the hope that it is part
-    # of most perl installations. If it's missing, we give up on checking the
-    # time difference. That's why we use eval() to load the Time::Local modul
-    # at runtime and not at startup with use.
+    # of most perl installations. Existance of Time::Local module was already
+    # done at startup with and +sts_expired disabled if missing.
     MAXAGE_CHECK: {
         $txt = $text{'no-STS'};
         last MAXAGE_CHECK if ($data{'https_sts'}->{val}($host) eq "");
         $txt = STR_UNDEF;
         last MAXAGE_CHECK if (!_is_do('sts_expired'));
-        $txt = "<<need Time::Local module for this check>>";
-        last MAXAGE_CHECK if (!eval {require Time::Local;});
-        $txt = "";  # reset
+        $txt = "";
         # compute epoch timestamp from 'after'
         my $ts = Time::Local::timelocal(reverse(split(/:/, $until[2])), $until[1], $u_mon - 1, $until[3]);
         my $maxage = $data{'hsts_maxage'}->{val}($host);
@@ -6287,6 +6286,7 @@ if (_is_do('list')) {
 if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs_cipherall') if (!_is_do('pfs_cipherall')); }
 
 if (_is_do('version') or ($cfg{'usemx'} > 0)) { $cfg{'need_netdns'} = 1; }
+if (_is_do('version') or (_is_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
 
 # set environment
 # Note:  openssl  has no option to specify the path to its  configuration
@@ -6379,6 +6379,14 @@ if ($cfg{'need_netdns'} > 0) {
         warn STR_ERROR, "$err";
         warn STR_WARN,  "--mx disabled";
         $cfg{'usemx'} = 0;
+    }
+}
+if ($cfg{'need_timelocal'} > 0) {
+    $err = _load_file("Time/Local.pm", "Time module");
+    if ($err ne "") {
+        warn STR_ERROR, "$err";
+        warn STR_WARN,  "value for +sts_expired not applicable";
+        # TODO: need to remove +sts_expired from cfg{do}
     }
 }
 if (_is_do('cipherraw') or _is_do('version')
