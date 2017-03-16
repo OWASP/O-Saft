@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.171 17/03/10 12:31:35";
+my  $man_SID= "@(#) o-saft-man.pm 1.172 17/03/16 21:57:00";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4646,6 +4646,13 @@ KNOWN PROBLEMS
 
         Workaround: try to use same call again (no guarantee, unfortunatelly)
 # see Net::SSLinfo.pm for details
+
+    Odd number of elements in anonymous hash at Net/SSLinfo.pm line 1613.
+
+        This warning from perl have been observed  when the connection to the
+        target to check for supported ciphers cannot be established.
+
+        This message can be ignored.
 
     openssl: ...some/path.../libssl.so.1.0.0: no version information available (required by openssl)
 
