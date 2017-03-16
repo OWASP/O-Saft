@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.605 17/03/16 21:31:23",
+    SID         => "@(#) yeast.pl 1.606 17/03/16 21:44:39",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -591,7 +591,7 @@ my %check_cert = (  ## certificate data
     'dv'            => {'txt' => "Certificate Domain Validation (DV)"},
     'ev+'           => {'txt' => "Certificate strict Extended Validation (EV)"},
     'ev-'           => {'txt' => "Certificate lazy Extended Validation (EV)"},
-    'ocsp'          => {'txt' => "Certificate has OCSP Responder URL"},
+    'ocsp_uri'      => {'txt' => "Certificate has OCSP Responder URL"},
     'cps'           => {'txt' => "Certificate has Certification Practice Statement"},
     'crl'           => {'txt' => "Certificate has CRL Distribution Points"},
     'zlib'          => {'txt' => "Certificate has (TLS extension) compression"},
@@ -811,7 +811,7 @@ our %shorttexts = (
     'sernumber'     => "Size Serial Number",
     'sha2signature' => "Signature is SHA2",
     'rootcert'      => "Not root CA",
-    'ocsp'          => "OCSP supported",
+    'ocsp_uri'      => "OCSP URL",
     'ocsp_valid'    => "OCSP valid",
     'hassslv2'      => "No SSLv2",
     'hassslv3'      => "No SSLv3",
@@ -1001,7 +1001,6 @@ our %shorttexts = (
     'sigkey_len'    => "Signature Key Length",
     'sigkey_value'  => "Signature Key Value",
     'trustout'      => "Trusted",
-    'ocsp_uri'      => "OCSP URL",
     'ocspid'        => "OCSP Hashes",
     'ocsp_subject_hash' => "OCSP Subject Hash",
     'ocsp_public_hash'  => "OCSP Public Hash",
@@ -3422,7 +3421,7 @@ sub checkcert($$) {
     # $checks{'certfqdn'}->{val} ... done in checksni()
 
     $checks{'rootcert'}->{val}  = $data{'issuer'}->{val}($host) if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
-    $checks{'ocsp'}->{val}      = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
+    $checks{'ocsp_uri'}->{val}  = " " if ($data{'ocsp_uri'}->{val}($host) eq "");
     $checks{'cps'}->{val}       = " " if ($data{'ext_cps'}->{val}($host)  eq "");
     $checks{'crl'}->{val}       = " " if ($data{'ext_crl'}->{val}($host)  eq "");
 
@@ -4061,7 +4060,7 @@ sub check7525($$) {
     #    OCSP [RFC6960]
     #    The OCSP stapling extension defined in [RFC6961]
 
-    $val .= _get_text('missing', 'OCSP') if ($checks{'ocsp'}->{val}  ne "");
+    $val .= _get_text('missing', 'OCSP') if ($checks{'ocsp_uri'}->{val}  ne "");
     $val .= $checks{'ocsp_valid'}->{val};
     $val .= _get_text('missing', 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
     $val .= $checks{'crl_valid'}->{val};
