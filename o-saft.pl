@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.606 17/03/16 21:44:39",
-    STR_VERSION => "17.02.26",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.607 17/03/16 22:19:54",
+    STR_VERSION => "17.03.17",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
