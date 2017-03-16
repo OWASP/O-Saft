@@ -129,6 +129,13 @@
 --cfg_cmd=ciphercheck=selected strong_cipher null_cipher adh_cipher exp_cipher cbc_cipher des_cipher rc4_cipher edh_cipher pfs_cipher pfs_cipherall cnt_ciphers cnt_totals
 
 ###
+### define new command +ocsp
+###
+# Collection of all info and checkcommands related to OCSP data.
+#
+--cfg_cmd=ocsp=ocsp_subject_hash ocsp_public_hash ocsp_uri ocsp_valid len_ocsp
+
+###
 ### reconfigure list of check for special commands (+http +check ...)
 ###
 # The default behaviour to print the results is to loop over the list of hash
