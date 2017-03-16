@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.604 17/03/15 09:39:25",
+    SID         => "@(#) yeast.pl 1.605 17/03/16 21:31:23",
     STR_VERSION => "17.02.26",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2307,6 +2307,7 @@ sub __SSLinfo($$$)      {
 # TODO: move code for formatting to print*()
     if ($cfg{'format'} ne "raw") {
         $val =  "" if (!defined $val);  # avoid warnings
+        $val =~ s/^\s+//g;      # remove leading spaces
         $val =~ s/\n\s+//g;     # remove trailing spaces
         $val =~ s/\n/ /g;
         $val =~ s/\s\s+/ /g;    # remove multiple spaces
@@ -6919,6 +6920,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
         foreach my $ssl (@{$cfg{'version'}}) {
+            _y_CMD("ckecking ciphers for $ssl ...");
             _trace("ckecking ciphers for $ssl ...");
             my $__verbose   = $cfg{'verbose'};
                 # $cfg{'v_cipher'}  should only print cipher checks verbosely,
@@ -6999,7 +7001,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
 # }
     } else {
-        _warn("Can't make a connection to $host:$port; no initial data");
+        _warn("Can't make a connection to $host:$port; no initial data (compare with and without SNI not possible)");
     }
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
