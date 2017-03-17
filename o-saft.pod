@@ -1237,10 +1237,59 @@ Internal use for CGI mode only.
 
 =head3 --exitcode
 
-The exit status code will be greater 0, if any check returns  C<no>.
-In particular, the status code will be the number of C<no> checks.
+The exit status code will be greater 0, if any of following applies:
+
+=over
+
+=item * any check returns  C<no>
+
+=back
+
+=over
+
+=item * insecure protocols are available
+
+=back
+
+=over
+
+=item * insecure ciphers are supported
+
+=back
+
+=over
+
+=item * ciphers without PFS are supported (disable with --exitcode-cipher)
+
+=back
+
+In particular, the status code will be the total count of all these
+checks.
+
+Parts of these checks can be diasabled,  see  I<--exitcode-*>  options
+below.
 
 Functionality implemented experimental, may change in future.
+
+=head3 --exitcode-no-checks
+
+Do not count checks with result C<no> for  I<--exitcode> .
+
+=head3 --exitcode-no-low  --exitcode-no-weak  --exitcode-no-medium
+
+Do not count LOW, WEAK or MEDIUM security ciphers for  I<--exitcode> .
+
+=head3 --exitcode-no-ciphers
+
+Do not count any ciphers for  I<--exitcode> .
+
+=head3 --exitcode-no-ciphers
+
+Do not count any ciphers for  I<--exitcode> .
+
+=head3 --exitcode-no-pfs
+
+Do not count ciphers without PFS for  I<--exitcode> .
 
 =head3 --s_client
 
@@ -2319,6 +2368,12 @@ Note that  I<--v>  is different from  -v  (see above).
 
 Print remotely checked ciphers.
 
+=head3 --v-cipher --cipher-v
+
+Print remotely checked ciphers.
+In contrast to  I<--v> I<--v>  above,  this just prints the ciphers while
+while being checked, but no other verbose messages.
+
 =head3 --trace
 
 Print debugging messages.
@@ -2740,6 +2795,13 @@ Checking the TLS extension C<tls-unique> is not yet implemented.
 =head3 Sweet32
 
 Currently (2016) we check for ciphers with CBC or CBC3 or DES or 3DES.
+
+=head3 Ticketbleed
+
+B<NOT YET IMPLEMENTED>
+Check if target is vulnerable to ticketbleed, means that it returns
+up to 31 random bytes from memory as Session Ticket, see CVE-2016-9244
+and https://filippo.io/Ticketbleed/ .
 
 =head2 Target (server) Configuration and Support
 
@@ -3898,6 +3960,13 @@ Error reported by some Net::SSLeay versions. Reason may be a timeout.
 This error cannot be omitted or handled properly.
 
 Workaround: try to use same call again (no guarantee, unfortunatelly)
+
+=head2 Odd number of elements in anonymous hash at Net/SSLinfo.pm line 1613.
+
+This warning from perl have been observed  when the connection to the
+target to check for supported ciphers cannot be established.
+
+This message can be ignored.
 
 =head2 openssl: ...some/path.../libssl.so.1.0.0: no version information available (required by openssl)
 
@@ -5630,7 +5699,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 16.12.16
+@(#) 17.03.17
 
 =head1 AUTHOR
 
@@ -5785,6 +5854,12 @@ authenticated and encrypted)
 =over
 
 =item * vulnerabilities
+
+=back
+
+=over
+
+=item ** Ticketbleed
 
 =back
 
