@@ -41,7 +41,7 @@
 #?
 # -----------------------------------------------------------------------------
 
-  SID="@(#) o-saft_bench 1.13 16/12/19 13:03:07"
+  SID="@(#) o-saft_bench 1.14 17/03/17 09:58:31"
 
 
   ich=${0##*/}
@@ -56,10 +56,11 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0; exit 0; ;;
-	'+VERSION)	echo "1.13"; ;;
+	'+VERSION')	echo "1.14"; ;;
 	*)	host="$1"; ;;
 	esac
 done
+ echo ego
 
 (echo
  echo -n "# " && date
