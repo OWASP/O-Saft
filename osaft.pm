@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.01.11',  # official version number of tis file
+    OSAFT_VERSION   => '17.03.17',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.84 17/03/15 08:40:57',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.85 17/03/17 09:22:00',
 
 };
 
@@ -2100,7 +2100,7 @@ sub sort_cipher_names   {
         # print warning if above algorithm misses ciphers; uses perl's  warn()
         # instead of our _warn() to clearly inform the user that the code here
         # needs to be fixed
-        warn STR_WARN . "missing ciphers in sorted list: $num < $cnt";
+        warn STR_WARN . "missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
         #dbx# print "## ".@sorted . " # @ciphers";
     }
     return @sorted;
