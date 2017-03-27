@@ -128,6 +128,7 @@ exec wish "$0" ${1+"$@"}
 #?      --img   use images as defined in o-saft-img.tcl for buttons
 #?              (not recommended on Mac OS X, because Aqua has nice buttons)
 #.      --tip   use own tooltip
+#?      --load=FILE read FILE and show in result TAB
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
 #?
@@ -295,7 +296,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.134 Winter Edition 2016
+#?      @(#) 1.135 Winter Edition 2016
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -362,8 +363,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.134 17/03/14 23:33:42 Sommer Edition 2016}
-set cfg(VERSION) {1.134}
+set cfg(SID)    {@(#) o-saft.tcl 1.135 17/03/28 00:21:39 Sommer Edition 2016}
+set cfg(VERSION) {1.135}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -374,6 +375,7 @@ set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
 set cfg(TKPOD)  {O-Saft};               # name of external viewer executable
                                         # O-Saft means built-in
 set cfg(HELP)   "";                     # O-Saft's complete help text
+set cfg(files)  {};                     # files to be loaded at startup --load
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -2220,7 +2222,11 @@ proc osaft_save   {type nr} {
 proc osaft_load   {cmd} {
     #? load results from file and create a new TAB for it
     global cfg tab
-    set name [tk_getOpenFile -title "$cfg(TITLE): [get_tipp loadresult]"]
+    if {$cmd eq "Load"} {
+        set name [tk_getOpenFile -title "$cfg(TITLE): [get_tipp loadresult]"]
+    } else {
+        set name $cmd
+    }
     if {$name eq ""} { return }
     update_cursor watch
     incr cfg(EXEC)
@@ -2322,6 +2328,7 @@ foreach arg $argv {
         {--d}       { incr  cfg(DEBUG);    }
         {--v}       { set   cfg(VERB)   1; }
         {--img*}    { set   cfg(bstyle) "image"; set optimg 1; }
+        --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
         {--text}    { set   cfg(bstyle) "text";  }
         {--tip}     { set   cfg(TIP)    1; }
         {--h}       -
@@ -2482,12 +2489,17 @@ create_host $w
 
 _dbx " hosts: $hosts(0)"
 
-
 ## apply themes
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.134"
+update_status "o-saft.tcl 1.135"
+
+## load files, if any
+foreach f $cfg(files) {
+    if {![file exists $f]} { continue }
+    osaft_load $f
+}
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
