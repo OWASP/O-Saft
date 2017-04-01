@@ -136,6 +136,14 @@
 --cfg_cmd=ocsp=ocsp_subject_hash ocsp_public_hash ocsp_uri ocsp_valid len_ocsp
 
 ###
+### define new command +fingerprints
+###
+# +ciphers shows which ciphers are accepted/supported and shows the severity.
+# This command summarizes the other cipher checks.
+#
+--cfg_cmd=fingerprints=fingerprint_type fingerprint fingerprint_hash fingerprint_md5 fingerprint_sha1 fingerprint_sha2 fp_not_md5
+
+###
 ### reconfigure list of check for special commands (+http +check ...)
 ###
 # The default behaviour to print the results is to loop over the list of hash
