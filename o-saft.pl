@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.607 17/03/16 22:19:54",
+    SID         => "@(#) yeast.pl 1.608 17/04/01 11:09:49",
     STR_VERSION => "17.03.17",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -249,10 +249,11 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         #  NOTE: the purpose here is to *change the source array"
         @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
         @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
+        @rc_argv = grep{s/\s*(--?)/$1/} @rc_argv;   # remove leading spaces for options
         ## use critic
         close($rc);
         push(@argv, @rc_argv);
-        #dbx# _dbx ".RC: " . join(" ", @rc_argv) . "\n";
+        #_dbx ".RC: " . join(" ", @rc_argv) . "\n";
     } else {
         _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);;
     }
