@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.608 17/04/01 11:09:49",
-    STR_VERSION => "17.03.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.609 17/04/02 08:04:36",
+    STR_VERSION => "17.04.02",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1807,7 +1807,7 @@ sub _check_modules()    {
         if ($v < $expect) {
             $ok = "no";
             $ok = "missing" if ($v == 0);
-            # use warn() not _warn() here, see CONCEPTS
+            # use warn() not _warn() here, SEE Perl:warn
             warn STR_WARN, "ancient $mod $v < $expect detected;";
             # TODO: not sexy: warnings are inside tabular data for --v
         }
@@ -1853,7 +1853,7 @@ sub _init_openssldir    {
         if (-e "$dir/certs") {
             $capath = "$dir/certs";
         } else {    # no directory found, add path to common paths as last resort
-            print STR_WARN, "'openssl version -d' returned: '$openssldir'; ca_path not set .\n";
+            print STR_WARN, "'openssl version -d' returned not existing: '$openssldir'; ca_path not set .\n";
             unshift(@{$cfg{'ca_paths'}}, $dir); # dirty hack (but dosn't harm:)
         }
     }
@@ -5214,7 +5214,7 @@ sub __SSLeay() {
     if (1.49 > $Net::SSLeay::VERSION) {
         my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
            $txt .= " cannot compare SSLeay with openssl version";
-        warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
+        warn STR_WARN, $txt;            # not _warn(), SEE Perl:warn
         return "$Net::SSLeay::VERSION";
     } else {
         return Net::SSLeay::SSLeay();
@@ -6351,6 +6351,7 @@ if ($cfg{'exec'} == 0) {
 
 #| add openssl-specific path for CAs
 #| -------------------------------------
+
 if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
     $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
 }
@@ -6420,34 +6421,44 @@ _check_modules();
 
 #| check if used software supports SNI properly
 #| -------------------------------------
+# these checks print warnings with warn() not _warn(), SEE Perl:warn
 if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
 $typ  = "ancient version ## does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled;";
-if ($IO::Socket::SSL::VERSION < 1.90) {
-    if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
-        $cfg{'usesni'} = 0;
-        my $txt = $typ; $txt =~ s/##/IO::Socket::SSL $IO::Socket::SSL::VERSION < 1.90/;
-        warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
-        _hint("--force-openssl can be used to disable this check");
+if (defined $IO::Socket::SSL::VERSION) {
+    if ($IO::Socket::SSL::VERSION < 1.90) {
+        if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
+            $cfg{'usesni'} = 0;
+            my $txt = $typ; $txt =~ s/##/IO::Socket::SSL $IO::Socket::SSL::VERSION < 1.90/;
+            warn STR_WARN, $txt;
+            _hint("--force-openssl can be used to disable this check");
+        }
     }
+} else {
+    warn STR_WARN, "unknown version of IO::Socket detected";
 }
-if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
-    # same as  IO::Socket::SSL->can_client_sni()
-    # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
-    if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
-        $cfg{'usesni'} = 0;
-        my $v   = Net::SSLeay::OPENSSL_VERSION_NUMBER();
-        my $txt = $typ; $txt =~ s/##/openssl $v < 1.0.0/;
-        warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
-        _hint("--force-sni can be used to disable this check");
+if (eval{Net::SSLeay::OPENSSL_VERSION_NUMBER();}) {
+    if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
+print "#####"; exit;
+        # same as  IO::Socket::SSL->can_client_sni()
+        # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
+        if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
+            $cfg{'usesni'} = 0;
+            my $v   = Net::SSLeay::OPENSSL_VERSION_NUMBER();
+            my $txt = $typ; $txt =~ s/##/openssl $v < 1.0.0/;
+            warn STR_WARN, $txt;
+            _hint("--force-sni can be used to disable this check");
+        }
     }
+} else {
+    warn STR_WARN, "unknown version of Net::SSLeay detected";
 }
 _trace(" cfg{usesni}: $cfg{'usesni'}");
 
 #| check if Net::SSLeay is usable
 #| -------------------------------------
 if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
-    die STR_ERROR, "Net::SSLeay not found, useless use of yet another SSL tool";
+    die STR_ERROR, "Net::SSLeay not found, useless use of SSL advanced forensic tool";
     # TODO: this is not really true, i.e. if we use openssl instead Net::SSLeay
 }
 if (1.49 > $Net::SSLeay::VERSION) { # WARNING about ancient version already printed elswhere
@@ -6456,7 +6467,7 @@ if (1.49 > $Net::SSLeay::VERSION) { # WARNING about ancient version already prin
     # but we shout out loud that the results are not reliable
     my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49";
        $txt .= "  may throw warnings and/or results may be missing;";
-    warn STR_WARN, $txt;            # not _warn(), see CONCEPTS
+    warn STR_WARN, $txt;            # not _warn(), SEE Perl:warn
 }
 } # ! +cipherraw
 
@@ -6930,7 +6941,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
             $cfg{'verbose'} = $__verbose if ($__verbose != 2);
             # remove  protocol: in each item
-            foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; }
+            for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }
+            #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for perl > 5.12
                 # map({s/^[^:]*://} @supported); # is the perlish way
                 # but discarted by perlcritic, hence the less readable foreach
             foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
@@ -7156,6 +7168,18 @@ user documentation please see o-saft-man.pm
 
 === Annotations, Internal Notes ===
 
+    The annotations here describe  behaviours, observations, and alike,  which
+    lead to special program logic.  The intention is to have on central place,
+    where to do the documentation.
+    Up to now --2016-- this is an internal documentaion only.  It is planed to
+    be available for the user too, i.e. with --help .
+
+== Perl:warn ==
+    I.g. perl's warn() is not used, but our private _warn(). With  _warn() the
+    The messages can be suppressed with the  --no-warning  option.
+    However, some warnings should never be supressed, hence  warn() is used in
+    in rare cases. See also  CONCEPTS  (if it exists in our help texts).
+
 == Perl:import include ==
     Perl's recommend way to import modules is the `use' or `require' statement
     Both methods have the disadvantage that this scripts fails  if a requested
@@ -7189,6 +7213,12 @@ user documentation please see o-saft-man.pm
     _init_openssldir() gets the configured directory for the certificate files
     from the openssl executable. It is expected that openssl returns something
     like:  OPENSSLDIR: "/usr/local/openssl"
+
+    Some versions of openssl on windows may return "/usr/local/ssl", or alike,
+    which is most likely wrong. As the existance of the returned directoy will
+    be checked, this produces an  **WARNING  and unsets the ca_path.  However,
+    the used perl modules (i.e. Net::SSLeay)  may be compiled with a different
+    OPenSSL, and hence use their (compiled-in) private path to the certs.
 
     Note that the returned OPENSSLDIR is a base-directory where the cert files
     are found in the cert/ sub-directory. This cert/ is hardcoded herein.
