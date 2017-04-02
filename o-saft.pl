@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.609 17/04/02 08:04:36",
+    SID         => "@(#) yeast.pl 1.610 17/04/02 08:10:40",
     STR_VERSION => "17.04.02",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6426,7 +6426,7 @@ if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
 $typ  = "ancient version ## does not support SNI";
 $typ .= " or is known to be buggy; SNI disabled;";
 if (defined $IO::Socket::SSL::VERSION) {
-    if ($IO::Socket::SSL::VERSION < 1.90) {
+    if (1.90 > $IO::Socket::SSL::VERSION) {
         if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
             $cfg{'usesni'} = 0;
             my $txt = $typ; $txt =~ s/##/IO::Socket::SSL $IO::Socket::SSL::VERSION < 1.90/;
@@ -6439,7 +6439,6 @@ if (defined $IO::Socket::SSL::VERSION) {
 }
 if (eval{Net::SSLeay::OPENSSL_VERSION_NUMBER();}) {
     if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
-print "#####"; exit;
         # same as  IO::Socket::SSL->can_client_sni()
         # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
         if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
