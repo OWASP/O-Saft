@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.610 17/04/02 08:10:40",
+    SID         => "@(#) yeast.pl 1.611 17/04/02 08:53:21",
     STR_VERSION => "17.04.02",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6472,10 +6472,13 @@ if (1.49 > $Net::SSLeay::VERSION) { # WARNING about ancient version already prin
 
 #| check for supported SSL versions
 #| -------------------------------------
+my @list;
 _y_CMD("  check supported SSL versions ...");
-my @list = Net::SSLinfo::ssleay_methods();
+if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
+    @list = Net::SSLinfo::ssleay_methods();
     # method names do not literally match our version string, hence the
     # cumbersome code below
+}
 _trace("SSLeay methods: " . join(" ", @list));
 foreach my $ssl (@{$cfg{'versions'}}) {
     next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
@@ -7173,11 +7176,11 @@ user documentation please see o-saft-man.pm
     Up to now --2016-- this is an internal documentaion only.  It is planed to
     be available for the user too, i.e. with --help .
 
-== Perl:warn ==
+== Perl:warn _warn ==
     I.g. perl's warn() is not used, but our private _warn(). With  _warn() the
-    The messages can be suppressed with the  --no-warning  option.
-    However, some warnings should never be supressed, hence  warn() is used in
-    in rare cases. See also  CONCEPTS  (if it exists in our help texts).
+    The messages can be supressed with the  --no-warning option. However, some
+    warnings should never be supressed, hence warn() is used in in rare cases.
+    See also  CONCEPTS  (if it exists in our help texts).
 
 == Perl:import include ==
     Perl's recommend way to import modules is the `use' or `require' statement
