@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.614 17/04/04 15:40:00",
+    SID         => "@(#) yeast.pl 1.615 17/04/04 17:14:00",
     STR_VERSION => "17.04.02",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -604,7 +604,7 @@ my %check_cert = (  ## certificate data
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC5280"},
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
-    'modulus_size'  => {'txt' => "Certificate Public Key Modulus <16385 bits"},
+    'modulus_size_oldssl' => {'txt' => "Certificate Public Key Modulus <16385 bits"},
     'modulus_exp_65537' =>{'txt'=> "Certificate Public Key Modulus Exponent =65537"},
     'modulus_exp_oldssl'=>{'txt'=> "Certificate Public Key Modulus Exponent <65537"},
     'pub_encryption'=> {'txt' => "Certificate Public Key with Encryption"},
@@ -854,7 +854,7 @@ our %shorttexts = (
     'sweet32'       => "Safe to Sweet32",
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
-    'modulus_size'  => "Modulus <16385 bits",
+    'modulus_size_oldssl'  => "Modulus <16385 bits",
     'modulus_exp_65537' =>"Modulus Eexponent =65537",
     'modulus_exp_oldssl'=>"Modulus Eexponent <65537",
     'pub_encryption'=> "Public Key with Encryption",
@@ -3587,13 +3587,13 @@ sub checksizes($$) {
         $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001) or prime256v1
         if ($value =~ m/prime/i) {  # public key uses EC with primes
             $value =~ s/\n */ /msg;
-            $checks{'modulus_exp_65537'} ->{val}= "<<N/A $value>>";
-            $checks{'modulus_exp_oldssl'}->{val}= "<<N/A $value>>";
-            $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
+            $checks{'modulus_exp_65537'} ->{val}    = "<<N/A $value>>";
+            $checks{'modulus_exp_oldssl'}->{val}    = "<<N/A $value>>";
+            $checks{'modulus_size_oldssl'}->{val}   = "<<N/A $value>>";
         } else  {                   # only traditional exponent needs to be checked
             if ($value eq '<<openssl>>') {  # TODO: <<openssl>> from Net::SSLinfo
-                $checks{'modulus_exp_65537'} ->{val} = $text{'no-openssl'};
-                $checks{'modulus_exp_oldssl'}->{val} = $text{'no-openssl'};
+                $checks{'modulus_exp_65537'} ->{val}= $text{'no-openssl'};
+                $checks{'modulus_exp_oldssl'}->{val}= $text{'no-openssl'};
             } else {
                 $value =~ s/^(\d+).*/$1/;
                 if ($value =~ m/^\d+$/) {   # avoid perl warning "Argument isn't numeric" 
@@ -3606,9 +3606,9 @@ sub checksizes($$) {
             }
             $value = $data{'modulus'}->{val}($host); # value are hex digits
             if ($value eq '<<openssl>>') {
-                $checks{'modulus_size'} ->{val} = $text{'no-openssl'};
+                $checks{'modulus_size_oldssl'}->{val}   = $text{'no-openssl'};
             } else {
-                $checks{'modulus_size'} ->{val} = length($value) * 4 if ((length($value) * 4) > 16384);
+                $checks{'modulus_size_oldssl'}->{val}   = length($value) * 4 if ((length($value) * 4) > 16384);
             }
         }
         $value = $data{'serial_int'}->{val}($host);
@@ -3619,9 +3619,9 @@ sub checksizes($$) {
         $checks{'sernumber'}    ->{val} = $text{'no-openssl'};
         $checks{'len_sigdump'}  ->{val} = $text{'no-openssl'};
         $checks{'len_publickey'}->{val} = $text{'no-openssl'};
-        $checks{'modulus_size'} ->{val} = $text{'no-openssl'};
         $checks{'modulus_exp_65537'} ->{val} = $text{'no-openssl'};
         $checks{'modulus_exp_oldssl'}->{val} = $text{'no-openssl'};
+        $checks{'modulus_size_oldssl'}->{val}= $text{'no-openssl'};
     }
     return;
 } # checksizes
