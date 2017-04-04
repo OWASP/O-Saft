@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.175 17/04/04 17:21:50";
+my  $man_SID= "@(#) o-saft-man.pm 1.176 17/04/04 17:30:08";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3886,6 +3886,7 @@ CHECKS
 
         The modulus exponent should be = 65537 as it is a prime number and an
         easy to calculate exponent.
+        If the exponent is less than 65537, "Boradcast" attacks are possible.
 
         However, some (mainly historic) SSL implementations may have problems
         to connect because they are not able to do the crypt mathematics with
