@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.612 17/04/04 15:25:38",
+    SID         => "@(#) yeast.pl 1.613 17/04/04 15:34:05",
     STR_VERSION => "17.04.02",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -605,7 +605,7 @@ my %check_cert = (  ## certificate data
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
     'modulus_size'  => {'txt' => "Certificate Public Key Modulus <16385 bits"},
-    'modulus_exp_oldssl '=>{'txt'=> "Certificate Public Key Modulus Exponent <65537"},
+    'modulus_exp_oldssl'=>{'txt'=> "Certificate Public Key Modulus Exponent <65537"},
     'pub_encryption'=> {'txt' => "Certificate Public Key with Encryption"},
     'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
     'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
@@ -854,7 +854,7 @@ our %shorttexts = (
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'modulus_size'  => "Modulus <16385 bits",
-    'modulus_exp_oldssl '=>"Modulus Eexponent <65537",
+    'modulus_exp_oldssl'=>"Modulus Eexponent <65537",
     'pub_encryption'=> "Public Key with Encryption",
     'pub_enc_known' => "Public Key Encryption known",
     'sig_encryption'=> "Private Key with Encryption",
