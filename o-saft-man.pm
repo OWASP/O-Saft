@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.174 17/04/04 16:10:33";
+my  $man_SID= "@(#) o-saft-man.pm 1.175 17/04/04 17:21:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3983,6 +3983,7 @@ CHECKS
           * +sts_maxagexy       - yes if HSTS maxage > 1 year
           * +modulus_exp_65537  - Public Key Modulus Exponent =65537
           * +modulus_exp_oldssl - Public Key Modulus Exponent <65537
+          * +modulus_size_oldssl - Public Key Modulus <16385 bits
 
         For some details of these cjecks, please see the description above at
           Public Key Modulus Exponent size
