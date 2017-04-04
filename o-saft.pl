@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.613 17/04/04 15:34:05",
+    SID         => "@(#) yeast.pl 1.614 17/04/04 15:40:00",
     STR_VERSION => "17.04.02",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -605,6 +605,7 @@ my %check_cert = (  ## certificate data
     'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
     'modulus_size'  => {'txt' => "Certificate Public Key Modulus <16385 bits"},
+    'modulus_exp_65537' =>{'txt'=> "Certificate Public Key Modulus Exponent =65537"},
     'modulus_exp_oldssl'=>{'txt'=> "Certificate Public Key Modulus Exponent <65537"},
     'pub_encryption'=> {'txt' => "Certificate Public Key with Encryption"},
     'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
@@ -854,6 +855,7 @@ our %shorttexts = (
     'scsv'          => "SCSV not supported",
     'constraints'   => "Basic Constraints is false",
     'modulus_size'  => "Modulus <16385 bits",
+    'modulus_exp_65537' =>"Modulus Eexponent =65537",
     'modulus_exp_oldssl'=>"Modulus Eexponent <65537",
     'pub_encryption'=> "Public Key with Encryption",
     'pub_enc_known' => "Public Key Encryption known",
@@ -3585,16 +3587,20 @@ sub checksizes($$) {
         $value = $data{'modulus_exponent'}->{val}($host);  # i.e. 65537 (0x10001) or prime256v1
         if ($value =~ m/prime/i) {  # public key uses EC with primes
             $value =~ s/\n */ /msg;
+            $checks{'modulus_exp_65537'} ->{val}= "<<N/A $value>>";
             $checks{'modulus_exp_oldssl'}->{val}= "<<N/A $value>>";
             $checks{'modulus_size'}->{val}      = "<<N/A $value>>";
         } else  {                   # only traditional exponent needs to be checked
             if ($value eq '<<openssl>>') {  # TODO: <<openssl>> from Net::SSLinfo
+                $checks{'modulus_exp_65537'} ->{val} = $text{'no-openssl'};
                 $checks{'modulus_exp_oldssl'}->{val} = $text{'no-openssl'};
             } else {
                 $value =~ s/^(\d+).*/$1/;
                 if ($value =~ m/^\d+$/) {   # avoid perl warning "Argument isn't numeric" 
-                    $checks{'modulus_exp_oldssl'}->{val}= $value if ($value > 65536);
+                    $checks{'modulus_exp_65537'} ->{val}= $value if ($value != 65537);
+                    $checks{'modulus_exp_oldssl'}->{val}= $value if ($value >  65536);
                 } else {
+                    $checks{'modulus_exp_65537'} ->{val}= $text{'na'};
                     $checks{'modulus_exp_oldssl'}->{val}= $text{'na'};
                 }
             }
@@ -3614,6 +3620,7 @@ sub checksizes($$) {
         $checks{'len_sigdump'}  ->{val} = $text{'no-openssl'};
         $checks{'len_publickey'}->{val} = $text{'no-openssl'};
         $checks{'modulus_size'} ->{val} = $text{'no-openssl'};
+        $checks{'modulus_exp_65537'} ->{val} = $text{'no-openssl'};
         $checks{'modulus_exp_oldssl'}->{val} = $text{'no-openssl'};
     }
     return;
@@ -6133,6 +6140,7 @@ while ($#argv >= 0) {
     # do not match +fingerprints  in next line as it may be in .o-saft.pl
     if ($arg =~ /^\+fingerprint$p?(.{2,})$/)          { $arg = '+fingerprint_' . $1;} # alias:
     if ($arg =~ /^\+fingerprint$p?sha$/)              { $arg = '+fingerprint_sha1'; } # alais:
+    if ($arg =~ /^\+modulus$p?exponent$p?65537$/)     { $arg = '+modulus_exp_65537';  } # alias:
     if ($arg =~ /^\+modulus$p?exponent$p?size$/)      { $arg = '+modulus_exp_oldssl'; } # alias:
     if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
     if ($arg =~ /^\+public$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
