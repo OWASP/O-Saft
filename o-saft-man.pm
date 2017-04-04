@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.172 17/03/16 21:57:00";
+my  $man_SID= "@(#) o-saft-man.pm 1.174 17/04/04 16:10:33";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1778,6 +1778,9 @@ SYNOPSIS
 
         All  commands  and  options  can also be specified in a  rc-file, see
         RC-FILE  below.
+
+	I.g. all commands start with a  '+'  character and options start with
+        '-'  or  '--'  characters. Anything else is treated as target name.
 
 
 QUICKSTART
@@ -3881,9 +3884,16 @@ CHECKS
 
       Public Key Modulus Exponent size
 
-        The modulus exponent should be <= 65536 as some (mainly historic) SSL
-        implementations may have problems to connect.
+        The modulus exponent should be = 65537 as it is a prime number and an
+        easy to calculate exponent.
+
+        However, some (mainly historic) SSL implementations may have problems
+        to connect because they are not able to do the crypt mathematics with
+        exponenents larger than 65536.
 # if > 65536 then all clients usisng MS-SSL-stack will fail to connect
+
+        If ecliptive curves are used, the result for these checks is always 
+        'no (<<N/A ...)'.
 
       Sizes and Lengths of Certificate Settings
 
@@ -3956,6 +3966,35 @@ CHECKS
 
       Public Key Pins header
         TBD - to be described ...
+
+    Sizes
+
+        Mainly in the certificate various counts, lengths and sizes of values
+        are checked and reported. All commands for these checks start with
+        '+cnt_'  or  '+len_'.  Up to now, there is no  'yes'  or  'no'  value
+        for these checks.
+
+        Following commands will check the value to be in  a specific range to
+        become  'yes'  or  'no':
+          * +sts_maxage1d       - yes if HSTS maxage < 1 day
+          * +sts_maxage1m       - yes if HSTS maxage < 1 month
+          * +sts_maxage1y       - yes if HSTS maxage < 1 year
+          * +sts_maxage18       - yes if HSTS maxage < 18 weeks (5 months)
+          * +sts_maxagexy       - yes if HSTS maxage > 1 year
+          * +modulus_exp_65537  - Public Key Modulus Exponent =65537
+          * +modulus_exp_oldssl - Public Key Modulus Exponent <65537
+
+        For some details of these cjecks, please see the description above at
+          Public Key Modulus Exponent size
+
+        The recommendations for  DH parameters (RSA and ecliptice curve)  are
+        are checked as follows:
+          * +dh_512             - DH Parameter >= 512 bits
+          * +dh_2048            - DH Parameter >= 2048 bits
+          * +ecdh_256           - DH Parameter >= 256 bits (ECDH)
+          * +ecdh_512           - DH Parameter >= 512 bits (ECDH)
+        Note that only one of the checks  '+dh_*'  and  '+ecdh_*'  can return
+        'yes'.
 
     Compliances
 
