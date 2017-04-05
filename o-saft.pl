@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.615 17/04/04 17:14:00",
-    STR_VERSION => "17.04.02",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.616 17/04/05 12:38:37",
+    STR_VERSION => "17.04.05",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -3319,11 +3319,16 @@ sub checkciphers($$) {
 
 sub checkbleed($$) {
     #? check if target supports vulnerable TLS extension 15 (hearbeat)
+    # SEE Note:heartbleed
     my ($host, $port) = @_;
     _y_CMD("checkbleed() ". $cfg{'done'}->{'checkbleed'});
     $cfg{'done'}->{'checkbleed'}++;
     return if ($cfg{'done'}->{'checkbleed'} > 1);
-    $checks{'heartbleed'}->{val}  = _isbleed($host, $port);
+    my $bleed = _isbleed($host, $port);
+    if ($cfg{'ignorenoreply'} > 0) {
+        return if ($bleed =~ m/no reply/);
+    }
+    $checks{'heartbleed'}->{val}  = $bleed;
     return;
 } # checkbleed
 
@@ -5967,6 +5972,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--nocert')            { $cfg{'no_cert'}++;        }
     if ($arg eq  '--noignorecase')      { $cfg{'ignorecase'}= 0;    }
     if ($arg eq  '--ignorecase')        { $cfg{'ignorecase'}= 1;    }
+    if ($arg eq  '--noignorenoreply')   { $cfg{'ignorenoreply'} = 0;}
+    if ($arg eq  '--ignorenoreply')     { $cfg{'ignorenoreply'} = 1;}
     if ($arg eq  '--noexitcode')        { $cfg{'exitcode'}  = 0;    }
     if ($arg eq  '--exitcode')          { $cfg{'exitcode'}  = 1;    } # SEE Note:--exitcode
     if ($arg =~ /^--exitcodenochecks?/) { $cfg{'exitcode_checks'} = 0; } # -"-
@@ -7275,6 +7282,13 @@ user documentation please see o-saft-man.pm
     http://filippo.io/Heartbleed/
     https://github.com/proactiveRISK/Heartbleed
     https://www.cloudflarechallenge.com/heartbleed
+    See also "--ignore-no-reply" description in o-saft-man.pm.
+
+    Apache cannot disable heartbeat, see:
+    ??
+
+    nginx cannot disable heartbeat, see:
+    https://www.nginx.com/blog/nginx-and-the-heartbleed-vulnerability/
 
 
 == Note:ticketbleed ==
