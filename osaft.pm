@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.86 17/04/04 16:59:38',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.87 17/04/05 12:32:52',
 
 };
 
@@ -1255,6 +1255,7 @@ our %cfg = (
     'exitcode_prot' => 1,       # 0: do not count protocols other than TLSv12 for --exitcode
     'exitcode_sizes'=> 1,       # 0: do not count size checks for --exitcode
     'ignorecase'    => 1,       # 1: compare some strings case insensitive
+    'ignorenoreply' => 1,       # 1: treat "no reply" as hertabeat not enabled
     'shorttxt'      => 0,       # 1: use short label texts
     'version'       => [],      # contains the versions to be checked
     'versions'      =>          # all supported versions; SEE Note:%prot (in o-saft.pl)
