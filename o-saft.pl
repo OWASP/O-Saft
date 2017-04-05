@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.616 17/04/05 12:38:37",
+    SID         => "@(#) yeast.pl 1.617 17/04/06 00:48:34",
     STR_VERSION => "17.04.05",          # <== our official version number
 };
 sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5582,7 +5582,7 @@ my $typ = 'HOST';
 push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
     $arg = shift @argv;
-    _y_ARG($arg);
+    _y_ARG("cli_arg= $arg");
     push(@{$dbx{argv}}, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
     push(@{$dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
 
@@ -6324,6 +6324,7 @@ $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); #
 
 _yeast_args();
 _vprintme();
+_y_EXIT("exit=ARGS  - options and arguments done");                                 
 
 #_init_openssldir();    # called later for performance reasons
 
