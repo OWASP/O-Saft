@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.176 17/04/04 17:30:08";
+my  $man_SID= "@(#) o-saft-man.pm 1.177 17/04/05 12:44:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3195,6 +3195,20 @@ OPTIONS
           Checks are done case sensitive. Default: case insensitive.
           Currently only checks according CN, alternate names in the target's
           certificate compared to the given hostname are effected.
+
+      --ignore-no-reply
+
+          When checking for the  TLS heartbeat extension,  the server may not
+          respond at all, which would result in a  "no reply"  message.  This
+          marks the check for  +heartbleed  as 'no'.
+          I.g.  a server is  not vulnerable to the  heartbleed attack  if the
+          TLS heartbeat extension is disabled.  Hence the  check result  'no' 
+          may be mis-leading.  This option  treats the  "no reply"  result as
+          "not vulnerable" and returns  'yes'  then.
+
+          Note: if the server does not respond for this check,  does not mean
+          that the heartbeat extension is switched off. So if unsure, disable
+          this lazy check with  --no-ignore-no-reply .
 
     Options for output format
 
