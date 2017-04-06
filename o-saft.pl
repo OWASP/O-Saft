@@ -52,10 +52,10 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.617 17/04/06 00:48:34",
+    SID         => "@(#) yeast.pl 1.618 17/04/07 00:26:49",
     STR_VERSION => "17.04.05",          # <== our official version number
 };
-sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
+sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
     my @txt = @_;
     if ((grep{/(?:--trace.*time)/i} @ARGV) > 0) {
@@ -63,20 +63,20 @@ sub _y_TIME(@) { # print timestamp if --trace-time was given; similar to _y_CMD
     }
     return;
 }
-sub _y_EXIT($) { # exit if parameter matches given argument in @ARGV
+sub _yeast_EXIT($)  { # exit if parameter matches given argument in @ARGV
     my $txt =  shift;
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
     if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {
-        printf STDERR ("#o-saft.pl  _y_EXIT $txt\n");
+        printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
         exit 0;
     }
     return;
 }
 
 BEGIN {
-    _y_TIME("BEGIN{");
-    _y_EXIT("exit=BEGIN0 - BEGIN start");
+    _yeast_TIME("BEGIN{");
+    _yeast_EXIT("exit=BEGIN0 - BEGIN start");
     sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
@@ -105,10 +105,10 @@ BEGIN {
     if ((grep{/^(?:--|\+)VERSION/} @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
     # be smart to users if systems behave strange :-/
     print STDERR "**WARNING: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
-    _y_EXIT("exit=BEGIN1 - BEGIN end");
+    _yeast_EXIT("exit=BEGIN1 - BEGIN end");
 } # BEGIN
-_y_TIME("BEGIN}");                  # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
-_y_EXIT("exit=INIT0 - initialization start");
+_yeast_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
+_yeast_EXIT("exit=INIT0 - initialization start");
 
 use osaft;          # get most of our configuration; it's ok to die if missing
 
@@ -234,8 +234,8 @@ sub _load_file($$)      {
 
 #| read RC-FILE if any
 #| -------------------------------------
-_y_TIME("cfg{");
-_y_EXIT("exit=CONF0 - RC-FILE start");
+_yeast_TIME("cfg{");
+_yeast_EXIT("exit=CONF0 - RC-FILE start");
 if ((grep{/(?:--rc)$/i} @ARGV) > 0) {           # default RC-File
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
@@ -258,7 +258,7 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);;
     }
 }
-_y_EXIT("exit=CONF1 - RC-FILE end");
+_yeast_EXIT("exit=CONF1 - RC-FILE end");
 $cfg{'RC-ARGV'} = [@rc_argv];
 
 %{$cfg{'done'}} = (               # internal administration
@@ -1196,7 +1196,7 @@ foreach my $key (keys %data) {
 }
 push(@{$cfg{'cmd-info--v'}}, 'info--v');
 
-_y_TIME("cfg}");
+_yeast_TIME("cfg}");
 
 our %ciphers = (
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
@@ -1739,7 +1739,7 @@ if (defined $ENV{'LIBPATH'}) {
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
 
-_y_EXIT("exit=INIT1 - initialization end");
+_yeast_EXIT("exit=INIT1 - initialization end");
 usr_pre_file();
 
 #| definitions: internal functions
@@ -2418,7 +2418,7 @@ sub _istr02102($$)      {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-02102'}/);
     return "";
 } # _istr02102
-sub _istr02102_strict    {
+sub _istr02102_strict   {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     my $val = _istr02102($ssl, $cipher);
@@ -2428,7 +2428,7 @@ sub _istr02102_strict    {
     }
     return $val;
 } # _istr02102_strict
-sub _istr02102_lazy      {
+sub _istr02102_lazy     {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     my $val = _istr02102($ssl, $cipher);
@@ -3317,7 +3317,7 @@ sub checkciphers($$) {
     return;
 } # checkciphers
 
-sub checkbleed($$) {
+sub checkbleed($$)  {
     #? check if target supports vulnerable TLS extension 15 (hearbeat)
     # SEE Note:heartbleed
     my ($host, $port) = @_;
@@ -3332,7 +3332,7 @@ sub checkbleed($$) {
     return;
 } # checkbleed
 
-sub checkdates($$) {
+sub checkdates($$)  {
     # check validation of certificate's before and after date
     my ($host, $port) = @_;
     _y_CMD("checkdates() " . $cfg{'done'}->{'checkdates'});
@@ -3416,7 +3416,7 @@ sub checkdates($$) {
     return;
 } # checkdates
 
-sub checkcert($$) {
+sub checkcert($$)   {
     #? check certificate settings
     my ($host, $port) = @_;
     my ($value, $label);
@@ -3523,7 +3523,7 @@ sub checkcert($$) {
     return;
 } # checkcert
 
-sub checksni($$) {
+sub checksni($$)    {
     #? check if given FQDN needs to use SNI
     # sets $checks{'sni'}, $checks{'certfqdn'}
     my ($host, $port) = @_;
@@ -3559,7 +3559,7 @@ sub checksni($$) {
     return;
 } # checksni
 
-sub checksizes($$) {
+sub checksizes($$)  {
     #? compute some lengths and count from certificate values
     # sets %checks
     my ($host, $port) = @_;
@@ -3631,7 +3631,7 @@ sub checksizes($$) {
     return;
 } # checksizes
 
-sub check02102($$) {
+sub check02102($$)  {
     #? check if target is compliant to BSI TR-02102-2 2016-01
     # assumes that checkciphers() and checkdest() already done
     my ($host, $port) = @_;
@@ -3724,7 +3724,7 @@ sub check02102($$) {
     return;
 } # check02102
 
-sub check03116($$) {
+sub check03116($$)  {
     #? check if target is compliant to BSI TR-03116-4
     my ($host, $port) = @_;
     # BSI TR-03116-4 is similar to BSI TR-02102-2
@@ -3820,7 +3820,7 @@ sub check03116($$) {
     return;
 } # check03116
 
-sub check6125($$) {
+sub check6125($$)   {
     #? check if certificate identifiers are RFC 6125 compliant
     my ($host, $port) = @_;
     _y_CMD("check6125() " . $cfg{'done'}->{'check6125'});
@@ -3910,7 +3910,7 @@ sub check6125($$) {
     return;
 } # check6125
 
-sub check7525($$) {
+sub check7525($$)   {
     #? check if target is RFC 7525 compliant
     my ($host, $port) = @_;
     _y_CMD("check7525() " . $cfg{'done'}->{'check7525'});
@@ -4085,7 +4085,7 @@ sub check7525($$) {
     return;
 } # check7525
 
-sub checkdv($$) {
+sub checkdv($$)     {
     #? check if certificate is DV-SSL
     my ($host, $port) = @_;
     _y_CMD("checkdv() "   . $cfg{'done'}->{'checkdv'});
@@ -4143,7 +4143,7 @@ sub checkdv($$) {
     return;
 } # checkdv
 
-sub checkev($$) {
+sub checkev($$)     {
     #? check if certificate is EV-SSL
     my ($host, $port) = @_;
     _y_CMD("checkev() "   . $cfg{'done'}->{'checkev'});
@@ -4259,7 +4259,7 @@ sub checkev($$) {
     return;
 } # checkev
 
-sub checkroot($$) {
+sub checkroot($$)   {
     #? check if certificate is root CA
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkroot'}++;
@@ -4270,7 +4270,7 @@ sub checkroot($$) {
     return;
 } # checkroot
 
-sub checkprot($$) {
+sub checkprot($$)   {
     #? check anything related to SSL protocol versions
     my ($host, $port) = @_;
     my $ssl;
@@ -4311,7 +4311,7 @@ sub checkprot($$) {
     return;
 } # checkprot
 
-sub checkdest($$) {
+sub checkdest($$)   {
     #? check anything related to target and connection
     my ($host, $port) = @_;
     my $ciphers = shift;
@@ -4400,7 +4400,7 @@ sub checkdest($$) {
     return;
 } # checkdest
 
-sub checkhttp($$) {
+sub checkhttp($$)   {
     #? HTTP(S) checks
     my ($host, $port) = @_;
     my $key = "";
@@ -4470,7 +4470,7 @@ sub checkhttp($$) {
     return;
 } # checkhttp
 
-sub checkssl($$)  {
+sub checkssl($$)    {
     #? SSL checks
     my ($host, $port) = @_;
     my $ciphers = shift;
@@ -6093,13 +6093,14 @@ while ($#argv >= 0) {
                 # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
     #} --------+------------------------+---------------------------+----------
 
+    _y_ARG("option=  $arg") if ($arg =~ /^-/);
     next if ($arg =~ /^-/); # all options handled, remaining are ignored
         # TODO: means that targets starting with '-' are not possible,
         #       however, such FQDN are illegal
 
     #{ COMMANDS
-    my $p = qr/[._-]/;  # characters uses as separators in commands keys
-                        # this will always be uses as $p? below
+    my $p = qr/[._-]/;  # characters used as separators in commands keys
+                        # this will always be used as $p? below
     _y_ARG("command? $arg");
     # The following sequence of conditions is important: commands which are an
     # alias for another command are listed first. These aliases should contain
@@ -6254,13 +6255,14 @@ while ($#argv >= 0) {
         if ($port =~ m#.*?:\d+#) {                 # got a port too
             $port =~ s#(?:[^/]+/+)?([^/]*).*#$1#;  # match host:port
             $port =~ s#[^:]*:(\d+).*#$1#;
-            _y_ARG("port: $port");
+            _y_ARG("port=    $port");
         } else { # use previous port
             $port = $cfg{'port'};
         }
         $arg =~ s#(?:[^/]+/+)?([^/]*).*#$1#;       # extract host from URL
         $arg =~ s#:(\d+)##;
         push(@{$cfg{'hosts'}}, $arg . ":" . $port);
+        _y_ARG("host=    $arg");
         _yeast("host: $arg") if ($cfg{'trace'} > 0);
     }
 
@@ -6323,8 +6325,8 @@ $ENV{'OPENSSL_CONF'} = $cfg{'openssl_cnf'}  if (defined $cfg{'openssl_cnf'});  #
 $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); ## no critic qw(Variables::RequireLocalizedPunctuationVars
 
 _yeast_args();
+_yeast_EXIT("exit=ARGS  - options and arguments done");                                 
 _vprintme();
-_y_EXIT("exit=ARGS  - options and arguments done");                                 
 
 #_init_openssldir();    # called later for performance reasons
 
@@ -6375,7 +6377,7 @@ if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
     # TODO: probably search for a path from our list in $cfg{'ca_paths'}
 }
 
-_y_TIME("inc{");
+_yeast_TIME("inc{");
 
 local $\ = "\n";
 
@@ -6425,7 +6427,7 @@ if ($err ne "") {
     die  STR_ERROR, "$err"  if (! _is_do('version'));
     warn STR_ERROR, "$err";         # no reason to die for +version
 }
-_y_TIME("inc}");
+_yeast_TIME("inc}");
 
 #| check for required module versions
 #| -------------------------------------
@@ -6719,7 +6721,7 @@ _dbx "\n########### fix this place (empty cipher list) ########\n";
 } # _need_cipher or _need_default
 _v_print("cipher list: @{$cfg{'ciphers'}}");
 
-_y_EXIT("exit=MAIN  - start");
+_yeast_EXIT("exit=MAIN  - start");
 usr_pre_main();
 
 #| main: do the work for all targets
@@ -6786,7 +6788,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         $cfg{'port'}  = $port;  #
         $cfg{'host'}  = $host;
     }
-    _y_EXIT("exit=HOST0 - perform host start");
+    _yeast_EXIT("exit=HOST0 - perform host start");
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host: $host {\n");
     _resetchecks();
@@ -7164,13 +7166,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
-    _y_EXIT("exit=HOST1 - perform host end");
+    _yeast_EXIT("exit=HOST1 - perform host end");
 
 } # foreach host
 
 usr_pre_exit();
 _yeast_exit();
-_y_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
+_yeast_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
 
 if ($cfg{'exitcode'}==0) {
     exit 0;
