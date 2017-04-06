@@ -100,6 +100,10 @@
 # https_body contains the HTML page, not important
 --ignore-output=https_body
 
+# temporary disbaled until proper implementation (04/2017)
+--ignore-output=alpn
+--ignore-output=hasalpn
+
 ###
 ### define new command +preload
 ###
