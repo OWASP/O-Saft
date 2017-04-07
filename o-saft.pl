@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.620 17/04/07 23:53:18",
-    STR_VERSION => "17.04.06",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.621 17/04/08 01:31:07",
+    STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -261,11 +261,13 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
 _yeast_EXIT("exit=CONF1 - RC-FILE end");
 $cfg{'RC-ARGV'} = [@rc_argv];
 
-%{$cfg{'done'}} = (               # internal administration
+%{$cfg{'done'}} = (             # internal administration
         'hosts'     => 0,
         'dbxfile'   => 0,
         'rc-file'   => 0,
         'init_all'  => 0,
+        'ssl_failed'=> 0,       # local counter for SSL connection errors
+        'ssl_errors'=> 0,       # total counter for SSL connection errors
         'arg_cmds'  => [],      # contains all commands given as argument
          # all following need to be reset for each host, which is done in
          # _resetchecks()  by matching the key against ^check or ^cipher
@@ -2701,6 +2703,27 @@ sub _istls12only($$)    {
     return join(" ", @ret);
 } # _istls12only
 
+sub _is_ssl_error($$$)  {
+    # returns 1 if probaly a SSL connection error occoured; 0 otherwise
+    # increments counters in $cfg{'done'}
+    my ($anf, $end, $txt) = @_;
+    return 0 if (($end - $anf) <= $cfg{'sslerror'}->{'timeout'});
+    $cfg{'done'}->{'ssl_errors'}++; # total counter
+    $cfg{'done'}->{'ssl_failed'}++; # local counter
+    return 0 if ($cfg{'ssl_error'} <= 0);   # no action required
+    if ($cfg{'done'}->{'ssl_errors'} > $cfg{'sslerror'}->{'total'}) {
+        _warn("$txt after $cfg{'sslerror'}->{'total'} total errors");
+        _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
+        return 1;
+    }
+    if ($cfg{'done'}->{'ssl_failed'} > $cfg{'sslerror'}->{'max'}) {
+        _warn("$txt after $cfg{'sslerror'}->{'max'} max errors");
+        _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
+        return 1;
+    }
+    return 0;
+} # _is_ssl_error
+
 sub _getwilds($$)       {
     # compute usage of wildcard in CN and subjectAltname
     my ($host, $port) = @_;
@@ -2940,7 +2963,7 @@ sub ciphers_get($$$$)   {
 
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();       # return accepted ciphers
-    my $failed  = 0;        # SEE Note:--ssl-error
+    $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
     foreach my $c (@ciphers) {
         my $anf = time();
         my $supported = "";
@@ -2957,15 +2980,7 @@ sub ciphers_get($$$$)   {
             ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
         }
         $supported = "" if (not defined $supported);
-        $failed++ if ((time() - $anf) > $cfg{'sslerror'}->{'timeout'});
-	#_dbx "cipher: $c $failed";
-        if ($failed > $cfg{'sslerror'}->{'max'}) {
-            if ($cfg{'ssl_error'} > 0) {
-                _warn("$ssl: abort connection attemts after $cfg{'sslerror'}->{'max'} errors");
-                _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
-                last;
-            }
-        }
+        last if (_is_ssl_error($anf, time(), "$ssl: abort connection attemts") > 0);
         if (($c !~ /(:?HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
             if (($c !~ $supported)) {
                 # mismatch: name asked for and name returned by server
@@ -6940,7 +6955,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     if ((_need_default() > 0) or ($check > 0)) {
-        my $failed  = 0; # SEE Note:--ssl-error
+        $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
         _y_CMD("get default ..");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             next if (!defined $prot{$ssl}->{opt});
@@ -6951,14 +6966,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             $prot{$ssl}->{'weak_cipher'}    = _get_default($ssl, $host, $port, 'weak');
             $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
             # FIXME: there are 3 connections above, but only one is counted
-            $failed++ if ((time() - $anf) > $cfg{'sslerror'}->{'timeout'});
-            if ($failed > $cfg{'sslerror'}->{'max'}) {
-                if ($cfg{'ssl_error'} > 0) {
-                    _warn("$ssl: abort getting default cipher after $cfg{'sslerror'}->{'max'} errors");
-                    _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
-                    last;
-                }
-            }
+            last if (_is_ssl_error($anf, time(), "$ssl: abort getting default cipher") > 0);
             my $cipher  = $prot{$ssl}->{'strong_cipher'};
             $prot{$ssl}->{'pfs_cipher'}     = $cipher if ("" eq _ispfs($ssl, $cipher));
             ##if (_is_do('selected') and ($#{$cfg{'do'}} == 0)) {
@@ -7009,7 +7017,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 $checks{'cnt_totals'}->{val}++;
             }
         }
-        checkciphers($host, $port);
+        checkciphers($host, $port); # necessary to compute 'out-summary'
      }
 
     # check ciphers manually (required for +check also)
