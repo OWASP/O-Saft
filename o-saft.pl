@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.619 17/04/07 21:11:08",
+    SID         => "@(#) yeast.pl 1.620 17/04/07 23:53:18",
     STR_VERSION => "17.04.06",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2910,7 +2910,7 @@ sub _get_default($$$$)  {
         ($version, $cipher, $dh)= _useopenssl($ssl, $host, $port, $cipher_list);
            # NOTE: $ssl will be converted to corresponding option for openssl,
            # for example: DTLSv1 becomes -dtlsv1
-           # unfortunately openssl (or Net::SSLinfo) returns a cipher even if
+           # Unfortunately openssl (or Net::SSLinfo) returns a cipher even if
            # the protocoll is not supported. Reason (aka bug) yet unknown.
            # Hence the caller should ensure that openssl supports $ssl .
     }
@@ -2934,16 +2934,15 @@ sub _get_default($$$$)  {
 sub ciphers_get($$$$)   {
     #? test target if given ciphers are accepted, returns array of accepted ciphers
     my ($ssl, $host, $port, $arr) = @_;
-    my @ciphers = @{$arr};# ciphers to be checked
-    my $version = "";   # returned protocol version
-    my $dh      = "";   # returned DH parameters (not yet used)
+    my @ciphers = @{$arr};  # ciphers to be checked
+    my $version = "";       # returned protocol version
+    my $dh      = "";       # returned DH parameters (not yet used)
 
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
-    my @res     = ();      # return accepted ciphers
-    my $failed  = 0;
+    my @res     = ();       # return accepted ciphers
+    my $failed  = 0;        # SEE Note:--ssl-error
     foreach my $c (@ciphers) {
         my $anf = time();
-        my $end = $anf;
         my $supported = "";
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'use_md5cipher'}) {
@@ -2958,13 +2957,14 @@ sub ciphers_get($$$$)   {
             ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
         }
         $supported = "" if (not defined $supported);
-        # TODO: muss auch bei _get_default() gemacht werden
-        $end = time();
-        $failed++ if (($end - $anf) > 1);
+        $failed++ if ((time() - $anf) > $cfg{'sslerror'}->{'timeout'});
 	#_dbx "cipher: $c $failed";
-        if ($failed > 5) {
-            _warn("$ssl: abort connection attemts after 5 errors");
-            last;
+        if ($failed > $cfg{'sslerror'}->{'max'}) {
+            if ($cfg{'ssl_error'} > 0) {
+                _warn("$ssl: abort connection attemts after $cfg{'sslerror'}->{'max'} errors");
+                _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
+                last;
+            }
         }
         if (($c !~ /(:?HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
             if (($c !~ $supported)) {
@@ -5665,9 +5665,14 @@ while ($#argv >= 0) {
         if ($typ eq 'FILE_CIPHERS') { $cfg{'data'}->{'file_ciphers'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'FILE_PCAP')    { $cfg{'data'}->{'file_pcap'}    = $arg;$typ = 'HOST'; }
         if ($typ eq 'FILE_PEM')     { $cfg{'data'}->{'file_pem'}     = $arg;$typ = 'HOST'; }
-        if ($typ eq 'SSLRETRY') { $cfg{'sslhello'}->{'retry'}   = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'SSLTOUT')  { $cfg{'sslhello'}->{'timeout'} = $arg;     $typ = 'HOST'; }
-        if ($typ eq 'MAXCIPHER'){ $cfg{'sslhello'}->{'maxciphers'}= $arg;   $typ = 'HOST'; }
+        if ($typ eq 'SSLRETRY')     { $cfg{'sslhello'}->{'retry'}    = $arg;$typ = 'HOST'; }
+        if ($typ eq 'SSLTOUT')      { $cfg{'sslhello'}->{'timeout'}  = $arg;$typ = 'HOST'; }
+        if ($typ eq 'MAXCIPHER')    { $cfg{'sslhello'}->{'maxciphers'}=$arg;$typ = 'HOST'; }
+        if ($typ eq 'SSLERROR_MAX') { $cfg{'sslerror'}->{'max'}      = $arg;$typ = 'HOST'; }
+        if ($typ eq 'SSLERROR_TOT') { $cfg{'sslerror'}->{'total'}    = $arg;$typ = 'HOST'; }
+        if ($typ eq 'SSLERROR_DLY') { $cfg{'sslerror'}->{'delay'}    = $arg;$typ = 'HOST'; }
+        if ($typ eq 'SSLERROR_TOUT'){ $cfg{'sslerror'}->{'timeout'}  = $arg;$typ = 'HOST'; }
+        if ($typ eq 'SSLERROR_PROT'){ $cfg{'sslerror'}->{'per_prot'} = $arg;$typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}              = $arg;     $typ = 'HOST'; }
         if ($typ eq 'TLSDELAY') { $cfg{'starttls_delay'}        = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SLOWDELAY'){ $cfg{'slow_server_delay'}     = $arg;     $typ = 'HOST'; }
@@ -5730,7 +5735,7 @@ while ($#argv >= 0) {
                 _warn("unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
-        if ($typ eq 'CRANGE')    {
+        if ($typ eq 'CRANGE')   {
             if (1 == (grep{/^$arg$/} keys %{$cfg{'cipherranges'}})) {
                 $cfg{'cipherrange'} = $arg;
             } else {
@@ -6037,10 +6042,12 @@ while ($#argv >= 0) {
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
     if ($arg eq  '--norc')              {                           } # simply ignore
-    if ($arg eq  '--ssllazy')           { $cfg{'ssl_lazy'}  = 1;    } # ..
-    if ($arg eq  '--nossllazy')         { $cfg{'ssl_lazy'}  = 0;    } # ..
-    if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    } # ..
-    if ($arg =~ /^--sslv?2null$/i)      { $cfg{'nullssl2'}  = 1;    } # ..
+    if ($arg eq  '--sslerror')          { $cfg{'ssl_error'} = 1;    }
+    if ($arg eq  '--nosslerror')        { $cfg{'ssl_error'} = 0;    }
+    if ($arg eq  '--ssllazy')           { $cfg{'ssl_lazy'}  = 1;    }
+    if ($arg eq  '--nossllazy')         { $cfg{'ssl_lazy'}  = 0;    }
+    if ($arg =~ /^--nullsslv?2$/i)      { $cfg{'nullssl2'}  = 1;    }
+    if ($arg =~ /^--sslv?2null$/i)      { $cfg{'nullssl2'}  = 1;    }
     if ($arg eq  '--nodns')             { $cfg{'usedns'}    = 0;    }
     if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1;    }
     if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    }
@@ -6075,6 +6082,11 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?timeout$/)         { $typ = 'TIMEOUT';         }
     if ($arg =~ /^--nocertte?xt$/)      { $typ = 'CTXT';            }
     if ($arg =~ /^--sniname/i)          { $typ = 'SNINAME';         }
+    if ($arg =~ /^--sslerrormax/i)      { $typ = 'SSLERROR_MAX';    }
+    if ($arg =~ /^--sslerrortotal/i)    { $typ = 'SSLERROR_TOT';    }
+    if ($arg =~ /^--sslerrordelay/i)    { $typ = 'SSLERROR_DLY';    }
+    if ($arg =~ /^--sslerrortimeout/i)  { $typ = 'SSLERROR_TOUT';   }
+    if ($arg =~ /^--sslerrorperprot/i)  { $typ = 'SSLERROR_PROT';   }
     if ($arg eq  '--socketreuse')       { $cfg{'socket_reuse'}  = 1;}
     if ($arg eq  '--nosocketreuse')     { $cfg{'socket_reuse'}  = 0;}
     # options for Net::SSLhello
@@ -6928,14 +6940,25 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     if ((_need_default() > 0) or ($check > 0)) {
+        my $failed  = 0; # SEE Note:--ssl-error
         _y_CMD("get default ..");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             next if (!defined $prot{$ssl}->{opt});
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
+            my $anf = time();
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
             $prot{$ssl}->{'strong_cipher'}  = _get_default($ssl, $host, $port, 'strong');
             $prot{$ssl}->{'weak_cipher'}    = _get_default($ssl, $host, $port, 'weak');
             $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
+            # FIXME: there are 3 connections above, but only one is counted
+            $failed++ if ((time() - $anf) > $cfg{'sslerror'}->{'timeout'});
+            if ($failed > $cfg{'sslerror'}->{'max'}) {
+                if ($cfg{'ssl_error'} > 0) {
+                    _warn("$ssl: abort getting default cipher after $cfg{'sslerror'}->{'max'} errors");
+                    _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
+                    last;
+                }
+            }
             my $cipher  = $prot{$ssl}->{'strong_cipher'};
             $prot{$ssl}->{'pfs_cipher'}     = $cipher if ("" eq _ispfs($ssl, $cipher));
             ##if (_is_do('selected') and ($#{$cfg{'do'}} == 0)) {
@@ -7281,6 +7304,23 @@ user documentation please see o-saft-man.pm
     example (ouput from openssl):
     example Net::SSLeay:
 	Net::SSLeay::get_cipher(..)
+
+
+== Note:--ssl-error ==
+    The option --ssl-error in conjuction with the error counts --ssl-error-max
+    and --ssl-error-total controls wether to try to connect to the target even
+    if there are errors or timeouts. I.g. the used API IO::Socket:SSL, openssl
+    returns an error in $!. Unfortunately the error may be different according
+    the used version.  Hence the check herein  does not use the returned error
+    but relies on the time passed during the connection.  The assumtion (based
+    on experiance) is, that successful or rejected connection take less than a
+    second, even on slow connections.  If the connection cannot be established
+    (because not supported or blocked), we run into a timeout, which is always
+    more than 0, at least 1 second (see --timeout=SEC option).
+    Timeout cannot be set less than  one second.  Also measuring the times and
+    their difference is in seconds.  A more accurate time measurement requires
+    the Time::Local module, which we try to avoid.  Measureing within a second
+    is sufficent for these checks.
 
 
 == Note:%prot ==
