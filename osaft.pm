@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.88 17/04/07 21:26:57',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.89 17/04/07 23:50:11',
 
 };
 
@@ -1486,11 +1486,12 @@ hasalpn alpn npn session_protocol next_protocols https_protocols http_protocols 
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
-    'ssl-error'     => 1,       # stop connecting to target after ssl-error-max failures
-    'ssl-error' =>  {  # configurations for TCP SSL protocol
+    'ssl_error'     => 1,       # stop connecting to target after ssl-error-max failures
+    'sslerror' =>   {  # configurations for TCP SSL protocol
         'timeout'   => 1,       # timeout to receive ssl-answer
         'max'       => 5,       # max. consecutive errors
         'total'     => 10,      # max. overall errors
+                                # following are NOT YET fully implemented:
         'delay'     => 0,       # if > 0 continue trying to connect after this time
         'per_prot'  => 1,       # if > 0 detection and count are per SSL version
     },
