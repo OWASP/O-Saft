@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.03.17',  # official version number of tis file
+    OSAFT_VERSION   => '17.04.06',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.87 17/04/05 12:32:52',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.88 17/04/07 21:26:57',
 
 };
 
@@ -1486,7 +1486,15 @@ hasalpn alpn npn session_protocol next_protocols https_protocols http_protocols 
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
-    'sslhello' => {    # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
+    'ssl-error'     => 1,       # stop connecting to target after ssl-error-max failures
+    'ssl-error' =>  {  # configurations for TCP SSL protocol
+        'timeout'   => 1,       # timeout to receive ssl-answer
+        'max'       => 5,       # max. consecutive errors
+        'total'     => 10,      # max. overall errors
+        'delay'     => 0,       # if > 0 continue trying to connect after this time
+        'per_prot'  => 1,       # if > 0 detection and count are per SSL version
+    },
+    'sslhello' =>   {  # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 2,       # number of retry when timeout
         'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
