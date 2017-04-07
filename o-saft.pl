@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.618 17/04/07 00:26:49",
-    STR_VERSION => "17.04.05",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.619 17/04/07 21:11:08",
+    STR_VERSION => "17.04.06",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -2798,7 +2798,7 @@ sub _usesocket($$$$)    {
                 };
             }
         }
-    }) {    # eval succeded
+    }) {        # eval succeded
         if ($sslsocket) {
             # SEE Note:Selected Protocol
             $version = $sslsocket->get_sslversion() if ($IO::Socket::SSL::VERSION > 1.964);
@@ -2806,8 +2806,13 @@ sub _usesocket($$$$)    {
             $sslsocket->close(SSL_ctx_free => 1);
             _trace1("_usesocket: SSL version (for $ssl): " . $version);
         }
+    } else {    # eval failed: connect failed
+        # we may get hints in $! like:
+        #   * empty if cipher was not accepted
+        #   * contains an error string if the connection was rejected or there
+        #     was an error in IO::Socket::SSL (i.e. timeout)
+        _trace1("_usesocket: connection failed: $!");
     }
-    # else  # connect failed, cipher not accepted, or error in IO::Socket::SSL
     _trace1("_usesocket()\t= $cipher }");
     return $version, $cipher;
 } # _usesocket
@@ -2935,7 +2940,10 @@ sub ciphers_get($$$$)   {
 
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();      # return accepted ciphers
+    my $failed  = 0;
     foreach my $c (@ciphers) {
+        my $anf = time();
+        my $end = $anf;
         my $supported = "";
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'use_md5cipher'}) {
@@ -2950,6 +2958,14 @@ sub ciphers_get($$$$)   {
             ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
         }
         $supported = "" if (not defined $supported);
+        # TODO: muss auch bei _get_default() gemacht werden
+        $end = time();
+        $failed++ if (($end - $anf) > 1);
+	#_dbx "cipher: $c $failed";
+        if ($failed > 5) {
+            _warn("$ssl: abort connection attemts after 5 errors");
+            last;
+        }
         if (($c !~ /(:?HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
             if (($c !~ $supported)) {
                 # mismatch: name asked for and name returned by server
