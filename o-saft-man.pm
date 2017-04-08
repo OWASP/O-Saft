@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.180 17/04/08 14:48:25";
+my  $man_SID= "@(#) o-saft-man.pm 1.181 17/04/08 23:19:26";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3587,7 +3587,7 @@ OPTIONS
 
       --trace-time
 
-          Prints timestamp in trace output (implies --trace-cmd).
+          Prints trace output with timestamps.
 
       --trace=FILE
 
@@ -6159,7 +6159,7 @@ EXAMPLES
           $0 some.tld +fingerprint --format=raw
           $0 some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
 
-    Special for hunting problems with connections etc.
+    Specials for hunting problems with connections etc.
 
         * Do not read RC-FILE .o-saft.pl
           $0 +info some.tld --no-rc
@@ -6180,7 +6180,10 @@ EXAMPLES
         * Show internal argument processeing
           $0 +info --trace-arg some.tld
 
-        * Show internal control flow and timing
+        * Show internal control flow
+          $0 +info some.tld --trace-cmd
+
+        * Show internal timing
           $0 +info some.tld --trace-time
 
         * Show checking ciphers
