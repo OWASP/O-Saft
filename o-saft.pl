@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.622 17/04/08 14:17:03",
+    SID         => "@(#) yeast.pl 1.623 17/04/08 23:25:31",
     STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6318,7 +6318,6 @@ if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
     my $q = "'";
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
 }
-$cfg{'traceCMD'}++ if ($cfg{'traceTIME'} > 0);
 $verbose = $cfg{'verbose'};
 $warning = $cfg{'warning'};
 $legacy  = $cfg{'legacy'};
@@ -6413,7 +6412,6 @@ if ($cfg{'exec'} == 0) {
 
 #| add openssl-specific path for CAs
 #| -------------------------------------
-
 if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
     $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
 }
@@ -6472,6 +6470,7 @@ if ($err ne "") {
     warn STR_ERROR, "$err";         # no reason to die for +version
 }
 _yeast_TIME("inc}");
+_yeast_TIME("mod{");
 
 #| check for required module versions
 #| -------------------------------------
@@ -6710,6 +6709,8 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
+_yeast_TIME("mod}");
+
 #| first: all commands which do not make a connection
 #| -------------------------------------
 if (_is_do('list'))       { printciphers(); exit 0; }
@@ -6732,6 +6733,7 @@ usr_pre_cipher();
 
 #| get list of ciphers available for tests
 #| -------------------------------------
+_yeast_TIME("get{");
 if ((_need_cipher() > 0) or (_need_default() > 0)) {
     _y_CMD("  get cipher list ..");
     my $pattern = $cfg{'cipherpattern'};# default pattern
@@ -6764,6 +6766,7 @@ _dbx "\n########### fix this place (empty cipher list) ########\n";
     }
 } # _need_cipher or _need_default
 _v_print("cipher list: @{$cfg{'ciphers'}}");
+_yeast_TIME("get}");
 
 _yeast_EXIT("exit=MAIN  - start");
 usr_pre_main();
@@ -6823,6 +6826,8 @@ if ($fail > 0) {
     }
 }
 
+_yeast_TIME("hosts{");
+
 # run the appropriate SSL tests for each host (ugly code down here):
 $port = ($cfg{'port'}||"");     # defensive programming
 foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
@@ -6837,6 +6842,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _trace(" host: $host {\n");
     _resetchecks();
     printheader(_get_text('out-target', "$host:$port"), "");
+
+    _yeast_TIME("DNS{");
 
     # prepare DNS stuff
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
@@ -6903,7 +6910,10 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
     }
 
+    _yeast_TIME("DNS}");
+
     if (_is_do('cipherraw')) {
+        _yeast_TIME("cipherraw{");
         _y_CMD("+cipherraw");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
         foreach my $ssl (@{$cfg{'version'}}) {
@@ -6939,6 +6949,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                              (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
             Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
         }
+        _yeast_TIME("cipherraw}");
         next;
     } # cipherraw
 
@@ -6956,6 +6967,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     if ((_need_default() > 0) or ($check > 0)) {
+        _yeast_TIME("need_default{");
         $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
         _y_CMD("get default ..");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
@@ -6977,6 +6989,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             ##}
         }
         checkdefault($host, $port);
+        _yeast_TIME("need_default}");
     }
 
     if (_is_do('cipher_default') and ($#{$cfg{'do'}} == 0)) {
@@ -6987,6 +7000,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     if (_need_cipher() > 0) {
+        _yeast_TIME("need_cipher{");
         _y_CMD("  need_cipher ..");
         _y_CMD("  use socket ..")  if (0 == $cmd{'extciphers'});
         _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
@@ -7019,10 +7033,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             }
         }
         checkciphers($host, $port); # necessary to compute 'out-summary'
+        _yeast_TIME("need_cipher}");
      }
 
     # check ciphers manually (required for +check also)
     if (_is_do('cipher') or $check > 0) {
+        _yeast_TIME("cipher{");
         _y_CMD("+cipher");
         _trace(" ciphers: @{$cfg{'ciphers'}}");
         # TODO: for legacy==testsslserver we need a summary line like:
@@ -7052,11 +7068,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             printruler() if ($quick == 0);
           }
         }
+        _yeast_TIME("cipher}");
     } # cipher
 
     goto CLOSE_SSL if ((_is_do('cipher') > 0) and ($quick == 0));
 
     usr_pre_info();
+    _yeast_TIME("SNI{");
 
 # FIXME: some servers do not respond for following
 #        reason seams to be SSLv2 or SSLv3 without SNI
@@ -7094,12 +7112,15 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
 # FIXME:    } # usesni
 
+    _yeast_TIME("SNI}");
     usr_pre_open();
 
     # TODO dirty hack, check with dh256.tlsfun.de
     # checking for DH parameters does not need a default connection
     if (_is_do('cipher_dh')) {
+        _yeast_TIME("cipher-dh{");
         printciphers_dh($legacy, $host, $port);
+        _yeast_TIME("cipher-dh}");
         goto CLOSE_SSL;
     }
 
@@ -7123,6 +7144,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     usr_pre_cmds();
+    _yeast_TIME("prepare{");
 
     if (_is_do('dump')) {
         _y_CMD("+dump");
@@ -7156,6 +7178,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _trace(" checkssl }");
      }
 
+    _yeast_TIME("prepare}");
     usr_pre_print();
 
     if ($check > 0) {
@@ -7169,10 +7192,15 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     # print all required data and checks
     # NOTE: if key (aka given command) exists in %checks and %data it will be printed twice
+    _yeast_TIME("info{");
     printdata(  $legacy, $host, $port) if ($check == 0); # not for +check
+    _yeast_TIME("info}");
+    _yeast_TIME("checks{");
     printchecks($legacy, $host, $port) if ($info  == 0); # not for +info
+    _yeast_TIME("checks}");
 
     if ($cfg{'out_score'} > 0) { # no output for +info also
+        _yeast_TIME("score{");
         _y_CMD("scores");
         scoring($host, $port);
         # simple rounding in perl: $rounded = int($float + 0.5)
@@ -7200,6 +7228,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             printruler();
         }
         print "\n";
+        _yeast_TIME("score}");
     }
 
     CLOSE_SSL:
@@ -7217,6 +7246,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _yeast_EXIT("exit=HOST1 - perform host end");
 
 } # foreach host
+
+_yeast_TIME("hosts}");
 
 usr_pre_exit();
 _yeast_exit();
