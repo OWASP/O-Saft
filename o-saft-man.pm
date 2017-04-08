@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.178 17/04/07 19:26:36";
+my  $man_SID= "@(#) o-saft-man.pm 1.180 17/04/08 14:48:25";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2780,6 +2780,35 @@ OPTIONS
           Check your system for the proper name, i.e.:
               DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH.
 
+      --ssl-error
+
+          Stop trying to connect to target if  --ssl-error-max  erros occourd
+          sequntialy or if total amount of errors reaches  --ssl-error-total.
+
+          The connection to  a target may fail, or even block, due to various
+          resons, for example lost network at all, blocking at firewall, etc.
+          In particular when checking ciphers with  +cipher , this may result
+          in long delays until results are printed.
+          Using this option stops trying to do more connections to the target
+          when  --ssl-error-max  consecutive errors occoured, or if the total
+          amount of errors increases  --ssl-error-total.
+
+          Note that this may result in loss of information and/or checks.
+#     --ssl-error-delay=SEC        (default: 0).
+
+      --ssl-error-max=CNT
+
+          Max. amount of consecutive errors (default: 5).
+
+      --ssl-error-timeout=SEC
+
+          Timeout in seconds when a failed connection is treated as error and
+          then counted (default: 1).
+
+      --ssl-error-total=CNT
+
+          Max. total amount of errors (default: 10).
+
       --ssl-lazy
 
           I.g. this tools tries to identify available functionality according
@@ -2799,6 +2828,10 @@ OPTIONS
           haves, can be found in the source of  $0 ,
           see section starting at
               #| check for supported SSL versions
+
+      --timeout=SEC
+
+          Timeout in seconds when connecting to the target (default: 2).
 
 
 # following missing on owasp.org 'cause still not fully implemented
@@ -4779,8 +4812,8 @@ KNOWN PROBLEMS
     Performance Problems
 
         There are various reasons when the program responds slow, or seems to
-        hang. Beside the problems described below performance issues are most
-        likely a target-side problem. Most common reasons are:
+        hang. Performance issues are most likely a target-side problem.  Most
+        common reasons are:
 
           a) DNS resolver problems
              Try with  --no-dns
@@ -4799,6 +4832,10 @@ KNOWN PROBLEMS
 
           f) use of external openssl(1) executable
              Use  --no-openssl
+
+          g) target does not respond at all and/or blocks
+             Use  --ssl-error
+             For a detailed description, please see "Connection Problems".
 
         Other options which may help to get closer to the problem's cause:
         --timeout=SEC,  --trace,  --trace=cmd
@@ -4898,6 +4935,57 @@ LIMITATIONS
           * nextprotoneg        --no-nextprotoneg
           * reconnect           --no-reconnect
           * tlsextdebug         --no-tlsextdebug
+
+    Connection Problems
+
+        Sometimes the connection cannot be established. This may have various
+        reasons.  Unfortunaly this script seems to hang then.  In  particular
+        when checking for ciphers with  +cipher  or  +cipherall  . The reason
+        is most likely that the server does not respond to the TCP/IP request
+        and hence the script closes the connection after the configured time-
+        out (see  --timeout=SEC  option).
+
+        Continous connection attempts  can be inhibited with the  --ssl-error
+        option, which is set by default. Avoiding further connections results
+        in a loss of information and consequentely leading to wrong checks.
+
+        It is a trade-off to wait for all information done accurately,  or to
+        get the results quickly. The logic to stop connecting for --ssl-error
+        can be controlled with following additional options:
+          * --ssl-error-max=CNT     - max. continous errors
+          * --ssl-error-timeout=SEC - timeout when to treat a failure as error
+          * --ssl-error-total=CNT   - max. amount of errors
+
+        This means that no more connections are maid when more than
+          * --ssl-error-max errors occour sequentialy
+        or
+          * --ssl-error-total errors occoured
+
+        Examples:
+          * --ssl-error-max=3
+          * --ssl-error-timeout=6
+          * --ssl-error-total=6
+        no more connections are made if for example  any sequence of timeouts
+        occour:
+          0 5 2 2                   - --ssl-error-max matches
+          0 1 3 0 0 0 4 1 2 2 2     - --ssl-error-max matches
+          0 5 0 2 0 2 2 0 2 0 2     - --ssl-error-total matches
+
+        This allows to fine-tune the condition when to stop connecting to the
+        target. For example, continous but not consecutive timeouts may indi-
+        cate a bad or instable network connection, but not that the target to
+        be connected blocks. In such a case sequence of timeouts like follows
+        may be observed (assuming --ssl-error-max=3):
+          0 5 1 2 2 2 4 2 3 2 3 3 3 2
+                ^                 ^____ stop for --ssl-error-timeout=3
+                |______________________ stop for --ssl-error-timeout=2
+
+        On normal (even slow) network connections  dozens of  connections per 
+        second are usual, hence the timeout is always  0 or 1.  Based on that
+        experience  --ssl-error  is enabled and set with defaults as follows:
+          * --ssl-error-max=5
+          * --ssl-error-timeout=1
+          * --ssl-error-total=10
 
     Poor Systems
 
