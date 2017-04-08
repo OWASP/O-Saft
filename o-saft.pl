@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.621 17/04/08 01:31:07",
+    SID         => "@(#) yeast.pl 1.622 17/04/08 14:17:03",
     STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6099,6 +6099,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--sniname/i)          { $typ = 'SNINAME';         }
     if ($arg =~ /^--sslerrormax/i)      { $typ = 'SSLERROR_MAX';    }
     if ($arg =~ /^--sslerrortotal/i)    { $typ = 'SSLERROR_TOT';    }
+    if ($arg =~ /^--sslerrortotal(?:max)?/i){ $typ = 'SSLERROR_TOT';}
     if ($arg =~ /^--sslerrordelay/i)    { $typ = 'SSLERROR_DLY';    }
     if ($arg =~ /^--sslerrortimeout/i)  { $typ = 'SSLERROR_TOUT';   }
     if ($arg =~ /^--sslerrorperprot/i)  { $typ = 'SSLERROR_PROT';   }
@@ -7232,188 +7233,232 @@ __END__
 __DATA__
 user documentation please see o-saft-man.pm
 
+=pod
 
-=== Annotations, Internal Notes ===
+=encoding utf8                                                                 
 
-    The annotations here describe  behaviours, observations, and alike,  which
-    lead to special program logic.  The intention is to have on central place,
-    where to do the documentation.
-    Up to now --2016-- this is an internal documentaion only.  It is planed to
-    be available for the user too, i.e. with --help .
+=head1 Annotations, Internal Notes
 
-== Perl:warn _warn ==
-    I.g. perl's warn() is not used, but our private _warn(). With  _warn() the
-    The messages can be supressed with the  --no-warning option. However, some
-    warnings should never be supressed, hence warn() is used in in rare cases.
-    See also  CONCEPTS  (if it exists in our help texts).
+The annotations here describe  behaviours, observations, and alike,  which
+lead to special program logic.  The intention is to have on central place,
+where to do the documentation.
+Up to now --2016-- this is an internal documentaion only.  It is planed to
+be available for the user too, i.e. with --help .
 
-== Perl:import include ==
-    Perl's recommend way to import modules is the `use' or `require' statement
-    Both methods have the disadvantage that this scripts fails  if a requested
-    module is missing.  The script fails immediately at startup if modules are
-    loaded with `use', or at runtime id loaded with `require'.
-    One goal is to be able to run on  ancient or incomplete configured systems
-    too. Hence we try to load all modules with our own function  _load_file(),
-    which uses `require' to load the module at runtime. This way it's possible
-    to selectively disable just some functionality if loading of a module fails
-    for various reasons (i.e. wrong version).
-    Perl's `use autouse' is also not possible, as to much functions need to be
-    declared for that pragma then.
-    Unfortunately some common Perl modules resist to be loaded with `require'.
-    They are still imported using  use  .
-
-== Note:SSL protocol versions ==
-    The phrases 'SSL protocol versions', 'SSL protocols' or simply 'protocols'
-    are used through out the comments in the sources equal for  SSLv2,  SSLv3,
-    TLSv1 etc..
+It is written in POD format, because some tools analyzing the code want to
+"see" comments and documentation. We feed them. For more information about
+that, please see "woodoo" in o-saft-man.pm .
+Note that only POD's =head2 syntax is used. It marks a single annotation.
+The reference to such an annotation uses  SEE  in the code.
+All following text is supposed to be read by humans!
 
 
-== Note:alias ==
-    The code for parsing options and arguments uses some special syntax:
-    * following comment at end of the line:
-        # alias: any other text
-      is used for aliases of commands or options. These lines are extracted
-      by  --help=alias
+=head2 Perl:warn _warn
+
+I.g. perl's warn() is not used, but our private _warn(). With  _warn() the
+The messages can be supressed with the  --no-warning option. However, some
+warnings should never be supressed, hence warn() is used in in rare cases.
+See also  CONCEPTS  (if it exists in our help texts).
 
 
-== Note:openssl CApath ==
-    _init_openssldir() gets the configured directory for the certificate files
-    from the openssl executable. It is expected that openssl returns something
-    like:  OPENSSLDIR: "/usr/local/openssl"
+=head2 Perl:import include
 
-    Some versions of openssl on windows may return "/usr/local/ssl", or alike,
-    which is most likely wrong. As the existance of the returned directoy will
-    be checked, this produces an  **WARNING  and unsets the ca_path.  However,
-    the used perl modules (i.e. Net::SSLeay)  may be compiled with a different
-    OPenSSL, and hence use their (compiled-in) private path to the certs.
+Perl's recommend way to import modules is the `use' or `require' statement
+Both methods have the disadvantage that this scripts fails  if a requested
+module is missing.  The script fails immediately at startup if modules are
+loaded with `use', or at runtime id loaded with `require'.
 
-    Note that the returned OPENSSLDIR is a base-directory where the cert files
-    are found in the cert/ sub-directory. This cert/ is hardcoded herein.
+One goal is to be able to run on  ancient or incomplete configured systems
+too. Hence we try to load all modules with our own function  _load_file(),
+which uses `require' to load the module at runtime. This way it's possible
+to selectively disable just some functionality if loading of a module fails
+for various reasons (i.e. wrong version).
 
-
-== Note:Selected Protocol ==
-    'sslversion' returns protocol as used in our data structure (like TLSv12)
-    example (ouput from openssl):
-        New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES128-GCM-SHA256
-    example Net::SSLeay:
-        Net::SSLeay::version(..)
-
-    example (ouput from openssl):
-    'session_protocol' retruns string used by openssl (like TLSv1.2)
-        Protocol  : TLSv1.2
-
-    'fallback_protocol'
-        Note: ouput from openssl:       TLSv1.2
-        Note: output from Net::SSLeay:  TLSv1_2
+Perl's `use autouse' is also not possible, as to much functions need to be
+declared for that pragma then.
+Unfortunately some common Perl modules resist to be loaded with `require'.
+They are still imported using  use  .
 
 
-== Note:Selected Cipher ==
-    'selected' returns cipher as used in our data structure (like DHE-DES-CBC)
-    example (ouput from openssl):
-    example Net::SSLeay:
+=head2 Note:SSL protocol versions
+
+The phrases 'SSL protocol versions', 'SSL protocols' or simply 'protocols'
+are used through out the comments in the sources equal for  SSLv2,  SSLv3,
+TLSv1 etc..
+
+
+=head2 Note:alias
+
+The code for parsing options and arguments uses some special syntax:
+
+* following comment at end of the line:
+
+    # alias: any other text
+
+is used for aliases of commands or options. These lines are extracted
+  by  --help=alias
+
+
+=head2 Note:openssl CApath
+
+_init_openssldir() gets the configured directory for the certificate files
+from the openssl executable. It is expected that openssl returns something
+like:  OPENSSLDIR: "/usr/local/openssl"
+
+Some versions of openssl on windows may return "/usr/local/ssl", or alike,
+which is most likely wrong. As the existance of the returned directoy will
+be checked, this produces an  **WARNING  and unsets the ca_path.  However,
+the used perl modules (i.e. Net::SSLeay)  may be compiled with a different
+OPenSSL, and hence use their (compiled-in) private path to the certs.
+
+Note that the returned OPENSSLDIR is a base-directory where the cert files
+are found in the cert/ sub-directory. This cert/ is hardcoded herein.
+
+
+=head2 Note:Selected Protocol
+
+'sslversion' returns protocol as used in our data structure (like TLSv12)
+
+example (ouput from openssl):
+    New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES128-GCM-SHA256
+example Net::SSLeay:
+    Net::SSLeay::version(..)
+
+example (ouput from openssl):
+'session_protocol' retruns string used by openssl (like TLSv1.2)
+    Protocol  : TLSv1.2
+
+'fallback_protocol'
+    Note: ouput from openssl:       TLSv1.2
+    Note: output from Net::SSLeay:  TLSv1_2
+
+
+=head2 Note:Selected Cipher
+
+'selected' returns cipher as used in our data structure (like DHE-DES-CBC)
+example (ouput from openssl):
+example Net::SSLeay:
 	Net::SSLeay::get_cipher(..)
 
 
-== Note:--ssl-error ==
-    The option --ssl-error in conjuction with the error counts --ssl-error-max
-    and --ssl-error-total controls wether to try to connect to the target even
-    if there are errors or timeouts. I.g. the used API IO::Socket:SSL, openssl
-    returns an error in $!. Unfortunately the error may be different according
-    the used version.  Hence the check herein  does not use the returned error
-    but relies on the time passed during the connection.  The assumtion (based
-    on experiance) is, that successful or rejected connection take less than a
-    second, even on slow connections.  If the connection cannot be established
-    (because not supported or blocked), we run into a timeout, which is always
-    more than 0, at least 1 second (see --timeout=SEC option).
-    Timeout cannot be set less than  one second.  Also measuring the times and
-    their difference is in seconds.  A more accurate time measurement requires
-    the Time::Local module, which we try to avoid.  Measureing within a second
-    is sufficent for these checks.
+=head2 Note:--ssl-error
+
+The option --ssl-error in conjuction with the error counts --ssl-error-max
+and --ssl-error-total controls wether to try to connect to the target even
+if there are errors or timeouts. I.g. the used API IO::Socket:SSL, openssl
+returns an error in $!. Unfortunately the error may be different according
+the used version.  Hence the check herein  does not use the returned error
+but relies on the time passed during the connection.  The assumtion (based
+on experiance) is, that successful or rejected connection take less than a
+second, even on slow connections.  If the connection cannot be established
+(because not supported or blocked), we run into a timeout, which is always
+more than 0, at least 1 second (see --timeout=SEC option).
+
+Timeout cannot be set less than  one second.  Also measuring the times and
+their difference is in seconds.  A more accurate time measurement requires
+the Time::Local module, which we try to avoid.  Measureing within a second
+is sufficent for these checks.
+
+More descriptions are in the section  LIMITATIONS  of the man page, see
+   "Connection Problems"  there.
 
 
-== Note:%prot ==
-    using SSL/TLS protocols can either be done using %prot or $cfg{'versions'}
-    in contrast to "keys %prot"  $cfg{'versions'} is sorted according protocol
-    like: SSLv2 SSLv3 TLSv1 ...
+=head2 Note:%prot
+
+Using SSL/TLS protocols can either be done using %prot or $cfg{'versions'}
+in contrast to "keys %prot"  $cfg{'versions'} is sorted according protocol
+like: SSLv2 SSLv3 TLSv1 ...
 
 
-== Note:--exitcode ==
-    Ideas and discussions see also: https://github.com/OWASP/O-Saft/issues/52
-    By default  --exitcode  counts all settings considered weak or insecure.
-    This behaviour can be controlled with the  --exitcode-no-*  options.
+=head2 Note:--exitcode
+
+Ideas and discussions see also: https://github.com/OWASP/O-Saft/issues/52
+By default  --exitcode  counts all settings considered weak or insecure.
+This behaviour can be controlled with the  --exitcode-no-*  options.
 
 
-== Note:heartbleed ==
-    http://heartbleed.com/
-    http://possible.lv/tools/hb/
-    http://filippo.io/Heartbleed/
-    https://github.com/proactiveRISK/Heartbleed
-    https://www.cloudflarechallenge.com/heartbleed
-    See also "--ignore-no-reply" description in o-saft-man.pm.
+=head2 Note:heartbleed
 
-    Apache cannot disable heartbeat, see:
-    ??
+http://heartbleed.com/
+http://possible.lv/tools/hb/
+http://filippo.io/Heartbleed/
+https://github.com/proactiveRISK/Heartbleed
+https://www.cloudflarechallenge.com/heartbleed
+See also "--ignore-no-reply" description in o-saft-man.pm.
 
-    nginx cannot disable heartbeat, see:
-    https://www.nginx.com/blog/nginx-and-the-heartbleed-vulnerability/
+Apache cannot disable heartbeat, see:
+??
 
-
-== Note:ticketbleed ==
+nginx cannot disable heartbeat, see:
+https://www.nginx.com/blog/nginx-and-the-heartbleed-vulnerability/
 
 
-== Note:CGI mode
-    In CGI mode all options are passed with a trailing  =  even those which do
-    not have an argument (value). This means that options cannot be ignored in
-    general, because they may occour at least in CGI mode, i.e.  --cmd=  .
-    The trailing  =  can always be removed, empty values are not possible.
+=head2 Note:ticketbleed
 
 
-== Note:root-CA ==
-    some texts from: http://www.zytrax.com/tech/survival/ssl.html
-    The term Certificate Authority is defined as being an entity which signs
-    certificates in which the following are true:
-      * the issuer and subject fields are the same,
-      * the KeyUsage field has keyCertSign set
-      * and/or the basicConstraints field has the cA attribute set TRUE.
-    Typically, in chained certificates the root CA certificate is the topmost
-    in the chain but RFC 4210 defines a 'root CA' to be any issuer for which
-    the end-entity, for example, the browser has a certificate which was obtained
-    by a trusted out-of-band process. Since final authority for issuing any
-    certificate rest with this CA the terms and conditions of any intermediate
-    certificate may be modified by this entity.
+=head2 Note:CGI mode
 
-    Subordinate Authority:
-    may be marked as CAs (the extension BasicContraints will be present and cA will be set True)
+In CGI mode all options are passed with a trailing  =  even those which do
+not have an argument (value). This means that options cannot be ignored in
+general, because they may occour at least in CGI mode, i.e.  --cmd=  .
+The trailing  =  can always be removed, empty values are not possible.
 
-    Intermediate Authority (a.k.a. Intermediate CA):
-    Imprecise term occasionally used to define an entity which creates an
-    intermediate certificate and could thus encompass an RA or a subordinate CA.
 
-    Cross certificates (a.k.a. Chain or Bridge certificate):
-    A cross-certificate is one in which the subject and the issuer are not the
-    same but in both cases they are CAs (BasicConstraints extension is present and has cA set True).
+=head2 Note:root-CA
 
-    Intermediate certificates (a.k.a. Chain certificates):
-    Imprecise term applied to any certificate which is not signed by a root CA.
-    The term chain in this context is meaningless (but sounds complicated and
-    expensive) and simply indicates that the certificate forms part of a chain.
+Some texts from: http://www.zytrax.com/tech/survival/ssl.html
+The term Certificate Authority is defined as being an entity which signs
+certificates in which the following are true:
+  * the issuer and subject fields are the same,
+  * the KeyUsage field has keyCertSign set
+  * and/or the basicConstraints field has the cA attribute set TRUE.
 
-    Qualified certificates: Defined in RFC 3739
-    the term Qualified certificates relates to personal certificates (rather than
-    server certificates) and references the European Directive on Electronic Signature (1999/93/EC)
-    see check02102() above
+Typically, in chained certificates the root CA certificate is the topmost
+in the chain but RFC 4210 defines a 'root CA' to be any issuer for which
+the end-entity, for example, the browser has a certificate which was obtained
+by a trusted out-of-band process. Since final authority for issuing any
+certificate rest with this CA the terms and conditions of any intermediate
+certificate may be modified by this entity.
 
-    Multi-host certificates (aka wildcard certificates)
 
-    EV Certificates (a.k.a. Extended Certificates): Extended Validation (EV)
-    certificates are distinguished by the presence of the CertificatePolicies
-    extension containg a registered OID in the policyIdentifier field. 
-    see checkev() above
+Subordinate Authority:
+may be marked as CAs (the extension BasicContraints will be present and cA will be set True)
 
-    RFC 3280
-     4.2.1.10  Basic Constraints
-       X509v3 Basic Constraints:
-           cA:FALSE
-           pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
-    RFC 4158
 
+Intermediate Authority (a.k.a. Intermediate CA):
+Imprecise term occasionally used to define an entity which creates an
+intermediate certificate and could thus encompass an RA or a subordinate CA.
+
+
+Cross certificates (a.k.a. Chain or Bridge certificate):
+A cross-certificate is one in which the subject and the issuer are not the
+same but in both cases they are CAs (BasicConstraints extension is present and has cA set True).
+
+
+Intermediate certificates (a.k.a. Chain certificates):
+Imprecise term applied to any certificate which is not signed by a root CA.
+The term chain in this context is meaningless (but sounds complicated and
+expensive) and simply indicates that the certificate forms part of a chain.
+
+
+Qualified certificates: Defined in RFC 3739
+the term Qualified certificates relates to personal certificates (rather than
+server certificates) and references the European Directive on Electronic Signature (1999/93/EC)
+see check02102() above
+
+
+Multi-host certificates (a.k.a wildcard certificates)
+
+EV Certificates (a.k.a. Extended Certificates): Extended Validation (EV)
+certificates are distinguished by the presence of the CertificatePolicies
+extension containg a registered OID in the policyIdentifier field. 
+see checkev() above
+
+RFC 3280
+ 4.2.1.10  Basic Constraints
+   X509v3 Basic Constraints:
+       cA:FALSE
+       pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
+RFC 4158
+
+=cut
