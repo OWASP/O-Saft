@@ -3682,10 +3682,10 @@ sub _compileClientHelloExtensions ($$$$@) {
             $clientHello{'extension_reneg_len'}               = 0x0001; # Tbd: hier, oder zentrale Definition?!
             $clientHello{'extension_reneg_info_ext_len'}      = 0x00;   # Tbd: hier, oder zentrale Definition?!
 
-            $clientHello_extensions .= pack ("n n a[1]",
-                $clientHello{'extension_type_renegotiation_info'},      #n    = 0xff01
-                $clientHello{'extension_reneg_len'},                    #n    = 0x0001
-                $clientHello{'extension_reneg_info_ext_len'},           #a[1] = 0x00
+            $clientHello_extensions .= pack ("n n c",
+                $clientHello{'extension_type_renegotiation_info'},      #n = 0xff01
+                $clientHello{'extension_reneg_len'},                    #n = 0x0001
+                $clientHello{'extension_reneg_info_ext_len'},           #c = 0x00
             );
             _trace2 ("compileClientHello: reneg_info Extension added\n");
         } else {
