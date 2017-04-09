@@ -157,6 +157,7 @@ $Net::SSLhello::sni_name            = "1";# name to be used for SNI mode connect
 $Net::SSLhello::timeout             = 2;# time in seconds
 $Net::SSLhello::retry               = 3;# number of retry when timeout occurs
 $Net::SSLhello::usereneg            = 0;# secure renegotiation 
+$Net::SSLhello::use_signature_alg   = 1;# signature_algorithm: 0 (off), 1 (auto on if >=TLSv1.2, >=DTLS1.2), 2: always on
 $Net::SSLhello::useecc              = 1;# use 'Supported Elliptic' Curves Extension
 $Net::SSLhello::useecpoint          = 1;# use 'ec_point_formats' extension
 $Net::SSLhello::starttls            = 0;# 1= do STARTTLS
@@ -1154,6 +1155,7 @@ sub printParameters {
     print ("#SSLHello:                usesni=$Net::SSLhello::usesni\n")          if (defined($Net::SSLhello::usesni));
     print ("#SSLHello:          use_sni_name=$Net::SSLhello::use_sni_name\n")    if (defined($Net::SSLhello::use_sni_name));
     print ("#SSLHello:              sni_name=$Net::SSLhello::sni_name\n")        if (defined($Net::SSLhello::sni_name));
+    print ("#SSLHello:     use_signature_alg=$Net::SSLhello::use_signature_alg\n")  if (defined($Net::SSLhello::use_signature_alg));
     print ("#SSLHello:                useecc=$Net::SSLhello::useecc\n")          if (defined($Net::SSLhello::useecc));
     print ("#SSLHello:            useecpoint=$Net::SSLhello::useecpoint\n")      if (defined($Net::SSLhello::useecpoint));
     print ("#SSLHello:              starttls=$Net::SSLhello::starttls\n")        if (defined($Net::SSLhello::starttls));
@@ -3693,6 +3695,36 @@ sub _compileClientHelloExtensions ($$$$@) {
         }
     }
 
+    # extension_type_signature_algorithms
+    if (    ($Net::SSLhello::use_signature_alg >1)
+        || (($Net::SSLhello::use_signature_alg >0)
+            && (   (($record_version >= $PROTOCOL_VERSION{'TLSv12'})     && ($record_version  < $PROTOCOL_VERSION{'DTLSfamily'}))
+                || (($record_version >= $PROTOCOL_VERSION{'DTLSfamily'}) && ($record_version <= $PROTOCOL_VERSION{'DTLSv12'}))
+            )
+        ) ) { 
+        # use_signature_alg: 0 (off), 1(auto on if >=TLSv1.2, >=DTLS1.2), 2: always on
+        ### data for extension 'signature_algorithms'
+        $clientHello{'extension_type_signature_algorithms'}   = 0x000d; ##TBD hier, oder zentrale Definition?!
+        $clientHello{'extension_hash_algorithms_list'}        = ""
+            ."\x06\x01\x06\x02\x06\x03"                                 #SHA512: RSA/DSA/ECDSA
+            ."\x05\x01\x05\x02\x05\x03"                                 #SHA384: RSA/DSA/ECDSA
+            ."\x04\x01\x04\x02\x04\x03"                                 #SHA256: RSA/DSA/ECDSA
+            ."\x03\x01\x03\x02\x03\x03"                                 #SHA224: RSA/DSA/ECDSA
+            ."\x02\x01\x02\x02\x02\x03"                                 #SHA1:   RSA/DSA/ECDSA
+            ."";
+        $clientHello{'extension_hash_algorithms_list_len'}    = length ($clientHello{'extension_hash_algorithms_list'}); #30 = 0x1E
+        $clientHello{'extension_signature_algorithms_len'}    = $clientHello{'extension_hash_algorithms_list_len'} + 2;  #32 = 0x20
+
+        $clientHello_extensions .= pack ("n n n a[$clientHello{'extension_hash_algorithms_list_len'}]",
+            $clientHello{'extension_type_signature_algorithms'},        #n = 0x001d
+            $clientHello{'extension_signature_algorithms_len'},         #n
+            $clientHello{'extension_hash_algorithms_list_len'},         #n
+            $clientHello{'extension_hash_algorithms_list'},             #a[$clientHello{'extension_hash_algorithms_list_len'}]
+        );
+        _trace2 ("compileClientHello: signature_algorithms Extension added\n");
+    }
+
+    # extension elliptic_curves
     my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
     my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
 
