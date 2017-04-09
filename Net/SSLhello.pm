@@ -40,7 +40,7 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {
-    SSLHELLO_VERSION=> '17.03.02',
+    SSLHELLO_VERSION=> '17.04.09',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.20 17/03/03 11:26:20",
 };
