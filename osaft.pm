@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.89 17/04/07 23:50:11',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.90 17/04/10 17:56:00',
 
 };
 
@@ -1499,6 +1499,7 @@ hasalpn alpn npn session_protocol next_protocols https_protocols http_protocols 
         'timeout'   => 2,       # timeout to receive ssl-answer
         'retry'     => 2,       # number of retry when timeout
         'maxciphers'=> 32,      # number of ciphers sent in SSL3/TLS Client-Hello
+        'usesignaturealg' => 1, # 1: use extension "signature algorithm"
         'useecc'    => 1,       # 1: use supported elliptic curves
         'useecpoint'=> 1,       # 1: use ec_point_formats extension
         'usereneg'  => 0,       # 1: secure renegotiation
