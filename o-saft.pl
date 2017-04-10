@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.623 17/04/08 23:25:31",
+    SID         => "@(#) yeast.pl 1.624 17/04/10 17:59:10",
     STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6111,6 +6111,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--sslretry')          { $typ = 'SSLRETRY';        }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLTOUT';         }
     if ($arg eq  '--sslmaxciphers')     { $typ = 'MAXCIPHER';       }
+    if ($arg eq  '--usesignaturealg')   { $cfg{'sslhello'}->{'usesignaturealg'} = 1; }
+    if ($arg eq  '--nousesignaturealg') { $cfg{'sslhello'}->{'usesignaturealg'} = 0; }
     if ($arg eq  '--nossluseecc')       { $cfg{'sslhello'}->{'useecc'}   = 0; }
     if ($arg eq  '--ssluseecc')         { $cfg{'sslhello'}->{'useecc'}   = 1; }
     if ($arg eq  '--nossluseecpoint')   { $cfg{'sslhello'}->{'useecpoint'} = 0; }
@@ -6688,6 +6690,7 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::timeout         = $cfg{'sslhello'}->{'timeout'};
     $Net::SSLhello::retry           = $cfg{'sslhello'}->{'retry'};
     $Net::SSLhello::max_ciphers     = $cfg{'sslhello'}->{'maxciphers'};
+    $Net::SSLhello::use_signature_alg = $cfg{'sslhello'}->{'usesignaturealg'};
     $Net::SSLhello::usereneg        = $cfg{'sslhello'}->{'usereneg'};
     $Net::SSLhello::useecc          = $cfg{'sslhello'}->{'useecc'};
     $Net::SSLhello::useecpoint      = $cfg{'sslhello'}->{'useecpoint'};
