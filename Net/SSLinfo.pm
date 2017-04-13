@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.172 17/04/13 23:34:59',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.173 17/04/13 23:36:24',
 };
 
 ######################################################## public documentation #
@@ -324,6 +324,96 @@ Error message like:
 
 Reason most likely Net::SSLeay Version (version<1.49) which doesn't define
 C<Net::SSLeay::X509_NAME_get_text_by_NID()>.
+
+=begin HACKER_INFO
+
+Internal documentation only.
+
+=head1 General Program Flow
+
+=over
+ 
+=item _ssleay_socket()
+
+    socket()
+    connect()
+    select()
+
+=item _ssleay_ctx_new()
+
+    Net::SSLeay::CTX_tlsv1_2_new()
+    Net::SSLeay::CTX_set_ssl_version()
+    Net::SSLeay::CTX_set_options()
+    Net::SSLeay::CTX_set_timeout()
+
+=item _ssleay_ctx_ca()
+
+    Net::SSLeay::CTX_set_verify()
+    Net::SSLeay::CTX_load_verify_locations()
+    Net::SSLeay::CTX_set_verify_depth()
+
+=item _ssleay_ssl_new()
+
+    Net::SSLeay::new()
+    Net::SSLeay::set_tlsext_host_name()
+    Net::SSLeay::ctrl()
+
+=item _ssleay_ssl_np()
+
+=item do_ssl_new()
+
+    _ssleay_socket()
+    _ssleay_ctx_new()
+    _ssleay_ctx_ca()
+    _ssleay_ssl_new()
+    _ssleay_ssl_np()
+    Net::SSLeay::connect()
+
+=item do_ssl_open()
+
+    do_ssl_new()
+    _ssleay_get()
+    Net::SSLeay::*()  # getter
+    $_SSLinfo{'*'}    # getter
+    Net::SSLeay::write() && Net::SSLeay::ssl_read_all  # HTTPS
+    _header_get()   # getter
+    Net::SSLeay::get_http()
+    $headers        # getter
+    _openssl_x509() # getter using openssl
+    do_openssl()
+
+=item do_ssl_free()
+
+    close(socket)
+    Net::SSLeay::free()
+    Net::SSLeay::CTX_free()
+
+=item do_ssl_close()
+
+    do_ssl_free()
+    _SSLinfo_reset()
+
+=back
+
+=head1 General Usage
+
+=over
+
+=item Open TCP connection and collect data
+
+    do_ssl_open(host,port)
+    #... check some stuff
+    do_ssl_close()
+
+=item Open TCP connection
+
+    do_ssl_new(host,port)
+    #... check some stuff
+    do_ssl_free()
+
+=back
+
+=end HACKER_INFO
 
 =head1 METHODS
 
