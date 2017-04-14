@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.629 17/04/14 17:14:00",
+    SID         => "@(#) yeast.pl 1.630 17/04/14 19:58:16",
     STR_VERSION => "17.04.13",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1801,7 +1801,7 @@ sub _load_modules       {
         die  STR_ERROR, "$err"  if (! _is_do('version'));
         warn STR_ERROR, "$err";     # no reason to die for +version
     }
-}; # _load_modules
+} # _load_modules
 
 sub _check_modules      {
     # check for minimal version of a module;
@@ -1872,7 +1872,7 @@ sub _check_modules      {
     }
     printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15 if ($cfg{verbose} > 1);
     return;
-}; # _check_modules
+} # _check_modules
 
 sub _check_versions     {
     # check for required functionality
@@ -1965,8 +1965,15 @@ sub _check_versions     {
         _v2print "Net::SSLeay\t$version_ssleay supports NPN\tyes";
     }
 
+    if (not exists &Net::SSLeay::CTX_set_alpn_protos  and
+        not exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
+        # TODO: very lazy last resort check
+        warn STR_WARN, "ALPN and NPN is not supported; checks disabled";
+        #_hint("--no-alpn --no-npn  can be used to disable this check");
+    }
+
    return;
-}; # _check_versions
+} # _check_versions
 
 sub _check_methods      {
    # check for supported SSL version methods and add them to $cfg{'version'}
@@ -2052,7 +2059,7 @@ sub _check_methods      {
         _v_print("  checked SSL versions: @{$cfg{'version'}}");
     }
    return;
-}; # _check_methods
+} # _check_methods
 
 sub _init_openssldir    {
     # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
@@ -2101,7 +2108,7 @@ sub _init_openssldir    {
     }
     _trace("_init_openssldir: ca_path=$cfg{'ca_paths'} .");
     return $capath;
-}; # _init_openssldir
+} # _init_openssldir
 
 sub _initchecks_score   {
     # set all default score values here
@@ -2549,7 +2556,7 @@ sub __SSLinfo($$$)      {
         $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
     }
     return $val;
-}; # __SSLinfo
+} # __SSLinfo
 
 sub _subst($$)          { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
     # return given text with '@@' replaced by given value
@@ -5493,7 +5500,7 @@ sub __SSLeay() {
     } else {
         return Net::SSLeay::SSLeay();
     }
-}; # __SSLeay
+} # __SSLeay
 
 sub printversionmismatch() {
     #? check if openssl and compiled SSLeay are of same version
