@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.631 17/04/15 00:03:42",
+    SID         => "@(#) yeast.pl 1.632 17/04/15 01:56:44",
     STR_VERSION => "17.04.14",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7237,6 +7237,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 _hint("--ignore-no-conn can be used to disable this check");
                 goto CLOSE_SSL;
             }
+        }
+        my @errtxt = Net::SSLinfo::errors($host, $port);
+        if ((grep{/\*\*ERROR/} @errtxt) > 0) {
+            _warn("Errors occoured when using openssl, some results may be wrong; errors ignored");
+            _hint("--v  will show more information");
+            # do not print @errtxt because of multiple lines not in standard format
         }
     }
 
