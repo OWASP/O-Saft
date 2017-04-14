@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.625 17/04/14 13:59:09",
+    SID         => "@(#) yeast.pl 1.626 17/04/14 14:13:03",
     STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1903,7 +1903,7 @@ sub _check_versions()    {
     if ($version_ssleay      < 1.46) {
         warn STR_WARN, "$txt < 1.46; cannot check for NPN;";
     }
-    $txt  = sprintf("ancient openssl version 0x%x", Net::SSLeay::OPENSSL_VERSION_NUMBER());
+    $txt  = sprintf("ancient openssl version 0x%x", $version_openssl);
     if ($version_openssl   < 0x10002000) {
         warn STR_WARN, "$txt < 1.0.2; cannot check for ALPN;";
     } else {
@@ -5378,10 +5378,11 @@ sub printversion() {
         print '# @INC = ' . join(" ", @INC) . "\n";
     }
     # SEE OpenSSL:Version
-    print "=== $0 $VERSION ===";
-    print "    Net::SSLeay::"; # next two should be identical
-    print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
-    print "       ::SSLeay()                    0x" . __SSLeay();
+    my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
+    print( "=== $0 $VERSION ===");
+    print( "    Net::SSLeay::");    # next two should be identical
+    printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
+    printf("       ::SSLeay()                    0x%x (%s)\n", __SSLeay(), __SSLeay());
     if (1.49 > $Net::SSLeay::VERSION) {
         warn STR_WARN, "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available";
     } else {
