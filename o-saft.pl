@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.627 17/04/14 15:58:43",
+    SID         => "@(#) yeast.pl 1.628 17/04/14 16:31:09",
     STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -205,7 +205,7 @@ sub _print_read($$)     { my @txt = @_; printf("=== reading: %s (%s) ===\n", @tx
         # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
         # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
 
-sub _load_file($$)      {
+sub _load_file          {
     # load file with perl's require using the paths in @INC
     # use `$0 +version --v'  to see which files are loaded
     my $fil = shift;
@@ -1753,7 +1753,57 @@ sub _isnummber          {
     return 0 if $val eq '';
     return ($val ^ $val) ? 0 : 1
 }
-sub _check_modules()    {
+
+use IO::Socket::INET;
+sub _load_modules       {
+    # load required modules
+    # SEE Perl:import include
+    my $err = "";
+    if (1 > 0) { # TODO: experimental code
+        $err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
+        warn STR_ERROR, "$err" if ($err ne "");
+        # cannot load IO::Socket::INET delayed because we use AF_INET,
+        # otherwise we get at startup: 
+        #    Bareword "AF_INET" not allowed while "strict subs" in use ...
+        #$err = _load_file("IO/Socket/INET.pm", "IO INET module");
+        #warn STR_ERROR, "$err" if ($err ne "");
+    }
+    if ($cfg{'need_netdns'} > 0) {
+        $err = _load_file("Net/DNS.pm", "Net module");
+        if ($err ne "") {
+            warn STR_ERROR, "$err";
+            warn STR_WARN,  "--mx disabled";
+            $cfg{'usemx'} = 0;
+        }
+    }
+    if ($cfg{'need_timelocal'} > 0) {
+        $err = _load_file("Time/Local.pm", "Time module");
+        if ($err ne "") {
+            warn STR_ERROR, "$err";
+            warn STR_WARN,  "value for +sts_expired not applicable";
+            # TODO: need to remove +sts_expired from cfg{do}
+        }
+    }
+    if (_is_do('cipherraw') or _is_do('version')
+        or ($cfg{'starttls'})
+        or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
+       ) {
+        $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
+        if ($err ne "") {
+            die  STR_ERROR, "$err"  if (! _is_do('version'));
+            warn STR_ERROR, "$err"; # no reason to die for +version
+        }
+        $cfg{'usehttp'} = 0;        # makes no sense for starttls
+        # TODO: not (yet) supported for proxy
+    }
+    $err = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
+    if ($err ne "") {
+        die  STR_ERROR, "$err"  if (! _is_do('version'));
+        warn STR_ERROR, "$err";     # no reason to die for +version
+    }
+}; # _load_modules
+
+sub _check_modules      {
     # check for minimal version of a module;
     # verbose out but with --v=2 ; uses string "yes" for contrib/bunt.*
     # SEE Perl:import include
@@ -1824,7 +1874,7 @@ sub _check_modules()    {
     return;
 }; # _check_modules
 
-sub _check_versions()    {
+sub _check_versions     {
     # check for required functionality
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
     # verbose out but with --v=2 ; uses string "yes" for contrib/bunt.*
@@ -1918,7 +1968,7 @@ sub _check_versions()    {
    return;
 }; # _check_versions
 
-sub _check_methods  {
+sub _check_methods      {
    # check for supported SSL version methods and add them to $cfg{'version'}
    # TODO: anything related to +cipherraw can be removed when Net::SSLhello
    #       supports DTLSv1
@@ -2053,7 +2103,7 @@ sub _init_openssldir    {
     return $capath;
 }; # _init_openssldir
 
-sub _initchecks_score() {
+sub _initchecks_score   {
     # set all default score values here
     $checks{$_}->{score} = 10 foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
@@ -2071,7 +2121,7 @@ sub _initchecks_score() {
     return;
 } # _initchecks_score
 
-sub _initchecks_val()   {
+sub _initchecks_val     {
     # set all default check values here
     $checks{$_}->{val}   = "" foreach (keys %checks);
     # some special values %checks{'sts_maxage*'}
@@ -2088,7 +2138,7 @@ sub _initchecks_val()   {
     return;
 } # _initchecks_val
 
-sub _init_all()         {
+sub _init_all           {
     # set all default values here
     $cfg{'done'}->{'init_all'}++;
     _trace("_init_all(){}");
@@ -2102,7 +2152,7 @@ sub _init_all()         {
 } # _init_all
 _init_all();   # initialize defaults in %checks (score, val)
 
-sub _resetchecks()      {
+sub _resetchecks        {
     # reset values
     foreach (keys %{$cfg{'done'}}) {
         next if (!m/^check/);  # only reset check*
@@ -2592,7 +2642,7 @@ sub _ispfs($$)  { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/
     # return given cipher if it does not support forward secret connections (PFS)
 sub _isrc4($)   { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
     # return given cipher if it is RC4
-sub _istr02102($$)      {
+sub _istr02102          {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     # this is valid vor TR-02102 2013 and 2016
     my ($ssl, $cipher) = @_;
@@ -2617,7 +2667,7 @@ sub _istr02102_lazy     {
     my $val = _istr02102($ssl, $cipher);
     return $val;
 } # _istr02102_lazy
-sub _istr03116_strict($$) {
+sub _istr03116_strict   {
     # return given cipher if it is not TR-03116 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($ssl    ne "TLSv12");
@@ -2626,7 +2676,7 @@ sub _istr03116_strict($$) {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116+'}/);
     return "";
 } # _istr03116_strict
-sub _istr03116_lazy($$) {
+sub _istr03116_lazy     {
     # return given cipher if it is not TR-03116 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($ssl    ne "TLSv12");
@@ -2634,7 +2684,7 @@ sub _istr03116_lazy($$) {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
     return "";
 } # _istr03116_lazy
-sub _isrfc7525($$)      {
+sub _isrfc7525          {
     # return given cipher if it is not RFC 7525 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     my $bit = get_cipher_bits($cipher);
@@ -6499,6 +6549,8 @@ while ($#argv >= 0) {
 
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
 
+local $\ = "\n";
+
 if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
     my $q = "'";
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
@@ -6606,72 +6658,35 @@ if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
 
 _yeast_TIME("inc{");
 
-local $\ = "\n";
-
 #| import common and private modules
 #| -------------------------------------
-# SEE Perl:import include
-if (1 > 0) { # TODO: experimental code
-    $err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
-    warn STR_ERROR, "$err" if ($err ne "");
-    # cannot load IO::Socket::INET delayed because we use AF_INET,
-    # otherwise we get at startup: 
-    #    Bareword "AF_INET" not allowed while "strict subs" in use ...
-    #$err = _load_file("IO/Socket/INET.pm", "IO INET module");
-    #warn STR_ERROR, "$err" if ($err ne "");
-}
-use IO::Socket::INET;
-if ($cfg{'need_netdns'} > 0) {
-    $err = _load_file("Net/DNS.pm", "Net module");
-    if ($err ne "") {
-        warn STR_ERROR, "$err";
-        warn STR_WARN,  "--mx disabled";
-        $cfg{'usemx'} = 0;
-    }
-}
-if ($cfg{'need_timelocal'} > 0) {
-    $err = _load_file("Time/Local.pm", "Time module");
-    if ($err ne "") {
-        warn STR_ERROR, "$err";
-        warn STR_WARN,  "value for +sts_expired not applicable";
-        # TODO: need to remove +sts_expired from cfg{do}
-    }
-}
-if (_is_do('cipherraw') or _is_do('version')
-    or ($cfg{'starttls'})
-    or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
-   ) {
-    $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
-    if ($err ne "") {
-        die  STR_ERROR, "$err"  if (! _is_do('version'));
-        warn STR_ERROR, "$err";     # no reason to die for +version
-    }
-    $cfg{'usehttp'} = 0;            # makes no sense for starttls
-    # TODO: not (yet) supported for proxy
-}
-$err = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
-if ($err ne "") {
-    die  STR_ERROR, "$err"  if (! _is_do('version'));
-    warn STR_ERROR, "$err";         # no reason to die for +version
-}
+_load_modules();
+
 _yeast_TIME("inc}");
 _yeast_TIME("mod{");
+
+if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
 
 #| check for required module versions
 #| -------------------------------------
 #  check done after loading our own modules because they may require other
 #  common perl modules too; we may have detailed warnings before
-_check_modules()  if (! _is_do('cipherraw'));   # +cipherraw does not need these checks
+    _check_modules();
 
 #| check for required functionality
 #| -------------------------------------
 #  more detailed checks on version numbers with proper warning messages
-_check_versions() if (! _is_do('cipherraw'));   # +cipherraw does not need these checks
+    _check_versions();
 
 #| check for supported SSL versions
 #| -------------------------------------
 # initialize $cfg{'version'} and all $cfg{ssl}
-_check_methods() if ((_need_cipher() > 0) or (_need_default() > 0) and not _is_do('version'));
+    _check_methods() if ((_need_cipher() > 0) or (_need_default() > 0) and not _is_do('version'));
+
+}; # +cipherraw
+
+_yeast_TIME("mod}");
+_yeast_TIME("ini{");
 
 #| set additional defaults if missing
 #| -------------------------------------
@@ -6771,7 +6786,7 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
     foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
 }
 
-_yeast_TIME("mod}");
+_yeast_TIME("ini}");
 
 #| first: all commands which do not make a connection
 #| -------------------------------------
@@ -6795,6 +6810,9 @@ usr_pre_cipher();
 
 #| get list of ciphers available for tests
 #| -------------------------------------
+# TODO: move this code-block up behind call of _check_methods(); 
+#       needs exhausting tests with previous non-connecting commands
+#       needs also proper tests what Net::SSLinfo::cipher_* returns
 _yeast_TIME("get{");
 if ((_need_cipher() > 0) or (_need_default() > 0)) {
     _y_CMD("  get cipher list ..");
@@ -6859,7 +6877,9 @@ if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     }
 }
 
-# now commands which do make a connection
+#| main: perform commands for all hosts
+#| -------------------------------------
+
 usr_pre_host();
 
 my $fail = 0;
