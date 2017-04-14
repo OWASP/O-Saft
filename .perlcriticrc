@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.7 16/09/17 12:22:14
+#?      @(#) .perlcriticrc 1.8 17/04/14 22:26:06
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -208,6 +208,16 @@ verbose     = 8
 	# Main code has high complexity score (NN) at line ...
 
     # CHECK ENABLED
+
+
+[Subroutines::ProhibitExcessComplexity]
+
+    # Message
+	# Subroutine "XXXX" with high complexity score (29) at line ...
+
+    # CHECK ENABLED
+	# TODO: CHECK adapted
+	# Net::SSLinfo.pm     max_mccabe = 45
 
 
 [-Subroutines::ProhibitUnusedPrivateSubroutines]
@@ -617,3 +627,12 @@ verbose     = 8
 [Miscellanea::ProhibitUnrestrictedNoCritic]
 
 	# does not make sense to disable it, can even not be disabled :-/
+
+
+[Documentation::RequirePodSections]
+    lib_sections = NAME | SYNOPSIS | DESCRIPTION | AUTHOR
+
+    # Message:
+	#
+
+    # CHECK adapted
