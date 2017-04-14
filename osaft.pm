@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.04.13',  # official version number of tis file
+    OSAFT_VERSION   => '17.04.14',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.91 17/04/14 19:40:26',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.93 17/04/15 00:00:04',
 
 };
 
@@ -129,8 +129,6 @@ Following functions (methods) must be defined in the calling program:
 
 =item %dbx
 
-=item @npn
-
 =item %prot
 
 =item %prot_txt
@@ -189,7 +187,6 @@ our @EXPORT     = qw(
                 STR_DBX
                 STR_UNDEF
                 STR_NOTXT
-                @npn
                 %prot
                 %prot_txt
                 %tls_handshake_type
@@ -230,11 +227,6 @@ our @EXPORT     = qw(
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
-
-our @npn    = qw(http/1.1 h2c h2c-14
-                 spdy/1 npn-spdy/2 spdy/2 spdy/3 spdy/3.1 spdy/4a2 spdy/4a4
-                 grpc-exp grpc -exp h2-14 h2-15 http/2.0 h2
-                );      # NPN - Next Protocol Negotioation (most weak first)
 
 our %prot   = (     # collected data for protocols and ciphers
     # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
@@ -1220,6 +1212,14 @@ our %cfg = (
     'usedns'        => 1,       # 1: make DNS reverse lookup
     'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttp'       => 1,       # 1: make HTTP request
+    'usealpn'       => 1,       # 0: do not use -alpn option for openssl
+    'usenpn'        => 1,       # 0: do not use -nextprotoneg option for openssl
+    'next_protos'   =>          # all names known for ALPN or NPN
+                       'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,http/2.0,h2',
+                                # even Net::SSLeay functions most likely use an
+                                # array,  this is a string with comma-separated
+                                # names as used by openssl
+                                # Note: must not contain any white spaces!
     'use_md5cipher' => 1,       # 0: do not use *-MD5 ciphers except for SSLv2 with +cipher
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
@@ -1417,7 +1417,7 @@ our %cfg = (
                        ],
     'cmd-prots'     => [        # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
-hasalpn alpn npn session_protocol next_protocols https_protocols http_protocols https_svc http_svc)
+hasalpn alpn hasnpn session_protocol next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
     'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
                     # Results of these commands are not printed in output.
