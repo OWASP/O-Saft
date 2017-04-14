@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.626 17/04/14 14:13:03",
+    SID         => "@(#) yeast.pl 1.627 17/04/14 15:58:43",
     STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1915,7 +1915,94 @@ sub _check_versions()    {
         _v2print "Net::SSLeay\t$version_ssleay supports NPN\tyes";
     }
 
+   return;
 }; # _check_versions
+
+sub _check_methods  {
+   # check for supported SSL version methods and add them to $cfg{'version'}
+   # TODO: anything related to +cipherraw can be removed when Net::SSLhello
+   #       supports DTLSv1
+    my $typ;
+    my @list;
+    _y_CMD("  check supported SSL versions ...");
+    if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
+        @list = Net::SSLinfo::ssleay_methods();
+        # method names do not literally match our version string, hence the
+        # cumbersome code below
+    }
+    _trace("SSLeay methods: " . join(" ", @list));
+    foreach my $ssl (@{$cfg{'versions'}}) {
+        next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
+        if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
+            if ($ssl eq 'DTLSv1') {
+                _warn("SSL version '$ssl': not supported by '$me +cipherraw'; not checked");
+                next;
+            }
+            push(@{$cfg{'version'}}, $ssl);
+            next;
+        }
+        # following checks for these commands only
+        $cfg{$ssl} = 0; # reset to simplify further checks
+        if ($ssl !~ /$cfg{'regex'}->{'SSLprot'}/) {
+            _warn("SSL version '$ssl': not supported; not checked");
+            next;
+        }
+        # Net::SSLeay  only supports methods for those SSL protocols which were
+        # available at the time of compiling  Net::SSLeay. The support of these
+        # protocols is not checked dynamically when building Net::SSLeay.
+        # Net::SSLeay's config script simply relies on the definitions found in
+        # the specified include files of the underlaying  SSL library (which is
+        # is openssl usually).
+        # Unfortunately,  there are situations where the assumptions at compile
+        # time do not match the conditions at runtime. Then  Net::SSLeay  bails
+        # out with error like:
+        #   Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
+        # which means that  Net::SSLeay  was build without support for SSLv2.
+        # To avoid bothering users with such messages (see above), or even more
+        # errors or program aborts, we check for the availability of all needed
+        # methods.  Sometimes, for whatever reason,  the user may know that the
+        # warning can be avoided.  Therfore the  --ssl-lazy option can be used,
+        # which simply disables the check.
+        if ($cfg{'ssl_lazy'}>0) {
+            push(@{$cfg{'version'}}, $ssl);
+            $cfg{$ssl} = 1;
+            next;
+        }
+        # Check for high-level API functions, like SSLv2_method, also possible
+        # would be    Net::SSLeay::CTX_v2_new,  Net::SSLeay::CTX_tlsv1_2_new
+        # and similar calls.
+        # Net::SSLeay::SSLv23_method is missing in some  Net::SSLeay versions,
+        # as we don't use it, there is no need to check for it.
+        # TODO: DTLSv9 which is DTLS 0.9 ; but is this really in use?
+        $typ = 0;
+        $typ++ if (($ssl eq 'SSLv2')   and (grep{/^SSLv2_method$/}    @list));
+        $typ++ if (($ssl eq 'SSLv3')   and (grep{/^SSLv3_method$/}    @list));
+        $typ++ if (($ssl eq 'TLSv1')   and (grep{/^TLSv1_method$/}    @list));
+        $typ++ if (($ssl eq 'TLSv11')  and (grep{/^TLSv1_1_method$/}  @list));
+        $typ++ if (($ssl eq 'TLSv12')  and (grep{/^TLSv1_2_method$/}  @list));
+        $typ++ if (($ssl eq 'TLSv13')  and (grep{/^TLSv1_3_method$/}  @list));
+        $typ++ if (($ssl eq 'DTLSv1')  and (grep{/^DTLSv1_method$/}   @list));
+        $typ++ if (($ssl eq 'DTLSv11') and (grep{/^DTLSv1_1_method$/} @list));
+        $typ++ if (($ssl eq 'DTLSv12') and (grep{/^DTLSv1_2_method$/} @list));
+        $typ++ if (($ssl eq 'DTLSv13') and (grep{/^DTLSv1_3_method$/} @list));
+        $typ++ if (($ssl eq 'SSLv2')   and (grep{/^SSLv23_method$/}   @list));
+        $typ++ if (($ssl eq 'SSLv3')   and (grep{/^SSLv23_method$/}   @list));
+        # TODO: not sure if SSLv23_method  also supports TLSv1, TLSv11, TLSv12
+        if ($typ > 0) {
+            push(@{$cfg{'version'}}, $ssl);
+            $cfg{$ssl} = 1;
+        } else {
+            _warn("SSL version '$ssl': not supported by Net::SSLeay; not checked");
+            _hint("consider using '+cipherall' instead") if (_is_do('cipher'));
+        }
+    } # $ssl
+
+    if (! _is_do('version')) {
+        _v_print("supported SSL versions: @{$cfg{'versions'}}");
+        _v_print("  checked SSL versions: @{$cfg{'version'}}");
+    }
+   return;
+}; # _check_methods
 
 sub _init_openssldir    {
     # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
@@ -6583,84 +6670,8 @@ _check_versions() if (! _is_do('cipherraw'));   # +cipherraw does not need these
 
 #| check for supported SSL versions
 #| -------------------------------------
-my @list;
-_y_CMD("  check supported SSL versions ...");
-if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
-    @list = Net::SSLinfo::ssleay_methods();
-    # method names do not literally match our version string, hence the
-    # cumbersome code below
-}
-_trace("SSLeay methods: " . join(" ", @list));
-foreach my $ssl (@{$cfg{'versions'}}) {
-    next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
-    if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
-        if ($ssl eq 'DTLSv1') {
-            _warn("SSL version '$ssl': not supported by '$me +cipherraw'; not checked");
-            next;
-        }
-        push(@{$cfg{'version'}}, $ssl);
-        next;
-    }
-    next if ((_need_cipher() <= 0) and (_need_default() <= 0) and not _is_do('version'));
-    # following checks for these commands only
-    $cfg{$ssl} = 0; # reset to simplify further checks
-    if ($ssl =~ /$cfg{'regex'}->{'SSLprot'}/) {
-        # Net::SSLeay  only supports methods for those SSL protocols which were
-        # available at the time of compiling  Net::SSLeay. The support of these
-        # protocols is not checked dynamically when building Net::SSLeay.
-        # Net::SSLeay's config script simply relies on the definitions found in
-        # the specified include files of the underlaying  SSL library (which is
-        # is openssl usually).
-        # Unfortunately,  there are situations where the assumptions at compile
-        # time do not match the conditions at runtime. Then  Net::SSLeay  bails
-        # out with error like:
-        #   Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
-        # which means that  Net::SSLeay  was build without support for SSLv2.
-        # To avoid bothering users with such messages (see above), or even more
-        # errors or program aborts, we check for the availability of all needed
-        # methods.  Sometimes, for whatever reason,  the user may know that the
-        # warning can be avoided.  Therfore the  --ssl-lazy option can be used,
-        # which simply disables the check.
-        if ($cfg{'ssl_lazy'}>0) {
-            push(@{$cfg{'version'}}, $ssl);
-            $cfg{$ssl} = 1;
-            next;
-        }
-        # Check for high-level API functions, like SSLv2_method, also possible
-        # would be    Net::SSLeay::CTX_v2_new,  Net::SSLeay::CTX_tlsv1_2_new
-        # and similar calls.
-        # Net::SSLeay::SSLv23_method is missing in some  Net::SSLeay versions,
-        # as we don't use it, there is no need to check for it.
-        # TODO: DTLSv9 which is DTLS 0.9 ; but is this really in use?
-        $typ = 0;
-        $typ++ if (($ssl eq 'SSLv2')   and (grep{/^SSLv2_method$/}    @list));
-        $typ++ if (($ssl eq 'SSLv3')   and (grep{/^SSLv3_method$/}    @list));
-        $typ++ if (($ssl eq 'TLSv1')   and (grep{/^TLSv1_method$/}    @list));
-        $typ++ if (($ssl eq 'TLSv11')  and (grep{/^TLSv1_1_method$/}  @list));
-        $typ++ if (($ssl eq 'TLSv12')  and (grep{/^TLSv1_2_method$/}  @list));
-        $typ++ if (($ssl eq 'TLSv13')  and (grep{/^TLSv1_3_method$/}  @list));
-        $typ++ if (($ssl eq 'DTLSv1')  and (grep{/^DTLSv1_method$/}   @list));
-        $typ++ if (($ssl eq 'DTLSv11') and (grep{/^DTLSv1_1_method$/} @list));
-        $typ++ if (($ssl eq 'DTLSv12') and (grep{/^DTLSv1_2_method$/} @list));
-        $typ++ if (($ssl eq 'DTLSv13') and (grep{/^DTLSv1_3_method$/} @list));
-        $typ++ if (($ssl eq 'SSLv2')   and (grep{/^SSLv23_method$/}   @list));
-        $typ++ if (($ssl eq 'SSLv3')   and (grep{/^SSLv23_method$/}   @list));
-        # TODO: not sure if SSLv23_method  also supports TLSv1, TLSv11, TLSv12
-        if ($typ > 0) {
-            push(@{$cfg{'version'}}, $ssl);
-            $cfg{$ssl} = 1;
-        } else {
-            _warn("SSL version '$ssl': not supported by Net::SSLeay; not checked");
-            _hint("consider using '+cipherall' instead") if (_is_do('cipher'));
-        }
-    } else {    # SSL versions not supported by Net::SSLeay <= 1.51 (Jan/2013)
-        _warn("SSL version '$ssl': not supported; not checked");
-    }
-} # $ssl
-if (! _is_do('version')) {
-    _v_print("supported SSL versions: @{$cfg{'versions'}}");
-    _v_print("  checked SSL versions: @{$cfg{'version'}}");
-}
+# initialize $cfg{'version'} and all $cfg{ssl}
+_check_methods() if ((_need_cipher() > 0) or (_need_default() > 0) and not _is_do('version'));
 
 #| set additional defaults if missing
 #| -------------------------------------
