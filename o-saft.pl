@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.628 17/04/14 16:31:09",
-    STR_VERSION => "17.04.07",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.629 17/04/14 17:14:00",
+    STR_VERSION => "17.04.13",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -686,8 +686,8 @@ my %check_dest = (  ## target (connection) data
     'hastls11'      => {'txt' => "Target supports TLSv1.1"},
     'hastls12'      => {'txt' => "Target supports TLSv1.2"},
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
-    'hasalpn'       => {'txt' => "Target supports Application Layer Protocol Negotiation (ALPN)"},
-    'npn'           => {'txt' => "Target supports Next Protocol Negotiation (NPN)"},
+    'hasalpn'       => {'txt' => "Target supports ALPN (Application Layer Protocol Negotiation)"},
+    'hasnpn'        => {'txt' => "Target supports NPN (Next Protocol Negotiation)"},
     'strong_cipher' => {'txt' => "Target selects strongest cipher"},
     'order_cipher'  => {'txt' => "Target does not honors client's cipher order"}, # NOT YET USED
     'adh_cipher'    => {'txt' => "Target does not accept ADH ciphers"},
@@ -824,7 +824,7 @@ our %shorttexts = (
     'hastls12'      => "TLSv1.2",
     'hastls13'      => "TLSv1.3",
     'hasalpn'       => "Supports ALPN",
-    'npn'           => "Supports NPN",
+    'hasnpn'        => "Supports NPN",
     'adh_cipher'    => "No ADH ciphers",
     'null_cipher'   => "No NULL ciphers",
     'exp_cipher'    => "No EXPORT ciphers",
@@ -4616,7 +4616,7 @@ sub checkdest($$)   {
     # check protocol support
     $key   = 'next_protocols';
     $value = $data{$key}->{val}($host, $port);
-    $checks{'npn'}->{val}   = " " if ($value eq "");
+    $checks{'hasnpn'}->{val}    = " " if ($value eq "");
     $key   = 'alpn';
     $value = $data{$key}->{val}($host, $port);
     $checks{'hasalpn'}->{val}   = " " if ($value eq "");
