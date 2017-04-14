@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.174 17/04/14 19:34:05',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.175 17/04/14 22:24:33',
 };
 
 ######################################################## public documentation #
@@ -58,6 +58,9 @@ use constant {
 #       unexpected behaviours in the calling program. Exception are:
 #           warn()  when used to inform about ancient modules
 #           print() when used in trace mode ($trace > 0).
+
+## no critic qw( ErrorHandling::RequireCarping)
+#  NOTE: See NOTE above.
 
 =pod
 
@@ -230,6 +233,22 @@ supports SNI; default: 1
 If set to "1", make a simple  HTTP request on the open  SSL connection and
 parse the response for additional SSL/TLS related information (for example
 Strict-Transport-Security header); default: 1
+
+=item $Net::SSLinfo::use_alpn
+
+If set to "1", protocols from $Net::SSLinfo::next_protos" are used for the
+ALPN option to open the SSL connection.
+
+=item $Net::SSLinfo::use_npn
+
+If set to "1", protocols from $Net::SSLinfo::next_protos" are used for the
+NPN option to open the SSL connection.
+
+=item $Net::SSLinfo::next_protos
+
+List of protocols to be used for ALPN and/or NPN option when opening a SSL
+connection. Used if  "$Net::SSLinfo::use_alpn" or "$Net::SSLinfo::use_npn"
+is set.
 
 =item $Net::SSLinfo::no_cert
 
@@ -613,18 +632,20 @@ $Net::SSLinfo::use_reconnect=1; # 0 do not use openssl with -reconnect option
 $Net::SSLinfo::sclient_opt =""; # option for openssl s_client command
 $Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target; 0: do not use SNI; string: use this as hostname for SNI
 $Net::SSLinfo::use_http    = 1; # 1 make HTTP request and retrive additional data
+$Net::SSLinfo::use_alpn    = 1; # 1 to set ALPN option using $Net::SSLinfo::next_protos
+$Net::SSLinfo::use_npn     = 1; # 1 to set NPN option using $Net::SSLinfo::next_protos
+$Net::SSLinfo::next_protos = 'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,h2-14,h2-15,http/2.0,h2';
+                                # NOTE: most weak protocol first, cause we check for vulnerabilities
+                                # next protocols not yet configurable
+                                # h2c*  - HTTP 2 Cleartext
+                                # protocols may have prefix `exp' which should not be checked by server
+                                # grpc-exp not yet supported (which has -exp suffix, strange ...)
 $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 # 1 don't collect data from target's certificate
                                 #   return empty string
                                 # 2 don't collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
-$Net::SSLinfo::next_prots  = 'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,h2-14,h2-15,http/2.0,h2';
-                                # NOTE: most weak protocol first, cause we check for vulnerabilities
-                                # next protocols not yet configurable
-                                # h2c*  - HTTP 2 Cleartext
-                                # protocols may have prefix `exp' which should not be checked by server
-                                # grpc-exp not yet supported (which has -exp suffix, strange ...)
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
 $Net::SSLinfo::starttls    = "";# use STARTTLS if not empty
@@ -1477,8 +1498,9 @@ sub _ssleay_ssl_np  {
     my $ctx     = shift;
     my $set_alpn= shift;
     my $set_npn = shift;
-    my @protos  = @_;
-    _trace("_ssleay_ssl_np(ctx, @protos)");
+    my $protos  = shift;
+    my @protos  = split(",", $protos);  # Net::SSLeay wants a list
+    _trace("_ssleay_ssl_np(ctx, $set_alpn, $set_npn, $protos)");
     my $src;
     my @err;
     # functions return 0 on success, hence: && do{} to catch errors
@@ -1500,7 +1522,7 @@ sub _ssleay_ssl_np  {
             };
         }
     }
-    _trace("_ssleay_ssl_np .");
+    _trace("_ssleay_ssl_np $#err.");
     return @err;
 } # _ssleay_ssl_np
 
@@ -1624,7 +1646,7 @@ sub _openssl_x509   {
 
 =pod
 
-=head2 do_ssl_new($host,$port,$sslversions[,$cipherlist,$socket])
+=head2 do_ssl_new($host,$port,$sslversions[,$cipherlist,$protolist,$socket])
 
 Establish new SSL connection using L<Net::SSLeay>.
 
@@ -1636,8 +1658,7 @@ Use L<do_ssl_free($ctx,$ssl,$socket)> to free allocated objects.
 =cut
 
 sub do_ssl_new      {
-    my ($host, $port, $sslversions, $cipher, $socket) = @_;
- # uses variables $Net::SSLinfo::next_prots and $Net::SSLinfo::use_nextprot
+    my ($host, $port, $sslversions, $cipher, $protos, $use_alpn, $use_npn, $socket) = @_;
     my $ctx     = undef;
     my $ssl     = undef;
     my $method  = undef;
@@ -1648,8 +1669,12 @@ sub do_ssl_new      {
     my $dum     = *FH;  # keep perl's -w quiet
        $dum     = undef;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
+    $protos = "" if (!defined $protos); # -"-
+    $use_alpn= 1 if (!defined $use_alpn); # -"-
+    $use_npn=  1 if (!defined $use_npn);  # -"-
     _traceset();
-    _trace("do_ssl_new(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
+    _trace("do_ssl_new(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . ","
+                       . ($cipher||'') . "," . ($protos||'') . ",socket)");
     _SSLtemp_reset();   # assumes that handles there are already freed
 
     TRY: {
@@ -1727,11 +1752,8 @@ sub do_ssl_new      {
             #1d. set certificate verification options
             ($dum = _ssleay_ctx_ca($ctx))       or do {$src = '_ssleay_ctx_ca()' } and next;
 
-# FIXME: NPN and ALPN is hardcoded here, needs to be controlled by parameter
             #1e. set ALPN and NPN option
-            my @protos;
-               @protos = split(",", $Net::SSLinfo::next_prots) if ($Net::SSLinfo::use_nextprot == 1);
-            my @err = _ssleay_ssl_np($ctx, 1, 1, @protos);
+            my @err = _ssleay_ssl_np($ctx, $use_alpn, $use_npn, $protos);
             if ($#err > 0) {     # somthing failed, just collect errors
                 push(@{$_SSLtemp{'errors'}}, @err);
             }
@@ -1863,12 +1885,14 @@ sub do_ssl_open($$$@) {
         }
 
         #1. open TCP connection; no way to continue if it fails
-        ($ssl, $ctx, $socket, $method) = do_ssl_new($host, $port, $sslversions, $cipher, $Net::SSLinfo::socket); 
+        ($ssl, $ctx, $socket, $method) = do_ssl_new($host, $port, $sslversions,
+               $cipher, $Net::SSLinfo::next_protos, $Net::SSLinfo::use_apln,
+               $Net::SSLinfo::use_nln, $Net::SSLinfo::socket); 
         $_SSLinfo{'ctx'}      = $ctx;
         $_SSLinfo{'ssl'}      = $ssl;
         $_SSLinfo{'method'}   = $method;
         $Net::SSLinfo::method = $method;
-        $Net::SSLinfo::socket = $_SSLtemp{'socket'};
+        $Net::SSLinfo::socket = $socket;
         push(@{$_SSLinfo{'errors'}}, @{$_SSLtemp{'errors'}});
         #goto finished if (! $ctx); # TODO: not yet properly tested 11/2016
         _trace("do_ssl_open: $Net::SSLinfo::method");
@@ -2460,16 +2484,19 @@ sub do_openssl($$$$) {
             _trace("do_openssl($mode): WARNING: no openssl s_client") if ($trace > 1);
             return SSLINFO_HASH;
         }
+        # pass -alpn option to validate 'protocols' support later
         # pass -nextprotoneg option to validate 'protocols' support later
         # pass -reconnect option to validate 'resumption' support later
         # pass -tlsextdebug option to validate 'heartbeat' support later
         # NOTE that openssl 1.x or later is required for -nextprotoneg
+        # NOTE that openssl 1.0.2 or later is required for -alpn
         $mode  = 's_client' . $Net::SSLinfo::sclient_opt;
 # FIXME: { following fixes general verify, but not self signed
         $mode .= ' -CApath ' . $capath if ($capath ne "");
         $mode .= ' -CAfile ' . $cafile if ($cafile ne "");
 # }
-        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::next_prots if ($Net::SSLinfo::use_nextprot == 1);
+        $mode .= ' -alpn '         . $Net::SSLinfo::next_protos if ($Net::SSLinfo::use_alpn == 1);
+        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::next_protos if ($Net::SSLinfo::use_npn  == 1);
         $mode .= ' -reconnect'   if ($Net::SSLinfo::use_reconnect == 1);
         $mode .= ' -tlsextdebug' if ($Net::SSLinfo::use_extdebug  == 1);
         $mode .= ' -connect';
