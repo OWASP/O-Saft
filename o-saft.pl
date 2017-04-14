@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.630 17/04/14 19:58:16",
-    STR_VERSION => "17.04.13",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.631 17/04/15 00:03:42",
+    STR_VERSION => "17.04.14",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -373,7 +373,6 @@ usr_pre_init();
 #!#
 #!# Here's an overview of the used global variables (mostly defined in o-saft-lib.pm):
 #!#   $me             - the program name or script name with path stripped off
-#!#   @npn            - list of protocolls for NPN
 #!#   %prot           - collected data per protocol (from Net::SSLinfo)
 #!#   %prot_txt       - labes for %prot
 #!#   @cipher_results - where we store the results as:  [SSL, cipher, "yes|no"]
@@ -3014,6 +3013,7 @@ sub _usesocket($$$$)    {
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
+        my @protos = split(",", $cfg{'next_protos'});   # need a list here
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
             _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
@@ -3031,7 +3031,8 @@ sub _usesocket($$$$)    {
                 SSL_cipher_list => $ciphers,
               # SSL_cipher_list => "$ciphers eNULL",
                 #SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
-                SSL_npn_protocols => ($cfg{'use_nextprot'} == 1) ? [@npn] : [],
+                SSL_npn_protocols => ($cfg{'usenpn'} == 1) ? [@protos] : [],
+              # FIXME: misses $cfg{'usealpn'}
             );
         } else {
             # proxy or starttls
@@ -3052,7 +3053,8 @@ sub _usesocket($$$$)    {
                   SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
                   SSL_version     => $ssl,    # default is SSLv23
                   SSL_cipher_list => $ciphers,
-                  SSL_npn_protocols => ($cfg{'use_nextprot'} == 1) ? [@npn] : [],
+                  SSL_npn_protocols => ($cfg{'usenpn'} == 1) ? [@protos] : [],
+              # FIXME: misses $cfg{'usealpn'}
                 ) or do {
                     _trace1("_usesocket: ssl handshake failed: $!");
                     return "";
@@ -6230,8 +6232,12 @@ while ($#argv >= 0) {
     if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}    = 0;}
     if ($arg eq  '--forceopenssl')      { $cmd{'extciphers'}    = 1;}
     if ($arg =~ /^--s_?client$/)        { $cmd{'extsclient'}++;     }
-    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'use_nextprot'}  = 1;}
-    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'use_nextprot'}  = 0;}
+    if ($arg eq  '--alpn')              { $cfg{'usealpn'}   = 1;    }
+    if ($arg eq  '--noalpn')            { $cfg{'usealpn'}   = 0;    }
+    if ($arg eq  '--npn')               { $cfg{'usenpn'}    = 1;    }
+    if ($arg eq  '--nonpn')             { $cfg{'usenpn'}    = 0;    }
+    if ($arg =~ /^--?nextprotoneg$/)    { $cfg{'usenpn'}    = 1;    } # openssl
+    if ($arg =~ /^--nonextprotoneg/)    { $cfg{'usenpn'}    = 0;    }
     if ($arg =~ /^--?tlsextdebug$/)     { $cfg{'use_extdebug'}  = 1;}
     if ($arg =~ /^--notlsextdebug/)     { $cfg{'use_extdebug'}  = 0;}
     if ($arg =~ /^--?reconnect$/)       { $cfg{'use_reconnect'} = 1;}
@@ -6725,7 +6731,9 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::openssl          = $cmd{'openssl'};
     $Net::SSLinfo::use_http         = $cfg{'usehttp'};
     $Net::SSLinfo::use_SNI          = $cfg{'sni_name'};
-    $Net::SSLinfo::use_nextprot     = $cfg{'use_nextprot'};
+    $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
+    $Net::SSLinfo::use_npn          = $cfg{'usenpn'};
+    $Net::SSLinfo::next_protos      = $cfg{'next_protos'};
     $Net::SSLinfo::use_extdebug     = $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect    = $cfg{'use_reconnect'};
     $Net::SSLinfo::socket_reuse     = $cfg{'socket_reuse'};
