@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.04.06',  # official version number of tis file
+    OSAFT_VERSION   => '17.04.13',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.90 17/04/10 17:56:00',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.91 17/04/14 19:40:26',
 
 };
 
@@ -233,7 +233,7 @@ our @EXPORT     = qw(
 
 our @npn    = qw(http/1.1 h2c h2c-14
                  spdy/1 npn-spdy/2 spdy/2 spdy/3 spdy/3.1 spdy/4a2 spdy/4a4
-                 grpc-exp grpc -exph2-14 h2-15 http/2.0 h2
+                 grpc-exp grpc -exp h2-14 h2-15 http/2.0 h2
                 );      # NPN - Next Protocol Negotioation (most weak first)
 
 our %prot   = (     # collected data for protocols and ciphers
