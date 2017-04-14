@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.624 17/04/10 17:59:10",
+    SID         => "@(#) yeast.pl 1.625 17/04/14 13:59:09",
     STR_VERSION => "17.04.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1754,7 +1754,8 @@ sub _isnummber          {
     return ($val ^ $val) ? 0 : 1
 }
 sub _check_modules()    {
-    # check for minimal version of a module; verbose out but for --v=2
+    # check for minimal version of a module;
+    # verbose out but with --v=2 ; uses string "yes" for contrib/bunt.*
     # SEE Perl:import include
     my %expected_versions = (
         'IO::Socket::INET'  => "1.31",
@@ -1822,6 +1823,99 @@ sub _check_modules()    {
     printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15 if ($cfg{verbose} > 1);
     return;
 }; # _check_modules
+
+sub _check_versions()    {
+    # check for required functionality
+    # these checks print warnings with warn() not _warn(), SEE Perl:warn
+    # verbose out but with --v=2 ; uses string "yes" for contrib/bunt.*
+    # check if used software supports SNI properly
+    # Note: don't bother users with warnings, if functionality is not required
+    #       hence some additional checks arround the warnings
+    # Note: instead of requiring a specific version with perl's use,  only the
+    #       version of the loaded module ischecked; this allows continueing to
+    #       use this tool even if the version is too old; but  shout  out loud
+    #       (using warn()) that the results are not reliable
+    my  $txt = "";
+    my  $tmp = "";
+    my  $version_ssleay   = -1; # -1 should be always lower than anything else
+    my  $version_iosocket = -1; # -"-
+    my  $version_openssl  = -1; # -"-
+
+    _y_CMD("  check required modules ...");
+    if (defined $Net::SSLeay::VERSION) {    # Net::SSLeay auto-loaded by IO::Socket::SSL
+        $version_ssleay   = $Net::SSLeay::VERSION;
+    } else {
+        die STR_ERROR, "Net::SSLeay not found, useless use of SSL advanced forensic tool";
+        # TODO: this is not really true, i.e. if we use openssl instead Net::SSLeay
+    }
+    if (eval{Net::SSLeay::OPENSSL_VERSION_NUMBER();}) {
+        $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER();
+    } else {
+        warn STR_WARN, "unknown version of Net::SSLeay detected; cannot detext openssl version";
+    }
+    if (defined $IO::Socket::SSL::VERSION) {
+        $version_iosocket = $IO::Socket::SSL::VERSION;
+    } else {
+        warn STR_WARN, "unknown version of IO::Socket detected";
+    }
+
+    _y_CMD("  check for proper SNI support ...");
+    $txt  = "ancient version @@ does not support SNI";
+    $txt .= " or is known to be buggy; SNI disabled;";
+    if ($version_iosocket < 1.90) {
+        if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
+            $cfg{'usesni'} = 0;
+            ($tmp = $txt) =~ s/@@/IO::Socket::SSL $version_iosocket < 1.90/;
+            warn STR_WARN, $tmp;
+            _hint("--force-openssl can be used to disable this check");
+        }
+    } else {
+        _v2print "IO::Socket::SSL\t$version_iosocket OK\tyes";
+    }
+    if ($version_openssl < 0x01000000) {
+        # same as  IO::Socket::SSL->can_client_sni()
+        # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
+        if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
+            $cfg{'usesni'} = 0;
+            my $v   = sprintf("0x%x", $version_openssl);
+            ($tmp = $txt) =~ s/@@/openssl $v < 1.0.0/;
+            warn STR_WARN, $tmp;
+            _hint("--force-sni can be used to disable this check");
+        }
+    } else {
+        _v2print "Net::SSLeay\t$version_ssleay OpenSSL version\tyes";
+    }
+    _trace(" cfg{usesni}: $cfg{'usesni'}");
+
+    _y_CMD("  check if Net::SSLeay is usable ...");
+    $txt  = "ancient version Net::SSLeay $version_ssleay";
+    if ($version_ssleay      < 1.49) {
+        warn STR_WARN, "$txt < 1.49; may throw warnings and/or results may be missing;";
+    } else {
+        _v2print "Net::SSLeay\t$version_ssleay OK\tyes";
+    }
+
+    _y_CMD("  check for NPN and ALPN support ..."); # SEE OpenSSL:Version
+    $txt  = "ancient version Net::SSLeay $version_ssleay";
+    if ($version_ssleay      < 1.56) {
+        warn STR_WARN, "$txt < 1.56; cannot check for ALPN;";
+    }
+    if ($version_ssleay      < 1.46) {
+        warn STR_WARN, "$txt < 1.46; cannot check for NPN;";
+    }
+    $txt  = sprintf("ancient openssl version 0x%x", Net::SSLeay::OPENSSL_VERSION_NUMBER());
+    if ($version_openssl   < 0x10002000) {
+        warn STR_WARN, "$txt < 1.0.2; cannot check for ALPN;";
+    } else {
+        _v2print "Net::SSLeay\t$version_ssleay supports ALPN\tyes";
+    }
+    if ($version_openssl   < 0x10001000) {
+        warn STR_WARN, "$txt < 1.0.1; cannot check for NPN;";
+    } else {
+        _v2print "Net::SSLeay\t$version_ssleay supports NPN\tyes";
+    }
+
+}; # _check_versions
 
 sub _init_openssldir    {
     # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
@@ -5283,8 +5377,9 @@ sub printversion() {
         print "# perl $^V";
         print '# @INC = ' . join(" ", @INC) . "\n";
     }
+    # SEE OpenSSL:Version
     print "=== $0 $VERSION ===";
-    print "    Net::SSLeay::"; # next two should be identical; 0x1000000f => openssl-1.0.0
+    print "    Net::SSLeay::"; # next two should be identical
     print "       ::OPENSSL_VERSION_NUMBER()    0x" . Net::SSLeay::OPENSSL_VERSION_NUMBER();
     print "       ::SSLeay()                    0x" . __SSLeay();
     if (1.49 > $Net::SSLeay::VERSION) {
@@ -6477,61 +6572,13 @@ _yeast_TIME("mod{");
 #| check for required module versions
 #| -------------------------------------
 #  check done after loading our own modules because they may require other
-#  common perl modules too; we may have detailed warnings berfore
-#  it is just a simple check, more detailed checks on version numbers will
-#  be done in the code with proper warning messages
-_check_modules();
+#  common perl modules too; we may have detailed warnings before
+_check_modules()  if (! _is_do('cipherraw'));   # +cipherraw does not need these checks
 
-#| check if used software supports SNI properly
+#| check for required functionality
 #| -------------------------------------
-# these checks print warnings with warn() not _warn(), SEE Perl:warn
-if (! _is_do('cipherraw')) {        # +cipherraw does not need these checks
-$typ  = "ancient version ## does not support SNI";
-$typ .= " or is known to be buggy; SNI disabled;";
-if (defined $IO::Socket::SSL::VERSION) {
-    if (1.90 > $IO::Socket::SSL::VERSION) {
-        if(($cfg{'usesni'} > 0) && ($cmd{'extciphers'} == 0)) {
-            $cfg{'usesni'} = 0;
-            my $txt = $typ; $txt =~ s/##/IO::Socket::SSL $IO::Socket::SSL::VERSION < 1.90/;
-            warn STR_WARN, $txt;
-            _hint("--force-openssl can be used to disable this check");
-        }
-    }
-} else {
-    warn STR_WARN, "unknown version of IO::Socket detected";
-}
-if (eval{Net::SSLeay::OPENSSL_VERSION_NUMBER();}) {
-    if (Net::SSLeay::OPENSSL_VERSION_NUMBER() < 0x01000000) {
-        # same as  IO::Socket::SSL->can_client_sni()
-        # see section "SNI Support" in: perldoc IO/Socket/SSL.pm
-        if(($cfg{'usesni'} > 0) && ($cfg{'forcesni'} == 0)) {
-            $cfg{'usesni'} = 0;
-            my $v   = Net::SSLeay::OPENSSL_VERSION_NUMBER();
-            my $txt = $typ; $txt =~ s/##/openssl $v < 1.0.0/;
-            warn STR_WARN, $txt;
-            _hint("--force-sni can be used to disable this check");
-        }
-    }
-} else {
-    warn STR_WARN, "unknown version of Net::SSLeay detected";
-}
-_trace(" cfg{usesni}: $cfg{'usesni'}");
-
-#| check if Net::SSLeay is usable
-#| -------------------------------------
-if (!defined $Net::SSLeay::VERSION) { # Net::SSLeay auto-loaded by IO::Socket::SSL
-    die STR_ERROR, "Net::SSLeay not found, useless use of SSL advanced forensic tool";
-    # TODO: this is not really true, i.e. if we use openssl instead Net::SSLeay
-}
-if (1.49 > $Net::SSLeay::VERSION) { # WARNING about ancient version already printed elswhere
-    # only check VERSION instead of requiring a specific version with perl's use
-    # this allows continueing to use this tool even if the version is too old
-    # but we shout out loud that the results are not reliable
-    my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49";
-       $txt .= "  may throw warnings and/or results may be missing;";
-    warn STR_WARN, $txt;            # not _warn(), SEE Perl:warn
-}
-} # ! +cipherraw
+#  more detailed checks on version numbers with proper warning messages
+_check_versions() if (! _is_do('cipherraw'));   # +cipherraw does not need these checks
 
 #| check for supported SSL versions
 #| -------------------------------------
@@ -7331,6 +7378,14 @@ The code for parsing options and arguments uses some special syntax:
 
 is used for aliases of commands or options. These lines are extracted
   by  --help=alias
+
+
+=head2 OpenSSL:Version
+
+About OpenSSL's version numbers see openssl/opensslv.h . Examples:
+  0x01000000 => openssl-0.9x.x
+  0x1000000f => openssl-1.0.0
+  0x10002000 => openssl-1.0.2
 
 
 =head2 Note:openssl CApath
