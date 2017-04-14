@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.04.13',
+    SSLINFO_VERSION => '17.04.14',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.175 17/04/14 22:24:33',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.176 17/04/15 01:51:29',
 };
 
 ######################################################## public documentation #
@@ -1912,6 +1912,7 @@ sub do_ssl_open($$$@) {
             # $x509 may be undef or 0; this may cause "Segmentation fault"s in
             # some Net::SSLeay::X509_* methods; hence we always use _ssleay_get
 
+
         #5a. get internal data
         $_SSLinfo{'x509'}       = $x509;
         $_SSLinfo{'_options'}  .= sprintf("0x%016x", Net::SSLeay::CTX_get_options($ctx)) if $ctx;
@@ -2154,6 +2155,15 @@ sub do_ssl_open($$$@) {
         # NO Certificate }
 
         $_SSLinfo{'s_client'}       = do_openssl('s_client', $host, $port, '');
+            # this should be the forst call to openssl herein
+        my  $eee = $_SSLinfo{'s_client'};
+        if ($eee =~ m/.*(?:\*\*ERROR)/) {   # pass errors to caller
+            $eee =~ s/.*(\*\*ERROR[^\n]*).*/$1/s;
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING openssl: $eee");
+        } else {
+            $eee =  "";
+        }
+        # FIXME: lazy and incomplete approach to pass errors
 
             # from s_client: (if openssl supports -nextprotoneg)
             #    Protocols advertised by server: spdy/4a4, spdy/3.1, spdy/3, http/1.1
@@ -2507,9 +2517,19 @@ sub do_openssl($$$$) {
         $host .= ':' if ($port ne '');
         $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
         if ($data =~ m/(\nusage:|unknown option)/s) {
+            #$data =~ s/((?:usage:|unknown option)[^\r\n]*).*/$1/g;
+            my $u1 = $data; $u1 =~ s/.*?(unknown option[^\r\n]*).*/$1/s;
+            my $u2 = $data; $u2 =~ s/.*?\n(usage:[^\r\n]*).*/$1/s;
+            $data = "**ERROR: $u1\n**ERROR: $u2\n"; # pass basic error string to caller
             _trace("do_openssl($mode): WARNING: openssl does not support -nextprotoneg option");
-            $mode =  's_client -reconnect -connect';
-            $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
+            push(@{$_SSLinfo{'errors'}}, "do_openssl($mode) failed: $data");
+            # try to do it again with mostly safe options
+            $mode =  's_client';
+            $mode .= ' -CApath ' . $capath if ($capath ne "");
+            $mode .= ' -CAfile ' . $cafile if ($cafile ne "");
+            $mode .= ' -reconnect'   if ($Net::SSLinfo::use_reconnect == 1);
+            $mode .= ' -connect';
+            $data .= `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
         }
     } else {
         $data = _openssl_MS($mode, $host, $port, '');
