@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.03.17',
+    SSLINFO_VERSION => '17.04.13',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.173 17/04/13 23:36:24',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.174 17/04/14 19:34:05',
 };
 
 ######################################################## public documentation #
@@ -359,6 +359,8 @@ Internal documentation only.
     Net::SSLeay::ctrl()
 
 =item _ssleay_ssl_np()
+    Net::SSLeay::CTX_set_alpn_protos()
+    Net::SSLeay::CTX_set_next_proto_select_cb()
 
 =item do_ssl_new()
 
@@ -1466,6 +1468,42 @@ sub _ssleay_ssl_new {
     return;
 } # _ssleay_ssl_new
 
+sub _ssleay_ssl_np  {
+    #? sets CTX for ALPN and/or NPN if possible
+    # returns -1 on success, otherwise array with errors
+    # Note: check if functionality is available should be done before, 
+    #       for defensive programming, it's done here again
+    # Note  that parameters are different: ALPN array ref. vs. NPN array
+    my $ctx     = shift;
+    my $set_alpn= shift;
+    my $set_npn = shift;
+    my @protos  = @_;
+    _trace("_ssleay_ssl_np(ctx, @protos)");
+    my $src;
+    my @err;
+    # functions return 0 on success, hence: && do{} to catch errors
+    # ALPN (Net-SSLeay > 1.55, openssl >= 1.0.2)
+    if ($set_alpn > 0) {
+        $src = 'Net::SSLeay::CTX_set_alpn_protos()';
+        if (exists &Net::SSLeay::CTX_set_alpn_protos) {
+            Net::SSLeay::CTX_set_alpn_protos($ctx, [@protos]) && do {
+                push(@err, "_ssleay_ssl_np() failed calling $src: $!");
+            };
+        }
+    }
+    # NPN  (Net-SSLeay > 1.45, openssl >= 1.0.1)
+    if ($set_npn > 0) {
+        if (exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
+            $src = 'Net::SSLeay::CTX_set_next_proto_select_cb()';
+            Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @protos) && do {
+                push(@err, "_ssleay_ssl_np() failed calling $src: $!");
+            };
+        }
+    }
+    _trace("_ssleay_ssl_np .");
+    return @err;
+} # _ssleay_ssl_np
+
 sub _header_get     {
     #? get value for specified header from given HTTP response; empty if not exists
     my $head    = shift;   # header to search for
@@ -1690,11 +1728,13 @@ sub do_ssl_new      {
             ($dum = _ssleay_ctx_ca($ctx))       or do {$src = '_ssleay_ctx_ca()' } and next;
 
 # FIXME: NPN and ALPN is hardcoded here, needs to be controlled by parameter
-            #1e. set NPN option
-            my @npns;
-               @npns = split(",", $Net::SSLinfo::next_prots) if ($Net::SSLinfo::use_nextprot == 1);
-            Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @npns);
-            # TODO: need to check which Net::SSLeay supports it
+            #1e. set ALPN and NPN option
+            my @protos;
+               @protos = split(",", $Net::SSLinfo::next_prots) if ($Net::SSLinfo::use_nextprot == 1);
+            my @err = _ssleay_ssl_np($ctx, 1, 1, @protos);
+            if ($#err > 0) {     # somthing failed, just collect errors
+                push(@{$_SSLtemp{'errors'}}, @err);
+            }
 
             #1f. prepare SSL object
             ($ssl = _ssleay_ssl_new($ctx, $host, $tmp_sock, $cipher)) or {$src = '_ssleay_ssl_new()'} and next;
