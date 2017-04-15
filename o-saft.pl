@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.632 17/04/15 01:56:44",
+    SID         => "@(#) yeast.pl 1.633 17/04/15 09:37:40",
     STR_VERSION => "17.04.14",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1168,6 +1168,34 @@ our %cmd = (
     'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
     'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
     'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check 
+    #-----------------+---------+----------------------------------------------
+    # key              supported  1: option supported by openssl
+    #-----------------+---------+----------------------------------------------
+    'has_alpn'      => 0,       # -alpn
+    'has_npn'       => 0,       # -nextprotoneg
+    'has_reconnect' => 0,       # -reconnect
+    'has_fallback'  => 0,       # -fallback_scsv
+    'has_no_ticket' => 0,       # -no_ticket
+    'has_no_tlsext' => 0,       # -no_tlsext
+    'has_serverinfo'=> 0,       # -serverinfo
+    'has_servername'=> 0,       # -servername
+    'has_showcerts' => 0,       # -showcerts
+    'has_curves'    => 0,       # -curves
+    'has_debug'     => 0,       # -debug
+    'has_bugs'      => 0,       # -bugs
+    'has_key'       => 0,       # -key
+    'has_msg'       => 0,       # -msg
+    'has_psk'       => 0,       # -psk -psk_identity
+    'has_pause'     => 0,       # -pause
+    'has_proxy'     => 0,       # -proxy
+    'has_status'    => 0,       # -status
+    'has_sigalgs'   => 0,       # -sigalgs
+    'has-nbio_test' => 0,       # -nbio_test
+    'has_tlsextdebug'   => 0,   # -tlsextdebug
+    'has_legacy_reneg'  => 0,   # -legacy_renegotiation
+    'has_cafile'    => 0,       # -CAfile
+    'has_capath'    => 0,       # -CApath
+    #-----------------+---------+----------------------------------------------
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
     'call'          => [],      # list of special (internal) function calls
                                 # see --call=METHOD option in description below
@@ -1800,6 +1828,7 @@ sub _load_modules       {
         die  STR_ERROR, "$err"  if (! _is_do('version'));
         warn STR_ERROR, "$err";     # no reason to die for +version
     }
+    return;
 } # _load_modules
 
 sub _check_modules      {
@@ -1971,7 +2000,7 @@ sub _check_versions     {
         #_hint("--no-alpn --no-npn  can be used to disable this check");
     }
 
-   return;
+    return;
 } # _check_versions
 
 sub _check_methods      {
@@ -2057,8 +2086,48 @@ sub _check_methods      {
         _v_print("supported SSL versions: @{$cfg{'versions'}}");
         _v_print("  checked SSL versions: @{$cfg{'version'}}");
     }
-   return;
+    return;
 } # _check_methods
+
+sub _check_sclient      {
+    _y_CMD("  check cpapbilities of openssl's s_client command");
+    my $cmd_timeout = shift;
+    my $cmd_openssl = shift;
+    # check with "openssl s_client --help" where --help most likely is unknown
+    # and hence forces the usage message which will be analysed
+    # Note: following checks asume that the  returned usage properly describes
+    #       openssl's capabilities
+    # For an example output SEE Note:openssl s_client
+    _trace("echo  | $cmd_timeout $cmd_openssl s_client --help 2>&1");
+#print("echo  | $cmd_timeout $cmd_openssl s_client --help 2>&1");
+    return;
+} # _check_sclient
+
+sub _check_openssl      {
+    _y_CMD("  check cpapbilities of openssl ...");
+    # FIXME: implement functionality for MSWin32 like in use Net::SSLinfo::do_openssl()
+    my $cmd_openssl =  $cmd{'openssl'};
+       $cmd_openssl = '\\' .  $cmd_openssl if (($cmd_openssl ne '') and ($cmd_openssl !~ /\//));
+    my $cmd_timeout = "$cmd{'timeout'} $cfg{'timeout'}";
+       $cmd_timeout = '\\' .  $cmd_timeout if (($cmd_timeout ne '') and ($cmd_timeout !~ /\//));
+       $cmd_timeout = "" if ($^O =~ m/MSWin32/);
+    _trace("$cmd_openssl version 2>&1");# check availability
+    qx($cmd_openssl version 2>&1) or do {
+        _warn("'$cmd{'openssl'}' not available; all its functionality disabled");
+        _hint("consider using '--openssl=/path/to/openssl'");
+        $cmd{'openssl'}     = "";
+        $cmd{'extopenssl'}  = 0;
+        $cmd{'extsclient'}  = 0;
+        $cmd{'extciphers'}  = 0;
+        # TODO: remove +s_client from $cmd{do}
+        return;
+    };
+    _check_sclient($cmd_timeout, $cmd_openssl);
+    # TODO: should check openssl with a real connection
+    # my $mode = "";
+    #_trace("echo  | $cmd_timeout $cmd{'openssl'} $mode $host:$port 2>&1");
+    return;
+} # _check_openssl
 
 sub _init_openssldir    {
     # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
@@ -6677,6 +6746,7 @@ _load_modules();
 
 _yeast_TIME("inc}");
 _yeast_TIME("mod{");
+_y_CMD("check $cfg{'mename'} internals ...");
 
 if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
 
@@ -6697,6 +6767,13 @@ if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
     _check_methods() if ((_need_cipher() > 0) or (_need_default() > 0) and not _is_do('version'));
 
 }; # +cipherraw
+
+#| check for proper openssl support
+#| -------------------------------------
+# initialize $cmd{has_*}
+# TODO: if openssl needed ... {
+_check_openssl();
+#}
 
 _yeast_TIME("mod}");
 _yeast_TIME("ini{");
@@ -7457,6 +7534,93 @@ Note that the returned OPENSSLDIR is a base-directory where the cert files
 are found in the cert/ sub-directory. This cert/ is hardcoded herein.
 
 
+=head2 Note:openssl s_client
+
+Example of% openssl s_client --help
+
+ unknown option --help
+ usage: s_client args
+
+ -host host     - use -connect instead
+ -port port     - use -connect instead
+ -connect host:port - who to connect to (default is localhost:4433)
+ -proxy host:port - use HTTP proxy to connect
+ -verify_host host - check peer certificate matches "host"
+ -verify_email email - check peer certificate matches "email"
+ -verify_ip ipaddr - check peer certificate matches "ipaddr"
+ -verify arg   - turn on peer certificate verification
+ -verify_return_error - return verification errors
+ -cert arg     - certificate file to use, PEM format assumed
+ -certform arg - certificate format (PEM or DER) PEM default
+ -key arg      - Private key file to use, in cert file if
+                 not specified but cert file is.
+ -keyform arg  - key format (PEM or DER) PEM default
+ -pass arg     - private key file pass phrase source
+ -CApath arg   - PEM format directory of CA's
+ -CAfile arg   - PEM format file of CA's
+ -no_alt_chains - only ever use the first certificate chain found
+ -reconnect    - Drop and re-make the connection with the same Session-ID
+ -pause        - sleep(1) after each read(2) and write(2) system call
+ -prexit       - print session information even on connection failure
+ -showcerts    - show all certificates in the chain
+ -debug        - extra output
+ -msg          - Show protocol messages
+ -nbio_test    - more ssl protocol testing
+ -state        - print the 'ssl' states
+ -nbio         - Run with non-blocking IO
+ -crlf         - convert LF from terminal into CRLF
+ -quiet        - no s_client output
+ -ign_eof      - ignore input eof (default when -quiet)
+ -no_ign_eof   - don't ignore input eof
+ -psk_identity arg - PSK identity
+ -psk arg      - PSK in hex (without 0x)
+ -srpuser user     - SRP authentification for 'user'
+ -srppass arg      - password for 'user'
+ -srp_lateuser     - SRP username into second ClientHello message
+ -srp_moregroups   - Tolerate other than the known g N values.
+ -srp_strength int - minimal length in bits for N (default 1024).
+ -ssl2         - just use SSLv2
+ -ssl3         - just use SSLv3
+ -tls1_2       - just use TLSv1.2
+ -tls1_1       - just use TLSv1.1
+ -tls1         - just use TLSv1
+ -dtls1        - just use DTLSv1
+ -fallback_scsv - send TLS_FALLBACK_SCSV
+ -mtu          - set the link layer MTU
+ -no_tls1_2/-no_tls1_1/-no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol
+ -bugs         - Switch on all SSL implementation bug workarounds
+ -serverpref   - Use server's cipher preferences (only SSLv2)
+ -cipher       - preferred cipher to use, use the 'openssl ciphers'
+                 command to see what is available
+ -starttls prot - use the STARTTLS command before starting TLS
+                 for those protocols that support it, where
+                 'prot' defines which one to assume.  Currently,
+                 only "smtp", "pop3", "imap", "ftp", "xmpp"
+                 "telnet" and "ldap" are supported.
+                 are supported.
+ -xmpphost host - When used with "-starttls xmpp" specifies the virtual host.
+ -engine id    - Initialise and use the specified engine
+ -rand file:file:...
+ -sess_out arg - file to write SSL session to
+ -sess_in arg  - file to read SSL session from
+ -servername host  - Set TLS extension servername in ClientHello
+ -tlsextdebug      - hex dump of all TLS extensions received
+ -status           - request certificate status from server
+ -no_ticket        - disable use of RFC4507bis session tickets
+ -serverinfo types - send empty ClientHello extensions (comma-separated numbers)
+ -curves arg       - Elliptic curves to advertise (colon-separated list)
+ -sigalgs arg      - Signature algorithms to support (colon-separated list)
+ -client_sigalgs arg - Signature algorithms to support for client
+                       certificate authentication (colon-separated list)
+ -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)
+ -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)
+ -legacy_renegotiation - enable use of legacy renegotiation (dangerous)
+ -use_srtp profiles - Offer SRTP key management with a colon-separated profile list
+ -keymatexport label   - Export keying material using label
+ -keymatexportlen len  - Export len bytes of keying material (default 20)
+ -no_tlsext        - Don't send any TLS extensions (breaks servername, NPN and ALPN among others)
+
+
 =head2 Note:Selected Protocol
 
 'sslversion' returns protocol as used in our data structure (like TLSv12)
@@ -7485,7 +7649,7 @@ example Net::SSLeay:
 
 =head2 Note:--ssl-error
 
-The option --ssl-error in conjuction with the error counts --ssl-error-max
+The option  --ssl-error  in conjunction with error counts  --ssl-error-max
 and --ssl-error-total controls wether to try to connect to the target even
 if there are errors or timeouts. I.g. the used API IO::Socket:SSL, openssl
 returns an error in $!. Unfortunately the error may be different according
