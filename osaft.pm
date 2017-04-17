@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.04.14',  # official version number of tis file
+    OSAFT_VERSION   => '17.04.17',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.93 17/04/15 00:00:04',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.94 17/04/17 17:06:32',
 
 };
 
@@ -1416,8 +1416,7 @@ our %cfg = (
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [        # commands for checking protocols
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
-hasalpn alpn hasnpn session_protocol next_protocols https_protocols http_protocols https_svc http_svc)
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npns next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
     'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
                     # Results of these commands are not printed in output.
