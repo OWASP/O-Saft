@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.634 17/04/17 11:25:05",
+    SID         => "@(#) yeast.pl 1.635 17/04/17 11:44:56",
     STR_VERSION => "17.04.16",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4688,13 +4688,15 @@ sub checkdest($$)   {
         $checks{'session_random'}->{val} = $text{'na'};
     }
 
-    # check protocol support
+    # check ALPN and NPN support
     $key   = 'next_protocols';
     $value = $data{$key}->{val}($host, $port);
     $checks{'hasnpn'}->{val}    = " " if ($value eq "");
+    $checks{'hasnpn'}->{val}    = _get_text('disabled', "--no-npn")  if ($cfg{'usenpn'}  < 1);
     $key   = 'alpn';
     $value = $data{$key}->{val}($host, $port);
     $checks{'hasalpn'}->{val}   = " " if ($value eq "");
+    $checks{'hasalpn'}->{val}   = _get_text('disabled', "--no-alpn") if ($cfg{'usealpn'} < 1);
     $key   = 'no_alpn';
     $value = $data{$key}->{val}($host, $port);
     if ($value ne "") { # ALPN not negotiated
