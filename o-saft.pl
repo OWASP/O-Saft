@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.639 17/04/17 17:29:19",
+    SID         => "@(#) yeast.pl 1.640 17/04/17 18:26:47",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7082,6 +7082,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("test IP ...");
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
         if ($cfg{'usedns'} == 1) {  # following settings only with --dns
+           local $? = 0; local $! = undef;
            ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
             $cfg{'rhost'}   = $fail if ($? != 0);
         }
@@ -7090,8 +7091,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
             my $i = 0;
             foreach my $ip (@ips) {
-                local $! = 0;
-                local $? = 0;
+                local $? = 0; local $! = undef;
                ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
                 $rhost  = $fail if ($? != 0);
                 $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
