@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.178 17/04/17 09:51:11',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.179 17/04/17 11:16:38',
 };
 
 ######################################################## public documentation #
@@ -781,7 +781,7 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-npn'          => 0, # same as -nextprotoneg
     '-nextprotoneg' => 0,
     '-reconnect'    => 0,
-    '-fallback_scv' => 0,
+    '-fallback_scsv'=> 0,
     '-no_ticket'    => 0,
     '-no_tlsext'    => 0,
     '-serverinfo'   => 0,
