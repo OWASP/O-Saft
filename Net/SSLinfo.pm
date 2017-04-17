@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.04.15',
+    SSLINFO_VERSION => '17.04.17',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.177 17/04/17 09:25:37',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.178 17/04/17 09:51:11',
 };
 
 ######################################################## public documentation #
@@ -477,6 +477,9 @@ our @EXPORT_OK = qw(
         ssleay_methods
         ssleay_test
         datadump
+        s_client_check
+        s_client_get_optionlist
+        s_client_opt_get
         do_ssl_new
         do_ssl_free
         do_ssl_open
@@ -760,6 +763,48 @@ sub _traceSSLbitmasks {
 } # _traceSSLbitmasks
 
 ##################################################### internal data structure #
+
+my %_OpenSSL_opt = (    # openssl capabilities
+    # openssl has various capabilities which can be used with options.
+    # Depending on the version of openssl, these options are available or not.
+    # The data structure contains the important options, each as key where its
+    # value is is 1 if the option is available at openssl.
+    # Currently only options for openssl's  s_client  command are supported.
+    # This data structure is for one openssl command. More than one command is
+    # not expected, not usefull, hence it is thread save.
+    'done'          => 0, # set to 1 if initialized
+    'data'          => "",# contains output from "openssl s_client -help"
+    #--------------+------------
+    # key (=option) supported=1
+    #--------------+------------
+    '-alpn'         => 0,
+    '-npn'          => 0, # same as -nextprotoneg
+    '-nextprotoneg' => 0,
+    '-reconnect'    => 0,
+    '-fallback_scv' => 0,
+    '-no_ticket'    => 0,
+    '-no_tlsext'    => 0,
+    '-serverinfo'   => 0,
+    '-servername'   => 0,
+    '-showcerts'    => 0,
+    '-curves'       => 0,
+    '-debug'        => 0,
+    '-bugs'         => 0,
+    '-key'          => 0,
+    '-msg'          => 0,
+    '-psk'          => 0,
+    '-psk_identity' => 0,
+    '-pause'        => 0,
+    '-proxy'        => 0,
+    '-status'       => 0,
+    '-sigalgs'      => 0,
+    '-nbio_test'    => 0,
+    '-tlsextdebug'  => 0,
+    '-legacy_renegotiation'  => 0,
+    '-CAfile'       => 0,
+    '-CApath'       => 0,
+    #--------------+------------
+);
 
 my %_SSLmap = ( # map libssl's constants to speaking names
     # SSL and openssl is a pain, for setting protocols it needs a bitmask
@@ -1060,14 +1105,13 @@ $line
     return $data;
 } # ssleay_test
 
-
 sub _dump       {
     my $key = shift;
     my $txt = shift;
     my $val = shift;
     return sprintf("#{ %-12s:%s%s #}\n", $key, $txt, ($val || "<<undefined>>"));
 } # _dump
-    # my ($label, $separator, $value) = @_;
+
 sub datadump    {
     #? return internal data structure
     my $data = '';
@@ -1092,6 +1136,8 @@ sub datadump    {
 } # datadump
 
 ########################################################## internal functions #
+
+### _OpenSSL_opt_get()  defined later to avoid forward declaration
 
 sub _SSLinfo_get    {
     # get specified value from %_SSLinfo, first parameter 'key' is mandatory
@@ -1667,6 +1713,111 @@ sub _openssl_x509   {
 
 =pod
 
+=head2 s_client_check()
+
+Check if specified openssl executable is available and check capabilities of
+"s_client"  command..
+Returns  undef  if openssl is not available.
+
+=head2 s_client_get_optionlist
+
+Get list of options for openssl s_client command. Returns array.
+
+=head2 s_client_opt_get($option)
+
+Returns 1 if specified option is available for openssl s_client.
+
+=cut
+
+sub s_client_check  {
+    #? store capabilities of "openssl s_client" command in %_OpenSSL_opt
+    return 1 if ($_OpenSSL_opt{'done'} > 0);
+    _traceset();
+    _trace("s_client_check()");
+    _setcmd();
+    if ($_openssl eq '') {
+        _trace("s_client_check(): WARNING: no openssl");
+        return undef;
+    }
+
+    # check with "openssl s_client --help" where --help most likely is unknown
+    # and hence forces the usage message which will be analysed
+    # Note: following checks asume that the  returned usage properly describes
+    #       openssl's capabilities
+    # Partial example of output:
+    # unknown option --help
+    # usage: s_client args
+    # 
+    #  -host host     - use -connect instead
+    #  -port port     - use -connect instead
+    #  -connect host:port - who to connect to (default is localhost:4433)
+    #  -proxy host:port - use HTTP proxy to connect
+    #...
+    #  -CApath arg   - PEM format directory of CA's
+    #  -CAfile arg   - PEM format file of CA's
+    #  -reconnect    - Drop and re-make the connection with the same Session-ID
+    #  -pause        - sleep(1) after each read(2) and write(2) system call
+    #  -debug        - extra output
+    #  -msg          - Show protocol messages
+    #  -nbio_test    - more ssl protocol testing
+    #  -psk_identity arg - PSK identity
+    #  -psk arg      - PSK in hex (without 0x)
+    #  -fallback_scsv - send TLS_FALLBACK_SCSV
+    #  -bugs         - Switch on all SSL implementation bug workarounds
+    #...
+    #  -servername host  - Set TLS extension servername in ClientHello
+    #  -tlsextdebug      - hex dump of all TLS extensions received
+    #  -status           - request certificate status from server
+    #  -no_ticket        - disable use of RFC4507bis session tickets
+    #  -serverinfo types - send empty ClientHello extensions
+    #  -curves arg       - Elliptic curves to advertise
+    #  -sigalgs arg      - Signature algorithms to support
+    #  -nextprotoneg arg - enable NPN extension
+    #  -alpn arg         - enable ALPN extension
+    #  -legacy_renegotiation - enable use of legacy renegotiation
+    #  -no_tlsext        - Don't send any TLS extensions
+    #
+    my $data = "";
+    if ($^O =~ m/MSWin32/) {
+        $_OpenSSL_opt{'data'} = _openssl_MS("s_client -help", '', '', '');  # no host:port
+    } else {
+        $_OpenSSL_opt{'data'} = qx($_openssl s_client -help 2>&1);
+    }
+    #_trace("data{ $_OpenSSL_opt{'data'} }";
+
+    # store data very simple: set value to 1 if option appears in output
+    foreach my $key (keys %_OpenSSL_opt) {
+        next if ($key !~ m/^-/);    # ensure that only options are set
+        $_OpenSSL_opt{$key} = grep{/^ *$key\s/} split("\n", $_OpenSSL_opt{'data'});
+    }
+    $_OpenSSL_opt{'-npn'} = $_OpenSSL_opt{'-nextprotoneg'}; # -npn is an alias
+    $_OpenSSL_opt{'done'} = 1;
+    _trace("s_client_check done.");
+    return 1;
+} # s_client_check
+
+sub _OpenSSL_opt_get{
+    #? get specified value from %_OpenSSL_opt, parameter 'key' is mandatory
+    my $key = shift;
+    _traceset();
+    _trace("_OpenSSL_opt_get('$key')");
+    if ($_OpenSSL_opt{'done'} <= 0) {
+        # initilize %_OpenSSL_opt
+        if (!defined s_client_check()) {
+            _trace("_OpenSSL_opt_get undef");
+            return SSLINFO_HASH;
+        }
+    }
+    _trace("_OpenSSL_opt_get '$key'=" . ($_OpenSSL_opt{$key} || ""));
+    return (grep{/^$key$/} keys %_OpenSSL_opt) ? $_OpenSSL_opt{$key} : '';
+} # _OpenSSL_opt_get
+
+sub s_client_get_optionlist { return (grep{/^-/} keys %_OpenSSL_opt); }
+
+sub s_client_opt_get{ return _OpenSSL_opt_get(shift); }
+
+=pod
+
 =head2 do_ssl_new($host,$port,$sslversions[,$cipherlist,$protolist,$socket])
 
 Establish new SSL connection using L<Net::SSLeay>.
@@ -1893,6 +2044,14 @@ sub do_ssl_open($$$@) {
     my $method  = undef;
     my $src;            # function (name) where something failed
     my $err     = "";   # error string, if any, from sub-system $src
+
+    # initialize %_OpenSSL_opt
+    $src = 's_client_check';
+    if ($Net::SSLinfo::use_openssl > 0) {
+        if (!defined s_client_check()) {
+            push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: undefined");
+       }
+    }
 
     TRY: {
 
@@ -2533,7 +2692,7 @@ sub do_openssl($$$$) {
         $mode .= ' -connect';
     }
     $host = $port = "" if ($mode =~ m/^-?(ciphers)/);
-    _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1") ;
+    _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1");
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $data = `echo $pipe | $_timeout $_openssl $mode $host$port 2>&1`;
