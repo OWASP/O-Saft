@@ -36,6 +36,9 @@ Multiple commands and targets may be combined.
 All  commands  and  options  can also be specified in a  rc-file, see
 L</RC-FILE>  below.
 
+	I.g. all commands start with a  C<+>  character and options start with
+C<->  or  C<-->  characters. Anything else is treated as target name.
+
 =head1 QUICKSTART
 
 Before going into  a detailed description  of the  purpose and usage,
@@ -97,7 +100,7 @@ here are some examples of the most common use cases:
 
 	o-saft.pl +cipherall example.tld --range=full
 	checkAllCiphers.pl example.tld
-	checkAllCiphers.pl example.tld   --range=full --v
+	checkAllCiphers.pl example.tld I--range=full& I&--v&&
 
 =over
 
@@ -1117,14 +1120,6 @@ For developers.
 
 =head2 Options for all commands (general)
 
-=head3 --rc
-
-Read  L</RC-FILE>  if exists, from directory where program was found.
-
-=head3 --no-rc
-
-Do not read  L</RC-FILE>.
-
 =head3 --dns
 
 Do DNS lookups to map given hostname to IP, do a reverse lookup.
@@ -1234,6 +1229,14 @@ a longer delay.
 Internal use for CGI mode only.
 
 =head2 Options for SSL tool
+
+=head3 --rc
+
+Read  L</RC-FILE>  if exists, from directory where program was found.
+
+=head3 --no-rc
+
+Do not read  L</RC-FILE>.
 
 =head3 --exitcode
 
@@ -1357,6 +1360,34 @@ Check your system for the proper name, i.e.:
 
 	DYLD_LIBRARY_PATH, LIBPATH, RPATH, SHLIB_PATH.
 
+=head3 --ssl-error
+
+Stop trying to connect to target if  I<--ssl-error-max>  erros occourd
+sequntialy or if total amount of errors reaches  I<--ssl-error-total>.
+
+The connection to  a target may fail, or even block, due to various
+resons, for example lost network at all, blocking at firewall, etc.
+In particular when checking ciphers with  I<+cipher> , this may result
+in long delays until results are printed.
+Using this option stops trying to do more connections to the target
+when  I<--ssl-error-max>  consecutive errors occoured, or if the total
+amount of errors increases  I<--ssl-error-total>.
+
+Note that this may result in loss of information and/or checks.
+
+=head3 --ssl-error-max=CNT
+
+Max. amount of consecutive errors (default: 5).
+
+=head3 --ssl-error-timeout=SEC
+
+Timeout in seconds when a failed connection is treated as error and
+then counted (default: 1).
+
+=head3 --ssl-error-total=CNT
+
+Max. total amount of errors (default: 10).
+
 =head3 --ssl-lazy
 
 I.g. this tools tries to identify available functionality according
@@ -1378,6 +1409,10 @@ haves, can be found in the source of  o-saft.pl ,
 see section starting at
 
 	#| check for supported SSL versions
+
+=head3 --timeout=SEC
+
+Timeout in seconds when connecting to the target (default: 2).
 
 =head3 --call=METHOD
 
@@ -1931,6 +1966,20 @@ Checks are done case sensitive. Default: case insensitive.
 Currently only checks according CN, alternate names in the target's
 certificate compared to the given hostname are effected.
 
+=head3 --ignore-no-reply
+
+When checking for the  TLS heartbeat extension,  the server may not
+respond at all, which would result in a  "no reply"  message.  This
+marks the check for  I<+heartbleed>  as C<no>.
+I.g.  a server is  not vulnerable to the  heartbleed attack  if the
+TLS heartbeat extension is disabled.  Hence the  check result  C<no> 
+may be mis-leading.  This option  treats the  "no reply"  result as
+"not vulnerable" and returns  C<yes>  then.
+
+Note: if the server does not respond for this check,  does not mean
+that the heartbeat extension is switched off. So if unsure, disable
+this lazy check with  I<--no-ignore-no-reply> .
+
 =head2 Options for output format
 
 =head3 --short
@@ -2452,7 +2501,7 @@ Trace Option        Alias Option
 
 =head3 --trace-time
 
-Prints timestamp in trace output (implies I<--trace-cmd>).
+Prints trace output with timestamps.
 
 =head3 --trace=FILE
 
@@ -2874,8 +2923,16 @@ the key exceeds 16384 or 32768 bits. The check is against 16384 bits.
 
 =head3 Public Key Modulus Exponent size
 
-The modulus exponent should be <= 65536 as some (mainly historic) SSL
-implementations may have problems to connect.
+The modulus exponent should be = 65537 as it is a prime number and an
+easy to calculate exponent.
+If the exponent is less than 65537, "Boradcast" attacks are possible.
+
+However, some (mainly historic) SSL implementations may have problems
+to connect because they are not able to do the crypt mathematics with
+exponenents larger than 65536.
+
+If ecliptive curves are used, the result for these checks is always 
+C<no (<<N/A ...)>.
 
 =head3 Sizes and Lengths of Certificate Settings
 
@@ -3088,6 +3145,97 @@ Note that  I<+preload>  is defined in  .o-saft.pl  only.
 =head3 Public Key Pins header
 
 TBD - to be described ...
+
+=head2 Sizes
+
+Mainly in the certificate various counts, lengths and sizes of values
+are checked and reported. All commands for these checks start with
+C<+cnt_>  or  C<+len_>.  Up to now, there is no  C<yes>  or  C<no>  value
+for these checks.
+
+Following commands will check the value to be in  a specific range to
+become  C<yes>  or  C<no>:
+
+=over
+
+=item * +sts_maxage1d       - yes if HSTS maxage < 1 day
+
+=back
+
+=over
+
+=item * +sts_maxage1m       - yes if HSTS maxage < 1 month
+
+=back
+
+=over
+
+=item * +sts_maxage1y       - yes if HSTS maxage < 1 year
+
+=back
+
+=over
+
+=item * +sts_maxage18       - yes if HSTS maxage < 18 weeks (5 months)
+
+=back
+
+=over
+
+=item * +sts_maxagexy       - yes if HSTS maxage > 1 year
+
+=back
+
+=over
+
+=item * +modulus_exp_65537  - Public Key Modulus Exponent =65537
+
+=back
+
+=over
+
+=item * +modulus_exp_oldssl - Public Key Modulus Exponent <65537
+
+=back
+
+=over
+
+=item * +modulus_size_oldssl - Public Key Modulus <16385 bits
+
+=back
+
+For some details of these cjecks, please see the description above at
+Public Key Modulus Exponent size
+
+The recommendations for  DH parameters (RSA and ecliptice curve)  are
+are checked as follows:
+
+=over
+
+=item * +dh_512             - DH Parameter >= 512 bits
+
+=back
+
+=over
+
+=item * +dh_2048            - DH Parameter >= 2048 bits
+
+=back
+
+=over
+
+=item * +ecdh_256           - DH Parameter >= 256 bits (ECDH)
+
+=back
+
+=over
+
+=item * +ecdh_512           - DH Parameter >= 512 bits (ECDH)
+
+=back
+
+Note that only one of the checks  C<+dh_*>  and  C<+ecdh_*>  can return
+C<yes>.
 
 =head2 Compliances
 
@@ -4032,11 +4180,11 @@ which then may produce:
 	=== reading: Net/SSLinfo.pm (O-Saft module done) ===
 	**USAGE: no command given
 	# most common usage:
-	o-saft.pl +info   your.tld
-	o-saft.pl +check  your.tld
-	o-saft.pl +cipher your.tld
+	o-saft.pl I+info&   your.tld&
+	o-saft.pl I+check&  your.tld&
+	o-saft.pl I+cipher& your.tld&
 	# for more help use:
-	o-saft.pl --help
+	o-saft.pl I--help&&
 
 Workaround: use full path to perl.exe, for example
 C:\Programs\perl\bin\perl.exe o-saft.pl I<--help=FAQ>
@@ -4044,8 +4192,8 @@ C:\Programs\perl\bin\perl.exe o-saft.pl I<--help=FAQ>
 =head2 Performance Problems
 
 There are various reasons when the program responds slow, or seems to
-hang. Beside the problems described below performance issues are most
-likely a target-side problem. Most common reasons are:
+hang. Performance issues are most likely a target-side problem.  Most
+common reasons are:
 
 =over
 
@@ -4094,6 +4242,15 @@ Try with  I<--no-sni>
 =back
 
 Use  I<--no-openssl>
+
+=over
+
+=item *           g) target does not respond at all and/or blocks
+
+=back
+
+Use  I<--ssl-error>
+For a detailed description, please see "Connection Problems".
 
 Other options which may help to get closer to the problem's cause:
 I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>
@@ -4225,6 +4382,114 @@ o-saft:
 =over
 
 =item * tlsextdebug         --no-tlsextdebug
+
+=back
+
+=head2 Connection Problems
+
+Sometimes the connection cannot be established. This may have various
+reasons.  Unfortunaly this script seems to hang then.  In  particular
+when checking for ciphers with  I<+cipher>  or  I<+cipherall>  . The reason
+is most likely that the server does not respond to the TCP/IP request
+and hence the script closes the connection after the configured time-
+out (see  I<--timeout=SEC>  option).
+
+Continous connection attempts  can be inhibited with the  I<--ssl-error>
+option, which is set by default. Avoiding further connections results
+in a loss of information and consequentely leading to wrong checks.
+
+It is a trade-off to wait for all information done accurately,  or to
+get the results quickly. The logic to stop connecting for I<--ssl-error>
+can be controlled with following additional options:
+
+=over
+
+=item * --ssl-error-max=CNT     - max. continous errors
+
+=back
+
+=over
+
+=item * --ssl-error-timeout=SEC - timeout when to treat a failure as error
+
+=back
+
+=over
+
+=item * --ssl-error-total=CNT   - max. amount of errors
+
+=back
+
+This means that no more connections are maid when more than
+
+=over
+
+=item * --ssl-error-max errors occour sequentialy
+
+=back
+
+or
+
+=over
+
+=item * --ssl-error-total errors occoured
+
+=back
+
+Examples:
+
+=over
+
+=item * --ssl-error-max=3
+
+=back
+
+=over
+
+=item * --ssl-error-timeout=6
+
+=back
+
+=over
+
+=item * --ssl-error-total=6
+
+=back
+
+no more connections are made if for example  any sequence of timeouts
+occour:
+0 5 2 2                   - I<--ssl-error-max> matches
+0 1 3 0 0 0 4 1 2 2 2     - I<--ssl-error-max> matches
+0 5 0 2 0 2 2 0 2 0 2     - I<--ssl-error-total> matches
+
+This allows to fine-tune the condition when to stop connecting to the
+target. For example, continous but not consecutive timeouts may indi-
+cate a bad or instable network connection, but not that the target to
+be connected blocks. In such a case sequence of timeouts like follows
+may be observed (assuming I<--ssl-error-max=3>):
+0 5 1 2 2 2 4 2 3 2 3 3 3 2
+   ^                 ^____ stop for I<--ssl-error-timeout=3>
+   |______________________ stop for I<--ssl-error-timeout=2>
+
+On normal (even slow) network connections  dozens of  connections per 
+second are usual, hence the timeout is always  0 or 1.  Based on that
+experience  I<--ssl-error>  is enabled and set with defaults as follows:
+
+=over
+
+=item * --ssl-error-max=5
+
+=back
+
+=over
+
+=item * --ssl-error-timeout=1
+
+=back
+
+=over
+
+=item * --ssl-error-total=10
 
 =back
 
@@ -4585,7 +4850,7 @@ Building our own library and module (with openssl from C</usr/local>):
 
 	make
 	make install
-	cd /tmp && o-saft.pl +version
+	cd /tmp & o-saft.pl +version&
 
 SSLeay.xs needs to be changed as follows:
 
@@ -4632,7 +4897,7 @@ and  C<DESTDIR>  parameter.
 Following command can be used to check  which methods are avilable in
 Net::SSLeay, hence above patches can be verified:
 
-	perl -MNet::SSLinfo -le 'print Net::SSLinfo::ssleay_test();'
+	perl -MLNet::SSLinfo& -le 'print L&Net::SSLinfo&::ssleay_test();'&
 
 =head2 Testing OpenSSL
 
@@ -5450,8 +5715,8 @@ Net::SSLeay 1.30
 =back
 
 	o-saft.pl +cipherall some.tld
-	o-saft.pl +cipherall some.tld  --range=full
-	checkAllCiphers.pl example.tld --range=full --v
+	o-saft.pl +cipherall some.tld --range=full
+	checkAllCiphers.pl example.tld I--range=full& I&--v&&
 
 =over
 
@@ -5549,7 +5814,7 @@ edit as needed: .o-saft.pl
 	o-saft.pl some.tld +fingerprint --format=raw
 	o-saft.pl some.tld +certificate --format=raw | openssl x509 -noout -fingerprint
 
-=head2 Special for hunting problems with connections etc.
+=head2 Specials for hunting problems with connections etc.
 
 =over
 
@@ -5602,7 +5867,15 @@ edit as needed: .o-saft.pl
 
 =over
 
-=item * Show internal control flow and timing
+=item * Show internal control flow
+
+=back
+
+	o-saft.pl +info some.tld --trace-cmd
+
+=over
+
+=item * Show internal timing
 
 =back
 
@@ -5699,7 +5972,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 17.03.17
+@(#) 17.04.17
 
 =head1 AUTHOR
 
