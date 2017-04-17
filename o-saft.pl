@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.633 17/04/15 09:37:40",
-    STR_VERSION => "17.04.14",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.634 17/04/17 11:25:05",
+    STR_VERSION => "17.04.16",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1168,34 +1168,6 @@ our %cmd = (
     'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
     'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
     'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check 
-    #-----------------+---------+----------------------------------------------
-    # key              supported  1: option supported by openssl
-    #-----------------+---------+----------------------------------------------
-    'has_alpn'      => 0,       # -alpn
-    'has_npn'       => 0,       # -nextprotoneg
-    'has_reconnect' => 0,       # -reconnect
-    'has_fallback'  => 0,       # -fallback_scsv
-    'has_no_ticket' => 0,       # -no_ticket
-    'has_no_tlsext' => 0,       # -no_tlsext
-    'has_serverinfo'=> 0,       # -serverinfo
-    'has_servername'=> 0,       # -servername
-    'has_showcerts' => 0,       # -showcerts
-    'has_curves'    => 0,       # -curves
-    'has_debug'     => 0,       # -debug
-    'has_bugs'      => 0,       # -bugs
-    'has_key'       => 0,       # -key
-    'has_msg'       => 0,       # -msg
-    'has_psk'       => 0,       # -psk -psk_identity
-    'has_pause'     => 0,       # -pause
-    'has_proxy'     => 0,       # -proxy
-    'has_status'    => 0,       # -status
-    'has_sigalgs'   => 0,       # -sigalgs
-    'has-nbio_test' => 0,       # -nbio_test
-    'has_tlsextdebug'   => 0,   # -tlsextdebug
-    'has_legacy_reneg'  => 0,   # -legacy_renegotiation
-    'has_cafile'    => 0,       # -CAfile
-    'has_capath'    => 0,       # -CApath
-    #-----------------+---------+----------------------------------------------
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
     'call'          => [],      # list of special (internal) function calls
                                 # see --call=METHOD option in description below
@@ -2090,42 +2062,67 @@ sub _check_methods      {
 } # _check_methods
 
 sub _check_sclient      {
-    _y_CMD("  check cpapbilities of openssl's s_client command");
-    my $cmd_timeout = shift;
-    my $cmd_openssl = shift;
-    # check with "openssl s_client --help" where --help most likely is unknown
-    # and hence forces the usage message which will be analysed
-    # Note: following checks asume that the  returned usage properly describes
-    #       openssl's capabilities
-    # For an example output SEE Note:openssl s_client
-    _trace("echo  | $cmd_timeout $cmd_openssl s_client --help 2>&1");
-#print("echo  | $cmd_timeout $cmd_openssl s_client --help 2>&1");
+    my $opt = shift;
+    _y_CMD("  check openssl s_client cpapbilitiy $opt ...");
+    my %opt_map = (
+        # s_client option      %cfg{key}    string for functionality
+        #-------------------+-----------------------------------
+        '-alpn'             => ['usealpn',          "checks for ALPN disabled"],
+        '-nextprotoneg'     => ['usenpn',           "checks for NPN  disabled"],
+        '-npn'              => ['usenpn',           "checks for NPN  disabled"],
+        '-fallback_scsv'    => ['',                 "checks for TLS_FALLBACK_SCSV wrong"],
+        '-servername'       => ['usesni',           "checks with TLS extension SNI disabled"],
+        '-reconnect'        => ['use_reconnect',    "checks with openssl reconnect disabled"],
+        '-tlsextdebug'      => ['use_extdebug',     "TLS extension missing or wrong"],
+        '-psk'              => ['',                 "PSK  missing or wrong"],
+        '-psk_identity'     => ['',                 "PSK identity missing or wrong"],
+        '-CAfile'           => ['ca_file',          "using -CAfile disabled"],
+        '-CApath'           => ['ca_path',          "using -CApath disabled"],
+        '-no_tlsext'        => ['',                 ""], # not yet used
+        '-no_ticket'        => ['',                 ""], # not yet used
+    );
+    my $supported = Net::SSLinfo::s_client_opt_get($opt) || 0;
+       $supported = 0 if ($supported eq '<<openssl>>'); # TODO: <<openssl>> from Net::SSLinfo
+    if ($supported == 0) {
+        my $key = $opt_map{$opt}[0] ;
+        my $txt = $opt_map{$opt}[1] ;
+        $cfg{$key} = 0  if ($key ne "");;
+        _warn("openssl s_client does not support $opt; $txt") if ($txt ne "");
+        if ($opt eq '-tlsextdebug') {
+            _warn("following results may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
+        }
+        # TODO: remove commands, i.e. +s_client, +heartbleed, from $cmd{do}
+        #    -fallback_scsv: remove +scsv and +fallback
+    }
     return;
 } # _check_sclient
 
 sub _check_openssl      {
     _y_CMD("  check cpapbilities of openssl ...");
-    # FIXME: implement functionality for MSWin32 like in use Net::SSLinfo::do_openssl()
-    my $cmd_openssl =  $cmd{'openssl'};
-       $cmd_openssl = '\\' .  $cmd_openssl if (($cmd_openssl ne '') and ($cmd_openssl !~ /\//));
-    my $cmd_timeout = "$cmd{'timeout'} $cfg{'timeout'}";
-       $cmd_timeout = '\\' .  $cmd_timeout if (($cmd_timeout ne '') and ($cmd_timeout !~ /\//));
-       $cmd_timeout = "" if ($^O =~ m/MSWin32/);
-    _trace("$cmd_openssl version 2>&1");# check availability
-    qx($cmd_openssl version 2>&1) or do {
-        _warn("'$cmd{'openssl'}' not available; all its functionality disabled");
+    $Net::SSLinfo::openssl = $cmd{'openssl'};   # this version should be checked
+    $Net::SSLinfo::trace   = $cfg{'trace'};
+        # save to set $Net::SSLinfo::* here,
+        # will be redifined later, see: set defaults for Net::SSLinfo
+    if (!defined Net::SSLinfo::s_client_check()) {
+        _warn("'$cmd{'openssl'}' not available; all openssl functionality disabled");
         _hint("consider using '--openssl=/path/to/openssl'");
         $cmd{'openssl'}     = "";
         $cmd{'extopenssl'}  = 0;
         $cmd{'extsclient'}  = 0;
         $cmd{'extciphers'}  = 0;
-        # TODO: remove +s_client from $cmd{do}
-        return;
-    };
-    _check_sclient($cmd_timeout, $cmd_openssl);
+    }
+    # Net::SSLinfo::s_client_check() is used to check openssl's capabilities.
+    # For an example output SEE Note:openssl s_client
+    # Each capabilitiy can be queried with  Net::SSLinfo::s_client_opt_get().
+    # I.g. all checks are be done in Net::SSLinfo::*  but there are no proper
+    # error messages printed. Hence we check here and disable all unavailable
+    # functionality with a warining.
+    foreach my $opt (qw(-alpn -npn -tlsextdebug -servername -fallback_scsv
+                     -CAfile -CApath -no_ticket -no_tlsext -psk -psk_identity)) {
+        _check_sclient($opt);
+    }
+    # TODO: checks not yet complete
     # TODO: should check openssl with a real connection
-    # my $mode = "";
-    #_trace("echo  | $cmd_timeout $cmd{'openssl'} $mode $host:$port 2>&1");
     return;
 } # _check_openssl
 
@@ -6770,7 +6767,6 @@ if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
 
 #| check for proper openssl support
 #| -------------------------------------
-# initialize $cmd{has_*}
 # TODO: if openssl needed ... {
 _check_openssl();
 #}
@@ -7317,7 +7313,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         my @errtxt = Net::SSLinfo::errors($host, $port);
         if ((grep{/\*\*ERROR/} @errtxt) > 0) {
-            _warn("Errors occoured when using openssl, some results may be wrong; errors ignored");
+            _warn("Errors occoured when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
             _hint("--v  will show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
