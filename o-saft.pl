@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) %M% %I% %E% %U%",
+    SID         => "@(#) yeast.pl 1.637 17/04/17 16:30:55",
     STR_VERSION => "17.04.16",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -289,6 +289,7 @@ $cfg{'RC-ARGV'} = [@rc_argv];
         'checkhttp' => 0,
         'checksni'  => 0,
         'checkssl'  => 0,
+        'checknpn'  => 0,
         'checkdv'   => 0,
         'checkev'   => 0,
         'check_dh'  => 0,
@@ -502,6 +503,8 @@ our %data   = (     # connection and certificate details
     'heartbeat'     => {'val' => sub {    __SSLinfo('heartbeat',    $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
     'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target advertised protocols"},
     'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
+    'alpns'         => {'val' => sub { return $cfg{'alpns'}->{val};              }, 'txt' => "Target's supported ALPNs"},
+    'npns'          => {'val' => sub { return $cfg{'npns'}->{val};               }, 'txt' => "Target's supported  NPNs"},
     'no_alpn'       => {'val' => sub { Net::SSLinfo::no_alpn(       $_[0], $_[1])}, 'txt' => "Target's not negotiated message (ALPN)"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
@@ -823,7 +826,9 @@ our %shorttexts = (
     'hastls12'      => "TLSv1.2",
     'hastls13'      => "TLSv1.3",
     'hasalpn'       => "Supports ALPN",
-    'hasnpn'        => "Supports NPN",
+    'hasnpn'        => "Supports  NPN",
+    'alpns'         => "Supported ALPNs",
+    'npns'          => "Supported  NPNs",
     'adh_cipher'    => "No ADH ciphers",
     'null_cipher'   => "No NULL ciphers",
     'exp_cipher'    => "No EXPORT ciphers",
@@ -4872,6 +4877,43 @@ sub checkssl($$)    {
     return;
 } # checkssl
 
+sub check_nextproto {
+    #? check target for ALPN or NPN support; returns two lists
+    my ($host, $port, $mode) = @_;
+    _y_CMD("check_nextproto() ");
+    my @npn;
+    my ($ssl, $ctx, $method);
+    my $socket = undef;
+    foreach my $proto (split(",", $cfg{'next_protos'})) {
+        ($ssl, $ctx, $socket, $method) = Net::SSLinfo::do_ssl_new($host, $port,
+                (join(" ", @{$cfg{'version'}})), $cfg{'cipherpattern'}, $proto,
+                (($mode eq 'ALPN')? 1 : 0), (($mode eq 'NPN')? 1 : 0), $socket);
+        if (defined $ssl) {
+            # Net::SSLeay's functions are crazy, anyway, we only want to know if supported
+            # as we check protocols one by one, this information is sufficient
+            push(@npn, $proto) if ($mode eq 'ALPN' and Net::SSLeay::P_alpn_selected($ssl));
+            push(@npn, $proto) if ($mode eq 'NPN'  and Net::SSLeay::P_next_proto_negotiated($ssl));
+        } else {
+            # Net::SSLeay::P_alpn_selected() and Net::SSLeay::P_next_proto_negotiated()
+            # returns undef if not supported by server and for any error
+            _warn("connection failed with '$proto'");
+        }
+        Net::SSLeay::free($ssl)      if (defined $ssl);
+        Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
+        # TODO: need to check if ($cfg{'socket_reuse'} > 0) {
+        close($socket);
+        $socket = undef;
+        #}
+        # if ($cfg(extopenssl} > 0)
+        #my $data = Net::SSLinfo::do_openssl("s_client -alpn $proto -connect", $host, $port, "");
+        #my $np = grep{/^ALPN protocol:.*/} split("\n", $data);
+        #print "$proto : $np";
+        #}
+    }
+    _trace("check_nextproto:  @npn");
+    return @npn;
+} # check_nextproto
+
 sub check_exitcode  {
     #? compute exitcode; returns number of failed checks or insecure settings
     # SEE Note:--exitcode
@@ -7334,6 +7376,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     usr_pre_data();
+
+    $cfg{'alpns'}->{val} = join(",", check_nextproto($host, $port, 'ALPN')) if ($cfg{'usealpn'} > 0);
+    $cfg{'npns'}->{val}  = join(",", check_nextproto($host, $port, 'NPN'))  if ($cfg{'usenpn'}  > 0);
 
     # following sequence important!
     _y_CMD("get checks ..");
