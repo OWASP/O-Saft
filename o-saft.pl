@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.638 17/04/17 17:15:20",
+    SID         => "@(#) yeast.pl 1.639 17/04/17 17:29:19",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1760,28 +1760,28 @@ use IO::Socket::INET;
 sub _load_modules       {
     # load required modules
     # SEE Perl:import include
-    my $err = "";
+    my $txt = "";
     if (1 > 0) { # TODO: experimental code
-        $err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
-        warn STR_ERROR, "$err" if ($err ne "");
+        $txt = _load_file("IO/Socket/SSL.pm", "IO SSL module");
+        warn STR_ERROR, "$txt" if ($txt ne "");
         # cannot load IO::Socket::INET delayed because we use AF_INET,
         # otherwise we get at startup: 
         #    Bareword "AF_INET" not allowed while "strict subs" in use ...
-        #$err = _load_file("IO/Socket/INET.pm", "IO INET module");
-        #warn STR_ERROR, "$err" if ($err ne "");
+        #$txt = _load_file("IO/Socket/INET.pm", "IO INET module");
+        #warn STR_ERROR, "$txt" if ($txt ne "");
     }
     if ($cfg{'need_netdns'} > 0) {
-        $err = _load_file("Net/DNS.pm", "Net module");
-        if ($err ne "") {
-            warn STR_ERROR, "$err";
+        $txt = _load_file("Net/DNS.pm", "Net module");
+        if ($txt ne "") {
+            warn STR_ERROR, "$txt";
             warn STR_WARN,  "--mx disabled";
             $cfg{'usemx'} = 0;
         }
     }
     if ($cfg{'need_timelocal'} > 0) {
-        $err = _load_file("Time/Local.pm", "Time module");
-        if ($err ne "") {
-            warn STR_ERROR, "$err";
+        $txt = _load_file("Time/Local.pm", "Time module");
+        if ($txt ne "") {
+            warn STR_ERROR, "$txt";
             warn STR_WARN,  "value for +sts_expired not applicable";
             # TODO: need to remove +sts_expired from cfg{do}
         }
@@ -1790,18 +1790,18 @@ sub _load_modules       {
         or ($cfg{'starttls'})
         or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
        ) {
-        $err = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
-        if ($err ne "") {
-            die  STR_ERROR, "$err"  if (! _is_do('version'));
-            warn STR_ERROR, "$err"; # no reason to die for +version
+        $txt = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
+        if ($txt ne "") {
+            die  STR_ERROR, "$txt"  if (! _is_do('version'));
+            warn STR_ERROR, "$txt"; # no reason to die for +version
         }
         $cfg{'usehttp'} = 0;        # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
-    $err = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
-    if ($err ne "") {
-        die  STR_ERROR, "$err"  if (! _is_do('version'));
-        warn STR_ERROR, "$err";     # no reason to die for +version
+    $txt = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
+    if ($txt ne "") {
+        die  STR_ERROR, "$txt"  if (! _is_do('version'));
+        warn STR_ERROR, "$txt";     # no reason to die for +version
     }
     return;
 } # _load_modules
@@ -3196,7 +3196,7 @@ sub _useopenssl($$$$)   {
     #   # unknown messages: 139693193549472:error:1407F0E5:SSL routines:SSL2_WRITE:ssl handshake failure:s2_pkt.c:429:
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
-    return "", "", "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#);
+    return "", "", "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
     if ($data =~ m#^\s*$#) {
         _warn("SSL version '$ssl': empty result from openssl");
     } else {
@@ -3292,7 +3292,7 @@ sub ciphers_get($$$$)   {
         }
         $supported = "" if (not defined $supported);
         last if (_is_ssl_error($anf, time(), "$ssl: abort connection attemts") > 0);
-        if (($c !~ /(:?HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
+        if (($c !~ /(?:HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
             if (($c !~ $supported)) {
                 # mismatch: name asked for and name returned by server
                 # this may indicate wrong cipher name in our configuration
@@ -3710,8 +3710,9 @@ sub checkdates($$)  {
     my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
     my $m   = 0;
     my $s_mon = 0; my $u_mon = 0;
-    if (@since) { map({$m++; $s_mon=$m if/$since[0]/} @mon); $m = 0; }
-    if (@until) { map({$m++; $u_mon=$m if/$until[0]/} @mon); $m = 0; }
+    if (@since) { my $dum = map({$m++; $s_mon=$m if/$since[0]/} @mon); $m = 0; }
+    if (@until) { my $dum = map({$m++; $u_mon=$m if/$until[0]/} @mon); $m = 0; }
+        # my $dum =   keeps perlcritic happy
     my $now   = sprintf("%4d%02d%02d", $now[5]+1900, $now[4]+1, $now[3]);
     my $start = sprintf("%s%02s%02s",  $since[3], $s_mon, $since[1]);
     my $end   = sprintf("%s%02s%02s",  $until[3], $u_mon, $until[1]);
@@ -3846,10 +3847,10 @@ sub checkcert($$)   {
     $value = $data{'signame'}->{val}($host);
     $checks{'sha2signature'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'SHA2'}/);
     $checks{'sig_encryption'}->{val} = $value if ($value !~ m/$cfg{'regex'}->{'encryption'}/i);
-    $checks{'sig_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i);
+    $checks{'sig_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
     $value = $data{'pubkey_algorithm'}->{val}($host);
     $checks{'pub_encryption'}->{val} = $value if ($value !~ m/$cfg{'regex'}->{'encryption'}/i);
-    $checks{'pub_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i);
+    $checks{'pub_enc_known'} ->{val} = $value if ($value !~ m/^$cfg{'regex'}->{'encryption_ok'}|$cfg{'regex'}->{'encryption_no'}$/i); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
 
 # TODO: ocsp_uri pruefen; Soft-Fail, Hard-Fail
 
@@ -4959,7 +4960,8 @@ sub scoring($$) {
     foreach my $key (sort keys %checks) {
         next if ($key =~ m/^(ip|reversehost)/); # not scored
         next if ($key =~ m/^(sts_)/);           # needs special handlicg
-        next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); # FIXME: not yet scored
+        next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|pkp_pins|psk_|rootcert|srp|zlib)/); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+          # FIXME: not yet scored
         next if ($key =~ m/^TLSv1[123]/); # FIXME:
         $value = $checks{$key}->{val};
         # TODO: go through @cipher_results
