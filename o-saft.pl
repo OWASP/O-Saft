@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.635 17/04/17 11:44:56",
+    SID         => "@(#) %M% %I% %E% %U%",
     STR_VERSION => "17.04.16",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2063,7 +2063,7 @@ sub _check_methods      {
 
 sub _check_sclient      {
     my $opt = shift;
-    _y_CMD("  check openssl s_client cpapbilitiy $opt ...");
+    _y_CMD("  check openssl s_client cpapbility $opt ...") if ($cfg{verbose} > 0);
     my %opt_map = (
         # s_client option      %cfg{key}    string for functionality
         #-------------------+-----------------------------------
