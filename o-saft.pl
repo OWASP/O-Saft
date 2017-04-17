@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.640 17/04/17 18:26:47",
+    SID         => "@(#) yeast.pl 1.641 17/04/17 19:02:55",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6797,7 +6797,7 @@ if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
 #| check for supported SSL versions
 #| -------------------------------------
 # initialize $cfg{'version'} and all $cfg{ssl}
-    _check_methods() if ((_need_cipher() > 0) or (_need_default() > 0) and not _is_do('version'));
+    _check_methods() if ((_need_cipher() > 0) or (_need_default() > 0) or _is_do('version'));
 
 }; # +cipherraw
 
