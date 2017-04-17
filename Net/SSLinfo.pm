@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.179 17/04/17 11:16:38',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.180 17/04/17 17:43:24',
 };
 
 ######################################################## public documentation #
@@ -59,8 +59,12 @@ use constant {
 #           warn()  when used to inform about ancient modules
 #           print() when used in trace mode ($trace > 0).
 
-## no critic qw( ErrorHandling::RequireCarping)
+## no critic qw(ErrorHandling::RequireCarping)
 #  NOTE: See NOTE above.
+
+## no critic qw(Subroutines::ProhibitExcessComplexity)
+#  it's the nature of some checks to be complex
+#  a max_mccabe = 40 would be nice, but cannot be set per file
 
 =pod
 
@@ -682,6 +686,7 @@ my $dumm_3   = $Net::SSLinfo::proxypass;
 my $dumm_4   = $Net::SSLinfo::proxyuser;
 my $dumm_5   = $Net::SSLinfo::proxyauth;
 my $dumm_6   = $Net::SSLinfo::ca_crl;
+my $dumm_7   = $Net::SSLinfo::use_nextprot;
 my $trace    = $Net::SSLinfo::trace;
 
 # forward declarations
@@ -1211,7 +1216,7 @@ sub _ssleay_get     {
 
     if (! $x509) {
         # ugly check to avoid "Segmentation fault" if $x509 is 0 or undef
-        return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|sha2|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type|serial|altname)/);
+        return $Net::SSLinfo::no_cert_txt if ($key =~ m/^(PEM|version|md5|sha1|sha2|subject|issuer|before|after|serial_hex|cn|policies|error_depth|cert_type|serial|altname)/); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
     }
 
     return Net::SSLeay::PEM_get_string_X509(     $x509) || ""   if ($key eq 'PEM');
@@ -1737,7 +1742,7 @@ sub s_client_check  {
     _setcmd();
     if ($_openssl eq '') {
         _trace("s_client_check(): WARNING: no openssl");
-        return undef;
+        return undef; ## no critic qw(Subroutines::ProhibitExplicitReturnUndef)
     }
 
     # check with "openssl s_client --help" where --help most likely is unknown
@@ -1838,8 +1843,7 @@ sub do_ssl_new      {
     my $err     = "";   # error string, if any, from sub-system $src
     my $tmp_sock= undef;# newly opened socket,
                         # Note: $socket is only used to check if it is defined
-    my $dum     = *FH;  # keep perl's -w quiet
-       $dum     = undef;
+    my $dum     = undef;
     $cipher = "" if (!defined $cipher); # cipher parameter is optional
     $protos = "" if (!defined $protos); # -"-
     $use_alpn= 1 if (!defined $use_alpn); # -"-
@@ -2066,8 +2070,8 @@ sub do_ssl_open($$$@) {
 
         #1. open TCP connection; no way to continue if it fails
         ($ssl, $ctx, $socket, $method) = do_ssl_new($host, $port, $sslversions,
-               $cipher, $Net::SSLinfo::next_protos, $Net::SSLinfo::use_apln,
-               $Net::SSLinfo::use_nln, $Net::SSLinfo::socket); 
+               $cipher, $Net::SSLinfo::next_protos, $Net::SSLinfo::use_alpn,
+               $Net::SSLinfo::use_npn, $Net::SSLinfo::socket); 
         $_SSLinfo{'ctx'}      = $ctx;
         $_SSLinfo{'ssl'}      = $ssl;
         $_SSLinfo{'method'}   = $method;
