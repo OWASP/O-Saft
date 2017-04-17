@@ -52,8 +52,8 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.637 17/04/17 16:30:55",
-    STR_VERSION => "17.04.16",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.638 17/04/17 17:15:20",
+    STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -505,7 +505,6 @@ our %data   = (     # connection and certificate details
     'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
     'alpns'         => {'val' => sub { return $cfg{'alpns'}->{val};              }, 'txt' => "Target's supported ALPNs"},
     'npns'          => {'val' => sub { return $cfg{'npns'}->{val};               }, 'txt' => "Target's supported  NPNs"},
-    'no_alpn'       => {'val' => sub { Net::SSLinfo::no_alpn(       $_[0], $_[1])}, 'txt' => "Target's not negotiated message (ALPN)"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
@@ -925,7 +924,6 @@ our %shorttexts = (
     'srp'           => "SRP Username",
     'next_protocols'=> "(NPN) Protocols",
     'alpn'          => "ALPN",
-    'no_alpn'       => "ALPN message",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
     'session_protocol'  => "Selected SSL Protocol",
@@ -1974,7 +1972,9 @@ sub _check_versions     {
         not exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
         # TODO: very lazy last resort check
         warn STR_WARN, "ALPN and NPN is not supported; checks disabled";
-        #_hint("--no-alpn --no-npn  can be used to disable this check");
+        _hint("--no-alpn --no-npn  can be used to disable this check");
+        cfg{'usealpn'} = 0;
+        cfg{'usenpn'}  = 0;
     }
 
     return;
@@ -4702,16 +4702,6 @@ sub checkdest($$)   {
     $value = $data{$key}->{val}($host, $port);
     $checks{'hasalpn'}->{val}   = " " if ($value eq "");
     $checks{'hasalpn'}->{val}   = _get_text('disabled', "--no-alpn") if ($cfg{'usealpn'} < 1);
-    $key   = 'no_alpn';
-    $value = $data{$key}->{val}($host, $port);
-    if ($value ne "") { # ALPN not negotiated
-        # ALPN not negotiated
-        if ($checks{'hasalpn'}->{val} eq "") {
-            $checks{'hasalpn'}->{val}   = $value;
-        } else {
-            $checks{'hasalpn'}->{val}   = "<<mismatch: " . $checks{'hasalpn'}->{val} . " and '$value'>>";
-        }
-    }
 
     checkprot($host, $port);
 
