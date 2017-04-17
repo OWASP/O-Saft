@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.04.14',
+    SSLINFO_VERSION => '17.04.15',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.176 17/04/15 01:51:29',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.177 17/04/17 09:25:37',
 };
 
 ######################################################## public documentation #
@@ -704,19 +704,40 @@ my $_echo    = "";              # dangerous if aliased or wrong one found
 my $_timeout = undef;
 my $_openssl = undef;
 
-sub _setcmd     {
-    #? check for external commands and initialize if necessary
-    return if (defined $_timeout);  # lazy check
-    `$Net::SSLinfo::timeout --version 2>&1` and $_timeout = "$Net::SSLinfo::timeout $Net::SSLinfo::timeout_sec"; # without leading \, lazy
-    `$Net::SSLinfo::openssl version   2>&1` and $_openssl = $Net::SSLinfo::openssl;
-    $_timeout = "" if (!defined $_timeout);  # Mac OS X does not have timeout by default; can work without ...
-    $_openssl = "" if (!defined $_openssl);  # shit happens ...
-    #dbx# print "#_setcmd using: " . `which openssl`;
+sub _setcommand {
+    #? check for external command $command; returns command or undef
+    my $command =shift;
+    my $cmd;
+    my $opt = "version";
+       $opt = "--version" if ($command =~ m/timeout$/);
+    $cmd = qx($command $opt 2>&1);
+    if (defined $cmd) {
+        # chomp() and _trace() here only to avoid "Use of uninitialized value $cmd ..."
+        chomp $cmd;
+        _trace("_setcommand: $command = $cmd");
+        $cmd = "$command";
+    } else {
+        _trace("_setcommand: $command = <<undef>>");
+        $cmd = "";  # i.e. Mac OS X does not have timeout by default; can work without ...
+    }
     if ($^O !~ m/MSWin32/) {
         # Windows is too stupid for secure program calls
-        $_timeout = '\\' .  $_timeout if (($_timeout ne '') and ($_timeout !~ /\//));
-        $_openssl = '\\' .  $_openssl if (($_openssl ne '') and ($_openssl !~ /\//));
-        $_echo    = '\\' .  $_echo;
+        $cmd = '\\' .  $cmd if (($cmd ne '') and ($cmd !~ /\//));
+    }
+    return $cmd;
+} # _setcommand
+
+sub _setcmd     {
+    #? check for external commands and initialize if necessary
+    # set global variabales $_openssl and $_timeout
+    return if (defined $_timeout);  # lazy check
+    $_openssl   = _setcommand($Net::SSLinfo::openssl);
+    $_timeout   = _setcommand($Net::SSLinfo::timeout);
+    $_timeout  .= " $Net::SSLinfo::timeout_sec" if (defined $_timeout);
+    _trace("#_setcmd using: $_openssl ; $_timeout");
+    if ($^O !~ m/MSWin32/) {
+        # Windows is too stupid for secure program calls
+        $_echo  = '\\' .  $_echo;
     }
     return;
 } # _setcmd
