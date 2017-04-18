@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.643 17/04/18 10:46:59",
+    SID         => "@(#) yeast.pl 1.644 17/04/18 17:48:14",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4876,7 +4876,7 @@ sub checkssl($$)    {
 } # checkssl
 
 sub check_nextproto {
-    #? check target for ALPN or NPN support; returns two lists
+    #? check target for ALPN or NPN support; returns list of supported protocols
     my ($host, $port, $mode) = @_;
     _y_CMD("check_nextproto() ");
     my @npn;
@@ -4902,9 +4902,12 @@ sub check_nextproto {
         close($socket);
         $socket = undef;
         #}
-        # if ($cfg(extopenssl} > 0)
+        #TODO: if ($cfg(extopenssl} > 0)
         #my $data = Net::SSLinfo::do_openssl("s_client -alpn $proto -connect", $host, $port, "");
         #my $np = grep{/^ALPN protocol:.*/} split("\n", $data);
+        #my $data = Net::SSLinfo::do_openssl("s_client -nextprotoneg $proto -connect", $host, $port, "");
+        #my $np = grep{/^Next protocol:.*/} split("\n", $data);
+        #my $np = grep{/^Protocols advertised by:.*/} split("\n", $data);
         #print "$proto : $np";
         #}
     }
