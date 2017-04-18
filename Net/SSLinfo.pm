@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.180 17/04/17 17:43:24',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.181 17/04/18 10:57:28',
 };
 
 ######################################################## public documentation #
@@ -2069,16 +2069,18 @@ sub do_ssl_open($$$@) {
         }
 
         #1. open TCP connection; no way to continue if it fails
+        $src ='Net::SSinfo::do_ssl_new()';
         ($ssl, $ctx, $socket, $method) = do_ssl_new($host, $port, $sslversions,
                $cipher, $Net::SSLinfo::next_protos, $Net::SSLinfo::use_alpn,
                $Net::SSLinfo::use_npn, $Net::SSLinfo::socket); 
+        if (!defined $ssl) { $err = 'undef $ssl'; last; }
+        if (!defined $ctx) { $err = 'undef $ctx'; last; }
         $_SSLinfo{'ctx'}      = $ctx;
         $_SSLinfo{'ssl'}      = $ssl;
         $_SSLinfo{'method'}   = $method;
         $Net::SSLinfo::method = $method;
         $Net::SSLinfo::socket = $socket;
         push(@{$_SSLinfo{'errors'}}, @{$_SSLtemp{'errors'}});
-        #goto finished if (! $ctx); # TODO: not yet properly tested 11/2016
         _trace("do_ssl_open: $Net::SSLinfo::method");
 
 #print "### ext: ". Net::SSLeay::get_tlsext_status_type($ssl);
@@ -2095,7 +2097,6 @@ sub do_ssl_open($$$@) {
         my $x509= Net::SSLeay::get_peer_certificate($ssl);
             # $x509 may be undef or 0; this may cause "Segmentation fault"s in
             # some Net::SSLeay::X509_* methods; hence we always use _ssleay_get
-
 
         #5a. get internal data
         $_SSLinfo{'x509'}       = $x509;
