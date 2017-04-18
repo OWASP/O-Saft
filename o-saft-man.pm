@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.181 17/04/08 23:19:26";
+my  $man_SID= "@(#) o-saft-man.pm 1.182 17/04/18 16:44:45";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3737,6 +3737,7 @@ CHECKS
         Check if target supports ALPN. Following messages are evaluated:
               ALPN protocol: h2-14
               No ALPN negotiated
+        Please see also  CHECKS  ALPN and NPN  below.
 
     SSL Vulnerabilities
 
@@ -4029,6 +4030,7 @@ CHECKS
           * +sts_maxage1y       - yes if HSTS maxage < 1 year
           * +sts_maxage18       - yes if HSTS maxage < 18 weeks (5 months)
           * +sts_maxagexy       - yes if HSTS maxage > 1 year
+          * +modulus_exp_1      - Public Key Modulus Exponent <>1
           * +modulus_exp_65537  - Public Key Modulus Exponent =65537
           * +modulus_exp_oldssl - Public Key Modulus Exponent <65537
           * +modulus_size_oldssl - Public Key Modulus <16385 bits
@@ -4044,6 +4046,25 @@ CHECKS
           * +ecdh_512           - DH Parameter >= 512 bits (ECDH)
         Note that only one of the checks  '+dh_*'  and  '+ecdh_*'  can return
         'yes'.
+
+    ALPN and NPN
+
+        The commands for the checks to report  'yes'  or  'no', are  +hasalpn
+        and  +hasnpn.
+
+        Both, the Application Layer Protocol Negotiation (ALPN) and the  Next
+        Protocol Negotiation (NPN) will be tested. The commands for that are:
+          * +alpns
+          * +npns
+
+        Each, ALPN and NPN, is tested separately with all known protocols.
+        The test sets only one protocol,  tries to make a connection and then
+        checks if the protocol was accepted by the server. The collected list
+        of protocols will be printed with the aforementioned commands, or the
+        +info  command. Note the difference for the commands  +next_protocols
+        and  +alpns, where  +next_protocols  simply reports  what  the server
+        itself advertises, while  +alpns  reports what the server supports if
+        asked for.
 
     Compliances
 
