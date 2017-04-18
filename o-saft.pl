@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.646 17/04/18 18:28:53",
+    SID         => "@(#) yeast.pl 1.647 17/04/18 23:43:46",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -289,7 +289,7 @@ $cfg{'RC-ARGV'} = [@rc_argv];
         'checkhttp' => 0,
         'checksni'  => 0,
         'checkssl'  => 0,
-        'checknpn'  => 0,
+        'checkalpn' => 0,
         'checkdv'   => 0,
         'checkev'   => 0,
         'check_dh'  => 0,
@@ -385,6 +385,7 @@ usr_pre_init();
 #!#                     HTTP vs. HTTPS checks
 #!#   %shorttexts     - same as %checks, but short texts
 #!#   %data_oid       - map known OIDs to human readable description
+#!#   %info           - like $data, but for data not retrived from Net::SSLinfo
 #!#   %cmd            - configuration for external commands
 #!#   %cfg            - configuration for commands and options herein
 #!#   %text           - configuration for message texts
@@ -420,6 +421,13 @@ my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
 
 our @cipher_results = ();   # list of checked ciphers: [PROT, ciper suite name, yes|no]
+
+our %info   = (     # same as %data with values only; keys are identical to %data
+    'alpn'          => "",
+    'npn'           => "",
+    'alpns'         => "",
+    'npns'          => "",
+);
 
 our %data0  = ();   # same as %data but has 'val' only, no 'txt'
                     # contains values from first connection only
@@ -502,9 +510,11 @@ our %data   = (     # connection and certificate details
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
     'heartbeat'     => {'val' => sub {    __SSLinfo('heartbeat',    $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
     'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target advertised protocols"},
-    'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
-    'alpns'         => {'val' => sub { return $cfg{'alpns'}->{val};              }, 'txt' => "Target's supported ALPNs"},
-    'npns'          => {'val' => sub { return $cfg{'npns'}->{val};               }, 'txt' => "Target's supported  NPNs"},
+#   'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
+    'alpn'          => {'val' => sub { return $info{'alpn'};                     }, 'txt' => "Target's selected protocol (ALPN)"},
+    'npn'           => {'val' => sub { return $info{'npn'};                      }, 'txt' => "Target's selected protocol  (NPN)"},
+    'alpns'         => {'val' => sub { return $info{'alpns'};                    }, 'txt' => "Target's supported ALPNs"},
+    'npns'          => {'val' => sub { return $info{'npns'};                     }, 'txt' => "Target's supported  NPNs"},
     'master_key'    => {'val' => sub { Net::SSLinfo::master_key(    $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'session_id'    => {'val' => sub { Net::SSLinfo::session_id(    $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_protocol'=>{'val'=> sub { Net::SSLinfo::session_protocol($_[0],$_[1])},'txt' => "Target's selected SSL Protocol"},
@@ -688,8 +698,8 @@ my %check_dest = (  ## target (connection) data
     'hastls11'      => {'txt' => "Target supports TLSv1.1"},
     'hastls12'      => {'txt' => "Target supports TLSv1.2"},
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
-    'hasalpn'       => {'txt' => "Target supports ALPN (Application Layer Protocol Negotiation)"},
-    'hasnpn'        => {'txt' => "Target supports NPN (Next Protocol Negotiation)"},
+    'hasalpn'       => {'txt' => "Target supports ALPN"},
+    'hasnpn'        => {'txt' => "Target supports  NPN"},
     'strong_cipher' => {'txt' => "Target selects strongest cipher"},
     'order_cipher'  => {'txt' => "Target does not honors client's cipher order"}, # NOT YET USED
     'adh_cipher'    => {'txt' => "Target does not accept ADH ciphers"},
@@ -827,8 +837,11 @@ our %shorttexts = (
     'hastls13'      => "TLSv1.3",
     'hasalpn'       => "Supports ALPN",
     'hasnpn'        => "Supports  NPN",
+    'alpn'          => "Selected ALPN",
+    'npn'           => "Selected  NPN",
     'alpns'         => "Supported ALPNs",
     'npns'          => "Supported  NPNs",
+    'next_protocols'=> "(NPN) Protocols",
     'adh_cipher'    => "No ADH ciphers",
     'null_cipher'   => "No NULL ciphers",
     'exp_cipher'    => "No EXPORT ciphers",
@@ -924,8 +937,6 @@ our %shorttexts = (
     'psk_hint'      => "PSK Identity Hint",
     'psk_identity'  => "PSK Identity",
     'srp'           => "SRP Username",
-    'next_protocols'=> "(NPN) Protocols",
-    'alpn'          => "ALPN",
     'master_key'    => "Master-Key",
     'session_id'    => "Session-ID",
     'session_protocol'  => "Selected SSL Protocol",
@@ -3351,7 +3362,7 @@ sub check_certchars($$) {
     return;
 } # check_certchars
 
-sub check_dh($$) {
+sub check_dh($$)    {
     #? check if target is vulnerable to Logjam attack
     my ($host, $port) = @_;
     _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
@@ -3400,7 +3411,7 @@ sub check_dh($$) {
     return;
 } # check_dh
 
-sub check_url($$) {
+sub check_url($$)   {
     #? request given URL and check if it is a valid CRL or OCSP site
     #? returns result of check; empty string if anything OK
     my ($uri, $type) = @_;  # type is 'ext_crl' or 'ocsp_uri'
@@ -3541,6 +3552,71 @@ sub check_url($$) {
 
     return $txt;
 } # check_url
+
+sub check_nextproto {
+    #? check target for ALPN or NPN support; returns list of supported protocols
+    my ($host, $port, $type, $mode) = @_;
+    # $type is ALPN or NPN; $mode is all or single
+    # in single mode, each protocol specified in $cfg{'next_protos'} is tested
+    # for its own, while in all mode all protocols are set at once
+    _trace("check_nextproto($host, $port, $type, $mode");
+    my @protos = split(",", $cfg{'next_protos'});
+       @protos = $cfg{'next_protos'}   if ($mode eq 'all'); # pass all at once
+    my @npn;
+    my ($ssl, $ctx, $method);
+    my $socket = undef;
+    foreach my $proto (@protos) {
+        ($ssl, $ctx, $socket, $method) = Net::SSLinfo::do_ssl_new($host, $port,
+                (join(" ", @{$cfg{'version'}})), $cfg{'cipherpattern'}, $proto,
+                (($type eq 'ALPN')? 1 : 0), (($type eq 'NPN')? 1 : 0), $socket);
+        if (!defined $ssl) {
+            _warn("$type connection failed with '$proto'");
+        } else {
+            # Net::SSLeay's functions are crazy, both P_next_proto_negotiated()
+            # and P_alpn_selected() return undef if not supported by server and
+            # for any error. Anyway, we only want to know if $proto supported.
+            # As we check protocols one by one, this information is sufficient.
+            my $np;
+            $np = Net::SSLeay::P_alpn_selected($ssl)         if ($type eq 'ALPN');
+            $np = Net::SSLeay::P_next_proto_negotiated($ssl) if ($type eq 'NPN');
+            if (defined $np && $mode eq 'single') {
+                _warn("$type name mismatch: $proto <> $np")  if ($proto ne $np);
+            }
+            _trace("check_nextproto: $type $np") if (defined $np) ;
+            push(@npn, $np) if (defined $np);
+        }
+        Net::SSLeay::free($ssl)      if (defined $ssl);
+        Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
+        # TODO: need to check if ($cfg{'socket_reuse'} > 0) {
+        close($socket);
+        $socket = undef;
+        #}
+        #TODO: if ($cfg(extopenssl} > 0)
+        #my $data = Net::SSLinfo::do_openssl("s_client -alpn $proto -connect", $host, $port, "");
+        #my $np = grep{/^ALPN protocol:.*/} split("\n", $data);
+        #my $data = Net::SSLinfo::do_openssl("s_client -nextprotoneg $proto -connect", $host, $port, "");
+        #my $np = grep{/^Next protocol:.*/} split("\n", $data);
+        #my $np = grep{/^Protocols advertised by:.*/} split("\n", $data);
+        #print "$proto : $np";
+        #}
+    }
+    _trace("check_nextproto:  @npn");
+    return @npn;
+} # check_nextproto
+
+sub checkalpn       {
+    #? check target for ALPN or NPN support; returns list of supported protocols
+    my ($host, $port) = @_;
+    _y_CMD("checkalpn() ");
+    $cfg{'done'}->{'checkalpn'}++;
+    return if ($cfg{'done'}->{'checkalpn'} > 1);
+    $info{'alpns'} = join(",", check_nextproto($host, $port, 'ALPN', 'single'));
+    $info{'npns'}  = join(",", check_nextproto($host, $port, 'NPN',  'single'));
+    $info{'alpn'}  = join(",", check_nextproto($host, $port, 'ALPN', 'all'));
+    $info{'npn'}   = join(",", check_nextproto($host, $port, 'NPN',  'all'));
+    # TODO: 'next_protocols' should be retrieved here too
+    return;
+} # checkalpn
 
 sub checkdefault    {
     #? test if target prefers strong ciphers, aka SSLHonorCipherOrder
@@ -4658,6 +4734,17 @@ sub checkprot($$)   {
             $checks{'poodle'}  ->{val}  = "SSLv3";
         }
     }
+
+    # check ALPN and NPN support
+    my ($key, $value);
+    $key    = 'alpns';
+    $value  = $data{$key}->{val}($host, $port);
+    $checks{'hasalpn'}->{val}   = " " if ($value eq "");
+    #$checks{'hasalpn'}->{val}   = _get_text('disabled', "--no-alpn") if ($cfg{'usealpn'} < 1);
+    $key    = 'npns';
+    $value  = $data{$key}->{val}($host, $port);
+    $checks{'hasnpn'}->{val}    = " " if ($value eq "");
+    #$checks{'hasnpn'}->{val}    = _get_text('disabled', "--no-npn")  if ($cfg{'usenpn'}  < 1);
     return;
 } # checkprot
 
@@ -4700,16 +4787,6 @@ sub checkdest($$)   {
     } else {
         $checks{'session_random'}->{val} = $text{'na'};
     }
-
-    # check ALPN and NPN support
-    $key   = 'next_protocols';
-    $value = $data{$key}->{val}($host, $port);
-    $checks{'hasnpn'}->{val}    = " " if ($value eq "");
-    $checks{'hasnpn'}->{val}    = _get_text('disabled', "--no-npn")  if ($cfg{'usenpn'}  < 1);
-    $key   = 'alpn';
-    $value = $data{$key}->{val}($host, $port);
-    $checks{'hasalpn'}->{val}   = " " if ($value eq "");
-    $checks{'hasalpn'}->{val}   = _get_text('disabled', "--no-alpn") if ($cfg{'usealpn'} < 1);
 
     checkprot($host, $port);
 
@@ -4874,46 +4951,6 @@ sub checkssl($$)    {
 
     return;
 } # checkssl
-
-sub check_nextproto {
-    #? check target for ALPN or NPN support; returns list of supported protocols
-    my ($host, $port, $mode) = @_;
-    _y_CMD("check_nextproto() ");
-    my @npn;
-    my ($ssl, $ctx, $method);
-    my $socket = undef;
-    foreach my $proto (split(",", $cfg{'next_protos'})) {
-        ($ssl, $ctx, $socket, $method) = Net::SSLinfo::do_ssl_new($host, $port,
-                (join(" ", @{$cfg{'version'}})), $cfg{'cipherpattern'}, $proto,
-                (($mode eq 'ALPN')? 1 : 0), (($mode eq 'NPN')? 1 : 0), $socket);
-        if (defined $ssl) {
-            # Net::SSLeay's functions are crazy, anyway, we only want to know if supported
-            # as we check protocols one by one, this information is sufficient
-            push(@npn, $proto) if ($mode eq 'ALPN' and Net::SSLeay::P_alpn_selected($ssl));
-            push(@npn, $proto) if ($mode eq 'NPN'  and Net::SSLeay::P_next_proto_negotiated($ssl));
-        } else {
-            # Net::SSLeay::P_alpn_selected() and Net::SSLeay::P_next_proto_negotiated()
-            # returns undef if not supported by server and for any error
-            _warn("connection failed with '$proto'");
-        }
-        Net::SSLeay::free($ssl)      if (defined $ssl);
-        Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
-        # TODO: need to check if ($cfg{'socket_reuse'} > 0) {
-        close($socket);
-        $socket = undef;
-        #}
-        #TODO: if ($cfg(extopenssl} > 0)
-        #my $data = Net::SSLinfo::do_openssl("s_client -alpn $proto -connect", $host, $port, "");
-        #my $np = grep{/^ALPN protocol:.*/} split("\n", $data);
-        #my $data = Net::SSLinfo::do_openssl("s_client -nextprotoneg $proto -connect", $host, $port, "");
-        #my $np = grep{/^Next protocol:.*/} split("\n", $data);
-        #my $np = grep{/^Protocols advertised by:.*/} split("\n", $data);
-        #print "$proto : $np";
-        #}
-    }
-    _trace("check_nextproto:  @npn");
-    return @npn;
-} # check_nextproto
 
 sub check_exitcode  {
     #? compute exitcode; returns number of failed checks or insecure settings
@@ -5501,8 +5538,8 @@ sub printdata($$$) {
     printheader($text{'out-infos'}, $text{'desc-info'});
     _trace_cmd('%data');
     foreach my $key (@{$cfg{'do'}}) {
-        next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}}) > 0);
-        next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
+        next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}})  > 0);
+        next if (_is_member( $key, \@{$cfg{'ignore-out'}})       > 0);
         next if (_is_hashkey($key, \%data) < 1);
         if ($cfg{'experimental'} == 0) {
             next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
@@ -5521,7 +5558,7 @@ sub printdata($$$) {
             next if ((_is_do('info') > 0) and ($cfg{'verbose'} <= 0));
         }
         if ($cfg{'format'} eq "raw") {  # should be the only place where format=raw counts
-            print $data{$key}->{val}($host);;
+            print $data{$key}->{val}($host);
         } else {
             print_data($legacy, $host, $port, $key);
         }
@@ -7382,11 +7419,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     usr_pre_data();
 
-    $cfg{'alpns'}->{val} = join(",", check_nextproto($host, $port, 'ALPN')) if ($cfg{'usealpn'} > 0);
-    $cfg{'npns'}->{val}  = join(",", check_nextproto($host, $port, 'NPN'))  if ($cfg{'usenpn'}  > 0);
-
     # following sequence important!
     _y_CMD("get checks ..");
+    checkalpn( $host, $port);
     checkdates($host, $port);
     checkhttp( $host, $port);
     checksni(  $host, $port);
