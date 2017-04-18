@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.644 17/04/18 17:48:14",
+    SID         => "@(#) yeast.pl 1.645 17/04/18 18:10:53",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6805,18 +6805,18 @@ if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
 #  more detailed checks on version numbers with proper warning messages
     _check_versions();
 
+#| check for proper openssl support
+#| -------------------------------------
+_check_openssl();
+
 #| check for supported SSL versions
 #| -------------------------------------
 # initialize $cfg{'version'} and all $cfg{ssl}
     _check_methods() if ((_need_cipher() > 0) or (_need_default() > 0) or _is_do('version'));
 
+} else {
+    _check_methods();   # function is oversized for +cipherraw, but does the work
 }; # +cipherraw
-
-#| check for proper openssl support
-#| -------------------------------------
-# TODO: if openssl needed ... {
-_check_openssl();
-#}
 
 _yeast_TIME("mod}");
 _yeast_TIME("ini{");
@@ -7133,6 +7133,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _yeast_TIME("cipherraw{");
         _y_CMD("+cipherraw");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
+        _warn("no SSL versions for +cipherraw available") if ($#{$cfg{'version'}} < 0);
+            # above warning is most likely a programming error herein
         foreach my $ssl (@{$cfg{'version'}}) {
             next if ($cfg{$ssl} == 0);
             my @all;
