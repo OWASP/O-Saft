@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.642 17/04/17 19:16:25",
+    SID         => "@(#) yeast.pl 1.643 17/04/18 10:46:59",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7313,7 +7313,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
 # }
     } else {
-        _warn("Can't make a connection to $host:$port; no initial data (compare with and without SNI not possible)");
+        _warn("Can't make a connection to $host:$port without SNI; no initial data (compare with and without SNI not possible)");
     }
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
