@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.647 17/04/18 23:43:46",
+    SID         => "@(#) yeast.pl 1.648 17/04/19 11:59:18",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3304,7 +3304,7 @@ sub ciphers_get($$$$)   {
             ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
         }
         $supported = "" if (not defined $supported);
-        last if (_is_ssl_error($anf, time(), "$ssl: abort connection attemts") > 0);
+        last if (_is_ssl_error($anf, time(), "$ssl: abort connection attempts") > 0);
         if (($c !~ /(?:HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
             if (($c !~ $supported)) {
                 # mismatch: name asked for and name returned by server
@@ -3580,7 +3580,7 @@ sub check_nextproto {
             $np = Net::SSLeay::P_alpn_selected($ssl)         if ($type eq 'ALPN');
             $np = Net::SSLeay::P_next_proto_negotiated($ssl) if ($type eq 'NPN');
             if (defined $np && $mode eq 'single') {
-                _warn("$type name mismatch: $proto <> $np")  if ($proto ne $np);
+                _warn("$type name mismatch: (send) $proto <> $np (returned)")  if ($proto ne $np);
             }
             _trace("check_nextproto: $type $np") if (defined $np) ;
             push(@npn, $np) if (defined $np);
@@ -7421,7 +7421,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     # following sequence important!
     _y_CMD("get checks ..");
-    checkalpn( $host, $port);
+    checkalpn( $host, $port); # if (_is_do('hasalpn') or _is_do('hasnpn'))
     checkdates($host, $port);
     checkhttp( $host, $port);
     checksni(  $host, $port);
