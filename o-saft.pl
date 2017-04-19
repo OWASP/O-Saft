@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.648 17/04/19 11:59:18",
+    SID         => "@(#) yeast.pl 1.649 17/04/19 12:31:46",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1981,13 +1981,22 @@ sub _check_versions     {
         _v2print "Net::SSLeay\t$version_ssleay supports NPN\tyes";
     }
 
+    if (not exists &Net::SSLeay::P_alpn_selected  or
+        not exists &Net::SSLeay::P_next_proto_negotiated) {
+        # TODO: very lazy last resort check
+        warn STR_WARN, "improper Net::SSLeay version to get ALPN or NPN information; tests disabled";
+        $cfg{'ssleay'}->{'get_alpn'} = 0;
+        $cfg{'ssleay'}->{'get_npn'}  = 0;
+    }
     if (not exists &Net::SSLeay::CTX_set_alpn_protos  and
         not exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
         # TODO: very lazy last resort check
-        warn STR_WARN, "ALPN and NPN is not supported; checks disabled";
+        warn STR_WARN, "ALPN and NPN is not supported; tests disabled";
         _hint("--no-alpn --no-npn  can be used to disable this check");
-        cfg{'usealpn'} = 0;
-        cfg{'usenpn'}  = 0;
+        $cfg{'usealpn'} = 0;
+        $cfg{'usenpn'}  = 0;
+        $cfg{'ssleay'}->{'set_alpn'} = 0;
+        $cfg{'ssleay'}->{'set_npn'}  = 0;
     }
 
     return;
@@ -3610,10 +3619,16 @@ sub checkalpn       {
     _y_CMD("checkalpn() ");
     $cfg{'done'}->{'checkalpn'}++;
     return if ($cfg{'done'}->{'checkalpn'} > 1);
-    $info{'alpns'} = join(",", check_nextproto($host, $port, 'ALPN', 'single'));
-    $info{'npns'}  = join(",", check_nextproto($host, $port, 'NPN',  'single'));
-    $info{'alpn'}  = join(",", check_nextproto($host, $port, 'ALPN', 'all'));
-    $info{'npn'}   = join(",", check_nextproto($host, $port, 'NPN',  'all'));
+    if ($cfg{'ssleay'}->{'get_alpn'} > 0) {
+        $info{'alpns'} = join(",", check_nextproto($host, $port, 'ALPN', 'single'));
+        $info{'alpn'}  = join(",", check_nextproto($host, $port, 'ALPN', 'all'));
+    }
+    # else warning already printed
+    if ($cfg{'ssleay'}->{'get_npn'} > 0) {
+        $info{'npns'}  = join(",", check_nextproto($host, $port, 'NPN',  'single'));
+        $info{'npn'}   = join(",", check_nextproto($host, $port, 'NPN',  'all'));
+    }
+    # else warning already printed
     # TODO: 'next_protocols' should be retrieved here too
     return;
 } # checkalpn
