@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.650 17/04/19 16:52:11",
+    SID         => "@(#) yeast.pl 1.651 17/04/19 23:26:06",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2121,8 +2121,15 @@ sub _check_sclient      {
     if ($supported == 0) {
         my $key = $opt_map{$opt}[0] ;
         my $txt = $opt_map{$opt}[1] ;
-        $cfg{$key} = 0  if ($key ne "");;
-        _warn("openssl s_client does not support $opt; $txt") if ($txt ne "");
+        $cfg{$key} = 0  if ($key ne "");
+        if ($opt =~ m/^-(al|n)pn$/) {
+            # no warning for external openssl, as -alpn or -npn is not used # there
+            if ($cmd{'extciphers'} > 0) {
+            _warn("openssl s_client does not support '$opt'; $txt") if ($txt ne "");
+            }
+        } else {
+            _warn("openssl s_client does not support '$opt'; $txt") if ($txt ne "");
+        }
         if ($opt eq '-tlsextdebug') {
             _warn("following results may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
         }
@@ -2149,9 +2156,9 @@ sub _check_openssl      {
     # Net::SSLinfo::s_client_check() is used to check openssl's capabilities.
     # For an example output SEE Note:openssl s_client
     # Each capabilitiy can be queried with  Net::SSLinfo::s_client_opt_get().
-    # I.g. all checks are be done in Net::SSLinfo::*  but there are no proper
-    # error messages printed. Hence we check here and disable all unavailable
-    # functionality with a warining.
+    # I.g. all checks are done in  Net::SSLinfo::s_client_*(),  but no proper
+    # error messages are printed there.  Hence the checks are done here again
+    # to disable all unavailable functionality with a warning.
     foreach my $opt (qw(-alpn -npn -tlsextdebug -servername -fallback_scsv
                      -CAfile -CApath -no_ticket -no_tlsext -psk -psk_identity)) {
         _check_sclient($opt);
@@ -3118,6 +3125,7 @@ sub _usesocket($$$$)    {
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
             _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
+            local $? = 0; local $! = undef;
             $sslsocket = IO::Socket::SSL->new(
                 PeerAddr        => $host,
                 PeerPort        => $port,
@@ -3135,9 +3143,11 @@ sub _usesocket($$$$)    {
                 SSL_npn_protocols => ($cfg{'usenpn'} == 1) ? [@protos] : [],
               # FIXME: misses $cfg{'usealpn'}
             );
+            #_trace1("_usesocket: IO::Socket::SSL->new: $? : $! :");
         } else {
             # proxy or starttls
             _trace1("_usesocket: using 'Net::SSLhello'");
+            local $? = 0; local $! = undef;
             $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
             if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection 
                 local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
@@ -3168,14 +3178,14 @@ sub _usesocket($$$$)    {
             $version = $sslsocket->get_sslversion() if ($IO::Socket::SSL::VERSION > 1.964);
             $cipher  = $sslsocket->get_cipher();
             $sslsocket->close(SSL_ctx_free => 1);
-            _trace1("_usesocket: SSL version (for $ssl): " . $version);
+            _trace1("_usesocket: SSL version (for $ssl $ciphers): $version");
         }
     } else {    # eval failed: connect failed
         # we may get hints in $! like:
         #   * empty if cipher was not accepted
         #   * contains an error string if the connection was rejected or there
         #     was an error in IO::Socket::SSL (i.e. timeout)
-        _trace1("_usesocket: connection failed: $!");
+        _trace1("_usesocket: connection failed (for $ssl $ciphers): $!");
     }
     _trace1("_usesocket()\t= $cipher }");
     return $version, $cipher;
@@ -6507,6 +6517,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
     if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
     if ($arg eq  '--call')              { $typ = 'CALL';            }
+    if ($arg eq   '-cipher')            { $typ = 'CIPHER';          } # openssl
     if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
     if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
     if ($arg eq  '--format')            { $typ = 'FORMAT';          }
