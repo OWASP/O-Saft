@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.649 17/04/19 12:31:46",
+    SID         => "@(#) yeast.pl 1.650 17/04/19 16:52:11",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -509,8 +509,8 @@ our %data   = (     # connection and certificate details
     'psk_identity'  => {'val' => sub { Net::SSLinfo::psk_identity(  $_[0], $_[1])}, 'txt' => "Target supports PSK"},
     'srp'           => {'val' => sub { Net::SSLinfo::srp(           $_[0], $_[1])}, 'txt' => "Target supports SRP"},
     'heartbeat'     => {'val' => sub {    __SSLinfo('heartbeat',    $_[0], $_[1])}, 'txt' => "Target supports Heartbeat"},
-    'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target advertised protocols"},
-#   'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"},
+    'next_protocols'=> {'val' => sub { Net::SSLinfo::next_protocols($_[0], $_[1])}, 'txt' => "Target's advertised protocols"},
+#   'alpn'          => {'val' => sub { Net::SSLinfo::alpn(          $_[0], $_[1])}, 'txt' => "Target's selected protocol (ALPN)"}, # old, pre 17.04.17 version
     'alpn'          => {'val' => sub { return $info{'alpn'};                     }, 'txt' => "Target's selected protocol (ALPN)"},
     'npn'           => {'val' => sub { return $info{'npn'};                      }, 'txt' => "Target's selected protocol  (NPN)"},
     'alpns'         => {'val' => sub { return $info{'alpns'};                    }, 'txt' => "Target's supported ALPNs"},
@@ -1981,21 +1981,29 @@ sub _check_versions     {
         _v2print "Net::SSLeay\t$version_ssleay supports NPN\tyes";
     }
 
-    if (not exists &Net::SSLeay::P_alpn_selected  or
-        not exists &Net::SSLeay::P_next_proto_negotiated) {
-        # TODO: very lazy last resort check
-        warn STR_WARN, "improper Net::SSLeay version to get ALPN or NPN information; tests disabled";
+    if (not exists &Net::SSLeay::P_alpn_selected) {
+        warn STR_WARN, "improper Net::SSLeay version to get ALPN information; tests disabled";
+        #_hint("use  --force-openssl  to use a workaround");
         $cfg{'ssleay'}->{'get_alpn'} = 0;
+    }
+
+    if (not exists &Net::SSLeay::P_next_proto_negotiated) {
+        warn STR_WARN, "improper Net::SSLeay version to get NPN information; tests disabled";
+        #_hint("use  --force-openssl  to use a workaround");
         $cfg{'ssleay'}->{'get_npn'}  = 0;
     }
-    if (not exists &Net::SSLeay::CTX_set_alpn_protos  and
-        not exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
-        # TODO: very lazy last resort check
-        warn STR_WARN, "ALPN and NPN is not supported; tests disabled";
-        _hint("--no-alpn --no-npn  can be used to disable this check");
+
+    if (not exists &Net::SSLeay::CTX_set_alpn_protos) {
+        warn STR_WARN, "ALPN is not supported; tests disabled";
+        _hint("--no-alpn  can be used to disable this check");
         $cfg{'usealpn'} = 0;
-        $cfg{'usenpn'}  = 0;
         $cfg{'ssleay'}->{'set_alpn'} = 0;
+    }
+
+    if (not exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
+        warn STR_WARN, "NPN is not supported; tests disabled";
+        _hint("--no-npn  can be used to disable this check");
+        $cfg{'usenpn'}  = 0;
         $cfg{'ssleay'}->{'set_npn'}  = 0;
     }
 
@@ -6648,7 +6656,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; }
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
-    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
+#    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
         print "# $cfg{'mename'}  list of internal functions:\n";
