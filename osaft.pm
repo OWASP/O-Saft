@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.95 17/04/18 17:53:20',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.96 17/04/19 12:32:17',
 
 };
 
@@ -1486,6 +1486,12 @@ our %cfg = (
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
+    'ssleay'   =>   {  # configurations for various Net::SSLeay functionality
+        'get_alpn'  => 1,       # 1: P_alpn_selected available() available
+        'get_npn'   => 1,       # 1: P_next_proto_negotiated() available
+        'set_alpn'  => 1,       # 1: CTX_set_alpn_protos() available
+        'set_npn'   => 1,       # 1: CTX_set_next_proto_select_cb() available
+    },
     'ssl_error'     => 1,       # stop connecting to target after ssl-error-max failures
     'sslerror' =>   {  # configurations for TCP SSL protocol
         'timeout'   => 1,       # timeout to receive ssl-answer
