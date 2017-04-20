@@ -1,4 +1,33 @@
 
+Version: 17.04.17
+  BUGFIX
+    * NET::SSLinfo.pm: avoid "Segmentation fault" when connection fails
+    * NET::SSLinfo.pm: pass errors from openssl to caller (simple workaround)
+    * label texts corrected for modulus_size_oldssl and modulus_exp_oldssl
+    * print correct OpenSSL version for +version
+    * do not load NET::SSLinfo for +cipherraw
+    * o-saft-lib.pm: +lucky13 requires a cipher check: added to list * 'need-cipher'
+  CHANGES
+    * NET::SSLinfo.pm: %_OpenSSL_opt and s_client_*() for openssl capabilities * implemented
+    * NET::SSLinfo.pm: internal method _stcmd improved
+    * o-saft.pl: warning message improved if connection without SNI fails
+    * o-saft.pl: --ignore-no-reply option added for more proper +heartbleed check
+    * o-saft.pl: +modulus_exp_size renamed to +modulus_exp_oldssl
+    * o-saft.pl: +modulus_size renamed to +modulus_size_oldssl
+    * o-saft.pl: -trace-time improved
+    * o-saft.pl: +npn renamed to +hasnpn; label texts adapted
+    * o-saft-lib.pm: @npn renamed to cfg{next_protos}; cfg{usealpn} and cfg{usenpn} added
+    * documentation improved
+    * _load_modules(), _check_versions(), _check_methods() implemented
+  NEW
+    * NET::SSLinfo.pm: new function _ssleay_ssl_np() to set ALPN and NPN option
+    * NET::SSLinfo.pm: do_ssl_new() and do_ssl_free() implemented
+    * --ssl-error --ssl-error-max --ssl-error-timeout implemented
+    * o-saft.pl: +alpn and +npn implemented
+    * o-saft.pl: remove leading spaces for options when reading .o-saft.pl
+    * o-saft.pl: better checks for ancient perl modules; documentation improved
+    * .o-saft.pl: new command +fingerprints
+    * o-saft.tcl: --load=FILE option implemented
 
 Version: 17.03.17
   BUGFIX
