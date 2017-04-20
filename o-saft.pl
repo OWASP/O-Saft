@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.651 17/04/19 23:26:06",
+    SID         => "@(#) yeast.pl 1.652 17/04/21 00:37:58",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3140,7 +3140,10 @@ sub _usesocket($$$$)    {
                 SSL_cipher_list => $ciphers,
               # SSL_cipher_list => "$ciphers eNULL",
                 #SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
-                SSL_npn_protocols => ($cfg{'usenpn'} == 1) ? [@protos] : [],
+                #SSL_npn_protocols   => ($cfg{'usenpn'}  == 1) ? [@protos] : [],
+                #SSL_alpn_protocols  => ($cfg{'usealpn'} == 1) ? [@protos] : [],
+                SSL_npn_protocols   => [@protos],
+                SSL_alpn_protocols  => [@protos],
               # FIXME: misses $cfg{'usealpn'}
             );
             #_trace1("_usesocket: IO::Socket::SSL->new: $? : $! :");
