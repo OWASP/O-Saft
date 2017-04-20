@@ -296,7 +296,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.136 Winter Edition 2016
+#?      @(#) 1.137 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -363,8 +363,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.136 17/04/01 22:15:59 Sommer Edition 2016}
-set cfg(VERSION) {1.136}
+set cfg(SID)    {@(#) o-saft.tcl 1.137 17/04/20 09:49:25 Spring Edition 2017}
+set cfg(VERSION) {1.137}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -2272,7 +2272,7 @@ proc osaft_exec   {parent cmd} {
         lappend targets $h
     }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
-putv "$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]"
+        putv "$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]"
         set execcmd [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # windows has no proper STDERR etc.
     } else {
@@ -2497,7 +2497,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.136"
+update_status "o-saft.tcl 1.137"
 
 ## load files, if any
 foreach f $cfg(files) {
