@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.98 17/04/22 18:45:23',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.99 17/04/22 20:48:15',
 
 };
 
@@ -1339,10 +1339,14 @@ our %cfg = (
                        ",
                        # 0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
     }, # cipherranges
+    'cipher_dh'     => 0,       # 1: +cipher also prints DH parameters (default will be changed in future)
     'cipher_md5'    => 1,       # 0: +cipher does not use *-MD5 ciphers except for SSLv2
     'cipher_alpn'   => 1,       # 0: +cipher does not use ALPN
     'cipher_npn'    => 1,       # 0: +cipher does not use  NPN ($Net::SSLinfo::use_nextprot is for openssl only)
     'cipher_ecdh'   => 1,       # 0: +cipher does not use TLS curves extension
+    'cipheralpns'   => [],      # contains all protocols to be passed for +cipher checks
+    'ciphernpns'    => [],      # contains all protocols to be passed for +cipher checks
+    'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
 
