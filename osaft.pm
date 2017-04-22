@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.96 17/04/19 12:32:17',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.97 17/04/22 18:08:16',
 
 };
 
@@ -1482,15 +1482,23 @@ our %cfg = (
     'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
     'port'          => 443,     # port for currently used connections
     'timeout'       => 2,       # default timeout in seconds for connections
-                                # NOTE that some servers do not connect SSL within this time
+                                # Note that some servers do not connect SSL within this time
                                 #      this may result in ciphers marked as  "not supported"
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
+                                #  see 'sslerror' settings and options also
     'ssleay'   =>   {  # configurations for various Net::SSLeay functionality
-        'get_alpn'  => 1,       # 1: P_alpn_selected available() available
-        'get_npn'   => 1,       # 1: P_next_proto_negotiated() available
-        'set_alpn'  => 1,       # 1: CTX_set_alpn_protos() available
-        'set_npn'   => 1,       # 1: CTX_set_next_proto_select_cb() available
+                                # 1: if available (see _check_functions()) is default
+        'openssl'   => 1,       # OPENSSL_VERSION_NUMBER()
+        'get_alpn'  => 1,       # P_alpn_selected available()
+        'get_npn'   => 1,       # P_next_proto_negotiated()
+        'set_alpn'  => 1,       # CTX_set_alpn_protos()
+        'set_npn'   => 1,       # CTX_set_next_proto_select_cb()
+        'can_npn'   => 1,       # same as get_npn, just an alias
+        'can_ecdh'  => 1,       # can_ecdh()
+        'can_sni'   => 1,       # for openssl version > 0x01000000
+        'can_ocsp'  => 1,       # OCSP_cert2ids
+        'iosocket'  => 1,       # $IO::Socket::SSL::VERSION # TODO: wrong container
     },
     'ssl_error'     => 1,       # stop connecting to target after ssl-error-max failures
     'sslerror' =>   {  # configurations for TCP SSL protocol
