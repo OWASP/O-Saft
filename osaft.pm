@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.99 17/04/22 20:48:15',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.100 17/04/22 22:35:08',
 
 };
 
@@ -493,7 +493,7 @@ our %tls_curves = (
 42013 => [qw( brainpoolp192r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.3 )],
 42014 => [qw( brainpoolp224r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.5 )],
 42015 => [qw( brainpoolp320r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.9 )],
-42016 => [qw( brainpoolp512r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.13)], # same as brainpoolP521r142001 => [qw(
+42016 => [qw( brainpoolp512r1                   ????  N      -   -1 1.3.36.3.3.2.8.1.1.13)], # same as brainpoolP521r1
 42020 => [qw( GOST2001-test                     ????  N      -   -1 1.2.643.2.2.35.0     )],
 42021 => [qw( GOST2001-CryptoPro-A              ????  N      -   -1 1.2.643.2.2.35.1     )],
 42022 => [qw( GOST2001-CryptoPro-B              ????  N      -   -1 1.2.643.2.2.35.2     )],
@@ -1346,7 +1346,10 @@ our %cfg = (
     'cipher_ecdh'   => 1,       # 0: +cipher does not use TLS curves extension
     'cipheralpns'   => [],      # contains all protocols to be passed for +cipher checks
     'ciphernpns'    => [],      # contains all protocols to be passed for +cipher checks
-    'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
+#   'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
+    'ciphercurves'  => [   # TODO: quick&dirty, NOT YET complete
+                       qw(ed25519 ecdh_x25519 ecdh_x448 prime256v1 prime192v1 prime192v2 prime192v3 prime239v1 prime239v2 prime239v3 brainpoolP256r1 brainpoolP384r1 brainpoolP512r1 sect163k1 sect163r1 sect193r1 sect193r2 sect233k1)
+                       ],
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
 
@@ -2164,6 +2167,10 @@ sub _cfg_init   {
     #? initialize dynamic settings in %cfg, copy data from %prot
     $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot);
     $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot);
+    # initialize alternate protocols and curves for cipher checks
+    $cfg{'cipheralpns'} = [split(/,/, $cfg{'next_protos'})];
+    $cfg{'ciphernpns'}  = [split(/,/, $cfg{'next_protos'})];
+    #$cfg{'ciphercurves'}= ... # from %tls_curves
     # incorporate some environment variables
     $cfg{'openssl_env'} = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
     $cfg{'openssl_cnf'} = $ENV{'OPENSSL_CONF'} if (defined $ENV{'OPENSSL_CONF'});
