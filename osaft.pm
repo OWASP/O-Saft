@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.97 17/04/22 18:08:16',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.98 17/04/22 18:45:23',
 
 };
 
@@ -1221,9 +1221,7 @@ our %cfg = (
                                 # array,  this is a string with comma-separated
                                 # names as used by openssl
                                 # Note: must not contain any white spaces!
-    'use_md5cipher' => 1,       # 0: do not use *-MD5 ciphers except for SSLv2 with +cipher
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
-    'use_nextprot'  => 1,       # 0: do not use -nextprotoneg option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
     'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
@@ -1341,6 +1339,10 @@ our %cfg = (
                        ",
                        # 0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
     }, # cipherranges
+    'cipher_md5'    => 1,       # 0: +cipher does not use *-MD5 ciphers except for SSLv2
+    'cipher_alpn'   => 1,       # 0: +cipher does not use ALPN
+    'cipher_npn'    => 1,       # 0: +cipher does not use  NPN ($Net::SSLinfo::use_nextprot is for openssl only)
+    'cipher_ecdh'   => 1,       # 0: +cipher does not use TLS curves extension
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
 
