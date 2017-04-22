@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.656 17/04/22 18:19:34",
+    SID         => "@(#) yeast.pl 1.657 17/04/22 18:46:07",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3403,10 +3403,10 @@ sub ciphers_get($$$$)   {
         my $anf = time();
         my $supported = "";
         if (0 == $cmd{'extciphers'}) {
-            if (0 >= $cfg{'use_md5cipher'}) {
+            if (0 >= $cfg{'cipher_md5'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
-                # detailled description see OPTION  --no-md5-cipher
-                #_hint("--no-md5-cipher can be used to disable checks with MD5 ciphers");
+                # detailled description see OPTION  --no-cipher-md5
+                #_hint("--no-cipher-md5 can be used to disable checks with MD5 ciphers");
                 _v4print("check cipher (MD5): $ssl:$c\n");
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
@@ -6585,8 +6585,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
-    if ($arg eq  '--nomd5cipher')       { $cfg{'use_md5cipher'} = 0;}
-    if ($arg eq  '--md5cipher')         { $cfg{'use_md5cipher'} = 1;}
+    if ($arg eq  '--nomd5cipher')       { $cfg{'cipher_md5'}= 0;    }
+    if ($arg eq  '--md5cipher')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
 #   if ($arg eq  '--sniname')           { $cfg{'use_sni_name'}  = 1;} # violates historic usage
