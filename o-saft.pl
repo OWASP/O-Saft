@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.657 17/04/22 18:46:07",
+    SID         => "@(#) yeast.pl 1.658 17/04/22 20:49:53",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6265,6 +6265,24 @@ while ($#argv >= 0) {
                 _warn("unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
+        if ($typ eq 'CURVES')   {
+            push(@{$cfg{'ciphercurves'}},   split(/,/, $arg));
+            # TODO: checking names of curves needs a sophisticated function
+            #if (1 == (grep{/^$arg$/} keys %{$cfg{'ciphercurves'}})) {
+            #    $cfg{'ciphercurves'} = $arg;
+            #} else {
+            #    _warn("unknown curve name '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+            #}
+        }
+        if ($typ eq 'PROTO_ALPN'){
+            push(@{$cfg{'cipheralpns'}}, split(/,/, $arg));
+            # TODO: checking names of protocols needs a sophisticated function
+            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'next_protos'})) {
+        }
+        if ($typ eq 'PROTO_NPN'){
+            push(@{$cfg{'ciphernpns'}},  split(/,/, $arg));
+            # TODO: checking names of protocols needs a sophisticated function
+        }
         _y_ARG("argument= $arg");
         #
         # --trace is special for historical reason, we allow:
@@ -6439,6 +6457,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--sslnodatanocipher') { $arg = '--nodataeqnocipher';  } # alias:
     if ($arg eq  '--sslnodataeqnocipher'){$arg = '--nodataeqnocipher';  } # alias:
     if ($arg eq  '--nosslnodataeqnocipher'){$arg = '--nosslnodatanocipher'; } # alias:
+    if ($arg eq  '--nomd5cipher')       { $arg = '--nociphermd5';       } # alias: used until VERSION 17.04.17
+    if ($arg eq  '--md5cipher')         { $arg = '--ciphermd5';         } # alias: used until VERSION 17.04.17
     #!#--------+------------------------+---------------------------+----------
     #!#           option to check         what to do                  comment
     #!#--------+------------------------+---------------------------+----------
@@ -6565,6 +6585,23 @@ while ($#argv >= 0) {
     if ($arg =~ /^--tcp/i)              { $cfg{$_} = 1 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
     if ($arg =~ /^--noudp/i)            { $cfg{$_} = 0 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
     if ($arg =~ /^--udp/i)              { $cfg{$_} = 1 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
+    # options for +cipher
+    if ($arg eq   '-cipher')            { $typ = 'CIPHER';          } # openssl
+    if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
+    if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
+    if ($arg =~ /^--ciphercurves?/)     { $typ = 'CURVES';          }
+    if ($arg =~ /^--cipheralpn?/)       { $typ = 'PROTO_ALPN';      }
+    if ($arg =~ /^--ciphernpn?/)        { $typ = 'PROTO_NPN';       }
+    if ($arg eq  '--nocipherecdh')      { $cfg{'cipher_ecdh'}   = 0;}
+    if ($arg eq  '--cipherecdh')        { $cfg{'cipher_ecdh'}   = 1;}
+    if ($arg eq  '--nocipheralpn')      { $cfg{'cipher_alpn'}   = 0;}
+    if ($arg eq  '--cipheralpn')        { $cfg{'cipher_alpn'}   = 1;}
+    if ($arg eq  '--nociphernpn')       { $cfg{'cipher_npn'}= 0;    }
+    if ($arg eq  '--ciphernpn')         { $cfg{'cipher_npn'}= 1;    }
+    if ($arg eq  '--nociphermd5')       { $cfg{'cipher_md5'}= 0;    }
+    if ($arg eq  '--ciphermd5')         { $cfg{'cipher_md5'}= 1;    }
+    if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
+    if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
     # our options
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
@@ -6585,8 +6622,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
-    if ($arg eq  '--nomd5cipher')       { $cfg{'cipher_md5'}= 0;    }
-    if ($arg eq  '--md5cipher')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--showhost')          { $cfg{'showhost'}++;       }
 #   if ($arg eq  '--sniname')           { $cfg{'use_sni_name'}  = 1;} # violates historic usage
@@ -6601,9 +6636,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
     if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
     if ($arg eq  '--call')              { $typ = 'CALL';            }
-    if ($arg eq   '-cipher')            { $typ = 'CIPHER';          } # openssl
-    if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
-    if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
     if ($arg eq  '--format')            { $typ = 'FORMAT';          }
     if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
     if ($arg =~ /^--sep(?:arator)?$/)   { $typ = 'SEP';             }
