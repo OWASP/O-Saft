@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.660 17/04/23 19:15:28",
+    SID         => "@(#) yeast.pl 1.661 17/04/23 19:27:14",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7350,35 +7350,28 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             # above warning is most likely a programming error herein
         foreach my $ssl (@{$cfg{'version'}}) {
             next if ($cfg{$ssl} == 0);
+            if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
+                next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
+                next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI
+            }
             my @all;
             my $range = $cfg{'cipherrange'};            # use specified range of constants
                $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
             my @accepted = ();                          # accepted ciphers
             #  NOTE: following eval must not use the block form because the
             #        value needs to be evaluated
-            foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) {            ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+            foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
                 push(@all, sprintf("0x%08X",$c));
             }
             printtitle($legacy, $ssl, $host, $port);
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
-            if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
-                $Net::SSLhello::usesni = 0;
-                @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
-                # correct total number if first 2 ciphers are identical
-                # (this indicates cipher order by the server)
-                # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
-                _v_print(sprintf("total number of accepted ciphers: %4d",
-                                 (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
-                Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, 0, @accepted);
-                $Net::SSLhello::usesni = $cfg{'usesni'}; # restore
-                next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
-                next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI
-                @accepted = ();             # reset accepted ciphers
-            }
             @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
             _v_print(sprintf("total number of accepted ciphers: %4d",
                              (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
+                # correct total number if first 2 ciphers are identical
+                # (this indicates cipher order by the server)
+                # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
             Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
         }
         _yeast_TIME("cipherraw}");
