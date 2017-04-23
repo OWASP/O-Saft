@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.661 17/04/23 19:27:14",
+    SID         => "@(#) yeast.pl 1.662 17/04/23 20:49:16",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3220,8 +3220,8 @@ sub _usesocket($$$$)    {
                 SSL_cipher_list => $ciphers,
                 SSL_ecdh_curve  => "prime256v1,", # OID or NID; ecdh_x448, default is prime256v1,
                 #SSL_ecdh_curve  => undef,   # TODO: cannot be selected by options
-                SSL_alpn_protocols  => [@{$cfg{'cipheralpns'}}],
-                SSL_npn_protocols   => [@{$cfg{'ciphernpns'}}],
+                SSL_alpn_protocols  => [@{$cfg{'cipher_alpns'}}],
+                SSL_npn_protocols   => [@{$cfg{'cipher_npns'}}],
                 #SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
                 #SSL_check_crl   => 1,       # if we want to use a client certificate
                 #SSL_cert_file   => "path"   # file for client certificate
@@ -3248,8 +3248,8 @@ sub _usesocket($$$$)    {
                   SSL_version     => $ssl,    # default is SSLv23
                   SSL_cipher_list => $ciphers,
                   SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
-                  SSL_alpn_protocols => [@{$cfg{'cipheralpns'}}],
-                  SSL_npn_protocols  => [@{$cfg{'ciphernpns'}}],
+                  SSL_alpn_protocols => [@{$cfg{'cipher_alpns'}}],
+                  SSL_npn_protocols  => [@{$cfg{'cipher_npns'}}],
               # FIXME: misses $cfg{'usealpn'}
                 ) or do {
                     _trace1("_usesocket: ssl handshake failed: $!");
@@ -3669,11 +3669,12 @@ sub check_nextproto {
     #? check target for ALPN or NPN support; returns list of supported protocols
     my ($host, $port, $type, $mode) = @_;
     # $type is ALPN or NPN; $mode is all or single
-    # in single mode, each protocol specified in $cfg{'next_protos'} is tested
+    # in single mode, each protocol specified in $cfg{'protos_next'} is tested
     # for its own, while in all mode all protocols are set at once
+    # Also SEE Note:ALPN, NPN
     _trace("check_nextproto($host, $port, $type, $mode)");
-    my @protos = split(",", $cfg{'next_protos'});
-       @protos = $cfg{'next_protos'}   if ($mode eq 'all'); # pass all at once
+    my @protos = split(",", $cfg{'protos_next'});
+       @protos = $cfg{'protos_next'}   if ($mode eq 'all'); # pass all at once
     my @npn;
     my ($ssl, $ctx, $method);
     my $socket = undef;
@@ -3724,7 +3725,7 @@ sub check_nextproto {
 
 sub checkalpn       {
     #? check target for ALPN or NPN support; returns list of supported protocols
-    # uses protocols from $cfg{'next_protos'} only
+    # uses protocols from $cfg{'protos_next'} only
     my ($host, $port) = @_;
     _y_CMD("checkalpn() ");
     $cfg{'done'}->{'checkalpn'}++;
@@ -6291,21 +6292,21 @@ while ($#argv >= 0) {
         }
         if ($typ eq 'PROTO_ALPN'){
             # Unterschied  [], [""], [" "]  beachten!
-            $cfg{'cipheralpns'} = [""] if ($arg eq ',,'); # special to set empty string
+            $cfg{'cipher_alpns'} = [""] if ($arg eq ',,'); # special to set empty string
             if ($arg eq ',') {
-                $cfg{'cipheralpns'} = [];
+                $cfg{'cipher_alpns'} = [];
             } else {
-                push(@{$cfg{'cipheralpns'}}, split(/,/, $arg));
+                push(@{$cfg{'cipher_alpns'}}, split(/,/, $arg));
             }
             # TODO: checking names of protocols needs a sophisticated function
-            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'next_protos'})) {
+            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) {
         }
         if ($typ eq 'PROTO_NPN'){
-            $cfg{'ciphernpns'} = [""] if ($arg eq ',,');  # special to set empty string
+            $cfg{'cipher_npns'} = [""] if ($arg eq ',,');  # special to set empty string
             if ($arg eq ',') {
-                $cfg{'ciphernpns'} = [""];
+                $cfg{'cipher_npns'} = [""];
             } else {
-                push(@{$cfg{'ciphernpns'}},  split(/,/, $arg));
+                push(@{$cfg{'cipher_npns'}},  split(/,/, $arg));
             }
             # TODO: checking names of protocols needs a sophisticated function
         }
@@ -7066,8 +7067,8 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_SNI          = $cfg{'sni_name'};
     $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
     $Net::SSLinfo::use_npn          = $cfg{'usenpn'};
-    $Net::SSLinfo::alpn_protos      = (join(",", @{$cfg{'cipheralpns'}}));
-    $Net::SSLinfo::npn_protos       = (join(",", @{$cfg{'ciphernpns'}}));
+    $Net::SSLinfo::protos_alpn      = (join(",", @{$cfg{'protos_alpn'}}));
+    $Net::SSLinfo::protos_npn       = (join(",", @{$cfg{'protos_npn'}}));
     $Net::SSLinfo::use_extdebug     = $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect    = $cfg{'use_reconnect'};
     $Net::SSLinfo::socket_reuse     = $cfg{'socket_reuse'};
@@ -7748,6 +7749,31 @@ They are still imported using  use  .
 The phrases 'SSL protocol versions', 'SSL protocols' or simply 'protocols'
 are used through out the comments in the sources equal for  SSLv2,  SSLv3,
 TLSv1 etc..
+
+
+=head2 Note:ALPN, NPN
+
+Traditionally first known as NPN, the  "protocol negotiation",  is used in
+in the two flaviours NPN and ALPN. The internal variable names are adapted
+to these acronyms and use "alpn" and "npn" in their names.  For historical
+reason, the list of the protocol names was stored in "cfg{'next_protos'}",
+which reflects the openssl option (-nextprotoneg),  and the function names
+used in some perl modules.
+As newer versions of openssl uses the option  -alpn,  and some other tools
+also use  -alpn  and/or  -npn  as option, the internal variable names have
+been adapted to this nameing scheme after version 17.04.17.
+The primary variable names containing ALPN or NPN protocol names are now:
+
+    protos_next     - internal list of all protocol names
+    protos_alpn     - used with/for ALPN options
+    protos_npn      - used with/for  nPN options
+    cipher_alpns    - used with/for ALPN options for +cipher command only
+    cipher_npns     - used with/for  nPN options for +cipher command only
+
+I.g. these are arrays. But as the common syntax for most other tools is to
+use a comma-separated list of names, the value in "cfg{'protos_next'}"  is
+are stored as  string.  Using a string instead of an arrays also simlifies
+passing the values to functions.
 
 
 =head2 Note:alias
