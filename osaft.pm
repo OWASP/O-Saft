@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.100 17/04/22 22:35:08',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.101 17/04/23 20:45:10',
 
 };
 
@@ -1215,12 +1215,14 @@ our %cfg = (
     'usealpn'       => 0,       # 1: use -alpn option for openssl
     'usenpn'        => 0,       # 1: use -nextprotoneg option for openssl
                                 # when setting to 1, connection handshake may fail
-    'next_protos'   =>          # all names known for ALPN or NPN
+    'protos_next'   =>          # all names known for ALPN or NPN
                        'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,http/2.0,h2',
                                 # even Net::SSLeay functions most likely use an
                                 # array,  this is a string with comma-separated
                                 # names as used by openssl
                                 # Note: must not contain any white spaces!
+    'protos_alpn'   => [],      # initially same as cfg{protos_next}, see _cfg_init()
+    'protos_npn'    => [],      # "-"
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
@@ -1344,11 +1346,15 @@ our %cfg = (
     'cipher_alpn'   => 1,       # 0: +cipher does not use ALPN
     'cipher_npn'    => 1,       # 0: +cipher does not use  NPN ($Net::SSLinfo::use_nextprot is for openssl only)
     'cipher_ecdh'   => 1,       # 0: +cipher does not use TLS curves extension
-    'cipheralpns'   => [],      # contains all protocols to be passed for +cipher checks
-    'ciphernpns'    => [],      # contains all protocols to be passed for +cipher checks
-#   'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
-    'ciphercurves'  => [   # TODO: quick&dirty, NOT YET complete
-                       qw(ed25519 ecdh_x25519 ecdh_x448 prime256v1 prime192v1 prime192v2 prime192v3 prime239v1 prime239v2 prime239v3 brainpoolP256r1 brainpoolP384r1 brainpoolP512r1 sect163k1 sect163r1 sect193r1 sect193r2 sect233k1)
+    'cipher_alpns'  => [],      # contains all protocols to be passed for +cipher checks
+    'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
+    'ciphercurves'  => [        # contains all curves to be passed for +cipher checks
+                       qw(prime256v1), # currenlty (2017) use only one curve
+                      # TODO: following list NOT YET complete, see %tls_curves
+                      #qw(ed25519 ecdh_x25519 ecdh_x448),
+                      #qw(prime256v1 prime192v1 prime192v2 prime192v3 prime239v1 prime239v2 prime239v3),
+                      #qw(brainpoolP256r1 brainpoolP384r1 brainpoolP512r1),
+                      #qw(sect163k1 sect163r1 sect193r1 sect193r2 sect233k1)),
                        ],
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
@@ -2167,9 +2173,11 @@ sub _cfg_init   {
     #? initialize dynamic settings in %cfg, copy data from %prot
     $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot);
     $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot);
+    $cfg{'protos_alpn'} = [split(/,/, $cfg{'protos_next'})];
+    $cfg{'protos_npn'}  = [split(/,/, $cfg{'protos_next'})];
     # initialize alternate protocols and curves for cipher checks
-    $cfg{'cipheralpns'} = [split(/,/, $cfg{'next_protos'})];
-    $cfg{'ciphernpns'}  = [split(/,/, $cfg{'next_protos'})];
+    $cfg{'cipher_alpns'}= [split(/,/, $cfg{'protos_next'})];
+    $cfg{'cipher_npns'} = [split(/,/, $cfg{'protos_next'})];
     #$cfg{'ciphercurves'}= ... # from %tls_curves
     # incorporate some environment variables
     $cfg{'openssl_env'} = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
