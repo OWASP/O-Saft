@@ -52,14 +52,15 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.659 17/04/22 22:18:28",
+    SID         => "@(#) yeast.pl 1.660 17/04/23 19:15:28",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
     my @txt = @_;
+    my $me  = ($0 =~ m/yeast.pl/) ? "yeast" : "o-saft.pl";  # nice name
     if ((grep{/(?:--trace.*time)/i} @ARGV) > 0) {
-        printf("#o-saft.pl  %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @txt);
+        printf("#$me   %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @txt);
     }
     return;
 }
@@ -3184,7 +3185,7 @@ sub _usesocket($$$$)    {
     # TODO: dirty hack to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
-    # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSX
+    # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSx
     # doesn't produce such warnings. Sigh.
     _trace1("_usesocket($ssl, $host, $port, $ciphers){ sni: $sni");
     if (($ssl eq "SSLv2") && (! defined &Net::SSLeay::CTX_v2_new)) {
@@ -3201,7 +3202,6 @@ sub _usesocket($$$$)    {
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
-        my @protos = split(",", $cfg{'next_protos'});   # need a list here
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
             _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
@@ -3218,12 +3218,13 @@ sub _usesocket($$$$)    {
                 SSL_version     => $ssl,    # default is SSLv23 (for empty $ssl)
                 SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
-                SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
-                #SSL_alpn_protocols  => [@{$cfg{'cipheralpns'}}], # == 1) ? [@protos] : [],
-                #SSL_npn_protocols   => [@{$cfg{'ciphernpns'}}],  # == 1) ? [@protos] : [],
-                SSL_npn_protocols   => [@protos],
-                SSL_alpn_protocols  => [@protos],
-              # FIXME: misses $cfg{'usealpn'}
+                SSL_ecdh_curve  => "prime256v1,", # OID or NID; ecdh_x448, default is prime256v1,
+                #SSL_ecdh_curve  => undef,   # TODO: cannot be selected by options
+                SSL_alpn_protocols  => [@{$cfg{'cipheralpns'}}],
+                SSL_npn_protocols   => [@{$cfg{'ciphernpns'}}],
+                #SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
+                #SSL_check_crl   => 1,       # if we want to use a client certificate
+                #SSL_cert_file   => "path"   # file for client certificate
             );
             #_trace1("_usesocket: IO::Socket::SSL->new: $? : $! :");
         } else {
@@ -3247,8 +3248,8 @@ sub _usesocket($$$$)    {
                   SSL_version     => $ssl,    # default is SSLv23
                   SSL_cipher_list => $ciphers,
                   SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
-                  SSL_npn_protocols  => [@protos],
-                  SSL_alpn_protocols => [@protos],
+                  SSL_alpn_protocols => [@{$cfg{'cipheralpns'}}],
+                  SSL_npn_protocols  => [@{$cfg{'ciphernpns'}}],
               # FIXME: misses $cfg{'usealpn'}
                 ) or do {
                     _trace1("_usesocket: ssl handshake failed: $!");
@@ -3670,16 +3671,20 @@ sub check_nextproto {
     # $type is ALPN or NPN; $mode is all or single
     # in single mode, each protocol specified in $cfg{'next_protos'} is tested
     # for its own, while in all mode all protocols are set at once
-    _trace("check_nextproto($host, $port, $type, $mode");
+    _trace("check_nextproto($host, $port, $type, $mode)");
     my @protos = split(",", $cfg{'next_protos'});
        @protos = $cfg{'next_protos'}   if ($mode eq 'all'); # pass all at once
     my @npn;
     my ($ssl, $ctx, $method);
     my $socket = undef;
     foreach my $proto (@protos) {
+        #_trace("  do_ssl_new(..., ".(join(" ", @{$cfg{'version'}}))
+        #     . ", $cfg{'cipherpattern'}, $proto, $proto, socket)");
         ($ssl, $ctx, $socket, $method) = Net::SSLinfo::do_ssl_new($host, $port,
-                (join(" ", @{$cfg{'version'}})), $cfg{'cipherpattern'}, $proto,
-                (($type eq 'ALPN')? 1 : 0), (($type eq 'NPN')? 1 : 0), $socket);
+                (join(" ", @{$cfg{'version'}})), $cfg{'cipherpattern'},
+                (($type eq 'ALPN') ? $proto : ""),
+                (($type eq 'NPN')  ? $proto : ""),
+                $socket);
         if (!defined $ssl) {
             _warn("$type connection failed with '$proto'");
         } else {
@@ -3694,7 +3699,9 @@ sub check_nextproto {
                 _warn("$type name mismatch: (send) $proto <> $np (returned)")  if ($proto ne $np);
             }
             _trace("check_nextproto: $type $np") if (defined $np) ;
-            push(@npn, $np) if (defined $np);
+            if (defined $np) {
+                push(@npn, $np) if ($proto eq $np); # only if matched
+            }
         }
         Net::SSLeay::free($ssl)      if (defined $ssl);
         Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
@@ -3717,10 +3724,12 @@ sub check_nextproto {
 
 sub checkalpn       {
     #? check target for ALPN or NPN support; returns list of supported protocols
+    # uses protocols from $cfg{'next_protos'} only
     my ($host, $port) = @_;
     _y_CMD("checkalpn() ");
     $cfg{'done'}->{'checkalpn'}++;
     return if ($cfg{'done'}->{'checkalpn'} > 1);
+    # _trace("trace not necessary, output from check_nextproto() is sufficient");
     if ($cfg{'ssleay'}->{'get_alpn'} > 0) {
         $info{'alpns'} = join(",", check_nextproto($host, $port, 'ALPN', 'single'));
         $info{'alpn'}  = join(",", check_nextproto($host, $port, 'ALPN', 'all'));
@@ -6266,11 +6275,12 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'CURVES')   {
-            $arg = "" if ($arg eq ',');
-            if ($arg =~ m/^\s*$/) {
+            $cfg{'ciphercurves'} = [""] if ($arg eq ',,'); # special to set empty string
+            if ($arg eq ',') {
                 $cfg{'ciphercurves'} = [];
             } else {
-                push(@{$cfg{'ciphercurves'}},   split(/,/, $arg));
+                $cfg{'ciphercurves'} = [(split(/,/, $arg))[0]];
+                # NOTE: only one curve possible (04/2017)
             }
             # TODO: checking names of curves needs a sophisticated function
             #if (1 == (grep{/^$arg$/} keys %{$cfg{'ciphercurves'}})) {
@@ -6280,8 +6290,9 @@ while ($#argv >= 0) {
             #}
         }
         if ($typ eq 'PROTO_ALPN'){
-            $arg = "" if ($arg eq ',');
-            if ($arg =~ m/^\s*$/) {
+            # Unterschied  [], [""], [" "]  beachten!
+            $cfg{'cipheralpns'} = [""] if ($arg eq ',,'); # special to set empty string
+            if ($arg eq ',') {
                 $cfg{'cipheralpns'} = [];
             } else {
                 push(@{$cfg{'cipheralpns'}}, split(/,/, $arg));
@@ -6290,9 +6301,9 @@ while ($#argv >= 0) {
             #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'next_protos'})) {
         }
         if ($typ eq 'PROTO_NPN'){
-            $arg = "" if ($arg eq ',');
-            if ($arg =~ m/^\s*$/) {
-                $cfg{'ciphernpns'} = [];
+            $cfg{'ciphernpns'} = [""] if ($arg eq ',,');  # special to set empty string
+            if ($arg eq ',') {
+                $cfg{'ciphernpns'} = [""];
             } else {
                 push(@{$cfg{'ciphernpns'}},  split(/,/, $arg));
             }
@@ -7055,7 +7066,8 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_SNI          = $cfg{'sni_name'};
     $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
     $Net::SSLinfo::use_npn          = $cfg{'usenpn'};
-    $Net::SSLinfo::next_protos      = $cfg{'next_protos'};
+    $Net::SSLinfo::alpn_protos      = (join(",", @{$cfg{'cipheralpns'}}));
+    $Net::SSLinfo::npn_protos       = (join(",", @{$cfg{'ciphernpns'}}));
     $Net::SSLinfo::use_extdebug     = $cfg{'use_extdebug'};
     $Net::SSLinfo::use_reconnect    = $cfg{'use_reconnect'};
     $Net::SSLinfo::socket_reuse     = $cfg{'socket_reuse'};
@@ -7313,7 +7325,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             _warn("Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
         }
     }
-
     # print DNS stuff
     if (($info + $check + $cmdsni) > 0) {
         _y_CMD("+info || +check || +sni*");
