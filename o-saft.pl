@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.662 17/04/23 20:49:16",
+    SID         => "@(#) yeast.pl 1.663 17/04/23 21:22:09",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6290,7 +6290,7 @@ while ($#argv >= 0) {
             #    _warn("unknown curve name '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             #}
         }
-        if ($typ eq 'PROTO_ALPN'){
+        if ($typ eq 'CIPHER_ALPN'){
             # Unterschied  [], [""], [" "]  beachten!
             $cfg{'cipher_alpns'} = [""] if ($arg eq ',,'); # special to set empty string
             if ($arg eq ',') {
@@ -6301,12 +6301,31 @@ while ($#argv >= 0) {
             # TODO: checking names of protocols needs a sophisticated function
             #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) {
         }
-        if ($typ eq 'PROTO_NPN'){
+        if ($typ eq 'CIPHER_NPN'){
             $cfg{'cipher_npns'} = [""] if ($arg eq ',,');  # special to set empty string
             if ($arg eq ',') {
                 $cfg{'cipher_npns'} = [""];
             } else {
                 push(@{$cfg{'cipher_npns'}},  split(/,/, $arg));
+            }
+            # TODO: checking names of protocols needs a sophisticated function
+        }
+        if ($typ eq 'PROTO_ALPN'){
+            $cfg{'protos_alpn'} = [""] if ($arg eq ',,'); # special to set empty string
+            if ($arg eq ',') {
+                $cfg{'protos_alpn'} = [];
+            } else {
+                push(@{$cfg{'protos_alpn'}}, split(/,/, $arg));
+            }
+            # TODO: checking names of protocols needs a sophisticated function
+            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) {
+        }
+        if ($typ eq 'PROTO_NPN'){
+            $cfg{'protos_npn'} = [""] if ($arg eq ',,');  # special to set empty string
+            if ($arg eq ',') {
+                $cfg{'protos_npn'} = [""];
+            } else {
+                push(@{$cfg{'protos_npn'}},  split(/,/, $arg));
             }
             # TODO: checking names of protocols needs a sophisticated function
         }
@@ -6617,8 +6636,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--cipher')            { $typ = 'CIPHER';          }
     if ($arg eq  '--cipherrange')       { $typ = 'CRANGE';          }
     if ($arg =~ /^--ciphercurves?/)     { $typ = 'CURVES';          }
-    if ($arg =~ /^--cipheralpn?/)       { $typ = 'PROTO_ALPN';      }
-    if ($arg =~ /^--ciphernpn?/)        { $typ = 'PROTO_NPN';       }
+    if ($arg =~ /^--cipheralpns?/)      { $typ = 'CIPHER_ALPN';     }
+    if ($arg =~ /^--ciphernpns?/)       { $typ = 'CIPHER_NPN';      }
     if ($arg eq  '--nocipherecdh')      { $cfg{'cipher_ecdh'}   = 0;}
     if ($arg eq  '--cipherecdh')        { $cfg{'cipher_ecdh'}   = 1;}
     if ($arg eq  '--nocipheralpn')      { $cfg{'cipher_alpn'}   = 0;}
@@ -6655,6 +6674,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--nosniname')         { $cfg{'use_sni_name'}  = 0;}
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
+    if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTO_ALPN';      }
+    if ($arg =~ /^--protonpns?/)        { $typ = 'PROTO_NPN';       }
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
     if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            }
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
@@ -7772,8 +7793,8 @@ The primary variable names containing ALPN or NPN protocol names are now:
 
 I.g. these are arrays. But as the common syntax for most other tools is to
 use a comma-separated list of names, the value in "cfg{'protos_next'}"  is
-are stored as  string.  Using a string instead of an arrays also simlifies
-passing the values to functions.
+stored as a string.  Using a string instead of an arrays also simlifies to
+pass the value to functions.
 
 
 =head2 Note:alias
