@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.101 17/04/23 20:45:10',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.102 17/04/27 00:12:17',
 
 };
 
@@ -1449,7 +1449,7 @@ our %cfg = (
                        ],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check cipher cipher_dh),
-                        qw(pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected),
+                        qw(pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4),
                         qw(beast crime time breach drown freak logjam lucky13 poodle sloth sweet32),
                         qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
