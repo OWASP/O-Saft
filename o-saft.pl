@@ -42,6 +42,10 @@
 #        this policy (see our .perlcriticrc), it even doesn't honor the setting
 #        here, hence it's disabled at each line using  $ENV{} = ...
 
+## no critic qw(Variables::ProhibitPackageVars)
+#  NOTE: we have a couple of global variables, but do not want to write them in
+#        all CAPS (as it would be required by perlcritic)
+
 ## no critic qw(ErrorHandling::RequireCarping)
 #  NOTE: Using carp() is nice in modules,  as it also prints the calling stack.
 #        But here it is sufficient to see the line number, hence we use warn().
@@ -49,10 +53,17 @@
 ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #  NOTE: It's the nature of checks to be complex, hence don't complain.
 
+## no critic qw(Modules::ProhibitExcessMainComplexity)
+#  NOTE: Yes, its hight, very high complexity here.
+#       BUG: this pragma does not work here, needs mccabe value ...
+
 use strict;
 use warnings;
-use constant {
-    SID         => "@(#) yeast.pl 1.664 17/04/26 23:29:15",
+use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
+    # NOTE: use Readonly instead of constant is not possible, because constants
+    #       are used for example in the BEGIN{} section.  Constants can be used
+    #       there but not Readonly variables. Hence  "no critic"  must be used.
+    SID         => "@(#) yeast.pl 1.665 17/04/27 01:15:22",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
