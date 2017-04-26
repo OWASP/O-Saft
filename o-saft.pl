@@ -52,7 +52,7 @@
 use strict;
 use warnings;
 use constant {
-    SID         => "@(#) yeast.pl 1.663 17/04/23 21:22:09",
+    SID         => "@(#) yeast.pl 1.664 17/04/26 23:29:15",
     STR_VERSION => "17.04.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3219,10 +3219,11 @@ sub _usesocket($$$$)    {
                 SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
                 SSL_ecdh_curve  => "prime256v1,", # OID or NID; ecdh_x448, default is prime256v1,
-                #SSL_ecdh_curve  => undef,   # TODO: cannot be selected by options
-                SSL_alpn_protocols  => [@{$cfg{'cipher_alpns'}}],
-                SSL_npn_protocols   => [@{$cfg{'cipher_npns'}}],
-                #SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
+                SSL_alpn_protocols  => [@{$cfg{'cipher_alpns'}}], # same as $cfg{'cipher_alpns'}
+                SSL_npn_protocols   => [@{$cfg{'cipher_npns'}}],  # same as $cfg{'cipher_npns'}
+                #TODO: SSL_ecdh_curve  => undef,   # TODO: cannot be selected by options
+                #TODO: SSL_npn_protocols   => [], #[@{$cfg{'cipher_npns'}}],
+                #TODO: SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
                 #SSL_check_crl   => 1,       # if we want to use a client certificate
                 #SSL_cert_file   => "path"   # file for client certificate
             );
@@ -6638,12 +6639,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ciphercurves?/)     { $typ = 'CURVES';          }
     if ($arg =~ /^--cipheralpns?/)      { $typ = 'CIPHER_ALPN';     }
     if ($arg =~ /^--ciphernpns?/)       { $typ = 'CIPHER_NPN';      }
-    if ($arg eq  '--nocipherecdh')      { $cfg{'cipher_ecdh'}   = 0;}
-    if ($arg eq  '--cipherecdh')        { $cfg{'cipher_ecdh'}   = 1;}
-    if ($arg eq  '--nocipheralpn')      { $cfg{'cipher_alpn'}   = 0;}
-    if ($arg eq  '--cipheralpn')        { $cfg{'cipher_alpn'}   = 1;}
-    if ($arg eq  '--nociphernpn')       { $cfg{'cipher_npn'}= 0;    }
-    if ($arg eq  '--ciphernpn')         { $cfg{'cipher_npn'}= 1;    }
     if ($arg eq  '--nociphermd5')       { $cfg{'cipher_md5'}= 0;    }
     if ($arg eq  '--ciphermd5')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
@@ -7144,6 +7139,9 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::proxyhost       = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport       = $cfg{'proxyport'};
     $Net::SSLhello::cipherrange     = $cfg{'cipherrange'};  # not really necessary, see below
+    $Net::SSLhello::ciphercurves    = (join(",", @{$cfg{'ciphercurves'}}));
+    $Net::SSLhello::protos_alpn     = (join(",", @{$cfg{'protos_alpn'}}));
+    $Net::SSLhello::protos_npn      = (join(",", @{$cfg{'protos_npn'}}));
     # TODO: need to unify variables
     @Net::SSLhello::starttlsPhaseArray  = @{$cfg{'starttls_phase'}};
     # add 'starttls_error' array elements according Net::SSLhello's internal
