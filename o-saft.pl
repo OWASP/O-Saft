@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.665 17/04/27 01:15:22",
-    STR_VERSION => "17.04.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.666 17/04/29 20:54:27",
+    STR_VERSION => "17.04.21",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -3229,11 +3229,10 @@ sub _usesocket($$$$)    {
                 SSL_version     => $ssl,    # default is SSLv23 (for empty $ssl)
                 SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
-                SSL_ecdh_curve  => "prime256v1,", # OID or NID; ecdh_x448, default is prime256v1,
-                SSL_alpn_protocols  => [@{$cfg{'cipher_alpns'}}], # same as $cfg{'cipher_alpns'}
-                SSL_npn_protocols   => [@{$cfg{'cipher_npns'}}],  # same as $cfg{'cipher_npns'}
-                #TODO: SSL_ecdh_curve  => undef,   # TODO: cannot be selected by options
-                #TODO: SSL_npn_protocols   => [], #[@{$cfg{'cipher_npns'}}],
+                SSL_ecdh_curve  => "prime256v1,",    # OID or NID; ecdh_x448, default is prime256v1,
+                SSL_alpn_protocols  => $cfg{'cipher_alpns'},
+                SSL_npn_protocols   => $cfg{'cipher_npns'},
+                #TODO: SSL_ecdh_curve  => undef,     # TODO: cannot be selected by options
                 #TODO: SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
                 #SSL_check_crl   => 1,       # if we want to use a client certificate
                 #SSL_cert_file   => "path"   # file for client certificate
@@ -6302,8 +6301,13 @@ while ($#argv >= 0) {
             #    _warn("unknown curve name '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             #}
         }
+
+        # --protos* is special to simulate empty and undefined arrays
+        #   --protosnpn=value	- add value to array
+        #   --protosnpn=,	- set empty array
+        #   --protosnpn=,,	- set array element to ""
+        # NOTE: distinguish:  [], [""], [" "]
         if ($typ eq 'CIPHER_ALPN'){
-            # Unterschied  [], [""], [" "]  beachten!
             $cfg{'cipher_alpns'} = [""] if ($arg eq ',,'); # special to set empty string
             if ($arg eq ',') {
                 $cfg{'cipher_alpns'} = [];
@@ -6316,7 +6320,7 @@ while ($#argv >= 0) {
         if ($typ eq 'CIPHER_NPN'){
             $cfg{'cipher_npns'} = [""] if ($arg eq ',,');  # special to set empty string
             if ($arg eq ',') {
-                $cfg{'cipher_npns'} = [""];
+                $cfg{'cipher_npns'} = [];
             } else {
                 push(@{$cfg{'cipher_npns'}},  split(/,/, $arg));
             }
@@ -6335,14 +6339,14 @@ while ($#argv >= 0) {
         if ($typ eq 'PROTO_NPN'){
             $cfg{'protos_npn'} = [""] if ($arg eq ',,');  # special to set empty string
             if ($arg eq ',') {
-                $cfg{'protos_npn'} = [""];
+                $cfg{'protos_npn'} = [];
             } else {
                 push(@{$cfg{'protos_npn'}},  split(/,/, $arg));
             }
             # TODO: checking names of protocols needs a sophisticated function
         }
         _y_ARG("argument= $arg");
-        #
+
         # --trace is special for historical reason, we allow:
         #   --traceARG
         #   --tracearg
