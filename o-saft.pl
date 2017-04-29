@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.666 17/04/29 20:54:27",
+    SID         => "@(#) %M% %I% %E% %U%",
     STR_VERSION => "17.04.21",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1906,7 +1906,7 @@ sub _check_modules      {
 sub _enable_functions   {
     # enable internal functionality based on available functionality of modules
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
-    # verbose messages with --v=2
+    # verbose messages with --v --v
     # Note: don't bother users with warnings, if functionality is not required
     #       hence some additional checks arround the warnings
     # Note: instead of requiring a specific version with perl's use,  only the
@@ -5770,8 +5770,8 @@ sub printquit() {
         _warn(" +quit  command should be used with  --trace=arg  option");
     }
     _v_print("\n# some information may appear multiple times\n#");
-    $cfg{'verbose'} = 2;
-    $cfg{'trace'}   = 2;
+    $cfg{'verbose'} = 2 if ($cfg{'verbose'} < 2);   # dirty hack
+    $cfg{'trace'}   = 2 if ($cfg{'trace'}   < 2);   # -"-
     $cfg{'traceARG'}= 1; # for _yeast_args()
     _yeast_init();
     # _yeast_args();  # duplicate call, see in main at "set environment"
@@ -5883,6 +5883,14 @@ sub printversion() {
     print "    openssl supported SSL versions   " . join(" ", @{$cfg{'version'}});
     print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
     printversionmismatch();
+
+    print "= $me +cipher =";
+    print "    list of supported elliptic curves " . join(" ", @{$cfg{'ciphercurves'}});
+    print "    list of supported ALPN, NPN      " . join(" ", $cfg{'protos_next'});
+    if ($cfg{'verbose'} > 0) {
+        print "    list of supported ALPN       " . join(" ", @{$cfg{'protos_alpn'}});
+        print "    list of supported NPN        " . join(" ", @{$cfg{'protos_npn'}});
+    }
 
     print "= $me +cipherall =";
     # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
@@ -6183,11 +6191,12 @@ while ($#argv >= 0) {
         if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
-        if ($typ eq 'DO')       { push(@{$cfg{'do'}}, $arg);    $typ = 'HOST'; } # treat as command,
+        if ($typ eq 'VERBOSE')  { $cfg{'verbose'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'ENV')      { $cmd{'envlibvar'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'OPENSSL')  { $cmd{'openssl'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SSLCNF')   { $cfg{'openssl_cnf'}   = $arg; $typ = 'HOST'; }
         if ($typ eq 'SSLFIPS')  { $cfg{'openssl_fips'}  = $arg; $typ = 'HOST'; }
+        if ($typ eq 'DO')       { push(@{$cfg{'do'}}, $arg);    $typ = 'HOST'; } # treat as command,
         if ($typ eq 'NO_OUT')   { push(@{$cfg{'ignore-out'}}, $arg);        $typ = 'HOST'; }
         if ($typ eq 'EXE')      { push(@{$cmd{'path'}}, $arg);  $typ = 'HOST'; }
         if ($typ eq 'LIB')      { push(@{$cmd{'libs'}}, $arg);  $typ = 'HOST'; }
@@ -6434,6 +6443,7 @@ while ($#argv >= 0) {
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
     if ($arg eq  '--trace--')           { $cfg{'traceARG'}++;       next; } # for backward compatibility
+    if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.*/)             { $cgi = 1;                 next; } # for CGI mode; ignore
     if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
@@ -6525,7 +6535,7 @@ while ($#argv >= 0) {
     #!#           option to check         what to do                  comment
     #!#--------+------------------------+---------------------------+----------
     # options for trace and debug
-    if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        }
+    if ($arg =~ /^--v(?:erbose)?$/)     { $typ = 'VERBOSE';         }
     if ($arg =~ /^--v-ciphers?$/)       { $cfg{'v_cipher'}++;       }
     if ($arg =~ /^--ciphers?--?v$/)     { $cfg{'v_cipher'}++;       } # alias:
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
