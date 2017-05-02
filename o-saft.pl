@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.669 17/05/02 08:25:32",
-    STR_VERSION => "17.04.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.670 17/05/02 14:14:55",
+    STR_VERSION => "17.04.29",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -7475,7 +7475,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
-_dbx "useALPN $cfg{'usealpn'} useNPN $cfg{'usenpn'} #"; # " @{$cfg{'ciphers'}}";
         foreach my $ssl (@{$cfg{'version'}}) {
             my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
             _y_CMD("ckecking ciphers for $ssl ... ($__openssl)");
