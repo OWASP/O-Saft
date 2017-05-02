@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.04.21',
+    SSLINFO_VERSION => '17.04.29',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.183 17/04/23 20:46:33',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.184 17/05/02 08:14:23',
 };
 
 ######################################################## public documentation #
@@ -2669,7 +2669,7 @@ sub do_openssl($$$$) {
         _trace("do_openssl($mode): WARNING: no openssl");
         return SSLINFO_HASH;
     }
-    if ($mode =~ m/^-?(s_client)$/) {
+    if ($mode =~ m/^-?s_client$/) {
         if ($Net::SSLinfo::file_sclient !~ m/^\s*$/) {
             if (open(my $fh, '<:encoding(UTF-8)', $Net::SSLinfo::file_sclient)) {
                 undef $/;   # get anything
@@ -2684,6 +2684,7 @@ sub do_openssl($$$$) {
             _trace("do_openssl($mode): WARNING: no openssl s_client") if ($trace > 1);
             return SSLINFO_HASH;
         }
+# TODO: Optionen hier entfernen, muss im Caller gemacht werden
         # pass -alpn option to validate 'protocols' support later
         # pass -nextprotoneg option to validate 'protocols' support later
         # pass -reconnect option to validate 'resumption' support later
@@ -2695,13 +2696,18 @@ sub do_openssl($$$$) {
         $mode .= ' -CApath ' . $capath if ($capath ne "");
         $mode .= ' -CAfile ' . $cafile if ($cafile ne "");
 # }
-        $mode .= ' -alpn '         . $Net::SSLinfo::protos_alpn if ($Net::SSLinfo::use_alpn == 1);
-        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protos_npn  if ($Net::SSLinfo::use_npn  == 1);
         $mode .= ' -reconnect'   if ($Net::SSLinfo::use_reconnect == 1);
         $mode .= ' -tlsextdebug' if ($Net::SSLinfo::use_extdebug  == 1);
-        $mode .= ' -connect';
     }
-    $host = $port = "" if ($mode =~ m/^-?(ciphers)/);
+    if (($mode =~ m/^-?s_client$/) 
+    ||  ($mode =~ m/^-?s_client.*?-cipher/)) {
+        $mode .= ' -alpn '         . $Net::SSLinfo::protos_alpn if ($Net::SSLinfo::use_alpn == 1);
+        $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protos_npn  if ($Net::SSLinfo::use_npn  == 1);
+    }
+    if ($mode =~ m/^-?s_client/) {
+        $mode .= ' -connect'     if  ($mode !~ m/-connect/);
+    }
+    $host = $port = "" if ($mode =~ m/^-?(ciphers)/);   # TODO: may be scary
     _trace("echo '' | $_timeout $_openssl $mode $host:$port 2>&1");
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
