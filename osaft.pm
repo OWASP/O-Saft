@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.102 17/04/27 00:12:17',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.103 17/05/02 08:17:15',
 
 };
 
@@ -1212,9 +1212,8 @@ our %cfg = (
     'usedns'        => 1,       # 1: make DNS reverse lookup
     'usemx'         => 0,       # 1: make MX-Record DNS lookup
     'usehttp'       => 1,       # 1: make HTTP request
-    'usealpn'       => 0,       # 1: use -alpn option for openssl
-    'usenpn'        => 0,       # 1: use -nextprotoneg option for openssl
-                                # when setting to 1, connection handshake may fail
+    'usealpn'       => 1,       # 0: do not use -alpn option for openssl
+    'usenpn'        => 1,       # 0: do not use -nextprotoneg option for openssl
     'protos_next'   =>          # all names known for ALPN or NPN
                        'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,http/2.0,h2',
                                 # even Net::SSLeay functions most likely use an
