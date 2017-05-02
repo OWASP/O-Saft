@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.670 17/05/02 14:14:55",
+    SID         => "@(#) yeast.pl 1.671 17/05/02 22:45:01",
     STR_VERSION => "17.04.29",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3213,6 +3213,9 @@ sub _usesocket($$$$)    {
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
+#_dbx "Cipher 1: $ciphers" if $ciphers =~ /ECDHE-ECDSA-CHACHA20-POLY1305/; #-SHA256,
+_dbx "Cipher 1: $ciphers" if $ciphers =~ /CHACHA20/; #-SHA256,
+_dbx "Cipher 2: $ciphers" if $ciphers =~ /ECDHE-RSA-AES256-GCM-SHA384/; #-SHA256,
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
             _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
@@ -3229,7 +3232,7 @@ sub _usesocket($$$$)    {
                 SSL_version     => $ssl,    # default is SSLv23 (for empty $ssl)
                 SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
-                SSL_ecdh_curve  => "prime256v1,",    # OID or NID; ecdh_x448, default is prime256v1,
+                SSL_ecdh_curve  => "prime256v1",     # OID or NID; ecdh_x448, default is prime256v1, ecdh_x25519
                 SSL_alpn_protocols  => $cfg{'cipher_alpns'},
                 SSL_npn_protocols   => $cfg{'cipher_npns'},
                 #TODO: SSL_ecdh_curve  => undef,     # TODO: cannot be selected by options
@@ -6302,8 +6305,7 @@ while ($#argv >= 0) {
             if ($arg eq ',') {
                 $cfg{'ciphercurves'} = [];
             } else {
-                $cfg{'ciphercurves'} = [(split(/,/, $arg))[0]];
-                # NOTE: only one curve possible (04/2017)
+                push(@{$cfg{'ciphercurves'}}, split(/,/, $arg));
             }
             # TODO: checking names of curves needs a sophisticated function
             #if (1 == (grep{/^$arg$/} keys %{$cfg{'ciphercurves'}})) {
