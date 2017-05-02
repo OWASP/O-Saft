@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.671 17/05/02 22:45:01",
+    SID         => "@(#) yeast.pl 1.672 17/05/02 23:26:45",
     STR_VERSION => "17.04.29",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3214,8 +3214,6 @@ sub _usesocket($$$$)    {
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
 #_dbx "Cipher 1: $ciphers" if $ciphers =~ /ECDHE-ECDSA-CHACHA20-POLY1305/; #-SHA256,
-_dbx "Cipher 1: $ciphers" if $ciphers =~ /CHACHA20/; #-SHA256,
-_dbx "Cipher 2: $ciphers" if $ciphers =~ /ECDHE-RSA-AES256-GCM-SHA384/; #-SHA256,
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
             _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
@@ -3233,6 +3231,7 @@ _dbx "Cipher 2: $ciphers" if $ciphers =~ /ECDHE-RSA-AES256-GCM-SHA384/; #-SHA256
                 SSL_check_crl   => 0,       # do not check CRL
                 SSL_cipher_list => $ciphers,
                 SSL_ecdh_curve  => "prime256v1",     # OID or NID; ecdh_x448, default is prime256v1, ecdh_x25519
+                #SSL_ecdh_curve  => [qw(sect163k1 x25519)],    # OID or NID; ecdh_x448, default is prime256v1,
                 SSL_alpn_protocols  => $cfg{'cipher_alpns'},
                 SSL_npn_protocols   => $cfg{'cipher_npns'},
                 #TODO: SSL_ecdh_curve  => undef,     # TODO: cannot be selected by options
@@ -6301,8 +6300,8 @@ while ($#argv >= 0) {
             }
         }
         if ($typ eq 'CURVES')   {
-            $cfg{'ciphercurves'} = [""] if ($arg eq ',,'); # special to set empty string
-            if ($arg eq ',') {
+            $cfg{'ciphercurves'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
+            if ($arg =~ /^[,:]$/) {
                 $cfg{'ciphercurves'} = [];
             } else {
                 push(@{$cfg{'ciphercurves'}}, split(/,/, $arg));
@@ -6321,8 +6320,8 @@ while ($#argv >= 0) {
         #   --protosnpn=,,	- set array element to ""
         # NOTE: distinguish:  [], [""], [" "]
         if ($typ eq 'CIPHER_ALPN'){
-            $cfg{'cipher_alpns'} = [""] if ($arg eq ',,'); # special to set empty string
-            if ($arg eq ',') {
+            $cfg{'cipher_alpns'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
+            if ($arg =~ /^[,:]$/) {
                 $cfg{'cipher_alpns'} = [];
             } else {
                 push(@{$cfg{'cipher_alpns'}}, split(/,/, $arg));
@@ -6331,8 +6330,8 @@ while ($#argv >= 0) {
             #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) {
         }
         if ($typ eq 'CIPHER_NPN'){
-            $cfg{'cipher_npns'} = [""] if ($arg eq ',,');  # special to set empty string
-            if ($arg eq ',') {
+            $cfg{'cipher_npns'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
+            if ($arg =~ /^[,:]$/) {
                 $cfg{'cipher_npns'} = [];
             } else {
                 push(@{$cfg{'cipher_npns'}},  split(/,/, $arg));
@@ -6340,8 +6339,8 @@ while ($#argv >= 0) {
             # TODO: checking names of protocols needs a sophisticated function
         }
         if ($typ eq 'PROTO_ALPN'){
-            $cfg{'protos_alpn'} = [""] if ($arg eq ',,'); # special to set empty string
-            if ($arg eq ',') {
+            $cfg{'protos_alpn'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
+            if ($arg =~ /^[,:]$/) {
                 $cfg{'protos_alpn'} = [];
             } else {
                 push(@{$cfg{'protos_alpn'}}, split(/,/, $arg));
@@ -6350,8 +6349,8 @@ while ($#argv >= 0) {
             #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) {
         }
         if ($typ eq 'PROTO_NPN'){
-            $cfg{'protos_npn'} = [""] if ($arg eq ',,');  # special to set empty string
-            if ($arg eq ',') {
+            $cfg{'protos_npn'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
+            if ($arg =~ /^[,:]$/) {
                 $cfg{'protos_npn'} = [];
             } else {
                 push(@{$cfg{'protos_npn'}},  split(/,/, $arg));
@@ -7169,7 +7168,7 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::proxyhost       = $cfg{'proxyhost'};
     $Net::SSLhello::proxyport       = $cfg{'proxyport'};
     $Net::SSLhello::cipherrange     = $cfg{'cipherrange'};  # not really necessary, see below
-    $Net::SSLhello::ciphercurves    = (join(",", @{$cfg{'ciphercurves'}}));
+    $Net::SSLhello::ciphercurves    = (join(":", @{$cfg{'ciphercurves'}}));
     $Net::SSLhello::protos_alpn     = (join(",", @{$cfg{'protos_alpn'}}));
     $Net::SSLhello::protos_npn      = (join(",", @{$cfg{'protos_npn'}}));
     # TODO: need to unify variables
