@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.668 17/05/02 08:11:56",
+    SID         => "@(#) yeast.pl 1.669 17/05/02 08:25:32",
     STR_VERSION => "17.04.21",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7212,7 +7212,7 @@ usr_pre_cipher();
 #       needs also proper tests what Net::SSLinfo::cipher_* returns
 _yeast_TIME("get{");
 if ((_need_cipher() > 0) or (_need_default() > 0)) {
-    _y_CMD("  get cipher list ..");
+    _y_CMD("  get cipher list ...");
     my $pattern = $cfg{'cipherpattern'};# default pattern
        $pattern = join(":", @{$cfg{'cipher'}}) if (scalar(@{$cfg{'cipher'}}) > 0);
     _trace(" cipher pattern= $pattern");
@@ -7222,24 +7222,12 @@ if ((_need_cipher() > 0) or (_need_default() > 0)) {
         @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_list( $pattern);
     }
     _trace(" got ciphers: @{$cfg{'ciphers'}}");
-    if (@{$cfg{'ciphers'}} < 0) {       # empty list, try openssl and local list
+    if (@{$cfg{'ciphers'}} <= 0) {      # empty list
         _warn("given pattern '$pattern' did not return cipher list");
-#        _y_CMD("  using private cipher list ..");
-#        @{$cfg{'ciphers'}} = keys %ciphers;
-        _y_CMD("  get cipher list using openssl ..");
-        @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_local($pattern);
-        if (@{$cfg{'ciphers'}} < 0) {   # empty list, try own list
-            #if ($pattern =~ m/(NULL|COMP|DEF|HIG|MED|LOW|PORT|:|@|!|\+)/) {
-            #    _trace(" cipher match: $pattern");
-            #} else {
-            #    _trace(" cipher privat: $pattern");
-            #}
-_dbx "\n########### fix this place (empty cipher list) ########\n";
-# TODO: #10jan14: reimplement this check when %ciphers has a new structure
-            #10jan14        $new = get_cipher_name($c);
-        }
+        _y_CMD("  using private cipher list ...");
+        @{$cfg{'ciphers'}} = keys %ciphers;
     }
-    if (@{$cfg{'ciphers'}} < 0) {
+    if (@{$cfg{'ciphers'}} <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
         die(STR_ERROR, "no ciphers found; may happen with openssl pre 1.0.0 according given pattern");
     }
@@ -7444,7 +7432,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ((_need_default() > 0) or ($check > 0)) {
         _yeast_TIME("need_default{");
         $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
-        _y_CMD("get default ..");
+        _y_CMD("get default ...");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             next if (!defined $prot{$ssl}->{opt});
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
@@ -7476,9 +7464,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if (_need_cipher() > 0) {
         _yeast_TIME("need_cipher{");
-        _y_CMD("  need_cipher ..");
-        _y_CMD("  use socket ..")  if (0 == $cmd{'extciphers'});
-        _y_CMD("  use openssl ..") if (1 == $cmd{'extciphers'});
+        _y_CMD("  need_cipher ...");
+        _y_CMD("  use socket ...")  if (0 == $cmd{'extciphers'});
+        _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
         @cipher_results = ();   # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
 #dbx# print "# C", @{$cfg{'ciphers'}};
@@ -7558,7 +7546,7 @@ _dbx "useALPN $cfg{'usealpn'} useNPN $cfg{'usenpn'} #"; # " @{$cfg{'ciphers'}}";
 #        reason seams to be SSLv2 or SSLv3 without SNI
 # FIXME: cannot use:    if ($cfg{usesni} > 0) {
 #        need to review code first for %data0 usage
-    _y_CMD("test without SNI (disable with --no-sni) ..");
+    _y_CMD("test without SNI (disable with --no-sni) ...");
     # check if SNI supported, also copy some data to %data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
@@ -7642,7 +7630,7 @@ _dbx "useALPN $cfg{'usealpn'} useNPN $cfg{'usenpn'} #"; # " @{$cfg{'ciphers'}}";
     usr_pre_data();
 
     # following sequence important!
-    _y_CMD("get checks ..");
+    _y_CMD("get checks ...");
     checkalpn( $host, $port); # if (_is_do('hasalpn') or _is_do('hasnpn'))
     checkdates($host, $port);
     checkhttp( $host, $port);
@@ -7657,7 +7645,7 @@ _dbx "useALPN $cfg{'usealpn'} useNPN $cfg{'usenpn'} #"; # " @{$cfg{'ciphers'}}";
     }
 
     if (_need_checkssl() > 0) {
-        _y_CMD("  need_checkssl ..");
+        _y_CMD("  need_checkssl ...");
         _trace(" checkssl {");
         checkssl( $host, $port);
         _trace(" checkssl }");
