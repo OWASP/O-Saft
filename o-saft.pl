@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) %M% %I% %E% %U%",
+    SID         => "@(#) yeast.pl 1.668 17/05/02 08:11:56",
     STR_VERSION => "17.04.21",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3259,8 +3259,8 @@ sub _usesocket($$$$)    {
                   SSL_version     => $ssl,    # default is SSLv23
                   SSL_cipher_list => $ciphers,
                   SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
-                  SSL_alpn_protocols => [@{$cfg{'cipher_alpns'}}],
-                  SSL_npn_protocols  => [@{$cfg{'cipher_npns'}}],
+                  SSL_alpn_protocols => $cfg{'cipher_alpns'},
+                  SSL_npn_protocols  => $cfg{'cipher_npns'},
               # FIXME: misses $cfg{'usealpn'}
                 ) or do {
                     _trace1("_usesocket: ssl handshake failed: $!");
@@ -3297,7 +3297,9 @@ sub _useopenssl($$$$)   {
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
     $ssl = ($cfg{'openssl_option_map'}->{$ssl} || '');  # set empty if no protocol given
-    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers -connect", $host, $port, '');
+    my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers ", $host, $port, '');
+# TODO: hier -alpn $protos_alpn und -nextprotoneg $protos_npn übergeben
+# TODO: dann entsprechenden Code in Net::SSLinfo::do_openssl() entfernen
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
     # also possible would be Cipher line from:
@@ -6668,6 +6670,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--ciphermd5')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
     if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
+    if ($arg eq  '--cipheropenssl')     { $cmd{'extciphers'}    = 1;} # alias: for --force-openssl
     # our options
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
@@ -7221,6 +7224,8 @@ if ((_need_cipher() > 0) or (_need_default() > 0)) {
     _trace(" got ciphers: @{$cfg{'ciphers'}}");
     if (@{$cfg{'ciphers'}} < 0) {       # empty list, try openssl and local list
         _warn("given pattern '$pattern' did not return cipher list");
+#        _y_CMD("  using private cipher list ..");
+#        @{$cfg{'ciphers'}} = keys %ciphers;
         _y_CMD("  get cipher list using openssl ..");
         @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_local($pattern);
         if (@{$cfg{'ciphers'}} < 0) {   # empty list, try own list
@@ -7482,9 +7487,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
+_dbx "useALPN $cfg{'usealpn'} useNPN $cfg{'usenpn'} #"; # " @{$cfg{'ciphers'}}";
         foreach my $ssl (@{$cfg{'version'}}) {
-            _y_CMD("ckecking ciphers for $ssl ...");
-            _trace("ckecking ciphers for $ssl ...");
+            my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
+            _y_CMD("ckecking ciphers for $ssl ... ($__openssl)");
+            _trace("ckecking ciphers for $ssl ... ($__openssl)");
             my $__verbose   = $cfg{'verbose'};
                 # $cfg{'v_cipher'}  should only print cipher checks verbosely,
                 # ciphers_get()  uses  $cfg{'verbose'}, hence wee need to save
@@ -7537,6 +7544,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             printprotocols($legacy, $host, $port);
             printruler() if ($quick == 0);
           }
+          _hint("consider testing with options '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
         }
         _yeast_TIME("cipher}");
     } # cipher
