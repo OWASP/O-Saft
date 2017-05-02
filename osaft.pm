@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.103 17/05/02 08:17:15',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.104 17/05/02 23:25:44',
 
 };
 
@@ -1347,14 +1347,7 @@ our %cfg = (
     'cipher_ecdh'   => 1,       # 0: +cipher does not use TLS curves extension
     'cipher_alpns'  => [],      # contains all protocols to be passed for +cipher checks
     'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
-    'ciphercurves'  => [        # contains all curves to be passed for +cipher checks
-                       qw(prime256v1), # currenlty (2017) use only one curve
-                      # TODO: following list NOT YET complete, see %tls_curves
-                      #qw(ed25519 ecdh_x25519 ecdh_x448),
-                      #qw(prime256v1 prime192v1 prime192v2 prime192v3 prime239v1 prime239v2 prime239v3),
-                      #qw(brainpoolP256r1 brainpoolP384r1 brainpoolP512r1),
-                      #qw(sect163k1 sect163r1 sect193r1 sect193r2 sect233k1)),
-                       ],
+    'ciphercurves'  => [],      # contains all curves to be passed for +cipher checks
     'ciphers-v'     => 0,       # as: openssl ciphers -v
     'ciphers-V'     => 0,       # as: openssl ciphers -V
 
@@ -2177,7 +2170,19 @@ sub _cfg_init   {
     # initialize alternate protocols and curves for cipher checks
     $cfg{'cipher_alpns'}= [split(/,/, $cfg{'protos_next'})];
     $cfg{'cipher_npns'} = [split(/,/, $cfg{'protos_next'})];
-    #$cfg{'ciphercurves'}= ... # from %tls_curves
+    $cfg{'ciphercurves'}= [
+            qw(prime192v1 prime256v1),
+            qw(sect163k1 sect163r1 sect193r1           sect233k1 sect233r1),
+            qw(sect283k1 sect283r1 sect409k1 sect409r1 sect571k1 sect571r1),
+            qw(secp160k1 secp160r1 secp160r2 secp192k1 secp224k1 secp224r1),
+            qw(secp256k1 secp384r1 secp521r1),
+            qw(brainpoolP256r1 brainpoolP384r1 brainpoolP512r1),
+            # TODO: list NOT YET complete, see %tls_curves
+            #       adapted to Mosman's openssl 1.0.2dev (5/2017)
+            #qw(ed25519 ecdh_x25519 ecdh_x448),
+            #qw(prime192v2 prime192v3 prime239v1 prime239v2 prime239v3),
+            #qw(sect193r2 secp256r1 ),
+        ];
     # incorporate some environment variables
     $cfg{'openssl_env'} = $ENV{'OPENSSL'}      if (defined $ENV{'OPENSSL'});
     $cfg{'openssl_cnf'} = $ENV{'OPENSSL_CONF'} if (defined $ENV{'OPENSSL_CONF'});
