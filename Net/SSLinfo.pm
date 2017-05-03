@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.04.29',
+    SSLINFO_VERSION => '17.04.30',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.184 17/05/02 08:14:23',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.185 17/05/03 22:50:40',
 };
 
 ######################################################## public documentation #
@@ -797,6 +797,7 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-no_tlsext'    => 0,
     '-serverinfo'   => 0,
     '-servername'   => 0,
+    '-serverpref'   => 0,
     '-showcerts'    => 0,
     '-curves'       => 0,
     '-debug'        => 0,
@@ -807,11 +808,13 @@ my %_OpenSSL_opt = (    # openssl capabilities
     '-psk_identity' => 0,
     '-pause'        => 0,
     '-proxy'        => 0,
+    '-state'        => 0,
     '-status'       => 0,
     '-sigalgs'      => 0,
+    '-client_sigalgs'       => 0,
     '-nbio_test'    => 0,
     '-tlsextdebug'  => 0,
-    '-legacy_renegotiation'  => 0,
+    '-legacy_renegotiation' => 0,
     '-CAfile'       => 0,
     '-CApath'       => 0,
     #--------------+------------
