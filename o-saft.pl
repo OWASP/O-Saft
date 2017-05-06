@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.673 17/05/06 09:54:52",
+    SID         => "@(#) yeast.pl 1.674 17/05/07 01:11:21",
     STR_VERSION => "17.04.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3187,10 +3187,13 @@ sub _usesocket($$$$)    {
     # hence no need for sophisticated options in new() and no certificate
     # checks, $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
-    my $sni = ($cfg{'usesni'} == 1) ? $host : "";
     my $cipher  = "";   # to be returned
     my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
+    my $sni     = ($cfg{'usesni'}  < 1) ? "" : $host;
+    my $npns    = ($cfg{'usenpn'}  < 1) ? [] : $cfg{'cipher_npns'};
+    my $alpns   = ($cfg{'usealpn'} < 1) ? [] : $cfg{'cipher_alpns'};
+        # --noalpn or --nonpn is same as --cipher-alpn=, or --cipher-npn=,
     # TODO: dirty hack to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
@@ -3211,7 +3214,6 @@ sub _usesocket($$$$)    {
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
-#_dbx "Cipher 1: $ciphers" if $ciphers =~ /ECDHE-ECDSA-CHACHA20-POLY1305/; #-SHA256,
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
             _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
@@ -3232,8 +3234,8 @@ sub _usesocket($$$$)    {
                 #SSL_ecdh_curve  => $cfg{'ciphercurves'},# OID or NID; ecdh_x448, default is prime256v1,
                 #SSL_ecdh_curve  => [qw(sect163k1 x25519)],
                 #TODO: SSL_ecdh_curve  => undef,     # TODO: cannot be selected by options
-                SSL_alpn_protocols  => $cfg{'cipher_alpns'},
-                SSL_npn_protocols   => $cfg{'cipher_npns'},
+                SSL_alpn_protocols  => $alpns,
+                SSL_npn_protocols   => $npns,
                 #TODO: SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
                 #SSL_check_crl   => 1,       # if we want to use a client certificate
                 #SSL_cert_file   => "path"   # file for client certificate
@@ -3261,9 +3263,8 @@ sub _usesocket($$$$)    {
                   SSL_version     => $ssl,    # default is SSLv23
                   SSL_cipher_list => $ciphers,
                   SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
-                  SSL_alpn_protocols => $cfg{'cipher_alpns'},
-                  SSL_npn_protocols  => $cfg{'cipher_npns'},
-              # FIXME: misses $cfg{'usealpn'}
+                  SSL_alpn_protocols => $alpns,
+                  SSL_npn_protocols  => $npns,
                 ) or do {
                     _trace1("_usesocket: ssl handshake failed: $!");
                     return "";
