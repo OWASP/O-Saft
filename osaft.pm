@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.04.17',  # official version number of tis file
+    OSAFT_VERSION   => '17.04.30',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.104 17/05/02 23:25:44',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.105 17/05/06 09:53:10',
 
 };
 
@@ -1494,6 +1494,44 @@ our %cfg = (
                                 #      it's recommended to set timeout to 3 or higher, which
                                 #      results in a performance bottleneck, obviously
                                 #  see 'sslerror' settings and options also
+    'openssl'  =>   {  # configurations for various openssl functionality
+       #'openssl'   => "",      # if set, full path of openssl executable
+                                # same data structure as in Net::SSLinfo
+                                # not all values used yet
+        #--------------+--------+---------------------------------------------
+        # key (=option) supported=1    warning message if option is missing
+        #--------------+--------+---------------------------------------------
+        '-alpn'         => [ 1,   "checks with ALPN disabled"],
+        '-npn'          => [ 1,   "checks with NPN  disabled"],
+        '-nextprotoneg' => [ 1,   "checks with NPN  disabled"], # alias for -npn
+        '-reconnect'    => [ 1,   "checks with openssl reconnect disabled"],
+        '-fallback_scsv'=> [ 1,   "checks for TLS_FALLBACK_SCSV wrong"],
+        '-no_tlsext'    => [ 1,   "<<NOT YET USED>>"],
+        '-no_ticket'    => [ 1,   "<<NOT YET USED>>"],
+        '-serverinfo'   => [ 1,   "checks without TLS extension disabled"],
+        '-servername'   => [ 1,   "checks with TLS extension SNI disabled"],
+        '-serverpref'   => [ 1,   "<<NOT YET USED>>"],
+        '-showcerts'    => [ 1,   "<<NOT YET USED>>"],
+        '-curves'       => [ 1,   "using -curves disabled"],
+        '-debug'        => [ 1,   "<<NOT YET USED>>"],
+        '-bugs'         => [ 1,   "<<NOT YET USED>>"],
+        '-key'          => [ 1,   "<<NOT YET USED>>"],
+        '-msg'          => [ 1,   "using -msg disabled, DH paramaters missing or wrong"],
+        '-psk'          => [ 1,   "PSK  missing or wrong"],
+        '-psk_identity' => [ 1,   "PSK identity missing or wrong"],
+        '-pause'        => [ 1,   "<<NOT YET USED>>"],
+        '-proxy'        => [ 1,   "<<NOT YET USED>>"],
+        '-state'        => [ 1,   "<<NOT YET USED>>"],
+        '-status'       => [ 1,   "<<NOT YET USED>>"],
+        '-sigalgs'      => [ 1,   "<<NOT YET USED>>"],
+        '-client_sigalgs' => [ 1, "<<NOT YET USED>>"],
+        '-tlsextdebug'    => [ 1, "TLS extension missing or wrong"],
+        '-legacy_renegotiation' => [ 1, "<<NOT YET USED>>"],
+        '-nbio_test'    => [ 1,   "<<NOT YET USED>>"],
+        '-CAfile'       => [ 1,   "using -CAfile disabled"],
+        '-CApath'       => [ 1,   "using -CApath disabled"],
+        #--------------+--------+---------------------------------------------
+    },
     'ssleay'   =>   {  # configurations for various Net::SSLeay functionality
                                 # 1: if available (see _check_functions()) is default
         'openssl'   => 1,       # OPENSSL_VERSION_NUMBER()
