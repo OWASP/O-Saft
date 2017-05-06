@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.672 17/05/02 23:26:45",
-    STR_VERSION => "17.04.29",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.673 17/05/06 09:54:52",
+    STR_VERSION => "17.04.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1908,7 +1908,7 @@ sub _enable_functions   {
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
     # verbose messages with --v --v
     # Note: don't bother users with warnings, if functionality is not required
-    #       hence some additional checks arround the warnings
+    #       hence some additional checks around the warnings
     # Note: instead of requiring a specific version with perl's use,  only the
     #       version of the loaded module ischecked; this allows continueing to
     #       use this tool even if the version is too old; but  shout  out loud
@@ -1944,6 +1944,7 @@ sub _enable_functions   {
     _trace(" cfg{usesni}: $cfg{'usesni'}");
 
     if ($cfg{'ssleay'}->{'set_alpn'} == 0 or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
+        # warnings only if ALPN functionality required
         if ($cfg{'usealpn'} > 0 or ($cmd{'extciphers'} > 0)) {
             $cfg{'usealpn'} = 0;
             warn STR_WARN, "$txt tests with/for ALPN disabled";
@@ -1958,6 +1959,7 @@ sub _enable_functions   {
     }
     _trace(" cfg{usealpn}: $cfg{'usealpn'}");
     if ($cfg{'ssleay'}->{'set_npn'} == 0) {
+        # warnings only if NPN functionality required
         if ($cfg{'usenpn'}  > 0 or ($cmd{'extciphers'} > 0)) {
             $cfg{'usenpn'}  = 0;
             warn STR_WARN, "$txt tests with/for NPN disabled";
@@ -2188,48 +2190,38 @@ sub _check_SSL_methods  {
     return;
 } # _check_SSL_methods
 
-sub _check_sclient      {
+sub _enable_sclient     {
+    # enable internal functionality based on available functionality of openssl s_client
     my $opt = shift;
     _y_CMD("  check openssl s_client cpapbility $opt ...") if ($cfg{verbose} > 0);
-    my %opt_map = (
-        # s_client option      %cfg{key}    string for functionality
-        #-------------------+-----------------------------------
-        '-alpn'             => ['usealpn',          "checks for ALPN disabled"],
-        '-nextprotoneg'     => ['usenpn',           "checks for NPN  disabled"],
-        '-npn'              => ['usenpn',           "checks for NPN  disabled"],
-        '-fallback_scsv'    => ['',                 "checks for TLS_FALLBACK_SCSV wrong"],
-        '-servername'       => ['usesni',           "checks with TLS extension SNI disabled"],
-        '-reconnect'        => ['use_reconnect',    "checks with openssl reconnect disabled"],
-        '-tlsextdebug'      => ['use_extdebug',     "TLS extension missing or wrong"],
-        '-psk'              => ['',                 "PSK  missing or wrong"],
-        '-psk_identity'     => ['',                 "PSK identity missing or wrong"],
-        '-CAfile'           => ['ca_file',          "using -CAfile disabled"],
-        '-CApath'           => ['ca_path',          "using -CApath disabled"],
-        '-no_tlsext'        => ['',                 ""], # not yet used
-        '-no_ticket'        => ['',                 ""], # not yet used
-    );
-    my $supported = Net::SSLinfo::s_client_opt_get($opt) || 0;
-       $supported = 0 if ($supported eq '<<openssl>>'); # TODO: <<openssl>> from Net::SSLinfo
-    if ($supported == 0) {
-        my $key = $opt_map{$opt}[0] ;
-        my $txt = $opt_map{$opt}[1] ;
-        $cfg{$key} = 0  if ($key ne "");
-        if ($opt =~ m/^-(al|n)pn$/) {
-            # no warning for external openssl, as -alpn or -npn is not used # there
+    my $txt = $cfg{'openssl'}->{$opt}[1];
+    my $val = $cfg{'openssl'}->{$opt}[0];
+    if ($val == 0) {
+        if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
+            # no warning for external openssl, as -alpn or -npn is only used with +cipher
             if ($cmd{'extciphers'} > 0) {
             _warn("openssl s_client does not support '$opt'; $txt") if ($txt ne "");
             }
         } else {
             _warn("openssl s_client does not support '$opt'; $txt") if ($txt ne "");
         }
-        if ($opt eq '-tlsextdebug') {
+        if ($opt eq '-tlsextdebug') {   # additional warning
             _warn("following results may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
         }
-        # TODO: remove commands, i.e. +s_client, +heartbleed, from $cmd{do}
-        #    -fallback_scsv: remove +scsv and +fallback
+        # switch $opt {
+        $cfg{'use_reconnect'} = $val  if ($opt eq '-reconnect');
+        $cfg{'use_extdebug'}  = $val  if ($opt eq '-tlsextdebug');
+        $cfg{'usealpn'}       = $val  if ($opt eq '-alpn');
+        $cfg{'usenpn'}        = $val  if ($opt eq '-npn');
+        $cfg{'sni'}           = $val  if ($opt eq '-servername');
+        $cfg{'ca_file'}       = undef if ($opt =~ /^-CAfile/i);
+        $cfg{'ca_path'}       = undef if ($opt =~ /^-CApath/i);
+        # }
     }
+    # TODO: remove commands, i.e. +s_client, +heartbleed, from $cmd{do}
+    #    -fallback_scsv: remove +scsv and +fallback
     return;
-} # _check_sclient
+} # _enable_sclient
 
 sub _check_openssl      {
     _y_CMD("  check cpapbilities of openssl ...");
@@ -2251,9 +2243,15 @@ sub _check_openssl      {
     # I.g. all checks are done in  Net::SSLinfo::s_client_*(),  but no proper
     # error messages are printed there.  Hence the checks are done here again
     # to disable all unavailable functionality with a warning.
-    foreach my $opt (qw(-alpn -npn -tlsextdebug -servername -fallback_scsv
-                     -CAfile -CApath -no_ticket -no_tlsext -psk -psk_identity)) {
-        _check_sclient($opt);
+    foreach my $opt (Net::SSLinfo::s_client_get_optionlist()) {
+        # perl warning  "Use of uninitialized value in ..."  here indicates
+        # that cfg{openssl} is not properly initialized
+        my $val = Net::SSLinfo::s_client_opt_get($opt);
+           $val = 0 if ($val eq '<<openssl>>'); # TODO: <<openssl>> from Net::SSLinfo
+        # _dbx "$opt $val";
+        $cfg{'openssl'}->{$opt}[0] = $val;
+        next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
+        _enable_sclient($opt);
     }
     # TODO: checks not yet complete
     # TODO: should check openssl with a real connection
@@ -2407,7 +2405,7 @@ sub _cfg_set_from_file($$) {
             #    Anthing following (and including) a hash is a comment
             #    and ignored. Empty lines are ignored.
             #    Settings must be in format:  key=value
-            #       where white spaces are allowed arround =
+            #       where white spaces are allowed around =
             chomp $line;
             $line =~ s/\s*#.*$// if ($typ !~ m/^CFG-text/i);
                 # remove trailing comments, but CFG-text may contain hash (#)
@@ -3227,14 +3225,15 @@ sub _usesocket($$$$)    {
                 SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
                 SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
                 SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
-                SSL_version     => $ssl,    # default is SSLv23 (for empty $ssl)
                 SSL_check_crl   => 0,       # do not check CRL
+                SSL_version     => $ssl,    # default is SSLv23 (for empty $ssl)
                 SSL_cipher_list => $ciphers,
                 SSL_ecdh_curve  => "prime256v1",     # OID or NID; ecdh_x448, default is prime256v1, ecdh_x25519
-                #SSL_ecdh_curve  => [qw(sect163k1 x25519)],    # OID or NID; ecdh_x448, default is prime256v1,
+                #SSL_ecdh_curve  => $cfg{'ciphercurves'},# OID or NID; ecdh_x448, default is prime256v1,
+                #SSL_ecdh_curve  => [qw(sect163k1 x25519)],
+                #TODO: SSL_ecdh_curve  => undef,     # TODO: cannot be selected by options
                 SSL_alpn_protocols  => $cfg{'cipher_alpns'},
                 SSL_npn_protocols   => $cfg{'cipher_npns'},
-                #TODO: SSL_ecdh_curve  => undef,     # TODO: cannot be selected by options
                 #TODO: SSL_honor_cipher_order  => 1,   # usefull for SSLv2 only
                 #SSL_check_crl   => 1,       # if we want to use a client certificate
                 #SSL_cert_file   => "path"   # file for client certificate
@@ -3258,6 +3257,7 @@ sub _usesocket($$$$)    {
                   SSL_verify_mode => 0x0,     # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
                   SSL_ca_file     => undef,   # see man IO::Socket::SSL ..
                   SSL_ca_path     => undef,   # .. newer versions are smarter and accept ''
+                  SSL_check_crl   => 0,       # do not check CRL
                   SSL_version     => $ssl,    # default is SSLv23
                   SSL_cipher_list => $ciphers,
                   SSL_ecdh_curve  => "prime256v1", # default is prime256v1,
@@ -3293,10 +3293,13 @@ sub _useopenssl($$$$)   {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers (empty) passed in
     # $ciphers must be colon (:) separated list
+    # adds all configured options, like -alpn -curves -servername etc. with 
+    # their proper values
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
     my $sni  = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
+    my $curves  = "-curves " . join(":", $cfg{'ciphercurves'}); # TODO: add to command below
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
     $ssl = ($cfg{'openssl_option_map'}->{$ssl} || '');  # set empty if no protocol given
     my $data = Net::SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers ", $host, $port, '');
@@ -5585,9 +5588,9 @@ sub printciphers_dh($$$) {
     my ($legacy, $host, $port) = @_;
     my $openssl_version = get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh: openssl_version: $openssl_version");
-    if ($openssl_version lt "1.0.2") { # yes perl can do this check
+    if ($openssl_version lt "1.0.2") { # yes perl can do this check  # TODO: move this check to _check_openssl()
         _warn("ancient openssl $openssl_version: using '-msg' option to get DH parameters");
-        $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl_msg'} eq "");
+        $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl'}->{'msg'} == 1);
         require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
     }
     foreach my $ssl (@{$cfg{'version'}}) {
