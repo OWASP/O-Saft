@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.677 17/05/15 15:59:00",
-    STR_VERSION => "17.04.30",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.678 17/05/15 17:12:53",
+    STR_VERSION => "17.05.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1648,6 +1648,7 @@ our %text = (
     'no-openssl'    => "<<N/A as --no-openssl in use>>",
     'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'protocol'      => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
+    'miss-cipher'   => "<<N/A as no ciphers found>>",
     'ext-enabled'   => " <<@@ extension enabled>>",
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
@@ -3833,6 +3834,17 @@ sub checkciphers($$) {
     return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace("checkciphers($host, $port){");
 
+    if ($#cipher_results < 0) { # no ciphers found; avoid misleading values
+        foreach my $key (@{$cfg{'need-cipher'}}) {
+            $checks{$key}->{val} = _get_text('miss-cipher', "");
+        }
+        foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
+            @{$prot{$ssl}->{'pfs_ciphers'}} = _get_text('miss-cipher', "");
+        }
+        _trace("checkciphers() }");
+        return;
+    }
+
     my $ssl     = "";
     my $cipher  = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
@@ -3855,6 +3867,7 @@ sub checkciphers($$) {
     $checks{'beast'}->{val} .= " " . _istls12only($host, $port);
 
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
+
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  -"-
@@ -7508,6 +7521,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 $checks{'cnt_totals'}->{val}++;
             }
         }
+        #dbx @cipher_results = (); # simulate "no ciphers found"
         checkciphers($host, $port); # necessary to compute 'out-summary'
         _yeast_TIME("need_cipher}");
      }
