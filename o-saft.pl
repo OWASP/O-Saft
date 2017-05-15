@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.675 17/05/15 14:58:11",
+    SID         => "@(#) yeast.pl 1.676 17/05/15 15:39:33",
     STR_VERSION => "17.04.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1858,14 +1858,14 @@ sub _check_modules      {
         #   undef   - version module was not available or didn't define VERSION
         #   string  - even "0.42" cannot be compared to integer, bad luck ...
         #   integer - that's the usual and expected value
-    if (_isnummber($version::VERSION)==1) {
+    if (_isnummber($version::VERSION) == 1) {
         $have_version = 0 if ($version::VERSION < 0.77);
             # veriosn module too old, use natural number compare
     } else {
         $have_version = 0;
         $version::VERSION = ""; # defensive programming ..
     }
-    if ($have_version==0) {
+    if ($have_version == 0) {
         warn STR_WARN, "ancient perl has no 'version' module; version checks may not be accurate;";
     }
     if ($cfg{verbose} > 1) {
@@ -1883,7 +1883,7 @@ sub _check_modules      {
         my $ok = "yes";
         # following eval is safe, as left side value cannot be injected
         eval {$v = $$v;} or $v = 0;     # module was not loaded or has no VERSION
-        if ($have_version==1) {         # accurate checks with version module
+        if ($have_version == 1) {       # accurate checks with version module
             # convert natural numbers to version objects
             $v      = version->parse("v$v");
             $expect = version->parse("v$expect");
@@ -3193,6 +3193,7 @@ sub _usesocket($$$$)    {
         # --noalpn or --nonpn is same as --cipher-alpn=, or --cipher-npn=,
     my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
+_dbx "ALPNs: $alpns; NPNs: @{$npns}";
     # TODO: dirty hack (undef) to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
@@ -3208,7 +3209,6 @@ sub _usesocket($$$$)    {
         return "";
     }
     # FIXME: use Net::SSLeay instead of IO::Socket::SSL
-    #if (IO::Socket::SSL->can_ecdh() == 1) {}
     if (eval {  # FIXME: use something better than eval()
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
@@ -5543,7 +5543,7 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
         $total++;
         next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
-        print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
+        print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
     }
     return $total;
 } # _print_results
@@ -6317,6 +6317,7 @@ while ($#argv >= 0) {
             #}
         }
 
+        # SEE Note:ALPN, NPN
         # --protos* is special to simulate empty and undefined arrays
         #   --protosnpn=value	- add value to array
         #   --protosnpn=,	- set empty array
@@ -7736,7 +7737,7 @@ usr_pre_exit();
 _yeast_exit();
 _yeast_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
 
-if ($cfg{'exitcode'}==0) {
+if ($cfg{'exitcode'} == 0) {
     exit 0;
 } else {
     exit check_exitcode();
@@ -7816,14 +7817,18 @@ The primary variable names containing ALPN or NPN protocol names are now:
 
     protos_next     - internal list of all protocol names
     protos_alpn     - used with/for ALPN options
-    protos_npn      - used with/for  nPN options
+    protos_npn      - used with/for  NPN options
     cipher_alpns    - used with/for ALPN options for +cipher command only
-    cipher_npns     - used with/for  nPN options for +cipher command only
+    cipher_npns     - used with/for  NPN options for +cipher command only
 
 I.g. these are arrays. But as the common syntax for most other tools is to
 use a comma-separated list of names, the value in "cfg{'protos_next'}"  is
-stored as a string.  Using a string instead of an arrays also simlifies to
+stored as a string. Using a string instead of an arrays also simplifies to
 pass the value to functions.
+
+Note: openssl uses a comma-separated list for ALPN and NPN,  but it uses a
+colon-separated list for ecliptic curves (and also for ciphers).  Hence we
+allow both separators for all lists on command line.
 
 
 =head2 Note:alias
