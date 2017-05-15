@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.674 17/05/07 01:11:21",
+    SID         => "@(#) yeast.pl 1.675 17/05/15 14:58:11",
     STR_VERSION => "17.04.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1923,10 +1923,10 @@ sub _enable_functions   {
     _y_CMD("  enable internal functionality ...");
 
     if ($cfg{'ssleay'}->{'openssl'} == 0) {
-        warn STR_WARN, "Net::SSLeay $Net::SSLeay::VERSION cannot detext openssl version";
+        warn STR_WARN, "ancient Net::SSLeay $Net::SSLeay::VERSION cannot detect openssl version";
     }
     if ($cfg{'ssleay'}->{'iosocket'} == 0) {
-        warn STR_WARN, "unknown version of IO::Socket detected";
+        warn STR_WARN, "ancient or unknown version of IO::Socket detected";
     }
 
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
@@ -1943,7 +1943,7 @@ sub _enable_functions   {
     }
     _trace(" cfg{usesni}: $cfg{'usesni'}");
 
-    if ($cfg{'ssleay'}->{'set_alpn'} == 0 or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
+    if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
         if ($cfg{'usealpn'} > 0 or ($cmd{'extciphers'} > 0)) {
             $cfg{'usealpn'} = 0;
@@ -1976,7 +1976,6 @@ sub _enable_functions   {
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {
         warn STR_WARN, "$txt tests for OCSP disabled";
-        warn STR_WARN, "OCSP testing is not supported; tests disabled";
         #_hint("--no-ocsp  can be used to disable this check");
     }
 
@@ -3188,13 +3187,13 @@ sub _usesocket($$$$)    {
     # checks, $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $cipher  = "";   # to be returned
-    my $version = "";   # version returned by IO::Socket::SSL-new
-    my $sslsocket = undef;
     my $sni     = ($cfg{'usesni'}  < 1) ? "" : $host;
     my $npns    = ($cfg{'usenpn'}  < 1) ? [] : $cfg{'cipher_npns'};
     my $alpns   = ($cfg{'usealpn'} < 1) ? [] : $cfg{'cipher_alpns'};
         # --noalpn or --nonpn is same as --cipher-alpn=, or --cipher-npn=,
-    # TODO: dirty hack to avoid perl error like:
+    my $version = "";   # version returned by IO::Socket::SSL-new
+    my $sslsocket = undef;
+    # TODO: dirty hack (undef) to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
     # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSx
@@ -7043,6 +7042,13 @@ if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
 }
 if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
     # TODO: probably search for a path from our list in $cfg{'ca_paths'}
+}
+
+if ($info > 0) {                # +info does not do anything with ciphers
+    # main purpose is to avoid missing "*PN" warnings in following _checks_*()
+    $cmd{'extciphers'}  = 0;
+    $cfg{'usealpn'}     = 0;
+    $cfg{'usenpn'}      = 0;
 }
 
 _yeast_TIME("inc{");
