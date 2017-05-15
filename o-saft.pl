@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.676 17/05/15 15:39:33",
+    SID         => "@(#) yeast.pl 1.677 17/05/15 15:59:00",
     STR_VERSION => "17.04.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1674,6 +1674,7 @@ our %text = (
     'out-checks'    => "\n=== Performed Checks ===",
     'out-list'      => "=== List @@ Ciphers ===",
     'out-summary'   => "=== Ciphers: Summary @@ ==",
+    'test-disabled' => "tests with/for @@ disabled",  # not yet used
     # hostname texts
     'host-host'     => "Given hostname",
     'host-IP'       => "IP for given hostname",
@@ -3193,7 +3194,6 @@ sub _usesocket($$$$)    {
         # --noalpn or --nonpn is same as --cipher-alpn=, or --cipher-npn=,
     my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
-_dbx "ALPNs: $alpns; NPNs: @{$npns}";
     # TODO: dirty hack (undef) to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
@@ -6675,7 +6675,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--ciphermd5')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
     if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
-    if ($arg eq  '--cipheropenssl')     { $cmd{'extciphers'}    = 1;} # alias: for --force-openssl
+    if ($arg eq  '--cipheropenssl')     { $cmd{'extciphers'}= 1;    } # alias: for --force-openssl
     # our options
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
