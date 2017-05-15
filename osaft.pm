@@ -12,8 +12,8 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.04.30',  # official version number of tis file
-  # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
+    OSAFT_VERSION   => '17.05.17',  # official version number of tis file
+  # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "!!Hint: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.105 17/05/06 09:53:10',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.106 17/05/15 17:14:11',
 
 };
 
@@ -1441,7 +1441,8 @@ our %cfg = (
                        ],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check cipher cipher_dh),
-                        qw(pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4),
+                        qw(null_cipher adh_cipher exp_cipher cbc_cipher des_cipher),
+                        qw(edh_cipher rc4_cipher rc4 pfs_cipher pfs_cipherall),
                         qw(beast crime time breach drown freak logjam lucky13 poodle sloth sweet32),
                         qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
