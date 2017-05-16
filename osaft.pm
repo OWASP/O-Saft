@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) %M% %I% %E% %U%',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.107 17/05/16 11:43:09',
 
 };
 
@@ -1969,6 +1969,7 @@ Check if given C<%cipher> name is a known cipher.
 
 sub get_cipher_hex($)  {
     # find hex key for cipher in %cipher_names or %cipher_alias
+    # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $c = shift;
     foreach my $k (keys %cipher_names) { # database up to VERSION 14.07.14
         return $k if (($cipher_names{$k}[0] eq $c) or ($cipher_names{$k}[1] eq $c));
@@ -1982,6 +1983,7 @@ sub get_cipher_hex($)  {
 sub get_cipher_name($) {
     # check if given cipher name is a known cipher
     # checks in %ciphers if nof found in %cipher_names
+    # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $cipher  = shift;
     return $cipher if ((grep{/^$cipher/} %ciphers)>0);
     _trace("get_cipher_name: search $cipher");
