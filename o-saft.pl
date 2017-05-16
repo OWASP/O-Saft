@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.678 17/05/15 17:12:53",
+    SID         => "@(#) yeast.pl 1.679 17/05/16 11:40:35",
     STR_VERSION => "17.05.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1447,6 +1447,17 @@ our %ciphers = (
         'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # bugfix for openssl 1.0.2
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
 
+        # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
+        'RSA-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSA         1 :)],
+        'ECDHE-RSA-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
+        'ECDHE-ECDSA-CHACHA20-SHA'      => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
+        'DHE-RSA-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   DH          1 :)],
+        'DHE-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 PSK   DH          1 :)],
+        'PSK-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 PSK   PSK         1 :)],
+        'ECDHE-PSK-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
+        'RSA-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSAPSK      1 :)],
+
+
         # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2015)
         'PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
         'ECDHE-PSK-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
@@ -1610,7 +1621,7 @@ our %ciphers = (
         'ECDHE_PSK-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA     128 SHA256 PSK   ECDHE   11 :)],
 
         # from: https://chromium.googlesource.com/chromium/src/net/+/master/ssl/ssl_cipher_suite_names_unittest.cc
-        'CECPQ1-RSA-CHACHA20-POLY1305_SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 RSA   CECPQ1 91 :)],
+        'CECPQ1-RSA-CHACHA20-POLY1305-SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 RSA   CECPQ1 91 :)],
         'CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 ECDSA CECPQ1 91 :)],
         'CECPQ1-RSA-AES256-GCM-SHA384'          => [qw( HIGH TLSv12 AESGCM 256 SHA384 RSA   CECPQ1 91 :)],
         'CECPQ1-ECDSA-AES256-GCM-SHA384'        => [qw( HIGH TLSv12 AESGCM 256 SHA384 ECDSA CECPQ1 91 :)],
@@ -3743,7 +3754,8 @@ sub check_nextproto {
 } # check_nextproto
 
 sub checkalpn       {
-    #? check target for ALPN or NPN support; returns list of supported protocols
+    #? check target for ALPN or NPN support; returns void
+    # stores list of supported protocols in corresponding $info{}
     # uses protocols from $cfg{'protos_next'} only
     my ($host, $port) = @_;
     _y_CMD("checkalpn() ");
@@ -7212,6 +7224,7 @@ _yeast_TIME("ini}");
 
 #| first: all commands which do not make a connection
 #| -------------------------------------
+_y_CMD("no connection commands ...");
 if (_is_do('list'))       { printciphers(); exit 0; }
 if (_is_do('ciphers'))    { printciphers(); exit 0; }
 if (_is_do('version'))    { printversion(); exit 0; }
@@ -7272,19 +7285,19 @@ usr_pre_main();
 printusage_exit("no target hosts given") if ($#{$cfg{'hosts'}} < 0); # does not make any sense
 if (_is_do('cipher')) {
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
-        printusage_exit("additional commands in conjuntion with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
+        printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
 }
 if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +info does not allow additional commands
     # see printchecks() call below
-    _warn("additional commands in conjuntion with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
+    _warn("additional commands in conjunction with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
 }
 if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +check does not allow additional commands of type "info"
     foreach my $key (@{$cfg{'done'}->{'arg_cmds'}}) {
         if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
-            _warn("additional commands in conjuntion with '+check' are not supported; +'$key' ignored");
+            _warn("additional commands in conjunction with '+check' are not supported; +'$key' ignored");
         }
     }
 }
@@ -7320,6 +7333,7 @@ if ($fail > 0) {
     }
 }
 
+_y_CMD("hosts ...");
 _yeast_TIME("hosts{");
 
 # run the appropriate SSL tests for each host (ugly code down here):
