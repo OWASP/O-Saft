@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.182 17/04/18 16:44:45";
+my  $man_SID= "@(#) o-saft-man.pm 1.185 17/05/16 11:41:34";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3131,7 +3131,51 @@ OPTIONS
 
           Argument or option passed to openssl's  s_client  command.
 
-    Options for cipherall command
+    Options for  +cipher  command
+
+--proto-alpn=NAME
+
+    Name of protocol to be added to list of  applcation layer protocols
+    (ALPN), which is used for any connection to the targets.
+    See  --cipher-alpn=NAME  also.
+
+--proto-npn=NAME
+
+    Name of protocol to be added to list of  next protocol negotiations
+    (NPN), which is used for any connection to the targets.
+    See  --cipher-npn=NAME  also.
+
+--cipher-alpn=NAME
+
+    Name of protocol to be added to list of  applcation layer protocols
+    (ALPN), which is used for cipher checks.
+
+    --cipher-alpn=,   sets empty list.
+    --cipher-alpn=,,  sets list to empty element "".
+
+--cipher-npn=NAME
+
+    Name of protocol to be added to list of  next protocol negotiations
+    (NPN), which is used for cipher checks.
+
+    --cipher-npn=,   sets empty list.
+    --cipher-npn=,,  sets list to empty element "".
+
+    Note:  setting empty list or element most likely does not work with
+    openssl executable (i.e.  --force-openssl).
+
+--cipher-curve=NAME
+
+    Name of ecliptic curve to be added to list of ecliptic curves (EC),
+    which is used for cipher checks.
+
+    --cipher-curve=,   sets empty list.
+    --cipher-curve=,,  sets list to empty element "".
+
+    Note:  setting empty list or element most likely does not work with
+    openssl executable (i.e.  --force-openssl).
+
+    Options for  +cipherall  command
 
       --range=RANGE 
       --cipherrange=RANGE
@@ -3587,7 +3631,8 @@ OPTIONS
 
       --trace-time
 
-          Prints trace output with timestamps.
+          Prints trace output with timestamps. More timestamps are printed if
+          used together with  --trace-cmd.
 
       --trace=FILE
 
