@@ -296,7 +296,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.138 Spring Edition 2017
+#?      @(#) 1.139 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -323,8 +323,9 @@ package require Tk      8.5
 # Hence it's defined right below.
 
 foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
-                     TButton TCombobox TEntry TLabel TText \
-                     Checkbutton Radiobutton Dialog] {
+                     TButton TCombobox TEntry TLabel TText Frame Menu \
+                     LabelFrame  PanedWindow Scale Scrollbar \
+                     Checkbutton Menubutton  Radiobutton Dialog] {
     bind $klasse  <Control-ButtonPress-1>       { copy2clipboard %W 0 }
     bind $klasse  <Shift-Control-ButtonPress-1> { copy2clipboard %W 1 }
 }
@@ -337,6 +338,7 @@ proc copy2clipboard {w shift} {
     if {$shift==1} { set txt "$w $klasse: " }
     # TODO: Spinbox not complete; some classes are missing
     switch $klasse {
+       Frame        { append dum "nothing to see in frames" }
        Button       -
        Combobox     -
        Dialog       -
@@ -363,8 +365,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.138 17/05/09 19:54:16 Spring Edition 2017}
-set cfg(VERSION) {1.138}
+set cfg(SID)    {@(#) o-saft.tcl 1.139 17/05/18 00:40:09 Spring Edition 2017}
+set cfg(VERSION) {1.139}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1001,6 +1003,29 @@ proc theme_init   {theme} {
     return
 }; # theme_init
 
+proc set_disabled {w} {
+    #? set widget to disabled state (mode)
+    $w config -state disabled
+    return
+}; # set_disabled
+
+proc set_readonly {w} {
+    #? set widget to readonly state (mode)
+    # The definition of "read-only" here is, that any action or event for the
+    # widget is allowed, except changing its content anyhow  (delete, insert,
+    # etc.). Selecting, highlighting is not considered as a change.
+    # This can accomplished simply with:
+    #   $w config -state disabled
+    # Unfortunately, this does not work as expected on Mac OS X.  On Mac OS X
+    # it also disables highlighting and selecting, for example copying to the
+    # clipboard (cutbuffer).
+    # Hence following workaround is used, which simply disables all functions
+    # for events and sets them to do nothing.
+    # This works on all platforms (*ix, Windows, Mac OS X).
+    foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
+    return
+}; # set_readonly
+
 proc toggle_cfg   {w opt val} {
     #? use widget config command to change options value
     if {$val ne {}} { $w config $opt $val; }
@@ -1050,9 +1075,9 @@ proc update_status {val} {
     $cfg(objS) config -state normal
     $cfg(objS) insert end "$val\n"
     $cfg(objS) see "end - 2 line"
-    $cfg(objS) config -state disabled
+    set_readonly $cfg(objS)
     update idletasks;       # enforce display update
-}
+}; # update_status
 
 proc apply_filter {w} {
     #? apply filters for markup in output, data is in text widget $w
@@ -1247,7 +1272,8 @@ proc create_text  {parent txt} {
     scrollbar   $this.s -orient vertical -command "$this.t yview"
     #set txt     [regsub -all {\t} $txt "\t"];   # tabs are a pain in Tcl :-(
     $this.t insert end $txt
-    $this.t config -state disabled -font TkFixedFont
+    $this.t config -font TkFixedFont
+    set_readonly $this.t
     pack $this.s -side right -fill y  -pady 2 -padx {0 2} -in $this
     pack $this.t -fill both -expand 1 -pady 2 -padx {2 0} -in $this
     return $this
@@ -1355,7 +1381,7 @@ proc create_filter      {parent cmd} {
     pack [label $this.f.t -relief flat -text [get_text c_toggle]] -fill x
     pack [checkbutton $this.f.c -text [get_text hideline] -variable filter_bool($obj,line)] -anchor w;
     create_tip $this.f.c [get_tipp hideline]
-    $this.f.c config -state disabled ; # TODO: not yet working, see FIXME in toggle_txt
+    set_readonly $this.f.c
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
         #set key $f_key($k)
@@ -1558,7 +1584,7 @@ proc create_help  {sect} {
     $txt insert 1.0 "\nCONTENT\n$toc\n"
     $txt tag     add  HELP-LNK    2.0 2.7;      # add markup
     $txt tag     add  HELP-LNK-T  2.0 2.7;      #
-    $txt config -state disabled
+    set_readonly $txt
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
     if {$nam eq ""} {
         _dbx " 3. no text available";              # avoid Tcl errors
@@ -1981,7 +2007,7 @@ proc search_more  {w search_text regex} {
         create_tip $txt "[get_tipp helpclick]"
         # TAG-$i  are never used again; new searches overwrite existing tags
     }
-    $txt config -state disabled
+    set_readonly $txt
     return $this
 }; # search_more
 
@@ -2482,7 +2508,7 @@ osaft_init;     # initialise options from .-osaft.pl (values shown in Options ta
 pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
 pack [text      $w.fl.t -relief flat   -height 3 -background [get_color status] ] -fill x
 set cfg(objS)   $w.fl.t
-$cfg(objS) config -state disabled
+set_readonly $cfg(objS)
 
 ## add hosts from command line
 foreach host $targets {         # display hosts
@@ -2500,7 +2526,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.138"
+update_status "o-saft.tcl 1.139"
 
 ## load files, if any
 foreach f $cfg(files) {
@@ -2547,7 +2573,10 @@ WM  :          [wm frame      .]
  |  focusmodel:[wm focusmodel .]
  |  system:    [tk windowingsystem]
  |  geometry:  $geo
+TAB tabs:      [$cfg(objN) tabs]
+ |
 _/"
     #          [tk windowingsystem] # we believe this a window manager property
+
 }
 
