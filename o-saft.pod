@@ -1363,7 +1363,8 @@ Check your system for the proper name, i.e.:
 =head3 --ssl-error
 
 Stop trying to connect to target if  I<--ssl-error-max>  erros occourd
-sequntialy or if total amount of errors reaches  I<--ssl-error-total>.
+sequentially, or if the total amount of errors  I<--ssl-error-total>
+is reached.
 
 The connection to  a target may fail, or even block, due to various
 resons, for example lost network at all, blocking at firewall, etc.
@@ -1827,7 +1828,63 @@ Do not use  -tlsextdebug  option for openssl.
 
 Argument or option passed to openssl's  s_client  command.
 
-=head2 Options for cipherall command
+=head2 Options for  +cipher  command
+
+--proto-alpn=NAME
+
+=head2 Name of protocol to be added to list of  applcation layer protocols
+
+=head2 (ALPN), which is used for any connection to the targets.
+
+=head2 See  --cipher-alpn=NAME  also.
+
+--proto-npn=NAME
+
+=head2 Name of protocol to be added to list of  next protocol negotiations
+
+=head2 (NPN), which is used for any connection to the targets.
+
+=head2 See  --cipher-npn=NAME  also.
+
+--cipher-alpn=NAME
+
+=head2 Name of protocol to be added to list of  applcation layer protocols
+
+=head2 (ALPN), which is used for cipher checks.
+
+=head2 --cipher-alpn=,   sets empty list.
+
+=head2 --cipher-alpn=,,  sets list to empty element "".
+
+--cipher-npn=NAME
+
+=head2 Name of protocol to be added to list of  next protocol negotiations
+
+=head2 (NPN), which is used for cipher checks.
+
+=head2 --cipher-npn=,   sets empty list.
+
+=head2 --cipher-npn=,,  sets list to empty element "".
+
+=head2 Note:  setting empty list or element most likely does not work with
+
+=head2 openssl executable (i.e.  --force-openssl).
+
+--cipher-curve=NAME
+
+=head2 Name of ecliptic curve to be added to list of ecliptic curves (EC),
+
+=head2 which is used for cipher checks.
+
+=head2 --cipher-curve=,   sets empty list.
+
+=head2 --cipher-curve=,,  sets list to empty element "".
+
+=head2 Note:  setting empty list or element most likely does not work with
+
+=head2 openssl executable (i.e.  --force-openssl).
+
+=head2 Options for  +cipherall  command
 
 =head3 --range=RANGE 
 
@@ -2501,7 +2558,8 @@ Trace Option        Alias Option
 
 =head3 --trace-time
 
-Prints trace output with timestamps.
+Prints trace output with timestamps. More timestamps are printed if
+used together with  I<--trace-cmd>.
 
 =head3 --trace=FILE
 
@@ -2736,6 +2794,7 @@ Check if target supports ALPN. Following messages are evaluated:
 
 	ALPN protocol: h2-14
 	No ALPN negotiated
+Please see also  L</CHECKS>  ALPN and NPN  below.
 
 =head2 SSL Vulnerabilities
 
@@ -3188,6 +3247,12 @@ become  C<yes>  or  C<no>:
 
 =over
 
+=item * +modulus_exp_1      - Public Key Modulus Exponent <>1
+
+=back
+
+=over
+
 =item * +modulus_exp_65537  - Public Key Modulus Exponent =65537
 
 =back
@@ -3236,6 +3301,35 @@ are checked as follows:
 
 Note that only one of the checks  C<+dh_*>  and  C<+ecdh_*>  can return
 C<yes>.
+
+=head2 ALPN and NPN
+
+The commands for the checks to report  C<yes>  or  C<no>, are  I<+hasalpn>
+and  I<+hasnpn>.
+
+Both, the Application Layer Protocol Negotiation (ALPN) and the  Next
+Protocol Negotiation (NPN) will be tested. The commands for that are:
+
+=over
+
+=item * +alpns
+
+=back
+
+=over
+
+=item * +npns
+
+=back
+
+Each, ALPN and NPN, is tested separately with all known protocols.
+The test sets only one protocol,  tries to make a connection and then
+checks if the protocol was accepted by the server. The collected list
+of protocols will be printed with the aforementioned commands, or the
+I<+info>  command. Note the difference for the commands  I<+next_protocols>
+and  I<+alpns>, where  I<+next_protocols>  simply reports  what  the server
+itself advertises, while  I<+alpns>  reports what the server supports if
+asked for.
 
 =head2 Compliances
 
@@ -4363,7 +4457,8 @@ certificate.
 
 Some versions of openssl (< 1.x) may not support all required options
 which results in various error messages,  or  more worse,  may not be
-visibale at all.
+visibale at all. Available functionalitity of openssl will be checked
+for right at the beginning Proper Warnings and hints are printed.
 Following table shows the openssl option and how to disbale it within
 o-saft:
 
@@ -4385,6 +4480,12 @@ o-saft:
 
 =back
 
+=over
+
+=item * alpn                --no-alpn
+
+=back
+
 =head2 Connection Problems
 
 Sometimes the connection cannot be established. This may have various
@@ -4396,7 +4497,7 @@ out (see  I<--timeout=SEC>  option).
 
 Continous connection attempts  can be inhibited with the  I<--ssl-error>
 option, which is set by default. Avoiding further connections results
-in a loss of information and consequentely leading to wrong checks.
+in a loss of information and consequentely, leads to wrong checks.
 
 It is a trade-off to wait for all information done accurately,  or to
 get the results quickly. The logic to stop connecting for I<--ssl-error>
@@ -4410,7 +4511,7 @@ can be controlled with following additional options:
 
 =over
 
-=item * --ssl-error-timeout=SEC - timeout when to treat a failure as error
+=item * --ssl-error-timeout=SEC - treat a failure as error after timeout
 
 =back
 
@@ -5972,7 +6073,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 17.04.17
+@(#) 17.05.17
 
 =head1 AUTHOR
 

@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.04.30',
+    SSLINFO_VERSION => '17.05.17',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.185 17/05/03 22:50:40',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.187 17/05/16 22:02:21',
 };
 
 ######################################################## public documentation #
@@ -2188,21 +2188,27 @@ sub do_ssl_open($$$@) {
 # $t1 = time();
 #           ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             # FIXME: need to find proper method instead hardcoded CTX_v23_new(); see _ssleay_ctx_new
+            #dbx# $Net::SSLeay::trace     = 2;
             $src = 'Net::SSLeay::write()';
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
-            $src = 'Net::SSLeay::read_all()';
+            $src = 'Net::SSLeay::ssl_read_all()';
             # use ::ssl_read_all() instead of ::read() to get HTTP body also
             $response = Net::SSLeay::ssl_read_all($ssl) || "<<GET failed>>";
+            if ($response =~ /handshake_failed/) {  # may get: http2_handshake_failed
+                $response = "<<HTTP handshake failed>>";
+                # no last; # as it will break checks outside
+            }
 # TODO: Net::SSLeay::read() fails sometimes, i.e. for fancyssl.hboeck.de
 # 03/2015: even using ssl_write_all() and ssl_read_all() does not help
 # TODO: reason unknown, happens probably if server requires SNI
 # $t2 = time(); set error = "<<timeout: Net::SSLeay::read()>>";
             $_SSLinfo{'https_body'}     =  $response;
             $_SSLinfo{'https_body'}     =~ s/.*?\r\n\r\n(.*)/$1/ms;
+            $_SSLinfo{'https_location'} =  _header_get('Location', $response);
+                # if a new Location is send for HTTPS, we should not follow
             $_SSLinfo{'https_status'}   =  $response;
             $_SSLinfo{'https_status'}   =~ s/[\r\n].*$//ms; # get very first line
             $_SSLinfo{'https_server'}   =  _header_get('Server',   $response);
-            $_SSLinfo{'https_location'} =  _header_get('Location', $response);
             $_SSLinfo{'https_refresh'}  =  _header_get('Refresh',  $response);
             $_SSLinfo{'https_pins'}     =  _header_get('Public-Key-Pins', $response);
             $_SSLinfo{'https_protocols'}=  _header_get('Alternate-Protocol', $response);

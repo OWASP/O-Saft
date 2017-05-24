@@ -12,8 +12,8 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.04.30',  # official version number of tis file
-  # STR_VERSION => 'dd.mm.yy',      # must be defined in calling program
+    OSAFT_VERSION   => '17.05.17',  # official version number of tis file
+  # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
     STR_HINT    => "!!Hint: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.105 17/05/06 09:53:10',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.107 17/05/16 11:43:09',
 
 };
 
@@ -789,12 +789,11 @@ our %cipher_names = (
     '0x03000088' => [qw(DHE-RSA-CAMELLIA256-SHA         DHE_RSA_WITH_CAMELLIA_256_CBC_SHA)],
     '0x030000BE' => [qw(DHE-RSA-CAMELLIA128-SHA256      DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x030000C4' => [qw(DHE-RSA-CAMELLIA256-SHA256      DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256)],
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], #
     '0x0300CCAA' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
     '0x0300CCAB' => [qw(PSK-CHACHA20-POLY1305-SHA256    PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300CCAC' => [qw(ECDHE-PSK-CHACHA20-POLY1305-SHA256 ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300CCAD' => [qw(DHE-PSK-CHACHA20-POLY1305-SHA256   DHE_PSK_WITH_CHACHA20_POLY1305_SHA256)],
-    '0x0300CCAE' => [qw(PSK-RSA-CHACHA20-POLY1305       RSA_PSK_WITH_CHACHA20_POLY1305_SHA256)],
+    '0x0300CCAE' => [qw(RSA-PSK-CHACHA20-POLY1305-SHA256   RSA_PSK_WITH_CHACHA20_POLY1305_SHA256)],
     '0x0300009A' => [qw(DHE-RSA-SEED-SHA                DHE_RSA_WITH_SEED_SHA)],
     '0x03000042' => [qw(DH-DSS-CAMELLIA128-SHA          DH_DSS_WITH_CAMELLIA_128_CBC_SHA)],
     '0x03000085' => [qw(DH-DSS-CAMELLIA256-SHA          DH_DSS_WITH_CAMELLIA_256_CBC_SHA)],
@@ -832,7 +831,6 @@ our %cipher_names = (
     '0x0300C024' => [qw(ECDHE-ECDSA-AES256-SHA384       ECDHE_ECDSA_WITH_AES_256_SHA384)],
     '0x03000072' => [qw(ECDHE-ECDSA-CAMELLIA128-SHA256  ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000073' => [qw(ECDHE-ECDSA-CAMELLIA256-SHA384  ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384)],
-    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], #
     '0x0300CCA9' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
     '0x0300C006' => [qw(ECDHE-ECDSA-NULL-SHA            ECDHE_ECDSA_WITH_NULL_SHA)],
     '0x0300C007' => [qw(ECDHE-ECDSA-RC4-SHA             ECDHE_ECDSA_WITH_RC4_128_SHA)],
@@ -845,7 +843,6 @@ our %cipher_names = (
     '0x0300C030' => [qw(ECDHE-RSA-AES256-GCM-SHA384     ECDHE_RSA_WITH_AES_256_GCM_SHA384)],
     '0x03000076' => [qw(ECDHE-RSA-CAMELLIA128-SHA256    ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256)],
     '0x03000077' => [qw(ECDHE-RSA-CAMELLIA256-SHA384    ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384)],
-    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], #
     '0x0300CCA8' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # see Note(c)
     '0x0300C010' => [qw(ECDHE-RSA-NULL-SHA              ECDHE_RSA_WITH_NULL_SHA)],
     '0x0300C011' => [qw(ECDHE-RSA-RC4-SHA               ECDHE_RSA_WITH_RC4_128_SHA)],
@@ -933,6 +930,30 @@ our %cipher_names = (
     '0x0300003B' => [qw(NULL-SHA256                     RSA_WITH_NULL_SHA256)],
     '0x03000096' => [qw(SEED-SHA                        RSA_WITH_SEED_SHA)],
 #
+#    http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
+    '0x0300CC12' => [qw(RSA-CHACHA20-POLY1305           RSA_WITH_CHACHA20_POLY1305)],       # see Note(c)
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
+    '0x0300CC20' => [qw(RSA-CHACHA20-SHA                RSA_WITH_CHACHA20_SHA)],
+    '0x0300CC21' => [qw(ECDHE-RSA-CHACHA20-SHA          ECDHE_RSA_WITH_CHACHA20_SHA)],
+    '0x0300CC22' => [qw(ECDHE-ECDSA-CHACHA20-SHA        ECDHE_ECDSA_WITH_CHACHA20_SHA)],
+    '0x0300CC23' => [qw(DHE-RSA-CHACHA20-SHA            DHE_RSA_WITH_CHACHA20_SHA)],
+    '0x0300CC24' => [qw(DHE-PSK-CHACHA20-SHA            DHE_PSK_WITH_CHACHA20_SHA)],
+    '0x0300CC25' => [qw(PSK-CHACHA20-SHA                PSK_WITH_CHACHA20_SHA)],
+    '0x0300CC26' => [qw(ECDHE-PSK-CHACHA20-SHA          ECDHE_PSK_WITH_CHACHA20_SHA)],
+    '0x0300CC27' => [qw(RSA-PSK-CHACHA20-SHA            RSA_PSK_WITH_CHACHA20_SHA)],
+#
+# http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-05
+    '0x0300CCA0' => [qw(RSA-CHACHA20-POLY1305           RSA_WITH_CHACHA20_POLY1305)],
+    '0x0300CCA1' => [qw(ECDHE-RSA-CHACHA20-POLY1305     ECDHE_RSA_WITH_CHACHA20_POLY1305)],
+    '0x0300CCA2' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305   ECDHE_ECDSA_WITH_CHACHA20_POLY1305)],
+    '0x0300CCA3' => [qw(DHE-RSA-CHACHA20-POLY1305       DHE_RSA_WITH_CHACHA20_POLY1305)],
+    '0x0300CCA4' => [qw(DHE-PSK-CHACHA20-POLY1305       DHE_PSK_WITH_CHACHA20_POLY1305)],
+    '0x0300CCA5' => [qw(PSK-CHACHA20-POLY1305           PSK_WITH_CHACHA20_POLY1305)],
+    '0x0300CCA6' => [qw(ECDHE-PSK-CHACHA20-POLY1305     ECDHE_PSK_WITH_CHACHA20_POLY1305)],
+    '0x0300CCA7' => [qw(RSA-PSK-CHACHA20-POLY1305       RSA_PSK_WITH_CHACHA20_POLY1305)],
+#
     '0x0300002C' => [qw(PSK-SHA                         PSK_WITH_NULL_SHA)],
     '0x0300002D' => [qw(DHE-PSK-SHA                     DHE_PSK_WITH_NULL_SHA)],
     '0x0300002E' => [qw(RSA-PSK-SHA                     RSA_PSK_WITH_NULL_SHA)],
@@ -941,12 +962,9 @@ our %cipher_names = (
     '0x03000090' => [qw(DHE-PSK-AES128-SHA              DHE_PSK_WITH_AES_128_CBC_SHA)],
     '0x03000091' => [qw(DHE-PSK-AES256-SHA              DHE_PSK_WITH_AES_256_CBC_SHA)],
     '0x03000092' => [qw(RSA-PSK-RC4-SHA                 RSA_PSK_WITH_RC4_128_SHA)],
-#   '0x03000093' => [qw(RSA-PSK-3DES-SHA                RSA_PSK_WITH_3DES_EDE_CBC_SHA)],
     '0x03000093' => [qw(RSA-PSK-3DES-EDE-CBC-SHA        RSA_PSK_WITH_3DES_EDE_CBC_SHA)],
     '0x03000094' => [qw(RSA-PSK-AES128-SHA              RSA_PSK_WITH_AES_128_CBC_SHA)],
-#   '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA          RSA_PSK_WITH_AES_128_CBC_SHA)],     # openssl 1.0.2
     '0x03000095' => [qw(RSA-PSK-AES256-SHA              RSA_PSK_WITH_AES_256_CBC_SHA)],
-#   '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA          RSA_PSK_WITH_AES_256_CBC_SHA)],     # openssl 1.0.2
     '0x030000AA' => [qw(DHE-PSK-AES128-GCM-SHA256       DHE_PSK_WITH_AES_128_GCM_SHA256)],
     '0x030000AB' => [qw(DHE-PSK-AES256-GCM-SHA384       DHE_PSK_WITH_AES_256_GCM_SHA384)],
     '0x030000AC' => [qw(RSA-PSK-AES128-GCM-SHA256       RSA_PSK_WITH_AES_128_GCM_SHA256)],
@@ -1035,7 +1053,7 @@ our %cipher_names = (
     '0x0300C061' => [qw(ECDHE-RSA-ARIA256-GCM-SHA384    ECDHE_RSA_WITH_ARIA_256_GCM_SHA384  )],
     '0x0300C062' => [qw(ECDH-RSA-ARIA128-GCM-SHA256     ECDH_RSA_WITH_ARIA_128_GCM_SHA256   )],
     '0x0300C063' => [qw(ECDH-RSA-ARIA256-GCM-SHA384     ECDH_RSA_WITH_ARIA_256_GCM_SHA384   )],
-    '0x0300C064' => [qw(PSK-ARIA128-SHA-56              PSK_WITH_ARIA_128_CBC_SHA256        )],
+    '0x0300C064' => [qw(PSK-ARIA128-SHA256              PSK_WITH_ARIA_128_CBC_SHA256        )],
     '0x0300C065' => [qw(PSK-ARIA256-SHA384              PSK_WITH_ARIA_256_CBC_SHA384        )],
     '0x0300C066' => [qw(DHE-PSK-ARIA128-SHA256          DHE_PSK_WITH_ARIA_128_CBC_SHA256    )],
     '0x0300C067' => [qw(DHE-PSK-ARIA256-SHA384          DHE_PSK_WITH_ARIA_256_CBC_SHA384    )],
@@ -1084,6 +1102,7 @@ our %cipher_names = (
     # Note(c)
     #   according https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04
     #   some hex keys for ciphers changed
+    #   see also: http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-05
 ); # %cipher_names
 
 our %cipher_alias = ( # TODO: list not yet used
@@ -1106,6 +1125,19 @@ our %cipher_alias = ( # TODO: list not yet used
     '0x03000064' => [qw(EXP-RC4-56-SHA)],              # -"-
     '0x03000065' => [qw(EXP-EDH-DSS-RC4-56-SHA)],
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
+
+    # TODO: need to mark following 10 as old ciphers with changed IDs
+    '0x03000093' => [qw(RSA-PSK-3DES-SHA)],            # ??
+    '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      # openssl 1.0.2
+    '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],      # openssl 1.0.2
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305)], # see Note(c) above
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305)], # -"-
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305)],   # -"-
+    '0x0300CC16' => [qw(DHE-PSK-CHACHA20-POLY1305)],   # -"-
+    '0x0300CC17' => [qw(PSK-CHACHA20-POLY1305)],       # -"-
+    '0x0300CC18' => [qw(ECDHE-PSK-CHACHA20-POLY1305)], # -"-
+    '0x0300CC19' => [qw(RSA-PSK-CHACHA20-POLY1305)],   # -"-
+
     '0x0300009B' => [qw(DHanon-SEED-SHA)],
     '0x0300C0A0' => [qw(RSA-AES128-CCM-8)],            # ?? some java
     '0x0300C0A1' => [qw(RSA-AES256-CCM-8)],            # -"-
@@ -1441,7 +1473,8 @@ our %cfg = (
                        ],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check cipher cipher_dh),
-                        qw(pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4),
+                        qw(null_cipher adh_cipher exp_cipher cbc_cipher des_cipher),
+                        qw(edh_cipher rc4_cipher rc4 pfs_cipher pfs_cipherall),
                         qw(beast crime time breach drown freak logjam lucky13 poodle sloth sweet32),
                         qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
@@ -1936,6 +1969,7 @@ Check if given C<%cipher> name is a known cipher.
 
 sub get_cipher_hex($)  {
     # find hex key for cipher in %cipher_names or %cipher_alias
+    # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $c = shift;
     foreach my $k (keys %cipher_names) { # database up to VERSION 14.07.14
         return $k if (($cipher_names{$k}[0] eq $c) or ($cipher_names{$k}[1] eq $c));
@@ -1949,6 +1983,7 @@ sub get_cipher_hex($)  {
 sub get_cipher_name($) {
     # check if given cipher name is a known cipher
     # checks in %ciphers if nof found in %cipher_names
+    # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $cipher  = shift;
     return $cipher if ((grep{/^$cipher/} %ciphers)>0);
     _trace("get_cipher_name: search $cipher");

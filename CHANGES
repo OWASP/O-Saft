@@ -1,4 +1,19 @@
 
+Version: 17.04.21
+  BUGFIX
+    * o-saft-lib.pm: missing commands added to need-cipher list
+    * --protosnpn=, corrected
+    * +selected does not need to check for all ciphers
+    * enable ALPN and NPN when testeing for ciphers (+cipher)
+    * NET::SSLinfo.pm: passing -alpn and -nextprotoneg option to openssl corrected
+  CHANGES                                                                      
+    * missing ciphers and missing cipher descriptions added
+    * +info does no onger complain for missing ALPN/NPN functionality
+    * NET::SSLinfo.pm: checks improved to detect handshake fail for HTTPS
+    * NET::SSLinfo.pm: ::next_protos replaced by ::alpn_protos and ::npn_protos
+    * check and warning messages for available functionality improved
+  NEW                                                                          
+
 Version: 17.04.17
   BUGFIX
     * NET::SSLinfo.pm: avoid "Segmentation fault" when connection fails

@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.182 17/04/18 16:44:45";
+my  $man_SID= "@(#) o-saft-man.pm 1.186 17/05/16 20:16:54";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2783,7 +2783,8 @@ OPTIONS
       --ssl-error
 
           Stop trying to connect to target if  --ssl-error-max  erros occourd
-          sequntialy or if total amount of errors reaches  --ssl-error-total.
+          sequentially, or if the total amount of errors  --ssl-error-total
+          is reached.
 
           The connection to  a target may fail, or even block, due to various
           resons, for example lost network at all, blocking at firewall, etc.
@@ -3131,7 +3132,51 @@ OPTIONS
 
           Argument or option passed to openssl's  s_client  command.
 
-    Options for cipherall command
+    Options for  +cipher  command
+
+--proto-alpn=NAME
+
+    Name of protocol to be added to list of  applcation layer protocols
+    (ALPN), which is used for any connection to the targets.
+    See  --cipher-alpn=NAME  also.
+
+--proto-npn=NAME
+
+    Name of protocol to be added to list of  next protocol negotiations
+    (NPN), which is used for any connection to the targets.
+    See  --cipher-npn=NAME  also.
+
+--cipher-alpn=NAME
+
+    Name of protocol to be added to list of  applcation layer protocols
+    (ALPN), which is used for cipher checks.
+
+    --cipher-alpn=,   sets empty list.
+    --cipher-alpn=,,  sets list to empty element "".
+
+--cipher-npn=NAME
+
+    Name of protocol to be added to list of  next protocol negotiations
+    (NPN), which is used for cipher checks.
+
+    --cipher-npn=,   sets empty list.
+    --cipher-npn=,,  sets list to empty element "".
+
+    Note:  setting empty list or element most likely does not work with
+    openssl executable (i.e.  --force-openssl).
+
+--cipher-curve=NAME
+
+    Name of ecliptic curve to be added to list of ecliptic curves (EC),
+    which is used for cipher checks.
+
+    --cipher-curve=,   sets empty list.
+    --cipher-curve=,,  sets list to empty element "".
+
+    Note:  setting empty list or element most likely does not work with
+    openssl executable (i.e.  --force-openssl).
+
+    Options for  +cipherall  command
 
       --range=RANGE 
       --cipherrange=RANGE
@@ -3587,7 +3632,8 @@ OPTIONS
 
       --trace-time
 
-          Prints trace output with timestamps.
+          Prints trace output with timestamps. More timestamps are printed if
+          used together with  --trace-cmd.
 
       --trace=FILE
 
@@ -4950,12 +4996,14 @@ LIMITATIONS
 
         Some versions of openssl (< 1.x) may not support all required options
         which results in various error messages,  or  more worse,  may not be
-        visibale at all.
+        visibale at all. Available functionalitity of openssl will be checked
+        for right at the beginning Proper Warnings and hints are printed.
         Following table shows the openssl option and how to disbale it within
         o-saft:
           * nextprotoneg        --no-nextprotoneg
           * reconnect           --no-reconnect
           * tlsextdebug         --no-tlsextdebug
+          * alpn                --no-alpn
 
     Connection Problems
 
@@ -4968,13 +5016,13 @@ LIMITATIONS
 
         Continous connection attempts  can be inhibited with the  --ssl-error
         option, which is set by default. Avoiding further connections results
-        in a loss of information and consequentely leading to wrong checks.
+        in a loss of information and consequentely, leads to wrong checks.
 
         It is a trade-off to wait for all information done accurately,  or to
         get the results quickly. The logic to stop connecting for --ssl-error
         can be controlled with following additional options:
           * --ssl-error-max=CNT     - max. continous errors
-          * --ssl-error-timeout=SEC - timeout when to treat a failure as error
+          * --ssl-error-timeout=SEC - treat a failure as error after timeout
           * --ssl-error-total=CNT   - max. amount of errors
 
         This means that no more connections are maid when more than

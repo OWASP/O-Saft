@@ -296,7 +296,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.137 Spring Edition 2017
+#?      @(#) 1.139 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -323,8 +323,9 @@ package require Tk      8.5
 # Hence it's defined right below.
 
 foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
-                     TButton TCombobox TEntry TLabel TText \
-                     Checkbutton Radiobutton Dialog] {
+                     TButton TCombobox TEntry TLabel TText Frame Menu \
+                     LabelFrame  PanedWindow Scale Scrollbar \
+                     Checkbutton Menubutton  Radiobutton Dialog] {
     bind $klasse  <Control-ButtonPress-1>       { copy2clipboard %W 0 }
     bind $klasse  <Shift-Control-ButtonPress-1> { copy2clipboard %W 1 }
 }
@@ -337,6 +338,7 @@ proc copy2clipboard {w shift} {
     if {$shift==1} { set txt "$w $klasse: " }
     # TODO: Spinbox not complete; some classes are missing
     switch $klasse {
+       Frame        { append dum "nothing to see in frames" }
        Button       -
        Combobox     -
        Dialog       -
@@ -363,8 +365,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.137 17/04/20 09:49:25 Spring Edition 2017}
-set cfg(VERSION) {1.137}
+set cfg(SID)    {@(#) o-saft.tcl 1.139 17/05/18 00:40:09 Spring Edition 2017}
+set cfg(VERSION) {1.139}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1001,6 +1003,29 @@ proc theme_init   {theme} {
     return
 }; # theme_init
 
+proc set_disabled {w} {
+    #? set widget to disabled state (mode)
+    $w config -state disabled
+    return
+}; # set_disabled
+
+proc set_readonly {w} {
+    #? set widget to readonly state (mode)
+    # The definition of "read-only" here is, that any action or event for the
+    # widget is allowed, except changing its content anyhow  (delete, insert,
+    # etc.). Selecting, highlighting is not considered as a change.
+    # This can accomplished simply with:
+    #   $w config -state disabled
+    # Unfortunately, this does not work as expected on Mac OS X.  On Mac OS X
+    # it also disables highlighting and selecting, for example copying to the
+    # clipboard (cutbuffer).
+    # Hence following workaround is used, which simply disables all functions
+    # for events and sets them to do nothing.
+    # This works on all platforms (*ix, Windows, Mac OS X).
+    foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
+    return
+}; # set_readonly
+
 proc toggle_cfg   {w opt val} {
     #? use widget config command to change options value
     if {$val ne {}} { $w config $opt $val; }
@@ -1050,9 +1075,9 @@ proc update_status {val} {
     $cfg(objS) config -state normal
     $cfg(objS) insert end "$val\n"
     $cfg(objS) see "end - 2 line"
-    $cfg(objS) config -state disabled
+    set_readonly $cfg(objS)
     update idletasks;       # enforce display update
-}
+}; # update_status
 
 proc apply_filter {w} {
     #? apply filters for markup in output, data is in text widget $w
@@ -1247,7 +1272,8 @@ proc create_text  {parent txt} {
     scrollbar   $this.s -orient vertical -command "$this.t yview"
     #set txt     [regsub -all {\t} $txt "\t"];   # tabs are a pain in Tcl :-(
     $this.t insert end $txt
-    $this.t config -state disabled -font TkFixedFont
+    $this.t config -font TkFixedFont
+    set_readonly $this.t
     pack $this.s -side right -fill y  -pady 2 -padx {0 2} -in $this
     pack $this.t -fill both -expand 1 -pady 2 -padx {2 0} -in $this
     return $this
@@ -1355,7 +1381,7 @@ proc create_filter      {parent cmd} {
     pack [label $this.f.t -relief flat -text [get_text c_toggle]] -fill x
     pack [checkbutton $this.f.c -text [get_text hideline] -variable filter_bool($obj,line)] -anchor w;
     create_tip $this.f.c [get_tipp hideline]
-    $this.f.c config -state disabled ; # TODO: not yet working, see FIXME in toggle_txt
+    set_readonly $this.f.c
     foreach {k key} [array get f_key] {
         if {$k eq 0} { continue };
         #set key $f_key($k)
@@ -1425,11 +1451,12 @@ proc create_help  {sect} {
         }
     }
 
-    # collect more documentations with --help=*
+    _dbx " 0. collect more documentations with --help=*"
     set help ""
     foreach key [list alias data checks regex rfc glossar] {
         # missing: text ourstr
         set txt ""
+        _dbx       " 0. $cfg(PERL) $cfg(SAFT) --help=$key"
         catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=$key } txt
         if {2 < [llength [split $txt "\n"]]} {
             set txt [regsub -all       {[&]} $txt {\\&}];   # avoid interpretation by regexp
@@ -1460,7 +1487,7 @@ proc create_help  {sect} {
             append help "\n\nINFO $head\n$txt"
         }
     }
-    # merge HELP and additional help texts
+    _dbx " 1. merge HELP and additional help texts"
     set help [regsub {(\n\nATTRIBUTION)} $cfg(HELP) "$help\n\nATTRIBUTION"];
 
     # uses plain text help text from "o-saft.pl --help"
@@ -1510,7 +1537,7 @@ proc create_help  {sect} {
     set txt     [create_text $this $help].t;        # $txt is a widget here
     set toc     {}
 
-    # add additional buttons for search
+    _dbx " 2. add additional buttons for search"
     pack [button $this.f1.help_home -command "search_show $txt {HELP-LNK-T}; set search(curr) 0;"] \
          [button $this.f1.help_prev -command "search_next $txt {-}"] \
          [button $this.f1.help_next -command "search_next $txt {+}"] \
@@ -1536,7 +1563,7 @@ proc create_help  {sect} {
            search_text $txt \$search(text);
            "
 
-    # 1. search for section head lines, mark them and add (prefix) to text
+    _dbx " 3. search for section head lines, mark them and add (prefix) to text"
     set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? '()=,:.-]+$} 1.0]
     set i 0
     foreach a $anf {
@@ -1544,7 +1571,7 @@ proc create_help  {sect} {
         set t [$txt get $a "$a + $e c"];         # don't trim, need leading spaces
         set l [string length $t]
         incr i
-        _dbx " 1. HEAD: $i\t$t"
+        _dbx " 3. HEAD: $i\t$t"
         if {[notTOC $t]} { continue; };          # skip some special strings
         if {[string trim $t] eq ""} { continue };# skip empty entries
         if {[regexp {^[A-Z][A-Z_? -]+$} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
@@ -1557,21 +1584,21 @@ proc create_help  {sect} {
     $txt insert 1.0 "\nCONTENT\n$toc\n"
     $txt tag     add  HELP-LNK    2.0 2.7;      # add markup
     $txt tag     add  HELP-LNK-T  2.0 2.7;      #
-    $txt config -state disabled
+    set_readonly $txt
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
     if {$nam eq ""} {
-        _dbx " no text available";              # avoid Tcl errors
+        _dbx " 3. no text available";              # avoid Tcl errors
         return;
     };
 
-    # 2. search for all references to section head lines in TOC and add click event
+    _dbx " 4. search for all references to section head lines in TOC and add click event"
     # NOTE: used regex must be similar to the one used in 1. above !!
     set anf [$txt search -regexp -nolinestop -all -count end { *[A-Za-z_? '()=,:.-]+( |$)} 3.0 $nam]
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
-        _dbx " 2. TOC: $i\t$t"
+        _dbx " 4. TOC: $i\t$t"
         if {[notTOC $t]} { continue; };          # skip some special strings
         incr i
         set name [str2obj [string trim $t]]
@@ -1581,7 +1608,7 @@ proc create_help  {sect} {
         $txt tag bind HELP-TOC-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
     }
 
-#    # 2a. search for all references to section head in text
+#    # 4a. search for all references to section head in text
 #    set anf [$txt search -regexp -nolinestop -all -count end { +[A-Z_ -]+( |$)} $nam]
 #    # FIXME: returns too much false positives
 #    set i 0
@@ -1597,7 +1624,7 @@ proc create_help  {sect} {
 #        $txt tag config HELP-XXX    -foreground [get_color link]
 #    }
 
-    # 3. search all commands and options and try to set click event
+    _dbx " 5. search all commands and options and try to set click event"
     set anf [$txt search -regexp -nolinestop -all -count end { [-+]-?[a-zA-Z0-9_=+-]+([, ]|$)} 3.0]
     # Now loop over all matches. The difficulty is to distinguish matches,
     # which are the head lines like:
@@ -1623,7 +1650,7 @@ proc create_help  {sect} {
         set r [regsub {[+]} $t {\\+}];  # need to escape +
         set r [regsub {[-]} $r {\\-}];  # need to escape -
         set name [str2obj [string trim $t]]
-        _dbx " 3. LNK: $i\tHELP-LNK-$name\t$t"
+        _dbx " 5. LNK: $i\tHELP-LNK-$name\t$t"
         if {[regexp -lineanchor "\\s\\s+$r$" $l]} {     # FIXME: does not match all lines proper
             # these matches are assumed to be the header lines
             $txt tag add    HELP-LNK-$name $a "$a + $e c";
@@ -1638,24 +1665,26 @@ proc create_help  {sect} {
         incr i
     }
 
-    # 4. search for all examples and highlight them
-    set anf [$txt search -regexp -nolinestop -all -count end "$cfg(SAFT) \[^\\n\]+" 3.0]
+    _dbx " 6. search for all examples and highlight them"
+    # causes problems in regsub on Mac OS X if $cfg(SAFT) startewith ./
+    set _me [regsub -all {^[./]*} $cfg(SAFT) {}];   # remove ./
+    set anf [$txt search -regexp -nolinestop -all -count end "$_me \[^\\n\]+" 3.0]
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"]
-        _dbx " 4. CODE: $i\tHELP-CODE\t$t"
+        _dbx " 6. CODE: $i\tHELP-CODE\t$t"
         $txt tag add  HELP-CODE $a "$a + $e c"
         incr i
     }
 
-    # 5. search for all special quoted strings and highlight them
+    _dbx " 7. search for all special quoted strings and highlight them"
     set anf [$txt search -regexp -nolinestop -all -count end {'[^'\n]+'} 3.0]
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"]
-        _dbx " 5. CODE: $i\tHELP-CODE\t$t"
+        _dbx " 7. CODE: $i\tHELP-CODE\t$t"
         $txt tag add  HELP-CODE $a "$a + $e c"
         # FIXME: replacing quotes does no work yet
         $txt replace  $a         "$a + 1 c"        { }
@@ -1663,7 +1692,7 @@ proc create_help  {sect} {
         incr i
     }
 
-    # 6. highlight all URLs and bind key
+    _dbx " 8. highlight all URLs and bind key"
     bind_browser $txt HELP-URL
 
     # finally global markups
@@ -1674,7 +1703,7 @@ proc create_help  {sect} {
     $txt tag config   HELP-LNK  -font osaftBold
     $txt tag config   HELP-HEAD -font osaftBold
 
-    _dbx " MARK: [$txt mark names]"
+    _dbx " 9. MARK: [$txt mark names]"
     if {$cfg(DEBUG) > 1} {
         #_dbx " TAGS: [$txt tag names]"; # huge output!!
         foreach tag [list HELP-TOC HELP-HEAD HELP-CODE HELP-URL HELP-LNK HELP-LNK-T HELP-search-pos] {
@@ -1978,7 +2007,7 @@ proc search_more  {w search_text regex} {
         create_tip $txt "[get_tipp helpclick]"
         # TAG-$i  are never used again; new searches overwrite existing tags
     }
-    $txt config -state disabled
+    set_readonly $txt
     return $this
 }; # search_more
 
@@ -2479,7 +2508,7 @@ osaft_init;     # initialise options from .-osaft.pl (values shown in Options ta
 pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
 pack [text      $w.fl.t -relief flat   -height 3 -background [get_color status] ] -fill x
 set cfg(objS)   $w.fl.t
-$cfg(objS) config -state disabled
+set_readonly $cfg(objS)
 
 ## add hosts from command line
 foreach host $targets {         # display hosts
@@ -2497,7 +2526,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.137"
+update_status "o-saft.tcl 1.139"
 
 ## load files, if any
 foreach f $cfg(files) {
@@ -2544,7 +2573,10 @@ WM  :          [wm frame      .]
  |  focusmodel:[wm focusmodel .]
  |  system:    [tk windowingsystem]
  |  geometry:  $geo
+TAB tabs:      [$cfg(objN) tabs]
+ |
 _/"
     #          [tk windowingsystem] # we believe this a window manager property
+
 }
 

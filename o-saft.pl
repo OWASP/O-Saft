@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.674 17/05/07 01:11:21",
-    STR_VERSION => "17.04.30",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.679 17/05/16 11:40:35",
+    STR_VERSION => "17.05.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1447,6 +1447,17 @@ our %ciphers = (
         'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # bugfix for openssl 1.0.2
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
 
+        # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
+        'RSA-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSA         1 :)],
+        'ECDHE-RSA-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
+        'ECDHE-ECDSA-CHACHA20-SHA'      => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
+        'DHE-RSA-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   DH          1 :)],
+        'DHE-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 PSK   DH          1 :)],
+        'PSK-CHACHA20-SHA'              => [qw( HIGH TLSv12 ChaCha20 256 SHA1 PSK   PSK         1 :)],
+        'ECDHE-PSK-CHACHA20-SHA'        => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   ECDH        1 :)],
+        'RSA-PSK-CHACHA20-SHA'          => [qw( HIGH TLSv12 ChaCha20 256 SHA1 RSA   RSAPSK      1 :)],
+
+
         # from https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04 (16. Dec 2015)
         'PSK-CHACHA20-POLY1305-SHA256'  => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD PSK   PSK   1 :)],
         'ECDHE-PSK-CHACHA20-POLY1305-SHA256'=> [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDHE ECDHEPSK 1 :)],
@@ -1610,7 +1621,7 @@ our %ciphers = (
         'ECDHE_PSK-ARIA128-SHA256'      => [qw(  -?- TLSv12 ARIA     128 SHA256 PSK   ECDHE   11 :)],
 
         # from: https://chromium.googlesource.com/chromium/src/net/+/master/ssl/ssl_cipher_suite_names_unittest.cc
-        'CECPQ1-RSA-CHACHA20-POLY1305_SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 RSA   CECPQ1 91 :)],
+        'CECPQ1-RSA-CHACHA20-POLY1305-SHA256'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 RSA   CECPQ1 91 :)],
         'CECPQ1-ECDSA-CHACHA20-POLY1305-SHA256' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 SHA256 ECDSA CECPQ1 91 :)],
         'CECPQ1-RSA-AES256-GCM-SHA384'          => [qw( HIGH TLSv12 AESGCM 256 SHA384 RSA   CECPQ1 91 :)],
         'CECPQ1-ECDSA-AES256-GCM-SHA384'        => [qw( HIGH TLSv12 AESGCM 256 SHA384 ECDSA CECPQ1 91 :)],
@@ -1648,6 +1659,7 @@ our %text = (
     'no-openssl'    => "<<N/A as --no-openssl in use>>",
     'disabled'      => "<<N/A as @@ in use>>",     # @@ is --no-SSLv2 or --no-SSLv3
     'protocol'      => "<<N/A as protocol disabled or NOT YET implemented>>",     # @@ is --no-SSLv2 or --no-SSLv3
+    'miss-cipher'   => "<<N/A as no ciphers found>>",
     'ext-enabled'   => " <<@@ extension enabled>>",
     'miss-RSA'      => " <<missing ECDHE-RSA-* cipher>>",
     'miss-ECDSA'    => " <<missing ECDHE-ECDSA-* cipher>>",
@@ -1674,6 +1686,7 @@ our %text = (
     'out-checks'    => "\n=== Performed Checks ===",
     'out-list'      => "=== List @@ Ciphers ===",
     'out-summary'   => "=== Ciphers: Summary @@ ==",
+    'test-disabled' => "tests with/for @@ disabled",  # not yet used
     # hostname texts
     'host-host'     => "Given hostname",
     'host-IP'       => "IP for given hostname",
@@ -1858,14 +1871,14 @@ sub _check_modules      {
         #   undef   - version module was not available or didn't define VERSION
         #   string  - even "0.42" cannot be compared to integer, bad luck ...
         #   integer - that's the usual and expected value
-    if (_isnummber($version::VERSION)==1) {
+    if (_isnummber($version::VERSION) == 1) {
         $have_version = 0 if ($version::VERSION < 0.77);
             # veriosn module too old, use natural number compare
     } else {
         $have_version = 0;
         $version::VERSION = ""; # defensive programming ..
     }
-    if ($have_version==0) {
+    if ($have_version == 0) {
         warn STR_WARN, "ancient perl has no 'version' module; version checks may not be accurate;";
     }
     if ($cfg{verbose} > 1) {
@@ -1883,7 +1896,7 @@ sub _check_modules      {
         my $ok = "yes";
         # following eval is safe, as left side value cannot be injected
         eval {$v = $$v;} or $v = 0;     # module was not loaded or has no VERSION
-        if ($have_version==1) {         # accurate checks with version module
+        if ($have_version == 1) {       # accurate checks with version module
             # convert natural numbers to version objects
             $v      = version->parse("v$v");
             $expect = version->parse("v$expect");
@@ -1923,10 +1936,10 @@ sub _enable_functions   {
     _y_CMD("  enable internal functionality ...");
 
     if ($cfg{'ssleay'}->{'openssl'} == 0) {
-        warn STR_WARN, "Net::SSLeay $Net::SSLeay::VERSION cannot detext openssl version";
+        warn STR_WARN, "ancient Net::SSLeay $Net::SSLeay::VERSION cannot detect openssl version";
     }
     if ($cfg{'ssleay'}->{'iosocket'} == 0) {
-        warn STR_WARN, "unknown version of IO::Socket detected";
+        warn STR_WARN, "ancient or unknown version of IO::Socket detected";
     }
 
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
@@ -1943,7 +1956,7 @@ sub _enable_functions   {
     }
     _trace(" cfg{usesni}: $cfg{'usesni'}");
 
-    if ($cfg{'ssleay'}->{'set_alpn'} == 0 or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
+    if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
         if ($cfg{'usealpn'} > 0 or ($cmd{'extciphers'} > 0)) {
             $cfg{'usealpn'} = 0;
@@ -1976,7 +1989,6 @@ sub _enable_functions   {
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {
         warn STR_WARN, "$txt tests for OCSP disabled";
-        warn STR_WARN, "OCSP testing is not supported; tests disabled";
         #_hint("--no-ocsp  can be used to disable this check");
     }
 
@@ -3188,13 +3200,13 @@ sub _usesocket($$$$)    {
     # checks, $ciphers must be colon (:) separated list
     my ($ssl, $host, $port, $ciphers) = @_;
     my $cipher  = "";   # to be returned
-    my $version = "";   # version returned by IO::Socket::SSL-new
-    my $sslsocket = undef;
     my $sni     = ($cfg{'usesni'}  < 1) ? "" : $host;
     my $npns    = ($cfg{'usenpn'}  < 1) ? [] : $cfg{'cipher_npns'};
     my $alpns   = ($cfg{'usealpn'} < 1) ? [] : $cfg{'cipher_alpns'};
         # --noalpn or --nonpn is same as --cipher-alpn=, or --cipher-npn=,
-    # TODO: dirty hack to avoid perl error like:
+    my $version = "";   # version returned by IO::Socket::SSL-new
+    my $sslsocket = undef;
+    # TODO: dirty hack (undef) to avoid perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
     # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSx
@@ -3209,7 +3221,6 @@ sub _usesocket($$$$)    {
         return "";
     }
     # FIXME: use Net::SSLeay instead of IO::Socket::SSL
-    #if (IO::Socket::SSL->can_ecdh() == 1) {}
     if (eval {  # FIXME: use something better than eval()
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
@@ -3743,7 +3754,8 @@ sub check_nextproto {
 } # check_nextproto
 
 sub checkalpn       {
-    #? check target for ALPN or NPN support; returns list of supported protocols
+    #? check target for ALPN or NPN support; returns void
+    # stores list of supported protocols in corresponding $info{}
     # uses protocols from $cfg{'protos_next'} only
     my ($host, $port) = @_;
     _y_CMD("checkalpn() ");
@@ -3834,6 +3846,17 @@ sub checkciphers($$) {
     return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace("checkciphers($host, $port){");
 
+    if ($#cipher_results < 0) { # no ciphers found; avoid misleading values
+        foreach my $key (@{$cfg{'need-cipher'}}) {
+            $checks{$key}->{val} = _get_text('miss-cipher', "");
+        }
+        foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
+            @{$prot{$ssl}->{'pfs_ciphers'}} = _get_text('miss-cipher', "");
+        }
+        _trace("checkciphers() }");
+        return;
+    }
+
     my $ssl     = "";
     my $cipher  = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
@@ -3856,6 +3879,7 @@ sub checkciphers($$) {
     $checks{'beast'}->{val} .= " " . _istls12only($host, $port);
 
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
+
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
         $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  -"-
@@ -5544,7 +5568,7 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
         $total++;
         next if ((${$c}[2] ne $yesno) and ($yesno ne ""));
         $print = _is_print(${$c}[2], $cfg{'disabled'}, $cfg{'enabled'});
-        print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print ==1);
+        print_cipherline($legacy, $ssl, $host, $port, ${$c}[1], ${$c}[2]) if ($print == 1);
     }
     return $total;
 } # _print_results
@@ -6318,6 +6342,7 @@ while ($#argv >= 0) {
             #}
         }
 
+        # SEE Note:ALPN, NPN
         # --protos* is special to simulate empty and undefined arrays
         #   --protosnpn=value	- add value to array
         #   --protosnpn=,	- set empty array
@@ -6675,7 +6700,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--ciphermd5')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
     if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
-    if ($arg eq  '--cipheropenssl')     { $cmd{'extciphers'}    = 1;} # alias: for --force-openssl
+    if ($arg eq  '--cipheropenssl')     { $cmd{'extciphers'}= 1;    } # alias: for --force-openssl
     # our options
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
@@ -7045,6 +7070,13 @@ if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
     # TODO: probably search for a path from our list in $cfg{'ca_paths'}
 }
 
+if ($info > 0) {                # +info does not do anything with ciphers
+    # main purpose is to avoid missing "*PN" warnings in following _checks_*()
+    $cmd{'extciphers'}  = 0;
+    $cfg{'usealpn'}     = 0;
+    $cfg{'usenpn'}      = 0;
+}
+
 _yeast_TIME("inc{");
 
 #| import common and private modules
@@ -7192,6 +7224,7 @@ _yeast_TIME("ini}");
 
 #| first: all commands which do not make a connection
 #| -------------------------------------
+_y_CMD("no connection commands ...");
 if (_is_do('list'))       { printciphers(); exit 0; }
 if (_is_do('ciphers'))    { printciphers(); exit 0; }
 if (_is_do('version'))    { printversion(); exit 0; }
@@ -7252,19 +7285,19 @@ usr_pre_main();
 printusage_exit("no target hosts given") if ($#{$cfg{'hosts'}} < 0); # does not make any sense
 if (_is_do('cipher')) {
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
-        printusage_exit("additional commands in conjuntion with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
+        printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
 }
 if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +info does not allow additional commands
     # see printchecks() call below
-    _warn("additional commands in conjuntion with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
+    _warn("additional commands in conjunction with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
 }
 if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +check does not allow additional commands of type "info"
     foreach my $key (@{$cfg{'done'}->{'arg_cmds'}}) {
         if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
-            _warn("additional commands in conjuntion with '+check' are not supported; +'$key' ignored");
+            _warn("additional commands in conjunction with '+check' are not supported; +'$key' ignored");
         }
     }
 }
@@ -7300,6 +7333,7 @@ if ($fail > 0) {
     }
 }
 
+_y_CMD("hosts ...");
 _yeast_TIME("hosts{");
 
 # run the appropriate SSL tests for each host (ugly code down here):
@@ -7501,6 +7535,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 $checks{'cnt_totals'}->{val}++;
             }
         }
+        #dbx @cipher_results = (); # simulate "no ciphers found"
         checkciphers($host, $port); # necessary to compute 'out-summary'
         _yeast_TIME("need_cipher}");
      }
@@ -7730,7 +7765,7 @@ usr_pre_exit();
 _yeast_exit();
 _yeast_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
 
-if ($cfg{'exitcode'}==0) {
+if ($cfg{'exitcode'} == 0) {
     exit 0;
 } else {
     exit check_exitcode();
@@ -7810,14 +7845,18 @@ The primary variable names containing ALPN or NPN protocol names are now:
 
     protos_next     - internal list of all protocol names
     protos_alpn     - used with/for ALPN options
-    protos_npn      - used with/for  nPN options
+    protos_npn      - used with/for  NPN options
     cipher_alpns    - used with/for ALPN options for +cipher command only
-    cipher_npns     - used with/for  nPN options for +cipher command only
+    cipher_npns     - used with/for  NPN options for +cipher command only
 
 I.g. these are arrays. But as the common syntax for most other tools is to
 use a comma-separated list of names, the value in "cfg{'protos_next'}"  is
-stored as a string.  Using a string instead of an arrays also simlifies to
+stored as a string. Using a string instead of an arrays also simplifies to
 pass the value to functions.
+
+Note: openssl uses a comma-separated list for ALPN and NPN,  but it uses a
+colon-separated list for ecliptic curves (and also for ciphers).  Hence we
+allow both separators for all lists on command line.
 
 
 =head2 Note:alias
