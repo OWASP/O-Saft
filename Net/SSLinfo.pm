@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.05.17',
+    SSLINFO_VERSION => '17.05.30',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.188 17/05/31 16:38:54',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.189 17/05/31 16:42:07',
 };
 
 ######################################################## public documentation #
@@ -544,6 +544,7 @@ our @EXPORT_OK = qw(
         cn
         commonname
         altname
+        subjectaltnames
         authority
         owner
         certificate
@@ -3238,6 +3239,7 @@ sub selected        { return _SSLinfo_get('selected',         $_[0], $_[1]); }
 sub cn              { return _SSLinfo_get('cn',               $_[0], $_[1]); }
 sub commonname      { return _SSLinfo_get('cn',               $_[0], $_[1]); } # alias for cn
 sub altname         { return _SSLinfo_get('altname',          $_[0], $_[1]); }
+sub subjectaltnames { return _SSLinfo_get('altname',          $_[0], $_[1]); } # alias for altname
 sub authority       { return _SSLinfo_get('authority',        $_[0], $_[1]); }
 sub owner           { return _SSLinfo_get('owner',            $_[0], $_[1]); } # alias for subject
 sub certificate     { return _SSLinfo_get('certificate',      $_[0], $_[1]); }
