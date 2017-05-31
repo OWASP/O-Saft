@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.679 17/05/16 11:40:35",
-    STR_VERSION => "17.05.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.680 17/05/31 16:46:10",
+    STR_VERSION => "17.05.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -6829,6 +6829,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+authority')          { $arg = '+issuer';         } # alias:
     if ($arg eq  '+expire')             { $arg = '+after';          } # alias:
     if ($arg eq  '+extension')          { $arg = '+extensions';     } # alias:
+    if ($arg =~ /^\+subject$p?altnames?/){$arg = '+altname';        } # alias:
     if ($arg eq  '+sts')                { $arg = '+hsts';           } # alias:
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';        } # alias:
     if ($arg =~ /^\+sigkey$p?algorithm/){ $arg = '+signame';        } # alias:
