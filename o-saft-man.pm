@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.186 17/05/16 20:16:54";
+my  $man_SID= "@(#) o-saft-man.pm 1.187 17/05/31 22:48:33";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3941,6 +3941,13 @@ CHECKS
       Self-signed Certificate
 
         Certificate should not be self-signed.
+
+      FQDN is listed in subjectAltname (RFC2818)
+
+        The FQDN must be listed in the certificates subjectAltname.
+        The check command  +rfc_2818_names  is based on the info command
+        +verify_hostname . The check was added in 05/2017 because browsers
+        started to complain if the FQDN is not part of the subjectAltname.
 
       IP in CommonName or subjectAltname (RFC6125)
 
