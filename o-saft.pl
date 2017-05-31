@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.680 17/05/31 16:46:10",
+    SID         => "@(#) yeast.pl 1.681 17/05/31 21:56:08",
     STR_VERSION => "17.05.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -290,6 +290,7 @@ $cfg{'RC-ARGV'} = [@rc_argv];
         'checkdefault'  => 0,
         'check02102'=> 0,
         'check03116'=> 0,
+        'check2818' => 0,
         'check6125' => 0,
         'check7525' => 0,
         'checkdates'=> 0,
@@ -638,6 +639,7 @@ my %check_cert = (  ## certificate data
     'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
     'sig_enc_known' => {'txt' => "Certificate Private Key Encryption known"},
     'rfc_6125_names'=> {'txt' => "Certificate Names compliant to RFC6125"},
+    'rfc_2818_names'=> {'txt' => "Certificate subjectAltNames compliant to RFC2818"},
     # following checks in subjectAltName, CRL, OCSP, CN, O, U
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
@@ -894,6 +896,7 @@ our %shorttexts = (
     'sig_encryption'=> "Private Key with Encryption",
     'sig_enc_known' => "Private Key Encryption known",
     'rfc_6125_names'=> "Names according RFC6125",
+    'rfc_2818_names'=> "subjectAltNames according RFC2818",
     'closure'       => "TLS closure alerts",
     'fallback'      => "Fallback from TLSv1.1",
     'zlib'          => "ZLIB extension",
@@ -4320,6 +4323,17 @@ sub check02102($$)  {
     return;
 } # check02102
 
+sub check2818($$)   {
+    #? check if subjectAltNames is RFC 2818 compliant
+    my ($host, $port) = @_;
+    _y_CMD("check2818() " . $cfg{'done'}->{'check2818'});
+    $cfg{'done'}->{'check2818'}++;
+    return if ($cfg{'done'}->{'check2818'} > 1);
+    my $val = $data{'verify_altname'}->{val}($host);
+    $checks{'rfc_2818_names'}->{val} = $val if ($val !~ m/matches/); # see Net::SSLinfo.pm
+    return;
+} # check2818
+
 sub check03116($$)  {
     #? check if target is compliant to BSI TR-03116-4
     my ($host, $port) = @_;
@@ -5078,6 +5092,7 @@ sub checkssl($$)    {
         check03116($host, $port);   # check for BSI TR-03116-4
         check7525( $host, $port);   # check for RFC 7525
         check6125( $host, $port);   # check for RFC 6125 (identifiers only)
+        check2818( $host, $port);   # check for RFC 2818 (subjectAltName only)
         checksni(  $host, $port);   # check for SNI
         checksizes($host, $port);   # some sizes
     } else {
@@ -5088,6 +5103,7 @@ sub checkssl($$)    {
         $cfg{'done'}->{'check03116'}++;# "
         $cfg{'done'}->{'check7525'}++; # "
         $cfg{'done'}->{'check6125'}++; # "
+        $cfg{'done'}->{'check2818'}++; # "
         $cfg{'done'}->{'checkdv'}++;   # "
         $cfg{'done'}->{'checkev'}++;   # "
         foreach my $key (sort keys %checks) { # anything related to certs need special setting
@@ -5099,6 +5115,7 @@ sub checkssl($$)    {
         $checks{'tr_03116+'}->{val} = $cfg{'no_cert_txt'};
         $checks{'tr_03116-'}->{val} = $cfg{'no_cert_txt'};
         $checks{'rfc_6125_names'}->{val} = $cfg{'no_cert_txt'};
+        $checks{'rfc_2818_names'}->{val} = $cfg{'no_cert_txt'};
     }
 
     if ($cfg{'usehttp'} == 1) {
@@ -6823,26 +6840,28 @@ while ($#argv >= 0) {
     if ($arg eq  '+exp')                { $arg = '+exp_cipher';     } # alias:
     if ($arg eq  '+export')             { $arg = '+exp_cipher';     } # alias:
     if ($arg eq  '+null')               { $arg = '+null_cipher';    } # alias:
-    if ($arg =~ /^\+order$p?cipher/)    { $arg = '+order_cipher';   } # alias:
-    if ($arg =~ /^\+strong$p?cipher/)   { $arg = '+strong_cipher';  } # alias:
+    if ($arg =~ /^\+order$p?cipher/i)   { $arg = '+order_cipher';   } # alias:
+    if ($arg =~ /^\+strong$p?cipher/i)  { $arg = '+strong_cipher';  } # alias:
     if ($arg eq  '+owner')              { $arg = '+subject';        } # alias:
     if ($arg eq  '+authority')          { $arg = '+issuer';         } # alias:
     if ($arg eq  '+expire')             { $arg = '+after';          } # alias:
     if ($arg eq  '+extension')          { $arg = '+extensions';     } # alias:
-    if ($arg =~ /^\+subject$p?altnames?/){$arg = '+altname';        } # alias:
     if ($arg eq  '+sts')                { $arg = '+hsts';           } # alias:
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';        } # alias:
-    if ($arg =~ /^\+sigkey$p?algorithm/){ $arg = '+signame';        } # alias:
+    if ($arg =~ /^\+sigkey$p?algorithm/i){$arg = '+signame';        } # alias:
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias:
-    if ($arg =~ /^\+rfc$p?6125$/i)      { $arg = '+rfc_6125_names'; } # alias; # TODO until check is improved (6/2015)
+    if ($arg =~ /^\+rfc$p?2818$/i)      { $arg = '+rfc_2818_names'; } # alias:
+    if ($arg =~ /^\+rfc$p?2818$p?names/i){$arg = '+rfc_2818_names'; } # alias:
+    if ($arg =~ /^\+rfc$p?6125$/i)      { $arg = '+rfc_6125_names'; } # alias: # TODO until check is improved (6/2015)
     if ($arg =~ /^\+rfc$p?6125$p?names/i){$arg = '+rfc_6125_names'; } # alias:
     if ($arg =~ /^\+rfc$p?6797$/i)      { $arg = '+hsts';           } # alias:
     if ($arg =~ /^\+rfc$p?7525$/i)      { $arg = '+rfc_7525';       } # alias:
     # do not match +fingerprints  in next line as it may be in .o-saft.pl
     if ($arg =~ /^\+fingerprint$p?(.{2,})$/)          { $arg = '+fingerprint_' . $1;} # alias:
-    if ($arg =~ /^\+fingerprint$p?sha$/)              { $arg = '+fingerprint_sha1'; } # alais:
+    if ($arg =~ /^\+fingerprint$p?sha$/i)             { $arg = '+fingerprint_sha1'; } # alais:
+    if ($arg =~ /^\+subject$p?altnames?/i)            { $arg = '+altname';          } # alias:
     if ($arg =~ /^\+modulus$p?exponent$p?1$/)         { $arg = '+modulus_exp_1';    } # alias:
-    if ($arg =~ /^\+modulus$p?exponent$p?65537$/)     { $arg = '+modulus_exp_65537';  } # alias:
+    if ($arg =~ /^\+modulus$p?exponent$p?65537$/)     { $arg = '+modulus_exp_65537';} # alias:
     if ($arg =~ /^\+modulus$p?exponent$p?size$/)      { $arg = '+modulus_exp_oldssl'; } # alias:
     if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
     if ($arg =~ /^\+public$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
