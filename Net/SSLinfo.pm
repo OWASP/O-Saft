@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.187 17/05/16 22:02:21',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.188 17/05/31 16:38:54',
 };
 
 ######################################################## public documentation #
@@ -1032,7 +1032,7 @@ sub ssleay_methods  {
     push(@list, 'CTX_v23_new'     ) if (defined &Net::SSLeay::CTX_v23_new);
     push(@list, 'CTX_v3_new'      ) if (defined &Net::SSLeay::CTX_v3_new);
     push(@list, 'CTX_v2_new'      ) if (defined &Net::SSLeay::CTX_v2_new);
-    push(@list, 'CTX_new_with_method') if (defined &Net::SSLeay::CTX_new_with_method);
+    push(@list, 'CTX_new_with_method')  if (defined &Net::SSLeay::CTX_new_with_method);
     push(@list, 'CTX_new'         ) if (defined &Net::SSLeay::CTX_new);
     push(@list, 'CTX_dtlsv1_3_new') if (defined &Net::SSLeay::CTX_dtlsv1_3_new);
     push(@list, 'CTX_dtlsv1_2_new') if (defined &Net::SSLeay::CTX_dtlsv1_2_new);
@@ -1040,6 +1040,8 @@ sub ssleay_methods  {
     push(@list, 'CTX_get_options' ) if (defined &Net::SSLeay::CTX_get_options);
     push(@list, 'CTX_set_options' ) if (defined &Net::SSLeay::CTX_set_options);
     push(@list, 'CTX_set_timeout' ) if (defined &Net::SSLeay::CTX_set_timeout);
+    push(@list, 'CTX_set_alpn_protos')  if (defined &Net::SSLeay::CTX_set_alpn_protos); # Net::SSLeay > 1.72 ??
+    push(@list, 'CTX_set_next_proto_select_cb') if (defined &Net::SSLeay::CTX_set_next_proto_select_cb);
     return @list;
 } # ssleay_methods
 
@@ -1061,7 +1063,7 @@ $line
 #            ::DTLSv1_2_method  = " . ((grep{/^DTLSv1_2_method$/}  @list) ? 1 : 0) . "
 #            ::DTLS_method      = " . ((grep{/^DTLS_method$/}      @list) ? 1 : 0) . "
 #}
-#            ::CTX_new_with_method = " . ((grep{/^CTX_new_with_method$/} @list) ? 1 : 0) . "
+#            ::CTX_new_with_method  = " . ((grep{/^CTX_new_with_method$/} @list) ? 1 : 0) . "
 #            ::CTX_new          = " . ((grep{/^CTX_new$/}          @list) ? 1 : 0) . "
 #            ::CTX_v2_new       = " . ((grep{/^CTX_v2_new$/}       @list) ? 1 : 0) . "
 #            ::CTX_v3_new       = " . ((grep{/^CTX_v3_new$/}       @list) ? 1 : 0) . "
@@ -1077,6 +1079,8 @@ $line
 #            ::CTX_get_options  = " . ((grep{/^CTX_get_options$/}  @list) ? 1 : 0) . "
 #            ::CTX_set_options  = " . ((grep{/^CTX_set_options$/}  @list) ? 1 : 0) . "
 #            ::CTX_set_timeout  = " . ((grep{/^CTX_set_timeout$/}  @list) ? 1 : 0) . "
+#            ::CTX_set_alpn_protos  = " . ((grep{/^CTX_set_alpn_protos$/}  @list) ? 1 : 0) . "
+#            ::CTX_set_next_proto_select_cb = " . ((grep{/^CTX_set_next_proto_select_cb$/}  @list) ? 1 : 0) . "
 $line
 # Net::SSLeay} function
 # Net::SSLeay{ constant           hex value
