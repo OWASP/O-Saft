@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.05.17',  # official version number of tis file
+    OSAFT_VERSION   => '17.05.30',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.107 17/05/16 11:43:09',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.108 17/05/31 22:29:31',
 
 };
 
@@ -1488,7 +1488,7 @@ our %cfg = (
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected ev+ ev-),
-                        qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 rfc_6125_names),
+                        qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 rfc_6125_names rfc_2818_names),
                        ],
     'need-checkchr' => [        # commands which always need checking various characters
                         qw(cn subject issuer altname ext_crl ocsp_uri),
