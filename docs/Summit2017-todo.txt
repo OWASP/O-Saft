@@ -1,0 +1,163 @@
+
+Wishes:
+	* get and use a reliable repository (currently git sucks)
+	  ** mandatory features of a reliable repository are:
+		+ no delete operation available (except last commit)
+		+ commit must be assigne to unique user
+		+ commit must have a reliable timestamp (based on epoch)
+		+ atomic commit (if more than one commit in push)
+		+ search and get/clone based on timestamp, tag
+	  ** prefered features
+		+ platform idependent client
+		+ merge functionality (if files are not locked for editing)
+		+ tree views (tags, branches, time-based)
+
+
+	* write postprocess for each --legacy=  option
+	  ** remove --legacy from o-saft.pl
+	  ** start with printciphers() 
+
+	* write postprocess for scoring
+	  ** remove anything related to scoring from o-saft.pl
+
+	* Cipher list, see OSaft/_ciphers_osaft.pm
+	  ** check settings; sort list, add RFC, include comments (from source)
+	  ** after change check printciphers() first
+	  ** after change check all loops:  foreach (sort keys %ciphers) ...
+	  -- problem always: currenlty the cipher suite name is the key in
+	     %ciphers which is ambigious for some like DES-CBC.SHA which exist
+	     for more than one protocol
+	     in future the hex-id is the key to %ciphers, only renamed ones
+	     are then a problem (i.e. 0xcc,0x13 etc.)
+
+	* implement full OCSP checking (URL and response data)
+
+	* implement getting certificate with all chains
+
+	* implement full certificate chain checking
+
+	* implement CCS injection; see _isccs()
+
+	* check implementation of FALLBACK_SCSV: +scsv and +fallback
+
+	* implement --proxy* for openssl calls also
+
+	* implement client-side renegotiation for/with +reneg
+
+	* change Net::SSLinfo _openssl_x509() from openssl to Net::SSLeay::*
+
+	* complete implementation of ccs vulnerability
+
+	* implement BEAST (if possible)
+
+	* EV certificate checks needs a review (new standard)
+	  cabforum.org  siehe EV SSL Cert. Guideline (Version 1.4.5 und 1.6.0 
+	  Appendix D )
+
+	* review check for RFC7525 and complete implementation
+
+	* complete implementation of reading from files (output from openssl)
+	  ** implement some kind of dump, which can be replayed
+
+	* Net::SSLinfo::do_ssl_open()  does not honor --sni when using GET /
+
+	* improve testing (simple sample script exist)
+	  ** build system which stores and compares data
+	  ** test must be repeatable, by host, by test-class, by +command
+	  ** CI with travis, rudimentary .travis.yml exists
+	  ** add knwon SSL-testservers and proper test cases to test-suite,
+		like badssl.com *.tlsfun.de fancyssl.hboeck.de
+
+	* long term: build own server for testing
+
+	* o-saft.tcl
+	  ** mark search in slide bar
+	  ** implement semantic search (nltk, tf-idf)
+	  ** make start page more sexy (big buttons are badly identified)
+
+	* improve --help=any section
+	  so that it also will show +commands or --options or sub-sections
+
+	* reactivate Makefile
+
+	* implement --alpn and --npn incl. --cipher-*= for openssl
+### TODO: -nextprotoneg : openssl sollte für jedes Protokoll aufgerufen werden,
+###        nicht alle zusammen (siehe Net::SSLinfo.pm)
+###       Hintergrund: encrypted.google.com nimmt das erste passende Protokoll
+###       liefert aber keine Liste wenn diese leer ist (siehe man openssl:
+###    -nextprotoneg protocols
+###        enable Next Protocol Negotiation TLS extension and provide a list
+###        of comma-separated protocol names that the client should advertise
+###        support for. The list should contain most wanted protocols first.
+###        Protocol names are printable ASCII strings, for example "http/1.1"
+###        or "spdy/3".  Empty list of protocols is treated specially and will
+###        cause the client to advertise support for the TLS extension but
+###        disconnect just after reciving ServerHello with a list of server
+###        supported protocols.
+
+	* internal cleanup: do commands in .o-saft.pl still match those
+	  in o-saft.pl itself? info, check, quick, ...  --norc
+
+	* +cipher with sockets is implemented in o-saft.pl, while +cipher
+	  with openssl is implemented in Net::SSLinfo.pm
+
+	* rething concept for  Net::SSLinfo::do_openssl()
+	  should not silently add option (-CApath -alpn etc.)
+
+	* test with local installed modules (Net::SSLeay, IO::Socket::SSL)
+	  ** write proper documentation
+
+	* setup wiki or alike for internal documentation of concept and code
+
+	* do we need translations?
+	  Note: all used text defaults must be inside the code, prefered
+		language english; an english "text" setting page may then be
+		generated
+
+= some unsorted =
+
+	* -nextprotoneg may return:
+Next protocol: (1) spdy/3 
+Next protocol: (2) gibts nicht
+
+	* +hasslpn vs. +alpns vs. +alpn (same for npn)
+
+	* strange syntax for --cipheralpn= --ciphernpn=
+	  --cipheralpn=, and --cipheralpn=,,
+	  is a general problem with option parsing which ignores options
+	  with empty values: --opt=
+	  needs a fix like:  if ($arg =~ m/^--.*=$/) ....
+
+	* implement check in printciphers_dh()
+
+	* filter and check ext_authority_* for TR*
+
+	* internal: --sni : check what value 0 does
+
+	* add option to use installed and passed openssl --openssl=/path...
+
+	* pass "s_client" as variable to _useopenssl() so that we can add
+	  more options like -starttls  -proxy*
+
+	* +rfc7525 cannot use get_dh_paramter() because check requires
+	  ciphers, but get_dh_paramter() only uses openssl, not Net::SSLeay
+
+	* check implementation of _hint() and osaft::printhint()
+
+	* special  --traceconnect  which shows commands (socket or openssl)
+	  to connect to target, no other trace output 
+
+	* replace huge if-switch for argument parsing by a proper table
+	  with all options and commands (table needs to contain a regex for
+	  each option/command, the cfg-value to set, and ..??..
+
+	* cfg{openssl} structure also in Net::SSLinfo
+	  then move all related _check_* and _*enable_* functions to
+	  Net::SSLinfo
+	  BUT: at least ALPN, NPN and Curves checks are also necessary for
+	  "+cipher --force-openssl" which does not need Net::SSLinfo
+
+
+=== Epilog ===
+Content herein becomes TODO for O-Saft after OWASP Summit 2017
+
