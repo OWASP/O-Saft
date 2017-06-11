@@ -1,0 +1,288 @@
+
+###############################################################################
+##                                                                           ##
+##  This file/text is still a draft (Januar 2017).                           ##
+##  It describes the main concepts used for programming O-Saft               ##
+##                                                                           ##
+###############################################################################
+
+
+=== Concepts ===
+
+The purpose of this tool is to do the work, not to tell the user what to do
+to get the tool working!
+
+The purpose of ''O-Saft'' is to do the work, not to force the user to learn
+a new tool or to install "newer" software first.
+
+It follows the perl principle "Perl is a language for getting your job done."
+
+O-Saft has many features that ease the task of the users at the expense of
+greater complexity in some parts of the code (for example the parser for
+command line options and arguments).
+
+The design of O-Saft's commands and options is very much influenced by
+linguistic principles. For examples, most options can be abrevated in
+various ways. Also, common things should be short and easy to remember, aka
+"concise and natural for humans".
+In the documentation important information should come first, details
+will follow.
+  include Huffman coding (common constructions should be short), good
+  end-weighting (the important information should come first), and a
+  large collection of language primitives.
+
+It's often a matter of opinion and taste how something should be done,
+for example command line arguments. So we try to allow all options and
+arguments a user might be used to (i.e. from other tools).
+
+It'also often a matter of opinion and taste how results should be presented.
+O-Saft strictly follows the rule: one check result in one line of output.
+It should be very easy to postprocess output. Think the UNIX pipe model.
+
+Results (checks) are marked "yes" or "no". 
+It leaves the interpretation, if the result is "good" or "bad", to the user.
+
+This tool should run on older systems too.
+Background:
+Most tools rely on the newest frameworks, libraries, modules and other
+gimmicks just to make work easy for programmers. These programmers forget,
+that productive systems are still most often one year or more behind the
+newest releases. In practice users of these tools are then forced to upgrade
+parts of the system or can't use the tool. Why? A program should do what the
+user wants and not the other way around, where the user does what the program
+wants. Hence O-Saft tries hard to run on ancient systems too. It may not have
+all features then, but it should work. In such cases, **WARNING messages are 
+printed. These warnings cannot be switched off the usual way with --no-warning.
+just to keep you -the user- informed, that not everything is possible.
+
+--> Drawbacks, traps:
+  O-Saft complains about unkwown commands (+cmd), but not about unknown
+  options. This means that unknown options are silently ignored, a misspelled
+  option is unknown. If unknown option are used with parameters, like
+  -legacy=compact  then the parameter (compact here) is treated as hostname.
+  (may change in future)
+
+--> HACKER's INFO
+  Because of our goal to support running on old systems too (see  CONCEPTS),
+  parts of the code make ugly checks for version numbers and try to do checks
+  in a cumbersome way. 
+  Keep in mind: the code knows how to do the work, the user most likely does
+  not know.
+
+
+=== Programming ===
+
+O-Saft's code favours language constructs that are easy to read for humans,
+even they are unusual for other programming languages (like postfix conditions).
+
+The purpose of O-Saft is to make users' life simpler, not the programmers'.
+We try hard to fullfil this goal.
+Programming is often done in a very defensive way, means that any kind of
+error (and exception if any) will be catched and displayed to the user.
+Unfortnately not all errors can be foreseen, hence a "silent" catch is used
+sometimes, which disacrds any error message (mainly used in the GUI o-saft.tcl).
+
+There are often situations where the underlaying system misses tools, is
+improper configured or simply behaves strange. If such conditions are
+identified, a proper  **WARNING  or  !!Hint  will be printed. 
+This may disturb or bore the user, but we don't hide what we detect, which
+might be suspiscious somehow.
+This is a tool to check security accurate, not to give a "good feeling".
+
+
+== Programming: Cipher ==
+
+There are to modes (technically spoken) to detect the ciphers supported
+by the server:
+  +cipher     - using perl's IO::Socket:SSL module (mainly based on openssl)
+  +cipherall  - private implementation without using other perl modules
+
+
+== Programming: +cipher ==
+
+To get the ciphers supported by the server, a basic connection is made
+using IO::Socket:SSL->new(). This connection does not check the server's
+certificate as it is not important for the cipher. It also uses SNI by
+default (unless disabled with --no-sni), because most modern servers
+expect TLS instead of SSL protocols and may fail with "handshake error"
+(see man IO::Socket:SSL) if the server expects SNI but is not set.
+
+Most likely IO::Socket:SSL->new() uses CTX_tlsv1_2_new() (from under-
+laying libssl), which has proper fallbacks to older protocols (like
+TLSv1 or even SSLv3).
+
+
+== Programming: +cipherall ==
+
+In this mode, all checks to get the server's cipher is done using core
+perl without additional modules.
+
+
+== Programming: +info ==
+
+All other commands, beside +cipher and +cipherall, use Net::SSLeay to
+connect to the server. However, Net::SSLeay uses IO::Socket:SSL underneath.
+In this case, the connection must succeed. We encounter the same
+problems as described for +cipher, in particular the server expects
+modern protocols (TLS instead of SSL) and SNI.
+Hence we try to connect using the most modern protocol first (which is
+CTX_tlsv1_2_new() and TLSv1_2_method() in 2017). If the connection fails,
+the next method is used, until the connection is established or failed
+at all. This logic is implemented in Net::SSLinfo's do_ssl_open().
+
+
+
+=== Results ===
+The purpose of this tool is to do the work, not to tell the user what to do!
+
+Results (checks) are marked "yes" or "no". 
+It leaves the interpretation, if the result is "good" or "bad", to the user.
+
+However, for the reults of the checks, it is not always possible to rate
+the result as "good" or "bad" or "insecure" or whatever. Hence O-Saft can
+not give "the best" recomendation, or a "proper" recomendation. In practice
+it depends on the context what a recomendation, or countermesure should be.
+Hence, most results are marked "yes" if considered good, and "no" if 
+considered "questionable" or "not good" (i.e. according other checks).
+
+
+== Results: Status Code ==
+Wha does O-Saft not support a  --fail  option?
+
+Long answer: 
+
+As said before, the functionality is implemented now, 'cause I see the practical
+use-case. However, it's experimental for now (means option and functionality may
+change slightly in near furure), please check when new versions are used.
+
+Clone from github, and everything should work as requested.
+
+Background: one of O-Saft's concepts is to "show important information" and to
+inform about the performed checks based on these informations. The check results
+are basically "yes" or "no". It leaves the interpretation, if the result is
+"good" or "bad", to the user.  This means that all reported results are
+unbiased.
+Said this, it's obvious that o-saft.pl cannot return any other status beside the
+printed results (which *are* the status).
+The idea is, that postprocessors should be used to use the results for scoring
+or alike. This is another concept, and o-saft.pl is prepared for the ease use of
+prostprocessors.
+
+As it is common sense that a status code other then 0 indicates that something
+is wrong, such a status code would violate this concept as it is biased.
+A status code other than 0 would also make using o-saft.pl in a pipe much more
+difficult.
+
+Now, I see the practical use in a pipe or process chain, which simplifies the
+handling of the results, sometimes. 
+So, the requirement makes sense, but throws a couple of questions to be
+answered. The requirement, as descibed in this issue, is to return a status code
+other than 0, if any check reports "no". Could be done (is done 11oct2016:), but
+is not the complete truth.
+What about the other checks
+  * like the sizes?
+  * the DNS checks?
+  * are medium ciphers subject for fail?
+  * What about incomplete checks because the server did not return proper data
+    (i.e. DH parameters)?
+  * What about failed checks, which could be considered unimportant in the
+    tested environment (i.e. some STS or compliance checks)?
+
+These are the same questions as for scoring the results (like other tools do).
+It's a matter of personal opinion and/or the attributes of the tested
+enviroinment, if "something" should be considered "good" or "bad".
+However, if a user is aware of such problems, she can configure O-Saft to do
+only the relevant checks. Other tools cannot do this, and hence score
+everything, wether important, usefull, practical, ... or not.
+Please see next comment for a practical example.
+
+How to deal with these questions?
+I.g. the "--fail" functionality needs to be configurable by the user.
+Best example why this is necessary, is the +cipher command. Is any supported
+cipher other than HIGH subject for fail? Should MEDIUM ciphers not fail? Or ask
+your marketing people what they think about disabling DES-CBC3-SHA (which is
+weak now), just to pass the test?
+
+My opinion is, that a configurable --fail in conjunction with the existing
+configuration of the checks to be performed, can do the trick.
+
+Conclusion: there is no -and will not be- a general --fail option. Instead, we
+provide some options if various kinds of checks should be subject for an exit
+code. 
+With this concepts, it's up to the user to configure O-Saft to return a proper
+exit code. This should not be difficult for experianced users with special
+requirements ;-)
+For now, --exitcode just counting the "no" checks is the starting points.
+
+Here we go, this desciption is subject for discussion. Please provide you
+opinions.
+
+
+== Examples for  --exitcode ==
+
+Here is a practical example why a general "--fail" would not return the
+expected results.
+
+Using  `o-saft.pl mysite.org --exitcode +vulns` would return results
+like shown in the very first comment above.
+Looking at these results, we see 6 "no" checks: BEAST, BREACH, DROWN,
+Lucky13, Sweet32 and SSLv2. My opinion is -please correct me if wrong-
+that only 2 checks should count for the exit code: Lucky13 and Sweet32.
+
+Currently, having the concepts (see previous comment) in mind, the
+solution to filter the improper checks would be to use prostprocessor:
+
+    o-saft.pl mysite.org --exitcode +vulns \
+	|grep -v '(<<'|egrep -q 'no( |$)' || echo fail
+
+o-saft.pl could be configured to do the proper tests only. There are at least
+3 ways to do it:
+
+1. using proper commands only:
+
+    o-saft.pl mysite.org --exitcode +crime +freak +heartbleed +logjam +lucky13 \
+	+poodle +rc4 +sloth +sweet32 +time +hassslv3 +pfs_cipher +session_random
+
+2. using .o-saft.pl (the traditional way):
+
+cat > .o-saft.pl <<EoT
+--host=mysite.org
+--exitcode
++crime
++freak
++heartbleed
++logjam
++lucky13
++poodle
++rc4
++sloth
++sweet32
++time
++hassslv3
++pfs_cipher
++session_random
+EoT
+
+   o-saft.pl
+
+3. using .o-saft.pl (advanced usage):
+
+cat > .o-saft.pl <<EoT
+--host=mysite.org
+--exitcode
++heureca
+### define new command +heureca , all following must be in one line
+--cfg_cmd=heureca=crime freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 time hassslv3 pfs_cipher session_random
+EoT
+
+   o-saft.pl
+
+
+Note that creating .o-saft.pl must be done once in the directory where
+o-saft.pl will be started.
+
+Hope this helps to understand how O-Saft handles various situation and
+how to configure it for very spezial purposes.
+
+
+
