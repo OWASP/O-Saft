@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.187 17/05/31 22:48:33";
+my  $man_SID= "@(#) o-saft-man.pm 1.188 17/06/16 19:15:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -658,6 +658,8 @@ and OpenVPN",
                    # Truncated CA keys (value 3)
                    # Truncated HMAC (value 4)
                    # (Certificate) Status Request (value 5)
+                   # OCSP stapling mechanism
+        '7633'  => [ "TLS Extension: Feature Extension: Must Staple" ],
         '6176'  => [ "Prohibiting Secure Sockets Layer (SSL) Version 2.0" ],
         '3711'  => [ "The Secure Real-time Transport Protocol (SRTP)" ],
         '6189'  => [ "ZRTP: Media Path Key Agreement for Unicast Secure RTP" ],
@@ -3498,6 +3500,12 @@ OPTIONS
               $0 --help=cfg-checks
               $0 --help=cfg-data
 
+      --cfg-cipher=CIPHER=value
+
+          Redefine the security value (i.e. HIGH) in the cipher description.
+          Example:
+          --cfg-cipher=NULL-MD5=no-security-at-all
+
       --cfg_text=KEY=TEXT
       --cfg-text=KEY=TEXT
 
@@ -4532,6 +4540,7 @@ CUSTOMIZATION
           * --cfg-data=KEY=TEXT
           * --cfg-hint=KEY=TEXT
           * --cfg-text=KEY=TEXT
+          * --cfg-cipher=CIPHER=TEXT
 
         KEY  is the key used in the internal data structure, and  TEXT is the
         value to be set for this key.  Note that unknown keys will be ignored
@@ -4539,6 +4548,10 @@ CUSTOMIZATION
 
         If KEY=TEXT is an exiting filename, all lines from that file are read
         and set. For details see  CONFIGURATION FILE  below.
+
+        CIPHER  must be a valid cipher suite name as shown with:
+
+            $0 ciphers
 
         NOTE that such configuration options should be used before any --help 
         or  --help=*  option, otherwise the changed setting is not visible.
