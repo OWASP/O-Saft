@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.681 17/05/31 21:56:08",
+    SID         => "@(#) yeast.pl 1.682 17/06/16 18:52:45",
     STR_VERSION => "17.05.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2534,6 +2534,16 @@ sub _cfg_set($$)        {
     _trace("_cfg_set() }");
     return;
 } # _cfg_set
+
+sub _cfg_set_cipher($$){
+    # set value for security of cipher in configuration %ciphers
+    my ($typ, $arg) = @_;
+    my ($key, $val) = split(/=/, $arg, 2); # left of first = is key
+    #dbx# _dbx "arg: $arg # key: $key # val: $val";
+    ${$ciphers{$key}}[0] = $val;
+    #dbx# _dbx @{$ciphers{$key}};
+    return;
+} # _cfg_set_cipher
 
 # check functions for array members and hash keys
 sub __SSLinfo($$$)      {
@@ -6231,12 +6241,15 @@ while ($#argv >= 0) {
     if ($typ ne 'HOST') { # option arguments
         # Note that $arg already contains the argument
         # hence `next' at end of surrounding if()
+        # $type is set at end of  each matching if condition,  hence only the
+        # first matching if condition is executed; sequence is important!
         _y_ARG("argument? $arg, typ= $typ");
         push(@{$dbx{exe}}, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
         #  $typ = '????'; # expected next argument
         #  +---------+----------+------------------------------+--------------------
         #   argument to process   what to do                    expect next argument
         #  +---------+----------+------------------------------+--------------------
+        if ($typ eq 'CFG-CIPHER') { _cfg_set_cipher($typ, $arg);$typ = 'HOST'; }
         if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
@@ -6753,6 +6766,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--envlibvar')         { $typ = 'ENV';             }
     if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
     if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
+    if ($arg =~ /^--cfgcipher$/)        { $typ = 'CFG-CIPHER';      }
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--format')            { $typ = 'FORMAT';          }
     if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
