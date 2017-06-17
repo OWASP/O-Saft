@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.683 17/06/17 12:57:56",
+    SID         => "@(#) yeast.pl 1.684 17/06/17 13:32:27",
     STR_VERSION => "17.05.30",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -252,6 +252,12 @@ if ((grep{/(?:--rc)$/i} @ARGV) > 0) {           # (re-)compute default RC-File
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
 }
+if ((grep{/(?:--rc=)/i} @ARGV) > 0) {           # other RC-FILE given
+    $cfg{'RC-FILE'} =  (grep{/--rc=.*/} @ARGV)[0];  # get value --rc=*
+    $cfg{'RC-FILE'} =~ s#--rc=##;               # stripp off --rc=
+    # no check if file exists, will be done below
+}
+print "#o-saft.pl  RC-FILE: $cfg{'RC-FILE'}\n" if ((grep{/--v/i} @ARGV) > 0);
 my @rc_argv = "";
 if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
     # we do not use a function for following to avoid passing @argv, @rc_argv
@@ -266,7 +272,7 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         ## use critic
         close($rc);
         push(@argv, @rc_argv);
-        print "#o-saft.pl  $cfg{'RC-FILE'}: " . join(" ", @rc_argv) . "\n" if ((grep{/--v/i} @ARGV) > 0);
+        print "#o-saft.pl  $cfg{'RC-FILE'}: #{" . join("\n  ", "", @rc_argv) .  "\n#}\n" if ((grep{/--v/i} @ARGV) > 0);
     } else {
         _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);
     }
