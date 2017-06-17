@@ -63,10 +63,10 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.682 17/06/16 18:52:45",
+    SID         => "@(#) yeast.pl 1.683 17/06/17 12:57:56",
     STR_VERSION => "17.05.30",          # <== our official version number
 };
-sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y_CMD
+sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
     my @txt = @_;
     my $me  = ($0 =~ m/yeast.pl/) ? "yeast" : "o-saft.pl";  # nice name
@@ -75,8 +75,8 @@ sub _yeast_TIME(@)  { # print timestamp if --trace-time was given; similar to _y
     }
     return;
 }
-sub _yeast_EXIT($)  { # exit if parameter matches given argument in @ARGV
-    my $txt =  shift;
+sub _yeast_EXIT($)  {   # exit if parameter matches given argument in @ARGV
+    my $txt =  shift;   # example: INIT0 - initialization start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
     if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {
@@ -248,12 +248,13 @@ sub _load_file          {
 #| -------------------------------------
 _yeast_TIME("cfg{");
 _yeast_EXIT("exit=CONF0 - RC-FILE start");
-if ((grep{/(?:--rc)$/i} @ARGV) > 0) {           # default RC-File
+if ((grep{/(?:--rc)$/i} @ARGV) > 0) {           # (re-)compute default RC-File
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
 }
 my @rc_argv = "";
 if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
+    # we do not use a function for following to avoid passing @argv, @rc_argv
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
         push(@{$dbx{file}}, $cfg{'RC-FILE'});
         _print_read(  "$cfg{'RC-FILE'}", "RC-FILE done");
@@ -261,13 +262,13 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         #  NOTE: the purpose here is to *change the source array"
         @rc_argv = grep{!/\s*#[^\r\n]*/} <$rc>; # remove comment lines
         @rc_argv = grep{s/[\r\n]//} @rc_argv;   # remove newlines
-        @rc_argv = grep{s/\s*(--?)/$1/} @rc_argv;   # remove leading spaces for options
+        @rc_argv = grep{s/\s*([+-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
         ## use critic
         close($rc);
         push(@argv, @rc_argv);
-        #_dbx ".RC: " . join(" ", @rc_argv) . "\n";
+        print "#o-saft.pl  $cfg{'RC-FILE'}: " . join(" ", @rc_argv) . "\n" if ((grep{/--v/i} @ARGV) > 0);
     } else {
-        _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);;
+        _print_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if ((grep{/--v/i} @ARGV) > 0);
     }
 }
 _yeast_EXIT("exit=CONF1 - RC-FILE end");
@@ -2502,7 +2503,7 @@ sub _cfg_set($$)        {
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
                     # whitelust check for valid characters; avoid injections
                     push(@{$cfg{'commands-USR'}}, $key);
-                    _warn("command '+$key' specified by user") if ((grep{/--v/i} @ARGV) > 0);;
+                    _warn("command '+$key' specified by user") if ((grep{/--v/i} @ARGV) > 0);
                 }
             }
         }
@@ -2535,7 +2536,7 @@ sub _cfg_set($$)        {
     return;
 } # _cfg_set
 
-sub _cfg_set_cipher($$){
+sub _cfg_set_cipher($$) {
     # set value for security of cipher in configuration %ciphers
     my ($typ, $arg) = @_;
     my ($key, $val) = split(/=/, $arg, 2); # left of first = is key
