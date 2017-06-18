@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.688 17/06/18 10:54:00",
-    STR_VERSION => "17.06.15",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.689 17/06/18 13:14:10",
+    STR_VERSION => "17.06.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -721,15 +721,18 @@ my %check_dest = (  ## target (connection) data
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
     'hasalpn'       => {'txt' => "Target supports ALPN"},
     'hasnpn'        => {'txt' => "Target supports  NPN"},
-    'strong_cipher' => {'txt' => "Target selects strongest cipher"},
-    'order_cipher'  => {'txt' => "Target does not honors client's cipher order"}, # NOT YET USED
-    'adh_cipher'    => {'txt' => "Target does not accept ADH ciphers"},
-    'null_cipher'   => {'txt' => "Target does not accept NULL ciphers"},
-    'exp_cipher'    => {'txt' => "Target does not accept EXPORT ciphers"},
-    'cbc_cipher'    => {'txt' => "Target does not accept CBC ciphers"},
-    'des_cipher'    => {'txt' => "Target does not accept DES ciphers"},
-    'rc4_cipher'    => {'txt' => "Target does not accept RC4 ciphers"},
-    'edh_cipher'    => {'txt' => "Target supports EDH ciphers"},
+    'cipher_strong' => {'txt' => "Target selects strongest cipher"},
+    'cipher_order'  => {'txt' => "Target does not honors client's cipher order"}, # NOT YET USED
+    'cipher_weak'   => {'txt' => "Target does not accept weak cipher"},
+    'cipher_null'   => {'txt' => "Target does not accept NULL ciphers"},
+    'cipher_adh'    => {'txt' => "Target does not accept ADH ciphers"},
+    'cipher_exp'    => {'txt' => "Target does not accept EXPORT ciphers"},
+    'cipher_cbc'    => {'txt' => "Target does not accept CBC ciphers"},
+    'cipher_des'    => {'txt' => "Target does not accept DES ciphers"},
+    'cipher_rc4'    => {'txt' => "Target does not accept RC4 ciphers"},
+    'cipher_edh'    => {'txt' => "Target supports EDH ciphers"},
+    'cipher_pfs'    => {'txt' => "Target supports PFS (selected cipher)"},
+    'cipher_pfsall' => {'txt' => "Target supports PFS (all ciphers)"},
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
     'ism'           => {'txt' => "Target is ISM compliant (ciphers only)"},
@@ -743,8 +746,6 @@ my %check_dest = (  ## target (connection) data
     'rfc_7525'      => {'txt' => "Target is RFC 7525 compliant"},
     'resumption'    => {'txt' => "Target supports Resumption"},
     'renegotiation' => {'txt' => "Target supports Secure Renegotiation"},
-    'pfs_cipher'    => {'txt' => "Target supports PFS (selected cipher)"},
-    'pfs_cipherall' => {'txt' => "Target supports PFS (all ciphers)"},
     'krb5'          => {'txt' => "Target supports Krb5"},
     'psk_hint'      => {'txt' => "Target supports PSK Identity Hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
@@ -863,13 +864,18 @@ our %shorttexts = (
     'alpns'         => "Supported ALPNs",
     'npns'          => "Supported  NPNs",
     'next_protocols'=> "(NPN) Protocols",
-    'adh_cipher'    => "No ADH ciphers",
-    'null_cipher'   => "No NULL ciphers",
-    'exp_cipher'    => "No EXPORT ciphers",
-    'cbc_cipher'    => "No CBC ciphers",
-    'des_cipher'    => "No DES ciphers",
-    'rc4_cipher'    => "No RC4 ciphers",
-    'edh_cipher'    => "EDH ciphers",
+    'cipher_strong' => "Strongest cipher selected",
+    'cipher_order'  => "Client's cipher order",
+    'cipher_weak'   => "Weak cipher selected",
+    'cipher_null'   => "No NULL ciphers",
+    'cipher_adh'    => "No ADH ciphers",
+    'cipher_exp'    => "No EXPORT ciphers",
+    'cipher_cbc'    => "No CBC ciphers",
+    'cipher_des'    => "No DES ciphers",
+    'cipher_rc4'    => "No RC4 ciphers",
+    'cipher_edh'    => "EDH ciphers",
+    'cipher_pfs'    => "PFS (selected cipher)",
+    'cipher_pfsall' => "PFS (all ciphers)",
     'sgc'           => "SGC supported",
     'cps'           => "CPS supported",
     'crl'           => "CRL supported",
@@ -909,12 +915,8 @@ our %shorttexts = (
     'zlib'          => "ZLIB extension",
     'lzo'           => "GnuTLS extension",
     'open_pgp'      => "OpenPGP extension",
-    'strong_cipher' => "Strongest cipher selected",
-    'order_cipher'  => "Client's cipher order",
     'ism'           => "ISM compliant",
     'pci'           => "PCI compliant",
-    'pfs_cipher'    => "PFS (selected cipher)",
-    'pfs_cipherall' => "PFS (all ciphers)",
     'fips'          => "FIPS-140 compliant",
 #   'nsab'          => "NSA Suite B compliant",
     'tr_02102+'     => "TR-02102-2 compliant (strict)",
@@ -3804,11 +3806,12 @@ sub checkdefault    {
     return if ($cfg{'done'}->{'checkdefault'} > 1);
     _trace("checkdefault($host, $port){");
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
-        my $strong = $prot{$ssl}->{'strong_cipher'};
-        my $weak   = $prot{$ssl}->{'weak_cipher'};
+        my $strong = $prot{$ssl}->{'cipher_strong'};
+        my $weak   = $prot{$ssl}->{'cipher_weak'};
         my $txt = "$strong,$weak";
-        $checks{'strong_cipher'}->{val} .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # FIXME: assumtion wrong if only one cipher accepted
-        $checks{'order_cipher'}->{val}  .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # NOT YET USED
+        $checks{'cipher_strong'}->{val} .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # FIXME: assumtion wrong if only one cipher accepted
+        $checks{'cipher_order'}->{val}  .= _prot_cipher($ssl, $txt) if ($weak ne $strong);  # NOT YET USED
+        $checks{'cipher_weak'}->{val}   .= _prot_cipher($ssl, $txt) if ($weak eq $strong);  # remember: eq !
     }
     _trace("checkdefault() }");
     return;
@@ -3821,13 +3824,13 @@ sub checkcipher($$) {
     # following checks add the "not compliant" or vulnerable ciphers
 
     # check weak ciphers
-    $checks{'null_cipher'}->{val} .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
-    $checks{'adh_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
-    $checks{'exp_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
-    $checks{'cbc_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /CBC/);
-    $checks{'des_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /DES/);
-    $checks{'rc4_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
-    $checks{'edh_cipher'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
+    $checks{'cipher_null'}->{val} .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
+    $checks{'cipher_adh'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
+    $checks{'cipher_exp'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
+    $checks{'cipher_cbc'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /CBC/);
+    $checks{'cipher_des'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /DES/);
+    $checks{'cipher_rc4'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+    $checks{'cipher_edh'}->{val}.= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
     $checks{'ism'}->{val}       .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
@@ -3846,7 +3849,7 @@ sub checkcipher($$) {
     $checks{'lucky13'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islucky($c));
     $checks{'sloth'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _issloth($ssl, $c));
     $checks{'sweet32'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _issweet($ssl, $c));
-    push(@{$prot{$ssl}->{'pfs_ciphers'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
+    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
     # counters
     $prot{$ssl}->{'-?-'}++      if ($risk =~ /-\?-/);       # private marker
     $prot{$ssl}->{'WEAK'}++     if ($risk =~ /WEAK/i);
@@ -3871,7 +3874,7 @@ sub checkciphers($$) {
             $checks{$key}->{val} = _get_text('miss-cipher', "");
         }
         foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
-            @{$prot{$ssl}->{'pfs_ciphers'}} = _get_text('miss-cipher', "");
+            @{$prot{$ssl}->{'ciphers_pfs'}} = _get_text('miss-cipher', "");
         }
         _trace("checkciphers() }");
         return;
@@ -3912,17 +3915,17 @@ sub checkciphers($$) {
         }
         $checks{'cnt_ciphers'}  ->{val} += $prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
     }
-    $checks{'edh_cipher'}->{val} = "" if ($checks{'edh_cipher'}->{val} ne "");  # good if we have them
+    $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
     # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
     $ssl    = $data{'sslversion'}->{val}($host, $port); # get selected protocol
     $cipher = $data{'selected'}  ->{val}($host, $port); # get selected cipher
-    if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'pfs_ciphers'})) {
-        $checks{'pfs_cipherall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'pfs_ciphers'}});
+    if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'ciphers_pfs'})) {
+        $checks{'cipher_pfsall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'ciphers_pfs'}});
     } else {
-        $checks{'pfs_cipherall'}->{val} = $text{'na'};
+        $checks{'cipher_pfsall'}->{val} = $text{'na'};
     }
-    #$checks{'pfs_cipher'}->{val} # done in checkdest()
+    #$checks{'cipher_pfs'}->{val} # done in checkdest()
     _trace("checkciphers() }");
     return;
 } # checkciphers
@@ -4973,7 +4976,7 @@ sub checkdest($$)   {
     my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
     $checks{'selected'}->{val}      = $cipher;
     if ($#prot == 0) {          # found exactly one matching protocol
-        $checks{'pfs_cipher'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
+        $checks{'cipher_pfs'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
     } else {
         _warn("protocol '". join(';', @prot) . "' does not match; no selected protocol available");
     }
@@ -5175,7 +5178,7 @@ sub check_exitcode  {
         next if ($cfg{$ssl} == 0);  # not requested, don't count
 # TODO: counts protocol even if no cipher was supported, is this insecure?
         $cnt_prot++ if ($cfg{$ssl} > 0);
-        $cnt_pfs   = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'pfs_ciphers'}};
+        $cnt_pfs   = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'ciphers_pfs'}};
         $exitcode += $cnt_pfs                if ($cfg{'exitcode_pfs'}    > 0);
         $cnt_ciph  = 0;
         $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if ($cfg{'exitcode_medium'} > 0);
@@ -5701,7 +5704,7 @@ sub printcipherdefaults {
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         printf("%-7s\t%-31s\t%s\n", $key,
-                $prot{$ssl}->{'strong_cipher'}, $prot{$ssl}->{'weak_cipher'},
+                $prot{$ssl}->{'cipher_strong'}, $prot{$ssl}->{'cipher_weak'},
         );
     }
     if ($cfg{'out_header'}>0) {
@@ -5730,10 +5733,10 @@ sub printprotocols($$$) {
         printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
                 $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
-                ($#{$prot{$ssl}->{'pfs_ciphers'}} + 1), $prot{$ssl}->{'cnt'},
-                $prot{$ssl}->{'strong_cipher'}, $prot{$ssl}->{'pfs_cipher'}
+                ($#{$prot{$ssl}->{'ciphers_pfs'}} + 1), $prot{$ssl}->{'cnt'},
+                $prot{$ssl}->{'cipher_strong'}, $prot{$ssl}->{'cipher_pfs'}
         );
-        # not yet printed: $prot{$ssl}->{'weak_cipher'}, $prot{$ssl}->{'default'}
+        # not yet printed: $prot{$ssl}->{'cipher_weak'}, $prot{$ssl}->{'default'}
     }
     if ($cfg{'out_header'}>0) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
@@ -6848,6 +6851,7 @@ while ($#argv >= 0) {
     #!#+---------+----------------------+---------------------------+-------------
     #!#           command to check       aliased to                  comment/traditional name
     #!#+---------+----------------------+---------------------------+-------------
+    # protocol commands
     if ($arg eq  '+check')              { $check  = 1;              }
     if ($arg eq  '+info')               { $info   = 1;              } # needed 'cause +info and ..
     if ($arg eq  '+quick')              { $quick  = 1;              } # .. +quick convert to list of commands
@@ -6860,15 +6864,38 @@ while ($#argv >= 0) {
     if ($arg eq  '+prots')              { $arg = '+protocols';      } # alias:
     if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';          } # alias:
     if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';         } # alias:
-    if ($arg eq  '+adh')                { $arg = '+adh_cipher';     } # alias:
-    if ($arg eq  '+cbc')                { $arg = '+cbc_cipher';     } # alias:
-    if ($arg eq  '+des')                { $arg = '+des_cipher';     } # alias:
-    if ($arg eq  '+edh')                { $arg = '+edh_cipher';     } # alias:
-    if ($arg eq  '+exp')                { $arg = '+exp_cipher';     } # alias:
-    if ($arg eq  '+export')             { $arg = '+exp_cipher';     } # alias:
-    if ($arg eq  '+null')               { $arg = '+null_cipher';    } # alias:
-    if ($arg =~ /^\+order$p?cipher/i)   { $arg = '+order_cipher';   } # alias:
-    if ($arg =~ /^\+strong$p?cipher/i)  { $arg = '+strong_cipher';  } # alias:
+    # cipher commands
+    if ($arg =~ /^\+ciphers?$p?adh/i)   { $arg = '+cipher_adh';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?cbc/i)   { $arg = '+cipher_cbc';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?des/i)   { $arg = '+cipher_des';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?edh/i)   { $arg = '+cipher_edh';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?exp/i)   { $arg = '+cipher_exp';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?export/i){ $arg = '+cipher_exp';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?null/i)  { $arg = '+cipher_null';    } # alias:
+    if ($arg =~ /^\+ciphers?$p?weak/i)  { $arg = '+cipher_weak';    } # alias:
+    if ($arg =~ /^\+ciphers?$p?order/i) { $arg = '+cipher_order';   } # alias:
+    if ($arg =~ /^\+ciphers?$p?strong/i){ $arg = '+cipher_strong';  } # alias:
+    if ($arg =~ /^\+ciphers?$p?pfs/i)   { $arg = '+cipher_pfs';     } # alias:
+    if ($arg =~ /^\+ciphers?$p?pfsall/i){ $arg = '+cipher_pfsall';  } # alias:
+    if ($arg =~ /^\+adh$p?ciphers?/i)   { $arg = '+cipher_adh';     } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+cbc$p?ciphers?/i)   { $arg = '+cipher_cbc';     } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+des$p?ciphers?/i)   { $arg = '+cipher_des';     } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+edh$p?ciphers?/i)   { $arg = '+cipher_edh';     } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+exp$p?ciphers?/i)   { $arg = '+cipher_exp';     } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+export$p?ciphers?/i){ $arg = '+cipher_exp';     } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+null$p?ciphers?/i)  { $arg = '+cipher_null';    } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+weak$p?ciphers?/i)  { $arg = '+cipher_weak';    } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+order$p?ciphers?/i) { $arg = '+cipher_order';   } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+strong$p?ciphers?/i){ $arg = '+cipher_strong';  } # alias: backward compatibility < 17.06.17
+    if ($arg eq  '+adh')                { $arg = '+cipher_adh';     } # alias:
+    if ($arg eq  '+cbc')                { $arg = '+cipher_cbc';     } # alias:
+    if ($arg eq  '+des')                { $arg = '+cipher_des';     } # alias:
+    if ($arg eq  '+edh')                { $arg = '+cipher_edh';     } # alias:
+    if ($arg eq  '+exp')                { $arg = '+cipher_exp';     } # alias:
+    if ($arg eq  '+export')             { $arg = '+cipher_exp';     } # alias:
+    if ($arg eq  '+null')               { $arg = '+cipher_null';    } # alias:
+    if ($arg eq  '+weak')               { $arg = '+cipher_weak';    } # alias:
+    # check and info commands
     if ($arg eq  '+owner')              { $arg = '+subject';        } # alias:
     if ($arg eq  '+authority')          { $arg = '+issuer';         } # alias:
     if ($arg eq  '+expire')             { $arg = '+after';          } # alias:
@@ -7048,7 +7075,7 @@ if (_is_do('list')) {
     $cfg{'ciphers-V'}   = $cfg{'opt-V'};
     $text{'separator'}  = "\t" if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # tab if not set
 }
-if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'pfs_cipherall') if (!_is_do('pfs_cipherall')); }
+if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (!_is_do('cipher_pfsall')); }
 
 if (_is_do('version') or ($cfg{'usemx'} > 0)) { $cfg{'need_netdns'} = 1; }
 if (_is_do('version') or (_is_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
@@ -7526,13 +7553,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             my $anf = time();
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
-            $prot{$ssl}->{'strong_cipher'}  = _get_default($ssl, $host, $port, 'strong');
-            $prot{$ssl}->{'weak_cipher'}    = _get_default($ssl, $host, $port, 'weak');
+            $prot{$ssl}->{'cipher_strong'}  = _get_default($ssl, $host, $port, 'strong');
+            $prot{$ssl}->{'cipher_weak'}    = _get_default($ssl, $host, $port, 'weak');
             $prot{$ssl}->{'default'}        = _get_default($ssl, $host, $port, 'default');
             # FIXME: there are 3 connections above, but only one is counted
             last if (_is_ssl_error($anf, time(), "$ssl: abort getting default cipher") > 0);
-            my $cipher  = $prot{$ssl}->{'strong_cipher'};
-            $prot{$ssl}->{'pfs_cipher'}     = $cipher if ("" eq _ispfs($ssl, $cipher));
+            my $cipher  = $prot{$ssl}->{'cipher_strong'};
+            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" eq _ispfs($ssl, $cipher));
             ##if (_is_do('selected') and ($#{$cfg{'do'}} == 0)) {
             ##    # +selected command given, but no other commands; ready
             ##    print_cipherdefault($legacy, $ssl, $host, $port); # need to check if $ssl available first
