@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.685 17/06/17 14:04:00",
-    STR_VERSION => "17.05.30",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.686 17/06/18 10:16:23",
+    STR_VERSION => "17.06.15",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -786,7 +786,7 @@ my %check_size = (  ## length and count data
     'cnt_altname'   => {'txt' => "Certificate Subject Altname count"}, # == 0
     'cnt_wildcard'  => {'txt' => "Certificate Wildcards count"},    # == 0
     'cnt_chaindepth'=> {'txt' => "Certificate Chain Depth count"},  # == 1
-    'cnt_ciphers'   => {'txt' => "Offered ciphers count"},          # <> 0
+    'cnt_ciphers'   => {'txt' => "Total number of offered ciphers:"},   # <> 0
     'cnt_totals'    => {'txt' => "Total number of checked ciphers"},
     'cnt_checks_no' => {'txt' => "Total number of check results 'no'"},
     'cnt_checks_yes'=> {'txt' => "Total number of check results 'yes'"},
