@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.108 17/05/31 22:29:31',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.109 17/06/18 13:12:58',
 
 };
 
@@ -250,7 +250,7 @@ our %prot   = (     # collected data for protocols and ciphers
     #-----------------------+--------------+----------------+------------------+---+---+---+---
     # see _prot_init_value() for following values in
     #   "protocol"=> {cnt, -?-, WEAK, LOW, MEDIUM, HIGH, protocol}
-    #   "protocol"=> {pfs_cipher, pfs_ciphers, default, strong_cipher, weak_cipher}
+    #   "protocol"=> {cipher_pfs, ciphers_pfs, default, cipher_strong, cipher_weak}
     # Notes:
     #  TLS1FF   0x03FF  # last possible version of TLS1.x (not specified, used internal)
     #  DTLSv09: 0x0100  # DTLS, OpenSSL pre 0.9.8f, not finally standardized; some versions use 0xFEFF
@@ -273,8 +273,8 @@ our %prot_txt = (
     'LOW'           => "Supported ciphers with security LOW",    #  "
     'MEDIUM'        => "Supported ciphers with security MEDIUM", #  "
     'HIGH'          => "Supported ciphers with security HIGH",   #  "
-    'pfs_ciphers'   => "PFS (all  ciphers)",            # list with PFS ciphers
-    'pfs_cipher'    => "PFS (selected cipher)",         # cipher if offered as default
+    'ciphers_pfs'   => "PFS (all  ciphers)",            # list with PFS ciphers
+    'cipher_pfs'    => "PFS (selected cipher)",         # cipher if offered as default
     'default'       => "Selected  cipher  by server",   # cipher offered as default
     'protocol'      => "Selected protocol by server",   # 1 if selected as default protocol
 ); # %prot_txt
@@ -1434,25 +1434,26 @@ our %cfg = (
     'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
                         qw(
-                         selected cipher fingerprint_hash fp_not_md5 
-                         sha2signature pub_encryption pub_enc_known email serial
-                         subject dates verify expansion compression hostname
-                         beast crime drown freak export cbc_cipher des_cipher rc4_cipher rc4 
-                         pfs_cipher crl
-                         hassslv2 hassslv3 poodle sloth sweet32
-                         resumption renegotiation tr_02102+ tr_02102- rfc_7525 hsts_sts
+                         selected cipher sslversion hassslv2 hassslv3
+                         cipher_null cipher_adh cipher_cbc cipher_des cipher_exp cipher_rc4
+                         rc4 cipher_pfs beast crime drown freak heartbleed
+                         logjam lucky13 poodle sloth sweet32
+                         fingerprint_hash fp_not_md5 sha2signature pub_encryption
+                         pub_enc_known email serial subject dates verify heartbeat
+                         expansion compression hostname hsts_sts crl
+                         resumption renegotiation tr_02102+ tr_02102- rfc_7525
                        )],
     'cmd-ev'        => [qw(cn subject altname dv ev ev- ev+ ev_chars)], # commands for +ev
     'cmd-bsi'       => [        # commands for +bsi
                                 # see also: commands-HINT
-                        qw(after dates crl rc4_cipher renegotiation
+                        qw(after dates crl cipher_rc4 renegotiation
                            tr_02102+ tr_02102- tr_03116+ tr_03116- 
                        )],
-    'cmd-pfs'       => [qw(pfs_cipher pfs_cipherall session_random)],   # commands for +pfs
+    'cmd-pfs'       => [qw(cipher_pfs cipher_pfsall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [        # commands for checking known vulnerabilities
-                        qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 time hassslv2 hassslv3 pfs_cipher session_random)
+                        qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 time hassslv2 hassslv3 cipher_pfs session_random)
                        #qw(resumption renegotiation) # die auch?
                        ],
     'cmd-prots'     => [        # commands for checking protocols
@@ -1473,21 +1474,21 @@ our %cfg = (
                        ],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check cipher cipher_dh),
-                        qw(null_cipher adh_cipher exp_cipher cbc_cipher des_cipher),
-                        qw(edh_cipher rc4_cipher rc4 pfs_cipher pfs_cipherall),
+                        qw(cipher_null cipher_adh cipher_exp cipher_cbc cipher_des),
+                        qw(cipher_edh cipher_rc4 rc4 cipher_pfs cipher_pfsall),
                         qw(beast crime time breach drown freak logjam lucky13 poodle sloth sweet32),
                         qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525),
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
                        ],
     'need-default'  => [        # commands which need selected cipher
-                        qw(check cipher pfs_cipher order_cipher strong_cipher cipher_default selected),
+                        qw(check cipher cipher_pfs cipher_order cipher_strong cipher_default selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
                                 # missing functionality (i.e in openssl) # 10/2015
                         qw(sslv2  tlsv13  dtlsv09 dtlvs1 dtlsv11 dtlsv12 dtlsv13)
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                        qw(check beast crime time breach freak pfs_cipher pfs_cipherall cbc_cipher des_cipher rc4_cipher rc4 selected ev+ ev-),
+                        qw(check beast crime time breach freak cipher_pfs cipher_pfsall cipher_cbc cipher_des cipher_edh cipher_exp cipher_rc4 selected ev+ ev-),
                         qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 rfc_6125_names rfc_2818_names),
                        ],
     'need-checkchr' => [        # commands which always need checking various characters
@@ -2225,11 +2226,11 @@ sub _prot_init_value {
         $prot{$ssl}->{'MEDIUM'}         = 0;
         $prot{$ssl}->{'HIGH'}           = 0;
         $prot{$ssl}->{'protocol'}       = 0;
-        $prot{$ssl}->{'pfs_ciphers'}    = [];
-        $prot{$ssl}->{'pfs_cipher'}     = STR_UNDEF;
+        $prot{$ssl}->{'ciphers_pfs'}    = [];
+        $prot{$ssl}->{'cipher_pfs'}     = STR_UNDEF;
         $prot{$ssl}->{'default'}        = STR_UNDEF;
-        $prot{$ssl}->{'strong_cipher'}  = STR_UNDEF;
-        $prot{$ssl}->{'weak_cipher'}    = STR_UNDEF;
+        $prot{$ssl}->{'cipher_strong'}  = STR_UNDEF;
+        $prot{$ssl}->{'cipher_weak'}    = STR_UNDEF;
     }
     return;
 } # _prot_init_value
