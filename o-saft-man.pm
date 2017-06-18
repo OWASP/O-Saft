@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.188 17/06/16 19:15:50";
+my  $man_SID= "@(#) o-saft-man.pm 1.189 17/06/19 00:14:00";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1192,14 +1192,14 @@ sub man_commands() {
 +cipher-dh        Check target for ciphers (using libssl), prints also DH parameter.
 +cipherraw        Check target for all possible ciphers.
 +cipher-default   Check target for (default) selected cipher for each protocol.
-+null_cipher      Check if target accepts NULL ciphers.
-+adh_cipher       Check if target accepts ciphers with anonymous key exchange.
-+exp_cipher       Check if target accepts EXPORT ciphers.
-+cbc_cipher       Check if target accepts CBC ciphers.
-+des_cipher       Check if target accepts DES ciphers.
-+rc4_cipher       Check if target accepts RC4 ciphers.
-+edh_cipher       Check if target supports ephemeral ciphers.
-+pfs_cipher       Check if target supports ciphers with PFS.
++cipher-null      Check if target accepts NULL ciphers.
++cipher-adh       Check if target accepts ciphers with anonymous key exchange.
++cipher-exp       Check if target accepts EXPORT ciphers.
++cipher-cbc       Check if target accepts CBC ciphers.
++cipher-des       Check if target accepts DES ciphers.
++cipher-rc4       Check if target accepts RC4 ciphers.
++cipher-edh       Check if target supports ephemeral ciphers.
++cipher-pfs       Check if target supports ciphers with PFS.
 
 EoHelp
 
@@ -2297,42 +2297,50 @@ COMMANDS
           ciphers.
 
       +null
-      +null_cipher
+      +cipher-null
 
           Check if target accepts NULL ciphers.
 
       +adh
-      +adh_cipher
+      +cipher-adh
 
           Check if target accepts ciphers with anonymous key exchange.
 
       +export
-      +exp_cipher
+      +cipher-exp
 
           Check if target accepts EXPORT ciphers.
 
       +cbc
-      +cbc_cipher
+      +cipher-cbc
 
           Check if target accepts CBC ciphers.
 
       +des
-      +des_cipher
+      +cipher-des
 
           Check if target accepts DES ciphers.
 
-      +rc4_cipher
+      +cipher-rc4
 
           Check if target accepts RC4 ciphers.
 
       +edh
-      +edh_cipher
+      +cipher-edh
 
           Check if target supports ephemeral ciphers.
 
-      +pfs_cipher
+      +cipher-pfs
 
           Check if target supports ciphers with PFS.
+
+      +cipher-strong
+
+          Check if target selects strongest cipher.
+
+      +cipher-weak
+
+          Check if target selects weak cipher (oposite of  +cipher-strong).
 
     Commands to test SSL connection to target
 
@@ -3867,7 +3875,7 @@ CHECKS
         Check if RC4 ciphers are supported.
         They are assumed to be broken.
         Note that  +rc4  reports the vulnerabilitiy to the  RC4 Attack, while
-        +rc4_cipher  simply reports if  RC4 ciphers are offered.  However the
+        +cipher-rc4  simply reports if  RC4 ciphers are offered.  However the
         check, and hence the result, is the same.
 
       PFS
