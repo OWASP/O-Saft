@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.686 17/06/18 10:16:23",
+    SID         => "@(#) yeast.pl 1.688 17/06/18 10:54:00",
     STR_VERSION => "17.06.15",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -467,7 +467,7 @@ our %data   = (     # connection and certificate details
     'issuer'        => {'val' => sub { Net::SSLinfo::issuer(        $_[0], $_[1])}, 'txt' => "Certificate Issuer"},
     'altname'       => {'val' => sub { Net::SSLinfo::altname(       $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
     'selected'      => {'val' => sub { Net::SSLinfo::selected(      $_[0], $_[1])}, 'txt' => "Selected Cipher"},
-    'ciphers_openssl'=>{'val' => sub { $_[0] },                                     'txt' => "OpenSSL Ciphers"},
+    'ciphers_local'  =>{'val' => sub { Net::SSLinfo::cipher_local()},               'txt' => "Local SSLlib Ciphers"},
     'ciphers'       => {'val' => sub { join(" ",  Net::SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
     'dates'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
     'before'        => {'val' => sub { Net::SSLinfo::before(        $_[0], $_[1])}, 'txt' => "Certificate valid since"},
@@ -1017,7 +1017,7 @@ our %shorttexts = (
     'altname'       => "Subject AltNames",
     'ciphers'       => "Client Ciphers",
     'selected'      => "Selected Cipher",
-    'ciphers_openssl'   => "OpenSSL Ciphers",
+    'ciphers_local' => "SSLlib Ciphers",
     'dates'         => "Validity (date)",
     'before'        => "Valid since",
     'after'         => "Valid until",
@@ -6910,11 +6910,13 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sni$p?check$/)      { $arg = '+check_sni';      }
     if ($arg =~ /^\+check$p?sni$/)      { $arg = '+check_sni';      }
     if ($arg =~ /^\+ext$p?aia$/i)       { $arg = '+ext_authority';  } # alias: AIA is a common acronym ...
-    if ($arg =~ /\+vulnerabilit(y|ies)/)  {$arg= '+vulns';          } # alias:
+    if ($arg =~ /^\+vulnerabilit(y|ies)/) {$arg= '+vulns';          } # alias:
     if ($arg =~ /^\+selected$p?ciphers?$/){$arg= '+selected';       } # alias:
     if ($arg =~ /^\+session$p?ciphers?$/) {$arg= '+selected';       } # alias:
     if ($arg =~ /^\+selected$p?protocol$/){$arg= '+session_protocol';} # alias:
     if ($arg =~ /^\+(?:all|raw)ciphers?$/){$arg= '+cipherraw';      } # alias:
+    if ($arg =~ /^\+ciphers$p?openssl$/){ $arg = '+ciphers_local';  } # alias: for backward compatibility
+    if ($arg =~ /^\+ciphers$p?local$/)  { $arg = '+ciphers_local';  } # alias:
     if ($arg =~ /^\+ciphers?(?:all|raw)$/){$arg= '+cipherraw';      } # alias:
     if ($arg =~ /^\+cipher$p?defaults?$/) {$arg= '+cipher_default'; } # alias:
     if ($arg =~ /^\+cipher$p?dh?$/)     { $arg = '+cipher_dh';      } # alias:
