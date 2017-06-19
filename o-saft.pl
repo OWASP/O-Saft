@@ -54,7 +54,7 @@
 #  NOTE: It's the nature of checks to be complex, hence don't complain.
 
 ## no critic qw(Modules::ProhibitExcessMainComplexity)
-#  NOTE: Yes, its hight, very high complexity here.
+#  NOTE: Yes, it's a high, very high complexity here.
 #       BUG: this pragma does not work here, needs mccabe value ...
 
 use strict;
@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.689 17/06/18 13:14:10",
+    SID         => "@(#) yeast.pl 1.690 17/06/19 10:38:57",
     STR_VERSION => "17.06.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3842,7 +3842,7 @@ sub checkcipher($$) {
     $checks{'tr_03116+'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_strict($ssl, $c));
     $checks{'tr_03116-'}->{val} .= _prot_cipher($ssl, $c) if ("" ne _istr03116_lazy(  $ssl, $c));
     # check attacks
-    $checks{'rc4'}->{val}        = $checks{'rc4_cipher'}->{val}; # these are the same checks
+    $checks{'rc4'}->{val}        = $checks{'cipher_rc4'}->{val}; # these are the same checks
     $checks{'beast'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isbeast($ssl, $c));
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
