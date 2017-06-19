@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.05.30',  # official version number of tis file
+    OSAFT_VERSION   => '17.06.17',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.109 17/06/18 13:12:58',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.110 17/06/19 20:51:24',
 
 };
 
@@ -1434,10 +1434,11 @@ our %cfg = (
     'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
                         qw(
-                         selected cipher sslversion hassslv2 hassslv3
-                         cipher_null cipher_adh cipher_cbc cipher_des cipher_exp cipher_rc4
-                         rc4 cipher_pfs beast crime drown freak heartbleed
-                         logjam lucky13 poodle sloth sweet32
+                         sslversion hassslv2 hassslv3 hastls12
+                         cipher_selected cipher_strong cipher_null cipher_adh
+                         cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh
+                         cipher_pfs beast crime drown freak heartbleed logjam
+                         lucky13 poodle rc4 sloth sweet32
                          fingerprint_hash fp_not_md5 sha2signature pub_encryption
                          pub_enc_known email serial subject dates verify heartbeat
                          expansion compression hostname hsts_sts crl
@@ -1473,22 +1474,23 @@ our %cfg = (
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
     'need-cipher'   => [        # commands which need +cipher
-                        qw(check cipher cipher_dh),
-                        qw(cipher_null cipher_adh cipher_exp cipher_cbc cipher_des),
-                        qw(cipher_edh cipher_rc4 rc4 cipher_pfs cipher_pfsall),
-                        qw(beast crime time breach drown freak logjam lucky13 poodle sloth sweet32),
-                        qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525),
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13), # TODO: need simple check for protocols
-                       ],
+                        qw(check cipher cipher_dh cipher_strong
+                         cipher_null cipher_adh cipher_cbc cipher_des cipher_exp
+                         cipher_edh  cipher_rc4 cipher_pfs cipher_pfsall
+                         beast crime time breach drown freak logjam lucky13 poodle rc4 sloth sweet32
+                         tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
+                         hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
+                       )],
+                                # TODO: need simple check for protocols
     'need-default'  => [        # commands which need selected cipher
-                        qw(check cipher cipher_pfs cipher_order cipher_strong cipher_default selected),
+                        qw(check cipher cipher_pfs cipher_order cipher_strong cipher_default cipher_selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
                                 # missing functionality (i.e in openssl) # 10/2015
                         qw(sslv2  tlsv13  dtlsv09 dtlvs1 dtlsv11 dtlsv12 dtlsv13)
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                        qw(check beast crime time breach freak cipher_pfs cipher_pfsall cipher_cbc cipher_des cipher_edh cipher_exp cipher_rc4 selected ev+ ev-),
+                        qw(check beast crime time breach freak cipher_pfs cipher_pfsall cipher_cbc cipher_des cipher_edh cipher_exp cipher_rc4 cipher_selected ev+ ev-),
                         qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 rfc_6125_names rfc_2818_names),
                        ],
     'need-checkchr' => [        # commands which always need checking various characters
