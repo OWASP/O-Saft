@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.691 17/06/19 14:28:39",
+    SID         => "@(#) yeast.pl 1.692 17/06/19 20:57:34",
     STR_VERSION => "17.06.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -466,8 +466,8 @@ our %data   = (     # connection and certificate details
     'subject'       => {'val' => sub { Net::SSLinfo::subject(       $_[0], $_[1])}, 'txt' => "Certificate Subject"},
     'issuer'        => {'val' => sub { Net::SSLinfo::issuer(        $_[0], $_[1])}, 'txt' => "Certificate Issuer"},
     'altname'       => {'val' => sub { Net::SSLinfo::altname(       $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
-    'selected'      => {'val' => sub { Net::SSLinfo::selected(      $_[0], $_[1])}, 'txt' => "Selected Cipher"},
-    'ciphers_local'  =>{'val' => sub { Net::SSLinfo::cipher_local()},               'txt' => "Local SSLlib Ciphers"},
+    'cipher_selected'=>{'val' => sub { Net::SSLinfo::selected(      $_[0], $_[1])}, 'txt' => "Selected Cipher"},
+    'ciphers_local' => {'val' => sub { Net::SSLinfo::cipher_local()},               'txt' => "Local SSLlib Ciphers"},
     'ciphers'       => {'val' => sub { join(" ",  Net::SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
     'dates'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
     'before'        => {'val' => sub { Net::SSLinfo::before(        $_[0], $_[1])}, 'txt' => "Certificate valid since"},
@@ -703,7 +703,6 @@ my %check_conn = (  ## connection data
     'sloth'         => {'txt' => "Connection is safe against SLOTH attack"},
     'sweet32'       => {'txt' => "Connection is safe against Sweet32 attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
-    'selected'      => {'txt' => "Selected Cipher"},
      # NOTE: following keys use mixed case letters, that's ok 'cause these
      #       checks are not called by their own commands; ugly hack ...
     #------------------+-----------------------------------------------------
@@ -1018,8 +1017,8 @@ our %shorttexts = (
     'issuer'        => "Issuer",
     'altname'       => "Subject AltNames",
     'ciphers'       => "Client Ciphers",
-    'selected'      => "Selected Cipher",
     'ciphers_local' => "SSLlib Ciphers",
+    'cipher_selected'   => "Selected Cipher",
     'dates'         => "Validity (date)",
     'before'        => "Valid since",
     'after'         => "Valid until",
@@ -2490,8 +2489,8 @@ sub _cfg_set($$)        {
                 next;
             }
             if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
-                push(@{$cfg{$typ}}, 'selected');
-                _warn("please use '+selected' instead of '+$key'; setting ignored");
+                push(@{$cfg{$typ}}, 'cipher_selected');
+                _warn("please use '+cipher-selected' instead of '+$key'; setting ignored");
                 next;
             }
             _warn("unknown command '+$key' for '$typ'; setting ignored");
@@ -3919,7 +3918,7 @@ sub checkciphers($$) {
 
     # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
     $ssl    = $data{'sslversion'}->{val}($host, $port); # get selected protocol
-    $cipher = $data{'selected'}  ->{val}($host, $port); # get selected cipher
+    $cipher = $data{'cipher_selected'}->{val}($host, $port); # get selected cipher
     if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'ciphers_pfs'})) {
         $checks{'cipher_pfsall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'ciphers_pfs'}});
     } else {
@@ -4970,11 +4969,10 @@ sub checkdest($$)   {
 
     # see also Note:Selected Protocol
     # get selected cipher and store in %checks, also check for PFS
-    $cipher = $data{'selected'}->{val}($host, $port);
+    $cipher = $data{'cipher_selected'} ->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
     my @prot = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
-    $checks{'selected'}->{val}      = $cipher;
     if ($#prot == 0) {          # found exactly one matching protocol
         $checks{'cipher_pfs'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
     } else {
@@ -5559,7 +5557,7 @@ sub print_cipherdefault($$$$) {
     if ($legacy eq 'sslaudit')  {} # TODO: cipher name should be DEFAULT
     if ($legacy eq 'sslscan')   { print "\n  Preferred Server Cipher(s):"; $yesno = "";}
     # all others are empty, no need to do anything
-    print_cipherline($legacy, $ssl, $host, $port, $data{'selected'}->{val}($host), $yesno);
+    print_cipherline($legacy, $ssl, $host, $port, $data{'cipher_selected'}->{val}($host), $yesno);
     return;
 } # print_cipherdefault
 
@@ -5750,10 +5748,15 @@ sub printdata($$$) {
     local $\ = "\n";
     printheader($text{'out-infos'}, $text{'desc-info'});
     _trace_cmd('%data');
+    if (_is_do('cipher_selected')) {    # value is special
+        my $key = $data{'cipher_selected'}->{val}($host, $port);
+        print_line($legacy, $host, $port, 'cipher_selected', $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
+    }
     foreach my $key (@{$cfg{'do'}}) {
         next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}})  > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})       > 0);
         next if (_is_hashkey($key, \%data) < 1);
+        next if ($key eq 'cipher_selected');# value is special, done above
         if ($cfg{'experimental'} == 0) {
             next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
         }
@@ -5770,7 +5773,7 @@ sub printdata($$$) {
             # if command given explizitely, i.e. +text, print
             next if ((_is_do('info') > 0) and ($cfg{'verbose'} <= 0));
         }
-        if ($cfg{'format'} eq "raw") {  # should be the only place where format=raw counts
+        if ($cfg{'format'} eq "raw") {      # should be the only place where format=raw counts
             print $data{$key}->{val}($host);
         } else {
             print_data($legacy, $host, $port, $key);
@@ -5786,19 +5789,14 @@ sub printchecks($$$) {
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
     _trace_cmd(' printchecks: %checks');
-    if (_is_do('selected')) {           # value is special
-        my $key = $checks{'selected'}->{val};
-        print_line($legacy, $host, $port, 'selected', $checks{'selected'}->{txt}, "$key " . get_cipher_sec($key));
-    }
     _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}}) > 0);
         next if (_is_member( $key, \@{$cfg{'ignore-out'}})  > 0);
         next if (_is_hashkey($key, \%checks) < 1);
-        next if (_is_intern( $key) > 0);# ignore aliases
+        next if (_is_intern( $key) > 0);    # ignore aliases
         next if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/); # these counters are already printed
-        next if ($key eq 'selected');   # done above
         if ($cfg{'experimental'} == 0) {
             next if (_is_member( $key, \@{$cfg{'commands-EXP'}}) > 0);
         }
@@ -6877,6 +6875,14 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+ciphers?$p?strong/i){ $arg = '+cipher_strong';  } # alias:
     if ($arg =~ /^\+ciphers?$p?pfs/i)   { $arg = '+cipher_pfs';     } # alias:
     if ($arg =~ /^\+ciphers?$p?pfsall/i){ $arg = '+cipher_pfsall';  } # alias:
+    if ($arg =~ /^\+ciphers?$p?selected/i){$arg= '+cipher_selected';} # alias: 
+    if ($arg =~ /^\+ciphers$p?openssl/i){ $arg = '+ciphers_local';  } # alias: for backward compatibility
+    if ($arg =~ /^\+ciphers$p?local/i)  { $arg = '+ciphers_local';  } # alias:
+    if ($arg =~ /^\+(?:all|raw)ciphers?/i){$arg= '+cipherraw';      } # alias:
+    if ($arg =~ /^\+ciphers?(?:all|raw)/i){$arg= '+cipherraw';      } # alias:
+    if ($arg =~ /^\+ciphers?$p?defaults?/i){$arg='+cipher_default'; } # alias:
+    if ($arg =~ /^\+ciphers?$p?d$/i)    { $arg = '+cipher_dh';      } # alias:
+    if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
     if ($arg =~ /^\+adh$p?ciphers?/i)   { $arg = '+cipher_adh';     } # alias: backward compatibility < 17.06.17
     if ($arg =~ /^\+cbc$p?ciphers?/i)   { $arg = '+cipher_cbc';     } # alias: backward compatibility < 17.06.17
     if ($arg =~ /^\+des$p?ciphers?/i)   { $arg = '+cipher_des';     } # alias: backward compatibility < 17.06.17
@@ -6887,6 +6893,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+weak$p?ciphers?/i)  { $arg = '+cipher_weak';    } # alias: backward compatibility < 17.06.17
     if ($arg =~ /^\+order$p?ciphers?/i) { $arg = '+cipher_order';   } # alias: backward compatibility < 17.06.17
     if ($arg =~ /^\+strong$p?ciphers?/i){ $arg = '+cipher_strong';  } # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+selected$p?ciphers?/i){$arg= '+cipher_selected';} # alias: backward compatibility < 17.06.17
+    if ($arg =~ /^\+session$p?ciphers?/i) {$arg= '+cipher_selected';} # alias: backward compatibility < 17.06.17
+    if ($arg eq  '+selected')           { $arg = '+cipher_selected';} # alias: backward compatibility < 17.06.17
     if ($arg eq  '+adh')                { $arg = '+cipher_adh';     } # alias:
     if ($arg eq  '+cbc')                { $arg = '+cipher_cbc';     } # alias:
     if ($arg eq  '+des')                { $arg = '+cipher_des';     } # alias:
@@ -6904,6 +6913,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';        } # alias:
     if ($arg =~ /^\+sigkey$p?algorithm/i){$arg = '+signame';        } # alias:
     if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias:
+    if ($arg =~ /^\+selected$p?protocol/i){$arg= '+session_protocol'; } # alias:
     if ($arg =~ /^\+rfc$p?2818$/i)      { $arg = '+rfc_2818_names'; } # alias:
     if ($arg =~ /^\+rfc$p?2818$p?names/i){$arg = '+rfc_2818_names'; } # alias:
     if ($arg =~ /^\+rfc$p?6125$/i)      { $arg = '+rfc_6125_names'; } # alias: # TODO until check is improved (6/2015)
@@ -6938,16 +6948,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+check$p?sni$/)      { $arg = '+check_sni';      }
     if ($arg =~ /^\+ext$p?aia$/i)       { $arg = '+ext_authority';  } # alias: AIA is a common acronym ...
     if ($arg =~ /^\+vulnerabilit(y|ies)/) {$arg= '+vulns';          } # alias:
-    if ($arg =~ /^\+selected$p?ciphers?$/){$arg= '+selected';       } # alias:
-    if ($arg =~ /^\+session$p?ciphers?$/) {$arg= '+selected';       } # alias:
-    if ($arg =~ /^\+selected$p?protocol$/){$arg= '+session_protocol';} # alias:
-    if ($arg =~ /^\+(?:all|raw)ciphers?$/){$arg= '+cipherraw';      } # alias:
-    if ($arg =~ /^\+ciphers$p?openssl$/){ $arg = '+ciphers_local';  } # alias: for backward compatibility
-    if ($arg =~ /^\+ciphers$p?local$/)  { $arg = '+ciphers_local';  } # alias:
-    if ($arg =~ /^\+ciphers?(?:all|raw)$/){$arg= '+cipherraw';      } # alias:
-    if ($arg =~ /^\+cipher$p?defaults?$/) {$arg= '+cipher_default'; } # alias:
-    if ($arg =~ /^\+cipher$p?dh?$/)     { $arg = '+cipher_dh';      } # alias:
-    if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
     #!#+---------+----------------------+---------------------------+-------------
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
@@ -7560,8 +7560,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             last if (_is_ssl_error($anf, time(), "$ssl: abort getting default cipher") > 0);
             my $cipher  = $prot{$ssl}->{'cipher_strong'};
             $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" eq _ispfs($ssl, $cipher));
-            ##if (_is_do('selected') and ($#{$cfg{'do'}} == 0)) {
-            ##    # +selected command given, but no other commands; ready
+            ##if (_is_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
+            ##    # +cipher_selected command given, but no other commands; ready
             ##    print_cipherdefault($legacy, $ssl, $host, $port); # need to check if $ssl available first
             ##    next HOSTS; # TODO: foreach-loop for hosts misses label
             ##}
@@ -7635,7 +7635,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         if ($legacy eq 'sslscan') {
             my $ssl = ${$cfg{'version'}}[4];
             print_cipherdefault($legacy, $ssl, $host, $port);
-            # TODO: there is only one $data{'selected'}
+            # TODO: there is only one $data{'cipher_selected'}
             #foreach my $ssl (@{$cfg{'version'}}) {
             #    print_cipherdefault($legacy, $ssl, $host, $port);
             #}
@@ -8078,7 +8078,8 @@ example (ouput from openssl):
 
 =head2 Note:Selected Cipher
 
-'selected' returns cipher as used in our data structure (like DHE-DES-CBC)
+'cipher_selected' returns the cipher as used in our data structure (like
+ DHE-DES-CBC)
 example (ouput from openssl):
 example Net::SSLeay:
 	Net::SSLeay::get_cipher(..)
