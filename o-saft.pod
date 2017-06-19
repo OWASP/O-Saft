@@ -819,47 +819,55 @@ ciphers.
 
 =head3 +null
 
-=head3 +null_cipher
+=head3 +cipher-null
 
 Check if target accepts NULL ciphers.
 
 =head3 +adh
 
-=head3 +adh_cipher
+=head3 +cipher-adh
 
 Check if target accepts ciphers with anonymous key exchange.
 
 =head3 +export
 
-=head3 +exp_cipher
+=head3 +cipher-exp
 
 Check if target accepts EXPORT ciphers.
 
 =head3 +cbc
 
-=head3 +cbc_cipher
+=head3 +cipher-cbc
 
 Check if target accepts CBC ciphers.
 
 =head3 +des
 
-=head3 +des_cipher
+=head3 +cipher-des
 
 Check if target accepts DES ciphers.
 
-=head3 +rc4_cipher
+=head3 +cipher-rc4
 
 Check if target accepts RC4 ciphers.
 
 =head3 +edh
 
-=head3 +edh_cipher
+=head3 +cipher-edh
 
 Check if target supports ephemeral ciphers.
 
-=head3 +pfs_cipher
+=head3 +cipher-pfs
 
 Check if target supports ciphers with PFS.
+
+=head3 +cipher-strong
+
+Check if target selects strongest cipher.
+
+=head3 +cipher-weak
+
+Check if target selects weak cipher (oposite of  I<+cipher-strong>).
 
 =head2 Commands to test SSL connection to target
 
@@ -2404,6 +2412,12 @@ To get a list of preconfigured labels, use:
 	o-saft.pl --help=cfg-checks
 	o-saft.pl --help=cfg-data
 
+=head3 --cfg-cipher=CIPHER=value
+
+Redefine the security value (i.e. HIGH) in the cipher description.
+Example:
+I<--cfg-cipher=NULL-MD5=no-security-at-all>
+
 =head3 --cfg_text=KEY=TEXT
 
 =head3 --cfg-text=KEY=TEXT
@@ -2870,7 +2884,7 @@ check is only for CBC ciphers.
 Check if RC4 ciphers are supported.
 They are assumed to be broken.
 Note that  I<+rc4>  reports the vulnerabilitiy to the  RC4 Attack, while
-I<+rc4_cipher>  simply reports if  RC4 ciphers are offered.  However the
+I<+cipher-rc4>  simply reports if  RC4 ciphers are offered.  However the
 check, and hence the result, is the same.
 
 =head3 PFS
@@ -2946,6 +2960,13 @@ Provided certificate by target should not be a Root CA.
 =head3 Self-signed Certificate
 
 Certificate should not be self-signed.
+
+=head3 FQDN is listed in subjectAltname (RFC2818)
+
+The FQDN must be listed in the certificates subjectAltname.
+The check command  I<+rfc_2818_names>  is based on the info command
+I<+verify_hostname> . The check was added in 05/2017 because browsers
+started to complain if the FQDN is not part of the subjectAltname.
 
 =head3 IP in CommonName or subjectAltname (RFC6125)
 
@@ -3879,12 +3900,22 @@ settings used in output. The options are:
 
 =back
 
+=over
+
+=item * --cfg-cipher=CIPHER=TEXT
+
+=back
+
 KEY  is the key used in the internal data structure, and  TEXT is the
 value to be set for this key.  Note that unknown keys will be ignored
 silently.
 
 If KEY=TEXT is an exiting filename, all lines from that file are read
 and set. For details see  L</CONFIGURATION FILE>  below.
+
+CIPHER  must be a valid cipher suite name as shown with:
+
+	o-saft.pl ciphers
 
 NOTE that such configuration options should be used before any I<--help> 
 or  I<--help=*>  option, otherwise the changed setting is not visible.
