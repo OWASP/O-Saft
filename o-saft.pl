@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.693 17/06/20 08:40:41",
+    SID         => "@(#) yeast.pl 1.695 17/06/20 10:09:42",
     STR_VERSION => "17.06.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -466,7 +466,7 @@ our %data   = (     # connection and certificate details
     'subject'       => {'val' => sub { Net::SSLinfo::subject(       $_[0], $_[1])}, 'txt' => "Certificate Subject"},
     'issuer'        => {'val' => sub { Net::SSLinfo::issuer(        $_[0], $_[1])}, 'txt' => "Certificate Issuer"},
     'altname'       => {'val' => sub { Net::SSLinfo::altname(       $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
-    'cipher_selected'=>{'val' => sub { Net::SSLinfo::selected(      $_[0], $_[1])}, 'txt' => "Selected Cipher"},
+    'cipher_selected'=>{'val' => sub { Net::SSLinfo::selected(      $_[0], $_[1])}, 'txt' => "Selected Cipher"},  # SEE Note:Selected Cipher
     'ciphers_local' => {'val' => sub { Net::SSLinfo::cipher_local()},               'txt' => "Local SSLlib Ciphers"},
     'ciphers'       => {'val' => sub { join(" ",  Net::SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
     'dates'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
@@ -3917,8 +3917,8 @@ sub checkciphers($$) {
     $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
     # we need our well known string, hence 'sslversion'; SEE Note:Selected Protocol
-    $ssl    = $data{'sslversion'}->{val}($host, $port); # get selected protocol
-    $cipher = $data{'cipher_selected'}->{val}($host, $port); # get selected cipher
+    $ssl    = $data{'sslversion'}->{val}($host, $port);     # get selected protocol
+    $cipher = $data{'cipher_selected'}->{val}($host, $port);# get selected cipher
     if ((defined $prot{$ssl}->{'cnt'}) and (defined $prot{$ssl}->{'ciphers_pfs'})) {
         $checks{'cipher_pfsall'}->{val} = " " if ($prot{$ssl}->{'cnt'} > $#{$prot{$ssl}->{'ciphers_pfs'}});
     } else {
@@ -4967,7 +4967,7 @@ sub checkdest($$)   {
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
     $checks{'ip'}->{val}            = $cfg{'IP'};
 
-    # see also Note:Selected Protocol
+    # SEE Note:Selected Protocol
     # get selected cipher and store in %checks, also check for PFS
     $cipher = $data{'cipher_selected'} ->{val}($host, $port);
     $ssl    = $data{'session_protocol'}->{val}($host, $port);
@@ -5708,6 +5708,7 @@ sub printcipherdefaults {
     if ($cfg{'out_header'}>0) {
         printf("=------+------------------------------+-------------------------------\n");
     }
+    print_data($legacy, $host, $port, 'cipher_selected');  # SEE Note:Selected Cipher
     return;
 } # printcipherdefaults
 
@@ -5724,7 +5725,7 @@ sub printprotocols($$$) {
     }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
-        next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
+        next if (($cfg{$ssl} == 0) and ($verbose <= 0));   # not requested with verbose only
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
@@ -7647,6 +7648,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             printprotocols($legacy, $host, $port);
             printruler() if ($quick == 0);
           }
+          my $key = $data{'cipher_selected'}->{val}($host, $port);
+          print_line($legacy, $host, $port, 'cipher_selected', $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
+          # print_data($legacy, $host, $port, 'cipher_selected');
           _hint("consider testing with options '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
         }
         _yeast_TIME("cipher}");
@@ -8079,7 +8083,7 @@ example (ouput from openssl):
 =head2 Note:Selected Cipher
 
 'cipher_selected' returns the cipher as used in our data structure (like
- DHE-DES-CBC)
+ DHE-DES-CBC), this is the one selected if the client provided a list
 example (ouput from openssl):
 example Net::SSLeay:
 	Net::SSLeay::get_cipher(..)
