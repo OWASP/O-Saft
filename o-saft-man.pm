@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.189 17/06/19 00:14:00";
+my  $man_SID= "@(#) o-saft-man.pm 1.190 17/06/20 10:08:51";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -130,6 +130,7 @@ my %man_text = (
     'glossar' => {
         'AA'        => "Attribute Authority",
         'AAD'       => "additional authenticated data",
+        'ACME'      => "Automated Certificate Management Environment",
         'ACL'       => "Access Control List",
         'ADH'       => "Anonymous Diffie-Hellman",
         'Adler32'   => "hash function",
@@ -1200,6 +1201,8 @@ sub man_commands() {
 +cipher-rc4       Check if target accepts RC4 ciphers.
 +cipher-edh       Check if target supports ephemeral ciphers.
 +cipher-pfs       Check if target supports ciphers with PFS.
++cipher-strong    Check if target selects strongest cipher.
++cipher-selected  Selected cipher.
 
 EoHelp
 
@@ -2380,7 +2383,7 @@ COMMANDS
           +cipher-default  lists the  cipher selected  by the server for each
           protocol.
 
-      +selected vs. +cipher-default
+      +cipher-selected vs. +cipher-default
 
           +selected  lists the cipher selected by the server if no particular
           protocol was specified and the system's default cipher list is send
@@ -2390,7 +2393,7 @@ COMMANDS
           protocol.
 
 # other names: SSLHonorCipherOrder prefer-server-ciphers PreferServerCipherSuites Server-Defined-Cipher-Order
-      +strong-cipher vs. +cipher-default
+      +cipher-strong vs. +cipher-default
 
           +strong-cipher  shows the result of the check if strong ciphers are
           preferred by the server. It is a check command.
@@ -4945,7 +4948,8 @@ LIMITATIONS
         +protocols .
  
         +quick  should not be used together with other commands, it returns
-        strange output then.
+        strange output then. It is the only command which allows  +cipher
+        together with other commands.
 
         +protocols  requires  openssl(1)  with support for  '-nextprotoneg'
         option. Otherwise the value will be empty.
