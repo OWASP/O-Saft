@@ -909,7 +909,7 @@ counts for various ciphers.
 I<+cipher-default>  lists the  cipher selected  by the server for each
 protocol.
 
-=head3 +selected vs. +cipher-default
+=head3 +cipher-selected vs. +cipher-default
 
 I<+selected>  lists the cipher selected by the server if no particular
 protocol was specified and the system's default cipher list is send
@@ -918,7 +918,7 @@ in the ClientHello to the server.
 I<+cipher-default>  lists the  cipher selected  by the server for each
 protocol.
 
-=head3 +strong-cipher vs. +cipher-default
+=head3 +cipher-strong vs. +cipher-default
 
 I<+strong-cipher>  shows the result of the check if strong ciphers are
 preferred by the server. It is a check command.
@@ -4389,7 +4389,8 @@ I<+cipher>,  I<+ciphers>,  I<+list>,  I<+libversion>,  I<+version>,  I<+check>, 
 I<+protocols> .
 
 I<+quick>  should not be used together with other commands, it returns
-strange output then.
+strange output then. It is the only command which allows  I<+cipher>
+together with other commands.
 
 I<+protocols>  requires L<openssl(1)|openssl(1)> with support for  C<-nextprotoneg>
 option. Otherwise the value will be empty.
