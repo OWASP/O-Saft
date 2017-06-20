@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.692 17/06/19 20:57:34",
+    SID         => "@(#) yeast.pl 1.693 17/06/20 08:40:41",
     STR_VERSION => "17.06.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6881,7 +6881,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+(?:all|raw)ciphers?/i){$arg= '+cipherraw';      } # alias:
     if ($arg =~ /^\+ciphers?(?:all|raw)/i){$arg= '+cipherraw';      } # alias:
     if ($arg =~ /^\+ciphers?$p?defaults?/i){$arg='+cipher_default'; } # alias:
-    if ($arg =~ /^\+ciphers?$p?d$/i)    { $arg = '+cipher_dh';      } # alias:
+    if ($arg =~ /^\+ciphers?$p?dh/i)    { $arg = '+cipher_dh';      } # alias:
     if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
     if ($arg =~ /^\+adh$p?ciphers?/i)   { $arg = '+cipher_adh';     } # alias: backward compatibility < 17.06.17
     if ($arg =~ /^\+cbc$p?ciphers?/i)   { $arg = '+cipher_cbc';     } # alias: backward compatibility < 17.06.17
