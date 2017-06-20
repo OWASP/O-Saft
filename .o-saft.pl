@@ -190,7 +190,7 @@
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls12 cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast crime drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
+--cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls12 cipher cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast crime drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
 
 ###
 ### redefine command +sizes
