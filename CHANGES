@@ -1,5 +1,18 @@
 
-Version: 17.04.21
+Version: 17.06.17
+  BUGFIX
+    * counting exitcode for -exitcode corrected
+    * reading +commands from RC-FILE
+  CHANGES                                                                      
+    * names of +cipher* commands unified
+    * cfg{ciphers_openssl} --> cfg{ciphers_local}
+  NEW                                                                          
+    * --rc=path/to/RC-FILE added
+    * --cfg-cipher=CIPHER=TEXT added
+    * +rfc_2818_names implemented
+    * +subjectaltnames added (alias)
+
+Version: 17.05.17
   BUGFIX
     * o-saft-lib.pm: missing commands added to need-cipher list
     * --protosnpn=, corrected
