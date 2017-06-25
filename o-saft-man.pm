@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.190 17/06/20 10:08:51";
+my  $man_SID= "@(#) o-saft-man.pm 1.191 17/06/25 18:57:38";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1120,7 +1120,7 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
-    if ($typ =~ m/data/) {
+    if ($typ =~ m/(?:data|info)/) {
         foreach my $key (sort keys %data) {
             $txt =  $data{$key}->{txt};
             _man_cfg($typ, $key, $sep, $txt);
@@ -1256,25 +1256,23 @@ sub man_alias() {
     my $p    = '[._-]'; # regex for separators as used in o-saft.pl
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
-            if (m(# alias:)) {
-                if (m|^\s*#?if[^/']*.([^/']+).[^/']+.([^/']+).[^#]*#\s*alias:\s*(.*)?|) {
-                    my $commt =  $3;
-                    my $alias =  $2;
-                    my $regex =  $1;
-                    # simplify regex for better (human) readability
-                    $regex =~ s/^\^//;      # remove leading ^
-                    $regex =~ s/^\\//;      # remove leading \ 
-                    $regex =~ s/\$$//;      # remove trailing $
-                    $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
-                    $regex =~ s/\$p\?/-/g;   # replace variable
-                    if (length($regex) < 29) {
-                        printf("%-29s%-21s# %s\n", $regex, $alias, $commt);
-                    } else {
-                        # pretty print if regex is to large for first column
-                        printf("%s\n", $regex);
-                        printf("%-29s%-21s# %s\n", "", $alias, $commt);
-                    }
-                }
+            next if (! m(# alias:)); 
+            next if (! m|^\s*#?if[^/']*.([^/']+).[^/']+.([^/']+).[^#]*#\s*alias:\s*(.*)?|);
+            my $commt =  $3;
+            my $alias =  $2;
+            my $regex =  $1;
+            # simplify regex for better (human) readability
+            $regex =~ s/^\^//;      # remove leading ^
+            $regex =~ s/^\\//;      # remove leading \ 
+            $regex =~ s/\$$//;      # remove trailing $
+            $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
+            $regex =~ s/\$p\?/-/g;  # replace variable
+            if (length($regex) < 29) {
+                printf("%-29s%-21s# %s\n", $regex, $alias, $commt);
+            } else {
+                # pretty print if regex is to large for first column
+                printf("%s\n", $regex);
+                printf("%-29s%-21s# %s\n", "", $alias, $commt);
             }
         }
         close($fh);
@@ -1637,9 +1635,9 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossar)$/); ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?)s?$/i);
-    man_table(lc($1)),          return if ($hlp =~ /^(check|data|hint|text|range|regex|score|ourstr)s?$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|hint|text|range|regex|score|ourstr)s?[_-]?cfg$/i);
-    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|hint|text|range|regex|score|ourstr)s?$/i);
+    man_table(lc($1)),          return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?[_-]?cfg$/i);
+    man_table('cfg_'.lc($1)),   return if ($hlp =~ /^cfg[_-]?(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
         # we allow:  text-cfg, text_cfg, cfg-text and cfg_text so that
         # we can simply switch from  --help=text  and/or  --cfg_text=*
     if ($hlp =~ /^cmds?$/i)     { # print program's commands
@@ -2484,6 +2482,7 @@ OPTIONS
 
       --help=data-cfg
       --help=cfg-data
+      --help=cfg-info
 
           Show texts used  as labels in output for  data  (see  +info)  ready
           for use in  RC-FILE  or as option.
@@ -3440,8 +3439,13 @@ OPTIONS
     Options for compatibility with other programs
 
         Please see other programs for detailed description (if not obvious:).
-        Note that only the long form options are accepted  as most short form
-        options are ambiguous.
+        Note that often only the long form options are accepted as most short
+        form options are ambiguous.
+        If other programs use the same option,but with a different behaviour,
+        then thes other options are not supported.
+        For a list of supported options, please see:
+
+          $0 --help=alias
 
         Following list contains only those options not shown with:
 
