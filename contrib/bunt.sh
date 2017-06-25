@@ -14,6 +14,7 @@
 #?      --test  simple self-testing
 #?      --line  colourize complete line
 #?      --word  colourize special words
+#?      --blind use blue instead of green
 #?      --italic colourize special words and additionally print "label texts:"
 #?               with italic characters
 #?              "label text:" is all text left of first : including :
@@ -35,7 +36,7 @@
 #       if shell builtin is needed.
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.6 16/01/23 16:23:12
+#?      @(#) bunt.sh 1.7 17/06/25 20:24:07
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -312,6 +313,7 @@ while [ $# -gt 0 ]; do
 	  '--word')   word=1; ;;
 	  '--italic') word=1; italic=1; ;;
 	  '--test') testeme; exit 0 ;;
+	  '--blind')  green='4'; ;;         # use blue instead of green
 	  --*)
 		arg=`expr "$1" ':' '--\(.*\)'`
 		expr "$arg" + 0 >/dev/null ; # prints warning on STDERR
