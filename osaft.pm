@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.111 17/06/25 14:29:39',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.112 17/06/25 14:33:43',
 
 };
 
@@ -2314,8 +2314,8 @@ Wrapper to simulate "slee" with perl's select.
 
 sub printhint   {
     #? Print hint for specified command.
-    my @args = @_;
     my $cmd  = shift;
+    my @args = @_;
     print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
     return;
 } # printhint
