@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.697 17/06/25 14:31:02",
+    SID         => "@(#) yeast.pl 1.698 17/06/25 16:59:56",
     STR_VERSION => "17.06.18",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2533,6 +2533,7 @@ sub _cfg_set($$)        {
     _trace("_cfg_set: KEY=$key, LABEL=$val");
     $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
     $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
+    $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-info/);   # alias for --cfg-data
     $cfg{'hints'}->{$key}= $val if ($typ =~ /^CFG-hint/);   # allows CFG-hints also
     $text{$key}          = $val if ($typ =~ /^CFG-text/);   # allows CFG-texts also
     $scores{$key}->{txt} = $val if ($typ =~ /^CFG-scores/); # BUT: CFG-score is different
@@ -6558,6 +6559,7 @@ while ($#argv >= 0) {
     #!#           option to check         alias for ...               # used by ...
     #!#--------+------------------------+---------------------------+----------
     # first all aliases
+    if ($arg eq  '-t')                  { $arg = '--starttls';      } # alias: testssl.sh
     if ($arg eq  '-b')                  { $arg = '--enabled';       } # alias: ssl-cert-check
     if ($arg eq  '-c')                  { $arg = '--capath';        } # alias: ssldiagnose.exe
     if ($arg =~ /^--?CApath/)           { $arg = '--capath';        } # alias: curl, openssl
@@ -6565,24 +6567,45 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ca(?:cert(?:ificate)?)$/i)  { $arg = '--cafile';} # alias: curl, openssl, wget, ...
     if ($arg =~ /^--cadirectory$/i)     { $arg = '--capath';        } # alias: curl, openssl, wget, ...
     if ($arg =~ /^--fuzz/i)             { $arg = '--cipherrange'; unshift(@argv, 'huge'); } # alias: sslmap
-    if ($arg eq  '--httpget')           { $arg = '--http';          } # alias: sslyze
+    if ($arg =~ /^--httpget/i)          { $arg = '--http';          } # alias: sslyze
     if ($arg =~ /^--httpstunnel/i)      { $arg = '--proxyhost';     } # alias: sslyze
+    if ($arg eq  '--hiderejectedciphers'){$arg = '--nodisabled';    } # alias: sslyze
+    if ($arg eq  '--regular')           { $arg = '--http';          } # alias: sslyze
     if ($arg =~ /^--?interval$/)        { $arg = '--timeout';       } # alias: ssldiagnos.exe
     if ($arg =~ /^--?nofailed$/)        { $arg = '--enabled';       } # alias: sslscan
+    if ($arg =~ /^--show-?each$/)       { $arg = '--disabled';      } # alias: testssl.sh
     if ($arg =~ /^--(?:no|ignore)cmd$/) { $arg = '--ignoreout';     } # alias:
     # /-- next line is a dummy for extracting aliases
    #if ($arg eq  '--protocol')          { $arg = '--SSL';           } # alias: ssldiagnose.exe
     if ($arg eq  '--range')             { $arg = '--cipherrange';   } # alias:
-    if ($arg eq  '--regular')           { $arg = '--http';          } # alias: sslyze
     if ($arg =~ /^--?servername/i)      { $arg = '--sniname/i';     } # alias: openssl
     # options form other programs which we treat as command; see Options vs. Commands also
+    if ($arg =~ /^-(e|-each-?cipher)$/) { $arg = '+cipher';         } # alias: testssl.sh
+    if ($arg =~ /^-(E|-cipher-?perproto)$/) { $arg = '+cipherall';  } # alias: testssl.sh
+    if ($arg =~ /^-(f|-ciphers)$/)      { $arg = '+ciphercheck';    } # alias: testssl.sh (+ciphercheck defined in .o-saft.pl)
+    if ($arg =~ /^-(p|-protocols)$/)    { $arg = '+protocols';      } # alias: testssl.sh
+    if ($arg =~ /^-(y|-spdy)$/)         { $arg = '+spdy';           } # alias: testssl.sh
+    if ($arg =~ /^-(Y|-http2)$/)        { $arg = '+spdy';           } # alias: testssl.sh
+    if ($arg =~ /^-(U|-vulnerable)$/)   { $arg = '+vulns';          } # alias: testssl.sh
     if ($arg =~ /^-(B|-heartbleed)$/)   { $arg = '+heartbleed';     } # alias: testssl.sh
+    if ($arg =~ /^-(I|-ccs(?:-?injection))$/) { $arg = '+ccs';      } # alias: testssl.sh
     if ($arg =~ /^-(C|-compression|-crime)$/) { $arg = '+compression';# alias: testssl.sh
+                                          push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); }
+    if ($arg =~ /^-(T|-breach)$/)       { $arg = '+breach';         } # alias: testssl.sh
+    if ($arg =~ /^-(O|-poodle)$/)       { $arg = '+poodle';         } # alias: testssl.sh
+    if ($arg =~ /^-(F|-freak)$/)        { $arg = '+freak';          } # alias: testssl.sh
+    if ($arg =~ /^-(A|-beast)$/)        { $arg = '+beast';          } # alias: testssl.sh
+    if ($arg =~ /^-(J|-logjam)$/)       { $arg = '+logjam';         } # alias: testssl.sh
+    if ($arg =~ /^-(D|-drown)$/)        { $arg = '+drown';          } # alias: testssl.sh
+    if ($arg =~ /^--(p?fs|nsa)$/)       { $arg = '+pfs';            } # alias: testssl.sh
+    if ($arg =~ /^--(rc4|appelbaum)$/)  { $arg = '+pfs';            } # alias: testssl.sh
+    if ($arg eq  '-R')                  { $arg = '+renegotiation';  } # alias: testssl.sh
+    if ($arg =~ /^--reneg(?:otiation)?/){ $arg = '+renegotiation';  } # alias: sslyze, testssl.sh
+    if ($arg =~ /^--resum(?:ption)?$/)  { $arg = '+resumption';     } # alias: sslyze
     if ($arg eq  '--chain')             { $arg = '+chain';          } # alias:
     if ($arg eq  '--default')           { $arg = '+default';        } # alias:
     if ($arg eq  '--fingerprint')       { $arg = '+fingerprint';    } # alias:
     if ($arg eq  '--fips')              { $arg = '+fips';           } # alias:
-    if ($arg eq  '--hiderejectedciphers'){$cfg{'disabled'}  = 0;    } # alias: sslyze
     if ($arg eq  '-i')                  { $arg = '+issuer';         } # alias: ssl-cert-check
     if ($arg eq  '--ism')               { $arg = '+ism';            } # alias: ssltest.pl
     if ($arg eq  '--list')              { $arg = '+list';           } # alias: ssltest.pl
@@ -6590,13 +6613,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--pci')               { $arg = '+pci';            } # alias: ssltest.pl
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # alias: ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';           } # alias: ssldiagnose.exe
-    if ($arg =~ /^--(p?fs|nsa)$/)       { $arg = '+pfs';            } # alias: testssl.sh
-    if ($arg =~ /^--(rc4|appelbaum)$/)  { $arg = '+pfs';            } # alias: testssl.sh
-    if ($arg eq  '-R')                  { $arg = '+renegotiation';  } # alias: testssl.sh
-    if ($arg =~ /^--reneg(?:otiation)?/){ $arg = '+renegotiation';  } # alias: sslyze, testssl.sh
-    if ($arg =~ /^--resum(?:ption)?$/)  { $arg = '+resumption';     } # alias: sslyze
-                                          push(@{$cfg{'do'}}, @{$cfg{'cmd-crime'}}); }
-    if ($arg eq  '--spdy')              { $arg = '+spdy';           } # alias: testssl.sh
     if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # alias:
     if ($arg eq  '--version')           { $arg = '+version';        } # alias: various programs
 #   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # alias: ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
@@ -6758,8 +6774,10 @@ while ($#argv >= 0) {
     if ($arg =~ /^--sslv?2null$/i)      { $cfg{'nullssl2'}  = 1;    }
     if ($arg eq  '--nodns')             { $cfg{'usedns'}    = 0;    }
     if ($arg eq  '--dns')               { $cfg{'usedns'}    = 1;    }
+    if ($arg eq  '--noenabled')         { $cfg{'enabled'}   = 0;    }
     if ($arg eq  '--enabled')           { $cfg{'enabled'}   = 1;    }
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    }
+    if ($arg eq  '--nodisabled')        { $cfg{'disabled'}  = 0;    }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    }
     if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'shorttxt'}  = 1;    }
     if ($arg =~ /^--hints?$/)           { $cfg{'out_hint_info'} = 1; $cfg{'out_hint_check'} = 1; }
@@ -6841,6 +6859,7 @@ while ($#argv >= 0) {
 
     _y_ARG("option=  $arg") if ($arg =~ /^-/);
     next if ($arg =~ /^-/); # all options handled, remaining are ignored
+        # i.e. from sslscan: --no-renegotiation --no-compression ...
         # TODO: means that targets starting with '-' are not possible,
         #       however, such FQDN are illegal
 
