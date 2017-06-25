@@ -15,6 +15,8 @@
 #?      --line  colourize complete line
 #?      --word  colourize special words
 #?      --blind use blue instead of green
+#?      --purple use purple instead of yellow
+#?               purple may be better readable on light backgrounds
 #?      --italic colourize special words and additionally print "label texts:"
 #?               with italic characters
 #?              "label text:" is all text left of first : including :
@@ -30,7 +32,7 @@
 #       How it workd, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.9 17/06/25 20:19:31
+#?      @(#) bunt.pl 1.10 17/06/25 20:33:25
 #?
 #? AUTHOR
 #?      08-jan-16 Achim Hoffmann _at_ sicsec .dot. de
@@ -257,6 +259,10 @@ while ( $#ARGV >= 0 ) {
 	if ($arg =~ m/--blind/)  {
 				   $map{'green'}       = $map{'blue'};
 				   $map{'light_green'} = $map{'light_blue'};
+				 }
+	if ($arg =~ m/--purple/)  {
+				   $map{'brown'}       = $map{'purple'};
+				   $map{'yellow'}      = $map{'light_purple'};
 				 }
 	if ($arg =~ m/--test/)   { testme; exit 0; }
 	if ($arg =~ m/--(\d+)/)  {
