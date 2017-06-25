@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.112 17/06/25 14:33:43',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.113 17/06/25 18:58:53',
 
 };
 
@@ -1627,7 +1627,7 @@ our %cfg = (
         'cmd-http'  => '^h?(?:ttps?|sts)_',     # match keys for HTTP
         'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
         'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
-        'cmd-cfg'   => '(?:cmd|checks?|data|hint|text|scores?)',# --cfg-* commands
+        'cmd-cfg'   => '(?:cmd|checks?|data|info|hint|text|scores?)',# --cfg-* commands
         'commands-INT'  => '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
         'opt-empty' => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
                        # these options may have no value
