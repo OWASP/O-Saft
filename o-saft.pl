@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.695 17/06/20 10:09:42",
-    STR_VERSION => "17.06.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.696 17/06/25 11:26:02",
+    STR_VERSION => "17.06.18",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1745,7 +1745,7 @@ our %text = (
     # Texts used for hints, key must be same as a command (without leading +)
     # Currently we define the hints here,  but it can be done anywhere in the
     # code, which may be useful for documentation purpose  because such hints
-    # often descibe missing features or functionality.
+    # often describe missing features or functionality.
     'hints' => {
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746 ",
     },
@@ -5843,10 +5843,11 @@ sub printquit() {
         #_warn(" +quit  command usefull with --v and/or --trace* option only");
         _warn(" +quit  command should be used with  --trace=arg  option");
     }
-    _v_print("\n# some information may appear multiple times\n#");
     $cfg{'verbose'} = 2 if ($cfg{'verbose'} < 2);   # dirty hack
     $cfg{'trace'}   = 2 if ($cfg{'trace'}   < 2);   # -"-
     $cfg{'traceARG'}= 1; # for _yeast_args()
+    print("\n# +quit using:  --verbode=2 --trace=2 --traceARG");
+    _v_print("\n# +quit : some information may appear multiple times\n#");
     _yeast_init();
     # _yeast_args();  # duplicate call, see in main at "set environment"
     print "# TEST done.";
@@ -7311,7 +7312,7 @@ if (_is_do('quit'))       { printquit();    exit 0; } # internal test command
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
 }
-_yeast_init();
+_yeast_init();  # call in printquit() also!
 
 if ($#{$cfg{'do'}} < 0) {
     _yeast_exit();
