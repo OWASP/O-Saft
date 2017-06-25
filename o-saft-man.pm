@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.191 17/06/25 18:57:38";
+my  $man_SID= "@(#) o-saft-man.pm 1.192 17/06/25 22:00:16";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1126,6 +1126,12 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
+    if ($typ =~ m/hint/) {
+        foreach my $key (sort keys %{$cfg{'hint'}}) {
+            $txt =  $cfg{'hints'}->{$key};
+            _man_cfg($typ, $key, $sep, $txt);
+        }
+    }
     if ($typ =~ m/text/) {
         foreach my $key (sort keys %text) {
             next if (ref($text{$key}) ne ""); # skip except string
@@ -1141,7 +1147,7 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     } else {
         # additional message here is like a WARNING or Hint,
         # do not print it if any of them is disabled
-        return if (($cfg{'warning'} + $cfg{'hint'}) < 2);
+        return if (($cfg{'warning'} + $cfg{'out_hint'}) < 2);
         my $q = '"';
         print "
 = Format is:  KEY=TEXT ; NL, CR and TAB are printed as \\n, \\r and \\t
