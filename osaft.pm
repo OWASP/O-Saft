@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.110 17/06/19 20:51:24',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.111 17/06/25 14:29:39',
 
 };
 
@@ -1217,7 +1217,6 @@ our %cfg = (
     'verbose'       => 0,       # used for --v
     'v_cipher'      => 0,       # used for --v-cipher
     'warning'       => 1,       # 1: print warnings; 0: don't print warnings
-    'hint'          => 1,       # 1: print hints; 0: don't print hints
     'proxyhost'     => "",      # FQDN or IP of proxy to be used
     'proxyport'     => 0,       # port for proxy
     'proxyauth'     => "",      # authentication string used for proxy
@@ -1514,6 +1513,10 @@ our %cfg = (
     'formats'       => [qw(csv html json ssv tab xml fullxml raw hex 0x esc)],
     'out_header'    => 0,       # print header lines in output
     'out_score'     => 0,       # print scoring; default for +check
+    'out_hint'      => 1,       # 1: print hints; 0: don't print hints
+    'out_hint_cipher'   => 1,   # 1: print hints for +cipher command
+    'out_hint_check'=> 1,       # 1: print hints for +check commands
+    'out_hint_info' => 1,       # 1: print hints for +info commands
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'pass_options'  => "",      # options to be passeed thru to other programs
     'mx_domains'    => [],      # list of mx-domain:port to be processed
@@ -1785,9 +1788,9 @@ our %cfg = (
         # This allows that the texts can be customised using the option:
         #   --cfg-hints=your-key="other text"
         # How automatic printing works:
-        #   Hint texts can be defined for any valid command (see abobe). When
-        #   results are printed,  print_check() will automatically print such
-        #   hint texts if any.
+        #   Hint texts can be defined for any valid command (see above). When
+        #   results are printed,  print_check() and print_data()  will  auto-
+        #   matically print such hint texts if any.
         # However, hint texts can be printed anywhere at anytime using:
         #   printhint('your-key'),
         # It is not recommended to use:
@@ -2312,8 +2315,7 @@ Wrapper to simulate "slee" with perl's select.
 sub printhint   {
     #? Print hint for specified command.
     my @args = @_;
-    return if ($cfg{'hint'} <= 0);
-    my $cmd = shift;
+    my $cmd  = shift;
     print STR_HINT, $cfg{'hints'}->{$cmd}, join(" ", @args) if (defined $cfg{'hints'}->{$cmd});
     return;
 } # printhint
