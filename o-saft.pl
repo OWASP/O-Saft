@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.696 17/06/25 11:26:02",
+    SID         => "@(#) yeast.pl 1.697 17/06/25 14:31:02",
     STR_VERSION => "17.06.18",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5419,6 +5419,7 @@ sub print_data($$$$)    {
         }
     }
     print_line($legacy, $host, $port, $key, $label, $value);
+    osaft::printhint($key) if ($cfg{'out_hint_info'} > 0);
     return;
 } # print_data
 
@@ -5429,7 +5430,7 @@ sub print_check($$$$$)  {
     my $label = "";
     $label = $checks{$key}->{txt} if ($legacy ne 'key');
     print_line($legacy, $host, $port, $key, $label, $value);
-    osaft::printhint($key);
+    osaft::printhint($key) if ($cfg{'out_hint_check'} > 0);
     return;
 } # print_check
 
@@ -6618,8 +6619,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^--ciphers?--?v$/)     { $cfg{'v_cipher'}++;       } # alias:
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
     if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
-    if ($arg =~ /^--hints?$/)           { $cfg{'hint'}++;           }
-    if ($arg =~ /^--nohints?$/)         { $cfg{'hint'}      = 0;    }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
     if ($arg =~ /^--tracearg/i)         { $cfg{'traceARG'}++;       } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { $cfg{'traceCMD'}++;       } # ..
@@ -6763,6 +6762,14 @@ while ($#argv >= 0) {
     if ($arg eq  '--disabled')          { $cfg{'disabled'}  = 1;    }
     if ($arg eq  '--local')             { $cfg{'nolocal'}   = 1;    }
     if ($arg =~ /^--short(?:te?xt)?$/)  { $cfg{'shorttxt'}  = 1;    }
+    if ($arg =~ /^--hints?$/)           { $cfg{'out_hint_info'} = 1; $cfg{'out_hint_check'} = 1; }
+    if ($arg =~ /^--nohints?$/)         { $cfg{'out_hint_info'} = 0; $cfg{'out_hint_check'} = 0; }
+    if ($arg =~ /^--hints?infos?/)      { $cfg{'out_hint_info'} = 1;}
+    if ($arg =~ /^--nohints?infos?/)    { $cfg{'out_hint_info'} = 0;}
+    if ($arg =~ /^--hints?checks?/)     { $cfg{'out_hint_check'}= 1;}
+    if ($arg =~ /^--nohints?checks?/)   { $cfg{'out_hint_check'}= 0;}
+    if ($arg =~ /^--hints?cipher/)      { $cfg{'out_hint_cipher'}=1;}
+    if ($arg =~ /^--nohints?cipher/)    { $cfg{'out_hint_cipher'}=0;}
     if ($arg eq  '--score')             { $cfg{'out_score'} = 1;    }
     if ($arg eq  '--noscore')           { $cfg{'out_score'} = 0;    }
     if ($arg eq  '--header')            { $cfg{'out_header'}= 1;    }
