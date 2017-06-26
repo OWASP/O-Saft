@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.699 17/06/25 19:10:45",
-    STR_VERSION => "17.06.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.700 17/06/26 13:15:39",
+    STR_VERSION => "17.06.20",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -583,6 +583,7 @@ our %data   = (     # connection and certificate details
     'valid-years'   => {'val' =>  0, 'txt' => "certificate validity in years"},
     'valid-months'  => {'val' =>  0, 'txt' => "certificate validity in months"},
     'valid-days'    => {'val' =>  0, 'txt' => "certificate validity in days"},  # approx. value, accurate if < 30
+    'valid-host'    => {'val' =>  0, 'txt' => "dummy used for printing DNS stuff"},
 ); # %data
 # need s_client for: compression|expansion|selfsigned|chain|verify|resumption|renegotiation|next_protocols|
 # need s_client for: krb5|psk_hint|psk_identity|srp|master_key|session_id|session_protocol|session_ticket|session_lifetime|session_timeout
@@ -1700,10 +1701,10 @@ our %text = (
     'out-summary'   => "=== Ciphers: Summary @@ ==",
     'test-disabled' => "tests with/for @@ disabled",  # not yet used
     # hostname texts
-    'host-host'     => "Given hostname",
-    'host-IP'       => "IP for given hostname",
-    'host-rhost'    => "Reverse resolved hostname",
-    'host-DNS'      => "DNS entries for given hostname",
+    'host_name'     => "Given hostname",
+    'host_IP'       => "IP for given hostname",
+    'host_rhost'    => "Reverse resolved hostname",
+    'host_DNS'      => "DNS entries for given hostname",
     # misc texts
     'cipher'        => "Cipher",
     'support'       => "supported",
@@ -6878,6 +6879,8 @@ while ($#argv >= 0) {
     #!#+---------+----------------------+---------------------------+-------------
     #!#           command to check       aliased to                  comment/traditional name
     #!#+---------+----------------------+---------------------------+-------------
+    if ($arg =~ /^\+targets?$/)         { $arg = '+host';           } # alias: print host and DNS information
+    if ($arg =~ /^\+host$p/)            { $arg = '+host';           } # alias: until indiidual +host-* commands available
     # protocol commands
     if ($arg eq  '+check')              { $check  = 1;              }
     if ($arg eq  '+info')               { $info   = 1;              } # needed 'cause +info and ..
@@ -6982,6 +6985,7 @@ while ($#argv >= 0) {
     #   command to check     what to do                          what to do next
     #  +---------+----------+-----------------------------------+----------------
     # commands which cannot be combined with others
+    if ($arg eq  '+host')   { push(@{$cfg{'do'}}, 'host');                      next; } # special
     if ($arg eq  '+info')   { @{$cfg{'do'}} = (@{$cfg{'cmd-info'}},    'info'); next; }
     if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
@@ -7508,15 +7512,15 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
     }
     # print DNS stuff
-    if (($info + $check + $cmdsni) > 0) {
+    if (_is_do('host') or (($info + $check + $cmdsni) > 0)) {
         _y_CMD("+info || +check || +sni*");
         if ($legacy =~ /(full|compact|simple)/) {
             printruler();
-            print_line($legacy, $host, $port, 'host-host', $text{'host-host'}, $host);
-            print_line($legacy, $host, $port, 'host-IP',   $text{'host-IP'}, $cfg{'IP'});
+            print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
+            print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
             if ($cfg{'usedns'} == 1) {
-                print_line($legacy, $host, $port, 'host-rhost', $text{'host-rhost'}, $cfg{'rhost'});
-                print_line($legacy, $host, $port, 'host-DNS',   $text{'host-DNS'},   $cfg{'DNS'});
+                print_line($legacy, $host, $port, 'host_rhost', $text{'host_rhost'}, $cfg{'rhost'});
+                print_line($legacy, $host, $port, 'host_DNS',   $text{'host_DNS'},   $cfg{'DNS'});
             }
             printruler();
         }
