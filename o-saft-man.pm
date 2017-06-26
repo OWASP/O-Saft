@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.192 17/06/25 22:00:16";
+my  $man_SID= "@(#) o-saft-man.pm 1.193 17/06/26 13:35:07";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2181,6 +2181,12 @@ COMMANDS
 #
 #         The rating is mainly based on the information given in
 #           http://ssllabs.com/.....
+
+      +host
+
+          Print details about the targets hostname, DNS, etc.
+          These details are usually printed only for the  +check  and  +info
+          command, but not for any individual command. 
 
       +http
 
