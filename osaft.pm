@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.115 17/06/26 20:49:48',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.116 17/06/26 21:28:57',
 
 };
 
@@ -218,6 +218,7 @@ our @EXPORT     = qw(
                 get_openssl_version
                 get_dh_paramter
                 sort_cipher_names
+                printhint
                 osaft_done
 );
 # insert above in vi with:
@@ -1165,7 +1166,7 @@ our %cipher_alias = ( # TODO: list not yet used
 ); # %cipher_alias
 
 
-our @cipher_results = [
+our @cipher_results = [ # list of checked ciphers
 # currently (12/2015)
 #   [ sslv3, rc4-md5, yes ]
 #   [ sslv3, NULL,    no ]
