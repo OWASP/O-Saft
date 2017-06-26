@@ -59,6 +59,91 @@ o-saft.pl +cipher --header --enabled your.tld | contrib/HTML-table.awk
 
 ###############################################################################
 ###
+### Postprocessing output with colours
+###
+
+# To colourize the results, the script  contrib/bunt.pl  (or contrib/bunt.sh)
+# can be used. It generates ANSI codes for the termnal. Example:
+
+o-saft.pl some.tld +check | contrib/bunt.pl
+
+# Sometimes colours need to be adapted, i.e. for red-green visual impairments
+# or when a light background is used.
+
+o-saft.pl some.tld +check | contrib/bunt.pl --blind
+o-saft.pl some.tld +check | contrib/bunt.pl --purple
+
+# If the  "aha - Ansi HTML Adapter"  (from https://github.com/theZiz/aha)  is
+# available, the output can be converted to an HTML page:
+
+o-saft.pl some.tld +check | contrib/bunt.pl | aha -w -b > some.tld_check.html
+
+
+###############################################################################
+###
+### Generating a list with all possible commands
+###
+
+o-saft.pl --help=cmd
+
+# same, but one command per line:
+
+o-saft.pl --help=cmd --norc | awk 'BEGIN{i=4}{while (i<NF){print $i;i++}}' 
+
+# generate list with  --cfg-data=CMD=  options (empty text):
+
+o-saft.pl --help=cmd --norc \
+| awk 'BEGIN{i=4}{while (i<NF){sub(/+/,"",$i);print "--cfg-data="$i"="i;i++}}' 
+
+
+###############################################################################
+###
+### Redefine label texts in output
+###
+
+# To change the label (text) of a command, the option  --cfg-data=CMD=TEXT or
+# --cfg-check=CMD=TEXT  can be used: 
+
+o-saft.pl --help=cfg-data  --norc
+o-saft.pl --help=cfg-check --norc
+
+# This will  generate one line  --cfg-data=COMMAND=  foreach command.  Simply
+# redirect this to for example  ./my-info-labels.txt  then add your new texts
+# to each line in that file and use the file like:
+
+o-saft.pl some.tld +info --rc=./my-info-labels.txt
+
+# This feature can be used to translate the labels in other languages. There-
+# for add the modified  ./my-info-labels.txt  to  .o-saft.pl   (which will be
+# read automatically by  o-saft.pl).
+
+
+###############################################################################
+###
+### Adding additional information (text) to the results
+###
+
+# o-saft.pl  writes a "hint" text for each  +check and for each  +info (data)
+# command.  This is initially intended to give  additional informations about
+# the performed checks.  Each such hint is written  in a separate line behind
+# the corresponding info or check line.
+# This feature can also be (mis-)used to add your own description to whatever
+# check you want, simply by using the  option  --cfg-hint=CMD=TEXT . 
+# A template file with all options for all possible commands can be generated
+# as follows:
+
+o-saft.pl --help=cmd --norc \
+| awk 'BEGIN{i=4}{while (i<NF){sub(/+/,"",$i);print "--cfg-hint="$i"="i;i++}}' 
+
+# Then proceed as describe for "Redefine label texts" above.
+
+# Take care that this may overwrite existing hint texts.  Existing texts will
+# be shown with:
+
+o-saft.pl --help=cfg-hint --norc
+
+###############################################################################
+###
 ### Reading parameters from file or STDIN
 ###
 
