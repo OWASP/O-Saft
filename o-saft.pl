@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.701 17/06/26 20:34:27",
+    SID         => "@(#) yeast.pl 1.702 17/06/26 21:30:06",
     STR_VERSION => "17.06.20",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -440,8 +440,6 @@ my $info    = 0;    # set to 1 if +info
 my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
-
-our @cipher_results = ();   # list of checked ciphers: [PROT, ciper suite name, yes|no]
 
 our %info   = (     # same as %data with values only; keys are identical to %data
     'alpn'          => "",
@@ -1240,7 +1238,8 @@ push(@{$cfg{'cmd-info--v'}}, 'info--v');
 
 _yeast_TIME("cfg}");
 
-our %ciphers = (
+# definitions here until moved to OSaft/Ciphers.pm
+%ciphers = (
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #'head'                 => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
@@ -5427,7 +5426,7 @@ sub print_data($$$$)    {
         }
     }
     print_line($legacy, $host, $port, $key, $label, $value);
-    osaft::printhint($key) if ($cfg{'out_hint_info'} > 0);
+    printhint($key) if ($cfg{'out_hint_info'} > 0);
     return;
 } # print_data
 
@@ -5438,7 +5437,7 @@ sub print_check($$$$$)  {
     my $label = "";
     $label = $checks{$key}->{txt} if ($legacy ne 'key');
     print_line($legacy, $host, $port, $key, $label, $value);
-    osaft::printhint($key) if ($cfg{'out_hint_check'} > 0);
+    printhint($key) if ($cfg{'out_hint_check'} > 0);
     return;
 } # print_check
 
