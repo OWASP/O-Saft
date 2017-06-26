@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.114 17/06/26 13:26:05',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.115 17/06/26 20:49:48',
 
 };
 
@@ -1189,18 +1189,16 @@ our @cipher_results = [
 
 ]; # @cipher_results
 
-my $me =  $0;
-   $me =~ s#.*[/\\]##;
-
 our %cfg = (
-    'me'            => $me,
     'mename'        => "O-Saft ", # my name pretty printed
-    'ARG0'          => $0,
-    'ARGV'          => [@ARGV], # arguments passed on command line
-    'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
-    'RC-FILE'       => "./.$me",# our RC-FILE, search in pwd only!
     'need_netdns'   => 0,       # used for better error message handling only
     'need_timelocal'=> 0,       # -"-
+    # following initialized in _osaft_init()
+    'me'            => "",
+    'ARG0'          => "",
+    'ARGV'          => [],      # arguments passed on command line
+    'RC-ARGV'       => [],      # arguments read from RC-FILE (set in caller)
+    'RC-FILE'       => "",      # our RC-FILE, search in pwd only!
 
    # config. key        default   description
    #------------------+---------+----------------------------------------------
@@ -2290,6 +2288,12 @@ sub _dbx_init   {
 
 sub _osaft_init {
     #? additional generic initializations for data structures
+    my $me =  $0;       # done here to instead of package's "main" to avoid
+       $me =~ s#.*[/\\]##;  # multiple variable definitions of $me
+    $cfg{'me'}      = $me;
+    $cfg{'RC-FILE'} = "./.$me";
+    $cfg{'ARG0'}    = $0;
+    $cfg{'ARGV'}    = [@ARGV];
     _prot_init_value(); # initallize WEAK, LOW, MEDIUM, HIGH, default, pfs, protocol
     _cfg_init();        # initallize dynamic data in %cfg
     _cmd_init();        # initallize dynamic commands in %cfg
