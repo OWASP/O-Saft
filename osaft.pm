@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.06.17',  # official version number of tis file
+    OSAFT_VERSION   => '17.06.20',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.113 17/06/25 18:58:53',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.114 17/06/26 13:26:05',
 
 };
 
@@ -1412,7 +1412,7 @@ our %cfg = (
                                 # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
                                 # keys not used as command
-                        qw(cn_nosni valid-years valid-months valid-days)
+                        qw(cn_nosni valid-years valid-months valid-days valid-host)
                        ],
     'commands-HINT' => [        # checks which are NOT YET fully implemented
                                 # these are mainly all commands for compliance
@@ -1628,7 +1628,7 @@ our %cfg = (
         'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
         'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
         'cmd-cfg'   => '(?:cmd|checks?|data|info|hint|text|scores?)',# --cfg-* commands
-        'commands-INT'  => '^(?:cn_nosni|valid-(?:year|month|day)s)', # internal data only, no command
+        'commands-INT'  => '^(?:cn_nosni|valid-(?:year|month|day|host)s?)', # internal data only, no command
         'opt-empty' => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
                        # these options may have no value
                        # i.e.  --cmd=   ; this may occour in CGI mode
