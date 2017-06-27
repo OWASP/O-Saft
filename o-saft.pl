@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.703 17/06/27 15:27:19",
+    SID         => "@(#) yeast.pl 1.704 17/06/27 21:10:39",
     STR_VERSION => "17.06.20",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -121,6 +121,8 @@ BEGIN {
 } # BEGIN
 _yeast_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 _yeast_EXIT("exit=INIT0 - initialization start");
+
+our $osaft_standalone = 0;  # SEE Note:Stand-alone
 
 ## PACKAGES         # dummy comment used by some generators, do not remove
 
@@ -229,7 +231,7 @@ sub _load_file          {
     #{
     # # currently (2017) disabled, until all modules can be included with require
     #    no warnings qw(once);
-    #    return "" if (defined($::osaft_standalone)); # SEE Note:Stand-alone
+    #    return "" if (defined($osaft_standalone)); # SEE Note:Stand-alone
     #}
     # need eval to catch "Can't locate ... in @INC ..."
     eval {require $fil;} or warn STR_WARN, "'require $fil' failed";
@@ -1840,7 +1842,7 @@ sub _load_modules       {
         }
     }
 
-    return if (defined($::osaft_standalone)); # SEE Note:Stand-alone
+    return if ($osaft_standalone > 0); # SEE Note:Stand-alone
 
     if (_is_do('cipherraw') or _is_do('version')
         or ($cfg{'starttls'})
@@ -8207,7 +8209,7 @@ Unfortunately there exist modules, which must be loaded with perl's use.
 When generating a stand-alone executable script, the complete file of each
 module is simply copied into the main script file (o-saft.pl usually).  In
 that case, the corresponding use statement must be removed. Modules loaded
-with _load_file() read the files only if the variable  $::osaft_standalone
+with  _load_file()  read the files only if the variable  $osaft_standalone
 does not exist.
 Please refer to the  INSTALLATION  section,  in particular the sub-section
 Stand-alone Executable  there, for more details on generating  stand-alone
