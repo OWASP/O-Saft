@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.702 17/06/26 21:30:06",
+    SID         => "@(#) yeast.pl 1.703 17/06/27 15:27:19",
     STR_VERSION => "17.06.20",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -121,6 +121,8 @@ BEGIN {
 } # BEGIN
 _yeast_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
 _yeast_EXIT("exit=INIT0 - initialization start");
+
+## PACKAGES         # dummy comment used by some generators, do not remove
 
 use osaft;          # get most of our configuration; it's ok to die if missing
 
@@ -224,10 +226,11 @@ sub _load_file          {
     my $fil = shift;
     my $txt = shift;
     my $err = "";
-    {
-      no warnings qw(once);
-      return "" if (defined($::osaft_standalone));
-    }
+    #{
+    # # currently (2017) disabled, until all modules can be included with require
+    #    no warnings qw(once);
+    #    return "" if (defined($::osaft_standalone)); # SEE Note:Stand-alone
+    #}
     # need eval to catch "Can't locate ... in @INC ..."
     eval {require $fil;} or warn STR_WARN, "'require $fil' failed";
     $err = $@;
@@ -1836,6 +1839,9 @@ sub _load_modules       {
             # TODO: need to remove +sts_expired from cfg{do}
         }
     }
+
+    return if (defined($::osaft_standalone)); # SEE Note:Stand-alone
+
     if (_is_do('cipherraw') or _is_do('version')
         or ($cfg{'starttls'})
         or (($cfg{'proxyhost'}) and ($cfg{'proxyport'}))
@@ -5666,6 +5672,7 @@ sub printciphers_dh($$$) {
         _warn("ancient openssl $openssl_version: using '-msg' option to get DH parameters");
         $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl'}->{'msg'} == 1);
         require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
+            # SEE Note:Stand-alone
     }
     foreach my $ssl (@{$cfg{'version'}}) {
         printtitle($legacy, $ssl, $host, $port);
@@ -8186,6 +8193,26 @@ In CGI mode all options are passed with a trailing  =  even those which do
 not have an argument (value). This means that options cannot be ignored in
 general, because they may occour at least in CGI mode, i.e.  --cmd=  .
 The trailing  =  can always be removed, empty values are not possible.
+
+
+=head2 Note:Stand-alone
+
+A stand-alone script is a single script,  which executes without any other 
+module to be included (read) at run-time.
+Most modules --means modules in perl context and syntax-- are already read
+using a private function  _load_file(),  which uses perl's require instead
+of use. This way the modules are loaded at  run-time (require)  and not at
+compile-time (use).
+Unfortunately there exist modules, which must be loaded with perl's use.
+When generating a stand-alone executable script, the complete file of each
+module is simply copied into the main script file (o-saft.pl usually).  In
+that case, the corresponding use statement must be removed. Modules loaded
+with _load_file() read the files only if the variable  $::osaft_standalone
+does not exist.
+Please refer to the  INSTALLATION  section,  in particular the sub-section
+Stand-alone Executable  there, for more details on generating  stand-alone
+scripts.
+Generating a stand-alone script is done by contrib/gen_standalone.sh .
 
 
 =head2 Note:root-CA
