@@ -38,7 +38,7 @@ binmode(STDERR, ":unix");
 
 use osaft;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.193 17/06/26 13:35:07";
+my  $man_SID= "@(#) o-saft-man.pm 1.194 17/07/03 19:06:01";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -126,7 +126,7 @@ local $\ = "";
 #| definitions: more documentations as data
 #| -------------------------------------
 my %man_text = (
-    # short list of used terms and acronyms, always incomplete ...
+    # list of used terms and acronyms, always incomplete ...
     'glossar' => {
         'AA'        => "Attribute Authority",
         'AAD'       => "additional authenticated data",
@@ -150,12 +150,20 @@ my %man_text = (
         'ASN'       => "Autonomous System Number",
         'ASN.1'     => "Abstract Syntax Notation number One",
         'BACPA'     => "Blockwise-adaptive chosen-plaintext attack",
+        'bcrypt'    => "hash function (Niels Provos, David Mazières, 1999)",
+        'BLAKE'     => "hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)",
+        'BLAKE2'    => "fast secure hashing function (2012)",
+        'BLAKE-224' => "see BLAKE (224 bit)",
+        'BLAKE-256' => "see BLAKE (256 bit)",
+        'BLAKE-384' => "see BLAKE (384 bit)",
+        'BLAKE-512' => "see BLAKE (512 bit)",
         'BEAR'      => "block cipher combining stream cipher and hash function",
         'BDH'       => "Bilinear Diffie-Hellman",
         'BEAST'     => "Browser Exploit Against SSL/TLS",
         'BER'       => "Basic Encoding Rules",
         'BGP'       => "Boorder Gateway Protocol",
         'Blowfish'  => "symmetric block cipher",
+        'boomerang attack'  => "attack on BLAKE",
         'Brainpool' => "signature algorithm, from BSI",
         'BREACH'    => "Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext (a variant of CRIME)",
                     #   http://www.breachattack.com/
@@ -216,8 +224,8 @@ my %man_text = (
         'CTL'       => "Certificate Trust Line",
         'CTR'       => "Counter Mode (sometimes: CM; block cipher mode)",
         'CTS'       => "Cipher Text Stealing",
-        'Curve448'  => "signature algorithm, aka Goldilocks (224 bits)",
-        'Curve25519'   => "signature algorithm by Dan J. Bernstein (ca. 128 bits)",
+        'Curve448'  => "signature algorithm, aka Goldilocks (224 bit)",
+        'Curve25519'   => "signature algorithm by Dan J. Bernstein (ca. 128 bit)",
         'CWC'       => "CWC Mode (Carter-Wegman + CTR mode; block cipher mode)",
         'DAA'       => "Data Authentication Algorithm",
         'DAC'       => "Data Authentication Code",
@@ -231,10 +239,10 @@ my %man_text = (
         'DES'       => "Data Encryption Standard",
         'DESede'    => "alias for 3DES ?java only?",
         'DESX'      => "extended DES",
-        '3DES'      => "Tripple DES (168 bits)",
+        '3DES'      => "Tripple DES (168 bit)",
         '3DES-EDE'  => "alias for 3DES",
-        '3TDEA'     => "Three-key  Tripple DEA (sometimes: Tripple DES; 168 bits)",
-        '2TDEA'     => "Double-key Tripple DEA (sometimes: Double DES; 112 bits)",
+        '3TDEA'     => "Three-key  Tripple DEA (sometimes: Tripple DES; 168 bit)",
+        '2TDEA'     => "Double-key Tripple DEA (sometimes: Double DES; 112 bit)",
         'D5'        => "Verhoeff's Dihedral Group D5 Check",
         'DH'        => "Diffie-Hellman",
         'DHE'       => "Diffie-Hellman ephemeral", # historic acronym, often used, mainly in openssl
@@ -266,6 +274,7 @@ my %man_text = (
         'ECDHE'     => "Ephemeral ECDH",
         'ECDSA'     => "Elliptic Curve Digital Signature Algorithm",
         'ECGDSA'    => "Elliptic Curve ??? DSA",
+        'ECHO'      => "hash function (Ryad Benadjila, Olivier Billet, Henri Gilbert, Gilles Macario-Rat, Thomas Peyrin, Matt Robshaw, Yannick Seurin, 2010)",
         'ECIES'     => "Elliptic Curve Integrated Encryption Scheme",
         'ECKA'      => "Elliptic Curve Key Agreement",
         'ECKA-EG'   => "Elliptic Curve Key Agreement of ElGamal Type",
@@ -294,6 +303,7 @@ my %man_text = (
         'EV-SSL'    => "Extended Validation Certificate",
         'FEAL'      => "Fast Data Encryption Algorithm",
         'FFC'       => "Finite Field Cryptography",
+        'FFT'       => "Fast Fourier Transform",
         'FIPS'      => "Federal Information Processing Standard",
         'FIPS46-2'  => "FIPS Data Encryption Standard (DES)",
         'FIPS73'    => "FIPS Guidelines for Security of Computer Applications",
@@ -313,10 +323,12 @@ my %man_text = (
         'GCM'       => "Galois/Counter Mode (block cipher mode)",
         'GHASH'     => "Hash funtion used in GCM",
         'GMAC'      => "MAC for GCM",
+        'Grøstl'    => "hash function (Lars Knudsen, 2010)",
         'Goldilocks'=> "see Curve448",
         'GOST'      => "Gossudarstwenny Standard (block cipher)",
         'Grainv1'   => "stream cipher (64-bit IV)",
         'Grainv128' => "stream cipher (96-bit IV)",
+        'HAIFA'     => "HAsh Iterative FrAmework",
         'hash127'   => "fast hash function (by Dan Bernstein)",
         'HAVAL'     => "one-way hashing",
         'HAS-160'   => "hash function",
@@ -326,6 +338,7 @@ my %man_text = (
         'HEARTBLEED'=> "attack against TLS extension heartbeat",
         'HEIST'     => "HTTP Encrypted Information can be Stolen through TCP-windows",
         'HIBE'      => "hierarchical identity-based encryption",
+        'HNF-256'   => "hash function (Harshvardhan Tiwari, Krishna Asawa, 2014)",
         'HMAC'      => "keyed-Hash Message Authentication Code",
         'HMQV'      => "h? Menezes-Qu-Vanstone",
         'HSM'       => "Hardware Security Module",
@@ -350,14 +363,18 @@ my %man_text = (
         'INT-PTXT'  => "Integrity of plaintext",
         'ISAKMP'    => "Internet Security Association and Key Management Protocol",
         'IV'        => "Initialization Vector",
+        'JH'        => "hash function (Hongjun Wu, 2011)",
         'JSSE'      => "Java Secure Socket Extension",
+        'Keccak'    => "hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)",
         'KCI'       => "Key Compromise Impersonation",
         'KEA'       => "Key Exchange Algorithm (alias for FORTEZZA-KEA)",
         'KEK'       => "Key Encryption Key",
         'KSK'       => "Key Signing Key", # DNSSEC
         'KU'        => "Key Usage",
+        'LAKE'      => "hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 2008)",
         'LFSR'      => "Linear Feedback Shift Register",
         'LION'      => "block cipher combining stream cipher and hash function",
+        'LLL'       => "Lenstra–Lenstra–Lovász, lattice basis reduction algorithm",
         'LM hash'   => "LAN Manager hash aka LanMan hash",
         'Logjam'    => "Attack to force server to downgrade to export ciphers",
         'LRA'       => "Local Registration Authority",
@@ -416,8 +433,7 @@ my %man_text = (
         'PEM'       => "Privacy Enhanced Mail",
         'PES'       => "Proposed Encryption Standard",
         'PFS'       => "Perfect Forward Secrecy",
-        'PFX'       => "see PKCS#12",
-#       'PFX'       => "Personal Information Exchange", # just for info
+        'PFX'       => "see PKCS#12 (Personal Information Exchange)",
         'PGP'       => "Pretty Good Privacy",
         'PII'       => "Personally Identifiable Information",
         'PKCS'      => "Public Key Cryptography Standards",
@@ -471,13 +487,18 @@ my %man_text = (
         'SA'        => "Subordinate Authority (aka Subordinate CA)",
         'SACL'      => "System Access Control List",
         'SAFER'     => "Secure And Fast Encryption Routine, block cipher",
-        'Salsa20'   => "stream cipher (by D. Bernstein)",
+        'Salsa20'   => "stream cipher (by D. Bernstein, 2005)",
+        'Salsa20/8' => "see scrypt",
+        'Salsa20/12'=> "see Salsa20",
+        'Salsa20/20'=> "see Salsa20",
         'SAM'       => "syriac abbreviation mark",
         'SAN'       => "Subject Alternate Name",
+        'Sarmal'    => "hash function",
         'SAX'       => "Symmetric Authenticated eXchange",
         'SCA'       => "Selfsigned CA signature",
         'SBCS'      => "single-byte character set",
         'SCEP'      => "Simple Certificate Enrollment Protocol",
+        'scrypt'    => "password based key derivation function (Colin Percival)",
         'SCSU'      => "Standard Compression Scheme for Unicode (compressed UTF-16)",
         'SCSV'      => "Signaling Cipher Suite Value",
         'SCVP'      => "Server-Based Certificate Validation Protocol",
@@ -491,18 +512,29 @@ my %man_text = (
         'SHA-0'     => "Secure Hash Algorithm (insecure version before 1995)",
         'SHA-1'     => "Secure Hash Algorithm (since 1995)",
         'SHA-2'     => "Secure Hash Algorithm (since 2002)",
+        'SHA-3'     => "Secure Hash Algorithm (since 2015), see Keccak also",
         'SHA-224'   => "Secure Hash Algorithm (224 bit)",
         'SHA-256'   => "Secure Hash Algorithm (256 bit)",
         'SHA-384'   => "Secure Hash Algorithm (384 bit)",
         'SHA-512'   => "Secure Hash Algorithm (512 bit)",
-        'SHA1'      => "alias for SHA-1 (160 bit)",
-        'SHA2'      => "alias for SHA-2 (224, 256, 384 or 512 bit)",
+        'SHA1'      => "see for SHA-1 (160 bit)",
+        'SHA2'      => "see for SHA-2 (224, 256, 384 or 512 bit)",
+        'SHA3'      => "see for SHA-3 (224, 256, 384 or 512 bit)",
+        'SHA3-224'  => "Secure Hash Algorithm (224 bit)",
+        'SHA3-256'  => "Secure Hash Algorithm (256 bit)",
+        'SHA3-384'  => "Secure Hash Algorithm (384 bit)",
+        'SHA3-512'  => "Secure Hash Algorithm (512 bit)",
+        'SHAKE128'  => "Secure Hash Algorithm (variable bit)",
+        'SHAKE256'  => "Secure Hash Algorithm (variable bit)",
+        'SHAvite-3' => "hash function (Eli Biham, Orr Dunkelman, 2009)",
         'SPHINCS'   => "post-quantum hash function",
         'SPHINCS-256'   => "alias for SPHINCS",
+        'SWIFFT'    => "hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)",
+        'SWIFFTX'   => "see SWIFFT",
         'SHS'       => "Secure Hash Standard",
         'SIA'       => "Subject Information Access (certificate extension)",
         'SIC'       => "Segmented Integer Counter (alias for CTR)",
-        'Skein'     => "hash function",
+        'Skein'     => "hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)",
         'SKID'      => "subject key ID (certificate extension)",
         'SKIP'      => "Message Skipping Attacks on TLS",
                     #  https://mitls.org/pages/attacks/SMACK
@@ -514,6 +546,8 @@ my %man_text = (
         'Snefu'     => "hash function",
         'SNI'       => "Server Name Indication",
         'SNOW'      => "word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )",
+        'Snuffle 2005'  => "see Salsa20",
+        'Snuffle 2008'  => "see ChaCha",
         'SPDY'      => "Google's application-layer protocol on top of SSL",
         'SPKI'      => "Subject Public Key Infrastructure",
         'SPN'       => "Substitution-Permutation Network",
@@ -532,9 +566,8 @@ my %man_text = (
         'SCT'       => "Signed Certificate Timestamp",
         'STS'       => "Strict Transport Security",
         'STS '      => "Station-to-Station protocol",
-        'Sweet32'   => "Sweet32: Birthday attacks on 64-bit block ciphers in TLS
+        'Sweet32'   => "Sweet32: Birthday attacks on 64-bit block ciphers in TLS and OpenVPN",
                     #  https://sweet32.info/
-and OpenVPN",
         'TA'        => "Trust Agent",
         'TACK'      => "Trust Assertions for Certificate Keys",
         'TCB'       => "Trusted Computing Base",
@@ -571,7 +604,7 @@ and OpenVPN",
         'WHIRLPOOL' => "hash function",
         'X.680'     => "X.680: ASN.1",
         'X.509'     => "X.509: The Directory - Authentication Framework",
-        'X25519'    => "alieas for Curve25519 ?",
+        'X25519'    => "alias for Curve25519 ?",
         'X680'      => "X.680: ASN.1",
         'X509'      => "X.509: The Directory - Authentication Framework",
         'XCBC'      => "eXtended CBC-MAC",
@@ -582,6 +615,7 @@ and OpenVPN",
         'XMACR'     => "radomized XOR-MAC",
         'XMLSIG'    => "XML-Signature Syntax and Processing",
         'XMSS'      => "hash function",
+        'XSalsa2'   => "variant of Salsa20",
         'XTEA'      => "extended Tiny Encryption Algorithm",
         'XTS'       => "XEX-based tweaked-codebook mode with ciphertext stealing",
         'XUDA'      => "Xcert Universal Database API",
@@ -4016,7 +4050,7 @@ CHECKS
       Public Key Modulus size
 
         Some (historic) SSL implementations are subject to buffer overflow if
-        the key exceeds 16384 or 32768 bits. The check is against 16384 bits.
+#bad#         the key exceeds 16384 or 32768 bits. The check is against 16384 bits.
 
       Public Key Modulus Exponent size
 
@@ -4412,7 +4446,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
         4.3.  Public Key Length
 
-          DH parameter must be at least 256 bits or 2048 its with EC.
+          DH parameter must be at least 256 bits or 2048 bits with EC.
           (Check currently, 4/2016, based on openssl which may not provide DH
            parameters for all ciphers.)
 
