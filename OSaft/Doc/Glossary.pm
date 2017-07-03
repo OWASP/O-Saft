@@ -14,7 +14,7 @@ use warnings;
 use Readonly;
 
 Readonly our $VERSION   => "17.07.01";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Glossary.pm 1.1 17/07/03 22:34:09";
+Readonly my  $SID       => "@(#) Glossary.pm 1.2 17/07/03 23:01:43";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -54,9 +54,7 @@ sub o_saft_glossary_done() {};  # dummy to check successful include
 print_as_text() if (! defined caller);
 1;
 
-#| documentation
-#| -------------------------------------
-# All documentation is in plain ASCII format.
+# All documentation following  __DATA__  is in plain ASCII format.
 # It's designed for human radability and simple editing.
 # Syntax is:
 #       each line consist of a KEY and a TEXT
