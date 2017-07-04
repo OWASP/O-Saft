@@ -38,9 +38,10 @@ binmode(STDERR, ":unix");
 
 use osaft;
 use OSaft::Doc::Glossary;
+use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.196 17/07/03 23:55:45";
+my  $man_SID= "@(#) o-saft-man.pm 1.197 17/07/04 08:27:41";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -124,121 +125,6 @@ if (open($file, '<:encoding(UTF-8)', $wer)) {
     close($file);
 }
 local $\ = "";
-
-#| definitions: more documentations as data
-#| -------------------------------------
-my %man_text = (
-
-    'links' => {    # TODO: not yet used (01/2017)
-        # name         [ title / description                     link ],
-        #--------------+------------------------------------+-----------------------+
-        'OWASP-CS'  => [ "OWASP TLS Cheat Sheet", "https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet" ],
-        'OWASP-PIN' => [ "OWASP Certificate and Public Key Pinning", "https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning" ],
-        'OWASP-STS' => [ "OWASP HTTP Strict Transport Security", "https://www.owasp.org/index.php/HTTP_Strict_Transport_Security" ],
-        'TR-02102'  => [ "BSI TR-02102 Teil 2", "https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR02102/BSI-TR-02102-2.pdf" ],
-        'ENISA_Report'  => [ "ENISA: Algorithms, Key Sizes and Parameters Report", "http://www.enisa.europa.eu/activities/identity-and-trust/library/deliverables/algorithms-key-sizes-and-parameters-report" ],
-        'EV-certs'  => [ "EV Certificate Guidelines", "https://www.cabforum.org/EV_Certificate_Guidelines.pdf" ],
-        'RFC-7525'  => [ "Recommendations for Secure Use of TLS and DTLS", "https://tools.ietf.org/html/rfc7525" ],
-        #--------------+------------------------------------+-----------------------+
-    }, # links
-
-    # Additional informations:
-    # CT   : http://ctwatch.net/
-    # AIA  : http://www.startssl.com/certs/sub.class4.server.ca.crt
-    # CDP  : http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl
-    # OCSP : http://ocsp.startssl.com/sub/class4/server/ca
-    # cat some.crl | openssl crl -text -inform der -noout
-    # OCSP response "3" (TLS 1.3) ==> certifcate gueltig
-    # SPDY - SPDY Protocol : http://www.chromium.org/spdy/spdy-protocol
-    # False Start: https://www.imperialviolet.org/2012/04/11/falsestart.html
-    #              https://technotes.googlecode.com/git/falsestart.html
-    # ALPN : http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
-    #        https://tools.ietf.org/html/rfc7301
-    #        ExtensionType Values 16
-    #        ProtocolNameList: 
-    #        Protocol:  HTTP/1.1
-    #           Identification Sequence: http/1.1
-    #        Protocol:  SPDY/1
-    #           Identification Sequence: spdy/1
-    #        Protocol:  SPDY/2
-    #           Identification Sequence: spdy/2
-    #        Protocol:  SPDY/3
-    #           Identification Sequence: spdy/3
-    #        Application-Layer Protocol Negotiation (ALPN) is available with
-    #        Net::SSLeay 1.56+ and +openssl-1.0.2+.
-    #        Check support with: 'IO::Socket::SSL->can_alpn()'.
-    #        Note that some client implementations may encounter problems if
-    #        both NPN and ALPN are +specified. Since ALPN is intended as a
-    #        replacement for NPN, try providing ALPN protocols +then fall back
-    #        to NPN if that fails.
-    # SPDY/3 http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3
-    # ALPN, NPN: https://www.imperialviolet.org/2013/03/20/alpn.html
-    # NPN  : https://technotes.googlecode.com/git/nextprotoneg.html
-    # HSTS : http://tools.ietf.org/html/draft-hodges-strict-transport-sec-02
-    #        https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
-    #        Strict-Transport-Security: max-age=16070400; includeSubDomains
-    #        Apache config:
-    #             Header set Strict-Transport-Security "max-age=16070400; includeSubDomains"
-    # SNI apache: https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
-    #        SSLStrictSNIVHostCheck, which controls whether to allow non SNI clients to access a name-based virtual host. 
-    #        when client provided the hostname using SNI, the new environment variable SSL_TLS_SNI
-    # TLS session resumption problem with session ticket
-    #        see https://www.imperialviolet.org/2011/11/22/forwardsecret.html
-    #        "Since the session ticket contains the state of the session, and
-    #         thus keys that can decrypt the session, it too must be protected
-    #         by ephemeral keys. But, in order for session resumption to be
-    #         effective, the keys protecting the session ticket have to be kept
-    #         around for a certain amount of time: the idea of session resumption
-    #         is that you can resume the session in the future, and you can't
-    #         do that if the server can't decrypt the ticket!
-    #         So the ephemeral, session ticket keys have to be distributed to
-    #         all the frontend machines, without being written to any kind of
-    #         persistent storage, and frequently rotated."
-    #        see also https://www.imperialviolet.org/2013/06/27/botchingpfs.html
-    #
-    # HPKP - "HTTP Public Key Pinning
-    #        https://timtaubert.de/blog/2014/10/http-public-key-pinning-explained/
-    #        https://blog.pregos.info/2015/02/23/http-public-key-pinning-hpkp-erklaerung-und-einrichtung/
-    #        https://blog.qualys.com/ssllabs/2016/09/06/is-http-public-key-pinning-dead
-    #        chrome://net-internals/#hsts    (show, reset pins in Chrome)
-    #
-    # TLS Server Identity Pinning with Tickets
-    #              draft-sheffer-tls-pinning-ticket-02
-    #        https://tools.ietf.org/id/draft-sheffer-tls-pinning-ticket-02.txt
-    #
-    # TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
-    #
-    # SCSV   https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
-    # SRI    Subresource Integrity: https://www.w3.org/TR/SRI/ 4/2016
-    #        see also: https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
-    #        supported by: Chrome 45, Firefox 43, Opera 32
-    #        Note that SRI is SSL/TLS-related but security-related
-    # XMSS   https://eprint.iacr.org/2011/484.pdf
-    # TS 102 042 : http://
-    #
-    #        http://rsapss.hboeck.de/rsapss-1.0.1.pdf
-    #        https://www.bsi.bund.de/DE/Themen/weitereThemen/SINA/sina_node.html  
-    #        http://datatracker.ietf.org/doc/draft-eastlake-additional-xmlsec-uris/ 
-    # Elliptic Curve
-    #        https://en.wikipedia.org/wiki/Comparison_of_TLS_implementations#Supported_elliptic_curves
-    #        https://www.researchgate.net/profile/Johannes_Merkle/publication/260050106_Standardisierung_der_Brainpool-Kurven_fur_TLS_und_IPSec/links/00b7d52f36a0cc2fdd000000.pdf
-    #        http://www.teletrust.de/fileadmin/files/oid/ecgdsa_final.pdf  
-    #        https://datatracker.ietf.org/doc/draft-harkins-ikev3/ 
-    #        http://datatracker.ietf.org/doc/draft-mcgrew-tls-aes-ccm-ecc/ 
-    #        http://datatracker.ietf.org/doc/draft-merkle-ikev2-ke-brainpool/ 
-    #        http://datatracker.ietf.org/doc/draft-merkle-tls-brainpool/ 
-    #        http://datatracker.ietf.org/doc/draft-sheffer-ipsecme-dh-checks/ 
-    #        http://eprint.iacr.org/2007/286
-    #        https://tools.ietf.org/html/draft-josefsson-tls-curve25519-06
-    #
-    # Firefox Add-ons
-    #        https://calomel.org/firefox_ssl_validation.htm  Calomel SSL Validation
-    #        https://addons.mozilla.org/de/firefox/addon/cert-viewer-plus/   Cert Viewer Plus
-    #
-    #        http://patrol.psyced.org/       Certifiate Patrol
-    #        certwatch.simos.info            CertWatch
-    #
-); # %man_text
 
 #| definitions: internal functions
 #| -------------------------------------
@@ -451,6 +337,7 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         'compl' => ["Compliance",    " - ",  " Brief description of performed checks"],
         'range' => ["range name",    " - ",  " hex values in this range"],
         'rfc'   => ["Number",        " - ",  " RFC Title and URL"],
+        'links' => ["Title",         " - ",  " URL"],
         'check' => ["key",           " - ",  " Label text"],
         'data'  => ["key",           " - ",  " Label text"],
         'hint'  => ["key",           " - ",  " Hint text"],
@@ -471,6 +358,9 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _man_head(16, $types{$typ}->[0], $types{$typ}->[2]) if ($typ !~ m/^cfg/);
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
+
+    # OSaft::Doc::*::get()  returns one line for each term;  format is:
+    #   term followd by TAB (aka \t) followd by description text
     if ($typ eq 'rfc')   {
         my $url = "";
         foreach my $line (OSaft::Doc::Rfc::get()) {
@@ -483,9 +373,16 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         }
     }
     if ($typ eq 'abbr')  {
-        # OSaft::Doc::Glossary::get()  returns one line for each term;  format
-        # is:  term followd by TAB (aka \t) followd by description text
         foreach my $line (OSaft::Doc::Glossary::get()) {
+            chomp $line;
+            next if ($line =~ m/^\s*$/);
+            next if ($line =~ m/^\s*#/);
+            my ($key, $val) = split("\t", $line);
+            _man_opt($key, $sep, $val);
+        }
+    }
+    if ($typ eq 'links')  {
+        foreach my $line (OSaft::Doc::Links::get()) {
             chomp $line;
             next if ($line =~ m/^\s*$/);
             next if ($line =~ m/^\s*#/);
@@ -1054,6 +951,7 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_commands(),             return if ($hlp =~ /^commands?$/);
     # anything below requires data defined in parent
     man_table('rfc'),           return if ($hlp =~ /^rfcs?$/);
+    man_table('links'),         return if ($hlp =~ /^links?$/);
     man_table('abbr'),          return if ($hlp =~ /^(abbr|abk|glossary?)$/); ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
     man_table(lc($1)),          return if ($hlp =~ /^(intern|compl(?:iance)?)s?$/i);
     man_table(lc($1)),          return if ($hlp =~ /^(check|data|info|hint|text|range|regex|score|ourstr)s?$/i);
@@ -1153,8 +1051,23 @@ printhelp($ARGV[0]) unless (defined caller);
 #     identify groups of commands and options. If a sub-title does not start
 #     with these prefixes, all following commands and options are ignored.
 #
-# Initilly the documentation was done using perl's doc format (perldoc, POD).
-# The advantage having a well formated output available on various platforms,
+#| -------------------------------------
+# Since VERSION 17.07.17
+# All documentation from variables, i.e. %man_text, moved to separate files in
+# ./OSaft/Doc/*. This simplified editing texts  as they are simple ASCI format
+# in the __DATA__ section of each file. The overhead compared to the %man_text
+# variable is just the perl module file with its POD texts.  A disadvantage is
+# is, that it is more complicated to import the data in  a stand-alone script,
+# see contrib/gen_standalone.sh.
+#
+# Since VERSION 17.06.17
+# All user documentation is now in  o-saft-man.pl,  which used a mix of  texts
+# defined in perl variables, i.e. %man_text, and user documentation is defined
+# in the __DATA__ section (mainly all the documentation).
+#
+# Until VERSION 14.11.12
+# Initilly the documentation was done using  perl's doc format (perldoc, POD).
+# The advantage having a well formated output available on  various platforms,
 # resulted in more difficult efforts extracting information from there.
 # In particular following problems occoured:
 #   - perldoc is not available on all platforms by default
@@ -1172,6 +1085,8 @@ printhelp($ARGV[0]) unless (defined caller);
 #   * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
 #   * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
 #   -------------------------+----+-------------+------+----------
+
+my %man_text = (
 
 __END__
 __DATA__
@@ -2007,6 +1922,10 @@ OPTIONS
       --help=glossary
 
           Show common abbreviation used in the world of security.
+
+      --help=links
+
+          Show list of URLs related to SSL/TLS.
 
       --help=rfc
 
