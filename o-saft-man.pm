@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.198 17/07/04 20:15:04";
+my  $man_SID= "@(#) o-saft-man.pm 1.199 17/07/04 20:48:33";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -287,7 +287,7 @@ sub _man_foot   {
     return;
 }
 sub _man_opt    {
-    #? print line in  "KEY- VALUE"  format
+    #? print line in  "KEY - VALUE"  format
     my @args = @_;
     my $len  = 16;
        $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
@@ -309,6 +309,32 @@ sub _man_cfg    {
     _man_opt($key, $sep, $txt);
     return;
 }
+
+sub _man_doc_opt{
+    #? print __DATA__ from $typ in  "KEY - VALUE"  format
+    my ($typ, $sep) = @_;
+    my  $url  = "";
+    my  @data;
+        @data = OSaft::Doc::Glossary::get() if ($typ eq 'abbr');
+        @data = OSaft::Doc::Links::get()    if ($typ eq 'links');
+        @data = OSaft::Doc::Rfc::get()      if ($typ eq 'rfc');
+    # OSaft::Doc::*::get()  returns one line for each term;  format is:
+    #   term followd by TAB (aka \t) followed by description text
+    foreach my $line (@data) {
+        chomp  $line;
+        next if ($line =~ m/^\s*$/);
+        next if ($line =~ m/^\s*#/);
+        my ($key, $val) = split("\t", $line);
+            $key =~ s/\s*$//;
+        if ($typ eq 'rfc') {    # RFC is different, adapt $key and $val
+            $url = $val if ($key eq "url"); # should be first line only
+            $val = $val . "\n\t\t\t$url/html/rfc$key";
+            $key = "RFC $key";
+        }
+        _man_opt($key, $sep, $val);
+    }
+    return;
+} # _man_doc_opt
 
 sub _man_usr_value($)   {
     #? return value of argument $_[0] from @{$cfg{'usr-args'}}
@@ -360,37 +386,8 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
-    # OSaft::Doc::*::get()  returns one line for each term;  format is:
-    #   term followd by TAB (aka \t) followd by description text
-    if ($typ eq 'rfc')   {
-        my $url = "";
-        foreach my $line (OSaft::Doc::Rfc::get()) {
-            chomp $line;
-            next if ($line =~ m/^\s*$/);
-            next if ($line =~ m/^\s*#/);
-            my ($key, $val) = split("\t", $line);
-            $url = $val if ($key eq "url");
-            _man_opt("RFC $key", $sep, $val . "\n\t\t\t$url/html/rfc$key");
-        }
-    }
-    if ($typ eq 'abbr')  {
-        foreach my $line (OSaft::Doc::Glossary::get()) {
-            chomp $line;
-            next if ($line =~ m/^\s*$/);
-            next if ($line =~ m/^\s*#/);
-            my ($key, $val) = split("\t", $line);
-            _man_opt($key, $sep, $val);
-        }
-    }
-    if ($typ eq 'links')  {
-        foreach my $line (OSaft::Doc::Links::get()) {
-            chomp $line;
-            next if ($line =~ m/^\s*$/);
-            next if ($line =~ m/^\s*#/);
-            my ($key, $val) = split("\t", $line);
-            _man_opt($key, $sep, $val);
-        }
-    }
+    _man_doc_opt($typ, $sep);   # abbr, rfc, links, ...
+
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
 
     if ($typ eq 'intern') {
