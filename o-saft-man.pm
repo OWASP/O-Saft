@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.199 17/07/04 20:48:33";
+my  $man_SID= "@(#) o-saft-man.pm 1.200 17/07/04 21:14:14";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -309,6 +309,13 @@ sub _man_cfg    {
     _man_opt($key, $sep, $txt);
     return;
 }
+
+sub _man_pod_item   {
+    #? print line as POD =item
+    my $line = shift;
+    print "=over\n\n$line\n=back\n";
+    return;
+} # _man_pod_item
 
 sub _man_doc_opt{
     #? print __DATA__ from $typ in  "KEY - VALUE"  format
@@ -649,7 +656,7 @@ sub man_pod() {
             print; $empty = 0; $code++; next;   # no more changes
         };
         $code = 0;
-        s:'([^']*)':C<$1>:g;            # markup literal text
+        s:'([^']*)':C<$1>:g;            # markup literal text; # dumm '
         s:X&([^&]*)&:L</$1>:g;          # markup references inside help
         s:L&([^&]*)&:L<$1|$1>:g;        # markup other references
         #s:L<[^(]*(\([^\)]*\)\>).*:>:g;  # POD does not like section in link
@@ -661,9 +668,8 @@ sub man_pod() {
             # each paragraph line must be surrounded by empty lines
             # =item paragraph must be inside =over .. =back
             print "\n"        if ($empty == 0);
-            print "=over\n\n" if $line =~ m/^=item/;
-            print "$line"     if $line =~ m/^=[hiovbefpc].*/;
-            print "\n=back\n" if $line =~ m/^=item/;
+            print "$line"     if $line =~ m/^=[hovbefpc].*/;# any POD keyword
+            _man_pod_item "$line" if $line =~ m/^=item/;    # POD =item keyword
             print "\n";
             $empty = 1;
             next;
