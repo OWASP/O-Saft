@@ -14,7 +14,7 @@ use warnings;
 use Readonly;
 
 Readonly our $VERSION   => "17.07.01";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Rfc.pm 1.1 17/07/03 23:53:41";
+Readonly my  $SID       => "@(#) Rfc.pm 1.2 17/07/04 07:38:19";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -45,7 +45,7 @@ Return all data.
 
 sub get           { return <DATA>; }
 sub print_as_text { print  <DATA>; return; }
-sub o_saft_glossary_done() {};  # dummy to check successful include
+sub o_saft_rfc_done() {};       # dummy to check successful include
 
 ## PACKAGE }
 
@@ -106,6 +106,14 @@ url	http://tools.ietf.org/
 5246	TLS Version 1.2 (with Cipher Suites)
 4347	DTLS Version 0.9
 6347	DTLS Version 1.2
+2616	Hypertext Transfer Protocol Version 1 (HTTP/1.1)
+7540	Hypertext Transfer Protocol Version 2 (HTTP/2)
+7230	HTTP/1.1: Message Syntax and Routing
+7231	HTTP/1.1: Semantics and Content
+7232	HTTP/1.1: Conditional Requests
+7233	HTTP/1.1: Range Requests
+7234	HTTP/1.1: Caching
+7235	HTTP/1.1: Authentication
 3490	Internationalizing Domain Names in Applications (IDNA)
 3987	Internationalized Resource Identifiers (IRIs)
 4518	Internationalized String Preparation in LDAP
@@ -120,7 +128,6 @@ url	http://tools.ietf.org/
 7296	The Internet Key Exchange Protocol 2 (IKEv2) - 2014
 4753	ECP Groups for IKE and IKEv2
 2412	AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec)
-#	http://en.wikipedia.org/wiki/Perfect_forward_secrecy
 2818	HTTP Over TLS
 2945	SRP Authentication & Key Exchange System
 2986	PKCS#10
@@ -135,11 +142,12 @@ url	http://tools.ietf.org/
 4868	Using HMAC-SHA-256, HMAC-SHA-384, and HMAC-SHA-512 with IPsec
 5116	An Interface and Algorithms for Authenticated Encryption
 4749	TLS Compression Methods
-5077	TLS session resumption
-5746	TLS Renegotiation Indication Extension
+5077	TLS session resumption without Server-Side State
+5746	TLS Extension: Renegotiation Indication Extension
 5764	TLS Extension: SRTP
 5929	TLS Extension: Channel Bindings
 6066	TLS Extension: Extension Definitions
+7301	TLS Extension: Application-Layer Protocol Negotiation (ALPN)
 7633	TLS Extension: Feature Extension: Must Staple
 6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
 3711	The Secure Real-time Transport Protocol (SRTP)
@@ -158,7 +166,6 @@ url	http://tools.ietf.org/
 4387	X509 PKI Operational Protocols: Certificate Store Access via HTTP
 5280	X509 PKI Certificate and Certificate Revocation List (CRL) Profile
 6960	X509 Online Certificate Status Protocol (OCSP)
-#	http://en.wikipedia.org/wiki/OCSP_stapling
 2712	TLSKRB: Addition of Kerberos Cipher Suites to TLS
 3268	TLSAES: Advanced Encryption Standard (AES) Cipher Suites for TLS
 4132	Addition of Camellia Cipher Suites to TLS
