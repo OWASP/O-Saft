@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.197 17/07/04 08:27:41";
+my  $man_SID= "@(#) o-saft-man.pm 1.198 17/07/04 20:15:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -287,6 +287,7 @@ sub _man_foot   {
     return;
 }
 sub _man_opt    {
+    #? print line in  "KEY- VALUE"  format
     my @args = @_;
     my $len  = 16;
        $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
@@ -1085,8 +1086,6 @@ printhelp($ARGV[0]) unless (defined caller);
 #   * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
 #   * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
 #   -------------------------+----+-------------+------+----------
-
-my %man_text = (
 
 __END__
 __DATA__
