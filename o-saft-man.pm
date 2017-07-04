@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.200 17/07/04 21:14:14";
+my  $man_SID= "@(#) o-saft-man.pm 1.201 17/07/04 22:30:51";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -317,9 +317,21 @@ sub _man_pod_item   {
     return;
 } # _man_pod_item
 
+sub _man_usr_value($)   {
+    #? return value of argument $_[0] from @{$cfg{'usr-args'}}
+    my $key =  shift;
+       $key =~ s/^(?:--|\+)//;  # strip leading chars
+    my @arg =  "";              # key, value (Note that value is anything right to leftmost = )
+    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr-args'}}); # does not allow multiple $key in 'usr-args'
+    return $arg[1];
+} # _man_usr_value
+
+#| definitions: print functions for help and information
+#| -------------------------------------
+
 sub _man_doc_opt{
     #? print __DATA__ from $typ in  "KEY - VALUE"  format
-    my ($typ, $sep) = @_;
+    my ($typ, $sep, $format) = @_;  # format is POD or opt
     my  $url  = "";
     my  @data;
         @data = OSaft::Doc::Glossary::get() if ($typ eq 'abbr');
@@ -338,22 +350,29 @@ sub _man_doc_opt{
             $val = $val . "\n\t\t\t$url/html/rfc$key";
             $key = "RFC $key";
         }
-        _man_opt($key, $sep, $val);
+        _man_opt($key, $sep, $val)          if ($format eq 'opt');
+        _man_pod_item("$key $sep $val\n")   if ($format eq 'POD');
     }
     return;
 } # _man_doc_opt
 
-sub _man_usr_value($)   {
-    #? return value of argument $_[0] from @{$cfg{'usr-args'}}
-    my $key =  shift;
-       $key =~ s/^(?:--|\+)//;  # strip leading chars
-    my @arg =  "";              # key, value (Note that value is anything right to leftmost = )
-    map({@arg = split(/=/, $_, 2) if /^$key/} @{$cfg{'usr-args'}}); # does not allow multiple $key in 'usr-args'
-    return $arg[1];
-} # _man_usr_value
-
-#| definitions: print functions for help and information
-#| -------------------------------------
+sub _man_doc_pod{
+    #? print __DATA__ from $typ in  POD  format
+    my ($typ, $sep) = @_;
+    my  @data;
+        @data = OSaft::Doc::Glossary::get() if ($typ eq 'abbr');
+        @data = OSaft::Doc::Links::get()    if ($typ eq 'links');
+        @data = OSaft::Doc::Rfc::get()      if ($typ eq 'rfc');
+    # print comment lines only, hence add # to each line
+    my  $data = "@data";
+        $data =~ s/\n/\n#/g;
+    print "# begin $typ\n\n";
+    print "# =head1 $typ\n\n";
+    print $data;
+    #_man_doc_opt($typ, $sep, "POD");   # if real POD should be printed
+    print "# end $typ\n";
+    return;
+} # _man_pod_pod
 
 sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
@@ -683,6 +702,11 @@ Generated with:
         o-saft.pl --no-warnings --no-header --help=gen-pod > o-saft.pod
 
 =cut
+
+';
+    _man_doc_pod('abbr', "-");  # this is for woodoo, see below
+    _man_doc_pod('rfc',  "-");  # this is for woodoo, see below
+    print '
 
 # begin woodoo
 
