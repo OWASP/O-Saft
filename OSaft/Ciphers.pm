@@ -42,7 +42,7 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.15 16/12/05 23:03:09';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.17 17/07/04 23:56:31';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -65,6 +65,9 @@ our $VERBOSE = 0;    # >1: option --v
 #  Our POD is inline as it serves for documenting the code itself too.
 #  But: this is a violation for severity 1, which is fixed and the produces
 #       another violation for severity 2.
+
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#  There're a lot of expressions here, it's ok to use them without /x flag.
 
 =pod
 
@@ -256,7 +259,7 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # Mac= mac encryption algorithm
     'text'          => [ # full description of each column in 'ciphers' below
                             # all following informations as reported by openssl 0.9.8 .. 1.0.1h
-        'SSL/TLS',          # Protocol Version:
+        'SSL/TLS version',  # Protocol Version:
                             # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
                             # NOTE: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
@@ -469,16 +472,16 @@ sub get_param   {
     return $ciphers{$cipher}->{$key} || '' if ((grep{/^$cipher/i} %ciphers)>0);
     return $STR_UNDEF;
 }; # get_param
-sub get_ssl     { my $c=shift; return get_param($c, 'ssl'); }
-sub get_keyx    { my $c=shift; return get_param($c, 'kx');  }
-sub get_auth    { my $c=shift; return get_param($c, 'au');  }
-sub get_enc     { my $c=shift; return get_param($c, 'enc'); }
-sub get_bits    { my $c=shift; return get_param($c, 'bit'); }
-sub get_mac     { my $c=shift; return get_param($c, 'mac'); }
+sub get_ssl     { my $c=shift; return get_param($c, 'ssl');  }
+sub get_keyx    { my $c=shift; return get_param($c, 'keyx'); }
+sub get_auth    { my $c=shift; return get_param($c, 'auth'); }
+sub get_enc     { my $c=shift; return get_param($c, 'enc');  }
+sub get_bits    { my $c=shift; return get_param($c, 'bits'); }
+sub get_mac     { my $c=shift; return get_param($c, 'mac');  }
 sub get_dtls    { my $c=shift; return get_param($c, 'dtls'); }
-sub get_rfc     { my $c=shift; return get_param($c, 'rfc'); }
-sub get_sec     { my $c=shift; return get_param($c, 'sec'); }
-sub get_tags    { my $c=shift; return get_param($c, 'tag'); }
+sub get_rfc     { my $c=shift; return get_param($c, 'rfc');  }
+sub get_sec     { my $c=shift; return get_param($c, 'sec');  }
+sub get_tags    { my $c=shift; return get_param($c, 'tags'); }
 sub get_score   { my $c=shift; return $STR_UNDEF; } # obsolete since 16.06.16
 
 sub get_desc    {
@@ -742,14 +745,22 @@ sub show_key    {
 } # show_key
 
 sub show_desc   {
-    #? print textual description for %cipher hash
+    #? print textual description for columns %cipher hash
 
     printf("#%s:\n", (caller(0))[3]);
-    print  "\n# %ciphers : tabular description of one line:\n";
+    print  "\n# %ciphers : example line:\n";
+    my $key = 0;
+    printf("  '0x00,0x3D' -> [");
+    foreach (@{$ciphers_desc{head}}) {
+        printf("\t%s", $ciphers_desc{sample}->{'0x00,0x3D'}[$key]);
+        $key++;
+    }
+    printf(" ]\n");
+    print  "\n# %ciphers : tabular description of one (example) line:\n";
     printf("#-------+------+-----------------------+--------\n");
     printf("# [%s]\t%5s\t%16s\t%s\n", "nr", "key", "description", "example");
     printf("#-------+------+-----------------------+--------\n");
-    my $key = 0;
+    $key = 0;
     foreach (@{$ciphers_desc{head}}) {
         printf("  [%s]\t%6s\t%-20s\t%s\n", $key, $ciphers_desc{head}[$key],
             $ciphers_desc{text}[$key], $ciphers_desc{sample}->{'0x00,0x3D'}[$key]);
@@ -771,27 +782,27 @@ sub show_desc   {
 
     print  "\n# %ciphers_names : description of one line as perl code:\n";
     #printf("# key     => [qw( iana OpenSSL openssl osaft )],\n)";
-    printf("# varname  %-31s\t# source of name\n", "%ciphers hash");
-    printf("#---------+-------------------------------------+-----------------\n");
+    printf("# varname  %-31s\t  # source of name\n", "%ciphers hash");
+    printf("#---------+---------------------------------------+-----------------\n");
     $key = 0;
     foreach (qw( iana OpenSSL openssl osaft )) {
-        printf("%8s = \$ciphers_names{'0xBE,0xEF'}[%s];\t# %s\n", '$' .  $_,
+        printf("%8s = \$ciphers_names{'0xBE,0xEF'}[%s];\t  # %s\n", '$' .  $_,
             $key, $_);
         $key++;
     }
-    printf("#---------+-------------------------------------+-----------------\n");
+    printf("#---------+---------------------------------------+-----------------\n");
 
     print  "\n# %ciphers_const : description of one line as perl code:\n";
     #printf("# key     => [qw( iana OpenSSL openssl osaft )],\n)";
-    printf("# varname  %-31s\t# source of constant\n", "%ciphers hash");
-    printf("#---------+-------------------------------------+-----------------\n");
+    printf("# varname  %-31s\t  # source of constant\n", "%ciphers hash");
+    printf("#---------+---------------------------------------+-----------------\n");
     $key = 0;
     foreach (qw( iana OpenSSL openssl osaft )) {
-        printf("%8s = \$ciphers_const{'0xBE,0xEF'}[%s];\t# %s\n", '$' .  $_,
+        printf("%8s = \$ciphers_const{'0xBE,0xEF'}[%s];\t  # %s\n", '$' .  $_,
             $key, $_);
         $key++;
     }
-    printf("#---------+-------------------------------------+-----------------\n");
+    printf("#---------+---------------------------------------+-----------------\n");
 
     print  "\n# \@cipher_results : description of one line in array:\n";
 # currently (12/2015)
@@ -811,11 +822,21 @@ sub show_desc   {
         "TLSv12", "0x00,0x3D", "0", "3", "512", "ec256", "comment");
     printf("#------+---------------+-------+-------+-------+-------+-------\n");
 
+    return;
 } # show_desc
 
 sub show_overview   {
     printf("#%s:\n", (caller(0))[3]);
-    print  "= overview if cipher description and name exists in internal data structure\n";
+    print  <<'EoT';
+= overview if cipher description and name exists in internal data structure
+=   description of columns:
+=       key         - hex key for cipher suite
+=       cipher desc - cipher suite known in internal data structure
+=       cipher const- cipher suite constant name exists
+=       cipher name - cipher suite (openssl) name exists
+=       name # desc - 'yes' if name and description exists
+
+EoT
     print  "= Note: following columns should have a *\n";
     print  "=       ciphers_desc, ciphers_const, ciphers_name\n";
     printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
@@ -844,17 +865,19 @@ sub show_overview   {
 
 sub show_const  {
     printf("#%s:\n", (caller(0))[3]);
-    print  "= overview of various cipher suite constant names
+    print  <<'EoT';
+= overview of various cipher suite constant names
 =   description of columns:
-=       key     - hex key for cipher suite
-=       iana    - constant of cipher suite as defined by IANA
-=       OpenSSL - constant of cipher suite used in openssl's *.h files
-=       osaft   - constant of cipher suite used by O-Saft
-=       o=i o=o - yes if IANA's cipher suite name is same as O-Saft's name
-";
+=       key         - hex key for cipher suite
+=       iana        - constant of cipher suite as defined by IANA
+=       OpenSSL     - constant of cipher suite used in openssl's *.h files
+=       osaft       - constant of cipher suite used by O-Saft
+=       o=iana o=op - yes if IANA's cipher suite name is same as O-Saft's name
+
+EoT
     printf("=%s+%s+%s+%s+%s-%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
-    printf("=%s|    osaft = \n", " " x 119);
-    printf("= %13s\t\t%-37s\t%-31s\t%-23s\t%s\n", "key ", "iana", "OpenSSL", "osaft", "| iana openssl");
+    printf("=%s   osaft = \n", " " x 119);
+    printf("= %13s\t\t%-37s\t%-31s\t%-23s\t%s\n", "key ", "iana", "OpenSSL", "osaft", "iana\topenssl");
     printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
     foreach my $key (sort keys %ciphers) {
          my $const1 = $ciphers_const{$key}->{'iana'}    || "";
@@ -872,14 +895,16 @@ sub show_const  {
 
 sub show_names  {
     printf("#%s:\n", (caller(0))[3]);
-    print  "= overview of various cipher suite names
+    print  <<'EoT';
+= overview of various cipher suite names
 =   description of columns:
-=       key     - hex key for cipher suite
-=       OpenSSL - name of cipher suite used in openssl's *.h files
-=       openssl - name of cipher suite used by openssl executable
-=       osaft   - name of cipher suite used by O-Saft
-=       o=o     - yes if openssl's cipher suite name is same as O-Saft's name
-";
+=       key         - hex key for cipher suite
+=       OpenSSL     - cipher suite name used in openssl's *.h files
+=       openssl     - cipher suite name used by openssl executable
+=       osaft       - cipher suite name used by O-Saft
+=       o=o         - yes if openssl's cipher suite name is same as O-Saft's name
+
+EoT
 
     printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 23, "-" x 23, "-" x 23, "-" x 7);
     printf("= %13s\t\t%-23s\t%-23s\t%-15s\t%s\n", "key ", "OpenSSL", "openssl", "osaft", "openssl=osaft");
@@ -918,13 +943,20 @@ sub show_names  {
 
 sub show_rfc    {
     printf("#%s:\n", (caller(0))[3]);
-    print  "= cipher suite and corresponding RFCs\n";
+    print  <<'EoT';
+= cipher suite and corresponding RFCs
+=   description of columns:
+=       key         - hex key for cipher suite
+=       RFC         - RFC numbers, where cipher suite is described
+=       OpenSSL     - cipher suite name as used in openssl
+
+EoT
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
     printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
     foreach my $key (sort keys %ciphers) {
          my $rfc = $ciphers{$key}->{'rfc'} || "";
-            $rfc = "RFC$rfc" if ($rfc ne "");
+            $rfc = "$rfc" if ($rfc ne "");
          printf("%14s\t%-15s\t%-23s\n", $key,
                 $rfc,
                 $ciphers_names{$key}->{'osaft'} || "",
@@ -940,7 +972,6 @@ sub _show_tablehead {
     # print table headline according given format
     my $format = shift;
     my @values;
-    printf("#%s:\n", (caller(0))[3]);
 
     return if ($format =~ m/tab$/);
 
@@ -953,12 +984,12 @@ sub _show_tablehead {
         printf"#%s%s\n", "-" x 14, join("", ("+-------" x ($#values + 1)));
     }
 #   printf("=%14s\t%-39s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-#            "key", "name", "sec", "ssl", "enc", "bit", "mac", "au", "kx", "score", "tag" );
+#            "key", "name", "sec", "ssl", "enc", "bit", "mac", "auth", "keyx", "score", "tag" );
 #	format=15.12
 
     if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
         printf("=%14s\t%-47s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-               "key", "name", "ssl", "kx", "au", "enc", "bit", "mac", "tag" );
+               "key", "name", "ssl", "keyx", "auth", "enc", "bits", "mac", "tags" );
         printf("=%s+%s+%s+%s+%s+%s+%s+%s+%s\n",
                "-" x 14, "-" x 47, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 11 );
     }
@@ -966,7 +997,7 @@ sub _show_tablehead {
 #    0x00,0x00,0x00 - NULL-MD5                SSLv2 Kx=RSA(512) Au=RSA  Enc=None(0) Ma
     if ($format =~ m/^openssl/) {
         printf("=% 18s - %-23s %-5s %-11s %-7s %-11s %-7s %s\n",
-               "key", "name", "ssl", "kx", "au", "enc(bit)", "mac", "tag" );
+               "key", "name", "ssl", "keyx", "auth", "enc(bit)", "mac", "tags" );
         printf("=%s+%s+%s+%s+%s+%s+%s+%s\n",
                "-" x 19, "-" x 24, "-" x 5, "-" x 11, "-" x 7, "-" x 11, "-" x 7, "-" x 11 );
     }
@@ -999,7 +1030,25 @@ sub show_ciphers    {
     my $format = shift;
     printf("#%s:\n", (caller(0))[3]);
 
-    print  "= internal lists of ciphers\n" if ($format !~ m/tab$/);
+    if ($format !~ m/(?:dump(?:tab)|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) {
+        printf("**WARNING: unknown format '%s'", $format);
+        return;
+    }
+
+    if ($format !~ m/tab$/) {
+        print  <<'EoT';
+= internal lists of ciphers
+=   description of columns:
+=       key         - hex key for cipher suite
+
+EoT
+        my $key = 0;
+        foreach (@{$ciphers_desc{head}}) {
+            printf("=       %-4s        - %s\n", $ciphers_desc{head}[$key],
+                $ciphers_desc{text}[$key]);
+            $key++;
+        }
+    }
 
     _show_tablehead($format);
 
@@ -1014,14 +1063,14 @@ sub show_ciphers    {
         }
 
         my $name= $ciphers_names{$key}->{'iana'} || '';
-        my $ssl = $ciphers{$key}->{'ssl'} || '';
-        my $kx  = $ciphers{$key}->{'kx'}  || '';
-        my $au  = $ciphers{$key}->{'au'}  || '';
-        my $enc = $ciphers{$key}->{'enc'} || '';
-        my $bit = $ciphers{$key}->{'bit'} || '0';
-        my $mac = $ciphers{$key}->{'mac'} || '';
-        my $sec = $ciphers{$key}->{'sec'} || '';
-        my $tag = $ciphers{$key}->{'tag'} || '';
+        my $ssl = $ciphers{$key}->{'ssl'}   || '';
+        my $kx  = $ciphers{$key}->{'keyx'}  || '';
+        my $au  = $ciphers{$key}->{'auth'}  || '';
+        my $enc = $ciphers{$key}->{'enc'}   || '';
+        my $bit = $ciphers{$key}->{'bits'}  || '0';
+        my $mac = $ciphers{$key}->{'mac'}   || '';
+        my $sec = $ciphers{$key}->{'sec'}   || '';
+        my $tag = $ciphers{$key}->{'tags'}  || '';
 
         if ($format =~ m/^(?:15|15.12.15|old)/) {
             $name= $ciphers_names{$key}->{'osaft'} || '';
@@ -1094,13 +1143,13 @@ sub _ciphers_init_osaft {
             $ciphers{$key}->{'dtls'} = "";
         }
         $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_osaft{$key}[0] || '';
-        $ciphers{$key}->{'kx'}  = $OSaft::Ciphers::_ciphers_osaft{$key}[1] || '';
-        $ciphers{$key}->{'au'}  = $OSaft::Ciphers::_ciphers_osaft{$key}[2] || '';
+        $ciphers{$key}->{'keyx'}= $OSaft::Ciphers::_ciphers_osaft{$key}[1] || '';
+        $ciphers{$key}->{'auth'}= $OSaft::Ciphers::_ciphers_osaft{$key}[2] || '';
         $ciphers{$key}->{'enc'} = $OSaft::Ciphers::_ciphers_osaft{$key}[3] || '';
-        $ciphers{$key}->{'bit'} = $OSaft::Ciphers::_ciphers_osaft{$key}[4] || '0';
+        $ciphers{$key}->{'bits'}= $OSaft::Ciphers::_ciphers_osaft{$key}[4] || '0';
         $ciphers{$key}->{'mac'} = $OSaft::Ciphers::_ciphers_osaft{$key}[5] || '';
         $ciphers{$key}->{'sec'} = $OSaft::Ciphers::_ciphers_osaft{$key}[6] || '';
-        $ciphers{$key}->{'tag'} = $OSaft::Ciphers::_ciphers_osaft{$key}[7] || '';
+        $ciphers{$key}->{'tags'}= $OSaft::Ciphers::_ciphers_osaft{$key}[7] || '';
         $ciphers{$key}->{'score'} = "0";  # dummy because we don't have scores in new structure
         $ciphers_names{$key}->{'osaft'} = $OSaft::Ciphers::_ciphers_names{$key}[0] || '';
         $ciphers_const{$key}->{'osaft'} = $OSaft::Ciphers::_ciphers_names{$key}[1] || '';
@@ -1138,12 +1187,12 @@ sub _ciphers_init_openssl   {
         }
         #print $key;
         $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[0];
-        $ciphers{$key}->{'kx'}  = $OSaft::Ciphers::_ciphers_openssl_all{$key}[1];
-        $ciphers{$key}->{'au'}  = $OSaft::Ciphers::_ciphers_openssl_all{$key}[2];
+        $ciphers{$key}->{'kexx'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[1];
+        $ciphers{$key}->{'auth'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[2];
         $ciphers{$key}->{'enc'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[3];
-        $ciphers{$key}->{'bit'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[4];
+        $ciphers{$key}->{'bits'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[4];
         $ciphers{$key}->{'mac'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[5];
-        $ciphers{$key}->{'tag'} = $OSaft::Ciphers::_ciphers_openssl_all{$key}[7] || '';
+        $ciphers{$key}->{'tags'}= $OSaft::Ciphers::_ciphers_openssl_all{$key}[7] || '';
         my $name                = $OSaft::Ciphers::_ciphers_openssl_all{$key}[6];
         $ciphers_names{$key}->{'openssl'} = $name;
     }
