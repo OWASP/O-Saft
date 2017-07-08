@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.706 17/07/08 10:26:50",
+    SID         => "@(#) yeast.pl 1.707 17/07/08 11:04:33",
     STR_VERSION => "17.07.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -277,6 +277,7 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         @rc_argv = grep{s/\s*([+-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
         ## use critic
         close($rc);
+        printf(STR_WARN . "trailing spaces in '%s'\n", $_) foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);
         print "#o-saft.pl  $cfg{'RC-FILE'}: #{" . join("\n  ", "", @rc_argv) .  "\n#}\n" if ((grep{/--v/i} @ARGV) > 0);
     } else {
