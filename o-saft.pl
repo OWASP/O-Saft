@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.704 17/06/27 21:10:39",
-    STR_VERSION => "17.06.20",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.706 17/07/08 10:26:50",
+    STR_VERSION => "17.07.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -203,7 +203,7 @@ sub _warn_and_exit      {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @txt));
     } else {
-        printf(STR_WARN, "(%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
+        printf(STR_WARN . "(%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
         exit(1);
     }
     return;
@@ -6527,6 +6527,11 @@ while ($#argv >= 0) {
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # if it was --help=*
         }
+        #my  $err = _load_file("o-saft-man.pm", "help file");
+        #if ($err ne "") {
+        #    die STR_ERROR, "$err" unless (-e $arg);
+        #}
+        # TODO: _load_file() does not yet work, hence following require
         require q{o-saft-man.pm};   ## no critic qw(Modules::RequireBarewordIncludes)
             # include if necessary only; dies if missing
         printhelp($arg);
