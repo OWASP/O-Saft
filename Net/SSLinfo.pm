@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.05.30',
+    SSLINFO_VERSION => '17.07.07',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.189 17/05/31 16:42:07',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.190 17/07/08 11:36:44',
 };
 
 ######################################################## public documentation #
@@ -1325,7 +1325,7 @@ sub _ssleay_socket  {
         ## use critic
         return $socket;
     }; # TRY
-    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    push(@{$_SSLinfo{'errors'}}, "_ssleay_socket() failed calling $src: $err");
     _trace("_ssleay_socket: undef");
     return;
 } # _ssleay_socket
@@ -1466,7 +1466,7 @@ sub _ssleay_ctx_new {
         return $ctx;
     } # TRY
     # reach here if ::CTX_* failed
-    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    push(@{$_SSLinfo{'errors'}}, "_ssleay_ctx_new() failed calling $src: $err");
     _trace("_ssleay_ctx_new: undef");
     return;
 } # _ssleay_ctx_new
@@ -1526,7 +1526,7 @@ sub _ssleay_ctx_ca  {
         #        &Net::SSLeay::X509_V_FLAG_CRL_CHECK);
         return 1; # success
     } # TRY
-    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    push(@{$_SSLinfo{'errors'}}, "_ssleay_ctx_ca() failed calling $src: $err");
     _trace("_ssleay_ctx_ca: undef.");
     return;
 } # _ssleay_ctx_ca
@@ -1570,7 +1570,7 @@ sub _ssleay_ssl_new {
         }
         return $ssl;
     } # TRY
-    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    push(@{$_SSLinfo{'errors'}}, "_ssleay_ssl_new() failed calling $src: $err");
     _trace("_ssleay_ssl_new: undef.");
     return;
 } # _ssleay_ssl_new
@@ -1594,14 +1594,14 @@ sub _ssleay_ssl_np  {
     $src = 'Net::SSLeay::CTX_set_alpn_protos()';
     if (exists &Net::SSLeay::CTX_set_alpn_protos) {
         Net::SSLeay::CTX_set_alpn_protos($ctx, [@protos_alpn]) && do {
-            push(@err, "_ssleay_ssl_np() failed calling $src: $!");
+            push(@err, "_ssleay_ssl_np(),alpn failed calling $src: $!");
         };
     }
     # NPN  (Net-SSLeay > 1.45, openssl >= 1.0.1)
     if (exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
         $src = 'Net::SSLeay::CTX_set_next_proto_select_cb()';
         Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @protos_npn) && do {
-            push(@err, "_ssleay_ssl_np() failed calling $src: $!");
+            push(@err, "_ssleay_ssl_np(),npn  failed calling $src: $!");
         };
     }
     _trace("_ssleay_ssl_np $#err.");
@@ -2455,11 +2455,11 @@ sub do_ssl_open($$$@) {
                 #
                 # cannot use eval with block form here, needs to be quoted
                 ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
-                if (eval('use Configx; $b = $Config{ivsize};')) {
+                if (eval('use Config; $b = $Config{ivsize};')) {
                     # use $Config{ivsize}
                 } else {
                     $err = "use Config";
-                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open(),Cfg failed calling $src: $err");
                     $_SSLinfo{'serial_int'} = "<<$err failed>>";
                 }
                 ## use critic
@@ -2471,7 +2471,7 @@ sub do_ssl_open($$$@) {
                     $_SSLinfo{'serial_int'} = Math::BigInt->from_hex($d);
                 } else {
                     $err = "Math::BigInt->from_hex($d)";
-                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open(),Big failed calling $src: $err");
                     $_SSLinfo{'serial_int'} = "<<$err failed>>";
                 }
             } else {
@@ -2613,7 +2613,7 @@ sub do_ssl_open($$$@) {
     } # TRY
 
     #6. error handling
-    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() failed calling $src: $err");
+    push(@{$_SSLinfo{'errors'}}, "do_ssl_open(),TRY failed calling $src: $err");
     if ($trace > 1) {
         Net::SSLeay::print_errs(SSLINFO_ERR);
         print SSLINFO_ERR . $_ foreach @{$_SSLinfo{'errors'}};
