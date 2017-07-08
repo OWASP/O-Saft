@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.708 17/07/08 11:29:24",
-    STR_VERSION => "17.07.07",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.709 17/07/08 17:58:17",
+    STR_VERSION => "17.07.08",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -116,7 +116,7 @@ BEGIN {
     # handle simple help very quickly
     if ((grep{/^(?:--|\+)VERSION/} @ARGV) > 0) { print STR_VERSION . "\n"; exit 0; }
     # be smart to users if systems behave strange :-/
-    print STDERR "**WARNING: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
+    print STDERR "**WARNING: 019: on $^O additional option  --v  required, sometimes ...\n" if ($^O =~ m/MSWin32/);
     _yeast_EXIT("exit=BEGIN1 - BEGIN end");
 } # BEGIN
 _yeast_TIME("BEGIN}");              # missing for +VERSION, however, +VERSION --trace-TIME makes no sense
@@ -171,7 +171,7 @@ my  $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
-    die STR_ERROR, "CGI mode requires strict settings" if ((grep{/--cgi=?/} @ARGV) <= 0);
+    die STR_ERROR, "010: CGI mode requires strict settings" if ((grep{/--cgi=?/} @ARGV) <= 0);
     $cgi = 1;
 } # CGI
 # $me might not be .cgi but called with --cgi-exec option
@@ -203,7 +203,7 @@ sub _warn_and_exit      {
         my $method = shift;
         _trace("_warn_and_exit $method: " . join(" ", @txt));
     } else {
-        printf(STR_WARN . "(%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
+        printf(STR_WARN . "099: (%s) --experimental option required to use '%s' functionality. Please send us your feedback about this functionality to o-saft(at)lists.owasp.org\n", @txt);
         exit(1);
     }
     return;
@@ -234,7 +234,7 @@ sub _load_file          {
     #    return "" if (defined($osaft_standalone)); # SEE Note:Stand-alone
     #}
     # need eval to catch "Can't locate ... in @INC ..."
-    eval {require $fil;} or warn STR_WARN, "'require $fil' failed";
+    eval {require $fil;} or _warn("101: 'require $fil' failed");
     $err = $@;
     chomp $err;
     if ($err eq "") {
@@ -277,7 +277,7 @@ if ((grep{/(?:--no.?rc)$/i} @ARGV) <= 0) {      # only if not inhibited
         @rc_argv = grep{s/\s*([+-]-?)/$1/} @rc_argv;# get options and commands, remove leading spaces
         ## use critic
         close($rc);
-        printf(STR_WARN . "trailing spaces in '%s'\n", $_) foreach (grep{m/\s+$/} @rc_argv);
+        _warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);
         print "#o-saft.pl  $cfg{'RC-FILE'}: #{" . join("\n  ", "", @rc_argv) .  "\n#}\n" if ((grep{/--v/i} @ARGV) > 0);
     } else {
@@ -337,7 +337,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     $err = _load_file($arg, "trace file");
     if ($err ne "") {
-        die STR_ERROR, "$err" unless (-e $arg);
+        die STR_ERROR, "003: $err" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -1819,26 +1819,26 @@ sub _load_modules       {
     my $txt = "";
     if (1 > 0) { # TODO: experimental code
         $txt = _load_file("IO/Socket/SSL.pm", "IO SSL module");
-        warn STR_ERROR, "$txt" if ($txt ne "");
+        warn STR_ERROR, "004: $txt" if ($txt ne "");
         # cannot load IO::Socket::INET delayed because we use AF_INET,
         # otherwise we get at startup: 
         #    Bareword "AF_INET" not allowed while "strict subs" in use ...
         #$txt = _load_file("IO/Socket/INET.pm", "IO INET module");
-        #warn STR_ERROR, "$txt" if ($txt ne "");
+        #warn STR_ERROR, "005: $txt" if ($txt ne "");
     }
     if ($cfg{'need_netdns'} > 0) {
         $txt = _load_file("Net/DNS.pm", "Net module");
         if ($txt ne "") {
-            warn STR_ERROR, "$txt";
-            warn STR_WARN,  "--mx disabled";
+            warn STR_ERROR, "006: $txt";
+            _warn("111: option --mx disabled");
             $cfg{'usemx'} = 0;
         }
     }
     if ($cfg{'need_timelocal'} > 0) {
         $txt = _load_file("Time/Local.pm", "Time module");
         if ($txt ne "") {
-            warn STR_ERROR, "$txt";
-            warn STR_WARN,  "value for +sts_expired not applicable";
+            warn STR_ERROR, "007: $txt";
+            _warn("112: value for +sts_expired not applicable");
             # TODO: need to remove +sts_expired from cfg{do}
         }
     }
@@ -1851,16 +1851,16 @@ sub _load_modules       {
        ) {
         $txt = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
         if ($txt ne "") {
-            die  STR_ERROR, "$txt"  if (! _is_do('version'));
-            warn STR_ERROR, "$txt"; # no reason to die for +version
+            die  STR_ERROR, "008: $txt"  if (not _is_do('version'));
+            warn STR_ERROR, "008: $txt"; # no reason to die for +version
         }
         $cfg{'usehttp'} = 0;        # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
     $txt = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
     if ($txt ne "") {
-        die  STR_ERROR, "$txt"  if (! _is_do('version'));
-        warn STR_ERROR, "$txt";     # no reason to die for +version
+        die  STR_ERROR, "009: $txt"  if (not _is_do('version'));
+        warn STR_ERROR, "009: $txt";     # no reason to die for +version
     }
     return;
 } # _load_modules
@@ -1868,6 +1868,7 @@ sub _load_modules       {
 sub _check_modules      {
     # check for minimal version of a module;
     # verbose out but with --v=2 ; uses string "yes" for contrib/bunt.*
+    # these checks print warnings with warn() not _warn(), SEE Perl:warn
     # SEE Perl:import include
     _y_CMD("  check module versions ...");
     my %expected_versions = (
@@ -1900,7 +1901,7 @@ sub _check_modules      {
         $version::VERSION = ""; # defensive programming ..
     }
     if ($have_version == 0) {
-        warn STR_WARN, "ancient perl has no 'version' module; version checks may not be accurate;";
+        warn STR_WARN, "120: ancient perl has no 'version' module; version checks may not be accurate;";
     }
     if ($cfg{verbose} > 1) {
         printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15;
@@ -1925,8 +1926,7 @@ sub _check_modules      {
         if ($v < $expect) {
             $ok = "no";
             $ok = "missing" if ($v == 0);
-            # use warn() not _warn() here, SEE Perl:warn
-            warn STR_WARN, "ancient $mod $v < $expect detected;";
+            warn STR_WARN, "121: ancient $mod $v < $expect detected;";
             # TODO: not sexy: warnings are inside tabular data for --v
         }
         if ($cfg{verbose} > 1) {
@@ -1957,20 +1957,20 @@ sub _enable_functions   {
     _y_CMD("  enable internal functionality ...");
 
     if ($cfg{'ssleay'}->{'openssl'} == 0) {
-        warn STR_WARN, "ancient Net::SSLeay $Net::SSLeay::VERSION cannot detect openssl version";
+        warn STR_WARN, "122: ancient Net::SSLeay $Net::SSLeay::VERSION cannot detect openssl version";
     }
     if ($cfg{'ssleay'}->{'iosocket'} == 0) {
-        warn STR_WARN, "ancient or unknown version of IO::Socket detected";
+        warn STR_WARN, "123: ancient or unknown version of IO::Socket detected";
     }
 
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
         if(($cfg{'usesni'} > 0) and ($cmd{'extciphers'} == 0)) {
             $cfg{'usesni'} = 0;
             if ($version_iosocket < 1.90) {
-                warn STR_WARN, "$txi < 1.90; does not support SNI or is known to be buggy; SNI disabled;";
+                warn STR_WARN, "124: $txi < 1.90; does not support SNI or is known to be buggy; SNI disabled;";
             }
             if ($version_openssl  < 0x01000000) {
-                warn STR_WARN, "$txo < 1.0.0; does not support SNI or is known to be buggy; SNI disabled;";
+                warn STR_WARN, "125: $txo < 1.0.0; does not support SNI or is known to be buggy; SNI disabled;";
             }
             _hint("--force-openssl can be used to disable this check");
         }
@@ -1981,12 +1981,12 @@ sub _enable_functions   {
         # warnings only if ALPN functionality required
         if ($cfg{'usealpn'} > 0 or ($cmd{'extciphers'} > 0)) {
             $cfg{'usealpn'} = 0;
-            warn STR_WARN, "$txt tests with/for ALPN disabled";
+            warn STR_WARN, "126: $txt tests with/for ALPN disabled";
             if ($version_ssleay      < 1.56) {  # is also < 1.46
-                warn STR_WARN, "$txs < 1.56"  if ($cfg{'verbose'} > 1);
+                warn STR_WARN, "127: $txs < 1.56"   if ($cfg{'verbose'} > 1);
             }
             if ($version_openssl   < 0x10002000) {
-                warn STR_WARN, "$txo < 1.0.2" if ($cfg{'verbose'} > 1);
+                warn STR_WARN, "128: $txo < 1.0.2"  if ($cfg{'verbose'} > 1);
             }
             _hint("--no-cipher-alpn or --force-openssl can be used to disable this check");
         }
@@ -1996,12 +1996,12 @@ sub _enable_functions   {
         # warnings only if NPN functionality required
         if ($cfg{'usenpn'}  > 0 or ($cmd{'extciphers'} > 0)) {
             $cfg{'usenpn'}  = 0;
-            warn STR_WARN, "$txt tests with/for NPN disabled";
+            warn STR_WARN, "129: $txt tests with/for NPN disabled";
             if ($version_ssleay      < 1.46) {
-                warn STR_WARN, "$txs < 1.46"  if ($cfg{'verbose'} > 1);
+                warn STR_WARN, "130: $txs < 1.46"   if ($cfg{'verbose'} > 1);
             }
             if ($version_openssl   < 0x10001000) {
-                warn STR_WARN, "$txo < 1.0.1" if ($cfg{'verbose'} > 1);
+                warn STR_WARN, "132: $txo < 1.0.1"  if ($cfg{'verbose'} > 1);
             }
             _hint("--no-cipher-alpn or --force-openssl can be used to disable this check");
         }
@@ -2009,12 +2009,12 @@ sub _enable_functions   {
     _trace(" cfg{usenpn}: $cfg{'usenpn'}");
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {
-        warn STR_WARN, "$txt tests for OCSP disabled";
+        warn STR_WARN, "133: $txt tests for OCSP disabled";
         #_hint("--no-ocsp  can be used to disable this check");
     }
 
     if ($cfg{'ssleay'}->{'can_ecdh'} == 0) {
-        warn STR_WARN, "$txt setting curves disabled";
+        warn STR_WARN, "134: $txt setting curves disabled";
         #_hint("--no-cipher-ecdh  can be used to disable this check");
     }
     return;
@@ -2037,7 +2037,7 @@ sub _check_functions    {
     _y_CMD("  check required modules ...");
     if (not defined $Net::SSLeay::VERSION) {# Net::SSLeay auto-loaded by IO::Socket::SSL
         if ($cmd{'extopenssl'} == 0) {
-            die STR_ERROR, "Net::SSLeay not found, useless use of SSL advanced forensic tool";
+            die STR_ERROR, "013: Net::SSLeay not found, useless use of SSL advanced forensic tool";
         }
     } else {
         $version_ssleay   = $Net::SSLeay::VERSION;
@@ -2076,7 +2076,7 @@ sub _check_functions    {
 
     _y_CMD("  check if Net::SSLeay is usable ...");
     if ($version_ssleay      < 1.49) {
-        warn STR_WARN, "$txt < 1.49; may throw warnings and/or results may be missing;";
+        warn STR_WARN, "135: $txt < 1.49; may throw warnings and/or results may be missing;";
     } else {
         _v2print "$text_ssleay (OK)\tyes";
     }
@@ -2154,7 +2154,7 @@ sub _check_SSL_methods  {
         next if ($cfg{$ssl} == 0);  # don't check what's disabled by option
         if (_is_do('cipherraw')) {  # +cipherraw does not depend on other libraries
             if ($ssl eq 'DTLSv1') {
-                _warn("SSL version '$ssl': not supported by '$me +cipherraw'; not checked");
+                _warn("140: SSL version '$ssl': not supported by '$me +cipherraw'; not checked");
                 next;
             }
             push(@{$cfg{'version'}}, $ssl);
@@ -2163,7 +2163,7 @@ sub _check_SSL_methods  {
         # following checks for these commands only
         $cfg{$ssl} = 0; # reset to simplify further checks
         if ($ssl !~ /$cfg{'regex'}->{'SSLprot'}/) {
-            _warn("SSL version '$ssl': not supported; not checked");
+            _warn("141: SSL version '$ssl': not supported; not checked");
             next;
         }
         # Net::SSLeay  only supports methods for those SSL protocols which were
@@ -2211,7 +2211,7 @@ sub _check_SSL_methods  {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
         } else {
-            _warn("SSL version '$ssl': not supported by Net::SSLeay; not checked");
+            _warn("143: SSL version '$ssl': not supported by Net::SSLeay; not checked");
             _hint("consider using '+cipherall' instead") if (_is_do('cipher'));
         }
     } # $ssl
@@ -2233,13 +2233,13 @@ sub _enable_sclient     {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
             # no warning for external openssl, as -alpn or -npn is only used with +cipher
             if ($cmd{'extciphers'} > 0) {
-            _warn("openssl s_client does not support '$opt'; $txt") if ($txt ne "");
+            _warn("144: openssl s_client does not support '$opt'; $txt") if ($txt ne "");
             }
         } else {
-            _warn("openssl s_client does not support '$opt'; $txt") if ($txt ne "");
+            _warn("145: openssl s_client does not support '$opt'; $txt") if ($txt ne "");
         }
         if ($opt eq '-tlsextdebug') {   # additional warning
-            _warn("following results may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
+            _warn("146: openssl -tlsextdebug not supported; following results may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
         }
         # switch $opt {
         $cfg{'use_reconnect'} = $val  if ($opt eq '-reconnect');
@@ -2263,7 +2263,7 @@ sub _check_openssl      {
         # save to set $Net::SSLinfo::* here,
         # will be redifined later, see: set defaults for Net::SSLinfo
     if (!defined Net::SSLinfo::s_client_check()) {
-        _warn("'$cmd{'openssl'}' not available; all openssl functionality disabled");
+        _warn("147: '$cmd{'openssl'}' not available; all openssl functionality disabled");
         _hint("consider using '--openssl=/path/to/openssl'");
         $cmd{'openssl'}     = "";
         $cmd{'extopenssl'}  = 0;
@@ -2309,10 +2309,11 @@ sub _init_openssldir    {
         # malloc() problems, in this case print an additional warning.
         # Note that low memory affects external calls only *but not* further
         # control flow herein as perl already managed to load the script.
-        print STR_WARN, "perl returned error: '$error'\n";
+        # For defence programming  print()  is used insted of  _warn().
+        print STR_WARN, "002: perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
-            print STR_WARN, "using external programs disabled.\n";
-            print STR_WARN, "data provided by external openssl may be shown as:  <<openssl>>\n";
+            print STR_WARN, "003: using external programs disabled.\n";
+            print STR_WARN, "004: data provided by external openssl may be shown as:  <<openssl>>\n";
         }
         $cmd{'openssl'}    = "";
         $cmd{'extopenssl'} = 0;
@@ -2325,13 +2326,13 @@ sub _init_openssldir    {
         if (-e "$dir/certs") {
             $capath = "$dir/certs";
         } else {    # no directory found, add path to common paths as last resort
-            print STR_WARN, "'openssl version -d' returned not existing: '$openssldir'; ca_path not set .\n";
+            _warn("148: 'openssl version -d' returned not existing: '$openssldir'; ca_path not set .");
             unshift(@{$cfg{'ca_paths'}}, $dir); # dirty hack (but dosn't harm:)
         }
     }
     if ($status != 0) {                     # on Windoze status may be 256
         $cmd{'openssl'}    = "";
-        print STR_WARN, "perl returned status: '$status' ('" . ($status>>8) . "')\n";
+        print STR_WARN, "005: perl returned status: '$status' ('" . ($status>>8) . "')\n";
             # no other warning here, see "some checks are missing" later, 
             # this is to avoid bothering the user with warnings, when not used
         # $capath = ""; # should still be empty
@@ -2449,7 +2450,7 @@ sub _cfg_set_from_file($$) {
         }
         close($fh);
     };
-    _warn("cannot open '$fil': $! ; file ignored");
+    _warn("070: configuration file '$fil' cannot be opened: $! ; file ignored");
     return;
 } #  _cfg_set_from_file
 
@@ -2464,14 +2465,14 @@ sub _cfg_set($$)        {
     my ($key, $val);
     _trace("_cfg_set($typ, ){");
     if ($typ !~ m/^CFG-$cfg{'regex'}->{'cmd-cfg'}/) {
-        _warn("unknown configuration key '$typ'; setting ignored");
+        _warn("071: configuration key unknown '$typ'; setting ignored");
         goto _CFG_RETURN;
     }
     if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
         if ($cgi == 0) {
-            _warn("configuration files are not read in CGI mode; ignored");
+            _warn("072: configuration files are not read in CGI mode; ignored");
             return;
         }
         _cfg_set_from_file($typ, $arg);
@@ -2500,10 +2501,10 @@ sub _cfg_set($$)        {
             }
             if ($key eq 'default') {    # valid before 14.11.14; behave smart for old rc-files
                 push(@{$cfg{$typ}}, 'cipher_selected');
-                _warn("please use '+cipher-selected' instead of '+$key'; setting ignored");
+                _warn("073: configuration: please use '+cipher-selected' instead of '+$key'; setting ignored");
                 next;
             }
-            _warn("unknown command '+$key' for '$typ'; setting ignored");
+            _warn("074: configuration: unknown command '+$key' for '$typ'; setting ignored");
         }
         # check if it is a known command, otherwise add it and print warning
         if ((_is_member($key, \@{$cfg{'commands'}})
@@ -2520,7 +2521,7 @@ sub _cfg_set($$)        {
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
                     # whitelust check for valid characters; avoid injections
                     push(@{$cfg{'commands-USR'}}, $key);
-                    _warn("command '+$key' specified by user") if ((grep{/--v/i} @ARGV) > 0);
+                    _warn("043: command '+$key' specified by user") if ((grep{/--v/i} @ARGV) > 0);
                 }
             }
         }
@@ -2531,7 +2532,7 @@ sub _cfg_set($$)        {
     if ($typ eq 'CFG-score') {          # set new score value
         _trace("_cfg_set: KEY=$key, SCORE=$val");
         if ($val !~ m/^(?:\d\d?|100)$/) { # allow 0 .. 100
-            _warn("invalid score value '$val'; setting ignored");
+            _warn("076: configuration: invalid score value '$val'; setting ignored");
             goto _CFG_RETURN;
         }
         $checks{$key}->{score} = $val if ($checks{$key});
@@ -3008,7 +3009,7 @@ sub _isbleed($$)        {
     unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
         # no proxy and not starttls
         $cl = IO::Socket::INET->new(PeerAddr=>"$host:$port", Timeout=>$cfg{'timeout'}) or do {
-            _warn("_isbleed: failed to connect: '$!'");
+            _warn("321: _isbleed: failed to connect: '$!'");
             return "failed to connect";
         };
     } else {
@@ -3017,7 +3018,7 @@ sub _isbleed($$)        {
         $cl = Net::SSLhello::openTcpSSLconnection($host, $port);
         if ((!defined ($cl)) || ($@)) { # No SSL Connection
             local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
-            _warn ("_isbleed (with openTcpSSLconnection): $@\n");
+            _warn ("322: _isbleed (with openTcpSSLconnection): $@\n");
             _trace("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
             return("failed to connect");
         }
@@ -3051,7 +3052,7 @@ sub _isbleed($$)        {
     while (1) {
         ($type,$ver,@msg) = _readframe($cl) or do {
             #ORIG die "no reply";
-            _warn(" isbleed: no reply: '$!'");
+            _warn("323: isbleed: no reply: '$!'");
             return "no reply";
         };
         last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
@@ -3101,7 +3102,7 @@ sub _isccs($$$)         {
         # open our own connection and close it at end
 # TODO: does not work with socket from SSLinfo.pm
     $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
-        _warn("failed to connect: '$!'");
+        _warn("331: _isccs: failed to connect: '$!'");
         return "failed to connect";
     };
 #################
@@ -3131,7 +3132,7 @@ sub _isccs($$$)         {
     )));
     while (1) {
         ($type,$ver,@msg) = _readframe($cl) or do {
-            _warn("no reply: '$!'");
+            _warn("332: _isccs: no reply: '$!'");
             return "no reply";
         };
         last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
@@ -3191,12 +3192,12 @@ sub _is_ssl_error($$$)  {
     $cfg{'done'}->{'ssl_failed'}++; # local counter
     return 0 if ($cfg{'ssl_error'} <= 0);   # no action required
     if ($cfg{'done'}->{'ssl_errors'} > $cfg{'sslerror'}->{'total'}) {
-        _warn("$txt after $cfg{'sslerror'}->{'total'} total errors");
+        _warn("301: $txt after $cfg{'sslerror'}->{'total'} total errors");
         _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
         return 1;
     }
     if ($cfg{'done'}->{'ssl_failed'} > $cfg{'sslerror'}->{'max'}) {
-        _warn("$txt after $cfg{'sslerror'}->{'max'} max errors");
+        _warn("302: $txt after $cfg{'sslerror'}->{'max'} max errors");
         _hint("use  --no-ssl-error  or  --ssl-error-max=  to continue connecting");
         return 1;
     }
@@ -3245,11 +3246,11 @@ sub _usesocket($$$$)    {
     # doesn't produce such warnings. Sigh.
     _trace1("_usesocket($ssl, $host, $port, $ciphers){ sni: $sni");
     if (($ssl eq "SSLv2") && (! defined &Net::SSLeay::CTX_v2_new)) {
-        _warn("SSL version '$ssl': not supported by Net::SSLeay");
+        _warn("303: SSL version '$ssl': not supported by Net::SSLeay");
         return "";
     }
     if (($ssl eq "SSLv3") && (! defined &Net::SSLeay::CTX_v3_new)) {
-        _warn("SSL version '$ssl': not supported by Net::SSLeay");
+        _warn("304: SSL version '$ssl': not supported by Net::SSLeay");
         return "";
     }
     # FIXME: use Net::SSLeay instead of IO::Socket::SSL
@@ -3291,7 +3292,7 @@ sub _usesocket($$$$)    {
             $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
             if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection 
                 local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
-                _warn("_usesocket: openTcpSSLconnection() failed: $@\n"); 
+                _warn("305: _usesocket: openTcpSSLconnection() failed: $@\n"); 
                 return ("");
             } else {
                 # SSL upgrade
@@ -3385,9 +3386,9 @@ sub _useopenssl($$$$)   {
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
     return "", "", "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
     if ($data =~ m#^\s*$#) {
-        _warn("SSL version '$ssl': empty result from openssl");
+        _warn("311: SSL version '$ssl': empty result from openssl");
     } else {
-        _warn("SSL version '$ssl': unknown result from openssl");
+        _warn("312: SSL version '$ssl': unknown result from openssl");
     }
     _trace2("_useopenssl: #{ $data }");
     if ($cfg{'verbose'} > 0) {
@@ -3441,7 +3442,7 @@ sub _get_default($$$$)  {
         # TODO: SSLv2 is special, see _usesocket "dirty hack"
         my $txt = "SSL version '$ssl': cannot get default cipher; ignored";
         if ($ssl =~ m/SSLv[2]/) {
-            _warn($txt);
+            _warn("401: $txt");
         } else {
             _v_print($txt);
         }
@@ -3483,7 +3484,7 @@ sub ciphers_get($$$$)   {
             if (($c !~ $supported)) {
                 # mismatch: name asked for and name returned by server
                 # this may indicate wrong cipher name in our configuration
-                warn STR_WARN, "checked cipher '$c' does not match 'returned cipher '$supported'";
+                _warn("411: checked cipher '$c' does not match 'returned cipher '$supported'");
             }
         }
         push(@res, "$version:$supported") if ($supported ne "");
@@ -3749,7 +3750,7 @@ sub check_nextproto {
                 (($type eq 'NPN')  ? $proto : ""),
                 $socket);
         if (!defined $ssl) {
-            _warn("$type connection failed with '$proto'");
+            _warn("601: $type connection failed with '$proto'");
         } else {
             # Net::SSLeay's functions are crazy, both P_next_proto_negotiated()
             # and P_alpn_selected() return undef if not supported by server and
@@ -3759,7 +3760,7 @@ sub check_nextproto {
             $np = Net::SSLeay::P_alpn_selected($ssl)         if ($type eq 'ALPN');
             $np = Net::SSLeay::P_next_proto_negotiated($ssl) if ($type eq 'NPN');
             if (defined $np && $mode eq 'single') {
-                _warn("$type name mismatch: (send) $proto <> $np (returned)")  if ($proto ne $np);
+                _warn("602: $type name mismatch: (send) $proto <> $np (returned)")  if ($proto ne $np);
             }
             _trace("check_nextproto: $type $np") if (defined $np) ;
             if (defined $np) {
@@ -4992,7 +4993,7 @@ sub checkdest($$)   {
     if ($#prot == 0) {          # found exactly one matching protocol
         $checks{'cipher_pfs'}->{val}= $cipher if ("" ne _ispfs($ssl, $cipher));
     } else {
-        _warn("protocol '". join(';', @prot) . "' does not match; no selected protocol available");
+        _warn("631: protocol '". join(';', @prot) . "' does not match; no selected protocol available");
     }
 
     # PFS is scary if the TLS session ticket is not random
@@ -5374,7 +5375,7 @@ sub print_data($$$$)    {
     # print given label and text from %data according given legacy format
     my ($legacy, $host, $port, $key) = @_;
     if (_is_hashkey($key, \%data) < 1) {    # silently ignore unknown labels
-        _warn("unknown label '$key'; output ignored"); # seems to be a programming error
+        _warn("801: unknown label '$key'; output ignored"); # seems to be a programming error
         return;
     }
     my $label = ($data{$key}->{txt} || ""); # defensive programming
@@ -5672,7 +5673,7 @@ sub printciphers_dh($$$) {
     my $openssl_version = get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh: openssl_version: $openssl_version");
     if ($openssl_version lt "1.0.2") { # yes perl can do this check  # TODO: move this check to _check_openssl()
-        _warn("ancient openssl $openssl_version: using '-msg' option to get DH parameters");
+        _warn("811: ancient openssl $openssl_version: using '-msg' option to get DH parameters");
         $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl'}->{'msg'} == 1);
         require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
             # SEE Note:Stand-alone
@@ -5808,7 +5809,7 @@ sub printchecks($$$) {
     local $\ = "\n";
     printheader($text{'out-checks'}, $text{'desc-check'});
     _trace_cmd(' printchecks: %checks');
-    _warn("can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
+    _warn("821: can't print certificate sizes without a certificate (--no-cert)") if ($cfg{'no_cert'} > 0);
     foreach my $key (@{$cfg{'do'}}) {
         _trace("printchecks: (%checks) ?" . $key);
         next if (_is_member( $key, \@{$cfg{'commands-NOTYET'}}) > 0);
@@ -5858,8 +5859,8 @@ sub printquit() {
     #       for the correspoding commands.
 
     if ($cfg{'trace'} + $cfg{'traceARG'} + $cfg{'verbose'} <= 0) {
-        #_warn(" +quit  command usefull with --v and/or --trace* option only");
-        _warn(" +quit  command should be used with  --trace=arg  option");
+        #_warn("831: +quit  command usefull with --v and/or --trace* option only");
+        _warn("831: +quit  command should be used with  --trace=arg  option");
     }
     $cfg{'verbose'} = 2 if ($cfg{'verbose'} < 2);   # dirty hack
     $cfg{'trace'}   = 2 if ($cfg{'trace'}   < 2);   # -"-
@@ -5877,7 +5878,7 @@ sub __SSLeay() {
     if (1.49 > $Net::SSLeay::VERSION) {
         my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
            $txt .= " cannot compare SSLeay with openssl version";
-        warn STR_WARN, $txt;            # not _warn(), SEE Perl:warn
+        warn STR_WARN, "080: $txt";         # not _warn(), SEE Perl:warn
         return "$Net::SSLeay::VERSION";
     } else {
         return Net::SSLeay::SSLeay();
@@ -5889,7 +5890,7 @@ sub printversionmismatch() {
     my $o = Net::SSLeay::OPENSSL_VERSION_NUMBER();
     my $s = __SSLeay();
     if ($o ne $s) {
-        _warn("used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
+        _warn("841: used openssl version '$o' differs from compiled Net:SSLeay '$s'; ignored");
     }
     return;
 } # printversionmismatch
@@ -5910,7 +5911,7 @@ sub printversion() {
     printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
     printf("       ::SSLeay()                    0x%x (%s)\n", __SSLeay(), __SSLeay());
     if (1.49 > $Net::SSLeay::VERSION) {
-        warn STR_WARN, "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available";
+        _warn("851: ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available");
     } else {
       if ($cfg{'verbose'} > 0) {
         # TODO: not all versions of Net::SSLeay have constants like 
@@ -6089,7 +6090,7 @@ sub printciphers() {
     # all following headers printed directly instead of using printheader()
 
     if ($cfg{'legacy'} eq "ssltest") {      # output looks like: ssltest --list
-        _warn("not all ciphers listed");
+        _warn("861: not all ciphers listed");
         foreach my $ssl (qw(SSLv2 SSLv3 TLSv1)) {# SSLv3 and TLSv1 are the same, hence search both
           print "SSLv2 Ciphers Supported..."       if ($ssl eq 'SSLv2');
           print "SSLv3/TLSv1 Ciphers Supported..." if ($ssl eq 'SSLv3');
@@ -6373,7 +6374,7 @@ while ($#argv >= 0) {
             if (1 == (grep{/^$arg$/i} @{$cfg{'legacys'}})) {
                 $cfg{'legacy'} = lc($arg);
             } else {
-                _warn("unknown legacy '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+                _warn("054: option with unknown legacy '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'FORMAT')   {
@@ -6381,14 +6382,14 @@ while ($#argv >= 0) {
             if (1 == (grep{/^$arg$/} @{$cfg{'formats'}})) {
                 $cfg{'format'} = $arg;
             } else {
-                _warn("unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+                _warn("055: option with unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CRANGE')   {
             if (1 == (grep{/^$arg$/} keys %{$cfg{'cipherranges'}})) {
                 $cfg{'cipherrange'} = $arg;
             } else {
-                _warn("unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+                _warn("056: option with unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
         if ($typ eq 'CURVES')   {
@@ -6402,7 +6403,7 @@ while ($#argv >= 0) {
             #if (1 == (grep{/^$arg$/} keys %{$cfg{'ciphercurves'}})) {
             #    $cfg{'ciphercurves'} = $arg;
             #} else {
-            #    _warn("unknown curve name '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+            #    _warn("057: option with unknown curve name '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             #}
         }
 
@@ -6494,7 +6495,7 @@ while ($#argv >= 0) {
         # SEE Note:CGI mode
         # only options in RegEx are ignored if the value is empty
         if ($arg =~ /$cfg{'regex'}->{'opt-empty'}/) {
-            _warn("option with empty argument '$arg'; option ignored") if ($cgi == 0);
+            _warn("050: option with empty argument '$arg'; option ignored") if ($cgi == 0);
             next;
         }
         $arg =~ s/=+$//;
@@ -6503,11 +6504,11 @@ while ($#argv >= 0) {
     # first handle some old syntax for backward compatibility
     if ($arg =~ /^--cfg(cmd|score|text)-([^=]*)=(.*)/) {
         $typ = 'CFG-'.$1; unshift(@argv, $2 . "=" . $3);   # convert to new syntax
-        _warn("old (pre 13.12.12) syntax '--cfg-$1-$2'; converted to '--cfg-$1=$2'; please consider changing your files");
+        _warn("022: old (pre 13.12.12) syntax '--cfg-$1-$2'; converted to '--cfg-$1=$2'; please consider changing your files");
         next; # no more normalisation!
     }
     if ($arg =~ /^--set[_-]?score=(.*)/) {
-        _warn("old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; option ignored");
+        _warn("021: old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; option ignored");
         next;
     }
 
@@ -6530,7 +6531,7 @@ while ($#argv >= 0) {
         }
         #my  $err = _load_file("o-saft-man.pm", "help file");
         #if ($err ne "") {
-        #    die STR_ERROR, "$err" unless (-e $arg);
+        #    die STR_ERROR, "011: $err" unless (-e $arg);
         #}
         # TODO: _load_file() does not yet work, hence following require
         require q{o-saft-man.pm};   ## no critic qw(Modules::RequireBarewordIncludes)
@@ -7052,19 +7053,19 @@ while ($#argv >= 0) {
         if (_is_member($val, \@{$cfg{'commands-USR'}}) == 1) {
                                   push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});    next; }
         if (_is_member($val, \@{$cfg{'commands-NOTYET'}}) > 0) {
-            _warn("command not yet implemented '$val' may be ignored");
+            _warn("044: command not yet implemented '$val' may be ignored");
         }
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
             push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
         } else {
-            _warn("unknown command '$val' command ignored");
+            _warn("049: command '$val' unknown; command ignored");
         }
         next;
     }
     #} +---------+----------+------------------------------------+----------------
 
     if ($arg =~ /(?:ciphers|s_client|version)/) {  # handle openssl commands special
-        _warn("host-like argument '$arg' treated as command '+$arg'");
+        _warn("041: host-like argument '$arg'; treated as command '+$arg'");
         _hint("please use '+$arg' instead");
         push(@{$cfg{'do'}}, $arg);
         next;
@@ -7202,7 +7203,7 @@ if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
 #| -------------------------------------
 foreach my $key (qw(ca_file ca_path ca_crl)) {
     next if not defined $cfg{$key};
-    _warn("spaces found in '$key'='$cfg{$key}'; may cause connection problems")
+    _warn("053: option with spaces '$key'='$cfg{$key}'; may cause connection problems")
         if ($cfg{$key} =~ m/\s/);
 }
 
@@ -7259,7 +7260,7 @@ $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # s
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
 if ($cfg{'usehttp'} == 0) {                # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
-    _warn("STS $text{'no-http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
+    _warn("064: STS $text{'no-http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
 $quick = 1 if ($cfg{'legacy'} eq 'testsslserver');
 if ($quick == 1) {
@@ -7397,13 +7398,13 @@ if ((_need_cipher() > 0) or (_need_default() > 0)) {
     }
     _trace(" got ciphers: @{$cfg{'ciphers'}}");
     if (@{$cfg{'ciphers'}} <= 0) {      # empty list
-        _warn("given pattern '$pattern' did not return cipher list");
+        _warn("063: given pattern '$pattern' did not return cipher list");
         _y_CMD("  using private cipher list ...");
         @{$cfg{'ciphers'}} = keys %ciphers;
     }
     if (@{$cfg{'ciphers'}} <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
-        die(STR_ERROR, "no ciphers found; may happen with openssl pre 1.0.0 according given pattern");
+        die STR_ERROR, "012: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
     }
 } # _need_cipher or _need_default
 _v_print("cipher list: @{$cfg{'ciphers'}}");
@@ -7427,13 +7428,13 @@ if (_is_do('cipher')) {
 if (($info > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +info does not allow additional commands
     # see printchecks() call below
-    _warn("additional commands in conjunction with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
+    _warn("047: additional commands in conjunction with '+info' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) . "' ignored");
 }
 if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
     # +check does not allow additional commands of type "info"
     foreach my $key (@{$cfg{'done'}->{'arg_cmds'}}) {
         if (_is_member( $key, \@{$cfg{'cmd-info'}}) > 0) {
-            _warn("additional commands in conjunction with '+check' are not supported; +'$key' ignored");
+            _warn("048: additional commands in conjunction with '+check' are not supported; +'$key' ignored");
         }
     }
 }
@@ -7449,10 +7450,10 @@ foreach my $cmd (@{$cfg{'ignore-out'}}) {
     $fail++ if (_is_do($cmd) > 0);
 }
 if ($fail > 0) {
-    _warn("$fail data and check outputs are disbaled due to use of '--no-out':");
+    _warn("066: $fail data and check outputs are disbaled due to use of '--no-out':");
     if ($cfg{'verbose'} >  0) {
-        _warn("  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
-        _warn("  given:  +" . join(" +", @{$cfg{'do'}}));
+        _warn("067:  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
+        _warn("068:  given:  +" . join(" +", @{$cfg{'do'}}));
     } else {
         _hint("use  '--v'  for more information");
     }
@@ -7506,7 +7507,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         $fail  = '<<gethostbyaddr() failed>>';
         $cfg{'ip'}      = gethostbyname($host); # primary IP as identified by given hostname
         if (!defined $cfg{'ip'}) {
-            _warn("Can't get IP for host '$host'; host ignored");
+            _warn("201: Can't get IP for host '$host'; host ignored");
             _y_CMD("host}");
             next; # otherwise all following fails
         }
@@ -7535,7 +7536,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
                 #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
             }
-            _warn("Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
+            _warn("202: Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
         }
     }
     # print DNS stuff
@@ -7559,7 +7560,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _yeast_TIME("cipherraw{");
         _y_CMD("+cipherraw");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
-        _warn("no SSL versions for +cipherraw available") if ($#{$cfg{'version'}} < 0);
+        _warn("209: No SSL versions for +cipherraw available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
         foreach my $ssl (@{$cfg{'version'}}) {
             next if ($cfg{$ssl} == 0);
@@ -7743,13 +7744,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
 # }
     } else {
-        _warn("Can't make a connection to $host:$port without SNI; no initial data (compare with and without SNI not possible)");
+        _warn("204: Can't make a connection to $host:$port without SNI; no initial data (compare with and without SNI not possible)");
     }
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
     # the connection failed and does nothing (except resetting data)
     if ($cfg{'verbose'} >  0) {
-        _warn($_) foreach Net::SSLinfo::errors();
+        _warn("206: $_") foreach Net::SSLinfo::errors();
     }
     Net::SSLinfo::do_ssl_close($host, $port);
     $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
@@ -7778,7 +7779,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             my @errtxt = Net::SSLinfo::errors($host, $port);
             if ($#errtxt > 0) {
                 _v_print(join("\n".STR_ERROR, @errtxt));
-                _warn("Can't make a connection to $host:$port; target ignored");
+                _warn("205: Can't make a connection to $host:$port; target ignored");
                 _hint("--v  will show more information");
                 _hint("--socket-reuse  may help in some cases");
                 _hint("--ignore-no-conn can be used to disable this check");
@@ -7787,7 +7788,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         my @errtxt = Net::SSLinfo::errors($host, $port);
         if ((grep{/\*\*ERROR/} @errtxt) > 0) {
-            _warn("Errors occoured when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
+            _warn("207: Errors occoured when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
             _hint("--v  will show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
@@ -7834,7 +7835,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if ($check > 0) {
         _y_CMD("+check");
-        _warn("no openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
+        _warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
     }
 
     # for debugging only
@@ -7935,14 +7936,6 @@ The reference to such an annotation uses  SEE  in the code.
 All following text is supposed to be read by humans!
 
 
-=head2 Perl:warn _warn
-
-I.g. perl's warn() is not used, but our private _warn(). With  _warn() the
-The messages can be supressed with the  --no-warning option. However, some
-warnings should never be supressed, hence warn() is used in in rare cases.
-See also  CONCEPTS  (if it exists in our help texts).
-
-
 =head2 Perl:import include
 
 Perl's recommend way to import modules is the `use' or `require' statement
@@ -7960,6 +7953,30 @@ Perl's `use autouse' is also not possible, as to much functions need to be
 declared for that pragma then.
 Unfortunately some common Perl modules resist to be loaded with `require'.
 They are still imported using  use  .
+
+
+=head2 Perl:warn _warn
+
+I.g. perl's warn() is not used, but our private _warn(). Using _warn() can
+supressed messages with the  --no-warning  option.  However, some warnings
+should never be supressed, hence warn() is used in in rare cases.
+See also  CONCEPTS  (if it exists in our help texts).
+
+
+=head2 Perl:Message Numbers
+
+Each warning has a unique number. The numbers are grouped as follows:
+    0xx     startup check, options, arguments
+    1xx     check (runtime) functionality
+    2xx     loop hosts
+    3xx     connect functions
+    4xx     cipher check functions
+    5xx     inernal check functions
+    6xx     check functions
+    8xx     print functions
+
+Check for used numbers with:
+    egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
 
 
 =head2 Note:SSL protocol versions
