@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.707 17/07/08 11:04:33",
+    SID         => "@(#) yeast.pl 1.708 17/07/08 11:29:24",
     STR_VERSION => "17.07.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7196,6 +7196,14 @@ if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
 }
 if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
     # TODO: probably search for a path from our list in $cfg{'ca_paths'}
+}
+
+#| openssl and Net::SSLeay is picky about path names
+#| -------------------------------------
+foreach my $key (qw(ca_file ca_path ca_crl)) {
+    next if not defined $cfg{$key};
+    _warn("spaces found in '$key'='$cfg{$key}'; may cause connection problems")
+        if ($cfg{$key} =~ m/\s/);
 }
 
 if ($info > 0) {                # +info does not do anything with ciphers
