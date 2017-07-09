@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.06.20',  # official version number of tis file
+    OSAFT_VERSION   => '17.07.07',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.117 17/06/27 21:07:24',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.118 17/07/09 20:21:10',
 
 };
 
@@ -1369,6 +1369,12 @@ our %cfg = (
                         0x0300FEE0,   0x0300FEE1, 0x0300FEFE, 0x0300FEFF,
                        ",
                        # 0x03000000 .. 0x0300002F, 0x030000FF,   # old SSLv3 ciphers
+        'c0xx'      => "0x0300C000 .. 0x0300C0FF",  # constants for ciphers using ecc
+        'ccxx'      => "0x0300CC00 .. 0x0300CCFF",  # constants for ciphers using ecc
+        'ecc'       =>          # constants for ciphers using ecc
+                       "0x0300C000 .. 0x0300C0FF,
+                        0x0300CC00 .. 0x0300CCFF,
+                       ",
     }, # cipherranges
     'cipher_dh'     => 0,       # 1: +cipher also prints DH parameters (default will be changed in future)
     'cipher_md5'    => 1,       # 0: +cipher does not use *-MD5 ciphers except for SSLv2
