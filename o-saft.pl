@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.711 17/07/09 22:23:00",
+    SID         => "@(#) yeast.pl 1.712 17/07/09 23:05:50",
     STR_VERSION => "17.07.08",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3400,6 +3400,50 @@ sub _useopenssl($$$$)   {
     return "", "", "";
 } # _useopenssl
 
+sub _get_ciphers_list   {
+    #? return space-separated list of cipher suites according command line options
+    _trace("_get_ciphers_list(){");
+    my @ciphers = ();
+    my $range   = $cfg{'cipherrange'};  # default is 'rfc'
+    _trace("cipherpattern= $cfg{'cipherpattern'}, cipherrange= $range");
+    my $pattern = $cfg{'cipherpattern'};# default pattern (colon-separated)
+       $pattern = join(":", @{$cfg{'cipher'}}) if (scalar(@{$cfg{'cipher'}}) > 0);
+        # @{$cfg{'cipher'}}) > 0  if option --cipher=* was used
+        # can be specified like: --cipher=NULL:RC4  or  --cipher=NULL --cipher=RC4
+    _trace(" cipher pattern= $pattern");
+    if ($range eq "rfc") {
+        # default cipher range is 'rfc' (see o-saft-lib.pm), then get list of
+        # ciphers from Net::SSLinfo
+        if ($cmd{'extciphers'} == 1) {
+            @ciphers = Net::SSLinfo::cipher_local($pattern);
+        } else {
+            @ciphers = Net::SSLinfo::cipher_list( $pattern);
+        }
+    } else {
+        # cipher range specified with --cipher-range=* option
+        # ranges are defined as numbers, need to get the cipher suite name
+        _v_print("cipher range: $range");
+        foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+            my $key = sprintf("0x%08X",$c);
+            _trace($key,   $cipher_names{$key}[0])  if defined $cipher_names{$key}[0];
+            push(@ciphers, $cipher_names{$key}[0])  if defined $cipher_names{$key}[0];
+            # TODO:  use   get_cipher_suitename()
+        }
+    }
+    _trace(" got ciphers: @ciphers");
+    if (@ciphers <= 0) {      # empty list
+        _warn("063: given pattern '$pattern' did not return cipher list");
+        _y_CMD("  using private cipher list ...");
+        @ciphers = keys %ciphers;
+    }
+    if (@ciphers <= 0) {
+        print "Errors: " . Net::SSLinfo::errors();
+        die STR_ERROR, "012: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
+    }
+    _trace("_get_ciphers_list\t= @ciphers }"); # TODO: trace a bit late
+    return @ciphers;
+} # _get_ciphers_list
+
 sub _get_default($$$$)  {
     # return list of offered (default) cipher from target
     # mode defines how to retrive the default cipher
@@ -3463,9 +3507,12 @@ sub ciphers_get($$$$)   {
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();       # return accepted ciphers
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
+    my $cnt     = 0;
     foreach my $c (@ciphers) {
         my $anf = time();
         my $supported = "";
+        $cnt++;
+        printf("#   cipher %3d %s%s\r", $cnt, $c, " "x30) if ($cfg{'verbose'} > 0);
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'cipher_md5'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
@@ -7386,28 +7433,13 @@ usr_pre_cipher();
 #| -------------------------------------
 # TODO: move this code-block up behind call of _check_SSL_methods();
 #       needs exhausting tests with previous non-connecting commands
-#       needs also proper tests what Net::SSLinfo::cipher_* returns
+#       needs also proper tests what Net::SSLinfo::cipher_* returns,
+#       see _get_ciphers_list()
 _yeast_TIME("get{");
 if ((_need_cipher() > 0) or (_need_default() > 0)) {
     _y_CMD("  get cipher list ...");
-    my $pattern = $cfg{'cipherpattern'};# default pattern
-       $pattern = join(":", @{$cfg{'cipher'}}) if (scalar(@{$cfg{'cipher'}}) > 0);
-    _trace(" cipher pattern= $pattern");
-    if ($cmd{'extciphers'} == 1) {
-        @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_local($pattern);
-    } else {
-        @{$cfg{'ciphers'}} = Net::SSLinfo::cipher_list( $pattern);
-    }
-    _trace(" got ciphers: @{$cfg{'ciphers'}}");
-    if (@{$cfg{'ciphers'}} <= 0) {      # empty list
-        _warn("063: given pattern '$pattern' did not return cipher list");
-        _y_CMD("  using private cipher list ...");
-        @{$cfg{'ciphers'}} = keys %ciphers;
-    }
-    if (@{$cfg{'ciphers'}} <= 0) {
-        print "Errors: " . Net::SSLinfo::errors();
-        die STR_ERROR, "012: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
-    }
+    @{$cfg{'ciphers'}} = _get_ciphers_list();
+
 } # _need_cipher or _need_default
 _v_print("cipher list: @{$cfg{'ciphers'}}");
 _yeast_TIME("get}");
@@ -7653,10 +7685,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 # hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
 #    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
 # Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
+        my $cnt = scalar(@{$cfg{'ciphers'}});
         foreach my $ssl (@{$cfg{'version'}}) {
             my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
-            _y_CMD("ckecking ciphers for $ssl ... ($__openssl)");
-            _trace("ckecking ciphers for $ssl ... ($__openssl)");
+            _y_CMD("ckecking $cnt ciphers for $ssl ... ($__openssl)");
+            _trace("ckecking $cnt ciphers for $ssl ... ($__openssl)");
+            _v_print("ckecking $cnt ciphers for $ssl ...");
             my $__verbose   = $cfg{'verbose'};
                 # $cfg{'v_cipher'}  should only print cipher checks verbosely,
                 # ciphers_get()  uses  $cfg{'verbose'}, hence wee need to save
