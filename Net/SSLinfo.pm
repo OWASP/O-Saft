@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.07.07',
+    SSLINFO_VERSION => '17.07.08',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.190 17/07/08 11:36:44',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.191 17/07/09 10:13:55',
 };
 
 ######################################################## public documentation #
@@ -1591,18 +1591,22 @@ sub _ssleay_ssl_np  {
     my @err;
     # functions return 0 on success, hence: && do{} to catch errors
     # ALPN (Net-SSLeay > 1.55, openssl >= 1.0.2)
-    $src = 'Net::SSLeay::CTX_set_alpn_protos()';
-    if (exists &Net::SSLeay::CTX_set_alpn_protos) {
-        Net::SSLeay::CTX_set_alpn_protos($ctx, [@protos_alpn]) && do {
-            push(@err, "_ssleay_ssl_np(),alpn failed calling $src: $!");
-        };
+    if ($protos_alpn !~ m/^\s*$/) {
+        if (exists &Net::SSLeay::CTX_set_alpn_protos) {
+            $src = 'Net::SSLeay::CTX_set_alpn_protos()';
+            Net::SSLeay::CTX_set_alpn_protos($ctx, [@protos_alpn]) && do {
+                push(@err, "_ssleay_ssl_np(),alpn failed calling $src: $!");
+            };
+        }
     }
     # NPN  (Net-SSLeay > 1.45, openssl >= 1.0.1)
-    if (exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
-        $src = 'Net::SSLeay::CTX_set_next_proto_select_cb()';
-        Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @protos_npn) && do {
-            push(@err, "_ssleay_ssl_np(),npn  failed calling $src: $!");
-        };
+    if ($protos_npn !~ m/^\s*$/) {
+        if (exists &Net::SSLeay::CTX_set_next_proto_select_cb) {
+            $src = 'Net::SSLeay::CTX_set_next_proto_select_cb()';
+            Net::SSLeay::CTX_set_next_proto_select_cb($ctx, @protos_npn) && do {
+                push(@err, "_ssleay_ssl_np(),npn  failed calling $src: $!");
+            };
+        }
     }
     _trace("_ssleay_ssl_np $#err.");
     return @err;
@@ -1854,9 +1858,9 @@ sub do_ssl_new      {
     my $tmp_sock= undef;# newly opened socket,
                         # Note: $socket is only used to check if it is defined
     my $dum     = undef;
-    $cipher     = "" if (!defined $cipher); # cipher parameter is optional
-    $protos_alpn= "" if (!defined $protos_alpn); # -"-
-    $protos_npn = "" if (!defined $protos_npn);  # -"-
+    $cipher     = "" if (not defined $cipher);      # cipher parameter is optional
+    $protos_alpn= "" if (not defined $protos_alpn); # -"-
+    $protos_npn = "" if (not defined $protos_npn);  # -"-
     _traceset();
     _trace("do_ssl_new(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . ","
                        . ($cipher||'') . "," . ($protos_alpn||'') . ",socket)");
@@ -1915,15 +1919,15 @@ sub do_ssl_new      {
             ($ctx = _ssleay_ctx_new($ctx_new))  or do {$src = '_ssleay_ctx_new()'} and next;
 
             #1c. disable not specified SSL versions, limit as specified by user
-            foreach  my $ssl (keys %_SSLmap) {
+            foreach  my $_ssl (keys %_SSLmap) {
                 # $sslversions  passes the version which should be supported,  but
                 # openssl and hence Net::SSLeay, configures what  should *not*  be
                 # supported, so we skip all versions found in  $sslversions
                 next if ($sslversions =~ m/^\s*$/); # no version given, leave default
-                next if (grep{/^$ssl$/} split(" ", $sslversions));
-                my $bitmask = _SSLbitmask_get($ssl);
+                next if (grep{/^$_ssl$/} split(" ", $sslversions));
+                my $bitmask = _SSLbitmask_get($_ssl);
                 if (defined $bitmask) {        # if there is a bitmask, disable this version
-                    _trace("do_ssl_new: OP_NO_$ssl");  # NOTE: constant name *not* as in ssl.h
+                    _trace("do_ssl_new: OP_NO_$_ssl");  # NOTE: constant name *not* as in ssl.h
                     Net::SSLeay::CTX_set_options($ctx, $bitmask);
                 }
                 #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
