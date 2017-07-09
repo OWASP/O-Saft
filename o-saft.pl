@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.709 17/07/08 17:58:17",
+    SID         => "@(#) yeast.pl 1.710 17/07/09 12:36:50",
     STR_VERSION => "17.07.08",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3744,11 +3744,13 @@ sub check_nextproto {
     foreach my $proto (@protos) {
         #_trace("  do_ssl_new(..., ".(join(" ", @{$cfg{'version'}}))
         #     . ", $cfg{'cipherpattern'}, $proto, $proto, socket)");
-        ($ssl, $ctx, $socket, $method) = Net::SSLinfo::do_ssl_new($host, $port,
+        ($ssl, $ctx, $socket, $method) = Net::SSLinfo::do_ssl_new(
+                $host, $port,
                 (join(" ", @{$cfg{'version'}})), $cfg{'cipherpattern'},
                 (($type eq 'ALPN') ? $proto : ""),
                 (($type eq 'NPN')  ? $proto : ""),
-                $socket);
+                $socket
+            );
         if (!defined $ssl) {
             _warn("601: $type connection failed with '$proto'");
         } else {
@@ -3770,7 +3772,7 @@ sub check_nextproto {
         Net::SSLeay::free($ssl)      if (defined $ssl);
         Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
         # TODO: need to check if ($cfg{'socket_reuse'} > 0) {
-        close($socket);
+        close($socket) if defined $socket;  # defensive programming ..
         $socket = undef;
         #}
         #TODO: if ($cfg(extopenssl} > 0)
