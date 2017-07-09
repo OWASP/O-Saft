@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.710 17/07/09 12:36:50",
+    SID         => "@(#) yeast.pl 1.711 17/07/09 22:23:00",
     STR_VERSION => "17.07.08",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -94,7 +94,7 @@ BEGIN {
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
     # Unfortunately perl's BEGIN has following limits and restrictions:
-    #   - constants can be defined before and used herein 
+    #   - constants can be defined before and used herein
     #   - sub can be defined herein and used later
     #   - variables can not be defined herein and used later
     #   - some file handles (like <DATA>) are not yet available
@@ -679,7 +679,7 @@ my %check_cert = (  ## certificate data
     #     8 - hostname mismatch
     #    16 - revoked
     #    32 - bad common name
-    #    64 - self-signed 
+    #    64 - self-signed
     # possible problems with chains:
     #   - contains untrusted certificate
     #   - chain incomplete/not resolvable
@@ -1212,7 +1212,7 @@ our %cmd = (
     'path'          => [],      # where to find openssl executable
     'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
     'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
-    'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check 
+    'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
     'call'          => [],      # list of special (internal) function calls
                                 # see --call=METHOD option in description below
@@ -1348,7 +1348,7 @@ _yeast_TIME("cfg}");
         'NULL-MD5'              => [qw(  weak SSLv2 None    0 MD5  RSA   RSA(512)    0 :)],
         'NULL-MD5'              => [qw(  weak SSLv3 None    0 MD5  RSA   RSA(512)    0 export)], # FIXME: same hash key as before
         'NULL-SHA'              => [qw(  weak SSLv3 None    0 SHA1 RSA   RSA         0 :)],
-        'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], 
+        'RSA-PSK-AES128-CBC-SHA'=> [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)],
 #       'RSA-PSK-AES128-SHA'    => [qw(  HIGH SSLv3 AES   128 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
         'RSA-PSK-AES256-CBC-SHA'=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)],
 #       'RSA-PSK-AES256-SHA    '=> [qw(  HIGH SSLv3 RSA   256 SHA1 AES   RSAPSK      0 :)], # same as RSA-PSK-AES128-CBC-SHA
@@ -1608,14 +1608,14 @@ _yeast_TIME("cfg}");
         'RSA-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 RSA   RSA     11 :)],
         'DHE_RSA-ARIA128-GCM-SHA256'    => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 RSA   DHE     11 :)], # unklar
         'DHE_RSA-ARIA256-GCM-SHA384'    => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 RSA   DHE     11 :)], # unklar
-        'DH_RSA-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 RSA   DH      11 :)], 
-        'DH_RSA-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 RSA   DH      11 :)], 
+        'DH_RSA-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 RSA   DH      11 :)],
+        'DH_RSA-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 RSA   DH      11 :)],
         'DHE_DSS-ARIA128-GCM-SHA256'    => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 DSS   DHE     11 :)], # unklar
         'DHE_DSS-ARIA256-GCM-SHA384'    => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 DSS   DHE     11 :)], # unklar
         'DH_DSS-ARIA128-GCM-SHA256'     => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 DSS   DH      11 :)],
         'DH_DSS-ARIA256-GCM-SHA384'     => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 DSS   DH      11 :)],
-        'ADH-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 None  DH      11 :)], 
-        'ADH-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 None  DH      11 :)], 
+        'ADH-ARIA128-GCM-SHA256'        => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 None  DH      11 :)],
+        'ADH-ARIA256-GCM-SHA384'        => [qw(  -?- TLSv12 ARIAGCM  256 SHA384 None  DH      11 :)],
         'ECDHE_ECDSA-ARIA128-GCM-SHA256'=> [qw(  -?- TLSv12 ARIAGCM  128 SHA256 ECDSA ECDHE   11 :)],
         'ECDHE_ECDSA-ARIA256-GCM-SHA384'=> [qw(  -?- TLSv12 ARIAGCM  256 SHA384 ECDSA ECDHE   11 :)],
         'ECDH_ECDSA-ARIA128-GCM-SHA256' => [qw(  -?- TLSv12 ARIAGCM  128 SHA256 ECDSA ECDH    11 :)],
@@ -1821,7 +1821,7 @@ sub _load_modules       {
         $txt = _load_file("IO/Socket/SSL.pm", "IO SSL module");
         warn STR_ERROR, "004: $txt" if ($txt ne "");
         # cannot load IO::Socket::INET delayed because we use AF_INET,
-        # otherwise we get at startup: 
+        # otherwise we get at startup:
         #    Bareword "AF_INET" not allowed while "strict subs" in use ...
         #$txt = _load_file("IO/Socket/INET.pm", "IO INET module");
         #warn STR_ERROR, "005: $txt" if ($txt ne "");
@@ -2024,7 +2024,7 @@ sub _check_functions    {
     # check for required functionality
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
     # verbose messages with --v=2 ; uses string "yes" for contrib/bunt.*
-    
+
     my $txt = "";
     my $tmp = "";
     my $version_openssl  =  0; # use 0 to avoid 0xffffffffffffffff in warnings
@@ -2032,7 +2032,7 @@ sub _check_functions    {
     my $version_iosocket = -1; # -"-
     my $text_ssleay      = "Net::SSLeay\t$version_ssleay supports";
 
-    # Note: $cfg{'ssleay'}->{'can_sni'} are set to 1 be default, will be 
+    # Note: $cfg{'ssleay'}->{'can_sni'} are set to 1 be default, will be
 
     _y_CMD("  check required modules ...");
     if (not defined $Net::SSLeay::VERSION) {# Net::SSLeay auto-loaded by IO::Socket::SSL
@@ -2333,7 +2333,7 @@ sub _init_openssldir    {
     if ($status != 0) {                     # on Windoze status may be 256
         $cmd{'openssl'}    = "";
         print STR_WARN, "005: perl returned status: '$status' ('" . ($status>>8) . "')\n";
-            # no other warning here, see "some checks are missing" later, 
+            # no other warning here, see "some checks are missing" later,
             # this is to avoid bothering the user with warnings, when not used
         # $capath = ""; # should still be empty
     }
@@ -2619,28 +2619,28 @@ sub __SSLinfo($$$)      {
         #
         # Example www.microsoft.com (03/2016)
         #    X509v3 extensions:
-        #        X509v3 Subject Alternative Name: 
+        #        X509v3 Subject Alternative Name:
         #            DNS:privacy.microsoft.com, DNS:www.microsoft.com, DNS:wwwqa.microsoft.com
-        #        X509v3 Basic Constraints: 
+        #        X509v3 Basic Constraints:
         #            CA:FALSE
         #        X509v3 Key Usage: critical
         #            Digital Signature, Key Encipherment
-        #        X509v3 Extended Key Usage: 
+        #        X509v3 Extended Key Usage:
         #            TLS Web Server Authentication, TLS Web Client Authentication
-        #        X509v3 Certificate Policies: 
+        #        X509v3 Certificate Policies:
         #            Policy: 2.16.840.1.113733.1.7.23.6
         #              CPS: https://d.symcb.com/cps
         #              User Notice:
         #                Explicit Text: https://d.symcb.com/rpa
-        #        X509v3 Authority Key Identifier: 
+        #        X509v3 Authority Key Identifier:
         #            keyid:0159ABE7DD3A0B59A66463D6CF200757D591E76A
-        #        X509v3 CRL Distribution Points: 
+        #        X509v3 CRL Distribution Points:
         #            Full Name:
         #              URI:http://sr.symcb.com/sr.crl
-        #        Authority Information Access: 
+        #        Authority Information Access:
         #            OCSP - URI:http://sr.symcd.com
         #            CA Issuers - URI:http://sr.symcb.com/sr.crt
-        #        CT Precertificate SCTs: 
+        #        CT Precertificate SCTs:
         #            Signed Certificate Timestamp:
         #                Version   : v1(0)
         #                Log ID    : DDEB1D2B7A0D4FA6208B81AD8168707E:
@@ -2669,11 +2669,11 @@ sub __SSLinfo($$$)      {
         #
         # Example microsoft.com
         #    X509v3 extensions:
-        #        X509v3 Key Usage: 
+        #        X509v3 Key Usage:
         #            Digital Signature, Key Encipherment, Data Encipherment
-        #        X509v3 Extended Key Usage: 
+        #        X509v3 Extended Key Usage:
         #            TLS Web Server Authentication, TLS Web Client Authentication
-        #        S/MIME Capabilities: 
+        #        S/MIME Capabilities:
         #            0000 - 30 69 30 0e 06 08 2a 86-48 86 f7 0d 03   0i0...*.H....
         #            000d - 02 02 02 00 80 30 0e 06-08 2a 86 48 86   .....0...*.H.
         #            001a - f7 0d 03 04 02 02 00 80-30 0b 06 09 60   ........0...`
@@ -2683,62 +2683,62 @@ sub __SSLinfo($$$)      {
         #            004e - 86 48 01 65 03 04 01 05-30 07 06 05 2b   .H.e....0...+
         #            005b - 0e 03 02 07 30 0a 06 08-2a 86 48 86 f7   ....0...*.H..
         #            0068 - 0d 03 07                                 ...
-        #        X509v3 Subject Key Identifier: 
+        #        X509v3 Subject Key Identifier:
         #            84C60E3B0FA69BF6EE0640CB02041B5F59340F73
-        #        X509v3 Authority Key Identifier: 
+        #        X509v3 Authority Key Identifier:
         #            keyid:51AF24269CF468225780262B3B4662157B1ECCA5
-        #        X509v3 CRL Distribution Points: 
+        #        X509v3 CRL Distribution Points:
         #            Full Name:
         #              URI:http://mscrl.microsoft.com/pki/mscorp/crl/msitwww2.crl
         #              URI:http://crl.microsoft.com/pki/mscorp/crl/msitwww2.crl
-        #        Authority Information Access: 
+        #        Authority Information Access:
         #            CA Issuers - URI:http://www.microsoft.com/pki/mscorp/msitwww2.crt
         #            OCSP - URI:http://ocsp.msocsp.com
-        #        X509v3 Certificate Policies: 
+        #        X509v3 Certificate Policies:
         #            Policy: 1.3.6.1.4.1.311.42.1
         #              CPS: http://www.microsoft.com/pki/mscorp/cps
-        #        1.3.6.1.4.1.311.21.10: 
+        #        1.3.6.1.4.1.311.21.10:
         #            0000 - 30 18 30 0a 06 08 2b 06-01 05 05 07 03   0.0...+......
         #            000d - 01 30 0a 06 08 2b 06 01-05 05 07 03 02   .0...+.......
         #        ...
         #
         # Example bsi.bund.de (03/2016)
         #    X509v3 extensions:
-        #        X509v3 Authority Key Identifier: 
+        #        X509v3 Authority Key Identifier:
         #            keyid:5404296FA293C6903145C03DDE2BE20A6980925F
         #        X509v3 Key Usage: critical
         #            Digital Signature, Key Encipherment
-        #        X509v3 Extended Key Usage: 
+        #        X509v3 Extended Key Usage:
         #            TLS Web Client Authentication, TLS Web Server Authentication
-        #        X509v3 Subject Key Identifier: 
+        #        X509v3 Subject Key Identifier:
         #            1BA42D9746798AE2AE91D60AA60BE40FAA8A299E
-        #        X509v3 Certificate Policies: 
+        #        X509v3 Certificate Policies:
         #            Policy: 1.3.6.1.4.1.7879.13.2
         #              CPS: http://www.telesec.de/serverpass/cps.html
         #            Policy: 2.23.140.1.2.2
-        #        X509v3 CRL Distribution Points: 
+        #        X509v3 CRL Distribution Points:
         #            Full Name:
         #              URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
         #            Full Name:
         #              URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
-        #        Authority Information Access: 
+        #        Authority Information Access:
         #            OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
         #            CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
         #            CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
         #        X509v3 Basic Constraints: critical
         #            CA:FALSE
-        #        X509v3 Subject Alternative Name: 
+        #        X509v3 Subject Alternative Name:
         #            DNS:www.bsi.bund.de
         #
         # Example www.bsi.de (06/2016)
-        #    X509v3 CRL Distribution Points: 
+        #    X509v3 CRL Distribution Points:
         #
         #         Full Name:
         #           URI:http://crl.serverpass.telesec.de/rl/TeleSec_ServerPass_DE-2.crl
         #
         #         Full Name:
         #           URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?certificateRevocationlist?base?certificateRevocationlist=*
-        #     Authority Information Access: 
+        #     Authority Information Access:
         #         OCSP - URI:http://ocsp.serverpass.telesec.de/ocspr
         #         CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
         #         CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
@@ -3290,9 +3290,9 @@ sub _usesocket($$$$)    {
             _trace1("_usesocket: using 'Net::SSLhello'");
             local $? = 0; local $! = undef;
             $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
-            if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection 
+            if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection
                 local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
-                _warn("305: _usesocket: openTcpSSLconnection() failed: $@\n"); 
+                _warn("305: _usesocket: openTcpSSLconnection() failed: $@\n");
                 return ("");
             } else {
                 # SSL upgrade
@@ -3338,7 +3338,7 @@ sub _useopenssl($$$$)   {
     # return cipher accepted by SSL connection
     # should return the targets default cipher if no ciphers (empty) passed in
     # $ciphers must be colon (:) separated list
-    # adds all configured options, like -alpn -curves -servername etc. with 
+    # adds all configured options, like -alpn -curves -servername etc. with
     # their proper values
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
@@ -3570,7 +3570,7 @@ sub check_dh($$)    {
        # ECDH, P-384, 384 bits
        # TODO: ECDH should also have 256 bits or more
     if ($dh =~ m/^\d+$/) {      # a number, check size
-        if ($txt !~ m/ECDH/) { 
+        if ($txt !~ m/ECDH/) {
             $checks{'dh_512'}->{val}    =  $txt if ($dh < 512);
             $checks{'dh_2048'}->{val}   =  $txt if ($dh < 2048);
         } else {                # ECDH is different
@@ -4143,7 +4143,7 @@ sub checkcert($$)   {
 # TODO: check: Version
 # TODO: check: validity (aka dates)
 # TODO: check: Issuer
-#        Only CN=, C=, ST=, O=, OU= and serialNumber= must be supported the rest are optional 
+#        Only CN=, C=, ST=, O=, OU= and serialNumber= must be supported the rest are optional
 # TODO: check: Subject
 #        The subject field can be empty in which case the entity being authenticated is defined in the subjectAltName.
 
@@ -4230,7 +4230,7 @@ sub checksizes($$)  {
                 $checks{'modulus_exp_oldssl'}->{val}= $text{'no-openssl'};
             } else {
                 $value =~ s/^(\d+).*/$1/;
-                if ($value =~ m/^\d+$/) {   # avoid perl warning "Argument isn't numeric" 
+                if ($value =~ m/^\d+$/) {   # avoid perl warning "Argument isn't numeric"
                     $checks{'modulus_exp_1'}     ->{val}= $value if ($value == 1);
                     $checks{'modulus_exp_65537'} ->{val}= $value if ($value != 65537);
                     $checks{'modulus_exp_oldssl'}->{val}= $value if ($value >  65536);
@@ -4302,7 +4302,7 @@ sub check02102($$)  {
 
     #! TR-02102-2 3.4.2 Verkürzung der HMAC-Ausgabe
         # FIXME: cannot be tested because openssl does not suppot it (11/2016)
-    $val = ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i) 
+    $val = ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i)
            ? _get_text('ext-enabled', 'truncated HMAC') : "" ;
     $checks{'tr_02102+'}->{val}.= $val;
     $checks{'tr_02102-'}->{val}.= $val;
@@ -4335,7 +4335,7 @@ sub check02102($$)  {
 
     #! TR-02102-2 3.6 Domainparameter und Schlüssellängen
     $val = $checks{'len_sigdump'}->{val};
-    if ($val =~ m/\d+/) {       # avoid perl warning "Argument isn't numeric" 
+    if ($val =~ m/\d+/) {       # avoid perl warning "Argument isn't numeric"
         $val = _get_text('bit2048', $val) if ($val < 2000);
         # FIXME: lazy check does not honor used cipher
     } else {
@@ -4679,7 +4679,7 @@ sub check7525($$)   {
     #    ... Curves of less than 192 bits SHOULD NOT be used.
 
     check_dh($host, $port);    # need DH Parameter
-    if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) { 
+    if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) {
         $val .= _get_text('insecure', "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
     } else {
         $val .= _get_text('insecure', "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
@@ -4813,16 +4813,16 @@ sub checkev($$)     {
     #     5d of the Guidelines, respectively.
     # Jurisdiction of Incorporation or Registration:
     #     Locality:        subject:jurisdictionOfIncorporationLocalityName (OID 1.3.6.1.4.1.311.60.2.1.1)
-    #     State or Province:subject:jurisdictionOfIncorporationStateOrProvinceName (OID 1.3.6.1.4.1.311.60.2.1.2) 
+    #     State or Province:subject:jurisdictionOfIncorporationStateOrProvinceName (OID 1.3.6.1.4.1.311.60.2.1.2)
     #     Country:         subject:jurisdictionOfIncorporationCountryName (OID 1.3.6.1.4.1.311.60.2.1.3)
-    # Registration Number: subject:serialNumber (OID 2.5.4.5) 
+    # Registration Number: subject:serialNumber (OID 2.5.4.5)
     # Physical Address of Place of Business
     #     City or town:    subject:localityName (OID 2.5.4.7)
     #     State or province: subject:stateOrProvinceName (OID 2.5.4.8)
     #     Number & street: subject:streetAddress (OID 2.5.4.9)
-    # 
+    #
     # Maximum Validity Period  27 months (recommended: EV Subscriber certificate 12 months)
-    # 
+    #
     # == Optional ==
     # Physical Address of Place of Business
     #     Country:         subject:countryName (OID 2.5.4.6)
@@ -4980,7 +4980,7 @@ sub checkdest($$)   {
     return if ($cfg{'done'}->{'checkdest'} > 1);
 
     checksni($host, $port);     # set checks according hostname
-    # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'} 
+    # $cfg{'IP'} and $cfg{'rhost'} already contain $text{'disabled'}
     # if --proxyhost was used; hence no need to check for proxyhost again
     $checks{'reversehost'}->{val}   = $host . " <> " . $cfg{'rhost'} if ($cfg{'rhost'} ne $host);
     $checks{'reversehost'}->{val}   = $text{'no-dns'}   if ($cfg{'usedns'} <= 0);
@@ -5062,7 +5062,7 @@ sub checkhttp($$)   {
     $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
     $checks{'http_https'}->{val} = $notxt if ($http_location eq "");  # HTTP Location is there
-    $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne ""); 
+    $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne "");
     if ($data{'https_sts'}->{val}($host) ne "") {
         my $fqdn =  $hsts_fqdn;
         $checks{'hsts_location'}->{val} = $data{'https_location'}->{val}($host) if ($data{'https_location'}->{val}($host) ne "");
@@ -5695,7 +5695,7 @@ sub printciphers_dh($$$) {
 # -------
 # cipher dhe oder edh, ecdh dann muss server temp key da sein
 # sonst kommt kein temp key z.B RSA oder camellia
-# 
+#
 # wenn dh kommen muesste aber fehlt, dann bei openssl -msg probieren
 # -------
 # rfc4492 wenn im cert ec oder ecdsa steht (extension) dann duerfen nur solche
@@ -5916,7 +5916,7 @@ sub printversion() {
         _warn("851: ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49; detailed version not available");
     } else {
       if ($cfg{'verbose'} > 0) {
-        # TODO: not all versions of Net::SSLeay have constants like 
+        # TODO: not all versions of Net::SSLeay have constants like
         # Net::SSLeay::SSLEAY_CFLAGS, hence we use hardcoded integers
         print "       ::SSLEAY_DIR                  " . Net::SSLeay::SSLeay_version(5);
         print "       ::SSLEAY_BUILD_ON             " . Net::SSLeay::SSLeay_version(3);
@@ -6065,7 +6065,7 @@ sub printciphers() {
     # uses settings from --legacy= and --format= options to select output format
     # implemented in VERSION 14.07.14
 
-    #                                         # output looks like: openssl ciphers 
+    #                                         # output looks like: openssl ciphers
     if ((($cfg{'ciphers-v'} + $cfg{'ciphers-V'}) <= 0)
      and ($cfg{'legacy'} eq "openssl") and ($cfg{'format'} eq "")) {
         # TODO: filter ciphers not supported by openssl
@@ -6103,7 +6103,7 @@ sub printciphers() {
             $mac =  get_cipher_mac($c);
             $enc =  get_cipher_enc($c);
             $bit =  get_cipher_bits($c);
-            if ($bit =~ m/\d+/) {           # avoid perl warning "Argument isn't numeric" 
+            if ($bit =~ m/\d+/) {           # avoid perl warning "Argument isn't numeric"
                 $bit = sprintf("%03d", $bit);
             } else {                        # pretty print
                 $bit = '-?-';
@@ -6553,7 +6553,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--yeast.?prot/)       { _yeast_prot();          exit 0; } # debugging
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # -"-
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
-    if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next; 
+    if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
         # in CGI mode commands need to be passed as --cmd=* option
     if ($arg eq '--openssl')            { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
     #!#--------+------------------------+--------------------------+------------
@@ -6929,7 +6929,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+ciphers?$p?strong/i){ $arg = '+cipher_strong';  } # alias:
     if ($arg =~ /^\+ciphers?$p?pfs/i)   { $arg = '+cipher_pfs';     } # alias:
     if ($arg =~ /^\+ciphers?$p?pfsall/i){ $arg = '+cipher_pfsall';  } # alias:
-    if ($arg =~ /^\+ciphers?$p?selected/i){$arg= '+cipher_selected';} # alias: 
+    if ($arg =~ /^\+ciphers?$p?selected/i){$arg= '+cipher_selected';} # alias:
     if ($arg =~ /^\+ciphers$p?openssl/i){ $arg = '+ciphers_local';  } # alias: for backward compatibility
     if ($arg =~ /^\+ciphers$p?local/i)  { $arg = '+ciphers_local';  } # alias:
     if ($arg =~ /^\+(?:all|raw)ciphers?/i){$arg= '+cipherraw';      } # alias:
@@ -7019,7 +7019,7 @@ while ($#argv >= 0) {
     if ($arg eq '+traceSUB'){
         # this command is just documentation, no need to care about other options
         print "# $cfg{'mename'}  list of internal functions:\n";
-        my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);} 
+        my $perlprog = 'sub p($$){printf("%-24s\t%s\n",@_);}
           ($F[0]=~/^#/)&&do{$_=~s/^\s*#\??/-/;p($s,$_)if($s ne "");$s="";};
           ($F[0] eq "sub")&&do{p($s,"")if($s ne "");$s=$F[1];}';
         exec 'perl', '-lane', "$perlprog", $0;
@@ -7150,7 +7150,7 @@ $ENV{'OPENSSL_CONF'} = $cfg{'openssl_cnf'}  if (defined $cfg{'openssl_cnf'});  #
 $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); ## no critic qw(Variables::RequireLocalizedPunctuationVars
 
 _yeast_args();
-_yeast_EXIT("exit=ARGS  - options and arguments done");                                 
+_yeast_EXIT("exit=ARGS  - options and arguments done");
 _vprintme();
 
 #_init_openssldir();    # called later for performance reasons
@@ -7920,7 +7920,7 @@ user documentation please see o-saft-man.pm
 
 =pod
 
-=encoding utf8                                                                 
+=encoding utf8
 
 =head1 Annotations, Internal Notes
 
@@ -8232,7 +8232,7 @@ The trailing  =  can always be removed, empty values are not possible.
 
 =head2 Note:Stand-alone
 
-A stand-alone script is a single script,  which executes without any other 
+A stand-alone script is a single script,  which executes without any other
 module to be included (read) at run-time.
 Most modules --means modules in perl context and syntax-- are already read
 using a private function  _load_file(),  which uses perl's require instead
@@ -8297,7 +8297,7 @@ Multi-host certificates (a.k.a wildcard certificates)
 
 EV Certificates (a.k.a. Extended Certificates): Extended Validation (EV)
 certificates are distinguished by the presence of the CertificatePolicies
-extension containg a registered OID in the policyIdentifier field. 
+extension containg a registered OID in the policyIdentifier field.
 see checkev() above
 
 RFC 3280
