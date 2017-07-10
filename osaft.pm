@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.07.07',  # official version number of tis file
+    OSAFT_VERSION   => '17.07.09',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.120 17/07/10 10:55:10',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.121 17/07/10 12:43:04',
 
 };
 
@@ -1964,7 +1964,7 @@ sub get_cipher_tags($) { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$
 sub get_cipher_desc($) { my $c=shift;
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
-       _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
+       _warn("016: undefined cipher description for '$c'"); # TODO: correct %ciphers
        return STR_UNDEF;
     }
     my @c = @{$ciphers{$c}};
@@ -2014,7 +2014,7 @@ sub get_cipher_name($) {
     foreach my $k (keys %cipher_names) {
         my $suite = get_cipher_suitename($k);
         if ($suite =~ m/$cipher/) {
-            _warn("partial match for cipher name found '$cipher'");
+            _warn("017: partial match for cipher name found '$cipher'");
             return $suite;
         }
     }
@@ -2138,7 +2138,9 @@ sub sort_cipher_names   {
     my @ciphers = @_;
     my @sorted  ;
     my @latest  ;
-    my $cnt     = scalar @ciphers;  # number of passed ciphers; see check at end
+    my $cnt_in  = scalar @ciphers;  # number of passed ciphers; see check at end
+
+my@a = @ciphers;
 
     # Algorithm:
     #  1. remove all known @insecure ciphers from given list
@@ -2222,14 +2224,15 @@ sub sort_cipher_names   {
         @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
     }
     push(@sorted, @latest);                     # add insecure ciphers again
-    my $num = scalar @sorted;
-    if ($cnt != $num) {
+    my $cnt_out = scalar @sorted;
+    if ($cnt_in != $cnt_out) {
         # print warning if above algorithm misses ciphers; uses perl's  warn()
         # instead of our _warn() to clearly inform the user that the code here
         # needs to be fixed
-        warn STR_WARN . "missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
+        warn STR_WARN . "015: missing ciphers in sorted list: $cnt_out < $cnt_in"; ## no critic qw(ErrorHandling::RequireCarping)
         #dbx# print "## ".@sorted . " # @ciphers";
     }
+    @sorted = grep{!/^\s*$/} @sorted;           # remove empty names, if any ...
     return @sorted;
 } # sort_cipher_names
 
