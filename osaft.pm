@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.118 17/07/09 20:21:10',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.119 17/07/10 10:06:41',
 
 };
 
@@ -1224,10 +1224,11 @@ our %cfg = (
     'starttls'      => "",      # use STARTTLS if not empty
                                 # protocol to be used with STARTTLS; default: SMTP
                                 # valid protocols: SMTP, IMAP, IMAP2, POP3, FTPS, LDAP, RDP, XMPP
-    'slow_server_delay' => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
     'starttls_delay'=> 0,       # STARTTLS: time to wait in seconds (to slow down the requests)
     'starttls_phase'=> [],      # STARTTLS: Array for customized STARTTLS sequences
     'starttls_error'=> [],      # STARTTLS: Array for customized STARTTLS sequences error handling
+    'slow_server_delay' => 0,   # time to wait in seconds after a connection via proxy or before starting STARTTLS sequence
+    'connect_delay' => 0,       # time to wait in seconds for starting next cipher check
     'socket_reuse'  => 1,       # 0: close and reopen sockets when SSL connect fails
                                 # 1: reuse existing sockets, even if SSL connect failed
     'enabled'       => 0,       # 1: only print enabled ciphers
