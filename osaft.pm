@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.119 17/07/10 10:06:41',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.120 17/07/10 10:55:10',
 
 };
 
@@ -203,6 +203,9 @@ our @EXPORT     = qw(
                 %cipher_names
                 %cipher_alias
                 @cipher_results
+                get_cipher_suitename
+                get_cipher_suiteconst
+                get_cipher_suitealias
                 get_cipher_sec
                 get_cipher_ssl
                 get_cipher_enc
@@ -1909,6 +1912,14 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 
 =pod
 
+=head2 get_cipher_suitename($cipher)
+
+=head2 get_cipher_suiteconst($cipher)
+
+=head2 get_cipher_suitealias($cipher)
+
+Get information from internal C<%cipher_names> data structure.
+
 =head2 get_cipher_sec($cipher)
 
 =head2 get_cipher_ssl($cipher)
@@ -1932,6 +1943,10 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 Get information from internal C<%cipher> data structure.
 
 =cut
+
+sub get_cipher_suitename { my $c=shift; return $cipher_names{$c}[0] if (defined $cipher_names{$c}[0]); return ""; }
+sub get_cipher_suiteconst{ my $c=shift; return $cipher_names{$c}[1] if (defined $cipher_names{$c}[1]); return ""; }
+sub get_cipher_suitealias{ my $c=shift; return $cipher_alias{$c}[0] if (defined $cipher_alias{$c}[0]); return ""; }
 
 # some people prefer to use a getter function to get data from objects
 # each function returns a spcific value (column) from the %cipher table
@@ -1975,7 +1990,7 @@ sub get_cipher_hex($)  {
     # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $c = shift;
     foreach my $k (keys %cipher_names) { # database up to VERSION 14.07.14
-        return $k if (($cipher_names{$k}[0] eq $c) or ($cipher_names{$k}[1] eq $c));
+        return $k if ((get_cipher_suitename($k) eq $c) or (get_cipher_suiteconst($k) eq $c));
     }
     foreach my $k (keys %cipher_alias) { # not yet found, check for alias
         return $k if ($cipher_alias{$k}[0] eq $c);
@@ -1991,14 +2006,16 @@ sub get_cipher_name($) {
     return $cipher if ((grep{/^$cipher/} %ciphers)>0);
     _trace("get_cipher_name: search $cipher");
     foreach my $k (keys %cipher_names) {
-        return $cipher_names{$k}[0] if ($cipher =~ m/$cipher_names{$k}[0]/);
-        return $cipher_names{$k}[0] if ($cipher_names{$k}[1] =~ /$cipher/);
+        my $suite = get_cipher_suitename($k);
+        return $suite if ($cipher =~ m/$cipher_names{$k}[0]/);
+        return $suite if (get_cipher_suiteconst($k) =~ /$cipher/);
     }
     # nothing found yet, try more lazy match
     foreach my $k (keys %cipher_names) {
-        if ($cipher_names{$k}[0] =~ m/$cipher/) {
+        my $suite = get_cipher_suitename($k);
+        if ($suite =~ m/$cipher/) {
             _warn("partial match for cipher name found '$cipher'");
-            return $cipher_names{$k}[0];
+            return $suite;
         }
     }
     return "";
@@ -2315,7 +2332,7 @@ Print hint for specified command, additionl text will be appended.
 Wrapper to simulate "slee" with perl's select.
 =cut
 
-sub printhint   {
+sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy perlcritic
     #? Print hint for specified command.
     my $cmd  = shift;
     my @args = @_;
