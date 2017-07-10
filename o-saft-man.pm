@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.202 17/07/05 08:25:37";
+my  $man_SID= "@(#) o-saft-man.pm 1.203 17/07/10 13:51:28";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2520,47 +2520,53 @@ OPTIONS
 
     Options for  +cipher  command
 
---proto-alpn=NAME
+      --connect-delay=SEC
 
-    Name of protocol to be added to list of  applcation layer protocols
-    (ALPN), which is used for any connection to the targets.
-    See  --cipher-alpn=NAME  also.
+          Additional delay in seconds  after each connect for a cipher check.
+          This is useful when connecting to servers which have IPS in place,
+          or are slow in accepting new connections or requests.
 
---proto-npn=NAME
+      --proto-alpn=NAME
 
-    Name of protocol to be added to list of  next protocol negotiations
-    (NPN), which is used for any connection to the targets.
-    See  --cipher-npn=NAME  also.
+          Name of protocol to be added to list of  applcation layer protocols
+          (ALPN), which is used for any connection to the targets.
+          See  --cipher-alpn=NAME  also.
 
---cipher-alpn=NAME
+      --proto-npn=NAME
 
-    Name of protocol to be added to list of  applcation layer protocols
-    (ALPN), which is used for cipher checks.
+          Name of protocol to be added to list of  next protocol negotiations
+          (NPN), which is used for any connection to the targets.
+          See  --cipher-npn=NAME  also.
 
-    --cipher-alpn=,   sets empty list.
-    --cipher-alpn=,,  sets list to empty element "".
+      --cipher-alpn=NAME
 
---cipher-npn=NAME
+          Name of protocol to be added to list of  applcation layer protocols
+          (ALPN), which is used for cipher checks.
 
-    Name of protocol to be added to list of  next protocol negotiations
-    (NPN), which is used for cipher checks.
+          --cipher-alpn=,   sets empty list.
+          --cipher-alpn=,,  sets list to empty element "".
 
-    --cipher-npn=,   sets empty list.
-    --cipher-npn=,,  sets list to empty element "".
+      --cipher-npn=NAME
 
-    Note:  setting empty list or element most likely does not work with
-    openssl executable (i.e.  --force-openssl).
+          Name of protocol to be added to list of  next protocol negotiations
+          (NPN), which is used for cipher checks.
 
---cipher-curve=NAME
+          --cipher-npn=,   sets empty list.
+          --cipher-npn=,,  sets list to empty element "".
 
-    Name of ecliptic curve to be added to list of ecliptic curves (EC),
-    which is used for cipher checks.
+          Note:  setting empty list or element most likely does not work with
+          openssl executable (i.e.  --force-openssl).
 
-    --cipher-curve=,   sets empty list.
-    --cipher-curve=,,  sets list to empty element "".
+      --cipher-curve=NAME
 
-    Note:  setting empty list or element most likely does not work with
-    openssl executable (i.e.  --force-openssl).
+          Name of ecliptic curve to be added to list of ecliptic curves (EC),
+          which is used for cipher checks.
+
+          --cipher-curve=,   sets empty list.
+          --cipher-curve=,,  sets list to empty element "".
+
+          Note:  setting empty list or element most likely does not work with
+          openssl executable (i.e.  --force-openssl).
 
     Options for  +cipherall  command
 
