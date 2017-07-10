@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.712 17/07/09 23:05:50",
+    SID         => "@(#) yeast.pl 1.713 17/07/10 10:11:22",
     STR_VERSION => "17.07.08",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3258,6 +3258,7 @@ sub _usesocket($$$$)    {
         # TODO: eval necessary to avoid perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
+        #dbx# $IO::Socket::SSL::DEBUG = 1;
         unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
             # no proxy and not starttls
             _trace1("_usesocket: using 'IO::Socket::SSL' with '$ssl'");
@@ -3315,6 +3316,7 @@ sub _usesocket($$$$)    {
                 };
             }
         }
+        #dbx# _dbx("_usesocket: $? : $! : $IO::Socket::SSL::SSL_ERROR :"); # more info in rare cases
     }) {        # eval succeded
         if ($sslsocket) {
             # SEE Note:Selected Protocol
@@ -3507,6 +3509,7 @@ sub ciphers_get($$$$)   {
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();       # return accepted ciphers
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
+    _v_print("connect delay: $cfg{'connect_delay'}") if ($cfg{'connect_delay'} > 0);
     my $cnt     = 0;
     foreach my $c (@ciphers) {
         my $anf = time();
@@ -3526,6 +3529,7 @@ sub ciphers_get($$$$)   {
             ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
         }
         $supported = "" if (not defined $supported);
+        sleep($cfg{'connect_delay'});
         last if (_is_ssl_error($anf, time(), "$ssl: abort connection attempts") > 0);
         if (($c !~ /(?:HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
             if (($c !~ $supported)) {
@@ -6372,6 +6376,7 @@ while ($#argv >= 0) {
         if ($typ eq 'SSLERROR_DLY') { $cfg{'sslerror'}->{'delay'}    = $arg;$typ = 'HOST'; }
         if ($typ eq 'SSLERROR_TOUT'){ $cfg{'sslerror'}->{'timeout'}  = $arg;$typ = 'HOST'; }
         if ($typ eq 'SSLERROR_PROT'){ $cfg{'sslerror'}->{'per_prot'} = $arg;$typ = 'HOST'; }
+        if ($typ eq 'CONNECT_DLY')  { $cfg{'connect_delay'}     = $arg;     $typ = 'HOST'; }
         if ($typ eq 'STARTTLS') { $cfg{'starttls'}              = $arg;     $typ = 'HOST'; }
         if ($typ eq 'TLSDELAY') { $cfg{'starttls_delay'}        = $arg;     $typ = 'HOST'; }
         if ($typ eq 'SLOWDELAY'){ $cfg{'slow_server_delay'}     = $arg;     $typ = 'HOST'; }
@@ -6892,6 +6897,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--sslerrordelay/i)    { $typ = 'SSLERROR_DLY';    }
     if ($arg =~ /^--sslerrortimeout/i)  { $typ = 'SSLERROR_TOUT';   }
     if ($arg =~ /^--sslerrorperprot/i)  { $typ = 'SSLERROR_PROT';   }
+    if ($arg =~ /^--connectdelay/i)     { $typ = 'CONNECT_DLY';     }
     if ($arg eq  '--socketreuse')       { $cfg{'socket_reuse'}  = 1;}
     if ($arg eq  '--nosocketreuse')     { $cfg{'socket_reuse'}  = 0;}
     # options for Net::SSLhello
@@ -7181,6 +7187,8 @@ if (_is_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (!_is_do('cipher_p
 
 if (_is_do('version') or ($cfg{'usemx'} > 0)) { $cfg{'need_netdns'} = 1; }
 if (_is_do('version') or (_is_do('sts_expired')) > 0) { $cfg{'need_timelocal'} = 1; }
+
+$cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
 
 # set environment
 # Note:  openssl  has no option to specify the path to its  configuration
