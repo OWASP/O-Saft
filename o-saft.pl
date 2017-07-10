@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.713 17/07/10 10:11:22",
+    SID         => "@(#) yeast.pl 1.714 17/07/10 10:47:07",
     STR_VERSION => "17.07.08",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3427,9 +3427,8 @@ sub _get_ciphers_list   {
         _v_print("cipher range: $range");
         foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
             my $key = sprintf("0x%08X",$c);
-            _trace($key,   $cipher_names{$key}[0])  if defined $cipher_names{$key}[0];
-            push(@ciphers, $cipher_names{$key}[0])  if defined $cipher_names{$key}[0];
-            # TODO:  use   get_cipher_suitename()
+            _trace($key,   get_cipher_suitename($key));
+            push(@ciphers, get_cipher_suitename($key));
         }
     }
     _trace(" got ciphers: @ciphers");
@@ -6048,6 +6047,9 @@ sub printversion() {
         print "    huge list of ciphers         " . $cfg{'cipherranges'}->{'huge'};
         print "    safe list of ciphers         " . $cfg{'cipherranges'}->{'safe'};
         print "    full list of ciphers         " . $cfg{'cipherranges'}->{'full'};
+        print "    C0xx list, range C0xx..C0FF  " . $cfg{'cipherranges'}->{'c0xx'};
+        print "    CCxx list, range CCxx..CCFF  " . $cfg{'cipherranges'}->{'c0xx'};
+        print "    ECC list, ephermeral ciphers " . $cfg{'cipherranges'}->{'ecc'};
         print "    SSLv2 list of ciphers        " . $cfg{'cipherranges'}->{'SSLv2'};
         print "    SSLv2_long list of ciphers   " . $cfg{'cipherranges'}->{'SSLv2_long'};
         print "    shifted list of ciphers      " . $cfg{'cipherranges'}->{'shifted'};
