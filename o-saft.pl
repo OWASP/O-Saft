@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.714 17/07/10 10:47:07",
+    SID         => "@(#) yeast.pl 1.715 17/07/10 12:46:22",
     STR_VERSION => "17.07.08",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3439,8 +3439,9 @@ sub _get_ciphers_list   {
     }
     if (@ciphers <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
-        die STR_ERROR, "012: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
+        die STR_ERROR, "014: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
     }
+    @ciphers    = grep{!/^\s*$/} @ciphers;   # remove empty names
     _trace("_get_ciphers_list\t= @ciphers }"); # TODO: trace a bit late
     return @ciphers;
 } # _get_ciphers_list
@@ -3508,12 +3509,14 @@ sub ciphers_get($$$$)   {
     _trace("ciphers_get($ssl, $host, $port, @ciphers){");
     my @res     = ();       # return accepted ciphers
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
-    _v_print("connect delay: $cfg{'connect_delay'}") if ($cfg{'connect_delay'} > 0);
+    _v_print("connect delay: $cfg{'connect_delay'} second(s)") if ($cfg{'connect_delay'} > 0);
     my $cnt     = 0;
     foreach my $c (@ciphers) {
+        next if ($c =~ m/^\s*$/);
         my $anf = time();
         my $supported = "";
         $cnt++;
+        my $txt = "$ssl: ($cnt of " . scalar(@ciphers) . " ciphers checked) abort connection attempts";
         printf("#   cipher %3d %s%s\r", $cnt, $c, " "x30) if ($cfg{'verbose'} > 0);
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'cipher_md5'}) {
@@ -3529,12 +3532,14 @@ sub ciphers_get($$$$)   {
         }
         $supported = "" if (not defined $supported);
         sleep($cfg{'connect_delay'});
-        last if (_is_ssl_error($anf, time(), "$ssl: abort connection attempts") > 0);
+        last if (_is_ssl_error($anf, time(), $txt) > 0);
         if (($c !~ /(?:HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
             if (($c !~ $supported)) {
                 # mismatch: name asked for and name returned by server
                 # this may indicate wrong cipher name in our configuration
-                _warn("411: checked cipher '$c' does not match 'returned cipher '$supported'");
+                # or the server returned no data or closed TCP connection
+                # or connection timed out, see _is_ssl_error()
+                _warn("411: checked cipher '$c' does not match returned cipher '$supported'");
             }
         }
         push(@res, "$version:$supported") if ($supported ne "");
