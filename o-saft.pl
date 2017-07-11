@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.716 17/07/10 13:38:05",
+    SID         => "@(#) yeast.pl 1.717 17/07/11 07:41:50",
     STR_VERSION => "17.07.09",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7738,11 +7738,17 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # TODO: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
         my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
+print "V $#{$cfg{'version'}}  " . scalar @{$cfg{'version'}};
         foreach my $ssl (@{$cfg{'version'}}) {
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
-                printtitle($legacy, $ssl, $host, $port);
+                # format of sslscan not yet supported correctly
+                if (($cfg{'out_header'} > 0) or (scalar @{$cfg{'version'}}) > 1) {
+                    # need a header when more than one protocol is checked
+                    printtitle($legacy, $ssl, $host, $port);
+                }
             }
+            # TODO: need to simplify above conditions
             printciphercheck($legacy, $ssl, $host, $port,
                 ($legacy eq "sslscan")?($_printtitle):0, @cipher_results);
         }
