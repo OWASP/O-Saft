@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.717 17/07/11 07:41:50",
+    SID         => "@(#) yeast.pl 1.718 17/07/12 07:46:32",
     STR_VERSION => "17.07.09",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2262,7 +2262,7 @@ sub _check_openssl      {
     $Net::SSLinfo::trace   = $cfg{'trace'};
         # save to set $Net::SSLinfo::* here,
         # will be redifined later, see: set defaults for Net::SSLinfo
-    if (!defined Net::SSLinfo::s_client_check()) {
+    if (not defined Net::SSLinfo::s_client_check()) {
         _warn("147: '$cmd{'openssl'}' not available; all openssl functionality disabled");
         _hint("consider using '--openssl=/path/to/openssl'");
         $cmd{'openssl'}     = "";
@@ -2481,7 +2481,7 @@ sub _cfg_set($$)        {
 
     ($key, $val) = split(/=/, $arg, 2); # left of first = is key
     $key =~ s/[^a-zA-Z0-9_?=+-]*//g;    # strict sanatize key
-    $val =  "" if (!defined $val);      # avoid warnings when not KEY=VALUE
+    $val =  "" if not defined $val;     # avoid warnings when not KEY=VALUE
     $val =~ s/^[+]//;                   # remove first + in command liss
     $val =~ s/ [+]/ /g;                 # remove + in commands
 
@@ -2790,7 +2790,7 @@ sub __SSLinfo($$$)      {
     }
 # TODO: move code for formatting to print*()
     if ($cfg{'format'} ne "raw") {
-        $val =  "" if (!defined $val);  # avoid warnings
+        $val =  "" if not defined $val; # avoid warnings
         $val =~ s/^\s+//g;      # remove leading spaces
         $val =~ s/\n\s+//g;     # remove trailing spaces
         $val =~ s/\n/ /g;
@@ -3016,7 +3016,7 @@ sub _isbleed($$)        {
         # proxy or starttls
         _trace("_isbleed: using 'Net::SSLhello'");
         $cl = Net::SSLhello::openTcpSSLconnection($host, $port);
-        if ((!defined ($cl)) || ($@)) { # No SSL Connection
+        if ((not defined $cl) || ($@)) { # No SSL Connection
             local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
             _warn ("322: _isbleed (with openTcpSSLconnection): $@\n");
             _trace("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
@@ -3245,11 +3245,11 @@ sub _usesocket($$$$)    {
     # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSx
     # doesn't produce such warnings. Sigh.
     _trace1("_usesocket($ssl, $host, $port, $ciphers){ sni: $sni");
-    if (($ssl eq "SSLv2") && (! defined &Net::SSLeay::CTX_v2_new)) {
+    if (($ssl eq "SSLv2") && (not defined &Net::SSLeay::CTX_v2_new)) {
         _warn("303: SSL version '$ssl': not supported by Net::SSLeay");
         return "";
     }
-    if (($ssl eq "SSLv3") && (! defined &Net::SSLeay::CTX_v3_new)) {
+    if (($ssl eq "SSLv3") && (not defined &Net::SSLeay::CTX_v3_new)) {
         _warn("304: SSL version '$ssl': not supported by Net::SSLeay");
         return "";
     }
@@ -3291,7 +3291,7 @@ sub _usesocket($$$$)    {
             _trace1("_usesocket: using 'Net::SSLhello'");
             local $? = 0; local $! = undef;
             $sslsocket = Net::SSLhello::openTcpSSLconnection($host, $port);
-            if ((!defined ($sslsocket)) || ($@)) { # No SSL Connection
+            if ((not defined ($sslsocket)) || ($@)) { # No SSL Connection
                 local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit" unless ($@);
                 _warn("305: _usesocket: openTcpSSLconnection() failed: $@\n");
                 return ("");
@@ -3483,7 +3483,7 @@ sub _get_default($$$$)  {
            # Hence the caller should ensure that openssl supports $ssl .
     }
 
-    $cipher = "" if (not defined $cipher);
+    $cipher = "" if not defined $cipher;
     if ($cipher =~ m#^\s*$#) {
         # TODO: SSLv2 is special, see _usesocket "dirty hack"
         my $txt = "SSL version '$ssl': cannot get default cipher; ignored";
@@ -3530,7 +3530,7 @@ sub ciphers_get($$$$)   {
         } else { # force openssl
             ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
         }
-        $supported = "" if (not defined $supported);
+        $supported = "" if not defined $supported;
         sleep($cfg{'connect_delay'});
         last if (_is_ssl_error($anf, time(), $txt) > 0);
         if (($c !~ /(?:HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
@@ -3735,7 +3735,7 @@ sub check_url($$)   {
       #  NOTE: it's ok here
     my $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $url =  $2 || "/";                   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-    return "" if (! defined $host);         # wrong URI may be passed
+    return "" if not defined $host;         # wrong URI may be passed
        $host=~ m#^([^:]+)(?::[0-9]{1-5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
@@ -3808,7 +3808,7 @@ sub check_nextproto {
                 (($type eq 'NPN')  ? $proto : ""),
                 $socket
             );
-        if (!defined $ssl) {
+        if (not defined $ssl) {
             _warn("601: $type connection failed with '$proto'");
         } else {
             # Net::SSLeay's functions are crazy, both P_next_proto_negotiated()
@@ -3955,6 +3955,8 @@ sub checkciphers($$) {
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     foreach my $c (@cipher_results) {   # check all accepted ciphers
+        next if not defined @{$c};  # defensive programming ..
+        next if (@{$c} =~ m/^\s*$/);# -"-
         # each $c looks like:  TLSv12  ECDHE-RSA-AES128-GCM-SHA256  yes
         my $yn  = ${$c}[2];
         $cipher = ${$c}[1];
@@ -3974,8 +3976,8 @@ sub checkciphers($$) {
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
-        $hasrsa{$ssl}  = 0 if (!defined $hasrsa{$ssl});     # keep perl silent
-        $hasecdsa{$ssl}= 0 if (!defined $hasecdsa{$ssl});   #  -"-
+        $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep perl silent
+        $hasecdsa{$ssl}= 0 if not defined $hasecdsa{$ssl};  #  -"-
         # TR-02102-2, see 3.2.3
         if ($prot{$ssl}->{'cnt'} > 0) { # checks do not make sense if there're no ciphers
             $checks{'tr_02102+'}->{val} .= _prot_cipher($ssl, $text{'miss-RSA'})   if ($hasrsa{$ssl}   != 1);
@@ -5329,7 +5331,7 @@ sub _printdump($$)  {
     my ($label, $value) = @_;
         $label =~ s/\n//g;
         $label = sprintf("%s %s", $label, '_' x (75 -length($label)));
-    $value = "" if (!defined $value); # value parameter is optional
+    $value = "" if not defined $value;  # value parameter is optional
     printf("#{ %s\n\t%s\n#}\n", $label, $value);
     # using curly brackets 'cause they most likely are not part of any data
     return;
@@ -5404,8 +5406,8 @@ sub print_line($$$$$$)  {
     #? print label and value separated by separator
     #? print hostname and key depending on --showhost and --trace-key option
     my ($legacy, $host, $port, $key, $text, $value) = @_;
-        $text   = STR_NOTXT if (! defined $text);   # defensive programming ..
-        $value  = STR_UNDEF if (! defined $value);  # .. missing variable declaration
+        $text   = STR_NOTXT if not defined $text;   # defensive programming ..
+        $value  = STR_UNDEF if not defined $value;  # .. missing variable declaration
     # general format of a line is:
     #       host:port:#[key]:label: \tvalue
     # legacy=_cipher is special: does not print label and value
@@ -5437,7 +5439,7 @@ sub print_data($$$$)    {
         _warn("801: unknown label '$key'; output ignored"); # seems to be a programming error
         return;
     }
-    my $label = ($data{$key}->{txt} || ""); # defensive programming
+    my $label = ($data{$key}->{txt} || ""); # defensive programming ..
     my $value =  $data{$key}->{val}($host, $port) || "";
     # { always pretty print
         if ($key =~ m/X509$/) {
@@ -5502,7 +5504,7 @@ sub print_data($$$$)    {
 sub print_check($$$$$)  {
     #? print label and result of check
     my ($legacy, $host, $port, $key, $value) = @_;
-    $value = $checks{$key}->{val} if (!defined $value); # defensive programming
+    $value = $checks{$key}->{val} if not defined $value; # defensive programming ..
     my $label = "";
     $label = $checks{$key}->{txt} if ($legacy ne 'key');
     print_line($legacy, $host, $port, $key, $label, $value);
@@ -6095,7 +6097,7 @@ sub printversion() {
         foreach my $m (sort keys %main:: ) {
             next if $m !~ /::/;
             $d = "?";       # beat the "Use of uninitialized value" dragon
-            $d = ${$$m{'VERSION'}} if (defined ${$$m{'VERSION'}});
+            $d = ${$$m{'VERSION'}} if defined ${$$m{'VERSION'}};
             printf("    %-22s %6s\n", $m, $d);
         }
     }
@@ -6249,8 +6251,8 @@ sub printciphers() {
             my $dupl = ""; # need to identify duplicates as we don't have List::MoreUtils
             foreach my $c (split(/:/, $ciphers)) {
                 next if ($c eq $dupl);
-                push(@test, $c) if (  defined $ciphers{$c});
-                push(@miss, $c) if (! defined $ciphers{$c});
+                push(@test, $c) if     defined $ciphers{$c};
+                push(@miss, $c) if not defined $ciphers{$c};
                 $dupl = $c;
             }
             # no customizable texts from %text, as it's for --v only
@@ -7525,7 +7527,7 @@ _y_CMD("hosts ...");
 _yeast_TIME("hosts{");
 
 # run the appropriate SSL tests for each host (ugly code down here):
-$port = ($cfg{'port'}||"");     # defensive programming
+$port = ($cfg{'port'}||"");     # defensive programming ..
 foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     $cfg{'host'}      = $host;
     if ($host =~ m#.*?:\d+#) {  # split host:port
@@ -7557,7 +7559,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     } else {
         $fail  = '<<gethostbyaddr() failed>>';
         $cfg{'ip'}      = gethostbyname($host); # primary IP as identified by given hostname
-        if (!defined $cfg{'ip'}) {
+        if (not defined $cfg{'ip'}) {
             _warn("201: Can't get IP for host '$host'; host ignored");
             _y_CMD("host}");
             next; # otherwise all following fails
@@ -7661,7 +7663,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
         _y_CMD("get default ...");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-            next if (!defined $prot{$ssl}->{opt});
+            next if (not defined $prot{$ssl}->{opt});
             next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             my $anf = time();
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
@@ -7738,7 +7740,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # TODO: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
         my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
-print "V $#{$cfg{'version'}}  " . scalar @{$cfg{'version'}};
         foreach my $ssl (@{$cfg{'version'}}) {
             $_printtitle++;
             if (($legacy ne "sslscan") or ($_printtitle <= 1)) {
@@ -7834,7 +7835,7 @@ print "V $#{$cfg{'version'}}  " . scalar @{$cfg{'version'}};
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
         _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
-        if (!defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
+        if (not defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
             my @errtxt = Net::SSLinfo::errors($host, $port);
             if ($#errtxt > 0) {
                 _v_print(join("\n".STR_ERROR, @errtxt));
