@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.720 17/07/12 14:47:12",
+    SID         => "@(#) yeast.pl 1.721 17/07/12 15:08:32",
     STR_VERSION => "17.07.09",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1755,7 +1755,7 @@ our %text = (
     # often describe missing features or functionality.
     'hints' => {
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746 ",
-        'drown'     => "checks only the target server itself ",
+        'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
     },
 
     'mnemonic'      => { # NOT YET USED
@@ -3388,16 +3388,17 @@ sub _useopenssl($$$$)   {
     #   error setting cipher list
     #   139912973481632:error:1410D0B9:SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1314:
     return "", "", "" if ($data =~ m#SSL routines.*(?:handshake failure|null ssl method passed|no ciphers? (?:available|match))#); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+
     if ($data =~ m#^\s*$#) {
         _warn("311: SSL version '$ssl': empty result from openssl");
     } else {
         _warn("312: SSL version '$ssl': unknown result from openssl");
     }
     _trace2("_useopenssl: #{ $data }");
-    if ($cfg{'verbose'} > 0) {
-        _v_print("_useopenssl: Net::SSLinfo::do_openssl() #{\n$data\n#}");
+    if ($cfg{'verbose'} < 1) {
+        _hint("use options like: --v --trace"); # print always
     } else {
-        _hint("use options like: --v --trace");
+        _v_print("_useopenssl: Net::SSLinfo::do_openssl() #{\n$data\n#}");
     }
 
     return "", "", "";
@@ -3956,8 +3957,8 @@ sub checkciphers($$) {
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     foreach my $c (@cipher_results) {   # check all accepted ciphers
-        next if not defined @{$c};  # defensive programming ..
-        next if (@{$c} =~ m/^\s*$/);# -"-
+        next if not @{$c};     # defensive programming ..
+        next if ((scalar(@{$c})) =~ m/^\s*$/);  # -"-
         # each $c looks like:  TLSv12  ECDHE-RSA-AES128-GCM-SHA256  yes
         my $yn  = ${$c}[2];
         $cipher = ${$c}[1];
@@ -4409,7 +4410,7 @@ sub check02102($$)  {
 
     #! TR-02102-2 3.6.1 Verwendung von elliptischen Kurven
         # brainpoolP256r1, brainpoolP384r1, brainpoolP512r1 (vgl. [RFC5639] und [RFC7027])
-	# lazy allows: secp256r1, secp384r1
+        # lazy allows: secp256r1, secp384r1
         # verboten:    secp224r1
     # TODO: cipher bit length check
 
@@ -6475,9 +6476,9 @@ while ($#argv >= 0) {
 
         # SEE Note:ALPN, NPN
         # --protos* is special to simulate empty and undefined arrays
-        #   --protosnpn=value	- add value to array
-        #   --protosnpn=,	- set empty array
-        #   --protosnpn=,,	- set array element to ""
+        #   --protosnpn=value   - add value to array
+        #   --protosnpn=,       - set empty array
+        #   --protosnpn=,,      - set array element to ""
         # NOTE: distinguish:  [], [""], [" "]
         if ($typ eq 'CIPHER_ALPN'){
             $cfg{'cipher_alpns'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
@@ -8223,7 +8224,7 @@ example (ouput from openssl):
  DHE-DES-CBC), this is the one selected if the client provided a list
 example (ouput from openssl):
 example Net::SSLeay:
-	Net::SSLeay::get_cipher(..)
+        Net::SSLeay::get_cipher(..)
 
 
 =head2 Note:--ssl-error
