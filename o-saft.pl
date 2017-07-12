@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.721 17/07/12 15:08:32",
+    SID         => "@(#) yeast.pl 1.722 17/07/13 00:18:41",
     STR_VERSION => "17.07.09",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -85,6 +85,8 @@ sub _yeast_EXIT($)  {   # exit if parameter matches given argument in @ARGV
     }
     return;
 }
+
+#$DB::single=1;  # for debugging; start with: PERL5OPT='-dt' $0
 
 BEGIN {
     _yeast_TIME("BEGIN{");
@@ -7576,11 +7578,10 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("test IP ...");
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
         if ($cfg{'usedns'} == 1) {  # following settings only with --dns
+           _yeast_TIME("use DNS{");
            local $? = 0; local $! = undef;
            ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
             $cfg{'rhost'}   = $fail if ($? != 0);
-        }
-        if ($cfg{'usedns'} == 1) {
             _y_CMD("test DNS (disable with --no-dns) ...");
             my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
             my $i = 0;
@@ -7592,6 +7593,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
             }
             _warn("202: Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
+           _yeast_TIME("use DNS}");
         }
     }
     # print DNS stuff
@@ -7794,6 +7796,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # finally we close the connection to be clean for all other tests
     _trace(" cn_nosni: {");
     $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
+    _yeast_TIME("no SNI{");
     if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
         _trace("cn_nosni: method: $Net::SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
@@ -7808,6 +7811,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     } else {
         _warn("204: Can't make a connection to $host:$port without SNI; no initial data (compare with and without SNI not possible)");
     }
+    _yeast_TIME("no SNI}");
     # now close connection, which also resets Net::SSLinfo's internal data
     # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
     # the connection failed and does nothing (except resetting data)
@@ -7836,6 +7840,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($cfg{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
+        _yeast_TIME("connection test{");
         _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
         if (not defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
             my @errtxt = Net::SSLinfo::errors($host, $port);
@@ -7845,15 +7850,18 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 _hint("--v  will show more information");
                 _hint("--socket-reuse  may help in some cases");
                 _hint("--ignore-no-conn can be used to disable this check");
+                _yeast_TIME("  connection test} failed");
                 goto CLOSE_SSL;
             }
         }
+        _yeast_TIME("  connection open.");
         my @errtxt = Net::SSLinfo::errors($host, $port);
         if ((grep{/\*\*ERROR/} @errtxt) > 0) {
             _warn("207: Errors occoured when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
             _hint("--v  will show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
+        _yeast_TIME("connection test}");
     }
 
     usr_pre_cmds();
@@ -7872,23 +7880,24 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     # following sequence important!
     _y_CMD("get checks ...");
-    checkalpn( $host, $port); # if (_is_do('hasalpn') or _is_do('hasnpn'))
-    checkdates($host, $port);
-    checkhttp( $host, $port);
-    checksni(  $host, $port);
-    checksizes($host, $port);
+    # if (_is_do('hasalpn') or _is_do('hasnpn'))
+    checkalpn( $host, $port);       _yeast_TIME("  checkalpn.");
+    checkdates($host, $port);       _yeast_TIME("  checkdates.");
+    checkhttp( $host, $port);       _yeast_TIME("  checkhttp.");
+    checksni(  $host, $port);       _yeast_TIME("  checksni.");
+    checksizes($host, $port);       _yeast_TIME("  checksizes.");
     if ($info == 0) {   # not for +info
 # TODO: probably subject for cfg{need-checkssl}
-        checkdv(   $host, $port);
-        checkdest( $host, $port);
-        checkprot( $host, $port);
-        checkbleed($host, $port);
+        checkdv(   $host, $port);   _yeast_TIME("  checkdv.");
+        checkdest( $host, $port);   _yeast_TIME("  checkdest.");
+        checkprot( $host, $port);   _yeast_TIME("  checkprot.");
+        checkbleed($host, $port);   _yeast_TIME("  checkbleed.");
     }
 
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ...");
         _trace(" checkssl {");
-        checkssl( $host, $port);
+        checkssl( $host, $port);   _yeast_TIME("  checkssl.");
         _trace(" checkssl }");
      }
 
