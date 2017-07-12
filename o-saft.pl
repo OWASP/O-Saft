@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.718 17/07/12 07:46:32",
+    SID         => "@(#) yeast.pl 1.719 17/07/12 14:33:48",
     STR_VERSION => "17.07.09",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3601,14 +3601,14 @@ sub check_dh($$)    {
     $cfg{'done'}->{'check_dh'}++;
     return if ($cfg{'done'}->{'check_dh'} > 1);
 
-    checkciphers($host, $port); # need EXPORT ciphers
-
     # Logjam check is a bit ugly: DH Parameter may be missing
     # TODO: implement own check for DH parameters instead relying on openssl
     my $txt = $data{'dh_parameter'}->{val}($host);
-    my $exp = $checks{'logjam'}->{val};
     if ($txt eq "") {
         $txt = "<<openssl did not return DH Paramter>>";
+        checkciphers($host, $port); # need EXPORT ciphers fot logjam
+        # TODO: calling checkciphers() is bad, it may even not contain ciphers
+        my $exp = $checks{'logjam'}->{val};
         $checks{'logjam'}->{val}   .=  $txt;
         $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
         $checks{'dh_512'}->{val}    =  $txt;
@@ -3934,6 +3934,7 @@ sub checkciphers($$) {
     # checks are done with information from @cipher_results
     my ($host, $port) = @_;     # not yet used
 
+_dbx "ccc";
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
     return if ($cfg{'done'}->{'checkciphers'} > 1);
@@ -7728,6 +7729,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             }
         }
         #dbx @cipher_results = (); # simulate "no ciphers found"
+_dbx "cc1: @{$cfg{'need-cipher'}}";
         checkciphers($host, $port); # necessary to compute 'out-summary'
         _yeast_TIME("need_cipher}");
      }
