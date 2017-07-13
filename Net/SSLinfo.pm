@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.07.08',
+    SSLINFO_VERSION => '17.07.12',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.191 17/07/09 10:13:55',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.192 17/07/13 18:19:21',
 };
 
 ######################################################## public documentation #
@@ -1837,6 +1837,22 @@ sub s_client_opt_get{ return _OpenSSL_opt_get(shift); }
 
 =pod
 
+=head2 do_ssl_free($ctx,$ssl,$socket)
+
+Destroy and free L<Net::SSLeay> allocated objects.
+=cut
+
+sub do_ssl_free     {
+    #? free SSL objects of NET::SSLeay TCP connection
+    my ($ctx, $ssl, $socket) = @_;
+    close($socket)              if (defined $socket);
+    Net::SSLeay::free($ssl)     if (defined $ssl); # or warn "**WARNING: Net::SSLeay::free(): $!";
+    Net::SSLeay::CTX_free($ctx) if (defined $ctx); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
+    return;
+} # do_ssl_free
+
+=pod
+
 =head2 do_ssl_new($host,$port,$sslversions[,$cipherlist,$alpns,$npns,$socket])
 
 Establish new SSL connection using L<Net::SSLeay>.
@@ -1904,16 +1920,14 @@ sub do_ssl_new      {
             $src = $ctx_new;
 
             #0. first reset Net::SSLeay objects if they exist
-            close($tmp_sock) if (defined $tmp_sock);    # from previous attempt
+            do_ssl_free($ctx, $ssl, $tmp_sock);
+            $ctx        = undef;
+            $ssl        = undef;
             $tmp_sock   = undef;
-            Net::SSLeay::free($ssl)      if (defined $ssl);
-            Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
 
             #1a. open TCP connection; no way to continue if it fails
-            if (!defined $socket) {
-                ($tmp_sock = _ssleay_socket($host, $port, $tmp_sock)) or do {$src = '_ssleay_socket()'} and last TRY;
-                # TODO: need to pass ::starttls, ::proxyhost and ::proxyport
-            }
+            ($tmp_sock = _ssleay_socket($host, $port, $tmp_sock)) or do {$src = '_ssleay_socket()'} and last TRY;
+            # TODO: need to pass ::starttls, ::proxyhost and ::proxyport
 
             #1b. get SSL's context object
             ($ctx = _ssleay_ctx_new($ctx_new))  or do {$src = '_ssleay_ctx_new()'} and next;
@@ -1948,7 +1962,7 @@ sub do_ssl_new      {
             }
 
             #1f. prepare SSL object
-            ($ssl = _ssleay_ssl_new($ctx, $host, $tmp_sock, $cipher)) or {$src = '_ssleay_ssl_new()'} and next;
+            ($ssl = _ssleay_ssl_new($ctx, $host, $tmp_sock, $cipher)) or do {$src = '_ssleay_ssl_new()'} and next;
 
             #1g. connect SSL
             local $SIG{PIPE} = 'IGNORE';        # Avoid "Broken Pipe"
@@ -1998,22 +2012,6 @@ sub do_ssl_new      {
 
 =pod
 
-=head2 do_ssl_free($ctx,$ssl,$socket)
-
-Destroy and free L<Net::SSLeay> allocated objects.
-=cut
-
-sub do_ssl_free     {
-    #? free SSL objects of NET::SSLeay TCP connection
-    my ($ctx, $ssl, $socket) = @_;
-    close($socket)              if (defined $socket);
-    Net::SSLeay::free($ssl)     if (defined $ssl); # or warn "**WARNING: Net::SSLeay::free(): $!";
-    Net::SSLeay::CTX_free($ctx) if (defined $ctx); # or warn "**WARNING: Net::SSLeay::CTX_free(): $!";
-    return;
-} # do_ssl_free
-
-=pod
-
 =head2 do_ssl_open($host,$port,$sslversions[,$cipherlist])
 
 Opens new SSL connection with Net::SSLeay and stores collected data.
@@ -2027,6 +2025,8 @@ Returns array with $ssl object and $ctx object.
 
 This method is called automatically by all other functions, hence no need to
 call it directly.
+
+Use L<do_ssl_close($host,$port)> to free allocated objects.
 
 This method tries to use the most modern methods provided by Net::SSLeay to
 establish the connections, i.e. CTX_tlsv1_2_new or CTX_v23_new. If a method
@@ -2195,7 +2195,7 @@ sub do_ssl_open($$$@) {
             my $response = "";
             my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
 # $t1 = time();
-#           ($ctx = Net::SSLeay::CTX_v23_new()) or {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
+#           ($ctx = Net::SSLeay::CTX_v23_new()) or do {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             # FIXME: need to find proper method instead hardcoded CTX_v23_new(); see _ssleay_ctx_new
             #dbx# $Net::SSLeay::trace     = 2;
             $src = 'Net::SSLeay::write()';
