@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.723 17/07/13 18:15:29",
-    STR_VERSION => "17.07.09",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.724 17/07/13 18:47:33",
+    STR_VERSION => "17.07.12",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -3013,6 +3013,7 @@ sub _isbleed($$)        {
         # no proxy and not starttls
         $cl = IO::Socket::INET->new(PeerAddr=>"$host:$port", Timeout=>$cfg{'timeout'}) or do {
             _warn("321: _isbleed: failed to connect: '$!'");
+            _trace("_isbleed: fatal exit in IO::Socket::INET->new\n");
             return "failed to connect";
         };
     } else {
@@ -3022,7 +3023,7 @@ sub _isbleed($$)        {
         if ((not defined $cl) || ($@)) { # No SSL Connection
             local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
             _warn ("322: _isbleed (with openTcpSSLconnection): $@\n");
-            _trace("_isbleed: Fatal Exit in _doCheckSSLciphers }\n");
+            _trace("_isbleed: fatal exit in _doCheckSSLciphers\n");
             return("failed to connect");
         }
         # NO SSL upgrade needed -> NO else
@@ -3056,6 +3057,7 @@ sub _isbleed($$)        {
         ($type,$ver,@msg) = _readframe($cl) or do {
             #ORIG die "no reply";
             _warn("323: isbleed: no reply: '$!'");
+            _hint("server does not respond, this does not indicate that it is not vulnerable!");
             return "no reply";
         };
         last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
@@ -3087,6 +3089,7 @@ sub _isbleed($$)        {
         _v_print("no reply - probably not vulnerable");
     }
     close($cl);
+    _trace("_isbleed= $ret\n");
     return $ret;
 } # _isbleed
 
@@ -7891,14 +7894,14 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         checkdv(   $host, $port);   _yeast_TIME("  checkdv.");
         checkdest( $host, $port);   _yeast_TIME("  checkdest.");
         checkprot( $host, $port);   _yeast_TIME("  checkprot.");
+    }
+    if (_is_do('heartbleed')) {
+        _y_CMD("  need_checkbleed ...");
         checkbleed($host, $port);   _yeast_TIME("  checkbleed.");
     }
-
     if (_need_checkssl() > 0) {
         _y_CMD("  need_checkssl ...");
-        _trace(" checkssl {");
-        checkssl( $host, $port);   _yeast_TIME("  checkssl.");
-        _trace(" checkssl }");
+        checkssl(  $host, $port);   _yeast_TIME("  checkssl.");
      }
 
     _yeast_TIME("prepare}");
