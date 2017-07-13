@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.722 17/07/13 00:18:41",
+    SID         => "@(#) yeast.pl 1.723 17/07/13 18:15:29",
     STR_VERSION => "17.07.09",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3801,10 +3801,13 @@ sub check_nextproto {
        @protos = $cfg{'protos_next'}   if ($mode eq 'all'); # pass all at once
     my @npn;
     my ($ssl, $ctx, $method);
-    my $socket = undef;
+    my $socket; # = undef;
     foreach my $proto (@protos) {
         #_trace("  do_ssl_new(..., ".(join(" ", @{$cfg{'version'}}))
         #     . ", $cfg{'cipherpattern'}, $proto, $proto, socket)");
+        $ssl   = undef;
+        $ctx   = undef;
+        $socket= undef;
         ($ssl, $ctx, $socket, $method) = Net::SSLinfo::do_ssl_new(
                 $host, $port,
                 (join(" ", @{$cfg{'version'}})), $cfg{'cipherpattern'},
@@ -3830,13 +3833,10 @@ sub check_nextproto {
                 push(@npn, $np) if ($proto eq $np); # only if matched
             }
         }
-        Net::SSLeay::free($ssl)      if (defined $ssl);
-        Net::SSLeay::CTX_free($ctx)  if (defined $ctx);
-        # TODO: need to check if ($cfg{'socket_reuse'} > 0) {
-        close($socket) if defined $socket;  # defensive programming ..
-        $socket = undef;
-        #}
-        #TODO: if ($cfg(extopenssl} > 0)
+        # TODO: need to check if ($cfg{'socket_reuse'} > 0); then do not call do_ssl_free
+        Net::SSLinfo::do_ssl_free($ctx, $ssl, $socket);
+        #{
+        #TODO: if ($cfg(extopenssl) > 0)
         #my $data = Net::SSLinfo::do_openssl("s_client -alpn $proto -connect", $host, $port, "");
         #my $np = grep{/^ALPN protocol:.*/} split("\n", $data);
         #my $data = Net::SSLinfo::do_openssl("s_client -nextprotoneg $proto -connect", $host, $port, "");
