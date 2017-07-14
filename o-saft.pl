@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.728 17/07/14 13:29:09",
+    SID         => "@(#) yeast.pl 1.729 17/07/14 15:14:13",
     STR_VERSION => "17.07.12",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -5175,8 +5175,9 @@ sub checkhttp($$)   {
     $checks{'hsts_is301'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
     $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
-    $checks{'http_https'}->{val} = $notxt if ($http_location =~ m/^\s*$/);      # HTTP Location missing
-    $checks{'http_https'}->{val} = $http_location if ($http_location !~ m/^\s*https:/); # no redirect to https:
+    # sequence important: first check if redirect to https, then check if empty
+    $checks{'http_https'}->{val} = $http_location if ($http_location !~ m/^\s*https:/);
+    $checks{'http_https'}->{val} = $notxt if ($http_location =~ m/^\s*$/);
     $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne "");
     if ($data{'https_sts'}->{val}($host) ne "") {
         my $fqdn =  $hsts_fqdn;
