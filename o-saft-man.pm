@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.203 17/07/10 13:51:28";
+my  $man_SID= "@(#) o-saft-man.pm 1.204 17/07/15 00:54:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4295,7 +4295,7 @@ KNOWN PROBLEMS
 
         There are various reasons when the program responds slow, or seems to
         hang. Performance issues are most likely a target-side problem.  Most
-        common reasons are:
+        common reasons are (no specific order):
 
           a) DNS resolver problems
              Try with  --no-dns
@@ -4319,8 +4319,22 @@ KNOWN PROBLEMS
              Use  --ssl-error
              For a detailed description, please see "Connection Problems".
 
-        Other options which may help to get closer to the problem's cause:
-        --timeout=SEC,  --trace,  --trace=cmd
+        Other options which may help to get closer to the problems cause:
+        --trace=time,  --timeout=SEC,  --trace,  --trace=cmd
+
+        Using  --trace=time   should show following times:
+          * DNS:             1 -  10 sec
+          * need_default:    <5 sec
+          * need_cipher:     1 - 299 sec (+cipher with socket)
+          * need_cipher:     1 -  20 sec (+cipherraw)
+          * no SNI:          1 -  10 sec
+          * connection test: 1 -   5 sec
+          * prepare checks:  2 -  20 sec
+          *   checkalpn.     1 -  15 sec
+          *   checkprot.     1 -  15 sec
+          * cipher:          <1 sec
+          * info:            <1 sec
+          * check:           <1 sec
 
 
 LIMITATIONS
