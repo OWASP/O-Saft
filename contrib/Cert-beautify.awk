@@ -4,9 +4,9 @@
 #?      Cert-beautify.awk   - formatting o-saft.pl's certificate data
 #?
 #? SYNOPSIS
-#?      o-saft.pl ... | Cert-beautify.awk
-#?      o-saft.pl ... | gawk -f Cert-beautify.awk
-#?      o-saft.pl ... | Cert-beautify.awk -v all=1
+#?      o-saft.pl +info ... | Cert-beautify.awk
+#?      o-saft.pl +info ... | gawk -f Cert-beautify.awk
+#?      o-saft.pl +info ... | Cert-beautify.awk -v all=1
 #?
 #? OPTIONS
 #?      -v all=1    - prints all line not matching certificate data from input
@@ -16,7 +16,7 @@
 #?      Formats certificate related data for better human readability.
 #?
 #? VERSION
-#?      @(#) Cert-beautify.awk 1.1 17/07/15 00:50:19
+#?      @(#) Cert-beautify.awk 1.2 17/07/15 00:52:43
 #?
 #? AUTHOR
 #?      07. July 2017 Achim Hoffmann
