@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.724 17/07/13 18:47:33",
+    SID         => "@(#) yeast.pl 1.725 17/07/14 08:42:08",
     STR_VERSION => "17.07.12",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1231,6 +1231,8 @@ foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'comm
     push(@{$cfg{'cmd-hsts'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-hsts'}/i);
     push(@{$cfg{'cmd-http'}},  $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/i);
     push(@{$cfg{'cmd-sizes'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
+    push(@{$cfg{'need-checkhttp'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-hsts'}/);
+    push(@{$cfg{'need-checkhttp'}}, $key) if ($key =~ m/$cfg{'regex'}->{'cmd-http'}/);
 }
 
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
@@ -1755,6 +1757,7 @@ our %text = (
     # Currently we define the hints here,  but it can be done anywhere in the
     # code, which may be useful for documentation purpose  because such hints
     # often describe missing features or functionality.
+    # TODO: move this to %cfg{hints}
     'hints' => {
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
@@ -2084,7 +2087,7 @@ sub _check_functions    {
         _v2print "$text_ssleay (OK)\tyes";
     }
 
-    _y_CMD("  check for NPN and ALPN support ..."); # SEE OpenSSL:Version
+    _y_CMD("  check for NPN and ALPN support ..."); # SEE Note:OpenSSL:Version
     if (($version_ssleay < 1.56) or ($version_openssl < 0x10002000)) {
         $cfg{'ssleay'}->{'set_alpn'} = 0;
         $cfg{'ssleay'}->{'get_alpn'} = 0;
@@ -2814,15 +2817,22 @@ sub _need_this($)       {
        $is  =~ s/\+/\\+/g;    # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
 }
-sub _need_cipher()      { return _need_this('need-cipher');   };
-sub _need_default()     { return _need_this('need-default');  };
-sub _need_checkssl()    { return _need_this('need-checkssl'); };
+sub _need_cipher()      { return _need_this('need-cipher');     };
+sub _need_default()     { return _need_this('need-default');    };
+sub _need_checkssl()    { return _need_this('need-checkssl');   };
+sub _need_checkalpn()   { return _need_this('need-checkalpn');  };
+sub _need_checkbleed()  { return _need_this('need-checkbleed'); };
+sub _need_checkchr()    { return _need_this('need-checkchr');   };
+sub _need_checkdest()   { return _need_this('need-checkdest');  };
+sub _need_check_dh()    { return _need_this('need-check_dh');   };
+sub _need_checkhttp()   { return _need_this('need-checkhttp');  };
+sub _need_checkprot()   { return _need_this('need-checkprot');  };
     # returns >0 if any  of the given commands is listed in $cfg{need-*}
 sub _is_hashkey($$)     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member($$)      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
 sub _is_do($)           { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}}); }
 sub _is_intern($)       { my  $is=shift;    return _is_member($is, \@{$cfg{'commands-INT'}}); }
-sub _is_hexdata($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});   }
+sub _is_hexdata($)      { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
 sub _is_call($)         { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}}); }
     # returns >0 if any of the given string is listed in $cfg{*}
 
@@ -5024,6 +5034,7 @@ sub checkprot($$)   {
     }
 
     # check ALPN and NPN support
+    checkalpn($host, $port);    #
     my ($key, $value);
     $key    = 'alpns';
     $value  = $data{$key}->{val}($host, $port);
@@ -5035,6 +5046,7 @@ sub checkprot($$)   {
     #$checks{'hasnpn'}->{val}    = _get_text('disabled', "--no-npn")  if ($cfg{'usenpn'}  < 1);
     return;
 } # checkprot
+
 
 sub checkdest($$)   {
     #? check anything related to target and connection
@@ -5972,7 +5984,7 @@ sub printversion() {
         print "# perl $^V";
         print '# @INC = ' . join(" ", @INC) . "\n";
     }
-    # SEE OpenSSL:Version
+    # SEE Note:OpenSSL:Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
     print( "=== $0 $VERSION ===");
     print( "    Net::SSLeay::");    # next two should be identical
@@ -6669,6 +6681,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--?nofailed$/)        { $arg = '--enabled';       } # alias: sslscan
     if ($arg =~ /^--show-?each$/)       { $arg = '--disabled';      } # alias: testssl.sh
     if ($arg =~ /^--(?:no|ignore)cmd$/) { $arg = '--ignoreout';     } # alias:
+        # SEE Note:ignore-out
     # /-- next line is a dummy for extracting aliases
    #if ($arg eq  '--protocol')          { $arg = '--SSL';           } # alias: ssldiagnose.exe
     if ($arg eq  '--range')             { $arg = '--cipherrange';   } # alias:
@@ -7505,7 +7518,7 @@ if (($check > 0) and ($#{$cfg{'done'}->{'arg_cmds'}} >= 0)) {
 usr_pre_host();
 
 my $fail = 0;
-# check if output disabled for given/used commands
+# check if output disabled for given/used commands, SEE Note:ignore-out
 foreach my $cmd (@{$cfg{'ignore-out'}}) {
     $fail++ if (_is_do($cmd) > 0);
 }
@@ -7798,9 +7811,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
         # finally we close the connection to be clean for all other tests
     _trace(" cn_nosni: {");
-    $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
     _yeast_TIME("no SNI{");
-    if (defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
+    $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
+    if (defined Net::SSLinfo::do_ssl_open(
+                    $host, $port,
+                    (join(" ", @{$cfg{'version'}})),
+                     join(" ", @{$cfg{'ciphers'}}))
+       ) {
         _trace("cn_nosni: method: $Net::SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
@@ -7845,7 +7862,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # to check the connection (hostname and port)
         _yeast_TIME("connection test{");
         _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
-        if (not defined Net::SSLinfo::do_ssl_open($host, $port, (join(" ", @{$cfg{'version'}})), join(" ", @{$cfg{'ciphers'}}))) {
+        if (not defined Net::SSLinfo::do_ssl_open(
+                            $host, $port,
+                            (join(" ", @{$cfg{'version'}})),
+                             join(" ", @{$cfg{'ciphers'}}))
+           ) {
             my @errtxt = Net::SSLinfo::errors($host, $port);
             if ($#errtxt > 0) {
                 _v_print(join("\n".STR_ERROR, @errtxt));
@@ -7882,20 +7903,28 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     usr_pre_data();
 
     # following sequence important!
+    # if conditions are just to improve performance
     _y_CMD("get checks ...");
-    # if (_is_do('hasalpn') or _is_do('hasnpn'))
-    checkalpn( $host, $port);       _yeast_TIME("  checkalpn.");
-    checkdates($host, $port);       _yeast_TIME("  checkdates.");
-    checkhttp( $host, $port);       _yeast_TIME("  checkhttp.");
-    checksni(  $host, $port);       _yeast_TIME("  checksni.");
-    checksizes($host, $port);       _yeast_TIME("  checksizes.");
+    if (_need_checkalpn() > 0) {
+        _y_CMD("  need_pn ...");
+        checkalpn( $host, $port);   _yeast_TIME("  checkalpn.");
+    }
+        checkdates($host, $port);   _yeast_TIME("  checkdates.");
+    if (_need_checkhttp() > 0) {
+        checkhttp( $host, $port);   _yeast_TIME("  checkhttp.");
+    }
+        checksni(  $host, $port);   _yeast_TIME("  checksni.");
+        checksizes($host, $port);   _yeast_TIME("  checksizes.");
     if ($info == 0) {   # not for +info
-# TODO: probably subject for cfg{need-checkssl}
         checkdv(   $host, $port);   _yeast_TIME("  checkdv.");
-        checkdest( $host, $port);   _yeast_TIME("  checkdest.");
+    }
+    if (_need_checkprot() > 0) {
         checkprot( $host, $port);   _yeast_TIME("  checkprot.");
     }
-    if (_is_do('heartbleed')) {
+    if (_need_checkdest() > 0) {
+        checkdest( $host, $port);   _yeast_TIME("  checkdest.");
+    }
+    if (_need_checkbleed() > 0) {
         _y_CMD("  need_checkbleed ...");
         checkbleed($host, $port);   _yeast_TIME("  checkbleed.");
     }
@@ -7913,7 +7942,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     # for debugging only
-    if (_is_do('s_client')) { _y_CMD("+s_client"); print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}"; }
+    if (_is_do('s_client')) {
+        _y_CMD("+s_client"); print "#{\n", Net::SSLinfo::s_client($host, $port), "\n#}";
+    }
     _y_CMD("do=".join(" ",@{$cfg{'do'}}));
 
     # print all required data and checks
@@ -8101,7 +8132,19 @@ is used for aliases of commands or options. These lines are extracted
   by  --help=alias
 
 
-=head2 OpenSSL:Version
+=head2 Note:ignore-out
+
+The option  --no-cmd  uses the commands defined in "cfg{'ignore-out'}".
+Results of these commands are not printed in output. # Purpose is to avoid
+The purpose is to avoid  printing the results of these commands in output,
+because the output is too noisy (like some +bsi* commands).
+All data collections and checks are still done, just output of results are
+omitted. Technically these commands are not removed from cfg{do}, but just
+skipped in printdata() and printchecks(),  which makes implementation much
+easier.
+
+
+=head2 Note:OpenSSL:Version
 
 About OpenSSL's version numbers see openssl/opensslv.h . Examples:
   0x01000000 => openssl-0.9x.x
