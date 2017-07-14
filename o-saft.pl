@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.727 17/07/14 10:56:49",
+    SID         => "@(#) yeast.pl 1.728 17/07/14 13:29:09",
     STR_VERSION => "17.07.12",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -838,6 +838,7 @@ foreach my $key (keys %check_cert) { $checks{$key}->{txt} = $check_cert{$key}->{
 foreach my $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt}; $checks{$key}->{typ} = 'destination'; }
 foreach my $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
 foreach my $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
+foreach my $key (keys %checks)     { $checks{$key}->{val} = ""; }
 # more data added to %checks after defining %cfg, see below
 
 our %shorttexts = (
@@ -5174,7 +5175,8 @@ sub checkhttp($$)   {
     $checks{'hsts_is301'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
     $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
-    $checks{'http_https'}->{val} = $notxt if ($http_location eq "");  # HTTP Location is there
+    $checks{'http_https'}->{val} = $notxt if ($http_location =~ m/^\s*$/);      # HTTP Location missing
+    $checks{'http_https'}->{val} = $http_location if ($http_location !~ m/^\s*https:/); # no redirect to https:
     $checks{'hsts_redirect'}->{val} = $data{'https_sts'}->{val}($host) if ($http_sts ne "");
     if ($data{'https_sts'}->{val}($host) ne "") {
         my $fqdn =  $hsts_fqdn;
