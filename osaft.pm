@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.07.09',  # official version number of tis file
+    OSAFT_VERSION   => '17.07.12',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.121 17/07/10 12:43:04',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.122 17/07/14 08:40:39',
 
 };
 
@@ -1397,6 +1397,9 @@ our %cfg = (
    #     cmd-*      - list for "summary" commands, can be redifined by user
    #     need-*     - list of commands which need a speciphic check
    #
+   # TODO: need to unify  cmd-* and need-* and regex->cmd-*;
+   #       see also _need_* functions and "construct list for special commands"
+   #       in o-saft.pl
    # config. key        list      description
    #------------------+---------+----------------------------------------------
     'do'            => [],      # commands to be performed
@@ -1468,23 +1471,16 @@ our %cfg = (
     'cmd-prots'     => [        # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npns next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
-    'ignore-out'    => [],      # commands (output) to be ignored, see --no-cmd
-                    # Results of these commands are not printed in output.
-                    # Purpose is to avoid output of noicy commands  (like some
-                    # +bsi*).  All data collections and checks are still done,
-                    # just output of results is omitted.
-                    # Technically these commands are not removed from cfg{do},
-                    # but just skipped in printdata() and printchecks(), which
-                    # makes implementation much easier.
-                    # need-* lists used to improve performance
+    'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only 
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
+                    # need-* lists used to improve performance
     'need-cipher'   => [        # commands which need +cipher
                         qw(check cipher cipher_dh cipher_strong
-                         cipher_null cipher_adh cipher_cbc cipher_des cipher_exp
-                         cipher_edh  cipher_rc4 cipher_pfs cipher_pfsall
+                         cipher_null cipher_adh cipher_cbc cipher_des cipher_edh
+                         cipher_exp  cipher_rc4 cipher_pfs cipher_pfsall
                          beast crime time breach drown freak logjam lucky13 poodle rc4 sloth sweet32
                          tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
                          hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
@@ -1498,8 +1494,35 @@ our %cfg = (
                         qw(sslv2  tlsv13  dtlsv09 dtlvs1 dtlsv11 dtlsv12 dtlsv13)
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
-                        qw(check beast crime time breach freak cipher_pfs cipher_pfsall cipher_cbc cipher_des cipher_edh cipher_exp cipher_rc4 cipher_selected ev+ ev-),
-                        qw(tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 rfc_6125_names rfc_2818_names),
+                        qw(check beast crime time breach freak
+                         cipher_pfs cipher_pfsall cipher_cbc cipher_des
+                         cipher_edh cipher_exp cipher_rc4 cipher_selected
+                         ev+ ev- tr_02102+ tr_02102- tr_03116+ tr_03116-
+                         rfc_7525 rfc_6125_names rfc_2818_names
+                       )],
+    'need-checkalnp'=> [        # commands which need checkalpn()
+                        qw(alpns alpn hasalpn npns npn hasnpn),
+                       ],
+    'need-checkbleed'   => [ qw(heartbleed) ],
+    'need-check_dh' => [        # commands which need check_dh()
+                        qw(logjam dh_512 dh_2048 ecdh_256 ecdh_512)
+                       ],
+    'need-checkdest'=> [        # commands which need checkprot()
+                        qw(reversehost ip resumption renegotiation
+                         session_protocol session_ticket session_random session_lifetime
+                         krb5 psk_hint psk_identity srp heartbeat
+                         cipher_selected cipher_pfs crime
+                       )],
+    'need-checkhttp'=> [qw(pkp_pins)],  # commands which need checkhttp(); more will be added in _init
+    'need-checkprot'=> [        # commands which need checkprot(), should be same as in 'cmd-prots'
+                        qw(
+                         sslversion
+                         hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
+                         alpns alpn hasalpn npns npn hasnpn
+                         crime drown poodle
+                       )],
+    'need-checksni' => [        # commands which need checksni()
+                        qw(hostname certfqdn cn cn_nosni sni)
                        ],
     'need-checkchr' => [        # commands which always need checking various characters
                         qw(cn subject issuer altname ext_crl ocsp_uri),
