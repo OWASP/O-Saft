@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.8 17/04/14 22:26:06
+#?      @(#) .perlcriticrc 1.9 17/07/14 09:29:05
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -446,6 +446,15 @@ verbose     = 8
     # CHECK DISABLED
 	# cause we consider following correct and useful:  my $var = '';
 	# the recomended use of q{} looks too complex:     my $var = q{};
+
+
+[-ValuesAndExpressions::ProhibitNoisyQuotes]
+
+    # Message
+        # Quotes used with a noisy string at line ... (Severity: 2)
+
+    # CHECK DISABLED
+        # other people, other opinions: ","  is better readable than qw(,) 
 
 
 [ValuesAndExpressions::ProhibitEscapedCharacters]
