@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.730 17/07/14 17:02:56",
-    STR_VERSION => "17.07.12",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.731 17/07/15 01:28:35",
+    STR_VERSION => "17.07.13",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -4448,7 +4448,7 @@ sub check02102($$)  {
     #! TR-02102-2 3.6 Domainparameter und Schlüssellängen
     $val = $checks{'len_sigdump'}->{val};
     if ($val =~ m/\d+/) {       # avoid perl warning "Argument isn't numeric"
-        $val = _get_text('bit2048', $val) if ($val < 2000);
+        $val = ($val < 2000) ? _get_text('bit2048', $val) : "";
         # FIXME: lazy check does not honor used cipher
     } else {
         $val = " len_sigdump missing $val";
