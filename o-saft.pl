@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.729 17/07/14 15:14:13",
+    SID         => "@(#) yeast.pl 1.730 17/07/14 17:02:56",
     STR_VERSION => "17.07.12",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6704,6 +6704,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--yeast(.*)/)         { _yeast_data();          exit 0; } # -"-
     if ($arg =~ /^--exit=(.*)/)         {                           next; } # -"-
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
+    if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
         # in CGI mode commands need to be passed as --cmd=* option
     if ($arg eq '--openssl')            { $arg = '--extopenssl';          } # no next; # dirty hack for historic option --openssl
     #!#--------+------------------------+--------------------------+------------
@@ -7238,7 +7239,7 @@ while ($#argv >= 0) {
         }
         $arg =~ s#(?:[^/]+/+)?([^/]*).*#$1#;       # extract host from URL
         $arg =~ s#:(\d+)##;
-        push(@{$cfg{'hosts'}}, $arg . ":" . $port);
+        push(@{$cfg{'hosts'}}, $arg . ":" . $port) if ($arg !~ m/^\s*$/);
         _y_ARG("host=    $arg");
         _yeast("host: $arg") if ($cfg{'trace'} > 0);
     }
