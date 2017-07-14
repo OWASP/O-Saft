@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.725 17/07/14 08:42:08",
+    SID         => "@(#) yeast.pl 1.726 17/07/14 09:06:42",
     STR_VERSION => "17.07.12",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3516,14 +3516,15 @@ sub _get_default($$$$)  {
     return $cipher;
 } # _get_default
 
-sub ciphers_get($$$$)   {
+sub ciphers_scan_prot   {
     #? test target if given ciphers are accepted, returns array of accepted ciphers
+    #? scans for ciphers with given protocol only
     my ($ssl, $host, $port, $arr) = @_;
     my @ciphers = @{$arr};  # ciphers to be checked
     my $version = "";       # returned protocol version
     my $dh      = "";       # returned DH parameters (not yet used)
 
-    _trace("ciphers_get($ssl, $host, $port, @ciphers){");
+    _trace("ciphers_scan_prot($ssl, $host, $port, @ciphers){");
     my @res     = ();       # return accepted ciphers
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
     _v_print("connect delay: $cfg{'connect_delay'} second(s)") if ($cfg{'connect_delay'} > 0);
@@ -3566,9 +3567,43 @@ sub ciphers_get($$$$)   {
     } # foreach @ciphers
     _v_print("connection errors: $cfg{'done'}->{'ssl_errors'}                  ");
     #    spaces to overwrite remaining cipher suite names
-    _trace("ciphers_get()\t= " . $#res . " @res }");
+    _trace("ciphers_scan_prot()\t= " . $#res . " @res }");
     return @res;
-} # ciphers_get
+} # ciphers_scan_prot
+
+sub ciphers_scan        {
+    #? scan target for ciphers for all protocols
+    # writes to @cipher_results
+    my ($host, $port) = @_;
+# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
+# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
+# hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
+#    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
+# Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
+    my $cnt = scalar(@{$cfg{'ciphers'}});
+    foreach my $ssl (@{$cfg{'version'}}) {
+        my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
+        _y_CMD("ckecking $cnt ciphers for $ssl ... ($__openssl)");
+        _trace("ckecking $cnt ciphers for $ssl ... ($__openssl)");
+        _v_print("ckecking $cnt ciphers for $ssl ...");
+        my $__verbose   = $cfg{'verbose'};
+            # $cfg{'v_cipher'}  should only print cipher checks verbosely,
+            # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence wee need to save
+            # the current value and reset after calling ciphers_scan_prot()
+        $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
+        my @supported = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
+        $cfg{'verbose'} = $__verbose if ($__verbose != 2);
+        # remove  protocol: in each item
+        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }
+        #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for perl > 5.12
+            # map({s/^[^:]*://} @supported); # is the perlish way
+            # but discarted by perlcritic, hence the less readable foreach
+        foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
+            push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
+        }
+    }
+    return;
+} # ciphers_scan
 
 sub check_certchars($$) {
     #? check for invalid characters in certificate
@@ -6133,7 +6168,7 @@ sub printversion() {
     return;
 } # printversion
 
-sub _hex_like_openssl($) {
+sub _hex_like_openssl   {
     # convert full hex constant to format used by openssl's output
     my $c = shift;
     $c =~ s/0x(..)(..)(..)(..)/0x$2,0x$3,0x$4 - /; # 0x0300C029 ==> 0x00,0xC0,0x29
@@ -6141,7 +6176,7 @@ sub _hex_like_openssl($) {
     return sprintf("%22s", $c);
 } # _hex_like_openssl
 
-sub printciphers() {
+sub printciphers        {
     #? print cipher descriptions from internal database
     # uses settings from --legacy= and --format= options to select output format
     # implemented in VERSION 14.07.14
@@ -6287,14 +6322,44 @@ sub printciphers() {
     return;
 } # printciphers
 
-sub printopenssl() {
+sub printscores         {
+    #? print calculated score values
+    my ($legacy, $host, $port) = @_;
+    scoring($host, $port);
+    # simple rounding in perl: $rounded = int($float + 0.5)
+    $scores{'checks'}->{val} = int(
+            ((
+              $scores{'check_cert'}->{val}
+            + $scores{'check_conn'}->{val}
+            + $scores{'check_dest'}->{val}
+            + $scores{'check_http'}->{val}
+            + $scores{'check_size'}->{val}
+            ) / 5 ) + 0.5);
+    printheader($text{'out-scoring'}."\n", $text{'desc-score'});
+    _trace_cmd('%scores');
+    foreach my $key (sort keys %scores) {
+        next if ($key !~ m/^check_/); # print totals only
+        print_line($legacy, $host, $port, $key, $scores{$key}->{txt}, $scores{$key}->{val});
+    }
+    print_line($legacy, $host, $port, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
+    printruler();
+    if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
+        _y_CMD("verbose score table");
+        print "\n";
+        printtable('score');
+        printruler();
+    }
+    return;
+} # printscores
+
+sub printopenssl        {
     #? print openssl version
     print Net::SSLinfo::do_openssl('version', '', '', '');
     printversionmismatch();
     return;
 } # printopenssl
 
-sub printusage_exit($) {
+sub printusage_exit     {
     my @txt = @_;
     local $\ = "\n";
     print STR_USAGE, @txt;
@@ -7667,7 +7732,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if (_is_do('fallback_protocol')) {
         _y_CMD("protocol fallback support ...");
-        # following similar to ciphers_get();
+        # following similar to ciphers_scan_prot();
         my ($version, $supported, $dh);
         if (0 == $cmd{'extciphers'}) {
             ($version, $supported)      = _usesocket( '', $host, $port, '');
@@ -7718,35 +7783,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("  use openssl ...") if (1 == $cmd{'extciphers'});
         @cipher_results = ();   # new list for every host
         $checks{'cnt_totals'}->{val} = 0;
-#dbx# print "# C", @{$cfg{'ciphers'}};
-# FIXME: 6/2015 es kommt eine Fehlermeldung wenn openssl 1.0.2 verwendet wird:
-# Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
-# hat mit den Ciphern aus @{$cfg{'ciphers'}} zu tun
-#    IDEA-CBC-MD5 RC2-CBC-MD5 DES-CBC3-MD5 RC4-64-MD5 DES-CBC-MD5 :
-# Ursache in _usesocket() das benutzt IO::Socket::SSL->new()
-        my $cnt = scalar(@{$cfg{'ciphers'}});
-        foreach my $ssl (@{$cfg{'version'}}) {
-            my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
-            _y_CMD("ckecking $cnt ciphers for $ssl ... ($__openssl)");
-            _trace("ckecking $cnt ciphers for $ssl ... ($__openssl)");
-            _v_print("ckecking $cnt ciphers for $ssl ...");
-            my $__verbose   = $cfg{'verbose'};
-                # $cfg{'v_cipher'}  should only print cipher checks verbosely,
-                # ciphers_get()  uses  $cfg{'verbose'}, hence wee need to save
-                # the current value and reset after calling ciphers_get()
-            $cfg{'verbose'} = 2 if ($cfg{'v_cipher'} > 0);
-            my @supported = ciphers_get($ssl, $host, $port, \@{$cfg{'ciphers'}});
-            $cfg{'verbose'} = $__verbose if ($__verbose != 2);
-            # remove  protocol: in each item
-            for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }
-            #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for perl > 5.12
-                # map({s/^[^:]*://} @supported); # is the perlish way
-                # but discarted by perlcritic, hence the less readable foreach
-            foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
-                push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
-                $checks{'cnt_totals'}->{val}++;
-            }
-        }
+        #dbx# _dbx "ciphers:", @{$cfg{'ciphers'}};
+        ciphers_scan($host, $port);
+        $checks{'cnt_totals'}->{val} = scalar @cipher_results;
         #dbx @cipher_results = (); # simulate "no ciphers found"
         checkciphers($host, $port); # necessary to compute 'out-summary'
         _yeast_TIME("need_cipher}");
@@ -7959,32 +7998,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     if ($cfg{'out_score'} > 0) { # no output for +info also
         _yeast_TIME("score{");
         _y_CMD("scores");
-        scoring($host, $port);
-        # simple rounding in perl: $rounded = int($float + 0.5)
-        $scores{'checks'}->{val} = int(
-            ((
-              $scores{'check_cert'}->{val}
-            + $scores{'check_conn'}->{val}
-            + $scores{'check_dest'}->{val}
-            + $scores{'check_http'}->{val}
-            + $scores{'check_size'}->{val}
-            ) / 5 ) + 0.5);
-        printheader($text{'out-scoring'}."\n", $text{'desc-score'});
-        print "\n";
-        _trace_cmd('%scores');
-        foreach my $key (sort keys %scores) {
-            next if ($key !~ m/^check_/); # print totals only
-            print_line($legacy, $host, $port, $key, $scores{$key}->{txt}, $scores{$key}->{val});
-        }
-        print_line($legacy, $host, $port, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
-        printruler();
-        print "\n";
-        if (($cfg{'traceKEY'} > 0) && ($verbose > 0)) {
-            _y_CMD("verbose score table");
-            printtable('score');
-            printruler();
-        }
-        print "\n";
+        printscores($legacy, $host, $port);
         _yeast_TIME("score}");
     }
 
