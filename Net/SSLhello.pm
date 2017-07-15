@@ -40,7 +40,7 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {
-    SSLHELLO_VERSION=> '17.04.09',
+    SSLHELLO_VERSION=> '17.07.15',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.20 17/03/03 11:26:20",
 };
@@ -156,6 +156,7 @@ $Net::SSLhello::use_sni_name        = 0;# 0=use hostname (default), 1: use sni_n
 $Net::SSLhello::sni_name            = "1";# name to be used for SNI mode connection is use_sni_name=1; ###FIX: "1": quickfix until migration of o-saft.pl is compleated (tbd)
 $Net::SSLhello::timeout             = 2;# time in seconds
 $Net::SSLhello::retry               = 3;# number of retry when timeout occurs
+$Net::SSLhello::connect_delay       = 0;# time to wait in seconds for starting next cipher check
 $Net::SSLhello::usereneg            = 0;# secure renegotiation 
 $Net::SSLhello::use_signature_alg   = 1;# signature_algorithm: 0 (off), 1 (auto on if >=TLSv1.2, >=DTLS1.2), 2: always on
 $Net::SSLhello::useecc              = 1;# use 'Supported Elliptic' Curves Extension
@@ -1148,6 +1149,7 @@ sub printParameters {
     print ("#O-Saft::Net::SSLhello::Parameters:\n");
     print ("#SSLHello:                 retry=$Net::SSLhello::retry\n")              if (defined($Net::SSLhello::retry));
     print ("#SSLHello:               timeout=$Net::SSLhello::timeout\n")            if (defined($Net::SSLhello::timeout));
+    print ("#SSLHello:         connect_delay=$Net::SSLhello::connect_delay\n")      if (defined($Net::SSLhello::connect_delay));
     print ("#SSLHello:                 trace=$Net::SSLhello::trace\n")              if (defined($Net::SSLhello::trace));
     print ("#SSLHello:             traceTIME=$Net::SSLhello::traceTIME\n")          if (defined($Net::SSLhello::traceTIME));
     print ("#SSLHello:              usereneg=$Net::SSLhello::usereneg\n")           if (defined($Net::SSLhello::usereneg));
@@ -1322,6 +1324,9 @@ sub checkSSLciphers ($$$@) {
         }
         _trace4_ ("\n");
         $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec);
+        _trace  ("checkSSLciphers(1): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
+        sleep($Net::SSLhello::connect_delay);
+        _trace4 ("checkSSLciphers(1): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
         if ($Net::SSLhello::trace > 0) { #about: _trace
             $i = 0;
             my $anzahl = int length ($acceptedCipher) / 3;
@@ -1371,6 +1376,9 @@ sub checkSSLciphers ($$$@) {
                     _trace2_ ("\n");
                 }
                 $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # test ciphers and collect accepted ciphers, $dtlsEpoch is only used in DTLS
+                _trace  ("checkSSLciphers(2): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
+                sleep($Net::SSLhello::connect_delay);
+                _trace4 ("checkSSLciphers(2): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
                 _trace2_ ("       ");
                 if ($acceptedCipher) { # received an accepted cipher
                     _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
@@ -1443,6 +1451,9 @@ sub checkSSLciphers ($$$@) {
                 _trace2_ ("\n");
             }
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # test ciphers and collect Accepted ciphers
+            _trace  ("checkSSLciphers(3): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
+            sleep($Net::SSLhello::connect_delay);
+            _trace4 ("checkSSLciphers(3): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
             _trace2_ ("       ");
             if ($acceptedCipher) { # received an accepted cipher ## TBD: Error handling using `given'/`when' TBD
                 _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
@@ -1513,6 +1524,9 @@ sub checkSSLciphers ($$$@) {
             _trace2 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             $@=""; # reset Error-Msg
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # collect accepted ciphers by priority
+            _trace  ("checkSSLciphers(4): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
+            sleep($Net::SSLhello::connect_delay);
+            _trace4 ("checkSSLciphers(4): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
             if ($@) {
                 _trace2 ("checkSSLciphers (3): '$@'\n");
@@ -1535,6 +1549,7 @@ sub checkSSLciphers ($$$@) {
                 } elsif ( ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
                     _trace1 ("checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
                     carp ("**WARNING: checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit Loop. Reason: '$@'");
+                    _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $@=""; # reset Error-Msg
                     last;
                 }
@@ -1603,7 +1618,8 @@ sub checkSSLciphers ($$$@) {
                     next;
                 } elsif ($@) { #any other Error like: #} elsif ( ( $@ =~ /\-> Received NO Data/) || ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) {
                     _trace1 ("checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'\n"); 
-                    carp ("**WARNING: checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit Loop. Reason: '$@'");
+                    carp ("**WARNING: checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit Loop. Reason: '$@'");
+                    _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $@=""; # reset Error-Msg
                     last;
                 } 
