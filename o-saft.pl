@@ -64,7 +64,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
     SID         => "@(#) yeast.pl 1.731 17/07/15 01:28:35",
-    STR_VERSION => "17.07.13",          # <== our official version number
+    STR_VERSION => "17.07.15",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -7483,6 +7483,7 @@ if (defined $Net::SSLhello::VERSION) {
     $Net::SSLhello::usesni          = $cfg{'usesni'};
     $Net::SSLhello::usemx           = $cfg{'usemx'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
+    $Net::SSLhello::connect_delay   = $cfg{'connect_delay'};
     $Net::SSLhello::starttls        = (($cfg{'starttls'} eq "") ? 0 : 1);
     $Net::SSLhello::starttlsType    = $cfg{'starttls'};
     $Net::SSLhello::starttlsDelay   = $cfg{'starttls_delay'};
