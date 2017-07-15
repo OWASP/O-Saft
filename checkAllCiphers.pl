@@ -43,7 +43,7 @@ BEGIN {
     unshift(@INC, $_path, "/bin" ); # /bin for special installation on portable media
 }
 
-my $VERSION = "16.05.16";
+my $VERSION = "17.07.15";
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
@@ -94,6 +94,10 @@ OPTIONS
     --sniname=SNINAME
                 if SNINAME is set, this Name is used in the Server Name Indication (SNI) Extension
                 (instead of the hostname)
+    --connect-delay=SEC
+                Additional delay in seconds after each connect for a cipher check.
+                This is useful when connecting to servers which have IPS in place,
+                or are slow in accepting new connections or requests
     --ssl-retry=CNT
                 number of retries for connects, if timed-out
     --ssl-timeout=SEC
@@ -253,6 +257,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+help=?(.*)$/i)                      { printhelp(); exit 0;         } # allow +help +help=*
     if ($arg =~ /^--v(erbose)?$/i)                      { $cfg{'verbose'}++;     next; }
     if ($arg =~ /^--n$/i)                               { $cfg{'try'}       = 1; next; }
+    if ($arg =~ /^--connect[_-]?delay=(\d+)$/i)         { $cfg{'connect_delay'}=$1; next;}
     if ($arg =~ /^--trace$/i)                           { $cfg{'trace'}++;       next; }
     if ($arg =~ /^--trace(--|[_-]?arg)$/i)              { $cfg{'traceARG'}++;    next; } # special internal tracing
     if ($arg =~ /^--trace([_-]?cmd)$/i)                 { $cfg{'traceCMD'}++;    next; } # ..
@@ -380,6 +385,7 @@ while ($#argv >= 0) {
     $Net::SSLhello::usesni          = $cfg{'usesni'};
     $Net::SSLhello::use_sni_name    = $cfg{'use_sni_name'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
+    $Net::SSLhello::connect_delay   = $cfg{'connect_delay'};
     $Net::SSLhello::starttls        = $cfg{'starttls'};
     $Net::SSLhello::starttlsType    = $cfg{'starttlsType'}; 
     @Net::SSLhello::starttlsPhaseArray  = @{$cfg{'starttls_phase'}};
