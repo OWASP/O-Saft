@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.204 17/07/15 00:54:17";
+my  $man_SID= "@(#) o-saft-man.pm 1.205 17/07/15 08:23:19";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -412,7 +412,7 @@ sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
     # first only lists, which cannot be redefined with --cfg-*= (doesn't make sense)
 
-    _man_doc_opt($typ, $sep);   # abbr, rfc, links, ...
+    _man_doc_opt($typ, $sep, 'opt');    # abbr, rfc, links, ...
 
     if ($typ eq 'compl') { _man_opt($_, $sep, $cfg{'compliance'}->{$_})    foreach (sort keys %{$cfg{'compliance'}}); }
 
