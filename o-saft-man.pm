@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.205 17/07/15 08:23:19";
+my  $man_SID= "@(#) o-saft-man.pm 1.206 17/07/15 08:29:58";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -828,6 +828,7 @@ sub man_wiki($) {
         # so we can switch this behavior now.
     _man_dbx("man_wiki($mode) ...");
     my $key = "";
+
     # 1. generate wiki page header
     print <<'EoHelp';
 ==O-Saft==
@@ -846,7 +847,8 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
 
 [[Category:OWASP Project]]  [[Category:OWASP_Builders]]  [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]  [[Category:SSL]]  [[Category:Test]]
 ----
-";
+EoHelp
+
     # 2. generate wiki page content
     #    extract from herein and convert POD syntax to mediawiki syntax
     while ($_ = shift @DATA) {
@@ -873,8 +875,9 @@ __TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing
         s/^:\s+$/\n/;                   # remove empty lines
         print;
     }
-    # 2. generate wiki page footer
-    print "
+
+    # 3. generate wiki page footer
+    print <<'EoHelp';
 ----
 <small>
 Content of this wiki page generated with:
