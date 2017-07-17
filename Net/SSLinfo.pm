@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.07.12',
+    SSLINFO_VERSION => '17.07.17',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.192 17/07/13 18:19:21',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.193 17/07/17 15:06:52',
 };
 
 ######################################################## public documentation #
@@ -720,8 +720,9 @@ my $_timeout = undef;
 my $_openssl = undef;
 
 sub _setcommand {
-    #? check for external command $command; returns command or undef
-    my $command =shift;
+    #? check for external command $command; returns command or empty string
+    my $command = shift;
+    return "" if ($command eq "");
     my $cmd;
     my $opt = "version";
        $opt = "--version" if ($command =~ m/timeout$/);
@@ -732,7 +733,7 @@ sub _setcommand {
         _trace("_setcommand: $command = $cmd");
         $cmd = "$command";
     } else {
-        _trace("_setcommand: $command = <<undef>>");
+        _trace("_setcommand: $command = ''");
         $cmd = "";  # i.e. Mac OS X does not have timeout by default; can work without ...
     }
     if ($^O !~ m/MSWin32/) {
