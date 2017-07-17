@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.07.12',  # official version number of tis file
+    OSAFT_VERSION   => '17.07.17',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.122 17/07/14 08:40:39',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.123 17/07/17 13:19:05',
 
 };
 
@@ -178,7 +178,7 @@ with the full package name.
 use Exporter qw(import);
 use base qw(Exporter);
 #our @ISA        = qw(Exporter);
-my  $VERSION    = OSAFT_VERSION;
+our $VERSION    = OSAFT_VERSION;
 our @EXPORT     = qw(
                 STR_ERROR
                 STR_WARN
