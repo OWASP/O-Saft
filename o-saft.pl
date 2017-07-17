@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.732 17/07/15 23:37:21",
+    SID         => "@(#) yeast.pl 1.733 17/07/17 15:50:34",
     STR_VERSION => "17.07.15",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -2263,8 +2263,22 @@ sub _enable_sclient     {
     return;
 } # _enable_sclient
 
+sub _reset_openssl      {
+    # reset all %cfg and %cmd settings according openssl executable
+    $cmd{'openssl'}     = "";
+    $cmd{'extopenssl'}  = 0;
+    $cmd{'extsclient'}  = 0;
+    $cmd{'extciphers'}  = 0;
+    # TODO: Net::SSLinfo not yet included ...
+    #foreach my $opt (Net::SSLinfo::s_client_get_optionlist()) {
+    #    $cfg{'openssl'}->{$opt}[0] = 0;
+    #}
+    return;
+} # _reset_openssl
+
 sub _check_openssl      {
     _y_CMD("  check cpapbilities of openssl ...");
+    return if ($cmd{'openssl'} eq "");          # already checked and warning printed
     $Net::SSLinfo::openssl = $cmd{'openssl'};   # this version should be checked
     $Net::SSLinfo::trace   = $cfg{'trace'};
         # save to set $Net::SSLinfo::* here,
@@ -2272,10 +2286,7 @@ sub _check_openssl      {
     if (not defined Net::SSLinfo::s_client_check()) {
         _warn("147: '$cmd{'openssl'}' not available; all openssl functionality disabled");
         _hint("consider using '--openssl=/path/to/openssl'");
-        $cmd{'openssl'}     = "";
-        $cmd{'extopenssl'}  = 0;
-        $cmd{'extsclient'}  = 0;
-        $cmd{'extciphers'}  = 0;
+        _reset_openssl();
     }
     # Net::SSLinfo::s_client_check() is used to check openssl's capabilities.
     # For an example output SEE Note:openssl s_client
@@ -2298,10 +2309,36 @@ sub _check_openssl      {
     return;
 } # _check_openssl
 
+sub _init_opensslexe    {
+    # check if openssl exists, return full path
+    # i.g. we may rely on bare word  openssl  which then would be found using
+    # $PATH, but it's better to have a clear definition right away because it
+    # avoids errors
+    # $cmd{'openssl'} not passed as parameter, as it will be changed here
+    my $exe     = "";
+    foreach my $p ("", split(/:/, $ENV{'PATH'})) { # try to find path
+        # ""  above ensures that full path in $openssl will be checked
+        $exe = "$p/$cmd{'openssl'}";
+        last if (-e $exe);
+        $exe = "";
+    }
+    $exe =~ s#//#/#g;       # make a nice path (see first path "" above)
+    if ($exe eq "" or $exe eq "/") {
+        _warn("149: no executable for '$cmd{'openssl'}' found; all openssl functionality disabled");
+        _hint("consider using '--openssl=/path/to/openssl'");
+        _reset_openssl();
+    } else {
+        $cmd{'openssl'} = $exe;
+    }
+    _v_print("_init_opensslexe: $exe");
+    return;
+} # _init_opensslexe
+
 sub _init_openssldir    {
     # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
     # resets cmd{'openssl'}, cmd{'extopenssl'} and cmd{'extsclient'} on error
     # SEE Note:openssl CApath
+    # $cmd{'openssl'} not passed as parameter, as it will be changed here
     my $dir = qx($cmd{'openssl'} version -d);   # get something like: OPENSSLDIR: "/usr/local/openssl"
     chomp $dir;
     my $status  = $?;
@@ -2322,9 +2359,7 @@ sub _init_openssldir    {
             print STR_WARN, "003: using external programs disabled.\n";
             print STR_WARN, "004: data provided by external openssl may be shown as:  <<openssl>>\n";
         }
-        $cmd{'openssl'}    = "";
-        $cmd{'extopenssl'} = 0;
-        $cmd{'extsclient'} = 0;
+        _reset_openssl();
         $status = 0;  # avoid following warning below
     } else {
         # process only if no errors to avoid "Use of uninitialized value"
@@ -6040,20 +6075,12 @@ sub printversion() {
         print "       ::SSLEAY_CFLAGS               " . Net::SSLeay::SSLeay_version(2);
       }
       print "    Net::SSLeay::SSLeay_version()    " . Net::SSLeay::SSLeay_version(); # no parameter is same as parameter 0
+      # TODO: print "   *SSL version mismatch" if Net::SSLeay::SSLeay_version() ne Net::SSLinfo::do_openssl('version','','','');
     }
 
     print "= openssl =";
+    print "    external executable              " . (($cmd{'openssl'} eq "") ? "<<executable not found>>" : $cmd{'openssl'});
     print "    version of external executable   " . Net::SSLinfo::do_openssl('version', '', '', '');
-    my $openssl = $cmd{'openssl'};
-    foreach my $p ("", split(/:/, $ENV{'PATH'})) { # try to find path
-        # "" above ensures that full path in $cmd{'openssl'} will be checked
-        $openssl = "$p/$cmd{'openssl'}";
-        last if (-e $openssl);
-        $openssl = "<<$cmd{'openssl'} not found>>";
-    }
-    $openssl =~ s#//#/#g;       # make a nice path (see first path "" above)
-    print "    external executable              " . $openssl;
-        #  . ($cmd{'openssl'} eq $openssl)?" (executable not found??)":"";
     print "    used environment variable (name) " . $cmd{'envlibvar'};
     print "    environment variable (content)   " . ($ENV{$cmd{'envlibvar'}} || STR_UNDEF);
     print "    path to shared libraries         " . join(" ", @{$cmd{'libs'}});
@@ -6090,7 +6117,9 @@ sub printversion() {
         }
     }
     my @ciphers= Net::SSLinfo::cipher_local();  # openssl ciphers ALL:aNULL:eNULL
-    print "    number of supported ciphers      " . @ciphers;
+    my $cnt    = 0;
+       $cnt    = @ciphers if (not grep{/<<openssl>>/} @ciphers);# if executable found
+    print "    number of supported ciphers      " . $cnt;
     print "    list of supported ciphers        " . join(" ", @ciphers) if ($cfg{'verbose'} > 0);
     print "    openssl supported SSL versions   " . join(" ", @{$cfg{'version'}});
     print "    $me known SSL versions     "       . join(" ", @{$cfg{'versions'}});
@@ -7350,6 +7379,7 @@ if ($cfg{'exec'} == 0) {
 
 #| add openssl-specific path for CAs
 #| -------------------------------------
+_init_opensslexe();                         # warnings already printed if empty
 if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
     $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
 }
