@@ -75,13 +75,15 @@ exec wish "$0" ${1+"$@"}
 #?
 #?   Copy Texts
 #?      All texts visible in the GUI,  wether a label, a button, an entry or a
-#?      text itself, can be copied to the systems clipboard with:
+#?      text itself, can be copied to the systems clipboard, using the systems
+#?      standard copy&paste methods, or with:
 #?         <Control-ButtonPress-1>
 #?      For debugging  <Shift-Control-ButtonPress-1>   will prefix the text by
 #?      the pathname and the class of the object containing the text.
 #?      Keep in mind that it also copies the huge text in the help window.
-#?      The text will be copied to the (ICCCM) buffer CLIPBOARD.  This ensures
-#?      that it will not interfere with the usual copy&paste buffer  PRIMARY.
+#?      With  <Control-ButtonPress-1>  or  <Shift-Control-ButtonPress-1>   the
+#?      text will be copied to the (ICCCM) buffer CLIPBOARD. This ensures that
+#?      it will not interfere with the usual copy&paste buffer  PRIMARY.
 #?      <ButtonPress-1> is the "select button", usually the left mouse button.
 #?      On X.org systems, the  CLIPBOARD  can be pasted using the context menu
 #?      (which is most likely the <left click>).
@@ -148,6 +150,8 @@ exec wish "$0" ${1+"$@"}
 #?      GUI herein.
 #?
 #?      The busy cursor does not work on Win32 and Win64 systems.
+#?
+#?      Selected coloured text will not be highlighted. Anyway it is selected.
 #?
 #? ARGUMENTS
 #?      All arguments,  except the options described above,  are treated  as a
@@ -235,7 +239,8 @@ exec wish "$0" ${1+"$@"}
 #.
 #.      When building the complete documention (help window),  additional text
 #.      documentation (beside that provided by +help) will be added before the
-#.      ATTRIBUTION  section.  Hence ATTRIBUTION must exist as section header.
+#.      ATTRIBUTION  section.  Hence ATTRIBUTION must exist as  section header
+#.      in output of "o-saft.pl --help".
 #.
 #.      The tool will only work if o-saft.pl is available and executes without
 #.      errors. All commands and options of  o-saft.pl  will be available from
@@ -278,17 +283,21 @@ exec wish "$0" ${1+"$@"}
 #.      All buttons for the GUI are defined in a tabular array,  where the key
 #.      is used as part of the object name. For details please see comments at
 #.          # define all buttons used in GUI
+#.      Note that the button texts defined there are displayed  when using our
+#.      own "Copy Text" (see above) with <Control-ButtonPress-1>,  even if the
+#.      button is displayed as image.
 #.
 #.   Notes about Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions (2015) are
 #.      the perl executable and the start method of the external browser.
 #.      Another exception (8/2016) is "package require Img" which is necessary
-#.      on some MacOS X.
+#.      on some Mac OS X.
 #.      All external programs are started using Tcl's  {*}  syntax.
 #.      If there is any text visible, we want to copy&paste it.  Therfore most
 #.      texts are placed in Tk's text widget instead of a label widget, 'cause
 #.      text widgets allow selecting their content by default, while labels do
-#.      not.
+#.      not. These text widgets are set to state "read-only"  instaed of Tcl's
+#.      disabled state, see set_readonly() for details.
 #.
 #.      This is no academically perfect code, but quick&dirty scripted:
 #.       - makes use of global variables instead of passing parameters etc..
@@ -296,7 +305,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.139 Spring Edition 2017
+#?      @(#) 1.141 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -365,8 +374,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.139 17/05/18 00:40:09 Spring Edition 2017}
-set cfg(VERSION) {1.139}
+set cfg(SID)    {@(#) o-saft.tcl 1.141 17/07/17 12:09:19 Spring Edition 2017}
+set cfg(VERSION) {1.141}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -878,7 +887,7 @@ proc read_images  {theme} {
        _dbx " IMG $rcfile"
        if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
     }
-    _dbx "IMG: [array names IMG]"
+    _dbx " IMG: [array names IMG]"
     return
 }; # read_images
 
@@ -1016,12 +1025,12 @@ proc set_readonly {w} {
     # etc.). Selecting, highlighting is not considered as a change.
     # This can accomplished simply with:
     #   $w config -state disabled
-    # Unfortunately, this does not work as expected on Mac OS X.  On Mac OS X
+    # Unfortunately, this does not work as expected on Mac OS X's Aqua. There
     # it also disables highlighting and selecting, for example copying to the
     # clipboard (cutbuffer).
     # Hence following workaround is used, which simply disables all functions
     # for events and sets them to do nothing.
-    # This works on all platforms (*ix, Windows, Mac OS X).
+    # This works on all platforms (*IX, Windows, Mac OS X Aqua).
     foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
     return
 }; # set_readonly
@@ -1666,7 +1675,7 @@ proc create_help  {sect} {
     }
 
     _dbx " 6. search for all examples and highlight them"
-    # causes problems in regsub on Mac OS X if $cfg(SAFT) startewith ./
+    # causes problems in regsub on Mac OS X if $cfg(SAFT) starts with ./
     set _me [regsub -all {^[./]*} $cfg(SAFT) {}];   # remove ./
     set anf [$txt search -regexp -nolinestop -all -count end "$_me \[^\\n\]+" 3.0]
     set i 0
@@ -1847,7 +1856,7 @@ proc create_win   {parent title cmd} {
         set tip [regsub {[^\s]+\s*}   $dat {} ]
         set dat [lindex [split $dat " "] 0]
 
-        _dbx "create_win: create: »$dat« $cmd"
+        _dbx " create: »$dat« $cmd"
         set name [str2obj $dat]
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
@@ -1883,7 +1892,7 @@ proc create_win   {parent title cmd} {
     set max 2;                          # 3 columns: 0..2
     if {$cmd eq "CMD"} { incr max };    # 4 columns in Commands
     set rows [expr $cnt / [expr $max + 1]]
-    _dbx "cnt/(max+1) = rows: $cnt/($max+1) = $rows"
+    _dbx " cnt/(max+1) = rows: $cnt/($max+1) = $rows"
     set col 0
     set row 0
     foreach slave $slaves {
@@ -2327,7 +2336,7 @@ proc osaft_exec   {parent cmd} {
         # dict get $errors --errorinfo   returns same as we have in $results
         # because STDERR was redirected to STDOUT
         # Tcl's exec added  "child process exited abnormally"  to the result
-        _dbx "error: [dict get $errors -errorcode]"
+        _dbx " error: [dict get $errors -errorcode]"
         set status [lindex [dict get $errors -errorcode] 2]
         set result [regsub {child process exited abnormally$} $result ""]
         # more pedantic check:
@@ -2463,7 +2472,7 @@ if {$cfg(VERB)==1} {
     pack [checkbutton $w.fq.img_txt -variable cfg(img_txt) -command {
             if {$cfg(img_txt)==1} { set cfg(bstyle) "image" }
             if {$cfg(img_txt)==0} { set cfg(bstyle) "text"  }
-            _dbx "toggle: $cfg(img_txt) # $cfg(bstyle) "
+            _dbx " toggle: $cfg(img_txt) # $cfg(bstyle) "
             theme_init $cfg(bstyle)
     } \
     ] -side right
@@ -2526,7 +2535,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.139"
+update_status "o-saft.tcl 1.141"
 
 ## load files, if any
 foreach f $cfg(files) {
