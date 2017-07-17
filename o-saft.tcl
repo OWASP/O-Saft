@@ -305,7 +305,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.141 Spring Edition 2017
+#?      @(#) 1.142 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -374,8 +374,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.141 17/07/17 12:09:19 Spring Edition 2017}
-set cfg(VERSION) {1.141}
+set cfg(SID)    {@(#) o-saft.tcl 1.142 17/07/17 12:40:20 Spring Edition 2017}
+set cfg(VERSION) {1.142}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -698,6 +698,7 @@ if {[regexp {indows} $tcl_platform(os)]} {
 # Tcl's  {*}  evaluation for that.
 
 ## check if cfg(SAFT) exists in PATH, +VERSION just prints the version number
+#_dbx          " $cfg(PERL) $cfg(SAFT) +VERSION"; # _dbx() not yet defined
 catch { exec {*}$cfg(PERL) $cfg(SAFT) +VERSION } usage;
 if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} { # check other PATH
     set osaft "$cfg(DIR)/$cfg(SAFT)";       # check in PATH of $argv0
@@ -1442,6 +1443,7 @@ proc create_pod   {sect} {
     # TODO: does probably not work on Windows
     #tk_messageBox -icon warning -title " using $cfg(TKPOD)" \
     #    -message "$cfg(TKPOD) will not be closed with $cfg(ICH)"
+    _dbx          " $cfg(TKPOD) o-saft.pod -geo $myX(geoO) &"
     catch { exec {*}$cfg(TKPOD) o-saft.pod -geo $myX(geoO) & };
     return
 }; # create_pod
@@ -2429,6 +2431,7 @@ cfg_update;                     # update configuration as needed
 read_images $cfg(bstyle);       # more precisely: before first use of theme_set
 
 # get information from O-Saft; it's a performance penulty, but simple ;-)
+_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) +help"
 set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
 if {2 > [llength [split $cfg(HELP) "\n"]]} {
     # exec call failed, probably because PATH does not contain . then cfg(SAFT)
@@ -2439,8 +2442,11 @@ if {2 > [llength [split $cfg(HELP) "\n"]]} {
     # that cfg(HELP) must be more than one line
     set cfg(SAFT) [file join "." $cfg(SAFT)];     # try current directory also
 }
+_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) +help"
 set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
+_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) --help=opt"
 set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
+_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) --help=commands"
 set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
 
 ##if {2 > [llength [split $cfg(HELP) "\n"]]} {
@@ -2535,7 +2541,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.141"
+update_status "o-saft.tcl 1.142"
 
 ## load files, if any
 foreach f $cfg(files) {
