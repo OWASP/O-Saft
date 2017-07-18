@@ -131,6 +131,7 @@ exec wish "$0" ${1+"$@"}
 #?              (not recommended on Mac OS X, because Aqua has nice buttons)
 #.      --tip   use own tooltip
 #?      --load=FILE read FILE and show in result TAB
+#?      --docker    use o-saft-docker instead of o-saft.pl
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
 #?
@@ -205,6 +206,8 @@ exec wish "$0" ${1+"$@"}
 #. LIMITATIONS
 #.
 #. HACKER's INFO
+#.   TODO (7/2017):
+#.      - "docker status" button is a quick&dirty hack
 #.   TODO (8/2016):
 #.      - need to check if ugly hacks for Aqua (Mac OS X 10.6  with  Tk 8.5.7)
 #.        are still necessary on modern Macs, in particular:
@@ -305,7 +308,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.142 Spring Edition 2017
+#?      @(#) 1.143 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -374,8 +377,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.142 17/07/17 12:40:20 Spring Edition 2017}
-set cfg(VERSION) {1.142}
+set cfg(SID)    {@(#) o-saft.tcl 1.143 17/07/19 00:04:37 Spring Edition 2017}
+set cfg(VERSION) {1.143}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -512,6 +515,7 @@ array set cfg_buttons "
     {cmdprotocols} {{+protocols} #ffb800 +protocols {Execute $cfg(SAFT) +protocols }}
     {cmdvulns}  {{+vulns}   #ffb000 +vulns    {Execute $cfg(SAFT) +vulns   }}
     {cmdversion} {{+version} #fffa00 +version {Execute $cfg(SAFT) +version }}
+    {docker_status} {{docker status} #00faff status  {Execute $cfg(SAFT) status   }}
     {img_txt}   {{image/text} $my_bg {img_txt}  {toggle buttons: text or image}}
 ";  #----------+-----------+-------+-----------+-------------------------------
 
@@ -2206,16 +2210,17 @@ proc osaft_reset  {} {
 proc osaft_init   {} {
     #? set values from .o-saft.pl in cfg()
     global cfg
+    if {[regexp {\-docker$} $cfg(SAFT)]} { return }; # skip in docker mode
     foreach l [split $cfg(.CFG) "\r\n"] {
         # expected lines look like:
         #  --no-header
         #  --cfg_cmd=bsi=xxx yyy
         #
-        if {[regexp "^\s*(#|$)" $l]} { continue }; # skip comments
+        if {[regexp "^\s*(#|$)" $l]} { continue };  # skip comments
         if {[regexp {=} $l]} {
             regexp $cfg(rexOPT-cfg) $l dumm idx val
             # FIXME: there may be multiple  --cfg_cmd=KKK=VVV  settings, but
-            #        there is only one variable in the GUU, so last one wins
+            #        there is only one variable in the GUI, so last one wins
             set idx [string trim $idx]
         } else {
             set idx [string trim $l]
@@ -2311,6 +2316,13 @@ proc osaft_exec   {parent cmd} {
         if {[string trim $h] eq ""} { continue };   # skip empty entries
         lappend targets $h
     }
+    # check for some special docker commands; # TODO: quick&dirty
+    if {$cmd eq "docker_status"} {
+        # o-saft-docker status  has no other options
+        set targets {}
+        set opt     {}
+        set do      "status"
+    }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
         putv "$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]"
         set execcmd [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
@@ -2365,6 +2377,7 @@ foreach arg $argv {
     switch -glob $arg {
         {+VERSION}  { puts $cfg(VERSION); exit; }
         {--version} { puts $cfg(SID);     exit; }
+        {--docker}  { set   cfg(SAFT)   {o-saft-docker}; }
         {--dbx}     -
         {--d}       { incr  cfg(DEBUG);    }
         {--v}       { set   cfg(VERB)   1; }
@@ -2379,6 +2392,7 @@ foreach arg $argv {
     }
 }
 if {$cfg(VERB) > 0} { lappend cfg(Ocmd) {+quit} {+version}; }
+if {[regexp {\-docker$} $cfg(SAFT)]} { lappend cfg(Ocmd) {docker_status}; }
 if {[tk windowingsystem] eq "aqua"} {
     set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
     if {$optimg==1} {
@@ -2541,7 +2555,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.142"
+update_status "o-saft.tcl 1.143"
 
 ## load files, if any
 foreach f $cfg(files) {
