@@ -1,0 +1,212 @@
+#!/bin/sh
+#?
+#? NAME
+#?       $0 - wrapper script to call O-Saft in a docker image
+#?
+#? SYNOPSIS
+#?       $0
+#?       $0 build
+#?       $0 usage
+#?       $0 shell
+#?       $0 status
+#?       $0 [options and commands of o-saft.pl]
+#?
+#? OPTIONS
+#?       -help   got it
+#?       -n      do not execute, just show what would be done
+#?       -v      be a bit verbose
+#?       --      pass all remaining parameters to o-saft.pl in docker image
+#?
+#? DESCRIPTION
+#?       This is a multipurpose wrapper for running O-Saft in a docker image.
+#?       It can operate in following modes:
+#?           build   - build the complete docker image for O-Saft
+#?           usage   - print the initial usage message for O-Saft in docker
+#?           shell   - run a shell (/bin/sh) in docker image
+#?           root    - run a shell (/bin/sh) as user root in docker image
+#?           status  - show various information about O-Saft docker image
+#?           hacker  - show information about the used Dockerfile
+#?           *       - anything else (default): run o-saft.pl in docker image
+#?
+#?       The main purpose of this wrapper is to provide a very simple call of
+#?       o-saft.pl  in a running docker image. This is the default mode.
+#?
+#?       Note: we use the term "mode" for our script, which is similar to the
+#?       term "command" for docker. This is to distingush our commands (mode)
+#?       from those of docker.
+#?
+#? MODES
+#?       Modes are simply an alias  to call  docker  with the proper commands
+#?       and options for the  O-Saft  image. Most modes (exception: build and
+#?       status) use the command:     "docker run ...".
+#?       This wrapper ensures that the proper O-Saft image within docker will
+#?       be used by passing the proper  "repository:tag"  image id.
+#?
+#?       The modes are:
+#?
+#?   default
+#?       In default mode,  all parameters given to this wrapper are passed to
+#?       o-saft.pl  in the docker image. This means that for all the existing
+#?       calls, the name of the script (usually o-saft.pl) needs simply to be
+#?       replaced by  $0 . Example:
+#?           o-saft.pl +info your.tld
+#?       becomes
+#?           $0 +info your.tld
+#?       Please see  LIMITATIONS  below also.
+#?
+#?   build
+#?       This mode builds the docker image for O-Saft from the Dockerfile.
+#?
+#?   usage
+#?       Print a brief purpose and usage of this script.
+#?       It is intended to be called from within the docker image once, right
+#?       after the initial build (see Dockerfile).
+#?
+#?   shell
+#?       Start a shell in O-Saft docker image.
+#?       This is useful because the  ENTRYPOINT  in the image is  o-saft.pl
+#?       which otherwise will always be executed.
+#?
+#?   root
+#?       Same as mode  shell  , but login as user root.
+#?
+#?   status
+#?       Show various information about O-Saft docker image.
+#?
+#? HACKER's INFO
+#?       Options for this script are with a single - (dash) only, because the
+#?       same options with double  --  exist for  o-saft.pl. See  LIMITATIONS
+#?       below also.
+#?
+#? LIMITATIONS
+#?       The options  -n  -v  and  -help  must be specified  first (leftmost)
+#?       if they should apply for this script.
+#?       The options  -n  -v  and  -help  can  only  passed to  o-saft.pl  in
+#?       the docker image, if they are preceeded by the  --  parameter.
+#?
+#? ENVIONMENT VARIABLES
+#?       Following environment variables can be used to pass settings to the
+#?       script:
+#?
+#?           o_saft_docker_name     - contains an image registry name
+#?           o_saft_docker_tag      - contains an image tag
+#?
+#?       To get the build-in defaults use:
+#?           $0 status
+#?
+#? VERSION
+#?       @(#) o-saft-docker 1.1 17/07/19 00:45:56
+#?
+#? AUTHOR
+#?      17-jul-17 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+tag=${o_saft_docker_tag};       tag=${tag:=17.07.17}
+registry=${o_saft_docker_name}; registry=${registry:=owasp/o-saft}
+image_name="${registry}:${tag}"
+try=
+exe=o-saft.pl
+
+docker_hacker () {
+	cat << EoHacker
+
+	Information about the Dockerfile will come here soon ...
+
+EoHacker
+}
+
+docker_usage () {
+	cat << EoDescription
+
+	O-Saft docker image is ready to run o-saft.pl, use:
+
+		docker run --rm -it ${image_name} +info your.tld
+	or:
+		$0 +info your.tld
+
+	The GUI  o-saft.tcl  will currently not work inside docker.  However
+	o-saft.tcl  may be started on the host and then use  o-saft.pl  from
+	the docker image, use:
+
+		o-saft.tcl --docker
+
+EoDescription
+}
+
+docker_status () {
+ 	image_id=`\docker images -q ${image_name}`
+	cat << EoStatus
+# using environment ...
+#     o_saft_docker_name = $o_saft_docker_name
+#     o_saft_docker_tag = $o_saft_docker_tag
+
+# using registry name  ${registry}  and  tag  ${tag}  =  ${image_name}
+
+# docker image id for ${image_name} is  $image_id
+
+# docker images for ${registry} ...
+EoStatus
+
+	$try \docker images ${registry}
+	echo
+	echo "# docker processes ..."
+	$try \docker ps -a
+}
+
+docker_build () {
+	$try \docker build -f ./Dockerfile --force-rm -t ${image_name}
+	$try \docker save  -o o-saft_docker.tar ${image_name}
+	$try \docker rmi   `docker images ${image_name}`
+	$try \docker load  -i o-saft_docker.tar
+	$try \rm              o-saft_docker.tar
+	$try \docker tag   ${image_name}  O-Saft
+}
+
+docker_osaft () {
+	# this is the command for the default mode, passing all parameters
+	$try \docker run --rm -it ${image_name} $@
+}
+
+docker_shell () {
+	$try \docker run --rm -it --entrypoint=/bin/sh ${image_name}
+}
+
+docker_root () {
+	$try \docker run --rm -it --entrypoint=/bin/sh -u root ${image_name}
+}
+
+my_help ()      {
+	ich=${0##*/}
+	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+}
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	  '-n')     try=echo; ;;
+	  '-v')     set -x  ; ;;
+	  '-help')  my_help;        exit 0; ;;
+	  'usage')  docker_usage;   exit 0; ;;
+	  'shell')  docker_shell;   exit 0; ;;
+	  'root')   docker_root;    exit 0; ;;
+	  'build')  docker_build;   exit 0; ;;
+	  'status') docker_status;  exit 0; ;;
+	  'hacker') docker_hacker;  exit 0; ;;
+          '--')     shift; break; ;;
+          *)               break; ;;
+	esac
+	shift
+done
+
+if [ $# -lt 1 ]; then
+	# did not get any argument, print own usage
+	my_help
+	echo
+	echo "**WARNING:  $0  called without parameters; nothing done."
+	echo
+	exit 2
+fi
+
+docker_osaft $@
+
+exit
