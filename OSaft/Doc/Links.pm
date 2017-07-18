@@ -14,7 +14,7 @@ use warnings;
 use Readonly;
 
 Readonly our $VERSION   => "17.07.01";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Links.pm 1.1 17/07/04 19:55:48";
+Readonly my  $SID       => "@(#) Links.pm 1.2 17/07/19 00:36:02";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -90,14 +90,14 @@ OCSP Stapling	http://en.wikipedia.org/wiki/OCSP_stapling
 PFS	http://en.wikipedia.org/wiki/Perfect_forward_secrecy
 Resumtion	https://www.imperialviolet.org/2011/11/22/forwardsecret.html
 Resumtion	https://www.imperialviolet.org/2013/06/27/botchingpfs.html
-SCSV   https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
+SCSV	https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
 Server Pinning	https://tools.ietf.org/id/draft-sheffer-tls-pinning-ticket-02.txt
 SNI apache	https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
 SPDY/3	http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3
 SPDY Protocol	http://www.chromium.org/spdy/spdy-protocol
 SRI	Subresource Integrity: https://www.w3.org/TR/SRI/ 4/2016
 SRI (Mozilla)	https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
-TACK   http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
+TACK	http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
 Elliptic Curve	https://en.wikipedia.org/wiki/Comparison_of_TLS_implementations#Supported_elliptic_curves
 Elliptic Curve for IPsec	https://www.researchgate.net/profile/Johannes_Merkle/publication/260050106_Standardisierung_der_Brainpool-Kurven_fur_TLS_und_IPSec/links/00b7d52f36a0cc2fdd000000.pdf
 Elliptic Curve 	http://datatracker.ietf.org/doc/draft-mcgrew-tls-aes-ccm-ecc/ 
