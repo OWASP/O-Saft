@@ -1,7 +1,7 @@
 #!/bin/sh
 #?
 #? NAME
-#?       $0 - wrapper script to call O-Saft in a docker image
+#?       $0 - wrapper script to call O-Saft in a Docker image
 #?
 #? SYNOPSIS
 #?       $0
@@ -15,38 +15,45 @@
 #?       -help   got it
 #?       -n      do not execute, just show what would be done
 #?       -v      be a bit verbose
-#?       --      pass all remaining parameters to o-saft.pl in docker image
+#?       --      pass all remaining parameters to o-saft.pl in Docker image
 #?
 #? DESCRIPTION
-#?       This is a multipurpose wrapper for running O-Saft in a docker image.
+#?       This is a multipurpose wrapper for running O-Saft in a Docker image.
 #?       It can operate in following modes:
-#?           build   - build the complete docker image for O-Saft
-#?           usage   - print the initial usage message for O-Saft in docker
-#?           shell   - run a shell (/bin/sh) in docker image
-#?           root    - run a shell (/bin/sh) as user root in docker image
-#?           status  - show various information about O-Saft docker image
+#?           build   - build the complete Docker image for O-Saft
+#?           usage   - print the initial usage message for O-Saft in Docker
+#?           shell   - run a shell (/bin/sh) in Docker image
+#?           root    - run a shell (/bin/sh) as user root in Docker image
+#?           status  - show various information about O-Saft Docker image
 #?           hacker  - show information about the used Dockerfile
-#?           *       - anything else (default): run o-saft.pl in docker image
+#?           *       - anything else (default): run o-saft.pl in Docker image
 #?
 #?       The main purpose of this wrapper is to provide a very simple call of
-#?       o-saft.pl  in a running docker image. This is the default mode.
+#?       o-saft.pl  in a running Docker image. This is the default mode.
 #?
-#?       Note: we use the term "mode" for our script, which is similar to the
-#?       term "command" for docker. This is to distingush our commands (mode)
-#?       from those of docker.
+#? TERMINOLOGY
+#?
+#?   Docker vs. docker
+#?       We use the term "Docker" when the Docker system in general is meant.
+#?       The term "docker" is used when the Docker client program is meant.
+#?
+#?   mode vs. command
+#?       We use the term "mode" for our script,  which is similar to the term
+#?       "command" for Docker. This is to distingush our commands (mode) from
+#?       those of Docker.
 #?
 #? MODES
 #?       Modes are simply an alias  to call  docker  with the proper commands
 #?       and options for the  O-Saft  image. Most modes (exception: build and
 #?       status) use the command:     "docker run ...".
-#?       This wrapper ensures that the proper O-Saft image within docker will
+#?       This wrapper ensures that the proper O-Saft image within Docker will
 #?       be used by passing the proper  "repository:tag"  image id.
 #?
 #?       The modes are:
 #?
 #?   default
 #?       In default mode,  all parameters given to this wrapper are passed to
-#?       o-saft.pl  in the docker image. This means that for all the existing
+#?       o-saft.pl  in the Docker image. This means that for all the existing
 #?       calls, the name of the script (usually o-saft.pl) needs simply to be
 #?       replaced by  $0 . Example:
 #?           o-saft.pl +info your.tld
@@ -55,15 +62,15 @@
 #?       Please see  LIMITATIONS  below also.
 #?
 #?   build
-#?       This mode builds the docker image for O-Saft from the Dockerfile.
+#?       This mode builds the Docker image for O-Saft from the Dockerfile.
 #?
 #?   usage
 #?       Print a brief purpose and usage of this script.
-#?       It is intended to be called from within the docker image once, right
+#?       It is intended to be called from within the Docker image once, right
 #?       after the initial build (see Dockerfile).
 #?
 #?   shell
-#?       Start a shell in O-Saft docker image.
+#?       Start a shell in O-Saft Docker image.
 #?       This is useful because the  ENTRYPOINT  in the image is  o-saft.pl
 #?       which otherwise will always be executed.
 #?
@@ -71,8 +78,42 @@
 #?       Same as mode  shell  , but login as user root.
 #?
 #?   status
-#?       Show various information about O-Saft docker image.
+#?       Show various information about O-Saft Docker image.
 #?
+#? SECURITY
+#?       When working with Docker images, at least two types of security have
+#?       to be observed.
+#?
+#?       WARNING:  it is highly recommended to *not* use the created image as
+#?                 base for other Docker images, or even run openssl from the
+#?                 image for other purpose than O-Saft intends.
+#?
+#?       It is rather difficult to create a secure Docker image, at least the
+#?       pulled files (Dockerfile, image, other sources) must be trusted.
+#?
+#?       That's why this script provides different modes to create an image.
+#?       The purpose is to make the build process as transparent as possible.
+#?       please refer to the "build" modes described below.
+#?
+#?       The known security types are:
+#?
+#?   Security of the created images
+#?       When creating Docker images, wether using  build, load or pull,  you
+#?       must trust the sources: the binary (load or pull) or the  Dockerfile
+#?       (which may be fetched at runtime too) used to build the image.
+#?
+#?   Security of the tools executed from within the image (docker run)
+#?       If the image is trustworthy (see before),  the tools executed in the
+#?       image may have security impacts. 
+#?       This script creates a Docker image for O-Saft. O-Saft is supposed to
+#?       checks a target for SSL/TLS related issues.  I. g. it doesn not harm
+#?       the target using  penetration or attacking techniques  (except check
+#?       for Heartbleed vulnerability). So o-saft.pl itself should not be any
+#?       security issue.  However, to perfom the checks, O-Saft recommends to
+#?       install a special version of openSSL. This OpenSSL has functionality
+#?       enabled, which is known to be insecure (i. e. SSLv2, SSLv3).
+#?
+#?       
 #? HACKER's INFO
 #?       Options for this script are with a single - (dash) only, because the
 #?       same options with double  --  exist for  o-saft.pl. See  LIMITATIONS
@@ -82,7 +123,7 @@
 #?       The options  -n  -v  and  -help  must be specified  first (leftmost)
 #?       if they should apply for this script.
 #?       The options  -n  -v  and  -help  can  only  passed to  o-saft.pl  in
-#?       the docker image, if they are preceeded by the  --  parameter.
+#?       the Docker image, if they are preceeded by the  --  parameter.
 #?
 #? ENVIONMENT VARIABLES
 #?       Following environment variables can be used to pass settings to the
@@ -95,7 +136,7 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.1 17/07/19 00:45:56
+#?       @(#) o-saft-docker 1.2 17/07/20 07:36:43
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -125,9 +166,9 @@ docker_usage () {
 	or:
 		$0 +info your.tld
 
-	The GUI  o-saft.tcl  will currently not work inside docker.  However
+	The GUI  o-saft.tcl  will currently not work inside Docker.  However
 	o-saft.tcl  may be started on the host and then use  o-saft.pl  from
-	the docker image, use:
+	the Docker image, use:
 
 		o-saft.tcl --docker
 
