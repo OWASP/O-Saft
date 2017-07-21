@@ -135,6 +135,22 @@ exec wish "$0" ${1+"$@"}
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
 #?
+#? DOCKER
+#?      This script can be used from within any Docker image. The host is then
+#?      responsible for providing the proper protocols for the GUI (i.e. X11).
+#?      In this case,  anything is executed inside the Docker image,  just the
+#?      graphical output is passed to the host.
+#?
+#?      When used with the  --docker  option, this script runs on the host and
+#?      connects to an O-Saft Docker image to execute o-saft.pl there with all
+#?      the selected commands and options.
+#?      In this mode,  o-saft-docker  will be used instead of o-saft.pl, which
+#?      must be available on the host.
+#?      Note that  o-saft-docker  relies on O-Saft's Docker image osawp/o-saft
+#?      which has its own (Docker) entrypoint.  This means that  o-saft-docker
+#?      is responsible to provide the same functionality as  o-saft.pl  does.
+#?      Adaptions, if necessary, should be done in  o-saft-docker.
+#?
 #? KNOWN PROBLEMS
 #?      Using option  -v  causes a Tcl error, like:
 #?         application-specific initialization failed: "-v" option requires an\
@@ -157,6 +173,10 @@ exec wish "$0" ${1+"$@"}
 #? ARGUMENTS
 #?      All arguments,  except the options described above,  are treated  as a
 #?      hostname to be checked.
+#?
+#? SEE ALSO
+#?      o-saft.pl
+#?      o-saft-docker
 #?
 #. LAYOUT
 #.           +---------------------------------------------------------------+
@@ -308,7 +328,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.143 Spring Edition 2017
+#?      @(#) 1.144 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -377,8 +397,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.143 17/07/19 00:04:37 Spring Edition 2017}
-set cfg(VERSION) {1.143}
+set cfg(SID)    {@(#) o-saft.tcl 1.144 17/07/21 15:04:01 Spring Edition 2017}
+set cfg(VERSION) {1.144}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -390,6 +410,7 @@ set cfg(TKPOD)  {O-Saft};               # name of external viewer executable
                                         # O-Saft means built-in
 set cfg(HELP)   "";                     # O-Saft's complete help text
 set cfg(files)  {};                     # files to be loaded at startup --load
+set cfg(docker-id)  {owasp/o-saft};     # Docker image ID, if needed
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -588,6 +609,7 @@ Changes apply to next +command.
     --no-sni    {do not make connections in SNI mode}
     --no-sslv2  {do not check for SSLv2 ciphers}
     --no-tlsv13 {do not check for TLSv13 ciphers}
+    docker-id   {Docker image ID (registry:tag) to be connected}
 "; # cfg_tips; # Note: text for tab* contain new lines.
 
 # now add default to cfg_* as described before
@@ -2295,6 +2317,11 @@ proc osaft_exec   {parent cmd} {
     set do  {};     # must be set to avoid tcl error
     set opt {};     # ..
     set targets {}; # ..
+    if {[regexp {\-docker$} $cfg(SAFT)]} {
+        # pass image ID to Docker;
+        # note that this option must be before o-saft.pl commands or options
+        lappend do "-id=$cfg(docker-id)"
+    }
     if {$cmd eq "Start"} {
         foreach {idx val} [array get cfg] { # collect selected commands
             if {[regexp {^[^+]} $idx]}     { continue }; # want commands only
@@ -2321,7 +2348,8 @@ proc osaft_exec   {parent cmd} {
         # o-saft-docker status  has no other options
         set targets {}
         set opt     {}
-        set do      "status"
+        set do      "-id=$cfg(docker-id)"
+        lappend do  "status"
     }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
         putv "$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]"
@@ -2445,6 +2473,9 @@ cfg_update;                     # update configuration as needed
 read_images $cfg(bstyle);       # more precisely: before first use of theme_set
 
 # get information from O-Saft; it's a performance penulty, but simple ;-)
+# FIXME: cfg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
+#        will be empty if O-Saft's default Docker image is not (found) running
+#        workaround: use environment variables, see o-saft-docker
 _dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) +help"
 set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
 if {2 > [llength [split $cfg(HELP) "\n"]]} {
@@ -2513,6 +2544,10 @@ pack [label     $w.fo.ol -text " "] -side left -padx 11
 foreach b $cfg(Oopt) {
     create_opt  $w.fo $b;
 }
+if {[regexp {\-docker$} $cfg(SAFT)]} {
+    pack [entry $w.fo.dockerid -textvariable cfg(docker-id) -width 12] -anchor w
+    create_tip  $w.fo.dockerid [get_tipp docker-id]
+}
 
 ## create notebook object and set up Ctrl+Tab traversal
 set cfg(objN)   $w.note
@@ -2555,7 +2590,7 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.143"
+update_status "o-saft.tcl 1.144"
 
 ## load files, if any
 foreach f $cfg(files) {
