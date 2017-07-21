@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.733 17/07/17 15:50:34",
-    STR_VERSION => "17.07.15",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.734 17/07/21 15:13:05",
+    STR_VERSION => "17.07.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1964,7 +1964,7 @@ sub _enable_functions   {
     _y_CMD("  enable internal functionality ...");
 
     if ($cfg{'ssleay'}->{'openssl'} == 0) {
-        warn STR_WARN, "122: ancient Net::SSLeay $Net::SSLeay::VERSION cannot detect openssl version";
+        warn STR_WARN, "122: ancient Net::SSLeay $version_ssleay cannot detect openssl version";
     }
     if ($cfg{'ssleay'}->{'iosocket'} == 0) {
         warn STR_WARN, "123: ancient or unknown version of IO::Socket detected";
@@ -2288,6 +2288,8 @@ sub _check_openssl      {
         _hint("consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
     }
+    # NOTE: if loading Net::SSLinfo faild, then we get a perl Warning here:
+    #        Undefined subroutine &Net::SSLinfo::s_client_check called at ...
     # Net::SSLinfo::s_client_check() is used to check openssl's capabilities.
     # For an example output SEE Note:openssl s_client
     # Each capabilitiy can be queried with  Net::SSLinfo::s_client_opt_get().
