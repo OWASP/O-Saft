@@ -9,6 +9,7 @@
 #?       $0 usage
 #?       $0 shell
 #?       $0 status
+#?       $0 call /path/to/program [arguments]
 #?       $0 [options and commands of o-saft.pl]
 #?
 #? OPTIONS
@@ -25,6 +26,7 @@
 #?           usage   - print the initial usage message for O-Saft in Docker
 #?           shell   - run a shell (/bin/sh) in Docker image
 #?           root    - run a shell (/bin/sh) as user root in Docker image
+#?           call    - run specified program with arguments in Docker image
 #?           status  - show various information about O-Saft Docker image
 #?           hacker  - show information about the used Dockerfile
 #?           *       - anything else (default): run o-saft.pl in Docker image
@@ -78,6 +80,13 @@
 #?   root
 #?       Same as mode  shell  , but login as user root.
 #?
+#?   call
+#?       Execute specified program (must be full path) with given arguments.
+#?       This might be usefull to retrieve other information  from the image,
+#?       i.e. O-Saft  itself uses it to get the environment variables set in 
+#?       the image:
+#?           $0 call /bin/env
+#?
 #?   status
 #?       Show various information about O-Saft Docker image.
 #?
@@ -110,8 +119,8 @@
 #?       checks a target for SSL/TLS related issues.  I. g. it doesn not harm
 #?       the target using  penetration or attacking techniques  (except check
 #?       for Heartbleed vulnerability). So o-saft.pl itself should not be any
-#?       security issue.  However, to perfom the checks, O-Saft recommends to
-#?       install a special version of openSSL. This OpenSSL has functionality
+#?       security issue. However, to perform the checks, O-Saft recommends to
+#?       install a special version of OpenSSL. This OpenSSL has functionality
 #?       enabled, which is known to be insecure (i. e. SSLv2, SSLv3).
 #?
 #?       
@@ -121,10 +130,10 @@
 #?       below also.
 #?
 #? LIMITATIONS
-#?       The options  -n  -v  and  -help  must be specified  first (leftmost)
+#?       The options  -n  -v  -id=ID  and  -help  must be specified  leftmost
 #?       if they should apply for this script.
-#?       The options  -n  -v  and  -help  can  only  passed to  o-saft.pl  in
-#?       the Docker image, if they are preceeded by the  --  parameter.
+#?       These options can only be passed to  o-saft.pl  in the Docker image,
+#?       if they are preceeded by the  --  parameter.
 #?
 #? ENVIONMENT VARIABLES
 #?       Following environment variables can be used to pass settings to the
@@ -137,7 +146,7 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.3 17/07/21 13:42:13
+#?       @(#) o-saft-docker 1.4 17/07/22 13:18:47
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -207,14 +216,22 @@ docker_build () {
 
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
+        # expects ENTRYPOINT /O-Saft/o-saft.pl in the image
 	$try \docker run --rm -it ${image_name} $@
+}
+
+docker_call ()  {
+	shift
+	cmd="$1"
+	shift
+	$try \docker run --rm -it --entrypoint=$cmd    ${image_name} $@
 }
 
 docker_shell () {
 	$try \docker run --rm -it --entrypoint=/bin/sh ${image_name}
 }
 
-docker_root () {
+docker_root ()  {
 	$try \docker run --rm -it --entrypoint=/bin/sh -u root ${image_name}
 }
 
@@ -229,6 +246,7 @@ while [ $# -gt 0 ]; do
 	  '-v')     set -x  ; ;;
 	  '-help')  my_help;        exit 0; ;;
 	  'usage')  docker_usage;   exit 0; ;;
+	  'call')   docker_call $@; exit 0; ;;
 	  'shell')  docker_shell;   exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
 	  'build')  docker_build;   exit 0; ;;
