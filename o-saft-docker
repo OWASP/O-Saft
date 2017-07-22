@@ -17,22 +17,34 @@
 #?       -n      do not execute, just show what would be done
 #?       -v      be a bit verbose
 #?       -id=ID  use Docker image ID (registry:tag); default: owasp/o-saft
+#?       -tag=23 use Docker image ID with tag; default: (empty)
 #?       --      pass all remaining parameters to o-saft.pl in Docker image
+#?
+#? QUICKSTART
+#?       The main purpose of this wrapper is to provide a very simple call of
+#?       o-saft.pl  in a running Docker image. It is the default mode.
+#?       Example:
+#?           $0 +info your.tld
 #?
 #? DESCRIPTION
 #?       This is a multipurpose wrapper for running O-Saft in a Docker image.
 #?       It can operate in following modes:
 #?           build   - build the complete Docker image for O-Saft
 #?           usage   - print the initial usage message for O-Saft in Docker
+#?           status  - show various information about O-Saft Docker image
 #?           shell   - run a shell (/bin/sh) in Docker image
 #?           root    - run a shell (/bin/sh) as user root in Docker image
 #?           call    - run specified program with arguments in Docker image
-#?           status  - show various information about O-Saft Docker image
 #?           hacker  - show information about the used Dockerfile
 #?           *       - anything else (default): run o-saft.pl in Docker image
 #?
-#?       The main purpose of this wrapper is to provide a very simple call of
-#?       o-saft.pl  in a running Docker image. This is the default mode.
+#?       This wrapper expects, that the O-Saft Docker image has the name:
+#?           owasp/o-saft
+#?       If there are more Docker images with the same (registry) name, a tag
+#?       can be used to identify the image, see  -tag=TAG  option, i.e.
+#?           $0 -tag=17.07.17 +info your.tld
+#?       will use the name:  owasp/o-saft:17.07.17 .  The  -id=ID  option can
+#?       used to redifine the (registry:tag) name to be used.
 #?
 #? TERMINOLOGY
 #?
@@ -134,6 +146,9 @@
 #?       if they should apply for this script.
 #?       These options can only be passed to  o-saft.pl  in the Docker image,
 #?       if they are preceeded by the  --  parameter.
+#?       Unknown parameters to this script will be treated as arguments to be
+#?       passed to o-saft.pl and will terminate internal argument scanning in
+#?       this script.
 #?
 #? ENVIONMENT VARIABLES
 #?       Following environment variables can be used to pass settings to the
@@ -146,16 +161,17 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.4 17/07/22 13:18:47
+#?       @(#) o-saft-docker 1.5 17/07/22 13:58:57
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-tag=${o_saft_docker_tag};       tag=${tag:=17.07.17}
+tag=${o_saft_docker_tag};     # tag=${tag:=17.07.17}
 registry=${o_saft_docker_name}; registry=${registry:=owasp/o-saft}
-image_name="${registry}:${tag}"
+image_name="${registry}"
+[ -n "$tag" ] && image_name="${registry}:${tag}"
 try=
 exe=o-saft.pl
 
@@ -216,7 +232,7 @@ docker_build () {
 
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
-        # expects ENTRYPOINT /O-Saft/o-saft.pl in the image
+        # expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
 	$try \docker run --rm -it ${image_name} $@
 }
 
@@ -252,6 +268,9 @@ while [ $# -gt 0 ]; do
 	  'build')  docker_build;   exit 0; ;;
 	  'status') docker_status;  exit 0; ;;
 	  'hacker') docker_hacker;  exit 0; ;;
+#          -registry=*) registry=  # not supported, as this is for O-Saft only
+          -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
+	            image_name="${registry}:$tag" ; ;;
           -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
           '--')     shift; break; ;;
           *)               break; ;;
