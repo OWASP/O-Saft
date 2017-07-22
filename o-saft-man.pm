@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.206 17/07/15 08:29:58";
+my  $man_SID= "@(#) o-saft-man.pm 1.207 17/07/22 16:32:08";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1198,6 +1198,9 @@ QUICKSTART
 
         * Start the simple GUI
           o-saft.tcl
+
+        * Start the simple GUI which uses $0 in a Docker image
+          o-saft.tcl --docker
 
         For more specialised test cases, refer to the  COMMANDS  and  OPTIONS 
         sections below. For more examples please refer to  EXAMPLES  section.
@@ -4544,6 +4547,7 @@ DEPENDENCIES
         * o-saft-man.pm
         * o-saft-usr.pm
         * o-saft-README
+        * o-saft-docker
 
 
 INSTALLATION
@@ -4805,17 +4809,31 @@ INSTALLATION
               perl2exe $0
               perl2exe checkAllCiphers.pl
 
-        For details  on building the executable,  for example how to include
+        For details  on building the executable,  for example  how to include
         all required modules, please refer to the documentation of the tool.
            * http://search.cpan.org/~rschupp/PAR-Packer-1.030/lib/PAR/Packer.pm
            * http://docs.activestate.com/pdk/6.0/PerlApp.html
            * http://www.indigostar.com 
 
-        Note that  pre-build executables (build by perlapp, perl2exe) cannot
+        Note that  pre-build executables (build by perlapp, perl2exe)  cannot
         be provided due to licence problems.
-        Also note that using stand-alone executable have not been tested the
+        Also note that using  stand-alone executable have not been tested the
         same way as the $0 itself. Use them at your own risk.
 
+
+DOCKER
+
+        The tool can be used inside a Docker image. With  o-saft-docker and a
+        Dockerfile (both are part of the distribution), a proper Docker image
+        will be build easily. o-saft-docker  can also be used to run commands
+        with $0 inside the Docker image, example:
+
+              o-saft-docker +info some.tld
+
+        For more details, please refer to:
+
+              o-saft-docker -help
+              o-saft-docker usage
 
 
 SEE ALSO
@@ -4823,6 +4841,7 @@ SEE ALSO
         * openssl(1), Net::SSLeay(1), Net::SSLhello, Net::SSLinfo, timeout(1)
         * http://www.openssl.org/docs/apps/ciphers.html
         * IO::Socket::SSL(1), IO::Socket::INET(1)
+        * o-saft-docker, o-saft-docker-dev, Dockerfile, docker
 
 
 HACKER's INFO
