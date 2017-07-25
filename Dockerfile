@@ -1,6 +1,6 @@
-#!/usr/bin/docker --force-rm -f
+#!/usr/bin/docker build --force-rm --rm -f
 
-FROM alpine:3.6 AS O-Saft
+FROM alpine:3.6
 MAINTAINER Achim <achim@owasp.org>
 
 LABEL \
@@ -13,20 +13,23 @@ LABEL \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
 	SOURCE3="http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.049.tar.gz" \
-	SID="@(#) Dockerfile 1.2 17/07/20 01:00:14" \
+	SID="@(#) Dockerfile 1.3 17/07/25 22:57:31" \
 	AUTHOR="Achim Hoffmann"	
 
-# Install required packages
-RUN apk update && \
-    apk add --no-cache wget perl perl-net-dns perl-net-ssleay tcl tk ncurses
-
+ENV o-saft-docker-build "Dockerfile 17.06.17"                                     
 ENV OSAFT_DIR	/O-Saft
 ENV OPENSSL_DIR	/openssl
 ENV OPENSSL_VERSION  1.0.2-chacha
+ENV TERM xterm
+ENV PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
+
+# Install required packages
+RUN apk update && \
+    apk add --no-cache wget perl perl-net-dns perl-net-ssleay ncurses
 
 WORKDIR	/
 
-# Pull O-Saft
+# Install O-Saft
 RUN \
 	mkdir $OSAFT_DIR			&& \
 	adduser -D -h ${OSAFT_DIR} osaft	&& \
@@ -40,6 +43,11 @@ RUN \
 	chown -R root:root   $OSAFT_DIR		&& \
 	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl	&& \
+	mv       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
+	sed -e "s:^#--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:" \
+		< $OSAFT_DIR/.o-saft.pl-orig \
+		> $OSAFT_DIR/.o-saft.pl		&& \
+	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
 	rm    -f o-saft.tgz
 
 
@@ -50,16 +58,17 @@ RUN \
 	wget --no-check-certificate \
 		http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.049.tar.gz \
 		-O iosocket.tgz 		&& \
+	\
 	tar   -xzf iosocket.tgz -C /src_iosocket --strip-components=1	&& \
 	cd    /src_iosocket			&& \
-	# build {
+	# build iosocket {
 	# install development tools
 	apk add --no-cache make			&& \
 	echo n | perl Makefile.PL		&& \
 	make && make test && make install	&& \
 	# cleanup
 	apk del --purge make			&& \
-	# build }
+	# build iosocket }
 	cd   /					&& \
 	rm   -r /src_iosocket iosocket.tgz
 
@@ -73,7 +82,7 @@ RUN \
 	\
 	tar   -xzf openssl.tgz -C /src_openssl --strip-components=1	&& \
 	cd    /src_openssl			&& \
-	# build {
+	# build openssl {
 	# install development tools
 	apk add --no-cache musl-dev gcc make zlib-dev	&& \
 	./config --prefix=$OPENSSL_DIR --openssldir=$OPENSSL_DIR/ssl \
@@ -88,7 +97,7 @@ RUN \
 	$OPENSSL_DIR/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
 	# cleanup
 	apk del --purge musl-dev gcc make zlib-dev	&& \
-	# build }
+	# build openssl }
 	cd   /					&& \
 	rm   -r /src_openssl openssl.tgz
 
@@ -96,8 +105,6 @@ RUN \
 # RUN apk add --no-cache openssl
 
 WORKDIR $OSAFT_DIR
-ENV     TERM xterm
-ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
 USER    osaft
 #RUN     o-saft-docker usage
 
