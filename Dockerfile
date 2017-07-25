@@ -1,22 +1,21 @@
 #!/usr/bin/docker build --force-rm --rm -f
 
-FROM alpine:3.6
+FROM alpine:edge
 MAINTAINER Achim <achim@owasp.org>
 
 LABEL \
 	VERSION="17.06.17"	\
 	\
 	DESCRIPTION="Build O-Saft docker image (with Peter Mosman's openssl)"	\
-	SYNOPSIS="docker build --force-rm --rm -f ./Dockerfile -t owasp/o-saft:17.06.17 -t owasp/o-saft ." \
+	SYNOPSIS="docker build --force-rm --rm -f ./Dockerfile -t owasp/o-saft:17.07.17 -t owasp/o-saft ." \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SOURCE3="http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.049.tar.gz" \
-	SID="@(#) Dockerfile 1.3 17/07/25 22:57:31" \
+	SID="@(#) Dockerfile 1.4 17/07/25 23:38:36" \
 	AUTHOR="Achim Hoffmann"	
 
-ENV o-saft-docker-build "Dockerfile 17.06.17"                                     
+ENV o-saft-docker-build "Dockerfile 17.07.17"
 ENV OSAFT_DIR	/O-Saft
 ENV OPENSSL_DIR	/openssl
 ENV OPENSSL_VERSION  1.0.2-chacha
@@ -24,8 +23,8 @@ ENV TERM xterm
 ENV PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
 
 # Install required packages
-RUN apk update && \
-    apk add --no-cache wget perl perl-net-dns perl-net-ssleay ncurses
+#RUN apk update && \   # no update neded and not wanted
+RUN apk add --no-cache wget perl perl-net-dns perl-io-socket-ssl perl-net-ssleay ncurses
 
 WORKDIR	/
 
@@ -37,7 +36,7 @@ RUN \
 	wget --no-check-certificate \
 		https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz \
 		-O o-saft.tgz 			&& \
-	echo "a55702d69314b8eda52e921e35b89aef9eef02b14c870b3077fbddf3af91320d  o-saft.tgz" | sha256sum -c && \
+	echo "please_use_//github.com/OWASP/O-Saft/raw/master/Dockerfile  o-saft.tgz" | sha256sum -c ; \
 	\
 	tar   -xzf o-saft.tgz			&& \
 	chown -R root:root   $OSAFT_DIR		&& \
@@ -49,28 +48,6 @@ RUN \
 		> $OSAFT_DIR/.o-saft.pl		&& \
 	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
 	rm    -f o-saft.tgz
-
-
-# Pull and build IO::Socket::SSL (July/2017: missing in alpine's perl)
-RUN \
-	# pull and extract module
-	mkdir /src_iosocket			&& \
-	wget --no-check-certificate \
-		http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.049.tar.gz \
-		-O iosocket.tgz 		&& \
-	\
-	tar   -xzf iosocket.tgz -C /src_iosocket --strip-components=1	&& \
-	cd    /src_iosocket			&& \
-	# build iosocket {
-	# install development tools
-	apk add --no-cache make			&& \
-	echo n | perl Makefile.PL		&& \
-	make && make test && make install	&& \
-	# cleanup
-	apk del --purge make			&& \
-	# build iosocket }
-	cd   /					&& \
-	rm   -r /src_iosocket iosocket.tgz
 
 # Pull and build enhanced openssl
 RUN \
@@ -104,9 +81,12 @@ RUN \
 # Install traditional openssl
 # RUN apk add --no-cache openssl
 
+# Install Tcl/Tk support
+# RUN apk add --no-cache tcl tk xvfb
+
 WORKDIR $OSAFT_DIR
 USER    osaft
-#RUN     o-saft-docker usage
+RUN     o-saft-docker usage
 
 ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]
 CMD  ["--help=docker"]
