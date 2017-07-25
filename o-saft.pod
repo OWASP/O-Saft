@@ -12,6 +12,7 @@
 
 =encoding utf8
 
+
 =head1 NAME
 
 O-Saft - OWASP SSL advanced forensic tool
@@ -1850,59 +1851,53 @@ Argument or option passed to openssl's  s_client  command.
 
 =head2 Options for  +cipher  command
 
---proto-alpn=NAME
+=head3 --connect-delay=SEC
 
-=head2 Name of protocol to be added to list of  applcation layer protocols
+Additional delay in seconds  after each connect for a cipher check.
+This is useful when connecting to servers which have IPS in place,
+or are slow in accepting new connections or requests.
 
-=head2 (ALPN), which is used for any connection to the targets.
+=head3 --proto-alpn=NAME
 
-=head2 See  --cipher-alpn=NAME  also.
+Name of protocol to be added to list of  applcation layer protocols
+(ALPN), which is used for any connection to the targets.
+See  I<--cipher-alpn=NAME>  also.
 
---proto-npn=NAME
+=head3 --proto-npn=NAME
 
-=head2 Name of protocol to be added to list of  next protocol negotiations
+Name of protocol to be added to list of  next protocol negotiations
+(NPN), which is used for any connection to the targets.
+See  I<--cipher-npn=NAME>  also.
 
-=head2 (NPN), which is used for any connection to the targets.
+=head3 --cipher-alpn=NAME
 
-=head2 See  --cipher-npn=NAME  also.
+Name of protocol to be added to list of  applcation layer protocols
+(ALPN), which is used for cipher checks.
 
---cipher-alpn=NAME
+I<--cipher-alpn=>,   sets empty list.
+I<--cipher-alpn=>,,  sets list to empty element "".
 
-=head2 Name of protocol to be added to list of  applcation layer protocols
+=head3 --cipher-npn=NAME
 
-=head2 (ALPN), which is used for cipher checks.
+Name of protocol to be added to list of  next protocol negotiations
+(NPN), which is used for cipher checks.
 
-=head2 --cipher-alpn=,   sets empty list.
+I<--cipher-npn=>,   sets empty list.
+I<--cipher-npn=>,,  sets list to empty element "".
 
-=head2 --cipher-alpn=,,  sets list to empty element "".
+Note:  setting empty list or element most likely does not work with
+openssl executable (i.e.  I<--force-openssl>).
 
---cipher-npn=NAME
+=head3 --cipher-curve=NAME
 
-=head2 Name of protocol to be added to list of  next protocol negotiations
+Name of ecliptic curve to be added to list of ecliptic curves (EC),
+which is used for cipher checks.
 
-=head2 (NPN), which is used for cipher checks.
+I<--cipher-curve=>,   sets empty list.
+I<--cipher-curve=>,,  sets list to empty element "".
 
-=head2 --cipher-npn=,   sets empty list.
-
-=head2 --cipher-npn=,,  sets list to empty element "".
-
-=head2 Note:  setting empty list or element most likely does not work with
-
-=head2 openssl executable (i.e.  --force-openssl).
-
---cipher-curve=NAME
-
-=head2 Name of ecliptic curve to be added to list of ecliptic curves (EC),
-
-=head2 which is used for cipher checks.
-
-=head2 --cipher-curve=,   sets empty list.
-
-=head2 --cipher-curve=,,  sets list to empty element "".
-
-=head2 Note:  setting empty list or element most likely does not work with
-
-=head2 openssl executable (i.e.  --force-openssl).
+Note:  setting empty list or element most likely does not work with
+openssl executable (i.e.  I<--force-openssl>).
 
 =head2 Options for  +cipherall  command
 
@@ -4334,7 +4329,7 @@ C:\Programs\perl\bin\perl.exe o-saft.pl I<--help=FAQ>
 
 There are various reasons when the program responds slow, or seems to
 hang. Performance issues are most likely a target-side problem.  Most
-common reasons are:
+common reasons are (no specific order):
 
 =over
 
@@ -4393,8 +4388,82 @@ Use  I<--no-openssl>
 Use  I<--ssl-error>
 For a detailed description, please see "Connection Problems".
 
-Other options which may help to get closer to the problem's cause:
-I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>
+Other options which may help to get closer to the problems cause:
+I<--trace=time>,  I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>
+
+Using  I<--trace=time>   should show following times:
+
+=over
+
+=item * DNS:             1 -  10 sec
+
+=back
+
+=over
+
+=item * need_default:    <5 sec
+
+=back
+
+=over
+
+=item * need_cipher:     1 - 299 sec (+cipher with socket)
+
+=back
+
+=over
+
+=item * need_cipher:     1 -  20 sec (+cipherraw)
+
+=back
+
+=over
+
+=item * no SNI:          1 -  10 sec
+
+=back
+
+=over
+
+=item * connection test: 1 -   5 sec
+
+=back
+
+=over
+
+=item * prepare checks:  2 -  20 sec
+
+=back
+
+=over
+
+=item *   checkalpn.     1 -  15 sec
+
+=back
+
+=over
+
+=item *   checkprot.     1 -  15 sec
+
+=back
+
+=over
+
+=item * cipher:          <1 sec
+
+=back
+
+=over
+
+=item * info:            <1 sec
+
+=back
+
+=over
+
+=item * check:           <1 sec
+
+=back
 
 =head1 LIMITATIONS
 
@@ -6121,7 +6190,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 17.06.20
+@(#) 17.07.15
 
 =head1 AUTHOR
 
@@ -6467,7 +6536,6 @@ see t.client-cert.txt
 =back
 
 _get_default(): L<Net::SSLinfo|Net::SSLinfo>::default() benutzen
-
 
 Generated with:
 
@@ -7089,7 +7157,6 @@ Generated with:
 # 1135	The Helminthiasis of the Internet
 # 
 ## end rfc
-
 
 # begin woodoo
 
