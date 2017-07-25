@@ -44,7 +44,8 @@
 #?       can be used to identify the image, see  -tag=TAG  option, i.e.
 #?           $0 -tag=17.07.17 +info your.tld
 #?       will use the name:  owasp/o-saft:17.07.17 .  The  -id=ID  option can
-#?       used to redifine the (registry:tag) name to be used.
+#?       be used to redifine the (registry:tag) name to be used, for example:
+#?           owasp/o-saft:4711
 #?
 #? TERMINOLOGY
 #?
@@ -113,10 +114,6 @@
 #?       It is rather difficult to create a secure Docker image, at least the
 #?       pulled files (Dockerfile, image, other sources) must be trusted.
 #?
-#?       That's why this script provides different modes to create an image.
-#?       The purpose is to make the build process as transparent as possible.
-#?       please refer to the "build" modes described below.
-#?
 #?       The known security types are:
 #?
 #?   Security of the created images
@@ -135,6 +132,7 @@
 #?       install a special version of OpenSSL. This OpenSSL has functionality
 #?       enabled, which is known to be insecure (i. e. SSLv2, SSLv3).
 #?
+#?       That's why this script uses a transparent method to create an image.
 #?       
 #? HACKER's INFO
 #?       Options for this script are with a single - (dash) only, because the
@@ -161,15 +159,15 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.5 17/07/22 13:58:57
+#?       @(#) o-saft-docker 1.6 17/07/25 22:31:30
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-tag=${o_saft_docker_tag};     # tag=${tag:=17.07.17}
-registry=${o_saft_docker_name}; registry=${registry:=owasp/o-saft}
+tag=${o_saft_docker_tag};     # tag=${tag:-17.07.17}
+registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
 [ -n "$tag" ] && image_name="${registry}:${tag}"
 try=
@@ -178,7 +176,11 @@ exe=o-saft.pl
 docker_hacker () {
 	cat << EoHacker
 
-	Information about the Dockerfile will come here soon ...
+	To use the GUI  o-saft.tcl  inside Docker, additionl packages need to
+	be installed. For Docker image based on alpine, following works:
+
+		$0 root
+		apk add tcl tk xvfb
 
 EoHacker
 }
@@ -222,12 +224,13 @@ EoStatus
 }
 
 docker_build () {
-	$try \docker build -f ./Dockerfile --force-rm -t ${image_name}
-	$try \docker save  -o o-saft_docker.tar ${image_name}
-	$try \docker rmi   `docker images ${image_name}`
-	$try \docker load  -i o-saft_docker.tar
-	$try \rm              o-saft_docker.tar
-	$try \docker tag   ${image_name}  O-Saft
+	_tar=o-saft_docker.tar
+	$try \docker build -f ./Dockerfile --force-rm --rm -t ${image_name} . && \
+	$try \docker save  -o $_tar ${image_name} && \
+	$try \docker rmi   `$try docker images -q ${image_name}` && \
+	$try \docker load  -i $_tar && \
+	$try \rm              $_tar && \
+	$try \docker tag   ${image_name} o-saft
 }
 
 docker_osaft () {
