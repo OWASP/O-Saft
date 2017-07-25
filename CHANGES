@@ -1,4 +1,36 @@
 
+Version: 17.07.17
+  BUGFIX
+    * +tr-02102+ corrected (len_sigdump check)
+    * check for redirect HTTP to HTTPs corrected (+http_https)
+    * Net::SSLinfo.pm: do_ssl_new() improved (avoid "Segmentation fault" or "double free or corruption .. Abort" in rare cases)
+    * o-saft.pl: setting ALPN and NPN options with Net::SSLeay improved (avoid "Segmentation fault" in rare cases)
+    * warning message for --experimental corrected
+    * avoid perl warning "Argument isn't numeric" for +tr_02102 checks
+    * osaft.pm: export printhint()
+    * print hint for +info commands also
+  CHANGES                                                                      
+    * check for heartbleed only if requested
+    * hint for DROWN check added
+    * error and warning messages have a unique number
+    * print warning for trailing spaces in options read from RC-file
+    * contrib/gen_standalone.sh: generates working script
+    * *.pl and *.om improved for use with contrib/gen_standalone.sh
+    * o-saft-lib.pm: initialization of %cfg with dynamic data done in _osaft_init()
+    * trace output improved
+    * contrib/* more examples added
+  NEW                                                                          
+    * --connect-delay implemented
+    * --cipher-range=* implemented for +cipher command
+    * OSaft/Doc/Glossary.pm, use OSaft::Doc::Rfc
+    * contrib/JSON-*.awk
+    * o-saft-lib.pm: new cipher-ranges: c0xx, ccxx, ecc
+    * +host command (to display host and DNS information) added
+    * --exit=WARN implemented
+    * --v prints each checked cipher for +cipher
+    * more aliases for commands and options added (mainly from testssl.sh)
+    * new options: --hint-check and --hint-info
+
 Version: 17.06.17
   BUGFIX
     * counting exitcode for -exitcode corrected
