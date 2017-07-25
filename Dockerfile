@@ -4,7 +4,7 @@ FROM alpine:edge
 MAINTAINER Achim <achim@owasp.org>
 
 LABEL \
-	VERSION="17.06.17"	\
+	VERSION="17.07.17"	\
 	\
 	DESCRIPTION="Build O-Saft docker image (with Peter Mosman's openssl)"	\
 	SYNOPSIS="docker build --force-rm --rm -f ./Dockerfile -t owasp/o-saft:17.07.17 -t owasp/o-saft ." \
@@ -12,7 +12,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SID="@(#) Dockerfile 1.4 17/07/25 23:38:36" \
+	SID="@(#) Dockerfile 1.5 17/07/26 00:31:55" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV o-saft-docker-build "Dockerfile 17.07.17"
@@ -36,7 +36,7 @@ RUN \
 	wget --no-check-certificate \
 		https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz \
 		-O o-saft.tgz 			&& \
-	echo "please_use_//github.com/OWASP/O-Saft/raw/master/Dockerfile  o-saft.tgz" | sha256sum -c ; \
+	echo "ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08  o-saft.tgz" | sha256sum -c ; \
 	\
 	tar   -xzf o-saft.tgz			&& \
 	chown -R root:root   $OSAFT_DIR		&& \
