@@ -1,0 +1,653 @@
+#!/bin/sh
+#?
+#? NAME
+#?       $0 - wrapper script to build O-Saft in a Docker image
+#?
+#? SYNOPSIS
+#?       $0 build [build options]
+#?       $0 load  [load options]
+#?       $0 pull  [pull options]
+#?
+#? OPTIONS
+#?       -help   got it
+#?       -n      do not execute, just show what would be done
+#?       -v      be a bit verbose
+#?       --      pass all remaining parameters to docker
+#?
+#?       To create a Docker image, following additional options can be used:
+#?       --force-rm     pass --force-rm option to "docker build"
+#?       --rm           pass --rm option to "docker build"
+#?       --no-force-rm  do not pass --force-rm option to "docker build"
+#?       --no-rm        do not pass --rm option to "docker build"
+#?       -no-del        do not delete saved image file after "docker load"
+#?       -del           delete saved image file after "docker load"
+#?       -clean         shortcut for: --no-force-rm --no-rm -no-del
+#?       -no-clean      shortcut for:    --force-rm    --rm    -del
+#? TODO: more options comming ...
+#? TODO: need option to pass SHA256 values
+# ?       -pull [name[:tag]
+# ?               Pulls specified image from hub.docker.net.  [name[:tag]  is
+# ?               the same as for Docker's pull command.  This command implies
+# ?               the options: -no-save -no-tag -no-del
+#?
+#?       The defaults are:  -f ./Dockerfile --force-rm --rm -del -save -tag
+#?       which results in:
+#?             docker build -f ./Dockerfile --force-rm --rm ...
+#?
+#? DESCRIPTION
+#?       The purpose of this script is to provide various modes to creates an
+#?       O-Saft Docker image. It's a more powerful version of o-saft-docker's
+#?       build command (mode) and provides some options mainly for debugging.
+#?
+#?       It can operate in following modes:
+#?           build   - use Docker's build command to create the image
+#?           load    - use Docker's load  command to create the image
+#?           pull    - use Docker's pull  command to create the image
+#?
+#?       In build mode it generates a Dockerfile and then calls docker build
+#?       with. The Dockerfile consists mainly of five parts:
+#?           1. initial data
+#?           2. setup O-Saft
+#?           3. setup IO::Socket::SSL (if necessary)
+#?           4. setup special openssl (if enabled)
+#?           5. final data
+#?
+#?       It is highly recommended to use this script with the -n option first
+#?       and verify that the printed commands are correct.
+#?
+#? TERMINOLOGY
+#?       Please see also:  o-saft-docker -help
+#?
+#?   del(ete) vs. rm (remove) vs. clean
+#?       The term  "remove"  herein is used when  objects, files, etc. inside
+#?       Docker images or containers are removed. The term  "delete"  is used
+#?       when objects, files, etc. on the host are deleted. The term  "clean"
+#?       is used when both, targets inside Docker and on the host, are meant.
+#?       Options are named accordingly.
+#?       
+#?   build vs. load vs. pull
+#?       These terms are used as  Docker does.  "build"  creates the image on
+#?       the local host.  It uses the sources specified in  the corresponding
+#?       Dockerfile.  "load"  creates an image from a local (on the host) tar
+#?       archive. And finally  "pull"  creates an image from a registry.
+#?       Please refer to  WHY?  and  SECURITY  below, to understand  why this
+#?       difference is important.
+#?
+#? WHY?
+#?       Why using a script, which finally generates  a Dockerfile, to create
+#?       Docker images, when simply using the Dockerfile would do the same?
+#?       Some reasons are:
+#?           used sources - Commands of the Dockerfile itself must be changed
+#?                          when a source will be provided by the host (local
+#?                          filesystem) instead of fetching  from an internet
+#?                          archive (such as hub.docker.com).  The difference
+#?                          is using ADD and COPY instead of RUN with wget.
+#?           trustworth   - I.g. creating your own image on your host is more
+#?                          trustworthy than downloading and blindly using an
+#?                          preconfigured image from resources not under your
+#?                          control. Using  build  provides full control over
+#?                          all used resources.   Contrary, using  pull  from
+#?                          remote resources provides no control at all..
+#?           clean-up     - After creating images,  a proper clean-up must be
+#?                          done at three places: while creating the image by
+#?                          using proper option (like --force-rm), inside the
+#?                          image (mainly the RUN commands) and on the host. 
+#?           tagging      - The name (registry:tag)  for images must be given
+#?                          to the build command, it is not possible to write
+#?                          it inside the Dockerfile. Hence there is at least
+#?                          one program call (docker build ...) which must be
+#?                          closely related to the  whole process of creating
+#?                          a Docker image.
+#?           identity     - Inside an image, it is hard, probably impossible,
+#?                          to identify how and when the image was build.
+#?
+#? IMAGE
+#?   build
+#?   from the Dockerfile.
+#?
+#?   pull
+#?       Use Docker's pull command.
+#?
+#? SECURITY
+#?       Please see:  o-saft-docker -help
+#?       That's why this script provides different modes to create an image.
+#?       The purpose is to make the build process as transparent as possible.
+#?       please refer to the "build" modes described above
+#?       
+#? HACKER's INFO
+#        The purpose of this script is to build Docker images with o-saft.pl.
+#        Hence all default settings support this.
+#
+#        Docker's ADD command promisses to fetch archives from a URL and also
+#        extract it. Unfortunately, modern archives can have various filename
+#        extensions and also may be compressed with different algorithms.  So
+#        only COPY or wget is used to provide externa archives.
+#
+#        The generated  RUN commands to get and unpack archives depend on the
+#        source.  If it is a tarball, this must be copied or mounted into the
+#        docker image. Unfortunately, this requires different syntax elements
+#        in the Dockerfile, i.e.  "COPY ..." vs. "RUN wget ...".  To generate
+#        the appropriate code, following functions take care of that:
+#            _copy_src  $_src $_tar
+#            _run_wget  $_src $_tar
+#            _run_sha2  $_tar $_sha
+#            _run_untar $_tar $_tmp
+#
+#        Using sevaral independent Docker RUN commands,  as the documentation
+#        recommends, is not a wice idea,  because it results in one layer for
+#        each RUN command containing anything from the previous Docker layer.
+#        Hence each generated  RUN command contains as much internal commands
+#        as possible (concatenated with &&).
+#
+#        Docker itself provides  no functionality to shrink an image while it
+#        is build.  This must be done by additional Docker commands (save and
+#        load).
+#
+#? LIMITATIONS
+#?       The options  -n  -v  and  -help  must be specified  first (leftmost)
+#?       if they should apply for this script.
+#?
+#? ENVIONMENT VARIABLES
+#?       Following environment variables can be used to pass settings to the
+#?       script:
+#?
+#?           o_saft_docker_name     - contains an image registry name
+#?           o_saft_docker_tag      - contains an image tag
+#?
+#? SEE ALSO
+#?       o-saft-docker
+#?
+#? EXAMPLES
+#?       # FROM command sources openssl Tcl/Tk   ...    options
+#?       +-----+-------+-------+-------+-------+-------+-----------------------
+#?       alpine pull    reg:tag                         -alpine -pull
+#?       alpine build   http:// openssl                 -alpine
+#?       alpine build   .tgz                            -alpine -tar=o-saft.tgz
+#?       debian build   http://         wish            -debian
+#?       debian build   .tgz            wish            -debian -tar=o-saft.tgz
+#?
+#? VERSION
+#?       @(#) o-saft-docker-dev 1.1 17/07/26 00:18:33
+#?
+#? AUTHOR
+#?      17-jul-17 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+try=
+cmd=unknonw
+
+registry="${o_saft_docker_name}"; registry="${registry:-owasp/o-saft}"
+image_tag="${o_saft_docker_tag}"; image_tag="${image_tag:-`date +%y.%m.%d`}"
+image_name="${registry}:${image_tag}"
+image_save="o-saft_docker.tar"
+image_from="alpine:edge"
+dockerfile="Dockerfile"
+maintainer=""           # must be set with -autor
+buildfrm="--force-rm"
+build_rm="--rm=true"
+buildtag=1
+buildsav=1
+inst_tcl=0
+instwget=1
+host_del=1
+host_tar=""
+hostdate=`date +%y%m%d07/26/17M%S`
+apt="apk"
+apt_tcl=""
+aptwget=""
+check_sha256=1
+make_osaft=1
+make_openssl=
+make_iosocket=
+make_ssleay=
+dir_osaft="/O-Saft"
+diropenssl="/openssl"
+# sources
+# NOTE: empty checksum must be specified as "-"
+url_osaft="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
+sha_osaft="a55702d69314b8eda52e921e35b89aef9eef02b14c870b3077fbddf3af91320d"
+url_openssl="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz"
+sha_openssl="-"
+urliosocket="http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.049.tar.gz"
+shaiosocket="-"
+url__ssleay=""
+sha__ssleay="-"
+
+_dbx_config ()  {
+	cat <<EoConfig
+#=== internal configuration {
+# == commands and variables
+#    cmd = $cmd
+#    buildtag = $buildtag
+#    buildsav = $buildsav
+#    host_del = $host_del
+#    host_tar = $host_tar
+#    inst_tcl = $inst_tcl
+#    instwget = $instwget
+#    host_del = $host_del
+#    host_tar = $host_tar
+#    hostdate = $hostdate
+#    image_save    = $image_save
+#    check_sha256  = $check_sha256
+#    make_osaft    = $make_osaft
+#    make_openssl  = $make_openssl
+#    make_iosocket = $make_iosocket
+#    make_ssleay   = $make_ssleay
+#    dir_osaft     = $dir_osaft
+#    diropenssl    = $diropenssl
+# == sources
+#    url_osaft     = $url_osaft
+#    sha_osaft     = $sha_osaft
+#    url_openssl   = $url_openssl
+#    sha_openssl   = $sha_openssl
+#    urliosocket   = $urliosocket
+#    shaiosocket   = $shaiosocket
+#    url__ssleay   = $url__ssleay
+#    sha__ssleay   = $sha__ssleay
+# == docker
+#    cmd = $cmd
+#    options = $buildfrm $build_rm
+#    aliases = $buildtag
+#    image   = $image_name
+#    dockerfile = $dockerfile
+#    image_from = $image_from
+#    maintainer = $maintainer
+# == packages
+#    apt = $apt
+#    apt_add = $apt_add
+#    apt_del = $apt_del
+#    apt_dev = $apt_dev
+#    apt_tcl = $apt_tcl
+#    aptwget = $aptwget
+#=== internal configuration }
+EoConfig
+}
+
+_cfg_alpine ()  {
+	_typ="$1"
+	image_from="${image_from:-alpine:3.6}"
+	make_openssl=${make_openssl:-1}
+	make_iosocket=${make_iosocket:-1}
+	make_ssleay=${make_ssleay:-0}
+	apt="apk"
+	apt_upd="echo 'no update'"	# alpine doesn't need it
+	apt_dev="perl perl-net-dns perl-net-ssleay ncurses" # alpine:3.6
+	apt_gcc="musl-dev gcc make zlib-dev"
+	adduser="adduser -D osaft -h $dir_osaft"
+	[ $inst_tcl -eq 1 ] && apt_tcl="tcl tk xvfb"
+	[ $instwget -eq 1 ] && aptwget="wget"
+	if [ "$_typ" = "alpine:edge" ]; then
+		# dirty hack
+		apt_dev="$apt_dev perl-io-socket-ssl"
+		make_iosocket=0
+	fi
+	#[ -z "$host_tar" ] && wget=wget
+}
+_cfg_debian ()  {
+	image_from="${image_from:-debian:stretch-slim}"
+	make_openssl=${make_openssl:-1}
+	make_iosocket=${make_iosocket:-0}
+	make_ssleay=${make_ssleay:-0}
+	apt="apt"
+	apt_upd="$apt update"
+	apt_dev="libperl5.24 libio-socket-ssl-perl libnet-dns-perl libnet-ssleay-perl"
+	apt_gcc="gcc make"
+	adduser="adduser --disabled-password --gecos '' osaft"
+		# debian's adduser complains if GECOS is missing
+	[ $inst_tcl -eq 1 ] && apt_tcl="wish"
+		# debian installs X11 with Tcl/Tk, grrr ...
+	[ $instwget -eq 1 ] && aptwget=wget
+}
+
+_copy_src ()    {
+	#? return Docker COPY command to get tarball
+	_src=$1
+	_tar=${2:-some.tgz}
+	echo "$_src" | \egrep -q ^http && return;  # return if URL
+	echo "COPY $_src /$_tar"
+}
+
+
+_run_wget ()    {
+	#? return part for Docker RUN command to get tarball
+	_url=$1
+	_tar=${2:-openssl.tgz}
+	echo "$_src" | \egrep -q ^http || return;  # return if not URL
+	cat <<EoRUN
+	wget --no-check-certificate $_url -O $_tar && \\
+EoRUN
+}
+
+_run_sha2 ()    {
+	#? return part for Docker RUN command to check SHA256 checksum
+	[ -z $2 ]      && return
+	[ "$2" = "-" ] && return
+	# only generate code if checksum was given
+	cat <<EoRUN
+        echo "$2  $1" | sha256sum -c && \\
+EoRUN
+}
+
+_run_untar ()   {
+	#? return part for Docker RUN command to extract tarball and cd to dir
+	_tar=$1
+	_dir=${2:-/src_tmp}
+	_tmp=${3:-/tmp}
+	cat <<EoRUN
+	mkdir    $_dir	&& \\
+	tar   -C $_dir --strip-components=1 -xzf $_tar	&& \\
+	cd       $_dir	&& \\
+EoRUN
+}
+
+_run_osaftrc () {
+	#? return Docker RUN command to build IO::Socket::SSL
+	_dir=${1:-/O-Saft}
+	_openssl=${2:-/openssl}
+	cat <<EoRUN
+        mv        $_dir/.o-saft.pl $_dir/.o-saft.pl-orig	&& \
+        sed -e "s:^#--openssl=.*:--openssl=$_openssl/bin/openssl:" \
+                < $_dir/.o-saft.pl-orig \
+                > $_dir/.o-saft.pl	&& \
+EoRUN
+}
+
+_run_osaft ()   {
+	#? return Docker RUN command to build /O-Saft
+	_src=$1
+	_sha=$2
+	_tar=${3:-o-saft}
+	_dir=${4:-/O-Saft}
+	_copy_src  $_src $_tar
+	cat <<EoRUN
+
+# Install O-Saft                                                               
+RUN \\
+EoRUN
+	_run_wget  $_src $_tar
+	_run_sha2  $_tar $_sha
+	cat <<EoRUN
+        \\
+        tar   -xzf $_tar		&& \\
+        chown -R root:root   $_dir		&& \\
+        chown    osaft:osaft $_dir		&& \\
+        chown -R osaft:osaft $_dir/contrib	&& \\
+        chown    osaft:osaft $_dir/.o-saft.pl	&& \\
+EoRUN
+	_run_osaftrc $_dir /openssl
+        echo "	chmod 666 $_dir/.o-saft.pl	&& \\"
+}
+
+_run_iosocket () {
+	#? return Docker RUN command to build IO::Socket::SSL
+	_src=$1
+	_sha=$2
+	_tar=${3:-iosocket.tgz}
+	_dir=${4:-/iosocket}     # not used
+	_tmp=${5:-/src_iosocket}
+	_copy_src  $_src $_tar
+	cat <<EoRUN
+
+# Pull and build IO::Socket::SSL
+RUN \\
+	# pull and extract module
+EoRUN
+	_run_wget  $_src $_tar
+	_run_sha2  $_tar $_sha
+	_run_untar $_tar $_tmp
+	cat <<EoRUN
+	# install development tools
+	$apt $apt_add make		&& \\
+	# build iosocket
+	echo n | perl Makefile.PL	&& \\
+	make && make test && make install && \\
+	# cleanup
+	$apt $apt_del make		&& \\
+	cd / && rm -r $_tmp		&& \\
+EoRUN
+}
+
+_run__openssl () {
+	#? return Docker RUN command to build openssl
+	_src=$1
+	_sha=$3
+	_tar=${3:-openssl.tgz}
+	_dir=${4:-/openssl}
+	_tmp=${5:-/src_openssl}
+	_copy_src  $_src $_tar
+	cat <<EoRUN
+
+# Pull and build enhanced openssl
+RUN \\
+	# pull and extract module
+EoRUN
+	_run_wget  $_src $_tar
+	_run_sha2  $_tar $_sha
+	_run_untar $_tar $_tmp
+	cat <<EoRUN
+	# install development tools
+	$apt $apt_add $apt_gcc		&& \\
+	# build openssl
+	./config --prefix=$_dir --openssldir=$_dir/ssl \\
+		enable-zlib enable-ssl3  enable-rc5  enable-rc2  enable-GOST \\
+		enable-cms  enable-md2   enable-mdc2 enable-ec   enable-ec2m \\
+		enable-ecdh enable-ecdsa enable-seed enable-idea enable-camellia \\
+		enable-rfc3779 enable-ec_nistp_64_gcc_128 \\
+		-static experimental-jpake -DOPENSSL_USE_BUILD_DATE	&& \\
+	make depend && make && make report && make install		&& \\
+	# simple test
+	echo -e "# number of ciphers $_dir/bin/openssl: "		&& \\
+	$_dir/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l	&& \\
+	# cleanup
+	$apt $apt_del $apt_gcc		&& \\
+	cd / && rm -r $_tmp		&& \\
+EoRUN
+}
+
+dockerfile ()   {
+	# generate a Dockerfile; for options see general description above
+	path='$PATH'    # avoid \\ in strings
+
+	cat <<EoDockerfile
+#!/usr/bin/docker build --force-rm --rm -f
+FROM    $image_from
+$maintainer
+LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.1"
+
+ENV     o-saft-docker-build.$hostdate "$0 $args"
+ENV     TERM xterm
+ENV     PATH ${dir_osaft}:${dir_osaft}/contrib:${diropenssl}/bin:$path
+
+RUN     $apt_upd && $apt $apt_add $apt_dev $apt_tcl $aptwget
+WORKDIR /
+RUN     $adduser
+EoDockerfile
+
+	if [ $make_osaft -eq 1 ]; then
+		tar=o-saft.tgz
+		_run_osaft    $url_osaft   $sha_osaft   $tar $dir_osaft
+		echo "	rm $tar"
+	fi
+
+	if [ $make_iosocket -eq 1 ]; then
+		tar=iosocket.tgz
+		_run_iosocket $urliosocket $shaiosocket $tar /iosocket
+		echo "	rm $tar"
+	fi
+
+	if [ $make_openssl -eq 1 ]; then
+		tar=openssl.tgz
+		_run__openssl $url_openssl $sha_openssl $tar $dir_openssl
+		echo "	rm $tar"
+	fi
+
+	cat <<EoDockerfile
+
+WORKDIR ${dir_osaft}
+USER    osaft
+#RUN     o-saft-docker usage
+ENTRYPOINT ["perl", "${dir_osaft}/o-saft.pl"]
+CMD     ["--help=docker"]
+EoDockerfile
+}
+
+docker_clean () {
+	$try \docker save  -o ${image_save} ${image_name}
+	$try \docker rmi      `$try docker images -q ${image_name}`
+	$try \docker load  -i ${image_save}
+}
+
+docker_build_file () {
+	name="$1"; shift
+	file="$1"; shift
+
+	tmp=./tmp-Dockerfile
+	make=`perl -ne 'print if m(# build {)..m(# build })' Dockerfile`
+
+	cat > $tmp <<EoDockerfile
+FROM  $name
+LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.1" \
+	SOURCE="$file" 
+WORKDIR /
+ADD   $file /
+COPY  $file /
+USER  root
+RUN   $apt $apt_add 
+RUN   $make
+RUN   $apt $apt_del 
+ENV   o-saft-docker-build.$hostdate "$0 $args"
+EoDockerfile
+
+	$try \docker build -f $tmp $buildfrm $build_rm .
+
+	if [-d $dir ]; then
+		echo
+	fi
+}
+
+docker_build () {
+	# create an image; for options see general description above
+	src=$host_tmp/$dockerfile
+#	while [ $# -gt 0 ]; do
+#		case "$1" in
+#       		   *)  src=$1;    break; ;;
+#		esac
+#		shift
+#	done
+
+# für Osaft: wenn ein .tar-File da ist, das benutzen statt wget
+#   betrifft: osaft.tgz iosocket.tgz openssl.tgz $aptwget
+	dockerfile > $src
+
+	[ "$try" = "echo" ] && echo && cat $src && echo
+
+	for file in $host_tar; do
+		$try docker_build_file ${image_name} $file
+	done
+
+	$try \docker build -f $src $buildfrm $build_rm -t ${image_name} .
+	[ $buildsav -eq 1 ]     && docker_clean
+	[ $host_del -eq 1 ]     && [ -f ${image_save} ] && $try \rm ${image_save}
+	[ $buildtag -eq 1 ]     && $try \docker tag ${image_name} o-saft
+}
+
+docker_pull () {
+	$try \docker pull $@
+}
+
+docker_load () {
+	$try \docker load $@
+}
+
+my_help ()      {
+	ich=${0##*/}
+	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+}
+
+_cfg_alpine   # set defaults
+args="$*"
+while [ $# -gt 0 ]; do
+	case "$1" in
+	  '-n')            try=echo;    ;;
+	  '-v')            set -x  ;    ;;
+	  '-help')         cmd=help;    ;;
+	  'build')         cmd=build;   ;;
+	  'load')          cmd=load;    ;;
+	  'pull')          cmd=pull;    ;;
+	  'config')        cmd=config;  ;;
+	  '-alpine')       _cfg_alpine alpine ; ;;
+	  '-debian')       _cfg_debian debian ; ;;
+	  -from=*)         image_from="`expr "$1" ':' '-from=\(.*\)'`"; ;;
+	  -tar=*)          host_tar="$host_tar `expr "$1" ':' '-tar=\(.*\)'`"; ;;
+	  -apt=*)          apt="`expr "$1" ':' '-apt=\(.*\)'`"; ;;
+	  '-autor')        maintainer="MAINTAINER Achim <achim@owasp.org>"; ;;
+	  '-sha256sum')    check_sha256=1;  ;;
+	  '-no-sha256sum') check_sha256=0;  ;;
+	  '-openssl')      make_openssl=1;  ;;
+	  '-no-openssl')   make_openssl=0;  ;;
+	  '-iosocket')     make_iosocket=1; ;;
+	  '-no-iosocket')  make_iosocket=0; ;;
+	  '-ssleay')       make_ssleay=1;   ;;
+	  '-no-ssleay')    make_ssleay=0;   ;;
+	  '-save')         buildsav=1; ;;
+	  '-no-save')      buildsav=0; ;;
+	  '-tag')          buildtag=1; ;;
+	  '-no-tag')       buildtag=0; ;;
+	  '-tcl'         |    '-wish')        inst_tcl=1;  ;;
+	  '-no-tcl'      | '-no-wish')        inst_tcl=0;  ;;
+	  '-force-rm'    |    '--force-rm')   buildfrm="--force-rm"; ;;
+	  '-no-force-rm' | '--no-force-rm')   buildfrm=""; ;;
+	  '-rm'          |    '--rm')         build_rm="--rm"; ;;
+	  '-no-rm'       | '--no-rm')         build_rm=""; ;;
+	  '-del'         |    '--delete')     host_del=1;  ;;
+	  '-no-del'      | '--no-delete')     host_del=0;  ;;
+	  '-clean')    host_del=1; build_rm="--rm"; buildfrm="--force-rm"; ;;
+	  '-no-clean') host_del=0; build_rm="";     buildfrm=""; ;;
+          '--')     shift; break; ;;
+          *)               break; ;;
+	esac
+	shift
+done
+# TODO: options need to be documented
+
+# adapt platform-specific settings according options
+case "$image_from" in
+  alpine*)  _cfg_alpine "$image_from"; ;;
+  debian*)  _cfg_debian "$image_from"; ;;
+esac
+
+# commands for package manager
+case "$apt" in
+  'apk')    apt_add="add --no-cache"; apt_del="del --purge"; ;;
+  'apt')    apt_add="install";        apt_del="purge"; ;;
+esac
+
+[ "$try" = "echo" ] && _dbx_config && echo
+
+[ "$cmd" = "help" ] && my_help     && exit 0;   # just help, ready
+
+# make temp. directory, avoids:
+#    unable to prepare context: the Dockerfile must be within the build context
+host_tmp=/tmp/$hostdate
+[ -d $host_tmp ] && echo "**ERROR: $host_tmp  exists; aborted"      && exit 2
+\mkdir $host_tmp   # no $try, because we need the dir
+if [ $? -ne 0 ]; then
+	echo "**ERROR: create $host_tmp faild; aborted"
+	exit 2
+fi
+$try \cd    $host_tmp
+
+case "$cmd" in
+  'help')   my_help $0; ;;
+  'dockerfile' | 'Dockerfile') dockerfile $@; ;;
+  'config') dockerfile   $@; ;;
+  'build')  docker_build $@; ;;
+  'load')   docker_load  $@; ;;
+  'pull')   docker_pull  $@; ;;
+   *)       echo && echo "**WARNING:  $0 $cmd ... unknown mode, ignored" && echo ; ;;
+esac
+
+[ $host_del -eq 1 ] && \rm -r $host_tmp     # # no $try, because we used the dir
+
+exit
