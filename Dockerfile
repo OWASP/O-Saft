@@ -12,7 +12,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SID="@(#) Dockerfile 1.5 17/07/26 00:31:55" \
+	SID="@(#) Dockerfile 1.6 17/07/26 15:46:06" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV o-saft-docker-build "Dockerfile 17.07.17"
@@ -24,7 +24,8 @@ ENV PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
 
 # Install required packages
 #RUN apk update && \   # no update neded and not wanted
-RUN apk add --no-cache wget perl perl-net-dns perl-io-socket-ssl perl-net-ssleay ncurses
+RUN apk add --no-cache wget ncurses \
+	perl perl-readonly perl-net-dns perl-io-socket-ssl perl-net-ssleay
 
 WORKDIR	/
 
