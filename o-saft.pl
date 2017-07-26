@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.734 17/07/21 15:13:05",
+    SID         => "@(#) yeast.pl 1.735 17/07/26 15:37:38",
     STR_VERSION => "17.07.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3826,7 +3826,7 @@ sub check_url($$)   {
     my $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $url =  $2 || "/";                   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     return "" if not defined $host;         # wrong URI may be passed
-       $host=~ m#^([^:]+)(?::[0-9]{1-5})?#;
+       $host=~ m#^([^:]+)(?::[0-9]{1,5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     _trace2("check_url: get_http($host, $port, $url)");
