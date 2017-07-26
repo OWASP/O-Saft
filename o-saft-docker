@@ -78,7 +78,9 @@
 #?       Please see  LIMITATIONS  below also.
 #?
 #?   build
-#?       This mode builds the Docker image for O-Saft from the Dockerfile.
+#?       This mode builds the Docker image for O-Saft from the Dockerfile. If
+#?       ./Dockerfile is missing following will be used:
+#?           https://github.com/OWASP/O-Saft/raw/master/Dockerfile
 #?
 #?   usage
 #?       Print a brief purpose and usage of this script.
@@ -159,7 +161,7 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.6 17/07/25 22:31:30
+#?       @(#) o-saft-docker 1.7 17/07/26 16:46:25
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -172,6 +174,7 @@ image_name="${registry}"
 [ -n "$tag" ] && image_name="${registry}:${tag}"
 try=
 exe=o-saft.pl
+dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
 
 docker_hacker () {
 	cat << EoHacker
@@ -224,6 +227,8 @@ EoStatus
 }
 
 docker_build () {
+	_cfg=./Dockerfile
+	[ ! -e $_cfg ] && $try \wget ${dockerfile} -O $_cfg
 	_tar=o-saft_docker.tar
 	$try \docker build -f ./Dockerfile --force-rm --rm -t ${image_name} . && \
 	$try \docker save  -o $_tar ${image_name} && \
