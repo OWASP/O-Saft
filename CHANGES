@@ -1,4 +1,11 @@
 
+Version: 17.07.26
+  BUGFIX
+    * regex to detect port numbers in URL: {1,5} quantifier instead of {1-5}
+    * Dockerfile: install perl-readonly for alpine also
+  NEW                                                                          
+    * o-saft-docker: rmi command implemented; status command improved
+
 Version: 17.07.17
   BUGFIX
     * +tr-02102+ corrected (len_sigdump check)
