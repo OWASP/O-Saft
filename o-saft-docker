@@ -9,6 +9,7 @@
 #?       $0 usage
 #?       $0 shell
 #?       $0 status
+#?       $0 rmi
 #?       $0 call /path/to/program [arguments]
 #?       $0 [options and commands of o-saft.pl]
 #?
@@ -32,6 +33,7 @@
 #?           build   - build the complete Docker image for O-Saft
 #?           usage   - print the initial usage message for O-Saft in Docker
 #?           status  - show various information about O-Saft Docker image
+#?           rmi     - remove O-Saft Docker image(s)
 #?           shell   - run a shell (/bin/sh) in Docker image
 #?           root    - run a shell (/bin/sh) as user root in Docker image
 #?           call    - run specified program with arguments in Docker image
@@ -81,6 +83,9 @@
 #?       This mode builds the Docker image for O-Saft from the Dockerfile. If
 #?       ./Dockerfile is missing following will be used:
 #?           https://github.com/OWASP/O-Saft/raw/master/Dockerfile
+#?
+#?   rmi
+#?       Remove all O-Saft images, including tagged images.
 #?
 #?   usage
 #?       Print a brief purpose and usage of this script.
@@ -161,7 +166,7 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.7 17/07/26 16:46:25
+#?       @(#) o-saft-docker 1.8 17/07/27 08:09:39
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -220,7 +225,12 @@ docker_status () {
 # docker images for ${registry} ...
 EoStatus
 
-	$try \docker images ${registry}
+	# list matching images
+	$try \docker images ${registry};   # will be listed below again
+	# list related (tagged) images
+	for _id in `\docker images -q ${registry}` ; do
+		$try \docker images | \grep "$_id"
+	done;
 	echo
 	echo "# docker processes ..."
 	$try \docker ps -a
@@ -259,21 +269,46 @@ docker_root ()  {
 	$try \docker run --rm -it --entrypoint=/bin/sh -u root ${image_name}
 }
 
+docker_rmi   () {
+	# parameters can only be the options for Docker's rmi command
+	shift
+	_ids=`\docker images -q ${registry}` # ${image_name}
+	echo "# image ISs to be deleted: $_ids "
+	# need to find all images, including referenced images, that done
+	# with "images" command, then extract all lines with matching IDs
+	# only these IDs are deleted
+	# Note: "docker images" should return newest image on top, hence
+	#       all images which just represent a tag (alias) come first
+	#       and will be deleted first
+	\docker images | while read _any ; do
+		for _id in $_ids ; do
+			_img=`echo "$_any" | \awk "/$_id/"'{print $1}'`
+			#dbx# echo "  ID  $_any : $_id : $_img"
+			[ -z "$_img" ] && continue  # other image
+			$try \docker rmi $@ $_img
+		done
+	done;
+}
+
 my_help ()      {
 	ich=${0##*/}
 	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 }
 
+# NOTE: All functions may use ${registry} and ${image_name}, which are global
+#       variables. We do not pass these values as parameters to the functions
+#       because we want $@ (all parameters of this script) in the functions
 while [ $# -gt 0 ]; do
 	case "$1" in
 	  '-n')     try=echo; ;;
 	  '-v')     set -x  ; ;;
 	  '-help')  my_help;        exit 0; ;;
+	  'build')  docker_build;   exit 0; ;;
 	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
-	  'shell')  docker_shell;   exit 0; ;;
+	  'rmi')    docker_rmi  $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
-	  'build')  docker_build;   exit 0; ;;
+	  'shell')  docker_shell;   exit 0; ;;
 	  'status') docker_status;  exit 0; ;;
 	  'hacker') docker_hacker;  exit 0; ;;
 #          -registry=*) registry=  # not supported, as this is for O-Saft only
