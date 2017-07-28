@@ -12,10 +12,15 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SID="@(#) Dockerfile 1.6 17/07/26 15:46:06" \
+	SID="@(#) Dockerfile 1.7 17/07/28 13:59:28" \
 	AUTHOR="Achim Hoffmann"	
 
-ENV o-saft-docker-build "Dockerfile 17.07.17"
+# parameters passed to build (must be defined after FROM)
+ARG OSAFT_DOCKER_SHA256_OSAFT=ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08
+ARG OSAFT_DOCKER_SHA256_OPENSSL
+ARG OSAFT_DOCKER_APT_INSTALL
+
+ENV o-saft-docker-build "Dockerfile 17.07.17 FROM: $OSAFT_DOCKER_FROM"
 ENV OSAFT_DIR	/O-Saft
 ENV OPENSSL_DIR	/openssl
 ENV OPENSSL_VERSION  1.0.2-chacha
@@ -24,7 +29,7 @@ ENV PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
 
 # Install required packages
 #RUN apk update && \   # no update neded and not wanted
-RUN apk add --no-cache wget ncurses \
+RUN apk add --no-cache wget ncurses $OSAFT_DOCKER_APT_INSTALL \
 	perl perl-readonly perl-net-dns perl-io-socket-ssl perl-net-ssleay
 
 WORKDIR	/
@@ -37,7 +42,9 @@ RUN \
 	wget --no-check-certificate \
 		https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz \
 		-O o-saft.tgz 			&& \
-	echo "ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08  o-saft.tgz" | sha256sum -c ; \
+	# check sha256 if there is one
+	[ -n "$OSAFT_DOCKER_SHA256_OSAFT" ]	&& \
+		echo "$OSAFT_DOCKER_SHA256_OSAFT  o-saft.tgz" | sha256sum -c ; \
 	\
 	tar   -xzf o-saft.tgz			&& \
 	chown -R root:root   $OSAFT_DIR		&& \
@@ -57,6 +64,10 @@ RUN \
 	wget --no-check-certificate \
 		https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz \
 		-O openssl.tgz 			&& \
+	# check sha256 if there is one
+	echo "oooooooo $OSAFT_DOCKER_SHA256_OPENSSL" && \
+	[ -n "$OSAFT_DOCKER_SHA256_OPENSSL" ]	&& \
+		echo "$OSAFT_DOCKER_SHA256_OPENSSL  openssl.tgz" | sha256sum -c ; \
 	\
 	tar   -xzf openssl.tgz -C /src_openssl --strip-components=1	&& \
 	cd    /src_openssl			&& \
