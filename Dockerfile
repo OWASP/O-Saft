@@ -4,27 +4,27 @@
 #?      This Dockerfile uses environment variables to build the Docker image,
 #?      and to pass SHA256 checksums to the build process. The variables are:
 #?
-#?          OSAFT_DOCKER_FROM
+#?          OSAFT_VM_FROM
 #?              Base image to be used for this build. Tested images are:
 #?                  alpine:3.6  alpine:edge  debian:stretch-slim  debian
 #?              default is  alpine:edge.
 #?
-#?          OSAFT_DOCKER_APT_INSTALL
+#?          OSAFT_VM_APT_INSTALL
 #?              Additional packages  to be installed in the image.  Note that
 #?              the package names depend on the used base image.
 #?              Tested packages are:  tcl  tk  xvfb  openssl
 #?
-#?          OSAFT_DOCKER_SHA_OSAFT
+#?          OSAFT_VM_SHA_OSAFT
 #?              SHA256 checksum for the o-saft.tgz archive.
 #?
-#?          OSAFT_DOCKER_SHA_OPENSSL
+#?          OSAFT_VM_SHA_OPENSSL
 #?              SHA256 checksum for the openssl-1.0.2-chacha.tar.gz archive.
 #?
-#?          OSAFT_DOCKER_TAR_OSAFT
+#?          OSAFT_VM_TAR_OSAFT
 #?              Name of archive file for O-Saft.
 #?              default is  o-saft.tgz
 #?
-#?          OSAFT_DOCKER_TAR_OPENSSL
+#?          OSAFT_VM_TAR_OPENSSL
 #?              Name of archive file for OpenSSL..
 #?              default is  openssl.tgz
 #?
@@ -35,24 +35,24 @@
 #?
 #?      Simple build with base image alpine:3.6
 #?          docker build --force-rm --rm \ 
-#?                  --build-arg "OSAFT_DOCKER_FROM=alpine:3.6" \ 
+#?                  --build-arg "OSAFT_VM_FROM=alpine:3.6" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
 #?      Build with base image alpine:3.6 and Tcl/Tk
 #?          docker build --force-rm --rm \ 
-#?                  --build-arg "OSAFT_DOCKER_FROM=alpine:3.6" \ 
-#?                  --build-arg "OSAFT_DOCKER_APT_INSTALL=tcl tk xvfb" \ 
+#?                  --build-arg "OSAFT_VM_FROM=alpine:3.6" \ 
+#?                  --build-arg "OSAFT_VM_APT_INSTALL=tcl tk xvfb" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
 #?      Build with other SHA256 checksum for o-saft.tgz
 #?          docker build --force-rm --rm \ 
-#?                  --build-arg "OSAFT_DOCKER_SHA_OSAFT=caffee" \ 
+#?                  --build-arg "OSAFT_VM_SHA_OSAFT=caffee" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
 
-ARG     OSAFT_DOCKER_FROM=alpine:edge
+ARG     OSAFT_VM_FROM=alpine:edge
 
-FROM    $OSAFT_DOCKER_FROM
+FROM    $OSAFT_VM_FROM
 MAINTAINER Achim <achim@owasp.org>
 
 LABEL \
@@ -64,18 +64,18 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SID="@(#) Dockerfile 1.9 17/07/29 10:58:29" \
+	SID="@(#) Dockerfile 1.10 17/07/29 11:47:38" \
 	AUTHOR="Achim Hoffmann"	
 
 # Parameters passed to build
-ARG     OSAFT_DOCKER_FROM
-ARG     OSAFT_DOCKER_SHA_OSAFT=ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08
-ARG     OSAFT_DOCKER_SHA_OPENSSL
-ARG     OSAFT_DOCKER_TAR_OSAFT=o-saft.tgz
-ARG     OSAFT_DOCKER_TAR_OPENSSL=openssl.tgz
-ARG     OSAFT_DOCKER_APT_INSTALL
+ARG     OSAFT_VM_FROM
+ARG     OSAFT_VM_SHA_OSAFT=ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08
+ARG     OSAFT_VM_SHA_OPENSSL
+ARG     OSAFT_VM_TAR_OSAFT=o-saft.tgz
+ARG     OSAFT_VM_TAR_OPENSSL=openssl.tgz
+ARG     OSAFT_VM_APT_INSTALL
 
-ENV     osaft_docker_build "Dockerfile 17.07.17; FROM $OSAFT_DOCKER_FROM"
+ENV     osaft_vm_build  "Dockerfile 17.07.17; FROM $OSAFT_VM_FROM"
 ENV     OSAFT_DIR	/O-Saft
 ENV     OPENSSL_DIR	/openssl
 ENV     OPENSSL_VERSION  1.0.2-chacha
@@ -84,7 +84,7 @@ ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
 
 # Install required packages
 #RUN apk update && \   # no update neded and not wanted
-RUN     apk add --no-cache wget ncurses $OSAFT_DOCKER_APT_INSTALL \
+RUN     apk add --no-cache wget ncurses $OSAFT_VM_APT_INSTALL \
 	perl perl-readonly perl-net-dns perl-io-socket-ssl perl-net-ssleay
 
 WORKDIR	/
@@ -96,12 +96,12 @@ RUN \
 	\
 	wget --no-check-certificate \
 		https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz \
-		-O $OSAFT_DOCKER_TAR_OSAFT 	&& \
+		-O $OSAFT_VM_TAR_OSAFT 		&& \
 	# check sha256 if there is one
-	[ -n "$OSAFT_DOCKER_SHA_OSAFT" ]	&& \
-		echo "$OSAFT_DOCKER_SHA_OSAFT  $OSAFT_DOCKER_TAR_OSAFT" | sha256sum -c ; \
+	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
+		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
 	\
-	tar   -xzf $OSAFT_DOCKER_TAR_OSAFT	&& \
+	tar   -xzf $OSAFT_VM_TAR_OSAFT		&& \
 	chown -R root:root   $OSAFT_DIR		&& \
 	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl	&& \
@@ -110,7 +110,7 @@ RUN \
 		< $OSAFT_DIR/.o-saft.pl-orig \
 		> $OSAFT_DIR/.o-saft.pl		&& \
 	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
-	rm    -f $OSAFT_DOCKER_TAR_OSAFT
+	rm    -f $OSAFT_VM_TAR_OSAFT
 
 # Pull, build and install enhanced openssl
 RUN \
@@ -118,12 +118,12 @@ RUN \
 	mkdir $OPENSSL_DIR /src_openssl		&& \
 	wget --no-check-certificate \
 		https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz \
-		-O $OSAFT_DOCKER_TAR_OPENSSL	&& \
+		-O $OSAFT_VM_TAR_OPENSSL	&& \
 	# check sha256 if there is one
-	[ -n "$OSAFT_DOCKER_SHA_OPENSSL" ]	&& \
-		echo "$OSAFT_DOCKER_SHA_OPENSSL  $OSAFT_DOCKER_TAR_OPENSSL" | sha256sum -c ; \
+	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
+		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
 	\
-	tar   -xzf $OSAFT_DOCKER_TAR_OPENSSL -C /src_openssl --strip-components=1	&& \
+	tar   -xzf $OSAFT_VM_TAR_OPENSSL -C /src_openssl --strip-components=1	&& \
 	cd    /src_openssl			&& \
 	# build openssl {
 	# install development tools
@@ -142,7 +142,7 @@ RUN \
 	apk del --purge musl-dev gcc make zlib-dev	&& \
 	# build openssl }
 	cd   /					&& \
-	rm   -r /src_openssl $OSAFT_DOCKER_TAR_OPENSSL
+	rm   -r /src_openssl $OSAFT_VM_TAR_OPENSSL
 
 WORKDIR $OSAFT_DIR
 USER    osaft
