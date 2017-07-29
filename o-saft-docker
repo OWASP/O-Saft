@@ -10,6 +10,7 @@
 #?       $0 shell
 #?       $0 status
 #?       $0 rmi
+#?       $0 gui
 #?       $0 call /path/to/program [arguments]
 #?       $0 [options and commands of o-saft.pl]
 #?
@@ -38,6 +39,7 @@
 #?           root    - run a shell (/bin/sh) as user root in Docker image
 #?           call    - run specified program with arguments in Docker image
 #?           hacker  - show information about the used Dockerfile
+#?           gui     - start o-saft.tcl in the Docker image
 #?           *       - anything else (default): run o-saft.pl in Docker image
 #?
 #?       This wrapper expects, that the O-Saft Docker image has the name:
@@ -78,6 +80,10 @@
 #?       becomes
 #?           $0 +info your.tld
 #?       Please see  LIMITATIONS  below also.
+#?
+#?   gui
+#?       Start  o-saft.tcl in the Docker image with display to the host where
+#?       started.
 #?
 #?   build
 #?       This mode builds the Docker image for O-Saft from the Dockerfile. If
@@ -166,7 +172,7 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.9 17/07/29 10:34:38
+#?       @(#) o-saft-docker 1.10 17/07/29 11:34:30
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -234,6 +240,15 @@ EoStatus
 	echo
 	echo "# docker processes ..."
 	$try \docker ps -a
+
+	echo ""
+	echo "# O-Saft docker image ..."
+	_id=`$0 call env | grep osaft_docker_build`
+	if [ -n "$_id" ]; then
+		echo "$_id"
+	else
+		echo "<<no build variable 'osaft_docker_build' found>>"
+	fi
 }
 
 docker_build () {
@@ -252,6 +267,11 @@ docker_osaft () {
 	# this is the command for the default mode, passing all parameters
         # expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
 	$try \docker run --rm -it ${image_name} $@
+}
+
+docker_gui   () {
+	$try \docker run --rm -it --entrypoint=/O-Saft/o-saft.tcl \
+		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
 
 docker_call ()  {
@@ -306,6 +326,7 @@ while [ $# -gt 0 ]; do
 	  'build')  docker_build;   exit 0; ;;
 	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
+	  'gui')    docker_gui  $@; exit 0; ;;
 	  'rmi')    docker_rmi  $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
 	  'shell')  docker_shell;   exit 0; ;;
