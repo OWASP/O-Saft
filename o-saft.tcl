@@ -139,7 +139,9 @@ exec wish "$0" ${1+"$@"}
 #?      This script can be used from within any Docker image. The host is then
 #?      responsible for providing the proper protocols for the GUI (i.e. X11).
 #?      In this case,  anything is executed inside the Docker image,  just the
-#?      graphical output is passed to the host.
+#?      graphical output is passed to the host. In this mode
+#?          o-saft-docker gui
+#?      will do all the necessary magic with Docker for protocol and DISPLAY.
 #?
 #?      When used with the  --docker  option, this script runs on the host and
 #?      connects to an O-Saft Docker image to execute o-saft.pl there with all
@@ -328,7 +330,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.144 Spring Edition 2017
+#?      @(#) 1.145 Spring Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -397,8 +399,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.144 17/07/21 15:04:01 Spring Edition 2017}
-set cfg(VERSION) {1.144}
+set cfg(SID)    {@(#) o-saft.tcl 1.145 17/07/29 12:35:59 Spring Edition 2017}
+set cfg(VERSION) {1.145}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1001,6 +1003,7 @@ proc theme_set    {w theme} {
     set key [regsub {.*\.([^.]*)$} $w {\1}];    # get trailer of widget name
     set val [get_tipp  $key]; if {$val ne ""} { create_tip   $w  $val }
     set val [get_text  $key]; if {$val ne ""} { $w config -text  $val }
+    if {[regexp {docker status$} $val]} { $w config -width 10 }; # FIXME: quick&dirty, not really necessary
     set val [get_image $key]; if {![info exists IMG($val)]} { set theme "text" }
     _dbx " $w\t-> $key\t$theme\t-> $val"
     if {$theme eq "text"} {
@@ -2590,7 +2593,10 @@ _dbx " hosts: $hosts(0)"
 theme_init $cfg(bstyle)
 
 ## some verbose output
-update_status "o-saft.tcl 1.144"
+set vm "";      # check if inside docker
+if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
+if {[regexp {\-docker$} $cfg(SAFT)]}        { set vm "(using $cfg(SAFT))" }
+update_status "o-saft.tcl 1.145 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
