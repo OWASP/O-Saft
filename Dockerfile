@@ -64,7 +64,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SID="@(#) Dockerfile 1.8 17/07/29 10:28:48" \
+	SID="@(#) Dockerfile 1.9 17/07/29 10:58:29" \
 	AUTHOR="Achim Hoffmann"	
 
 # Parameters passed to build
@@ -75,7 +75,7 @@ ARG     OSAFT_DOCKER_TAR_OSAFT=o-saft.tgz
 ARG     OSAFT_DOCKER_TAR_OPENSSL=openssl.tgz
 ARG     OSAFT_DOCKER_APT_INSTALL
 
-ENV     o-saft-docker-build "Dockerfile 17.07.17 FROM: $OSAFT_DOCKER_FROM"
+ENV     osaft_docker_build "Dockerfile 17.07.17; FROM $OSAFT_DOCKER_FROM"
 ENV     OSAFT_DIR	/O-Saft
 ENV     OPENSSL_DIR	/openssl
 ENV     OPENSSL_VERSION  1.0.2-chacha
