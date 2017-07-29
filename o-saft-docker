@@ -172,7 +172,7 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.10 17/07/29 11:34:30
+#?       @(#) o-saft-docker 1.11 17/07/29 11:49:25
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -243,11 +243,11 @@ EoStatus
 
 	echo ""
 	echo "# O-Saft docker image ..."
-	_id=`$0 call env | grep osaft_docker_build`
+	_id=`$0 call env | grep osaft_vm_build`
 	if [ -n "$_id" ]; then
 		echo "$_id"
 	else
-		echo "<<no build variable 'osaft_docker_build' found>>"
+		echo "<<no build variable 'osaft_vm_build' found>>"
 	fi
 }
 
