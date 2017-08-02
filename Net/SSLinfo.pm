@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.07.17',
+    SSLINFO_VERSION => '17.07.31',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.193 17/07/17 15:06:52',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.194 17/08/02 08:51:42',
 };
 
 ######################################################## public documentation #
@@ -1279,6 +1279,7 @@ sub _ssleay_get     {
             $type = 'email'         if ($type eq '1');
             $name = '<<undefined>>' if(($type eq '0') && ($name!~/^/));
             $type = 'othername'     if ($type eq '0');
+            $name = join('.', unpack('W4', $name)) if ($type eq 'IPADD');
             # all other types are used as is, so we see what's missing
             $ret .= ' ' . join(':', $type, $name);
         }
@@ -3371,8 +3372,8 @@ sub verify_altname  {
     _trace("verify_altname: $cname");
     foreach my $alt (split(' ', $cname)) {
         my ($type, $name) = split(/:/, $alt);
+#dbx# print "# $alt: ($type, $name)";
 # TODO: implement IP and URI
-#dbx print "# ($type, $name)";
         push(@{$_SSLinfo{'errors'}}, "verify_altname() $type not supported in SNA") if ($type !~ m/DNS/i);
         my $rex = $name;
         if ($Net::SSLinfo::ignore_case == 1) {
