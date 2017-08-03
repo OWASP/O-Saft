@@ -165,6 +165,7 @@
 #?       Following environment variables can be used to pass settings to the
 #?       script:
 #?
+#?           OSAFT_VERSION          - version to be passed to Dockerfile
 #?           o_saft_docker_name     - contains an image registry name
 #?           o_saft_docker_tag      - contains an image tag
 #?
@@ -172,13 +173,14 @@
 #?           $0 status
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.11 17/07/29 11:49:25
+#?       @(#) o-saft-docker 1.12 17/08/03 22:55:07
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
+VERSION="${OSAFT_VERSION:-17.07.17}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.07.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
@@ -252,11 +254,14 @@ EoStatus
 }
 
 docker_build () {
+	# build O-Saft Docker image from Dockerfile, mainly using defaults
+	# from Dockerfile
 	_cfg=./Dockerfile
 	[ ! -e $_cfg ] && $try \wget ${dockerfile} -O $_cfg
 	_tar=o-saft_docker.tar
-	$try \docker build -f ./Dockerfile --force-rm --rm -t ${image_name} . && \
-	$try \docker save  -o $_tar ${image_name} && \
+	$try \docker build -f ./Dockerfile --force-rm --rm -t ${image_name} \
+		--build-arg "OSAFT_VERSION=$VERSION" .	&& \
+	$try \docker save  -o $_tar ${image_name}	&& \
 	$try \docker rmi   `$try docker images -q ${image_name}` && \
 	$try \docker load  -i $_tar && \
 	$try \rm              $_tar && \
