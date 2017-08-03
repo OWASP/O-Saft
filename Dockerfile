@@ -64,7 +64,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SID="@(#) Dockerfile 1.10 17/07/29 11:47:38" \
+	SID="@(#) Dockerfile 1.11 17/08/03 22:00:55" \
 	AUTHOR="Achim Hoffmann"	
 
 # Parameters passed to build
@@ -149,6 +149,6 @@ USER    osaft
 RUN     o-saft-docker usage
 
 ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]
-CMD  ["--help=docker"]
+CMD     ["--norc",  "--help=docker"]
 
 # vim:set ft=dockerfile:
