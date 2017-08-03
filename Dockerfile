@@ -4,6 +4,9 @@
 #?      This Dockerfile uses environment variables to build the Docker image,
 #?      and to pass SHA256 checksums to the build process. The variables are:
 #?
+#?          OSAFT_VERSION
+#?              Version of this build (should be used as image tag also).
+#?
 #?          OSAFT_VM_FROM
 #?              Base image to be used for this build. Tested images are:
 #?                  alpine:3.6  alpine:edge  debian:stretch-slim  debian
@@ -55,27 +58,28 @@ ARG     OSAFT_VM_FROM=alpine:edge
 FROM    $OSAFT_VM_FROM
 MAINTAINER Achim <achim@owasp.org>
 
+# Parameters passed to build
+ARG     OSAFT_VM_FROM
+ARG     OSAFT_VM_SHA_OSAFT="ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08"
+ARG     OSAFT_VM_SHA_OPENSSL
+ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
+ARG     OSAFT_VM_TAR_OPENSSL="openssl.tgz"
+ARG     OSAFT_VM_APT_INSTALL
+ARG     OSAFT_VERSION="undefined"
+
 LABEL \
-	VERSION="17.07.17"	\
+	VERSION="$OSAFT_VERSION"	\
 	\
 	DESCRIPTION="Build O-Saft docker image (with Peter Mosman's openssl)"	\
-	SYNOPSIS="docker build --force-rm --rm -f ./Dockerfile -t owasp/o-saft:17.07.17 -t owasp/o-saft ." \
+	SYNOPSIS="docker build --force-rm --rm -f ./Dockerfile -t owasp/o-saft:$OSAFT_VERSION -t owasp/o-saft ." \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz" \
 	SOURCE2="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz" \
-	SID="@(#) Dockerfile 1.11 17/08/03 22:00:55" \
+	SID="@(#) Dockerfile 1.12 17/08/04 00:10:03" \
 	AUTHOR="Achim Hoffmann"	
 
-# Parameters passed to build
-ARG     OSAFT_VM_FROM
-ARG     OSAFT_VM_SHA_OSAFT=ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08
-ARG     OSAFT_VM_SHA_OPENSSL
-ARG     OSAFT_VM_TAR_OSAFT=o-saft.tgz
-ARG     OSAFT_VM_TAR_OPENSSL=openssl.tgz
-ARG     OSAFT_VM_APT_INSTALL
-
-ENV     osaft_vm_build  "Dockerfile 17.07.17; FROM $OSAFT_VM_FROM"
+ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
 ENV     OSAFT_DIR	/O-Saft
 ENV     OPENSSL_DIR	/openssl
 ENV     OPENSSL_VERSION  1.0.2-chacha
