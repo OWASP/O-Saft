@@ -103,7 +103,7 @@
 #?                          when a source will be provided by the host (local
 #?                          filesystem) instead of fetching  from an internet
 #?                          archive (such as hub.docker.com).  The difference
-#?                          is using ADD and COPY instead of RUN with wget.
+#?                          is using COPY instead of RUN with wget.
 #?           trustworth   - I.g. creating your own image on your host is more
 #?                          trustworthy than downloading and blindly using an
 #?                          preconfigured image from resources not under your
@@ -131,7 +131,7 @@
 #?       Install image with Docker's load command.
 #?
 #?   pull
-#?       Install image with Docker's pull command.
+#?       Install image with Docker's pull command. Remember  WHY?  above.
 #?
 #? SECURITY
 #?       Please see:  o-saft-docker -help
@@ -176,6 +176,7 @@
 #?       Following environment variables can be used to pass settings to the
 #?       script:
 #?
+#?           OSAFT_VERSION          - version to be passed to Dockerfile
 #?           o_saft_docker_name     - contains an image registry name
 #?           o_saft_docker_tag      - contains an image tag
 #?
@@ -192,7 +193,7 @@
 #?       debian build   .tgz            wish            -debian -tar=o-saft.tgz
 #?
 #? VERSION
-#?       @(#) o-saft-docker-dev 1.2 17/08/02 22:19:40
+#?       @(#) o-saft-docker-dev 1.3 17/08/03 23:17:09
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -202,6 +203,7 @@
 try=
 cmd=unknonw
 
+VERSION="${OSAFT_VERSION:-17.07.17}"
 registry="${o_saft_docker_name}"; registry="${registry:-owasp/o-saft}"
 image_tag="${o_saft_docker_tag}"; image_tag="${image_tag:-`date +%y.%m.%d`}"
 image_name="${registry}:${image_tag}"
@@ -217,7 +219,7 @@ inst_tcl=0
 instwget=1
 host_del=1
 host_tar=""
-hostdate=`date +%y%m%d08/02/17M%S`
+hostdate=`date +%y%m%d08/03/17M%S`
 apt="apk"
 apt_tcl=""
 aptwget=""
@@ -478,7 +480,7 @@ dockerfile ()   {
 #!/usr/bin/docker build --force-rm --rm -f
 FROM    $image_from
 $maintainer
-LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.2"
+LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.3"
 
 ENV     o-saft-docker-build.$hostdate "$0 $args"
 ENV     TERM xterm
@@ -513,7 +515,7 @@ WORKDIR ${dir__o_saft}
 USER    osaft
 RUN     o-saft-docker usage
 ENTRYPOINT ["perl", "${dir__o_saft}/o-saft.pl"]
-CMD     ["--help=docker"]
+CMD     ["--norc", "--help=docker"]
 EoDockerfile
 }
 
@@ -527,15 +529,14 @@ docker_build_file () {
 	name="$1"; shift
 	file="$1"; shift
 
-	tmp=./tmp-Dockerfile
+	_src=./tmp-Dockerfile
 	make=`perl -ne 'print if m(# build {)..m(# build })' Dockerfile`
 
-	cat > $tmp <<EoDockerfile
+	cat > $_src <<EoDockerfile
 FROM  $name
-LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.2" \
+LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.3" \
 	SOURCE="$file"
 WORKDIR /
-ADD   $file /
 COPY  $file /
 USER  root
 RUN   $apt $apt_add
@@ -544,7 +545,8 @@ RUN   $apt $apt_del
 ENV   o-saft-docker-build.$hostdate "$0 $args"
 EoDockerfile
 
-	$try \docker build -f $tmp $buildfrm $build_rm .
+	$try \docker build --build-arg "OSAFT_VERSION=$VERSION" \
+		$buildfrm $build_rm -f $_src .
 
 	if [-d $dir ]; then
 		echo
@@ -553,25 +555,26 @@ EoDockerfile
 
 docker_build () {
 	# create an image; for options see general description above
-	src=$host_tmp/$dockerfile
+	_src=$host_tmp/$dockerfile
 #	while [ $# -gt 0 ]; do
 #		case "$1" in
-#       		   *)  src=$1;    break; ;;
+#       		   *)  _src=$1;    break; ;;
 #		esac
 #		shift
 #	done
 
 # für Osaft: wenn ein .tar-File da ist, das benutzen statt wget
 #   betrifft: osaft.tgz iosocket.tgz openssl.tgz $aptwget
-	dockerfile > $src
+	dockerfile > $_src
 
-	[ "$try" = "echo" ] && echo && cat $src && echo
+	[ "$try" = "echo" ] && echo && cat $_src && echo
 
 	for file in $host_tar; do
 		$try docker_build_file ${image_name} $file
 	done
 
-	$try \docker build -f $src $buildfrm $build_rm -t ${image_name} .
+	$try \docker build --build-arg "OSAFT_VERSION=$VERSION" \
+		$buildfrm $build_rm -f $_src -t ${image_name} .
 	[ $buildsav -eq 1 ]     && docker_clean
 	[ $host_del -eq 1 ]     && [ -f ${image_save} ] && $try \rm ${image_save}
 	[ $buildtag -eq 1 ]     && $try \docker tag ${image_name} o-saft
