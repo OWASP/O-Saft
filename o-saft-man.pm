@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.207 17/07/22 16:32:08";
+my  $man_SID= "@(#) o-saft-man.pm 1.208 17/08/03 08:21:59";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4823,17 +4823,37 @@ INSTALLATION
 
 DOCKER
 
-        The tool can be used inside a Docker image. With  o-saft-docker and a
-        Dockerfile (both are part of the distribution), a proper Docker image
-        will be build easily. o-saft-docker  can also be used to run commands
-        with $0 inside the Docker image, example:
+        The tool can be used inside a Docker image. To start  $0  inside
+        the Docker image, use following:
 
               o-saft-docker +info some.tld
+        or
+              docker run --rm -it owasp/o-saft +info some.tld
+
+        For more details, please refer to:
+
+              o-saft-docker usage
+              o-saft-docker -help
+
+
+BUILD DOCKER IMAGE
+
+        The Docker image can be installed as follows:
+
+              docker pull owasp/o-saft
+
+        The image can also easily be build from the Dockerfile (which is part
+        of the distribution) as follows:
+
+              o-saft-docker build
+
+        To build the image from the Dockerfile with docker commands, see:
+
+              o-saft-docker -n build
 
         For more details, please refer to:
 
               o-saft-docker -help
-              o-saft-docker usage
 
 
 SEE ALSO
