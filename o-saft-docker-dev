@@ -193,7 +193,7 @@
 #?       debian build   .tgz            wish            -debian -tar=o-saft.tgz
 #?
 #? VERSION
-#?       @(#) o-saft-docker-dev 1.3 17/08/03 23:17:09
+#?       @(#) o-saft-docker-dev 1.4 17/08/04 00:08:13
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -219,10 +219,15 @@ inst_tcl=0
 instwget=1
 host_del=1
 host_tar=""
-hostdate=`date +%y%m%d08/03/17M%S`
+hostdate=`date +%y%m%d08/04/17M%S`
 apt="apk"
-apt_tcl=""
-aptwget=""
+upd="$apt update"
+apt_add="add"
+apt_del="del"
+apt__dev=""
+apt__gcc="gcc make"
+apt__tcl=""
+apt_wget=""
 check_sha256=1
 make_o_saft=1
 make_openssl=
@@ -282,72 +287,75 @@ _dbx_config ()  {
 #    maintainer = $maintainer
 # == packages
 #    apt = $apt
+#    upd = $upd
 #    apt_add    = $apt_add
 #    apt_del    = $apt_del
-#    apt_dev    = $apt_dev
-#    apt_tcl    = $apt_tcl
-#    aptwget    = $aptwget
+#    apt__dev   = $apt__dev
+#    apt__gcc   = $apt__gcc
+#    apt__tcl   = $apt__tcl
+#    apt_wget   = $apt_wget
 #=== internal configuration }
 EoConfig
 }
 
 _cfg_alpine ()  {
+	#? set global variables for alpine
 	_typ="$1"
 	image_from="${image_from:-alpine:3.6}"
 	make_openssl=${make_openssl:-1}
 	make_iosocket=${make_iosocket:-1}
 	make_ssleay=${make_ssleay:-0}
 	apt="apk"
-	apt_upd="echo 'no update'"	# alpine doesn't need it
-	apt_dev="perl perl-net-dns perl-net-ssleay ncurses" # alpine:3.6
-	apt_gcc="musl-dev gcc make zlib-dev"
+	upd="echo 'no update'"	# alpine doesn't need it
+	apt__dev="perl perl-net-dns perl-net-ssleay ncurses" # alpine:3.6
+	apt__gcc="musl-dev gcc make zlib-dev"
 	adduser="adduser -D osaft -h $dir__o_saft"
-	[ $inst_tcl -eq 1 ] && apt_tcl="tcl tk xvfb"
-	[ $instwget -eq 1 ] && aptwget="wget"
+	[ $inst_tcl -eq 1 ] && apt__tcl="tcl tk xvfb"
+	[ $instwget -eq 1 ] && apt_wget="wget"
 	if [ "$_typ" = "alpine:edge" ]; then
 		# dirty hack
-		apt_dev="$apt_dev perl-io-socket-ssl"
+		apt__dev="$apt__dev perl-io-socket-ssl"
 		make_iosocket=0
 	fi
 	#[ -z "$host_tar" ] && wget=wget
 }
 _cfg_debian ()  {
+	#? set global variables for debian
 	image_from="${image_from:-debian:stretch-slim}"
 	make_openssl=${make_openssl:-1}
 	make_iosocket=${make_iosocket:-0}
 	make_ssleay=${make_ssleay:-0}
 	apt="apt"
-	apt_upd="$apt update"
-	apt_dev="libperl5.24 libio-socket-ssl-perl libnet-dns-perl libnet-ssleay-perl"
-	apt_gcc="gcc make"
+	upd="$apt update"
+	apt__dev="libperl5.24 libio-socket-ssl-perl libnet-dns-perl libnet-ssleay-perl"
+	apt__gcc="gcc make"
 	adduser="adduser --disabled-password --gecos '' osaft"
 		# debian's adduser complains if GECOS is missing
-	[ $inst_tcl -eq 1 ] && apt_tcl="wish"
+	[ $inst_tcl -eq 1 ] && apt__tcl="wish"
 		# debian installs X11 with Tcl/Tk, grrr ...
-	[ $instwget -eq 1 ] && aptwget=wget
+	[ $instwget -eq 1 ] && apt_wget=wget
 }
 
 _copy_src ()    {
 	#? return Docker COPY command to get tarball
-	_src=$1
-	_tar=${2:-some.tgz}
-	echo "$_src" | \egrep -q ^http && return;  # return if URL
-	echo "COPY $_src /$_tar"
+	# src=${1}  tar=${2}
+	echo "$1" | \egrep -q ^http && return;  # return if URL
+	echo "COPY $1 /$2"
 }
 
 
 _run_wget ()    {
 	#? return part for Docker RUN command to get tarball
-	_url=$1
-	_tar=${2:-openssl.tgz}
-	echo "$_src" | \egrep -q ^http || return;  # return if not URL
+	# url=${1}  tar=${2}
+	echo "$1" | \egrep -q ^http || return;  # return if not URL
 	cat <<EoRUN
-	wget --no-check-certificate $_url -O $_tar && \\
+	wget --no-check-certificate $1 -O $2 && \\
 EoRUN
 }
 
 _run_sha2 ()    {
 	#? return part for Docker RUN command to check SHA256 checksum
+	# tar=${1}  sha=${2}
 	[ -z $2 ]      && return
 	[ "$2" = "-" ] && return
 	# only generate code if checksum was given
@@ -358,33 +366,32 @@ EoRUN
 
 _run_untar ()   {
 	#? return part for Docker RUN command to extract tarball and cd to dir
-	_tar=$1
-	_dir=${2:-/src_tmp}
-	_tmp=${3:-/tmp}
+	# tar=${1}  sha=${2}  tmp=${3}
 	cat <<EoRUN
-	mkdir    $_dir	&& \\
-	tar   -C $_dir --strip-components=1 -xzf $_tar	&& \\
-	cd       $_dir	&& \\
+	mkdir    $2	&& \\
+	tar   -C $2 --strip-components=1 -xzf $1	&& \\
+	cd       $2	&& \\
 EoRUN
 }
 
+		_run_iosocket $urliosocket $shaiosocket $__tar /iosocket
 _run_iosocket () {
 	#? return Docker RUN command to build IO::Socket::SSL
-	_src=$1
-	_sha=$2
-	_tar=${3:-iosocket.tgz}
-	_dir=${4:-/iosocket}     # not used
-	_tmp=${5:-/src_iosocket}
-	_copy_src  $_src $_tar
+	_src_1=${1}
+	_sha_1=${2}
+	_tar_1=${3:-iosocket.tgz}
+	_dir_1=${4:-/iosocket}     # not used
+	_tmp_1=${5:-/src_iosocket}
+	_copy_src  $_src_1 $_tar_1
 	cat <<EoRUN
 
 # Pull and build IO::Socket::SSL
 RUN \\
 	# pull and extract module
 EoRUN
-	_run_wget  $_src $_tar
-	_run_sha2  $_tar $_sha
-	_run_untar $_tar $_tmp
+	_run_wget  $_src_1 $_tar_1
+	_run_sha2  $_tar_1 $_sha_1
+	_run_untar $_tar_1 $_tmp_1
 	cat <<EoRUN
 	# install development tools
 	$apt $apt_add make		&& \\
@@ -393,32 +400,32 @@ EoRUN
 	make && make test && make install && \\
 	# cleanup
 	$apt $apt_del make		&& \\
-	cd / && rm -r $_tmp		&& \\
+	cd / && rm -r $_tmp_1		&& \\
 EoRUN
 }
 
 _run__openssl () {
 	#? return Docker RUN command to build openssl
-	_src=$1
-	_sha=$3
-	_tar=${3:-openssl.tgz}
-	_dir=${4:-/openssl}
-	_tmp=${5:-/src_openssl}
-	_copy_src  $_src $_tar
+	_src_2=${1}
+	_sha_2=${2}
+	_tar_2=${3:-openssl.tgz}
+	_dir_2=${4:-/openssl}
+	_tmp_2=${5:-/src_openssl}
+	_copy_src  $_src_2 $_tar_2
 	cat <<EoRUN
 
 # Pull and build enhanced openssl
 RUN \\
 	# pull and extract module
 EoRUN
-	_run_wget  $_src $_tar
-	_run_sha2  $_tar $_sha
-	_run_untar $_tar $_tmp
+	_run_wget  $_src_2 $_tar_2
+	_run_sha2  $_tar_2 $_sha_2
+	_run_untar $_tar_2 $_tmp_2
 	cat <<EoRUN
 	# install development tools
-	$apt $apt_add $apt_gcc		&& \\
+	$apt $apt_add $apt__gcc		&& \\
 	# build openssl
-	./config --prefix=$_dir --openssldir=$_dir/ssl \\
+	./config --prefix=$_dir_2 --openssldir=$_dir_2/ssl \\
 		enable-zlib enable-ssl3  enable-rc5  enable-rc2  enable-GOST \\
 		enable-cms  enable-md2   enable-mdc2 enable-ec   enable-ec2m \\
 		enable-ecdh enable-ecdsa enable-seed enable-idea enable-camellia \\
@@ -426,67 +433,67 @@ EoRUN
 		-static experimental-jpake -DOPENSSL_USE_BUILD_DATE	&& \\
 	make depend && make && make report && make install		&& \\
 	# simple test
-	echo -e "# number of ciphers $_dir/bin/openssl: "		&& \\
-	$_dir/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l	&& \\
+	echo -e "# number of ciphers $_dir_2/bin/openssl: "		&& \\
+	$_dir_2/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l	&& \\
 	# cleanup
-	$apt $apt_del $apt_gcc		&& \\
-	cd / && rm -r $_tmp		&& \\
+	$apt $apt_del $apt__gcc		&& \\
+	cd / && rm -r $_tmp_2		&& \\
 EoRUN
 }
 
 _run_osaftrc () {
 	#? return partial command to patch .o-saft.pl
-	_dir=${1:-/O-Saft}
+	_dir_8=${1:-/O-Saft}
 	_openssl=${2:-/openssl}
 	cat <<EoRUN
-        mv        $_dir/.o-saft.pl $_dir/.o-saft.pl-orig	&& \
+        mv        $_dir_8/.o-saft.pl $_dir_8/.o-saft.pl-orig	&& \
         sed -e "s:^#--openssl=.*:--openssl=$_openssl/bin/openssl:" \
-                < $_dir/.o-saft.pl-orig \
-                > $_dir/.o-saft.pl	&& \
+                < $_dir_8/.o-saft.pl-orig \
+                > $_dir_8/.o-saft.pl	&& \
 EoRUN
 }
 
 _run_osaft ()   {
 	#? return Docker RUN command to build /O-Saft
-	_src=$1
-	_sha=$2
-	_tar=${3:-o-saft}
-	_dir=${4:-/O-Saft}
-	_copy_src  $_src $_tar
+	_src_9=${1}
+	_sha_9=${2}
+	_tar_9=${3:-o-saft}
+	_dir_9=${4:-/O-Saft}
+	_copy_src  $_src_9 $_tar_9
 	cat <<EoRUN
 
 # Install O-Saft
 RUN \\
 EoRUN
-	_run_wget  $_src $_tar
-	_run_sha2  $_tar $_sha
+	_run_wget  $_src_9 $_tar_9
+	_run_sha2  $_tar_9 $_sha_9
 	cat <<EoRUN
         \\
-        tar   -xzf $_tar		&& \\
-        chown -R root:root   $_dir		&& \\
-        chown    osaft:osaft $_dir		&& \\
-        chown -R osaft:osaft $_dir/contrib	&& \\
-        chown    osaft:osaft $_dir/.o-saft.pl	&& \\
+        tar   -xzf $_tar_9		&& \\
+        chown -R root:root   $_dir_9		&& \\
+        chown    osaft:osaft $_dir_9		&& \\
+        chown -R osaft:osaft $_dir_9/contrib	&& \\
+        chown    osaft:osaft $_dir_9/.o-saft.pl	&& \\
 EoRUN
-	_run_osaftrc $_dir /openssl
-        echo "	chmod 666 $_dir/.o-saft.pl	&& \\"
+	_run_osaftrc $_dir_9 /openssl
+        echo "	chmod 666 $_dir_9/.o-saft.pl	&& \\"
 }
 
 dockerfile ()   {
 	# generate a Dockerfile; for options see general description above
-	path='$PATH'    # avoid \\ in strings
+	_path='$PATH'   # avoid \\ in strings
 
 	cat <<EoDockerfile
 #!/usr/bin/docker build --force-rm --rm -f
 FROM    $image_from
 $maintainer
-LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.3"
+LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.4"
 
 ENV     o-saft-docker-build.$hostdate "$0 $args"
 ENV     TERM xterm
-ENV     PATH ${dir__o_saft}:${dir__o_saft}/contrib:${dir_openssl}/bin:$path
+ENV     PATH ${dir__o_saft}:${dir__o_saft}/contrib:${dir_openssl}/bin:$_path
 
-RUN     $apt_upd && $apt $apt_add $apt_dev $apt_tcl $aptwget
+RUN     $upd && $apt $apt_add $apt__dev $apt__tcl $apt_wget
 WORKDIR /
 RUN     $adduser
 EoDockerfile
@@ -515,7 +522,7 @@ WORKDIR ${dir__o_saft}
 USER    osaft
 RUN     o-saft-docker usage
 ENTRYPOINT ["perl", "${dir__o_saft}/o-saft.pl"]
-CMD     ["--norc", "--help=docker"]
+CMD     ["--norc",  "--help=docker"]
 EoDockerfile
 }
 
@@ -527,17 +534,18 @@ docker_clean () {
 
 docker_build_file () {
 	name="$1"; shift
-	file="$1"; shift
+	_file_f="$2"; shift
+	_dir_f=""
 
-	_src=./tmp-Dockerfile
+	_dockerfile_f=./tmp-Dockerfile
 	make=`perl -ne 'print if m(# build {)..m(# build })' Dockerfile`
 
-	cat > $_src <<EoDockerfile
+	cat > $_dockerfile_f <<EoDockerfile
 FROM  $name
-LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.3" \
-	SOURCE="$file"
+LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.4" \
+	SOURCE="$_file_f"
 WORKDIR /
-COPY  $file /
+COPY  $_file_f /
 USER  root
 RUN   $apt $apt_add
 RUN   $make
@@ -546,35 +554,35 @@ ENV   o-saft-docker-build.$hostdate "$0 $args"
 EoDockerfile
 
 	$try \docker build --build-arg "OSAFT_VERSION=$VERSION" \
-		$buildfrm $build_rm -f $_src .
+		$buildfrm $build_rm -f $_dockerfile_f .
 
-	if [-d $dir ]; then
+	if [-d $_dir_f ]; then
 		echo
 	fi
 }
 
 docker_build () {
 	# create an image; for options see general description above
-	_src=$host_tmp/$dockerfile
+	_dockerfile_b=$host_tmp/$dockerfile
 #	while [ $# -gt 0 ]; do
 #		case "$1" in
-#       		   *)  _src=$1;    break; ;;
+#       		   *)  _dockerfile_b=$1;    break; ;;
 #		esac
 #		shift
 #	done
 
 # für Osaft: wenn ein .tar-File da ist, das benutzen statt wget
-#   betrifft: osaft.tgz iosocket.tgz openssl.tgz $aptwget
-	dockerfile > $_src
+#   betrifft: osaft.tgz iosocket.tgz openssl.tgz $apt_wget
+	dockerfile > $_dockerfile_b
 
-	[ "$try" = "echo" ] && echo && cat $_src && echo
+	[ "$try" = "echo" ] && echo && cat $_dockerfile_b && echo
 
 	for file in $host_tar; do
-		$try docker_build_file ${image_name} $file
+		$try docker_build_file ${image_name} $_dockerfile_b
 	done
 
 	$try \docker build --build-arg "OSAFT_VERSION=$VERSION" \
-		$buildfrm $build_rm -f $_src -t ${image_name} .
+		$buildfrm $build_rm -f $_dockerfile_b -t ${image_name} .
 	[ $buildsav -eq 1 ]     && docker_clean
 	[ $host_del -eq 1 ]     && [ -f ${image_save} ] && $try \rm ${image_save}
 	[ $buildtag -eq 1 ]     && $try \docker tag ${image_name} o-saft
