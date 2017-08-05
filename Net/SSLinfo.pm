@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.194 17/08/02 08:51:42',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.195 17/08/05 15:30:19',
 };
 
 ######################################################## public documentation #
@@ -970,7 +970,7 @@ my %_SSLinfo= ( # our internal data structure
     'session_protocol'  => "",  # SSL-Session Protocol
     # following from HTTP(S) request
     'https_protocols'   => "",  # HTTPS Alternate-Protocol header
-    'https_svc'         => "",  # HTTPS Alt-Svc header
+    'https_svc'         => "",  # HTTPS Alt-Svc, X-Firefox-Spdy header
     'https_body'        => "",  # HTTPS response (HTML body)
     'https_status'      => "",  # HTTPS response (aka status) line
     'https_server'      => "",  # HTTPS Server header
@@ -979,7 +979,7 @@ my %_SSLinfo= ( # our internal data structure
     'https_refresh'     => "",  # HTTPS Refresh header send by server
     'https_pins'        => "",  # HTTPS Public Key Pins header
     'http_protocols'    => "",  # HTTP Alternate-Protocol header
-    'http_svc'          => "",  # HTTP Alt-Svc header
+    'http_svc'          => "",  # HTTP Alt-Svc, X-Firefox-Spdy header
     'http_status'       => "",  # HTTP response (aka status) line
     'http_location'     => "",  # HTTP Location header send by server
     'http_refresh'      => "",  # HTTP Refresh header send by server
@@ -2194,6 +2194,8 @@ sub do_ssl_open($$$@) {
         if ($Net::SSLinfo::use_http > 0) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x'; # TODO: <== some servers behave strange if a wrong hostname is passed
+            # TODO: test with a browser User-Agent
+            my $ua = "User-Agent: Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0";
             my $response = "";
             my $request  = "GET / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n";
 # $t1 = time();
@@ -2221,10 +2223,10 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'https_status'}   =~ s/[\r\n].*$//ms; # get very first line
             $_SSLinfo{'https_server'}   =  _header_get('Server',   $response);
             $_SSLinfo{'https_refresh'}  =  _header_get('Refresh',  $response);
-            $_SSLinfo{'https_pins'}     =  _header_get('Public-Key-Pins', $response);
+            $_SSLinfo{'https_pins'}     =  _header_get('Public-Key-Pins',    $response);
             $_SSLinfo{'https_protocols'}=  _header_get('Alternate-Protocol', $response);
             $_SSLinfo{'https_svc'}      =  _header_get('Alt-Svc',  $response);
-            $_SSLinfo{'https_svc'}      .= _header_get('X-Firefox-Spdy',  $response);
+            $_SSLinfo{'https_svc'}      .= _header_get('X-Firefox-Spdy',     $response);
             $_SSLinfo{'https_sts'}      =  _header_get('Strict-Transport-Security', $response);
             $_SSLinfo{'hsts_httpequiv'} =  $_SSLinfo{'https_body'};
             $_SSLinfo{'hsts_httpequiv'} =~ s/.*?(http-equiv=["']?Strict-Transport-Security[^>]*).*/$1/ims;
@@ -2237,12 +2239,15 @@ sub do_ssl_open($$$@) {
 # TODO: HTTP header:
 #    X-Firefox-Spdy: 3.1
 #    X-Firefox-Spdy: h2             (seen at policy.mta-sts.google.com 9/2016)
+#           X-Firefox-Spdy  most likely returned only for proper User-Agent
             _trace("\n$response \n# do_ssl_open HTTPS }");
             _trace("do_ssl_open HTTP {");   # HTTP uses its own connection ...
             my %headers;
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) = Net::SSLeay::get_http($host, 80, '/',
                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
+                 # TODO: test with a browser User-Agent
+                 # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
             );
                 # Net::SSLeay 1.58 (and before)
                 # Net::SSLeay::get_http() may return:
@@ -2266,7 +2271,8 @@ sub do_ssl_open($$$@) {
                 $_SSLinfo{'http_location'}  =  $headers{(grep{/^Location$/i} keys %headers)[0] || ""};
                 $_SSLinfo{'http_refresh'}   =  $headers{(grep{/^Refresh$/i}  keys %headers)[0] || ""};
                 $_SSLinfo{'http_sts'}       =  $headers{(grep{/^Strict-Transport-Security$/i} keys %headers)[0] || ""};
-                $_SSLinfo{'http_svc'}       =  $headers{(grep{/^Alt-Svc$/i} keys %headers)[0]  || ""};
+                $_SSLinfo{'http_svc'}       =  $headers{(grep{/^Alt-Svc$/i}  keys %headers)[0] || ""} || "";
+                $_SSLinfo{'http_svc'}      .=  $headers{(grep{/^X-Firefox-Spdy$/i}    keys %headers)[0] || ""} || "";
                 $_SSLinfo{'http_protocols'} =  $headers{(grep{/^Alternate-Protocol/i} keys %headers)[0] || ""};
                 # TODO: http_protocols somtimes fails, reason unknown (03/2015)
             } else { # any status code > 500
@@ -3153,7 +3159,7 @@ Get HTTPS Alterenate-Protocol header.
 
 =head2 https_svc( )
 
-Get HTTPS Alt-Svc header.
+Get HTTPS Alt-Svc and X-Firefox-Spdy header.
 
 =head2 https_body( )
 
@@ -3181,7 +3187,7 @@ Get HTTP Alterenate-Protocol header.
 
 =head2 http_svc( )
 
-Get HTTP Alt-Svc header.
+Get HTTP Alt-Svc and X-Firefox-Spdy header.
 
 =head2 http_status( )
 
