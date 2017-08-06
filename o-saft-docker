@@ -1,7 +1,7 @@
 #!/bin/sh
 #?
 #? NAME
-#?       $0 - wrapper script to call O-Saft in a Docker image
+#?       $0 - wrapper script to handle O-Saft in a Docker image
 #?
 #? SYNOPSIS
 #?       $0
@@ -10,6 +10,7 @@
 #?       $0 shell
 #?       $0 status
 #?       $0 rmi
+#?       $0 apk  package
 #?       $0 gui
 #?       $0 call /path/to/program [arguments]
 #?       $0 [options and commands of o-saft.pl]
@@ -24,17 +25,18 @@
 #?
 #? QUICKSTART
 #?       The main purpose of this wrapper is to provide a very simple call of
-#?       o-saft.pl  in a running Docker image. It is the default mode.
+#?       o-saft.pl  in a running O-Saft Docker image. It is the default mode.
 #?       Example:
 #?           $0 +info your.tld
 #?
 #? DESCRIPTION
-#?       This is a multipurpose wrapper for running O-Saft in a Docker image.
+#?       This is a multipurpose wrapper to handle O-Saft in a Docker image.
 #?       It can operate in following modes:
 #?           build   - build the complete Docker image for O-Saft
 #?           usage   - print the initial usage message for O-Saft in Docker
 #?           status  - show various information about O-Saft Docker image
 #?           rmi     - remove O-Saft Docker image(s)
+#?           apk     - add and commit packages in O-Saft Docker image
 #?           shell   - run a shell (/bin/sh) in Docker image
 #?           root    - run a shell (/bin/sh) as user root in Docker image
 #?           call    - run specified program with arguments in Docker image
@@ -51,6 +53,9 @@
 #?       be used to redifine the (registry:tag) name to be used, for example:
 #?           owasp/o-saft:4711
 #?
+#?       If any other mode than the default is used, please see  WARNING  and
+#?       SECURITY  below.
+#?
 #? TERMINOLOGY
 #?
 #?   Docker vs. docker
@@ -59,15 +64,16 @@
 #?
 #?   mode vs. command
 #?       We use the term "mode" for our script,  which is similar to the term
-#?       "command" for Docker. This is to distingush our commands (mode) from
+#?       "command" of Docker. This is to distinguish the commands herein from
 #?       those of Docker.
 #?
 #? MODES
 #?       Modes are simply an alias  to call  docker  with the proper commands
-#?       and options for the  O-Saft  image. Most modes (exception: build and
-#?       status) use the command:     "docker run ...".
+#?       and options for the  O-Saft Docker image. Most modes use the command
+#?       "docker run --rm ...".
 #?       This wrapper ensures that the proper O-Saft image within Docker will
-#?       be used by passing the proper  "repository:tag"  image id.
+#?       be used by passing the correct  "repository:tag"  image id (default:
+#?       owasp/o-saft).
 #?
 #?       The modes are:
 #?
@@ -90,6 +96,11 @@
 #?       ./Dockerfile is missing following will be used:
 #?           https://github.com/OWASP/O-Saft/raw/master/Dockerfile
 #?
+#?   apk
+#?       Add and commit the specified packages in O-Saft Docker image.
+#?       Note that this creates a new layer for the O-Saft Docker image.
+#?       For more advanced mode, please refer to  o-saft-docker-dev.
+#?
 #?   rmi
 #?       Remove all O-Saft images, including tagged images.
 #?
@@ -104,25 +115,26 @@
 #?       which otherwise will always be executed.
 #?
 #?   root
-#?       Same as mode  shell  , but login as user root.
+#?       Same as mode  shell, but login as user root.
 #?
 #?   call
 #?       Execute specified program (must be full path) with given arguments.
 #?       This might be usefull to retrieve other information  from the image,
 #?       i.e. O-Saft  itself uses it to get the environment variables set in 
 #?       the image:
-#?           $0 call /bin/env
+#?           $0 call /usr/bin/env
 #?
 #?   status
 #?       Show various information about O-Saft Docker image.
 #?
+#? WARNING
+#?       It is highly recommended to  *not* use the created image as base for
+#?       other Docker images. Also,  do *not*  use openssl from the image for
+#?       other purpose than O-Saft intends.
+#?
 #? SECURITY
 #?       When working with Docker images, at least two types of security have
 #?       to be observed.
-#?
-#?       WARNING:  it is highly recommended to *not* use the created image as
-#?                 base for other Docker images, or even run openssl from the
-#?                 image for other purpose than O-Saft intends.
 #?
 #?       It is rather difficult to create a secure Docker image, at least the
 #?       pulled files (Dockerfile, image, other sources) must be trusted.
@@ -172,8 +184,11 @@
 #?       To get the build-in defaults use:
 #?           $0 status
 #?
+#? SEE ALSO
+#?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
+#?
 #? VERSION
-#?       @(#) o-saft-docker 1.12 17/08/03 22:55:07
+#?       @(#) o-saft-docker 1.14 17/08/06 21:55:25
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -202,6 +217,7 @@ EoHacker
 }
 
 docker_usage () {
+	# TODO: env|grep osaft_vm_build
 	cat << EoDescription
 
 	O-Saft docker image is ready to run o-saft.pl, use:
@@ -223,14 +239,18 @@ docker_status () {
  	image_id=`\docker images -q ${image_name}`
 	cat << EoStatus
 # using environment ...
+#     OSAFT_VERSION      = $OSAFT_VERSION
 #     o_saft_docker_name = $o_saft_docker_name
-#     o_saft_docker_tag = $o_saft_docker_tag
+#     o_saft_docker_tag  = $o_saft_docker_tag
 
-# using registry name  ${registry}  and  tag  ${tag}  =  ${image_name}
+# using ...
+#     registry name = ${registry}
+#     tag           = ${tag}
+#?    registry:tag  = ${image_name}
 
 # docker image id for ${image_name} is  $image_id
 
-# docker images for ${registry} ...
+# docker images for   ${registry} ...
 EoStatus
 
 	# list matching images
@@ -294,7 +314,21 @@ docker_root ()  {
 	$try \docker run --rm -it --entrypoint=/bin/sh -u root ${image_name}
 }
 
-docker_rmi   () {
+docker_apk  ()  {
+	shift
+	if [ "`\docker images -qa ${image_name} |\wc -w`" -ne 1 ]; then
+		echo "**ERROR: to many matching images for '${image_name}'; exit"
+		#exit 2
+	fi
+	_container="o-saft-apk"
+	$try \docker run -t --user root --entrypoint=/sbin/apk \
+		--name      ${_container} ${image_name} add --no-cache $@
+	#dbx# \docker images
+	$try \docker commit -m "add $@" ${_container} ${image_name}
+	$try \docker rm     ${_container} 
+}
+
+docker_rmi  ()  {
 	# parameters can only be the options for Docker's rmi command
 	shift
 	_ids=`\docker images -q ${registry}` # ${image_name}
@@ -332,6 +366,7 @@ while [ $# -gt 0 ]; do
 	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
 	  'gui')    docker_gui  $@; exit 0; ;;
+	  'apk')    docker_apk  $@; exit 0; ;;
 	  'rmi')    docker_rmi  $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
 	  'shell')  docker_shell;   exit 0; ;;
