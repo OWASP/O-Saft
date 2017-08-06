@@ -163,6 +163,9 @@
 #?       Options for this script are with a single - (dash) only, because the
 #?       same options with double  --  exist for  o-saft.pl. See  LIMITATIONS
 #?       below also.
+#
+#        We do not use shortcut commands for docker like run, rmi, save, etc.
+#        because they are depricated according docker docukentation.
 #?
 #? LIMITATIONS
 #?       The options  -n  -v  -id=ID  and  -help  must be specified  leftmost
@@ -188,7 +191,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.14 17/08/06 21:55:25
+#?       @(#) o-saft-docker 1.15 17/08/06 22:21:44
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -236,7 +239,7 @@ EoDescription
 }
 
 docker_status () {
- 	image_id=`\docker images -q ${image_name}`
+ 	image_id=`\docker image ls -q ${image_name}`
 	cat << EoStatus
 # using environment ...
 #     OSAFT_VERSION      = $OSAFT_VERSION
@@ -254,14 +257,14 @@ docker_status () {
 EoStatus
 
 	# list matching images
-	$try \docker images ${registry};   # will be listed below again
+	$try \docker image ls ${registry}; # will be listed below again
 	# list related (tagged) images
-	for _id in `\docker images -q ${registry}` ; do
-		$try \docker images | \grep "$_id"
+	for _id in  `\docker image ls -q ${registry}` ; do
+		$try \docker image ls | \grep "$_id"
 	done;
 	echo
 	echo "# docker processes ..."
-	$try \docker ps -a
+	$try \docker container ls -a
 
 	echo ""
 	echo "# O-Saft docker image ..."
@@ -279,23 +282,23 @@ docker_build () {
 	_cfg=./Dockerfile
 	[ ! -e $_cfg ] && $try \wget ${dockerfile} -O $_cfg
 	_tar=o-saft_docker.tar
-	$try \docker build -f ./Dockerfile --force-rm --rm -t ${image_name} \
+	$try \docker image build -f ./Dockerfile --force-rm --rm -t ${image_name} \
 		--build-arg "OSAFT_VERSION=$VERSION" .	&& \
-	$try \docker save  -o $_tar ${image_name}	&& \
-	$try \docker rmi   `$try docker images -q ${image_name}` && \
-	$try \docker load  -i $_tar && \
-	$try \rm              $_tar && \
-	$try \docker tag   ${image_name} o-saft
+	$try \docker image save  -o $_tar ${image_name}	&& \
+	$try \docker image rm    `$try docker image ls -q ${image_name}` && \
+	$try \docker image load  -i $_tar && \
+	$try \rm                    $_tar && \
+	$try \docker image tag   ${image_name} o-saft
 }
 
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
         # expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
-	$try \docker run --rm -it ${image_name} $@
+	$try \docker container run --rm -it ${image_name} $@
 }
 
 docker_gui   () {
-	$try \docker run --rm -it --entrypoint=/O-Saft/o-saft.tcl \
+	$try \docker container run --rm -it --entrypoint=/O-Saft/o-saft.tcl \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
 
@@ -303,35 +306,35 @@ docker_call ()  {
 	shift
 	cmd="$1"
 	shift
-	$try \docker run --rm -it --entrypoint=$cmd    ${image_name} $@
+	$try \docker container run --rm -it --entrypoint=$cmd    ${image_name} $@
 }
 
 docker_shell () {
-	$try \docker run --rm -it --entrypoint=/bin/sh ${image_name}
+	$try \docker container run --rm -it --entrypoint=/bin/sh ${image_name}
 }
 
 docker_root ()  {
-	$try \docker run --rm -it --entrypoint=/bin/sh -u root ${image_name}
+	$try \docker container run --rm -it --entrypoint=/bin/sh -u root ${image_name}
 }
 
 docker_apk  ()  {
 	shift
-	if [ "`\docker images -qa ${image_name} |\wc -w`" -ne 1 ]; then
+	if [ "`\docker image ls -qa ${image_name} |\wc -w`" -ne 1 ]; then
 		echo "**ERROR: to many matching images for '${image_name}'; exit"
 		#exit 2
 	fi
-	_container="o-saft-apk"
-	$try \docker run -t --user root --entrypoint=/sbin/apk \
-		--name      ${_container} ${image_name} add --no-cache $@
-	#dbx# \docker images
-	$try \docker commit -m "add $@" ${_container} ${image_name}
-	$try \docker rm     ${_container} 
+	_id="o-saft-apk"
+	$try \docker container run -t --user root --entrypoint=/sbin/apk \
+		--name ${_id} ${image_name} add --no-cache $@
+	#dbx# \docker image ls
+	$try \docker container commit -m "add $@" ${_id} ${image_name}
+	$try \docker container rm ${_id} 
 }
 
 docker_rmi  ()  {
 	# parameters can only be the options for Docker's rmi command
 	shift
-	_ids=`\docker images -q ${registry}` # ${image_name}
+	_ids=`\docker image ls -q ${registry}` # ${image_name}
 	echo "# image ISs to be deleted: $_ids "
 	# need to find all images, including referenced images, that done
 	# with "images" command, then extract all lines with matching IDs
@@ -339,12 +342,12 @@ docker_rmi  ()  {
 	# Note: "docker images" should return newest image on top, hence
 	#       all images which just represent a tag (alias) come first
 	#       and will be deleted first
-	\docker images | while read _any ; do
+	\docker image ls | while read _any ; do
 		for _id in $_ids ; do
 			_img=`echo "$_any" | \awk "/$_id/"'{print $1}'`
 			#dbx# echo "  ID  $_any : $_id : $_img"
 			[ -z "$_img" ] && continue  # other image
-			$try \docker rmi $@ $_img
+			$try \docker image rm $@ $_img
 		done
 	done;
 }
