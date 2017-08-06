@@ -193,7 +193,7 @@
 #?       debian build   .tgz            wish            -debian -tar=o-saft.tgz
 #?
 #? VERSION
-#?       @(#) o-saft-docker-dev 1.4 17/08/04 00:08:13
+#?       @(#) o-saft-docker-dev 1.5 17/08/06 22:29:42
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -201,7 +201,7 @@
 # -----------------------------------------------------------------------------
 
 try=
-cmd=unknonw
+cmd=unknown
 
 VERSION="${OSAFT_VERSION:-17.07.17}"
 registry="${o_saft_docker_name}"; registry="${registry:-owasp/o-saft}"
@@ -219,7 +219,7 @@ inst_tcl=0
 instwget=1
 host_del=1
 host_tar=""
-hostdate=`date +%y%m%d08/04/17M%S`
+hostdate=`date +%y%m%d08/06/17M%S`
 apt="apk"
 upd="$apt update"
 apt_add="add"
@@ -487,7 +487,7 @@ dockerfile ()   {
 #!/usr/bin/docker build --force-rm --rm -f
 FROM    $image_from
 $maintainer
-LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.4"
+LABEL   VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.5"
 
 ENV     o-saft-docker-build.$hostdate "$0 $args"
 ENV     TERM xterm
@@ -527,9 +527,9 @@ EoDockerfile
 }
 
 docker_clean () {
-	$try \docker save  -o ${image_save} ${image_name}
-	$try \docker rmi      `$try docker images -q ${image_name}`
-	$try \docker load  -i ${image_save}
+	$try \docker image save  -o ${image_save} ${image_name}
+	$try \docker image rm    `$try docker image ls -q ${image_name}`
+	$try \docker image load  -i ${image_save}
 }
 
 docker_build_file () {
@@ -542,7 +542,7 @@ docker_build_file () {
 
 	cat > $_dockerfile_f <<EoDockerfile
 FROM  $name
-LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.4" \
+LABEL VERSION="$image_tag" DESCRIPTION="O-Saft docker image build by $0 1.5" \
 	SOURCE="$_file_f"
 WORKDIR /
 COPY  $_file_f /
@@ -553,7 +553,7 @@ RUN   $apt $apt_del
 ENV   o-saft-docker-build.$hostdate "$0 $args"
 EoDockerfile
 
-	$try \docker build --build-arg "OSAFT_VERSION=$VERSION" \
+	$try \docker image build --build-arg "OSAFT_VERSION=$VERSION" \
 		$buildfrm $build_rm -f $_dockerfile_f .
 
 	if [-d $_dir_f ]; then
@@ -581,19 +581,19 @@ docker_build () {
 		$try docker_build_file ${image_name} $_dockerfile_b
 	done
 
-	$try \docker build --build-arg "OSAFT_VERSION=$VERSION" \
+	$try \docker image build --build-arg "OSAFT_VERSION=$VERSION" \
 		$buildfrm $build_rm -f $_dockerfile_b -t ${image_name} .
 	[ $buildsav -eq 1 ]     && docker_clean
 	[ $host_del -eq 1 ]     && [ -f ${image_save} ] && $try \rm ${image_save}
-	[ $buildtag -eq 1 ]     && $try \docker tag ${image_name} o-saft
+	[ $buildtag -eq 1 ]     && $try \docker image tag ${image_name} o-saft
 }
 
 docker_pull () {
-	$try \docker pull $@
+	$try \docker image pull $@
 }
 
 docker_load () {
-	$try \docker load $@
+	$try \docker image load $@
 }
 
 my_help ()      {
