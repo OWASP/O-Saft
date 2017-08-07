@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.07.31',
+    SSLINFO_VERSION => '17.08.06',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.195 17/08/05 15:30:19',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.196 17/08/08 01:14:23',
 };
 
 ######################################################## public documentation #
@@ -732,6 +732,11 @@ sub _setcommand {
         chomp $cmd;
         _trace("_setcommand: $command = $cmd");
         $cmd = "$command";
+        if ($cmd =~ m#timeout$#) {
+            # some timout implementations require -t option, i.e. BusyBox v1.26.2
+            # hence we check if it works with -t and add it
+            qx($cmd -t 2 pwd) and $cmd = "$cmd -t ";
+        }
     } else {
         _trace("_setcommand: $command = ''");
         $cmd = "";  # i.e. Mac OS X does not have timeout by default; can work without ...
