@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.735 17/07/26 15:37:38",
-    STR_VERSION => "17.07.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.736 17/08/08 01:36:38",
+    STR_VERSION => "17.08.06",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -2343,6 +2343,7 @@ sub _init_openssldir    {
     # $cmd{'openssl'} not passed as parameter, as it will be changed here
     my $dir = qx($cmd{'openssl'} version -d);   # get something like: OPENSSLDIR: "/usr/local/openssl"
     chomp $dir;
+        # if qx() above failed, we get: Use of uninitialized value $dir in ...
     my $status  = $?;
     my $error   = $!;
     my $capath  = "";
@@ -6062,6 +6063,7 @@ sub printversion() {
     # SEE Note:OpenSSL:Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
     print( "=== $0 $VERSION ===");
+    print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
     print( "    Net::SSLeay::");    # next two should be identical
     printf("       ::OPENSSL_VERSION_NUMBER()    0x%x (%s)\n", $version_openssl, $version_openssl);
     printf("       ::SSLeay()                    0x%x (%s)\n", __SSLeay(), __SSLeay());
