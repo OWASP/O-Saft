@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.196 17/08/08 01:14:23',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.197 17/08/08 01:25:21',
 };
 
 ######################################################## public documentation #
@@ -735,7 +735,8 @@ sub _setcommand {
         if ($cmd =~ m#timeout$#) {
             # some timout implementations require -t option, i.e. BusyBox v1.26.2
             # hence we check if it works with -t and add it
-            qx($cmd -t 2 pwd) and $cmd = "$cmd -t ";
+            qx($cmd -t 2 pwd 2>&1);
+            $cmd = "$cmd -t " if ($? == 0);
         }
     } else {
         _trace("_setcommand: $command = ''");
