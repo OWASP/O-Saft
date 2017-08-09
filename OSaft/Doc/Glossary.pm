@@ -13,8 +13,8 @@ use strict;
 use warnings;
 use Readonly;
 
-Readonly our $VERSION   => "17.07.01";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Glossary.pm 1.2 17/07/03 23:01:43";
+Readonly our $VERSION   => "17.08.17";  # official verion number of tis file
+Readonly my  $SID       => "@(#) Glossary.pm 1.3 17/08/09 14:55:01";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -259,6 +259,7 @@ Goldilocks	see Curve448
 GOST	Gossudarstwenny Standard (block cipher)
 Grainv1	stream cipher (64-bit IV)
 Grainv128	stream cipher (96-bit IV)
+GREASE	Generate Random Extensions And Sustain Extensibility
 HAIFA	HAsh Iterative FrAmework
 hash127	fast hash function (by Dan Bernstein)
 HAVAL	one-way hashing
