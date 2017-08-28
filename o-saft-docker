@@ -191,7 +191,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.15 17/08/06 22:21:44
+#?       @(#) o-saft-docker 1.16 17/08/28 08:12:11
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -207,16 +207,31 @@ try=
 exe=o-saft.pl
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
 
-docker_hacker () {
-	cat << EoHacker
-
-	To use the GUI  o-saft.tcl  inside Docker, additionl packages need to
-	be installed. For Docker image based on alpine, following works:
-
-		$0 root
-		apk add tcl tk xvfb
-
-EoHacker
+check_image_name () {
+	#? check if image with configured registry:tag exists; exit otherwise
+	# This tool does not allow automatic pull by default.
+	# Most (all?) Docker commands automatically try to pull the specified
+	# image if it does not exist.  More worse, while some Docker commands
+	# use any matching registry name  (run without --entrypoint=), others
+	# require that the registry:tag name exists (run with --entrypoint=).
+	# Unfortunately Docker  does not provide  any option or configuration
+	# to inhibit such automatic pulls.
+	# This function tries to find existing images matching the configured
+	# image (name). The function exits the script if the found image name
+	# does not equal the configured image name.
+	# This function should be called before most docker commands.
+	#dbx#  \docker image ls ${image_name} -q | \wc -w
+	is_id=`\docker image ls ${image_name} -q | \wc -w`
+	if [ "${is_id}" -ne 1 ]; then
+		echo "**ERROR: given image '${image_name}' does not match found image(s)" # '${is_id}'"
+	fi
+		for tag in `\docker image ls ${image_name} | \awk '/^REPOSITORY/{next}{print $2}'` ; do
+			# varaiable tag is the same as the global one!
+			echo "#        consider using  option -id=${image_name}:$tag  or  -tag=$tag"
+		done
+		#exit
+	#echo $tag
+	#exit
 }
 
 docker_usage () {
@@ -236,6 +251,18 @@ docker_usage () {
 		o-saft.tcl --docker
 
 EoDescription
+}
+
+docker_hacker () {
+	cat << EoHacker
+
+	To use the GUI  o-saft.tcl  inside Docker, additionl packages need to
+	be installed. For Docker image based on alpine, following works:
+
+		$0 root
+		apk add tcl tk xvfb
+
+EoHacker
 }
 
 docker_status () {
@@ -349,7 +376,7 @@ docker_rmi  ()  {
 			[ -z "$_img" ] && continue  # other image
 			$try \docker image rm $@ $_img
 		done
-	done;
+	done
 }
 
 my_help ()      {
@@ -357,14 +384,29 @@ my_help ()      {
 	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 }
 
+# first check for options
+while [ $# -gt 0 ]; do
+	case "$1" in
+	  '-n')     try=echo; ;;
+	  '-v')     set -x  ; ;;
+	  -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
+	            image_name="${registry}:$tag" 
+	            ;;
+	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
+	  '-help')  my_help;        exit 0; ;;
+	  *)        break;  ;;
+	esac
+	shift
+done
+
+# FIXME: following not necessary for usage, 
+check_image_name;   # may exit, see description there
+
 # NOTE: All functions may use ${registry} and ${image_name}, which are global
 #       variables. We do not pass these values as parameters to the functions
 #       because we want $@ (all parameters of this script) in the functions
 while [ $# -gt 0 ]; do
 	case "$1" in
-	  '-n')     try=echo; ;;
-	  '-v')     set -x  ; ;;
-	  '-help')  my_help;        exit 0; ;;
 	  'build')  docker_build;   exit 0; ;;
 	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
@@ -376,9 +418,6 @@ while [ $# -gt 0 ]; do
 	  'status') docker_status;  exit 0; ;;
 	  'hacker') docker_hacker;  exit 0; ;;
 #          -registry=*) registry=  # not supported, as this is for O-Saft only
-          -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
-	            image_name="${registry}:$tag" ; ;;
-          -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
           '--')     shift; break; ;;
           *)               break; ;;
 	esac
