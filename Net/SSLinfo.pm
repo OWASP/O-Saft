@@ -3394,7 +3394,7 @@ sub verify_altname  {
         }
         $rex =~ s/[.]/\\./g;
         if ($name =~ m/[*]/) {
-            $rex =~ s/(\*)/.*?/;
+            $rex =~ s/(\*)/[^.]*/;
         }
         _trace("verify_altname: $host =~ $rex ");
         if ($host =~ /^$rex$/) {
