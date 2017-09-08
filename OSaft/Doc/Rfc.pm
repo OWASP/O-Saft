@@ -14,7 +14,7 @@ use warnings;
 use Readonly;
 
 Readonly our $VERSION   => "17.07.01";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Rfc.pm 1.2 17/07/04 07:38:19";
+Readonly my  $SID       => "@(#) Rfc.pm 1.3 17/09/08 20:05:18";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -209,4 +209,6 @@ url	http://tools.ietf.org/
 7627	TLS Session Hash and Extended Master Secret Extension
 7905	ChaCha20-Poly1305 Cipher Suites for TLS
 1135	The Helminthiasis of the Internet
+6698	DNS-Based Authentication of Named Entities (DANE)
+6844	DNS Certification Authority Authorization (CAA) Resource Record
 
