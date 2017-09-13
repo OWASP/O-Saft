@@ -50,7 +50,8 @@
 #?       can be used to identify the image, see  -tag=TAG  option, i.e.
 #?           $0 -tag=17.07.17 +info your.tld
 #?       will use the name:  owasp/o-saft:17.07.17 .  The  -id=ID  option can
-#?       be used to redifine the (registry:tag) name to be used, for example:
+#?       be used to redefine the (registry:tag) name to be used completely.
+#?       For example:
 #?           owasp/o-saft:4711
 #?
 #?       If any other mode than the default is used, please see  WARNING  and
@@ -59,11 +60,11 @@
 #? TERMINOLOGY
 #?
 #?   Docker vs. docker
-#?       We use the term "Docker" when the Docker system in general is meant.
+#?       The term "Docker" is used when the Docker system in general is meant.
 #?       The term "docker" is used when the Docker client program is meant.
 #?
 #?   mode vs. command
-#?       We use the term "mode" for our script,  which is similar to the term
+#?       The term "mode" is used for our script, which is similar to the term
 #?       "command" of Docker. This is to distinguish the commands herein from
 #?       those of Docker.
 #?
@@ -191,7 +192,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.16 17/08/28 08:12:11
+#?       @(#) o-saft-docker 1.17 17/09/13 22:41:12
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
