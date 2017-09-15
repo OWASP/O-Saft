@@ -192,14 +192,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.17 17/09/13 22:41:12
+#?       @(#) o-saft-docker 1.18 17/09/15 11:53:06
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-VERSION="${OSAFT_VERSION:-17.07.17}"
+VERSION="${OSAFT_VERSION:-17.09.17}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.07.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
@@ -362,18 +362,19 @@ docker_apk  ()  {
 docker_rmi  ()  {
 	# parameters can only be the options for Docker's rmi command
 	shift
+	#dbx# echo "# registry: ${registry} # image_name: ${image_name}"
 	_ids=`\docker image ls -q ${registry}` # ${image_name}
-	echo "# image ISs to be deleted: $_ids "
-	# need to find all images, including referenced images, that done
-	# with "images" command, then extract all lines with matching IDs
+	echo "# image IDs to be deleted: $_ids "
+	# need to find all images,  including referenced images, this is done
+	# with "images" command, then extract all lines with matching IDs,
 	# only these IDs are deleted
-	# Note: "docker images" should return newest image on top, hence
-	#       all images which just represent a tag (alias) come first
-	#       and will be deleted first
+	# Note: "docker images"  should return newest image on top, hence all
+	#       images which just represent a tag (alias) come first and will
+	#       be deleted first
 	\docker image ls | while read _any ; do
 		for _id in $_ids ; do
-			_img=`echo "$_any" | \awk "/$_id/"'{print $1}'`
-			#dbx# echo "  ID  $_any : $_id : $_img"
+			_img=`echo "$_any" | \awk "/$_id/"'{print $3}'`
+			#dbx# echo "# ID  $_any : $_id : $_img"
 			[ -z "$_img" ] && continue  # other image
 			$try \docker image rm $@ $_img
 		done
@@ -400,8 +401,12 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-# FIXME: following not necessary for usage, 
-check_image_name;   # may exit, see description there
+# some modes do not need to check existing images
+case "$1" in
+  'build')  ;;
+  'usage')  ;;
+  *)        check_image_name;   # may exit, see description there
+esac
 
 # NOTE: All functions may use ${registry} and ${image_name}, which are global
 #       variables. We do not pass these values as parameters to the functions
