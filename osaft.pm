@@ -1735,7 +1735,7 @@ our %cfg = (
             # must be used programatically.
             # Key 'TYPE' must match and key 'notTYPE' must not match.
         # The following RegEx define what is "vulnerable":
-        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?(?:ARC(?:4|FOUR)|RC4)',
+        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',  # borrowed from 'Lucky13'. There may be another better RegEx.
 #       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         'FREAK'     => '^(?:SSL[23]?)?(?:EXP(?:ORT)?(?:40|56|1024)?[_-])',
                        # EXP? is same as regex{EXPORT} above

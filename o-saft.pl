@@ -2883,7 +2883,7 @@ sub _setvalue($){ my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . '
 sub _isbeast($$){
     # return given cipher if vulnerable to BEAST attack, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(?:SSLv3|TLSv11?)/); # SSLv2 and TLSv1.2 not vulnerable to BEAST
+    return ""      if ($ssl    !~ /(?:SSL|TLSv1$)/); # TLSv11 or later are not vulnerable to BEAST
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
     return "";
 } # _isbeast
@@ -3217,26 +3217,20 @@ sub _isccs($$$)         {
     return $ret;
 } # _isccs
 
-sub _istls12only($$)    {
-    #? returns empty string if TLS 1.2 is the only protocol used,
-    #? returns all used protocols otherwise
+sub _isbeastskipped($$)    {
+    #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
+    #? returns empty string otherwise.
     my ($host, $port) = @_;
     my @ret;
-    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1 TLSv11)) {
+    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1)) {
         # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
-        # If the protocol  is supported by the target,  at least  one cipher
-        # must be accpted. So the amount of ciphers must be > 0.
-        if ($prot{$ssl}->{'cnt'}  >  0) {
-            push(@ret, $ssl);
-        }
         if ($cfg{$ssl} == 0) {
-            # this condition is never true if ciphers have been detected
             push(@ret, _get_text('disabled', "--no-$ssl"));
         }
     }
 #_dbx ": TLS  " . join(" ", @ret);
     return join(" ", @ret);
-} # _istls12only
+} # _isbeastskipped
 
 sub _is_ssl_error($$$)  {
     # returns 1 if probaly a SSL connection error occoured; 0 otherwise
@@ -4061,8 +4055,9 @@ sub checkciphers($$) {
         $hasecdsa{$ssl}= 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
     }
 
-    # additional BEAST check: is TLS 1.2 the only protocol used?
-    $checks{'beast'}->{val} .= " " . _istls12only($host, $port);
+    # additional BEAST check: checks for vulnerable protocols are disabled?
+    my $beastskipped = _isbeastskipped($host, $port);
+    $checks{'beast'}->{val} .= " " . ${beastskipped} if "" ne $beastskipped;
 
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
