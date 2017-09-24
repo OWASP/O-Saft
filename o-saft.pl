@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.736 17/08/08 01:36:38",
+    SID         => "@(#) yeast.pl 1.737 17/09/24 22:18:02",
     STR_VERSION => "17.08.06",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3231,6 +3231,28 @@ sub _isbeastskipped($$)    {
 #_dbx ": TLS  " . join(" ", @ret);
     return join(" ", @ret);
 } # _isbeastskipped
+
+sub _istls12only($$)    {
+# NOTE: not yet used
+    #? returns empty string if TLS 1.2 is the only protocol used,
+    #? returns all used protocols otherwise
+    my ($host, $port) = @_;
+    my @ret;
+    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1 TLSv11)) {
+        # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
+        # If the protocol  is supported by the target,  at least  one cipher
+        # must be accpted. So the amount of ciphers must be > 0.
+        if ($prot{$ssl}->{'cnt'}  >  0) {
+            push(@ret, $ssl);
+        }
+        if ($cfg{$ssl} == 0) {
+            # this condition is never true if ciphers have been detected
+            push(@ret, _get_text('disabled', "--no-$ssl"));
+        }
+    }
+#_dbx ": TLS  " . join(" ", @ret);
+    return join(" ", @ret);
+} # _istls12only
 
 sub _is_ssl_error($$$)  {
     # returns 1 if probaly a SSL connection error occoured; 0 otherwise
