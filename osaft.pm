@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.123 17/07/17 13:19:05',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.124 17/09/24 21:44:08',
 
 };
 
@@ -1735,7 +1735,7 @@ our %cfg = (
             # must be used programatically.
             # Key 'TYPE' must match and key 'notTYPE' must not match.
         # The following RegEx define what is "vulnerable":
-        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',  # borrowed from 'Lucky13'. There may be another better RegEx.
+        'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',# borrowed from 'Lucky13'. There may be another better RegEx.
 #       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         'FREAK'     => '^(?:SSL[23]?)?(?:EXP(?:ORT)?(?:40|56|1024)?[_-])',
                        # EXP? is same as regex{EXPORT} above
