@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.208 17/08/03 08:21:59";
+my  $man_SID= "@(#) o-saft-man.pm 1.209 17/09/24 22:36:21";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3208,8 +3208,7 @@ CHECKS
 
       BEAST
 
-        Currently (2015) only a simple check is used: RC4 or CBC ciphers used.
-        Which is any cipher with RC4, ARC4 or ARCFOUR or with CBC.
+        Check if ciphers with CBC for protocol SSLv1, SSLv3 or TLSv1.
         TLSv1.2 checks are not yet implemented.
 
       CRIME
