@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.210 17/09/25 08:50:56";
+my  $man_SID= "@(#) o-saft-man.pm 1.211 17/09/25 11:27:24";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1812,6 +1812,18 @@ COMMANDS
 
           These commands are just an alias for the  +protocols  command.
 
+      +hostname vs. +wildhost vs. +altname vs. +rfc_2818
+
+          The commands  +cn  and  +altname  print the  information stored  in
+          the certificate.
+          The command  +hostname  checks if the given hostname matches the CN
+          value in the certificate.  Note that wildcard names in the CN, only 
+          allow to contain one '*'.
+          The command  +wildcard  checks if the given hostname does not match
+          any name specified in the certificate's "subjectAltname". This check
+          is usefull  if the certificate and the configuration must comply to
+          RFC 6125 or EV certificates.
+
 
 OPTIONS
 
@@ -3208,7 +3220,7 @@ CHECKS
 
       BEAST
 
-        Check if ciphers with CBC for protocol SSLv1, SSLv3 or TLSv1.
+        Check if ciphers with CBC for protocol SSLv1, SSLv3 or TLSv1 are used.
         TLSv1.2 checks are not yet implemented.
 
       CRIME
@@ -3724,7 +3736,6 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
           This requirement is not testable from remote.
 
       RFC 2818 (+rfc2818)
-
         Check if the FQDN is listed in the certificates 'subjectAltname'.
 
       RFC 6125 (+rfc6125)
