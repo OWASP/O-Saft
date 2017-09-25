@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.197 17/08/08 01:25:21',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.198 17/09/25 10:38:31',
 };
 
 ######################################################## public documentation #
@@ -3385,7 +3385,7 @@ sub verify_altname  {
     foreach my $alt (split(' ', $cname)) {
         my ($type, $name) = split(/:/, $alt);
 #dbx# print "# $alt: ($type, $name)";
-# TODO: implement IP and URI
+# TODO: implement IP and URI; see also o-saft.pl: _checkwildcards()
         push(@{$_SSLinfo{'errors'}}, "verify_altname() $type not supported in SNA") if ($type !~ m/DNS/i);
         my $rex = $name;
         if ($Net::SSLinfo::ignore_case == 1) {
