@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.124 17/09/24 21:44:08',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.125 17/09/25 22:50:43',
 
 };
 
@@ -697,11 +697,11 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
                             # NOTE: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
-        'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED
+        'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED, GOST89
         'Key Size',         # in bits
-        'MAC Algorithm',    # MD5, SHA1, SHA256, SHA384, AEAD
-        'Authentication',   # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK
-        'Key Exchange',     # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP
+        'MAC Algorithm',    # MD5, SHA1, SHA256, SHA384, AEAD, GOST89, GOST94
+        'Authentication',   # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK, GOST01, GOST94
+        'Key Exchange',     # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP, GOST
                             # last column is a : separated list (only export from openssl)
                             # different versions of openssl report  ECDH or ECDH/ECDSA
         'score',            # score value as defined in sslaudit.ini (0, 20, 80, 100)
@@ -1084,8 +1084,8 @@ our %cipher_names = (
     '0x0300FF00' => [qw(GOST-MD5                        GOSTR341094_RSA_WITH_28147_CNT_MD5)],
     '0x0300FF01' => [qw(GOST-GOST94                     RSA_WITH_28147_CNT_GOST94)],
 #    '0x0300FF01' => [qw(GOST2001-NULL-GOST94           GOSTR341001_WITH_NULL_GOSTR3411)], # unklar da nummer doppelt
-    '0x0300FF02' => [qw(GOST-GOST89MAC                  -?-)],
-    '0x0300FF03' => [qw(GOST-GOST89STREAM               -?-)],
+    '0x0300FF02' => [qw(GOST-GOST89MAC                  GOST-GOST89MAC-)],
+    '0x0300FF03' => [qw(GOST-GOST89STREAM               GOST-GOST89STREAM-)],
 # TODO:  following PCT...
     '0x00800001' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509)],
     '0x00800003' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509_CHAIN)],
@@ -1110,6 +1110,7 @@ our %cipher_names = (
 ); # %cipher_names
 
 our %cipher_alias = ( # TODO: list not yet used
+    # TODO: only one element allowed
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name alias        # comment (where found)
     #!#----------+-------------------------------------+--------------------------+
@@ -1130,6 +1131,9 @@ our %cipher_alias = ( # TODO: list not yet used
     '0x03000065' => [qw(EXP-EDH-DSS-RC4-56-SHA)],
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
 
+#   '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)],  # openssl-chacha
+#   '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)],# -"-
+#   '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],    # -"-
     # TODO: need to mark following 10 as old ciphers with changed IDs
     '0x03000093' => [qw(RSA-PSK-3DES-SHA)],            # ??
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      # openssl 1.0.2
@@ -2213,9 +2217,11 @@ my@a = @ciphers;
         qw(ECDH[_-].*?384) ,
         qw(ECDH[_-].*?256) ,
         qw(ECDH[_-].*?128) ,
-        qw(AES) ,                       # 5. all AES
+        qw(AES) ,                       # 5. all AES and specials
+        qw(KRB5) ,
         qw(SRP) ,
         qw(PSK) ,
+        qw(GOST) ,
         qw((?:EDH|DHE).*?CHACHA) ,      # 6. all DH
         qw((?:EDH|DHE).*?512) ,
         qw((?:EDH|DHE).*?384) ,
@@ -2239,7 +2245,6 @@ my@a = @ciphers;
         _trace2("sort_cipher_names: insecure regex\t= $rex }");
         push(@latest, grep{ /$rex/} @ciphers);  # add matches to result
         @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
-    }
     foreach my $rex (@strength) {               # sort according strength
         $rex = qr/^(?:(?:SSL|TLS)[_-])?$rex/;   # allow IANA constant names too
         _trace2("sort_cipher_names: strong regex\t= $rex }");
@@ -2249,9 +2254,9 @@ my@a = @ciphers;
     push(@sorted, @latest);                     # add insecure ciphers again
     my $cnt_out = scalar @sorted;
     if ($cnt_in != $cnt_out) {
-        # print warning if above algorithm misses ciphers; uses perl's  warn()
-        # instead of our _warn() to clearly inform the user that the code here
-        # needs to be fixed
+        # print warning if above algorithm misses ciphers;
+        # uses perl's warn() instead of our _warn() to clearly inform the user
+        # that the code here needs to be fixed
         warn STR_WARN . "015: missing ciphers in sorted list: $cnt_out < $cnt_in"; ## no critic qw(ErrorHandling::RequireCarping)
         #dbx# print "## ".@sorted . " # @ciphers";
     }
