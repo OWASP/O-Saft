@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.125 17/09/25 22:50:43',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.126 17/09/25 23:16:10',
 
 };
 
@@ -1109,7 +1109,7 @@ our %cipher_names = (
     #   see also: http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-05
 ); # %cipher_names
 
-our %cipher_alias = ( # TODO: list not yet used
+our %cipher_alias = (
     # TODO: only one element allowed
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name alias        # comment (where found)
@@ -1131,9 +1131,6 @@ our %cipher_alias = ( # TODO: list not yet used
     '0x03000065' => [qw(EXP-EDH-DSS-RC4-56-SHA)],
     '0x03000066' => [qw(EDH-DSS-RC4-SHA)],             # from RSA BSAFE SSL-C
 
-#   '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)],  # openssl-chacha
-#   '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)],# -"-
-#   '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],    # -"-
     # TODO: need to mark following 10 as old ciphers with changed IDs
     '0x03000093' => [qw(RSA-PSK-3DES-SHA)],            # ??
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      # openssl 1.0.2
@@ -1172,6 +1169,16 @@ our %cipher_alias = ( # TODO: list not yet used
     #!#----------+-------------------------------------+--------------------------+
 ); # %cipher_alias
 
+our %cipher_old   = (
+    # TODO: only one element allowed (not needed in OSaft/Ciphers.pm)
+    #!#----------+-------------------------------------+--------------------------+
+    #!# constant =>     cipher suite name alias        # comment (where found)
+    #!#----------+-------------------------------------+--------------------------+
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)],  # openssl-chacha
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)],# -"-
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],    # -"-
+    #!#----------+-------------------------------------+--------------------------+
+); # %cipher_old
 
 our @cipher_results = [ # list of checked ciphers
 # currently (12/2015)
@@ -2022,6 +2029,9 @@ sub get_cipher_hex($)  {
     foreach my $k (keys %cipher_alias) { # not yet found, check for alias
         return $k if ($cipher_alias{$k}[0] eq $c);
     }
+    foreach my $k (keys %cipher_old) {   # not yet found, check old names
+        return $k if ($cipher_old{$k}[0] eq $c);
+    }
     return "";
 } # get_cipher_hex
 
@@ -2167,8 +2177,6 @@ sub sort_cipher_names   {
     my @latest  ;
     my $cnt_in  = scalar @ciphers;  # number of passed ciphers; see check at end
 
-my@a = @ciphers;
-
     # Algorithm:
     #  1. remove all known @insecure ciphers from given list
     #  2. start building new list with most @strength cipher first
@@ -2245,6 +2253,7 @@ my@a = @ciphers;
         _trace2("sort_cipher_names: insecure regex\t= $rex }");
         push(@latest, grep{ /$rex/} @ciphers);  # add matches to result
         @ciphers    = grep{!/$rex/} @ciphers;   # remove matches from original list
+    }
     foreach my $rex (@strength) {               # sort according strength
         $rex = qr/^(?:(?:SSL|TLS)[_-])?$rex/;   # allow IANA constant names too
         _trace2("sort_cipher_names: strong regex\t= $rex }");
