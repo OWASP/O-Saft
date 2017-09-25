@@ -42,7 +42,7 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.17 17/07/04 23:56:31';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.18 17/09/25 23:18:51';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -263,13 +263,13 @@ our %ciphers_desc = (   # description of following %ciphers table
                             # SSLv2, SSLv3, TLSv1, TLSv11, TLSv12, TLSv13, DTLS0.9, DTLS1.0, PCT
                             # NOTE: all SSLv3 are also TLSv1, TLSv11, TLSv12
                             # (cross-checked with sslaudit.ini)
-        'Key Exchange',     # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP
+        'Key Exchange',     # DH, ECDH, ECDH/ECDSA, RSA, KRB5, PSK, SRP, GOST
                             # last column is a : separated list (only export from openssl)
                             # different versions of openssl report  ECDH or ECDH/ECDSA
-        'Authentication',   # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK
-        'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED
+        'Authentication',   # None, DSS, RSA, ECDH, ECDSA, KRB5, PSK, GOST01, GOST94
+        'Encryption Algorithm', # None, AES, AESCCM, AESGCM, CAMELLIA, DES, 3DES, FZA, IDEA, RC4, RC2, SEED, GOST89
         'Key Size',         # in bits
-        'MAC Algorithm',    # MD5, SHA1, SHA256, SHA384, AEAD
+        'MAC Algorithm',    # MD5, SHA1, SHA256, SHA384, AEAD, GOST89, GOST94
         'DTLS OK',          # Y  if cipher is compatible for DTLS, N  otherwise
                             # (information from IANA)
         'RFC',              # RFC number where cipher was defined
@@ -325,7 +325,7 @@ our %ciphers_names = (
 ); # %ciphers_names
 #  defined in OSaft/_ciphers_iana.pm, OSaft/_ciphers_osaft.pm
 
-our %ciphers_alias = ( # TODO: list not yet used
+our %ciphers_alias = (
     #? list of cipher suite alias names, will be generated in _ciphers_init()
     #------------------+-----------------------------+----------------------,
     # hex,hex   => [qw( cipher suite name aliases )],# comment (where found)
@@ -630,9 +630,11 @@ sub sort_cipher_names   {
         qw(ECDH[_-].*?384) ,
         qw(ECDH[_-].*?256) ,
         qw(ECDH[_-].*?128) ,
-        qw(AES) ,                       # 5. all AES
+        qw(AES) ,                       # 5. all AES and specials
+        qw(KRB5) ,
         qw(SRP) ,
         qw(PSK) ,
+        qw(GOST) ,
         qw((?:EDH|DHE).*?CHACHA) ,      # 6. all DH
         qw((?:EDH|DHE).*?512) ,
         qw((?:EDH|DHE).*?384) ,
