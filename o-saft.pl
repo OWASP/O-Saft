@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.738 17/09/25 10:35:48",
+    SID         => "@(#) yeast.pl 1.739 17/09/25 23:17:24",
     STR_VERSION => "17.08.06",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -1380,10 +1380,14 @@ _yeast_TIME("cfg}");
         'DHE-DSS-CAMELLIA256-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  256 SHA1 DSS   DH    100 :)],
         'DHE-RSA-CAMELLIA128-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  128 SHA1 RSA   DH     80 :)],
         'DHE-RSA-CAMELLIA256-SHA'=>[qw(  HIGH SSLv3 CAMELLIA  256 SHA1 RSA   DH    100 :)],
-        'GOST94-GOST89-GOST89'  => [qw(  -?-  SSLv3 GOST89 256 GOST89  GOST94 VKO    1 :)],
-        'GOST2001-GOST89-GOST89'=> [qw(  -?-  SSLv3 GOST89 256 GOST89  GOST01 VKO    1 :)],
-        'GOST94-NULL-GOST94'    => [qw(  -?-  SSLv3 None     0 GOST94  GOST94 VKO    1 :)],
-        'GOST2001-NULL-GOST94'  => [qw(  -?-  SSLv3 None     0 GOST94  GOST01 VKO    1 :)],
+        'GOST2001-GOST89-GOST89'=> [qw(  HIGH SSLv3 GOST89 256 GOST89  GOST01 GOST 100 :)],
+        'GOST94-GOST89-GOST89'  => [qw(  HIGH SSLv3 GOST89 256 GOST89  GOST94 GOST 100 :)],
+        'GOST-GOST89STREAM'     => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
+        'GOST-GOST89MAC'        => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
+        'GOST-GOST94'           => [qw(  HIGH SSLv3 GOST89 256 GOST94  RSA    RSA  100 :)],
+        'GOST-MD5'              => [qw(  weah SSLv3 GOST89 256 MD5     RSA    RSA    0 :)], #openssl: HIGH
+        'GOST2001-NULL-GOST94'  => [qw(  HIGH SSLv3 None     0 GOST94  GOST01 GOST 100 :)],
+        'GOST94-NULL-GOST94'    => [qw(  HIGH SSLv3 None     0 GOST94  GOST94 GOST 100 :)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
 
         # from openssl-1.0.1c
@@ -1468,6 +1472,9 @@ _yeast_TIME("cfg}");
         'DHE-RSA-CHACHA20-POLY1305'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], # bugfix for openssl 1.0.2
         'ECDHE-RSA-CHACHA20-POLY1305'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], # bugfix for openssl 1.0.2
         'ECDHE-ECDSA-CHACHA20-POLY1305' => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # bugfix for openssl 1.0.2
+        'DHE-RSA-CHACHA20-POLY1305-OLD'       => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   DH    1 :)], # openssl 1.0.2k-dev (patched version)
+        'ECDHE-RSA-CHACHA20-POLY1305-OLD'     => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD RSA   ECDH  1 :)], # openssl 1.0.2k-dev (patched version)
+        'ECDHE-ECDSA-CHACHA20-POLY1305-OLD'   => [qw( HIGH TLSv12 ChaCha20-Poly1305 256 AEAD ECDSA ECDH  1 :)], # openssl 1.0.2k-dev (patched version)
         #!#-----------------------------------+------+-----+------+---+------+-----+--------+----+--------,
 
         # from http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
@@ -1546,9 +1553,10 @@ _yeast_TIME("cfg}");
         'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
         'RSA-FIPS-DES-CBC-SHA'          => [qw(  weak SSLv3 DES_CBC 56 SHA1 RSA_FIPS RSA_FIPS   0 :)],
 
+        'EXP-DH-DSS-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    DSS   DH(512)     0 export)],
+        'EXP-DH-RSA-DES-CBC-SHA'        => [qw(  weak SSLv3 DES    40 SHA1    RSA   DH(512)     0 export)],
+
         # FIXME: all following
-        'EXP-DH-DSS-DES-CBC-SHA'        => [qw( weak  SSLv3 DES    40 SHA1    DSS   DH(512)    0 export)],
-        'EXP-DH-RSA-DES-CBC-SHA'        => [qw( weak  SSLv3 DES    40 SHA1    RSA   DH(512)    0 export)],
         'DH-DSS-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    DSS   DH          0 :)],
         'DH-RSA-DES-CBC-SHA'            => [qw( weak  SSLv3 DES    56 SHA1    RSA   DH          0 :)],
         'DH-DSS-DES-CBC3-SHA'           => [qw( weak  SSLv3 3DES   168 SHA1   DSS   DH          0 :)],
