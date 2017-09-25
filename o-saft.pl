@@ -3285,8 +3285,8 @@ sub _getwilds($$)       {
             $value =~ s/.*://;      # strip prefix
         if ($value =~ m/\*/) {
             $checks{'wildcard'}->{val} .= " " . $value;
-            ($rex = $value) =~ s/[*]/.*/;   # make RegEx (miss dots is ok)
-            $checks{'wildhost'}->{val}  = $value if ($host =~ m/$rex/);
+            ($rex = $value) =~ s/[*]/[^.]*/;   # make RegEx (miss dots is ok)
+            $checks{'wildhost'}->{val}  = $value if ($host =~ m/^$rex$/);
             $checks{'cnt_wildcard'}->{val}++;
         }
         $checks{'cnt_altname'}->{val}++;
