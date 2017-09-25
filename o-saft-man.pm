@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.209 17/09/24 22:36:21";
+my  $man_SID= "@(#) o-saft-man.pm 1.210 17/09/25 08:50:56";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3546,6 +3546,7 @@ CHECKS
           * PCI
           * BSI TR-02102-2 (2016-01)
           * BSI TR-03116-4
+          * RFC 2818
           * RFC 6125
           * RFC 6797
           * RFC 7525
@@ -3722,11 +3723,15 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
           This requirement is not testable from remote.
 
+      RFC 2818 (+rfc2818)
+
+        Check if the FQDN is listed in the certificates 'subjectAltname'.
+
       RFC 6125 (+rfc6125)
         Checks values 'CommonName', 'Subject' and 'SubjectAltname'  of the
         certificate for:
            * must all be valid characters for DNS
-           * must not contain more than one wildcards
+           * must not contain more than one wildcard
            * must not contain invalid wildcards
            * must not contain invalid IDN characters
 
