@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.737 17/09/24 22:18:02",
+    SID         => "@(#) yeast.pl 1.738 17/09/25 10:35:48",
     STR_VERSION => "17.08.06",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3275,17 +3275,21 @@ sub _is_ssl_error($$$)  {
     return 0;
 } # _is_ssl_error
 
-sub _getwilds($$)       {
+sub _checkwildcard($$)  {
     # compute usage of wildcard in CN and subjectAltname
     my ($host, $port) = @_;
-    my ($value, $rex);
-    $value = $data{'cn'}->{val}($host);
-    $checks{'wildcard'}->{val} = "<<CN:>>$value" if ($value =~ m/[*]/);
+    my ($cn_host, $rex);
+    $cn_host = $data{'cn'}->{val}($host);
+    $checks{'wildcard'}->{val} = "<<CN:>>$cn_host" if ($cn_host =~ m/[*]/);
     foreach my $value (split(" ", $data{'altname'}->{val}($host))) {
-            $value =~ s/.*://;      # strip prefix
-        if ($value =~ m/\*/) {
+            $value =~ s/.*://;      # strip prefix, like DNS:
+        if ($value =~ m/\*/) {      # * can be anywhere, like a.b*.some.tld
+            # NOTE: lazy check, because *.b*.some.tld is invalid, but works here
             $checks{'wildcard'}->{val} .= " " . $value;
-            ($rex = $value) =~ s/[*]/[^.]*/;   # make RegEx (miss dots is ok)
+            ($rex = $value) =~ s/[*]/[^.]*/;# make RegEx
+                # RegEx: missing dots is ok, like a.b.some.tld
+                # RegEx: leading dot is ok, like .some.tld
+                # then $host must match completely ^$rex$
             $checks{'wildhost'}->{val}  = $value if ($host =~ m/^$rex$/);
             $checks{'cnt_wildcard'}->{val}++;
         }
@@ -3294,7 +3298,7 @@ sub _getwilds($$)       {
     }
     # checking for SNI does not work here 'cause it destroys %data
     return;
-} # _getwilds
+} # _checkwildcard
 
 sub _usesocket($$$$)    {
     # return protocol and cipher accepted by SSL connection
@@ -4219,7 +4223,7 @@ sub checkcert($$)   {
     return if ($cfg{'done'}->{'checkcert'} > 1);
 
     # wildcards (and some sizes)
-    _getwilds($host, $port);
+    _checkwildcard($host, $port);
     # $checks{'certfqdn'}->{val} ... done in checksni()
 
     $checks{'rootcert'}->{val}  = $data{'issuer'}->{val}($host) if ($data{'subject'}->{val}($host) eq $data{'issuer'}->{val}($host));
@@ -4603,7 +4607,7 @@ sub check03116($$)  {
     }
 # FIXME: need to verify provided CRL and OCSP
     $checks{'tr_03116+'}->{val} .= _get_text('wildcards', $txt) if ($txt ne "");
-    # _getwilds() checks for CN and subjectAltname only, we need Subject also
+    # _checkwildcard() checks for CN and subjectAltname only, we need Subject also
     $txt = $data{'subject'}->{val}($host);
     $checks{'tr_03116+'}->{val} .= _get_text('wildcards', "Subject:$txt") if ($txt =~ m/[*]/);
 # FIXME: need to check wildcards in all certificates
@@ -4698,7 +4702,7 @@ sub check6125($$)   {
     #   visually similar (so-called "confusable") characters in certificates;
     #   for discussion, see for example [IDNA-DEFS].
 
-    # Note: wildcards itself are checked in   checkcert() _getwilds()
+    # Note: wildcards itself are checked in   checkcert() _checkwildcard()
     $txt = $data{'cn'}->{val}($host);
     $val     .= " <<6.4.2:cn $txt>>"      if ($txt !~ m!$cfg{'regex'}->{'isDNS'}!);
     $val     .= " <<6.4.3:cn $txt>>"      if ($txt =~ m!$cfg{'regex'}->{'doublewild'}!);
