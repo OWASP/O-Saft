@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.07.17',  # official version number of tis file
+    OSAFT_VERSION   => '17.09.17',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.126 17/09/25 23:16:10',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.127 17/09/28 21:50:52',
 
 };
 
@@ -935,10 +935,10 @@ our %cipher_names = (
     '0x03000096' => [qw(SEED-SHA                        RSA_WITH_SEED_SHA)],
 #
 #    http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
-    '0x0300CC12' => [qw(RSA-CHACHA20-POLY1305           RSA_WITH_CHACHA20_POLY1305)],       # see Note(c)
-    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
+    '0x0300CC12' => [qw(RSA-CHACHA20-POLY1305           RSA_WITH_CHACHA20_POLY1305)],                     # see Note(c)
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],    # -"-
     '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],       # -"-
     '0x0300CC20' => [qw(RSA-CHACHA20-SHA                RSA_WITH_CHACHA20_SHA)],
     '0x0300CC21' => [qw(ECDHE-RSA-CHACHA20-SHA          ECDHE_RSA_WITH_CHACHA20_SHA)],
     '0x0300CC22' => [qw(ECDHE-ECDSA-CHACHA20-SHA        ECDHE_ECDSA_WITH_CHACHA20_SHA)],
@@ -1071,10 +1071,10 @@ our %cipher_names = (
     '0x0300C06F' => [qw(RSA-PSK-ARIA256-GCM-SHA384      RSA_PSK_WITH_ARIA_256_GCM_SHA384    )],
     '0x0300C070' => [qw(ECDHE-PSK-ARIA128-SHA256        ECDHE_PSK_WITH_ARIA_128_CBC_SHA256  )],
     '0x0300C071' => [qw(ECDHE-PSK-ARIA256-SHA384        ECDHE_PSK_WITH_ARIA_256_CBC_SHA384  )],
-    '0x0300FEE0' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],
-    '0x0300FEE1' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],
-    '0x0300FEFE' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],
-    '0x0300FEFF' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],
+    '0x0300FEE0' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],  # unklar
+    '0x0300FEE1' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],       # unklar,
+    '0x0300FEFE' => [qw(RSA-FIPS-DES-CBC-SHA            RSA_FIPS_WITH_DES_CBC_SHA)],       # openssl-chacha
+    '0x0300FEFF' => [qw(RSA-FIPS-3DES-EDE-SHA           RSA_FIPS_WITH_3DES_EDE_CBC_SHA)],  # openssl-chacha
 #
     '0x03000080' => [qw(GOST94-GOST89-GOST89            GOSTR341094_WITH_28147_CNT_IMIT)], #ok
     '0x03000081' => [qw(GOST2001-GOST89-GOST89          GOSTR341001_WITH_28147_CNT_IMIT)], #ok
@@ -1084,8 +1084,8 @@ our %cipher_names = (
     '0x0300FF00' => [qw(GOST-MD5                        GOSTR341094_RSA_WITH_28147_CNT_MD5)],
     '0x0300FF01' => [qw(GOST-GOST94                     RSA_WITH_28147_CNT_GOST94)],
 #    '0x0300FF01' => [qw(GOST2001-NULL-GOST94           GOSTR341001_WITH_NULL_GOSTR3411)], # unklar da nummer doppelt
-    '0x0300FF02' => [qw(GOST-GOST89MAC                  GOST-GOST89MAC-)],
-    '0x0300FF03' => [qw(GOST-GOST89STREAM               GOST-GOST89STREAM-)],
+    '0x0300FF02' => [qw(GOST-GOST89MAC                  GOST-GOST89MAC)],                  # openssl-chacha
+    '0x0300FF03' => [qw(GOST-GOST89STREAM               GOST-GOST89STREAM)],               # openssl-chacha
 # TODO:  following PCT...
     '0x00800001' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509)],
     '0x00800003' => [qw(PCT_SSL_CERT_TYPE               PCT1_CERT_X509_CHAIN)],
