@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.741 17/09/28 23:07:34",
+    SID         => "@(#) yeast.pl 1.742 17/09/28 23:31:53",
     STR_VERSION => "17.09.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7606,10 +7606,6 @@ if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with 
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
 }
 _yeast_init();  # call in printquit() also!
-
-_dbx "s_client $cmd{'extsclient'}";
-_dbx "ciphers  $cmd{'extciphers'}";
-exit;
 
 if ($#{$cfg{'do'}} < 0) {
     _yeast_exit();
