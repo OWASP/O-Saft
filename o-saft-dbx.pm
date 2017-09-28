@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.54 17/06/25 11:24:48";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.55 17/09/28 18:23:30";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -214,7 +214,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("  cmd->timeout= $cmd{'timeout'}");
     _yeast("  cmd->openssl= $cmd{'openssl'}");
     _yeast("   use_openssl= $cmd{'extopenssl'}");
-    _yeast("openssl cipher= $cmd{'extciphers'}");
+    _yeast("use cipher from openssl= $cmd{'extciphers'}");
     _yline(" cmd }");
     _yline(" user-friendly cfg {");
     _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
@@ -223,9 +223,12 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$cfg{'sni_name'}");
     _yeast("  default port= $cfg{'port'} (last specified)");
     _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
-    foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay starttls_phase starttls_error cipherrange)) {
+    foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
         printf("#%s: %14s= %s\n", $cfg{'mename'}, $key, $cfg{$key});
            # cannot use _yeast() 'cause of pretty printing
+    }
+    foreach my $key (qw(starttls_phase starttls_error)) {
+        _yeast(      "$key= " . _y_ARR(@{$cfg{$key}}));
     }
     _yeast("   SSL version= " . _y_ARR(@{$cfg{'version'}}));
     printf("#%s: %14s= %s", $cfg{'mename'}, "SSL versions", "[ ");
@@ -236,11 +239,21 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast(" user commands= " . _y_ARR(@{$cfg{'commands-USR'}}));
     _yeast("given commands= " . _y_ARR(@{$cfg{'done'}->{'arg_cmds'}}));
     _yeast("      commands= " . _y_ARR(@{$cfg{'do'}}));
-    _yeast("        cipher= " . _y_ARR(@{$cfg{'cipher'}}));
     _yline(" user-friendly cfg }");
     _yeast("(more information with: --trace=2  or  --trace=3 )") if ($cfg{'trace'} < 1);
+    # $cfg{'ciphers'} may not yet set, print with _yeast_ciphers()
     return;
 } # _yeast_init
+
+sub _yeast_ciphers {
+    #? print ciphers fromc %cfg
+    return if (($cfg{'trace'} + $cfg{'verbose'}) <= 0);
+    my $_cnt = sprintf("%6s", scalar @{$cfg{'ciphers'}}); # format count
+    _yline(" ciphers {");
+    _yeast("use cipher from openssl= " . $cmd{'extciphers'});
+    _yeast("$_cnt ciphers= @{$cfg{'ciphers'}}");
+    _yline(" ciphers }");
+} # _yeast_ciphers
 
 sub _yeast_exit {
     if ($cfg{'trace'} > 0) {
