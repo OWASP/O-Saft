@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.08.06',
+    SSLINFO_VERSION => '17.09.17',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.198 17/09/25 10:38:31',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.199 17/09/28 21:47:29',
 };
 
 ######################################################## public documentation #
@@ -539,6 +539,7 @@ our @EXPORT_OK = qw(
         default
         selected
         cipher_list
+        cipher_openssl
         cipher_local
         ciphers
         cn
@@ -1171,7 +1172,7 @@ sub _SSLinfo_get    {
     _traceset();
     _trace("_SSLinfo_get('$key'," . ($host||'') . "," . ($port||'') . ")");
     if ($key eq 'ciphers_openssl') {
-        _trace("_SSLinfo_get($key): WARNING: function obsolete, please use cipher_local()");
+        _trace("_SSLinfo_get($key): WARNING: function obsolete, please use cipher_openssl()");
         return "";
     }
     if ($key eq 'errors') { # always there, no need to connect target
@@ -2847,20 +2848,22 @@ Get cipher selected by server for current session. Returns ciphers string.
 
 =head2 cipher_list($pattern)
 
-Get cipher list offered by local SSL implementation. Returns space-separated list of ciphers.
+Get cipher list offered by local SSL implementation (i.g. Net::SSLeay).
+Returns space-separated list of ciphers.
 Returns array if used in array context, a single string otherwise.
 
 Requires successful connection to target.
 
-=head2 ciphers($pattern)
-
-Returns List of ciphers provided for current connection to target.
-
-=head2 cipher_local($pattern)
+=head2 cipher_openssl($pattern)
 
 Get cipher list offered by local openssl implementation. Returns colon-separated list of ciphers.
 
 Does not require connection to any target.
+
+=head2 ciphers($pattern)
+
+Returns List of ciphers provided for current connection to target.
+Calls cipher_list() or cipher_openssl() depending on Net::SSLinfo::use_openssl.
 
 =cut
 
@@ -2883,21 +2886,26 @@ sub cipher_list     {
     return (wantarray) ? @list : join(' ', @list);
 } # cipher_list
 
-sub cipher_local    {
+sub cipher_openssl  {
     my $pattern = shift || $_SSLinfo{'cipherlist'}; # use default if unset
     my $list;
-    _trace("cipher_local($pattern)");
+    _trace("cipher_openssl($pattern)");
     _setcmd();
     _trace("_SSLinfo_get: openssl ciphers $pattern") if ($trace > 1);
     $list = do_openssl("ciphers $pattern", '', '', '');
     chomp  $list;
     return (wantarray) ? split(/[:\s]+/, $list) : $list;
+} # cipher_openssl
+
+sub cipher_local    {
+    warn("WARNING: function obsolete, please use cipher_openssl()");
+    return cipher_openssl(@_);
 } # cipher_local
 
 ## no critic qw(Subroutines::RequireArgUnpacking)
 sub ciphers         {
-    return cipher_list( @_) if ($Net::SSLinfo::use_openssl == 0);
-    return cipher_local(@_);
+    return cipher_list(   @_) if ($Net::SSLinfo::use_openssl == 0);
+    return cipher_openssl(@_);
 } # ciphers
 
 # "critic Subroutines::RequireArgUnpacking" disabled from hereon for a couple
