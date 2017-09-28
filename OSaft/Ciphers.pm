@@ -42,7 +42,7 @@ our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 use Readonly;
 Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.18 17/09/25 23:18:51';
+Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.19 17/09/28 21:54:50';
 Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -520,6 +520,10 @@ sub get_hex     {
     foreach my $k (keys %ciphers_alias) { # not yet found, check for alias
         return $k if ($ciphers_alias{$k}[0] eq $c);
     }
+    # NOTE: need to check if this is necessary here
+    #foreach my $k (keys %ciphers_old) {   # not yet found, check old names
+    #    return $k if ($ciphers_old{$k}[0] eq $c);
+    #}
     return '';
 } # get_hex
 
