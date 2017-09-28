@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.211 17/09/25 11:27:24";
+my  $man_SID= "@(#) o-saft-man.pm 1.212 17/09/28 23:12:25";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2117,12 +2117,12 @@ OPTIONS
 
           Do not count ciphers without PFS for  --exitcode .
 
-      --s_client
+      --openssl-s_client --s_client
 
           Use  "openssl s_slient ..."  call to retrieve more information from
           the SSL connection.  This is disabled by default on Windows because
           of performance problems. Without this option (default on Windows !)
-          following informations are missing on Windows:
+          following informations are missing:
               compression, expansion, renegotiation, resumption,
               selfsigned, verify, chain, protocols, DH parameters
 
@@ -2154,7 +2154,7 @@ OPTIONS
           (or file) when openssl(1) is started. Please see openssl's man page
           for details about specifying alternate  openssl.cnf  files.
 
-      --force-openssl
+      --openssl-ciphers --force-openssl
 
           Use openssl to check for supported ciphers;  default: IO::Socket(1)
 
