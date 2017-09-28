@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.739 17/09/25 23:17:24",
-    STR_VERSION => "17.08.06",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.740 17/09/28 21:48:28",
+    STR_VERSION => "17.09.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -351,6 +351,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
     sub _yeast_exit   {}
     sub _yeast_args   {}
     sub _yeast_data   {}
+    sub _yeast_ciphers{}
     sub _yeast        {}
     sub _y_ARG        {}
     sub _y_CMD        {}
@@ -474,7 +475,7 @@ our %data   = (     # connection and certificate details
     'issuer'        => {'val' => sub { Net::SSLinfo::issuer(        $_[0], $_[1])}, 'txt' => "Certificate Issuer"},
     'altname'       => {'val' => sub { Net::SSLinfo::altname(       $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
     'cipher_selected'=>{'val' => sub { Net::SSLinfo::selected(      $_[0], $_[1])}, 'txt' => "Selected Cipher"},  # SEE Note:Selected Cipher
-    'ciphers_local' => {'val' => sub { Net::SSLinfo::cipher_local()},               'txt' => "Local SSLlib Ciphers"},
+    'ciphers_local' => {'val' => sub { Net::SSLinfo::cipher_openssl()},             'txt' => "Local SSLlib Ciphers"},
     'ciphers'       => {'val' => sub { join(" ",  Net::SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
     'dates'         => {'val' => sub { join(" .. ", Net::SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
     'before'        => {'val' => sub { Net::SSLinfo::before(        $_[0], $_[1])}, 'txt' => "Certificate valid since"},
@@ -1385,7 +1386,7 @@ _yeast_TIME("cfg}");
         'GOST-GOST89STREAM'     => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
         'GOST-GOST89MAC'        => [qw(  HIGH SSLv3 GOST89 256 GOST89  RSA    RSA  100 :)],
         'GOST-GOST94'           => [qw(  HIGH SSLv3 GOST89 256 GOST94  RSA    RSA  100 :)],
-        'GOST-MD5'              => [qw(  weah SSLv3 GOST89 256 MD5     RSA    RSA    0 :)], #openssl: HIGH
+        'GOST-MD5'              => [qw(  weak SSLv3 GOST89 256 MD5     RSA    RSA    0 :)], #openssl: HIGH
         'GOST2001-NULL-GOST94'  => [qw(  HIGH SSLv3 None     0 GOST94  GOST01 GOST 100 :)],
         'GOST94-NULL-GOST94'    => [qw(  HIGH SSLv3 None     0 GOST94  GOST94 GOST 100 :)],
         #-----------------------------+------+-----+----+----+----+-----+--------+----+--------,
@@ -3501,9 +3502,9 @@ sub _get_ciphers_list   {
         # default cipher range is 'rfc' (see o-saft-lib.pm), then get list of
         # ciphers from Net::SSLinfo
         if ($cmd{'extciphers'} == 1) {
-            @ciphers = Net::SSLinfo::cipher_local($pattern);
+            @ciphers = Net::SSLinfo::cipher_openssl($pattern);
         } else {
-            @ciphers = Net::SSLinfo::cipher_list( $pattern);
+            @ciphers = Net::SSLinfo::cipher_list(   $pattern);
         }
     } else {
         # cipher range specified with --cipher-range=* option
@@ -3602,7 +3603,10 @@ sub ciphers_scan_prot   {
         my $supported = "";
         $cnt++;
         my $txt = "$ssl: ($cnt of " . scalar(@ciphers) . " ciphers checked) abort connection attempts";
-        printf("#   cipher %3d %s%s\r", $cnt, $c, " "x30) if ($cfg{'verbose'} > 0);
+        printf("#   cipher %3d/%d %s%s\r", $cnt, scalar @ciphers, $c, " "x42) if ($cfg{'verbose'} > 0);
+            # no \n at end of line, hence all messages print to same line
+            # wipe previous trailing text with  " "x42
+            # cannot use _v_print() because it prints with \n
         if (0 == $cmd{'extciphers'}) {
             if (0 >= $cfg{'cipher_md5'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
@@ -5832,6 +5836,9 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
 
     if ($legacy ne 'sslyze') {
         $total = _print_results($legacy, $ssl, $host, $port, "", @results);
+            # NOTE: $checks{'cnt_totals'}->{val} is the number of all checked
+            # ciphers for all protocols,  here only the number of ciphers for
+            # the protocol $ssl should be printed
         print_cipherruler() if ($legacy eq 'simple');
         print_check($legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
     } else {
@@ -5923,7 +5930,7 @@ sub printprotocols($$$) {
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
     if ($cfg{'out_header'}>0) {
-        printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=total amount  PFS=selected cipher with PFS\n") if ($verbose > 0);
+        printf("# H=HIGH  M=MEDIUM  L=LOW  W=WEAK  tot=enabled ciphers  PFS=enabled cipher with PFS\n") if ($verbose > 0);
         printf("%s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", "=", qw(H M L W PFS tot default-strong-cipher PFS-cipher));
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
     }
@@ -6149,7 +6156,7 @@ sub printversion() {
             }
         }
     }
-    my @ciphers= Net::SSLinfo::cipher_local();  # openssl ciphers ALL:aNULL:eNULL
+    my @ciphers= Net::SSLinfo::cipher_openssl();# openssl ciphers ALL:aNULL:eNULL
     my $cnt    = 0;
        $cnt    = @ciphers if (not grep{/<<openssl>>/} @ciphers);# if executable found
     print "    number of supported ciphers      " . $cnt;
@@ -6267,7 +6274,7 @@ sub printciphers        {
     my $have_cipher = 0;
     my $miss_cipher = 0;
     my $ciphers     = "";
-       $ciphers     = Net::SSLinfo::cipher_local() if ($cfg{'verbose'} > 0);
+       $ciphers     = Net::SSLinfo::cipher_openssl() if ($cfg{'verbose'} > 0);
 
     printheader(_get_text('out-list', $0), "");
     # all following headers printed directly instead of using printheader()
@@ -7614,10 +7621,10 @@ if ((_need_cipher() > 0) or (_need_default() > 0)) {
     @{$cfg{'ciphers'}} = _get_ciphers_list();
 
 } # _need_cipher or _need_default
-_v_print("cipher list: @{$cfg{'ciphers'}}");
 _yeast_TIME("get}");
 
 _yeast_EXIT("exit=MAIN  - start");
+_yeast_ciphers();
 usr_pre_main();
 
 #| main: do the work for all targets
