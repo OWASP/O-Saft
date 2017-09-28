@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.740 17/09/28 21:48:28",
+    SID         => "@(#) yeast.pl 1.741 17/09/28 23:07:34",
     STR_VERSION => "17.09.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6858,10 +6858,15 @@ while ($#argv >= 0) {
     if ($arg eq  '--pci')               { $arg = '+pci';            } # alias: ssltest.pl
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # alias: ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';           } # alias: ssldiagnose.exe
+    if ($arg =~ /^--showkeys?/i)        { $arg = '--traceKEY';      } # alias:
     if ($arg =~ /^--tracesub/i)         { $arg = '+traceSUB';       } # alias:
     if ($arg eq  '--version')           { $arg = '+version';        } # alias: various programs
 #   if ($arg eq  '-v')                  { $typ = 'PROTOCOL';        } # alias: ssl-cert-check # FIXME: not supported; see opt-v and ciphers-v above
     if ($arg eq  '-V')                  { $cfg{'opt-V'}     = 1;    } # .....: ssl-cert-check; will be out_header, see below
+    if ($arg eq  '--forceopenssl')      { $arg = '--opensslciphers';    } # alias:
+    if ($arg eq  '--cipheropenssl')     { $arg = '--opensslciphers';    } # alias:
+    if ($arg eq  '--sclient')           { $arg = '--opensslsclient';    } # alias:
+    if ($arg eq  '--nosclient')         { $arg = '--noopensslsclient';  } # alias:
     if ($arg eq  '--sslnouseecc')       { $arg = '--nossluseecc';       } # alias:
     if ($arg eq  '--sslnouseecpoint')   { $arg = '--nossluseecpoint';   } # alias:
     if ($arg eq  '--sslnousereneg')     { $arg = '--nosslusereneg';     } # alias:
@@ -6876,8 +6881,8 @@ while ($#argv >= 0) {
     #!#--------+------------------------+---------------------------+----------
     # options for trace and debug
     if ($arg =~ /^--v(?:erbose)?$/)     { $typ = 'VERBOSE';         }
+    if ($arg =~ /^--ciphers?--?v$/)     { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--v-ciphers?$/)       { $cfg{'v_cipher'}++;       }
-    if ($arg =~ /^--ciphers?--?v$/)     { $cfg{'v_cipher'}++;       } # alias:
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
     if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
@@ -6924,10 +6929,12 @@ while ($#argv >= 0) {
     if ($arg eq  '--openssl')           { $typ = 'OPENSSL';         }
     if ($arg =~  '--opensslco?nf')      { $typ = 'SSLCNF';          }
     if ($arg eq  '--opensslfips')       { $typ = 'SSLFIPS';         }
-    if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}    = 1;}
-    if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}    = 0;}
-    if ($arg eq  '--forceopenssl')      { $cmd{'extciphers'}    = 1;}
-    if ($arg =~ /^--s_?client$/)        { $cmd{'extsclient'}++;     }
+    if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}= 1;    }
+    if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}= 0;    }
+    if ($arg eq  '--opensslciphers')    { $cmd{'extciphers'}= 1;    }
+    if ($arg eq  '--noopensslciphers')  { $cmd{'extciphers'}= 0;    }
+    if ($arg eq  '--opensslsclient')    { $cmd{'extsclient'}= 1;    }
+    if ($arg eq  '--noopensslsclient')  { $cmd{'extsclient'}= 0;    }
     if ($arg eq  '--alpn')              { $cfg{'usealpn'}   = 1;    }
     if ($arg eq  '--noalpn')            { $cfg{'usealpn'}   = 0;    }
     if ($arg eq  '--npn')               { $cfg{'usenpn'}    = 1;    }
@@ -7006,7 +7013,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--ciphermd5')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
     if ($arg eq  '--cipherdh')          { $cfg{'cipher_dh'} = 1;    }
-    if ($arg eq  '--cipheropenssl')     { $cmd{'extciphers'}= 1;    } # alias: for --force-openssl
     # our options
     if ($arg eq  '--http')              { $cfg{'usehttp'}++;        }
     if ($arg eq  '--nohttp')            { $cfg{'usehttp'}   = 0;    }
@@ -7039,7 +7045,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg =~ /^--showhosts?/i)       { $cfg{'showhost'}++;       }
-    if ($arg =~ /^--showkeys?/i)        { $cfg{'traceKEY'}++;       } # alias:
 #   if ($arg eq  '--sniname')           { $cfg{'use_sni_name'}  = 1;} # violates historic usage
     if ($arg eq  '--nosniname')         { $cfg{'use_sni_name'}  = 0;}
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
@@ -7601,6 +7606,10 @@ if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with 
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
 }
 _yeast_init();  # call in printquit() also!
+
+_dbx "s_client $cmd{'extsclient'}";
+_dbx "ciphers  $cmd{'extciphers'}";
+exit;
 
 if ($#{$cfg{'do'}} < 0) {
     _yeast_exit();
