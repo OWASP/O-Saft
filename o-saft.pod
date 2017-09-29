@@ -151,6 +151,14 @@ here are some examples of the most common use cases:
 
 	o-saft.tcl
 
+=over
+
+=item * Start the simple GUI which uses o-saft.pl in a Docker image
+
+=back
+
+	o-saft.tcl I--docker&&
+
 For more specialised test cases, refer to the  L</COMMANDS>  and  L</OPTIONS> 
 sections below. For more examples please refer to  L</EXAMPLES>  section.
 
@@ -970,6 +978,18 @@ extensions.
 
 These commands are just an alias for the  I<+protocols>  command.
 
+=head3 +hostname vs. +wildhost vs. +altname vs. +rfc_2818
+
+The commands  I<+cn>  and  I<+altname>  print the  information stored  in
+the certificate.
+The command  I<+hostname>  checks if the given hostname matches the CN
+value in the certificate.  Note that wildcard names in the CN, only 
+allow to contain one C<*>.
+The command  I<+wildcard>  checks if the given hostname does not match
+any name specified in the certificate's "subjectAltname". This check
+is usefull  if the certificate and the configuration must comply to
+RFC 6125 or EV certificates.
+
 =head1 OPTIONS
 
 All options are written in lowercase. Words written in all capital in
@@ -1315,12 +1335,12 @@ Do not count any ciphers for  I<--exitcode> .
 
 Do not count ciphers without PFS for  I<--exitcode> .
 
-=head3 --s_client
+=head3 --openssl-s_client --s_client
 
 Use  "openssl s_slient ..."  call to retrieve more information from
 the SSL connection.  This is disabled by default on Windows because
 of performance problems. Without this option (default on Windows !)
-following informations are missing on Windows:
+following informations are missing:
 
 	compression, expansion, renegotiation, resumption,
 	selfsigned, verify, chain, protocols, DH parameters
@@ -1348,7 +1368,7 @@ If set, environment variable OPENSSL_CONF will be set to given path
 (or file) when L<openssl(1)|openssl(1)> is started. Please see openssl's man page
 for details about specifying alternate  openssl.cnf  files.
 
-=head3 --force-openssl
+=head3 --openssl-ciphers --force-openssl
 
 Use openssl to check for supported ciphers;  default: L<IO::Socket(1)|IO::Socket(1)>
 
@@ -2836,8 +2856,7 @@ They are necessary to support Perfect Forward Secrecy (PFS).
 
 =head3 BEAST
 
-Currently (2015) only a simple check is used: RC4 or CBC ciphers used.
-Which is any cipher with RC4, ARC4 or ARCFOUR or with CBC.
+Check if ciphers with CBC for protocol SSLv1, SSLv3 or TLSv1 are used.
 TLSv1.2 checks are not yet implemented.
 
 =head3 CRIME
@@ -3408,6 +3427,12 @@ of these checks are used.
 
 =over
 
+=item * RFC 2818
+
+=back
+
+=over
+
 =item * RFC 6125
 
 =back
@@ -3578,6 +3603,10 @@ This requirement is not testable from remote.
 
 This requirement is not testable from remote.
 
+=head3 RFC 2818 (+rfc2818)
+
+Check if the FQDN is listed in the certificates C<subjectAltname>.
+
 =head3 RFC 6125 (+rfc6125)
 
 Checks values C<CommonName>, C<Subject> and C<SubjectAltname>  of the
@@ -3591,7 +3620,7 @@ certificate for:
 
 =over
 
-=item * must not contain more than one wildcards
+=item * must not contain more than one wildcard
 
 =back
 
@@ -4864,6 +4893,12 @@ To see which files have been included use:
 
 =back
 
+=over
+
+=item * o-saft-docker
+
+=back
+
 =head1 INSTALLATION
 
 The tool can be installed in any path. It just requres the modules as
@@ -5204,7 +5239,7 @@ stand-alone executable:
 	perl2exe o-saft.pl
 	perl2exe checkAllCiphers.pl
 
-For details  on building the executable,  for example how to include
+For details  on building the executable,  for example  how to include
 all required modules, please refer to the documentation of the tool.
 
 =over
@@ -5225,10 +5260,44 @@ all required modules, please refer to the documentation of the tool.
 
 =back
 
-Note that  pre-build executables (build by perlapp, perl2exe) cannot
+Note that  pre-build executables (build by perlapp, perl2exe)  cannot
 be provided due to licence problems.
-Also note that using stand-alone executable have not been tested the
+Also note that using  stand-alone executable have not been tested the
 same way as the o-saft.pl itself. Use them at your own risk.
+
+=head1 DOCKER
+
+The tool can be used inside a Docker image. To start  o-saft.pl  inside
+the Docker image, use following:
+
+	o-saft-docker +info some.tld
+or
+
+	docker run --rm -it owasp/o-saft +info some.tld
+
+For more details, please refer to:
+
+	o-saft-docker usage
+	o-saft-docker -help
+
+=head1 BUILD DOCKER IMAGE
+
+The Docker image can be installed as follows:
+
+	docker pull owasp/o-saft
+
+The image can also easily be build from the Dockerfile (which is part
+of the distribution) as follows:
+
+	o-saft-docker build
+
+To build the image from the Dockerfile with docker commands, see:
+
+	o-saft-docker -n build
+
+For more details, please refer to:
+
+	o-saft-docker -help
 
 =head1 SEE ALSO
 
@@ -5247,6 +5316,12 @@ same way as the o-saft.pl itself. Use them at your own risk.
 =over
 
 =item * L<IO::Socket::SSL(1)|IO::Socket::SSL(1)>, L<IO::Socket::INET(1)|IO::Socket::INET(1)>
+
+=back
+
+=over
+
+=item * o-saft-docker, o-saft-docker-dev, Dockerfile, docker
 
 =back
 
@@ -6190,7 +6265,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 17.07.15
+@(#) 17.09.17
 
 =head1 AUTHOR
 
@@ -6742,6 +6817,7 @@ Generated with:
 # GOST	Gossudarstwenny Standard (block cipher)
 # Grainv1	stream cipher (64-bit IV)
 # Grainv128	stream cipher (96-bit IV)
+# GREASE	Generate Random Extensions And Sustain Extensibility
 # HAIFA	HAsh Iterative FrAmework
 # hash127	fast hash function (by Dan Bernstein)
 # HAVAL	one-way hashing
@@ -7155,6 +7231,8 @@ Generated with:
 # 7627	TLS Session Hash and Extended Master Secret Extension
 # 7905	ChaCha20-Poly1305 Cipher Suites for TLS
 # 1135	The Helminthiasis of the Internet
+# 6698	DNS-Based Authentication of Named Entities (DANE)
+# 6844	DNS Certification Authority Authorization (CAA) Resource Record
 # 
 ## end rfc
 
