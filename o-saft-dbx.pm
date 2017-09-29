@@ -87,7 +87,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.55 17/09/28 18:23:30";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.56 17/09/29 07:56:29";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -253,6 +253,7 @@ sub _yeast_ciphers {
     _yeast("use cipher from openssl= " . $cmd{'extciphers'});
     _yeast("$_cnt ciphers= @{$cfg{'ciphers'}}");
     _yline(" ciphers }");
+    return;
 } # _yeast_ciphers
 
 sub _yeast_exit {
