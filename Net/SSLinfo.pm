@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.199 17/09/28 21:47:29',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.200 17/09/29 08:11:12',
 };
 
 ######################################################## public documentation #
@@ -2897,21 +2897,21 @@ sub cipher_openssl  {
     return (wantarray) ? split(/[:\s]+/, $list) : $list;
 } # cipher_openssl
 
+## no critic qw(Subroutines::RequireArgUnpacking)
+# "critic Subroutines::RequireArgUnpacking" disabled from hereon for a couple
+# of subs because using explicit variable declarations in each sub would make
+# (human) reading more difficult; it is also ensured that the called function
+# _SSLinfo_get()  does not modify the parameters.
+
 sub cipher_local    {
     warn("WARNING: function obsolete, please use cipher_openssl()");
     return cipher_openssl(@_);
 } # cipher_local
 
-## no critic qw(Subroutines::RequireArgUnpacking)
 sub ciphers         {
     return cipher_list(   @_) if ($Net::SSLinfo::use_openssl == 0);
     return cipher_openssl(@_);
 } # ciphers
-
-# "critic Subroutines::RequireArgUnpacking" disabled from hereon for a couple
-# of subs because using explicit variable declarations in each sub would make
-# (human) reading more difficult; it is also ensured that the called function
-# _SSLinfo_get()  does not modify the parameters.
 
 =pod
 
