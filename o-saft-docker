@@ -128,6 +128,9 @@
 #?       the image:
 #?           $0 call /usr/bin/env
 #?
+#?   inspect
+#?       Print information using Docker's inspect command.
+#?
 #?   status
 #?       Show various information about O-Saft Docker image.
 #?
@@ -217,7 +220,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.20 17/09/30 10:10:51
+#?       @(#) o-saft-docker 1.21 17/09/30 10:23:12
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -289,6 +292,10 @@ docker_hacker () {
 		$0 apk add tcl tk xvfb
 
 EoHacker
+}
+
+docker_inspect () {
+	$try \docker image inspect ${image_name}
 }
 
 docker_status () {
@@ -451,6 +458,7 @@ while [ $# -gt 0 ]; do
 	  'rmi')    docker_rmi  $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
 	  'shell')  docker_shell;   exit 0; ;;
+	  'inspect')docker_inspect; exit 0; ;;
 	  'status') docker_status;  exit 0; ;;
 	  'hacker') docker_hacker;  exit 0; ;;
 #          -registry=*) registry=  # not supported, as this is for O-Saft only
