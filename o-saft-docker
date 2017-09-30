@@ -11,6 +11,7 @@
 #?       $0 status
 #?       $0 rmi
 #?       $0 apk  package
+#?       $0 apt  package
 #?       $0 gui
 #?       $0 call /path/to/program [arguments]
 #?       $0 [options and commands of o-saft.pl]
@@ -98,9 +99,11 @@
 #?           https://github.com/OWASP/O-Saft/raw/master/Dockerfile
 #?
 #?   apk
+#?   apt
 #?       Add and commit the specified packages in O-Saft Docker image.
 #?       Note that this creates a new layer for the O-Saft Docker image.
 #?       For more advanced mode, please refer to  o-saft-docker-dev.
+#?       Uses  apk or apt  to add/install the package, depending on the mode.
 #?
 #?   rmi
 #?       Remove all O-Saft images, including tagged images.
@@ -168,6 +171,14 @@
 #        We do not use shortcut commands for docker like run, rmi, save, etc.
 #        because they are depricated according docker docukentation.
 #
+#        Keep in mind that docker is picky about the sequence of commands and
+#        options. In particular all options must preced the IMAGE argument.
+#
+#        "docker commit ..." is used without the --message option because the
+#        documentation about  --message and/or -m  is ambigious. Also passed
+#        comment text is mainly the same as Docker already reports with the
+#        "docker history IMAGE"  command in the  "CREATED BY" column.
+#
 # KNOWN PROBLEMS
 #        * Error when building docker image
 #            fetch http://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/APKINDEX.tar.gz
@@ -177,6 +188,7 @@
 #            ERROR: unsatisfiable constraints:
 #
 #          Reason: backend mirror  dl-cdn.alpinelinux.org  down or not responding
+#          Most likely an update of the host's docker package will fix it.
 #?
 #? LIMITATIONS
 #?       The options  -n  -v  -id=ID  and  -help  must be specified  leftmost
@@ -205,7 +217,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.19 17/09/30 02:04:18
+#?       @(#) o-saft-docker 1.20 17/09/30 10:10:51
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -274,8 +286,7 @@ docker_hacker () {
 	To use the GUI  o-saft.tcl  inside Docker, additionl packages need to
 	be installed. For Docker image based on alpine, following works:
 
-		$0 root
-		apk add tcl tk xvfb
+		$0 apk add tcl tk xvfb
 
 EoHacker
 }
@@ -356,21 +367,26 @@ docker_shell () {
 }
 
 docker_root ()  {
-	$try \docker container run --rm -it --entrypoint=/bin/sh -u root ${image_name}
+	$try \docker container run --rm -it --entrypoint=/bin/sh --user root ${image_name}
 }
 
 docker_apk  ()  {
 	shift
-	if [ "`\docker image ls -qa ${image_name} |\wc -w`" -ne 1 ]; then
-		echo "**ERROR: to many matching images for '${image_name}'; exit"
-		#exit 2
-	fi
 	_id="o-saft-apk"
 	$try \docker container run -t --user root --entrypoint=/sbin/apk \
-		--name ${_id} ${image_name} add --no-cache $@
-	#dbx# \docker image ls
-	$try \docker container commit -m "add $@" ${_id} ${image_name}
-	$try \docker container rm ${_id} 
+				--name ${_id} ${image_name} add --no-cache $@
+	$try \docker container commit  ${_id} ${image_name}
+	$try \docker container rm      ${_id} 
+# --entrypoint="perl /O-Saft/o-saft.pl"  --cmd="/bin/sh -c --help=docker"
+}
+
+docker_apt  ()  {
+	shift
+	_id="o-saft-apt"
+	$try \docker container run -t --user root --entrypoint=/usr/bin/apt \
+				--name ${_id} ${image_name} install $@
+	$try \docker container commit  ${_id} ${image_name}
+	$try \docker container rm      ${_id} 
 }
 
 docker_rmi  ()  {
