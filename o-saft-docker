@@ -167,6 +167,16 @@
 #
 #        We do not use shortcut commands for docker like run, rmi, save, etc.
 #        because they are depricated according docker docukentation.
+#
+# KNOWN PROBLEMS
+#        * Error when building docker image
+#            fetch http://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/APKINDEX.tar.gz
+#            WARNING: Ignoring http://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/APKINDEX.tar.gz: temporary error (try again later)
+#            fetch http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/APKINDEX.tar.gz
+#            WARNING: Ignoring http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/APKINDEX.tar.gz: temporary error (try again later)
+#            ERROR: unsatisfiable constraints:
+#
+#          Reason: backend mirror  dl-cdn.alpinelinux.org  down or not responding
 #?
 #? LIMITATIONS
 #?       The options  -n  -v  -id=ID  and  -help  must be specified  leftmost
@@ -188,11 +198,14 @@
 #?       To get the build-in defaults use:
 #?           $0 status
 #?
+#? EXAMPLES
+#?       See  SYNOPSIS.
+#?
 #? SEE ALSO
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.18 17/09/15 11:53:06
+#?       @(#) o-saft-docker 1.19 17/09/30 02:04:18
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -200,7 +213,7 @@
 # -----------------------------------------------------------------------------
 
 VERSION="${OSAFT_VERSION:-17.09.17}"
-tag=${o_saft_docker_tag};     # tag=${tag:-17.07.17}
+tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
 [ -n "$tag" ] && image_name="${registry}:${tag}"
@@ -223,16 +236,17 @@ check_image_name () {
 	# This function should be called before most docker commands.
 	#dbx#  \docker image ls ${image_name} -q | \wc -w
 	is_id=`\docker image ls ${image_name} -q | \wc -w`
-	if [ "${is_id}" -ne 1 ]; then
+	[ "${is_id}" -eq 1 ] && return; # found image, return
+
+	[ "${is_id}" -ne 1 ] && \
 		echo "**ERROR: given image '${image_name}' does not match found image(s)" # '${is_id}'"
-	fi
+	if [ "${is_id}" -gt 1 ]; then
 		for tag in `\docker image ls ${image_name} | \awk '/^REPOSITORY/{next}{print $2}'` ; do
 			# varaiable tag is the same as the global one!
 			echo "#        consider using  option -id=${image_name}:$tag  or  -tag=$tag"
 		done
-		#exit
-	#echo $tag
-	#exit
+	fi
+	exit 3;     # no image found, exit script
 }
 
 docker_usage () {
@@ -321,7 +335,7 @@ docker_build () {
 
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
-        # expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
+	# expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
 	$try \docker container run --rm -it ${image_name} $@
 }
 
