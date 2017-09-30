@@ -129,7 +129,7 @@
 #?           $0 call /usr/bin/env
 #?
 #?   inspect
-#?       Print information using Docker's inspect command.
+#?       Print information about O-Saft Docker image using inspect command.
 #?
 #?   status
 #?       Show various information about O-Saft Docker image.
@@ -220,7 +220,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.21 17/09/30 10:23:12
+#?       @(#) o-saft-docker 1.22 17/09/30 11:05:13
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -363,7 +363,6 @@ docker_gui   () {
 }
 
 docker_call ()  {
-	shift
 	cmd="$1"
 	shift
 	$try \docker container run --rm -it --entrypoint=$cmd    ${image_name} $@
@@ -378,7 +377,6 @@ docker_root ()  {
 }
 
 docker_apk  ()  {
-	shift
 	_id="o-saft-apk"
 	$try \docker container run -t --user root --entrypoint=/sbin/apk \
 				--name ${_id} ${image_name} add --no-cache $@
@@ -388,7 +386,6 @@ docker_apk  ()  {
 }
 
 docker_apt  ()  {
-	shift
 	_id="o-saft-apt"
 	$try \docker container run -t --user root --entrypoint=/usr/bin/apt \
 				--name ${_id} ${image_name} install $@
@@ -449,7 +446,9 @@ esac
 #       variables. We do not pass these values as parameters to the functions
 #       because we want $@ (all parameters of this script) in the functions
 while [ $# -gt 0 ]; do
-	case "$1" in
+	mode="$1"
+	shift
+	case "$mode" in
 	  'build')  docker_build;   exit 0; ;;
 	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
@@ -465,8 +464,8 @@ while [ $# -gt 0 ]; do
           '--')     shift; break; ;;
           *)               break; ;;
 	esac
-	shift
 done
+set -- "$mode" $@ ; # 1st argument has no special meaning, pass to o-saft.pl
 
 if [ $# -lt 1 ]; then
 	# did not get any argument, print own usage
