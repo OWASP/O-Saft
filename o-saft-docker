@@ -225,7 +225,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.26 17/10/01 13:02:58
+#?       @(#) o-saft-docker 1.27 17/10/01 16:38:41
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -242,11 +242,6 @@ entry__cmd='CMD ["--norc", "--help=docker"]':           # default CMD
 try=
 exe=o-saft.pl
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
-
-if [ -n "$osaft_vm_build" ]; then
-	echo "**ERROR: cannot run inside docker image; exit"
-	exit 1
-fi
 
 check_image_name () {
 	#? check if image with configured registry:tag exists; exit otherwise
@@ -484,10 +479,22 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
+# don't run inside docker
+case "$1" in
+  'hacker') ;;
+  'usage')  ;;
+  *)        if [ -n "$osaft_vm_build" ]; then
+		echo "**ERROR: cannot run inside docker image; exit"
+		exit 1
+	    fi
+	    ;;
+esac
+
 # some modes do not need to check existing images
 case "$1" in
   'build')  ;;
   'usage')  ;;
+  'hacker') ;;
   *)        check_image_name;   # may exit, see description there
 esac
 
