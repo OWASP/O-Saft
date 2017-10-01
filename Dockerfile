@@ -1,7 +1,7 @@
 #!/usr/bin/docker build --force-rm --rm -f
 
 #? USAGE
-#?      This Dockerfile uses environment variables to build the Docker image,
+#?      This Dockerfile uses "buildargs" variables to build the Docker image,
 #?      and to pass SHA256 checksums to the build process. The variables are:
 #?
 #?          OSAFT_VERSION
@@ -115,7 +115,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.14 17/09/15 11:51:15" \
+	SID="@(#) Dockerfile 1.15 17/10/01 11:49:41" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
