@@ -121,6 +121,9 @@
 #?   root
 #?       Same as mode  shell, but login as user root.
 #?
+#?   cp
+#?       Copy file to /O-Saft directory in the Docker image.
+#?
 #?   call
 #?       Execute specified program (must be full path) with given arguments.
 #?       This might be usefull to retrieve other information  from the image,
@@ -220,7 +223,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.22 17/09/30 11:05:13
+#?       @(#) o-saft-docker 1.23 17/10/01 09:27:37
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -231,6 +234,7 @@ VERSION="${OSAFT_VERSION:-17.09.17}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
+entrypoint='ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]';  # default ENTRYPOINT
 [ -n "$tag" ] && image_name="${registry}:${tag}"
 try=
 exe=o-saft.pl
@@ -376,26 +380,36 @@ docker_root ()  {
 	$try \docker container run --rm -it --entrypoint=/bin/sh --user root ${image_name}
 }
 
+docker_cp   ()  {
+	_id="o-saft-cp"
+	# create a new container with a dummy command; exit if exists or fails
+	$try \docker container run --name ${_id} ${image_name} +VERSION || exit 4
+	$try \docker container cp    $@   ${_id}:/O-Saft/
+	$try \docker container commit     ${_id} ${image_name}
+	$try \docker container rm         ${_id}
+}
+
 docker_apk  ()  {
 	_id="o-saft-apk"
+	# after commit the entrypoint is changed, hence the original one is
+	# set again with commit's --change option; unfortunately hardcoded
+	# TODO: probably add also:  --change='CMD ["--norc", "--help=docker"]'
 	$try \docker container run -t --user root --entrypoint=/sbin/apk \
 				--name ${_id} ${image_name} add --no-cache $@
-	$try \docker container commit  ${_id} ${image_name}
+	$try \docker container commit --change="${entrypoint}" ${_id} ${image_name}
 	$try \docker container rm      ${_id} 
-# --entrypoint="perl /O-Saft/o-saft.pl"  --cmd="/bin/sh -c --help=docker"
 }
 
 docker_apt  ()  {
 	_id="o-saft-apt"
 	$try \docker container run -t --user root --entrypoint=/usr/bin/apt \
 				--name ${_id} ${image_name} install $@
-	$try \docker container commit  ${_id} ${image_name}
+	$try \docker container commit --change="${entrypoint}" ${_id} ${image_name}
 	$try \docker container rm      ${_id} 
 }
 
 docker_rmi  ()  {
 	# parameters can only be the options for Docker's rmi command
-	shift
 	#dbx# echo "# registry: ${registry} # image_name: ${image_name}"
 	_ids=`\docker image ls -q ${registry}` # ${image_name}
 	echo "# image IDs to be deleted: $_ids "
@@ -453,6 +467,7 @@ while [ $# -gt 0 ]; do
 	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
 	  'gui')    docker_gui  $@; exit 0; ;;
+	  'cp')     docker_cp   $@; exit 0; ;;
 	  'apk')    docker_apk  $@; exit 0; ;;
 	  'rmi')    docker_rmi  $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
