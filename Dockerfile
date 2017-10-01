@@ -115,7 +115,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.15 17/10/01 11:49:41" \
+	SID="@(#) Dockerfile 1.16 17/10/01 13:03:54" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -132,27 +132,6 @@ RUN     apk add --no-cache wget ncurses $OSAFT_VM_APT_INSTALL \
 	perl perl-readonly perl-net-dns perl-io-socket-ssl perl-net-ssleay
 
 WORKDIR	/
-
-# Pull and install O-Saft
-RUN \
-	mkdir $OSAFT_DIR			&& \
-	adduser -D -h ${OSAFT_DIR} osaft	&& \
-	\
-	wget --no-check-certificate $OSAFT_VM_SRC_OSAFT -O $OSAFT_VM_TAR_OSAFT && \
-	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
-		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_OSAFT		&& \
-	chown -R root:root   $OSAFT_DIR		&& \
-	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
-	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl	&& \
-	mv       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
-	sed -e "s:^#--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:" \
-		< $OSAFT_DIR/.o-saft.pl-orig \
-		> $OSAFT_DIR/.o-saft.pl		&& \
-	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
-	rm    -f $OSAFT_VM_TAR_OSAFT
 
 # Pull, build and install enhanced openssl
 RUN \
@@ -217,7 +196,7 @@ RUN \
 	make depend && make && make report -i && make install	&& \
 		# make report most likely fails, hence -i
 	# simple test
-	echo -e "# number of ciphers $OPENSSL_DIR/bin/openssl: " && \
+	echo -n "# number of ciphers $OPENSSL_DIR/bin/openssl: " && \
 	$OPENSSL_DIR/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
 	# cleanup
 	apk del --purge musl-dev gcc make linux-headers		&& \
@@ -227,6 +206,27 @@ RUN \
 	# build openssl }
 	cd   /					&& \
 	rm   -r /src_openssl $OSAFT_VM_TAR_OPENSSL
+
+# Pull and install O-Saft
+RUN \
+	mkdir $OSAFT_DIR			&& \
+	adduser -D -h ${OSAFT_DIR} osaft	&& \
+	\
+	wget --no-check-certificate $OSAFT_VM_SRC_OSAFT -O $OSAFT_VM_TAR_OSAFT && \
+	# check sha256 if there is one
+	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
+		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
+	\
+	tar   -xzf $OSAFT_VM_TAR_OSAFT		&& \
+	chown -R root:root   $OSAFT_DIR		&& \
+	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
+	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl	&& \
+	mv       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
+	sed -e "s:^#--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:" \
+		< $OSAFT_DIR/.o-saft.pl-orig \
+		> $OSAFT_DIR/.o-saft.pl		&& \
+	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
+	rm    -f $OSAFT_VM_TAR_OSAFT
 
 WORKDIR $OSAFT_DIR
 USER    osaft
