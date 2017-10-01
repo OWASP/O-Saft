@@ -225,7 +225,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.25 17/10/01 12:06:31
+#?       @(#) o-saft-docker 1.26 17/10/01 13:02:58
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -278,19 +278,33 @@ check_image_name () {
 
 docker_usage () {
 	# TODO: env|grep osaft_vm_build
+	_openssl="/openssl/bin/openssl";    # TODO: still hardcoded
+	_ciphers=`$0 call $_openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL | \wc -l`
 	cat << EoDescription
 
+      # openssl:
+	$_openssl supports $_ciphers ciphers 
+
+      # o-saft.pl:
 	O-Saft docker image is ready to run o-saft.pl, use:
 
 		docker run --rm -it ${image_name} +info your.tld
 	or:
 		$0 +info your.tld
 
+      # o-saft.tcl:
 	The GUI  o-saft.tcl  will only work inside Docker if the the packages
 	tcl tk and xvfb   are installed.  However  o-saft.tcl  may be started
-        on the host and then use  o-saft.pl  from the Docker image, with:
+        on the host and then use  o-saft.pl  from the Docker image.
+
+	# run on host:
 
 		o-saft.tcl --docker
+
+	# run in Docker image
+
+		$0 apk add tcl tk xvfb
+		$0 gui
 
 EoDescription
 }
@@ -444,9 +458,10 @@ docker_rmi  ()  {
 			_img=`echo "$_any" | \awk "/$_id/"'{print $3}'`
 			#dbx# echo "# ID  $_any : $_id : $_img"
 			[ -z "$_img" ] && continue  # other image
-			$try \docker image rm $@ $_img
+			$try \docker image rm -f $@ $_img
 		done
 	done
+	$try \docker image rm ${registry}
 }
 
 my_help ()      {
