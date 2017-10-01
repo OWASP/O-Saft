@@ -54,8 +54,6 @@
 (       The modules Net::SSLinfo, Net::SSLhello are part of O-Saft and should
  )      be installed in ./Net .
 (
- )      DOCKER IMAGE
-(           docker pull owasp/o-saft
  )
 (       Following files are optional:
  )          .o-saft.pl           (private user configuration)
@@ -89,6 +87,8 @@
  )      git clone https://github.com/OWASP/O-Saft.git
 (       wget https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz
  )
+(   Get Docker Image
+ )      docker pull owasp/o-saft
 (
  )  VERSION
 (       The version of the tarball  o-saft.tgz  represents the version listed
@@ -96,6 +96,10 @@
 (       (tarball) version.
  )
 (       SHA256 checksum of o-saft.tgz
- )           9492e57c844cb0f44c0a17906bac35d25a3164a3bdeb3b5d8f19f985be7a2473
+ )           2dee8b063274ac18f922e013c9545e49f82243afc7b447c1b92f8ad6aa937e82
+(
+ )      SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:17.09.17
+(            a2554d9aa86507d8ddfc41792247effbf54f92f087569497502f140e163050ab
+ )
 (
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/
