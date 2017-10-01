@@ -223,7 +223,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.23 17/10/01 09:27:37
+#?       @(#) o-saft-docker 1.24 17/10/01 11:47:42
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -235,6 +235,7 @@ tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
 entrypoint='ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]';  # default ENTRYPOINT
+entry__cmd='CMD ["--norc", "--help=docker"]':           # default CMD
 [ -n "$tag" ] && image_name="${registry}:${tag}"
 try=
 exe=o-saft.pl
@@ -383,29 +384,41 @@ docker_root ()  {
 docker_cp   ()  {
 	_id="o-saft-cp"
 	# create a new container with a dummy command; exit if exists or fails
-	$try \docker container run --name ${_id} ${image_name} +VERSION || exit 4
-	$try \docker container cp    $@   ${_id}:/O-Saft/
-	$try \docker container commit     ${_id} ${image_name}
-	$try \docker container rm         ${_id}
+	$try \docker container run   --name ${_id} ${image_name} +VERSION || exit 4
+	$try \docker container cp    $@     ${_id}:/O-Saft/
+	$try \docker container commit       ${_id} ${image_name}
+	$try \docker container rm           ${_id}
 }
 
 docker_apk  ()  {
 	_id="o-saft-apk"
 	# after commit the entrypoint is changed, hence the original one is
 	# set again with commit's --change option; unfortunately hardcoded
-	# TODO: probably add also:  --change='CMD ["--norc", "--help=docker"]'
 	$try \docker container run -t --user root --entrypoint=/sbin/apk \
-				--name ${_id} ${image_name} add --no-cache $@
-	$try \docker container commit --change="${entrypoint}" ${_id} ${image_name}
-	$try \docker container rm      ${_id} 
+				--name      ${_id} ${image_name} add --no-cache $@ \
+		|| exit 4
+	$try \docker container commit \
+		--change="${entrypoint}" --change="${entry__cmd}" \
+					    ${_id} ${image_name}
+	$try \docker container rm           ${_id} 
+	return
+
+	# TODO: following more cleaner method does not work (reason yet unknown)
+	$try \docker container run  -d --name ${_id} ${image_name} +VERSION || exit 4
+	$try \docker container exec -t --user root ${_id} /sbin/apk add --no-cache $@
+	$try \docker container commit       ${_id} ${image_name}
+	$try \docker container rm           ${_id} 
 }
 
 docker_apt  ()  {
 	_id="o-saft-apt"
-	$try \docker container run -t --user root --entrypoint=/usr/bin/apt \
-				--name ${_id} ${image_name} install $@
-	$try \docker container commit --change="${entrypoint}" ${_id} ${image_name}
-	$try \docker container rm      ${_id} 
+	$try \docker container run -t --user root --entrypoint=/usr/bin/apk \
+				--name      ${_id} ${image_name} install --no-cache $@ \
+		|| exit 4
+	$try \docker container commit \
+		--change="${entrypoint}" --change="${entry__cmd}" \
+					    ${_id} ${image_name}
+	$try \docker container rm           ${_id} 
 }
 
 docker_rmi  ()  {
