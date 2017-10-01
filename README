@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 17.07.17  )
+                                                          Version: 17.09.17  )
         O-Saft  - OWASP SSL advanced forensic tool                          (
 	                                                                     )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -54,6 +54,8 @@
 (       The modules Net::SSLinfo, Net::SSLhello are part of O-Saft and should
  )      be installed in ./Net .
 (
+ )      DOCKER IMAGE
+(           docker pull owasp/o-saft
  )
 (       Following files are optional:
  )          .o-saft.pl           (private user configuration)
@@ -94,6 +96,6 @@
 (       (tarball) version.
  )
 (       SHA256 checksum of o-saft.tgz
- )           ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08
+ )           9492e57c844cb0f44c0a17906bac35d25a3164a3bdeb3b5d8f19f985be7a2473
 (
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/
