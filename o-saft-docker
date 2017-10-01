@@ -33,7 +33,7 @@
 #? DESCRIPTION
 #?       This is a multipurpose wrapper to handle O-Saft in a Docker image.
 #?       It can operate in following modes:
-#?           build   - build the complete Docker image for O-Saft
+#?           build   - build the Docker image for O-Saft from Dockerfile
 #?           usage   - print the initial usage message for O-Saft in Docker
 #?           status  - show various information about O-Saft Docker image
 #?           rmi     - remove O-Saft Docker image(s)
@@ -41,7 +41,8 @@
 #?           shell   - run a shell (/bin/sh) in Docker image
 #?           root    - run a shell (/bin/sh) as user root in Docker image
 #?           call    - run specified program with arguments in Docker image
-#?           hacker  - show information about the used Dockerfile
+#?           cp      - copy file to /O-Saft directory in the Docker image
+#            hacker  - show more information
 #?           gui     - start o-saft.tcl in the Docker image
 #?           *       - anything else (default): run o-saft.pl in Docker image
 #?
@@ -75,7 +76,8 @@
 #?       "docker run --rm ...".
 #?       This wrapper ensures that the proper O-Saft image within Docker will
 #?       be used by passing the correct  "repository:tag"  image id (default:
-#?       owasp/o-saft).
+#?       owasp/o-saft). This script will exit, if the image owasp/o-saft does
+#?       exist (to avoid automatic pull from Docker's repository).
 #?
 #?       The modes are:
 #?
@@ -223,7 +225,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.24 17/10/01 11:47:42
+#?       @(#) o-saft-docker 1.25 17/10/01 12:06:31
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -240,6 +242,11 @@ entry__cmd='CMD ["--norc", "--help=docker"]':           # default CMD
 try=
 exe=o-saft.pl
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
+
+if [ -n "$osaft_vm_build" ]; then
+	echo "**ERROR: cannot run inside docker image; exit"
+	exit 1
+fi
 
 check_image_name () {
 	#? check if image with configured registry:tag exists; exit otherwise
