@@ -83,11 +83,19 @@ or any I<--trace*>  option, which then loads this file automatically.
 
 =cut
 
+# HACKER's INFO
+#       Following (internal) functions from o-saft.pl are used:
+#	_is_do()
+#	_is_intern()
+#	_is_member()
+#	_need_cipher()
+#	_get_ciphers_range()
+
 ## no critic qw(TestingAndDebugging::RequireUseStrict)
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.56 17/09/29 07:56:29";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.57 17/10/04 09:30:32";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -105,12 +113,12 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 
 
 # debug functions
-sub _y_ts     { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
+sub _yTIME    { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
 sub _yeast    { local $\ = "\n"; print "#" . $cfg{'mename'} . ": " . $_[0]; return; }
 sub _y_ARG    { local $\ = "\n"; print "#" . $cfg{'mename'} . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); return; }
-sub _y_CMD    { local $\ = "\n"; print "#" . $cfg{'mename'} . _y_ts() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
+sub _y_CMD    { local $\ = "\n"; print "#" . $cfg{'mename'} . _yTIME() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
 sub _yTRAC    { local $\ = "\n"; printf("#%s: %14s= %s\n", $cfg{'mename'}, $_[0], $_[1]); return; }
-sub _yline    { _yeast("#----------------------------------------------------" . $_[0]); return; }
+sub _yline    { _yeast("#----------------------------------------------------"  . $_[0]); return; }
 sub _y_ARR    { return join(" ", "[", @_, "]"); }
 sub _yeast_trac {}   # forward declaration
 sub _yeast_trac {
@@ -246,12 +254,42 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 } # _yeast_init
 
 sub _yeast_ciphers {
-    #? print ciphers fromc %cfg
+    #? print ciphers fromc %cfg (output optimized for +cipher and +cipherraw)
     return if (($cfg{'trace'} + $cfg{'verbose'}) <= 0);
-    my $_cnt = sprintf("%6s", scalar @{$cfg{'ciphers'}}); # format count
     _yline(" ciphers {");
-    _yeast("use cipher from openssl= " . $cmd{'extciphers'});
-    _yeast("$_cnt ciphers= @{$cfg{'ciphers'}}");
+    my $_cnt = scalar @{$cfg{'ciphers'}};
+    my $need = _need_cipher();
+    my $ciphers = "@{$cfg{'ciphers'}}";
+    if (_is_do('cipherraw')) {
+       $need = 1;
+       my @range = $cfg{'cipherranges'}->{$cfg{'cipherrange'}};
+       if ($cfg{'cipherrange'} =~ m/(full|huge|safe)/i) {
+           # avoid huge (useless output)
+           $_cnt = 0xffffff;
+           $_cnt = 0x2fffff if ($cfg{'cipherrange'} =~ m/safe/i);
+           $_cnt = 0xffff   if ($cfg{'cipherrange'} =~ m/huge/i);
+       } else {
+           # expand list
+           @range = _get_ciphers_range(${$cfg{'version'}}[0], $cfg{'cipherrange'});
+              # FIXME: _get_ciphers_range() first arg is the SSL version, which is
+              #        usually unknown here, hence the first is passed
+              #        this my result in a wrong list; but its trace output only
+           $_cnt = scalar @range;
+       }
+       $ciphers = "@range";
+    }
+    _yeast("  _need_cipher= $need");
+    if ($need > 0) {
+        $_cnt = sprintf("%5s", $_cnt); # format count
+        _yeast("      starttls= " . $cfg{'starttls'});
+        if (_is_do('cipherraw')) {
+            _yeast("   cipherrange= " . $cfg{'cipherrange'});
+        } else {
+            _yeast(" cipherpattern= " . $cfg{'cipherpattern'});
+            _yeast("use cipher from openssl= " . $cmd{'extciphers'});
+        }
+        _yeast(" $_cnt ciphers= $ciphers");
+    }
     _yline(" ciphers }");
     return;
 } # _yeast_ciphers
