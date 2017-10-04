@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.742 17/09/28 23:31:53",
-    STR_VERSION => "17.09.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.743 17/10/04 09:29:22",
+    STR_VERSION => "17.09.19",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -3486,6 +3486,23 @@ sub _useopenssl($$$$)   {
 
     return "", "", "";
 } # _useopenssl
+
+sub _get_ciphers_range  {
+    #? retrun array of cipher-suite hex values for given range
+    #  uses $cfg{'cipherranges'}->{$range}
+    my $ssl   = shift;
+    my $range = shift;
+       $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
+    my @all;
+    _trace("_get_ciphers_range($ssl, $range");
+    #  NOTE: following eval must not use the block form because the
+    #        value needs to be evaluated
+    foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+        push(@all, sprintf("0x%08X",$c));
+    }
+    _trace2("_get_ciphers_range: @all");
+    return @all;
+} # _get_ciphers_range
 
 sub _get_ciphers_list   {
     #? return space-separated list of cipher suites according command line options
@@ -7787,15 +7804,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
                 next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI
             }
-            my @all;
-            my $range = $cfg{'cipherrange'};            # use specified range of constants
-               $range = 'SSLv2' if ($ssl eq 'SSLv2');   # but SSLv2 needs its own list
+            my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
             my @accepted = ();                          # accepted ciphers
-            #  NOTE: following eval must not use the block form because the
-            #        value needs to be evaluated
-            foreach my $c (eval($cfg{'cipherranges'}->{$range}) ) { ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
-                push(@all, sprintf("0x%08X",$c));
-            }
             printtitle($legacy, $ssl, $host, $port);
             _v_print("cipher range: $cfg{'cipherrange'}");
             _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
