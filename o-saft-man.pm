@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.212 17/09/28 23:12:25";
+my  $man_SID= "@(#) o-saft-man.pm 1.213 17/10/07 00:18:26";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1177,7 +1177,7 @@ QUICKSTART
           $0 +vulns example.tld
 
         * Check for all known ciphers (independant of SSL library):
-          $0 +cipherall example.tld --range=full
+          $0 +cipherraw example.tld --range=full
           checkAllCiphers.pl example.tld
           checkAllCiphers.pl example.tld --range=full --v
 
@@ -1298,8 +1298,8 @@ TECHNICAL INFORMATION
           * --force-openssl
           * --exe-path=PATH --exe=PATH
 
-        Above applies to all commands except  +cipherall  which uses no other
-        libraries.
+        Above applies to all commands except  +cipherall and +cipherraw which
+        uses no other libraries.
 
         OpenSSL is recommended to be used for libssl and libcrypto.  Versions
         0.9.8k to 1.0.2e (Jan. 2016) are known to work. However, versions be-
@@ -1641,12 +1641,11 @@ COMMANDS
           with  --cipher=*  option.
 
           Note that ciphers not supported by the local SSL implementation are
-          not checked by default, use  +cipherall  command for that.
+          not checked by default, use  +cipherall or +cipherraw   command.
 
           Use  --v  option to see all ciphers being checked.
 
 # other names: +cipherall +allciphers +rawciphers
-      +cipherall
       +cipherraw
 
           Check target for all possible ciphers.
@@ -1655,6 +1654,10 @@ COMMANDS
           In contrast to  +cipher  this command has some options to tweak the
           cipher tests, connection results and some strange behaviours of the
           target. See  X&Options for cipherall command&  for details.
+
+      +cipherall
+
+         Same as  +cipherraw  but ouput format similat to  +cipher  command.
 
       +cipher-default
 
@@ -1737,6 +1740,10 @@ COMMANDS
           provided by the local SSL implementation (i.e. libssl).
           +cipherall  can check for any cipher,  as it just uses the cipher's
           integer value in the range 0 .. 65532.
+
+      +cipherall vs. +cipherraw
+
+          These commands are identical, just the output format is different.
 
       +cipher vs. +cipher-dh
 
@@ -2586,7 +2593,7 @@ OPTIONS
           Note:  setting empty list or element most likely does not work with
           openssl executable (i.e.  --force-openssl).
 
-    Options for  +cipherall  command
+    Options for  +cipherall and +cipherraw  command
 
       --range=RANGE 
       --cipherrange=RANGE
@@ -5656,6 +5663,7 @@ EXAMPLES
           $0 +cipher --cipher=ADH-AES256-SHA some.tld
 
         * Test all ciphers, even if not supported by local SSL implementation
+          $0 +cipherraw some.tld
           $0 +cipherall some.tld
           $0 +cipherall some.tld --range=full
           checkAllCiphers.pl example.tld --range=full --v
