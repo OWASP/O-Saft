@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.09.17',  # official version number of tis file
+    OSAFT_VERSION   => '17.10.07',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.127 17/09/28 21:50:52',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.128 17/10/06 23:53:51',
 
 };
 
@@ -1430,7 +1430,7 @@ our %cfg = (
                         qw(
                          check cipher dump check_sni exec help info info--v http
                          quick list libversion sizes s_client version quit
-                         sigkey bsi ev cipherraw cipher_dh cipher_default
+                         sigkey bsi ev cipherall cipherraw cipher_dh cipher_default
                         ),
                                 # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
