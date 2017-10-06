@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.743 17/10/04 09:29:22",
-    STR_VERSION => "17.09.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.744 17/10/07 00:24:18",
+    STR_VERSION => "17.10.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -5838,6 +5838,29 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
     return $total;
 } # _print_results
 
+sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacking)
+    #? print all cipher check results from Net::SSLhello::checkSSLciphers()
+    # FIXME: $legacy, --enabled and --disabled not fully supported
+    my $legacy  = shift;
+    my $ssl     = shift;
+    my $host    = shift;
+    my $port    = shift;
+    my $count   = shift; # print title line if 0
+    my @results = @_;    # contains only accepted ciphers
+    my $last    = "";    # avoid duplicates
+    local    $\ = "\n";
+    print_cipherhead( $legacy) if ($count == 0);
+    foreach my $key (@results) {
+        next if ($last eq $key);
+        my $cipher = get_cipher_suitename($key);
+        print_cipherline($legacy, $ssl, $host, $port, $cipher, "yes");
+        $last = $key;
+    }
+    print_cipherruler() if ($legacy eq 'simple');
+    printfooter($legacy);
+    return;
+} # printcipherall
+
 sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all cipher check results according given legacy format
     my $legacy  = shift;
@@ -6190,7 +6213,7 @@ sub printversion() {
         print "    list of supported NPN        " . join(" ", @{$cfg{'protos_npn'}});
     }
 
-    print "= $me +cipherall =";
+    print "= $me +cipherall ="; # +cipherraw
     # TODO: would be nicer:   $cfg{'cipherranges'}->{'rfc'} =~ s/\n//g;
     print "    default list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
     if ($cfg{'verbose'} > 0) {
@@ -7177,8 +7200,9 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+ciphers?$p?selected/i){$arg= '+cipher_selected';} # alias:
     if ($arg =~ /^\+ciphers$p?openssl/i){ $arg = '+ciphers_local';  } # alias: for backward compatibility
     if ($arg =~ /^\+ciphers$p?local/i)  { $arg = '+ciphers_local';  } # alias:
-    if ($arg =~ /^\+(?:all|raw)ciphers?/i){$arg= '+cipherraw';      } # alias:
-    if ($arg =~ /^\+ciphers?(?:all|raw)/i){$arg= '+cipherraw';      } # alias:
+    if ($arg =~ /^\+all$p?ciphers?/i)   { $arg = '+cipherall';      } # alias:
+    if ($arg =~ /^\+raw$p?ciphers?/i)   { $arg = '+cipherraw';      } # alias:
+    if ($arg =~ /^\+ciphers?$p?raw/i)   { $arg = '+cipherraw';      } # alias:
     if ($arg =~ /^\+ciphers?$p?defaults?/i){$arg='+cipher_default'; } # alias:
     if ($arg =~ /^\+ciphers?$p?dh/i)    { $arg = '+cipher_dh';      } # alias:
     if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
@@ -7367,6 +7391,10 @@ if (_is_do('ciphers')) {
     if (! _is_do('list')) {
         $cfg{'out_header'}  = $cfg{'opt-V'} if ($cfg{'out_header'} <= 0);
     }
+}
+if (_is_do('cipherall')) {
+    # +cipherall same as cipherraw with different output format
+    push(@{$cfg{'do'}}, 'cipherraw') if (not _is_do('cipherraw'));
 }
 if (_is_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
@@ -7798,7 +7826,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
         _warn("209: No SSL versions for +cipherraw available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
+        my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
         foreach my $ssl (@{$cfg{'version'}}) {
+            $_printtitle++;
             next if ($cfg{$ssl} == 0);
             if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
                 next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
@@ -7815,7 +7845,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 # correct total number if first 2 ciphers are identical
                 # (this indicates cipher order by the server)
                 # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
-            Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
+            if (_is_do('cipherall')) {
+                printcipherall($legacy, $ssl, $host, $port,
+                    ($legacy eq "sslscan")?($_printtitle):0, @accepted);
+            } else {
+                Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
+            }
         }
         _yeast_TIME("cipherraw}");
         next;
