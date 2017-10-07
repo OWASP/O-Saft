@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.744 17/10/07 00:24:18",
+    SID         => "@(#) yeast.pl 1.745 17/10/07 14:51:32",
     STR_VERSION => "17.10.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3735,7 +3735,7 @@ sub check_certchars($$) {
 } # check_certchars
 
 sub check_dh($$)    {
-    #? check if target is vulnerable to Logjam attack
+    #? check if target is vulnerable to Logjam attack; uses @cipher_results
     my ($host, $port) = @_;
     _y_CMD("check_dh() ". $cfg{'done'}->{'check_dh'});
     $cfg{'done'}->{'check_dh'}++;
@@ -3746,7 +3746,7 @@ sub check_dh($$)    {
     my $txt = $data{'dh_parameter'}->{val}($host);
     if ($txt eq "") {
         $txt = "<<openssl did not return DH Paramter>>";
-        checkciphers($host, $port); # need EXPORT ciphers fot logjam
+        checkciphers($host, $port, @cipher_results); # need EXPORT ciphers fot logjam
         # TODO: calling checkciphers() is bad, it may even not contain ciphers
         my $exp = $checks{'logjam'}->{val};
         $checks{'logjam'}->{val}   .=  $txt;
@@ -4069,17 +4069,19 @@ sub checkcipher($$) {
     return;
 } # checkcipher
 
-sub checkciphers($$) {
+sub checkciphers($$@) {
     #? test target if given ciphers are accepted, results stored in global %checks
     # checks are done with information from @cipher_results
-    my ($host, $port) = @_;     # not yet used
+    my $host    = shift;        # not yet used
+    my $port    = shift;        # not yet used
+    my @results = @_;
 
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
     return if ($cfg{'done'}->{'checkciphers'} > 1);
     _trace("checkciphers($host, $port){");
 
-    if ($#cipher_results < 0) { # no ciphers found; avoid misleading values
+    if ($#results < 0) {        # no ciphers found; avoid misleading values
         foreach my $key (@{$cfg{'need-cipher'}}) {
             $checks{$key}->{val} = _get_text('miss-cipher', "");
         }
@@ -4094,8 +4096,8 @@ sub checkciphers($$) {
     my $cipher  = "";
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    foreach my $c (@cipher_results) {   # check all accepted ciphers
-        next if not @{$c};     # defensive programming ..
+    foreach my $c (@results) {  # check all accepted ciphers
+        next if not @{$c};      # defensive programming ..
         next if ((scalar(@{$c})) =~ m/^\s*$/);  # -"-
         # each $c looks like:  TLSv12  ECDHE-RSA-AES128-GCM-SHA256  yes
         my $yn  = ${$c}[2];
@@ -5840,25 +5842,28 @@ sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacki
 
 sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all cipher check results from Net::SSLhello::checkSSLciphers()
+    #? returns number of unique (enabled) ciphers
     # FIXME: $legacy, --enabled and --disabled not fully supported
     my $legacy  = shift;
     my $ssl     = shift;
     my $host    = shift;
     my $port    = shift;
-    my $count   = shift; # print title line if 0
+    my $outtitle= shift; # print title line if 0
     my @results = @_;    # contains only accepted ciphers
+    my $uniqe   = 0;     # count unique ciphers
     my $last    = "";    # avoid duplicates
     local    $\ = "\n";
-    print_cipherhead( $legacy) if ($count == 0);
+    print_cipherhead( $legacy) if ($outtitle == 0);
     foreach my $key (@results) {
         next if ($last eq $key);
         my $cipher = get_cipher_suitename($key);
         print_cipherline($legacy, $ssl, $host, $port, $cipher, "yes");
         $last = $key;
+        $uniqe++;
     }
     print_cipherruler() if ($legacy eq 'simple');
     printfooter($legacy);
-    return;
+    return $uniqe;
 } # printcipherall
 
 sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacking)
@@ -5993,6 +5998,22 @@ sub printprotocols($$$) {
     }
     return;
 } # printprotocols
+
+sub printciphersummary  {
+    #? print summary of cipher check (+cipher, +cipherall, +cipherraw)
+    my ($legacy, $host, $port, $total) = @_;
+    if ($legacy =~ /(full|compact|simple|quick)/) {   # but only our formats
+        printheader("\n" . _get_text('out-summary', ""), "");
+        print_check(   $legacy, $host, $port, 'cnt_totals', $total) if ($cfg{'verbose'} > 0);
+        printprotocols($legacy, $host, $port);
+        printruler() if (not _is_do('quick'));  # FIXME: 'quick' needs to be a parameter
+    }
+    my $key = $data{'cipher_selected'}->{val}($host, $port);
+    print_line($legacy, $host, $port, 'cipher_selected',
+               $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
+    # print_data($legacy, $host, $port, 'cipher_selected');
+    _hint("consider testing with options '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
+} # printciphersummary
 
 sub printdata($$$) {
     #? print information stored in %data
@@ -7826,34 +7847,65 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
         _warn("209: No SSL versions for +cipherraw available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
+        my $total   = 0;
+        my $enabled = 0;
         my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
+        my @results = ();       # new cipher list for every host
         foreach my $ssl (@{$cfg{'version'}}) {
             $_printtitle++;
             next if ($cfg{$ssl} == 0);
             if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
-                next if ($ssl eq 'SSLv2');  # SSLv2 has no SNI
-                next if ($ssl eq 'SSLv3');  # SSLv3 has originally no SNI
+                if ($ssl =~ m/^SSLv/) {
+                    # SSLv2 has no SNI
+                    # SSLv3 has originally no SNI
+                    _hint("$ssl does not support SNI; use '--no-sni' for checking");
+                    next;
+                }
             }
             my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
             my @accepted = ();                          # accepted ciphers
+            $total += scalar @all;
             printtitle($legacy, $ssl, $host, $port);
-            _v_print("cipher range: $cfg{'cipherrange'}");
-            _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
+            if (not _is_do('cipherall')) {
+                _v_print("cipher range: $cfg{'cipherrange'}");
+                _v_print sprintf("total number of ciphers to check: %4d", scalar(@all));
+            }
             @accepted = Net::SSLhello::checkSSLciphers($host, $port, $ssl, @all);
-            _v_print(sprintf("total number of accepted ciphers: %4d",
+            if (not _is_do('cipherall')) {
+                _v_print(sprintf("total number of accepted ciphers: %4d",
                              (scalar(@accepted) - (scalar(@accepted) >= 2 && ($accepted[0] eq $accepted[1]))) ));
                 # correct total number if first 2 ciphers are identical
                 # (this indicates cipher order by the server)
                 # delete 1 when the first 2 ciphers are identical (this indicates an order by the server)
+            }
             if (_is_do('cipherall')) {
-                printcipherall($legacy, $ssl, $host, $port,
+                $enabled += printcipherall($legacy, $ssl, $host, $port,
                     ($legacy eq "sslscan")?($_printtitle):0, @accepted);
+                print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
+                next if ($enabled < 1); # defensive programming ..
+                # prepare for printing ...
+                my $cipher = get_cipher_suitename($accepted[0]);
+                # SEE Note:+cipherall
+                $prot{$ssl}->{'cipher_strong'}  = $cipher;
+                $prot{$ssl}->{'default'}        = $cipher;
+                my $last    = "";    # avoid duplicates
+                foreach my $key (@accepted) {
+                    # each entry looks like:  TLSv12  AES128-SHA256  yes
+                    next if ($last eq $key);
+                    push(@results, [$ssl, get_cipher_suitename($key), "yes"]);
+                    $last = $key;
+                }
             } else {
                 Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
             }
+        } # $ssl
+        if ($_printtitle > 0) {
+            # SEE Note:+cipherall
+            checkciphers($host, $port, @results);   # necessary to compute 'out-summary'
+            printciphersummary($legacy, $host, $port, $total);
         }
         _yeast_TIME("cipherraw}");
-        next;
+        next; # FIXME: SEE Note:+cipherall
     } # cipherraw
 
     if (_is_do('fallback_protocol')) {
@@ -7870,6 +7922,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     if ((_need_default() > 0) or ($check > 0)) {
+        # SEE Note:+cipherall
         _yeast_TIME("need_default{");
         $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
         _y_CMD("get default ...");
@@ -7913,7 +7966,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         ciphers_scan($host, $port);
         $checks{'cnt_totals'}->{val} = scalar @cipher_results;
         #dbx @cipher_results = (); # simulate "no ciphers found"
-        checkciphers($host, $port); # necessary to compute 'out-summary'
+        checkciphers($host, $port, @cipher_results); # necessary to compute 'out-summary'
         _yeast_TIME("need_cipher}");
      }
 
@@ -7947,16 +8000,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             #}
         }
         if ($_printtitle > 0) { # if we checked for ciphers
-          if ($legacy =~ /(full|compact|simple|quick)/) {   # but only our formats
-            printheader("\n" . _get_text('out-summary', ""), "");
-            print_check($legacy, $host, $port, 'cnt_totals', scalar @cipher_results) if ($cfg{'verbose'} > 0);
-            printprotocols($legacy, $host, $port);
-            printruler() if ($quick == 0);
-          }
-          my $key = $data{'cipher_selected'}->{val}($host, $port);
-          print_line($legacy, $host, $port, 'cipher_selected', $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
-          # print_data($legacy, $host, $port, 'cipher_selected');
-          _hint("consider testing with options '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
+            # SEE Note:+cipherall
+            printciphersummary($legacy, $host, $port, scalar @cipher_results);
         }
         _yeast_TIME("cipher}");
     } # cipher
@@ -8561,5 +8606,29 @@ RFC 3280
        cA:FALSE
        pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
 RFC 4158
+
+
+=head2 Note:+cipherall
+
+In October 2017 (VERSION 17.09.17), the +cipherall command is no longer an
+alias for +cipherraw. It is now using the the same technique as +cipherraw
+to detect the targets ciphers, but prints the results like the traditional
++cipher command.
+This has some impacts on computing other checks, like the default selected
+cipher, the strongest and weakest selected cipher.
+
+One problem is, that  +cipher  itself cannot detect the default cipher, so
+it uses the underlaying SSL library's methods to do it, see _get_default()
+which also computes the strongest and weakest selected cipher.
+When using +cipherraw another method to detect these ciphers must be used;
+this is not yet implemented completely.
+The problem should finally be solved when  +cipher and +cipherraw  use the
+same data structre for the results. Then the program flow should be like:
+   ciphers_scan()
+   checkciphers()
+   printciphers()
+   printciphersummary()
+
+
 
 =cut
