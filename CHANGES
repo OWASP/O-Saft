@@ -1,9 +1,18 @@
 
-Version: 17.07.26
+Version: 17.09.17
   BUGFIX
+    * bugfix: avoid sub-subdomain matching againt subdomain wildcard
+    * bugfix: BEAST check (https://github.com/OWASP/O-Saft/pull/99)
+    * Net::SSLinfo.pm: support timeout commands which require -t option (BusyBox)
+    * Net::SSLinfo.pm: handle binary IP address in certificate's altname attribut
     * regex to detect port numbers in URL: {1,5} quantifier instead of {1-5}
     * Dockerfile: install perl-readonly for alpine also
+  CHANGES                                                                      
+    * Dockerfile build openssl with GOST and KRB5 ciphers (for alpine:edge)
+    * Dockerfile supports environment variables
+    * Net::SSLinfo.pm: checking for Alt-Svc, X-Firefox-Spdy headers improved
   NEW                                                                          
+    * o-saft-docker: checks for proper installed images
     * o-saft-docker: rmi command implemented; status command improved
 
 Version: 17.07.17
