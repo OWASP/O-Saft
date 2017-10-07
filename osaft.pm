@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.128 17/10/06 23:53:51',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.129 17/10/07 12:54:35',
 
 };
 
@@ -1498,7 +1498,8 @@ our %cfg = (
                        )],
                                 # TODO: need simple check for protocols
     'need-default'  => [        # commands which need selected cipher
-                        qw(check cipher cipher_pfs cipher_order cipher_strong cipher_default cipher_selected),
+                        qw(check cipher cipherall cipher_default
+                           cipher_pfs cipher_order cipher_strong cipher_selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
                                 # missing functionality (i.e in openssl) # 10/2015
