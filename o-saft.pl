@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.745 17/10/07 14:51:32",
+    SID         => "@(#) yeast.pl 1.746 17/10/09 02:17:33",
     STR_VERSION => "17.10.07",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7882,7 +7882,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 $enabled += printcipherall($legacy, $ssl, $host, $port,
                     ($legacy eq "sslscan")?($_printtitle):0, @accepted);
                 print_check($legacy, $host, $port, 'cnt_totals', scalar(@all)) if ($cfg{'verbose'} > 0);
-                next if ($enabled < 1); # defensive programming ..
+                next if (scalar @accepted < 1); # defensive programming ..
                 # prepare for printing ...
                 my $cipher = get_cipher_suitename($accepted[0]);
                 # SEE Note:+cipherall
