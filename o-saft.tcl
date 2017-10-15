@@ -241,7 +241,7 @@ exec wish "$0" ${1+"$@"}
 #.      platform and underlaying shell would be like:
 #.          #!/usr/bin/wish
 #.          exec wish "$0" ${1+"$@"}
-#.      but above exec throws erros on  Mac OS X,  hence a quick&dirt version
+#.      but above exec throws errors on  Mac OS X,  hence a quick&dirt version
 #.          exec wish "$0" --
 #.      need to be used.  Unfortunatelly this does not allow to pass arguments
 #.      on command line. Hence the initial hash-bang line uses   /bin/sh  .
@@ -318,7 +318,7 @@ exec wish "$0" ${1+"$@"}
 #.      Another exception (8/2016) is "package require Img" which is necessary
 #.      on some Mac OS X.
 #.      All external programs are started using Tcl's  {*}  syntax.
-#.      If there is any text visible, we want to copy&paste it.  Therfore most
+#.      If there is any text visible, we want to copy&paste it. Therefore most
 #.      texts are placed in Tk's text widget instead of a label widget, 'cause
 #.      text widgets allow selecting their content by default, while labels do
 #.      not. These text widgets are set to state "read-only"  instaed of Tcl's
@@ -330,7 +330,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.145 Spring Edition 2017
+#?      @(#) 1.146 Summer Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -399,8 +399,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.145 17/07/29 12:35:59 Spring Edition 2017}
-set cfg(VERSION) {1.145}
+set cfg(SID)    {@(#) o-saft.tcl 1.146 17/10/14 11:13:09 Summer Edition 2017}
+set cfg(VERSION) {1.146}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -914,7 +914,11 @@ proc read_images  {theme} {
     if {$theme eq "image"} {
        set rcfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];   # must be same path
        _dbx " IMG $rcfile"
-       if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+       if {[file isfile $rcfile]} {
+           catch { source $rcfile } error_txt
+       } else {
+           puts "**WARNING: $cfg(IMG) not found; using traditional buttons"
+       }
     }
     _dbx " IMG: [array names IMG]"
     return
@@ -2596,7 +2600,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $cfg(SAFT)]}        { set vm "(using $cfg(SAFT))" }
-update_status "o-saft.tcl 1.145 $vm"
+update_status "o-saft.tcl 1.146 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
