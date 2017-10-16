@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.10.07',  # official version number of tis file
+    OSAFT_VERSION   => '17.10.16',  # official version number of tis file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.129 17/10/07 12:54:35',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.130 17/10/16 22:05:34',
 
 };
 
@@ -1393,8 +1393,10 @@ our %cfg = (
     }, # cipherranges
     'cipher_dh'     => 0,       # 1: +cipher also prints DH parameters (default will be changed in future)
     'cipher_md5'    => 1,       # 0: +cipher does not use *-MD5 ciphers except for SSLv2
-    'cipher_alpn'   => 1,       # 0: +cipher does not use ALPN
-    'cipher_npn'    => 1,       # 0: +cipher does not use  NPN ($Net::SSLinfo::use_nextprot is for openssl only)
+   #{ removed 10/2017 as they are not used
+   #'cipher_alpn'   => 1,       # 0: +cipher does not use ALPN
+   #'cipher_npn'    => 1,       # 0: +cipher does not use  NPN ($Net::SSLinfo::use_nextprot is for openssl only)
+   #}
     'cipher_ecdh'   => 1,       # 0: +cipher does not use TLS curves extension
     'cipher_alpns'  => [],      # contains all protocols to be passed for +cipher checks
     'cipher_npns'   => [],      # contains all protocols to be passed for +cipher checks
