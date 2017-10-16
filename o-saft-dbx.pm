@@ -95,7 +95,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.57 17/10/04 09:30:32";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.58 17/10/16 22:01:59";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -201,14 +201,19 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _yline(" %cmd }");
         _yline(" complete %cfg {");
         foreach my $key (sort keys %cfg) {
-            if ($key ne "openssl") {
-                _yeast_trac(\%cfg, $key);
-            } else { # FIXME: ugly data structure %cfg{openssl}
+            if ($key =~ m/(hints|openssl|ssleay)$/) { # sslerror|sslhello|data
+                # FIXME: ugly data structures ... should be done by _yTRAC()
                 _yeast("# - - - - HASH: $key = {");
                 foreach my $k (sort keys %{$cfg{$key}}) {
-                    _yTRAC($k, _y_ARR(@{$cfg{$key}{$k}}));
+                    if ($key eq "openssl") {
+                        _yTRAC($k, _y_ARR(@{$cfg{$key}{$k}}));
+                    } else {
+                        _yTRAC($k, $cfg{$key}{$k});
+                    };
                 };
                 _yeast("# - - - - HASH: $key }");
+            } else {
+                _yeast_trac(\%cfg, $key);
             }
         }
         _yline(" %cfg }");
