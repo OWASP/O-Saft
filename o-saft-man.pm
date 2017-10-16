@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.213 17/10/07 00:18:26";
+my  $man_SID= "@(#) o-saft-man.pm 1.214 17/10/16 22:25:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -2526,7 +2526,15 @@ OPTIONS
 
           to see the used settings.
 
+      --alpn
 
+          Use  -alpn  option for openssl.
+
+      --no-alpn
+
+          Do not use  -alpn  option for openssl.
+
+      --no-npn
       --no-nextprotoneg
 
           Do not use  -nextprotoneg  option for openssl.
@@ -4455,13 +4463,13 @@ LIMITATIONS
         Some versions of openssl (< 1.x) may not support all required options
         which results in various error messages,  or  more worse,  may not be
         visibale at all. Available functionalitity of openssl will be checked
-        for right at the beginning Proper Warnings and hints are printed.
+        for right at the beginning. Proper warnings and hints are printed.
         Following table shows the openssl option and how to disbale it within
         o-saft:
-          * nextprotoneg        --no-nextprotoneg
-          * reconnect           --no-reconnect
-          * tlsextdebug         --no-tlsextdebug
-          * alpn                --no-alpn
+          * -nextprotoneg       --no-nextprotoneg
+          * -reconnect          --no-reconnect
+          * -tlsextdebug        --no-tlsextdebug
+          * -alpn               --no-alpn
 
     Connection Problems
 
