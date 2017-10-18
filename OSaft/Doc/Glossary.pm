@@ -11,10 +11,9 @@ package OSaft::Doc::Glossary;
 
 use strict;
 use warnings;
-use Readonly;
 
-Readonly our $VERSION   => "17.08.17";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Glossary.pm 1.3 17/08/09 14:55:01";
+my  $VERSION    = "17.10.17";  # official verion number of tis file
+my  $SID        = "@(#) Glossary.pm 1.4 17/10/18 15:52:47";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
