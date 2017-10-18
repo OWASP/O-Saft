@@ -11,10 +11,9 @@ package OSaft::Doc::Rfc;
 
 use strict;
 use warnings;
-use Readonly;
 
 my  $VERSION    = "17.10.17";  # official verion number of tis file
-my  $SID        = "@(#) Rfc.pm 1.4 17/10/18 16:00:59";
+my  $SID        = "@(#) Rfc.pm 1.5 17/10/18 16:02:42";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
