@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.214 17/10/16 22:25:04";
+my  $man_SID= "@(#) o-saft-man.pm 1.215 17/10/18 16:53:41";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -533,7 +533,8 @@ sub man_commands() {
                   Commands to test ciphers provided by target
 +cipher           Check target for ciphers (using libssl).
 +cipher-dh        Check target for ciphers (using libssl), prints also DH parameter.
-+cipherraw        Check target for all possible ciphers.
++cipherall        Check target for all possible ciphers (same format as +cipher).
++cipherraw        Check target for all possible ciphers (special format).
 +cipher-default   Check target for (default) selected cipher for each protocol.
 +cipher-null      Check if target accepts NULL ciphers.
 +cipher-adh       Check if target accepts ciphers with anonymous key exchange.
