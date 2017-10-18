@@ -40,10 +40,9 @@ use warnings;
 use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
-use Readonly;
-Readonly our $VERSION     => '16.09.21';    # official verion number of tis file
-Readonly our $CIPHERS_SID => '@(#) Ciphers.pm 1.19 17/09/28 21:54:50';
-Readonly my  $STR_UNDEF   => '<<undef>>';   # defined in osaft.pm
+my  $VERSION      = '17.10.17';     # official verion number of tis file
+my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.20 17/10/18 16:10:12';
+my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
    # VERBOSE instead of verbose because of perlcritic
