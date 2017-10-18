@@ -11,10 +11,9 @@ package OSaft::Doc::Links;
 
 use strict;
 use warnings;
-use Readonly;
 
-Readonly our $VERSION   => "17.07.01";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Links.pm 1.2 17/07/19 00:36:02";
+my  $VERSION    = "17.10.17";  # official verion number of tis file
+my  $SID        = "@(#) Links.pm 1.3 17/10/18 16:02:28";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
