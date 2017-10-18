@@ -13,8 +13,8 @@ use strict;
 use warnings;
 use Readonly;
 
-Readonly our $VERSION   => "17.07.01";  # official verion number of tis file
-Readonly my  $SID       => "@(#) Rfc.pm 1.3 17/09/08 20:05:18";
+my  $VERSION    = "17.10.17";  # official verion number of tis file
+my  $SID        = "@(#) Rfc.pm 1.4 17/10/18 16:00:59";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
