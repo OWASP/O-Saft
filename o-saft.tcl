@@ -130,6 +130,7 @@ exec wish "$0" ${1+"$@"}
 #?      --img   use images as defined in o-saft-img.tcl for buttons
 #?              (not recommended on Mac OS X, because Aqua has nice buttons)
 #.      --tip   use own tooltip
+#.      --trace use Tcl's trace to trace proc calls
 #?      --load=FILE read FILE and show in result TAB
 #?      --docker    use o-saft-docker instead of o-saft.pl
 #?      --version   print version number
@@ -139,9 +140,9 @@ exec wish "$0" ${1+"$@"}
 #?      This script can be used from within any Docker image. The host is then
 #?      responsible for providing the proper protocols for the GUI (i.e. X11).
 #?      In this case,  anything is executed inside the Docker image,  just the
-#?      graphical output is passed to the host. In this mode
+#?      graphical output is passed to the host. This mode is started with
 #?          o-saft-docker gui
-#?      will do all the necessary magic with Docker for protocol and DISPLAY.
+#?      which does the necessary magic with Docker for protocol and DISPLAY.
 #?
 #?      When used with the  --docker  option, this script runs on the host and
 #?      connects to an O-Saft Docker image to execute o-saft.pl there with all
@@ -152,6 +153,10 @@ exec wish "$0" ${1+"$@"}
 #?      which has its own (Docker) entrypoint.  This means that  o-saft-docker
 #?      is responsible to provide the same functionality as  o-saft.pl  does.
 #?      Adaptions, if necessary, should be done in  o-saft-docker.
+#?
+#?      Summary
+#?          o-saft.tcl --docker     - run on host using o-saft.pl in Docker
+#?          o-saft-docker gui       - run in Docker with display to host
 #?
 #? KNOWN PROBLEMS
 #?      Using option  -v  causes a Tcl error, like:
@@ -203,6 +208,8 @@ exec wish "$0" ${1+"$@"}
 #.       (O) - CheckButtons for most commonly used options
 #.       (T) - Frame containing panes for commands, options, filter, results.
 #.       (S) - Frame containing Status messages
+#.       [-] - Help about  $0
+#.       [?] - Help about  o-saft.pl
 #.
 #.      Filter TAB Description
 #.           +---------------------------------------------------------------+
@@ -312,6 +319,15 @@ exec wish "$0" ${1+"$@"}
 #.      own "Copy Text" (see above) with <Control-ButtonPress-1>,  even if the
 #.      button is displayed as image.
 #.
+#.   Traceing (GUI)
+#.      Tcl's  trace  functionality is used to trace most procs defined herein
+#.      and all created buttons.  See trace_commands() and trace_buttons() for
+#.      details. Tracing does not yet work for buttons created in sub-windows.
+#.      Traceing is invoked with  --trace  option.
+#.
+#.   Traceing and Debugging
+#.      All output for ..trace and/or --dbx is printed on STDERR.
+#.
 #.   Notes about Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions (2015) are
 #.      the perl executable and the start method of the external browser.
@@ -330,7 +346,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.146 Summer Edition 2017
+#?      @(#) 1.147 Summer Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -362,6 +378,7 @@ foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
                      Checkbutton Menubutton  Radiobutton Dialog] {
     bind $klasse  <Control-ButtonPress-1>       { copy2clipboard %W 0 }
     bind $klasse  <Shift-Control-ButtonPress-1> { copy2clipboard %W 1 }
+
 }
 
 proc copy2clipboard {w shift} {
@@ -399,8 +416,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.146 17/10/14 11:13:09 Summer Edition 2017}
-set cfg(VERSION) {1.146}
+set cfg(SID)    {@(#) o-saft.tcl 1.147 17/10/18 14:53:32 Summer Edition 2017}
+set cfg(VERSION) {1.147}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -417,6 +434,7 @@ set cfg(docker-id)  {owasp/o-saft};     # Docker image ID, if needed
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
+set cfg(PERL)   {};                     # full path to perl; empty on *nix
 set cfg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
 set cfg(SAFT)   {o-saft.pl};            # name of O-Saft executable
 set cfg(INIT)   {.o-saft.pl};           # name of O-Saft's startup file
@@ -700,8 +718,6 @@ proc cfg_update   {} {
     array unset cfg_tipp
 }; # cfg_update
 
-set cfg(PERL)   {};             # full path to perl; empty on *nix
-
 if {[regexp {indows} $tcl_platform(os)]} {
     # Some platforms are too stupid to run our executable cfg(SAFT) directly,
     # they need a proper  perl executable to do it. Check for perl.exe in all
@@ -755,6 +771,7 @@ set cfg(winF)   ""; # object name of Filter window
 set cfg(objS)   ""; # object name of status line
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(DEBUG)  0;  # set to 1 to print debugging messages
+set cfg(TRACE)  0;  # set to 1 to print program tracing
 set cfg(browser) "";        # external browser program, set below
 
 set cfg(AQUA)   {-- CONFIGURATION Aqua (Mac OS X) ----------------------------}
@@ -885,6 +902,12 @@ txt2arr [string map "
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
 
+proc pwarn        {txt} { puts "**WARNING: $txt" }
+    #? output WARNING message
+
+proc perr         {txt} { puts "**ERROR: $txt" }
+    #? output ERROR message
+
 proc putv         {txt} {
     #? verbose output
     global cfg
@@ -892,17 +915,79 @@ proc putv         {txt} {
     puts stderr "#\[$cfg(ICH)\]:$txt";
 }; # putv
 
+proc _ident       {cnt} {
+    #? return ident string
+    set txt ""
+    for {set i 1} {$i <= $cnt} {incr i} {
+        set chr " "; # .
+        #if {[expr $i % 3] == 0} { set chr "|" }
+        append txt $chr
+    }
+    return $txt
+}; # _ident
+
+proc _trace      {args} {
+    #? trace output
+    global cfg
+    if {$cfg(TRACE) <= 0} { return; }
+    set cnt  [info level]
+    set txt  "$args"
+    # convert from: {proc_name arg1 arg2} enter
+    #           to: proc_name {arg1 arg2} {                     # dumm } for tcl
+    set txt  [regsub {^.([^\s]*)\s*(.*)} $txt "\\1 \{\\2"];
+    set txt  [regsub {enter\s*$} $txt "\{"];
+    if {[regexp {leave$} $txt]} { set txt  [regsub {^([^\s]*).*} $txt "\\1 \}"]; }
+       # just keep function name from noisy leave message:
+       #             {proc_name arg1 arg2} 0 noisy text   -->  proc_name
+    puts stderr "#\[$cfg(ICH)\][_ident $cnt]$txt";
+    return
+    # more lazy mode, not implemented ...
+    #set func [lindex $args 0]
+    #puts stderr "#\[$cfg(ICH)\][_ident $cnt]$func"
+    #return
+}; # _trace
+
 proc _dbx         {txt} {
     #? debug output
     global cfg
     if {$cfg(DEBUG) < 1} { return }
     # [lindex [info level 1] 0]; # would be simple, but returns wrong
-    # name of procedure if it was call called within []
+    # name of procedure if it was called within []
     # [info frame -1];           # better
     catch { dict get [info frame -1] proc } me; # name of procedure or error
     if {[regexp {not known in dictionary} $me]} { set me "." }; # is toplevel
     puts stderr "#dbx \[$cfg(ICH)\]$me$txt"
 }; # _dbx
+
+proc _trace_add   {cmd} {
+    #? initilaize Tcl's tracing for given command or widget
+    trace add execution $cmd enter _trace
+    trace add execution $cmd leave _trace
+}; # _trace_add
+
+proc trace_commands  {} {
+    #? initilaize Tcl's tracing for our procs
+    append _trace_cmds "[info procs create*] "
+    append _trace_cmds "[info procs osaft*] "
+    append _trace_cmds "[info procs search*] "
+    append _trace_cmds "read_images remove_host www_browser show_window theme_init"
+    foreach _cmd $_trace_cmds {
+        if {[regexp "\(create_\(tip\)\)" $_cmd]} { continue }
+        _trace_add $_cmd
+    }
+    _trace_add read_images
+    return
+}; # trace_commands
+
+proc trace_buttons   {} {
+    #? initilaize Tcl's tracing for all buttons
+    foreach obj [info commands] {
+        if {![regexp {^\.}  $obj]}  { continue }
+        switch [winfo class $obj] {
+            {Button}    { _trace_add $obj }
+        }
+    }
+}; # trace_buttons
 
 proc read_images  {theme} {
     #? read $cfg(IMG) if exists and not already done
@@ -917,7 +1002,7 @@ proc read_images  {theme} {
        if {[file isfile $rcfile]} {
            catch { source $rcfile } error_txt
        } else {
-           puts "**WARNING: $cfg(IMG) not found; using traditional buttons"
+           pwarn "$cfg(IMG) not found; using traditional buttons"
        }
     }
     _dbx " IMG: [array names IMG]"
@@ -2416,7 +2501,9 @@ foreach arg $argv {
         {--dbx}     -
         {--d}       { incr  cfg(DEBUG);    }
         {--v}       { set   cfg(VERB)   1; }
-        {--img*}    { set   cfg(bstyle) "image"; set optimg 1; }
+        {--trace}   { set   cfg(TRACE)  1; }
+        {--image}   -
+        {--img}     { set   cfg(bstyle) "image"; set optimg 1; }
         --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
         {--text}    { set   cfg(bstyle) "text";  }
         {--tip}     { set   cfg(TIP)    1; }
@@ -2426,6 +2513,8 @@ foreach arg $argv {
         default     { puts "**WARNING: unknown parameter '$arg'; ignored" }
     }
 }
+
+if {$cfg(TRACE)> 0} { trace_commands }
 if {$cfg(VERB) > 0} { lappend cfg(Ocmd) {+quit} {+version}; }
 if {[regexp {\-docker$} $cfg(SAFT)]} { lappend cfg(Ocmd) {docker_status}; }
 if {[tk windowingsystem] eq "aqua"} {
@@ -2600,13 +2689,16 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $cfg(SAFT)]}        { set vm "(using $cfg(SAFT))" }
-update_status "o-saft.tcl 1.146 $vm"
+update_status "o-saft.tcl 1.147 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
     if {![file exists $f]} { continue }
     osaft_load $f
 }
+
+# GUI ready, can initilize tracing if required
+if {$cfg(TRACE) > 0} { trace_buttons }
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
