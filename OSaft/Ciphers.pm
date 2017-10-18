@@ -41,7 +41,7 @@ use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
 my  $VERSION      = '17.10.17';     # official verion number of tis file
-my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.20 17/10/18 16:10:12';
+my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.21 17/10/18 16:22:12';
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -1226,21 +1226,24 @@ sub _ciphers_init   {
     return;
 }; # _ciphers_init
 
+sub _main_help  {
+    #? print help
+    printf("# %s %s\n", __PACKAGE__, $VERSION);
+    if (eval {require POD::Perldoc;}) {
+        # pod2usage( -verbose => 1 );
+        exec( Pod::Perldoc->run(args=>[$0]) );
+    }
+    if (qx(perldoc -V)) {
+        # may return:  You need to install the perl-doc package to use this program.
+        #exec "perldoc $0"; # scary ...
+        printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
+    }
+    return;
+}; # _main_help
+
 sub _main       {
     #? print own documentation
-    if ($#ARGV < 0) {       # no arguments given, print help
-        printf("# %s %s\n", __PACKAGE__, $VERSION);
-        if (eval {require POD::Perldoc;}) {
-            # pod2usage( -verbose => 1 );
-            exit( Pod::Perldoc->run(args=>[$0]) );
-        }
-        if (qx(perldoc -V)) {
-            # may return:  You need to install the perl-doc package to use this program.
-            #exec "perldoc $0"; # scary ...
-            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
-        }
-        exit 0;
-    }
+    if ($#ARGV < 0) { _main_help; exit 0; }
 
     # got arguments, do something special
     while (my $arg = shift @ARGV) {
@@ -1259,25 +1262,24 @@ sub _main       {
         if ($arg =~ /^ciphers=(.*)$/) { show_ciphers($1); } # same as above, but keeps perlcritic quiet
         if ($arg =~ /^getter=?(.*)/)  { show_getter($1);  }
         if ($arg =~ /^key=?(.*)/)     { show_key($1);  }
+        if ($arg !~ /^--h(?:elp)?/)   { next; }
 
-        if ($arg =~ /^--h(?:elp)?/)   {
-            my $name = (caller(0))[1];
-            print "# commands to show internal cipher tables:\n";
-            foreach my $cmd (qw(overview names const alias rfc description)) {
-                printf("\t%s %s\n", $name, $cmd);
-            }
-            print "# commands to show ciphers based on origin:\n";
-            foreach my $cmd (qw(ciphers=osaft ciphers=openssl ciphers=iana ciphers=old)) {
-                printf("\t%s %s\n", $name, $cmd);
-            }
-            print "# various commands:\n";
-            foreach my $cmd (qw(ciphers=dumptab)) {
-                printf("\t%s %s\n", $name, $cmd);
-            }
-                printf("\t$name getter=KEY #(KEY: sec, bit, mac, ssl, auth, keyx, enc, name)\n");
-                printf("\t$name key=KEY #(KEY: )\n");
-                printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
-        } # help
+        my $name = (caller(0))[1];
+        print "# commands to show internal cipher tables:\n";
+        foreach my $cmd (qw(overview names const alias rfc description)) {
+            printf("\t%s %s\n", $name, $cmd);
+        }
+        print "# commands to show ciphers based on origin:\n";
+        foreach my $cmd (qw(ciphers=osaft ciphers=openssl ciphers=iana ciphers=old)) {
+            printf("\t%s %s\n", $name, $cmd);
+        }
+        print "# various commands:\n";
+        foreach my $cmd (qw(ciphers=dumptab)) {
+            printf("\t%s %s\n", $name, $cmd);
+        }
+        printf("\t$name getter=KEY #(KEY: sec, bit, mac, ssl, auth, keyx, enc, name)\n");
+        printf("\t$name key=KEY #(KEY: )\n");
+        printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
     }
     exit 0;
 }; # _main
