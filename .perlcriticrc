@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) .perlcriticrc 1.9 17/07/14 09:29:05
+#?      @(#) .perlcriticrc 1.10 17/10/18 16:27:46
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -434,8 +434,8 @@ verbose     = 8
 	# Pragma "constant" used at line ...
 
     # CHECK ENABLED
-	# FIXME: constant should be replaced by Readonly
-	#  but need to check if Readonly.pm is available on ancient systems
+	# Readonly module not used, because it is missing on some
+	# systems, for example Mac OS X 10.x with perl 5.18
 
 
 [-ValuesAndExpressions::ProhibitEmptyQuotes]
