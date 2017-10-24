@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.746 17/10/09 02:17:33",
-    STR_VERSION => "17.10.07",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.747 17/10/24 22:40:56",
+    STR_VERSION => "17.10.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -1883,7 +1883,7 @@ sub _load_modules       {
 
 sub _check_modules      {
     # check for minimal version of a module;
-    # verbose out but with --v=2 ; uses string "yes" for contrib/bunt.*
+    # verbose output with --v=2 ; uses string "yes" for contrib/bunt.*
     # these checks print warnings with warn() not _warn(), SEE Perl:warn
     # SEE Perl:import include
     _y_CMD("  check module versions ...");
@@ -1960,7 +1960,7 @@ sub _enable_functions   {
     # Note: don't bother users with warnings, if functionality is not required
     #       hence some additional checks around the warnings
     # Note: instead of requiring a specific version with perl's use,  only the
-    #       version of the loaded module ischecked; this allows continueing to
+    #       version of the loaded module is checked; this allows continuing to
     #       use this tool even if the version is too old; but  shout  out loud
     my $version_openssl  = shift;
     my $version_ssleay   = shift;
@@ -1995,31 +1995,33 @@ sub _enable_functions   {
 
     if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
-        if ($cfg{'usealpn'} > 0 or ($cmd{'extciphers'} > 0)) {
+        # TODO: is this check necessary if ($cmd{'extciphers'} > 0)?
+        if ($cfg{'usealpn'} > 0) {
             $cfg{'usealpn'} = 0;
             warn STR_WARN, "126: $txt tests with/for ALPN disabled";
-            if ($version_ssleay      < 1.56) {  # is also < 1.46
+            if ($version_ssleay   < 1.56) {  # is also < 1.46
                 warn STR_WARN, "127: $txs < 1.56"   if ($cfg{'verbose'} > 1);
             }
-            if ($version_openssl   < 0x10002000) {
+            if ($version_openssl  < 0x10002000) {
                 warn STR_WARN, "128: $txo < 1.0.2"  if ($cfg{'verbose'} > 1);
             }
-            _hint("--no-cipher-alpn or --force-openssl can be used to disable this check");
+            _hint("--no-alpn can be used to disable this check");
         }
     }
     _trace(" cfg{usealpn}: $cfg{'usealpn'}");
+
     if ($cfg{'ssleay'}->{'set_npn'} == 0) {
         # warnings only if NPN functionality required
-        if ($cfg{'usenpn'}  > 0 or ($cmd{'extciphers'} > 0)) {
+        if ($cfg{'usenpn'}  > 0) {
             $cfg{'usenpn'}  = 0;
             warn STR_WARN, "129: $txt tests with/for NPN disabled";
-            if ($version_ssleay      < 1.46) {
+            if ($version_ssleay   < 1.46) {
                 warn STR_WARN, "130: $txs < 1.46"   if ($cfg{'verbose'} > 1);
             }
-            if ($version_openssl   < 0x10001000) {
+            if ($version_openssl  < 0x10001000) {
                 warn STR_WARN, "132: $txo < 1.0.1"  if ($cfg{'verbose'} > 1);
             }
-            _hint("--no-cipher-alpn or --force-openssl can be used to disable this check");
+            _hint("--no-npn can be used to disable this check");
         }
     }
     _trace(" cfg{usenpn}: $cfg{'usenpn'}");
@@ -2091,7 +2093,7 @@ sub _check_functions    {
     }
 
     _y_CMD("  check if Net::SSLeay is usable ...");
-    if ($version_ssleay      < 1.49) {
+    if ($version_ssleay  < 1.49) {
         warn STR_WARN, "135: $txt < 1.49; may throw warnings and/or results may be missing;";
     } else {
         _v2print "$text_ssleay (OK)\tyes";
@@ -2241,10 +2243,11 @@ sub _check_SSL_methods  {
 
 sub _enable_sclient     {
     # enable internal functionality based on available functionality of openssl s_client
+    # SEE Note:openssl s_client
     my $opt = shift;
     _y_CMD("  check openssl s_client cpapbility $opt ...") if ($cfg{verbose} > 0);
     my $txt = $cfg{'openssl'}->{$opt}[1];
-    my $val = $cfg{'openssl'}->{$opt}[0];
+    my $val = $cfg{'openssl'}->{$opt}[0];   # 1 if supported
     if ($val == 0) {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
             # no warning for external openssl, as -alpn or -npn is only used with +cipher
@@ -2297,14 +2300,15 @@ sub _check_openssl      {
         _hint("consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
     }
-    # NOTE: if loading Net::SSLinfo faild, then we get a perl Warning here:
+    # NOTE: if loading Net::SSLinfo failed, then we get a perl Warning here:
     #        Undefined subroutine &Net::SSLinfo::s_client_check called at ...
     # Net::SSLinfo::s_client_check() is used to check openssl's capabilities.
     # For an example output SEE Note:openssl s_client
     # Each capabilitiy can be queried with  Net::SSLinfo::s_client_opt_get().
     # I.g. all checks are done in  Net::SSLinfo::s_client_*(),  but no proper
     # error messages are printed there.  Hence the checks are done here again
-    # to disable all unavailable functionality with a warning.
+    # to disable all unavailable functionality with a warning.  Finally store
+    # result (capabilitiy is supported or not) in $cfg{'openssl'} .
     foreach my $opt (Net::SSLinfo::s_client_get_optionlist()) {
         # perl warning  "Use of uninitialized value in ..."  here indicates
         # that cfg{openssl} is not properly initialized
@@ -3320,7 +3324,7 @@ sub _usesocket($$$$)    {
     my $sni     = ($cfg{'usesni'}  < 1) ? "" : $host;
     my $npns    = ($cfg{'usenpn'}  < 1) ? [] : $cfg{'cipher_npns'};
     my $alpns   = ($cfg{'usealpn'} < 1) ? [] : $cfg{'cipher_alpns'};
-        # --noalpn or --nonpn is same as --cipher-alpn=, or --cipher-npn=,
+        # --no-alpn or --no-npn is same as --cipher-alpn=, or --cipher-npn=,
     my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
     # TODO: dirty hack (undef) to avoid perl error like:
@@ -6942,8 +6946,9 @@ while ($#argv >= 0) {
     #!#--------+------------------------+---------------------------+----------
     # options for trace and debug
     if ($arg =~ /^--v(?:erbose)?$/)     { $typ = 'VERBOSE';         }
+    if ($arg =~ /^--ciphers?-?v$/)      { $arg = '--v-ciphers';     } # alias:
     if ($arg =~ /^--ciphers?--?v$/)     { $arg = '--v-ciphers';     } # alias:
-    if ($arg =~ /^--v-ciphers?$/)       { $cfg{'v_cipher'}++;       }
+    if ($arg =~ /^--v-?ciphers?$/)      { $cfg{'v_cipher'}++;       }
     if ($arg =~ /^--warnings?$/)        { $cfg{'warning'}++;        }
     if ($arg =~ /^--nowarnings?$/)      { $cfg{'warning'}   = 0;    }
     if ($arg eq  '--n')                 { $cfg{'try'}       = 1;    }
@@ -7534,7 +7539,7 @@ if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
 #| check for required functionality
 #| -------------------------------------
     # more detailed checks on version numbers with proper warning messages
-    _check_functions();
+    _check_functions()   if (not _is_do('cipher')); # "if" to improve performance
 
 #| check for proper openssl support
 #| -------------------------------------
@@ -8304,6 +8309,8 @@ Note: openssl uses a comma-separated list for ALPN and NPN,  but it uses a
 colon-separated list for ecliptic curves (and also for ciphers).  Hence we
 allow both separators for all lists on command line.
 
+See also Note:OpenSSL:Version
+
 
 =head2 Note:alias
 
@@ -8334,7 +8341,9 @@ easier.
 About OpenSSL's version numbers see openssl/opensslv.h . Examples:
   0x01000000 => openssl-0.9x.x
   0x1000000f => openssl-1.0.0
+  0x10001000 => openssl-1.0.1
   0x10002000 => openssl-1.0.2
+  0x102031af => 1.2.3z
 
 
 =head2 Note:openssl CApath
@@ -8438,6 +8447,9 @@ Example of% openssl s_client --help
  -keymatexport label   - Export keying material using label
  -keymatexportlen len  - Export len bytes of keying material (default 20)
  -no_tlsext        - Don't send any TLS extensions (breaks servername, NPN and ALPN among others)
+
+Some options are implemented for s_client, see Net::SSLinfo.pm , or use:
+perl -MNet::SSLinfo -e 'print join("\n",Net::SSLinfo::s_client_get_optionlist());'
 
 
 =head2 Note:Selected Protocol
