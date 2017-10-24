@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.747 17/10/24 22:40:56",
+    SID         => "@(#) yeast.pl 1.748 17/10/24 23:03:28",
     STR_VERSION => "17.10.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3644,12 +3644,13 @@ sub ciphers_scan_prot   {
         sleep($cfg{'connect_delay'});
         last if (_is_ssl_error($anf, time(), $txt) > 0);
         if (($c !~ /(?:HIGH|ALL)/) and ($supported ne "")) { # given generic names is ok
-            if (($c !~ $supported)) {
+            if (($c !~ $supported) and ($ssl ne "SSLv2")) {
                 # mismatch: name asked for and name returned by server
                 # this may indicate wrong cipher name in our configuration
                 # or the server returned no data or closed TCP connection
                 # or connection timed out, see _is_ssl_error()
-                _warn("411: checked cipher '$c' does not match returned cipher '$supported'");
+                # no complain for SSLv2, which may return an empty string
+                _warn("411: checked $ssl cipher '$c' does not match returned cipher '$supported'");
             }
         }
         push(@res, "$version:$supported") if ($supported ne "");
