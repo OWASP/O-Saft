@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.748 17/10/24 23:03:28",
+    SID         => "@(#) yeast.pl 1.749 17/10/24 23:16:40",
     STR_VERSION => "17.10.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3480,6 +3480,7 @@ sub _useopenssl($$$$)   {
         _warn("311: SSL version '$ssl': empty result from openssl");
     } else {
         _warn("312: SSL version '$ssl': unknown result from openssl");
+        _warn("312: result from openssl: '$data'") if ($cfg{'verbose'} > 0);
     }
     _trace2("_useopenssl: #{ $data }");
     if ($cfg{'verbose'} < 1) {
