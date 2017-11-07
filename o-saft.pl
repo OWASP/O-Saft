@@ -7742,7 +7742,7 @@ foreach my $cmd (@{$cfg{'ignore-out'}}) {
     $fail++ if (_is_do($cmd) > 0);
 }
 if ($fail > 0) {
-    _warn("066: $fail data and check outputs are disbaled due to use of '--no-out':");
+    _warn("066: $fail data and check outputs are disabled due to use of '--no-out':");
     if ($cfg{'verbose'} >  0) {
         _warn("067:  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
         _warn("068:  given:  +" . join(" +", @{$cfg{'do'}}));

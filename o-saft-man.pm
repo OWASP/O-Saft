@@ -27,7 +27,7 @@ package main;   # ensure that main:: variables are used
 #        We have a lot of single character strings, herein, that's ok.
 
 ## no critic qw(Modules::ProhibitExcessMainComplexity)
-#        It's the nature of translations to be complex, hence don't complain. 
+#        It's the nature of translations to be complex, hence don't complain.
 # NOTE: this expception fails, perlcritic still complains (probably a bug there)
 
 use strict;
@@ -158,9 +158,9 @@ function t(id){id.display=(id.display=='none')?'block':'none';}
 <style>
  .h{margin-left:1em;border:0px solid #fff;}
  .r{float:right;}
- .b, div[class=h] > a{text-decoration:none; font-weight:bold; color:#000;      
-    border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666;    
-    padding:0px 0.5em 0px 0.5em; margin:0.1em;                                 
+ .b, div[class=h] > a{text-decoration:none; font-weight:bold; color:#000;
+    border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666;
+    padding:0px 0.5em 0px 0.5em; margin:0.1em;
     background:linear-gradient(#fff, #ddd); }
  a[class="b r"]:hover, div[class=h] > a:hover { background:linear-gradient(#ddd, #fff); }
  .c{font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
@@ -599,14 +599,14 @@ sub man_alias() {
     my $p    = '[._-]'; # regex for separators as used in o-saft.pl
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
-            next if (! m(# alias:)); 
+            next if (! m(# alias:));
             next if (! m|^\s*#?if[^/']*.([^/']+).[^/']+.([^/']+).[^#]*#\s*alias:\s*(.*)?|);
             my $commt =  $3;
             my $alias =  $2;
             my $regex =  $1;
             # simplify regex for better (human) readability
             $regex =~ s/^\^//;      # remove leading ^
-            $regex =~ s/^\\//;      # remove leading \ 
+            $regex =~ s/^\\//;      # remove leading \
             $regex =~ s/\$$//;      # remove trailing $
             $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
             $regex =~ s/\$p\?/-/g;  # replace variable
@@ -723,7 +723,7 @@ EoHelp
 # Hopefully, if these people read this, they change the workflow (means: they
 # also review the source code) or adapt their conclusions having in mind that
 # statistics can be manipulated in many ways. Here we go ...
-# 
+#
 # Disclaimer: No offence meant anyhow, neither against any analyzing tool nor
 # against anyone using them. It is just a reminder to use the tools and their
 # results in a wise manner. Measuring quality is more than just automatically
@@ -978,7 +978,7 @@ sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     man_pod(),                  return if ($hlp =~ /^(gen-)?pod$/i);
     man_cgi(),                  return if ($hlp =~ /^(gen-)?cgi$/i);
         # Note: gen-cgi is called from within parent's BEGIN and hence
-        # causes some   Use of uninitialized value within %cfg 
+        # causes some   Use of uninitialized value within %cfg
         # when called as  gen-CGI  it will not be called from within
         # BEGIN and hence %cfg is defined and will not result in warnings
     man_alias(),                return if ($hlp =~ /^alias(es)?$/);
@@ -1203,7 +1203,7 @@ QUICKSTART
         * Start the simple GUI which uses $0 in a Docker image
           o-saft.tcl --docker
 
-        For more specialised test cases, refer to the  COMMANDS  and  OPTIONS 
+        For more specialised test cases, refer to the  COMMANDS  and  OPTIONS
         sections below. For more examples please refer to  EXAMPLES  section.
 
         For more details, please see  X&Requirements&  and  INSTALLATION  below.
@@ -1256,7 +1256,7 @@ SECURITY
         $0 . No other tools of your system should use these installations
         i.e. by accident or because your environment variables point to them.
 
-        Note that compilation and installation of additional tools  (openssl, 
+        Note that compilation and installation of additional tools  (openssl,
         Net::SSLeay, etc.) uses known insecure configurations and features!
         This is essential to make $0 able to check for such insecurities.
 
@@ -1279,7 +1279,7 @@ CONCEPTS
 TECHNICAL INFORMATION
 
         It is important to understand, which provided information is based on
-        data returned by underlaying (used) libraries and the information 
+        data returned by underlaying (used) libraries and the information
         computed directly.
 
     OpenSSL, libssl, libcrypto
@@ -1337,7 +1337,7 @@ TECHNICAL INFORMATION
           * OPENSSL         - if set, full path to openssl executable
           * OPENSSL_CONF    - if set, full path to openssl's openssl.cnf or
                               directory where to find openssl.cnf
-#         * OPENSSL_FIPS    - 
+#         * OPENSSL_FIPS    -
 #         * OPENSSL_ENGINES -
 #         * OPENSSL_ALLOW_PROXY
 #         * OPENSSL_ALLOW_PROXY_CERTS
@@ -1476,7 +1476,7 @@ COMMANDS
 
         The final sub-sections  X&Notes about commands&  describes some notes
         about special commands and related commands.
-        
+
 
     Commands for information about this tool
 
@@ -1488,7 +1488,7 @@ COMMANDS
           Show ciphers offered by local SSL implementation.
 
           This commands prints the ciphers in a format like "openssl ciphers"
-          does. It also accepts the  -v  and  -V  option. The  --legacy=TYPE 
+          does. It also accepts the  -v  and  -V  option. The  --legacy=TYPE
           option can be used as described for  +list  command.
           Use  +list  command for more information according ciphers.
 
@@ -1551,7 +1551,7 @@ COMMANDS
 
           Print details about the targets hostname, DNS, etc.
           These details are usually printed only for the  +check  and  +info
-          command, but not for any individual command. 
+          command, but not for any individual command.
 
       +http
 
@@ -1785,7 +1785,7 @@ COMMANDS
 
           It is not possible to check if a server uses 'SSLHonorCipherOrder'.
           Even if it is used (switched on),  it is not possible to  check the
-          specified order of the ciphers. 
+          specified order of the ciphers.
 
           I. g. it is expected that the order is according the cipher suite's
           strength, meaning the most strongest first, and the weakest last.
@@ -1825,7 +1825,7 @@ COMMANDS
           The commands  +cn  and  +altname  print the  information stored  in
           the certificate.
           The command  +hostname  checks if the given hostname matches the CN
-          value in the certificate.  Note that wildcard names in the CN, only 
+          value in the certificate.  Note that wildcard names in the CN, only
           allow to contain one '*'.
           The command  +wildcard  checks if the given hostname does not match
           any name specified in the certificate's "subjectAltname". This check
@@ -2229,7 +2229,7 @@ OPTIONS
           are then disables and a warning is shown.
           Unfortunately some libraries have  not implemented all functions to
           check availability of a specific SSL version, which then results in
-          a compile error. 
+          a compile error.
 
           This option disables the strict check of availability.
           If the underlaying library doesn't support the required SSL version
@@ -2259,7 +2259,7 @@ OPTIONS
           * cipher-socket       use internal socket to ckeck for ciphers
           * cipher-openssl      use external openssl to ckeck for ciphers
           * cipher-user         use usr_getciphers() to ckeck for ciphers
-  
+
           Method names starting with:
           * info-
             are responsible to retrieve information  about the SSL connection
@@ -2272,7 +2272,7 @@ OPTIONS
             the  +check  command)
           * score-
             are responsible to compute  the score based on check results
- 
+
           The second part of the name denotes which kind of method to call:
           * socket      the internal functionality with sockets is used
           * openssl     the exteranl openssl executable is used
@@ -2604,7 +2604,7 @@ OPTIONS
 
     Options for  +cipherall and +cipherraw  command
 
-      --range=RANGE 
+      --range=RANGE
       --cipherrange=RANGE
 
           Specify range of cipher constants to be tested by  +cipherall.
@@ -2621,14 +2621,14 @@ OPTIONS
           Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
 
-      --slow-server-delay=SEC 
+      --slow-server-delay=SEC
 
           Additional delay in seconds  after the server is connected  using a
           proxy or before starting STARTTLS.
           This is useful when connecting via  slow proxy chains or connecting
           to slow servers before sending the STARTTLS sequence.
 
-      --ssl-maxciphers=CNT 
+      --ssl-maxciphers=CNT
 
           Maximal number of ciphers sent in a sslhello (default: 32).
 
@@ -2706,7 +2706,7 @@ OPTIONS
           respond at all, which would result in a  "no reply"  message.  This
           marks the check for  +heartbleed  as 'no'.
           I.g.  a server is  not vulnerable to the  heartbleed attack  if the
-          TLS heartbeat extension is disabled.  Hence the  check result  'no' 
+          TLS heartbeat extension is disabled.  Hence the  check result  'no'
           may be mis-leading.  This option  treats the  "no reply"  result as
           "not vulnerable" and returns  'yes'  then.
 
@@ -3092,11 +3092,11 @@ OPTIONS
 
       --hint
 
-          Print hint messages (!!Hint:). 
+          Print hint messages (!!Hint:).
 
       --no-hint
 
-          Do not print hint messages (!!Hint:). 
+          Do not print hint messages (!!Hint:).
 
       --warning
 
@@ -3243,7 +3243,7 @@ CHECKS
 
         Connection is vulnerable if target supports SSL-level compression, or
         supports SPDY/3 (because SPDY/3 uses compression).
-        See http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl 
+        See http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
 
         Note: SPDY/3 is only possible if the client explicitely asks for this
         alternate protocol (for example  "openssl ... -nextprotoneg spdy/3").
@@ -3430,7 +3430,7 @@ CHECKS
         exponenents larger than 65536.
 # if > 65536 then all clients usisng MS-SSL-stack will fail to connect
 
-        If ecliptive curves are used, the result for these checks is always 
+        If ecliptive curves are used, the result for these checks is always
         'no (<<N/A ...)'.
 
       Sizes and Lengths of Certificate Settings
@@ -3685,7 +3685,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
       BSI TR-03116-4 (+tr-03116+ +tr-03116- +bsi)
         Checks if connection and ciphers are compliant according TR-03116-4,
-        see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
+        see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
         /TechnischeRichtlinien/TR03116/BSI-TR-03116-4.pdf?__blob=publicationFile
 
         (following headlines are taken from there)
@@ -3696,7 +3696,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
         2.1.2 Cipher Suites
 
-          Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265. 
+          Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265.
           For curiosity, stronger cipher suites with AES256 and/or SHA384 are
           not not allowed. To follow this curiosity the  +tr-03116-  (lazy)
           check allows the stronger cipher suites ;-)
@@ -3882,14 +3882,14 @@ OUTPUT
               https://github.com/OWASP/O-Saft/blob/master/contrib
 
 #    Overview of Special Formattings
-#        #----------------------+---------------+----------------                       
-#                               |    label has      
-#        +cmd and/or --legacy=* |   :    spaces    TAB                                    
-#        #----------------------+-------+-------+----------------                       
-#          --legacy=simple      |  yes     yes     yes                                     
-#          --legacy=compact     |  yes      no      no                                     
-#          --legacy=quick       |   no      no     yes                                     
-#          +quick               |  yes     yes     yes                                     
+#        #----------------------+---------------+----------------
+#                               |    label has
+#        +cmd and/or --legacy=* |   :    spaces    TAB
+#        #----------------------+-------+-------+----------------
+#          --legacy=simple      |  yes     yes     yes
+#          --legacy=compact     |  yes      no      no
+#          --legacy=quick       |   no      no     yes
+#          +quick               |  yes     yes     yes
 #        #----------------------+-------+-------+----------------
 
 
@@ -3985,7 +3985,7 @@ CUSTOMIZATION
 
             $0 ciphers
 
-        NOTE that such configuration options should be used before any --help 
+        NOTE that such configuration options should be used before any --help
         or  --help=*  option, otherwise the changed setting is not visible.
 
     CONFIGURATION FILE
@@ -4042,7 +4042,7 @@ CUSTOMIZATION
 
     SHELL TWEAKS
 
-        Configuring the shell environment where the tool is startet,  must be 
+        Configuring the shell environment where the tool is startet,  must be
         done before the tools starts.  It is  not really  a task for the tool
         itself, but it can simplify your life, somehow.
 
@@ -4063,7 +4063,7 @@ CIPHER NAMES
 
         While the SSL/TLS protocol uses integer numbers to identify  ciphers,
         almost all tools use some kind of  "human readable"  texts for cipher
-        names. 
+        names.
 
         These numbers (which are most likely written  as hex values in source
         code and documentations) are the only true identifier, and we have to
@@ -4092,18 +4092,18 @@ CIPHER NAMES
         herein.
 
         Mind the traps and dragons with cipher names and what number they are
-        actually mapped to. In particular when  --lib,  --exe  or  --openssl 
+        actually mapped to. In particular when  --lib,  --exe  or  --openssl
         options are in use. Always use these options with  +list command too.
 
     Name Rodeo
 
         As said above, the  SSL/TLS protocol uses integer numbers to identify
         ciphers, but almost all tools use some kind of  human readable  texts
-        for cipher names. 
+        for cipher names.
 
         For example the cipher commonly known as 'DES-CBC3-SHA' is identified
         by '0x020701c0' (in openssl) and has 'SSL2_DES_192_EDE3_CBC_WITH_SHA'
-        as constant name. A definition is missing in IANA, but there is 
+        as constant name. A definition is missing in IANA, but there is
         'TLS_RSA_WITH_3DES_EDE_CBC_SHA'.  Thers is also '0x000A' for the same
         cipher 'DES-CBC3-SHA'.  Both are valid, first one if used with SSLv2,
         and second one when used with SSLv3.
@@ -4123,7 +4123,7 @@ CIPHER NAMES
               openssl ciphers -V ECDHE
 
         Next example is  'ADH'  which is also known as  'DH_anon' or 'DHAnon'
-        or  'DHA'  or  'ANON_DH'. 
+        or  'DHA'  or  'ANON_DH'.
 
         You think this is enough? Then have a look how many acronyms are used
         for  "Tripple DES".
@@ -4381,7 +4381,7 @@ LIMITATIONS
         Some commands cannot be used together with others, for example:
         +cipher,  +ciphers,  +list,  +libversion,  +version,  +check,  +help,
         +protocols .
- 
+
         +quick  should not be used together with other commands, it returns
         strange output then. It is the only command which allows  +cipher
         together with other commands.
@@ -4465,7 +4465,7 @@ LIMITATIONS
         which results in various error messages,  or  more worse,  may not be
         visibale at all. Available functionalitity of openssl will be checked
         for right at the beginning. Proper warnings and hints are printed.
-        Following table shows the openssl option and how to disbale it within
+        Following table shows the openssl option and how to disable it within
         o-saft:
           * -nextprotoneg       --no-nextprotoneg
           * -reconnect          --no-reconnect
@@ -4516,7 +4516,7 @@ LIMITATIONS
                 ^                 ^____ stop for --ssl-error-timeout=3
                 |______________________ stop for --ssl-error-timeout=2
 
-        On normal (even slow) network connections  dozens of  connections per 
+        On normal (even slow) network connections  dozens of  connections per
         second are usual, hence the timeout is always  0 or 1.  Based on that
         experience  --ssl-error  is enabled and set with defaults as follows:
           * --ssl-error-max=5
@@ -4666,7 +4666,7 @@ INSTALLATION
               vi ssl/tls1.h         +/TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES/
                        # define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
               vi ssl/ssl3.h ssl/s{2,3}_lib.c   +"/# *if 0/"
-                       #==> remove all   # if 0  and corresponding  #endif 
+                       #==> remove all   # if 0  and corresponding  #endif
                        #    except if lines contain:
                        #        _FZA
                        #        /* Fortezza ciphersuite from SSL 3.0
@@ -4844,7 +4844,7 @@ INSTALLATION
         all required modules, please refer to the documentation of the tool.
            * http://search.cpan.org/~rschupp/PAR-Packer-1.030/lib/PAR/Packer.pm
            * http://docs.activestate.com/pdk/6.0/PerlApp.html
-           * http://www.indigostar.com 
+           * http://www.indigostar.com
 
         Note that  pre-build executables (build by perlapp, perl2exe)  cannot
         be provided due to licence problems.
@@ -4962,7 +4962,7 @@ HACKER's INFO
         variable to specify  additional paths  to directories where to search
         for libraries, for example the  LD_LIBRARY_PATH environment variable.
         This is the default environment variable used herein.  If your system
-        uses  another name it must be specified with the  --envlibvar=NAME 
+        uses  another name it must be specified with the  --envlibvar=NAME
         option, where  NAME  is the name of the environment variable.
 
     Understanding  --exe=PATH, --lib=PATH, --openssl=FILE
@@ -5078,7 +5078,7 @@ HACKER's INFO
               WARNING: can't open config file: /path/to/openssl/ssl/openssl.cnf
 
         This warning can be ignored, usually as  req  or  ca  sub commands of
-        openssl is not used here. 
+        openssl is not used here.
         To fix the problem, either use  --openssl-cnf=FILE  option or set the
         the environment variable OPENSSL_CONF properly.
 
@@ -5105,7 +5105,7 @@ HACKER's INFO
         This script can be used as  CGI application. Output is the same as in
         common CLI mode, using  'Content-Type:text/plain'.  Keep in mind that
         the used modules like  Net::SSLeay(1)  will write some debug messages
-        on  STDERR instead  STDOUT.  Therefore multiple  --v  and/or  --trace 
+        on  STDERR instead  STDOUT.  Therefore multiple  --v  and/or  --trace
         options behave slightly different.
 
         No additional external files like  RC-FILE  or  DEBUG-FILE  are read
@@ -5115,7 +5115,7 @@ HACKER's INFO
 
       WARNING
 
-          There are  no  input data validation checks implemented herein. All 
+          There are  no  input data validation checks implemented herein. All
           input data is url-decoded once and then used verbatim.
           More advanced checks must be done outside before calling this tool.
 
@@ -5125,7 +5125,7 @@ HACKER's INFO
 #       The only code necessary for CGI mode is encapsulated at the beginning,
 #       see  'if ($me =~/\.cgi/){ ... }'.  Beside some minor additional regex
 #       matches (mainly removing trailing   '=' and empty arguments) no other
-#       code is needed. 
+#       code is needed.
 #
 
     Using user specified code
@@ -5146,7 +5146,7 @@ HACKER's INFO
 #        be done in a standarized generic way using well designed software but
 #        mainly needs individual code for each check, and sometimes more worse
 #        variants of the same code.
-#        Please keep this in mind, before trying to unitise the code. 
+#        Please keep this in mind, before trying to unitise the code.
 #
 #        Note:  following descriptions mainly uses the term "sub" (the perlish
 #        term) when talking about functions, procedures, and/or methods.
@@ -5253,7 +5253,7 @@ HACKER's INFO
 #
 #        The code is most likely not thread-safe. Anyway, we don't use them.
 #
-#        For debugging the code, the  --trace  option can be used. See  DEBUG 
+#        For debugging the code, the  --trace  option can be used. See  DEBUG
 #        section below for more details. Be prepared for a lot of output!
 #
 #      Comments
@@ -5517,7 +5517,7 @@ DEBUG
                    external executable              /opt/openssl-chacha/bin/openssl
                    used environment variable (name) LD_LIBRARY_PATH
                    environment variable (content)   <<undef>>
-                   path to shared libraries         
+                   path to shared libraries
                    full path to openssl.cnf file    <<undef>>
                    common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
                                                     /etc/ssl/openssl.cnf \
@@ -5549,7 +5549,7 @@ DEBUG
                    Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
                    Net::SSLinfo           16.06.01 Net/SSLinfo.pm
                    Net::SSLhello          16.05.16 Net/SSLhello.pm
-                   Ciphers                          
+                   Ciphers
                    osaft                  16.05.10 osaft.pm
 
         Following example shows the result with warnings:
@@ -5578,7 +5578,7 @@ DEBUG
                 external executable              /usr/bin/openssl
                 used environment variable (name) LD_LIBRARY_PATH
                 environment variable (content)   <<undef>>
-                path to shared libraries         
+                path to shared libraries
                 full path to openssl.cnf file    <<undef>>
                 common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
                                                  /etc/ssl/openssl.cnf \
@@ -5787,8 +5787,8 @@ EXAMPLES
 
 #begin --v --v
 .raw nerobeg
-sretset rof tidua LSS PSAWO  -  "tfaS-O"   
-retseT reuf tiduA LSS PSAWO  -  "tfaS-O"   
+sretset rof tidua LSS PSAWO  -  "tfaS-O"
+retseT reuf tiduA LSS PSAWO  -  "tfaS-O"
 :nnawdnegri nnad sib ,elieW enie sad gnig oS
 ..wsu ,"haey-lss" ,"agoy-lss" :etsiL red fua dnats -reteaps reibssieW
 eretiew  raap nie-  nohcs se tnha nam  ,ehcuS eid nnageb os ,nebegrev
@@ -5796,7 +5796,7 @@ nohcs dnis nemaN ednessap eleiV  .guneg "giffirg"  thcin reba sad raw
 gnuhciltneffeoreV enie reuF .noisrevsgnulkciwtnE red emaN red tsi saD
 . loot LSS rehtona tey -  "lp.tsaey"   :resseb nohcs tsi sad
 ,aha ,tsaey -- efeH -- reibssieW -- .thcin sad tgnilk srednoseb ,ajan
-eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"   
+eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"
 :ehan gal se ,nedrew emaN "regithcir" nie hcod nnad se etssum
 hcan dnu hcaN  .edruw nefforteg setsre sla "y" sad liew ,"lp.y" :eman
 -ietaD nie snetsednim  ,reh emaN nie etssum sE .slooT seseid pytotorP
