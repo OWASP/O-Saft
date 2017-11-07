@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.216 17/11/07 07:20:11";
+my  $man_SID= "@(#) o-saft-man.pm 1.217 17/11/07 07:31:44";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1203,8 +1203,8 @@ QUICKSTART
         * Start the simple GUI which uses $0 in a Docker image
           o-saft.tcl --docker
 
-        For more specialised test cases, refer to the  COMMANDS  and  OPTIONS
-        sections below. For more examples please refer to  EXAMPLES  section.
+        For more specialised test cases, refer to the sections  COMMANDS  and
+        OPTIONS  below. For more examples please refer to  EXAMPLES  section.
 
         For more details, please see  X&Requirements&  and  INSTALLATION  below.
 
