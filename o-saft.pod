@@ -159,7 +159,7 @@ here are some examples of the most common use cases:
 
 	o-saft.tcl I--docker&&
 
-For more specialised test cases, refer to the  L</COMMANDS>  and  L</OPTIONS> 
+For more specialised test cases, refer to the  L</COMMANDS>  and  L</OPTIONS>
 sections below. For more examples please refer to  L</EXAMPLES>  section.
 
 For more details, please see  L</Requirements>  and  L</INSTALLATION>  below.
@@ -262,7 +262,7 @@ do such installations into directoies specially prepared for use with
 	o-saft.pl . No other tools of your system should use these installations
 i.e. by accident or because your environment variables point to them.
 
-Note that compilation and installation of additional tools  (openssl, 
+Note that compilation and installation of additional tools  (openssl,
 Net::SSLeay, etc.) uses known insecure configurations and features!
 This is essential to make o-saft.pl able to check for such insecurities.
 
@@ -283,7 +283,7 @@ reported results.
 =head1 TECHNICAL INFORMATION
 
 It is important to understand, which provided information is based on
-data returned by underlaying (used) libraries and the information 
+data returned by underlaying (used) libraries and the information
 computed directly.
 
 =head2 OpenSSL, libssl, libcrypto
@@ -632,7 +632,7 @@ with other commands).
 Show ciphers offered by local SSL implementation.
 
 This commands prints the ciphers in a format like "openssl ciphers"
-does. It also accepts the  -v  and  -V  option. The  I<--legacy=TYPE> 
+does. It also accepts the  -v  and  -V  option. The  I<--legacy=TYPE>
 option can be used as described for  I<+list>  command.
 Use  I<+list>  command for more information according ciphers.
 
@@ -707,7 +707,7 @@ but also gives some kind of scoring for security issues if any.
 
 Print details about the targets hostname, DNS, etc.
 These details are usually printed only for the  I<+check>  and  I<+info>
-command, but not for any individual command. 
+command, but not for any individual command.
 
 =head3 +http
 
@@ -943,7 +943,7 @@ protocol. It is a information command.
 
 It is not possible to check if a server uses C<SSLHonorCipherOrder>.
 Even if it is used (switched on),  it is not possible to  check the
-specified order of the ciphers. 
+specified order of the ciphers.
 
 I. g. it is expected that the order is according the cipher suite's
 strength, meaning the most strongest first, and the weakest last.
@@ -983,7 +983,7 @@ These commands are just an alias for the  I<+protocols>  command.
 The commands  I<+cn>  and  I<+altname>  print the  information stored  in
 the certificate.
 The command  I<+hostname>  checks if the given hostname matches the CN
-value in the certificate.  Note that wildcard names in the CN, only 
+value in the certificate.  Note that wildcard names in the CN, only
 allow to contain one C<*>.
 The command  I<+wildcard>  checks if the given hostname does not match
 any name specified in the certificate's "subjectAltname". This check
@@ -1437,7 +1437,7 @@ SSL versions from the underlaying libraries.  Unsupported  versions
 are then disables and a warning is shown.
 Unfortunately some libraries have  not implemented all functions to
 check availability of a specific SSL version, which then results in
-a compile error. 
+a compile error.
 
 This option disables the strict check of availability.
 If the underlaying library doesn't support the required SSL version
@@ -1921,7 +1921,7 @@ openssl executable (i.e.  I<--force-openssl>).
 
 =head2 Options for  +cipherall  command
 
-=head3 --range=RANGE 
+=head3 --range=RANGE
 
 =head3 --cipherrange=RANGE
 
@@ -1979,14 +1979,14 @@ Following RANGEs are supported (see also:  I<--cipherrange=RANGE>):
 Note: C<SSLv2> is the internal list used for testing SSLv2 ciphers.
 It does not make sense to use it for other protocols; however ...
 
-=head3 --slow-server-delay=SEC 
+=head3 --slow-server-delay=SEC
 
 Additional delay in seconds  after the server is connected  using a
 proxy or before starting STARTTLS.
 This is useful when connecting via  slow proxy chains or connecting
 to slow servers before sending the STARTTLS sequence.
 
-=head3 --ssl-maxciphers=CNT 
+=head3 --ssl-maxciphers=CNT
 
 Maximal number of ciphers sent in a sslhello (default: 32).
 
@@ -2064,7 +2064,7 @@ When checking for the  TLS heartbeat extension,  the server may not
 respond at all, which would result in a  "no reply"  message.  This
 marks the check for  I<+heartbleed>  as C<no>.
 I.g.  a server is  not vulnerable to the  heartbleed attack  if the
-TLS heartbeat extension is disabled.  Hence the  check result  C<no> 
+TLS heartbeat extension is disabled.  Hence the  check result  C<no>
 may be mis-leading.  This option  treats the  "no reply"  result as
 "not vulnerable" and returns  C<yes>  then.
 
@@ -2628,11 +2628,11 @@ Not to be intended in conjunction with any target check.
 
 =head3 --hint
 
-Print hint messages (!!Hint:). 
+Print hint messages (!!Hint:).
 
 =head3 --no-hint
 
-Do not print hint messages (!!Hint:). 
+Do not print hint messages (!!Hint:).
 
 =head3 --warning
 
@@ -2863,7 +2863,7 @@ TLSv1.2 checks are not yet implemented.
 
 Connection is vulnerable if target supports SSL-level compression, or
 supports SPDY/3 (because SPDY/3 uses compression).
-See http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl 
+See http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
 
 Note: SPDY/3 is only possible if the client explicitely asks for this
 alternate protocol (for example  "openssl ... -nextprotoneg spdy/3").
@@ -3041,7 +3041,7 @@ However, some (mainly historic) SSL implementations may have problems
 to connect because they are not able to do the crypt mathematics with
 exponenents larger than 65536.
 
-If ecliptive curves are used, the result for these checks is always 
+If ecliptive curves are used, the result for these checks is always
 C<no (<<N/A ...)>.
 
 =head3 Sizes and Lengths of Certificate Settings
@@ -3537,7 +3537,7 @@ This requirement is not testable from remote.
 =head3 BSI TR-03116-4 (+tr-03116+ +tr-03116- +bsi)
 
 Checks if connection and ciphers are compliant according TR-03116-4,
-see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen 
+see https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen
 /TechnischeRichtlinien/TR03116/BSI-TR-03116-4.pdf?__blob=publicationFile
 
 (following headlines are taken from there)
@@ -3548,7 +3548,7 @@ Allows only TLS 1.2.
 
 2.1.2 Cipher Suites
 
-Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265. 
+Cipher suites must be ECDHE-ECDSA or -RSA with AES128 and SHA265.
 For curiosity, stronger cipher suites with AES256 and/or SHA384 are
 not not allowed. To follow this curiosity the  I<+tr-03116->  (lazy)
 check allows the stronger cipher suites ;-)
@@ -3957,7 +3957,7 @@ CIPHER  must be a valid cipher suite name as shown with:
 
 	o-saft.pl ciphers
 
-NOTE that such configuration options should be used before any I<--help> 
+NOTE that such configuration options should be used before any I<--help>
 or  I<--help=*>  option, otherwise the changed setting is not visible.
 
 =head2 CONFIGURATION FILE
@@ -4014,7 +4014,7 @@ when and how these functions are called.
 
 =head2 SHELL TWEAKS
 
-Configuring the shell environment where the tool is startet,  must be 
+Configuring the shell environment where the tool is startet,  must be
 done before the tools starts.  It is  not really  a task for the tool
 itself, but it can simplify your life, somehow.
 
@@ -4034,7 +4034,7 @@ Examples in  C<.o-saft.pl>  are  I<+preload>  and  I<+ciphercheck> .
 
 While the SSL/TLS protocol uses integer numbers to identify  ciphers,
 almost all tools use some kind of  "human readable"  texts for cipher
-names. 
+names.
 
 These numbers (which are most likely written  as hex values in source
 code and documentations) are the only true identifier, and we have to
@@ -4098,18 +4098,18 @@ Use  I<--help=regex>  to see which regex are used to handle all variants
 herein.
 
 Mind the traps and dragons with cipher names and what number they are
-actually mapped to. In particular when  I<--lib>,  I<--exe>  or  I<--openssl> 
+actually mapped to. In particular when  I<--lib>,  I<--exe>  or  I<--openssl>
 options are in use. Always use these options with  I<+list> command too.
 
 =head2 Name Rodeo
 
 As said above, the  SSL/TLS protocol uses integer numbers to identify
 ciphers, but almost all tools use some kind of  human readable  texts
-for cipher names. 
+for cipher names.
 
 For example the cipher commonly known as C<DES-CBC3-SHA> is identified
 by C<0x020701c0> (in openssl) and has C<SSL2_DES_192_EDE3_CBC_WITH_SHA>
-as constant name. A definition is missing in IANA, but there is 
+as constant name. A definition is missing in IANA, but there is
 C<TLS_RSA_WITH_3DES_EDE_CBC_SHA>.  Thers is also C<0x000A> for the same
 cipher C<DES-CBC3-SHA>.  Both are valid, first one if used with SSLv2,
 and second one when used with SSLv3.
@@ -4130,7 +4130,7 @@ only in openssl's "ciphers"  command. Wonder about (up to 1.0.1h):
 	openssl ciphers -V ECDHE
 
 Next example is  C<ADH>  which is also known as  C<DH_anon> or C<DHAnon>
-or  C<DHA>  or  C<ANON_DH>. 
+or  C<DHA>  or  C<ANON_DH>.
 
 You think this is enough? Then have a look how many acronyms are used
 for  "Tripple DES".
@@ -4605,7 +4605,7 @@ Some versions of openssl (< 1.x) may not support all required options
 which results in various error messages,  or  more worse,  may not be
 visibale at all. Available functionalitity of openssl will be checked
 for right at the beginning Proper Warnings and hints are printed.
-Following table shows the openssl option and how to disbale it within
+Following table shows the openssl option and how to disable it within
 o-saft:
 
 =over
@@ -4718,7 +4718,7 @@ may be observed (assuming I<--ssl-error-max=3>):
    ^                 ^____ stop for I<--ssl-error-timeout=3>
    |______________________ stop for I<--ssl-error-timeout=2>
 
-On normal (even slow) network connections  dozens of  connections per 
+On normal (even slow) network connections  dozens of  connections per
 second are usual, hence the timeout is always  0 or 1.  Based on that
 experience  I<--ssl-error>  is enabled and set with defaults as follows:
 
@@ -5034,7 +5034,7 @@ Example with openssl-1.0.2d:
           # define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
 
 	vi ssl/ssl3.h ssl/s{2,3}_lib.c   +"/# *if 0/"
-          #==> remove all   # if 0  and corresponding  #endif 
+          #==> remove all   # if 0  and corresponding  #endif
           #    except if lines contain:
           #        _FZA
           #        /* Fortezza ciphersuite from SSL 3.0
@@ -5256,7 +5256,7 @@ all required modules, please refer to the documentation of the tool.
 
 =over
 
-=item * http://www.indigostar.com 
+=item * http://www.indigostar.com
 
 =back
 
@@ -5419,7 +5419,7 @@ find these libraries. Also most systems provide a special environment
 variable to specify  additional paths  to directories where to search
 for libraries, for example the  LD_LIBRARY_PATH environment variable.
 This is the default environment variable used herein.  If your system
-uses  another name it must be specified with the  I<--envlibvar=NAME> 
+uses  another name it must be specified with the  I<--envlibvar=NAME>
 option, where  NAME  is the name of the environment variable.
 
 =head2 Understanding  --exe=PATH, --lib=PATH, --openssl=FILE
@@ -5589,7 +5589,7 @@ tool or lib, a warning like following may occur:
 	WARNING: can't open config file: /path/to/openssl/ssl/openssl.cnf
 
 This warning can be ignored, usually as  req  or  ca  sub commands of
-openssl is not used here. 
+openssl is not used here.
 To fix the problem, either use  I<--openssl-cnf=FILE>  option or set the
 the environment variable OPENSSL_CONF properly.
 
@@ -5615,7 +5615,7 @@ place the libs in the same directory as the  corresponding executable
 This script can be used as  CGI application. Output is the same as in
 common CLI mode, using  C<Content-Type:text/plain>.  Keep in mind that
 the used modules like L<Net::SSLeay(1)|Net::SSLeay(1)> will write some debug messages
-on  STDERR instead  STDOUT.  Therefore multiple  I<--v>  and/or  I<--trace> 
+on  STDERR instead  STDOUT.  Therefore multiple  I<--v>  and/or  I<--trace>
 options behave slightly different.
 
 No additional external files like  L</RC-FILE>  or  L</DEBUG-FILE>  are read
@@ -5625,7 +5625,7 @@ don't make any sense.
 
 =head3 WARNING
 
-There are  no  input data validation checks implemented herein. All 
+There are  no  input data validation checks implemented herein. All
 input data is url-decoded once and then used verbatim.
 More advanced checks must be done outside before calling this tool.
 
@@ -5804,7 +5804,7 @@ Following example shows the result without warnings:
       external executable              /opt/openssl-chacha/bin/openssl
       used environment variable (name) LD_LIBRARY_PATH
       environment variable (content)   <<undef>>
-      path to shared libraries         
+      path to shared libraries
       full path to openssl.cnf file    <<undef>>
       common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
                                        /etc/ssl/openssl.cnf \
@@ -5837,7 +5837,7 @@ Following example shows the result without warnings:
       Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
      L<Net::SSLinfo|Net::SSLinfo>          16.06.01 Net/SSLinfo.pm
      L<Net::SSLhello|Net::SSLhello>         16.05.16 Net/SSLhello.pm
-      Ciphers                          
+      Ciphers
       osaft                  16.05.10 osaft.pm
 
 Following example shows the result with warnings:
@@ -5869,7 +5869,7 @@ Following example shows the result with warnings:
    external executable              /usr/bin/openssl
    used environment variable (name) LD_LIBRARY_PATH
    environment variable (content)   <<undef>>
-   path to shared libraries         
+   path to shared libraries
    full path to openssl.cnf file    <<undef>>
    common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
                                     /etc/ssl/openssl.cnf \
@@ -6772,7 +6772,7 @@ Generated with:
 # ECKDSA	Elliptic Curve ??? DSA
 # ECMQV	Elliptic Curve Menezes-Qu-Vanstone
 # ECOH	Elliptic Curve only hash
-# #       'ECRYPT	 ?? 
+# #       'ECRYPT	 ??
 # Ed25519	alias for Curve25519
 # Ed448	alias for Curve448
 # EDE	Encryption-Decryption-Encryption
@@ -6870,7 +6870,7 @@ Generated with:
 # LRA	Local Registration Authority
 # LRW	Liskov, Rivest, and Wagner (blok encryption)
 # Lucky 13	Break SSL/TLS Protocol
-# MARS	
+# MARS
 # MAC	Message Authentication Code
 # MCF	Modular Crypt Format
 # MDC2	Modification Detection Code 2 aka Meyer-Schilling
@@ -7110,7 +7110,7 @@ Generated with:
 # ZLIB	Lossless compression file format
 # ZRTP	SRTP for VoIP
 # ZSK	Zone Signing Key (DNSSEC)
-# 
+#
 ## end abbr
 # begin rfc
 
@@ -7233,7 +7233,7 @@ Generated with:
 # 1135	The Helminthiasis of the Internet
 # 6698	DNS-Based Authentication of Named Entities (DANE)
 # 6844	DNS Certification Authority Authorization (CAA) Resource Record
-# 
+#
 ## end rfc
 
 # begin woodoo
@@ -7249,7 +7249,7 @@ Generated with:
 # Hopefully, if these people read this, they change the workflow (means: they
 # also review the source code) or adapt their conclusions having in mind that
 # statistics can be manipulated in many ways. Here we go ...
-# 
+#
 # Disclaimer: No offence meant anyhow, neither against any analyzing tool nor
 # against anyone using them. It is just a reminder to use the tools and their
 # results in a wise manner. Measuring quality is more than just automatically
