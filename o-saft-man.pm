@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.215 17/10/18 16:53:41";
+my  $man_SID= "@(#) o-saft-man.pm 1.216 17/11/07 07:20:11";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -4730,7 +4730,7 @@ INSTALLATION
               echo == patch files
               echo "edit SSLeay.xs and change some #if as described below"
               env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
-                    INC=/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
+                    INC=-I/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
               make
               make install
               cd /tmp && $0 +version
@@ -5796,7 +5796,7 @@ nohcs dnis nemaN ednessap eleiV  .guneg "giffirg"  thcin reba sad raw
 gnuhciltneffeoreV enie reuF .noisrevsgnulkciwtnE red emaN red tsi saD
 . loot LSS rehtona tey -  "lp.tsaey"   :resseb nohcs tsi sad
 ,aha ,tsaey -- efeH -- reibssieW -- .thcin sad tgnilk srednoseb ,ajan
-eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"
+eigeRnegiE nI resworB lSS nIE redeiW  -  "lp.reibssiew"    .
 :ehan gal se ,nedrew emaN "regithcir" nie hcod nnad se etssum
 hcan dnu hcaN  .edruw nefforteg setsre sla "y" sad liew ,"lp.y" :eman
 -ietaD nie snetsednim  ,reh emaN nie etssum sE .slooT seseid pytotorP
