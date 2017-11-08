@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.749 17/10/24 23:16:40",
+    SID         => "@(#) yeast.pl 1.750 17/11/08 23:39:00",
     STR_VERSION => "17.10.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3592,13 +3592,9 @@ sub _get_default($$$$)  {
 
     $cipher = "" if not defined $cipher;
     if ($cipher =~ m#^\s*$#) {
-        # TODO: SSLv2 is special, see _usesocket "dirty hack"
         my $txt = "SSL version '$ssl': cannot get default cipher; ignored";
-        if ($ssl =~ m/SSLv[2]/) {
-            _warn("401: $txt");
-        } else {
-            _v_print($txt);
-        }
+        # SSLv2 is special, see _usesocket "dirty hack"; don't print
+        _v_print($txt) if ($ssl !~ m/SSLv[2]/);
     } else {
         _v2print("default cipher: $ssl:\t$cipher");
     }
@@ -7742,7 +7738,7 @@ foreach my $cmd (@{$cfg{'ignore-out'}}) {
     $fail++ if (_is_do($cmd) > 0);
 }
 if ($fail > 0) {
-    _warn("066: $fail data and check outputs are disabled due to use of '--no-out':");
+    _warn("066: $fail data and check outputs are disbaled due to use of '--no-out':");
     if ($cfg{'verbose'} >  0) {
         _warn("067:  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
         _warn("068:  given:  +" . join(" +", @{$cfg{'do'}}));
@@ -7935,7 +7931,6 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("get default ...");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             next if (not defined $prot{$ssl}->{opt});
-            next if (($ssl eq "SSLv2") && ($cfg{$ssl} == 0));   # avoid warning if protocol disabled: cannot get default cipher
             my $anf = time();
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
             $prot{$ssl}->{'cipher_strong'}  = _get_default($ssl, $host, $port, 'strong');
