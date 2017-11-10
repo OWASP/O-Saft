@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.750 17/11/08 23:39:00",
+    SID         => "@(#) yeast.pl 1.751 17/11/10 02:12:21",
     STR_VERSION => "17.10.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -4390,6 +4390,20 @@ sub checksni($$)    {
     return;
 } # checksni
 
+sub _base2  {
+    #? return base-2 of given number
+    my $value = shift;
+       $value = log($value);
+    # base-2 = log($value) / log(2)
+    # unfortunatelly this calculation results in  "inf"  for big values
+    # to avoid using Math::BigInt for big values, the calculation is done 
+    # as follows (approximately):
+    #   log(2)   = 0.693147180559945;
+    #   1/log(2) = 1.44269504088896;
+    #   v * 1.44 = v + (v / 100 * 44);
+    return ($value + ($value/100*44)); 
+} # _base2
+
 sub checksizes($$)  {
     #? compute some lengths and count from certificate values
     # sets %checks
@@ -4413,8 +4427,9 @@ sub checksizes($$)  {
     $checks{'len_ocsp'}     ->{val} = length($data{'ocsp_uri'}->{val}($host));
     #$checks{'len_oids'}     ->{val} = length($data{'oids'}->{val}($host));
     $checks{'len_sernumber'}->{val} = int(length($data{'serial_hex'}->{val}($host)) / 2); # value are hex octets
-        # Note: RFC5280 limits to 20 digit (integer), which is hard to check
-        #       with the hex value, anyway it should not be more than 8 bytes
+        # Note: RFC5280 limits the serial number to an integer with not more
+        #       than 20 octets. It should also be not a negative number.
+        # It's assumed that a octet equals one byte.
 
     if ($cmd{'extopenssl'} == 1) {
         # TODO: find a better way to do this ugly check
@@ -4451,8 +4466,9 @@ sub checksizes($$)  {
                 $checks{'modulus_size_oldssl'}->{val}   = length($value) * 4 if ((length($value) * 4) > 16384);
             }
         }
-        $value = $data{'serial_int'}->{val}($host);
-        $checks{'sernumber'}    ->{val} = length($value) ." > 20" if (length($value) > 20);
+        $value = $data{'serial_int'}->{val}($host) + 0;
+        my $bits_of_value = _base2($value);
+        $checks{'sernumber'}    ->{val} = "$bits_of_value  > 160" if ($bits_of_value > 160);
         $value = $data{'sigkey_len'}->{val}($host);
         $checks{'len_sigdump'}  ->{val} = (($value =~ m/^\s*$/) ? 0 : $value); # missing without openssl
     } else { # missing without openssl
