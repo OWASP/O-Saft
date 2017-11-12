@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.752 17/11/12 10:18:28",
-    STR_VERSION => "17.11.10",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.753 17/11/12 10:58:00",
+    STR_VERSION => "17.11.11",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -5469,7 +5469,7 @@ sub check_exitcode  {
     return $checks{'cnt_exitcode'}->{val};
 } # check_exitcode
 
-sub scoring($$) {
+sub scoring         {
     #? compute scoring of all checks; sets values in %scores
     my ($host, $port) = @_;
     my $value;
@@ -5513,6 +5513,23 @@ sub scoring($$) {
 
 #| definitions: print functions
 #| -------------------------------------
+
+sub _cleanup_data   {
+    # cleanup some values (strings) in data
+    my ($key, $value) = @_;
+    if ($key eq "https_status") {
+        # remove non-printables from HTTP Status line
+        # such bytes may occour if SSL connection failed
+        #_v_print("# removing non-printable characters from $data{$key}->{txt}:");
+        _v_print("removing non-printable characters from $key: $value");
+        $value =~ s/[^[:print:]]+//g;   # FIXME: not yet perfect
+    }
+    if ($key =~ m/X509$/) {
+        $value =~ s#/([^=]*)#\n   ($1)#g;
+        $value =~ s#=#\t#g;
+    }
+    return $value;
+} # _cleanup_data
 
 sub _printdump($$)  {
     my ($label, $value) = @_;
@@ -5628,15 +5645,13 @@ sub print_data($$$$)    {
     }
     my $label = ($data{$key}->{txt} || ""); # defensive programming ..
     my $value =  $data{$key}->{val}($host, $port) || "";
-    # { always pretty print
-        if ($key =~ m/X509$/) {
+       $value = _cleanup_data($key, $value);
+    if ($key =~ m/X509$/) {                 # always pretty print
             $key =~ s/X509$//;
-            $value =~ s#/([^=]*)#\n   ($1)#g;
-            $value =~ s#=#\t#g;
+            # $value done in _cleanup_data()
             print_line($legacy, $host, $port, $key, $data{$key}->{txt}, $value);
             return;
-        }
-    # }
+    }
     if ((1 == _is_hexdata($key)) && ($value !~ m/^\s*$/)) {
         # check for empty $value to avoid warnings with -w
         # pubkey_value may look like:
