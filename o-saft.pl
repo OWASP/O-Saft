@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.751 17/11/10 02:12:21",
-    STR_VERSION => "17.10.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.752 17/11/12 10:18:28",
+    STR_VERSION => "17.11.10",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
@@ -185,7 +185,7 @@ $cgi = 1 if ((grep{/(?:--cgi|--cgi-?exec)/i} @ARGV) > 0);
 sub _dprint { my @txt = @_; local $\ = "\n"; print STDERR STR_DBX, join(" ", @txt); return; }
 sub _dbx    { my @txt = @_; _dprint(@txt); return; } # alias for _dprint
 sub _warn   {
-    #? print warning if wanted
+    #? print warning if wanted; SEE Perl:Message Numbers
     # don't print if ($warning <= 0);
     my @txt = @_;
     return if ((grep{/(?:--no.?warn)/i} @ARGV) > 0);  # ugly hack 'cause we won't pass $warning
@@ -194,7 +194,8 @@ sub _warn   {
     # TODO: in CGI mode warning must be avoided until HTTP header written
     _yeast_EXIT("exit=WARN - exit on first warning");
     return;
-}
+} # _warn
+
 sub _warn_and_exit      {
     #? print warning that --experimental option is required
     #-method:  name of function where this message is called
@@ -209,7 +210,8 @@ sub _warn_and_exit      {
         exit(1);
     }
     return;
-}
+} # _warn_and_exit
+
 sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
@@ -217,7 +219,20 @@ sub _hint   {
     return if ((grep{/(?:--no.?hint)/i} @ARGV) > 0);
     local $\ = "\n"; print(STR_HINT, join(" ", @txt));
     return;
-}
+} # _hint
+
+sub _warn_nosni         {
+    #? print warning and hint message if no SNI is supported
+    my $err = shift;
+    my $ssl = shift;
+    my $sni = shift;
+    return if ($sni < 1);
+    return if ($ssl !~ m/^SSLv[23]/);
+    # SSLv2 has no SNI; SSLv3 has originally no SNI
+    _warn("$err $ssl does not support SNI; checks skipped");
+    _hint("use '--no-sni' for checking");
+    return;
+} # _warn_nosni
 
 sub _print_read($$)     { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(?:--no.?header|--cgi)/i} @ARGV) <= 0); return; }
     # print information what will be read
@@ -1859,7 +1874,7 @@ sub _load_modules       {
         }
     }
 
-    return if ($osaft_standalone > 0); # SEE Note:Stand-alone
+    return if ($osaft_standalone > 0);  # SEE Note:Stand-alone
 
     if (_is_do('cipherraw') or _is_do('version')
         or ($cfg{'starttls'})
@@ -1868,15 +1883,15 @@ sub _load_modules       {
         $txt = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
         if ($txt ne "") {
             die  STR_ERROR, "008: $txt"  if (not _is_do('version'));
-            warn STR_ERROR, "008: $txt"; # no reason to die for +version
+            warn STR_ERROR, "008: $txt";# no reason to die for +version
         }
-        $cfg{'usehttp'} = 0;        # makes no sense for starttls
+        $cfg{'usehttp'} = 0;            # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
     $txt = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
     if ($txt ne "") {
         die  STR_ERROR, "009: $txt"  if (not _is_do('version'));
-        warn STR_ERROR, "009: $txt";     # no reason to die for +version
+        warn STR_ERROR, "009: $txt";    # no reason to die for +version
     }
     return;
 } # _load_modules
@@ -2099,7 +2114,7 @@ sub _check_functions    {
         _v2print "$text_ssleay (OK)\tyes";
     }
 
-    _y_CMD("  check for NPN and ALPN support ..."); # SEE Note:OpenSSL:Version
+    _y_CMD("  check for NPN and ALPN support ..."); # SEE Note:OpenSSL Version
     if (($version_ssleay < 1.56) or ($version_openssl < 0x10002000)) {
         $cfg{'ssleay'}->{'set_alpn'} = 0;
         $cfg{'ssleay'}->{'get_alpn'} = 0;
@@ -2243,7 +2258,7 @@ sub _check_SSL_methods  {
 
 sub _enable_sclient     {
     # enable internal functionality based on available functionality of openssl s_client
-    # SEE Note:openssl s_client
+    # SEE Note:OpenSSL s_client
     my $opt = shift;
     _y_CMD("  check openssl s_client cpapbility $opt ...") if ($cfg{verbose} > 0);
     my $txt = $cfg{'openssl'}->{$opt}[1];
@@ -2303,7 +2318,7 @@ sub _check_openssl      {
     # NOTE: if loading Net::SSLinfo failed, then we get a perl Warning here:
     #        Undefined subroutine &Net::SSLinfo::s_client_check called at ...
     # Net::SSLinfo::s_client_check() is used to check openssl's capabilities.
-    # For an example output SEE Note:openssl s_client
+    # For an example output SEE Note:OpenSSL s_client
     # Each capabilitiy can be queried with  Net::SSLinfo::s_client_opt_get().
     # I.g. all checks are done in  Net::SSLinfo::s_client_*(),  but no proper
     # error messages are printed there.  Hence the checks are done here again
@@ -2352,7 +2367,7 @@ sub _init_opensslexe    {
 sub _init_openssldir    {
     # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
     # resets cmd{'openssl'}, cmd{'extopenssl'} and cmd{'extsclient'} on error
-    # SEE Note:openssl CApath
+    # SEE Note:OpenSSL CApath
     # $cmd{'openssl'} not passed as parameter, as it will be changed here
     my $dir = qx($cmd{'openssl'} version -d);   # get something like: OPENSSLDIR: "/usr/local/openssl"
     chomp $dir;
@@ -2939,13 +2954,13 @@ sub _islogjam($$) {
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
     return "";
 } # _islogjam
-sub _issloth($$) {
+sub _issloth($$){
     # return given cipher if vulnerable to SLOTH attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
     return "";
 } # _issloth
-sub _issweet($$) {
+sub _issweet($$){
     # return given cipher if vulnerable to Sweet32 attack, empty string otherwise
     my ($ssl, $cipher) = @_;
     return ""      if ($cipher =~ /$cfg{'regex'}->{'notSweet32'}/);
@@ -3230,7 +3245,7 @@ sub _isccs($$$)         {
     return $ret;
 } # _isccs
 
-sub _isbeastskipped($$)    {
+sub _isbeastskipped($$) {
     #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
     #? returns empty string otherwise.
     my ($host, $port) = @_;
@@ -3333,6 +3348,8 @@ sub _usesocket($$$$)    {
     # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSx
     # doesn't produce such warnings. Sigh.
     _trace1("_usesocket($ssl, $host, $port, $ciphers){ sni: $sni");
+    # _warn_nosni(); # not here, because too noisy
+    # following ugly if conditions: because one or both functions may be there
     if (($ssl eq "SSLv2") && (not defined &Net::SSLeay::CTX_v2_new)) {
         _warn("303: SSL version '$ssl': not supported by Net::SSLeay");
         return "";
@@ -3676,6 +3693,11 @@ sub ciphers_scan        {
         _y_CMD("ckecking $cnt ciphers for $ssl ... ($__openssl)");
         _trace("ckecking $cnt ciphers for $ssl ... ($__openssl)");
         _v_print("ckecking $cnt ciphers for $ssl ...");
+        if ($ssl =~ m/^SSLv[23]/) {
+            # SSLv2 has no SNI; SSLv3 has originally no SNI
+            _warn_nosni("410:", $ssl, $cfg{'usesni'});
+            next;
+        }
         my $__verbose   = $cfg{'verbose'};
             # $cfg{'v_cipher'}  should only print cipher checks verbosely,
             # ciphers_scan_prot()  uses  $cfg{'verbose'}, hence wee need to save
@@ -3684,9 +3706,9 @@ sub ciphers_scan        {
         my @supported = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
         $cfg{'verbose'} = $__verbose if ($__verbose != 2);
         # remove  protocol: in each item
-        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }
         #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for perl > 5.12
-            # map({s/^[^:]*://} @supported); # is the perlish way
+        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for per < 5.12 and perlcritic
+            # map({s/^[^:]*://} @supported); # is the perlish way (all perl 5.x)
             # but discarted by perlcritic, hence the less readable foreach
         foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
             push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
@@ -5825,7 +5847,7 @@ sub print_ciphertotals($$$$) {
     return;
 } # print_ciphertotals
 
-sub _is_print($$$) {
+sub _is_print       {
     #? return 1 if parameter indicate printing
     my $enabled = shift;
     my $print_disabled = shift;
@@ -6033,7 +6055,7 @@ sub printciphersummary  {
     _hint("consider testing with options '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
 } # printciphersummary
 
-sub printdata($$$) {
+sub printdata($$$)  {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
@@ -6108,7 +6130,7 @@ sub printchecks($$$) {
 #| definitions: print functions for help and information
 #| -------------------------------------
 
-sub printquit() {
+sub printquit       {
     #? print internal data
     # call this function with:
     #    $0 `\
@@ -6144,7 +6166,7 @@ sub printquit() {
     return;
 } # printquit
 
-sub __SSLeay() {
+sub __SSLeay        {
     #? internal wrapper for Net::SSLeay::SSLeay()
     if (1.49 > $Net::SSLeay::VERSION) {
         my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
@@ -6156,7 +6178,7 @@ sub __SSLeay() {
     }
 } # __SSLeay
 
-sub printversionmismatch() {
+sub printversionmismatch {
     #? check if openssl and compiled SSLeay are of same version
     my $o = Net::SSLeay::OPENSSL_VERSION_NUMBER();
     my $s = __SSLeay();
@@ -6168,14 +6190,14 @@ sub printversionmismatch() {
 
 ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #  NOTE: yes, it is high complexity, but that's the nature of printing all information
-sub printversion() {
+sub printversion    {
     #? print program and module versions
     local $\ = "\n";
     if ($cfg{'verbose'} > 0) {
         print "# perl $^V";
         print '# @INC = ' . join(" ", @INC) . "\n";
     }
-    # SEE Note:OpenSSL:Version
+    # SEE Note:OpenSSL Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
     print( "=== $0 $VERSION ===");
     print( "    osaft_vm_build = $ENV{'osaft_vm_build'}") if (defined $ENV{'osaft_vm_build'});
@@ -7678,7 +7700,7 @@ if ($cfg{'shorttxt'} > 0) {     # reconfigure texts
 
 _yeast_TIME("ini}");
 
-#| first: all commands which do not make a connection
+#| first all commands which do not make a connection
 #| -------------------------------------
 _y_CMD("no connection commands ...");
 if (_is_do('list'))       { printciphers(); exit 0; }
@@ -7874,10 +7896,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             $_printtitle++;
             next if ($cfg{$ssl} == 0);
             if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
+                # using $Net::SSLhello::usesni instead of $cfg{'usesni'} (even
+                # they should be the same) because Net::SSLhello functions are
+                # called
                 if ($ssl =~ m/^SSLv/) {
-                    # SSLv2 has no SNI
-                    # SSLv3 has originally no SNI
-                    _hint("$ssl does not support SNI; use '--no-sni' for checking");
+                    # SSLv2 has no SNI; SSLv3 has originally no SNI
+                    _warn_nosni("409:", $ssl, $Net::SSLhello::usesni);
                     next;
                 }
             }
@@ -8267,7 +8291,8 @@ They are still imported using  use  .
 
 I.g. perl's warn() is not used, but our private _warn(). Using _warn() can
 supressed messages with the  --no-warning  option.  However, some warnings
-should never be supressed, hence warn() is used in in rare cases.
+should never be supressed, hence warn() is used in rare cases.
+Each warning should have a unique number, SEE Perl:Message Numbers .
 See also  CONCEPTS  (if it exists in our help texts).
 
 
@@ -8322,7 +8347,7 @@ Note: openssl uses a comma-separated list for ALPN and NPN,  but it uses a
 colon-separated list for ecliptic curves (and also for ciphers).  Hence we
 allow both separators for all lists on command line.
 
-See also Note:OpenSSL:Version
+See also Note:OpenSSL Version
 
 
 =head2 Note:alias
@@ -8349,7 +8374,7 @@ skipped in printdata() and printchecks(),  which makes implementation much
 easier.
 
 
-=head2 Note:OpenSSL:Version
+=head2 Note:OpenSSL Version
 
 About OpenSSL's version numbers see openssl/opensslv.h . Examples:
   0x01000000 => openssl-0.9x.x
@@ -8359,7 +8384,7 @@ About OpenSSL's version numbers see openssl/opensslv.h . Examples:
   0x102031af => 1.2.3z
 
 
-=head2 Note:openssl CApath
+=head2 Note:OpenSSL CApath
 
 _init_openssldir() gets the configured directory for the certificate files
 from the openssl executable. It is expected that openssl returns something
@@ -8375,7 +8400,7 @@ Note that the returned OPENSSLDIR is a base-directory where the cert files
 are found in the cert/ sub-directory. This cert/ is hardcoded herein.
 
 
-=head2 Note:openssl s_client
+=head2 Note:OpenSSL s_client
 
 Example of% openssl s_client --help
 
@@ -8490,6 +8515,8 @@ example (ouput from openssl):
 example (ouput from openssl):
 example Net::SSLeay:
         Net::SSLeay::get_cipher(..)
+
+Sometimes the term "default cipher" is used.
 
 
 =head2 Note:--ssl-error
