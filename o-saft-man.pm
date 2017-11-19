@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.222 17/11/19 11:19:55";
+my  $man_SID= "@(#) o-saft-man.pm 1.223 17/11/19 17:36:03";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -197,32 +197,32 @@ function osaft_commands(){
 }
 </script>
 <style>
- .h{margin-left:1em;border:0px solid #fff;}
- .r{float:right;}
+ .h             {margin-left:     1em;border:0px solid #fff;}
+ .r             {float:right;}
  .b, div[class=h] > a, input[type=submit]{
+    margin:0.1em;padding:0px 0.5em 0px 0.5em;
     text-decoration:none; font-weight:bold; color:#000;
     border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666;
-    padding:0px 0.5em 0px 0.5em; margin:0.1em;
-    background:linear-gradient(#fff, #ddd); }
- a[class="b r"]:hover, div[class=h] > a:hover { background:linear-gradient(#ddd, #fff); }
- .c{font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
- .q{border:0px solid white;}
- p{margin-left:2em;margin-top:0;}
- td{padding-left:1em;}
- h2, h3, h4, h5{margin-bottom:0.2em;}
- h2{margin-top:-1.5em;padding:1em;height:1.5em;background-color:black;color:white;}
- li{margin-left:2em;}
- div{padding:0.5em;border:1px solid green;}
- div[class=c]{padding:0.1em;margin-left:4em;border:0px solid green;}
- div[class=n]{border:0px solid white;}
- form{padding:1em;}
- span{font-size:120%;margin-bottom:2em;border:1px solid green;}
- label[class=i]{min-width:80px;border:1px solid white;margin-right:1em;}
- label:hover[class=i]{background-color:lightgray;border-bottom:1px solid green}
- input{margin-right:0.5em;}
- input[type=submit]{background:linear-gradient(gold, #ff0);                    
-min-width:8em;text-align:left;}                                                
- input[type=submit]:hover{background:linear-gradient(#ff0, gold)}
+    background:linear-gradient(#fff, #ddd);}
+ a[class="b r"]:hover, div[class=h] > a:hover {background:linear-gradient(#ddd, #fff);}
+ .c             {font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
+ .q             {border:0px solid white;}
+ p              {margin-left:     2em;margin-top:0;}
+ td             {padding-left:    1em;}
+ h2, h3, h4, h5 {margin-bottom: 0.2em;}
+ h2             {margin-top:   -1.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
+ li             {margin-left:     2em;}
+ div            {                     padding:0.5em; border:1px solid green;}
+ div[class=c]   {margin-left:     4em;padding:0.1em; border:0px solid green;}
+ div[class=n]   {                                    border:0px solid white;}
+ form           {padding:1em;}
+ span           {margin-bottom:   2em;font-size:120%;border:1px solid green;}
+ label[class=i] {margin-right:    1em;min-width:8em; border:1px solid white;display:inline-block;}
+ label:hover[class=i]{background-color:lightgray;border-bottom:1px solid green;}
+ input          {margin-right:  0.5em;}
+ input[type=submit]      {background:linear-gradient(gold, #ff0);min-width:8em;text-align:left;}
+ input[type=submit]:hover{background:linear-gradient(#ff0, gold);}
+ fieldset > p   {margin:           0px;padding:0.5em;background-color:#ffa;}
 </style>
 </head>
 <body>
@@ -285,7 +285,6 @@ sub _man_html_cbox  {
 sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", ""); }
-sub _man_html_br    { return sprintf("        <br>\n"); }
 
 sub _man_html   {
     my $anf = shift; # pattern where to start extraction
@@ -365,7 +364,7 @@ sub _man_pod_item   {
     return;
 } # _man_pod_item
 
-sub _man_usr_value($)   {
+sub _man_usr_value  {
     #? return value of argument $_[0] from @{$cfg{'usr-args'}}
     my $key =  shift;
        $key =~ s/^(?:--|\+)//;  # strip leading chars
@@ -377,7 +376,7 @@ sub _man_usr_value($)   {
 #| definitions: print functions for help and information
 #| -------------------------------------
 
-sub _man_doc_opt{
+sub _man_doc_opt    {
     #? print __DATA__ from $typ in  "KEY - VALUE"  format
     my ($typ, $sep, $format) = @_;  # format is POD or opt
     my  $url  = "";
@@ -404,7 +403,7 @@ sub _man_doc_opt{
     return;
 } # _man_doc_opt
 
-sub _man_doc_pod{
+sub _man_doc_pod    {
     #? print __DATA__ from $typ in  POD  format
     my ($typ, $sep) = @_;
     my  @data;
@@ -543,7 +542,7 @@ EoHelp
     return;
 } # man_table
 
-sub man_commands() {
+sub man_commands {
     #? print commands and short description
     # data is extracted from $parents internal data structure
     my $skip = 1;
@@ -627,7 +626,7 @@ EoHelp
     return;
 } # man_commands
 
-sub man_alias() {
+sub man_alias   {
     #? print alias and short description (if available)
     #
     # Aliases are extracted from the source code. All lines handling aliases
@@ -680,7 +679,7 @@ EoHelp
     return;
 } # man_alias
 
-sub man_html() {
+sub man_html    {
     #? print complete HTML page for o-saft.pl --help=gen-html
     #? recommended usage:   $0 --no-warning --no-header --help=gen-html
     _man_dbx("man_html() ...");
@@ -691,7 +690,7 @@ sub man_html() {
     return;
 } # man_html
 
-sub man_pod() {
+sub man_pod     {
     #? print complete HTML page for o-saft.pl --help=gen-pod
     #? recommended usage see at end of this sub
     _man_dbx("man_pod() ...");
@@ -785,7 +784,7 @@ EoHelp
     return;
 } # man_pod
 
-sub man_cgi() {
+sub man_cgi     {
     #? print complete HTML page for o-saft.pl used as CGI
     #? recommended usage:      $0 --no-warning --no-header --help=gen-cgi
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
@@ -806,41 +805,54 @@ print << "EoHTML";
   <a href="$cgi?--cgi&--help=command" target=_help >commands</a>
   <a href="$cgi?--cgi&--help=checks"  target=_help >checks</a>
   <a href="$cgi?--cgi&--help=example" target=_help >examples</a>
-  <a href="$cgi?--cgi&--help=regex"   target=_help >regex</a>
+  <a href="$cgi?--cgi&--help=opt"     target=_help >options</a>
   <a href="$cgi?--cgi&--help=FAQ"     target=_help >FAQ</a>
   <a href="$cgi?--cgi&--help=abbr"    target=_help >Glossar</a>
   <a href="$cgi?--cgi&--help=todo"    target=_help >ToDo</a><br>
  </div>
  <form action="$cgi" method="GET" target="cmd" >
+  <noscript><div>JavaScript disabled. The buttons "Options", "Full GUI" and "Simple GUI" will not work.</div><br></noscript>
   <input  type=hidden name="--cgi" value="" >
   <fieldset>
+    <p>
+    Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
+    <input  type=submit name="--cmd" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
+    <!--
     --url  <input type=text name="--url"  size=40 title='URL to be checked' >
     --host <input type=text name="--host" size=8  title='hostname or IP' >
     --port <input type=text name="--port" size=8  title='port number' >
+    -->
+    </p>
     <table id=cmd>
-    </table>
-    <button onclick="toggle_display(d('a'));return false;" title="show options">Options</button><br>
-    <div id=a ><b>Options</b>
-        <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI">Full GUI</button><br>
+    </table><br>
+    <button onclick="toggle_display(d('a'));return false;" title="show options">Options</button>
+    <div id=a >
+        <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all commands and options">Full GUI</button>
+    <br>
+      <div class=n>
 EoHTML
+        # above HTML contains <div class=n> which contains checkboxes for some
+        # option; these checkboxes are added in following  foreach loop
+        # above HTML contains <table id=cmd> which contains the quick buttons
+        # for some commands; these buttons shoud get the description from the
+        # help text which is generated later in this page,  hence the buttons
+        # are not generated here but using  JavaScript at runtime so that the
+        # corresponding help text can be derivied from the (HTML) page itself
     #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
-    print _man_html_br();
-    print "        <div class=n>\n";
-    print "        </div>\n";
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
                      no-dns dns no-cert BR
                      no-sni sni   BR
                      no-http http BR
-                     header  no-header BR
-                     enabled disabled  BR
-                     v v trace trace traceCMD traceKEY BR
+                     header  no-header  no-warnings BR
+                     enabled disabled   BR
+                     traceKEY traceCMD  trace v     BR
                  )) {
-        if ($key eq 'BR') { print _man_html_br(); next; }
+        if ($key eq 'BR') { print "        <br>\n"; next; }
         print _man_html_cbox($key);
     }
     print << "EoHTML";
-        <br>
-    </div>
+      </div><!-- class=n -->
+    </div><!-- id=a -->
     <div id=b >
         <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI">Simple GUI</button><br>
         <!-- not yet working properly                                                  
@@ -852,9 +864,7 @@ EoHTML
     print << "EoHTML";
 </p>
         <input type=reset  value="clear" title="clear all settings"/>
-    </div>
-EoHTML
-    print << "EoHTML";
+    </div><!-- id=a -->
   </fieldset>
  </form>
  <hr>
@@ -871,7 +881,7 @@ EoHTML
     return;
 } # man_cgi
 
-sub man_wiki($) {
+sub man_wiki    {
     #? print documentation for o-saft.pl in mediawiki format (to be used at owasp.org)
     #? recommended usage:   $0 --no-warning --no-header --help=gen-wiki
     my $mode =  shift;
@@ -941,7 +951,7 @@ EoHelp
     return;
 } # man_wiki
 
-sub man_toc($) {
+sub man_toc     {
     #? print help table of content
     my $typ     = lc(shift) || "";      # || to avoid uninitialized value
     _man_dbx("man_toc() ..");
@@ -959,7 +969,7 @@ sub man_toc($) {
     return;
 } # man_toc
 
-sub man_help($) {
+sub man_help    {
     #? print program's help
     my $label   = lc(shift) || "";      # || to avoid uninitialized value
     my $anf     = uc($label);
@@ -1000,7 +1010,7 @@ sub man_help($) {
     return;
 } # man_help
 
-sub printhelp($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub printhelp   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
