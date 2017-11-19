@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.219 17/11/09 00:40:44";
+my  $man_SID= "@(#) o-saft-man.pm 1.220 17/11/19 01:56:21";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -133,7 +133,7 @@ sub _man_dbx(@) { my @txt=@_; print "#" . $ich . " CMD: " . join(" ", @txt, "\n"
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
 
-sub _man_http_head(){
+sub _man_http_head  {
     return if ((grep{/--cgi/} @ARGV) <= 0);
     # checking @ARGV for --cgi is ok, as this option is for simulating
     # CGI mode only.
@@ -144,29 +144,71 @@ sub _man_http_head(){
     return;
 }
 
-sub _man_html_head(){
+sub _man_html_head  {
     _man_dbx("_man_html_head() ...");
-    print << "EoHTML";
+    print << 'EoHTML';
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> . :  O - S a f t  &#151;  OWASP SSL advanced forensic tool : . </title>
 <script>
-function d(id){return document.getElementById(id).style;}
+function $(id){return document.getElementById(id);}                            
+function d(id){return $(id).style;}
 function t(id){id.display=(id.display=='none')?'block':'none';}
+function osaft_buttons(){
+        var buttons = ['+quick', '+check', '+cipher', '+cipherall', '+info', '+protocols', '+vulns' ];
+        var table   = $('cmd');
+        for (var b in buttons) {
+                // <input type=submit name="--cmd" value="+check" ><div class=q
+                // id='1+check'></div><br>
+                tr = document.createElement('TR');
+                td = document.createElement('TD');
+                cc = document.createElement('INPUT');
+                cc.type = 'submit'; cc.name='--cmd'; cc.value=buttons[b];     
+                cc.title= 'execute: o-saft.pl ' + buttons[b];
+                td.appendChild(cc);
+                tr.appendChild(td);
+                td = document.createElement('TD');
+                td.setAttribute('class', 'q');
+                td.id='q' + buttons[b];
+                tr.appendChild(td);
+                table.appendChild(tr);
+        }
+}
+function osaft_commands(){                                                                  
+/* get help texts from generated button of command and add it to quick 
+ * command button
+ * existing  tag of button containing help text have id=c+cmd
+ * generated tag of quick button containing help text have id=q+cmd
+ */
+	osaft_buttons();                                                                           
+        var arr = document.getElementsByTagName('p');                          
+        for (var p=0; p<arr.length; p++) {                                     
+            if (/^c./.test(arr[p].id)===true) {                                
+                var id = arr[p].id.replace(/^c/, 'q');                         
+		if ($(id) != undefined) {
+			// button exists, add help text
+                	$(id).innerHTML = $(arr[p].id).innerHTML;                      
+            	}                                                                  
+            }                                                                  
+        }                                                                      
+}
 </script>
 <style>
  .h{margin-left:1em;border:0px solid #fff;}
  .r{float:right;}
- .b, div[class=h] > a{text-decoration:none; font-weight:bold; color:#000;
+ .b, div[class=h] > a, input[type=submit]{
+    text-decoration:none; font-weight:bold; color:#000;
     border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666;
     padding:0px 0.5em 0px 0.5em; margin:0.1em;
     background:linear-gradient(#fff, #ddd); }
  a[class="b r"]:hover, div[class=h] > a:hover { background:linear-gradient(#ddd, #fff); }
  .c{font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
+ .q{border:0px solid white;}
  p{margin-left:2em;margin-top:0;}
+ td{padding-left:1em;}
  h2, h3, h4, h5{margin-bottom:0.2em;}
- h2{margin-top:-0.5em;padding:1em;height:1.5em;background-color:black;color:white;}
+ h2{margin-top:-1.5em;padding:1em;height:1.5em;background-color:black;color:white;}
  li{margin-left:2em;}
  div{padding:0.5em;border:1px solid green;}
  div[class=c]{padding:0.1em;margin-left:4em;border:0px solid green;}
@@ -176,6 +218,9 @@ function t(id){id.display=(id.display=='none')?'block':'none';}
  label[class=i]{min-width:80px;border:1px solid white;margin-right:1em;}
  label:hover[class=i]{background-color:lightgray;border-bottom:1px solid green}
  input{margin-right:0.5em;}
+ input[type=submit]{background:linear-gradient(gold, #ff0);                    
+min-width:8em;text-align:left;}                                                
+ input[type=submit]:hover{background:linear-gradient(#ff0, gold)}
 </style>
 </head>
 <body>
@@ -184,7 +229,7 @@ function t(id){id.display=(id.display=='none')?'block':'none';}
 EoHTML
     return;
 }
-sub _man_html_foot(){
+sub _man_html_foot  {
     _man_dbx("_man_html_foot() ...");
     print << "EoHTML";
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
@@ -196,7 +241,7 @@ EoHTML
     return;
 }
 
-sub _man_html_chck($){
+sub _man_html_chck  {
     #? same as _man_html_cbox() but without lable and only if passed parameter start with - or +
     my $n = shift || "";
     my $v = "";
@@ -210,13 +255,13 @@ sub _man_html_chck($){
     }
     return sprintf("<input type=checkbox name='%s' value='%s' >", $n, $v);
 }
-sub _man_name_ankor($){
+sub _man_name_ankor {
     my $n = shift;
     $n =~ s/,//g;  # remove comma
     #$n =~ s/\s/_/g;# replace spaces
     return $n;
 }
-sub _man_html_ankor($){
+sub _man_html_ankor {
     #? print ankor tag for each word in given parameter
     my $n = shift;
     my $a = "";
@@ -227,7 +272,7 @@ sub _man_html_ankor($){
     return $a;
 }
 #sub _man_html_cbox($) { my $key = shift; return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $key, '"--' . $key . '"'); }
-sub _man_html_cbox($) {
+sub _man_html_cbox  {
     #? checkbox with clickable label and hover highlight
     my $key = shift;
        $key = '--' . $key;
@@ -235,16 +280,21 @@ sub _man_html_cbox($) {
     return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
         "", $id, $id, $id, $key);
 }
-sub _man_html_text($) { my $key = shift; return sprintf("%8s--%-10s<input type=text     name=%-12s size=8 >\n", "", $key, '"--' . $key . '"'); }
-sub _man_html_span($) { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
-sub _man_html_cmd($)  { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
-sub _man_html_go()    { my $key = shift; return sprintf("%8s<input type=submit value=go title='execute o-saft.pl with selected commands and options'/>\n", ""); }
-sub _man_html_br()    { return sprintf("        <br>\n"); }
+sub _man_html_text  {
+    my ($key, $title, $size) = @_;
+    return sprintf("%8s--%-10s<input type=text     name=%-12s size=$size title='$title' >\n",
+                   "", $key, '"--' . $key . '"');
+}
+sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
+sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
+sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value=go title='execute o-saft.pl with selected commands and options'/>\n", ""); }
+sub _man_html_br    { return sprintf("        <br>\n"); }
 
-sub _man_html($$) {
+sub _man_html   {
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $h = 0;
+    my $a = "";
     _man_dbx("_man_html($anf, $end) ...");
     while ($_ = shift @DATA) {
         last if/^TODO/;
@@ -253,7 +303,7 @@ sub _man_html($$) {
         next if $h==0;                              # ignore "out of scope"
         m/^=head1 (.*)/   && do { printf("\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);next;};
         m/^=head2 (.*)/   && do { print _man_html_go(); printf("%s\n<h3>%s %s </h3> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
-        m/^=head3 (.*)/   && do { printf("%s\n<h4>%s %s </h4> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
+        m/^=head3 (.*)/   && do { $a=$1; printf("%s\n<h4>%s %s </h4> <p onclick='t(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
         m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
@@ -264,7 +314,8 @@ sub _man_html($$) {
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
-        s/^\s*$/<p>/;                               # add paragraph for formatting
+        #s/^\s*$/<p id="c$a">/;                      # add paragraph for formatting
+        m/^\s*$/ && do { $a="id='c$a'" if ($a ne ""); s/.*/<p $a>/; $a=""; }; # add paragraph for formatting
         print;
     }
     return;
@@ -751,7 +802,7 @@ sub man_cgi() {
     _man_http_head();
     _man_html_head();
 print << "EoHTML";
- <div class=h >
+ <div class=h ><b>Help:</b>
   <a href="$cgi?--cgi&--help"         target=_help >help</a>
   <a href="$cgi?--cgi&--help=command" target=_help >commands</a>
   <a href="$cgi?--cgi&--help=checks"  target=_help >checks</a>
@@ -765,55 +816,52 @@ print << "EoHTML";
   <input  type=hidden name="--cgi" value="" >
   <fieldset>
 EoHTML
+    print _man_html_text('url', "URL to be checked", "40");
 
-    print _man_html_text('host');
-    print _man_html_text('port');
+    print _man_html_text('host', "hostname or IP",    "8");
+    print _man_html_text('port', "port number",       "8");
 print << "EoHTML";
-    <div id=a style="display:block;">
+    <table id=cmd>
+    </table>
+    <button onclick="t(d('a'));return false;" title="show options">Options</button><br>
+    <div id=a style="display:none;"><b>Options</b>
         <button class=r onclick="t(d('a'));t(d('b'));return false;" title="switch to full GUI">Full GUI</button><br>
 EoHTML
-    foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
+    #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     print _man_html_br();
     print "        <div class=n>\n";
-    print _man_html_span('check cipher quick info info--v vulns dump check_sni help http list libversion sizes s_client version quit sigkey bsi ev cipherraw'); # similar to @{$cfg{'commands-INT'}}
     print "        </div>\n";
-    foreach my $key (qw(sslv3 tlsv1 tlsv11 tlsv12 tlsv13 sslv2null BR
+    foreach my $key (qw(sslv2 sslv3 tlsv1 tlsv11 tlsv12 tlsv13 BR
                      no-sni sni no-http http BR
                      no-dns dns no-cert BR
-                     no-openssl openssl force-openssl  BR
-                     no-header  header  short showhost BR
+                     header  no-header  short showhost BR
                      enabled disabled BR
                      v v trace trace traceCMD traceKEY BR
                  )) {
         if ($key eq 'BR') { print _man_html_br(); next; }
         print _man_html_cbox($key);
     }
-    foreach my $key (qw(separator timeout legacy)) { print _man_html_text($key); }
-    print _man_html_br();
-    print "<div class=n>";
-    print _man_html_span('cnark sslaudit sslcipher ssldiagnos sslscan ssltest ssltest-g sslyze testsslserver thcsslcheck openssl simple full compact quick'); # similar to @{$cfg{'legacys'}}
-    print "</div>";
-    print _man_html_text("format");
-    print _man_html_span('csv html json ssv tab xml fullxml raw hex'); # milar to @{$cfg{'formats'}}:
     print << "EoHTML";
         <br>
     </div>
     <div id=b style="display:none;">
         <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI">Simple GUI</button><br>
-        <input type=text     name=--cmds size=55 />
+        <!-- not yet working properly                                                  
+        <input type=text     name=--cmds size=55 title="type any command or option"/>/>
+        -->
 EoHTML
 
     _man_html("COMMANDS", 'LAZY'); # print help starting at COMMANDS
     print << "EoHTML";
 </p>
-    </div>
         <input type=reset  value="clear" title="clear all settings"/>
+    </div>
 EoHTML
-    print _man_html_go();
     print << "EoHTML";
   </fieldset>
  </form>
  <hr>
+ <script> osaft_commands("a");</script>
 EoHTML
     _man_html_foot();
     return;
@@ -1540,12 +1588,7 @@ COMMANDS
 
       +check
 
-          Check the SSL connection for security issues. This is the same as:
-            +info +cipher +sizes --sslv2 --sslv3 --tlsv1 --tlsv11 --tlsv12
-          but also gives some kind of scoring for security issues if any.
-#
-#         The rating is mainly based on the information given in
-#           http://ssllabs.com/.....
+          Check the SSL connection for security issues. Implies  +cipher .
 
       +host
 
