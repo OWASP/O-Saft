@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.221 17/11/19 10:57:47";
+my  $man_SID= "@(#) o-saft-man.pm 1.222 17/11/19 11:19:55";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -237,7 +237,7 @@ sub _man_html_foot  {
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
  <a href="https://github.com/OWASP/O-Saft/blob/master/o-saft.tgz" target=_tar class=b >Download (stable)</a><br>
  <a href="https://owasp.org/index.php/O-Saft" target=_owasp  >O-Saft Home</a>
- <hr><p><span>&copy; sic[&#x2713;]sec GmbH, 2012 - 2017</span></p>
+ <hr><p><span style="display:none">&copy; sic[&#x2713;]sec GmbH, 2012 - 2017</span></p>
 </body></html>
 EoHTML
     return;
@@ -284,7 +284,7 @@ sub _man_html_cbox  {
 }
 sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
-sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value=go title='execute o-saft.pl with selected commands and options'/>\n", ""); }
+sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", ""); }
 sub _man_html_br    { return sprintf("        <br>\n"); }
 
 sub _man_html   {
@@ -573,10 +573,12 @@ sub man_commands() {
 +info             Overview of most important details of the SSL connection.
 +info--v          More detailled overview.
 +quick            Quick overview of checks.
++protocols        Check for protocols supported by target.
 +s_client         Dump data retrieved from  "openssl s_client ..."  call.
 +sizes            Check length, size and count of some values in the certificate.
 +sni              Check for Server Name Indication (SNI) usage.
 +sts              Various checks according STS HTTP header.
++vulns            Check for various vulnerabilities.
 
                   Commands to test ciphers provided by target
 +cipher           Check target for ciphers (using libssl).
@@ -1623,6 +1625,14 @@ COMMANDS
       +pfs
 
           Check if servers offers ciphers with prefect forward secrecy (PFS).
+
+      +protocols
+
+          Check for protocols supported by target.
+
+      +vulns
+
+          Check for various vulnerabilities.
 
       +sts
       +hsts
