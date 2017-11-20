@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 17.09.17  )
+                                                          Version: 17.11.17  )
         O-Saft  - OWASP SSL advanced forensic tool                          (
 	                                                                     )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -96,10 +96,10 @@
 (       (tarball) version.
  )
 (       SHA256 checksum of o-saft.tgz
- )           2dee8b063274ac18f922e013c9545e49f82243afc7b447c1b92f8ad6aa937e82
+ )           a4d85953bdd1e08d20c6f31e9be7ea0af6ae8de3544bbfe823bd1e34ace26e7d
 (
- )      SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:17.09.17
-(            a2554d9aa86507d8ddfc41792247effbf54f92f087569497502f140e163050ab
+ )      SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:17.11.17
+(            10d8f59353d504ad191e39df39e1c0c13bf22d9f7d535f4d45224b423beb7c5c
  )
 (
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/
