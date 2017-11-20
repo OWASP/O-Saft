@@ -1,4 +1,23 @@
 
+Version: 17.11.17
+  BUGFIX
+    * o-saft.cgi: IPv6 addresses are not allowed
+    * do not print prefered cipher for SSLv2, as it has no such cipher
+    * no warning (401) for SSLv2 selected cipher
+    * do not complain about cipher mismatch (warning 411) for SSLv2
+    * missleading hint message for WARNING 126 corrected
+    * check for bit-length of serial number corrected (approx aproach)
+  CHANGES                                                                      
+    * --help=cgi generated HTML for cgi usage improved
+    * +protocols and +vulns documentation added
+    * warnings and hints improved if SNI used with/for SSLv3
+    * remove non-printable characters from HTTPS Status line
+    * Dockerfile: build Net::SSLeay and IO::Socket::SSL based on enhanced openssl-chacha
+    * +cipherall uses same output format as +cipher
+    * documentation improved
+  NEW                                                                          
+    * o-saft.tcl: trace implemented; option --trace
+
 Version: 17.09.17
   BUGFIX
     * bugfix: avoid sub-subdomain matching againt subdomain wildcard
