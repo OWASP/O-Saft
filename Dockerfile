@@ -112,7 +112,7 @@ MAINTAINER Achim <achim@owasp.org>
 	# OSAFT_VM_FROM must be defined again, otherwise its value is not available
 ARG     OSAFT_VM_FROM
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
-ARG     OSAFT_VM_SHA_OSAFT="ff8819f064d1425274d0fa47dbb78313be9984b79a38b5127ace6e6f107d9f08"
+ARG     OSAFT_VM_SHA_OSAFT="a4d85953bdd1e08d20c6f31e9be7ea0af6ae8de3544bbfe823bd1e34ace26e7d"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
 ARG     OSAFT_VM_SRC_SSLEAY="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.82.tar.gz"
 ARG     OSAFT_VM_SHA_SSLEAY="5895c519c9986a5e5af88e3b8884bbdc70e709ee829dc6abb9f53155c347c7e5"
@@ -137,7 +137,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.17 17/11/08 09:49:51" \
+	SID="@(#) Dockerfile 1.18 17/11/20 23:45:57" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -290,7 +290,7 @@ RUN \
 WORKDIR $OSAFT_DIR
 USER    osaft
 RUN     o-saft-docker usage
-	# currently (17.10.17) reports wrong number of ciphers for openssl,
+	# currently (17.11.17) reports wrong number of ciphers for openssl,
 	# because o-saft-docker relies on owasp/o-saft image, which is not
 	# yet available (tagged).
 
