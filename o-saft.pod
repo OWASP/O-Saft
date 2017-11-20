@@ -698,9 +698,7 @@ list of other commands. For details of the list use:
 
 =head3 +check
 
-Check the SSL connection for security issues. This is the same as:
-I<+info> I<+cipher> I<+sizes> I<--sslv2> I<--sslv3> I<--tlsv1> I<--tlsv11> I<--tlsv12>
-but also gives some kind of scoring for security issues if any.
+Check the SSL connection for security issues. Implies  I<+cipher> .
 
 =head3 +host
 
@@ -733,6 +731,14 @@ Quick overview of checks. Implies  I<--enabled>  and  I<--short>.
 =head3 +pfs
 
 Check if servers offers ciphers with prefect forward secrecy (PFS).
+
+=head3 +protocols
+
+Check for protocols supported by target.
+
+=head3 +vulns
+
+Check for various vulnerabilities.
 
 =head3 +sts
 
@@ -814,7 +820,7 @@ target. See  L</Options for cipherall command>  for details.
 
 =head3 +cipherall
 
-Same as  I<+cipherraw>  but ouput format similat to  I<+cipher>  command.
+Same as  I<+cipherraw>  but ouput format similar to  I<+cipher>  command.
 
 =head3 +cipher-default
 
@@ -4431,7 +4437,7 @@ Use  I<--no-openssl>
 Use  I<--ssl-error>
 For a detailed description, please see "Connection Problems".
 
-Other options which may help to get closer to the problems cause:
+Other options which may help to get closer to the problem's cause:
 I<--trace=time>,  I<--timeout=SEC>,  I<--trace>,  I<--trace=cmd>
 
 Using  I<--trace=time>   should show following times:
@@ -6280,7 +6286,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 17.10.17
+@(#) 17.11.12
 
 =head1 AUTHOR
 
