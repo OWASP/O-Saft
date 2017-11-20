@@ -35,7 +35,7 @@
 #?      $0 /opt/bin/ --force
 #?
 #? VERSION
-#?      @(#) INSTALL.sh 1.2 16/12/18 23:51:18
+#?      @(#) INSTALL.sh 1.3 17/11/21 00:38:25
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann (at) sicsec .dot. de
@@ -58,13 +58,29 @@ text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 
+files_contrib="
+		bash_completion_o-saft dash_completion_o-saft \
+		fish_completion_o-saft tcsh_completion_o-saft \
+		filter_examples usage_examples lazy_checks.awk \
+		HTML-simple.awk HTML-table.awk JSON-array.awk JSON-struct.awk \
+		XML-value.awk XML-attribute.awk Cert-beautify.awk Cert-beautify.pl \
+		bunt.pl bunt.sh zap_config.xml"
+#		critic.sh install_perl_modules.pl gen_standalone.sh \
+#		Dockerfile.alpine:3.6 distribution_install.sh \
+#
+
 files_install="o-saft.pl o-saft-dbx.pm o-saft-usr.pm o-saft-man.pm \
 		osaft.pm OSaft/Ciphers.pm OSaft/error_handler.pm \
+		Doc/Rfc.pm Doc/Links.pm Doc/Glossary.pm \
 		Net/SSLinfo.pm Net/SSLhello.pm \
 		o-saft.pod o-saft.tcl o-saft-img.tcl \
-		checkAllCiphers.pl"
+		o-saft-docker checkAllCiphers.pl"
+#		OSaft/_ciphers_iana.pm OSaft/_ciphers_osaft.pm \
+#		OSaft/_ciphers_openssl_all.pm OSaft/_ciphers_openssl_medium.pm \
+#		OSaft/_ciphers_openssl_low.pm OSaft/_ciphers_openssl_high \
+#
 
-files_develop=".perlcriticrc o-saft_bench"
+files_develop=".perlcriticrc o-saft_bench o-saft-docker-dev Dockerfile"
 
 files_ancient="generate_ciphers_hash openssl_h-to-perl_hash o-saft-README INSTALL-devel.sh"
 
@@ -85,7 +101,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.2 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.3 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; dest="$1";  ;;  # last one wins
 	esac
 	shift
@@ -175,11 +191,11 @@ echo "#--------------------------------------------------------------"
 # err=`expr $err + 1` ; # errors not counted here
 files="openssl_h-to-perl_hash generate_ciphers_hash o-saft-README"
 for f in $files ; do
-	[ -e "$f" ] && echo "# found $f ... \033[1;33m$text_alt\033[0m"
+	[ -e "$f" ] && echo "# found $f ... \t\033[1;33m$text_alt\033[0m"
 done
-files="INSTALL-devel.sh README .perlcriticrc o-saft.*.tgz"
+files="$files_develop $files_info "
 for f in $files ; do
-	[ -e "$f" ] && echo "# found $f ... \033[1;33m$text_dev\033[0m"
+	[ -e "$f" ] && echo "# found $f ... \t\033[1;33m$text_dev\033[0m"
 done
 echo "#--------------------------------------------------------------"
 
@@ -253,6 +269,19 @@ if [ -e "$rc" ]; then
 	echo "# $rc found\t\033[1;33m which will be used when started in $HOME only \033[0m"
 	err=`expr $err + 1`
 fi
+echo "#--------------------------------------------------------------"
+
+echo ""
+echo "# check for contributed files"
+echo "#--------------------------------------------------------------"
+for c in $files_contrib ; do
+	d="contrib/$c"
+		if [ -e "$d" ]; then
+			echo "# found\t\033[1;32m\t$d \033[0m"
+		else
+			echo "# not found\t\033[1;33m\t$d \033[0m"
+		fi
+done
 echo "#--------------------------------------------------------------"
 echo ""
 echo -n "# checks"
