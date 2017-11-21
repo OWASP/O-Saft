@@ -65,6 +65,8 @@ They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 
 =item %dbx
 
+=item $time0
+
 =back
 
 Functions being used in L<o-saft.pl|o-saft.pl> shoudl be defined as empty stub there.
@@ -95,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.58 17/10/16 22:01:59";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.59 17/11/21 22:29:22";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -113,7 +115,11 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 
 
 # debug functions
-sub _yTIME    { if ($cfg{'traceTIME'} <= 0){ return ""; } return sprintf(" %02s:%02s:%02s", (localtime)[2,1,0]); }
+sub _yTIME    {
+    if ($cfg{'traceTIME'} <= 0) { return ""; }
+    my $now = time() - ($time0 || 0);   # $time0 defined in main
+    return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
+}
 sub _yeast    { local $\ = "\n"; print "#" . $cfg{'mename'} . ": " . $_[0]; return; }
 sub _y_ARG    { local $\ = "\n"; print "#" . $cfg{'mename'} . " ARG: " . join(" ", @_) if ($cfg{'traceARG'} > 0); return; }
 sub _y_CMD    { local $\ = "\n"; print "#" . $cfg{'mename'} . _yTIME() . " CMD: " . join(" ", @_) if ($cfg{'traceCMD'} > 0); return; }
