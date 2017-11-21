@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.130 17/10/16 22:05:34',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.131 17/11/21 22:36:15',
 
 };
 
@@ -1226,6 +1226,7 @@ our %cfg = (
     'traceCMD'      => 0,       # 1: trace command processing
     'traceKEY'      => 0,       # 1: (trace) print yeast's internal variable names
     'traceTIME'     => 0,       # 1: (trace) print additiona time for benchmarking
+    'time_absolut'  => 0,       # 1: (trace) --traceTIME uses absolut timstamps
     'linux_debug'   => 0,       # passed to Net::SSLeay::linux_debug
     'verbose'       => 0,       # used for --v
     'v_cipher'      => 0,       # used for --v-cipher
