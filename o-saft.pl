@@ -63,15 +63,15 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.755 17/11/20 22:51:35",
+    SID         => "@(#) yeast.pl 1.756 17/11/21 21:20:29",
     STR_VERSION => "17.11.17",          # <== our official version number
 };
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
     my @txt = @_;
-    my $me  = ($0 =~ m/yeast.pl/) ? "yeast" : "o-saft.pl";  # nice name
+    my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
     if ((grep{/(?:--trace.*time)/i} @ARGV) > 0) {
-        printf("#$me   %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @txt);
+        printf("#$me %02s:%02s:%02s CMD: %s\n", (localtime)[2,1,0], @txt);
     }
     return;
 }
@@ -137,7 +137,7 @@ our $VERSION= STR_VERSION;
 my  $me     = $cfg{'me'};       # use a short and easy to remember variable name
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
-$cfg{'mename'} = "yeast  " if ($me =~ /yeast/); # want to see if in develop mode
+$cfg{'mename'} = $me;
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -8088,6 +8088,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                     (join(" ", @{$cfg{'version'}})),
                      join(" ", @{$cfg{'ciphers'}}))
        ) {
+        _yeast_TIME("  open ...");
         _trace("cn_nosni: method: $Net::SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
         $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
