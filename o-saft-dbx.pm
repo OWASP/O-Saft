@@ -59,7 +59,7 @@ They must be defined as `our' in L<o-saft.pl|o-saft.pl>:
 
 =item %data
 
-=item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, verbose
+=item %cfg, i.e. trace, traceARG, traceCMD, traceKEY, time_absolut, verbose
 
 =item %checks
 
@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.59 17/11/21 22:29:22";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.60 17/11/21 23:05:26";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -117,7 +117,8 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 # debug functions
 sub _yTIME    {
     if ($cfg{'traceTIME'} <= 0) { return ""; }
-    my $now = time() - ($time0 || 0);   # $time0 defined in main
+    my $now = time() - ($time0 || 0);
+       $now = time() if ($cfg{'time_absolut'} == 1);# $time0 defined in main
     return sprintf(" %02s:%02s:%02s", (localtime($now))[2,1,0]);
 }
 sub _yeast    { local $\ = "\n"; print "#" . $cfg{'mename'} . ": " . $_[0]; return; }
@@ -200,6 +201,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yTRAC("--no-rc", ((grep{/(?:--no.?rc)$/i} @ARGV) > 0)? 1 : 0);
     _yTRAC("verbose", $cfg{'verbose'});
     _yTRAC("trace",  "$cfg{'trace'}, traceARG=$cfg{'traceARG'}, traceCMD=$cfg{'traceCMD'}, traceKEY=$cfg{'traceKEY'}, traceTIME=$cfg{'traceTIME'}");
+    _yTRAC("time_absolut", $cfg{'time_absolut'});
     # more detailed trace first
     if ($cfg{'trace'} > 1) {
         _yline(" %cmd {");
