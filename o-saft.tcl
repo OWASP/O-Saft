@@ -346,7 +346,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.147 Summer Edition 2017
+#?      @(#) 1.148 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -416,8 +416,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.147 17/10/18 14:53:32 Summer Edition 2017}
-set cfg(VERSION) {1.147}
+set cfg(SID)    {@(#) o-saft.tcl 1.148 17/11/22 01:14:52 Winter Edition 2017}
+set cfg(VERSION) {1.148}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -430,6 +430,10 @@ set cfg(TKPOD)  {O-Saft};               # name of external viewer executable
 set cfg(HELP)   "";                     # O-Saft's complete help text
 set cfg(files)  {};                     # files to be loaded at startup --load
 set cfg(docker-id)  {owasp/o-saft};     # Docker image ID, if needed
+set cfg(docker-tag) {latest};           # Docker image tag, if needed
+
+if {[info exists env(o_saft_docker_tag)] ==1} { set cfg(docker-tag) $env(o_saft_docker_tag);  }
+if {[info exists env(o_saft_docker_name)]==1} { set cfg(docker-id)  $env(o_saft_docker_name); }
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
@@ -2413,6 +2417,7 @@ proc osaft_exec   {parent cmd} {
         # pass image ID to Docker;
         # note that this option must be before o-saft.pl commands or options
         lappend do "-id=$cfg(docker-id)"
+        lappend do "-tag=$cfg(docker-tag)"
     }
     if {$cmd eq "Start"} {
         foreach {idx val} [array get cfg] { # collect selected commands
@@ -2441,6 +2446,7 @@ proc osaft_exec   {parent cmd} {
         set targets {}
         set opt     {}
         set do      "-id=$cfg(docker-id)"
+        lappend do  "-tag=$cfg(docker-tag)"
         lappend do  "status"
     }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
@@ -2689,7 +2695,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $cfg(SAFT)]}        { set vm "(using $cfg(SAFT))" }
-update_status "o-saft.tcl 1.147 $vm"
+update_status "o-saft.tcl 1.148 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
