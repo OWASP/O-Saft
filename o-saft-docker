@@ -225,14 +225,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.27 17/10/01 16:38:41
+#?       @(#) o-saft-docker 1.28 17/11/22 01:17:26
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-VERSION="${OSAFT_VERSION:-17.09.17}"
+VERSION="${OSAFT_VERSION:-17.11.11}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
@@ -375,11 +375,11 @@ docker_build () {
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
 	# expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
-	$try \docker container run --rm -it ${image_name} $@
+	$try \docker container run --rm -i  ${image_name} $@
 }
 
 docker_gui   () {
-	$try \docker container run --rm -it --entrypoint=/O-Saft/o-saft.tcl \
+	$try \docker container run --rm -i  --entrypoint=/O-Saft/o-saft.tcl \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
 
@@ -404,6 +404,11 @@ docker_cp   ()  {
 	$try \docker container cp    $@     ${_id}:/O-Saft/
 	$try \docker container commit       ${_id} ${image_name}
 	$try \docker container rm           ${_id}
+	#
+	# if we need to reset the entrypoint:
+	# $try \docker container commit       \
+	#	--change='ENTRYPOINT ["perl","/O-Saft/o-saft.pl"]' \
+	#
 }
 
 docker_apk  ()  {
