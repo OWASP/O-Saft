@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.757 17/11/21 23:10:14",
-    STR_VERSION => "17.11.20",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.760 17/11/27 22:09:18",
+    STR_VERSION => "17.11.21",          # <== our official version number
 };
 our $time0  = time();
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -3623,6 +3623,49 @@ sub _get_default($$$$)  {
     return $cipher;
 } # _get_default
 
+sub _get_data0          {
+    #? get %data for connection without SNI
+    my ($host, $port) = @_;
+    _y_CMD("test without SNI (disable with --no-sni) ...");
+    # check if SNI supported, also copy some data to %data0
+        # to do this, we need a clean SSL connection with SNI disabled
+        # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
+        # finally we close the connection to be clean for all other tests
+    _trace(" cn_nosni: {");
+    _yeast_TIME("no SNI{");
+    $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
+    if (defined Net::SSLinfo::do_ssl_open(
+                    $host, $port,
+                    (join(" ", @{$cfg{'version'}})),
+                     join(" ", @{$cfg{'ciphers'}}))
+       ) {
+        _y_CMD("  open with no SNI.");
+        _trace("cn_nosni: method: $Net::SSLinfo::method");
+        $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
+        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
+# TODO:  following needs to be improved, because there are multipe openssl
+        # calls which may produce unexpected results (10/2015) {
+        foreach my $key (keys %data) { # copy to %data0
+            next if ($key =~ m/$cfg{'regex'}->{'commands-INT'}/i);
+            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+        }
+# }
+    } else {
+        _warn("204: Can't make a connection to $host:$port without SNI; no initial data (compare with and without SNI not possible)");
+    }
+    _yeast_TIME("no SNI}");
+    # now close connection, which also resets Net::SSLinfo's internal data
+    # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
+    # the connection failed and does nothing (except resetting data)
+    if ($cfg{'verbose'} >  0) {
+        _warn("206: $_") foreach Net::SSLinfo::errors();
+    }
+    Net::SSLinfo::do_ssl_close($host, $port);
+    $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
+    _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
+    return;
+} # _get_data0
+
 sub ciphers_scan_prot   {
     #? test target if given ciphers are accepted, returns array of accepted ciphers
     #? scans for ciphers with given protocol only
@@ -6567,6 +6610,34 @@ sub printusage_exit     {
     exit 2;
 } # printusage_exit
 
+sub _get_host_port      {
+    #? check argument and return host:port
+    # allow host, host:port, URL with IPv4, IPv6, FQDN
+    #   http://user:pass@f.q.d.n:42/aa*foo=bar:23/
+    #    ftp://username:password@hostname/
+    #   http://f.q.d.n:42/aa*foo=bar:23/
+    #    ftp://f.q.d.n:42/aa*foo=bar:23
+    #   ftp:42/no-fqdn:42/aa*foo=bar:23
+    #   //abc/def    
+    #   abc://def    # scary
+    # NOTE: following regex allow hostnames containing @, _ and many more ...
+    my $arg   =  shift;
+    my $prot  =  $arg;
+    my $host  =  $arg;
+       $host  =~ s#^(?:[a-z][a-z0-9]*:)?//##i; # strip schema, if any
+       $host  =~ s#^(?:[^@]+@)?##i;            # strip user:pass, if any
+       $host  =~ s#/.*$##;                     # strip /path/and?more
+    return "" if ($host =~ m/^\s*$/);
+    my $port  =  $host;
+       $port  =~ s#^.*:([0-9]+)#$1#;           # get port
+       $port  =  $cfg{'port'}  if ($port =~ m/^\s*$/);
+       $port  =  $cfg{'port'}  if ($port eq $host); # use previous port
+       $host  =~ s#(?::[0-9]+)$##;             # strip port
+    _y_ARG("arg=$arg => host=$host, port=$port");
+    return "" if ($port =~ m/^\s*$/);
+    return "$host:$port";
+} # _get_host_port
+
 # end sub
 
 usr_pre_args();
@@ -6764,7 +6835,7 @@ while ($#argv >= 0) {
                 push(@{$cfg{'cipher_alpns'}}, split(/,/, $arg));
             }
             # TODO: checking names of protocols needs a sophisticated function
-            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) {
+            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) { }
         }
         if ($typ eq 'CIPHER_NPN'){
             $cfg{'cipher_npns'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
@@ -6783,7 +6854,7 @@ while ($#argv >= 0) {
                 push(@{$cfg{'protos_alpn'}}, split(/,/, $arg));
             }
             # TODO: checking names of protocols needs a sophisticated function
-            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) {
+            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) { }
         }
         if ($typ eq 'PROTO_NPN'){
             $cfg{'protos_npn'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
@@ -7429,20 +7500,14 @@ while ($#argv >= 0) {
     }
 
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
-        # allow URL   http://f.q.d.n:42/aa*foo=bar:23/
-        $port = $arg;
-        if ($port =~ m#.*?:\d+#) {                 # got a port too
-            $port =~ s#(?:[^/]+/+)?([^/]*).*#$1#;  # match host:port
-            $port =~ s#[^:]*:(\d+).*#$1#;
-            _y_ARG("port=    $port");
-        } else { # use previous port
-            $port = $cfg{'port'};
+        my $host_port = _get_host_port($arg);
+        _y_ARG("host=    $host_port");
+        _yeast("host: $host_port") if ($cfg{'trace'} > 0);
+        if ($host_port =~ m/^\s*$/) {
+            _warn("042: invalid host-like argument '$arg'; ignored");
+        } else {
+            push(@{$cfg{'hosts'}}, $host_port)      if ($host_port !~ m/^\s*$/);
         }
-        $arg =~ s#(?:[^/]+/+)?([^/]*).*#$1#;       # extract host from URL
-        $arg =~ s#:(\d+)##;
-        push(@{$cfg{'hosts'}}, $arg . ":" . $port) if ($arg !~ m/^\s*$/);
-        _y_ARG("host=    $arg");
-        _yeast("host: $arg") if ($cfg{'trace'} > 0);
     }
 
 } # while options and arguments
@@ -7522,7 +7587,7 @@ usr_pre_exec();
 #| -------------------------------------
 _y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
-if ($cfg{'exec'} == 0) {
+if ($cfg{'exec'} == 0)  {
     # as all shared libraries used by perl modules are already loaded when
     # this program executes, we need to set PATH and LD_LIBRARY_PATH before
     # being called
@@ -7588,7 +7653,7 @@ _yeast_TIME("inc}");
 _yeast_TIME("mod{");
 _y_CMD("check $cfg{'mename'} internals ...");
 
-if (! _is_do('cipherraw')) {    # +cipherraw does not need these checks
+if (! _is_do('cipherraw'))  {   # +cipherraw does not need these checks
 
 #| check for required module versions
 #| -------------------------------------
@@ -7622,7 +7687,7 @@ _yeast_TIME("ini{");
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
-if ($cfg{'usehttp'} == 0) {                # was explizitely set with --no-http 'cause default is 1
+if ($cfg{'usehttp'} == 0)   {              # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("064: STS $text{'no-http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
@@ -8079,46 +8144,10 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
 # FIXME: some servers do not respond for following
 #        reason seams to be SSLv2 or SSLv3 without SNI
-# FIXME: cannot use:    if ($cfg{usesni} > 0) {
+# FIXME: cannot use:    if ($cfg{usesni} > 0) 
 #        need to review code first for %data0 usage
-    _y_CMD("test without SNI (disable with --no-sni) ...");
-    # check if SNI supported, also copy some data to %data0
-        # to do this, we need a clean SSL connection with SNI disabled
-        # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
-        # finally we close the connection to be clean for all other tests
-    _trace(" cn_nosni: {");
-    _yeast_TIME("no SNI{");
-    $Net::SSLinfo::use_SNI  = 0;    # no need to save current value
-    if (defined Net::SSLinfo::do_ssl_open(
-                    $host, $port,
-                    (join(" ", @{$cfg{'version'}})),
-                     join(" ", @{$cfg{'ciphers'}}))
-       ) {
-        _y_CMD("  open with no SNI.");
-        _trace("cn_nosni: method: $Net::SSLinfo::method");
-        $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
-        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
-# TODO:  following needs to be improved, because there are multipe openssl
-        # calls which may produce unexpected results (10/2015) {
-        foreach my $key (keys %data) { # copy to %data0
-            next if ($key =~ m/$cfg{'regex'}->{'commands-INT'}/i);
-            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
-        }
-# }
-    } else {
-        _warn("204: Can't make a connection to $host:$port without SNI; no initial data (compare with and without SNI not possible)");
-    }
-    _yeast_TIME("no SNI}");
-    # now close connection, which also resets Net::SSLinfo's internal data
-    # structure,  Net::SSLinfo::do_ssl_close() is clever enough to work if
-    # the connection failed and does nothing (except resetting data)
-    if ($cfg{'verbose'} >  0) {
-        _warn("206: $_") foreach Net::SSLinfo::errors();
-    }
-    Net::SSLinfo::do_ssl_close($host, $port);
-    $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
-    _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
-# FIXME:    } # usesni
+    # 21nov17: following temporarily disabled due to performance reasons
+    # _get_data0($host, $port);
 
     _yeast_TIME("SNI}");
     usr_pre_open();
