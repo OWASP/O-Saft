@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.760 17/11/27 22:09:18",
+    SID         => "@(#) yeast.pl 1.761 17/11/27 22:49:12",
     STR_VERSION => "17.11.21",          # <== our official version number
 };
 our $time0  = time();
@@ -6629,7 +6629,7 @@ sub _get_host_port      {
        $host  =~ s#/.*$##;                     # strip /path/and?more
     return "" if ($host =~ m/^\s*$/);
     my $port  =  $host;
-       $port  =~ s#^.*:([0-9]+)#$1#;           # get port
+       $port  =~ s#^.*:([0-9]+)$#$1#;          # get port
        $port  =  $cfg{'port'}  if ($port =~ m/^\s*$/);
        $port  =  $cfg{'port'}  if ($port eq $host); # use previous port
        $host  =~ s#(?::[0-9]+)$##;             # strip port
@@ -7891,12 +7891,10 @@ _yeast_TIME("hosts{");
 # run the appropriate SSL tests for each host (ugly code down here):
 $port = ($cfg{'port'}||"");     # defensive programming ..
 foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
-    $cfg{'host'}      = $host;
-    if ($host =~ m#.*?:\d+#) {  # split host:port
-       ($host, $port) = split(/:/, $host);
-        $cfg{'port'}  = $port;  #
-        $cfg{'host'}  = $host;
-    }
+    ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
+    $port = $cfg{'port'} if ($port =~ m/^\s*$/);
+    $cfg{'port'}    = $port;
+    $cfg{'host'}    = $host;
     _yeast_EXIT("exit=HOST0 - perform host start");
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host: $host {\n");
