@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.761 17/11/27 22:49:12",
-    STR_VERSION => "17.11.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.762 17/11/29 10:49:48",
+    STR_VERSION => "17.11.22",          # <== our official version number
 };
 our $time0  = time();
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -6261,6 +6261,7 @@ sub printversion    {
         print "# perl $^V";
         print '# @INC = ' . join(" ", @INC) . "\n";
     }
+    print( "=== started in: $ENV{PWD} ===");# avoid "use Cwd;" or `pwd`
     # SEE Note:OpenSSL Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || STR_UNDEF;
     print( "=== $0 $VERSION ===");
