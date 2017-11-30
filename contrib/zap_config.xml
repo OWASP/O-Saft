@@ -4,25 +4,24 @@
 #?      zap_config.xml  -  example configurtation for ZAP Add-on
 #?
 #? DESCRIPTION
-#?      This files contains some simple examples to use O-Saft from ZAP's
-#?      context menu "External Program".
+#?      This file contains simple examples to use  O-Saft  from  ZAP's context
+#?       menu  "External Program".
 #?
 #? USAGE
-#?      Unfortunately ZAP has no method to  "include" these settings.  So
-#?      they must be copied manually into ZAP's  config.xml  which can be
-#?      found in  $HOME/.ZAP/config.xml  or  your  working directory.
-#?      Copy all  <app>..</app>  scopes into the  <apps>  scope.
+#?      Unfortunately ZAP has no method to  "include"  these settings. So they
+#?      must be copied manually into ZAP's  config.xml , which can be found in
+#?      $HOME/.ZAP/config.xml  or  your  working directory.
+#?      Copy all  <app>..</app>  scopes into the  <apps>  scope there.
 #?
 #? NOTE
-#?      o-saft.pl  and  o-saft.tcl  must be found by the PATH environment
-#?      variable, or they must be specified with a full path here.
+#?      All programs, like o-saft.pl and o-saft.tcl, must be found by the PATH
+#?      environment variable, or they must be specified with a full path here.
 #?
 #? HINT
-#?      If  .o-saft.pl  should be used,  it  must be located  in the same
-#?      directory as  o-saft.pl  will be started. ZAP uses the setting in
-#?      <directory>  for that. If  <directory/>  is empty, o-saft.pl will
-#?      be started in the same directory as ZAP itself.   Then place your
-#?      .o-saft.pl  in that directory.
+#?      If .o-saft.pl should be used, it must be located in the same directory
+#?      where  o-saft.pl  will be started. ZAP uses the setting in <directory>
+#?      for that. If  <directory/>  is empty, o-saft.pl will be started in the
+#?      same directory as ZAP itself. Place your .o-saft.pl in that directory.
 #?
 #? AUTHOR
 #?      16-dec-14 Achim Hoffmann
