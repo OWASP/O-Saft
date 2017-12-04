@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.762 17/11/29 10:49:48",
-    STR_VERSION => "17.11.22",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.763 17/12/05 00:28:07",
+    STR_VERSION => "17.11.30",          # <== our official version number
 };
 our $time0  = time();
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -7145,7 +7145,9 @@ while ($#argv >= 0) {
     if ($arg eq  '--sclientopt')        { $typ = 'OPT';             }
     # various options
     if ($arg eq  '--forcesni')          { $cfg{'forcesni'}  = 1;    }
-    if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'ignore_no_conn'}= 1;}
+    if ($arg =~ /^--ignorenoconn(ect)?/){ $cfg{'sslerror'}->{'ignore_no_conn'}  = 1;}
+    if ($arg =~ /^--ignorehandshake/)   { $cfg{'sslerror'}->{'ignore_handshake'}= 1;}
+    if ($arg =~ /^--noignorehandshake/) { $cfg{'sslerror'}->{'ignore_handshake'}= 0;}
     if ($arg eq  '--lwp')               { $cfg{'uselwp'}    = 1;    }
     if ($arg eq  '--sni')               { $cfg{'usesni'}    = 1;    }
     if ($arg eq  '--nosni')             { $cfg{'usesni'}    = 0;    }
@@ -7730,6 +7732,7 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::ca_file          = $cfg{'ca_file'};
     $Net::SSLinfo::ca_path          = $cfg{'ca_path'};
     $Net::SSLinfo::ca_depth         = $cfg{'ca_depth'};
+    $Net::SSLinfo::ignore_handshake = $cfg{'sslerror'}->{'ignore_handshake'};
     $Net::SSLinfo::starttls         = $cfg{'starttls'};
     $Net::SSLinfo::proxyhost        = $cfg{'proxyhost'};
     $Net::SSLinfo::proxyport        = $cfg{'proxyport'};
@@ -8162,7 +8165,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
 # FIXME: some servers do not respond for following; --no-http helps sometimes
     # Check if there is something listening on $host:$port
-    if ($cfg{'ignore_no_conn'} <= 0) {
+    if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
         _yeast_TIME("connection test{");
@@ -8179,6 +8182,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 _hint("--v  will show more information");
                 _hint("--socket-reuse  may help in some cases");
                 _hint("--ignore-no-conn can be used to disable this check");
+                _hint("do not use --no-ignore-handshake") if ($cfg{'sslerror'}->{'ignore_handshake'} <= 0);
                 _yeast_TIME("  connection test} failed");
                 goto CLOSE_SSL;
             }
