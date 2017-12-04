@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.10.16',  # official version number of tis file
+    OSAFT_VERSION   => '17.11.30',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.131 17/11/21 22:36:15',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.132 17/12/04 22:29:59',
 
 };
 
@@ -1639,6 +1639,9 @@ our %cfg = (
                                 # following are NOT YET fully implemented:
         'delay'     => 0,       # if > 0 continue trying to connect after this time
         'per_prot'  => 1,       # if > 0 detection and count are per SSL version
+        'ignore_no_conn'   => 0,# 0: ignore warnings if connection fails, check target anyway
+                                # 1: print  warnings if connection fails, don't check target
+        'ignore_handshake' => 1,# 1: treat "failed handshake" as error,   don't check target
     },
     'sslhello' =>   {  # configurations for TCP SSL protocol (mainly used in Net::SSLhello)
         'timeout'   => 2,       # timeout to receive ssl-answer
