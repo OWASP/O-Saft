@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '17.09.17',
+    SSLINFO_VERSION => '17.11.30',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.200 17/09/29 08:11:12',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.201 17/12/05 00:19:36',
 };
 
 ######################################################## public documentation #
@@ -158,6 +158,11 @@ Value will not be used at all is set C<undef>.
 Depth of peer certificate verification; default: 9
 
 Value will not be used at all if set C<undef>.
+
+=item $Net::SSLinfo::ignore_handshake
+
+If set to "1" connection attempts returning "faild handshake" will be
+treated as errorM default: 0.
 
 =item $Net::SSLinfo::proxyhost
 
@@ -662,6 +667,7 @@ $Net::SSLinfo::no_cert     = 0; # 0 collect data from target's certificate
                                 #   return string $Net::SSLinfo::no_cert_txt
 $Net::SSLinfo::no_cert_txt = 'unable to load certificate'; # same as openssl 1.0.x
 $Net::SSLinfo::ignore_case = 1; # 1 match hostname, CN case insensitive
+$Net::SSLinfo::ignore_handshake = 0; # 1 treat "failed handshake" as error
 $Net::SSLinfo::timeout_sec = 3; # time in seconds for timeout executable
 $Net::SSLinfo::starttls    = "";# use STARTTLS if not empty
 $Net::SSLinfo::proxyhost   = "";# FQDN or IP of proxy to be used
@@ -1461,6 +1467,7 @@ sub _ssleay_ctx_new {
             #   Net::SSLeay::CTX_set_options(); # can not fail according description!
                 Net::SSLeay::CTX_set_options($ctx, 0); # reset options
                 Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
+# TODO:         Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL | &Net::SSLeay::OP_NO_COMPRESSION);
                 #test# # quick$dirty disable SSL_OP_TLSEXT_PADDING 0x00000010L (see ssl.h)
                 #test# Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL ^ 0x00000010);
             # sets all options, even those for all protocol versions (which are removed later)
@@ -1978,12 +1985,20 @@ sub do_ssl_new      {
             my $ret;
             $src = 'Net::SSLeay::connect() ';
             $ret =  Net::SSLeay::connect($ssl); # may call _check_peer() ..
-            if ($ret <= 0) {
-                $src .= " failed start with $ctx_new()"     if ($ret <  0); # i.e. no matching protocol
-                $src .= " failed handshake with $ctx_new()" if ($ret == 0);
+            if ($ret <  0) {
+                $src .= " failed start with $ctx_new()"; # i.e. no matching protocol
                 $err  = $!;
                 push(@{$_SSLtemp{'errors'}}, "do_ssl_new() $src: $err");
                 next;
+            }
+            # following check only if requested; fails to often
+            if ($Net::SSLinfo::ignore_handshake <= 0){
+              if ($ret == 0) {
+                $src .= " failed handshake with $ctx_new()";
+                $err  = $!;
+                push(@{$_SSLtemp{'errors'}}, "do_ssl_new() $src: $err");
+                next;
+              }
             }
             $src = "";
             last;
@@ -2051,7 +2066,11 @@ sub _FLAGS_ALLOW_SELFSIGNED () { return 0x00000001; }
 
 sub do_ssl_open($$$@) {
     my ($host, $port, $sslversions, $cipher) = @_;
-    $cipher = "" if (!defined $cipher); # cipher parameter is optional
+    $cipher = "" if (not defined $cipher);  # cipher parameter is optional
+    #$port   = _check_port($port);
+        # TODO: port may be empty for some calls; results in "... uninitialized
+        #       value $port ..."; need to check if call can provide a port
+        #       mainly happens if called with --ignore-no-connect
     _traceset();
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
@@ -2074,13 +2093,13 @@ sub do_ssl_open($$$@) {
     # initialize %_OpenSSL_opt
     $src = 's_client_check';
     if ($Net::SSLinfo::use_openssl > 0) {
-        if (!defined s_client_check()) {
+        if (not defined s_client_check()) {
             push(@{$_SSLinfo{'errors'}}, "do_ssl_open() WARNING $src: undefined");
        }
     }
 
-    if (defined $Net::SSLinfo::next_protos) {
-        warn "**WARNING: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::next_protos instead"
+    if (defined $Net::SSLinfo::next_protos) {   # < 1.182
+        warn "**WARNING: Net::SSLinfo::next_protos no longer supported, please use Net::SSLinfo::protos_alpn instead"
     }
 
     TRY: {
