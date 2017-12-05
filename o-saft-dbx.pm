@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.60 17/11/21 23:05:26";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.61 17/12/06 00:37:30";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -436,7 +436,7 @@ sub _yeast_data {
     .  no score defined in %checks{key}
 
     A shorttext should be available for each command and all data keys, except:
-        cn_nosni, ext_*, valid-*
+        cn_nosni, ext_*, valid_*
 
     Please check following keys, they skipped in table above due to
     ';
