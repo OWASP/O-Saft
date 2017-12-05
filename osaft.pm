@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.132 17/12/04 22:29:59',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.133 17/12/06 00:45:46',
 
 };
 
@@ -1438,7 +1438,7 @@ our %cfg = (
                                 # internal (debugging) commands
                       # qw(options cert_type),  # will be seen with +info--v only
                                 # keys not used as command
-                        qw(cn_nosni valid-years valid-months valid-days valid-host)
+                        qw(cn_nosni valid_years valid_months valid_days valid_host)
                        ],
     'commands-HINT' => [        # checks which are NOT YET fully implemented
                                 # these are mainly all commands for compliance
@@ -1490,7 +1490,12 @@ our %cfg = (
                                 # they should be available with +info --v only 
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
-                    # need-* lists used to improve performance
+                    # need-* lists used to improve performance and warning messages
+    'need-sslv3'    => [        # commands which need SSLv3 protocol
+                        qw(check cipher cipher_dh cipher_strong cipher_selected
+                         protocols hassslv3 beast freak poodle
+                         tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
+                       )],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check cipher cipher_dh cipher_strong
                          cipher_null cipher_adh cipher_cbc cipher_des cipher_edh
@@ -1678,7 +1683,7 @@ our %cfg = (
         'cmd-hsts'  => '^h?sts',                # match keys for (H)STS
         'cmd-sizes' => '^(?:cnt|len)_',         # match keys for length, sizes etc.
         'cmd-cfg'   => '(?:cmd|checks?|data|info|hint|text|scores?)',# --cfg-* commands
-        'commands-INT'  => '^(?:cn_nosni|valid-(?:year|month|day|host)s?)', # internal data only, no command
+        'commands-INT'  => '^(?:cn_nosni|valid_(?:year|month|day|host)s?)', # internal data only, no command
         'opt-empty' => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
                        # these options may have no value
                        # i.e.  --cmd=   ; this may occour in CGI mode
