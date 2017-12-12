@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.764 17/12/06 00:44:27",
-    STR_VERSION => "17.11.30",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.766 17/12/12 20:57:01",
+    STR_VERSION => "17.12.03",          # <== our official version number
 };
 our $time0  = time();
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -233,7 +233,7 @@ sub _warn_nosni         {
     return if ($sni < 1);
     return if ($ssl !~ m/^SSLv[23]/);
     # SSLv2 has no SNI; SSLv3 has originally no SNI
-    _warn("$err $ssl does not support SNI; checks skipped");
+    _warn("$err $ssl does not support SNI; related checks skipped");
     _hint("use '--no-sni' for checking");
     return;
 } # _warn_nosni
@@ -3737,12 +3737,23 @@ sub ciphers_scan        {
     my $cnt = scalar(@{$cfg{'ciphers'}});
     foreach my $ssl (@{$cfg{'version'}}) {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
-        _y_CMD("ckecking $cnt ciphers for $ssl ... ($__openssl)");
-        _trace("ckecking $cnt ciphers for $ssl ... ($__openssl)");
-        _v_print("ckecking $cnt ciphers for $ssl ...");
+        if (($cfg{'verbose'} + $cfg{'trace'} + $cfg{'traceCMD'}) > 0) {
+            # optimize output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
+            my $_me = "";
+               $_me = $cfg{'mename'} . " CMD:" if ($cfg{'traceCMD'} > 0); # TODO: _yTIME() missing
+               $_me = $cfg{'mename'} . "::"    if ($cfg{'trace'}    > 0);
+            print("#$_me checking $cnt ciphers for $ssl ... ($__openssl)");
+        }
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
-            _warn_nosni("410:", $ssl, $cfg{'usesni'});
+            
+            if (_is_do('cipher') or $cfg{'verbose'} > 0) {
+                _warn_nosni("410:", $ssl, $cfg{'usesni'});
+                # ciphers are collected for various checks, this would result
+                # in above warning, even then if  SSLv3 is not needed for the
+                # requested check;  to avoid these noicy warnings, it is only
+                # printend for  +cipher  command or with --v option
+            }
             next;
         }
         my $__verbose   = $cfg{'verbose'};
