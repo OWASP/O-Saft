@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.766 17/12/12 20:57:01",
-    STR_VERSION => "17.12.03",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.767 17/12/13 15:07:11",
+    STR_VERSION => "17.12.13",          # <== our official version number
 };
 our $time0  = time();
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -728,6 +728,7 @@ my %check_conn = (  ## connection data
     'lucky13'       => {'txt' => "Connection is safe against Lucky 13 attack"},
     'poodle'        => {'txt' => "Connection is safe against POODLE attack"},
     'rc4'           => {'txt' => "Connection is safe against RC4 attack"},
+    'robot'         => {'txt' => "Connection is safe against ROBOT attack"},
     'sloth'         => {'txt' => "Connection is safe against SLOTH attack"},
     'sweet32'       => {'txt' => "Connection is safe against Sweet32 attack"},
     'sni'           => {'txt' => "Connection is not based on SNI"},
@@ -924,6 +925,7 @@ our %shorttexts = (
     'logjam'        => "Safe to Logjam",
     'poodle'        => "Safe to POODLE",
     'rc4'           => "Safe to RC4 attack",
+    'robot'         => "Safe to ROBOT",
     'sloth'         => "Safe to SLOTH",
     'sweet32'       => "Safe to Sweet32",
     'scsv'          => "SCSV not supported",
@@ -1790,6 +1792,7 @@ our %text = (
     'hints' => {
         'renegotiation' => "checks only if renegotiation is implemented serverside according RFC5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
+        'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
     },
 
     'mnemonic'      => { # NOT YET USED
@@ -2958,6 +2961,13 @@ sub _islogjam($$) {
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
     return "";
 } # _islogjam
+sub _isrobot($$){
+    # return given cipher if vulnerable to ROBOT attack, empty string otherwise
+    my ($ssl, $cipher) = @_;
+   #return ""      if ($cipher =~ /$cfg{'regex'}->{'notROBOT'}/);
+    return $cipher if ($cipher =~ /$cfg{'regex'}->{'ROBOT'}/);
+    return "";
+} # _isrobot
 sub _issloth($$){
     # return given cipher if vulnerable to SLOTH attack, empty string otherwise
     my ($ssl, $cipher) = @_;
@@ -4139,6 +4149,7 @@ sub checkcipher($$) {
     $checks{'breach'}->{val}    .= _prot_cipher($ssl, $c) if ("" ne _isbreach($c));
     $checks{'freak'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isfreak($ssl, $c));
     $checks{'lucky13'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _islucky($c));
+    $checks{'robot'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _isrobot($ssl, $c));
     $checks{'sloth'}->{val}     .= _prot_cipher($ssl, $c) if ("" ne _issloth($ssl, $c));
     $checks{'sweet32'}->{val}   .= _prot_cipher($ssl, $c) if ("" ne _issweet($ssl, $c));
     push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" eq _ispfs($ssl, $c));  # add PFS cipher
@@ -7045,6 +7056,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^-(O|-poodle)$/)       { $arg = '+poodle';         } # alias: testssl.sh
     if ($arg =~ /^-(F|-freak)$/)        { $arg = '+freak';          } # alias: testssl.sh
     if ($arg =~ /^-(A|-beast)$/)        { $arg = '+beast';          } # alias: testssl.sh
+    if ($arg =~ /^-(BB|-robot)$/)       { $arg = '+robot';          } # alias: testssl.sh
     if ($arg =~ /^-(J|-logjam)$/)       { $arg = '+logjam';         } # alias: testssl.sh
     if ($arg =~ /^-(D|-drown)$/)        { $arg = '+drown';          } # alias: testssl.sh
     if ($arg =~ /^--(p?fs|nsa)$/)       { $arg = '+pfs';            } # alias: testssl.sh
@@ -7489,6 +7501,7 @@ while ($#argv >= 0) {
         if ($val eq 'drown')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-drown'}});   next; }
         if ($val eq 'freak')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-freak'}});   next; }
         if ($val eq 'lucky13')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
+        if ($val eq 'robot')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-robot'}});   next; }
         if ($val eq 'sweet32')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sweet32'}}); next; }
         if ($val =~ /tr$p?02102/){push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
         if ($val =~ /tr$p?03116/){push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
