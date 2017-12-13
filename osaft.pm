@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.11.30',  # official version number of this file
+    OSAFT_VERSION   => '17.12.13',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.133 17/12/06 00:45:46',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.134 17/12/13 15:05:34',
 
 };
 
@@ -1450,6 +1450,7 @@ our %cfg = (
     'cmd-drown'     => [qw(drown)],                 # commands for +drown
     'cmd-freak'     => [qw(freak)],                 # commands for +freak
     'cmd-lucky13'   => [qw(lucky13)],               # commands for +lucky13
+    'cmd-robot'     => [qw(robot)],                 # commands for +robot
     'cmd-sweet32'   => [qw(sweet32)],               # commands for +sweet32
     'cmd-http'      => [],      # commands for +http, computed below
     'cmd-hsts'      => [],      # commands for +hsts, computed below
@@ -1463,7 +1464,7 @@ our %cfg = (
                          cipher_selected cipher_strong cipher_null cipher_adh
                          cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh
                          cipher_pfs beast crime drown freak heartbleed logjam
-                         lucky13 poodle rc4 sloth sweet32
+                         lucky13 poodle rc4 robot sloth sweet32
                          fingerprint_hash fp_not_md5 sha2signature pub_encryption
                          pub_enc_known email serial subject dates verify heartbeat
                          expansion compression hostname hsts_sts crl
@@ -1479,9 +1480,12 @@ our %cfg = (
     'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [        # commands for checking known vulnerabilities
-                        qw(beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 sloth sweet32 time hassslv2 hassslv3 cipher_pfs session_random)
+                        qw(
+                         beast breach crime drown freak heartbleed logjam
+                         lucky13 poodle rc4 robot sloth sweet32 time
+                         hassslv2 hassslv3 cipher_pfs session_random
+                       )],
                        #qw(resumption renegotiation) # die auch?
-                       ],
     'cmd-prots'     => [        # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npns next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
@@ -1500,7 +1504,8 @@ our %cfg = (
                         qw(check cipher cipher_dh cipher_strong
                          cipher_null cipher_adh cipher_cbc cipher_des cipher_edh
                          cipher_exp  cipher_rc4 cipher_pfs cipher_pfsall
-                         beast crime time breach drown freak logjam lucky13 poodle rc4 sloth sweet32
+                         beast crime time breach drown freak logjam
+                         lucky13 poodle rc4 robot sloth sweet32
                          tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
                          hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
                        )],
@@ -1765,8 +1770,11 @@ our %cfg = (
         'notCRIME'  => '(?:NONE|NULL|^\s*$)',   # same as nocompression (see above)
 #       'TIME'      => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         'Lucky13'   => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',
-        'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',    # match against cipher
+        'Logjam'    => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',        # match against cipher
                        # Logjam is same as regex{EXPORT} above
+        'ROBOT'     => '^(?:(?:SSLv?3|TLSv?1(?:[12]))[_-])?(?:A?DH[_-])?(RC2|RC4|RSA)[_-]',
+        'notROBOT'  => '(?:(?:EC)?DHE[_-])',                    # match against cipher
+                       # ROBOT are all TLS_RCA except those with DHE or ECDHE
         'SLOTH'     => '(?:(EXP(?:ORT)?|NULL).*MD5$|EC(?:DHE|EDH)[_-]ECDSA[_-].*(?:MD5|SHA)$)',
         'Sweet32'   => '(?:[_-](?:CBC||CBC3|3DES|DES|192)[_-])',# match against cipher
         'notSweet32'=> '(?:[_-]AES[_-])',                       # match against cipher
