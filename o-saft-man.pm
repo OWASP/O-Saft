@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.223 17/11/19 17:36:03";
+my  $man_SID= "@(#) o-saft-man.pm 1.224 17/12/13 13:17:06";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -3267,6 +3267,11 @@ CHECKS
 
         Check if target is vulnerable to POODLE attack (SSLv3 enabled).
 
+      robot
+
+        Check if target is vulnerable to ROBOT attack (server offers ciphers
+        with RSA encryption).
+
       sloth
 
         Check if target is vulnerable to SLOTH attack  (server offers RSA-MD5
@@ -3319,7 +3324,7 @@ CHECKS
 
       FREAK
 
-        Attack Against SSL/TLS to downgrade to EXPORT ciphers.
+        Attack against SSL/TLS to downgrade to EXPORT ciphers.
         Currently (2015) a simple check is used:   SSLv3 enabled and EXPORT
         ciphers supported by server.
         See CVE-2015-0204 and https://freakattack.com/ .
@@ -3391,6 +3396,13 @@ CHECKS
 #       Message Skipping Attacks on TLS. Attack to force  server or client  to
 #       skip messages in handshake protocol",
 
+      ROBOT
+
+        Bleichebacher's Oracle attack against SSL/TLS ciphers.
+
+        Not implemented.
+        https://robotattack.org/
+
       SLOTH
 
         Currently (2016) we check for ciphers with  ECDSA, RSA-MD5.
@@ -3410,7 +3422,7 @@ CHECKS
     Target (server) Configuration and Support
 
       BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4,
-      SLOTH, Sweet32
+      ROBOT, SLOTH, Sweet32
 
         See above.
 
