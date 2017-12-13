@@ -13,7 +13,7 @@ use strict;
 use warnings;
 
 my  $VERSION    = "17.10.17";  # official verion number of tis file
-my  $SID        = "@(#) Glossary.pm 1.4 17/10/18 15:52:47";
+my  $SID        = "@(#) Glossary.pm 1.5 17/12/13 12:51:44";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -410,6 +410,7 @@ RIPEMD	RACE Integrity Primitives Evaluation Message Digest
 RMAC	Randomized MAC (block cipher authentication mode)
 RNG	Random Number Generator
 ROT-13	see XOR
+ROBOT	Return Of Bleichenbacher's Oracle Threat
 RTP	Real-time Transport Protocol
 RSA	Rivest Sharmir Adelman (public key cryptographic algorithm)
 RSS-14	Reduced Space Symbology, see GS1
