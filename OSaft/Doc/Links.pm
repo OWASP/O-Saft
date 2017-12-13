@@ -13,7 +13,7 @@ use strict;
 use warnings;
 
 my  $VERSION    = "17.10.17";  # official verion number of tis file
-my  $SID        = "@(#) Links.pm 1.3 17/10/18 16:02:28";
+my  $SID        = "@(#) Links.pm 1.4 17/12/13 13:00:31";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -113,10 +113,12 @@ BEAST	?
 BREACH	http://www.breachattack.com/
 CRIME	http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
 DROWN	https://drownattack.com/
+FREAK	https://freakattack.com/
 FREAK	https://mitls.org/pages/attacks/SMACK#freak
 Lucky 13	?
-LogJam	?
-POODLE	?
+LogJam	https://weakdh.org/
+POODLE	https://www.openssl.org/~bodo/ssl-poodle.pdf
+ROBOT	https://robotattack.org/
 SLOTH	?
 SKIP	https://mitls.org/pages/attacks/SMACK
 SMACK	https://mitls.org/pages/attacks/SMACK
