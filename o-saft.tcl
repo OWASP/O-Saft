@@ -346,7 +346,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.148 Winter Edition 2017
+#?      @(#) 1.149 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -416,8 +416,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.148 17/11/22 01:14:52 Winter Edition 2017}
-set cfg(VERSION) {1.148}
+set cfg(SID)    {@(#) o-saft.tcl 1.149 17/12/19 07:59:58 Winter Edition 2017}
+set cfg(VERSION) {1.149}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -2377,7 +2377,7 @@ proc osaft_save   {type nr} {
             }
         }
     }
-    $fid
+    close $fid
     update_status "saved to $name"
     return
 }; # osaft_save
@@ -2695,7 +2695,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $cfg(SAFT)]}        { set vm "(using $cfg(SAFT))" }
-update_status "o-saft.tcl 1.148 $vm"
+update_status "o-saft.tcl 1.149 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
