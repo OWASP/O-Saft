@@ -1,0 +1,67 @@
+#!/bin/sh
+#?
+#? NAME
+#?      $0 - simple wrapper to call  o-saft.pl
+#?
+#? SYNOPSIS
+#?      $0 [options] target
+#?
+#? DESCRIPTION
+#?      Calls  o-saft.pl  with all specified arguments.  o-saft.pl's  output is
+#?      is then piped to the command specified in the  -post=  option.
+#?      Command given with  -post=  must be located in  contrib/  directory  or
+#?      must be found via  PATH  environment variable.
+#?
+#? OPTIONS
+#?      -h      got it
+#?      -post="command [options]"
+#?              command to pipe output of  o-saft.pl  too
+#?
+#? LIMITATIONS
+#?      Option  -h  or  -post=  must preceed all other options.
+#?
+#? EXAMPLES
+#?	    $0 +cmd --option target
+#?	    $0 -post='bunt.pl'      ' +cmd --option target
+#?	    $0 -post='bunt.pl -blind' +cmd --option target
+#?
+# 
+# Hacker's INFO
+#       Uses options  -h  and  -post=  and not  --h  or  --help  or  --post  to
+#       avoid conflicts with same option for  o-saft.pl .
+#
+#? VERSION
+#?      @(#) o-saft 1.1 17/12/26 10:44:05
+#?
+#? AUTHOR
+#?      17-dec-17 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+ich=${0##*/}
+dir=${0%/*};    [ "$dir" = "$0" ] && dir="."    # $0 found via $PATH in .
+prg=o-saft.pl
+post="cat";     # default, avoids special handling if -post= missing
+
+case "$1" in
+    -h  | '-?')
+        \sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+        \cat <<EoT
+ NOTE
+    To get help for  o-saft.pl, please use:
+        $0 --help
+    or
+        o-saft.pl --help
+EoT
+        exit 0
+        ;;
+    -post=*)
+        post="`expr "$1" ':' '-post=\(.*\)'`"
+        cmd=${post% *}
+        [ -x "$dir/contrib/$cmd" ] && post="$dir/contrib/$post"
+        shift
+        ;;
+esac
+
+$prg $@ | $post
+exit 0
