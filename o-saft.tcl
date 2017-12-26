@@ -346,7 +346,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.149 Winter Edition 2017
+#?      @(#) 1.150 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -416,8 +416,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.149 17/12/19 07:59:58 Winter Edition 2017}
-set cfg(VERSION) {1.149}
+set cfg(SID)    {@(#) o-saft.tcl 1.150 17/12/26 14:32:53 Winter Edition 2017}
+set cfg(VERSION) {1.150}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -509,7 +509,9 @@ set myX(buffer) PRIMARY;        # buffer to be used for copy&paste GUI texts
                                 #         <Btn2Up>: insert-selection(PRIMARY,CLIPBOARD) \
                                 #         ... \
 
-set cfg(bstyle) {image};        # button style: {image} or {text}
+set cfg(bstyle) {image};        # button style:  image  or  text
+
+set cfg(layout) {text};         # layout o-saft.pl's results:  text  or  table
 
 set my_bg       "[lindex [. config -bg] 4]";  # default background color
                                 # this colour is used for buttons too
@@ -1211,7 +1213,7 @@ proc update_status {val} {
     update idletasks;       # enforce display update
 }; # update_status
 
-proc apply_filter {w} {
+proc apply_filter_text  {w} {
     #? apply filters for markup in output, data is in text widget $w
     # set tag for all texts matching pattern from each filter
     # also sets a tag for the complete line named with suffix .l
@@ -1257,6 +1259,39 @@ proc apply_filter {w} {
         if {$bg ne ""}  { $w tag config HELP-$key -background $bg }
         if {$nr ne "0"} { $w tag config HELP-$key -underline  $nr }
         if {$fn ne ""}  { $w tag config HELP-$key -font       $fn }
+    }
+    return
+}; # apply_filter_text
+
+proc apply_filter_table {w} {
+    #? apply filters for markup in output, data is in table widget $w
+    global cfg
+    global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
+    foreach {k key} [array get f_key] {
+        if {$k eq 0} { continue };
+        # extract values from filter table for easy use
+        #set key $f_key($k)
+        set mod $f_mod($k)
+        set len $f_len($k)
+        set rex $f_rex($k)
+        set fg  $f_fg($k)
+        set bg  $f_bg($k)
+        set nr  $f_un($k)
+        set fn  $f_fn($k)
+        if {$key eq ""} { continue };   # invalid or disabled filter rules
+        if {$rex eq ""} { continue };   # -"-
+        _dbx " $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"
+        #if {[regexp yes $col1]} { $this.t  cellconfigure end,1 -bg green }
+    }
+    return
+}; # apply_filter_table
+
+proc apply_filter {w} {
+    #? apply filters for markup in output, data is in text or table widget $w
+    global cfg
+    switch $cfg(layout) {
+        text    { apply_filter_text  $w }
+        table   { apply_filter_table $w }
     }
     return
 }; # apply_filter
@@ -1397,19 +1432,86 @@ proc remove_host  {parent} {
     catch {destroy $parent.eh $parent.bp $parent.bm $parent.lh $parent}
 }; # remove_host
 
-proc create_text  {parent txt} {
+proc create_text  {parent content} {
     #? create scrollable text widget and insert given text; returns widget
     set this    $parent
     text        $this.t -wrap char -yscroll "$this.s set";  # -width 40 -height 10
     scrollbar   $this.s -orient vertical -command "$this.t yview"
-    #set txt     [regsub -all {\t} $txt "\t"];   # tabs are a pain in Tcl :-(
-    $this.t insert end $txt
+    #set txt     [regsub -all {\t} $content "\t"];   # tabs are a pain in Tcl :-(
+    # insert content
+    $this.t insert end $content
     $this.t config -font TkFixedFont
     set_readonly $this.t
     pack $this.s -side right -fill y  -pady 2 -padx {0 2} -in $this
     pack $this.t -fill both -expand 1 -pady 2 -padx {2 0} -in $this
     return $this
 }; # create_text
+
+proc create_table {parent content} {
+    #? create scrollable table widget and insert given text; returns widget
+    global  CFG
+    package require tablelist ;
+    set this    $parent.ft
+    frame $this
+    pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
+    pack [scrollbar $this.y -orient vertical   -command [list $this.t yview]] -side right  -fill y
+    pack [tablelist::tablelist $this.t   \
+             -exportselection true \
+             -selectmode extended  \
+             -selecttype row    \
+             -arrowcolor black  \
+             -background white  \
+             -borderwidth 1     \
+             -stripebackground lightgray \
+             -labelrelief solid \
+             -labelfont osaftBold \
+             -labelpady   3     \
+             -labelcommand tablelist::sortByColumn -showarrow 1 \
+             -movablecolumns true \
+             -movablerows    true \
+             -xscrollcommand [list $this.x set] \
+             -yscrollcommand [list $this.y set] \
+             -font  TkFixedFont \
+             -spacing 1 \
+             -height 25 \
+             -width 150 \
+             -stretch 2 \
+         ] -side left -fill both -expand yes
+    # insert header line
+    set head [list Label Value Comment]
+    foreach f $head { lappend titles 0 $f }
+    $this.t config -columns $titles
+    $this.t  columnconfigure 0 -width 50
+    # insert content
+    foreach line [split $content "\n"] {
+        # content consist of lines separated by \n , where each line is a label
+        # and a value separated by a tab (and additional spaces for formatting)
+        # in tabular context, only label and value is required; no tabs, spaces
+        if {[regexp {^\s*$} $line]} { continue };# skip empty lines
+        set line [regsub {^(=+)} $line {\1:}]
+        if {[regexp {:}  $line]} {  # line not from +cipher
+            set col2 ""
+            set col0 [regsub {:.*$}  $line {}] ;# get label
+            set col1 [regsub {^.*:}  $line {}] ;# get value
+            set col1 [regsub {^\s*}  $col1 {}] ;# remove leading white-sapces
+            if {[regexp -nocase {^(yes|no)\s} $col1]} {
+                # split yes|no from rest of text
+                set col2 [regsub {^[^\s]+\s*} $col1 {}]
+                set col1 [regsub -nocase {^(yes|no)\s.*} $col1 {\1}]
+            }
+            set line [list $col0 $col1 $col2]
+        } else {
+            set line [regsub {^[ \t]+} $line {}]   ;# remove trailing spaces
+            set line [regsub -all {([ \t])+} $line { }]
+            set cols [split $line " "]
+            set line $cols
+        }
+        set line [regsub -all \t $line {}] ;# remove tabs
+        $this.t insert end $line
+    }
+    pack $this -side top
+    return $this
+}; # create_table
 
 proc create_filter_head {parent txt tip col} {
     #? create a cell for header line in the filter grid
@@ -1867,7 +1969,12 @@ proc create_tab   {parent cmd content} {
     #? create new TAB in .note and set focus for it; returns text widget in TAB
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
-    set txt [create_text $tab $content].t ; # <== ugly hardcoded .t from .note
+    if {$cfg(layout) eq "text"} {
+        set txt [create_text  $tab $content].t ;# <== ugly hardcoded .t from .note
+    }
+    if {$cfg(layout) eq "table"} {
+        set txt [create_table $tab $content].t
+    }
     pack [button $tab.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] \
          [button $tab.ttyresult  -command "osaft_save {TTY} $cfg(EXEC)"    ] \
          [button $tab.filter     -command "create_filter $txt $cmd"    ] \
@@ -2570,6 +2677,8 @@ if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 set rcfile [file join {./}       $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 cfg_update;                     # update configuration as needed
+if {[catch { package require tablelist} error_txt]} { set cfg(layout) {text}; }
+   # returns 0 if package availlable, 1 otherwise; use text if not available
 
 ## read $cfg(IMG)               # must be read before any widget is created
 read_images $cfg(bstyle);       # more precisely: before first use of theme_set
@@ -2695,7 +2804,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $cfg(SAFT)]}        { set vm "(using $cfg(SAFT))" }
-update_status "o-saft.tcl 1.149 $vm"
+update_status "o-saft.tcl 1.150 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
@@ -2723,6 +2832,8 @@ PRG $argv0  -- $cfg(ICH)
  |  INIT:      $cfg(INIT)\t$ini
 CFG
  |  TITLE:     $cfg(TITLE)
+ |  debug:     $cfg(DEBUG)
+ |  trace:     $cfg(TRACE)
  |  browser:   $cfg(browser)
  |  tooltip:   tooltip package\t$tip
  |  bstyle:    $cfg(bstyle)
