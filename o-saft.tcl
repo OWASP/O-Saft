@@ -126,6 +126,7 @@ exec wish "$0" ${1+"$@"}
 #? OPTIONS
 #?      --v     print verbose messages (for debugging)
 #?      --d     print more verbose messages (for debugging)
+#?      --rc    print template for .o-saft.pl
 #?      --text  use simple texts as labels for buttons
 #?      --img   use images as defined in o-saft-img.tcl for buttons
 #?              (not recommended on Mac OS X, because Aqua has nice buttons)
@@ -346,7 +347,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.150 Winter Edition 2017
+#?      @(#) 1.151 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -416,8 +417,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.150 17/12/26 14:32:53 Winter Edition 2017}
-set cfg(VERSION) {1.150}
+set cfg(SID)    {@(#) o-saft.tcl 1.151 17/12/28 23:20:44 Winter Edition 2017}
+set cfg(VERSION) {1.151}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -425,59 +426,48 @@ set cfg(ICH)    [file tail $argv0]
 set cfg(DIR)    [file dirname $argv0];  # directory of cfg(ICH)
 set cfg(ME)     [info script];          # set very early, may be missing later
 set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
-set cfg(TKPOD)  {O-Saft};               # name of external viewer executable
                                         # O-Saft means built-in
 set cfg(HELP)   "";                     # O-Saft's complete help text
 set cfg(files)  {};                     # files to be loaded at startup --load
-set cfg(docker-id)  {owasp/o-saft};     # Docker image ID, if needed
-set cfg(docker-tag) {latest};           # Docker image tag, if needed
-
-if {[info exists env(o_saft_docker_tag)] ==1} { set cfg(docker-tag) $env(o_saft_docker_tag);  }
-if {[info exists env(o_saft_docker_name)]==1} { set cfg(docker-id)  $env(o_saft_docker_name); }
+set cfg(.CFG)   {};                     # contains data from prg(INIT)
+                                        # set below and processed in osaft_init
+## configuration file
+# RC-ANF {
 
 #-----------------------------------------------------------------------------{
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
-set cfg(PERL)   {};                     # full path to perl; empty on *nix
-set cfg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
-set cfg(SAFT)   {o-saft.pl};            # name of O-Saft executable
-set cfg(INIT)   {.o-saft.pl};           # name of O-Saft's startup file
-set cfg(.CFG)   {};                     # contains data from cfg(INIT)
-                                        # set below and processed in osaft_init
-catch {
-  set fid [open $cfg(INIT) r]
-  set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
-}
-# some regex to match output from o-saft.pl or data in .o-saft.pl
-# mainly used in create_win()
-set cfg(rexOPT-cfg)  {^([^=]*)=(.*)};   # match  --cfg-CONF=KEY=VAL
-set cfg(rexOUT-head) {^(==|\*\*)};      # match header lines starting with ==
-set cfg(rexOUT-int)  {^--(cgi|call)};   # use other tools for that
-set cfg(rexCMD-int)  {^\+(cgi|exec)};   # internal use only
+set prg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
+set prg(SAFT)   {o-saft.pl};            # name of O-Saft executable
+set prg(INIT)   {.o-saft.pl};           # name of O-Saft's startup file
+
+#   some regex to match output from o-saft.pl or data in .o-saft.pl
+#   mainly used in create_win()
+set prg(DESC)        {-- CONFIGURATION regex to match output from o-saft.pl --}
+set prg(rexOPT-cfg)  {^([^=]*)=(.*)};   # match  --cfg-CONF=KEY=VAL
+set prg(rexOUT-head) {^(==|\*\*)};      # match header lines starting with ==
+set prg(rexOUT-int)  {^--(cgi|call)};   # use other tools for that
+set prg(rexCMD-int)  {^\+(cgi|exec)};   # internal use only
 #-----------------------------------------------------------------------------}
 
-## configure GUI
+set prg(DESC)       {-- CONFIGURATION external programs ----------------------}
+set prg(PERL)       {};                 # full path to perl; empty on *nix
+set prg(BROWSER)    "";                 # external browser program, set below
+set prg(TKPOD)      {O-Saft};           # name of external viewer executable
+set prg(docker-id)  {owasp/o-saft};     # Docker image ID, if needed
+set prg(docker-tag) {latest};           # Docker image tag, if needed
 
-set IMG(!) [image create photo -data {
-  R0lGODlhGAAYAOMOAAAAAAARAQASAQASAgATAQATAgBwLgCBNgCBNwCCNQCCNgCCNwCDNiZ/AP//
-  /////yH5BAEKAA8ALAAAAAAYABgAAASE8MlJq6o4W3W1fwvHfZ6oLKRmfkKLmcnTDlRrv6IEBC0g
-  2YXMStf7CWiPnETUqAl8suNylFROilHkanh9GpEME9cInU3EVvJ3gkB3umXppCHGYM2UeuUuP4/V
-  WRUJHAcZfEgpgHh5b3teUYsmTV1YBDYCfhwGTlgTA4iSFANQJAccKB8RADs=
-}]; # [!] 24x24
+set prg(DESC)       {-- CONFIGURATION default buttons and checkboxes ---------}
+set prg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
+                                # buttons for quick access commands
+set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}};
+                                # checkboxes for quick access options
 
-set IMG(help) ::tk::icons::question
-if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
-    # reset if no icons there, forces text (see cfg_buttons below)
+set cfg(DESC)       {-- CONFIGURATION GUI style and layout -------------------}
+set cfg(bstyle) {image};        # button style:  image  or  text
+set cfg(layout) {text};         # layout o-saft.pl's results:  text  or  table
 
-
-### IMG(...)  #  other images are defined in cfg(IMG)
-
-set cfg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}}; # quick access commands
-set cfg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}}; # quick access options
-
-set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
-
-set myX(DESC)   {-- CONFIGURATION window manager geometry --------------------}
+set myX(DESC)       {-- CONFIGURATION window manager geometry ----------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
 #   windows will be larger if the screen supports it (we rely on "wm maxsize")
 set myX(geoO)   "600x720-0+0";  # geometry and position of Help    window
@@ -491,6 +481,34 @@ set myX(miny)   720;            # O-Saft  window min. height
 set myX(lenl)   15;             # fixed width of labels in Options window
 set myX(rpad)   15;             # right padding in the lower right corner
 set myX(padx)   5;              # padding to right border
+
+# RC-END }
+
+if {[info exists env(o_saft_docker_tag)] ==1} { set prg(docker-tag) $env(o_saft_docker_tag);  }
+if {[info exists env(o_saft_docker_name)]==1} { set prg(docker-id)  $env(o_saft_docker_name); }
+
+catch {
+  set fid [open $prg(INIT) r]
+  set cfg(.CFG) [read $fid];    close $fid; # read .o-saft.pl
+}
+
+## configure GUI
+
+set cfg(TIP)    [catch { package require tooltip} tip_msg];  # 0 on success, 1 otherwise!
+
+set IMG(!) [image create photo -data {
+  R0lGODlhGAAYAOMOAAAAAAARAQASAQASAgATAQATAgBwLgCBNgCBNwCCNQCCNgCCNwCDNiZ/AP//
+  /////yH5BAEKAA8ALAAAAAAYABgAAASE8MlJq6o4W3W1fwvHfZ6oLKRmfkKLmcnTDlRrv6IEBC0g
+  2YXMStf7CWiPnETUqAl8suNylFROilHkanh9GpEME9cInU3EVvJ3gkB3umXppCHGYM2UeuUuP4/V
+  WRUJHAcZfEgpgHh5b3teUYsmTV1YBDYCfhwGTlgTA4iSFANQJAccKB8RADs=
+}]; # [!] 24x24
+
+set IMG(help) ::tk::icons::question
+if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
+    # reset if no icons there, forces text (see cfg_buttons below)
+
+### IMG(...)  #  other images are defined in cfg(IMG)
+
 #   configure according real size
 set __x         [lindex [wm maxsize .] 0]
 set __y         [lindex [wm maxsize .] 1]
@@ -508,10 +526,6 @@ set myX(buffer) PRIMARY;        # buffer to be used for copy&paste GUI texts
                                 #         ... \
                                 #         <Btn2Up>: insert-selection(PRIMARY,CLIPBOARD) \
                                 #         ... \
-
-set cfg(bstyle) {image};        # button style:  image  or  text
-
-set cfg(layout) {text};         # layout o-saft.pl's results:  text  or  table
 
 set my_bg       "[lindex [. config -bg] 4]";  # default background color
                                 # this colour is used for buttons too
@@ -553,16 +567,16 @@ array set cfg_buttons "
     {help_next} {{>}        $my_bg  help_next   {Search forward for text}}
     {help_help} {{?}        $my_bg  {?}         {Show help about search functionality}}
     {helpsearch}  {{??}     $my_bg  helpsearch  {Text to be searched}}
-    {cmdstart}  {{Start}    yellow  cmdstart    {Execute $cfg(SAFT) with commands selected in 'Commands' tab}}
-    {cmdcheck}  {{+check}   #ffd800 +check    {Execute $cfg(SAFT) +check   }}
-    {cmdcipher} {{+cipher}  #ffd000 +cipher   {Execute $cfg(SAFT) +cipher  }}
-    {cmdinfo}   {{+info}    #ffc800 +info     {Execute $cfg(SAFT) +info    }}
-    {cmdquit}   {{+quit}    #ffc800 +quit     {Execute $cfg(SAFT) +quit (debugging only)}}
-    {cmdquick}  {{+quick}   #ffc000 +quick    {Execute $cfg(SAFT) +quick   }}
-    {cmdprotocols} {{+protocols} #ffb800 +protocols {Execute $cfg(SAFT) +protocols }}
-    {cmdvulns}  {{+vulns}   #ffb000 +vulns    {Execute $cfg(SAFT) +vulns   }}
-    {cmdversion} {{+version} #fffa00 +version {Execute $cfg(SAFT) +version }}
-    {docker_status} {{docker status} #00faff status  {Execute $cfg(SAFT) status   }}
+    {cmdstart}  {{Start}    yellow  cmdstart    {Execute $prg(SAFT) with commands selected in 'Commands' tab}}
+    {cmdcheck}  {{+check}   #ffd800 +check    {Execute $prg(SAFT) +check   }}
+    {cmdcipher} {{+cipher}  #ffd000 +cipher   {Execute $prg(SAFT) +cipher  }}
+    {cmdinfo}   {{+info}    #ffc800 +info     {Execute $prg(SAFT) +info    }}
+    {cmdquit}   {{+quit}    #ffc800 +quit     {Execute $prg(SAFT) +quit (debugging only)}}
+    {cmdquick}  {{+quick}   #ffc000 +quick    {Execute $prg(SAFT) +quick   }}
+    {cmdprotocols} {{+protocols} #ffb800 +protocols {Execute $prg(SAFT) +protocols }}
+    {cmdvulns}  {{+vulns}   #ffb000 +vulns    {Execute $prg(SAFT) +vulns   }}
+    {cmdversion} {{+version} #fffa00 +version {Execute $prg(SAFT) +version }}
+    {docker_status} {{docker status} #00faff status  {Execute $prg(SAFT) status   }}
     {img_txt}   {{image/text} $my_bg {img_txt}  {toggle buttons: text or image}}
 ";  #----------+-----------+-------+-----------+-------------------------------
 
@@ -575,6 +589,11 @@ array set cfg_buttons "
     # These lists (arrays in Tcl terms) contain not just the button values, but
     # also values for other objects.  So the lists are initialized here for all
     # other values, and then the values from cfg_buttons are added.
+    #
+    # array in cfg(RC)  array herein   (see also cfg_update() )
+    #     cfg_color     cfg_colors
+    #     cfg_label     cfg_texts
+    #     cfg_tipp      cfg_tips
 
 proc buttons_txt  {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 0]; }
 proc buttons_bg   {key} { global cfg_buttons; return [lindex $cfg_buttons($key) 1]; }
@@ -722,10 +741,30 @@ proc cfg_update   {} {
         }
     }
     array unset cfg_tipp
+    global myX cfg_geo
+    foreach key [array names cfg_geo] {
+        set value $cfg_geo($key)
+        switch -exact $key {
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set myX($key)             $value }
+        }
+    }
+    array unset cfg_geo
+    global cfg cfg_cmd
+    foreach key [array names cfg_cmd] {
+        set value $cfg_cmd($key)
+        switch -exact $key {
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set cfg($key)             $value }
+        }
+    }
+    array unset cfg_geo
+
+   return
 }; # cfg_update
 
 if {[regexp {indows} $tcl_platform(os)]} {
-    # Some platforms are too stupid to run our executable cfg(SAFT) directly,
+    # Some platforms are too stupid to run our executable prg(SAFT) directly,
     # they need a proper  perl executable to do it. Check for perl.exe in all
     # directories of the  PATH environment variable. If no executable will be
     # found, ask the user to choose a proper one.
@@ -735,33 +774,33 @@ if {[regexp {indows} $tcl_platform(os)]} {
         set p [file join $p "perl.exe"]
         if {[file isdirectory $p]} { continue }
         if {[file executable  $p]} {
-            set cfg(PERL)     $p
+            set prg(PERL)     $p
             break
         }
     }
-    if {![file executable $cfg(PERL)]} {
-        set cfg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
+    if {![file executable $prg(PERL)]} {
+        set prg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
     }
 }
 # NOTE:  as Tcl is picky about empty variables, we have to ensure later, that
-# $cfg(PERL) is evaluated propperly,  in particular when it is empty.  We use
+# $prg(PERL) is evaluated propperly,  in particular when it is empty.  We use
 # Tcl's  {*}  evaluation for that.
 
-## check if cfg(SAFT) exists in PATH, +VERSION just prints the version number
-#_dbx          " $cfg(PERL) $cfg(SAFT) +VERSION"; # _dbx() not yet defined
-catch { exec {*}$cfg(PERL) $cfg(SAFT) +VERSION } usage;
+## check if prg(SAFT) exists in PATH, +VERSION just prints the version number
+#_dbx          " $prg(PERL) $prg(SAFT) +VERSION"; # _dbx() not yet defined
+catch { exec {*}$prg(PERL) $prg(SAFT) +VERSION } usage;
 if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} { # check other PATH
-    set osaft "$cfg(DIR)/$cfg(SAFT)";       # check in PATH of $argv0
-    catch { exec {*}$cfg(PERL) $osaft +VERSION }  usage;
+    set osaft "$cfg(DIR)/$prg(SAFT)";       # check in PATH of $argv0
+    catch { exec {*}$prg(PERL) $osaft +VERSION }  usage;
     if {![regexp {^\d\d\.\d\d\.\d\d} $usage]} {
-        tk_messageBox -icon warning -title "$cfg(SAFT) not found" -message "
+        tk_messageBox -icon warning -title "$prg(SAFT) not found" -message "
 most parts of the GUI are missing!
 
 !!Hint:
 check PATH environment variable."
 
     } else {
-        set cfg(SAFT) $osaft;               # found
+        set prg(SAFT) $osaft;               # found
     }
 }
 
@@ -778,7 +817,6 @@ set cfg(objS)   ""; # object name of status line
 set cfg(VERB)   0;  # set to 1 to print more informational messages from Tcl/Tk
 set cfg(DEBUG)  0;  # set to 1 to print debugging messages
 set cfg(TRACE)  0;  # set to 1 to print program tracing
-set cfg(browser) "";        # external browser program, set below
 
 set cfg(AQUA)   {-- CONFIGURATION Aqua (Mac OS X) ----------------------------}
 #   Tcl/Tk on Aqua has some limitations and quirky behaviours
@@ -812,7 +850,7 @@ set search(mode)    "regex";# search pattern is exact text, or regex, or fuzzy
     # HELP-CODE     tag assigned to all code texts
 
 set hosts(0)     0; # array containing host:port; index 0 contains counter
-set tab(0)      ""; # contains results of cfg(SAFT)
+set tab(0)      ""; # contains results of prg(SAFT)
 
 #_____________________________________________________________________________
 #_______________________________________________________ filter definitions __|
@@ -869,7 +907,7 @@ txt2arr [string map "
     _lBlue  LightBlue
     _lGray  LightGray
     __bold  osaftHead
-    _ME_    $cfg(SAFT)
+    _ME_    $prg(SAFT)
     " {
 # syntax in following table:
 #   - lines starting with # as very first character are comments and ignored
@@ -1306,8 +1344,8 @@ proc show_window  {w} {
 
 proc www_browser  {url} {
     #? open URL in browser, uses system's native browser
-    global cfg
-    if {[string length $cfg(browser)] < 1} { puts {**WARNING: no browser found}; return; }
+    global cfg prg
+    if {[string length $prg(BROWSER)] < 1} { puts {**WARNING: no browser found}; return; }
 ### [tk windowingsystem]  eq "win32"
 # { geht nicht (mit ActiveTcl)
 ## package require twapi_com
@@ -1324,9 +1362,9 @@ proc www_browser  {url} {
 ## dde execute iexplore WWW_OpenURL http://www.tcl.tk/
 #}
     if {$cfg(VERB)==1} {
-        puts  { exec {*}$cfg(browser) $url & }
+        puts  { exec {*}$prg(BROWSER) $url & }
     }
-        catch { exec {*}$cfg(browser) $url & }
+        catch { exec {*}$prg(BROWSER) $url & }
 }; # www_browser
 
 proc bind_browser {w tagname} {
@@ -1663,12 +1701,12 @@ proc create_about {} {
 proc create_pod   {sect} {
     #? create new window with complete help using external viewer
     # for advantages and disadvantages please see contrib/.o-saft.tcl
-    global cfg myX
+    global cfg myX prg
     # TODO: does probably not work on Windows
-    #tk_messageBox -icon warning -title " using $cfg(TKPOD)" \
-    #    -message "$cfg(TKPOD) will not be closed with $cfg(ICH)"
-    _dbx          " $cfg(TKPOD) o-saft.pod -geo $myX(geoO) &"
-    catch { exec {*}$cfg(TKPOD) o-saft.pod -geo $myX(geoO) & };
+    #tk_messageBox -icon warning -title " using $prg(TKPOD)" \
+    #    -message "$prg(TKPOD) will not be closed with $cfg(ICH)"
+    _dbx          " $prg(TKPOD) o-saft.pod -geo $myX(geoO) &"
+    catch { exec {*}$prg(TKPOD) o-saft.pod -geo $myX(geoO) & };
     return
 }; # create_pod
 
@@ -1676,11 +1714,11 @@ proc create_help  {sect} {
     #? create new window with complete help; store widget in cfg(winH)
     #? if  sect  is given, jump to this section
 
-    global cfg myX search
+    global cfg myX prg search
     putv "create_help(»$sect«)"
 
-    if {[info exists cfg(TKPOD)]==1} {
-        if {$cfg(TKPOD) ne "O-Saft"} {  # external viewer specified, use it ...
+    if {[info exists prg(TKPOD)]==1} {
+        if {$prg(TKPOD) ne "O-Saft"} {  # external viewer specified, use it ...
             create_pod $sect ;
             return;
         }
@@ -1691,8 +1729,8 @@ proc create_help  {sect} {
     foreach key [list alias data checks regex rfc glossar] {
         # missing: text ourstr
         set txt ""
-        _dbx       " 0. $cfg(PERL) $cfg(SAFT) --help=$key"
-        catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=$key } txt
+        _dbx       " 0. $prg(PERL) $prg(SAFT) --help=$key"
+        catch { exec {*}$prg(PERL) $prg(SAFT) --help=$key } txt
         if {2 < [llength [split $txt "\n"]]} {
             set txt [regsub -all       {[&]} $txt {\\&}];   # avoid interpretation by regexp
             # add section header, hardcoded (stolen from o-saft-man.pm)
@@ -1901,8 +1939,8 @@ proc create_help  {sect} {
     }
 
     _dbx " 6. search for all examples and highlight them"
-    # causes problems in regsub on Mac OS X if $cfg(SAFT) starts with ./
-    set _me [regsub -all {^[./]*} $cfg(SAFT) {}];   # remove ./
+    # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
+    set _me [regsub -all {^[./]*} $prg(SAFT) {}];   # remove ./
     set anf [$txt search -regexp -nolinestop -all -count end "$_me \[^\\n\]+" 3.0]
     set i 0
     foreach a $anf {
@@ -1969,12 +2007,9 @@ proc create_tab   {parent cmd content} {
     #? create new TAB in .note and set focus for it; returns text widget in TAB
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
-    if {$cfg(layout) eq "text"} {
-        set txt [create_text  $tab $content].t ;# <== ugly hardcoded .t from .note
-    }
-    if {$cfg(layout) eq "table"} {
-        set txt [create_table $tab $content].t
-    }
+    if {$cfg(layout) eq "text"}  { set txt [create_text  $tab $content].t }
+    if {$cfg(layout) eq "table"} { set txt [create_table $tab $content].t }
+        # ugly hardcoded .t from .note
     pack [button $tab.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] \
          [button $tab.ttyresult  -command "osaft_save {TTY} $cfg(EXEC)"    ] \
          [button $tab.filter     -command "create_filter $txt $cmd"    ] \
@@ -2013,7 +2048,7 @@ proc create_win   {parent title cmd} {
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
     # title must be string of group of command or options
     _dbx "create_win(»$title« $cmd)"
-    global cfg myX
+    global cfg myX prg
     set this $parent
     set win  $this
     set data $cfg(OPTS)
@@ -2068,14 +2103,14 @@ proc create_win   {parent title cmd} {
         #dbx# puts "DATA $dat"
         ## skipped general
         if {$dat eq ""}                      { continue; }
-        if {[regexp $cfg(rexOUT-head) $dat]} { continue; }; # ignore header lines
+        if {[regexp $prg(rexOUT-head) $dat]} { continue; }; # ignore header lines
         ## skipped commands
-        if {[regexp $cfg(rexCMD-int)  $dat]} { continue; }; # internal use only
+        if {[regexp $prg(rexCMD-int)  $dat]} { continue; }; # internal use only
         ## skipped options
        #if {"OPTIONS" eq $dat}               { continue; }
         if {[regexp {^--h$}           $dat]} { continue; }
         if {[regexp {^--help}         $dat]} { continue; }
-        if {[regexp $cfg(rexOUT-int)  $dat]} { continue; }; # use other tools for that
+        if {[regexp $prg(rexOUT-int)  $dat]} { continue; }; # use other tools for that
 
         # the line $l looks like:
         #    our_key   some descriptive text
@@ -2101,7 +2136,7 @@ proc create_win   {parent title cmd} {
             #dbx# puts "create_win: check: $this.$name.c -variable cfg($dat)"
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
         } else {
-            regexp $cfg(rexOPT-cfg) $l dumm idx val
+            regexp $prg(rexOPT-cfg) $l dumm idx val
             #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
             pack [label  $this.$name.l -text $idx -width $myX(lenl)]    -fill x -side left -anchor w
             pack [entry  $this.$name.e -textvariable cfg($idx)] -fill x -side left -expand 1
@@ -2140,7 +2175,7 @@ proc create_buttons {parent cmd} {
     #? create buttons to open window with commands or options
     #  creates one button for header line returned by: o-saft.pl --help=opt|commands
     # cmd must be "OPT" or "CMD" or "TRC"
-    global cfg
+    global cfg prg
     set data $cfg(OPTS)
     if {$cmd eq "CMD"} { set data $cfg(CMDS) }
         # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
@@ -2155,7 +2190,7 @@ proc create_buttons {parent cmd} {
             # we do not support these options in the GUI
         ## skipped general
         if {$txt eq ""}                      { continue; }
-        if {[regexp $cfg(rexOUT-head) $txt]} { continue; }; # header or Warning
+        if {[regexp $prg(rexOUT-head) $txt]} { continue; }; # header or Warning
         if {"OPTIONS" eq $txt}               { continue; }
         # remove noicy prefix and make first character upper case
         set dat  [string toupper [string trim [regsub {^(Commands|Options) (to|for)} $txt ""]] 0 0]
@@ -2400,6 +2435,58 @@ proc search_list  {direction} {
     return
 }; # search_list
 
+proc osaft_write_rc {} {
+    #? print data for resource file
+    # print all lines between  RC-ANF and RC-END
+    global cfg argv0
+    if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
+    # TODO: print docu, see contrib/.o-saft.tcl
+    puts "#!/bin/cat
+
+set cfg(RCSID)  {1.7};  # initial SID, do not remove
+
+package require Tcl 8.5
+
+set cfg(TITLE)  {$cfg(TITLE)}"
+
+    set skip 1
+    foreach l [split [read $fid] "\r\n"] {
+        if {[regexp {^# RC-ANF} $l]} { set skip 0; continue }
+        if {[regexp {^# RC-END} $l]} { set skip 1; break    }
+        if {$skip == 1} { continue }
+        set l [regsub -all {\$0} $l $cfg(ICH)]
+        puts $l
+    }
+    close $fid
+    # print other configurations in simple format, see also cfg_update()
+    global cfg_colors cfg_texts cfg_tips
+    set qq {"} ;# dumm "
+    puts ""
+    puts "array set cfg_color $qq"
+    puts "    DESC\t{$cfg_colors(DESC)}"
+    foreach key [lsort [array names cfg_colors]] {
+        if {$key eq "DESC"} { continue }
+        puts "    $key\t{$cfg_colors($key)}"
+    }
+    puts "$qq;\n"
+    puts "array set cfg_label $qq"
+    puts "    DESC\t{$cfg_texts(DESC)}"
+    foreach key [lsort [array names cfg_texts]] {
+        if {$key eq "DESC"} { continue }
+        puts "    $key\t{$cfg_texts($key)}"
+    }
+    puts "$qq;\n"
+
+    puts "array set cfg_tipp $qq"
+    puts "    DESC\t{$cfg_tips(DESC)}"
+    foreach key [lsort [array names cfg_tips]] {
+        if {$key eq "DESC"} { continue }
+        puts "    $key\t{$cfg_tips($key)}"
+    }
+    puts "$qq;\n"
+    return
+}; # osaft_write_rc
+
 proc osaft_about  {mode} {
     #? extract description from myself; returns text
     global arrv argv0
@@ -2434,8 +2521,8 @@ proc osaft_reset  {} {
 
 proc osaft_init   {} {
     #? set values from .o-saft.pl in cfg()
-    global cfg
-    if {[regexp {\-docker$} $cfg(SAFT)]} { return }; # skip in docker mode
+    global cfg prg
+    if {[regexp {\-docker$} $prg(SAFT)]} { return }; # skip in docker mode
     foreach l [split $cfg(.CFG) "\r\n"] {
         # expected lines look like:
         #  --no-header
@@ -2443,7 +2530,7 @@ proc osaft_init   {} {
         #
         if {[regexp "^\s*(#|$)" $l]} { continue };  # skip comments
         if {[regexp {=} $l]} {
-            regexp $cfg(rexOPT-cfg) $l dumm idx val
+            regexp $prg(rexOPT-cfg) $l dumm idx val
             # FIXME: there may be multiple  --cfg_cmd=KKK=VVV  settings, but
             #        there is only one variable in the GUI, so last one wins
             set idx [string trim $idx]
@@ -2459,19 +2546,19 @@ proc osaft_init   {} {
 proc osaft_save   {type nr} {
     #? save selected output to file; $nr used if $type == TAB
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
-    global cfg tab
+    global cfg prg tab
     if {$type eq "TTY"} {
         puts $tab($nr)
         return;     # ready
     }
     if {$type eq "TAB"} {
-        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveresult]" -initialfile "$cfg(SAFT)--$nr.log"]
+        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveresult]" -initialfile "$prg(SAFT)--$nr.log"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         puts $fid $tab($nr)
     }
     if {$type eq "CFG"} {
-        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveconfig]" -initialfile ".$cfg(SAFT)--new"]
+        set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveconfig]" -initialfile ".$prg(SAFT)--new"]
         if {$name eq ""} { return }
         set fid  [open $name w]
         foreach {idx val} [array get cfg] { # collect selected options
@@ -2512,19 +2599,19 @@ proc osaft_load   {cmd} {
 }; # osaft_load
 
 proc osaft_exec   {parent cmd} {
-    #? run $cfg(SAFT) with given command; write result to global $osaft
+    #? run $prg(SAFT) with given command; write result to global $osaft
     # parent is a dummy here
-    global cfg hosts tab
+    global cfg hosts prg tab
     update_cursor watch
     update_status "#{ $cmd"
     set do  {};     # must be set to avoid tcl error
     set opt {};     # ..
     set targets {}; # ..
-    if {[regexp {\-docker$} $cfg(SAFT)]} {
+    if {[regexp {\-docker$} $prg(SAFT)]} {
         # pass image ID to Docker;
         # note that this option must be before o-saft.pl commands or options
-        lappend do "-id=$cfg(docker-id)"
-        lappend do "-tag=$cfg(docker-tag)"
+        lappend do "-id=$prg(docker-id)"
+        lappend do "-tag=$prg(docker-tag)"
     }
     if {$cmd eq "Start"} {
         foreach {idx val} [array get cfg] { # collect selected commands
@@ -2552,16 +2639,16 @@ proc osaft_exec   {parent cmd} {
         # o-saft-docker status  has no other options
         set targets {}
         set opt     {}
-        set do      "-id=$cfg(docker-id)"
-        lappend do  "-tag=$cfg(docker-tag)"
+        set do      "-id=$prg(docker-id)"
+        lappend do  "-tag=$prg(docker-tag)"
         lappend do  "status"
     }
     if {[regexp {^win(32|64)} [tk windowingsystem]]} {
-        putv "$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]"
-        set execcmd [list exec {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+        putv "$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]"
+        set execcmd [list exec {*}$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # windows has no proper STDERR etc.
     } else {
-        set execcmd [list exec 2>@stdout {*}$cfg(PERL) $cfg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
+        set execcmd [list exec 2>@stdout {*}$prg(PERL) $prg(SAFT) {*}$opt {*}$do {*}$targets]; # Tcl >= 8.5
         # on some systems (i.e. Mac OS X) buffering of STDOUT and STDERR is not
         # synchronized, hence we redirect STDERR to STDOUT, which is OK herein,
         # because no other process can fetch STDERR or STDOUT.
@@ -2610,16 +2697,17 @@ foreach arg $argv {
     switch -glob $arg {
         {+VERSION}  { puts $cfg(VERSION); exit; }
         {--version} { puts $cfg(SID);     exit; }
-        {--docker}  { set   cfg(SAFT)   {o-saft-docker}; }
+        {--docker}  { set   prg(SAFT)   {o-saft-docker}; }
         {--dbx}     -
-        {--d}       { incr  cfg(DEBUG);    }
-        {--v}       { set   cfg(VERB)   1; }
-        {--trace}   { set   cfg(TRACE)  1; }
+        {--d}       { incr  cfg(DEBUG);     }
+        {--v}       { set   cfg(VERB)   1;  }
+        {--rc}      { osaft_write_rc; exit; }
+        {--trace}   { set   cfg(TRACE)  1;  }
         {--image}   -
         {--img}     { set   cfg(bstyle) "image"; set optimg 1; }
         --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
         {--text}    { set   cfg(bstyle) "text";  }
-        {--tip}     { set   cfg(TIP)    1; }
+        {--tip}     { set   cfg(TIP)    1;  }
         {--h}       -
         {--help}    { puts [osaft_about "HELP"]; exit; }
         *           { lappend targets $arg; }
@@ -2628,8 +2716,8 @@ foreach arg $argv {
 }
 
 if {$cfg(TRACE)> 0} { trace_commands }
-if {$cfg(VERB) > 0} { lappend cfg(Ocmd) {+quit} {+version}; }
-if {[regexp {\-docker$} $cfg(SAFT)]} { lappend cfg(Ocmd) {docker_status}; }
+if {$cfg(VERB) > 0} { lappend prg(Ocmd) {+quit} {+version}; }
+if {[regexp {\-docker$} $prg(SAFT)]} { lappend prg(Ocmd) {docker_status}; }
 if {[tk windowingsystem] eq "aqua"} {
     set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
     if {$optimg==1} {
@@ -2665,7 +2753,7 @@ foreach b " $__native \
     set binary [lindex [auto_execok $b] 0]; # search in $PATH
     _dbx " browser: $b $binary"
     if {[string length $binary]} {
-        set cfg(browser) $binary
+        set prg(BROWSER) $binary
         break
     }
 }
@@ -2684,32 +2772,32 @@ if {[catch { package require tablelist} error_txt]} { set cfg(layout) {text}; }
 read_images $cfg(bstyle);       # more precisely: before first use of theme_set
 
 # get information from O-Saft; it's a performance penulty, but simple ;-)
-# FIXME: cfg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
+# FIXME: prg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
 #        will be empty if O-Saft's default Docker image is not (found) running
 #        workaround: use environment variables, see o-saft-docker
-_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) +help"
-set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
+_dbx                      " exec {*}$prg(PERL) $prg(SAFT) +help"
+set cfg(HELP)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) +help }           cfg(HELP)
 if {2 > [llength [split $cfg(HELP) "\n"]]} {
-    # exec call failed, probably because PATH does not contain . then cfg(SAFT)
+    # exec call failed, probably because PATH does not contain . then prg(SAFT)
     # returns an error, most likely just one line, like:
     #   couldn't execute "o-saft.pl": no such file or directory
     # as this message depends on the lanuguage setting of the calling shell, we
     # do not check for any specific string,  but for more than one line,  means
     # that cfg(HELP) must be more than one line
-    set cfg(SAFT) [file join "." $cfg(SAFT)];     # try current directory also
+    set prg(SAFT) [file join "." $prg(SAFT)];     # try current directory also
 }
-_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) +help"
-set cfg(HELP)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) +help }           cfg(HELP)
-_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) --help=opt"
-set cfg(OPTS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=opt }      cfg(OPTS)
-_dbx                      " exec {*}$cfg(PERL) $cfg(SAFT) --help=commands"
-set cfg(CMDS)   ""; catch { exec {*}$cfg(PERL) $cfg(SAFT) --help=commands } cfg(CMDS)
+_dbx                      " exec {*}$prg(PERL) $prg(SAFT) +help"
+set cfg(HELP)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) +help }           cfg(HELP)
+_dbx                      " exec {*}$prg(PERL) $prg(SAFT) --help=opt"
+set cfg(OPTS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=opt }      cfg(OPTS)
+_dbx                      " exec {*}$prg(PERL) $prg(SAFT) --help=commands"
+set cfg(CMDS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=commands } cfg(CMDS)
 
 ##if {2 > [llength [split $cfg(HELP) "\n"]]} {
 ##    # failed again, so we have no command and no options also
 ##    # would be better to exit here, however some parts of the GUI may work ...
 ##    tk_messageBox -icon error \
-##        -message "**ERROR: could not call $cfg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
+##        -message "**ERROR: could not call $prg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
 ##    exit 2
 ##}
 
@@ -2743,7 +2831,7 @@ if {$cfg(VERB)==1} {
 }
 pack [frame     $w.fc] -fill x
 pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -padx 11
-foreach b $cfg(Ocmd) {
+foreach b $prg(Ocmd) {
     create_cmd  $w.fc $b;
 }
 pack [button    $w.fc.loadresult -command "osaft_load {Load}"] -side left -padx 11
@@ -2752,11 +2840,11 @@ pack [button    $w.fc.help -command "create_help {}"] -side right -padx $myX(pad
 ## create option buttons for simple access
 pack [frame     $w.fo] -fill x
 pack [label     $w.fo.ol -text " "] -side left -padx 11
-foreach b $cfg(Oopt) {
+foreach b $prg(Oopt) {
     create_opt  $w.fo $b;
 }
-if {[regexp {\-docker$} $cfg(SAFT)]} {
-    pack [entry $w.fo.dockerid -textvariable cfg(docker-id) -width 12] -anchor w
+if {[regexp {\-docker$} $prg(SAFT)]} {
+    pack [entry $w.fo.dockerid -textvariable prg(docker-id) -width 12] -anchor w
     create_tip  $w.fo.dockerid [get_tipp docker-id]
 }
 
@@ -2803,8 +2891,8 @@ theme_init $cfg(bstyle)
 ## some verbose output
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
-if {[regexp {\-docker$} $cfg(SAFT)]}        { set vm "(using $cfg(SAFT))" }
-update_status "o-saft.tcl 1.150 $vm"
+if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
+update_status "o-saft.tcl 1.151 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
@@ -2828,17 +2916,18 @@ if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
     puts "
 PRG $argv0  -- $cfg(ICH)
  |  RC:        $cfg(RC)\t$rc
- |  O-Saft:    $cfg(SAFT)
- |  INIT:      $cfg(INIT)\t$ini
+ |  O-Saft:    $prg(SAFT)
+ |  INIT:      $prg(INIT)\t$ini
 CFG
  |  TITLE:     $cfg(TITLE)
  |  debug:     $cfg(DEBUG)
  |  trace:     $cfg(TRACE)
- |  browser:   $cfg(browser)
  |  tooltip:   tooltip package\t$tip
  |  bstyle:    $cfg(bstyle)
- |  PERL:      $cfg(PERL)
- |  SAFT:      $cfg(SAFT)
+ |  layout:    $cfg(layout)
+ |  BROWSER:   $prg(BROWSER)
+ |  PERL:      $prg(PERL)
+ |  SAFT:      $prg(SAFT)
 TCL version:   $::tcl_patchLevel
  |  library:   $::tcl_library
  |  platform:  $::tcl_platform(platform)
@@ -2855,6 +2944,7 @@ WM  :          [wm frame      .]
  |  maxsize:   [wm maxsize    .]
  |  focusmodel:[wm focusmodel .]
  |  system:    [tk windowingsystem]
+ |  clipboard: $myX(buffer)
  |  geometry:  $geo
 TAB tabs:      [$cfg(objN) tabs]
  |
