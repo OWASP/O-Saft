@@ -18,13 +18,13 @@
 #?      Content of this file must be valid Tcl syntax.
 #?
 #? VERSION
-#?      @(#) .o-saft.tcl 1.13 16/11/01 17:08:52
+#?      @(#) .o-saft.tcl 1.14 17/12/28 23:35:20
 #?
 #? AUTHOR
 #?      04. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
-set cfg(RCSID)  {1.13};  # initial SID, do not remove
+set cfg(RCSID)  {1.14};  # initial SID, do not remove
 
 package require Tcl 8.5
 
@@ -143,12 +143,12 @@ Changes apply to next +command.
     f_font      {Font}
     f_u         {u}
     DESC_opts   {-- CONFIGURATION texts used in GUI for option checkbuttons --}
-    --header    {print header line}                                            
-    --enabled   {print only enabled ciphers}                                   
-    --no-dns    {do not make DNS lookups}                                      
-    --no-http   {do not make HTTP requests}                                    
-    --no-sni    {do not make connections in SNI mode}                          
-    --no-sslv2  {do not check for SSLv2 ciphers}                               
+    --header    {print header line}
+    --enabled   {print only enabled ciphers}
+    --no-dns    {do not make DNS lookups}
+    --no-http   {do not make HTTP requests}
+    --no-sni    {do not make connections in SNI mode}
+    --no-sslv2  {do not check for SSLv2 ciphers}
     --no-tlsv13 {do not check for TLSv13 ciphers}
 ";
 
@@ -166,7 +166,7 @@ set myX(geo-)   "";             # (reserved for future use)
 #et myX(geoS)  "700x720";       # geometry and position of O-Saft  window
 set myX(geoA)   "600x610";      # geometry and position of About   window
 set myX(geoF)   "";             # geometry and position of Filter  window (computed dynamically)
-set myX(geoT)   "";             # 
+set myX(geoT)   "";             #
 set myX(minx)   700;            # O-Saft  window min. width
 set myX(miny)   720;            # O-Saft  window min. height
 
@@ -182,7 +182,7 @@ set myX(padx)   5;              # padding to right border
     # if o-saft.pl will not be found with the system's PATH environment
     # variable, a full path to o-saft.pl can be set here
 
-set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
+set prg(SAFT)   {o-saft.pl};    # name of O-Saft executable
 
 #--------------------------------------------------- viewer to show o-saft.pod
     # o-saft.tcl uses built-in functionality to show its  documentation.  This
@@ -202,7 +202,7 @@ set cfg(SAFT)   {o-saft.pl};    # name of O-Saft executable
     #    *          - all viewers must be started in background and will not be
     #                 closed with o-saft.tcl itself
 
-set cfg(TKPOD)  {O-Saft};       # name of executable to view O-Saft's POD file
+set prg(TKPOD)  {O-Saft};       # name of executable to view O-Saft's POD file
 
 #--------------------------------- list of buttons for "quick access commands"
     # for each O-Saft command in this list a button will be created in
@@ -210,18 +210,24 @@ set cfg(TKPOD)  {O-Saft};       # name of executable to view O-Saft's POD file
     # NOTE that this must be commands for o-saft.pl, which usually start
     # with  +  character
 
-set cfg(FAST)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
+set prg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
+
+#------------------------------- list of checkboxes for "quick access options"
+
+set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}};
+
 
 #------------------------------------------------------ executable for browser
-    # o-saft.tcl tries to find the browser automatically, it uses a list 
+    # o-saft.tcl tries to find the browser automatically, it uses a list
     # of well known browser names for that. If another browser should be
     # used, it can be set here.
     # Must be a full path or found with PATH environment variable.
 
-# set cfg(browser) "";
+# set prg(BROWSER) "";
 
 #----------------------------------------- buttons style: simple text or image
 set cfg(bstyle) {image};        # button style: {image} or {text}
+set cfg(layout) {text};         # layout o-saft.pl's results:  text  or  table
 
 #-------------------------------------------- set font for various tcl widgets
     # NOTE that setting other fonts may change the layout of the GUI, it
