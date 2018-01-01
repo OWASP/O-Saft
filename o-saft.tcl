@@ -347,7 +347,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.151 Winter Edition 2017
+#?      @(#) 1.152 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -417,8 +417,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.151 17/12/28 23:20:44 Winter Edition 2017}
-set cfg(VERSION) {1.151}
+set cfg(SID)    {@(#) o-saft.tcl 1.152 18/01/02 00:27:42 Winter Edition 2017}
+set cfg(VERSION) {1.152}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -431,7 +431,8 @@ set cfg(HELP)   "";                     # O-Saft's complete help text
 set cfg(files)  {};                     # files to be loaded at startup --load
 set cfg(.CFG)   {};                     # contains data from prg(INIT)
                                         # set below and processed in osaft_init
-## configuration file
+
+## configuration file # TODO: add descriptions from contrib/.o-saft.tcl
 # RC-ANF {
 
 #-----------------------------------------------------------------------------{
@@ -466,6 +467,7 @@ set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-
 set cfg(DESC)       {-- CONFIGURATION GUI style and layout -------------------}
 set cfg(bstyle) {image};        # button style:  image  or  text
 set cfg(layout) {text};         # layout o-saft.pl's results:  text  or  table
+set cfg(layout) {table};        # layout o-saft.pl's results:  text  or  table
 
 set myX(DESC)       {-- CONFIGURATION window manager geometry ----------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
@@ -1487,7 +1489,17 @@ proc create_text  {parent content} {
 
 proc create_table {parent content} {
     #? create scrollable table widget and insert given text; returns widget
-    global  CFG
+    #
+    # create a table with 4 columns: Nr Label Value Comment
+    # the Nr column is used to revert any sorting and hidden in the view
+    # the text for Label column is extracted from the line: anything left of :
+    # the text for Value column is extracted from the line: anything right of :
+    #   the value is then further separated in a Value and a Comment (if any)
+    # lines from +cipher command consist of a cipher, a value and a severity
+    #   the cipher becomes the Label columns
+    # lines starting with = or # are currently ignored, because Tcl's tablelist
+    # has no "colspan" functionality and therfore do not fit into the 4 colums
+    global  prg
     package require tablelist ;
     set this    $parent.ft
     frame $this
@@ -1516,33 +1528,77 @@ proc create_table {parent content} {
              -stretch 2 \
          ] -side left -fill both -expand yes
     # insert header line
-    set head [list Label Value Comment]
+    set head [list Nr Label Value Comment]
     foreach f $head { lappend titles 0 $f }
     $this.t config -columns $titles
-    $this.t  columnconfigure 0 -width 50
+    $this.t columnconfigure 0 -width  3 ;# -hide true ;# line nr
+    $this.t columnconfigure 1 -width 50            ;# label
+    $this.t columnconfigure 2 -width 25            ;# value
     # insert content
+    set n 1;   # add uniwue number to each line, for initial sorting
     foreach line [split $content "\n"] {
         # content consist of lines separated by \n , where each line is a label
         # and a value separated by a tab (and additional spaces for formatting)
         # in tabular context, only label and value is required; no tabs, spaces
         if {[regexp {^\s*$} $line]} { continue };# skip empty lines
-        set line [regsub {^(=+)} $line {\1:}]
+        set nr [format %03d [incr n]]
+            # integer must have leading zeros, otherwise tablelist sorting fails
+            # no more than 999 lines are expected, may be more with --v --trace
+        set stretch 0
+        set line [regsub {^(=+)} $line {\1:}];  # simulate label: value
+        if {[regexp {^[=#]+} $line]} {
+            $this.t insert end [list $nr $line]
+            $this.t togglerowhide end
+            $this.t cellconfigure end,0 -stretch 1 ;# FIXME: does not work
+            # tablelist does not support "colspan", hence lines are ignored
+            continue
+            set col2 $col1
+            set col1 ""
+            #??# set col0 "$col0 $col1"
+            #??# set stretch 1
+            #??# tablelist kann kein "colspan"
+        }
+        if {[regexp $prg(SAFT).* $line]} {
+            $this.t insert end [list $nr $line]
+            $this.t togglerowhide end
+            $this.t cellconfigure end,0 -stretch 1 ;# FIXME: does not work
+            # tablelist does not support "colspan", hence lines are ignored
+            continue
+            set col2 $col0
+            set col1 ""
+            set col0 ""
+        }
         if {[regexp {:}  $line]} {  # line not from +cipher
             set col2 ""
-            set col0 [regsub {:.*$}  $line {}] ;# get label
-            set col1 [regsub {^.*:}  $line {}] ;# get value
-            set col1 [regsub {^\s*}  $col1 {}] ;# remove leading white-sapces
-            if {[regexp -nocase {^(yes|no)\s} $col1]} {
+            set col0 [regsub {^([^:]+):.*}  $line {\1}] ; # get label
+            set col1 [regsub {^[^:]+:\s*} $line {}] ;   # get label
+            #if {[regexp -nocase {^(yes|no\s+\()} $col1]} 
+                # NOTE: there my be values like "No other text ..."
+            if {[regexp -nocase {^(yes|no)} $col1]} {
+                # lines from +check
                 # split yes|no from rest of text
-                set col2 [regsub {^[^\s]+\s*} $col1 {}]
+                set col2 [regsub {^[^\s]+\s+} $col1 {}]
                 set col1 [regsub -nocase {^(yes|no)\s.*} $col1 {\1}]
+                if {$col1 eq $col2} { set col2 "" };# if there is no col2
             }
-            set line [list $col0 $col1 $col2]
+            if {[regexp {^[!\*]+} $line]} {
+                # warning and hint lines
+                set col2 $col1
+                set col1 ""
+            }
+            if {[regexp {^(SSL|TLS)v} $col0]} {
+                # summary lines of cipher checks
+                set col2 $col1
+                set col1 ""
+            }
+            set line [list $nr $col0 $col1 $col2]
         } else {
+            # lines containing cipher, like:
+            #   AES128-SHA256 yes HIGH
             set line [regsub {^[ \t]+} $line {}]   ;# remove trailing spaces
             set line [regsub -all {([ \t])+} $line { }]
             set cols [split $line " "]
-            set line $cols
+            set line "$nr $cols"
         }
         set line [regsub -all \t $line {}] ;# remove tabs
         $this.t insert end $line
@@ -2892,7 +2948,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.151 $vm"
+update_status "o-saft.tcl 1.152 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
