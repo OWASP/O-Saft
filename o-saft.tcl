@@ -347,7 +347,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.152 Winter Edition 2017
+#?      @(#) 1.153 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -417,8 +417,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.152 18/01/02 00:27:42 Winter Edition 2017}
-set cfg(VERSION) {1.152}
+set cfg(SID)    {@(#) o-saft.tcl 1.153 18/01/02 23:55:53 Winter Edition 2017}
+set cfg(VERSION) {1.153}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -931,6 +931,7 @@ txt2arr [string map "
  MEDIUM	-regexp	6	yellow	{}	{}	0	(MEDIUM|medium)	word MEDIUM anywhere
   HIGH	-regexp	4	_lGreen	{}	{}	0	(HIGH|high)	word  HIGH  anywhere
  **WARN	-exact	0	_lBlue	{}	{}	0	**WARN	line  **WARN (warning from _ME_)
+ !!HINT	-exact	0	_lBlue	{}	{}	0	!!Hint	line  !!Hint (hint from _ME_)
   NO	-regexp	1	_orange	{}	{}	0	no \([^)]*\)	word  no ( anywhere
   YES	-regexp	3	_lGreen	{}	{}	0	yes	word  yes  at end of line
  == CMT	-regexp	-1	_lGray	{}	__bold	1	^==*	line starting with  == (formatting lines)
@@ -1305,23 +1306,70 @@ proc apply_filter_text  {w} {
 
 proc apply_filter_table {w} {
     #? apply filters for markup in output, data is in table widget $w
+    # FIXME: this is ugly code because the regex in f_rex are optimized for
+    # use in Tcls's text widget, the regex must be changed to match the values
+    # in Tcl's tableist columns
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
-    foreach {k key} [array get f_key] {
-        if {$k eq 0} { continue };
-        # extract values from filter table for easy use
-        #set key $f_key($k)
-        set mod $f_mod($k)
-        set len $f_len($k)
-        set rex $f_rex($k)
-        set fg  $f_fg($k)
-        set bg  $f_bg($k)
-        set nr  $f_un($k)
-        set fn  $f_fn($k)
-        if {$key eq ""} { continue };   # invalid or disabled filter rules
-        if {$rex eq ""} { continue };   # -"-
-        _dbx " $key : /$rex/ $mod: bg->$bg, fg->$fg, fn->$fn"
-        #if {[regexp yes $col1]} { $this.t  cellconfigure end,1 -bg green }
+    set nr  -1
+    foreach l [$w get 0 end] {
+        #set nr    [lindex $l 0] ;# cannot use stored number, because of leading 0
+        incr nr
+        set label [lindex $l 1]
+        set value [lindex $l 2]
+        set cmt   [lindex $l 3]
+        if {[regexp -nocase ^no $value] && [regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $cmt]} { continue }
+            # no colour for lines with ciphers (from +cipher) which are not supported
+        set col      1
+        set matchtxt $label
+        foreach {k key} [array get f_key] {
+            if {$k eq 0} { continue };
+            # extract values from filter table for easy use
+            #set key $f_key($k)
+            set mod $f_mod($k); # not used here
+            set len $f_len($k); # not used here
+            set rex $f_rex($k)
+            set fg  $f_fg($k)
+            set bg  $f_bg($k)
+            set un  $f_un($k)
+            set fn  $f_fn($k)  ;# does not work in tablelist
+            if {$key eq ""} { continue };   # invalid or disabled filter rules
+            if {$rex eq ""} { continue };   # -"-
+            _dbx " $key : /$rex/ bg->$bg, fg->$fg, fn->$fn"
+            # finding the pattern in the table's cells is not as simple as in
+            # texts (see apply_filter_text() above), that's why the regex must
+            # be applied to the proper column, we need $col and $matchtxt
+            switch -exact $key {
+                "no"        { continue }
+                "NO"        { set col 2; set matchtxt $value; set rex ^no }
+                "YES"       { set col 2; set matchtxt $value }
+                "_ME_"      -
+                "Label:"    -
+                "**WARN"    -
+                "!!Hint"    -
+                "== CMT"    -
+                "# DBX"     { set col 1; set matchtxt $label }
+            }
+            set rex [regsub {^(\*\*|\!\!)} $rex {\\\1}];
+                # regex are designed for Tcl's text search where we have the
+                # -exact or -regex option; this regex must be converted for
+                # use in Tcl's regexp: escape special characters
+            if {[regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $key]} { set col 3; set matchtxt $cmt   }
+            if {[regexp -nocase -- $rex "$matchtxt"]} {
+                if {$col == 1} {
+                    # if the match is agains the first column, coulorize the whole line
+                    if {$fg ne ""}  { $w rowconfig  $nr -foreground $fg }
+                    if {$bg ne ""}  { $w rowconfig  $nr -background $bg }
+                    if {$fn ne ""}  { $w rowconfig  $nr -font       $fn }
+                   #if {$un ne "0"} { $w cellconfig $nr,$col -underline  $un }
+                } else {
+                    if {$fg ne ""}  { $w cellconfig $nr,$col -foreground $fg }
+                    if {$bg ne ""}  { $w cellconfig $nr,$col -background $bg }
+                    if {$fn ne ""}  { $w cellconfig $nr,$col -font       $fn }
+                   #if {$un ne "0"} { $w cellconfig $nr,$col -underline  1   }
+                }
+            }
+        }
     }
     return
 }; # apply_filter_table
@@ -1491,12 +1539,12 @@ proc create_table {parent content} {
     #? create scrollable table widget and insert given text; returns widget
     #
     # create a table with 4 columns: Nr Label Value Comment
-    # the Nr column is used to revert any sorting and hidden in the view
-    # the text for Label column is extracted from the line: anything left of :
-    # the text for Value column is extracted from the line: anything right of :
+    # the Nr column is used to revert any sorting 
+    # the text for Label column is extracted from the line, anything left of :
+    # the text for Value column is extracted from the line, anything right of :
     #   the value is then further separated in a Value and a Comment (if any)
     # lines from +cipher command consist of a cipher, a value and a severity
-    #   the cipher becomes the Label columns
+    #   the cipher becomes the Label column
     # lines starting with = or # are currently ignored, because Tcl's tablelist
     # has no "colspan" functionality and therfore do not fit into the 4 colums
     global  prg
@@ -1505,6 +1553,7 @@ proc create_table {parent content} {
     frame $this
     pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
     pack [scrollbar $this.y -orient vertical   -command [list $this.t yview]] -side right  -fill y
+# flat6x4, flat7x4, flat7x5, flat7x7, flat8x5, flat9x5, flat9x6, flat9x7, flat10x6, photo7x7, sunken8x7, sunken10x9, or sunken12x11
     pack [tablelist::tablelist $this.t   \
              -exportselection true \
              -selectmode extended  \
@@ -1513,10 +1562,11 @@ proc create_table {parent content} {
              -background white  \
              -borderwidth 1     \
              -stripebackground lightgray \
-             -labelrelief solid \
+             -arrowstyle flat9x6  \
+             -labelrelief solid   \
              -labelfont osaftBold \
              -labelpady   3     \
-             -labelcommand tablelist::sortByColumn -showarrow 1 \
+             -labelcommand tablelist::sortByColumn -showarrow true \
              -movablecolumns true \
              -movablerows    true \
              -xscrollcommand [list $this.x set] \
@@ -1542,7 +1592,7 @@ proc create_table {parent content} {
         # in tabular context, only label and value is required; no tabs, spaces
         if {[regexp {^\s*$} $line]} { continue };# skip empty lines
         set nr [format %03d [incr n]]
-            # integer must have leading zeros, otherwise tablelist sorting fails
+            # integer must have leading 0, otherwise sorting of tablelist fails
             # no more than 999 lines are expected, may be more with --v --trace
         set stretch 0
         set line [regsub {^(=+)} $line {\1:}];  # simulate label: value
@@ -2948,7 +2998,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.152 $vm"
+update_status "o-saft.tcl 1.153 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
