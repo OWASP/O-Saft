@@ -347,7 +347,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.153 Winter Edition 2017
+#?      @(#) 1.154 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -417,8 +417,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.153 18/01/02 23:55:53 Winter Edition 2017}
-set cfg(VERSION) {1.153}
+set cfg(SID)    {@(#) o-saft.tcl 1.154 18/01/03 22:55:18 Winter Edition 2017}
+set cfg(VERSION) {1.154}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -924,7 +924,7 @@ txt2arr [string map "
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
   no	-regexp	1	{}	{}	{}	0	no\s*(LO|WE|we|ME|HI)	word 'no' followed by LOW|WEAK|MEDIUM|HIGH
 # NOTE   no  has no colours, otherwhise it would mix with filters below
-# FIXME  no  must be first regex in liste here, but still causes problems in toggle_txt
+# FIXME  no  must be first regex in liste here, but still causes problems in toggle_filter
   LOW	-regexp	3	red	{}	{}	0	(LOW|low)	word  LOW   anywhere
   WEAK	-exact	4	red	{}	{}	0	WEAK	word  WEAK  anywhere
   weak	-exact	4	red	{}	{}	0	weak	word  weak  anywhere
@@ -1207,8 +1207,22 @@ proc toggle_cfg   {w opt val} {
     return 1
 }; # toggle_cfg
 
-proc toggle_txt   {w tag val line} {
-    #? toggle visability of text tagged with name $tag
+proc toggle_filter_table {w tag val line} {
+    #? toggle visability of text tagged with name $tag in text widget
+    global cfg
+    _dbx " $w tag config $tag -elide [expr ! $val]"
+    return
+    if {[regexp {\-(Label|#.KEY)} $tag]} {
+        $w tag config $tag   -elide [expr ! $val];  # hide just this pattern
+        # FIXME: still buggy (see below)
+        return;
+    }
+    $w tag config $tag.l -elide [expr ! $val]
+    return
+}; # toggle_filter_table
+
+proc toggle_filter_text {w tag val line} {
+    #? toggle visability of text tagged with name $tag in text widget
     # note that complete line is tagged with name $tag.l (see apply_filter)
     global cfg
     _dbx " $w tag config $tag -elide [expr ! $val]"
@@ -1226,7 +1240,18 @@ proc toggle_txt   {w tag val line} {
     # Hence we only support hiding the complete line yet.
     $w tag config $tag.l -elide [expr ! $val]
     return
-}; # toggle_txt
+}; # toggle_filter_text
+
+proc toggle_filter  {w tag val line} {
+    #? toggle visability of text tagged with name $tag
+    _dbx "$w $tag $val $line"
+    global cfg
+    switch $cfg(layout) {
+        text    { toggle_filter_text  $w $tag $val $line }
+        table   { toggle_filter_table $w $tag $val $line }
+    }
+    return
+}; # toggle_filter
 
 proc update_cursor {cursor} {
     #? set cursor for toplevel and tab widgets and all other windows
@@ -1769,7 +1794,7 @@ proc create_filter      {parent cmd} {
         set filter_bool($obj,HELP-$key) 1;  # default: text is visible
         pack [checkbutton $this.x$key \
                     -text $f_key($k) -variable filter_bool($obj,HELP-$key) \
-                    -command "toggle_txt $obj HELP-$key \$filter_bool($obj,HELP-$key) \$filter_bool($obj,line);" \
+                    -command "toggle_filter $obj HELP-$key \$filter_bool($obj,HELP-$key) \$filter_bool($obj,line);" \
              ] -anchor w ;
         # note: useing $f_key($k) instead of $key as text
         # note: checkbutton value passed as reference
@@ -2998,7 +3023,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.153 $vm"
+update_status "o-saft.tcl 1.154 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
