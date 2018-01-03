@@ -347,7 +347,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.154 Winter Edition 2017
+#?      @(#) 1.156 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -417,8 +417,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.154 18/01/03 22:55:18 Winter Edition 2017}
-set cfg(VERSION) {1.154}
+set cfg(SID)    {@(#) o-saft.tcl 1.156 18/01/03 23:21:13 Winter Edition 2017}
+set cfg(VERSION) {1.156}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -431,6 +431,7 @@ set cfg(HELP)   "";                     # O-Saft's complete help text
 set cfg(files)  {};                     # files to be loaded at startup --load
 set cfg(.CFG)   {};                     # contains data from prg(INIT)
                                         # set below and processed in osaft_init
+#et cfg(HELP-key) ""                    # contains linenumber of result table
 
 ## configuration file # TODO: add descriptions from contrib/.o-saft.tcl
 # RC-ANF {
@@ -1207,17 +1208,14 @@ proc toggle_cfg   {w opt val} {
     return 1
 }; # toggle_cfg
 
-proc toggle_filter_table {w tag val line} {
+proc toggle_filter_table {w tag} {
     #? toggle visability of text tagged with name $tag in text widget
     global cfg
-    _dbx " $w tag config $tag -elide [expr ! $val]"
-    return
-    if {[regexp {\-(Label|#.KEY)} $tag]} {
-        $w tag config $tag   -elide [expr ! $val];  # hide just this pattern
-        # FIXME: still buggy (see below)
-        return;
+    _dbx " $w $tag"
+    # FIXME: some lines are in multible lists, which causes unexpected toggles
+    foreach n $cfg($tag) {
+        $w togglerowhide $n
     }
-    $w tag config $tag.l -elide [expr ! $val]
     return
 }; # toggle_filter_table
 
@@ -1248,7 +1246,7 @@ proc toggle_filter  {w tag val line} {
     global cfg
     switch $cfg(layout) {
         text    { toggle_filter_text  $w $tag $val $line }
-        table   { toggle_filter_table $w $tag $val $line }
+        table   { toggle_filter_table $w $tag }
     }
     return
 }; # toggle_filter
@@ -1393,6 +1391,8 @@ proc apply_filter_table {w} {
                     if {$fn ne ""}  { $w cellconfig $nr,$col -font       $fn }
                    #if {$un ne "0"} { $w cellconfig $nr,$col -underline  1   }
                 }
+                set key [str2obj [string trim $key]]
+                lappend cfg(HELP-$key) $nr
             }
         }
     }
@@ -3023,7 +3023,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.154 $vm"
+update_status "o-saft.tcl 1.156 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
