@@ -347,7 +347,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.156 Winter Edition 2017
+#?      @(#) 1.157 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -417,8 +417,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.156 18/01/03 23:21:13 Winter Edition 2017}
-set cfg(VERSION) {1.156}
+set cfg(SID)    {@(#) o-saft.tcl 1.157 18/01/04 01:27:18 Winter Edition 2017}
+set cfg(VERSION) {1.157}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -467,7 +467,6 @@ set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-
 
 set cfg(DESC)       {-- CONFIGURATION GUI style and layout -------------------}
 set cfg(bstyle) {image};        # button style:  image  or  text
-set cfg(layout) {text};         # layout o-saft.pl's results:  text  or  table
 set cfg(layout) {table};        # layout o-saft.pl's results:  text  or  table
 
 set myX(DESC)       {-- CONFIGURATION window manager geometry ----------------}
@@ -1202,55 +1201,6 @@ proc set_readonly {w} {
     return
 }; # set_readonly
 
-proc toggle_cfg   {w opt val} {
-    #? use widget config command to change options value
-    if {$val ne {}} { $w config $opt $val; }
-    return 1
-}; # toggle_cfg
-
-proc toggle_filter_table {w tag} {
-    #? toggle visability of text tagged with name $tag in text widget
-    global cfg
-    _dbx " $w $tag"
-    # FIXME: some lines are in multible lists, which causes unexpected toggles
-    foreach n $cfg($tag) {
-        $w togglerowhide $n
-    }
-    return
-}; # toggle_filter_table
-
-proc toggle_filter_text {w tag val line} {
-    #? toggle visability of text tagged with name $tag in text widget
-    # note that complete line is tagged with name $tag.l (see apply_filter)
-    global cfg
-    _dbx " $w tag config $tag -elide [expr ! $val]"
-    #if {$line==0} {
-        #$w tag config $tag   -elide [expr ! $val]; # "elide true" hides the text
-    #}
-    if {[regexp {\-(Label|#.KEY)} $tag]} {
-        $w tag config $tag   -elide [expr ! $val];  # hide just this pattern
-        # FIXME: still buggy (see below)
-        return;
-    }
-    # FIXME: if there is more than one tag associated with the same range of
-    # characters (which is obviously for $tag and $tag.l), then unhiding the
-    # tag causes the $tag no longer accessable. Reason yet unknown.
-    # Hence we only support hiding the complete line yet.
-    $w tag config $tag.l -elide [expr ! $val]
-    return
-}; # toggle_filter_text
-
-proc toggle_filter  {w tag val line} {
-    #? toggle visability of text tagged with name $tag
-    _dbx "$w $tag $val $line"
-    global cfg
-    switch $cfg(layout) {
-        text    { toggle_filter_text  $w $tag $val $line }
-        table   { toggle_filter_table $w $tag }
-    }
-    return
-}; # toggle_filter
-
 proc update_cursor {cursor} {
     #? set cursor for toplevel and tab widgets and all other windows
     global cfg
@@ -1276,6 +1226,61 @@ proc update_status {val} {
     set_readonly $cfg(objS)
     update idletasks;       # enforce display update
 }; # update_status
+
+proc toggle_cfg   {w opt val} {
+    #? use widget config command to change options value
+    if {$val ne {}} { $w config $opt $val; }
+    return 1
+}; # toggle_cfg
+
+proc toggle_filter_text {w tag val line} {
+    #? toggle visability of text tagged with name $tag in text widget
+    # note that complete line is tagged with name $tag.l (see apply_filter)
+    global cfg
+    _dbx " $w tag config $tag -elide [expr ! $val]"
+    #if {$line==0} {
+        #$w tag config $tag   -elide [expr ! $val]; # "elide true" hides the text
+    #}
+    if {[regexp {\-(Label|#.KEY)} $tag]} {
+        $w tag config $tag   -elide [expr ! $val];  # hide just this pattern
+        # FIXME: still buggy (see below)
+        return;
+    }
+    # FIXME: if there is more than one tag associated with the same range of
+    # characters (which is obviously for $tag and $tag.l), then unhiding the
+    # tag causes the $tag no longer accessable. Reason yet unknown.
+    # Hence we only support hiding the complete line yet.
+    $w tag config $tag.l -elide [expr ! $val]
+    return
+}; # toggle_filter_text
+
+proc toggle_filter_table {w tag val} {
+    #? toggle visability of text tagged with name $tag in text widget
+    global cfg
+    _dbx " $w rowcget  $tag $val"
+    # toggling a list of rows could be as simple as
+    #   $w togglerowhide $cfg($tag)
+    # but some lines are in multiple lists, so each line's toggle state will
+    # be checked and changed only if different from given $val,  this avoids
+    # unexpected toggles
+    # FIXME: checkbutton in Filter window is wrong now (if multiple lists)
+    foreach n $cfg($tag) {
+        if {[$w rowcget  $n -hide] != $val} { continue }
+        $w togglerowhide $n
+    }
+    return
+}; # toggle_filter_table
+
+proc toggle_filter  {w tag val line} {
+    #? toggle visability of text tagged with name $tag
+    _dbx "$w $tag $val $line"
+    global cfg
+    switch $cfg(layout) {
+        text    { toggle_filter_text  $w $tag $val $line }
+        table   { toggle_filter_table $w $tag $val }
+    }
+    return
+}; # toggle_filter
 
 proc apply_filter_text  {w} {
     #? apply filters for markup in output, data is in text widget $w
@@ -1334,6 +1339,10 @@ proc apply_filter_table {w} {
     # in Tcl's tableist columns
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
+    foreach {k key} [array get f_key] {
+        set key [str2obj [string trim $key]]
+        set cfg(HELP-$key) ""
+    }
     set nr  -1
     foreach l [$w get 0 end] {
         #set nr    [lindex $l 0] ;# cannot use stored number, because of leading 0
@@ -1359,25 +1368,25 @@ proc apply_filter_table {w} {
             if {$key eq ""} { continue };   # invalid or disabled filter rules
             if {$rex eq ""} { continue };   # -"-
             _dbx " $key : /$rex/ bg->$bg, fg->$fg, fn->$fn"
-            # finding the pattern in the table's cells is not as simple as in
+            # finding the pattern in the  table's cells is not as simple as in
             # texts (see apply_filter_text() above), that's why the regex must
-            # be applied to the proper column, we need $col and $matchtxt
+            # be applied to the proper column: $col and $matchtxt is needed
             switch -exact $key {
                 "no"        { continue }
-                "NO"        { set col 2; set matchtxt $value; set rex ^no }
-                "YES"       { set col 2; set matchtxt $value }
                 "_ME_"      -
                 "Label:"    -
                 "**WARN"    -
                 "!!Hint"    -
                 "== CMT"    -
                 "# DBX"     { set col 1; set matchtxt $label }
+                "NO"        { set col 2; set matchtxt $value; set rex ^no }
+                "YES"       { set col 2; set matchtxt $value }
             }
             set rex [regsub {^(\*\*|\!\!)} $rex {\\\1}];
                 # regex are designed for Tcl's text search where we have the
                 # -exact or -regex option; this regex must be converted for
-                # use in Tcl's regexp: escape special characters
-            if {[regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $key]} { set col 3; set matchtxt $cmt   }
+                # use in Tcl's regexp: need to escape special characters
+            if {[regexp -nocase ^(LOW|WEAK|MEDIUM|HIGH) $key]} { set col 3; set matchtxt $cmt }
             if {[regexp -nocase -- $rex "$matchtxt"]} {
                 if {$col == 1} {
                     # if the match is agains the first column, coulorize the whole line
@@ -3023,7 +3032,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.156 $vm"
+update_status "o-saft.tcl 1.157 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
