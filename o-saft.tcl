@@ -347,7 +347,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.157 Winter Edition 2017
+#?      @(#) 1.158 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -417,8 +417,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.157 18/01/04 01:27:18 Winter Edition 2017}
-set cfg(VERSION) {1.157}
+set cfg(SID)    {@(#) o-saft.tcl 1.158 18/01/05 03:05:23 Winter Edition 2017}
+set cfg(VERSION) {1.158}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -2150,8 +2150,8 @@ proc create_tab   {parent cmd content} {
     if {$cfg(layout) eq "text"}  { set txt [create_text  $tab $content].t }
     if {$cfg(layout) eq "table"} { set txt [create_table $tab $content].t }
         # ugly hardcoded .t from .note
-    pack [button $tab.saveresult -command "osaft_save {TAB} $cfg(EXEC)"] \
-         [button $tab.ttyresult  -command "osaft_save {TTY} $cfg(EXEC)"    ] \
+    pack [button $tab.saveresult -command "osaft_save $txt {TAB} $cfg(EXEC)"] \
+         [button $tab.ttyresult  -command "osaft_save $txt {TTY} $cfg(EXEC)"    ] \
          [button $tab.filter     -command "create_filter $txt $cmd"    ] \
          -side left
     pack [button $tab.closetab   -command "destroy $tab"] -side right
@@ -2683,18 +2683,41 @@ proc osaft_init   {} {
     }
 }; # osaft_init
 
-proc osaft_save   {type nr} {
+proc _get_table   {tbl} {
+    #? return all line from the table, except the hidden ones
+    # lines are formatted like result from O-Saft (roughly, not exactly)
+    set txt ""
+    set n   -1
+    foreach l [$tbl get 0 end] {
+        incr n
+        if {[$tbl rowcget $n -hide]} { continue }
+        set label [lindex $l 1]
+        set value [lindex $l 2]
+        set cmt   [lindex $l 3]
+        append txt "$label:\t$value $cmt\n"
+    }
+    return $txt
+}; # _get_table
+
+proc osaft_save   {tbl type nr} {
     #? save selected output to file; $nr used if $type == TAB
     # type denotes type of data (TAB = tab() or CFG = cfg()); nr denotes entry
     global cfg prg tab
     if {$type eq "TTY"} {
-        puts $tab($nr)
+        switch $cfg(layout) {
+            text    { puts $tab($nr) }
+            table   { puts [_get_table $tbl] }
+        }
         return;     # ready
     }
     if {$type eq "TAB"} {
         set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveresult]" -initialfile "$prg(SAFT)--$nr.log"]
         if {$name eq ""} { return }
         set fid  [open $name w]
+        switch $cfg(layout) {
+            text    { puts $fid $tab($nr) }
+            table   { puts $fid [_get_table $tbl] }
+        }
         puts $fid $tab($nr)
     }
     if {$type eq "CFG"} {
@@ -3032,7 +3055,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.157 $vm"
+update_status "o-saft.tcl 1.158 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
