@@ -40,9 +40,28 @@ exec wish "$0" ${1+"$@"}
 #?      as specified. Results are printed in a new TAB of the GUI. A filter to
 #?      markup some important texts is applied to the results in the GUI. This
 #?      filter can be modified and extended in the  Filter TAB.
-#?      Each TAB with results has a  Filter  button which opens a window where
-#?      the visibility of filtered texts (see Filter TAB) can be toggeled.
 #?      All results and settings (commands and options) can be saved to files.
+#?
+#?   Result TAB
+#?      The result of  o-saft.pl  are shown in a new TAB.  The format (layout)
+#?      of the result can be simple "text" or "table".  This can be configured
+#?      in the  Options TAB.
+#?
+#?      The difference between the formats are:
+#?      "table"
+#?        The table consist of 4 columns: Nr, Label, Value and Comment. It can
+#?        be sorted according each. All Filters are applied to matching lines.
+#?        The  Filter  will hide the lines completely.
+#?        Saving the results will only save the visible lines. These lines are
+#?        saved in the order of the last sorting.
+#?        Some informational lines and all header lines (see  --header option)
+#?        from  o-saft.pl  are not shown and will not be saved.
+#?      "text"
+#?        In this format, the results are shown in the same format as returned
+#?        by  o-saft.pl. Lines cannot be sorted. The Filter is applied to each
+#?        matching line. The  Filter  will just remove the text,  but not hide
+#?        the lines.
+#?        Saving the result will save the complete text.
 #?
 #?   Help
 #?      All functionallity is documented with balloon help on each checkbutton,
@@ -347,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.158 Winter Edition 2017
+#?      @(#) 1.159 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -417,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.158 18/01/05 03:05:23 Winter Edition 2017}
-set cfg(VERSION) {1.158}
+set cfg(SID)    {@(#) o-saft.tcl 1.159 18/01/07 10:17:44 Winter Edition 2017}
+set cfg(VERSION) {1.159}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -621,6 +640,7 @@ array set cfg_texts "
 array set cfg_tips "
     DESC        {-- CONFIGURATION texts used for tool tips on buttons --------}
     settings    {Open window with more settings}
+    layout      {Format used in result TAB}
     DESC_other  {-- CONFIGURATION texts used for tool tips on other objects --}
     choosen     {Choosen value for}
     hideline    {Hide complete line instead of pattern only}
@@ -2317,10 +2337,19 @@ proc create_buttons {parent cmd} {
     # cmd must be "OPT" or "CMD" or "TRC"
     global cfg prg
     set data $cfg(OPTS)
-    if {$cmd eq "CMD"} { set data $cfg(CMDS) }
-        # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
-
     set txt  [get_tipp "tab$cmd"];      # tabCMD and tabOPT
+    switch $cmd {
+      "CMD" { # expected format of data in $cfg(CMDS) and $cfg(OPTS) see create_win() above
+              set data $cfg(CMDS) }
+      "OPT" { # add options for o-saft.tcl itself
+              pack [frame $parent.of] -fill x -padx 5 -anchor w
+              pack [label $parent.of.l -text "Layout format of results:"] \
+                   [radiobutton $parent.of.t$cmd -variable cfg(layout) -value "table" -text "table"] \
+                   [radiobutton $parent.of.s$cmd -variable cfg(layout) -value "text"  -text "text"] \
+                   -padx 5 -anchor w -side left
+              create_tip $parent.of [get_tipp "layout"]
+            }
+    }
     pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
@@ -2718,7 +2747,6 @@ proc osaft_save   {tbl type nr} {
             text    { puts $fid $tab($nr) }
             table   { puts $fid [_get_table $tbl] }
         }
-        puts $fid $tab($nr)
     }
     if {$type eq "CFG"} {
         set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [get_tipp saveconfig]" -initialfile ".$prg(SAFT)--new"]
@@ -3055,7 +3083,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.158 $vm"
+update_status "o-saft.tcl 1.159 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
