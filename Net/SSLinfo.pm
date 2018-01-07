@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.201 17/12/05 00:19:36',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.202 18/01/07 12:07:14',
 };
 
 ######################################################## public documentation #
@@ -741,9 +741,8 @@ sub _setcommand {
         $cmd = "$command";
         if ($cmd =~ m#timeout$#) {
             # some timout implementations require -t option, i.e. BusyBox v1.26.2
-            # hence we check if it works with -t and add it
-            qx($cmd -t 2 pwd 2>&1);
-            $cmd = "$cmd -t " if ($? == 0);
+            # hence we check if it works with -t and add it to $cmd
+            $cmd = "$cmd -t " if (not qx($cmd -t 2 pwd 2>&1));
         }
     } else {
         _trace("_setcommand: $command = ''");
@@ -2346,7 +2345,7 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'fingerprint'}        = $fingerprint; #alias
        ($_SSLinfo{'fingerprint_type'},  $_SSLinfo{'fingerprint_hash'}) = split(/=/, $fingerprint);
         $_SSLinfo{'fingerprint_type'}   =~ s/\s+.*$//;
-        $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/ if (defined $1);  # TODO: ugly check
+        $_SSLinfo{'fingerprint_type'}   =~ s/(^[^\s]*).*/$1/ if (m/^[^\s]*/);  # TODO: ugly check
         $_SSLinfo{'fingerprint_type'}   = $Net::SSLinfo::no_cert_txt if (!defined $_SSLinfo{'fingerprint_type'});
         $_SSLinfo{'fingerprint_hash'}   = $Net::SSLinfo::no_cert_txt if (!defined $_SSLinfo{'fingerprint_hash'});
         $_SSLinfo{'subject_hash'}       = _openssl_x509($_SSLinfo{'PEM'}, '-subject_hash');
