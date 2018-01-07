@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.767 17/12/13 15:07:11",
+    SID         => "@(#) yeast.pl 1.768 18/01/07 11:36:52",
     STR_VERSION => "17.12.13",          # <== our official version number
 };
 our $time0  = time();
@@ -4162,12 +4162,10 @@ sub checkcipher($$) {
     return;
 } # checkcipher
 
-sub checkciphers($$@) {
+sub checkciphers      {
     #? test target if given ciphers are accepted, results stored in global %checks
     # checks are done with information from @cipher_results
-    my $host    = shift;        # not yet used
-    my $port    = shift;        # not yet used
-    my @results = @_;
+    my ($host, $port, @results) = @_;
 
     _y_CMD("checkciphers() " . $cfg{'done'}->{'checkciphers'});
     $cfg{'done'}->{'checkciphers'}++;
@@ -5975,14 +5973,14 @@ sub printcipherall              { ## no critic qw(Subroutines::RequireArgUnpacki
     my $outtitle= shift; # print title line if 0
     my @results = @_;    # contains only accepted ciphers
     my $uniqe   = 0;     # count unique ciphers
-    my $last    = "";    # avoid duplicates
+    my $last_r  = "";    # avoid duplicates
     local    $\ = "\n";
     print_cipherhead( $legacy) if ($outtitle == 0);
     foreach my $key (@results) {
-        next if ($last eq $key);
+        next if ($last_r eq $key);
         my $cipher = get_cipher_suitename($key);
         print_cipherline($legacy, $ssl, $host, $port, $cipher, "yes");
-        $last = $key;
+        $last_r = $key;
         $uniqe++;
     }
     print_cipherruler() if ($legacy eq 'simple');
@@ -6093,7 +6091,7 @@ sub printcipherprefered {
     return;
 } # printcipherprefered
 
-sub printprotocols($$$) {
+sub printprotocols      {
     #? print table with cipher informations per protocol
     # number of found ciphers, various risks ciphers, default and PFS cipher
     # prints information stored in %prot
@@ -6139,6 +6137,7 @@ sub printciphersummary  {
                $data{'cipher_selected'}->{txt}, "$key " . get_cipher_sec($key));
     # print_data($legacy, $host, $port, 'cipher_selected');
     _hint("consider testing with options '--cipheralpn=, --ciphernpn=,' also") if ($cfg{'verbose'} > 0);
+    return;
 } # printciphersummary
 
 sub printdata($$$)  {
@@ -8046,12 +8045,12 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 # SEE Note:+cipherall
                 $prot{$ssl}->{'cipher_strong'}  = $cipher;
                 $prot{$ssl}->{'default'}        = $cipher;
-                my $last    = "";    # avoid duplicates
+                my $last_a  = "";    # avoid duplicates
                 foreach my $key (@accepted) {
                     # each entry looks like:  TLSv12  AES128-SHA256  yes
-                    next if ($last eq $key);
+                    next if ($last_a eq $key);
                     push(@results, [$ssl, get_cipher_suitename($key), "yes"]);
-                    $last = $key;
+                    $last_a = $key;
                 }
             } else {
                 Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
