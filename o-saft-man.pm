@@ -41,7 +41,7 @@ use OSaft::Doc::Glossary;
 use OSaft::Doc::Links;
 use OSaft::Doc::Rfc;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.224 17/12/13 13:17:06";
+my  $man_SID= "@(#) o-saft-man.pm 1.225 18/01/07 11:51:32";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -286,11 +286,16 @@ sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n"
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", ""); }
 
-sub _man_html   {
+sub _man_html   {    ## no critic qw(Variables::RequireLocalizedPunctuationVars)
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $h = 0;
-    my $a = "";
+    my $a = "";      ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                     # perlcritic complains that $a should be localized below,
+                     # this is wrong, because it's exactly the purpose to find
+                     # other settings in other lines
+                     # Also: perlcritic fails to handle this  "## no critic"
+                     # pragma, even in the  "sub _man_html"  line above, grrr
     _man_dbx("_man_html($anf, $end) ...");
     while ($_ = shift @DATA) {
         last if/^TODO/;
@@ -311,7 +316,7 @@ sub _man_html   {
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         #s/^\s*$/<p id="h$a">/;                      # add paragraph for formatting
-        m/^\s*$/ && do { $a="id='h$a'" if ($a ne ""); s/.*/<p $a>/; $a=""; }; # add paragraph for formatting
+        m/^\s*$/ && do { local $a="id='h$a'" if ($a ne ""); s/.*/<p $a>/; $a=""; }; # add paragraph for formatting
         print;
     }
     return;
