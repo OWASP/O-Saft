@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.768 18/01/07 11:36:52",
+    SID         => "@(#) yeast.pl 1.769 18/01/11 09:17:41",
     STR_VERSION => "17.12.13",          # <== our official version number
 };
 our $time0  = time();
@@ -156,8 +156,8 @@ my  @argv   = ();   # all options, including those from RC-FILE
 # arrays to collect data for debugging, they are global!
 our $warning= 1;    # print warnings; need this variable very early
 
-binmode(STDOUT, ":unix");
-binmode(STDERR, ":unix");
+binmode(STDOUT, ":unix:utf8");
+binmode(STDERR, ":unix:utf8");
 
 #| definitions: forward declarations
 #| -------------------------------------
@@ -7318,7 +7318,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
     if ($arg =~ /^--cafile$/i)          { $typ = 'CAFILE';          }
     if ($arg =~ /^--capath$/i)          { $typ = 'CAPATH';          }
-    if ($arg =~ /^--winCR/i)            { binmode(STDOUT, ':crlf'); binmode(STDERR, ':crlf'); }
+    if ($arg =~ /^--winCR/i)            { binmode(STDOUT, ':crlf:utf8'); binmode(STDERR, ':crlf:utf8'); }
     # ignored options
     if ($arg =~ /^-connect$/)           {}
     if ($arg eq  '--insecure')          {}
