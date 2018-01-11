@@ -33,15 +33,13 @@ package main;   # ensure that main:: variables are used
 use strict;
 use warnings;
 use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars)
-binmode(STDOUT, ":unix");
-binmode(STDERR, ":unix");
+binmode(STDOUT, ":unix:utf8");
+binmode(STDERR, ":unix:utf8");
 
 use osaft;
-use OSaft::Doc::Glossary;
-use OSaft::Doc::Links;
-use OSaft::Doc::Rfc;
+use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.225 18/01/07 11:51:32";
+my  $man_SID= "@(#) o-saft-man.pm 1.226 18/01/11 09:26:04";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -132,6 +130,15 @@ sub _man_dbx(@) { my @txt=@_; print "#" . $ich . " CMD: " . join(" ", @txt, "\n"
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
+
+sub _man_file_get   {
+    #? get filename containing text for specified keyword
+    my $typ = shift;
+    return OSaft::Doc::Data::get("glossary.txt")    if ($typ eq 'abbr');
+    return OSaft::Doc::Data::get("links.txt")       if ($typ eq 'links');
+    return OSaft::Doc::Data::get("rfc.txt")         if ($typ eq 'rfc');
+    return "";
+} 
 
 sub _man_http_head  {
     return if ((grep{/--cgi/} @ARGV) <= 0);
@@ -316,7 +323,7 @@ sub _man_html   {    ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         #s/^\s*$/<p id="h$a">/;                      # add paragraph for formatting
-        m/^\s*$/ && do { local $a="id='h$a'" if ($a ne ""); s/.*/<p $a>/; $a=""; }; # add paragraph for formatting
+        m/^\s*$/ && do { $a="id='h$a'" if ($a ne ""); s/.*/<p $a>/; $a=""; }; # add paragraph for formatting
         print;
     }
     return;
@@ -383,12 +390,11 @@ sub _man_usr_value  {
 
 sub _man_doc_opt    {
     #? print __DATA__ from $typ in  "KEY - VALUE"  format
+    #  type is:   abbr, links, rfc
+    #  format is: opt, POD
     my ($typ, $sep, $format) = @_;  # format is POD or opt
     my  $url  = "";
-    my  @data;
-        @data = OSaft::Doc::Glossary::get() if ($typ eq 'abbr');
-        @data = OSaft::Doc::Links::get()    if ($typ eq 'links');
-        @data = OSaft::Doc::Rfc::get()      if ($typ eq 'rfc');
+    my  @data = _man_file_get($typ);
     # OSaft::Doc::*::get()  returns one line for each term;  format is:
     #   term followd by TAB (aka \t) followed by description text
     foreach my $line (@data) {
@@ -411,10 +417,7 @@ sub _man_doc_opt    {
 sub _man_doc_pod    {
     #? print __DATA__ from $typ in  POD  format
     my ($typ, $sep) = @_;
-    my  @data;
-        @data = OSaft::Doc::Glossary::get() if ($typ eq 'abbr');
-        @data = OSaft::Doc::Links::get()    if ($typ eq 'links');
-        @data = OSaft::Doc::Rfc::get()      if ($typ eq 'rfc');
+    my  @data = _man_file_get($typ);
     # print comment lines only, hence add # to each line
     my  $data = "@data";
         $data =~ s/\n/\n#/g;
@@ -1105,87 +1108,8 @@ printhelp($ARGV[0]) unless (defined caller);
 
 #| documentation
 #| -------------------------------------
-# All documentation is in plain ASCII format.
-# Following notations / markups are used:
-#   TITLE
-#       Titles start at beginning of a line, i.g. all upper case characters.
-#     SUB-Title
-#       Sub-titles start at beginning of a line preceeded by 4 or 6 spaces.
-#     code
-#       Code lines start at beginning of a line preceeded by 14 or more spaces.
-#   "text in double quotes"
-#       References to text or cite.
-#   'text in single quotes'
-#       References to verbatim text elswhere or constant string in description.
-#   * list item
-#       Force list item (first level) in generated markup.
-#   ** list item
-#       Force list item (second level) in generated markup.
-#   d) list item
-#       Force list item in generated markup (d may be a digit or character).
-#   $VERSION
-#       Will be replaced by current version string (as defined in caller).
-#   $0
-#       Will be replaced by caller's name (i.g. o-saft.pl).
-#
-#   Referenzes to titles are written in all upper case characters and prefixed
-#   and suffixed with 2 spaces.
-#
-#   There is only one special markup used:
-#   X&Some title here&
-#       which referes to sub-titles, it must be used to properly markup internal
-#       links to sub-sections if the title is not written in all upper case.
-#
-#   All head lines for sections (see TITLE above) are preceeded by 2 empty lines.
-#   All head lines for commands and options should contain just this command
-#   or option, aliases should be written in their own line (to avoid confusion
-#   in some other parsers, like Tcl).
-#   List items should be followed by an empty line.
-#   Texts in section headers should not contain any quote characters.
-#
-# Special markups for o-saft.tcl:
-#   - the sub-titles in the COMMANDS and OPTIONS sections must look like:
-#       Commands for whatever text
-#       Commands to whatever text
-#       Options for whatever text
-#     means that the prefixes  "Commands for"  and  "Options for"  are used to
-#     identify groups of commands and options. If a sub-title does not start
-#     with these prefixes, all following commands and options are ignored.
-#
-#| -------------------------------------
-# Since VERSION 17.07.17
-# All documentation from variables, i.e. %man_text, moved to separate files in
-# ./OSaft/Doc/*. This simplified editing texts as they are simple ASCII format
-# in the __DATA__ section of each file. The overhead compared to the %man_text
-# variable is just the perl module file with its POD texts.  A disadvantage is
-# is, that it is more complicated to import the data in  a stand-alone script,
-# see contrib/gen_standalone.sh.
-#
-# Since VERSION 17.06.17
-# All user documentation is now in  o-saft-man.pl,  which used a mix of  texts
-# defined in perl variables, i.e. %man_text, and user documentation is defined
-# in the __DATA__ section (mainly all the documentation).
-#
-# Until VERSION 14.11.12
-# Initilly the documentation was done using  perl's doc format (perldoc, POD).
-# The advantage having a well formated output available on  various platforms,
-# resulted in more difficult efforts extracting information from there.
-# In particular following problems occoured:
-#   - perldoc is not available on all platforms by default
-#   - POD is picky when text lines start with a whitespace
-#   - programatically extracting data from POD requires additional substitutes
-#   - POD is slow
-#
-# Changing POD to plain ASCII
-#   equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm
-#     Description              POD ASCII           %    File
-#   -------------------------+----+-------------+------+----------
-#   * reduced doc. text:      3110  2656 lines     85%  o-saft.pl
-#   * reduced doc. text:      86.9  85.5 kBytes    98%  o-saft.pl
-#   * reduced source code:     122    21 lines     17%  o-saft.pl
-#   * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
-#   * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
-#   -------------------------+----+-------------+------+----------
+# All documentation for  o-saft.pl  is in plain ASCII format.
+# Please see  OSaft/Doc/Data.pm and  *.txt  files in  OSaft/Doc/  for details.
 
 __END__
 __DATA__
