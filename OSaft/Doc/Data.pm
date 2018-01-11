@@ -17,7 +17,7 @@ use strict;
 use warnings;
 
 my  $VERSION    = "10.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.1 18/01/10 23:46:15";
+my  $SID        = "@(#) Data.pm 1.2 18/01/11 21:06:01";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -85,7 +85,7 @@ sub get_egg       {
 
 =head2 get_markup($file)
 
-Return all data converted to internal markup format.
+Return all data converted to internal markup format. Returns array of lines.
 
 =cut
 
@@ -93,7 +93,7 @@ sub get_markup    {
     my $file    = shift;
     my $parent  = shift || "o-saft.pl";
     my $version = shift || $VERSION;
-    my @DATA;
+    my @txt;
     my $fh      = _get_filehandle($file);
     # Preformat plain text with markup for further simple substitutions. We
     # use a modified (& instead of < >) POD markup as it is easy to parse.
@@ -139,10 +139,10 @@ sub get_markup    {
         }
         s#\$VERSION#$version#g;         # add current VERSION
         s# \$0# $parent#g;              # my name
-        push(@DATA, $_);
+        push(@txt, $_);
     }
 #}
-    return @DATA;
+    return @txt;
 } # get_markup
 
 =pod
@@ -167,6 +167,7 @@ sub get_text    {
 #   #    print scalar reverse "\n\n$egg";
 #   #    return;
 #   #}
+#print "T $txt T";
     if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
         # above terrible performance and unreliable, hence in peaces below
@@ -377,13 +378,18 @@ _main() if (! defined caller);
 #     with these prefixes, all following commands and options are ignored.
 #
 #| -------------------------------------
+# Since VERSION 17.01.18
+# All documentation is now in plain text files. All files use UTF-8 charset.
+# Previous files  ./OSaft/Doc/*.pm  have been replaced by  ./OSaft/Doc/Data.pm
+# and all documentations in  ./OSaft/Doc/*.txt  files.
+#
 # Since VERSION 17.07.17
 # All documentation from variables, i.e. %man_text, moved to separate files in
 # ./OSaft/Doc/*. This simplified editing texts as they are simple ASCII format
 # in the __DATA__ section of each file. The overhead compared to the %man_text
-# variable is just the perl module file with its POD texts.  A disadvantage is
-# is, that it is more complicated to import the data in  a stand-alone script,
-# see contrib/gen_standalone.sh.
+# variable is just the perl module file with its POD texts. A disadvantage is,
+# that it is more complicated to import the data in  a stand-alone script, see
+# contrib/gen_standalone.sh.
 #
 # Since VERSION 17.06.17
 # All user documentation is now in  o-saft-man.pl,  which used a mix of  texts
