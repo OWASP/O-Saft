@@ -28,10 +28,10 @@
 #!# WARNING:
 #!# This is no "academically" certified code,  but written to be understood and
 #!# modified by humans (you:) easily.  Please see the documentation  in section
-#!# "Program Code" in  o-saft-man.pm  if you want to improve the program.
+#!# "Program Code" in  coding.txt  if you want to improve the program.
 
 # NOTE
-#       Perl's  `use' and `require' will be used for common and well known perl
+#       Perl's  `use' and `require' will be used for common and well known Perl
 #       modules only. All other modules, in particular our own ones, are loaded
 #       using an internal function, see _load_file().  All required modules are
 #       included as needed. This keeps away noisy messages and allows to be run
@@ -63,8 +63,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.770 18/01/12 22:26:36",
-    STR_VERSION => "17.12.13",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.771 18/01/12 22:50:31",
+    STR_VERSION => "18.01.11",          # <== our official version number
 };
 our $time0  = time();
 sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
@@ -99,14 +99,14 @@ BEGIN {
     # Loading `require'd  files and modules as well as parsing the command line
     # in this scope  would increase performance and lower the memory foot print
     # for some commands (see o-saft-man.pm also).
-    # Unfortunately perl's BEGIN has following limits and restrictions:
+    # Unfortunately Perl's BEGIN has following limits and restrictions:
     #   - constants can be defined before and used herein
     #   - sub can be defined herein and used later
     #   - variables can not be defined herein and used later
     #   - some file handles (like <DATA>) are not yet available
     #   - strict sequence of definitions and usage (even for variables in subs)
     # subs used in the BEGIN block must be defined in the BEGIN block or before
-    # the BEGIN block (which is a crazy behaviour of perl).
+    # the BEGIN block (which is a crazy behaviour of Perl).
     # To make the program work as needed,  these limitations would force to use
     # some dirty code hacks and split the flow of processing in different parts
     # of the source. Therefore this scope is used for --help=* options only.
@@ -162,7 +162,7 @@ binmode(STDERR, ":unix:utf8");
 #| definitions: forward declarations
 #| -------------------------------------
 sub __SSLinfo($$$);
-sub _is_intern($);  # perl avoid: main::_is_member() called too early to check prototype
+sub _is_intern($);  # Perl avoid: main::_is_member() called too early to check prototype
 sub _is_member($$); #   "
 
 #| README if any
@@ -244,7 +244,7 @@ sub _print_read($$)     { my @txt = @_; printf("=== reading: %s (%s) ===\n", @tx
         # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
 
 sub _load_file          {
-    # load file with perl's require using the paths in @INC
+    # load file with Perl's require using the paths in @INC
     # use `$0 +version --v'  to see which files are loaded
     my $fil = shift;
     my $txt = shift;
@@ -1291,7 +1291,7 @@ _yeast_TIME("cfg}");
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
         #!# 'head'              => [qw(  sec  ssl   enc  bits mac  auth  keyx    score tags)],
         #!#---------------------------+------+-----+----+----+----+-----+--------+----+--------,
- # FIXME: perl hashes may not have multiple keys (have them for SSLv2 and SSLv3)
+ # FIXME: Perl hashes may not have multiple keys (have them for SSLv2 and SSLv3)
         'ADH-AES128-SHA'        => [qw(  weak SSLv3 AES   128 SHA1 None  DH          0 :)],
         'ADH-AES256-SHA'        => [qw(  weak SSLv3 AES   256 SHA1 None  DH          0 :)],
         'ADH-DES-CBC3-SHA'      => [qw(  weak SSLv3 3DES  168 SHA1 None  DH          0 :)],
@@ -1922,8 +1922,8 @@ sub _check_modules      {
     # Comparing version numbers is tricky, 'cause they are no natural numbers
     # Consider for example 1.8 and 1.11 : where the numerical comapre returns
     #   "1.8 > 1.11".
-    # perl has the Version module for this, but it's available for perl > 5.9
-    # only. For older perl, we warn that version checks may not be accurate.
+    # Perl has the version module for this, but it's available for Perl > 5.9
+    # only. For older Perl, we warn that version checks may not be accurate.
     # Please see "perldoc version" about the logic and syntax.
     my $have_version = 1;
     eval {require version; } or $have_version = 0;
@@ -1981,7 +1981,7 @@ sub _enable_functions   {
     # verbose messages with --v --v
     # Note: don't bother users with warnings, if functionality is not required
     #       hence some additional checks around the warnings
-    # Note: instead of requiring a specific version with perl's use,  only the
+    # Note: instead of requiring a specific version with Perl's use,  only the
     #       version of the loaded module is checked; this allows continuing to
     #       use this tool even if the version is too old; but  shout  out loud
     my $version_openssl  = shift;
@@ -2322,7 +2322,7 @@ sub _check_openssl      {
         _hint("consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
     }
-    # NOTE: if loading Net::SSLinfo failed, then we get a perl Warning here:
+    # NOTE: if loading Net::SSLinfo failed, then we get a Perl warning here:
     #        Undefined subroutine &Net::SSLinfo::s_client_check called at ...
     # Net::SSLinfo::s_client_check() is used to check openssl's capabilities.
     # For an example output SEE Note:OpenSSL s_client
@@ -2332,7 +2332,7 @@ sub _check_openssl      {
     # to disable all unavailable functionality with a warning.  Finally store
     # result (capabilitiy is supported or not) in $cfg{'openssl'} .
     foreach my $opt (Net::SSLinfo::s_client_get_optionlist()) {
-        # perl warning  "Use of uninitialized value in ..."  here indicates
+        # Perl warning  "Use of uninitialized value in ..."  here indicates
         # that cfg{openssl} is not properly initialized
         my $val = Net::SSLinfo::s_client_opt_get($opt);
            $val = 0 if ($val eq '<<openssl>>'); # TODO: <<openssl>> from Net::SSLinfo
@@ -2390,7 +2390,7 @@ sub _init_openssldir    {
         # In rare cases (i.e. VM with low memory) external call fails due to
         # malloc() problems, in this case print an additional warning.
         # Note that low memory affects external calls only *but not* further
-        # control flow herein as perl already managed to load the script.
+        # control flow herein as Perl already managed to load the script.
         # For defence programming  print()  is used insted of  _warn().
         print STR_WARN, "002: perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
@@ -2607,7 +2607,7 @@ sub _cfg_set($$)        {
         }
     }
 
-    # invalid keys are silently ignored (perl is that clever:)
+    # invalid keys are silently ignored (Perl is that clever:)
 
     if ($typ eq 'CFG-score') {          # set new score value
         _trace("_cfg_set: KEY=$key, SCORE=$val");
@@ -3036,7 +3036,7 @@ sub _isrfc7525          {
     return $cipher if ($cipher =~ /NULL/);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'RC4orARC4'}/);
-    return ""      if ($bit =~ m/^\s*$/);   # avoid perl warnings if $bit empty
+    return ""      if ($bit =~ m/^\s*$/);   # avoid Perl warnings if $bit empty
     return $cipher if ($bit < 128);
     return "";
 } # _isrfc7525
@@ -3356,7 +3356,7 @@ sub _usesocket($$$$)    {
         # --no-alpn or --no-npn is same as --cipher-alpn=, or --cipher-npn=,
     my $version = "";   # version returned by IO::Socket::SSL-new
     my $sslsocket = undef;
-    # TODO: dirty hack (undef) to avoid perl error like:
+    # TODO: dirty hack (undef) to avoid Perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
     # which may occour if Net::SSLeay was not build properly with support for
     # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSx
@@ -3374,7 +3374,7 @@ sub _usesocket($$$$)    {
     }
     # FIXME: use Net::SSLeay instead of IO::Socket::SSL
     if (eval {  # FIXME: use something better than eval()
-        # TODO: eval necessary to avoid perl error like:
+        # TODO: eval necessary to avoid Perl error like:
         #   invalid SSL_version specified at /usr/share/perl5/IO/Socket/SSL.pm line 492.
         # TODO: SSL_hostname does not support IPs (at least up to 1.88); check done in IO::Socket::SSL
         #dbx# $IO::Socket::SSL::DEBUG = 1;
@@ -3774,9 +3774,9 @@ sub ciphers_scan        {
         my @supported = ciphers_scan_prot($ssl, $host, $port, \@{$cfg{'ciphers'}});
         $cfg{'verbose'} = $__verbose if ($__verbose != 2);
         # remove  protocol: in each item
-        #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for perl > 5.12
-        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for per < 5.12 and perlcritic
-            # map({s/^[^:]*://} @supported); # is the perlish way (all perl 5.x)
+        #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for Perl > 5.12
+        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for Perl < 5.12 and perlcritic
+            # map({s/^[^:]*://} @supported); # is the perlish way (all Perl 5.x)
             # but discarted by perlcritic, hence the less readable foreach
         foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
             push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
@@ -4210,7 +4210,7 @@ sub checkciphers      {
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
-        $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep perl silent
+        $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep Perl silent
         $hasecdsa{$ssl}= 0 if not defined $hasecdsa{$ssl};  #  -"-
         # TR-02102-2, see 3.2.3
         if ($prot{$ssl}->{'cnt'} > 0) { # checks do not make sense if there're no ciphers
@@ -4274,7 +4274,7 @@ sub checkdates($$)  {
     }
 
    # Note about calculating dates:
-   # Calculation should be done without using additional perl modules like
+   # Calculation should be done without using additional Perl modules like
    #   Time::Local, Date::Calc, Date::Manip, ...
    # Hence we convert dates given by the certificate's before and after value
    # to the format  YYYYMMDD.  The format given in the certificate  is always
@@ -4311,7 +4311,7 @@ sub checkdates($$)  {
     # Unfortunately there exist  no simple method to convert a human readable
     # timestamps (like certificate's  after) into epoch timestamp format.
     # Perl's  Time::Local module is used for that in the hope that it is part
-    # of most perl installations. Existance of Time::Local module was already
+    # of most Perl installations. Existance of Time::Local module was already
     # done at startup with and +sts_expired disabled if missing.
     # SEE Perl:import include
     MAXAGE_CHECK: {
@@ -4538,7 +4538,7 @@ sub checksizes($$)  {
                 $checks{'modulus_exp_oldssl'}->{val}= $text{'na_openssl'};
             } else {
                 $value =~ s/^(\d+).*/$1/;
-                if ($value =~ m/^\d+$/) {   # avoid perl warning "Argument isn't numeric"
+                if ($value =~ m/^\d+$/) {   # avoid Perl warning "Argument isn't numeric"
                     $checks{'modulus_exp_1'}     ->{val}= $value if ($value == 1);
                     $checks{'modulus_exp_65537'} ->{val}= $value if ($value != 65537);
                     $checks{'modulus_exp_oldssl'}->{val}= $value if ($value >  65536);
@@ -4644,7 +4644,7 @@ sub check02102($$)  {
 
     #! TR-02102-2 3.6 Domainparameter und Schlüssellängen
     $val = $checks{'len_sigdump'}->{val};
-    if ($val =~ m/\d+/) {       # avoid perl warning "Argument isn't numeric"
+    if ($val =~ m/\d+/) {       # avoid Perl warning "Argument isn't numeric"
         $val = ($val < 2000) ? _get_text('bit2048', $val) : "";
         # FIXME: lazy check does not honor used cipher
     } else {
@@ -5314,7 +5314,7 @@ sub checkdest($$)   {
     #  it's ok if both are empty 'cause then no tickets are used
     $key   = 'session_ticket';
     $value = $data{$key}->{val}($host, $port);
-    if (defined $data0{$key}->{val}) {  # avoid perl warning "Use uninitialized value in string"
+    if (defined $data0{$key}->{val}) {  # avoid Perl warning "Use uninitialized value in string"
         $checks{'session_random'}->{val} = $value if ($value eq $data0{$key}->{val});
     } else {
         $checks{'session_random'}->{val} = $text{'na'};
@@ -5361,7 +5361,7 @@ sub checkhttp($$)   {
 
     # collect informations
     my $notxt = " "; # use a variable to make assignments below more human readable
-    my $http_sts      = $data{'http_sts'}     ->{val}($host) || ""; # value may be undefined, avoid perl error
+    my $http_sts      = $data{'http_sts'}     ->{val}($host) || ""; # value may be undefined, avoid Perl error
     my $http_location = $data{'http_location'}->{val}($host) || ""; #  "
     my $hsts_maxage   = $data{'hsts_maxage'}  ->{val}($host);       # 0 is valid here, hence || does not work
        $hsts_maxage   = -1 if ($data{'hsts_maxage'}->{val}($host) =~ m/^\s*$/);
@@ -6031,10 +6031,10 @@ sub printciphers_dh($$$) {
     my ($legacy, $host, $port) = @_;
     my $openssl_version = get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh: openssl_version: $openssl_version");
-    if ($openssl_version lt "1.0.2") { # yes perl can do this check  # TODO: move this check to _check_openssl()
+    if ($openssl_version lt "1.0.2") { # yes Perl can do this check  # TODO: move this check to _check_openssl()
         _warn("811: ancient openssl $openssl_version: using '-msg' option to get DH parameters");
         $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl'}->{'msg'} == 1);
-        require Net::SSLhello; # to parse output of '-msg'; ok here, as perl handles multiple includes proper
+        require Net::SSLhello; # to parse output of '-msg'; ok here, as Perl handles multiple includes proper
             # SEE Note:Stand-alone
     }
     foreach my $ssl (@{$cfg{'version'}}) {
@@ -6478,7 +6478,7 @@ sub printciphers        {
             $mac =  get_cipher_mac($c);
             $enc =  get_cipher_enc($c);
             $bit =  get_cipher_bits($c);
-            if ($bit =~ m/\d+/) {           # avoid perl warning "Argument isn't numeric"
+            if ($bit =~ m/\d+/) {           # avoid Perl warning "Argument isn't numeric"
                 $bit = sprintf("%03d", $bit);
             } else {                        # pretty print
                 $bit = '-?-';
@@ -6585,7 +6585,7 @@ sub printscores         {
     #? print calculated score values
     my ($legacy, $host, $port) = @_;
     scoring($host, $port);
-    # simple rounding in perl: $rounded = int($float + 0.5)
+    # simple rounding in Perl: $rounded = int($float + 0.5)
     $scores{'checks'}->{val} = int(
             ((
               $scores{'check_cert'}->{val}
@@ -7614,7 +7614,7 @@ usr_pre_exec();
 _y_ARG("exec? $cfg{'exec'}");
 # NOTE: this must be the very first action/command
 if ($cfg{'exec'} == 0)  {
-    # as all shared libraries used by perl modules are already loaded when
+    # as all shared libraries used by Perl modules are already loaded when
     # this program executes, we need to set PATH and LD_LIBRARY_PATH before
     # being called
     # so we call ourself with proper set environment variables again
@@ -7684,7 +7684,7 @@ if (! _is_do('cipherraw'))  {   # +cipherraw does not need these checks
 #| check for required module versions
 #| -------------------------------------
     # check done after loading our own modules because they may require
-    # other common perl modules too; we may have detailed warnings before
+    # other common Perl modules too; we may have detailed warnings before
     _check_modules();
 
 #| check for required functionality
@@ -7953,11 +7953,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         # gethostbyaddr() is strange: returns $?==0 but an error message in $!
         # hence just checking $? is not reliable, we do it additionally.
-        # If gethostbyaddr()  fails we use perl's  `or'  to assign our default
+        # If gethostbyaddr()  fails we use Perl's  `or'  to assign our default
         # text.  This may happen when there're problems with the local name
         # resolution.
         # When gethostbyaddr() fails, the connection to the target most likely
-        # fails also, which produces more perl warnings later.
+        # fails also, which produces more Perl warnings later.
         _y_CMD("test IP ...");
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
         if ($cfg{'usedns'} == 1) {  # following settings only with --dns
@@ -8326,7 +8326,7 @@ exit 2; # main; code never reached
 
 __END__
 __DATA__
-user documentation please see o-saft-man.pm
+public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm 
 
 =pod
 
@@ -8335,9 +8335,9 @@ user documentation please see o-saft-man.pm
 =head1 Annotations, Internal Notes
 
 The annotations here describe  behaviours, observations, and alike,  which
-lead to special program logic.  The intention is to have on central place,
+lead to special program logic. The intention is to have one central place,
 where to do the documentation.
-Up to now --2016-- this is an internal documentaion only.  It is planed to
+Up to now --2017-- this is an internal documentaion only.  It is planed to
 be available for the user too, i.e. with --help .
 
 It is written in POD format, because some tools analyzing the code want to
@@ -8346,6 +8346,9 @@ that, please see "woodoo" in o-saft-man.pm .
 Note that only POD's =head2 syntax is used. It marks a single annotation.
 The reference to such an annotation uses  SEE  in the code.
 All following text is supposed to be read by humans!
+
+The term  Perl  is used when the programming language in general is meant.
+The term  perl  is used when the program perl (or perl.exe) is meant.
 
 
 =head2 Perl:import include
@@ -8365,6 +8368,11 @@ Perl's `use autouse' is also not possible, as to much functions need to be
 declared for that pragma then.
 Unfortunately some common Perl modules resist to be loaded with `require'.
 They are still imported using  use  .
+
+
+=head2 Perl:BEGIN
+
+TBD
 
 
 =head2 Perl:map()
@@ -8392,7 +8400,7 @@ like (which then keep perlcritic happy too):
 
 =head2 Perl:warn _warn
 
-I.g. perl's warn() is not used, but our private _warn(). Using _warn() can
+I.g. Perl's warn() is not used, but our private _warn(). Using _warn() can
 supressed messages with the  --no-warning  option.  However, some warnings
 should never be supressed, hence warn() is used in rare cases.
 Each warning should have a unique number, SEE Perl:Message Numbers .
@@ -8402,6 +8410,7 @@ See also  CONCEPTS  (if it exists in our help texts).
 =head2 Perl:Message Numbers
 
 Each warning has a unique number. The numbers are grouped as follows:
+
     0xx     startup check, options, arguments
     1xx     check (runtime) functionality
     2xx     loop hosts
@@ -8421,28 +8430,32 @@ All documentation is in plain text format. All documentation available for
 users is located in its own file. The documentation texts are designed for
 human radability and simple editing. 
 
-For details on documentation texts from files see  ./OSaft/Doc/Data.pm .
+For details on documentation texts from files, see  ./OSaft/Doc/Data.pm .
 
 Since VERSION 18.01.18
 All public user documentation is now in plain text files which use charset
 UTF-8, see  ./OSaft/Doc/*.txt . Previous files ./OSaft/Doc/*.pm  have been
 replaced by  ./OSaft/Doc/Data.pm  and these plain text files.
+Reading plain text from external files instead of  Perl's DATA also avoids
+sophisticated computation of the correct file and DATA handle, for example
+when  ./OSaft/Doc/*.pm  is imported in  Perl's BEGIN section,  please also
+SEE Perl:BEGIN  above.
 
 Since VERSION 17.07.17
 All documentation from variables, i.e.  %man_text, moved to separate files 
 in  ./OSaft/Doc/*. This simplified editing texts as they are  simple ASCII
 format in the  __DATA__ section of each file. The overhead compared to the
-%man_text  variable is just the perl module file with its  POD texts.  The
+%man_text  variable is just the Perl module file with its  POD texts.  The
 disadvantage is, that it's more complicated to import the data in a stand-
 alone script, see  contrib/gen_standalone.sh .
 
 Since VERSION 17.06.17
 All user documentation is now in  o-saft-man.pl, which uses a mix of texts
-defined in perl variables,  i.e. %man_text.  The public user documentation
+defined in Perl variables,  i.e. %man_text.  The public user documentation
 is defined in the  __DATA__  section (mainly all the documentation).
 
 Until VERSION 14.11.12
-Initilly the documentation was written in perl's doc format: perldoc, POD.
+Initilly the documentation was written in Perl's doc format: perldoc, POD.
 The advantage of POD is the well formated output on various platforms, but
 results in more difficult efforts for extracting information from there.
 In particular following problems occoured with POD:
@@ -8453,6 +8466,7 @@ In particular following problems occoured with POD:
 
 Changing POD to plain ASCII:
     equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm     
+
       Description              POD ASCII           %    File
     -------------------------+----+-------------+------+----------
     * reduced doc. text:      3110  2656 lines     85%  o-saft.pl
@@ -8477,7 +8491,7 @@ in the two flaviours NPN and ALPN. The internal variable names are adapted
 to these acronyms and use "alpn" and "npn" in their names.  For historical
 reason, the list of the protocol names was stored in "cfg{'next_protos'}",
 which reflects the openssl option (-nextprotoneg),  and the function names
-used in some perl modules.
+used in some Perl modules.
 As newer versions of openssl uses the option  -alpn,  and some other tools
 also use  -alpn  and/or  -npn  as option, the internal variable names have
 been adapted to this nameing scheme after version 17.04.17.
@@ -8509,8 +8523,8 @@ The code for parsing options and arguments uses some special syntax:
 
     # alias: any other text
 
-is used for aliases of commands or options. These lines are extracted
-  by  --help=alias
+is used for aliases of commands or options. These lines are extracted by
+   --help=alias
 
 
 =head2 Note:ignore-out
@@ -8528,6 +8542,7 @@ easier.
 =head2 Note:OpenSSL Version
 
 About OpenSSL's version numbers see openssl/opensslv.h . Examples:
+
   0x01000000 => openssl-0.9x.x
   0x1000000f => openssl-1.0.0
   0x10001000 => openssl-1.0.1
@@ -8544,7 +8559,7 @@ like:  OPENSSLDIR: "/usr/local/openssl"
 Some versions of openssl on windows may return "/usr/local/ssl", or alike,
 which is most likely wrong. As the existance of the returned directoy will
 be checked, this produces an  **WARNING  and unsets the ca_path.  However,
-the used perl modules (i.e. Net::SSLeay)  may be compiled with a different
+the used Perl modules (i.e. Net::SSLeay)  may be compiled with a different
 OPenSSL, and hence use their (compiled-in) private path to the certs.
 
 Note that the returned OPENSSLDIR is a base-directory where the cert files
@@ -8646,15 +8661,20 @@ perl -MNet::SSLinfo -e 'print join("\n",Net::SSLinfo::s_client_get_optionlist())
 'sslversion' returns protocol as used in our data structure (like TLSv12)
 
 example (ouput from openssl):
+
     New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES128-GCM-SHA256
+
 example Net::SSLeay:
+
     Net::SSLeay::version(..)
 
 example (ouput from openssl):
 'session_protocol' retruns string used by openssl (like TLSv1.2)
+
     Protocol  : TLSv1.2
 
 'fallback_protocol'
+
     Note: ouput from openssl:       TLSv1.2
     Note: output from Net::SSLeay:  TLSv1_2
 
@@ -8666,6 +8686,7 @@ SEE Note:term default cipher.
 'cipher_selected' returns the cipher as used in our data structure (like
  DHE-DES-CBC), this is the one selected if the client provided a list
 example (ouput from openssl):
+
 example Net::SSLeay:
         Net::SSLeay::get_cipher(..)
 
@@ -8689,6 +8710,7 @@ the Time::Local module, which we try to avoid.  Measureing within a second
 is sufficent for these checks.
 
 More descriptions are in the section  LIMITATIONS  of the man page, see
+
    "Connection Problems"  there.
 
 
@@ -8737,11 +8759,11 @@ The trailing  =  can always be removed, empty values are not possible.
 
 A stand-alone script is a single script,  which executes without any other
 module to be included (read) at run-time.
-Most modules --means modules in perl context and syntax-- are already read
-using a private function  _load_file(),  which uses perl's require instead
+Most modules --means modules in Perl context and syntax-- are already read
+using a private function  _load_file(),  which uses Perl's require instead
 of use. This way the modules are loaded at  run-time (require)  and not at
 compile-time (use).
-Unfortunately there exist modules, which must be loaded with perl's use.
+Unfortunately there exist modules, which must be loaded with Perl's use.
 When generating a stand-alone executable script, the complete file of each
 module is simply copied into the main script file (o-saft.pl usually).  In
 that case, the corresponding use statement must be removed. Modules loaded
@@ -8758,9 +8780,10 @@ Generating a stand-alone script is done by contrib/gen_standalone.sh .
 Some texts from: http://www.zytrax.com/tech/survival/ssl.html
 The term Certificate Authority is defined as being an entity which signs
 certificates in which the following are true:
-  * the issuer and subject fields are the same,
-  * the KeyUsage field has keyCertSign set
-  * and/or the basicConstraints field has the cA attribute set TRUE.
+
+ * the issuer and subject fields are the same,
+ * the KeyUsage field has keyCertSign set
+ * and/or the basicConstraints field has the cA attribute set TRUE.
 
 Typically, in chained certificates the root CA certificate is the topmost
 in the chain but RFC 4210 defines a 'root CA' to be any issuer for which
@@ -8803,12 +8826,12 @@ certificates are distinguished by the presence of the CertificatePolicies
 extension containg a registered OID in the policyIdentifier field.
 see checkev() above
 
-RFC 3280
- 4.2.1.10  Basic Constraints
-   X509v3 Basic Constraints:
-       cA:FALSE
-       pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
-RFC 4158
+  RFC 3280
+   4.2.1.10  Basic Constraints
+     X509v3 Basic Constraints:
+         cA:FALSE
+         pathLenConstraint  INTEGER (0..MAX) OPTIONAL )
+  RFC 4158
 
 
 =head2 Note:term default cipher
@@ -8840,11 +8863,11 @@ When using +cipherraw another method to detect these ciphers must be used;
 this is not yet implemented completely.
 The problem should finally be solved when  +cipher and +cipherraw  use the
 same data structre for the results. Then the program flow should be like:
+
    ciphers_scan()
    checkciphers()
    printciphers()
    printciphersummary()
-
 
 
 =cut
