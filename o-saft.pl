@@ -63,7 +63,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.769 18/01/11 09:17:41",
+    SID         => "@(#) yeast.pl 1.770 18/01/12 22:26:36",
     STR_VERSION => "17.12.13",          # <== our official version number
 };
 our $time0  = time();
@@ -8367,6 +8367,29 @@ Unfortunately some common Perl modules resist to be loaded with `require'.
 They are still imported using  use  .
 
 
+=head2 Perl:map()
+
+To replace data in each item of an arrays,  Perl provides various methods,
+examples:
+
+    @arr = map {$_ =~ s/old/new/g; $_; } @arr;  # 0. very bad
+    @arr = map {      s/old/new/g; $_; } @arr;  # 1. bad
+           map {      s/old/new/g;     } @arr;  # 2. better
+                      s/old/new/     for @arr;  # 3. best
+
+we prefer the perlish one (3. above).  Because it does not copy the array,
+it is the most performant solution also.
+Unfortunatelly perlcritic complains about postfix controls with
+ControlStructures::ProhibitPostfixControls  which seems to be misleading.
+If there are multiple substitutions to be done, it is better to use a loop
+like (which then keep perlcritic happy too):
+
+    while (@arr) {
+        s/old/new/;
+        s/alt/neu/;
+    }
+
+
 =head2 Perl:warn _warn
 
 I.g. perl's warn() is not used, but our private _warn(). Using _warn() can
@@ -8390,6 +8413,54 @@ Each warning has a unique number. The numbers are grouped as follows:
 
 Check for used numbers with:
     egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
+
+
+=head2 Note:Documentation
+
+All documentation is in plain text format. All documentation available for
+users is located in its own file. The documentation texts are designed for
+human radability and simple editing. 
+
+For details on documentation texts from files see  ./OSaft/Doc/Data.pm .
+
+Since VERSION 18.01.18
+All public user documentation is now in plain text files which use charset
+UTF-8, see  ./OSaft/Doc/*.txt . Previous files ./OSaft/Doc/*.pm  have been
+replaced by  ./OSaft/Doc/Data.pm  and these plain text files.
+
+Since VERSION 17.07.17
+All documentation from variables, i.e.  %man_text, moved to separate files 
+in  ./OSaft/Doc/*. This simplified editing texts as they are  simple ASCII
+format in the  __DATA__ section of each file. The overhead compared to the
+%man_text  variable is just the perl module file with its  POD texts.  The
+disadvantage is, that it's more complicated to import the data in a stand-
+alone script, see  contrib/gen_standalone.sh .
+
+Since VERSION 17.06.17
+All user documentation is now in  o-saft-man.pl, which uses a mix of texts
+defined in perl variables,  i.e. %man_text.  The public user documentation
+is defined in the  __DATA__  section (mainly all the documentation).
+
+Until VERSION 14.11.12
+Initilly the documentation was written in perl's doc format: perldoc, POD.
+The advantage of POD is the well formated output on various platforms, but
+results in more difficult efforts for extracting information from there.
+In particular following problems occoured with POD:
+    - perldoc is not available on all platforms by default
+    - POD is picky when text lines start with a whitespace
+    - programatically extracting data requires additional substitutes
+    - POD is slow
+
+Changing POD to plain ASCII:
+    equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm     
+      Description              POD ASCII           %    File
+    -------------------------+----+-------------+------+----------
+    * reduced doc. text:      3110  2656 lines     85%  o-saft.pl
+    * reduced doc. text:      86.9  85.5 kBytes    98%  o-saft.pl
+    * reduced source code:     122    21 lines     17%  o-saft.pl
+    * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
+    * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
+    -------------------------+----+-------------+------+----------
 
 
 =head2 Note:SSL protocol versions
