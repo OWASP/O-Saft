@@ -13,7 +13,9 @@ use strict;
 use warnings;
 
 my  $VERSION    = "17.10.17";  # official verion number of tis file
-my  $SID        = "@(#) Links.pm 1.4 17/12/13 13:00:31";
+my  $SID        = "@(#) Links.pm 1.6 18/01/13 21:50:21";
+
+print STDERR "**WARNING: OSaft::Doc::Links obsolete since O-Saft version 18.01.18";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -85,7 +87,7 @@ NPN (draft)	https://tools.ietf.org/id/draft-agl-tls-nextprotoneg-04.html
 NPN	https://technotes.googlecode.com/git/nextprotoneg.html
 NPN 	https://www.imperialviolet.org/2013/03/20/alpn.html
 OCSP	http://ocsp.startssl.com/sub/class4/server/ca
-OCSP Stapling	http://en.wikipedia.org/wiki/OCSP_stapling                             
+OCSP Stapling	http://en.wikipedia.org/wiki/OCSP_stapling
 PFS	http://en.wikipedia.org/wiki/Perfect_forward_secrecy
 Resumtion	https://www.imperialviolet.org/2011/11/22/forwardsecret.html
 Resumtion	https://www.imperialviolet.org/2013/06/27/botchingpfs.html
@@ -99,14 +101,14 @@ SRI (Mozilla)	https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_
 TACK	http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
 Elliptic Curve	https://en.wikipedia.org/wiki/Comparison_of_TLS_implementations#Supported_elliptic_curves
 Elliptic Curve for IPsec	https://www.researchgate.net/profile/Johannes_Merkle/publication/260050106_Standardisierung_der_Brainpool-Kurven_fur_TLS_und_IPSec/links/00b7d52f36a0cc2fdd000000.pdf
-Elliptic Curve 	http://datatracker.ietf.org/doc/draft-mcgrew-tls-aes-ccm-ecc/ 
-Elliptic Curve  	http://datatracker.ietf.org/doc/draft-merkle-tls-brainpool/ 
-Elliptic Curve   	http://datatracker.ietf.org/doc/draft-merkle-ikev2-ke-brainpool/ 
-Elliptic Curve    	http://datatracker.ietf.org/doc/draft-sheffer-ipsecme-dh-checks/ 
+Elliptic Curve 	http://datatracker.ietf.org/doc/draft-mcgrew-tls-aes-ccm-ecc/
+Elliptic Curve  	http://datatracker.ietf.org/doc/draft-merkle-tls-brainpool/
+Elliptic Curve   	http://datatracker.ietf.org/doc/draft-merkle-ikev2-ke-brainpool/
+Elliptic Curve    	http://datatracker.ietf.org/doc/draft-sheffer-ipsecme-dh-checks/
 Elliptic Curve     	https://tools.ietf.org/html/draft-josefsson-tls-curve25519-06
 Elliptic Curve     	http://eprint.iacr.org/2007/286
-Elliptic Curve      	http://www.teletrust.de/fileadmin/files/oid/ecgdsa_final.pdf  
-Elliptic Curve       	https://datatracker.ietf.org/doc/draft-harkins-ikev3/ 
+Elliptic Curve      	http://www.teletrust.de/fileadmin/files/oid/ecgdsa_final.pdf
+Elliptic Curve       	https://datatracker.ietf.org/doc/draft-harkins-ikev3/
 XMSS	https://eprint.iacr.org/2011/484.pdf
 
 BEAST	?
@@ -128,8 +130,8 @@ TIME	?
 # TS 102 042 : http://
     #
     #        http://rsapss.hboeck.de/rsapss-1.0.1.pdf
-    #        https://www.bsi.bund.de/DE/Themen/weitereThemen/SINA/sina_node.html  
-    #        http://datatracker.ietf.org/doc/draft-eastlake-additional-xmlsec-uris/ 
+    #        https://www.bsi.bund.de/DE/Themen/weitereThemen/SINA/sina_node.html
+    #        http://datatracker.ietf.org/doc/draft-eastlake-additional-xmlsec-uris/
 # Firefox Add-ons
     #        https://calomel.org/firefox_ssl_validation.htm  Calomel SSL Validation
     #        https://addons.mozilla.org/de/firefox/addon/cert-viewer-plus/   Cert Viewer Plus
