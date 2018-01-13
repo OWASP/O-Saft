@@ -5,11 +5,11 @@
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
-#        Our POD below is fine, perlcritic (severity 2) is too pedantic here.
+#        Our POD below is fine, Perl::Critic (severity 2) is too pedantic here.
 
 ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-#        Using regex instead of strings is not bad.
-#        perlcritic (severity 2) is too pedantic here.
+#        Using regex instead of strings is not bad.  Perl::Critic (severity 2)
+#        is too pedantic here.
 
 package OSaft::Doc::Data;
 
@@ -17,7 +17,9 @@ use strict;
 use warnings;
 
 my  $VERSION    = "10.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.2 18/01/11 21:06:01";
+my  $SID        = "@(#) Data.pm 1.3 18/01/13 22:18:10";
+
+# binmode(...); # inherited from parent
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -28,7 +30,7 @@ my  $SID        = "@(#) Data.pm 1.2 18/01/11 21:06:01";
 
 =head1 NAME
 
-OSaft::Doc::Data - common perl module to read data for user documentation
+OSaft::Doc::Data - common Perl module to read data for user documentation
 
 =head1 SYNOPSIS
 
@@ -41,10 +43,19 @@ OSaft::Doc::Data - common perl module to read data for user documentation
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
+sub _replace_var {
+    #? replace $0 by name and $VERSION by version in array, return array
+    my ($name, $version, @arr) = @_;
+    # SEE Perl:map()
+    s#\$VERSION#$version# for @arr;     # add current VERSION
+    s# \$0# $name#        for @arr;     # my name
+    return @arr;
+} # _replace_var
+
 sub _get_filehandle {
     #? return open file handle for passed filename,
-    #? return perl's DATA file handle if file does not exist
-    # this function is a wrapper for perl's DATA
+    #? return Perl's DATA file handle if file does not exist
+    # this function is a wrapper for Perl's DATA
     my $file = shift || "";
     my $fh; # same as *FH
     local $\ = "\n";
@@ -72,18 +83,19 @@ sub _get_filehandle {
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
-sub get_egg       {
+sub get_egg     {
     #? get easter egg from text
     my $fh      = _get_filehandle(shift);
     my $egg     = "";   # set empty to avoid "Use of uninitialized value" later
     while (<$fh>) { $egg .= $_ if (m/^#begin/..m/^#end/); }
     $egg =~ s/#(begin|end) .*\n//g;
+    close($fh);
     return scalar reverse "\n$egg";
 } # get_egg
 
 =pod
 
-=head2 get_markup($file)
+=head2 get_markup($file,$name,$version)
 
 Return all data converted to internal markup format. Returns array of lines.
 
@@ -100,7 +112,9 @@ sub get_markup    {
     # &  was choosen because it rarely appears in texts and  is not  a meta
     # character in any of the supported  output formats (text, wiki, html),
     # and also causes no problems inside regex.
-    while (<$fh>) {
+    for (<$fh>) {   ## no critic qw(InputOutput::ProhibitReadlineInForLoop)
+                    #  There is no differnce if the array is allocated by
+                    #  using a local variable or implecitely in the loop
         ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
             # it's the nature of some regex to be complex
         next if (m/^#begin/..m/^#end/); # remove egg
@@ -137,12 +151,10 @@ sub get_markup    {
             s/ (COMMANDS|OPTIONS|RESULTS|CHECKS|OUTPUT|INSTALLATION) / X&$1& /g;
             s/ (CUSTOMIZATION|SCORING|LIMITATIONS|DEBUG|EXAMPLES) / X&$1& /g;
         }
-        s#\$VERSION#$version#g;         # add current VERSION
-        s# \$0# $parent#g;              # my name
         push(@txt, $_);
     }
-#}
-    return @txt;
+    close($fh);
+    return _replace_var($parent, $version, @txt);
 } # get_markup
 
 =pod
@@ -155,6 +167,7 @@ Same as  get()  but with some variables substituted.
 
 sub get_text    {
     #? print program's help
+# NOTE: NOT YET READY, not yet used
     my $file    = shift;
     my $label   = shift || "";  # || to avoid uninitialized value
        $label   = lc($label);
@@ -202,13 +215,31 @@ sub get_text    {
 
 =pod
 
-=head2 get($file)
+=head2 get_as_text($file)
 
-Return all data from file as is.
+Return all data from file as is. Returns data as string.
 
 =cut
 
-sub get           { my $fh = _get_filehandle(shift); return <$fh>; }
+sub get_as_text { my $fh = _get_filehandle(shift); return <$fh>; }
+# TODO: misses  close($fh);
+
+=pod
+
+=head2 get($file,$name,$version)
+
+Return all data from file and replace $0 by $name. Returns data as string.
+
+=cut
+
+sub get         {
+    my $file    = shift;
+    my $name    = shift || "o-saft.pl";
+    my $version = shift || $VERSION;
+    my $fh      = _get_filehandle($file);
+    return _replace_var($name, $version, <$fh>);
+    # TODO: misses  close($fh);
+} # get
 
 =pod
 
@@ -219,6 +250,7 @@ Same as  get()  but prints text directly.
 =cut
 
 sub print_as_text { my $fh = _get_filehandle(shift); print  <$fh>; return; }
+# TODO: misses  close($fh);
 
 sub _main_help  {
     #? print help
@@ -283,6 +315,11 @@ Print VERSION version.
 
 sub _main       {
     #? print own documentation
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+    #   see .perlcritic for detailed description of "no critic"
+    binmode(STDOUT, ":unix:utf8"); # latin1 geht nicht
+    binmode(STDERR, ":unix:utf8");
+
     if ($#ARGV < 0) { _main_help; exit 0; }
 
     # got arguments, do something special
@@ -328,6 +365,7 @@ _main() if (! defined caller);
 
 1;
 
+# SEE Note:Documentation
 # All documentation is in plain ASCII format.
 # It's designed for human radability and simple editing.
 #
@@ -358,7 +396,7 @@ _main() if (! defined caller);
 #
 #   There is only one special markup used:
 #   X&Some title here&
-#       which referes to sub-titles, it must be used to properly markup internal
+#       which refers to sub-titles, it must be used to properly markup internal
 #       links to sub-sections if the title is not written in all upper case.
 #
 #   All head lines for sections (see TITLE above) are preceeded by 2 empty lines.
@@ -367,6 +405,8 @@ _main() if (! defined caller);
 #   in some other parsers, like Tcl).
 #   List items should be followed by an empty line.
 #   Texts in section headers should not contain any quote characters.
+#   I.g. no other markup is used. Even Lines starting with # as first character
+#   are usually not treated as comment line but verbatim text.
 #
 # Special markups for o-saft.tcl:
 #   - the sub-titles in the COMMANDS and OPTIONS sections must look like:
@@ -376,46 +416,6 @@ _main() if (! defined caller);
 #     means that the prefixes  "Commands for"  and  "Options for"  are used to
 #     identify groups of commands and options. If a sub-title does not start
 #     with these prefixes, all following commands and options are ignored.
-#
-#| -------------------------------------
-# Since VERSION 17.01.18
-# All documentation is now in plain text files. All files use UTF-8 charset.
-# Previous files  ./OSaft/Doc/*.pm  have been replaced by  ./OSaft/Doc/Data.pm
-# and all documentations in  ./OSaft/Doc/*.txt  files.
-#
-# Since VERSION 17.07.17
-# All documentation from variables, i.e. %man_text, moved to separate files in
-# ./OSaft/Doc/*. This simplified editing texts as they are simple ASCII format
-# in the __DATA__ section of each file. The overhead compared to the %man_text
-# variable is just the perl module file with its POD texts. A disadvantage is,
-# that it is more complicated to import the data in  a stand-alone script, see
-# contrib/gen_standalone.sh.
-#
-# Since VERSION 17.06.17
-# All user documentation is now in  o-saft-man.pl,  which used a mix of  texts
-# defined in perl variables, i.e. %man_text, and user documentation is defined
-# in the __DATA__ section (mainly all the documentation).
-#
-# Until VERSION 14.11.12
-# Initilly the documentation was done using  perl's doc format (perldoc, POD).
-# The advantage having a well formated output available on  various platforms,
-# resulted in more difficult efforts extracting information from there.
-# In particular following problems occoured:
-#   - perldoc is not available on all platforms by default
-#   - POD is picky when text lines start with a whitespace
-#   - programatically extracting data from POD requires additional substitutes
-#   - POD is slow
-#
-# Changing POD to plain ASCII
-#   equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm
-#     Description              POD ASCII           %    File
-#   -------------------------+----+-------------+------+----------
-#   * reduced doc. text:      3110  2656 lines     85%  o-saft.pl
-#   * reduced doc. text:      86.9  85.5 kBytes    98%  o-saft.pl
-#   * reduced source code:     122    21 lines     17%  o-saft.pl
-#   * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
-#   * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
-#   -------------------------+----+-------------+------+----------
 
 __DATA__
 
