@@ -37,14 +37,17 @@
 #       included as needed. This keeps away noisy messages and allows to be run
 #       and print some information even if installed incompletely.
 
+## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
+#  NOTE:  see .perlcritic for detailed description of "no critic"
+
 ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-#  NOTE: perlcritic seems to be buggy as it does not honor the allow option for
-#        this policy (see our .perlcriticrc), it even doesn't honor the setting
-#        here, hence it's disabled at each line using  $ENV{} = ...
+#  NOTE: Perl::Critic seems to be buggy as it does not honor the  allow  option
+#        for this policy (see  .perlcriticrc  also).  It even doesn't honor the
+#        setting here, hence it's disabled at each line using  $ENV{} = ...
 
 ## no critic qw(Variables::ProhibitPackageVars)
 #  NOTE: we have a couple of global variables, but do not want to write them in
-#        all CAPS (as it would be required by perlcritic)
+#        all CAPS (as it would be required by Perl::Critic)
 
 ## no critic qw(ErrorHandling::RequireCarping)
 #  NOTE: Using carp() is nice in modules,  as it also prints the calling stack.
@@ -63,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used for example in the BEGIN{} section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.771 18/01/12 22:50:31",
+    SID         => "@(#) yeast.pl 1.772 18/01/13 10:50:32",
     STR_VERSION => "18.01.11",          # <== our official version number
 };
 our $time0  = time();
@@ -2507,8 +2510,9 @@ sub _cfg_set_from_file($$) {
     my $line ="";
     my $fh;
     # NOTE: critic complains with InputOutput::RequireCheckedOpen, which
-    #       is a false positive because perlcritic seems not to understand
-    #       the logic of "open() && do{}; warn();", hence changed to if-condition
+    #       is a false positive, because  Perl::Critic  seems not to understand
+    #       the logic of "open() && do{}; warn();",  hence the code was changed
+    #       to use an  if-condition
     if (open($fh, '<:encoding(UTF-8)', $fil)) {
         push(@{$dbx{file}}, $fil);
         _print_read("$fil", "USER-FILE configuration file") if ($cfg{'out_header'} > 0);
@@ -3775,9 +3779,9 @@ sub ciphers_scan        {
         $cfg{'verbose'} = $__verbose if ($__verbose != 2);
         # remove  protocol: in each item
         #foreach my $i (keys @supported) { $supported[$i] =~ s/^[^:]*://; } # for Perl > 5.12
-        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for Perl < 5.12 and perlcritic
+        for my $i (0..$#supported) { $supported[$i] =~ s/^[^:]*://; }       # for Perl < 5.12 and Perl::Critic
             # map({s/^[^:]*://} @supported); # is the perlish way (all Perl 5.x)
-            # but discarted by perlcritic, hence the less readable foreach
+            # but discarted by Perl::Critic, hence the less readable foreach
         foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
             push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
         }
@@ -4289,7 +4293,7 @@ sub checkdates($$)  {
     my $s_mon = 0; my $u_mon = 0;
     if (@since) { my $dum = map({$m++; $s_mon=$m if/$since[0]/} @mon); $m = 0; }
     if (@until) { my $dum = map({$m++; $u_mon=$m if/$until[0]/} @mon); $m = 0; }
-        # my $dum =   keeps perlcritic happy
+        # my $dum =   keeps Perl::Critic happy
     my $now   = sprintf("%4d%02d%02d", $now[5]+1900, $now[4]+1, $now[3]);
     my $start = sprintf("%s%02s%02s",  $since[3], $s_mon, $since[1]);
     my $end   = sprintf("%s%02s%02s",  $until[3], $u_mon, $until[1]);
@@ -5940,7 +5944,7 @@ sub _is_print       {
     return 0;
 } # _is_print
 
-#  NOTE: perlcritic's violation for next 2 subs are false positives
+#  NOTE: Perl::Critic's violation for next 2 subs are false positives
 sub _print_results($$$$$@)      { ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print all ciphers from @results if match $ssl and $yesno; returns number of checked ciphers for $ssl
     my $legacy  = shift;
@@ -8349,6 +8353,9 @@ All following text is supposed to be read by humans!
 
 The term  Perl  is used when the programming language in general is meant.
 The term  perl  is used when the program perl (or perl.exe) is meant.
+The term  Perl::Critic  is used when the functionality of the Perl::Critic
+module, or any program using it, is meant.
+The term   perlcritic   is used when the program perlcritic is meant.
 
 
 =head2 Perl:import include
@@ -8387,10 +8394,10 @@ examples:
 
 we prefer the perlish one (3. above).  Because it does not copy the array,
 it is the most performant solution also.
-Unfortunatelly perlcritic complains about postfix controls with
+Unfortunatelly Perl::Critic complains about postfix controls with
 ControlStructures::ProhibitPostfixControls  which seems to be misleading.
 If there are multiple substitutions to be done, it is better to use a loop
-like (which then keep perlcritic happy too):
+like (which then keep Perl::Critic happy too):
 
     while (@arr) {
         s/old/new/;
