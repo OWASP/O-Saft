@@ -13,7 +13,9 @@ use strict;
 use warnings;
 
 my  $VERSION    = "17.10.17";  # official verion number of tis file
-my  $SID        = "@(#) Rfc.pm 1.5 17/10/18 16:02:42";
+my  $SID        = "@(#) Rfc.pm 1.6 18/01/13 21:53:23";
+
+print STDERR "**WARNING: OSaft::Doc::Rfc obsolete since O-Saft version 18.01.18";
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
