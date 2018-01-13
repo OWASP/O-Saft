@@ -1,0 +1,300 @@
+
+# Description about Program Code and Documentation
+# It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
+
+HACKER's INFO
+
+    Program Code
+
+        First of all: the main goal is to have a tool to be simple for users.
+        It's not designed to be academic code or simple for programmers.
+
+        Also testing for various flaws in other tools and protocols could not
+        be done in a standarized generic way using well designed software but
+        mainly needs individual code for each check, and sometimes more worse
+        variants of the same code.
+        Please keep this in mind, before trying to unitise the code.
+
+        Note:  following descriptions mainly uses the term "sub" (the perlish
+        term) when talking about functions, procedures, and/or methods.
+
+      Syntax style
+
+        Identation is 4 spaces. TABs would be the better solution, IMHO.
+        Unfortunately some repositories have issues with TABs,  so spaces are
+        used only. Sick.
+
+        Additional spacing is used to format the code for better human reada-
+        bility. There is no strict rule about this, it's just done as needed.
+
+        Empty lines (empty, without any space!) are used to group code blocks
+        logically. However, there is no strict rule about this too.
+
+        K&R-style curly brackets for subs and conditions are used.
+        K&R-style round brackets for subs and conditions are used (means that
+        definitions of subs, and calls of subs  do not use  spaces before the
+        opening bracket, while conditions use spaces).
+
+        Calls of subs are written in  K&R-style using round brackets, and the
+        perlisch way without round brackets. This may be unitised in future.
+
+        Short subs and conditions may be written in just one line.
+        Note: there is no need for each command in its one line, as debugging
+        on code level is rarely done.
+
+        subs are defined with number and type of parameters to have a minimal
+        syntax check at compile time.
+        This will be changed in future.
+
+        The  code  mainly uses  'text enclosed in single quotes'  for program
+        internal strings such as hash keys, and uses "double quoted text" for
+        texts being printed. However, exceptions if obviously necessary ;-)
+        Strings used for  RegEx are always enclosed in single quotes.  Reason
+        is mainly to make searching texts a bit easier.
+
+      Code style
+
+        Global variables are used, see X&Variables& for details below.
+
+        Variables are declared at beginning of subs. I.g. we do not use local
+        or my declarations in blocks (there may be some exceptions).
+
+        The code tries to avoid if-else constructs as much as possible. If an
+        else condition is used, it is written in one line:   } else {  .
+        elsif is used in "borrowed" code only ;-)
+
+        Early return statements in subs are prefered, rather than complicated
+        and nested conditions. There are also goto statements in parsers, but
+        return statements are prefered.
+
+        Most code is seqential instead of using functions, except the code is
+        used multiple times. This may be changed in future ...
+        It is not intended to have OO-code,  even perl's  OO capabilities are
+        used when rational.
+
+      Code quality
+
+        The code is regulary analysed using "perlcritic" -a front-end command
+        line tool to the Perl::Critic module. As decribed above, this code is
+        not supposed to be academically correct.  Nevertheless, we follow the
+        recommendations given by perlcritic to make the most of it.
+        For details please see:  .perlcriticrc  and  contrib/critic.sh .
+
+      General
+
+        Exceptions are not used, there is no need for them.
+
+        In general, the code *must not* use any additional libraries. We know
+        that there exist infinite marvellous libraries and frameworks (called
+        modules in perl), which would make some programming simpler,  but one
+        of the main goals of this tool is that it  should work on  any system
+        with just the core language (i.e. perl) installed. We do not want any
+        additional dependency, in particular no dependency on versions beside
+        the core language.  Currently some perl modules are an exception, and
+        will be removed in future.
+        However, libraries part of perl5 are assumed to be "core language".
+
+        Perl's  'die()'  is used whenever an unrecoverable error occurs.  The
+        message printed will always start with '**ERROR: '.
+        warnings are printed using perl's  'warn()'  function and the message
+        always starts with '**WARNING: '.
+
+        All output is written to STDOUT.  However perl's 'die()' and 'warn()'
+        write on STDERR. Only debug messages inside $0 are written to
+        STDERR.
+
+        All 'print*()' functions write to STDOUT directly.  They are slightly
+        prepared for using texts from  the configuration (%cfg, %checks),  so
+        these texts can be adapted easily (either with  OPTIONS  or in code).
+
+        Calling external programs uses 'qx()' rather than backticks or perl's
+        'system()' function.  Also note that it uses round brackets insted of
+        slashes to avoid confusion with RegEx.
+
+        The code flow often uses postfix conditions, means the  if-conditions
+        are written right of the command to be executed. This is done to make
+        the code better readable (not disturbed by conditions).
+
+        While  Net::SSLinfo  uses  Net::SSLeay(1), $0 itself uses only
+        IO::Socket::SSL(1). This is done 'cause we need some special features
+        there. However,  IO::Socket::SSL(1)  uses  Net::SSLeay(1)  anyways.
+
+        The code is most likely not thread-safe. Anyway, we don't use them.
+
+        For debugging the code, the  --trace  option can be used. See  DEBUG
+        section below for more details. Be prepared for a lot of output!
+
+      Comments
+
+        Following comments are used in the code:
+
+          # TODO:       Parts not working perfect, needs to be changed.
+          # FIXME:      Program code known to be buggy, needs to be fixed.
+          #!#           Comments not to be removed in compressed code.
+          #?            Description of sub.
+          #|            Code sections (documents program flow).
+          ##            Comments used by third-party programs  (for example:
+                        contrib/gen_standalone.sh, perlcritic).
+          # func        name of sub behind the closing bracket of sub
+
+        Comments usually precede the code line(s) or are placed at end of the
+        code line which they belong too. If the comments are placed after the
+        code line which they belong too, the lines are idented.
+
+      Annotations
+
+        To reduce the huge amount of comments, and to write them only once if
+        needed multiple times,  an annotation section  have been added at the
+        end of  $0  file. In this section a title for the comment is
+        followed by the comment's text. Example:
+
+          == Note:A Title
+             Text for comment.
+
+        Such comments are refered to in the code by:
+
+          SEE Note:A Title
+
+        This is experimental, to see if it helps  to make the control flow of
+        code more readable by humans, but keep the full documentation.
+
+      Variables
+
+        As explained above, global variables are used to avoid definitions of
+        complex subs with various parameters.
+
+        Most subs use global variables (even if they are defined in main with
+        'my'). These variables are mainly: @DATA, @results, %cmd, %data, %cfg,
+        %checks, %ciphers, %prot, %text.
+
+        Variables defined with 'our' can be used in   o-saft-dbx.pm   and
+        o-saft-usr.pm.
+
+        For a detailed description of the used variables, please refer to the
+        text starting at the line  '#!# set defaults'.
+
+      Function names
+
+        Some rules used for sub names:
+
+          check*        Functions which perform some checks on data.
+          print*        Functions which print results.
+          get_*         Functions to get values from internal data structure.
+          _<function_name>    Some kind of helper (internal) function.
+          _trace*
+          _y*           Print information when  --trace  is in use.
+          _v*print      Print information when  --v  is in use.
+
+        Function (sub) definitions are followed by a short description, which
+        is just one line right after the 'sub' line.  Such lines always start
+        with  '#?'  (see below how to get an overview).
+
+        Subs are ordered to avoid forward declarations as much as possible.
+
+      Code information
+
+        Examples to get an overview of perl functions (sub):
+          egrep '^(sub|\s*#\?)' $0
+
+        Same a little bit formatted, see  +traceSUB  command.
+
+        Examples to get an overview of programs workflow:
+          egrep '(^#\|\s|\s\susr_)' $0
+
+        Following to get perl's variables for checks:
+          $0 +check localhost --trace-key \
+          | awk -F'#' '($2~/^ /){a=$2;gsub(" ","",a);next}(NF>1){printf"%s{%s}\n",a,$2}' \
+          | tr '%' '$'
+
+      Debugging, Tracing
+
+        Most functionality for trace, debug or verbose output is encapsulated
+        in functions (see X&Function names& above). These subs are defined as
+        empty stubs in $0. The real definitions are in  o-saft-dbx.pm,
+        which is loaded on demand when any  --trace*  or --v  option is used.
+        As long as these options are not used,  $0  works without
+        o-saft-dbx.pm.
+
+        Trace messages always start with  '#O-Saft :'.
+        Debug messages always start with  '#o-saft.pl::'.
+        Following formats are used:
+          #o-saft.pl:: some data           - output from $0's main
+          #o-saft.pl::subfunc(){           - inital output in subfunc
+          #o-saft.pl::subfunc: some data   - some output in subfunc
+          #o-saft.pl::subfunc() = result } - result output of subfunc
+        However, these rules are implemented very lazy.
+
+        Note: in contrast to the name of the RC-FILE, the name  o-saft-dbx.pm
+        is hard-coded.
+
+      Abstract program flow
+          check special options and command (+exec, +cgi, --envlibvar)
+          read RC-FILE, DEBUG-FILE and USER-FILE if necessary
+          initialize internal data structure
+          scan options and arguments
+          perform commands without connection to target
+          loop over all specified targets
+              print DNS stuff
+              open connction and retrive information
+              print ciphers
+              print protocols
+              print information
+              print checks
+
+      Arguments (+commands and --options)
+
+        As described multiple times, it should be possible to mix options and
+        commands and other arguments in any order. It is also possible to use
+        various formats of commands and options.
+        A simple method to allow variants of  a string (command or option) is
+        to match it against regex.  Unfortunately it is hard to use a generic
+        way to parse commands and options. perl's Getopt module would be nice
+        but requires a hash with fixed keys.  Using a hash,  which conatins a
+        proper regex for each command and option, could be done, but the code
+        for such a sophisticated parser may be hard to understand.  So a loop
+        over all arguments with a huge "switch" statment is implemented. Each
+        "switch-case" matches a regex,  and then assign a proper value in the
+        configuration. See the  "#{ COMMANDS"  and  "#{ OPTIONS"  sections in
+        $0 .
+
+      Program flow
+
+        As explained in the documentation (please see +help) there are mainly
+        3 types of `checks':
+          +info    - getting as much information as possible about the target
+                     its certificate and the connection
+          +cipher  - checking for supported ciphers by the target
+          +check   - doing all the checks based on +info and +cipher
+
+        Any information is collected using  Net::SSLinfo and stored in %data.
+        All information according ciphers is collected directly and stored in
+        @results. Finally, when performing the checks, these informations are
+        used and compared to expected well know values.  The results of these
+        checks are stored in  %checks.
+        Then all information from %data and %checks is printed by just loop-
+        ing through these hashes.
+
+        Information is just collected using  Net::SSLinfo  and then printed.
+        Checks are performed on provided data by  Net::SSLinfo  and specified
+        conditions herein.  Most checks are done in functions  'check*',  see
+        above.
+        Some checks depend on other checks,  so check functions may be called
+        anywhere to solve dependencies. To avoid multiple checks,  each check
+        function sets and checks a flag if already called, see  $cfg{'done'}.
+
+      Documentation
+
+        All documentation of code details is  close to the corresponding code
+        lines. Some special comment lines are used, see  X&Comments&  above.
+        Note: comments describe *why* the code is written in some way  (means
+        the logic of the code),  and not  *what* the code does (which is most
+        likely obvious).
+
+        All documentation for the user is written in  plain ASCII text format
+        at end of the file  o-saft-man.pm.
+
+        All documentation was initially written in perl's POD format. After 2
+        years of development, it seems that POD wasn't the best decission, as
+        it makes extracting information from documentation complicated, some-
+        times. Using POD is also a huge performance penulty on all platforms.
+
