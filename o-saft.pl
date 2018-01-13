@@ -28,7 +28,7 @@
 #!# WARNING:
 #!# This is no "academically" certified code,  but written to be understood and
 #!# modified by humans (you:) easily.  Please see the documentation  in section
-#!# "Program Code" in  coding.txt  if you want to improve the program.
+#!# "Program Code"  (file coding.txt) if you want to improve the program.
 
 # NOTE
 #       Perl's  `use' and `require' will be used for common and well known Perl
@@ -64,13 +64,14 @@ use strict;
 use warnings;
 use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
-    #       are used for example in the BEGIN{} section.  Constants can be used
+    #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.772 18/01/13 10:50:32",
-    STR_VERSION => "18.01.11",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.773 18/01/13 23:29:39",
+    STR_VERSION => "18.01.12",          # <== our official version number
 };
 our $time0  = time();
-sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to _y_CMD
+sub _yeast_TIME(@)  {
+    # print timestamp if --trace-time was given; similar to _y_CMD
     # need to check @ARGV directly as this is called before any options are parsed
     my @txt = @_;
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
@@ -82,7 +83,8 @@ sub _yeast_TIME(@)  {   # print timestamp if --trace-time was given; similar to 
     }
     return;
 }
-sub _yeast_EXIT($)  {   # exit if parameter matches given argument in @ARGV
+sub _yeast_EXIT($)  {
+    # exit if parameter matches given argument in @ARGV
     my $txt =  shift;   # example: INIT0 - initialization start
     my $arg =  $txt;
        $arg =~ s# .*##; # strip off anything right of a space
@@ -99,20 +101,7 @@ BEGIN {
     _yeast_TIME("BEGIN{");
     _yeast_EXIT("exit=BEGIN0 - BEGIN start");
     sub _VERSION() { return STR_VERSION; }  # required in o-saft-man.pm
-    # Loading `require'd  files and modules as well as parsing the command line
-    # in this scope  would increase performance and lower the memory foot print
-    # for some commands (see o-saft-man.pm also).
-    # Unfortunately Perl's BEGIN has following limits and restrictions:
-    #   - constants can be defined before and used herein
-    #   - sub can be defined herein and used later
-    #   - variables can not be defined herein and used later
-    #   - some file handles (like <DATA>) are not yet available
-    #   - strict sequence of definitions and usage (even for variables in subs)
-    # subs used in the BEGIN block must be defined in the BEGIN block or before
-    # the BEGIN block (which is a crazy behaviour of Perl).
-    # To make the program work as needed,  these limitations would force to use
-    # some dirty code hacks and split the flow of processing in different parts
-    # of the source. Therefore this scope is used for --help=* options only.
+    # SEE Perl:BEGIN , Therefore this scope is used for --help=* options only.
 
     my $_me   = $0; $_me   =~ s#.*[/\\]##;
     my $_path = $0; $_path =~ s#[/\\][^/\\]*$##;
@@ -8341,7 +8330,7 @@ public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
 The annotations here describe  behaviours, observations, and alike,  which
 lead to special program logic. The intention is to have one central place,
 where to do the documentation.
-Up to now --2017-- this is an internal documentaion only.  It is planed to
+Up to now --2018-- this is an internal documentaion only.  It is planed to
 be available for the user too, i.e. with --help .
 
 It is written in POD format, because some tools analyzing the code want to
@@ -8379,7 +8368,22 @@ They are still imported using  use  .
 
 =head2 Perl:BEGIN
 
-TBD
+Loading `require'd  files and modules  as well as parsing the command line
+in Perl's  BEGIN section  increases performance and lowers the memory foot
+print for some commands (see o-saft-man.pm also).
+Unfortunately Perl's BEGIN has following limits and restrictions:
+
+  - constants can be defined before and used herein
+  - sub can be defined herein and used later
+  - variables can not be defined herein and used later
+  - some file handles (like <DATA>) are not yet available
+  - strict sequence of definitions and usage (even for variables in subs)
+
+Perl subs used in the  BEGIN section must be defined there also, or before
+the BEGIN section (which is a crazy behaviour of Perl).
+To make the program work as needed,  these limitations  forces to use some
+dirty code hacks and split the flow of processing into  different parts of
+the source.
 
 
 =head2 Perl:map()
