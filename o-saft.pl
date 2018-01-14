@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.773 18/01/13 23:29:39",
-    STR_VERSION => "18.01.12",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.774 18/01/14 02:09:13",
+    STR_VERSION => "18.01.13",          # <== our official version number
 };
 our $time0  = time();
 sub _yeast_TIME(@)  {
@@ -3335,6 +3335,35 @@ sub _checkwildcard($$)  {
     return;
 } # _checkwildcard
 
+sub _can_connect        {
+    # return 1 if host:port can be connected; 0 otherwise
+    my ($host, $port, $sni, $timeout, $ssl) = @_;
+    local $? = 0; local $! = undef;
+    my $socket;
+    if ($ssl == 1) {    # need different method for connecting with SSL
+        $socket = IO::Socket::SSL->new(
+            PeerAddr    => $host,
+            PeerPort    => $port,
+            Proto       => "tcp",
+            Timeout     => $timeout,
+            SSL_hostname => $sni,
+        );
+    } else {
+        $socket = IO::Socket::INET->new(
+            PeerAddr    => $host,
+            PeerPort    => $port,
+            Proto       => "tcp",
+            Timeout     => $timeout,
+        );
+    }
+    if (defined $socket) {
+        close($socket);
+        return 1;
+    }
+    _warn("324: failed to connect target $host:$port : '$!'");
+    return 0;
+} # _can_connect
+
 sub _usesocket($$$$)    {
     # return protocol and cipher accepted by SSL connection
     # should return the target's prefered cipher if none are given in $ciphers
@@ -4155,7 +4184,7 @@ sub checkcipher($$) {
     return;
 } # checkcipher
 
-sub checkciphers      {
+sub checkciphers    {
     #? test target if given ciphers are accepted, results stored in global %checks
     # checks are done with information from @cipher_results
     my ($host, $port, @results) = @_;
@@ -7989,6 +8018,19 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     _yeast_TIME("DNS}");
 
+    # Quick check if the target is available
+    _yeast_TIME("can_connect{");# SEE Note:Connection test
+    if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, 1)) {
+        next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
+    }
+    if (not _can_connect($host, 80   , $cfg{'sni_name'}, $cfg{'timeout'}, 0)) {
+        $cfg{'usehttp'} = 0;
+        $Net::SSLinfo::use_http = $cfg{'usehttp'}; # FIXME: wrong if there're multiple targets given
+        _warn("325: HTTP disabled, using --no-http");
+        next;
+    }
+    _yeast_TIME("can_connect}");
+
     if (_is_do('cipherraw')) {
         _yeast_TIME("cipherraw{");
         _y_CMD("+cipherraw");
@@ -8179,11 +8221,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         goto CLOSE_SSL;
     }
 
-# FIXME: some servers do not respond for following; --no-http helps sometimes
-    # Check if there is something listening on $host:$port
+    # SEE Note:Connection test
     if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0) {
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
+        # NOTE: the previous test (see can_connect above) should be sufficient
         _yeast_TIME("connection test{");
         _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
         if (not defined Net::SSLinfo::do_ssl_open(
@@ -8700,6 +8742,18 @@ example (ouput from openssl):
 
 example Net::SSLeay:
         Net::SSLeay::get_cipher(..)
+
+
+=head2 Note:Connection test
+
+To avoid long timouts, a quick connection check to the target is done.  At
+least the connection to the SSL port must succeed.  If not, all checks are
+skipped. If just the connection to port 80 fails, just the HTTP checks are
+disabled. Also SEE Note:--ssl-error .
+
+The initial connection check just opens the port and does nothing. This is
+done because  some methods, i.e.  Net::SSLeay::get_http(),  do not support
+timeout settings, which then results in "hanging" connections.
 
 
 =head2 Note:--ssl-error
