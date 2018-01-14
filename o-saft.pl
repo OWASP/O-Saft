@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.775 18/01/14 21:32:32",
+    SID         => "@(#) yeast.pl 1.776 18/01/14 23:04:47",
     STR_VERSION => "18.01.13",          # <== our official version number
 };
 
@@ -3348,20 +3348,25 @@ sub _can_connect        {
     local $? = 0; local $! = undef;
     my $socket;
     if ($ssl == 1) {    # need different method for connecting with SSL
+        #dbx# use IO::Socket::SSL qw/debug3/;
+        # simple connect: do not verify the certificate and/or CRL, OCSP, which
+        # may result in a connection fail
         $socket = IO::Socket::SSL->new(
-            PeerAddr    => $host,
+            PeerAddr    => "127.0.0.2",
             PeerPort    => $port,
             Proto       => "tcp",
+            SSL_verify_mode => 0x0, # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
+            SSL_check_crl   => 0,   # do not check CRL
             Timeout     => $timeout,
             SSL_hostname => $sni,
-        );
+        ) or do { _v_print("_can_connect: IO::Socket::SSL->new(): $! # $IO::Socket::SSL::SSL_ERROR"); };
     } else {
         $socket = IO::Socket::INET->new(
             PeerAddr    => $host,
             PeerPort    => $port,
             Proto       => "tcp",
             Timeout     => $timeout,
-        );
+        ) or do { _v_print("_can_connect: IO::Socket::INET->new(): $!"); };  # $IO::Socket::INET::ERROR");
     }
     if (defined $socket) {
         close($socket);
