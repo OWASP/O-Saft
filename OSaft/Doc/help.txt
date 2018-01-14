@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.2 18/01/14 12:10:37
+# SID   @(#) help.txt 1.3 18/01/14 21:56:22
 
 NAME
 
@@ -1666,6 +1666,9 @@ OPTIONS
       --format=hex
       --format=raw
 
+          This option is used to specify the format of the result lines. This
+          covers the value of the result line only.
+
           * 'raw'       Print raw data as passed from  Net::SSLinfo.
             Note:  all data will be printed as is,  without  additional label
             or formatting. It's recommended to use the  option in conjunction
@@ -1729,9 +1732,44 @@ OPTIONS
 
 #         However, it applies partially if used twice for  +info.
 
+      --std-format=utf8
+      --std-format=crnl
+      --std-format=raw
+      --std-format=unix
+      --std-format=CHARSET
+
+          This option is used to specify the general output format for STDOUT
+          and STDERR. All results are written to STDOUT,  errors and warnings
+          may also be written to STDERR .  The default is ':unix:utf8', which
+          is the perlish definition used internally.
+
+          Following values are supported:
+
+          * 'raw'
+          * 'unix'      Print raw data, binary in bytes without conversion.
+            Note:  binary here just means characters (as all output is text).
+
+          * 'utf8'      Convert all characters to UTF-8.
+          * 'crnl'      Use CR LF as end of line.
+                        
+          * 'CHARSET'   'CHARSET' can be any of the local installed character
+                        sets, like UTF-8, UTF-16LE, CP1252, iso-8859-7, etc..
+                        This conversion may print its own warnings.
+
+          The option can be used multiple times with different values.
+          To reset the  default behaviour, either  'raw'  or  'unix'  must be
+          used. Obviously, they must be used first. All other values are used
+          additionally.
+          Note:  'utf8' just defines the format of the characters, it does no
+          further checks on the converted characters. In contrast, 'UTF-8' is
+          used as real encoding and does some checks.
+
+          Currently (Jan. 2018), these options must be used before any --help
+          option.
+
       --win-CR
 
-          Print windows-Style with CR LF as end of line. Default is NL only.
+          Obsolete, please use  --std-format=crnl .
 
     Options for compatibility with other programs
 
@@ -3200,6 +3238,16 @@ KNOWN PROBLEMS
 
         or
               $0 +help | more
+
+    Character set (like UTF-8) not recognized in some tools
+
+        Some tools do not diplay all characters properly,  i.e. some versions
+        of podviewer. It is not the obligation of this tool to fix well known
+        bugs in other tools. However, we can offer workarounds.
+
+        Workaround: generate the affected output using --std-format=* options
+        For example:
+              $0 --no-rc --std-format=raw --help=gen-pod
 
     **WARNING: on MSWin32 additional option  --v  required, sometimes ...
 
