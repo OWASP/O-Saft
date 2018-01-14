@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.776 18/01/14 23:04:47",
+    SID         => "@(#) yeast.pl 1.777 18/01/14 23:10:01",
     STR_VERSION => "18.01.13",          # <== our official version number
 };
 
@@ -3359,14 +3359,14 @@ sub _can_connect        {
             SSL_check_crl   => 0,   # do not check CRL
             Timeout     => $timeout,
             SSL_hostname => $sni,
-        ) or do { _v_print("_can_connect: IO::Socket::SSL->new(): $! # $IO::Socket::SSL::SSL_ERROR"); };
+        ) or do { _v_print("_can_connect: IO::Socket::SSL->new(): $! #" .  IO::Socket::SSL::errstr()); };
     } else {
         $socket = IO::Socket::INET->new(
             PeerAddr    => $host,
             PeerPort    => $port,
             Proto       => "tcp",
             Timeout     => $timeout,
-        ) or do { _v_print("_can_connect: IO::Socket::INET->new(): $!"); };  # $IO::Socket::INET::ERROR");
+        ) or do { _v_print("_can_connect: IO::Socket::INET->new(): $!"); };  # IO::Socket::INET::errstr();
     }
     if (defined $socket) {
         close($socket);
