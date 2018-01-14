@@ -66,9 +66,19 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.774 18/01/14 02:09:13",
+    SID         => "@(#) yeast.pl 1.775 18/01/14 21:32:32",
     STR_VERSION => "18.01.13",          # <== our official version number
 };
+
+sub _set_binmode    {
+    # SEE Perl:binmode()
+    my $layer = shift;
+    binmode(STDOUT, $layer);
+    binmode(STDERR, $layer);
+    return;
+} # _set_binmode
+_set_binmode(":unix:utf8"); # set I/O layers very early
+
 our $time0  = time();
 sub _yeast_TIME(@)  {
     # print timestamp if --trace-time was given; similar to _y_CMD
@@ -147,9 +157,6 @@ my  @argv   = ();   # all options, including those from RC-FILE
                     # will be used when ever possible instead of @ARGV
 # arrays to collect data for debugging, they are global!
 our $warning= 1;    # print warnings; need this variable very early
-
-binmode(STDOUT, ":unix:utf8");
-binmode(STDERR, ":unix:utf8");
 
 #| definitions: forward declarations
 #| -------------------------------------
@@ -6645,9 +6652,10 @@ sub printusage_exit     {
     local $\ = "\n";
     print STR_USAGE, @txt;
     print "# most common usage:
-  $me +info   your.tld
-  $me +check  your.tld
-  $me +cipher your.tld
+  $me +info     your.tld
+  $me +check    your.tld
+  $me +cipher   your.tld
+  $me +cipherll your.tld
 # for more help use:
   $me --help
     ";
@@ -6795,6 +6803,14 @@ while ($#argv >= 0) {
         if ($typ eq 'PORT')     { $cfg{'port'}      = $arg;     $typ = 'HOST'; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
             #  ------+----------+------------------------------+--------------------
+        if ($typ eq 'STD_FORMAT') {
+            if ($arg =~ /^(?:unix|raw|crlf|utf8|win32|perlio)$/) {
+                _set_binmode($arg);
+            } else {
+                _set_binmode(":encoding($arg)") if ($arg =~ /^[a-zA-Z0-9_.-]+$/);
+                    # simple input validation
+            }
+        }
         if ($typ eq 'PROTOCOL') {
             if ($arg =~ /^?sslv?2$/i)         { $cfg{'SSLv2'}   = 1; }
             if ($arg =~ /^?sslv?3$/i)         { $cfg{'SSLv3'}   = 1; }
@@ -7340,7 +7356,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--cadepth$/i)         { $typ = 'CADEPTH';         } # some tools use CAdepth
     if ($arg =~ /^--cafile$/i)          { $typ = 'CAFILE';          }
     if ($arg =~ /^--capath$/i)          { $typ = 'CAPATH';          }
-    if ($arg =~ /^--winCR/i)            { binmode(STDOUT, ':crlf:utf8'); binmode(STDERR, ':crlf:utf8'); }
+    if ($arg =~ /^--stdformat/i)        { $typ = 'STD_FORMAT';      }
+    if ($arg =~ /^--winCR/i)            { _set_binmode(":crlf:utf8"); } # historic alias
     # ignored options
     if ($arg =~ /^-connect$/)           {}
     if ($arg eq  '--insecure')          {}
@@ -8426,6 +8443,37 @@ the BEGIN section (which is a crazy behaviour of Perl).
 To make the program work as needed,  these limitations  forces to use some
 dirty code hacks and split the flow of processing into  different parts of
 the source.
+
+
+=head2 Perl:binmode()
+
+Perl uses various layers for I/O operations. It's called  I/O layers (also
+known as discipline). Layers to be used are defined globaly with binmode()
+or individually in each open() call. All the glory details can be found in
+Perl's documentation (man or perldoc) for: PerlIO, binmode, open.
+
+The tool here roughly destingushes two types of I/O:
+
+    1. writeing texts to the user using STDOUT and STDERR channels
+       note that it never reads, except from command line, hence no STDIN
+    2. reading and writing to network sockets, which is done underneath
+
+We assume that the  I/O socket (2. above)  is handled properly by the used
+modules. This leaves STDOUT and STDERR (1. above) to be set properly.
+
+As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
+humans. Only these channels are handled explicitely. The idea is, that all
+texts consist of printable characters only, probably in various languages.
+Hence UTF-8 is used as default characters set. The channels are configured
+to expect UTF-8 characters.
+Perl destingushes between ':utf8' and ':encoding(UTF-8)' layer,  where the
+':utf8' does not check for valid encodings. ':utf8' is sufficient here, as
+we only want to ensure UTF-8 on output.
+The I/O layers need to be set in the main script only, all modules inherit
+the settings from there.
+
+Note that we use STDOUT and STDERR  and not the pseudo layer ':std' or the
+-S flag/option, because they also contain STDIN.
 
 
 =head2 Perl:map()
