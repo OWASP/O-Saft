@@ -11,15 +11,18 @@
 #        Using regex instead of strings is not bad.  Perl::Critic (severity 2)
 #        is too pedantic here.
 
+## no critic qw(ControlStructures::ProhibitPostfixControls)
+#        We believe it's better readable (severity 2 only)
+
 package OSaft::Doc::Data;
 
 use strict;
 use warnings;
 
-my  $VERSION    = "10.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.3 18/01/13 22:18:10";
+my  $VERSION    = "18.01.18";  # official verion number of tis file
+my  $SID        = "@(#) Data.pm 1.4 18/01/14 22:30:08";
 
-# binmode(...); # inherited from parent
+# binmode(...); # inherited from parent, SEE Perl:binmode()
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -69,6 +72,8 @@ sub _get_filehandle {
         }
     }
     if ($file ne "" and -e $file) {
+        ## no critic qw(InputOutput::RequireBriefOpen)
+        #  file hadnle needs to be closd by caller
         if (not open($fh, '<:encoding(UTF-8)', $file)) {
             print "**WARNING: open('$file'): $!";
         }
@@ -273,7 +278,7 @@ sub _main_help  {
 
 If called from command line, like
 
-  OSaft/data.pm [COMMANDS] file
+  OSaft/Doc/Data.pm [COMMANDS] file
 
 this modules provides following commands:
 
@@ -284,6 +289,10 @@ Print VERSION version.
 =head2 version
 
 Print internal version.
+
+=head2 list
+
+Print list of *.txt files in current directory.
 
 =head2 get filename
 
@@ -313,6 +322,20 @@ Print VERSION version.
 
 =cut
 
+sub list        {
+    my $dir = $0;
+       $dir =~ s#[/\\][^/\\]*$##;
+    my $txt =  "";
+    opendir(DIR, $dir) or return $!;
+    while (my $file = readdir(DIR)) {
+        next unless (-f "$dir/$file");
+        next unless ($file =~ m/\.txt$/);
+        $txt .= "$file\n";
+    }
+    closedir(DIR);
+    return $txt;
+} # list
+
 sub _main       {
     #? print own documentation
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
@@ -327,6 +350,7 @@ sub _main       {
         my $arg = shift @ARGV;
         if ($cmd =~ /^--?h(?:elp)?$/  ) { _main_help; exit 0;     }
         # ----------------------------- commands
+        if ($cmd =~ /^list$/)           { print list();           }
         if ($cmd =~ /^get$/)            { print get($arg);        }
         if ($cmd =~ /^get.?mark(up)?/)  { print get_markup($arg); }
         if ($cmd =~ /^get.?text/)       { print get_text($arg);   }
