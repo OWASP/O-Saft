@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.780 18/01/16 13:01:34",
+    SID         => "@(#) yeast.pl 1.781 18/01/16 13:20:42",
     STR_VERSION => "18.01.14",          # <== our official version number
 };
 
@@ -6145,12 +6145,19 @@ sub printprotocols      {
         next if ($ssl =~ m/^SSLv2/);    # SSLv2 has no server selected cipher
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
+        my $cipher_strong = $prot{$ssl}->{'cipher_strong'};
+        my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};
+        if ($cfg{'trace'} <= 0) {
+           # avoid internal strings, pretty print for humans
+           $cipher_strong = "" if ($cipher_strong eq STR_UNDEF);
+           $cipher_pfs    = "" if ($cipher_pfs eq STR_UNDEF);
+        }
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
         printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
                 $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
                 $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
                 ($#{$prot{$ssl}->{'ciphers_pfs'}} + 1), $prot{$ssl}->{'cnt'},
-                $prot{$ssl}->{'cipher_strong'}, $prot{$ssl}->{'cipher_pfs'}
+                $cipher_strong, $cipher_pfs
         );
         # not yet printed: $prot{$ssl}->{'cipher_weak'}, $prot{$ssl}->{'default'}
     }
