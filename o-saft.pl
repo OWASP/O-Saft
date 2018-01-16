@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.778 18/01/15 19:54:28",
+    SID         => "@(#) yeast.pl 1.779 18/01/16 12:21:40",
     STR_VERSION => "18.01.13",          # <== our official version number
 };
 
@@ -3147,7 +3147,7 @@ sub _isbleed($$)        {
     while (1) {
         ($type,$ver,@msg) = _readframe($cl) or do {
             #ORIG die "no reply";
-            _warn("323: isbleed: no reply: '$!'");
+            _warn("323: heartbleed: no reply: '$!'");
             _hint("server does not respond, this does not indicate that it is not vulnerable!");
             return "no reply";
         };
@@ -4517,6 +4517,7 @@ sub checksni($$)    {
 sub _base2  {
     #? return base-2 of given number
     my $value = shift;
+       $value = 1 if ($value !~ /^[0-9]+$/);# defensive programming: quick&dirty check
        $value = log($value);
     # base-2 = log($value) / log(2)
     # unfortunatelly this calculation results in  "inf"  for big values
