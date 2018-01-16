@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.777 18/01/14 23:10:01",
+    SID         => "@(#) yeast.pl 1.778 18/01/15 19:54:28",
     STR_VERSION => "18.01.13",          # <== our official version number
 };
 
@@ -3669,6 +3669,7 @@ sub _get_default($$$$)  {
 
 sub _get_data0          {
     #? get %data for connection without SNI
+    #  this function currently only returns data for:  cn_nosni, session_ticket
     my ($host, $port) = @_;
     _y_CMD("test without SNI (disable with --no-sni) ...");
     # check if SNI supported, also copy some data to %data0
@@ -8223,15 +8224,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     usr_pre_info();
     _yeast_TIME("SNI{");
-
-# FIXME: some servers do not respond for following
-#        reason seams to be SSLv2 or SSLv3 without SNI
-# FIXME: cannot use:    if ($cfg{usesni} > 0) 
-#        need to review code first for %data0 usage
-    # 21nov17: following temporarily disabled due to performance reasons
-    # _get_data0($host, $port);
-
+    _get_data0($host, $port);
     _yeast_TIME("SNI}");
+
     usr_pre_open();
 
     # TODO dirty hack, check with dh256.tlsfun.de
