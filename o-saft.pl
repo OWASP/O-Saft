@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.781 18/01/16 13:20:42",
+    SID         => "@(#) yeast.pl 1.782 18/01/16 14:19:50",
     STR_VERSION => "18.01.14",          # <== our official version number
 };
 
@@ -3351,7 +3351,7 @@ sub _can_connect        {
         # simple connect: do not verify the certificate and/or CRL, OCSP, which
         # may result in a connection fail
         $socket = IO::Socket::SSL->new(
-            PeerAddr    => "127.0.0.2",
+            PeerAddr    => $host,
             PeerPort    => $port,
             Proto       => "tcp",
             SSL_verify_mode => 0x0, # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
@@ -8052,10 +8052,15 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     # Quick check if the target is available
     _yeast_TIME("can_connect{");# SEE Note:Connection test
-    if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, 1)) {
+    my $connect_ssl = 1;
+    my $sni_name    = ($cfg{'sni_name'} == 1) ? $host : $cfg{'sni_name'};
+    _trace("sni_name $sni_name");
+    # NOTE: $sni_name may produce problems when only SSLv2 or SSLv3 enabled
+    if (not _can_connect($host, $port, $sni_name, $cfg{'timeout'}, $connect_ssl)) {
         next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
     }
-    if (not _can_connect($host, 80   , $cfg{'sni_name'}, $cfg{'timeout'}, 0)) {
+    $connect_ssl = 0;
+    if (not _can_connect($host, 80   , $sni_name, $cfg{'timeout'}, $connect_ssl)) {
         $cfg{'usehttp'} = 0;
         $Net::SSLinfo::use_http = $cfg{'usehttp'}; # FIXME: wrong if there're multiple targets given
         _warn("325: HTTP disabled, using --no-http");
