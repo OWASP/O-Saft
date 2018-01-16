@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.779 18/01/16 12:21:40",
-    STR_VERSION => "18.01.13",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.780 18/01/16 13:01:34",
+    STR_VERSION => "18.01.14",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -232,8 +232,7 @@ sub _warn_nosni         {
     return if ($sni < 1);
     return if ($ssl !~ m/^SSLv[23]/);
     # SSLv2 has no SNI; SSLv3 has originally no SNI
-    _warn("$err $ssl does not support SNI; related checks skipped");
-    _hint("use '--no-sni' for checking");
+    _warn("$err $ssl does not support SNI; cipher checks are done without SNI");
     return;
 } # _warn_nosni
 
@@ -3782,6 +3781,7 @@ sub ciphers_scan        {
     my $cnt = scalar(@{$cfg{'ciphers'}});
     foreach my $ssl (@{$cfg{'version'}}) {
         my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
+        my $usesni  = $cfg{'usesni'};
         if (($cfg{'verbose'} + $cfg{'trace'} + $cfg{'traceCMD'}) > 0) {
             # optimize output: instead using 3 lines with _y_CMD(), _trace() and _v_print()
             my $_me = "";
@@ -3799,7 +3799,7 @@ sub ciphers_scan        {
                 # requested check;  to avoid these noicy warnings, it is only
                 # printend for  +cipher  command or with --v option
             }
-            next;
+            $cfg{'usesni'} = 0; # do not use SNI for this $ssl
         }
         my $__verbose   = $cfg{'verbose'};
             # $cfg{'v_cipher'}  should only print cipher checks verbosely,
@@ -3816,6 +3816,7 @@ sub ciphers_scan        {
         foreach my $c (@{$cfg{'ciphers'}}) {  # might be done more perlish ;-)
             push(@cipher_results, [$ssl, $c, ((grep{/^$c$/} @supported)>0) ? "yes" : "no"]);
         }
+        $cfg{'usesni'} = $usesni;
     }
     return;
 } # ciphers_scan
@@ -8068,6 +8069,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         foreach my $ssl (@{$cfg{'version'}}) {
             $_printtitle++;
             next if ($cfg{$ssl} == 0);
+            my $usesni = $Net::SSLhello::usesni;
             if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
                 # using $Net::SSLhello::usesni instead of $cfg{'usesni'} (even
                 # they should be the same) because Net::SSLhello functions are
@@ -8075,7 +8077,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 if ($ssl =~ m/^SSLv/) {
                     # SSLv2 has no SNI; SSLv3 has originally no SNI
                     _warn_nosni("409:", $ssl, $Net::SSLhello::usesni);
-                    next;
+                    $Net::SSLhello::usesni = 0; # do not use SNI for this $ssl
                 }
             }
             my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
@@ -8114,6 +8116,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             } else {
                 Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
             }
+            $Net::SSLhello::usesni = $usesni;# restore
         } # $ssl
         if ($_printtitle > 0) {
             # SEE Note:+cipherall
