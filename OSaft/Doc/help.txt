@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.3 18/01/14 21:56:22
+# SID   @(#) help.txt 1.4 18/01/16 23:42:51
 
 NAME
 
@@ -12,7 +12,7 @@ DESCRIPTION
         This tools lists  information  about remote target's  SSL certificate
         and tests the remote target according given list of ciphers.
 
-        Note:  Throughout this description  '$0'  is used as an alias for the
+        Note:  Throughout this description  `$0'  is used as an alias for the
         program name  'o-saft.pl'.
 
 
@@ -1751,7 +1751,7 @@ OPTIONS
 
           * 'utf8'      Convert all characters to UTF-8.
           * 'crnl'      Use CR LF as end of line.
-                        
+
           * 'CHARSET'   'CHARSET' can be any of the local installed character
                         sets, like UTF-8, UTF-16LE, CP1252, iso-8859-7, etc..
                         This conversion may print its own warnings.
@@ -1816,8 +1816,9 @@ OPTIONS
           If  CMD  is any of the known internal commands, it will be redifned.
           If  CMD  is a unknown command, it will be created.
 
-          Example:  --cfg-cmd=sni="sni hostname"
-          An example  +preload  can be found in  '.o-saft.pl' .
+          Example:
+              --cfg-cmd=sni="sni hostname"
+          An example  +preload  can be found in  '.$0' .
 
           To get a list of commands and their settings, use:
               $0 --help=intern
@@ -1854,7 +1855,7 @@ OPTIONS
 
           Redefine the security value (i.e. HIGH) in the cipher description.
           Example:
-          --cfg-cipher=NULL-MD5=no-security-at-all
+              --cfg-cipher=NULL-MD5=no-security-at-all
 
       --cfg_text=KEY=TEXT
       --cfg-text=KEY=TEXT
@@ -1995,11 +1996,11 @@ OPTIONS
 
       --trace=FILE
 
-          Use FILE instead of the default rc-file (.o-saft.pl, see RC-FILE).
+          Use FILE instead of the default  RC-FILE, i.e. '.$0'.
 
       --trace-me
 
-          Print debugging messages for $0 only, but not any modules.
+          Print debugging messages for  $0  only, but not any modules.
 
       --trace-not-me
 
@@ -2029,7 +2030,7 @@ OPTIONS
 
       --exit=KEY
 
-          For debugging only: terminate $0 at specified 'KEY'.
+          For debugging only: terminate  $0  at specified 'KEY'.
           For 'KEY' please see:  'grep exit= $0'
 
     Options vs. Commands
@@ -2091,7 +2092,7 @@ LAZY SYNOPSIS
     Targets
 
         Following syntax is supported also:
-          $0 http://some.tld other.tld:3889/some/path?a=b
+              $0 http://some.tld other.tld:3889/some/path?a=b
 
         Note that only the hostname and the port are used from an URL.
 
@@ -2181,7 +2182,7 @@ CHECKS
       FREAK
 
         Attack against SSL/TLS to downgrade to EXPORT ciphers.
-        Currently (2015) a simple check is used:   SSLv3 enabled and EXPORT
+        Currently (2018) a simple check is used:   SSLv3 enabled and EXPORT
         ciphers supported by server.
         See CVE-2015-0204 and https://freakattack.com/ .
 
@@ -2228,8 +2229,6 @@ CHECKS
 
         Check if DHE ciphers are used.  Checks also if the TLS session ticket
         is random or not used at all.
-        Currently (2015) only a simple check is used: only DHE ciphers used.
-        Which is any cipher with DHE or ECDHE. SSLv2 does not support PFS.
         TLSv1.2 checks are not yet implemented.
 
       POODLE
@@ -2433,7 +2432,7 @@ CHECKS
           * serve all subdomains over https.
 
         Except the last requirement,  +preload  will do the checks.
-        Note that  +preload  is defined in  '.o-saft.pl'  only.
+        Note that  +preload  is defined in  '.$0'  only.
 
       Public Key Pins header
         TBD - to be described ...
@@ -2916,7 +2915,7 @@ CUSTOMIZATION
 
         CIPHER  must be a valid cipher suite name as shown with:
 
-            $0 ciphers
+              $0 ciphers
 
         NOTE that such configuration options should be used before any --help
         or  --help=*  option, otherwise the changed setting is not visible.
@@ -2937,7 +2936,7 @@ CUSTOMIZATION
         The rc-file will be searched for in the working directory only.
 
         The name of the rc-file is the name of the program file prefixed by a
-        '.'  (dot),  for example:  '.o-saft.pl'.
+        '.'  (dot),  for example:  '.$0'.
 
         A  rc-file  can contain any of the commands and options valid for the
         tool itself. The syntax for them is the same as on command line. Each
@@ -2989,7 +2988,7 @@ CUSTOMIZATION
         listed with  --help=intern  and CMD  must constist only of digits and
         letters.
 
-        Examples in  '.o-saft.pl'  are  +preload  and  +ciphercheck .
+        Examples in  '.$0'  are  +preload  and  +ciphercheck .
 
 
 CIPHER NAMES
@@ -3210,7 +3209,7 @@ KNOWN PROBLEMS
         piled with proper options. I.g. perl automatically converts the value
         to a floating pont number.
         Please report a bug with output of following command:
-          $0 +s_client +dump your.tld
+              $0 +s_client +dump your.tld
 
     <<openssl did not return DH Paramter>>
 
@@ -3268,7 +3267,7 @@ KNOWN PROBLEMS
                 o-saft.pl --help
 
         Workaround: use full path to perl.exe, for example
-          C:\Programs\perl\bin\perl.exe $0 --help=FAQ
+              C:\Programs\perl\bin\perl.exe $0 --help=FAQ
 
 
     Performance Problems
@@ -3356,7 +3355,7 @@ LIMITATIONS
           This check is only done for the certificate provided by the target.
           All other certificate in the chain are not checked.
 
-          This is currently (2015) a limitation in $0.
+          This is currently (2018) a limitation in  $0.
 
     Broken pipe
 
@@ -3435,7 +3434,7 @@ LIMITATIONS
           * --ssl-error-timeout=SEC - treat a failure as error after timeout
           * --ssl-error-total=CNT   - max. amount of errors
 
-        This means that no more connections are maid when more than
+        This means that no more connections are made when more than
           * --ssl-error-max errors occour sequentialy
         or
           * --ssl-error-total errors occoured
@@ -3529,7 +3528,7 @@ INSTALLATION
         The tool can be installed in any path. It just requres the modules as
         described in  DEPENDENCIES  above. However, it's recommended that the
         modules  Net::SSLhello  and  Net::SSLinfo  are found in the directory
-        './Net/'  where  'o-saft.pl'  is installed.
+        './Net/'  where  '$0'  is installed.
 
         For security reasons, most modern libraries  disabled or even removed
         insecure or "dirty" functionality.  As the purpose of this tool is to
@@ -3792,7 +3791,7 @@ INSTALLATION
         Note that  pre-build executables (build by perlapp, perl2exe)  cannot
         be provided due to licence problems.
         Also note that using  stand-alone executable have not been tested the
-        same way as the $0 itself. Use them at your own risk.
+        same way as the  $0  itself. Use them at your own risk.
 
 
 DOCKER
@@ -3835,7 +3834,7 @@ SEE ALSO
         * openssl(1), Net::SSLeay(1), Net::SSLhello, Net::SSLinfo, timeout(1)
         * http://www.openssl.org/docs/apps/ciphers.html
         * IO::Socket::SSL(1), IO::Socket::INET(1)
-        * o-saft-docker, o-saft-docker-dev, Dockerfile, docker
+        * o-saft, o-saft-docker, o-saft-docker-dev, Dockerfile, docker
 
 
 HACKER's INFO
@@ -3929,7 +3928,7 @@ HACKER's INFO
         the  --envlibvar=NAME  option.
 
         While  --exe  mainly impacts the  openssl(1) executable,  --lib  also
-        impacts o-saft.pl itself, as it loads other shared libraries if found.
+        impacts $0 itself, as it loads other shared libraries if found.
 
         Bear in mind that  all these options  can affect the behaviour of the
         openssl subsystem,  influencing both  which executable is called  and
@@ -4151,129 +4150,129 @@ DEBUG
 
         Following example shows the result without warnings:
 
-               === reading: ./.o-saft.pl (RC-FILE done) ===
-               === reading: Net/SSLhello.pm (O-Saft module done) ===
-               === reading: Net/SSLinfo.pm (O-Saft module done) ===
-               === ./o-saft.pl 16.09.09 ===
-                   Net::SSLeay::
-                      ::OPENSSL_VERSION_NUMBER()    0x268443744
-                      ::SSLeay()                    0x268443744
-                   Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
-               = openssl =
-                   version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
-                   external executable              /opt/openssl-chacha/bin/openssl
-                   used environment variable (name) LD_LIBRARY_PATH
-                   environment variable (content)   <<undef>>
-                   path to shared libraries
-                   full path to openssl.cnf file    <<undef>>
-                   common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-                                                    /etc/ssl/openssl.cnf \
-                                                    /System//Library/OpenSSL/openssl.cnf \
-                                                    /usr/ssl/openssl.cnf
-                   URL where to find CRL file       <<undef>>
-                   directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
-                   PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
-                   common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
-                                                     /System/Library/OpenSSL
-                   common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
-                   number of supported ciphers      177
-                   openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
-                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-                                                    DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-               = o-saft.pl +cipherall =
-                   default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                                                    0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-               = Required (and used) Modules =
-                   @INC                 ./ ./lib . /bin /usr/share/perl5 \
-                                        /usr/lib/x86_64-linux-gnu/perl5/5.20 \
-                                        /usr/lib/x86_64-linux-gnu/perl/5.20 \
-                                        /usr/share/perl/5.20 /usr/local/lib/site_perl .
-               =   module name            VERSION  found in
-               =   ----------------------+--------+------------------------------------------
-                   IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
-                   IO::Socket::SSL        2.002    /usr/share/perl5/IO/Socket/SSL.pm
-                   Net::DNS               0.81     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
-                   Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
-                   Net::SSLinfo           16.06.01 Net/SSLinfo.pm
-                   Net::SSLhello          16.05.16 Net/SSLhello.pm
-                   Ciphers
-                   osaft                  16.05.10 osaft.pm
+              === reading: ./.o-saft.pl (RC-FILE done) ===
+              === reading: Net/SSLhello.pm (O-Saft module done) ===
+              === reading: Net/SSLinfo.pm (O-Saft module done) ===
+              === ./o-saft.pl 16.09.09 ===
+                  Net::SSLeay::
+                  ::OPENSSL_VERSION_NUMBER()       0x268443744
+                  ::SSLeay()                       0x268443744
+                  Net::SSLeay::SSLeay_version()    OpenSSL 1.0.2-chacha (1.0.2f-dev)
+              = openssl =
+                  version of external executable   OpenSSL 1.0.2-chacha (1.0.2f-dev)
+                  external executable              /opt/openssl-chacha/bin/openssl
+                  used environment variable (name) LD_LIBRARY_PATH
+                  environment variable (content)   <<undef>>
+                  path to shared libraries
+                  full path to openssl.cnf file    <<undef>>
+                  common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                                                   /etc/ssl/openssl.cnf \
+                                                   /System//Library/OpenSSL/openssl.cnf \
+                                                   /usr/ssl/openssl.cnf
+                  URL where to find CRL file       <<undef>>
+                  directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
+                  PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
+                  common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
+                                                    /System/Library/OpenSSL
+                  common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+                  number of supported ciphers      177
+                  openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
+                  o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                                                   DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+              = o-saft.pl +cipherall =
+                  default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                                                   0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+              = Required (and used) Modules =
+                  @INC                 ./ ./lib . /bin /usr/share/perl5 \
+                                       /usr/lib/x86_64-linux-gnu/perl5/5.20 \
+                                       /usr/lib/x86_64-linux-gnu/perl/5.20 \
+                                       /usr/share/perl/5.20 /usr/local/lib/site_perl .
+              =   module name            VERSION  found in
+              =   ----------------------+--------+------------------------------------------
+                  IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
+                  IO::Socket::SSL        2.002    /usr/share/perl5/IO/Socket/SSL.pm
+                  Net::DNS               0.81     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/DNS.pm
+                  Net::SSLeay            1.72     /usr/lib/x86_64-linux-gnu/perl5/5.20/Net/SSLeay.pm
+                  Net::SSLinfo           16.06.01 Net/SSLinfo.pm
+                  Net::SSLhello          16.05.16 Net/SSLhello.pm
+                  Ciphers
+                  osaft                  16.05.10 osaft.pm
 
-        Following example shows the result with warnings:
+        Following example shows the result with warnings (line nr. may vary):
 
-            === reading: ./.o-saft.pl (RC-FILE done) ===
-            === reading: ./Net/SSLhello.pm (O-Saft module done) ===
-            **WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialize at /Net/SSLinfo.pm line 481.
-            === reading: ./Net/SSLinfo.pm (O-Saft module done) ===
-            **WARNING: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
-            **WARNING: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
-            **WARNING: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
-            **WARNING: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
-            !!Hint: --force-openssl can be used to disables this check
-            **WARNING: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
-            **WARNING: SSL version 'TLSv11': not supported by Net::SSLeay; not checked
-            **WARNING: SSL version 'TLSv12': not supported by Net::SSLeay; not checked
-            **WARNING: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
-            === o-saft.pl 16.09.09 ===
-                Net::SSLeay::
-                   ::OPENSSL_VERSION_NUMBER()    0x9470143
-            **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
-                   ::SSLeay()                    0x1.35
-            **WARNING: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
-            = openssl =
-                version of external executable   OpenSSL 0.9.8y 5 Feb 2013
-                external executable              /usr/bin/openssl
-                used environment variable (name) LD_LIBRARY_PATH
-                environment variable (content)   <<undef>>
-                path to shared libraries
-                full path to openssl.cnf file    <<undef>>
-                common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-                                                 /etc/ssl/openssl.cnf \
-                                                 /System//Library/OpenSSL/openssl.cnf \
-                                                 /usr/ssl/openssl.cnf
-                URL where to find CRL file       <<undef>>
-                directory with PEM files for CAs /System/Library/OpenSSL/certs
-                PEM format file with CAs         <<undef>>
-                common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
-                common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
-                number of supported ciphers      43
-                openssl supported SSL versions   SSLv2 SSLv3 TLSv1
-                o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-                                                 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
-            **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
-            **WARNING: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
-            = o-saft.pl +cipherall =
-                default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                                                 0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
-            = Required (and used) Modules =
-                @INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
-                                     /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
-                                     /System/Library/Perl/5.10.0 \
-                                     /Library/Perl/5.10.0/darwin-thread-multi-2level \
-                                     /Library/Perl/5.10.0 \
-                                     /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
-                                     /Network/Library/Perl/5.10.0 \
-                                     /Network/Library/Perl \
-                                     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
-                                     /System/Library/Perl/Extras/5.10.0 .
-            =   module name            VERSION  found in
-            =   ----------------------+--------+------------------------------------------
-                IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
-                IO::Socket::SSL        1.22     /System/Library/Perl/Extras/5.10.0/IO/Socket/SSL.pm
-                Net::DNS               0.65     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/DNS.pm
-                Net::SSLeay            1.35     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/SSLeay.pm
-                Net::SSLinfo           16.06.01 ./Net/SSLinfo.pm
-                Net::SSLhello          16.05.16 ./Net/SSLhello.pm
-                osaft                  16.05.10 /osaft.pm
+              === reading: ./.o-saft.pl (RC-FILE done) ===
+              === reading: ./Net/SSLhello.pm (O-Saft module done) ===
+              **WARNING: ancient Net::SSLeay 1.35 < 1.49; cannot use ::initialize at /Net/SSLinfo.pm line 481.
+              === reading: ./Net/SSLinfo.pm (O-Saft module done) ===
+              **WARNING: ancient perl has no 'version' module; version checks may not be accurate; at o-saft.pl line 1662.
+              **WARNING: ancient Net::SSLeay 1.35 < 1.49 detected; at o-saft.pl line 1687.
+              **WARNING: ancient IO::Socket::SSL 1.22 < 1.37 detected; at o-saft.pl line 1687.
+              **WARNING: ancient version IO::Socket::SSL 1.22 < 1.90 does not support SNI or is known to be buggy; SNI disabled; at o-saft.pl line 5905.
+              !!Hint: --force-openssl can be used to disables this check
+              **WARNING: ancient version Net::SSLeay 1.35 < 1.49  may throw warnings and/or results may be missing; at o-saft.pl line 5934.
+              **WARNING: SSL version 'TLSv11': not supported by Net::SSLeay; not checked
+              **WARNING: SSL version 'TLSv12': not supported by Net::SSLeay; not checked
+              **WARNING: SSL version 'TLSv13': not supported by Net::SSLeay; not checked
+              === o-saft.pl 16.09.09 ===
+                  Net::SSLeay::
+                  ::OPENSSL_VERSION_NUMBER()       0x9470143
+              **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+                  ::SSLeay()                       0x1.35
+              **WARNING: ancient version Net::SSLeay 1.35 < 1.49; detailed version not available at o-saft.pl line 4806.
+              = openssl =
+                  version of external executable   OpenSSL 0.9.8y 5 Feb 2013
+                  external executable              /usr/bin/openssl
+                  used environment variable (name) LD_LIBRARY_PATH
+                  environment variable (content)   <<undef>>
+                  path to shared libraries
+                  full path to openssl.cnf file    <<undef>>
+                  common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
+                                                   /etc/ssl/openssl.cnf \
+                                                   /System//Library/OpenSSL/openssl.cnf \
+                                                   /usr/ssl/openssl.cnf
+                  URL where to find CRL file       <<undef>>
+                  directory with PEM files for CAs /System/Library/OpenSSL/certs
+                  PEM format file with CAs         <<undef>>
+                  common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
+                  common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
+                  number of supported ciphers      43
+                  openssl supported SSL versions   SSLv2 SSLv3 TLSv1
+                  o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
+                                                   DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+              **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
+              **WARNING: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
+              = o-saft.pl +cipherall =
+                  default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
+                                                   0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+              = Required (and used) Modules =
+                  @INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
+                                       /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                                       /System/Library/Perl/5.10.0 \
+                                       /Library/Perl/5.10.0/darwin-thread-multi-2level \
+                                       /Library/Perl/5.10.0 \
+                                       /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                                       /Network/Library/Perl/5.10.0 \
+                                       /Network/Library/Perl \
+                                       /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
+                                       /System/Library/Perl/Extras/5.10.0 .
+              =   module name            VERSION  found in
+              =   ----------------------+--------+------------------------------------------
+                  IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
+                  IO::Socket::SSL        1.22     /System/Library/Perl/Extras/5.10.0/IO/Socket/SSL.pm
+                  Net::DNS               0.65     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/DNS.pm
+                  Net::SSLeay            1.35     /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level/Net/SSLeay.pm
+                  Net::SSLinfo           16.06.01 ./Net/SSLinfo.pm
+                  Net::SSLhello          16.05.16 ./Net/SSLhello.pm
+                  osaft                  16.05.10 /osaft.pm
 
         Please keep in mind that the shown version numbers and the shown line
         numbers are examples and may differ on your system.
 
         When starting $0 with outdated modules, more '**WARNING:' will
         be shown. The warnings depend on the installed version of the module.
-        $0 is known to work with at least:
-            IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
-            Net::SSLeay 1.30
+        $0  is known to work with at least:
+              IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
+              Net::SSLeay 1.30
 
 
 EXAMPLES
@@ -4352,8 +4351,8 @@ EXAMPLES
           $0 +check some.tld --cfg-text=desc="my special description"
 
         * Use your private texts from RC-FILE
-          $0 --help=cfg-text >> .o-saft.pl
-            edit as needed: .o-saft.pl
+          $0 --help=cfg-text >> .$0
+            edit as needed: .$0
           $0 +check some.tld
 
         * Use your private hint texts in output
@@ -4381,7 +4380,7 @@ EXAMPLES
 
     Specials for hunting problems with connections etc.
 
-        * Do not read RC-FILE .o-saft.pl
+        * Do not read RC-FILE .$0
           $0 +info some.tld --no-rc
 
         * Show command line argument processing
@@ -4525,6 +4524,7 @@ TODO
           ** Ticketbleed
           ** complete TIME, BREACH check
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
+          ** ROBOT
 
         * verify CA chain:
           ** Net::SSLinfo.pm implement verify*
@@ -4565,6 +4565,7 @@ TODO
              Ugly workaround using --v implemented in o-saft-man.pm only.
 
         * internal
+          ** move all configuration and code for commans line arguments to Arg.pm
           ** use qr() for defining regex, see $cfg{'regex'}
           ** print_line() has ugly code for legacy=cipher
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
