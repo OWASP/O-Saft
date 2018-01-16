@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.227 18/01/13 22:45:35";
+my  $man_SID= "@(#) o-saft-man.pm 1.228 18/01/16 23:51:15";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -662,7 +662,7 @@ EoHelp
             print; $empty = 0; $code++; next;   # no more changes
         };
         $code = 0;
-        s:'([^']*)':C<$1>:g;            # markup literal text; # dumm '
+        s:['`]([^']*)':C<$1>:g;         # markup literal text; # dumm '
         s:X&([^&]*)&:L</$1>:g;          # markup references inside help
         s:L&([^&]*)&:L<$1|$1>:g;        # markup other references
         #s:L<[^(]*(\([^\)]*\)\>).*:>:g;  # POD does not like section in link
@@ -861,7 +861,7 @@ EoHelp
         s/^=item (\* .*)/$1/;           # list item, first level
         s/^=[^= ]+ *//;                 # remove remaining markup and leading spaces
         print, next if/^=/;             # no more changes in header lines
-        s!'([^']*)'!<code>$1</code>!g;  # markup examples
+        s:['`]([^']*)':<code>$1</code>:g;  # markup examples # dumm '
         s/^S&([^&]*)&/  $1/ && do { print; next; }; # code or example line; no more changes
         s/X&([^&]*)&/[[#$1|$1]]/g;      # markup references inside help
         s/L&([^&]*)&/\'\'$1\'\'/g;      # markup other references
