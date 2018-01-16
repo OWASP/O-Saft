@@ -20,7 +20,7 @@ use strict;
 use warnings;
 
 my  $VERSION    = "18.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.4 18/01/14 22:30:08";
+my  $SID        = "@(#) Data.pm 1.5 18/01/16 23:44:14";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -50,8 +50,8 @@ sub _replace_var {
     #? replace $0 by name and $VERSION by version in array, return array
     my ($name, $version, @arr) = @_;
     # SEE Perl:map()
-    s#\$VERSION#$version# for @arr;     # add current VERSION
-    s# \$0# $name#        for @arr;     # my name
+    s#\$VERSION#$version#g  for @arr;   # add current VERSION
+    s#(?<!`)\$0#$name#g     for @arr;   # my name
     return @arr;
 } # _replace_var
 
@@ -134,15 +134,18 @@ sub get_markup    {
         s/^( +\* .*)/=item $1/;         # list item, first level
         s/^( {11})([^ ].*)/=item * $1$2/;# list item
         s/^( {14})([^ ].*)/S&$1$2&/;    # exactly 14 spaces used to highlight line
-        if (!m/^(?:=|S&|\s+\$0)/) {     # no markup in example lines and already marked lines
+        s/^( {18})([^ ].*)/S&$1$2&/;    # exactly 18
+        if (not m/^(?:=|S&|\s+\$0)/) {  # no markup in example lines and already marked lines
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g; # markup commands and options
                 # TODO: fails for something like:  --opt=foo="bar"
                 # TODO: above substitute fails for something like:  --opt --opt
                 #        hence same substitute again (should be sufficent then)
             s#(\s)((?:\+|--)[^,\s).]+)([,\s).])#$1I&$2&$3#g;
         }
-        s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d\))/L&$1&/g;
-        s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
+        if (not m/^S/ and not m/^ {14,}/) {
+            s/((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d\))/L&$1&/g;
+            s/((?:Net::SSL(?:hello|info)|o-saft(?:-dbx|-man|-usr|-README)(?:\.pm)?))/L&$1&/g;
+        }
         s/  (L&[^&]*&)/ $1/g;
         s/(L&[^&]*&)  /$1 /g;
             # If external references are enclosed in double spaces, we squeeze
@@ -414,6 +417,8 @@ _main() if (! defined caller);
 #       Will be replaced by current version string (as defined in caller).
 #   $0
 #       Will be replaced by caller's name (i.g. o-saft.pl).
+#   `$0'
+#       Will not be replaced, but kept as is.
 #
 #   Referenzes to titles are written in all upper case characters and prefixed
 #   and suffixed with 2 spaces.
