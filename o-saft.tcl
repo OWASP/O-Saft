@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.160 Winter Edition 2017
+#?      @(#) 1.161 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.160 18/01/17 22:24:20 Winter Edition 2017}
-set cfg(VERSION) {1.160}
+set cfg(SID)    {@(#) o-saft.tcl 1.161 18/01/18 00:30:26 Winter Edition 2017}
+set cfg(VERSION) {1.161}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -487,6 +487,7 @@ set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-
 set cfg(DESC)       {-- CONFIGURATION GUI style and layout -------------------}
 set cfg(bstyle) {image};        # button style:  image  or  text
 set cfg(layout) {table};        # layout o-saft.pl's results:  text  or  table
+set cfg(tfont)  {flat9x6};      # font used in tablelist::tablelist
 
 set myX(DESC)       {-- CONFIGURATION window manager geometry ----------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
@@ -1103,6 +1104,7 @@ proc tooltip:show {w arg} {
 
 proc gui_init     {} {
     #? initialize GUI
+    package require tablelist ;
     font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
     font create osaftBold   {*}[font config TkDefaultFont] -weight bold
     font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
@@ -1110,7 +1112,7 @@ proc gui_init     {} {
     option add *Label.font  osaftBold;  # ..
     option add *Text.font   TkFixedFont;
 
-    global cfg prg myX
+    global cfg prg myX argv
     # configure according real size
     set __x         [lindex [wm maxsize .] 0]
     set __y         [lindex [wm maxsize .] 1]
@@ -1128,7 +1130,7 @@ proc gui_init     {} {
         {aqua}  -
         {Aqua}  { set __native "open"
                   set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
-                  if {$optimg==1} {
+                  if {[regexp -- {-(img|image)} $argv]} {
                       tk_messageBox -icon warning \
                           -message "using images for buttons is not recomended on Aqua systems"
                   } else {
@@ -1139,11 +1141,23 @@ proc gui_init     {} {
     }
     set myX(geoS)   "$myX(minx)x$myX(miny)"
 
+    # find proper font for tablelist::tablelist; MacOSX is strange ...
+    # usually we should have:  flat6x4, flat7x4, flat7x5, flat7x7, flat8x5,
+    #                          flat9x5, flat9x6, flat9x7, flat10x6,
+    #                          photo7x7, sunken8x7, sunken10x9, or sunken12x11
+    # if no font is found, default will be used, which results in a Tcl error
+    foreach f "flat9x5 flat9x6 flat9x7 flat10x6 flat8x5" {
+        if {[catch {tablelist::tablelist .ttest -arrowstyle $f} err]} { continue }
+        set cfg(tfont) $f
+        destroy .ttest
+        break
+    }
+    _dbx " table font: $cfg(tfont)"
+
     # search browser, first matching will be used
     foreach bin " $__native \
             firefox chrome chromium iceweasel konqueror mozilla \
-            netscape opera safari webkit htmlview www-browser w3m \
-          " {
+            netscape opera safari webkit htmlview www-browser w3m" {
         set binary [lindex [auto_execok $bin] 0];   # search in $PATH
         _dbx " browser: $bin $binary"
         if {[string length   $binary]} {
@@ -1151,6 +1165,7 @@ proc gui_init     {} {
             break
         }
     }
+
     return
 }; # gui_init
 
@@ -1647,13 +1662,11 @@ proc create_table {parent content} {
     #   the cipher becomes the Label column
     # lines starting with = or # are currently ignored, because Tcl's tablelist
     # has no "colspan" functionality and therfore do not fit into the 4 colums
-    global  prg
-    package require tablelist ;
+    global  cfg prg
     set this    $parent.ft
     frame $this
     pack [scrollbar $this.x -orient horizontal -command [list $this.t xview]] -side bottom -fill x
     pack [scrollbar $this.y -orient vertical   -command [list $this.t yview]] -side right  -fill y
-# flat6x4, flat7x4, flat7x5, flat7x7, flat8x5, flat9x5, flat9x6, flat9x7, flat10x6, photo7x7, sunken8x7, sunken10x9, or sunken12x11
     pack [tablelist::tablelist $this.t   \
              -exportselection true \
              -selectmode extended  \
@@ -1662,7 +1675,7 @@ proc create_table {parent content} {
              -background white  \
              -borderwidth 1     \
              -stripebackground lightgray \
-             -arrowstyle flat9x6  \
+             -arrowstyle $cfg(tfont) \
              -labelrelief solid   \
              -labelfont osaftBold \
              -labelpady   3     \
@@ -2929,7 +2942,6 @@ proc osaft_exec   {parent cmd} {
 #_____________________________________________________________________ main __|
 
 set targets "";                 # will later be copied to hosts()
-set optimg  0
 foreach arg $argv {
     switch -glob $arg {
         {+VERSION}  { puts $cfg(VERSION); exit; }
@@ -2941,7 +2953,7 @@ foreach arg $argv {
         {--rc}      { osaft_write_rc; exit; }
         {--trace}   { set   cfg(TRACE)  1;  }
         {--image}   -
-        {--img}     { set   cfg(bstyle) "image"; set optimg 1; }
+        {--img}     { set   cfg(bstyle) "image"; }
         --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
         {--text}    { set   cfg(bstyle) "text";  }
         {--tip}     { set   cfg(TIP)    1;  }
@@ -3092,7 +3104,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.160 $vm"
+update_status "o-saft.tcl 1.161 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
