@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.161 Winter Edition 2017
+#?      @(#) 1.162 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.161 18/01/18 00:30:26 Winter Edition 2017}
-set cfg(VERSION) {1.161}
+set cfg(SID)    {@(#) o-saft.tcl 1.162 18/01/18 00:54:38 Winter Edition 2017}
+set cfg(VERSION) {1.162}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1489,10 +1489,12 @@ proc apply_filter_table {w} {
     return
 }; # apply_filter_table
 
-proc apply_filter {w} {
+proc apply_filter {w cmd} {
     #? apply filters for markup in output, data is in text or table widget $w
     global cfg
-    switch $cfg(layout) {
+    set _layout $cfg(layout)
+    if {$cmd eq "docker_status"} { set _layout "text" };  # don't have table here
+    switch $_layout {
         text    { apply_filter_text  $w }
         table   { apply_filter_table $w }
     }
@@ -2226,8 +2228,10 @@ proc create_tab   {parent cmd content} {
     #? create new TAB in .note and set focus for it; returns text widget in TAB
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"];
-    if {$cfg(layout) eq "text"}  { set txt [create_text  $tab $content].t }
-    if {$cfg(layout) eq "table"} { set txt [create_table $tab $content].t }
+    set _layout $cfg(layout)
+    if {$cmd eq "docker_status"} { set _layout "text" };  # don't need table here
+    if {$_layout eq "text"}  { set txt [create_text  $tab $content].t }
+    if {$_layout eq "table"} { set txt [create_table $tab $content].t }
         # ugly hardcoded .t from .note
     pack [button $tab.saveresult -command "osaft_save $txt {TAB} $cfg(EXEC)"] \
          [button $tab.ttyresult  -command "osaft_save $txt {TTY} $cfg(EXEC)"    ] \
@@ -2841,7 +2845,7 @@ proc osaft_load   {cmd} {
     set tab($cfg(EXEC)) [read $fid]
     close $fid
     set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
-    apply_filter $txt ;        # text placed in pane, now do some markup
+    apply_filter $txt $cmd ;    # text placed in pane, now do some markup
     #puts $fid $tab($nr)
     update_status "loaded file: $name"
     update_cursor {}
@@ -2931,7 +2935,7 @@ proc osaft_exec   {parent cmd} {
     }
     set tab($cfg(EXEC)) "\n$exectxt\n\n$result\n";  # store result for later use
     set txt [create_tab  $cfg(objN) $cmd $tab($cfg(EXEC))]
-    apply_filter $txt ;         # text placed in pane, now do some markup
+    apply_filter $txt $cmd ;    # text placed in pane, now do some markup
     destroy $cfg(winF);         # workaround, see FIXME in create_filtertab
     update_status "#} $do done (status=$status).";  # status not yet used ...
     update_cursor {}
@@ -3104,7 +3108,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.161 $vm"
+update_status "o-saft.tcl 1.162 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
