@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.159 Winter Edition 2017
+#?      @(#) 1.160 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.159 18/01/07 10:17:44 Winter Edition 2017}
-set cfg(VERSION) {1.159}
+set cfg(SID)    {@(#) o-saft.tcl 1.160 18/01/17 22:24:20 Winter Edition 2017}
+set cfg(VERSION) {1.160}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -530,14 +530,7 @@ if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
 
 ### IMG(...)  #  other images are defined in cfg(IMG)
 
-#   configure according real size
-set __x         [lindex [wm maxsize .] 0]
-set __y         [lindex [wm maxsize .] 1]
-if {$__y < $myX(miny)} { set myX(miny) $__y  }
-if {$__x < $myX(minx)} { set myX(minx) $__x  }
-if {$__x > 1000 }      { set myX(minx) "999" }
-set myX(geoS)   "$myX(minx)x$myX(miny)"
-
+#et myX(minx)  myX(miny)  myX(geoS)     # see gui_init() below
 #   myX(buffer) ... NOT YET USED
 set myX(buffer) PRIMARY;        # buffer to be used for copy&paste GUI texts
                                 # any ICCCM like: PRIMARY, SECONDARY, CLIPBOARD
@@ -1107,6 +1100,59 @@ proc tooltip:show {w arg} {
 # pack    .b
 #
 # }
+
+proc gui_init     {} {
+    #? initialize GUI
+    font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
+    font create osaftBold   {*}[font config TkDefaultFont] -weight bold
+    font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
+    option add *Button.font osaftBold;  # if we want buttons more exposed
+    option add *Label.font  osaftBold;  # ..
+    option add *Text.font   TkFixedFont;
+
+    global cfg prg myX
+    # configure according real size
+    set __x         [lindex [wm maxsize .] 0]
+    set __y         [lindex [wm maxsize .] 1]
+    if {$__y < $myX(miny)} { set myX(miny) $__y  }
+    if {$__x < $myX(minx)} { set myX(minx) $__x  }
+    if {$__x > 1000 }      { set myX(minx) "999" }
+    set myX(geoS)   "$myX(minx)x$myX(miny)"
+
+    set __native    "";
+    # next switch is ugly workaround to detect special start methods ...
+    # it also does some special setup for MacOSX
+    switch [tk windowingsystem] {
+        {win32} { set __native "start" }
+        {win64} { set __native "start" }
+        {aqua}  -
+        {Aqua}  { set __native "open"
+                  set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
+                  if {$optimg==1} {
+                      tk_messageBox -icon warning \
+                          -message "using images for buttons is not recomended on Aqua systems"
+                  } else {
+                      set cfg(bstyle) "text"; # text by default, because Aqua looks nice
+                  }
+                  set myX(miny)   770;        # because fonts are bigger by default
+                }
+    }
+    set myX(geoS)   "$myX(minx)x$myX(miny)"
+
+    # search browser, first matching will be used
+    foreach bin " $__native \
+            firefox chrome chromium iceweasel konqueror mozilla \
+            netscape opera safari webkit htmlview www-browser w3m \
+          " {
+        set binary [lindex [auto_execok $bin] 0];   # search in $PATH
+        _dbx " browser: $bin $binary"
+        if {[string length   $binary]} {
+            set prg(BROWSER) $binary
+            break
+        }
+    }
+    return
+}; # gui_init
 
 proc create_tip   {w txt} {
     #? add tooltip message to given widget
@@ -2909,45 +2955,6 @@ foreach arg $argv {
 if {$cfg(TRACE)> 0} { trace_commands }
 if {$cfg(VERB) > 0} { lappend prg(Ocmd) {+quit} {+version}; }
 if {[regexp {\-docker$} $prg(SAFT)]} { lappend prg(Ocmd) {docker_status}; }
-if {[tk windowingsystem] eq "aqua"} {
-    set cfg(confirm) {};        # Aqua's tk_save* has no  -confirmoverwrite
-    if {$optimg==1} {
-        tk_messageBox -icon warning \
-            -message "using images for buttons is not recomended on Aqua systems"
-    } else {
-        set cfg(bstyle) "text"; # text by default, because Aqua looks nice
-    }
-    set myX(miny)   770;        # because fonts are bigger by default
-    set myX(geoS)   "$myX(minx)x$myX(miny)"
-}
-
-font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
-font create osaftBold   {*}[font config TkDefaultFont] -weight bold
-font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
-option add *Button.font osaftBold;  # if we want buttons more exposed
-option add *Label.font  osaftBold;  # ..
-option add *Text.font   TkFixedFont;
-
-#   search browser, first matching will be used
-set __native    "";
-# next switch is ugly workaround to detect special start methods ...
-switch [tk windowingsystem] {
-    {aqua}  { set __native "open"  }
-    {Aqua}  { set __native "open"  }
-    {win32} { set __native "start" }
-    {win64} { set __native "start" }
-}
-foreach b " $__native \
-            firefox chrome chromium iceweasel konqueror mozilla \
-            netscape opera safari webkit htmlview www-browser w3m \
-          " {
-    set binary [lindex [auto_execok $b] 0]; # search in $PATH
-    _dbx " browser: $b $binary"
-    if {[string length $binary]} {
-        set prg(BROWSER) $binary
-        break
-    }
-}
 
 ## read $cfg(RC) if any
 #  if the file does not exist, the error is silently catched and ignored
@@ -2991,6 +2998,8 @@ set cfg(CMDS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=commands } cfg(
 ##        -message "**ERROR: could not call $prg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
 ##    exit 2
 ##}
+
+gui_init
 
 ## create toplevel window
 wm title        . $cfg(TITLE)
@@ -3083,7 +3092,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.159 $vm"
+update_status "o-saft.tcl 1.160 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
