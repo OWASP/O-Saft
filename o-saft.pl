@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.782 18/01/16 14:19:50",
-    STR_VERSION => "18.01.14",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.784 18/01/18 19:35:23",
+    STR_VERSION => "18.01.15",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -144,6 +144,8 @@ my  $me     = $cfg{'me'};       # use a short and easy to remember variable name
 my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 $cfg{'mename'} = $me;
+
+printf("#$me %s\n", join(" ", @ARGV)) if ((grep{/(?:--traceCLI$)/i} @ARGV) > 0);
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -309,7 +311,7 @@ $cfg{'RC-ARGV'} = [@rc_argv];
 %{$cfg{'done'}} = (             # internal administration
         'hosts'     => 0,
         'dbxfile'   => 0,
-        'rc-file'   => 0,
+        'rc_file'   => 0,
         'init_all'  => 0,
         'ssl_failed'=> 0,       # local counter for SSL connection errors
         'ssl_errors'=> 0,       # total counter for SSL connection errors
@@ -1821,7 +1823,7 @@ our %text = (
 
 $cmd{'extopenssl'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 $cmd{'extsclient'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
-$cfg{'done'}->{'rc-file'}++ if ($#rc_argv > 0);
+$cfg{'done'}->{'rc_file'}++ if ($#rc_argv > 0);
 
 #| incorporate some environment variables
 #| -------------------------------------
@@ -3347,24 +3349,29 @@ sub _can_connect        {
     local $? = 0; local $! = undef;
     my $socket;
     if ($ssl == 1) {    # need different method for connecting with SSL
-        #dbx# use IO::Socket::SSL qw/debug3/;
-        # simple connect: do not verify the certificate and/or CRL, OCSP, which
+        if ($cfg{'trace'} > 2) { $IO::Socket::SSL::debug3 = 1; my $keep_perl_quit = $IO::Socket::SSL::debug3; }
+        # simple and fast connect: full cipher list, no handshake,
+        #    do not verify the certificate and/or CRL, OCSP, which
         # may result in a connection fail
         $socket = IO::Socket::SSL->new(
-            PeerAddr    => $host,
-            PeerPort    => $port,
-            Proto       => "tcp",
+            PeerAddr        => $host,
+            PeerPort        => $port,
+            Proto           => "tcp",
+            Timeout         => $timeout,
+            SSL_hostname    => $sni,
+            SSL_version     => "SSLv23",
+            SSL_cipher_list => "ALL:NULL:eNULL:aNULL:LOW:EXP",
             SSL_verify_mode => 0x0, # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
             SSL_check_crl   => 0,   # do not check CRL
-            Timeout     => $timeout,
-            SSL_hostname => $sni,
+            SSL_ocsp_mode   => 0,   # TODO: is 0 the roccect value to disable this check?
+            SSL_startHandshake  => 0,
         ) or do { _v_print("_can_connect: IO::Socket::SSL->new(): $! #" .  IO::Socket::SSL::errstr()); };
     } else {
         $socket = IO::Socket::INET->new(
-            PeerAddr    => $host,
-            PeerPort    => $port,
-            Proto       => "tcp",
-            Timeout     => $timeout,
+            PeerAddr        => $host,
+            PeerPort        => $port,
+            Proto           => "tcp",
+            Timeout         => $timeout,
         ) or do { _v_print("_can_connect: IO::Socket::INET->new(): $!"); };  # IO::Socket::INET::errstr();
     }
     if (defined $socket) {
@@ -8015,11 +8022,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _y_CMD("test IP ...");
         $cfg{'IP'}          = join(".", unpack("W4", $cfg{'ip'}));
         if ($cfg{'usedns'} == 1) {  # following settings only with --dns
-           _yeast_TIME("use DNS{");
+            _y_CMD("test DNS (disable with --no-dns) ...");
+           _yeast_TIME("test DNS{");
            local $? = 0; local $! = undef;
            ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
             $cfg{'rhost'}   = $fail if ($? != 0);
-            _y_CMD("test DNS (disable with --no-dns) ...");
             my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
             my $i = 0;
             foreach my $ip (@ips) {
@@ -8030,7 +8037,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
             }
             _warn("202: Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
-           _yeast_TIME("use DNS}");
+           _yeast_TIME("test DNS}");
         }
     }
     # print DNS stuff
@@ -8051,7 +8058,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _yeast_TIME("DNS}");
 
     # Quick check if the target is available
-    _yeast_TIME("can_connect{");# SEE Note:Connection test
+    _y_CMD("test connect ...");
+    _yeast_TIME("test connect{");# SEE Note:Connection test
     my $connect_ssl = 1;
     my $sni_name    = ($cfg{'sni_name'} == 1) ? $host : $cfg{'sni_name'};
     _trace("sni_name $sni_name");
@@ -8066,11 +8074,11 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _warn("325: HTTP disabled, using --no-http");
         next;
     }
-    _yeast_TIME("can_connect}");
+    _yeast_TIME("test connect}");
 
     if (_is_do('cipherraw')) {
-        _yeast_TIME("cipherraw{");
         _y_CMD("+cipherraw");
+        _yeast_TIME("cipherraw{");
         Net::SSLhello::printParameters() if ($cfg{'trace'} > 1);
         _warn("209: No SSL versions for +cipherraw available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
@@ -8154,9 +8162,9 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     if ((_need_default() > 0) or ($check > 0)) {
         # SEE Note:+cipherall
+        _y_CMD("get default ...");
         _yeast_TIME("need_default{");
         $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
-        _y_CMD("get default ...");
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
             next if (not defined $prot{$ssl}->{opt});
             my $anf = time();
@@ -8202,8 +8210,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     # check ciphers manually (required for +check also)
     if (_is_do('cipher') or $check > 0) {
-        _yeast_TIME("cipher{");
         _y_CMD("+cipher");
+        _yeast_TIME("cipher{");
         _trace(" ciphers: @{$cfg{'ciphers'}}");
         # TODO: for legacy==testsslserver we need a summary line like:
         #      Supported versions: SSLv3 TLSv1.0
@@ -8248,6 +8256,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     # TODO dirty hack, check with dh256.tlsfun.de
     # checking for DH parameters does not need a default connection
     if (_is_do('cipher_dh')) {
+        _y_CMD("+cipher-dh");
         _yeast_TIME("cipher-dh{");
         printciphers_dh($legacy, $host, $port);
         _yeast_TIME("cipher-dh}");
@@ -8259,8 +8268,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         # use Net::SSLinfo::do_ssl_open() instead of IO::Socket::INET->new()
         # to check the connection (hostname and port)
         # NOTE: the previous test (see can_connect above) should be sufficient
-        _yeast_TIME("connection test{");
         _y_CMD("test connection  (disable with  --ignore-no-conn) ...");
+        _yeast_TIME("test connection{");
         if (not defined Net::SSLinfo::do_ssl_open(
                             $host, $port,
                             (join(" ", @{$cfg{'version'}})),
@@ -8274,7 +8283,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
                 _hint("--socket-reuse  may help in some cases");
                 _hint("--ignore-no-conn can be used to disable this check");
                 _hint("do not use --no-ignore-handshake") if ($cfg{'sslerror'}->{'ignore_handshake'} <= 0);
-                _yeast_TIME("  connection test} failed");
+                _yeast_TIME("  test connection} failed");
                 goto CLOSE_SSL;
             }
         }
@@ -8285,7 +8294,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             _hint("--v  will show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
-        _yeast_TIME("connection test}");
+        _yeast_TIME("test connection}");
     }
 
     usr_pre_cmds();
@@ -8357,8 +8366,8 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _yeast_TIME("checks}");
 
     if ($cfg{'out_score'} > 0) { # no output for +info also
-        _yeast_TIME("score{");
         _y_CMD("scores");
+        _yeast_TIME("score{");
         printscores($legacy, $host, $port);
         _yeast_TIME("score}");
     }
