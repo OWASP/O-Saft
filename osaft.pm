@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.134 17/12/13 15:05:34',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.135 18/01/19 00:57:04',
 
 };
 
@@ -1254,6 +1254,7 @@ our %cfg = (
     'uselwp'        => 0,       # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
     'forcesni'      => 0,       # 1: do not check if SNI seems to be supported by Net::SSLeay
     'usesni'        => 1,       # 0: do not make connection in SNI mode;
+                                # 1: make connection with SNI set (can be empty string)
                                 # 3: test with and without SNI mode (used with +cipherraw only)
     'usedns'        => 1,       # 1: make DNS reverse lookup
     'usemx'         => 0,       # 1: make MX-Record DNS lookup
@@ -1271,9 +1272,10 @@ our %cfg = (
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
-    'sni_name'      => "1",     # name to be used for SNI mode connection; hostname if empty
-                                # NOTE: default=1 as this is behaviour for Net::SSLinfo < 1.85
+    'sni_name'      => "",      # name to be used for SNI mode connection; hostname if empty
+                                # must be set to $host if 'usesni'=1 (see above)
     'use_sni_name'  => 0,       # 0: use hostname; 1: use name provided by --sni-name
+                                # used by Net::SSLhello only
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
     'no_cert'       => 0,       # 0: get data from certificate; 1, 2, do not get data
     'no_cert_txt'   => "",      # change default text if no data from cert retrieved
