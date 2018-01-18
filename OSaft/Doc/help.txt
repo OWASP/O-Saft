@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.4 18/01/16 23:42:51
+# SID   @(#) help.txt 1.5 18/01/18 20:08:30
 
 NAME
 
@@ -1956,6 +1956,10 @@ OPTIONS
       --trace --trace --trace --trace
 
           Print processing of all command line arguments.
+
+      --trace-cli
+
+          Print complete command line first. Used for internal testing.
 
       --trace-arg
       --trace--
