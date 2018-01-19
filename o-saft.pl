@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.784 18/01/18 19:35:23",
-    STR_VERSION => "18.01.15",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.785 18/01/19 01:58:04",
+    STR_VERSION => "18.01.16",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -145,7 +145,7 @@ my  $mepath = $0; $mepath =~ s#/[^/\\]*$##;
     $mepath = "./" if ($mepath eq $me);
 $cfg{'mename'} = $me;
 
-printf("#$me %s\n", join(" ", @ARGV)) if ((grep{/(?:--traceCLI$)/i} @ARGV) > 0);
+printf("#$me %s\n", join(" ", @ARGV)) if ((grep{/(?:--trace[_.-]?CLI$)/i} @ARGV) > 0);
 
 # now set @INC
 # NOTE: do not use "-I . lib/" in hashbang line as it will be pre- and appended
@@ -227,7 +227,7 @@ sub _hint   {
 } # _hint
 
 sub _warn_nosni         {
-    #? print warning and hint message if no SNI is supported
+    #? print warning and hint message if SNI is not supported by SSL
     my $err = shift;
     my $ssl = shift;
     my $sni = shift;
@@ -1987,9 +1987,8 @@ sub _enable_functions   {
     my $version_openssl  = shift;
     my $version_ssleay   = shift;
     my $version_iosocket = shift;
-    my $txo = sprintf("ancient openssl version 0x%x", $version_openssl);
+    my $txo = sprintf("ancient version openssl 0x%x", $version_openssl);
     my $txs = "ancient version Net::SSLeay $version_ssleay";
-    my $txi = "ancient version IO::Socket::SSL $version_iosocket";
     my $txt = "improper Net::SSLeay version;";
 
     _y_CMD("  enable internal functionality ...");
@@ -2004,11 +2003,12 @@ sub _enable_functions   {
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
         if(($cfg{'usesni'} > 0) and ($cmd{'extciphers'} == 0)) {
             $cfg{'usesni'} = 0;
+            my $txt_buggysni = "does not support SNI or is known to be buggy; SNI disabled;";
             if ($version_iosocket < 1.90) {
-                warn STR_WARN, "124: $txi < 1.90; does not support SNI or is known to be buggy; SNI disabled;";
+                warn STR_WARN, "124: ancient version IO::Socket::SSL $version_iosocket < 1.90; $txt_buggysni";
             }
             if ($version_openssl  < 0x01000000) {
-                warn STR_WARN, "125: $txo < 1.0.0; does not support SNI or is known to be buggy; SNI disabled;";
+                warn STR_WARN, "125: $txo < 1.0.0; $txt_buggysni";
             }
             _hint("--force-openssl can be used to disable this check");
         }
@@ -3353,12 +3353,14 @@ sub _can_connect        {
         # simple and fast connect: full cipher list, no handshake,
         #    do not verify the certificate and/or CRL, OCSP, which
         # may result in a connection fail
+        # SNI is not necessary, as we just want to know if the server responds
+        #    however, SNI may be necessary in future ...
         $socket = IO::Socket::SSL->new(
             PeerAddr        => $host,
             PeerPort        => $port,
             Proto           => "tcp",
             Timeout         => $timeout,
-            SSL_hostname    => $sni,
+           #SSL_hostname    => $sni,
             SSL_version     => "SSLv23",
             SSL_cipher_list => "ALL:NULL:eNULL:aNULL:LOW:EXP",
             SSL_verify_mode => 0x0, # SSL_VERIFY_NONE => Net::SSLeay::VERIFY_NONE(); # 0
@@ -3503,7 +3505,7 @@ sub _useopenssl($$$$)   {
     # their proper values
     my ($ssl, $host, $port, $ciphers) = @_;
     my $msg  =  $cfg{'openssl_msg'};
-    my $sni  = ($cfg{'usesni'} == 1) ? "-servername $host" : "";
+    my $sni  = ($cfg{'usesni'}  < 1) ? "" : "-servername $host";
     $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
     my $curves  = "-curves " . join(":", $cfg{'ciphercurves'}); # TODO: add to command below
     _trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here
@@ -3712,7 +3714,7 @@ sub _get_data0          {
         _warn("206: $_") foreach Net::SSLinfo::errors();
     }
     Net::SSLinfo::do_ssl_close($host, $port);
-    $Net::SSLinfo::use_SNI  = $cfg{'sni_name'};
+    $Net::SSLinfo::use_SNI  = $cfg{'usesni'};
     _trace(" cn_nosni: $data{'cn_nosni'}->{val}  }");
     return;
 } # _get_data0
@@ -7098,7 +7100,7 @@ while ($#argv >= 0) {
     # /-- next line is a dummy for extracting aliases
    #if ($arg eq  '--protocol')          { $arg = '--SSL';           } # alias: ssldiagnose.exe
     if ($arg eq  '--range')             { $arg = '--cipherrange';   } # alias:
-    if ($arg =~ /^--?servername/i)      { $arg = '--sniname/i';     } # alias: openssl
+    if ($arg =~ /^--?servername/i)      { $arg = '--sniname';       } # alias: openssl
     # options form other programs which we treat as command; see Options vs. Commands also
     if ($arg =~ /^-(e|-each-?cipher)$/) { $arg = '+cipher';         } # alias: testssl.sh
     if ($arg =~ /^-(E|-cipher-?perproto)$/) { $arg = '+cipherall';  } # alias: testssl.sh
@@ -7326,8 +7328,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--noheader')          { $cfg{'out_header'}= 0;    }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg =~ /^--showhosts?/i)       { $cfg{'showhost'}++;       }
-#   if ($arg eq  '--sniname')           { $cfg{'use_sni_name'}  = 1;} # violates historic usage
-    if ($arg eq  '--nosniname')         { $cfg{'use_sni_name'}  = 0;}
+    if ($arg eq  '--nosniname')         { $cfg{'usesni'}    = 0;    } # 0: don't use SNI, different than empty string
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
     if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTO_ALPN';      }
@@ -7774,6 +7775,7 @@ _yeast_TIME("ini{");
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
+#cfg{'sni_name'}    = $host;    # see below: loop hosts
 if ($cfg{'usehttp'} == 0)   {              # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
@@ -7797,8 +7799,9 @@ $text{'separator'}  = "\t"    if ($cfg{'legacy'} eq "quick");
     $Net::SSLinfo::use_openssl      = $cmd{'extopenssl'};
     $Net::SSLinfo::use_sclient      = $cmd{'extsclient'};
     $Net::SSLinfo::openssl          = $cmd{'openssl'};
+    $Net::SSLinfo::sni_name         = $cfg{'sni_name'}; # NOTE: may be undef
     $Net::SSLinfo::use_http         = $cfg{'usehttp'};
-    $Net::SSLinfo::use_SNI          = $cfg{'sni_name'};
+    $Net::SSLinfo::use_SNI          = $cfg{'usesni'};
     $Net::SSLinfo::use_alpn         = $cfg{'usealpn'};
     $Net::SSLinfo::use_npn          = $cfg{'usenpn'};
     $Net::SSLinfo::protos_alpn      = (join(",", @{$cfg{'protos_alpn'}}));
@@ -7839,8 +7842,8 @@ if (defined $Net::SSLhello::VERSION) {
     }
     $Net::SSLhello::traceTIME       = $cfg{'traceTIME'};
     $Net::SSLhello::experimental    = $cfg{'experimental'};
-    $Net::SSLhello::usesni          = $cfg{'usesni'};
     $Net::SSLhello::usemx           = $cfg{'usemx'};
+    $Net::SSLhello::usesni          = $cfg{'usesni'};
     $Net::SSLhello::sni_name        = $cfg{'sni_name'};
     $Net::SSLhello::connect_delay   = $cfg{'connect_delay'};
     $Net::SSLhello::starttls        = (($cfg{'starttls'} eq "") ? 0 : 1);
@@ -7956,7 +7959,7 @@ if ($fail > 0) {
     _warn("066: $fail data and check outputs are disbaled due to use of '--no-out':");
     if ($cfg{'verbose'} >  0) {
         _warn("067:  disabled:  +" . join(" +", @{$cfg{'ignore-out'}}));
-        _warn("068:  given:  +" . join(" +", @{$cfg{'do'}}));
+        _warn("068:  given:  +"    . join(" +", @{$cfg{'do'}}));
     } else {
         _hint("use  '--v'  for more information");
     }
@@ -7986,6 +7989,20 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _yeast_EXIT("exit=HOST0 - perform host start");
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host: $host {\n");
+    # SNI must be set foreach host, but it's always the same name!
+    my $sni_name    = $cfg{'sni_name'}; # NOTE: may be undef!
+    if ($cfg{'usesni'} > 0) {
+        if (defined $cfg{'sni_name'}) {
+            if ($host ne $cfg{'sni_name'}) {
+                _warn("069: hostname not equal SNI name; checks are done with '$host'");
+            }
+            $Net::SSLinfo::sni_name = $cfg{'sni_name'};
+            $Net::SSLhello::sni_name= $cfg{'sni_name'};
+        } else {
+            $Net::SSLinfo::sni_name = $host;
+            $Net::SSLhello::sni_name= $host;
+        }
+    }
     _resetchecks();
     printheader(_get_text('out_target', "$host:$port"), "");
 
@@ -8061,9 +8078,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _y_CMD("test connect ...");
     _yeast_TIME("test connect{");# SEE Note:Connection test
     my $connect_ssl = 1;
-    my $sni_name    = ($cfg{'sni_name'} == 1) ? $host : $cfg{'sni_name'};
-    _trace("sni_name $sni_name");
-    # NOTE: $sni_name may produce problems when only SSLv2 or SSLv3 enabled
+    _trace("sni_name " . ($sni_name || ""));
     if (not _can_connect($host, $port, $sni_name, $cfg{'timeout'}, $connect_ssl)) {
         next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
     }
@@ -8248,7 +8263,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
 
     usr_pre_info();
     _yeast_TIME("SNI{");
-    _get_data0($host, $port);
+    _get_data0($host, $port);   # uses Net::SSLinfo::do_ssl_open() and ::do_ssl_close()
     _yeast_TIME("SNI}");
 
     usr_pre_open();
