@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.5 18/01/18 20:08:30
+# SID   @(#) help.txt 1.6 18/01/19 09:41:18
 
 NAME
 
@@ -1343,7 +1343,7 @@ OPTIONS
       --sni-toggle
       --toggle-sni
 
-          Test with and witout SNI mode.
+          Test with and witout SNI mode (+cipherall  only).
 
       --force-sni
 
@@ -1357,18 +1357,21 @@ OPTIONS
       --servername=NAME
       --sni-name=NAME
 
-          Use NAME instead of given hostname to connect to target in SNI mode
-          By  default, NAME is automatically set to the given FQDN.
-          This is insufficient, when an IP instead of a FQDN was given,  then
-          the connection needs to specify the correct hostname (i.g. a FQDN).
+          If SNI mode is active, see  --sni  above, 'NAME' is used instead of
+          hostname for connections to the target.  If SNI mode is not active,
+          see  --no-sni  above, 'NAME' is not used. The default is undefined,
+          which forces to use the given FQDN.
 
-          For historical reason, the value '1' is the same as if the the real
-          FQDN (given hostname) has been used.  If the value is empty, or the
-          value '0' is given, no SNI name will be used.
+          This is useful, for example when an IP instead of a FQDN was given,
+          where a correct hostname (i.g. a FQDN) needs to be specified.
 
           Note: i.g. there is no need to use this option,  as a correct value
           for the SNI name will be choosen automatically (except for IPs).
-          However, it's kind of fuzzing ...
+          However, it is kind of fuzzing ... even setting to an  empty string
+          is possible.
+
+          Limitation:  the same 'NAME' is used for all targets,  if more than
+          one target was specified.
 
       --no-cert
 
