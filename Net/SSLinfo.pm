@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.203 18/01/16 00:52:50',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.204 18/01/19 01:56:03',
 };
 
 ######################################################## public documentation #
@@ -229,13 +229,16 @@ If disabled, the values returned will be: #
 
 =item $Net::SSLinfo::use_SNI
 
-The specified string will be used as hostname for SNI.  If set to "1", the
-given hostname will be used for SNI.  This is needed if there are multiple
-SSL hostnames on the same IP address. If empty string  or set to  "0", the
-hostname from  PeerAddr  will be used.  The latter will fail if only an IP
-was given.
-If set to "0" no SNI will be used. This can be used to check if the target
-supports SNI; default: 1
+If set to "1", "$Net::SSLinfo::sni_name"  will be used as SNI when opening
+the connection. If set to "0", no SNI will be used.
+SNI is needed if there are multiple SSL hostnames on the same IP address.
+This can be used to check if the target supports SNI; default: 1
+
+=item $Net::SSLinfo::sni_name
+
+The specified string will be used as hostname for SNI.  It will be used if
+$Net::SSLinfo::use_SNI is set to 1.
+supports SNI; default: ""
 
 =item $Net::SSLinfo::use_http
 
@@ -245,13 +248,13 @@ Strict-Transport-Security header); default: 1
 
 =item $Net::SSLinfo::use_alpn
 
-If set to "1", protocols from $Net::SSLinfo::protos_alpn" are used for the
-ALPN option to open the SSL connection.
+If set to "1",  protocols from  "$Net::SSLinfo::protos_alpn"  are used for
+the ALPN option to open the SSL connection.
 
 =item $Net::SSLinfo::use_npn
 
-If set to "1", protocols from $Net::SSLinfo::protos_npn"  are used for the
-NPN option to open the SSL connection.
+If set to "1",  protocols from  "$Net::SSLinfo::protos_npn"  are  used for
+the NPN option to open the SSL connection.
 
 =item $Net::SSLinfo::protos_alpn
 
@@ -654,6 +657,7 @@ $Net::SSLinfo::use_extdebug= 1; # 0 do not use openssl with -tlsextdebug option
 $Net::SSLinfo::use_nextprot= 1; # 0 do not use openssl with -nextprotoneg option
 $Net::SSLinfo::use_reconnect=1; # 0 do not use openssl with -reconnect option
 $Net::SSLinfo::sclient_opt =""; # option for openssl s_client command
+$Net::SSLinfo::sni_name    =""; # use this as hostname for SNI
 $Net::SSLinfo::use_SNI     = 1; # 1 use SNI to connect to target; 0: do not use SNI; string: use this as hostname for SNI
 $Net::SSLinfo::use_http    = 1; # 1 make HTTP request and retrive additional data
 $Net::SSLinfo::use_alpn    = 1; # 1 to set ALPN option using $Net::SSLinfo::protos_alpn
@@ -1556,8 +1560,6 @@ sub _ssleay_ssl_new {
     my $ssl     = undef;
     my $src     = "";   # function (name) where something failed
     my $err     = "";
-    my $sniname = $Net::SSLinfo::use_SNI;
-       $sniname =~ s/\s//g; # ensure no spaces
     _traceset();
     _trace("_ssleay_ssl_new($ctx)");
     TRY: {
@@ -1568,18 +1570,18 @@ sub _ssleay_ssl_new {
                 Net::SSLeay::set_fd($ssl, fileno($socket))     or do {$err = $!} and last;
         $src = "Net::SSLeay::set_cipher_list($cipher)";
                 Net::SSLeay::set_cipher_list($ssl, $cipher)    or do {$err = $!} and last;
-        if ($sniname !~ m/^0?$/) {  # no SNI if 0 or empty string
+        if ($Net::SSLinfo::use_SNI > 0) {
+            my $sni  = $Net::SSLinfo::sni_name;
             _trace("_ssleay_ssl_new: SNI");
-           $sniname = $host if ($sniname =~ m/^1$/);# old style, Net::SSLinfo < 1.85
             if (1.45 <= $Net::SSLeay::VERSION) {
                 $src = 'Net::SSLeay::set_tlsext_host_name()';
-                Net::SSLeay::set_tlsext_host_name($ssl, $sniname) or do {$err = $!} and last;
+                Net::SSLeay::set_tlsext_host_name($ssl, $sni)  or do {$err = $!} and last;
             } else {
                 # quick&dirty instead of:
                 #  use constant SSL_CTRL_SET_TLSEXT_HOSTNAME => 55
                 #  use constant TLSEXT_NAMETYPE_host_name    => 0
                 $src = 'Net::SSLeay::ctrl()';
-                Net::SSLeay::ctrl($ssl, 55, 0, $sniname)       or do {$err = $!} and last;
+                Net::SSLeay::ctrl($ssl, 55, 0, $sni)           or do {$err = $!} and last;
                 # TODO: ctrl() sometimes fails but does not return errors, reason yet unknown
             }
         }
