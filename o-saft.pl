@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.785 18/01/19 01:58:04",
+    SID         => "@(#) yeast.pl 1.786 18/01/19 14:05:38",
     STR_VERSION => "18.01.16",          # <== our official version number
 };
 
@@ -4528,6 +4528,7 @@ sub _base2  {
     #? return base-2 of given number
     my $value = shift;
        $value = 1 if ($value !~ /^[0-9]+$/);# defensive programming: quick&dirty check
+       return 0   if ($value == 0);         # -''-
        $value = log($value);
     # base-2 = log($value) / log(2)
     # unfortunatelly this calculation results in  "inf"  for big values
@@ -4601,7 +4602,9 @@ sub checksizes($$)  {
                 $checks{'modulus_size_oldssl'}->{val}   = length($value) * 4 if ((length($value) * 4) > 16384);
             }
         }
-        $value = $data{'serial_int'}->{val}($host) + 0;
+        $value = $data{'serial_int'}->{val}($host);
+        $value = 0 if ($value =~ m/^\s*$/); # avoid Perl warning "Argument isn't numeric"
+        $value += 0;
         my $bits_of_value = _base2($value);
         $checks{'sernumber'}    ->{val} = "$bits_of_value  > 160" if ($bits_of_value > 160);
         $value = $data{'sigkey_len'}->{val}($host);
