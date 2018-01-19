@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '17.12.13',  # official version number of this file
+    OSAFT_VERSION   => '18.01.18',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.135 18/01/19 00:57:04',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.136 18/01/19 01:34:53',
 
 };
 
@@ -1272,8 +1272,9 @@ our %cfg = (
     'use_reconnect' => 1,       # 0: do not use -reconnect option for openssl
     'use_extdebug'  => 1,       # 0: do not use -tlsextdebug option for openssl
     'slowly'        => 0,       # passed to Net::SSLeay::slowly
-    'sni_name'      => "",      # name to be used for SNI mode connection; hostname if empty
-                                # must be set to $host if 'usesni'=1 (see above)
+    'sni_name'      => undef,   # if set, name to be used for connection with SNI
+                                # must be set to $host if undef and 'usesni'=1 (see above)
+                                # all other strings are used verbatim, even empty one
     'use_sni_name'  => 0,       # 0: use hostname; 1: use name provided by --sni-name
                                 # used by Net::SSLhello only
     'sclient_opt'   => "",      # argument or option passed to openssl s_client command
