@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.786 18/01/19 14:05:38",
-    STR_VERSION => "18.01.16",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.787 18/01/20 19:18:28",
+    STR_VERSION => "18.01.17",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -468,6 +468,7 @@ my $info    = 0;    # set to 1 if +info
 my $check   = 0;    # set to 1 if +check was used
 my $quick   = 0;    # set to 1 if +quick was used
 my $cmdsni  = 0;    # set to 1 if +sni  or +sni_check was used
+my $sniname = undef;# will be set to $cfg{'sni_name'} as this changes for each host
 
 our %info   = (     # same as %data with values only; keys are identical to %data
     'alpn'          => "",
@@ -3695,7 +3696,7 @@ sub _get_data0          {
         _y_CMD("  open with no SNI.");
         _trace("cn_nosni: method: $Net::SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
-        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host);
+        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
 # TODO:  following needs to be improved, because there are multipe openssl
         # calls which may produce unexpected results (10/2015) {
         foreach my $key (keys %data) { # copy to %data0
@@ -4303,8 +4304,10 @@ sub checkdates($$)  {
     $cfg{'done'}->{'checkdates'}++;
     return if ($cfg{'done'}->{'checkdates'} > 1);
 
-    my $before= $data{'before'}->{val}($host);
-    my $after = $data{'after'} ->{val}($host);
+    # NOTE all $data{'valid_*'} are values, not functions
+
+    my $before= $data{'before'}->{val}($host, $port);
+    my $after = $data{'after'} ->{val}($host, $port);
     my @since = split(/ +/, $before);
     my @until = split(/ +/, $after);
     if ("$before$after" =~ m/^\s*$/) {
@@ -7779,7 +7782,8 @@ $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
 #cfg{'sni_name'}    = $host;    # see below: loop hosts
-if ($cfg{'usehttp'} == 0)   {              # was explizitely set with --no-http 'cause default is 1
+$sniname            = $cfg{'sni_name'};     # safe setting; may be undef
+if ($cfg{'usehttp'} == 0)   {               # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
     _warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
 }
@@ -7983,7 +7987,8 @@ _y_CMD("hosts ...");
 _yeast_TIME("hosts{");
 
 # run the appropriate SSL tests for each host (ugly code down here):
-$port = ($cfg{'port'}||"");     # defensive programming ..
+$sniname  = $cfg{'sni_name'};   # safe value;  NOTE: may be undef!
+$port     = ($cfg{'port'}||""); # defensive programming ..
 foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
     $port = $cfg{'port'} if ($port =~ m/^\s*$/);
@@ -7993,19 +7998,20 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host: $host {\n");
     # SNI must be set foreach host, but it's always the same name!
-    my $sni_name    = $cfg{'sni_name'}; # NOTE: may be undef!
     if ($cfg{'usesni'} > 0) {
-        if (defined $cfg{'sni_name'}) {
+        if (defined $sniname) {
             if ($host ne $cfg{'sni_name'}) {
                 _warn("069: hostname not equal SNI name; checks are done with '$host'");
             }
             $Net::SSLinfo::sni_name = $cfg{'sni_name'};
             $Net::SSLhello::sni_name= $cfg{'sni_name'};
         } else {
+            $cfg{'sni_name'}        = $host;
             $Net::SSLinfo::sni_name = $host;
             $Net::SSLhello::sni_name= $host;
         }
     }
+    $Net::SSLinfo::use_http = $cfg{'usehttp'};  # reset
     _resetchecks();
     printheader(_get_text('out_target', "$host:$port"), "");
 
@@ -8081,16 +8087,14 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _y_CMD("test connect ...");
     _yeast_TIME("test connect{");# SEE Note:Connection test
     my $connect_ssl = 1;
-    _trace("sni_name " . ($sni_name || ""));
-    if (not _can_connect($host, $port, $sni_name, $cfg{'timeout'}, $connect_ssl)) {
+    _trace("sni_name " . $cfg{'sni_name'});
+    if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
         next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
     }
     $connect_ssl = 0;
-    if (not _can_connect($host, 80   , $sni_name, $cfg{'timeout'}, $connect_ssl)) {
-        $cfg{'usehttp'} = 0;
-        $Net::SSLinfo::use_http = $cfg{'usehttp'}; # FIXME: wrong if there're multiple targets given
+    if (not _can_connect($host, 80   , $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
+        $Net::SSLinfo::use_http = 0;
         _warn("325: HTTP disabled, using --no-http");
-        next;
     }
     _yeast_TIME("test connect}");
 
