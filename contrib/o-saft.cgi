@@ -6,6 +6,15 @@
 
 o-saft.cgi  - wrapper script to start o-saft.pl as CGI script
 
+ #############################################################################
+ ##                                                                         ##
+ ## WARNING                                                                 ##
+ ##   This file is obsolete since O-Saft VERSION 18.01.18.                  ##
+ ##   There is  "o-saft.cgi"  which does better checks to avoid injections, ##
+ ##   and  "o-saft.pl --help=cgi"  now generates a full featured HTML page. ##
+ ##                                                                         ##
+ #############################################################################
+
 =head1 DESCRIPTIONS
 
 Calls ./o-saft.pl if first parameter is  I<--cgi>.
@@ -46,7 +55,7 @@ use warnings;
 ## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
 ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
 
-my $SID     = '@(#) o-saft.cgi 1.1 17/02/27 21:04:28';
+my $SID     = '@(#) o-saft.cgi 1.2 18/01/21 10:55:13';
 my $VERSION = '17.02.17';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/]*$##;
