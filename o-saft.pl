@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.787 18/01/20 19:18:28",
-    STR_VERSION => "18.01.17",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.788 18/01/21 10:20:03",
+    STR_VERSION => "18.01.18",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -717,7 +717,7 @@ my %check_conn = (  ## connection data
     #------------------+-----------------------------------------------------
     'ip'            => {'txt' => "IP for given hostname "},
     'reversehost'   => {'txt' => "Given hostname is same as reverse resolved hostname"},
-    'hostname'      => {'txt' => "Connected hostname matches certificate's subject"},
+    'hostname'      => {'txt' => "Connected hostname equals certificate's Subject"},
     'beast'         => {'txt' => "Connection is safe against BEAST attack (any cipher)"},
     'breach'        => {'txt' => "Connection is safe against BREACH attack"},
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
@@ -870,7 +870,7 @@ our %shorttexts = (
     'ip'            => "IP for hostname",
     'DNS'           => "DNS for hostname",
     'reversehost'   => "Reverse hostname",
-    'hostname'      => "Hostname matches Subject",
+    'hostname'      => "Hostname equals Subject",
     'expired'       => "Not expired",
     'certfqdn'      => "Valid for hostname",
     'wildhost'      => "Wilcard for hostname",
@@ -4494,30 +4494,40 @@ sub checkcert($$)   {
 sub checksni($$)    {
     #? check if given FQDN needs to use SNI
     # sets $checks{'sni'}, $checks{'certfqdn'}
+    # DNS strings are case insensitive, hence values are compared lowercase
     my ($host, $port) = @_;
     _y_CMD("checksni() "  . $cfg{'done'}->{'checksni'});
     $cfg{'done'}->{'checksni'}++;
     return if ($cfg{'done'}->{'checksni'} > 1);
 
+    my $cn          =    $data{'cn'}->{val}($host, $port);
+    my $lc_nosni    = lc($data{'cn_nosni'}->{val});
+    my $lc_host     = lc($host);
+    my $lc_cn       = lc($cn);
+    my $rex_cn      =    $cn;
+       $rex_cn      =~ s/[*][.]/(?:.*\\.)?/g;   # convert DNS wildcard to Perl regex
+
     if ($cfg{'usesni'} == 1) {      # useless check for --no-sni
-        if ($data{'cn_nosni'}->{val} eq $host) {
+        if ($lc_host eq $lc_nosni) {
             $checks{'sni'}->{val}   = "";
         } else {
             $checks{'sni'}->{val}   = $data{'cn_nosni'}->{val};
         }
     }
-    # $checks{'certfqdn'} and $checks{'hostname'} are similar
     if ($cfg{'no_cert'} != 0) {
         $checks{'certfqdn'}->{val}  = $cfg{'no_cert_txt'};
         $checks{'hostname'}->{val}  = $cfg{'no_cert_txt'};
         return;
     }
-    if ($data{'cn'}->{val}($host) eq $host) {
-        $checks{'certfqdn'}->{val}  = "";
+    if ($lc_host eq $lc_cn) {
         $checks{'hostname'}->{val}  = "";
     } else {
-        $checks{'certfqdn'}->{val}  = $data{'cn_nosni'}->{val} . " <> " . $host;
         $checks{'hostname'}->{val}  = $host . " <> " . $data{'cn'}->{val}($host);
+    }
+    if ($host =~ m/$rex_cn/i) {
+        $checks{'certfqdn'}->{val}  = "";
+    } else {
+        $checks{'certfqdn'}->{val}  = $data{'cn_nosni'}->{val} . " <> " . $host;
     }
     #dbx# _dbx "host:\t\t"           . $host;
     #dbx# _dbx "data{cn}:\t\t"       . $data{'cn'}->{val}($host);
