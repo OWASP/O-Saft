@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.136 18/01/19 01:34:53',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.137 18/01/21 10:15:32',
 
 };
 
@@ -1480,7 +1480,7 @@ our %cfg = (
                            tr_02102+ tr_02102- tr_03116+ tr_03116- 
                        )],
     'cmd-pfs'       => [qw(cipher_pfs cipher_pfsall session_random)],   # commands for +pfs
-    'cmd-sni'       => [qw(sni hostname)],          # commands for +sni
+    'cmd-sni'       => [qw(sni hostname certfqdn)],  # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [        # commands for checking known vulnerabilities
                         qw(
