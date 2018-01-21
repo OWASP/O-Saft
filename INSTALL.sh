@@ -35,7 +35,7 @@
 #?      $0 /opt/bin/ --force
 #?
 #? VERSION
-#?      @(#) INSTALL.sh 1.3 17/11/21 00:38:25
+#?      @(#) INSTALL.sh 1.4 18/01/21 11:48:33
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann (at) sicsec .dot. de
@@ -64,17 +64,21 @@ files_contrib="
 		filter_examples usage_examples lazy_checks.awk \
 		HTML-simple.awk HTML-table.awk JSON-array.awk JSON-struct.awk \
 		XML-value.awk XML-attribute.awk Cert-beautify.awk Cert-beautify.pl \
+		cipher_check.sh critic.sh gen_standalone.sh \
 		bunt.pl bunt.sh zap_config.xml"
-#		critic.sh install_perl_modules.pl gen_standalone.sh \
+#		install_perl_modules.pl \
 #		Dockerfile.alpine:3.6 distribution_install.sh \
-#
+
+files_not_installed="
+		o-saft.cgi contrb/o-saft.php contrib/install_perl_modules.pl \
+		"
 
 files_install="o-saft.pl o-saft-dbx.pm o-saft-usr.pm o-saft-man.pm \
 		osaft.pm OSaft/Ciphers.pm OSaft/error_handler.pm \
-		Doc/Rfc.pm Doc/Links.pm Doc/Glossary.pm \
-		Net/SSLinfo.pm Net/SSLhello.pm \
+		Doc/Data.pm Net/SSLinfo.pm Net/SSLhello.pm \
+		Doc/help Doc/glossary.txt Doc/links.txt Doc/rfc.txt \
 		o-saft.pod o-saft.tcl o-saft-img.tcl \
-		o-saft-docker checkAllCiphers.pl"
+		o-saft o-saft-docker checkAllCiphers.pl"
 #		OSaft/_ciphers_iana.pm OSaft/_ciphers_osaft.pm \
 #		OSaft/_ciphers_openssl_all.pm OSaft/_ciphers_openssl_medium.pm \
 #		OSaft/_ciphers_openssl_low.pm OSaft/_ciphers_openssl_high \
@@ -101,7 +105,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.3 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.4 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; dest="$1";  ;;  # last one wins
 	esac
 	shift
@@ -131,9 +135,21 @@ if [ -z "$mode" ]; then
 	$0 --check
 	o-saft_check_before_install.sh
 
+# In a Docker image, this script may only be called like:
+
+	$0 --check
+
 EoT
 	exit 0
 fi; # default mode }
+
+if [ "$mode" != "check" ]; then
+	if [ -n "$osaft_vm_build" ]; then
+	    echo "**ERROR: found 'osaft_vm_build=$osaft_vm_build'"
+	    echo "\033[1;31m**ERROR: inside docker only --check possible; exit\033[0m"
+	    exit 6
+	fi
+fi
 
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean" ]; then
