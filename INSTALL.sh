@@ -35,7 +35,7 @@
 #?      $0 /opt/bin/ --force
 #?
 #? VERSION
-#?      @(#) INSTALL.sh 1.4 18/01/21 11:48:33
+#?      @(#) INSTALL.sh 1.5 18/01/23 23:34:40
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann (at) sicsec .dot. de
@@ -105,7 +105,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.4 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.5 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; dest="$1";  ;;  # last one wins
 	esac
 	shift
@@ -133,7 +133,6 @@ if [ -z "$mode" ]; then
 # To check if O-Saft will work, you may use:
 
 	$0 --check
-	o-saft_check_before_install.sh
 
 # In a Docker image, this script may only be called like:
 
