@@ -1,5 +1,5 @@
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-.
-                                                          Version: 17.11.17  )
+                                                          Version: 18.11.18  )
         O-Saft  - OWASP SSL advanced forensic tool                          (
 	                                                                     )
  /~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-/
@@ -34,7 +34,7 @@
 (       * administrators
  )
 (   INSTALLATION
- )       o-saft.pl requires following Perl modules:
+ )      o-saft.pl requires following Perl modules:
 (          Net::SSLeay          (prefered >= 1.51)
  )         IO::Socket::SSL      (prefered >= 1.37)
 (          IO::Socket::INET     (prefered >= 1.31)
@@ -77,6 +77,8 @@
  )
 (       o-saft.tcl      (simple GUI; requires Tcl/Tk 8.5 or newer)
  )
+(       o-saft-docker   (simple wrapper to call o-saft.pl in docker image)
+ )
 (       Project home is https://www.owasp.org/index.php/O-Saft
  )      Project roadmap https://www.owasp.org/index.php/Projects/O-Saft/Roadmap
 (
@@ -98,8 +100,8 @@
 (       SHA256 checksum of o-saft.tgz
  )           a4d85953bdd1e08d20c6f31e9be7ea0af6ae8de3544bbfe823bd1e34ace26e7d
 (
- )      SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:17.11.17
-(            10d8f59353d504ad191e39df39e1c0c13bf22d9f7d535f4d45224b423beb7c5c
+ )      SHA256 checksum of owasp/o-saft:latest and owasp/o-saft:18.11.18
+(            bc7051a076720fbf30e7dff5518f4813c890ce68dd90ace6f77caa0c850a98d0
  )
 (
  \_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-~-_-/
