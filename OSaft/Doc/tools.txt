@@ -1,0 +1,152 @@
+
+# SID   @(#) tools.txt 1.1 18/01/23 23:42:42
+
+NAME
+
+        O-Saft Tools - tools for  o-saft.pl
+
+
+DESCRIPTION
+
+        Description of tools around  o-saft.pl,  when, where and how to use.
+
+
+SYNOPSIS
+
+        o-saft [OPTIONS ..] [COMMANDS ..] target [target target ...]
+
+        o-saft.pl [OPTIONS ..] [COMMANDS ..] target [target target ...]
+
+        o-saft.pl [OPTIONS ..] [COMMANDS ..] target [target target ...] | CMD
+
+        o-saft.tcl [OPTIONS ..] target [target target ...]
+
+        o-saft-docker [OPTIONS ..] [COMMANDS ..] target [target target ...]
+
+        https://o-saft.cgi?--cgi&OPTIONS&COMMANDS&target
+
+        INSTALL.sh
+
+        contrib/install_perl_modules.pl
+
+        contrib/gen_standalone.sh
+
+        contrib/critic.sh
+
+        where  [COMMANDS]  and  [OPTIONS]  are described in the corresponding
+        documentation of the tool.
+
+
+CONCEPTS
+
+        The main tool, doing all the SSL related tests, is  o-saft.pl .
+        All other tools described here are just wrappers around  o-saft.pl or
+        tools for postprocessing output data of  o-saft.pl .
+
+        These tools can be categorized as follows:
+
+           category       tools
+         #---------------+----------------+----------------------------------
+          CLI             o-saft.pl       # it's me
+          General Wrapper o-saft          # use o-saft.pl with prostprocessors
+          GUI             o-saft.tcl      # use o-saft.pl from GUI
+          CGI             o-saft.cgi      # use o-saft.pl from web server
+          VM              o-saft-docker   # use o-saft.pl inside docker
+          Postprocess     contrib/*       # prostprocessor tools
+          Installation    INSTALL.sh      # simple installation tool
+          Development     ....            # ... comming soon
+         #---------------+----------------+----------------------------------
+
+        For a description of  o-saft.pl  itself, please see:
+          o-saft.pl --help
+
+
+TOOLS
+
+    CLI
+        o-saft.pl  is the main tool, see  CONCEPTS  above.  It will be called
+        by all other tools.
+
+    General Wrapper
+        o-saft  is the general wrapper.  It calls  o-saft.pl  with all passed
+        arguments. All output from called  o-saft.pl  is piped to the command
+        specified with the  -post=  option.
+        The main purpose is to use postprocessors inside a VM like docker, or
+        when called from a CGI script.
+
+          o-saft +cmd --option target
+          o-saft -post='bunt.pl' +cmd --option target
+          o-saft-docker -id=osawp/o-saft  -post='bunt.pl' ' +cmd --option target
+
+    GUI
+        o-saft.tcl is the graphical user interface for  o-saft.pl .
+
+          o-saft.tcl
+          o-saft.tcl --docker
+          o-saft-docker -id=osawp/o-saft.tcl
+
+    CGI
+        o-saft.cgi TBD
+
+    VM
+        o-saft-docker calls  o-saft.pl  in a docker image.
+
+          o-saft-docker +cmd --option target
+          o-saft-docker -id=osawp/o-saft.pl +cmd --option target
+
+    Postprocess
+        contrib/* TBD
+
+    Installation
+        INSTALL.sh
+
+    Development
+        TBD
+
+
+CUSTOMIZATION
+
+        The tools can be customized with following files:
+
+        * o-saft.pl
+           .o-saft.pl
+           o-saft-usr.tcl
+
+        * o-saft.tcl
+           .o-saft.tcl
+           o-saft-img.tcl
+
+        * o-saft.cgi
+           none, but see contrib/o-saft.php
+
+        * o-saft-docker
+           none, but see o-saft-docker-dev
+
+        * SHELL TWEAKS
+           contrib/bash_completion_o-saft
+           contrib/dash_completion_o-saft
+           contrib/fish_completion_o-saft
+           contrib/tcsh_completion_o-saft
+
+
+SEE ALSO
+
+        * o-saft
+        * o-saft.pl
+        * o-saft.tcl
+        * o-saft-docker
+        * o-saft-docker-dev
+        * Dockerfile
+        * docker
+        * INSTALL.sh
+
+
+VERSION
+
+        @(#) $VERSION
+
+AUTHOR
+
+        18. Jan. 2018 Achim Hoffmann
+
+
