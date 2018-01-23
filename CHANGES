@@ -1,4 +1,30 @@
 
+Version: 18.01.18
+  BUGFIX
+    * markup for generated documentation corrected
+    * various Perl warnings (in rare runtime situations) fixed
+    * hostname, SNI and certificate subject checks are case insensitive
+  CHANGES
+    * --help=tools added to give an overview of all tools comming with O-Saft
+    * use of $cfg{'sni_name'} and $cfg{'usesni'} improved (--sni --no-sni --sniname= )
+    * SSLv3 cipher checks are done without SNI (automatically disabled just for SSLv3)
+    * simple connection check to avoid "hanging" connection
+    * documentation moved from o-saft-man.pm to OSaft/Doc/help.txt
+    * Net::SSLinfo.pm: treat "failed handshake" only as error when * Net::SSLinfo::ignore_handshake is not set
+    * contrib/zap_config.xml: description improved
+    * +version prints starting directory (PWD)
+    * +sni command contains +certfqdn
+    * detecting host and port improved
+    * use relative instead of absolute timestamps for --traceTIME
+  NEW
+    * wrapper script: o-saft
+    * --traceCLI option added
+    * --std-format= options implemented (allows generating files with any charset)
+    * o-saft.tcl: write result of o-saft.pl in Tcl table (experimental)
+    * +robot ROBOT added
+    * --ignore-handshake implemented
+    * --time-absolut to write absolute timestamps for --traceTIME
+
 Version: 17.11.17
   BUGFIX
     * o-saft.cgi: IPv6 addresses are not allowed
@@ -7,7 +33,7 @@ Version: 17.11.17
     * do not complain about cipher mismatch (warning 411) for SSLv2
     * missleading hint message for WARNING 126 corrected
     * check for bit-length of serial number corrected (approx aproach)
-  CHANGES                                                                      
+  CHANGES
     * --help=cgi generated HTML for cgi usage improved
     * +protocols and +vulns documentation added
     * warnings and hints improved if SNI used with/for SSLv3
@@ -15,7 +41,7 @@ Version: 17.11.17
     * Dockerfile: build Net::SSLeay and IO::Socket::SSL based on enhanced openssl-chacha
     * +cipherall uses same output format as +cipher
     * documentation improved
-  NEW                                                                          
+  NEW
     * o-saft.tcl: trace implemented; option --trace
 
 Version: 17.09.17
@@ -26,11 +52,11 @@ Version: 17.09.17
     * Net::SSLinfo.pm: handle binary IP address in certificate's altname attribut
     * regex to detect port numbers in URL: {1,5} quantifier instead of {1-5}
     * Dockerfile: install perl-readonly for alpine also
-  CHANGES                                                                      
+  CHANGES
     * Dockerfile build openssl with GOST and KRB5 ciphers (for alpine:edge)
     * Dockerfile supports environment variables
     * Net::SSLinfo.pm: checking for Alt-Svc, X-Firefox-Spdy headers improved
-  NEW                                                                          
+  NEW
     * o-saft-docker: checks for proper installed images
     * o-saft-docker: rmi command implemented; status command improved
 
@@ -44,7 +70,7 @@ Version: 17.07.17
     * avoid perl warning "Argument isn't numeric" for +tr_02102 checks
     * osaft.pm: export printhint()
     * print hint for +info commands also
-  CHANGES                                                                      
+  CHANGES
     * check for heartbleed only if requested
     * hint for DROWN check added
     * error and warning messages have a unique number
@@ -54,7 +80,7 @@ Version: 17.07.17
     * o-saft-lib.pm: initialization of %cfg with dynamic data done in _osaft_init()
     * trace output improved
     * contrib/* more examples added
-  NEW                                                                          
+  NEW
     * --connect-delay implemented
     * --cipher-range=* implemented for +cipher command
     * OSaft/Doc/Glossary.pm, use OSaft::Doc::Rfc
@@ -70,10 +96,10 @@ Version: 17.06.17
   BUGFIX
     * counting exitcode for -exitcode corrected
     * reading +commands from RC-FILE
-  CHANGES                                                                      
+  CHANGES
     * names of +cipher* commands unified
     * cfg{ciphers_openssl} --> cfg{ciphers_local}
-  NEW                                                                          
+  NEW
     * --rc=path/to/RC-FILE added
     * --cfg-cipher=CIPHER=TEXT added
     * +rfc_2818_names implemented
@@ -86,13 +112,13 @@ Version: 17.05.17
     * +selected does not need to check for all ciphers
     * enable ALPN and NPN when testeing for ciphers (+cipher)
     * NET::SSLinfo.pm: passing -alpn and -nextprotoneg option to openssl corrected
-  CHANGES                                                                      
+  CHANGES
     * missing ciphers and missing cipher descriptions added
     * +info does no onger complain for missing ALPN/NPN functionality
     * NET::SSLinfo.pm: checks improved to detect handshake fail for HTTPS
     * NET::SSLinfo.pm: ::next_protos replaced by ::alpn_protos and ::npn_protos
     * check and warning messages for available functionality improved
-  NEW                                                                          
+  NEW
 
 Version: 17.04.17
   BUGFIX
@@ -130,9 +156,9 @@ Version: 17.03.17
     * Net::SSLeay.pm: set NPN option when used with sockets
     * "use of uninitialized value" at _useopenssl() call
     * assume CGI mode with --cgi-exec
-    * better check of cfg{ca_path} (avoid uninitialized value) 
+    * better check of cfg{ca_path} (avoid uninitialized value)
     * wrong ca_path instead of ca_paths in trace output
-    * don't complain "need Time::Local module for this check"                
+    * don't complain "need Time::Local module for this check"
   CHANGES
     * +ocsp (check) command renamed to +ocsp_uri
     * +ocsp-subject-hash +ocsp-public-hash
@@ -147,7 +173,7 @@ Version: 17.03.17
   NEW
     * +ocsp (in .o-saft.pl)
     * +fingerprint_sha2
-    * osaft.pm: @npn - list for NPN added                                                      
+    * osaft.pm: @npn - list for NPN added
 Version: 17.01.17
   BUGFIX
     * avoid useless data checks for +info command
@@ -212,14 +238,14 @@ Version: 16.11.14
 
 Version: 16.09.29
   BUGFIX
-    * avoid "Use of uninitialized value ..." for $version::VERSION (see issue 51)    
+    * avoid "Use of uninitialized value ..." for $version::VERSION (see issue 51)
     * PSK-* cipher descriptions improved; PSK-* cipher descriptions improved
     * check for CN improved (DV and EV certificates)
     * contrib/.o-saft.tcl: syntax error corrected
     * some regex non-capturing groups corrected (parsing options only)
   CHANGES
     * commands for cipher checks unified (+*_cipher); alias commands added
-    * check for CRIME improved (SPDY/3 is vulnerable) 
+    * check for CRIME improved (SPDY/3 is vulnerable)
     * Net/SSLinfo.pm: sequence for "nextprotoneg" reversed (weakest first)
   NEW
     * searching documentation improved
@@ -459,7 +485,6 @@ Version: 15.06.19
     * support public key with EC parameters
     * DTLSv1x added (experimental)
     * +modulus_exp_size +modulus_size and +pub_encryption implemented
-    * 
 
 Version: 15.06.09
   BUGFIX
@@ -558,7 +583,7 @@ Version: 14.11.17
 
 Version: 14.11.16
   CHANGES
-    * beast-default removed 
+    * beast-default removed
 
 Version: 14.11.15
   NEW
@@ -624,7 +649,7 @@ Version: 14.07.15
 
 Version: 14.07.14
   CHANGES
-    * cipher descriptions improved; security and score qualification adapted 
+    * cipher descriptions improved; security and score qualification adapted
 
 Version: 14.07.07
   CHANGES
@@ -775,7 +800,7 @@ Version: 14.05.12
 
 Version: 14.05.11
   CHANGES
-    * some missing cipher descriptions added 
+    * some missing cipher descriptions added
 
 Version: 14.05.10
   BUGFIX
@@ -802,7 +827,7 @@ Version: 14.05.07
 
 Version: 14.05.06
   NEW
-    * --ssl-lazy option implemented 
+    * --ssl-lazy option implemented
 
 Version: 14.05.05
   NEW
@@ -1328,7 +1353,7 @@ Version: 13.09.07
     * +http   command for HTTP(S) checks
     * --legasy=testsslserver  implemented
 
-Version: 13.07.31 
+Version: 13.07.31
   UPDATE
     * debugging and tracing improved
   NEW
@@ -1337,7 +1362,7 @@ Version: 13.07.31
     * --format=raw implemented
     * new commands:  +sigkey_value, +sigkey_algorithm, +sigkey_len
 
-Version: 13.03.31 
+Version: 13.03.31
   BUGFIX
     * avoid useless or wrong output when --no-cert given
   UPDATE
