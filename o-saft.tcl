@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.162 Winter Edition 2017
+#?      @(#) 1.163 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.162 18/01/18 00:54:38 Winter Edition 2017}
-set cfg(VERSION) {1.162}
+set cfg(SID)    {@(#) o-saft.tcl 1.163 18/01/23 16:48:05 Winter Edition 2017}
+set cfg(VERSION) {1.163}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -1104,7 +1104,11 @@ proc tooltip:show {w arg} {
 
 proc gui_init     {} {
     #? initialize GUI
-    package require tablelist ;
+    global cfg prg myX argv
+    if {[catch { package require tablelist } err]} {
+        pwarn "'package tablelist' not found, probably 'tklib' missing; using text layout"
+        set cfg(layout) {text}
+    }
     font create osaftHead   {*}[font config TkFixedFont;]  -weight bold
     font create osaftBold   {*}[font config TkDefaultFont] -weight bold
     font create osaftSlant  {*}[font config TkFixedFont]   -slant italic
@@ -1112,7 +1116,6 @@ proc gui_init     {} {
     option add *Label.font  osaftBold;  # ..
     option add *Text.font   TkFixedFont;
 
-    global cfg prg myX argv
     # configure according real size
     set __x         [lindex [wm maxsize .] 0]
     set __y         [lindex [wm maxsize .] 1]
@@ -2979,8 +2982,6 @@ if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 set rcfile [file join {./}       $cfg(RC)]
 if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
 cfg_update;                     # update configuration as needed
-if {[catch { package require tablelist} error_txt]} { set cfg(layout) {text}; }
-   # returns 0 if package availlable, 1 otherwise; use text if not available
 
 ## read $cfg(IMG)               # must be read before any widget is created
 read_images $cfg(bstyle);       # more precisely: before first use of theme_set
@@ -3108,7 +3109,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.162 $vm"
+update_status "o-saft.tcl 1.163 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
