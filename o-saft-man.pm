@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.228 18/01/16 23:51:15";
+my  $man_SID= "@(#) o-saft-man.pm 1.229 18/01/23 16:51:05";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1007,6 +1007,10 @@ sub printhelp   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
         my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
         print join("", "OPTIONS\n", splice(@txt, 0, $end));     # print anything before end
+        return;
+    }
+    if ($hlp =~ m/^Tools$/i) {    # description for O-Saft tools
+	print OSaft::Doc::Data::get("tools.txt", $parent, $version);
         return;
     }
     if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description
