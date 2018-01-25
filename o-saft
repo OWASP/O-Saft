@@ -1,20 +1,25 @@
 #!/bin/sh
 #?
 #? NAME
-#?      $0 - simple wrapper to call  o-saft.pl
+#?      $0 - simple wrapper to call  o-saft.pl or o-saft.tcl
 #?
 #? SYNOPSIS
 #?      $0 [options] target
 #?
 #? DESCRIPTION
+#?      Calls  o-saft.pl or o-saft.tcl  with all specified arguments.
 #?      Calls  o-saft.pl  with all specified arguments.  o-saft.pl's  output is
-#?      then piped to the command specified in the  -post=  option.
-#?      Command given with  -post=  must be located in  contrib/  directory  or
-#?      must be found via  PATH  environment variable.
+#?      o-saft.pl's  output is piped to the command specified in the  -post=
+#?      option.
+#?      The command given with  -post=  must be located in  contrib/  directory
+#?      or must be found via  PATH  environment variable.
 #?
 #? OPTIONS
 #?      -h      got it
 #?      -list   list available programs in ./contrib/ directory
+#?      -cli    start o-saft.pl  with remaining arguments; this is the default
+#?      -gui    start o-saft.tcl with remaining arguments
+#?      --      pass all remaining arguments to o-saft.pl
 #?      -post="command [options]"
 #?              command to pipe output of  o-saft.pl  too
 #?
@@ -22,9 +27,10 @@
 #?      Option  -h  or  -list  or  -post=  must preceed all other options.
 #?
 #? EXAMPLES
-#?	    $0 +cmd --option target
-#?	    $0 -post='bunt.pl'      ' +cmd --option target
-#?	    $0 -post='bunt.pl -blind' +cmd --option target
+#?          $0 +cmd --option target
+#?          $0 -post='bunt.pl'      ' +cmd --option target
+#?          $0 -post='bunt.pl -blind' +cmd --option target
+#?          $0 -gui target
 #?
 # 
 # Hacker's INFO
@@ -32,7 +38,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.2 18/01/23 23:03:38
+#?      @(#) o-saft 1.3 18/01/26 00:01:19
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -41,14 +47,19 @@
 
 ich=${0##*/}
 dir=${0%/*};    [ "$dir" = "$0" ] && dir="."    # $0 found via $PATH in .
-prg=o-saft.pl
-post="cat";     # default, avoids special handling if -post= missing
+try=
+prg=$ich.pl     # most likely ich=o-saft
+gui=$ich.tcl
+cgi=$ich.cgi
+post="cat"      # default, avoids special handling if -post= missing
+mode=cli        # cli, cgi, gui
 contrib=$dir/contrib
 
-case "$1" in
-    -h  | '-?')
-        \sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
-        \cat <<EoT
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h  | '-?')
+            \sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+            \cat <<EoT
  NOTE
     To get help for  o-saft.pl, please use:
         $0 --help
@@ -56,23 +67,41 @@ case "$1" in
         o-saft.pl --help
 
 EoT
-        exit 0
-        ;;
-    -list)
-        for exe in $contrib/* ; do
-            [ -d "$exe" ] && continue
-            [ -x "$exe" ] && echo "$exe"
-        done
-        exit 0
-        ;;
-    -post=*)
-        post="`expr "$1" ':' '-post=\(.*\)'`"
-        cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
-        [ -x "$contrib/$cmd" ] && post="$contrib/$cmd"
-        shift
-        ;;
-esac
-#dbx# echo "#$post#"
+            exit 0
+            ;;
+        -list)
+            for exe in $contrib/* ; do
+                [ -d "$exe" ] && continue
+                [ -x "$exe" ] && echo "$exe"
+            done
+            exit 0
+            ;;
+        -n   | --n)     try=echo ; ;;
+        -cgi | --cgi)   mode=cgi ; ;;
+        -cli | --cli)   mode=cli ; ;;
+        -gui | --gui)   mode=gui ; ;;
+        -tcl | --tcl)   mode=gui ; ;;
+        -post=*)
+            post="`expr "$1" ':' '-post=\(.*\)'`"
+            cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
+            [ -x "$contrib/$cmd" ] && post="$contrib/$cmd"
+            break
+            ;;
+        --) break; ;;
+    esac
+    shift
+done
 
-$prg $@ | $post
+[ -n "$try" ] && echo "#mode=$mode, post=$post, $@#"
+
+case "$mode" in
+    #cgi) $try $cgi $post $@ ; ;;
+     gui) $try $gui --post=$post $@ ; ;;
+     *)   if [ -n "$try" ]; then
+              $try "$prg $@ | $post"
+          else
+              $prg $@ | $post 
+          fi
+          ;;
+esac
 exit 0
