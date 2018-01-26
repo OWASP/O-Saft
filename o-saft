@@ -19,6 +19,10 @@
 #?      -list   list available programs in ./contrib/ directory
 #?      -cli    start o-saft.pl  with remaining arguments; this is the default
 #?      -gui    start o-saft.tcl with remaining arguments
+#       -tcl    alias for -gui
+#?      -docker start o-saft-docker with remaining arguments
+#       -id=*   passed to o-saft-docker
+#       -tag=*  passed to o-saft-docker
 #?      --      pass all remaining arguments to o-saft.pl
 #?      -post="command [options]"
 #?              command to pipe output of  o-saft.pl  too
@@ -32,13 +36,18 @@
 #?          $0 -post='bunt.pl -blind' +cmd --option target
 #?          $0 -gui target
 #?
+#?          $0 -docker +cmd --option target
+#?          $0 -docker -post='bunt.pl'      ' +cmd --option target
+#?          $0 -docker -post='bunt.pl -blind' +cmd --option target
+#?          $0 -docker -gui target
+#?
 # 
 # Hacker's INFO
 #       Uses options  -h  and  -post=  and not  --h  or  --help  or  --post  to
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.4 18/01/26 00:12:56
+#?      @(#) o-saft 1.5 18/01/26 02:06:25
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -54,6 +63,9 @@ cgi=$ich.cgi
 post="cat"      # default, avoids special handling if -post= missing
 mode=cli        # cli, cgi, gui
 contrib=$dir/contrib
+opt=cli         # mode
+docker_id=
+docker_tag=
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -76,11 +88,14 @@ EoT
             done
             exit 0
             ;;
-        -n   | --n)     try=echo ; ;;
-        -cgi | --cgi)   mode=cgi ; ;;
-        -cli | --cli)   mode=cli ; ;;
-        -gui | --gui)   mode=gui ; ;;
-        -tcl | --tcl)   mode=gui ; ;;
+        -n      | --n)      try=echo ; ;;
+        -cgi    | --cgi)    opt=cgi  ; ;;
+        -cli    | --cli)    opt=cli  ; ;;
+        -gui    | --gui)    opt=gui  ; ;;
+        -tcl    | --tcl)    opt=gui  ; ;;
+        -docker | --docker) mode=docker ; ;;
+        -id*)               docker_id="$1"  ; ;;
+        -tag*)              docker_tag="$1" ; ;;
         -post=*)
             post="`expr "$1" ':' '-post=\(.*\)'`"
             cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
@@ -93,16 +108,29 @@ EoT
     shift
 done
 
-[ -n "$try" ] && echo "#mode=$mode, post=$post, $@#"
+[ -n "$try" ] && echo "# mode=$mode, post=$post, $@#"
 
+# docker mode is special
+if [ $mode = "docker" ]; then
+    if [ -n "$osaft_vm_build" ]; then
+        echo "**WARNING: option -docker ignored inside VM"
+    else
+        o-saft-docker $docker_id $docker_tag -$opt -post=$post $@
+        exit $?
+    fi
+fi
+mode=$opt
+
+# all other modes
 case "$mode" in
-    #cgi) $try $cgi $post $@ ; ;;
-     gui) $try $gui --post=$post $@ ; ;;
-     *)   if [ -n "$try" ]; then
-              $try "$prg $@ | $post"
-          else
-              $prg $@ | $post 
-          fi
-          ;;
+   #cgi) $try $cgi $post $@ ; ;;
+    gui) $try $gui --post=$post $@ ; ;;
+    *)   if [ -n "$try" ]; then
+            $try "$prg $docker_id $docker_tag $@ | $post"
+         else
+            echo "$prg $docker_id $docker_tag $@ | $post"
+            $prg $docker_id $docker_tag $@ | $post 
+         fi
+         ;;
 esac
 exit 0
