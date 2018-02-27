@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.163 Winter Edition 2017
+#?      @(#) 1.164 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.163 18/01/23 16:48:05 Winter Edition 2017}
-set cfg(VERSION) {1.163}
+set cfg(SID)    {@(#) o-saft.tcl 1.164 18/02/27 23:00:49 Winter Edition 2017}
+set cfg(VERSION) {1.164}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -483,6 +483,7 @@ set prg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
                                 # buttons for quick access commands
 set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}};
                                 # checkboxes for quick access options
+set prg(post)       {}         ;# --post=  parameter, if passed on command line
 
 set cfg(DESC)       {-- CONFIGURATION GUI style and layout -------------------}
 set cfg(bstyle) {image};        # button style:  image  or  text
@@ -2957,13 +2958,14 @@ foreach arg $argv {
         {--dbx}     -
         {--d}       { incr  cfg(DEBUG);     }
         {--v}       { set   cfg(VERB)   1;  }
-        {--rc}      { osaft_write_rc; exit; }
         {--trace}   { set   cfg(TRACE)  1;  }
+        {--rc}      { osaft_write_rc; exit; }
         {--image}   -
         {--img}     { set   cfg(bstyle) "image"; }
-        --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
         {--text}    { set   cfg(bstyle) "text";  }
         {--tip}     { set   cfg(TIP)    1;  }
+        --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
+        --post=*    { set   prg(post) $arg; }
         {--h}       -
         {--help}    { puts [osaft_about "HELP"]; exit; }
         *           { lappend targets $arg; }
@@ -3109,7 +3111,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.163 $vm"
+update_status "o-saft.tcl 1.164 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
