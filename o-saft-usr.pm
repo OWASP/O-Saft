@@ -5,7 +5,7 @@
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 ## no critic qw(Documentation::RequirePodSections)
-#  our POD below is fine, perlcritic (severity 2) is too pedantic here.
+# SEE Perl:perlcritic
 
 
 =pod
@@ -126,7 +126,7 @@ Call:  usr_version()
 use strict;
 use warnings;
 
-my  $usr_SID= "@(#) o-saft-usr.pm 1.21 16/09/26 19:26:03";
+my  $usr_SID= "@(#) o-saft-usr.pm 1.22 18/03/22 23:16:25";
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
@@ -234,6 +234,8 @@ unless (defined caller) {
         # pod2usage( -verbose => 1 )
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
+    ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        # SEE Perl:perlcritic
     if (qx(perldoc -V)) {
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
