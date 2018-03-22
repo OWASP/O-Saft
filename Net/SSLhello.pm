@@ -35,20 +35,27 @@
 
 # TODO: check if SNI-extension is supported by the server, if 'usesni' is set
 
+## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
+#  NOTE:  Contrary to  Perl::Critic  we consider prototypes as useful, even if
+#         the compile-time checks of Perl are not perfect,  Perl may give some
+#         hints.
+
 package Net::SSLhello;
 
 use strict;
 use warnings;
-use constant {
-    SSLHELLO_VERSION=> '17.07.15',
+use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
+    SSLHELLO_VERSION=> '18.03.17',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.20 17/03/03 11:26:20",
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.23 18/03/22 10:59:19',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
 #require IO::Select if ($main::cfg{'trace'} > 1);
 use Carp;
-use OSaft::error_handler qw (:sslhello_contants);               # use internal error_handler, get all constants used for SSLHELLO, for subs the full names will be used (includung OSaft::error_handler-><sub>)
+use OSaft::error_handler qw (:sslhello_contants);
+    # use internal error_handler, get all constants used for SSLHELLO, for subs
+    # the full names will be used (includung OSaft::error_handler-><sub>)
 
 ######################################################## public documentation #
 
@@ -56,8 +63,10 @@ use OSaft::error_handler qw (:sslhello_contants);               # use internal e
 
 =head1 NAME
 
-Net::SSLhello - perl extension for SSL to simulate SSLhello packets to check SSL parameters (especially ciphers)
-Connections via Proxy and using STARTTLS (SMTP, IMAP, POP3, FTPS, LDAP, RDP, XMPP and experimental: ACAP) are supported
+Net::SSLhello - Perl extension for SSL to simulate SSLhello packets to check
+SSL parameters (especially ciphers).
+Connections via Proxy and using STARTTLS (SMTP, IMAP, POP3, FTPS, LDAP, RDP,
+XMPP and experimental: ACAP) are supported.
 
 =head1 SYNOPSIS
 
@@ -82,15 +91,12 @@ Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni,
 
 #our %main::cfg;    # provided by caller
 our $dtlsEpoch = 0; # for DTLS only (globally)
-our %_SSLhello; #  our internal data structure
+our %_SSLhello;     # our internal data structure
 
-use vars   qw($VERSION @ISA @EXPORT @EXPORT_OK $HAVE_XS);
-
-BEGIN {
-    require Exporter;
-    $VERSION    = SSLHELLO_VERSION;
-    @ISA        = qw(Exporter);
-    @EXPORT     = qw(
+use Exporter qw(import)
+use base qw(Exporter);;
+our $VERSION    = SSLHELLO_VERSION;
+our @EXPORT_OK  = qw(
         net_sslhello_done
         checkSSLciphers
         compileClientHello
@@ -111,11 +117,9 @@ BEGIN {
         printSSL2CipherList
         printTLSCipherList
         version
-    );
-    # insert above in vi with:
-    # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/        \1/p' % | sort -u
+);
 
-    $HAVE_XS = eval {
+our $HAVE_XS = eval {
         local $SIG{'__DIE__'} = 'DEFAULT';
         eval {
             require XSLoader;
@@ -129,12 +133,11 @@ BEGIN {
         };
 
     } ? 1 : 0;
-} # BEGIN
 
 # All Main Parameters, Constants, Lists and Functions that are used by o-saft andSSLhello
 use osaft; # TBD add "raw";
 
-use constant {
+use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     _MY_SSL3_MAX_CIPHERS                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
     _MY_PRINT_CIPHERS_PER_LINE          =>  8, # Nr of ciphers printed in a trace
     _PROXY_CONNECT_MESSAGE1             => "CONNECT ",
