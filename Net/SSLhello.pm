@@ -40,14 +40,19 @@
 #         the compile-time checks of Perl are not perfect,  Perl may give some
 #         hints.
 
+
+## no critic qw(Variables::RequireLocalizedPunctuationVars)
+#  NOTE:  Only  $@  is used, which is a global variable for error messages,
+#         it's exactly what we use it for, hence this warning is not applicable
+
 package Net::SSLhello;
 
 use strict;
 use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '18.03.17',
+    SSLHELLO_VERSION=> '18.03.16',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.23 18/03/22 10:59:19',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.24 18/03/22 11:25:41',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -1303,8 +1308,8 @@ sub checkSSLciphers ($$$@) {
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
     my $maxCiphers = $Net::SSLhello::max_ciphers;
     local $\ = ""; # no auto '\n' at the end of the line
-    local $@ = ""; # Error handling uses $@ in this and all sub function (TBD: new error handling)
-    #reset error_handler and set basic information for this sub
+    local $@ = ""; # reset error message
+    # error handling uses $@ in this and all sub function (TBD: new error handling)
     OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
 
     if ($Net::SSLhello::trace > 0) { 
@@ -1359,12 +1364,12 @@ sub checkSSLciphers ($$$@) {
             push (@cipherSpecArray, $cipher_str); # add cipher to next test
             $arrayLen = @cipherSpecArray;
             if ( $arrayLen >= $maxCiphers) { # test up to ... ciphers ($Net::SSLhello::max_ciphers = _MY_SSL3_MAX_CIPHERS) with 1 doCheckSSLciphers (=> Client Hello)
-                $@=""; # reset Error-Msg
-                #reset error_handler and set basic information for this sub
+                $@ = ""; # reset error message
+                # reset error_handler and set basic information for this sub
                 OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
                 $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round
                 
-                if ($Net::SSLhello::trace > 1) { #Print ciphers that are tested this round:
+                if ($Net::SSLhello::trace > 1) { # print ciphers that are tested this round:
                     $i = 0;
                     if ($Net::SSLhello::starttls) {
                         _trace1 ("checkSSLciphers ($host, $port (STARTTLS), $ssl): Checking ". scalar(@cipherSpecArray)." Ciphers, this round (1):");
@@ -1394,13 +1399,20 @@ sub checkSSLciphers ($$$@) {
                     push (@acceptedCipherArray, $acceptedCipher); # add the cipher to the List of accepted ciphers 
                 } else { # no ciphers accepted
                     _trace1_ ("=> no Cipher found\n");
-                if ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST)) || ($@ =~ /Fatal Exit/) || ($@ =~ /make a connection/ ) || ($@ =~ /create a socket/) ) { #### Fatal Errors -> Useless to check more protocols
+                if ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_HOST))
+                     || ($@ =~ /Fatal Exit/)
+                     || ($@ =~ /make a connection/ )
+                     || ($@ =~ /create a socket/) ) {
+                        #### Fatal Errors -> Useless to check more protocols
 
                         _trace ("checkSSLciphers (1.1): '$@'\n") if ($@);
                         _trace ("**WARNING: checkSSLciphers => Exit loop (1.1): -> Abort '$host:$port' caused by ".OSaft::error_handler->get_err_str."\n");
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
-                    } elsif ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL)) || ($@ =~ /answer ignored/) || ($@ =~ /protocol_version.*?not supported/) || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
+                    } elsif ( ((OSaft::error_handler->get_err_type()) <= (OERR_SSLHELLO_RETRY_PROTOCOL))
+                      || ($@ =~ /answer ignored/)
+                      || ($@ =~ /protocol_version.*?not supported/)
+                      || ($@ =~ /check.*?aborted/) ) { # Just stop, no warning
                         _trace2 ("checkSSLciphers (1.2): '$@'\n") if ($@);
                         @cipherSpecArray =(); # server did not accept any cipher => nothing to do for these ciphers => empty @cipherSpecArray
                         last;
@@ -1413,7 +1425,7 @@ sub checkSSLciphers ($$$@) {
                         if ($Net::SSLhello::noDataEqNoCipher == 1) { # ignore error messages for TLS intolerant servers that do not respond if non of the ciphers are supported
                             _trace2 ("checkSSLciphers (1.4): Ignore Error Messages for TLS intolerant Servers that do not respond if non of the Ciphers are supported. Ignored: '$@'\n"); 
                             @cipherSpecArray =(); # => empty @cipherSpecArray
-                            $@=""; # reset Error-Msg
+                            $@ = ""; # reset error message
                             next;
                         } else { # noDataEqNoCipher == 0
                             _trace2 ("checkSSLciphers (1.5): \'$@\', => Please use the option \'--noDataEqNoCipher\' for Servers not answeing if none of the requested Ciphers are supported. Retry to test the following Cipheres individually:\n");
@@ -1432,7 +1444,7 @@ sub checkSSLciphers ($$$@) {
                                 warn    => 1,
                             } );
                         }
-                        $@=""; # reset Error-Msg
+                        $@ = ""; # reset error message
                         #reset error_handler and set basic information for this sub
                         OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
                     } # else: no cipher accepted but no error
@@ -1831,8 +1843,7 @@ sub openTcpSSLconnection ($$) {
         );
 
     my %startTlsTypeHash;
-    $@ ="";
-    #reset error_handler and set basic information for this sub
+    local $@ = ""; # reset error message
     OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
     if ( ($Net::SSLhello::proxyhost) && ($Net::SSLhello::proxyport) ) { # via proxy
         _trace2 ("openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via Proxy ".$Net::SSLhello::proxyhost.":".$Net::SSLhello::proxyport."\n");
@@ -2466,8 +2477,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
     }
 
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") .") {\n");
-    $@ =""; # reset Error-String
-    #reset error_handler and set basic information for this sub
+    local $@ = ""; # reset error message
     OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => '_doCheckSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
     
     $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLSv09'})  ); # udp for DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
@@ -2856,7 +2866,7 @@ sub _readRecord ($$;$$$) {
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
     while ( ( (length($input) < $pduLen) || ($input eq "") ) && ($retryCnt++ <= $Net::SSLhello::retry) ) {
         if ($isUdp) { # #still use select for udp
-            $@ ="";
+            $@ = "";
             eval { # check this for timeout, protect it against an unexpected Exit of the Program
                 #Set alarm and timeout 
                 local $SIG{ALRM}= "Net::SSLhello::_timedOut";
@@ -3112,7 +3122,7 @@ sub _readText {
     ###### receive the answer 
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
     while ( ($untilFound) && ( ! m {\A$untilFound\Z}) ) {{
-        $@ ="";
+        $@ = "";
         eval { # check this for timeout, protect it against an unexpected Exit of the Program
             #Set alarm and timeout 
             local $SIG{ALRM}= "Net::SSLhello::_timedOut";
@@ -3463,7 +3473,7 @@ sub compileClientHello ($$$$;$$$$) {
             $ssl ="--unknown Protocol--";
         }
 #        my ($ssl) = grep {$record_version ~~ ${$cfg{'openssl_version_map'}}{$_}} keys %{$cfg{'openssl_version_map'}};
-        $@ = "**WARNING: compileClientHello: Protocol version $ssl (0x". sprintf("%04X", $record_version) .") not (yet) defined in Net::SSLhello.pm -> protocol ignored";
+        local $@ = "**WARNING: compileClientHello: Protocol version $ssl (0x". sprintf("%04X", $record_version) .") not (yet) defined in Net::SSLhello.pm -> protocol ignored";
         carp($@);
     }
     if ( ($Net::SSLhello::max_sslHelloLen > 0) && (length($clientHello) > $Net::SSLhello::max_sslHelloLen) ) { # According RFC: 16383+5 Bytes; handshake messages between 256 and 511 bytes in length caused sometimes virtual servers to stall, cf.: https://code.google.com/p/chromium/issues/detail?id=245500
@@ -3474,7 +3484,7 @@ sub compileClientHello ($$$$;$$$$) {
             _trace_("\n");
             _trace ("compileClientHello: WARNING: Server $host (Protocol: $ssl): use of ClintHellos > $Net::SSLhello::max_sslHelloLen Bytes did cause some virtual servers to stall in the past. This protection is overridden by '--experimental'");
         } else { # use of experimental functions is not permitted (option is not activated)
-            $@ = "**WARNING: compileClientHello: Server $host: the ClientHello is longer than $Net::SSLhello::max_sslHelloLen Bytes, this caused sometimes virtual servers to stall, e.g. 256 Bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
+            local $@ = "**WARNING: compileClientHello: Server $host: the ClientHello is longer than $Net::SSLhello::max_sslHelloLen Bytes, this caused sometimes virtual servers to stall, e.g. 256 Bytes: https://code.google.com/p/chromium/issues/detail?id=245500;\n    Please add '--experimental' to override this protection; -> This time the protocol $ssl is ignored";
             carp ($@);
         }
     }
@@ -3496,7 +3506,8 @@ sub compileAlertRecord ($$$$;$$) {
     my $ssl = $rhash{$record_version};
     
     _trace4 ("compileAlertRecord ($host) {\n");
-    
+
+    local $@ = ""; # reset error message
 
     my %alertRecord =  ( #Alert Record
         'record_type'            => $RECORD_TYPE {'handshake'},# from SSL3:  Handshake (22=0x16) #uint8
@@ -3687,7 +3698,7 @@ sub _compileClientHelloExtensions ($$$$@) {
         );
         _trace2 ("compileClientHello: extension_sni_name Extension added (name='$clientHello{'extension_sni_name'}', len=$clientHello{'extension_sni_len'})\n");
     } elsif ($Net::SSLhello::usesni) { # && ($pduVersion <= $PROTOCOL_VERSION{'TLSv1'})  
-        $@ = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
+        local $@ = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
         print $@;
     }
 
@@ -3972,7 +3983,8 @@ sub parseHandshakeRecord ($$$$$$$;$) {
     my $keyExchange= "";
     my $description = "";
     my $lastMsgType = $HANDSHAKE_TYPE {'<<undefined>>'}; #undefined
-    $@="";
+
+    local $@ = ""; # reset error message
 
     my $sni = "";
     my %rhash = reverse %PROTOCOL_VERSION;
@@ -4405,7 +4417,7 @@ sub parseServerHello ($$$;$) {
                     return ("");
                 }
 
-#               Error-Handling according to # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv                
+                # Error-Handling according to # http://www.iana.org/assignments/tls-parameters/tls-parameters-6.csv                
                 unless ( ($serverHello{'level'} == 2) &&
                         (  ($serverHello{'description'} == 40) # handshake_failure(40): usually cipher not found is suppressed
                            || ($serverHello{'description'} == 71) # insufficient_security(71): no (secure) cipher found, is suppressed
