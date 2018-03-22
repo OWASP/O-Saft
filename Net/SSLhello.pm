@@ -44,14 +44,18 @@
 #  NOTE:  Only  $@  is used, which is a global variable for error messages,
 #         it's exactly what we use it for, hence this warning is not applicable
 
+## no critic qw(Variables::ProhibitPackageVars)
+#  NOTE: we have a couple of global variables, but do not want to write them in
+#        all CAPS (as it would be required by Perl::Critic)
+
 package Net::SSLhello;
 
 use strict;
 use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '18.03.17',
+    SSLHELLO_VERSION=> '18.03.18',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.25 18/03/22 13:59:37',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.26 18/03/22 14:43:55',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
