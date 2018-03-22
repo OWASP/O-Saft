@@ -81,33 +81,33 @@ use Carp;
 
 use Exporter qw(import);
 
-use constant {
+use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # the version number of this package
-    OERR_VERSION                                    => '16.09.16',
+    OERR_VERSION                                => '18.03.18',
 
     # error types (general)
-    OERR_NO_ERROR                                   =>     1,   # no error
-    OERR_UNKNOWN_TYPE                               => -9999,   # unknown error type, needs to be the most fatal error (=smallest number)
+    OERR_NO_ERROR                               =>     1,   # no error
+    OERR_UNKNOWN_TYPE                           => -9999,   # unknown error type, needs to be the most fatal error (=smallest number)
 
     # error texts
-    OERR_UNDEFINED_TXT                              => "<<undefined>>",
-    OERR_UNKNOWN_TXT                                => "<<unknown>>",
+    OERR_UNDEFINED_TXT                          => "<<undefined>>",
+    OERR_UNKNOWN_TXT                            => "<<unknown>>",
 
     #special error types for SSLhello, the smaller value is more severe (they may be changed here if needed)
-    OERR_SSLHELLO_ABORT_PROGRAM                     => -9000,   # error: abort running this program -> exit
-    OERR_SSLHELLO_ABORT_HOST                        =>   -99,   # error: abort testing this host
-    OERR_SSLHELLO_RETRY_HOST                        =>   -94,   # error: retry testing this host
-    OERR_SSLHELLO_ABORT_PROTOCOL                    =>   -89,   # error: abort testing this protocol for this host
-    OERR_SSLHELLO_RETRY_PROTOCOL                    =>   -84,   # error: retry testing this protocol for this host
-    OERR_SSLHELLO_ABORT_CIPHERS                     =>   -79,   # error: abort testing this cipher(s) for this protocol
-    OERR_SSLHELLO_RETRY_CIPHERS                     =>   -74,   # error: retry testing this cipher(s) for this protocol
-    OERR_SSLHELLO_ABORT_EXTENSIONS                  =>   -69,   # error: abort testing this extensions for this ciphers
-    OERR_SSLHELLO_RETRY_EXTENSIONS                  =>   -64,   # error: retry testing this extensions for this ciphers
-    OERR_SSLHELLO_TEST_EXTENSIONS                   =>   -59,   # test all possible values for listed extensions
-    OERR_SSLHELLO_RETRY_RECORD                      =>   -49,   # error: retry to send this record (e.g. DTLS)
-    OERR_SSLHELLO_MERGE_RECORD_FRAGMENTS            =>   -39,   # try to merge fragmented record
-    OERR_SSLHELLO_MERGE_DTLS                        =>   -29,   # try to merge fragmented DTLS packets
-    OERR_SSLHELLO_ERROR_MESSAGE_IGNORED             =>    -1,   # error message ignored
+    OERR_SSLHELLO_ABORT_PROGRAM                 => -9000,   # error: abort running this program -> exit
+    OERR_SSLHELLO_ABORT_HOST                    =>   -99,   # error: abort testing this host
+    OERR_SSLHELLO_RETRY_HOST                    =>   -94,   # error: retry testing this host
+    OERR_SSLHELLO_ABORT_PROTOCOL                =>   -89,   # error: abort testing this protocol for this host
+    OERR_SSLHELLO_RETRY_PROTOCOL                =>   -84,   # error: retry testing this protocol for this host
+    OERR_SSLHELLO_ABORT_CIPHERS                 =>   -79,   # error: abort testing this cipher(s) for this protocol
+    OERR_SSLHELLO_RETRY_CIPHERS                 =>   -74,   # error: retry testing this cipher(s) for this protocol
+    OERR_SSLHELLO_ABORT_EXTENSIONS              =>   -69,   # error: abort testing this extensions for this ciphers
+    OERR_SSLHELLO_RETRY_EXTENSIONS              =>   -64,   # error: retry testing this extensions for this ciphers
+    OERR_SSLHELLO_TEST_EXTENSIONS               =>   -59,   # test all possible values for listed extensions
+    OERR_SSLHELLO_RETRY_RECORD                  =>   -49,   # error: retry to send this record (e.g. DTLS)
+    OERR_SSLHELLO_MERGE_RECORD_FRAGMENTS        =>   -39,   # try to merge fragmented record
+    OERR_SSLHELLO_MERGE_DTLS                    =>   -29,   # try to merge fragmented DTLS packets
+    OERR_SSLHELLO_ERROR_MESSAGE_IGNORED         =>    -1,   # error message ignored
 };
 our $VERSION = OERR_VERSION;
 
@@ -138,7 +138,7 @@ our @EXPORT_OK =  ( qw(
 our %EXPORT_TAGS =  (
     subs =>             [qw(new is_err get_err_str reset_err get_err_val 
                             get_err_type get_err_type_name get_err_hash get_all_err_types
-    )],                                                         #all subs besides 'version'
+    )],                 #all subs besides 'version'
     sslhello_contants => [qw(
         OERR_VERSION
         OERR_NO_ERROR
@@ -164,34 +164,34 @@ our %EXPORT_TAGS =  (
 
 # reverse hash to show the names of the used constants in the modules that use this package
 my $ERROR_TYPE_RHASH_REF = { 
-   (OERR_NO_ERROR)                                  => 'OERR_NO_ERROR',
-   (OERR_UNKNOWN_TYPE)                              => 'OERR_UNKNOWN_TYPE',
-   (OERR_SSLHELLO_ABORT_PROGRAM)                    => 'OERR_SSLHELLO_ABORT_PROGRAM',
-   (OERR_SSLHELLO_ABORT_HOST)                       => 'OERR_SSLHELLO_ABORT_HOST',
-   (OERR_SSLHELLO_RETRY_HOST)                       => 'OERR_SSLHELLO_RETRY_HOST',
-   (OERR_SSLHELLO_ABORT_PROTOCOL)                   => 'OERR_SSLHELLO_ABORT_PROTOCOL',
-   (OERR_SSLHELLO_RETRY_PROTOCOL)                   => 'OERR_SSLHELLO_RETRY_PROTOCOL',
-   (OERR_SSLHELLO_ABORT_CIPHERS)                    => 'OERR_SSLHELLO_ABORT_CIPHERS',
-   (OERR_SSLHELLO_RETRY_CIPHERS)                    => 'OERR_SSLHELLO_RETRY_CIPHERS',
-   (OERR_SSLHELLO_ABORT_EXTENSIONS)                 => 'OERR_SSLHELLO_ABORT_EXTENSIONS',
-   (OERR_SSLHELLO_RETRY_EXTENSIONS)                 => 'OERR_SSLHELLO_RETRY_EXTENSIONS',
-   (OERR_SSLHELLO_TEST_EXTENSIONS)                  => 'OERR_SSLHELLO_TEST_EXTENSIONS',
-   (OERR_SSLHELLO_RETRY_RECORD)                     => 'OERR_SSLHELLO_RETRY_RECORD',
-   (OERR_SSLHELLO_MERGE_RECORD_FRAGMENTS)           => 'OERR_SSLHELLO_MERGE_RECORD_FRAGMENTS',
-   (OERR_SSLHELLO_MERGE_DTLS)                       => 'OERR_SSLHELLO_MERGE_DTLS',
-   (OERR_SSLHELLO_ERROR_MESSAGE_IGNORED)            => 'OERR_SSLHELLO_ERROR_MESSAGE_IGNORED',
+   (OERR_NO_ERROR)                              => 'OERR_NO_ERROR',
+   (OERR_UNKNOWN_TYPE)                          => 'OERR_UNKNOWN_TYPE',
+   (OERR_SSLHELLO_ABORT_PROGRAM)                => 'OERR_SSLHELLO_ABORT_PROGRAM',
+   (OERR_SSLHELLO_ABORT_HOST)                   => 'OERR_SSLHELLO_ABORT_HOST',
+   (OERR_SSLHELLO_RETRY_HOST)                   => 'OERR_SSLHELLO_RETRY_HOST',
+   (OERR_SSLHELLO_ABORT_PROTOCOL)               => 'OERR_SSLHELLO_ABORT_PROTOCOL',
+   (OERR_SSLHELLO_RETRY_PROTOCOL)               => 'OERR_SSLHELLO_RETRY_PROTOCOL',
+   (OERR_SSLHELLO_ABORT_CIPHERS)                => 'OERR_SSLHELLO_ABORT_CIPHERS',
+   (OERR_SSLHELLO_RETRY_CIPHERS)                => 'OERR_SSLHELLO_RETRY_CIPHERS',
+   (OERR_SSLHELLO_ABORT_EXTENSIONS)             => 'OERR_SSLHELLO_ABORT_EXTENSIONS',
+   (OERR_SSLHELLO_RETRY_EXTENSIONS)             => 'OERR_SSLHELLO_RETRY_EXTENSIONS',
+   (OERR_SSLHELLO_TEST_EXTENSIONS)              => 'OERR_SSLHELLO_TEST_EXTENSIONS',
+   (OERR_SSLHELLO_RETRY_RECORD)                 => 'OERR_SSLHELLO_RETRY_RECORD',
+   (OERR_SSLHELLO_MERGE_RECORD_FRAGMENTS)       => 'OERR_SSLHELLO_MERGE_RECORD_FRAGMENTS',
+   (OERR_SSLHELLO_MERGE_DTLS)                   => 'OERR_SSLHELLO_MERGE_DTLS',
+   (OERR_SSLHELLO_ERROR_MESSAGE_IGNORED)        => 'OERR_SSLHELLO_ERROR_MESSAGE_IGNORED',
 };
 
 # static hash object to store the last error
 my %err_hash = (
-        type      => OERR_NO_ERROR,
-        module    => "",
-        sub       => OERR_UNDEFINED_TXT,
-        id        => "",
-        message   => OERR_UNDEFINED_TXT,
-        print     => 0,
-        warn      => 0,
-        trace     => 1,
+    type      => OERR_NO_ERROR,
+    module    => "",
+    sub       => OERR_UNDEFINED_TXT,
+    id        => "",
+    message   => OERR_UNDEFINED_TXT,
+    print     => 0,
+    warn      => 0,
+    trace     => 1,
 );
 
 
@@ -202,31 +202,31 @@ sub version {
     local $\ = ""; # no auto '\n' at the end of the line
     print "OSaft::error_handler (". OERR_VERSION .")\n";
     return;
-}
+} # version
 
 
 #?---------------------------------------------------------------------------------------
 #? sub _compile_err_str (;$)
 #? internal sub that compiles a string ($err_str) based on the hash keys of $err_hash
-#? $err_hash{type} should be defined and known. If it isn't the err_string remarks this lack
-#? all other hash keys are suppressed if they do not exist or are not defined
-#? no input variables needed
+#? $err_hash{type} should be defined and known. If it isn't the err_string
+#? remarks this lack all other hash keys are suppressed if they do not exist
+#? or are not defined no input variables needed
 #? if the optional variable 'hash_ref' is used, the referenced hash is used instead of the $err_hash
 
 sub _compile_err_str {
-    my ($arg_ref) = @_;                                         # $arg_ref is optional, internal function: no $class!
+    my ($arg_ref) = @_;                         # $arg_ref is optional, internal function: no $class!
 
-    unless (defined ($arg_ref) && ($arg_ref)) {                 # use \$err_hash if $arg_ref is not defined (default)
+    unless (defined ($arg_ref) && ($arg_ref)) { # use \$err_hash if $arg_ref is not defined (default)
         $arg_ref = \%err_hash;
     }  elsif ($err_hash{trace}) {
         print "    \$arg_ref defined: $arg_ref\n";
     }
 
     my $err_str="";
-    $err_str  = $arg_ref->{module}                          if ( (exists ($arg_ref->{module}))  && (defined ($arg_ref->{module}))  );
-    $err_str .= "::".$arg_ref->{sub}                        if ( (exists ($arg_ref->{sub}))     && (defined ($arg_ref->{sub}))     );
-    $err_str .= " (".$arg_ref->{id}."):"                    if ( (exists ($arg_ref->{id}))      && (defined ($arg_ref->{id}))      );
-    $err_str .= " ".$arg_ref->{message}                     if ( (exists ($arg_ref->{message})) && (defined ($arg_ref->{message})) );
+    $err_str  = $arg_ref->{module}              if ( (exists ($arg_ref->{module}))  && (defined ($arg_ref->{module}))  );
+    $err_str .= "::".$arg_ref->{sub}            if ( (exists ($arg_ref->{sub}))     && (defined ($arg_ref->{sub}))     );
+    $err_str .= " (".$arg_ref->{id}."):"        if ( (exists ($arg_ref->{id}))      && (defined ($arg_ref->{id}))      );
+    $err_str .= " ".$arg_ref->{message}         if ( (exists ($arg_ref->{message})) && (defined ($arg_ref->{message})) );
     if ( (exists ($arg_ref->{type})) && (defined ($arg_ref->{type})) ) {    # type key is used
         # check if is type is known (defind in the reverse hash):
         if ( (exists ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) ) {
@@ -242,30 +242,33 @@ sub _compile_err_str {
         $err_str .= " [Type=".(OERR_UNDEFINED_TXT)."]";
     }
     return ($err_str);
-}
+} # _compile_err_str
 
 
 #?---------------------------------------------------------------------------------------
 #? sub new($$):
 #? set default values of an error hash and set values for received elements
 #? parameters:
-#? $class:      is added automatically when this method is used
-#? $arg_ref:    the referenced hash ovwerwrites the $err_hash if its type is more fatal than the old type
+#?   $class:      added automatically when method is used
+#?   $arg_ref:    the referenced hash ovwerwrites the $err_hash if its type is
+#?                more fatal than the old type
 sub new {
-    my ($class, $arg_ref) = @_;                                 # $class is not used
+    my ($class, $arg_ref) = @_;                 # $class is not used
     my $tmp_err_str       = "";
+    my $tmp_text          = "";
 
     # error handling inside error handling:
     # undefined/unknown error type in static err_hash
     unless ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) ) {
         $tmp_err_str = _compile_err_str();
-        print "OSaft::error_handler->new: internal error: unknown error type in \"$tmp_err_str\"." if ($err_hash{trace});
-        carp ("OSaft::error_handler->new: internal error: unknown error type in \"$tmp_err_str\".");
-        $err_hash{type} = OERR_UNKNOWN_TYPE;                    # overwrite error type to 'unknown', which is the most fatal
+        $tmp_text    = "OSaft::error_handler->new: internal error: unknown error type in";
+        print qq($tmp_text "$tmp_err_str".) if ($err_hash{trace});
+        carp (qq($tmp_text "$tmp_err_str".));
+        $err_hash{type} = OERR_UNKNOWN_TYPE;    # define error type to 'unknown', which is the most fatal
     } else {
         # undefined $arg_ref: no new error
         unless (defined ($arg_ref)) {
-            $arg_ref->{type}    = OERR_UNKNOWN_TYPE;            # define error type to 'unknown', which is the most fatal
+            $arg_ref->{type}    = OERR_UNKNOWN_TYPE; # define error type to 'unknown', which is the most fatal
             $arg_ref->{module}  = 'OSaft::error_handler';
             $arg_ref->{sub}     = 'new';
             $arg_ref->{message} = "internal error: undefined \$arg_ref";
@@ -277,36 +280,37 @@ sub new {
         # undefined/unknown Error Type in new $arg_ref->{type}
         unless ( (exists ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) ) {
             $tmp_err_str = _compile_err_str($arg_ref);
-            print "OSaft::error_handler->new: internal error: unknown new error type in \"$tmp_err_str\"." if ($err_hash{trace});
-            carp ("OSaft::error_handler->new: internal error: unknown new error type in \"$tmp_err_str\".");
-            $arg_ref->{type} = OERR_UNKNOWN_TYPE;               # define error type to 'unknown', which is the most fatal
+            print qq($tmp_text "$tmp_err_str".) if ($err_hash{trace});
+            carp (qq($tmp_text "$tmp_err_str".));
+            $arg_ref->{type} = OERR_UNKNOWN_TYPE; # define error type to 'unknown', which is the most fatal
         }
-        if ($arg_ref->{type} > $err_hash{type}) {               # New Error is less important than the previous
+        if ($arg_ref->{type} > $err_hash{type}) { # new error is less important than the previous
              my $old_err_str =  _compile_err_str();
-             $tmp_err_str =     _compile_err_str($arg_ref);
-             print ("OSaft::error_handler->new: new error type in \"$tmp_err_str\" is less important than the previous \"$old_err_str\".") if ($err_hash{trace});
-             carp ("OSaft::error_handler->new: new error type in \"$tmp_err_str\" is less important than the previous \"$old_err_str\".");
+             $tmp_err_str    =  _compile_err_str($arg_ref);
+             $tmp_text       = "OSaft::error_handler->new: new error type in";
+             print qq($tmp_text "$tmp_err_str" is less important than the previous "$old_err_str".) if ($err_hash{trace});
+             carp (qq($tmp_text "$tmp_err_str" is less important than the previous "$old_err_str".));
              return 0;
         }
     }
     %err_hash = (
-        %err_hash,                                              # previous keys and values
-        %$arg_ref                                               # keys and values overwrite the previous
+        %err_hash,                              # previous keys and values
+        %$arg_ref                               # keys and values overwrite the previous
     ) if ($arg_ref);
 
     my $err_str = _compile_err_str();
     print "$err_str\n" if ($err_hash{print});
     carp ($err_str)    if ($err_hash{warn});
     return 1;
-}
+} # new
 
 
 #?---------------------------------------------------------------------------------------
 #? reset the error_handler (no error)
 #? opionally owerwrite it with the hash values referenced by arg_ref
 sub reset_err {
-    my ($class, $arg_ref) = @_;                                 # $class is not used
-    %err_hash = (                                               # reset to default values and overwrite by optional hash arg_ref
+    my ($class, $arg_ref) = @_;                 # $class is not used
+    %err_hash = (                               # reset to default values and overwrite by optional hash arg_ref
         type      => OERR_NO_ERROR,
         module    => "",
         sub       => OERR_UNKNOWN_TXT,
@@ -317,8 +321,8 @@ sub reset_err {
         trace     => 1,
     );
     %err_hash = (
-        %err_hash,                                              # previous keys and values
-        %$arg_ref                                               # keys and values overwrite the previous if $arg_ref is defined and not empty
+        %err_hash,                              # previous keys and values
+        %$arg_ref                               # keys and values overwrite the previous if $arg_ref is defined and not empty
     ) if ($arg_ref);
 
     if ($err_hash{trace}>2) {
@@ -326,7 +330,7 @@ sub reset_err {
         print "$err_str\n";
     }
     return 1;
-}
+} # reset_err
 
 
 #?---------------------------------------------------------------------------------------
@@ -342,7 +346,7 @@ sub is_err {
        carp ($err_str);
        return (1);
    }
-}
+} # is_err
 
 
 #?---------------------------------------------------------------------------------------
@@ -356,7 +360,7 @@ sub get_err_type {
         carp ("Error type is ".OERR_UNDEFINED_TXT);
     }
     return (undef);
-}
+} # get_err_type
 
 
 #?---------------------------------------------------------------------------------------
@@ -371,20 +375,20 @@ sub get_err_type_name {
         carp ("Error type is ".OERR_UNDEFINED_TXT);
     }
     return (OERR_UNDEFINED_TXT);
-}
+} # get_err_type_name
 
 
 #?---------------------------------------------------------------------------------------
 #? sub get_err_val():
 #? get a single value of an error hash element
-#? variables:
-#? $class:              is automatically added when method is called
-#? $key_arg:            hash key where the value sould be fetched
+#? parameters:
+#?   $class:      added automatically when method is used
+#?   $key_arg:    hash key where the value sould be fetched
 sub get_err_val {
-    my ($class, $key_arg) = @_;                                 # $class is not used
+    my ($class, $key_arg) = @_;                 # $class is not used
     return ($err_hash {$key_arg}) if ( (exists ($err_hash {$key_arg})) && (defined ($err_hash {$key_arg})) );
     return;
-}
+} # get_err_val
 
 
 #?---------------------------------------------------------------------------------------
@@ -394,53 +398,55 @@ sub get_err_val {
 sub get_err_str {
     unless ( (exists ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$err_hash{type}})) ) { # undefined Error Type
         my $tmp_err_str = _compile_err_str();
-        print ("OSaft::error_handler->get_err_str: internal error: unknown error type in \"$tmp_err_str\".\n") if ($err_hash{trace});
-        carp ("OSaft::error_handler->get_err_str: internal error: unknown error type in \"$tmp_err_str\".\n");
-        $err_hash{type} = OERR_UNKNOWN_TYPE;                    # overwrite error type to unknown, which is the most fatal
+        my$tmp_text     = "OSaft::error_handler->get_err_str: internal error: unknown error type in";
+        print qq($tmp_text "$tmp_err_str".\n) if ($err_hash{trace});
+        carp (qq($tmp_text "$tmp_err_str".\n));
+        $err_hash{type} = OERR_UNKNOWN_TYPE;    # overwrite error type to unknown, which is the most fatal
     }
     return (_compile_err_str());
-}
+} #get_err_str
 
 
 #?---------------------------------------------------------------------------------------
 #? sub get_err_hash ($;$$):
 #? get the error hash as string (mainly used for debugging)
-#? variables:
-#? $class: added automaticially if called with 'error_handler->get_err_hash'
-#? $prefix after a new line (e.g. some spaces for the indent)
-#? $hash_ref: optional ref to an error_hash (default: %err_hash)
+#? parameters:
+#?   $class:      added automatically when method is used
+#?   $prefix:     optional prefix after new line (e.g. some spaces for the indent)
+#?   $hash_ref:   optional ref to an error_hash (default: %err_hash)
 #? returns the compiled output
 sub get_err_hash {
-    my ($class, $prefix, $hash_ref) = @_;                       # $class is not used later, it is added automatically when calling the method
+    my ($class, $prefix, $hash_ref) = @_;           # $class is not used later, it is added automatically when calling the method
     my $err_hash_str                = "";
-    $prefix =   ""         if (!defined($prefix));              # default is no indent
-    $hash_ref = \%err_hash if (!defined($hash_ref));            # default is the error_hash
+    $prefix =   ""         if (!defined($prefix));  # default is no indent
+    $hash_ref = \%err_hash if (!defined($hash_ref));# default is the error_hash
     print ">get_err_hash\n" if ($err_hash{trace}>2);
     #_trace "\n\$class =   $class\n";
     #_trace "\$hash_ref = ".\%$err_hash."\n";
     foreach my $err_key (sort (keys(%$hash_ref)) ) {
-        $err_hash_str .= $prefix if ($err_hash_str !~ /^$/);    # not the first line
+        $err_hash_str .= $prefix if ($err_hash_str !~ /^$/x);   # not the first line
         $err_hash_str .= "\$hash->\{$err_key\} => ".$hash_ref->{$err_key}."\n";
     }
     return ($err_hash_str);
-}
+} # get_err_hash
 
 
 #?---------------------------------------------------------------------------------------
 #? sub get_all_err_types($;$)
-#? get all possible defined error types and their internal representation as a string (mainly used for debugging)
-#? variable:
-#? $class:      is added automatically when this method is used
-#? $prefix:     optional prefix after new line (e.g. some spaces for the ident)
+#? get all possible defined error types and their internal representation as
+#? a string (mainly used for debugging)
+#? parameters:
+#?   $class:      added automatically when method is used
+#?   $prefix:     optional prefix after new line (e.g. some spaces for the indent)
 sub get_all_err_types {
     my ($class, $prefix) = @_;
     my $err_types_str="";
     print ">get_all_err_types\n" if ($err_hash{trace});
     foreach my $key (sort {$a <=> $b} (keys(%$ERROR_TYPE_RHASH_REF)) ) {
-        $err_types_str .= $prefix if ($err_types_str !~ /^$/);  # not the first line
+        $err_types_str .= $prefix if ($err_types_str !~ /^$/x); # not the first line
         $err_types_str .= "ERROR_TYPE_RHASH_REF\{$key\} => ".$ERROR_TYPE_RHASH_REF->{$key}."\n";
     }
     return ($err_types_str);
-}
+} # get_all_err_types
 
 1;
