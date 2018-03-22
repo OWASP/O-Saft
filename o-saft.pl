@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.788 18/01/21 10:20:03",
+    SID         => "@(#) yeast.pl 1.789 18/03/22 23:57:50",
     STR_VERSION => "18.01.18",          # <== our official version number
 };
 
@@ -92,7 +92,7 @@ sub _yeast_TIME(@)  {
         printf("#$me %02s:%02s:%02s CMD: %s\n", (localtime($now))[2,1,0], @txt);
     }
     return;
-}
+} # _yeast_TIME
 sub _yeast_EXIT($)  {
     # exit if parameter matches given argument in @ARGV
     my $txt =  shift;   # example: INIT0 - initialization start
@@ -103,7 +103,7 @@ sub _yeast_EXIT($)  {
         exit 0;
     }
     return;
-}
+} # _yeast_EXIT
 
 #$DB::single=1;  # for debugging; start with: PERL5OPT='-dt' $0
 
@@ -1849,7 +1849,7 @@ sub _isnummber          {
     return 0 if not defined $val;
     return 0 if $val eq '';
     return ($val ^ $val) ? 0 : 1
-}
+} # _isnummber
 
 use IO::Socket::INET;
 sub _load_modules       {
@@ -2481,7 +2481,7 @@ sub _resetchecks        {
     $cfg{'done'}->{'ciphers_get'} = 0;
     _initchecks_val();
     return;
-}
+} # _resetchecks
 
 sub _prot_cipher($$)    { my @txt = @_; return " " . join(":", @txt); }
     # return string consisting of given parameters separated by : and prefixed with a space
@@ -2892,7 +2892,7 @@ sub _need_this($)       {
     my $is  = join("|", @{$cfg{'do'}});
        $is  =~ s/\+/\\+/g;    # we have commands with +, needs to be escaped
     return grep{/^($is)$/} @{$cfg{$key}};
-}
+} # _need_this
 sub _need_cipher()      { return _need_this('need-cipher');     };
 sub _need_default()     { return _need_this('need-default');    };
 sub _need_checkssl()    { return _need_this('need-checkssl');   };
@@ -5703,7 +5703,7 @@ sub printfooter($)  {
     return;
 } # printfooter
 
-sub printtitle($$$$) {
+sub printtitle($$$$)    {
     #? print title according given legacy format
     my ($legacy, $ssl, $host, $port) = @_;
     local    $\ = "\n";
@@ -5991,7 +5991,7 @@ sub print_ciphertotals($$$$) {
     return;
 } # print_ciphertotals
 
-sub _is_print       {
+sub _is_print           {
     #? return 1 if parameter indicate printing
     my $enabled = shift;
     my $print_disabled = shift;
@@ -6209,7 +6209,7 @@ sub printciphersummary  {
     return;
 } # printciphersummary
 
-sub printdata($$$)  {
+sub printdata($$$)      {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
     local $\ = "\n";
@@ -6249,7 +6249,7 @@ sub printdata($$$)  {
     return;
 } # printdata
 
-sub printchecks($$$) {
+sub printchecks($$$)    {
     #? print results stored in %checks
     my ($legacy, $host, $port) = @_;
     my $value = "";
@@ -6284,7 +6284,7 @@ sub printchecks($$$) {
 #| definitions: print functions for help and information
 #| -------------------------------------
 
-sub printquit       {
+sub printquit           {
     #? print internal data
     # call this function with:
     #    $0 `\
@@ -6320,7 +6320,7 @@ sub printquit       {
     return;
 } # printquit
 
-sub __SSLeay        {
+sub __SSLeay            {
     #? internal wrapper for Net::SSLeay::SSLeay()
     if (1.49 > $Net::SSLeay::VERSION) {
         my $txt  = "ancient version Net::SSLeay $Net::SSLeay::VERSION < 1.49;";
@@ -6344,7 +6344,7 @@ sub printversionmismatch {
 
 ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #  NOTE: yes, it is high complexity, but that's the nature of printing all information
-sub printversion    {
+sub printversion        {
     #? print program and module versions
     local $\ = "\n";
     if ($cfg{'verbose'} > 0) {
@@ -8457,10 +8457,35 @@ The reference to such an annotation uses  SEE  in the code.
 All following text is supposed to be read by humans!
 
 The term  Perl  is used when the programming language in general is meant.
+
 The term  perl  is used when the program perl (or perl.exe) is meant.
+
 The term  Perl::Critic  is used when the functionality of the Perl::Critic
 module, or any program using it, is meant.
+
 The term   perlcritic   is used when the program perlcritic is meant.
+
+
+=head2 Perl:perlcritic
+
+perlcritic  is used for general code quality. Our code isn't accademically
+perfect, no is  perlcritic.  Hence we use  perlcritic's pragmas to disable
+some checks as needed. This is done in general in perlcritic's config file
+.perlcritic  and selectively in the code using  "## no critic"  pragma.
+All disabled checks are documented, wether in .perlcritic or as pragma.
+
+Following pragmas are used in various files:
+
+* InputOutput::ProhibitBacktickOperators)
+
+    This check seems to be a very perosnal opinion of perlcritic's author,
+    see descriptions like   "... but I find that they make a lot of noise"
+    and   "... I think its better to use ..." .
+    Using IPC::Open3 here is simply over-engineered.
+
+* Documentation::RequirePodSections
+
+    Our POD in *pm is fine, perlcritic (severity 2) is too pedantic here.
 
 
 =head2 Perl:import include
