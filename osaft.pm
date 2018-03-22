@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.01.18',  # official version number of this file
+    OSAFT_VERSION   => '18.03.18',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.137 18/01/21 10:15:32',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.138 18/03/22 23:46:35',
 
 };
 
@@ -428,7 +428,7 @@ our %ec_curve_types = ( # RFC 4492
     #----+-----------------------------+----+---+------------------------------
 ); # ec_curve_types
 
-# Torsten: %ECC_NAMED_CURVE = 
+# Torsten: %ECC_NAMED_CURVE =
 # http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-10
 # Value =>   Description bits(added) DTLS-OK Reference
 # our %named_curves =
@@ -455,7 +455,7 @@ our %tls_curves = (
    15 => [qw( secp160k1                         4492  Y      -  160 1.3.132.0.9          )],
    16 => [qw( secp160r1                         4492  Y      -  160 1.3.132.0.8          )],
    17 => [qw( secp160r2                         4492  Y      -  160 1.3.132.0.30         )],
-   18 => [qw( secp192k1                         4492  Y      -  192 1.3.132.0.31         )], # ANSI X9.62 prime192v1, NIST P-192, 
+   18 => [qw( secp192k1                         4492  Y      -  192 1.3.132.0.31         )], # ANSI X9.62 prime192v1, NIST P-192,
    19 => [qw( secp192r1                         4492  Y  P-192  192 1.2.840.10045.3.1.1  )], # ANSI X9.62 prime192v1
    20 => [qw( secp224k1                         4492  Y       - 224 1.3.132.0.32         )],
    21 => [qw( secp224r1                         4492  Y  P-224  224 1.3.132.0.33         )],
@@ -471,7 +471,7 @@ our %tls_curves = (
    30 => [qw( ecdh_x448                         4492bis Y    -  448                      )], # -"-
 #  31 => [qw( eddsa_ed25519                     4492bis Y    -  448 1.3.101.100          )], # Signature curves, see https://tools.ietf.org/html/draft-ietf-tls-tls13-11
 #  32 => [qw( eddsa_ed448                       4492bis Y    -  448 1.3.101.101          )], # -"-
- 
+
   256 => [qw( ffdhe2048                         ietf-tls-negotiated-ff-dhe-10 Y - 2048   )],
   257 => [qw( ffdhe3072                         ietf-tls-negotiated-ff-dhe-10 Y - 3072   )],
   258 => [qw( ffdhe4096                         ietf-tls-negotiated-ff-dhe-10 Y - 4096   )],
@@ -1338,7 +1338,7 @@ our %cfg = (
                     # Each range is defined as a string like  key=>"2..5, c..f"
                     # instead of an array like  key=>[2..5, c..f]  which would
                     # result in  key=>[2 3 4 5 c d e f] .
-                    # This expansion of the range is done at compile time  and 
+                    # This expansion of the range is done at compile time  and
                     # so will consume a huge amount of memory at runtime.
                     # Using a string instead of the expanded array reduces the
                     # memory footprint,  but requires use of  eval()  when the
@@ -1477,7 +1477,7 @@ our %cfg = (
     'cmd-bsi'       => [        # commands for +bsi
                                 # see also: commands-HINT
                         qw(after dates crl cipher_rc4 renegotiation
-                           tr_02102+ tr_02102- tr_03116+ tr_03116- 
+                           tr_02102+ tr_02102- tr_03116+ tr_03116-
                        )],
     'cmd-pfs'       => [qw(cipher_pfs cipher_pfsall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname certfqdn)],  # commands for +sni
@@ -1494,7 +1494,7 @@ our %cfg = (
                        ],
     'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
     'cmd-NL'        => [        # commands which need NL when printed
-                                # they should be available with +info --v only 
+                                # they should be available with +info --v only
                         qw(certificate extensions pem pubkey sigdump text chain chain_verify)
                        ],
                     # need-* lists used to improve performance and warning messages
@@ -1739,7 +1739,7 @@ our %cfg = (
         'encryption'    =>'(?:encryption|ecPublicKey)', # anything containing this string
         'encryption_ok' =>'(?:(?:(?:(?:md[245]|ripemd160|sha(?:1|224|256|384|512))with)?[rd]saencryption)|id-ecPublicKey)',
                        # well known strings to identify signature and public key encryption
-                       # rsaencryption, dsaencryption, md[245]withrsaencryption, 
+                       # rsaencryption, dsaencryption, md[245]withrsaencryption,
                        # ripemd160withrsa shaXXXwithrsaencryption
                        # id-ecPublicKey
         'encryption_no' =>'(?:rsa(?:ssapss)?|sha1withrsa|dsawithsha1?|dsa_with_sha256)',
@@ -2009,16 +2009,16 @@ sub get_cipher_suitealias{ my $c=shift; return $cipher_alias{$c}[0] if (defined 
 # each function returns a spcific value (column) from the %cipher table
 # see %ciphers_desc about description of the columns
 # returns STR_UNDEF if requested cipher is missing
-sub get_cipher_sec($)  { my $c=shift; return $ciphers{$c}[0] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_ssl($)  { my $c=shift; return $ciphers{$c}[1] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_enc($)  { my $c=shift; return $ciphers{$c}[2] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_bits($) { my $c=shift; return $ciphers{$c}[3] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_mac($)  { my $c=shift; return $ciphers{$c}[4] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_auth($) { my $c=shift; return $ciphers{$c}[5] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_keyx($) { my $c=shift; return $ciphers{$c}[6] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_score($){ my $c=shift; return $ciphers{$c}[7] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_tags($) { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
-sub get_cipher_desc($) { my $c=shift;
+sub get_cipher_sec($)   { my $c=shift; return $ciphers{$c}[0] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_ssl($)   { my $c=shift; return $ciphers{$c}[1] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_enc($)   { my $c=shift; return $ciphers{$c}[2] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_bits($)  { my $c=shift; return $ciphers{$c}[3] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_mac($)   { my $c=shift; return $ciphers{$c}[4] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_auth($)  { my $c=shift; return $ciphers{$c}[5] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_keyx($)  { my $c=shift; return $ciphers{$c}[6] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_score($) { my $c=shift; return $ciphers{$c}[7] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_tags($)  { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
+sub get_cipher_desc($)  { my $c=shift;
     # get description for specified cipher from %ciphers
     if (! defined $ciphers{$c}) {
        _warn("016: undefined cipher description for '$c'"); # TODO: correct %ciphers
@@ -2028,7 +2028,7 @@ sub get_cipher_desc($) { my $c=shift;
     shift @c;
     return @c if ((grep{/^$c/} %ciphers)>0);
     return "";
-}
+} # get_cipher_desc
 
 =pod
 
@@ -2042,7 +2042,7 @@ Check if given C<%cipher> name is a known cipher.
 
 =cut
 
-sub get_cipher_hex($)  {
+sub get_cipher_hex      {
     # find hex key for cipher in %cipher_names or %cipher_alias
     # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $c = shift;
@@ -2058,7 +2058,7 @@ sub get_cipher_hex($)  {
     return "";
 } # get_cipher_hex
 
-sub get_cipher_name($) {
+sub get_cipher_name     {
     # check if given cipher name is a known cipher
     # checks in %ciphers if nof found in %cipher_names
     # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
@@ -2090,7 +2090,7 @@ Call external $cmd (which is a full path for L<openssl|openssl>, usually) execut
 to retrive its version. Returns version string.
 =cut
 
-sub get_openssl_version($) {
+sub get_openssl_version {
     # we do a simple call, no checks, should work on all platforms
     # get something like: OpenSSL 1.0.1k 8 Jan 2015
     my $cmd  = shift;
@@ -2111,7 +2111,7 @@ Parse output of `openssl -msg' (given in $data) and returns DH parameters.
 Returns empty string if none found.
 =cut
 
-sub get_dh_paramter($$) {
+sub get_dh_paramter     {
     my ($cipher, $data) = @_;
     if ($data =~ m#Server Temp Key:#) {
         $data =~ s/.*?Server Temp Key:\s*([^\n]*)\n.*/$1/si;
@@ -2174,7 +2174,7 @@ sub get_dh_paramter($$) {
     chomp $dh;
     _trace("get_dh_paramter(){ ServerKeyExchange\t= $dh }");
     return $dh;
-}; # get_dh_paramter
+} # get_dh_paramter
 
 =pod
 
@@ -2298,7 +2298,7 @@ sub sort_cipher_names   {
 
 # internal methods
 
-sub _prot_init_value {
+sub _prot_init_value    {
     #? initialize default values in %prot
     foreach my $ssl (keys %prot) {
         $prot{$ssl}->{'cnt'}            = 0;
@@ -2351,7 +2351,7 @@ sub _cmd_init   {
     #? initialize dynamic settings in %cfg for commands
     foreach my $key (keys %cfg) {       # well-known "summary" commands
         push(@{$cfg{'commands-CMD'}}, $key) if ($key =~ m/^cmd-/);
-    } 
+    }
     return;
 } # _cmd_init
 
@@ -2381,7 +2381,7 @@ sub _osaft_init {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     return;
-}; # _osaft_init
+} # _osaft_init
 
 
 =pod
@@ -2410,7 +2410,7 @@ sub osaft_sleep {
     return;
 } # osaft_sleep
 
-sub osaft_done() {};    # dummy to check successful include
+sub osaft_done  {};     # dummy to check successful include
 
 _osaft_init();          # complete initializations
 
@@ -2443,12 +2443,12 @@ purpose of this module is defining variables. Hence we export them.
 # TODO: interanl wrappers for main's methods
 #       they are defined after the  ## PACKAGE  mark to avoid errors in the
 #       script generated by contrib/gen_standalone.sh
-sub _trace(@)   { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace0(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace1(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace2(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace3(@)  { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _warn(@)    { ::_warn(@_);  return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace      { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace0     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace1     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _warn       { ::_warn(@_);  return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
 unless (defined caller) {       # print myself or open connection
     printf("# %s %s\n", __PACKAGE__, $VERSION);
@@ -2462,7 +2462,7 @@ unless (defined caller) {       # print myself or open connection
         printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
         exit 0;
     }
-}
+} # !caller
 
 1;
 
