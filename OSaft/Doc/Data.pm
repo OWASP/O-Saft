@@ -14,13 +14,18 @@
 ## no critic qw(ControlStructures::ProhibitPostfixControls)
 #        We believe it's better readable (severity 2 only)
 
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#        Most of our regex are easy to read, it's the nature of the code herein
+#        to have simple and complex regex.  /x is used for human readability as
+#        needed.
+
 package OSaft::Doc::Data;
 
 use strict;
 use warnings;
 
 my  $VERSION    = "18.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.5 18/01/16 23:44:14";
+my  $SID        = "@(#) Data.pm 1.6 18/03/22 22:21:55";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -267,6 +272,11 @@ sub _main_help  {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$0]) );
     }
+    ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        # This check is a very perosnal opinion of perlcritic's author, see
+        # descriptions like "... but I find that they make a lot of noise ..."
+        # and "... I think its better to use ..."
+        # Using IPC::Open3 here is simply over-engineered.
     if (qx(perldoc -V)) {
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
