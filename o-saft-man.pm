@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.229 18/01/23 16:51:05";
+my  $man_SID= "@(#) o-saft-man.pm 1.230 18/03/22 23:32:54";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -54,7 +54,7 @@ local $\    = "";
 
 #| definitions: internal functions
 #| -------------------------------------
-sub _man_dbx(@) { my @txt=@_; print "#" . $ich . " CMD: " . join(" ", @txt, "\n") if ((grep{/^--(?:v|trace.?CMD)/i} @ARGV)>0); return; } # similar to _y_CMD
+sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(" ", @txt, "\n") if ((grep{/^--(?:v|trace.?CMD)/i} @ARGV)>0); return; } # similar to _y_CMD
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
     # options, which is not performant, but fast enough here.
@@ -221,7 +221,7 @@ sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n"
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", ""); }
 
-sub _man_html   {    ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+sub _man_html       { ## no critic qw(Variables::RequireLocalizedPunctuationVars)
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $h = 0;
@@ -257,7 +257,7 @@ sub _man_html   {    ## no critic qw(Variables::RequireLocalizedPunctuationVars)
     return;
 } # _man_html
 
-sub _man_head   {       ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
     my $len1 = shift;   # this line triggers Perl::Critic, stupid :-/
     my @args = @_;      # .. hence "no critic" pragma in sub line
     _man_dbx("_man_head(..) ...");
@@ -267,13 +267,13 @@ sub _man_head   {       ## no critic qw(Subroutines::RequireArgUnpacking)
     printf("=%s+%s\n", '-'x  $len1, '-'x60);
     return;
 }
-sub _man_foot   {
+sub _man_foot       {
     my $len1 = shift;   # expected length of first (left) string
     return if ($cfg_header < 1);
     printf("=%s+%s\n", '-'x $len1, '-'x60);
     return;
 }
-sub _man_opt    {
+sub _man_opt        {
     #? print line in  "KEY - VALUE"  format
     my @args = @_;
     my $len  = 16;
@@ -281,14 +281,14 @@ sub _man_opt    {
     printf("%${len}s%s%s\n", @args);
     return;
 }
-sub _man_arr    {
+sub _man_arr        {
     my ($ssl, $sep, $dumm) = @_;
     my @all = ();
     push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$ssl}});
     printf("%16s%s%s\n", $ssl, $sep, join(" ", @all));
     return;
 }
-sub _man_cfg    {
+sub _man_cfg        {
     #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
     $txt =  '"' . $txt . '"' if ($typ =~ m/^cfg/);
@@ -357,7 +357,7 @@ sub _man_doc_pod    {
     return;
 } # _man_pod_pod
 
-sub man_table($) { ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub man_table       { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
     #? header of table is not printed if $typ is cfg-*
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
@@ -478,7 +478,7 @@ EoHelp
     return;
 } # man_table
 
-sub man_commands {
+sub man_commands    {
     #? print commands and short description
     # data is extracted from $parents internal data structure
     my $skip = 1;
@@ -562,7 +562,7 @@ EoHelp
     return;
 } # man_commands
 
-sub man_alias   {
+sub man_alias       {
     #? print alias and short description (if available)
     #
     # Aliases are extracted from the source code. All lines handling aliases
@@ -615,7 +615,7 @@ EoHelp
     return;
 } # man_alias
 
-sub man_html    {
+sub man_html        {
     #? print complete HTML page for o-saft.pl --help=gen-html
     #? recommended usage:   $0 --no-warning --no-header --help=gen-html
     _man_dbx("man_html() ...");
@@ -626,7 +626,7 @@ sub man_html    {
     return;
 } # man_html
 
-sub man_pod     {
+sub man_pod         {
     #? print complete HTML page for o-saft.pl --help=gen-pod
     #? recommended usage see at end of this sub
     _man_dbx("man_pod() ...");
@@ -722,7 +722,7 @@ EoHelp
     return;
 } # man_pod
 
-sub man_cgi     {
+sub man_cgi         {
     #? print complete HTML page for o-saft.pl used as CGI
     #? recommended usage:      $0 --no-warning --no-header --help=gen-cgi
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
@@ -819,7 +819,7 @@ EoHTML
     return;
 } # man_cgi
 
-sub man_wiki    {
+sub man_wiki        {
     #? print documentation for o-saft.pl in mediawiki format (to be used at owasp.org)
     #? recommended usage:   $0 --no-warning --no-header --help=gen-wiki
     my $mode =  shift;
@@ -889,7 +889,7 @@ EoHelp
     return;
 } # man_wiki
 
-sub man_toc     {
+sub man_toc         {
     #? print help table of content
     my $typ     = lc(shift) || "";      # || to avoid uninitialized value
     _man_dbx("man_toc() ..");
@@ -907,7 +907,7 @@ sub man_toc     {
     return;
 } # man_toc
 
-sub man_help    {
+sub man_help        {
     #? print program's help
     my $label   = lc(shift) || "";      # || to avoid uninitialized value
     my $anf     = uc($label);
@@ -949,7 +949,7 @@ sub man_help    {
     return;
 } # man_help
 
-sub printhelp   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub printhelp       { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
@@ -1023,7 +1023,7 @@ sub printhelp   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     return;
 } # printhelp
 
-sub _main       {
+sub _main           {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see .perlcritic for detailed description of "no critic"
     binmode(STDOUT, ":unix:utf8");
@@ -1033,7 +1033,7 @@ sub _main       {
     exit 0;
 } # _main
 
-sub o_saft_man_done() {};       # dummy to check successful include
+sub o_saft_man_done {};         # dummy to check successful include
 ## PACKAGE }
 
 #_____________________________________________________________________________
