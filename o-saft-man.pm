@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.230 18/03/22 23:32:54";
+my  $man_SID= "@(#) o-saft-man.pm 1.231 18/03/23 23:18:31";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -347,7 +347,7 @@ sub _man_doc_pod    {
     my ($typ, $sep) = @_;
     my  @txt  = _man_file_get($typ);
     # print comment lines only, hence add # to each line
-    my  $help = "@help";
+    my  $help = "@txt";
         $help =~ s/\n/\n#/g;
     print "# begin $typ\n\n";
     print "# =head1 $typ\n\n";
@@ -627,7 +627,7 @@ sub man_html        {
 } # man_html
 
 sub man_pod         {
-    #? print complete HTML page for o-saft.pl --help=gen-pod
+    #? print complete POD page for o-saft.pl --help=gen-pod
     #? recommended usage see at end of this sub
     _man_dbx("man_pod() ...");
     print <<'EoHelp';
