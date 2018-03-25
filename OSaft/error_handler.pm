@@ -230,9 +230,9 @@ sub _compile_err_str {
     if ( (exists ($arg_ref->{type})) && (defined ($arg_ref->{type})) ) {    # type key is used
         # check if is type is known (defind in the reverse hash):
         if ( (exists ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) && (defined ($ERROR_TYPE_RHASH_REF->{$arg_ref->{type}})) ) {
-            if ( (exists ($arg_ref->{trace})) && ($arg_ref->{trace}>0) ) {  # show the type if trace is used
+            if ( (exists ($arg_ref->{trace})) && (0<$arg_ref->{trace}) ) {  # show the type if trace is used
                 $err_str .= " [Type=".$ERROR_TYPE_RHASH_REF->{$arg_ref->{type}};
-                $err_str .= "(".$arg_ref->{type}.")"        if ( $arg_ref->{trace}>2 );
+                $err_str .= "(".$arg_ref->{type}.")"        if (2<$arg_ref->{trace});
                 $err_str .= "]";
             } # end trace
         } else {                                                            # unknown type (not defined in ERROR_TYPE_RHASH_REF)
@@ -284,7 +284,7 @@ sub new {
             carp (qq($tmp_text "$tmp_err_str".));
             $arg_ref->{type} = OERR_UNKNOWN_TYPE; # define error type to 'unknown', which is the most fatal
         }
-        if ($arg_ref->{type} > $err_hash{type}) { # new error is less important than the previous
+        if ($err_hash{type} < $arg_ref->{type}) { # new error is less important than the previous
              my $old_err_str =  _compile_err_str();
              $tmp_err_str    =  _compile_err_str($arg_ref);
              $tmp_text       = "OSaft::error_handler->new: new error type in";
@@ -325,7 +325,7 @@ sub reset_err {
         %$arg_ref                               # keys and values overwrite the previous if $arg_ref is defined and not empty
     ) if ($arg_ref);
 
-    if ($err_hash{trace}>2) {
+    if (2<$err_hash{trace}) {
         my $err_str = _compile_err_str();
         print "$err_str\n";
     }
@@ -342,7 +342,7 @@ sub is_err {
     } else { # internal error: no type defined
        my $err_str = "OSaft::error_handler->is_err: internal error: undefined error type in \$error_hash: ";
        $err_str .= _compile_err_str();
-       print "$err_str\n" if ($err_hash{trace}>2);
+       print "$err_str\n" if (2<$err_hash{trace});
        carp ($err_str);
        return (1);
    }
@@ -418,9 +418,9 @@ sub get_err_str {
 sub get_err_hash {
     my ($class, $prefix, $hash_ref) = @_;           # $class is not used later, it is added automatically when calling the method
     my $err_hash_str                = "";
-    $prefix =   ""         if (!defined($prefix));  # default is no indent
-    $hash_ref = \%err_hash if (!defined($hash_ref));# default is the error_hash
-    print ">get_err_hash\n" if ($err_hash{trace}>2);
+    $prefix =   ""         if (not defined($prefix));   # default is no indent
+    $hash_ref = \%err_hash if (not defined($hash_ref)); # default is the error_hash
+    print ">get_err_hash\n" if (2<$err_hash{trace});
     #_trace "\n\$class =   $class\n";
     #_trace "\$hash_ref = ".\%$err_hash."\n";
     foreach my $err_key (sort (keys(%$hash_ref)) ) {
