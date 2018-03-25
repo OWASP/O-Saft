@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 my  $VERSION    = "18.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.7 18/03/22 23:14:38";
+my  $SID        = "@(#) Data.pm 1.8 18/03/25 09:42:27";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -67,7 +67,7 @@ sub _get_filehandle {
     my $file = shift || "";
     my $fh; # same as *FH
     local $\ = "\n";
-    if ($file ne "") {
+    if ("" ne $file) {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
@@ -76,7 +76,7 @@ sub _get_filehandle {
             #dbx# print "file: $file";
         }
     }
-    if ($file ne "" and -e $file) {
+    if ("" ne $file and -e $file) {
         ## no critic qw(InputOutput::RequireBriefOpen)
         #  file hadnle needs to be closd by caller
         if (not open($fh, '<:encoding(UTF-8)', $file)) {
@@ -189,7 +189,7 @@ sub get_text    {
 #   _man_dbx("man_help($anf, $end) ...");
     # no special help, print full one or parts of it
     my $txt = join ("", get_markup($file));
-#   #if ((grep{/^--v/} @ARGV) > 1) {     # with --v --v
+#   #if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
 #   #    print scalar reverse "\n\n$egg";
 #   #    return;
 #   #}
@@ -206,7 +206,7 @@ sub get_text    {
     $txt =~ s/\nS&([^&]*)&/\n$1/g;
     $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
-    if ((grep{/^--v/} @ARGV) > 0) {     # do not use $^O but our own option
+    if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
         print "**WARNING: using workaround to print large strings.\n\n";
         print foreach split(//, $txt);  # print character by character :-((
@@ -218,7 +218,7 @@ sub get_text    {
         print "\n  NOT YET IMPLEMENTED\n";
 # TODO: {
 #        foreach my $label (sort keys %checks) {
-#            next if (_is_member($label, \@{$cfg{'commands-NOTYET'}}) <= 0);
+#            next if (0 >= _is_member($label, \@{$cfg{'commands-NOTYET'}}));
 #            print "        $label\t- " . $checks{$label}->{txt} . "\n";
 #        }
 # TODO: }
@@ -353,7 +353,7 @@ sub _main       {
     binmode(STDOUT, ":unix:utf8"); # latin1 geht nicht
     binmode(STDERR, ":unix:utf8");
 
-    if ($#ARGV < 0) { _main_help; exit 0; }
+    if (0 > $#ARGV) { _main_help; exit 0; }
 
     # got arguments, do something special
     while (my $cmd = shift @ARGV) {
@@ -395,7 +395,7 @@ C<$VERSION>
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main() if (! defined caller);
+_main() if (not defined caller);
 
 1;
 
