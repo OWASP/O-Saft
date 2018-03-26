@@ -18,7 +18,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#) gen_standalone.sh 1.5 18/01/17 09:47:06
+#?       @(#) gen_standalone.sh 1.6 18/03/26 11:16:01
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -67,7 +67,8 @@ osaft_doc="
 
 if [ $sid -eq 1 ]; then
 	for f in $o_saft ; do
-		\egrep -q 'SID.*1.5' $f \
+		# NOTE contribution to SCCS:  %I''%
+		\egrep -q 'SID.*%I''%' $f \
 	  	&& \echo "**ERROR: $f changes not commited; exit" \
 	  	&& exit 2
 	done
