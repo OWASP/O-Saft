@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.03.20',
+    SSLINFO_VERSION => '18.03.21',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.208 18/03/26 22:07:06',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.209 18/03/26 23:17:47',
 };
 
 ######################################################## public documentation #
@@ -1275,6 +1275,7 @@ sub _ssleay_get     {
 
     my $ret = '';
     if ($key =~ 'serial') {
+print "#SERIAL# $key #\n";
 # TODO: dead code as Net::SSLeay::X509_get_serialNumber() does not really return an integer
         $ret = Net::SSLeay::P_ASN1_INTEGER_get_hex(Net::SSLeay::X509_get_serialNumber(   $x509));
         return $ret if($key eq 'serial_hex');
@@ -2361,7 +2362,7 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'version'}            = _openssl_x509($_SSLinfo{'PEM'}, 'version');
         $_SSLinfo{'text'}               = _openssl_x509($_SSLinfo{'PEM'}, '-text');
         $_SSLinfo{'modulus'}            = _openssl_x509($_SSLinfo{'PEM'}, '-modulus');
-       #$_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial');
+       #$_SSLinfo{'serial'}             = _openssl_x509($_SSLinfo{'PEM'}, '-serial'); # done below
         $_SSLinfo{'email'}              = _openssl_x509($_SSLinfo{'PEM'}, '-email');
         $_SSLinfo{'trustout'}           = _openssl_x509($_SSLinfo{'PEM'}, '-trustout');
         $_SSLinfo{'ocsp_uri'}           = _openssl_x509($_SSLinfo{'PEM'}, '-ocsp_uri');
@@ -2386,7 +2387,6 @@ sub do_ssl_open($$$@) {
         $_SSLinfo{'modulus_exponent'}   =  $_SSLinfo{'pubkey'};
         $_SSLinfo{'modulus_exponent'}   =~ s/^.*?(?:Exponent|ASN1 OID): (.*)$/$1/si;
         $_SSLinfo{'modulus'}            =~ s/^[^=]*=//i;
-        $_SSLinfo{'serial'}             =~ s/^[^=]*=//i;
         $_SSLinfo{'signame'}            =~ s/^[^:]*: //i;
         $_SSLinfo{'modulus_len'}        =  4 * length($_SSLinfo{'modulus'});
             # Note: modulus is hex value where 2 characters are 8 bit
@@ -2399,7 +2399,6 @@ sub do_ssl_open($$$@) {
         chomp $_SSLinfo{'fingerprint_hash'};
         chomp $_SSLinfo{'modulus'};
         chomp $_SSLinfo{'pubkey'};
-        chomp $_SSLinfo{'serial'};
         chomp $_SSLinfo{'signame'};
         # NO Certificate }
 
