@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.03.18',
+    SSLINFO_VERSION => '18.03.19',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.205 18/03/26 21:54:20',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.206 18/03/26 21:57:33',
 };
 
 ######################################################## public documentation #
@@ -3417,7 +3417,7 @@ sub verify_altname  {
     return "No alternate name defined in certificate" if ('' eq $cname);
     _trace("verify_altname: $cname");
     foreach my $alt (split(/ /, $cname)) {
-#dbx# print "#ALT# $alt";
+print "#ALT# $alt\n";
         my ($type, $name) = split(/:/, $alt);
 #dbx# print "#ALT# $alt: ($type, $name)";
 # TODO: implement IP and URI; see also o-saft.pl: _checkwildcards()
@@ -3442,7 +3442,7 @@ sub verify_altname  {
     return sprintf("Given hostname '%s' %s alternate name '%s' in certificate", $host, $match, $cname);
 } # verify_altname
 
-sub verify_alias    { verify_altname($_[0], $_[1]); return; }
+sub verify_alias    { return verify_altname($_[0], $_[1]); }
 
 sub _check_peer     {
     # TBD
