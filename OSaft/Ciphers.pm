@@ -40,8 +40,8 @@ use warnings;
 use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
-my  $VERSION      = '17.10.17';     # official verion number of tis file
-my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.21 17/10/18 16:22:12';
+my  $VERSION      = '18.03.18';     # official verion number of tis file
+my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.23 18/03/26 23:56:04';
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -241,9 +241,9 @@ sub _trace1     { ::_trace(@_); return; }   ## no critic qw(Subroutines::Require
 sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
 
-sub _warn       { my @args = @_; carp("**WARNING: ", join(" ", @args)); return; }
-sub vprint      { my @args = @_; return if ($VERBOSE<1); print("# ", join(" ", @args) . "\n");  return; }
-sub v2print     { my @args = @_; return if ($VERBOSE<2); print("# ", join(" ", @args) . "\n");  return; }
+sub _warn       { my @args = @_; carp("**WARNING: ", join(' ', @args)); return; }
+sub vprint      { my @args = @_; return if (1 > $VERBOSE); print("# ", join(' ', @args) . "\n");  return; }
+sub v2print     { my @args = @_; return if (2 > $VERBOSE); print("# ", join(' ', @args) . "\n");  return; }
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -468,7 +468,7 @@ Get information from internal C<%cipher> data structure.
 sub get_param   {
     #? internal method to return required value from %cipher
     my ($cipher, $key) = @_;
-    return $ciphers{$cipher}->{$key} || '' if ((grep{/^$cipher/i} %ciphers)>0);
+    return $ciphers{$cipher}->{$key} || '' if (0 < (grep{/^$cipher/i} %ciphers));
     return $STR_UNDEF;
 }; # get_param
 sub get_ssl     { my $c=shift; return get_param($c, 'ssl');  }
@@ -486,13 +486,13 @@ sub get_score   { my $c=shift; return $STR_UNDEF; } # obsolete since 16.06.16
 sub get_desc    {
     # get description for specified cipher from %ciphers
     my $c=shift;
-    if (! defined $ciphers{$c}) {
+    if (not defined $ciphers{$c}) {
        _warn("undefined cipher description for '$c'"); # TODO: correct %ciphers
        return $STR_UNDEF;
     }
     my @x = sort values %{$ciphers{$c}};
     shift @x;
-    return join(" ", @x) if ((grep{/^$c/} %ciphers)>0);
+    return join(' ', @x) if (0 < (grep{/^$c/} %ciphers));
     return '';
 }
 
@@ -513,6 +513,7 @@ sub get_hex     {
     #  example: RC4-MD5 -> 0x01,0x00,0x80 ;  AES128-SHA256 -> 0x00,0x3C
     my $c = shift;
 # FIXME: returns first matching even if more exist; example: RC4-MD5
+#        need protocol parameter
     foreach my $k (keys %ciphers_names) { # database up to VERSION 14.07.14
         return $k if (($ciphers_names{$k}[0] eq $c) or ($ciphers_names{$k}[1] eq $c));
     }
@@ -534,6 +535,7 @@ sub get_key     {
     my $key = uc($txt);
        $key =~ s/X/x/g;
 # FIXME: returns first matching even if more exist; example: RC4-MD5
+#        need protocol parameter
     return $key if defined $ciphers{$key};
     $key =  $txt;
     $key =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix;
@@ -541,11 +543,11 @@ sub get_key     {
     # not a key itself, try to find in names
     foreach my $k (keys %ciphers_names) {
         foreach (qw( iana OpenSSL openssl osaft )) {
-print "#$ciphers_names{$k}->{$_}#\n" if ($ciphers_names{$k}->{$_} =~ m/$key/i);
+#print "#$ciphers_names{$k}->{$_}#\n" if ($ciphers_names{$k}->{$_} =~ m/$key/i);
             return $k if (defined $ciphers_names{$k}->{$_} && ($ciphers_names{$k}->{$_} =~ m/^$key$/i));
         }
     }
-    return "";
+    return '';
 } # get_key
 
 sub get_name    {
@@ -555,7 +557,7 @@ sub get_name    {
     # Note: duplicate name (like RC4_128_WITH_MD5) are no problem, because they
     #       use the same cipher suite name (like RC4-MD5).
     my $cipher  = shift;
-    return $cipher if ((grep{/^$cipher/} %ciphers)>0);
+    return $cipher if (0 < (grep{/^$cipher/} %ciphers));
     _trace("get_name: search $cipher");
     foreach my $k (keys %ciphers_names) {
         return $ciphers_names{$k}[0] if ($cipher =~ m/$ciphers_names{$k}[0]/);
@@ -675,7 +677,7 @@ sub sort_cipher_names   {
         # instead of our _warn() to clearly inform the user that the code here
         # needs to be fixed
         #warn STR_WARN . "missing ciphers in sorted list: $num < $cnt";
-        warn "**WARNING: missing ciphers in sorted list: $num < $cnt";
+        warn "**WARNING: missing ciphers in sorted list: $num < $cnt"; ## no critic qw(ErrorHandling::RequireCarping)
         #dbx# print "## ".@sorted . " # @ciphers";
     }
     return @sorted;
@@ -713,7 +715,7 @@ sub show_getter03 {
 } # show_getter03
 
 sub show_getter {
-    #? show example for all getter functions
+    #? show example for all getter functions for specified cipher key
     my $cipher = shift;
     printf("#%s:\n", (caller(0))[3]);
     if ($cipher !~ m/^[x0-9a-fA-F,]+$/) {   # no cipher given, print hardcoded example
@@ -860,7 +862,7 @@ EoT
          $name  = "*" if $ciphers_names{$key}->{'osaft'};
          $const = "*" if defined $ciphers_const{$key};
          $alias = "*" if defined $ciphers_alias{$key};
-         $both  = "yes" if ($desc eq "*" and $name eq "*");
+         $both  = "yes" if ('*' eq $desc and '*' eq $name);
          printf("%14s\t%s\t%s\t%s\t%s\t%s\n", $key, $desc, $const, $name, $alias, $both);
     }
     printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7);
@@ -885,9 +887,9 @@ EoT
     printf("= %13s\t\t%-37s\t%-31s\t%-23s\t%s\n", "key ", "iana", "OpenSSL", "osaft", "iana\topenssl");
     printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
     foreach my $key (sort keys %ciphers) {
-         my $const1 = $ciphers_const{$key}->{'iana'}    || "";
-         my $const2 = $ciphers_const{$key}->{'OpenSSL'} || "";
-         my $const3 = $ciphers_const{$key}->{'osaft'}   || "";
+         my $const1 = $ciphers_const{$key}->{'iana'}    || '';
+         my $const2 = $ciphers_const{$key}->{'OpenSSL'} || '';
+         my $const3 = $ciphers_const{$key}->{'osaft'}   || '';
          my $o_i = "no";
             $o_i = "yes" if ($const1 eq ("TLS_" . $const3));
          my $o_o = "no";
@@ -895,6 +897,28 @@ EoT
          printf("%14s\t%-37s\t%-31s\t%-31s\t%s\t%s\n", $key, $const1, $const2, $const3, $o_i, $o_o);
     }
     printf("=%s+%s+%s+%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31, "-" x 31, "-" x 7, "-" x 7);
+    return;
+}; # show_const
+
+sub show_alias  {
+    printf("#%s:\n", (caller(0))[3]);
+    print  <<'EoT';
+= overview of various cipher suite alias names
+=   description of columns:
+=       key         - hex key for cipher suite
+=       alias       - alias of cipher suite name
+=       used in     - where alias is used / was found
+
+EoT
+    printf("= %13s\t%-37s\t%s\n", "key", "suite alias name", "used in");
+    printf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
+    foreach my $key (sort keys %ciphers_alias) {
+         my $alias = $ciphers_alias{$key}[0];
+         my $from  = $ciphers_names{$key}[2];
+         printf("%14s\t%-37s\t%-31s\n", $key, $alias, $from);
+    }
+    # hex,hex   => [qw( cipher suite name aliases )],# comment (where found)
+    printf("=%s+%s+%s\n", "-" x 14, "-" x 39, "-" x 31);
     return;
 }; # show_const
 
@@ -915,12 +939,12 @@ EoT
     printf("= %13s\t\t%-23s\t%-23s\t%-15s\t%s\n", "key ", "OpenSSL", "openssl", "osaft", "openssl=osaft");
     printf("=%s+%s+%s+%s+%s\n", "-" x 14, "-" x 23, "-" x 23, "-" x 23, "-" x 7);
     foreach my $key (sort keys %ciphers) {
-         my $name1 = $ciphers_names{$key}->{'openssl'} || "";
-         my $name2 = $ciphers_names{$key}->{'osaft'}   || "";
+         my $name1 = $ciphers_names{$key}->{'openssl'} || '';
+         my $name2 = $ciphers_names{$key}->{'osaft'}   || '';
          my $both  = "no";
             $both  = "yes" if ($name1 eq $name2);
          printf("%14s\t%-23s\t%-23s\t%-23s\t%s\n", $key,
-                $ciphers_names{$key}->{'OpenSSL'} || "",
+                $ciphers_names{$key}->{'OpenSSL'} || '',
                 $name1, $name2, $both,
                );
     }
@@ -960,13 +984,13 @@ EoT
     printf("= %13s\t\t%s\t%s\n", "key ", "RFC", "OpenSSL");
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
     foreach my $key (sort keys %ciphers) {
-         my $rfc = $ciphers{$key}->{'rfc'} || "";
-            $rfc = "$rfc" if ($rfc ne "");
+         my $rfc = $ciphers{$key}->{'rfc'} || '';
+            $rfc = "$rfc" if ('' eq $rfc);
          printf("%14s\t%-15s\t%-23s\n", $key,
                 $rfc,
-                $ciphers_names{$key}->{'osaft'} || "",
+                $ciphers_names{$key}->{'osaft'} || '',
                );
-         # TODO: in 'rfc' können mehrer stehen, durch Komma getrennt
+         # TODO: in 'rfc' können mehrer stehen, durch : getrennt
     }
     printf("=%s+%s+%s\n", "-" x 14, "-" x 15, "-" x 23);
     return;
@@ -1016,47 +1040,9 @@ sub _show_tableline {
     return;
 } # _show_tableline
 
-# =pod
-#
-# =head2 show_ciphers($format)
-#
-# Print C<%ciphers> data structure in specified format.
-#
-# Supported formats are:
-# * openssl       - like openssl ciphers -V
-# * osaft         - most important data
-# * dump          - all available data
-# * 15.12.15      - format like in version 15.12.15 (for compatibility)
-#
-# =cut
-
-sub show_ciphers    {
-    #? print internal list of ciphers in specified format
+sub _show_ciphers   {
+    # print internal list of ciphers
     my $format = shift;
-    printf("#%s:\n", (caller(0))[3]);
-
-    if ($format !~ m/(?:dump(?:tab)|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) {
-        printf("**WARNING: unknown format '%s'", $format);
-        return;
-    }
-
-    if ($format !~ m/tab$/) {
-        print  <<'EoT';
-= internal lists of ciphers
-=   description of columns:
-=       key         - hex key for cipher suite
-
-EoT
-        my $key = 0;
-        foreach (@{$ciphers_desc{head}}) {
-            printf("=       %-4s        - %s\n", $ciphers_desc{head}[$key],
-                $ciphers_desc{text}[$key]);
-            $key++;
-        }
-    }
-
-    _show_tablehead($format);
-
     foreach my $key (sort keys %ciphers) {
 
         my @values;
@@ -1099,6 +1085,51 @@ EoT
         }
 
     }
+    return;
+} # _show_ciphers
+
+# =pod
+#
+# =head2 show_ciphers($format)
+#
+# Print C<%ciphers> data structure in specified format.
+#
+# Supported formats are:
+# * openssl       - like openssl ciphers -V
+# * osaft         - most important data
+# * dump          - all available data
+# * 15.12.15      - format like in version 15.12.15 (for compatibility)
+#
+# =cut
+
+sub show_ciphers    {
+    #? print internal list of ciphers in specified format
+    my $format = shift;
+    printf("#%s:\n", (caller(0))[3]);
+
+    if ($format !~ m/(?:dump(?:tab)|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) {
+        _warn("**WARNING: unknown format '$format'");
+        return;
+    }
+
+    if ($format !~ m/tab$/) {
+        print  <<'EoT';
+= internal lists of ciphers
+=   description of columns:
+=       key         - hex key for cipher suite
+
+EoT
+        my $key = 0;
+        foreach (@{$ciphers_desc{head}}) {
+            printf("=       %-4s        - %s\n", $ciphers_desc{head}[$key],
+                $ciphers_desc{text}[$key]);
+            $key++;
+        }
+    }
+
+    _show_tablehead($format);
+    _show_ciphers($format);
+
     if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
         printf("=%s+%s+%s+%s+%s+%s+%s+%s+%s\n",
                "-" x 14, "-" x 47, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 7, "-" x 11 );
@@ -1144,8 +1175,8 @@ sub _ciphers_init_osaft {
         } else {
             v2print("  new   O-Saft key: »$key«");
             push(@_keys, $key);
-            $ciphers{$key}->{'rfc'}  = "";
-            $ciphers{$key}->{'dtls'} = "";
+            $ciphers{$key}->{'rfc'}  = '';
+            $ciphers{$key}->{'dtls'} = '';
         }
         $ciphers{$key}->{'ssl'} = $OSaft::Ciphers::_ciphers_osaft{$key}[0] || '';
         $ciphers{$key}->{'keyx'}= $OSaft::Ciphers::_ciphers_osaft{$key}[1] || '';
@@ -1164,12 +1195,12 @@ sub _ciphers_init_osaft {
     foreach my $key (sort keys %{OSaft::Ciphers::_ciphers_names}) { ## no critic qw(Subroutines::ProtectPrivateSubs)
         my $name  = $OSaft::Ciphers::_ciphers_names{$key}[0] || '';
         my $const = $OSaft::Ciphers::_ciphers_names{$key}[1] || '';
-        if (! defined $ciphers_names{$key}->{'osaft'} ne "") {
+        if (not defined $ciphers_names{$key}->{'osaft'}) {
             #print("  undef O-Saft name: $key : »$name«\n");
             $ciphers_names{$key}->{'osaft'} = $name;
             next;
         }
-        if ($ciphers_names{$key}->{'osaft'} eq "") {
+        if ('' eq $ciphers_names{$key}->{'osaft'}) {
             #print("  emtpty O-Saft name: $key : »$name«\n");
             $ciphers_names{$key}->{'osaft'} = $name;
         }
@@ -1241,9 +1272,33 @@ sub _main_help  {
     return;
 }; # _main_help
 
+sub _main_usage {
+    #? print usage
+    my $name = (caller(0))[1];
+    print "# commands to show internal cipher tables:\n";
+    foreach my $cmd (qw(overview names const alias rfc description)) {
+        printf("\t%s %s\n", $name, $cmd);
+    }
+    print "# commands to show ciphers based on origin:\n";
+    foreach my $cmd (qw(ciphers=osaft ciphers=openssl ciphers=iana ciphers=old)) {
+        printf("\t%s %s\n", $name, $cmd);
+    }
+    print "# various commands:\n";
+    foreach my $cmd (qw(ciphers=dumptab)) {
+        printf("\t%s %s\n", $name, $cmd);
+    }
+    printf("\t$name getter=KEY #(KEY: )\n");
+    printf("\t$name key=KEY #(KEY: )\n");
+    printf("\t$name ciphers=osaft\n");
+    printf("\t$name ciphers=openssl\n");
+    printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
+    printf("\t$name ciphersdescr\n");
+    return;
+}; # _main_usage
+
 sub _main       {
     #? print own documentation
-    if ($#ARGV < 0) { _main_help; exit 0; }
+    if (0 > $#ARGV) { _main_help; exit 0; }
 
     # got arguments, do something special
     while (my $arg = shift @ARGV) {
@@ -1263,23 +1318,7 @@ sub _main       {
         if ($arg =~ /^getter=?(.*)/)  { show_getter($1);  }
         if ($arg =~ /^key=?(.*)/)     { show_key($1);  }
         if ($arg !~ /^--h(?:elp)?/)   { next; }
-
-        my $name = (caller(0))[1];
-        print "# commands to show internal cipher tables:\n";
-        foreach my $cmd (qw(overview names const alias rfc description)) {
-            printf("\t%s %s\n", $name, $cmd);
-        }
-        print "# commands to show ciphers based on origin:\n";
-        foreach my $cmd (qw(ciphers=osaft ciphers=openssl ciphers=iana ciphers=old)) {
-            printf("\t%s %s\n", $name, $cmd);
-        }
-        print "# various commands:\n";
-        foreach my $cmd (qw(ciphers=dumptab)) {
-            printf("\t%s %s\n", $name, $cmd);
-        }
-        printf("\t$name getter=KEY #(KEY: sec, bit, mac, ssl, auth, keyx, enc, name)\n");
-        printf("\t$name key=KEY #(KEY: )\n");
-        printf("\t$name ciphers=dumptab > c.csv; libreoffice c.csv\n");
+        _main_usage();
     }
     exit 0;
 }; # _main
@@ -1376,7 +1415,7 @@ purpose of this module is defining variables. Hence we export them.
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main() if (! defined caller);
+_main() if (not defined caller);
 
 1;
 
