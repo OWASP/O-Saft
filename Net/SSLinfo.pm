@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.206 18/03/26 21:57:33',
+    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.207 18/03/26 22:00:50',
 };
 
 ######################################################## public documentation #
@@ -3417,7 +3417,7 @@ sub verify_altname  {
     return "No alternate name defined in certificate" if ('' eq $cname);
     _trace("verify_altname: $cname");
     foreach my $alt (split(/ /, $cname)) {
-print "#ALT# $alt\n";
+#dbx print "#ALT# $alt\n";
         my ($type, $name) = split(/:/, $alt);
 #dbx# print "#ALT# $alt: ($type, $name)";
 # TODO: implement IP and URI; see also o-saft.pl: _checkwildcards()
