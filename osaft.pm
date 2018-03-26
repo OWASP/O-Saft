@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.138 18/03/22 23:46:35',
+    OSAFT_SID   => '@(#) o-saft-lib.pm 1.139 18/03/26 18:35:20',
 
 };
 
@@ -2020,7 +2020,7 @@ sub get_cipher_score($) { my $c=shift; return $ciphers{$c}[7] || "" if ((grep{/^
 sub get_cipher_tags($)  { my $c=shift; return $ciphers{$c}[8] || "" if ((grep{/^$c/} %ciphers)>0); return STR_UNDEF; }
 sub get_cipher_desc($)  { my $c=shift;
     # get description for specified cipher from %ciphers
-    if (! defined $ciphers{$c}) {
+    if (not defined $ciphers{$c}) {
        _warn("016: undefined cipher description for '$c'"); # TODO: correct %ciphers
        return STR_UNDEF;
     }
@@ -2047,13 +2047,13 @@ sub get_cipher_hex      {
     # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $c = shift;
     foreach my $k (keys %cipher_names) { # database up to VERSION 14.07.14
-        return $k if ((get_cipher_suitename($k) eq $c) or (get_cipher_suiteconst($k) eq $c));
+        return $k if (($c eq get_cipher_suitename($k)) or ($c eq get_cipher_suiteconst($k)));
     }
     foreach my $k (keys %cipher_alias) { # not yet found, check for alias
-        return $k if ($cipher_alias{$k}[0] eq $c);
+        return $k if ($c eq $cipher_alias{$k}[0]);
     }
     foreach my $k (keys %cipher_old) {   # not yet found, check old names
-        return $k if ($cipher_old{$k}[0] eq $c);
+        return $k if ($c eq $cipher_old{$k}[0]);
     }
     return "";
 } # get_cipher_hex
@@ -2063,7 +2063,7 @@ sub get_cipher_name     {
     # checks in %ciphers if nof found in %cipher_names
     # FIXME: need $ssl parameter because of duplicate names (SSLv3, TLSv19
     my $cipher  = shift;
-    return $cipher if ((grep{/^$cipher/} %ciphers)>0);
+    return $cipher if (0 < grep{/^$cipher/} %ciphers);
     _trace("get_cipher_name: search $cipher");
     foreach my $k (keys %cipher_names) {
         my $suite = get_cipher_suitename($k);
@@ -2156,7 +2156,7 @@ sub get_dh_paramter     {
         $msgLen,        # n
         $msgData)   = unpack("C C n a*", $message);
 
-    if ($msgType == 0x0C) { # is ServerKeyExchange
+    if (0x0C == $msgType) { # is ServerKeyExchange
         # get info about the session cipher and prepare parameter $keyExchange
         # for parseServerKeyExchange()
         my $keyExchange = $cipher;
@@ -2406,7 +2406,7 @@ sub printhint   {   ## no critic qw(Subroutines::RequireArgUnpacking) # buggy pe
 sub osaft_sleep {
     #? wrapper for IO::select
     my $wait = shift;
-    select( undef, undef, undef, $wait);
+    select(undef, undef, undef, $wait);
     return;
 } # osaft_sleep
 
