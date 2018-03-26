@@ -18,7 +18,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#) gen_standalone.sh 1.6 18/03/26 11:16:01
+#?       @(#) gen_standalone.sh 1.7 18/03/26 11:48:34
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -85,19 +85,26 @@ $try \rm -rf $dst
 # 1.  extract from o-saft.pl anything before line
 ## PACKAGES
 #
-# 2. add $osaft_standalone
+# 2. add o-saft.pl POD
 #
-# 3. include osaft.pm
+# 3. add $osaft_standalone
+#
+# ?. include osaft.pm
 #
 # 4. include text from module file enclosed in  ## PACKAGE  scope  from all modules
 #
 # 5. add rest of o-saft.pl
+#
+# 6. add separator line for POD
 
 (
   # 1.
   $try \perl -ne 'print if (m()..m(## PACKAGES ))' $src
 
   # 2.
+  $try $src --no-warning --no-rc --help=pod
+
+  # 3.
   \echo ''
   \echo '$osaft_standalone = 1;'
   \echo ''
@@ -169,7 +176,10 @@ $try \rm -rf $dst
   $try \perl -ne 'print if (not m()..m(## PACKAGES)) and not m(use osaft;)' $src \
      | \egrep -v 'require (q.o-saft-man.pm|Net::SSLhello)'
 
-) > $dst
+) \
+  | $try \perl -pe '/^=head1 (NAME|Annotation)/ && do{print "=head1 "."_"x77 ."\n\n";};' \
+> $dst
+
 $try \chmod 555 $dst
 $try \ls    -la $dst
 \echo "# $dst generated"
