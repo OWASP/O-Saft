@@ -101,8 +101,8 @@ Net::SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni,
 our $dtlsEpoch = 0; # for DTLS only (globally)
 our %_SSLhello;     # our internal data structure
 
-use Exporter qw(import)
-use base qw(Exporter);;
+use Exporter qw(import);
+use base qw(Exporter);
 our $VERSION    = SSLHELLO_VERSION;
 our @EXPORT_OK  = qw(
         net_sslhello_done
