@@ -53,9 +53,9 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '18.03.18',
+    SSLHELLO_VERSION=> '18.03.19',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.26 18/03/22 14:43:55',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.27 18/03/23 00:06:41',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -135,7 +135,6 @@ our $HAVE_XS = eval {
             1;
         } or do {
             require DynaLoader;
-            push @ISA, 'DynaLoader';
             bootstrap Net::SSLhello $VERSION;
             1;
         };
