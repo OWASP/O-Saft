@@ -40,8 +40,8 @@ use warnings;
 use Carp;
 our @CARP_NOT = qw(OSaft::Ciphers); # TODO: funktioniert nicht
 
-my  $VERSION      = '18.03.18';     # official verion number of tis file
-my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.23 18/03/26 23:56:04';
+my  $VERSION      = '18.03.28';     # official verion number of tis file
+my  $CIPHERS_SID  = '@(#) Ciphers.pm 1.24 18/04/06 09:23:30';
 my  $STR_UNDEF    = '<<undef>>';    # defined in osaft.pm
 
 our $VERBOSE = 0;    # >1: option --v
@@ -236,10 +236,10 @@ our @EXPORT_OK  = qw(
 
 # TODO: interanl wrappers for main's methods
 sub _trace      { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace0     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace1     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
-sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking)
+sub _trace0     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
+sub _trace1     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
+sub _trace2     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
+sub _trace3     { ::_trace(@_); return; }   ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
 
 sub _warn       { my @args = @_; carp("**WARNING: ", join(' ', @args)); return; }
 sub vprint      { my @args = @_; return if (1 > $VERBOSE); print("# ", join(' ', @args) . "\n");  return; }
@@ -1036,7 +1036,34 @@ sub _show_tablehead {
 
 sub _show_tableline {
     # print table headline according given format
-    my $format = shift;
+    my ($format, $key) = @_;
+    my $name= $ciphers_names{$key}->{'iana'} || '';
+    my $ssl = $ciphers{$key}->{'ssl'}   || '';
+    my $kx  = $ciphers{$key}->{'keyx'}  || '';
+    my $au  = $ciphers{$key}->{'auth'}  || '';
+    my $enc = $ciphers{$key}->{'enc'}   || '';
+    my $bit = $ciphers{$key}->{'bits'}  || '0';
+    my $mac = $ciphers{$key}->{'mac'}   || '';
+    my $sec = $ciphers{$key}->{'sec'}   || '';
+    my $tag = $ciphers{$key}->{'tags'}  || '';
+    my $score = "0"; # dummy because we don't have scores in new structure
+    if ($format =~ m/^(?:15|15.12.15|old)/) {
+        $name= $ciphers_names{$key}->{'osaft'}   || '';
+        #next if $key =~ m/0x/;    # dirty hack 'til %cipher is clean
+        printf(" %-30s %s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                 $name, $sec, $ssl, $enc, $bit, $mac, $au, $kx, $score, $tag);
+    }
+    if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
+        $name= $ciphers_names{$key}->{'iana'}    || '';
+        $name= $ciphers_names{$key}->{'osaft'}   || '';
+        printf("%14s\t%-41s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                $key, $name, $ssl, $kx, $au, $enc, $bit, $mac, $tag);
+    }
+    if ($format =~ m/^(?:openssl)/) {
+        $name= $ciphers_names{$key}->{'openssl'} || '';
+        printf("%19s - %-23s %-5s Kx=%-8s Au=%-4s Enc=%s(%s) Mac=%-4s %s\n",
+                $key, $name, $ssl, $kx,   $au,   $enc, $bit, $mac,    $tag);
+    }
     return;
 } # _show_tableline
 
@@ -1044,46 +1071,15 @@ sub _show_ciphers   {
     # print internal list of ciphers
     my $format = shift;
     foreach my $key (sort keys %ciphers) {
-
         my @values;
         if ($format =~ m/^(?:dump|yeast)/) {
             foreach my $val (sort keys %{$ciphers{$key}}) {
                 push(@values, $ciphers{$key}->{$val});
             }
-            printf"%12s\t%s\n", $key, join("\t",@values); next;
+            printf"%12s\t%s\n", $key, join("\t",@values);
+            next;
         }
-
-        my $name= $ciphers_names{$key}->{'iana'} || '';
-        my $ssl = $ciphers{$key}->{'ssl'}   || '';
-        my $kx  = $ciphers{$key}->{'keyx'}  || '';
-        my $au  = $ciphers{$key}->{'auth'}  || '';
-        my $enc = $ciphers{$key}->{'enc'}   || '';
-        my $bit = $ciphers{$key}->{'bits'}  || '0';
-        my $mac = $ciphers{$key}->{'mac'}   || '';
-        my $sec = $ciphers{$key}->{'sec'}   || '';
-        my $tag = $ciphers{$key}->{'tags'}  || '';
-
-        if ($format =~ m/^(?:15|15.12.15|old)/) {
-            $name= $ciphers_names{$key}->{'osaft'} || '';
-    #next if $key =~ m/0x/;    # dirty hack 'til %cipher is clean
-            my $score= "0"; # dummy because we don't have scores in new structure
-            printf(" %-30s %s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-                     $name, $sec, $ssl, $enc, $bit, $mac, $au, $kx, $score, $tag  );
-        }
-
-        if ($format =~ m/^(?:16|16.06.16|new|osaft)/) {
-            $name= $ciphers_names{$key}->{'iana'} || '';
-            $name= $ciphers_names{$key}->{'osaft'} || '';
-            printf("%14s\t%-41s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-                    $key, $name, $ssl, $kx, $au, $enc, $bit, $mac, $tag  );
-        }
-
-        if ($format =~ m/^(?:openssl)/) {
-            $name= $ciphers_names{$key}->{'openssl'} || '';
-            printf("%19s - %-23s %-5s Kx=%-8s Au=%-4s Enc=%s(%s) Mac=%-4s %s\n",
-                    $key, $name, $ssl, $kx,   $au,   $enc, $bit, $mac,    $tag  );
-        }
-
+        _show_tableline($format, $key);
     }
     return;
 } # _show_ciphers
@@ -1107,8 +1103,8 @@ sub show_ciphers    {
     my $format = shift;
     printf("#%s:\n", (caller(0))[3]);
 
-    if ($format !~ m/(?:dump(?:tab)|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) {
-        _warn("**WARNING: unknown format '$format'");
+    if ($format !~ m/(?:dump|tab|yeast|osaft|openssl|15.12.15|15|old|16.06.16|16|new)/) {
+        _warn("unknown format '$format'");
         return;
     }
 
@@ -1236,10 +1232,6 @@ sub _ciphers_init_openssl   {
     return;
 }; # _ciphers_init_openssl
 
-sub _ciphers_init_openssl_  {
-    return;
-}; # _ciphers_init_openssl_
-
 sub _ciphers_init   {
     #? additional initializations for data structures
 
@@ -1264,7 +1256,7 @@ sub _main_help  {
         # pod2usage( -verbose => 1 );
         exec( Pod::Perldoc->run(args=>[$0]) );
     }
-    if (qx(perldoc -V)) {
+    if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
         # may return:  You need to install the perl-doc package to use this program.
         #exec "perldoc $0"; # scary ...
         printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");
