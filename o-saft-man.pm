@@ -17,7 +17,7 @@ package main;   # ensure that main:: variables are used
 #        Need to check regularily for this problem ...
 
 ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
-# NOTE:  Yes, we have very complex regex here.
+#     :  Yes, we have very complex regex here.
 
 ## no critic qw(InputOutput::RequireBriefOpen)
 #        We always close our filehandles, Perl::Critic is too stupid to read
@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.232 18/03/26 23:41:43";
+my  $man_SID= "@(#) o-saft-man.pm 1.233 18/04/09 21:43:18";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -221,16 +221,15 @@ sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n"
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", ""); }
 
-sub _man_html       { ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+sub _man_html       {
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $h = 0;
-    my $a = "";      ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+    my $a = "";
         # Perl::Critic complains that $a should be localized (code below), this
         # is wrong, because it is exactly the purpose to find other settings in
         # other lines.
-        # NOTE: Perl::Critic fails to handle this  "## no critic"  pragma, even
-        #       in the  "sub _man_html"  line above, grrr.
+        # NOTE: Perl::Critic must be set in each line
     _man_dbx("_man_html($anf, $end) ...");
     while ($_ = shift @help) {
         last if/^TODO/;
@@ -239,7 +238,7 @@ sub _man_html       { ## no critic qw(Variables::RequireLocalizedPunctuationVars
         next if (0 == $h);                          # ignore "out of scope"
         m/^=head1 (.*)/   && do { printf("\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);next;};
         m/^=head2 (.*)/   && do { print _man_html_go(); printf("%s\n<h3>%s %s </h3> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
-        m/^=head3 (.*)/   && do { $a=$1; printf("%s\n<h4>%s %s </h4> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
+        m/^=head3 (.*)/   && do { $a=$1; printf("%s\n<h4>%s %s </h4> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;}; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
@@ -251,7 +250,8 @@ sub _man_html       { ## no critic qw(Variables::RequireLocalizedPunctuationVars
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         #s/^\s*$/<p id="h$a">/;                      # add paragraph for formatting
-        m/^\s*$/ && do { $a="id='h$a'" if ('' ne $a); s/.*/<p $a>/; $a=''; }; # add paragraph for formatting
+        # add paragraph for formatting
+        m/^\s*$/ && do { $a="id='h$a'" if ('' ne $a); s/.*/<p $a>/; $a=''; }; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         print;
     }
     return;
