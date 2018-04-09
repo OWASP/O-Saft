@@ -13,6 +13,7 @@
 #?       $0 apk  package
 #?       $0 apt  package
 #?       $0 gui
+#?       $0 sshx
 #?       $0 call /path/to/program [arguments]
 #?       $0 [options and commands of o-saft.pl]
 #?
@@ -44,6 +45,7 @@
 #?           cp      - copy file to /O-Saft directory in the Docker image
 #            hacker  - show more information
 #?           gui     - start o-saft.tcl in the Docker image
+#?           sshx    - start o-saft.tcl in the Docker image (tunnel X via ssh)
 #?           *       - anything else (default): run o-saft.pl in Docker image
 #?
 #?       This wrapper expects, that the O-Saft Docker image has the name:
@@ -94,6 +96,10 @@
 #?   gui
 #?       Start  o-saft.tcl in the Docker image with display to the host where
 #?       started.
+#?
+#?   sshx
+#?       Start  o-saft.tcl in the Docker image using ssh  to tunnel X  to the
+#?       hosts display.
 #?
 #?   build
 #?       This mode builds the Docker image for O-Saft from the Dockerfile. If
@@ -225,7 +231,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.28 17/11/22 01:17:26
+#?       @(#) o-saft-docker 1.29 18/04/09 11:18:30
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -383,6 +389,19 @@ docker_gui   () {
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
 
+docker_sshx  () {
+	_ssh=`\docker port ${image_name} 22`
+	if [ -z "${_ssh}" ]; then
+		echo "**ERROR: no ssh port available for '${image_name}'"
+	else
+		# use "ip addr" to get docker's ip, should return something like:
+		#   6: docker0    inet 172.17.0.1/16 brd 172.17.255.255 scope global ...
+		# TODO: returns IP of last interface if more than on exists
+		_ip=`\ip -4 -o addr | \awk '($2~/docker/){sub("/..","",$4);print $4}'`
+		$try \ssh user@${_id} -p ${_ssh} /O-Saft/o-saft.tcl
+	fi
+}
+
 docker_call ()  {
 	cmd="$1"
 	shift
@@ -513,6 +532,7 @@ while [ $# -gt 0 ]; do
 	  'build')  docker_build;   exit 0; ;;
 	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
+	  'sshx')   docker_sshx $@; exit 0; ;;
 	  'gui')    docker_gui  $@; exit 0; ;;
 	  'cp')     docker_cp   $@; exit 0; ;;
 	  'apk')    docker_apk  $@; exit 0; ;;
