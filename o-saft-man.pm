@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.234 18/04/11 21:52:50";
+my  $man_SID= "@(#) o-saft-man.pm 1.235 18/04/12 00:54:17";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -66,9 +66,10 @@ sub _man_file_get   {
     return OSaft::Doc::Data::get_as_text('links.txt')       if ('links' eq $typ);
     return OSaft::Doc::Data::get_as_text('rfc.txt')         if ('rfc'   eq $typ);
     return '';
-} 
+} # _man_file_get
 
 sub _man_http_head  {
+    #? print HTTP headers (for CGI mode)
     return if (0 >= (grep{/--cgi/} @ARGV));
     # checking @ARGV for --cgi is ok, as this option is for simulating
     # CGI mode only.
@@ -77,9 +78,11 @@ sub _man_http_head  {
     print "Content-type: text/html; charset=utf-8\r\n";
     print "\r\n";
     return;
-}
+} # _man_http_head
 
 sub _man_html_head  {
+    #? print footer of HTML page
+    # SEE HTML:JavaScript
     _man_dbx("_man_html_head() ...");
     print << 'EoHTML';
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -93,7 +96,7 @@ function toggle_checked(id){id=$(id);id.checked=(id.checked=='false')?'true':'fa
 function toggle_display(id){id.display=(id.display=='none')?'block':'none';}
 function osaft_buttons(){
         var buttons = ['+quick', '+check', '+cipher', '+cipherall', '+info', '+protocols', '+vulns' ];
-        var table   = $('cmd');
+        var table   = $('osaft_buttons');
         for (var b in buttons) {
                 // <input type=submit name="--cmd" value="+check" ><div class=q
                 // id='c+check'></div><br>
@@ -165,8 +168,10 @@ function osaft_commands(){
  <!-- hides unwanted text before <body> tag -->
 EoHTML
     return;
-}
+} # _man_html_head
+
 sub _man_html_foot  {
+    #? print footer of HTML page
     _man_dbx("_man_html_foot() ...");
     print << "EoHTML";
  <a href="https://github.com/OWASP/O-Saft/"   target=_github >Repository</a> &nbsp;
@@ -176,7 +181,7 @@ sub _man_html_foot  {
 </body></html>
 EoHTML
     return;
-}
+} # _man_html_foot
 
 sub _man_html_chck  {
     #? same as _man_html_cbox() but without lable and only if passed parameter start with - or +
@@ -191,13 +196,13 @@ sub _man_html_chck  {
         $n =  scalar((split(/\s+/,$n))[0]);
     }
     return sprintf("<input type=checkbox name='%s' value='%s' >", $n, $v);
-}
+} # _man_html_chck
 sub _man_name_ankor {
     my $n = shift;
     $n =~ s/,//g;  # remove comma
     #$n =~ s/\s/_/g;# replace spaces
     return $n;
-}
+} # _man_name_ankor
 sub _man_html_ankor {
     #? print ankor tag for each word in given parameter
     my $n = shift;
@@ -207,7 +212,7 @@ sub _man_html_ankor {
         $a .= sprintf("<a name='a%s'></a>", _man_name_ankor($n));
     }
     return $a;
-}
+} # _man_html_ankor
 #sub _man_html_cbox($) { my $key = shift; return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $key, '"--' . $key . '"'); }
 sub _man_html_cbox  {
     #? checkbox with clickable label and hover highlight
@@ -250,7 +255,7 @@ sub _man_html       {
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         #s/^\s*$/<p id="h$a">/;                      # add paragraph for formatting
-        # add paragraph for formatting
+        # add paragraph for formatting, SEE HTML:JavaScript
         m/^\s*$/ && do { $a="id='h$a'" if ('' ne $a); s/.*/<p $a>/; $a=''; }; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         print;
     }
@@ -258,6 +263,7 @@ sub _man_html       {
 } # _man_html
 
 sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
+    #? print table header line (dashes)
     my $len1 = shift;   # this line triggers Perl::Critic, stupid :-/
     my @args = @_;      # .. hence "no critic" pragma in sub line
     _man_dbx("_man_head(..) ...");
@@ -266,13 +272,14 @@ sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
     printf("=%${len0}s | %s\n", @args);
     printf("=%s+%s\n", '-'x  $len1, '-'x60);
     return;
-}
+} # _man_head
 sub _man_foot       {
+    #? print table footer line (dashes)
     my $len1 = shift;   # expected length of first (left) string
     return if (1 > $cfg_header);
     printf("=%s+%s\n", '-'x $len1, '-'x60);
     return;
-}
+} # _man_foot
 sub _man_opt        {
     #? print line in  "KEY - VALUE"  format
     my @args = @_;
@@ -280,14 +287,14 @@ sub _man_opt        {
        $len  = 1 if ($args[1] eq "="); # allign left for copy&paste
     printf("%${len}s%s%s\n", @args);
     return;
-}
+} # _man_opt
 sub _man_arr        {
     my ($ssl, $sep, $dumm) = @_;
     my @all = ();
     push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$ssl}});
     printf("%16s%s%s\n", $ssl, $sep, join(' ', @all));
     return;
-}
+} # _man_arr
 sub _man_cfg        {
     #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
@@ -295,7 +302,7 @@ sub _man_cfg        {
     $key =  "--$typ=$key"    if ($typ =~ m/^cfg/);
     _man_opt($key, $sep, $txt);
     return;
-}
+} # _man_cfg
 
 sub _man_pod_item   {
     #? print line as POD =item
@@ -357,7 +364,7 @@ sub _man_doc_pod    {
     return;
 } # _man_pod_pod
 
-sub man_table       { ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
     #? header of table is not printed if $typ is cfg-*
     #  NOTE critic: McCabe 22 (tested 5/2016) is not that bad here ;-)
@@ -618,6 +625,7 @@ EoHelp
 sub man_html        {
     #? print complete HTML page for o-saft.pl --help=gen-html
     #? recommended usage:   $0 --no-warning --no-header --help=gen-html
+    # for concept and functionality of the generated page  SEE HTML:JavaScript
     _man_dbx("man_html() ...");
     _man_http_head();
     _man_html_head();
@@ -726,7 +734,7 @@ sub man_cgi         {
     # <a href="$cgi?--cgi&--help=html"    target=_help >help (HTML format)</a>
     # previous link not generated because it prints multiple HTTP headers
     #
-    # From action= and a href= values (link) must be specified using the
+    # <from action= > and <a href= > values (link) must be specified using the
     # option  --usr-action=  at script start.
     #
     _man_dbx("man_cgi() ...");
@@ -751,13 +759,8 @@ print << "EoHTML";
     <p>
     Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
     <input  type=submit name="--cmd" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
-    <!--
-    --url  <input type=text name="--url"  size=40 title='URL to be checked' >
-    --host <input type=text name="--host" size=8  title='hostname or IP' >
-    --port <input type=text name="--port" size=8  title='port number' >
-    -->
     </p>
-    <table id=cmd>
+    <table id="osaft_buttons">
     </table><br>
     <button onclick="toggle_display(d('a'));return false;" title="show options">Options</button>
     <div id=a >
@@ -765,13 +768,14 @@ print << "EoHTML";
     <br>
       <div class=n>
 EoHTML
-        # above HTML contains <div class=n> which contains checkboxes for some
-        # option; these checkboxes are added in following  foreach loop
-        # above HTML contains <table id=cmd> which contains the quick buttons
-        # for some commands; these buttons shoud get the description from the
-        # help text which is generated later in this page,  hence the buttons
-        # are not generated here but using  JavaScript at runtime so that the
-        # corresponding help text can be derivied from the (HTML) page itself
+        # Above HTML contains <div class=n> which contains checkboxes for some
+        # options. These checkboxes are added in following  foreach loop.
+        # Above HTML contains  <table id="osaft_buttons">  which contains the
+        # quick buttons for some commands. These quick  buttons shoud get the
+        # description from the later generated help text in this page,  hence
+        # the buttons are not generated here but using  JavaScript at runtime
+        # so that the corresponding help text can be derivied from the (HTML)
+        # page itself. SEE HTML:JavaScript
     #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
                      no-dns dns no-cert BR
@@ -886,7 +890,7 @@ EoHelp
 } # man_wiki
 
 sub man_toc         {
-    #? print help table of content
+    #? print help table of contents
     my $typ     = lc(shift) || "";      # || to avoid uninitialized value
     _man_dbx("man_toc() ..");
     foreach my $txt (grep{/^=head. /} @help) {  # note: @help is in POD format
@@ -904,7 +908,7 @@ sub man_toc         {
 } # man_toc
 
 sub man_help        {
-    #? print program's help
+    #? print complete user documentation for o-saft.pl as plain text (man-style)
     my $label   = lc(shift) || "";      # || to avoid uninitialized value
     my $anf     = uc($label);
     my $end     = "[A-Z]";
@@ -945,7 +949,7 @@ sub man_help        {
     return;
 } # man_help
 
-sub printhelp       { ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
     my $hlp = shift;
@@ -1022,10 +1026,21 @@ sub printhelp       { ## no critic qw(Subroutines::ProhibitExcessComplexity)
 sub _main           {
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see .perlcritic for detailed description of "no critic"
+    my $arg = shift;
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
+    if ($arg =~ m/--?h(elp)?$/) {
+        if (eval {require POD::Perldoc;}) {
+            # pod2usage( -verbose => 1 );
+            exec( Pod::Perldoc->run(args=>[$0]) );
+        }
+        if (qx(perldoc -V)) {   ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            printf("# no POD::Perldoc installed, please try:\n  perldoc $0\n");   
+        }
+        exit 0;
+    } else {
     printhelp($ARGV[0]);
-    # TODO: need to print help for this module, O-Saft's help when requested
+    }
     exit 0;
 } # _main
 
@@ -1035,7 +1050,7 @@ sub o_saft_man_done {};         # dummy to check successful include
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main() if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
@@ -1053,9 +1068,119 @@ END # mandatory to keep some grep happy
 
 =encoding utf8
 
+
+=head1 DESCRIPTION
+
+This module provides functionality to generate O-Saft's user documentation
+in various formats. Supported formats are:
+
+=over 2
+
+=item * POD
+
+=item * HTML
+
+=item * mediawiki
+
+=item * Plain Text
+
+=back
+
+Additionally various parts of the  documentation can be generated.  Please
+see  L<METHODS>  below.
+
+
+=head1 USAGE
+
+=over 2
+
+=item * require q{o-saft-man.pm}; printhelp($type);
+
+=item * o-saft-man.pm [<$type>]
+
+=back
+
+
+=head1 METHODS
+
+=over 2
+
+=item * printhelp($type)
+
+Public method for  all functionality.  The generated output format depends
+on the $type parameter, which is a literal string, as follows:
+
+=over 2
+
+=item * pod     -> all documentation in POD format
+
+=item * html    -> all documentation in HTML format
+
+=item * wiki    -> all documentation in mediawiki format
+
+=item * NAME    -> all documentation in plain text (man-style) format
+
+=item * <empty>
+
+=item * NAME    -> all documentation in plain text (man-style) format
+
+=item * contents
+
+=item * toc     -> table of contents for documentation as plain text
+
+=item * cgi     -> all documentation as HTML for CGI usage
+
+=item * alias   -> list of all aliases for commands and options
+
+=item * cmds    -> list of all commands (just the commands)
+
+=item * command -> list of all commands with brief description
+
+=item * opts    -> list of all options (just the options)
+
+=item * options -> list of all options with full description
+
+=item * legacy  -> list of legacy options
+
+=item * checks  -> list of all SSL/TLS checks (each can be used as command)
+
+=item * data    -> list of all SSL/TLS data values (each can be used as command)
+
+=item * info    -> list of all SSL/TLS info values (each can be used as command)
+
+=item * range   -> list of supported SSL/TLS cipher ranges (for +cipher)
+
+=item * regex   -> list of most RegEx used internaly for SSL/TLS checks
+
+=item * ourstr  -> list with RegEx matching special strings used in output
+
+=item * tools   -> list of tools delivered with o-saft.pl
+
+=item * abbr
+
+=item * glossar -> list of abbrevations and terms according SSL/TLS
+
+=item * links   -> list of links according SSL/TLS (incomplete)
+
+=item * rfx     -> list of RFCs according SSL/TLS (incomplete)
+
+=item * todo    -> show list of TODOs
+
+=item * intern  -> some internal documentations
+
+=item * Program.Code  -> description of coding style, conventions, etc.
+
+=back
+
+=back
+
+If any other string is used,  'printhelp()'  extracts just the section of
+the documention which is headed by that string.
+
+
 =head1 Annotations, Internal Notes
 
-The annotations here are for internal documentation only
+The annotations here are for internal documentation only.
 For details about our annotations, please SEE  Annotations,  in o-saft.pl.
 
 
@@ -1068,5 +1193,15 @@ Hence these keywords need to be printed in a seperate statement.
 
 
 =head2 HTML:JavaScript
+
+When generating the HTML page (wether plain HTML or CGI), each description
+text for commands and options is placed in a paragraph ('<p>' tag),  which
+has an 'id' attribute set to the name of the command or option.  This name
+is prefixed with the letter 'h'. Example: the description of the '+cipher'
+command is placed in following paragraph: <p id='h+cipher'> ... </p>.
+These paragraphs are generated in  _man_html().
+
+This allows to extract the desciption text after generating the page using
+JavaScript. See JavaScript function  osaft_buttons().
 
 =cut
