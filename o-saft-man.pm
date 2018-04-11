@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.233 18/04/09 21:43:18";
+my  $man_SID= "@(#) o-saft-man.pm 1.234 18/04/11 21:52:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -641,11 +641,8 @@ sub man_pod         {
 # Hence the additional identations for text following the =item are missing.
 # Tested viewers: podviewer, perldoc, pod2usage, tkpod
 
-=pod
-
-=encoding utf8
-
 EoHelp
+    print "=pod\n\n=encoding utf8\n\n"; # SEE POD:Syntax
 
     my $code  = 0;  # 1 if last printed line was `source code' format
     my $empty = 0;  # 1 if last printed line was empty
@@ -688,9 +685,8 @@ Generated with:
 
         o-saft.pl --no-warnings --no-header --help=gen-pod > o-saft.pod
 
-=cut
-
 EoHelp
+    print "=cut\n\n";           # SEE POD:Syntax
     _man_doc_pod('abbr', "-");  # this is for woodoo, see below
     _man_doc_pod('rfc',  "-");  # this is for woodoo, see below
     print <<'EoHelp';
@@ -1045,10 +1041,32 @@ _main() if (not defined caller);
 
 #| documentation
 #| -------------------------------------
-# All documentation for  o-saft.pl  is in plain ASCII format.
+# All public user documentation for  o-saft.pl  is in plain ASCII format.
 # Please see  OSaft/Doc/Data.pm and  *.txt  files in  OSaft/Doc/  for details.
 # $0's help itself is  OSaft/Doc/help.txt .
 
 __END__
 __DATA__
 END # mandatory to keep some grep happy
+
+=pod
+
+=encoding utf8
+
+=head1 Annotations, Internal Notes
+
+The annotations here are for internal documentation only
+For details about our annotations, please SEE  Annotations,  in o-saft.pl.
+
+
+=head2 POD:Syntax
+
+The special POD keywords  =pod  and  =cut  cannot be used as  literal text
+in particular in here documents, because the extracting POD from this file
+itself (using any tool, for example perldoc) would be confused.
+Hence these keywords need to be printed in a seperate statement.
+
+
+=head2 HTML:JavaScript
+
+=cut
