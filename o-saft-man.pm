@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.236 18/04/12 02:05:29";
+my  $man_SID= "@(#) o-saft-man.pm 1.237 18/04/12 19:40:50";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -135,7 +135,7 @@ function osaft_commands(){
 }
 function osaft_options(){                                                                  
 /* get help texts from generated HTML for options and add it to option
- * checkbox of cgi-GUI
+ * checkbox of cgi-GUI (actually add it to the parents title tag)
  * existing  tag of text paragraph containing help text has  id=h--OPT
  * generated tag of quick checkbox containing help text has  id=q--OPT
  */
@@ -246,9 +246,11 @@ sub _man_html_cbox  {
 }
 sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
-sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", ""); }
+sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", "") if ($key eq 'cgi'); return ""; }
+    # SEE HTML:start
 
 sub _man_html       {
+    my $key = shift; # cgi or html
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $h = 0;
@@ -257,14 +259,14 @@ sub _man_html       {
         # is wrong, because it is exactly the purpose to find other settings in
         # other lines.
         # NOTE: Perl::Critic must be set in each line
-    _man_dbx("_man_html($anf, $end) ...");
+    _man_dbx("_man_html($key, $anf, $end) ...");
     while ($_ = shift @help) {
         last if/^TODO/;
         $h=1 if/^=head1 $anf/;
         $h=0 if/^=head1 $end/;
         next if (0 == $h);                          # ignore "out of scope"
         m/^=head1 (.*)/   && do { printf("\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);next;};
-        m/^=head2 (.*)/   && do { print _man_html_go(); printf("%s\n<h3>%s %s </h3> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
+        m/^=head2 (.*)/   && do { print _man_html_go($key); printf("%s\n<h3>%s %s </h3> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
         m/^=head3 (.*)/   && do { $a=$1; printf("%s\n<h4>%s %s </h4> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;}; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
@@ -651,7 +653,7 @@ sub man_html        {
     _man_dbx("man_html() ...");
     _man_http_head();
     _man_html_head();
-    _man_html('NAME', 'TODO');
+    _man_html('html', 'NAME', 'TODO');
     _man_html_foot();
     return;
 } # man_html
@@ -820,7 +822,7 @@ EoHTML
         -->
 EoHTML
 
-    _man_html("COMMANDS", 'LAZY'); # print help starting at COMMANDS
+    _man_html('cgi', 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
     print << "EoHTML";
 </p>
         <input type=reset  value="clear" title="clear all settings"/>
@@ -1227,4 +1229,9 @@ These paragraphs are generated in  _man_html().
 This allows to extract the desciption text after generating the page using
 JavaScript. See JavaScript function  osaft_buttons().
 
+
+=head HTML:start
+
+The documenation in HTML format contains a "start" button at the bottom of
+each toplevel section.
 =cut
