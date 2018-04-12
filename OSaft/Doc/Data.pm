@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 my  $VERSION    = "18.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.8 18/03/25 09:42:27";
+my  $SID        = "@(#) Data.pm 1.9 18/04/12 20:49:40";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -256,7 +256,7 @@ sub get         {
 
 =pod
 
-=head2 print_ast_text($file)
+=head2 print_as_text($file)
 
 Same as  get()  but prints text directly.
 
@@ -308,9 +308,13 @@ Print list of *.txt files in current directory.
 
 Call get(filename).
 
-=head2 get_text(filename
+=head2 get_text filename
 
 Call get_text(filename).
+
+=head2 get_as_text filename
+
+Call get_as_text(filename).
 
 =head2 get_markup filename
 
@@ -350,22 +354,24 @@ sub _main       {
     #? print own documentation
     ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     #   see .perlcritic for detailed description of "no critic"
+    my @argv = @_;
     binmode(STDOUT, ":unix:utf8"); # latin1 geht nicht
     binmode(STDERR, ":unix:utf8");
 
-    if (0 > $#ARGV) { _main_help; exit 0; }
+    if (0 > $#argv) { _main_help; exit 0; }
 
     # got arguments, do something special
-    while (my $cmd = shift @ARGV) {
-        my $arg = shift @ARGV;
-        if ($cmd =~ /^--?h(?:elp)?$/  ) { _main_help; exit 0;     }
+    while (my $cmd = shift @argv) {
+        my $arg = shift @argv;
+        if ($cmd =~ /^--?h(?:elp)?$/  ) { _main_help;         exit 0; }
         # ----------------------------- commands
-        if ($cmd =~ /^list$/)           { print list();           }
-        if ($cmd =~ /^get$/)            { print get($arg);        }
-        if ($cmd =~ /^get.?mark(up)?/)  { print get_markup($arg); }
-        if ($cmd =~ /^get.?text/)       { print get_text($arg);   }
-        if ($cmd =~ /^print$/)          { print_as_text($arg);    }
-        if ($cmd =~ /^version$/)        { print "$SID\n"; exit 0; }
+        if ($cmd =~ /^list$/)           { print list();               }
+        if ($cmd =~ /^get$/)            { print get($arg);            }
+        if ($cmd =~ /^get.?mark(up)?/)  { print get_markup($arg);     }
+        if ($cmd =~ /^get.?text/)       { print get_text($arg);       }
+        if ($cmd =~ /^get.?as.?text/)   { print get_as_text($arg);    }
+        if ($cmd =~ /^print$/)          { print_as_text($arg);        }
+        if ($cmd =~ /^version$/)        { print "$SID\n";     exit 0; }
         if ($cmd =~ /^(-+)?V(ERSION)?$/){ print "$VERSION\n"; exit 0; }
     }
     exit 0;
@@ -381,7 +387,6 @@ sub o_saft_help_done   {};      # dummy to check successful include
 
 =head1 VERSION
 
-$(VERSION)
 C<$VERSION>
 
 =head1 AUTHOR
@@ -395,7 +400,7 @@ C<$VERSION>
 #_____________________________________________________________________________
 #_____________________________________________________________________ self __|
 
-_main() if (not defined caller);
+_main(@ARGV) if (not defined caller);
 
 1;
 
