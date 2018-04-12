@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.237 18/04/12 19:40:50";
+my  $man_SID= "@(#) o-saft-man.pm 1.238 18/04/12 20:47:36";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -52,8 +52,9 @@ my  $cfg_header = 0;                    # we may be called from within parents B
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 local $\    = "";
 
-#| definitions: internal functions
-#| -------------------------------------
+#_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
+
 sub _man_dbx    { my @txt=@_; print "#" . $ich . " CMD: " . join(' ', @txt, "\n") if (0 < (grep{/^--(?:v|trace.?CMD)/i} @ARGV)); return; } # similar to _y_CMD
     # When called from within parent's BEGIN{} section, options are not yet
     # parsed, and so not available in %cfg. Hence we use @ARGV to check for
@@ -278,7 +279,6 @@ sub _man_html       {
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
-        #s/^\s*$/<p id="h$a">/;                      # add paragraph for formatting
         # add paragraph for formatting, SEE HTML:JavaScript
         m/^\s*$/ && do { $a="id='h$a'" if ('' ne $a); s/.*/<p $a>/; $a=''; }; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         print;
@@ -344,9 +344,6 @@ sub _man_usr_value  {
     return $arg[1];
 } # _man_usr_value
 
-#| definitions: print functions for help and information
-#| -------------------------------------
-
 sub _man_doc_opt    {
     #? print text from file $typ in  "KEY - VALUE"  format
     #  type is:   abbr, links, rfc
@@ -387,6 +384,8 @@ sub _man_doc_pod    {
     print "# end $typ\n";
     return;
 } # _man_pod_pod
+#_____________________________________________________________________________
+#__________________________________________________________________ methods __|
 
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
@@ -1028,7 +1027,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         return;
     }
     if ($hlp =~ m/^opts?$/i)    { # print program's options
-        my @txt  = grep{/^=head. (General|Option|--)/} @help;   # grep options only
+        my @txt  = grep{/^=head. (General|Option|--)/} @help;   # get options only
         foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
         my($end) = grep{$txt[$_] =~ /^Options vs./} 0..$#txt;   # find end of OPTIONS section
         print join('', "OPTIONS\n", splice(@txt, 0, $end));     # print anything before end
@@ -1070,28 +1069,18 @@ sub _main           {
 } # _main
 
 sub o_saft_man_done {};         # dummy to check successful include
-## PACKAGE }
 
 #_____________________________________________________________________________
-#_____________________________________________________________________ self __|
-
-_main(@ARGV) if (not defined caller);
-
-1;
-
-#| documentation
-#| -------------------------------------
-# All public user documentation for  o-saft.pl  is in plain ASCII format.
-# Please see  OSaft/Doc/Data.pm and  *.txt  files in  OSaft/Doc/  for details.
-# $0's help itself is  OSaft/Doc/help.txt .
-
-__END__
-__DATA__
-END # mandatory to keep some grep happy
+#_____________________________________________________ public documentation __|
 
 =pod
 
 =encoding utf8
+
+
+=head1 NAME
+
+o-saft-man.pm - perl module to handle O-Saft's documentation
 
 
 =head1 DESCRIPTION
@@ -1115,7 +1104,7 @@ Additionally various parts of the  documentation can be generated.  Please
 see  L<METHODS>  below.
 
 
-=head1 USAGE
+=head1 SYNOPSIS
 
 =over 2
 
@@ -1203,6 +1192,25 @@ If any other string is used,  'printhelp()'  extracts just the section of
 the documention which is headed by that string.
 
 
+=head1 AUTHOR                                                                  
+                                                                               
+14-nov-14 Achim Hoffmann
+
+=cut
+
+## PACKAGE }
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ self __|
+
+_main(@ARGV) if (not defined caller);
+
+1;
+
+# SEE Note:Documentation                                                       
+
+=pod
+
 =head1 Annotations, Internal Notes
 
 The annotations here are for internal documentation only.
@@ -1224,14 +1232,15 @@ text for commands and options is placed in a paragraph ('<p>' tag),  which
 has an 'id' attribute set to the name of the command or option.  This name
 is prefixed with the letter 'h'. Example: the description of the '+cipher'
 command is placed in following paragraph: <p id='h+cipher'> ... </p>.
-These paragraphs are generated in  _man_html().
+These paragraphs are generated in  '_man_html()'.
 
 This allows to extract the desciption text after generating the page using
-JavaScript. See JavaScript function  osaft_buttons().
+JavaScript. See JavaScript function  'osaft_buttons()'.
 
 
-=head HTML:start
+=head2 HTML:start
 
 The documenation in HTML format contains a "start" button at the bottom of
 each toplevel section.
+
 =cut
