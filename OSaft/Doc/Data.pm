@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 my  $VERSION    = "18.01.18";  # official verion number of tis file
-my  $SID        = "@(#) Data.pm 1.9 18/04/12 20:49:40";
+my  $SID        = "@(#) Data.pm 1.10 18/04/13 18:56:35";
 
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
@@ -62,7 +62,7 @@ sub _replace_var {
 
 sub _get_filehandle {
     #? return open file handle for passed filename,
-    #? return Perl's DATA file handle if file does not exist
+    #? return Perl's DATA file handle of this file if file does not exist
     # this function is a wrapper for Perl's DATA
     my $file = shift || "";
     my $fh; # same as *FH
@@ -127,6 +127,7 @@ sub get_markup    {
                     #  using a local variable or implecitely in the loop
         ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
             # it's the nature of some regex to be complex
+        # SEE MARKUP
         next if (m/^#begin/..m/^#end/); # remove egg
         next if (/^#/);                 # remove comments
         next if (/^\s*#.*#$/);          # remove formatting lines
@@ -381,6 +382,136 @@ sub o_saft_help_done   {};      # dummy to check successful include
 
 =pod
 
+=head1 MARKUP
+
+Following notations / markups are used for public (user) documentation
+(for example help.txt):
+
+=over 2
+
+=item TITLE
+
+Titles start at beginning of a line, i.g. all upper case characters.
+
+=item SUB-Title
+
+Sub-titles start at beginning of a line preceeded by 4 or 6 spaces.
+
+=item code
+
+Code lines start at beginning of a line preceeded by 14 or more spaces.
+
+=item "text in double quotes"
+
+References to text or cite.
+
+=item 'text in single quotes'
+
+References to verbatim text elswhere or constant string in description.
+
+=item '* list item
+
+Force list item (first level) in generated markup.
+
+=item ** list item
+
+Force list item (second level) in generated markup.
+
+=item d) list item
+
+Force list item in generated markup (d may be a digit or character).
+
+=item $VERSION
+
+Will be replaced by current version string (as defined in caller).
+
+=item $0
+
+Will be replaced by caller's name (i.g. o-saft.pl).
+
+=item `$0'
+
+Will not be replaced, but kept as is.
+
+=back
+
+Referenzes to titles are written in all upper case characters and prefixed
+and suffixed with 2 spaces.
+
+There is only one special markup used:
+
+=over 2
+
+=item X&Some title here&
+
+Which refers to sub-titles. It must be used to properly markup internal
+links to sub-sections if the title is not written in all upper case.
+
+=back
+
+All head lines for sections (see TITLE above) must be preceeded by 2 empty
+lines. All head lines for commands and options should contain just this command
+or option, aliases should be written in their own line (to avoid confusion
+in some other parsers, like Tcl).
+
+List items should be followed by an empty line.
+
+Texts in section headers should not contain any quote characters.  I.g. no
+other markup is used. Even Lines starting with  '#' as first character are
+usually not treated as comment line but verbatim text.
+
+=head2 Special markups
+
+=head3 Left hand space
+
+=over 6
+
+=item none        - head line level 1
+
+=item exactly 4   - head line level 2
+
+=item exactly 6   - head line level 3
+
+=item exactly 11  - list item
+
+=item exactly 14  - highlighted line
+
+=item exactly 18  - code line
+
+=back
+
+=head3 Left hand *:
+
+=over 6
+
+=item spaces *    - list item level 1
+
+=item spaces **   - list item level 2
+
+=back
+
+=head3 Left hand digit or letter followed by )
+
+List item may start with letter or digit fowwed by ) .
+
+=head3 Special markups for o-saft.tcl
+
+The sub-titles in the COMMANDS and OPTIONS sections must look like:
+
+=over 6
+
+=item Commands for whatever text
+
+=item Commands to whatever text
+
+=item Options for whatever text
+
+=back
+
+Means that the prefixes  "Commands for"  and  "Options for"  are used to
+identify groups of commands and options. If a sub-title does not start
+with these prefixes, all following commands and options are ignored.
+
 =head1 SEE ALSO
 
 # ...
@@ -405,58 +536,16 @@ _main(@ARGV) if (not defined caller);
 1;
 
 # SEE Note:Documentation
-# All documentation is in plain ASCII format.
-# It's designed for human radability and simple editing.
-#
-# Following notations / markups are used:
-#   TITLE
-#       Titles start at beginning of a line, i.g. all upper case characters.
-#     SUB-Title
-#       Sub-titles start at beginning of a line preceeded by 4 or 6 spaces.
-#     code
-#       Code lines start at beginning of a line preceeded by 14 or more spaces.
-#   "text in double quotes"
-#       References to text or cite.
-#   'text in single quotes'
-#       References to verbatim text elswhere or constant string in description.
-#   * list item
-#       Force list item (first level) in generated markup.
-#   ** list item
-#       Force list item (second level) in generated markup.
-#   d) list item
-#       Force list item in generated markup (d may be a digit or character).
-#   $VERSION
-#       Will be replaced by current version string (as defined in caller).
-#   $0
-#       Will be replaced by caller's name (i.g. o-saft.pl).
-#   `$0'
-#       Will not be replaced, but kept as is.
-#
-#   Referenzes to titles are written in all upper case characters and prefixed
-#   and suffixed with 2 spaces.
-#
-#   There is only one special markup used:
-#   X&Some title here&
-#       which refers to sub-titles, it must be used to properly markup internal
-#       links to sub-sections if the title is not written in all upper case.
-#
-#   All head lines for sections (see TITLE above) are preceeded by 2 empty lines.
-#   All head lines for commands and options should contain just this command
-#   or option, aliases should be written in their own line (to avoid confusion
-#   in some other parsers, like Tcl).
-#   List items should be followed by an empty line.
-#   Texts in section headers should not contain any quote characters.
-#   I.g. no other markup is used. Even Lines starting with # as first character
-#   are usually not treated as comment line but verbatim text.
-#
-# Special markups for o-saft.tcl:
-#   - the sub-titles in the COMMANDS and OPTIONS sections must look like:
-#       Commands for whatever text
-#       Commands to whatever text
-#       Options for whatever text
-#     means that the prefixes  "Commands for"  and  "Options for"  are used to
-#     identify groups of commands and options. If a sub-title does not start
-#     with these prefixes, all following commands and options are ignored.
+# All public (user) documentation is in plain ASCII format (see help.txt).
+
+=pod
+
+=head1 Annotations, Internal Notes
+
+The annotations here are for internal documentation only.
+For details about our annotations, please SEE  Annotations,  in o-saft.pl.
+
+=cut
 
 __DATA__
 
