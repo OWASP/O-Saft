@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.6 18/01/19 09:41:18
+# SID   @(#) help.txt 1.7 18/04/14 12:22:48
 
 NAME
 
@@ -724,6 +724,10 @@ OPTIONS
       --help
 
           WYSIWYG
+
+      --help=help
+
+          Show available options to show descriptions (this Options section).
 
       --help=cmd
 
