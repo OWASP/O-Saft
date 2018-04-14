@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.238 18/04/12 20:47:36";
+my  $man_SID= "@(#) o-saft-man.pm 1.239 18/04/14 11:09:41";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -256,6 +256,7 @@ sub _man_html       {
     my $end = shift; # pattern where to stop extraction
     my $h = 0;
     my $a = "";
+    my $p = "";      # for closing p Tag
         # Perl::Critic complains that $a should be localized (code below), this
         # is wrong, because it is exactly the purpose to find other settings in
         # other lines.
@@ -266,7 +267,7 @@ sub _man_html       {
         $h=1 if/^=head1 $anf/;
         $h=0 if/^=head1 $end/;
         next if (0 == $h);                          # ignore "out of scope"
-        m/^=head1 (.*)/   && do { printf("\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);next;};
+        m/^=head1 (.*)/   && do { printf("$p\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);$p="";next;};
         m/^=head2 (.*)/   && do { print _man_html_go($key); printf("%s\n<h3>%s %s </h3> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
         m/^=head3 (.*)/   && do { $a=$1; printf("%s\n<h4>%s %s </h4> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;}; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
@@ -279,10 +280,16 @@ sub _man_html       {
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
-        # add paragraph for formatting, SEE HTML:JavaScript
-        m/^\s*$/ && do { $a="id='h$a'" if ('' ne $a); s/.*/<p $a>/; $a=''; }; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+        # add paragraph for formatting, SEE HTML:p and HTML:JavaScript
+        m/^\s*$/ && do {
+                    $a = "id='h$a'" if ('' ne $a);
+                    print "$p<p $a>";
+                    $p = "</p>";
+                    $a = '';
+                    }; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
         print;
     }
+    print "$p"; # if not empty, otherwise harmless
     return;
 } # _man_html
 
@@ -1176,7 +1183,9 @@ on the $type parameter, which is a literal string, as follows:
 
 =item * links   -> list of links according SSL/TLS (incomplete)
 
-=item * rfx     -> list of RFCs according SSL/TLS (incomplete)
+=item * rfc     -> list of RFCs according SSL/TLS (incomplete)
+
+=item * faq     -> lists known problems and limitations
 
 =item * todo    -> show list of TODOs
 
@@ -1190,6 +1199,9 @@ on the $type parameter, which is a literal string, as follows:
 
 If any other string is used,  'printhelp()'  extracts just the section of
 the documention which is headed by that string.
+
+NOTE that above list is also documented in ./OSaft/Doc/help.txt in section
+"Options for help and documentation".
 
 
 =head1 AUTHOR                                                                  
@@ -1207,7 +1219,7 @@ _main(@ARGV) if (not defined caller);
 
 1;
 
-# SEE Note:Documentation                                                       
+# SEE Note:Documentation (in o-saft.pl)
 
 =pod
 
@@ -1220,9 +1232,20 @@ For details about our annotations, please SEE  Annotations,  in o-saft.pl.
 =head2 POD:Syntax
 
 The special POD keywords  =pod  and  =cut  cannot be used as  literal text
-in particular in here documents, because the extracting POD from this file
-itself (using any tool, for example perldoc) would be confused.
+in particular in here documents, because (all?) most tools  extracting POD
+from this file (for example perldoc) would be confused.
 Hence these keywords need to be printed in a seperate statement.
+
+
+=head2 HTML:p
+
+For HTML format a paragraph tag '<p>' is used for all text blocks enclosed
+in empty lines.  As RegEx are used to substitute the  markup text to HTML, 
+empty paragraphs may be generated. This is harmless,  as browsers will not
+render empty paragraphs.
+
+Old-style '<p>' is used even we know that '<div>' is the modern standard.
+This simplifies formating with CSS.
 
 
 =head2 HTML:JavaScript
@@ -1241,6 +1264,7 @@ JavaScript. See JavaScript function  'osaft_buttons()'.
 =head2 HTML:start
 
 The documenation in HTML format contains a "start" button at the bottom of
-each toplevel section.
+each toplevel section.  This should only be done when the page is used for
+CGI (aka --help=cgi).
 
 =cut
