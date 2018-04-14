@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.239 18/04/14 11:09:41";
+my  $man_SID= "@(#) o-saft-man.pm 1.240 18/04/14 12:21:14";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -1033,6 +1033,17 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         print "# $parent legacy values:\t" . join(' ',  @{$cfg{'legacys'}});
         return;
     }
+    if ($hlp =~ /^help$/) {
+	#my $hlp = OSaft::Doc::Data::get("help.txt", $parent, $version);
+        my $txt  = "";
+        foreach (@help) { $txt .= $_ if (m/Options for help and documentation/..m/Options for all commands/); };
+            # TODO: quick&dirty match against to fixed strings (=head lines)
+        $txt =~ s/^=head.//msg;
+        $txt =~ s/Options for all commands.*.//msg;
+        print "$txt";
+        #man_help('Options for help and documentation');
+        return;
+    }
     if ($hlp =~ m/^opts?$/i)    { # print program's options
         my @txt  = grep{/^=head. (General|Option|--)/} @help;   # get options only
         foreach my $line (@txt) { $line =~ s/^=head. *//}       # remove leading markup
@@ -1149,6 +1160,8 @@ on the $type parameter, which is a literal string, as follows:
 
 =item * toc     -> table of contents for documentation as plain text
 
+=item * help    -> list all options to get (help) information
+
 =item * cgi     -> all documentation as HTML for CGI usage
 
 =item * alias   -> list of all aliases for commands and options
@@ -1202,6 +1215,7 @@ the documention which is headed by that string.
 
 NOTE that above list is also documented in ./OSaft/Doc/help.txt in section
 "Options for help and documentation".
+In a perfect world it would be extracted from there (or vice versa).
 
 
 =head1 AUTHOR                                                                  
