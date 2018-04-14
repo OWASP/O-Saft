@@ -18,14 +18,14 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#) gen_standalone.sh 1.7 18/03/26 11:48:34
+#?       @(#) gen_standalone.sh 1.8 18/04/14 21:08:56
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-dst=o-saft_standalone.pl
+dst=o-saft-standalone.pl
 src=o-saft.pl
 try=
 sid=1
