@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.789 18/03/22 23:57:50",
+    SID         => "@(#) yeast.pl 1.790 18/04/14 12:52:43",
     STR_VERSION => "18.01.18",          # <== our official version number
 };
 
@@ -8441,19 +8441,43 @@ public user documentation, please see  OSaft/Doc/*.txt  and  OSaft/Doc/Data.pm
 
 =encoding utf8
 
+
+=head1 Documentation
+
+Documentation distinguishes between the  L<Public User Documentation>  and
+L<Internal Code Documentation>.
+
+=head3 Public User Documentation
+
+All public user documentation is available in plain text format. It can be
+accessed programatially with the --help option and various variants of it.
+All plain text files are located in  ./OSaft/Doc/ .  They are designed for
+human radability and simple editing.
+
+For details on documentation texts (format, syntax, etc.) from files,  see
+./OSaft/Doc/Data.pm  and  o-saft-man.pm .
+
+=head3 Internal Code Documentation
+
+All internal (program and coding) documentation is usually  POD format  in
+the corresponding files. This documentation is intended for development.
+
+For details see following chapter  L<Annotations, Internal Notes> .
+
+
 =head1 Annotations, Internal Notes
 
 The annotations here describe  behaviours, observations, and alike,  which
 lead to special program logic. The intention is to have one central place,
 where to do the documentation.
-Up to now --2018-- this is an internal documentaion only.  It is planed to
-be available for the user too, i.e. with --help .
+Up to now --2018-- this is an internal documentation only. It is available
+for the developer with perldoc also.
 
 It is written in POD format, because some tools analyzing the code want to
 "see" comments and documentation. We feed them. For more information about
 that, please see "woodoo" in o-saft-man.pm .
-Note that only POD's =head2 syntax is used. It marks a single annotation.
-The reference to such an annotation uses  SEE  in the code.
+Note that POD's =head2 syntax is used. It marks a single annotation, which
+will be referenced in the code with the  "SEE <Annotation>"  syntax.
 All following text is supposed to be read by humans!
 
 The term  Perl  is used when the programming language in general is meant.
@@ -8461,9 +8485,62 @@ The term  Perl  is used when the programming language in general is meant.
 The term  perl  is used when the program perl (or perl.exe) is meant.
 
 The term  Perl::Critic  is used when the functionality of the Perl::Critic
-module, or any program using it, is meant.
+module, or any program using it (such as perlcritic), is meant.
 
 The term   perlcritic   is used when the program perlcritic is meant.
+
+
+=head2 Note:Documentation
+
+=head3 Since VERSION 18.01.18
+
+All public user documentation is now in plain text files which use charset
+UTF-8, see  ./OSaft/Doc/*.txt . Previous files ./OSaft/Doc/*.pm  have been
+replaced by  ./OSaft/Doc/Data.pm and the afore mentioned plain text files.
+Reading plain text from external files instead of  Perl's DATA also avoids
+sophisticated computation of the correct file and DATA handle, for example
+when  ./OSaft/Doc/*.pm  is imported in  Perl's BEGIN section,  please also
+SEE Perl:BEGIN  below.
+
+=head3 Since VERSION 17.07.17
+
+All documentation from variables, i.e.  %man_text, moved to separate files 
+in  ./OSaft/Doc/*. This simplified editing texts as they are  simple ASCII
+format in the  __DATA__ section of each file. The overhead compared to the
+%man_text  variable is just the Perl module file with its  POD texts.  The
+disadvantage is, that it's more complicated to import the data in a stand-
+alone script, see  contrib/gen_standalone.sh .
+
+=head3 Since VERSION 17.06.17
+
+All user documentation is now in  o-saft-man.pl, which uses a mix of texts
+defined in Perl variables,  i.e. %man_text.  The public user documentation
+is defined in the  __DATA__  section (mainly all the documentation).
+
+=head3 Until VERSION 14.11.12
+
+Initilly the documentation was written in Perl's doc format: perldoc, POD.
+The advantage of POD is the well formated output on various platforms, but
+results in more difficult efforts for extracting information from there.
+In particular following problems occoured with POD:
+
+    - perldoc is not available on all platforms by default
+    - POD is picky when text lines start with a whitespace
+    - programatically extracting data requires additional substitutes
+    - POD is slow
+
+Changing POD to plain ASCII (VERSION 14.11.14 vs. 14.12.14):
+
+    equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm     
+
+      Description              POD ASCII           %    File
+    -------------------------+----+-------------+------+----------
+    * reduced doc. text:      3110  2656 lines     85%  o-saft.pl
+    * reduced doc. text:      86.9  85.5 kBytes    98%  o-saft.pl
+    * reduced source code:     122    21 lines     17%  o-saft.pl
+    * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
+    * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
+    -------------------------+----+-------------+------+----------
 
 
 =head2 Perl:perlcritic
@@ -8605,60 +8682,6 @@ Each warning has a unique number. The numbers are grouped as follows:
 
 Check for used numbers with:
     egrep '(die|_warn| warn )' o-saft.pl | sed -e 's/^ *//' | sort
-
-
-=head2 Note:Documentation
-
-All documentation is in plain text format. All documentation available for
-users is located in its own file. The documentation texts are designed for
-human radability and simple editing. 
-
-For details on documentation texts from files, see  ./OSaft/Doc/Data.pm .
-
-Since VERSION 18.01.18
-All public user documentation is now in plain text files which use charset
-UTF-8, see  ./OSaft/Doc/*.txt . Previous files ./OSaft/Doc/*.pm  have been
-replaced by  ./OSaft/Doc/Data.pm  and these plain text files.
-Reading plain text from external files instead of  Perl's DATA also avoids
-sophisticated computation of the correct file and DATA handle, for example
-when  ./OSaft/Doc/*.pm  is imported in  Perl's BEGIN section,  please also
-SEE Perl:BEGIN  above.
-
-Since VERSION 17.07.17
-All documentation from variables, i.e.  %man_text, moved to separate files 
-in  ./OSaft/Doc/*. This simplified editing texts as they are  simple ASCII
-format in the  __DATA__ section of each file. The overhead compared to the
-%man_text  variable is just the Perl module file with its  POD texts.  The
-disadvantage is, that it's more complicated to import the data in a stand-
-alone script, see  contrib/gen_standalone.sh .
-
-Since VERSION 17.06.17
-All user documentation is now in  o-saft-man.pl, which uses a mix of texts
-defined in Perl variables,  i.e. %man_text.  The public user documentation
-is defined in the  __DATA__  section (mainly all the documentation).
-
-Until VERSION 14.11.12
-Initilly the documentation was written in Perl's doc format: perldoc, POD.
-The advantage of POD is the well formated output on various platforms, but
-results in more difficult efforts for extracting information from there.
-In particular following problems occoured with POD:
-    - perldoc is not available on all platforms by default
-    - POD is picky when text lines start with a whitespace
-    - programatically extracting data requires additional substitutes
-    - POD is slow
-
-Changing POD to plain ASCII:
-    equal source code: lines or kBytes in o-saft-usr.pm vs. o-saft-man.pm     
-
-      Description              POD ASCII           %    File
-    -------------------------+----+-------------+------+----------
-    * reduced doc. text:      3110  2656 lines     85%  o-saft.pl
-    * reduced doc. text:      86.9  85.5 kBytes    98%  o-saft.pl
-    * reduced source code:     122    21 lines     17%  o-saft.pl
-    * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
-    * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
-    -------------------------+----+-------------+------+----------
-
 
 =head2 Note:SSL protocol versions
 
