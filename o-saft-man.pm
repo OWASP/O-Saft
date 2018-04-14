@@ -12,19 +12,19 @@ package main;   # ensure that main:: variables are used
 #        However, the code herein is just for our own documentation ...
 
 ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-# NOTE:  This often happens in comman separated statements, see above.
+# NOTE:  This often happens in comma separated statements, see above.
 #        It may also happen after postfix statements.
 #        Need to check regularily for this problem ...
 
 ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
-#     :  Yes, we have very complex regex here.
+#        Yes, we have very complex regex here.
+
+## no critic qw(RegularExpressions::RequireExtendedFormatting)
+#        We believe that most RegEx are not too complex.
 
 ## no critic qw(InputOutput::RequireBriefOpen)
 #        We always close our filehandles, Perl::Critic is too stupid to read
 #        over 15 lines.
-
-## no critic qw(ValuesAndExpressions::ProhibitNoisyQuotes)
-#        We have a lot of single character strings, herein, that's ok.
 
 ## no critic qw(Modules::ProhibitExcessMainComplexity)
 #        It's the nature of translations to be complex, hence don't complain.
@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.240 18/04/14 12:21:14";
+my  $man_SID= "@(#) o-saft-man.pm 1.241 18/04/14 12:51:22";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -255,12 +255,8 @@ sub _man_html       {
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
     my $h = 0;
-    my $a = "";
+    my $a = "";      # NOTE: Perl::Critic is scary, SEE Perlcritic:LocalVars
     my $p = "";      # for closing p Tag
-        # Perl::Critic complains that $a should be localized (code below), this
-        # is wrong, because it is exactly the purpose to find other settings in
-        # other lines.
-        # NOTE: Perl::Critic must be set in each line
     _man_dbx("_man_html($key, $anf, $end) ...");
     while ($_ = shift @help) {
         last if/^TODO/;
@@ -281,12 +277,12 @@ sub _man_html       {
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
         # add paragraph for formatting, SEE HTML:p and HTML:JavaScript
-        m/^\s*$/ && do {
+        m/^\s*$/ && do { ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     $a = "id='h$a'" if ('' ne $a);
                     print "$p<p $a>";
                     $p = "</p>";
                     $a = '';
-                    }; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                }; # SEE Perlcritic:LocalVars
         print;
     }
     print "$p"; # if not empty, otherwise harmless
@@ -1241,6 +1237,15 @@ _main(@ARGV) if (not defined caller);
 
 The annotations here are for internal documentation only.
 For details about our annotations, please SEE  Annotations,  in o-saft.pl.
+
+
+=head2 Perlcritic:LocalVars
+
+Perl::Critic  complains that the variable $a should be localized in of the
+code, this is wrong,  because it is exactly the purpose to find this value
+(other settings) in other lines.
+Hence  "no critic Variables::RequireLocalizedPunctuationVars"  needs to be
+set in each line using $a.
 
 
 =head2 POD:Syntax
