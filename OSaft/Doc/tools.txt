@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 1.1 18/01/23 23:42:42
+# SID   @(#) tools.txt 1.2 18/04/16 22:10:46
 
 NAME
 
@@ -23,6 +23,8 @@ SYNOPSIS
 
         o-saft-docker [OPTIONS ..] [COMMANDS ..] target [target target ...]
 
+        env  QUERY_STRING="--cgi&OPTIONS&COMMANDS&target" o-saft.cgi
+
         https://o-saft.cgi?--cgi&OPTIONS&COMMANDS&target
 
         INSTALL.sh
@@ -30,6 +32,8 @@ SYNOPSIS
         contrib/install_perl_modules.pl
 
         contrib/gen_standalone.sh
+
+        contrib/cipher_check.sh
 
         contrib/critic.sh
 
@@ -39,7 +43,7 @@ SYNOPSIS
 
 CONCEPTS
 
-        The main tool, doing all the SSL related tests, is  o-saft.pl .
+        The main tool, doing all the SSL/TLS related tests, is  o-saft.pl .
         All other tools described here are just wrappers around  o-saft.pl or
         tools for postprocessing output data of  o-saft.pl .
 
@@ -53,6 +57,7 @@ CONCEPTS
           CGI             o-saft.cgi      # use o-saft.pl from web server
           VM              o-saft-docker   # use o-saft.pl inside docker
           Postprocess     contrib/*       # prostprocessor tools
+          Advanced Tools  contrib/*       # use o-saft.pl in advanced modes
           Installation    INSTALL.sh      # simple installation tool
           Development     ....            # ... comming soon
          #---------------+----------------+----------------------------------
@@ -74,16 +79,16 @@ TOOLS
         The main purpose is to use postprocessors inside a VM like docker, or
         when called from a CGI script.
 
-          o-saft +cmd --option target
-          o-saft -post='bunt.pl' +cmd --option target
-          o-saft-docker -id=osawp/o-saft  -post='bunt.pl' ' +cmd --option target
+          o-saft [COMMANDS] [OPTIONS] target
+          o-saft [COMMANDS] [OPTIONS] target -post='bunt.pl'
+          o-saft-docker -id=osawp/o-saft -post='bunt.pl' ' [COMMANDS] [OPTIONS] target
 
     GUI
         o-saft.tcl is the graphical user interface for  o-saft.pl .
 
           o-saft.tcl
           o-saft.tcl --docker
-          o-saft-docker -id=osawp/o-saft.tcl
+          o-saft-docker -id=osawp/o-saft
 
     CGI
         o-saft.cgi TBD
@@ -91,17 +96,30 @@ TOOLS
     VM
         o-saft-docker calls  o-saft.pl  in a docker image.
 
-          o-saft-docker +cmd --option target
-          o-saft-docker -id=osawp/o-saft.pl +cmd --option target
+          o-saft-docker [COMMANDS] [OPTIONS] target
+          o-saft-docker -id=osawp/o-saft.pl [COMMANDS] [OPTIONS] target
 
     Postprocess
-        contrib/* TBD
+        Various postprocessors exist.  They all change the  content or format
+        of o-saft.pl's output. See the files itself what they do.
+
+          contrib/bunt.pl
+          contrib/* TBD
+
+    Advanced Tools
+        Check a target for ciphers with various methods:
+
+          contrib/cipher_check.sh
 
     Installation
-        INSTALL.sh
+          INSTALL.sh
+          contrib/distribution_install.sh
+          contrib/install_perl_modules.pl
+          contrib/*_completion_o-saft
 
     Development
-        TBD
+          contrib/critic.sh
+          contrib/.perlcritic
 
 
 CUSTOMIZATION
