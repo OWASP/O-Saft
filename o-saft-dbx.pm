@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.62 18/03/25 10:06:08";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.63 18/04/19 13:01:17";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -227,6 +227,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _yline(" %cfg }");
     }
     # now user friendly informations
+    my $sni_name = $cfg{'sni_name'} || "<<undef>>"; # default is Perl's undef
     _yline(" cmd {");
     _yeast("# " . join(", ", @{$dbx{'file'}}));
     _yeast("          path= " . _y_ARR(@{$cmd{'path'}}));
@@ -241,7 +242,7 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("      ca_depth= $cfg{'ca_depth'}") if defined $cfg{'ca_depth'};
     _yeast("       ca_path= $cfg{'ca_path'}")  if defined $cfg{'ca_path'};
     _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
-    _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$cfg{'sni_name'}");
+    _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$sni_name");
     _yeast("  default port= $cfg{'port'} (last specified)");
     _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
     foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
