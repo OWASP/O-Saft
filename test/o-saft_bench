@@ -5,9 +5,10 @@
 #? SYNOPSYS
 #?      o-saft_bench [target host]
 #? DESCRIPTION
-#?      Runs o-saft.pl with most common commands and measures execution and
+#?      Runs  o-saft.pl with most common commands and measures execution and
 #?      memory usage using system's  time  command.
-#?      Results are appended to  o-saft_bench.times .
+#?      Results are written to STDOUT, the caller is responsible appended it
+#?      to  o-saft_bench.times .
 #?      localhost is used as target for testing, can be passed as parameter. 
 #? RESULTS                                                                     
 #?      Expected results are like:                                             
@@ -39,34 +40,36 @@
 #?          * max. memory: 25000 kB is good for info command
 #?          * max. memory: 45000 kB is good for cipher and check commands
 #?
+#? VERSION
+#?      @(#) o-saft_bench 1.17 18/04/20 12:04:54
+#? AUTHOR
+#?      07-jul-14 Achim Hoffmann
 # -----------------------------------------------------------------------------
 
-  SID="@(#) o-saft_bench 1.16 18/04/20 11:45:07"
+  SID="@(#) o-saft_bench 1.17 18/04/20 12:04:54"
 
 
   ich=${0##*/}
 yeast=../o-saft.pl
  host=localhost
  time=/usr/bin/time
-  out=./${ich}.times
-  cnt=4   # additional 4 lines which are the table header and footer line
+  out=./${ich}.times    # not used anymore, must be done by caller
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0; exit 0; ;;
-	'+VERSION')	echo "1.16"; ;;
+	'+VERSION')	echo "1.17"; ;;
 	*)	host="$1"; ;;
 	esac
 	shift
 done
 
+[ -x $yeast ] || yeast=o-saft.pl
 $yeast +quit > /dev/null
 if [ $? != 0 ]; then
 	echo "**ERROR: $yeast failed; exit" && exit 2
 fi
-
- echo ego
 
 (echo
  echo -n "# " && date
@@ -76,10 +79,10 @@ fi
  echo -n "# Perl   (perl -v):   " && perl -v|grep This
  echo    "#"
  echo    "# testing with target: \$host = $host"
-) | tee -a $out
-echo -n "# prepare ... "
+)
+#dbx echo -n "# prepare ... "
 $yeast +check localhost --trace --user >/dev/null 2>&1 # dummy to load modules and alocate memory
-echo "done."
+#dbx echo "done."
 t="%U  %S  %E  %P  %Kk  %Mk"
 line="#--------------------------------------+------+-----+--------+----+---+-------+"
 (
@@ -87,7 +90,7 @@ echo $line
 echo "#                                      |        time         |    |  memory   |"
 echo "#         command                      |  user system   real | CPU| av.  max  |"
 echo $line
-) >> $out
+)
 while read -r cmd ; do
 	[ -z "$cmd" ] && continue  # skip final emtpy line
 	#dbx# echo    "o-saft.pl $cmd "
@@ -95,8 +98,8 @@ while read -r cmd ; do
 		# we want a well formatted table, hence the real hostname is
 		# replaced by the fixed string $host
 #echo "$txt #"
-	echo -n "o-saft.pl $txt" | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast $cmd >/dev/null && echo ""
-        cnt=`expr $cnt + 1`
+	#echo -n "o-saft.pl $txt" | tee -a $out && $time --quiet -o $out -a -f "$t" $yeast $cmd >/dev/null && echo ""
+	echo -n "o-saft.pl $txt" && $time --quiet -f "$t" $yeast $cmd >/dev/null
 	# note: --exit=BEGIN0 is some kind of minimal (perl) resources
 done << EoT
 	--exit=BEGIN0                \ 
@@ -130,8 +133,7 @@ EoT
 # We want to have well formated texts (command and options) for o-saft.pl call.
 # Hence we use a trailing backslash followed by a single space.
 
-echo $line  >> $out
-tail -$cnt $out
+echo $line
 exit
 
 #=============================================================================#
