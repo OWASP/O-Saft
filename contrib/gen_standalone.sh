@@ -10,6 +10,7 @@
 #?       --h     got it
 #?       --n     do not execute, just show what would be done
 #?       --t     do not check if all files are commited to repository
+#?       --s     silent, do not print informations (for usage with Makefile)
 #?       --v     be a bit verbose
 #?
 #? DESCRIPTION
@@ -18,7 +19,7 @@
 #?       NOTE: this will not generate a bulletproof stand-alone script!
 #?
 #? VERSION
-#?       @(#) gen_standalone.sh 1.8 18/04/14 21:08:56
+#?       @(#) gen_standalone.sh 1.9 18/05/01 21:51:02
 #?
 #? AUTHOR
 #?      02-apr-16 Achim Hoffmann
@@ -29,6 +30,7 @@ dst=o-saft-standalone.pl
 src=o-saft.pl
 try=
 sid=1
+info=1
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -39,6 +41,7 @@ while [ $# -gt 0 ]; do
 		;;
 	 '-n' | '--n') try=echo; ;;
 	 '-t' | '--t') sid=0   ; ;;
+	 '-s' | '--s') info=0  ; ;;
 	 '-v' | '--v') set -x  ; ;;
 	esac
 	shift
@@ -74,8 +77,10 @@ if [ $sid -eq 1 ]; then
 	done
 fi
 
-\echo "# generate $dst ..."
-\echo ""
+if [ $info -eq 1 ]; then
+	\echo "# generate $dst ..."
+	\echo ""
+fi
 
 $try \rm -rf $dst
 
@@ -181,6 +186,8 @@ $try \rm -rf $dst
 > $dst
 
 $try \chmod 555 $dst
+[ $info -eq 0 ] && exit
+
 $try \ls    -la $dst
 \echo "# $dst generated"
 
