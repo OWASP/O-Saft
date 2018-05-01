@@ -1,5 +1,7 @@
 #! /bin/sh
 #?
+#? File generated from %M% %I%
+#?
 #? NAME
 #?      $0 - install script for O-Saft
 #?
@@ -34,11 +36,16 @@
 #?      $0 /opt/bin/
 #?      $0 /opt/bin/ --force
 #?
+# HACKER's INFO
+#       This file is generated from INSTALL-template.sh .
+#       The generator (make) inserts some values for internal variables.  In
+#       particular the list of source files to be installed.
+#
 #? VERSION
-#?      @(#) INSTALL.sh 1.5 18/01/23 23:34:40
+#?      @(#) INSTALL-template.sh 1.7 18/04/18 21:40:49
 #?
 #? AUTHOR
-#?      16-sep-16 Achim Hoffmann (at) sicsec .dot. de
+#?      16-sep-16 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
@@ -59,30 +66,16 @@ text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
 
 files_contrib="
-		bash_completion_o-saft dash_completion_o-saft \
-		fish_completion_o-saft tcsh_completion_o-saft \
-		filter_examples usage_examples lazy_checks.awk \
-		HTML-simple.awk HTML-table.awk JSON-array.awk JSON-struct.awk \
-		XML-value.awk XML-attribute.awk Cert-beautify.awk Cert-beautify.pl \
-		cipher_check.sh critic.sh gen_standalone.sh \
-		bunt.pl bunt.sh zap_config.xml"
-#		install_perl_modules.pl \
-#		Dockerfile.alpine:3.6 distribution_install.sh \
-
-files_not_installed="
-		o-saft.cgi contrb/o-saft.php contrib/install_perl_modules.pl \
+	contrib/.o-saft.tcl contrib/Cert-beautify.awk contrib/Cert-beautify.pl contrib/Dockerfile.alpine-3.6 contrib/HTML-simple.awk contrib/HTML-table.awk contrib/INSTALL-template.sh contrib/JSON-array.awk contrib/JSON-struct.awk contrib/XML-attribute.awk contrib/XML-value.awk contrib/bash_completion_o-saft contrib/bunt.pl contrib/bunt.sh contrib/cipher_check.sh contrib/critic.sh contrib/dash_completion_o-saft contrib/distribution_install.sh contrib/filter_examples contrib/fish_completion_o-saft contrib/gen_standalone.sh contrib/install_perl_modules.pl contrib/lazy_checks.awk contrib/o-saft.php contrib/tcsh_completion_o-saft contrib/usage_examples contrib/zap_config.sh contrib/zap_config.xml
 		"
 
-files_install="o-saft.pl o-saft-dbx.pm o-saft-usr.pm o-saft-man.pm \
-		osaft.pm OSaft/Ciphers.pm OSaft/error_handler.pm \
-		Doc/Data.pm Net/SSLinfo.pm Net/SSLhello.pm \
-		Doc/help Doc/glossary.txt Doc/links.txt Doc/rfc.txt \
-		o-saft.pod o-saft.tcl o-saft-img.tcl \
-		o-saft o-saft-docker checkAllCiphers.pl"
-#		OSaft/_ciphers_iana.pm OSaft/_ciphers_osaft.pm \
-#		OSaft/_ciphers_openssl_all.pm OSaft/_ciphers_openssl_medium.pm \
-#		OSaft/_ciphers_openssl_low.pm OSaft/_ciphers_openssl_high \
-#
+files_install="
+	.o-saft.pl Dockerfile Net/SSLhello.pm Net/SSLinfo.pm OSaft/Ciphers.pm OSaft/Doc/Data.pm OSaft/Doc/coding.txt OSaft/Doc/glossary.txt OSaft/Doc/help.txt OSaft/Doc/links.txt OSaft/Doc/misc.txt OSaft/Doc/rfc.txt OSaft/Doc/tools.txt OSaft/_ciphers_iana.pm OSaft/_ciphers_openssl_all.pm OSaft/_ciphers_openssl_high.pm OSaft/_ciphers_openssl_low.pm OSaft/_ciphers_openssl_medium.pm OSaft/_ciphers_osaft.pm OSaft/error_handler.pm checkAllCiphers.pl o-saft o-saft-dbx.pm o-saft-docker o-saft-docker-dev o-saft-img.tcl o-saft-man.pm o-saft-usr.pm o-saft.pl o-saft.tcl osaft.pm
+		"
+
+files_not_installed="
+		o-saft.cgi contrb/o-saft.php contrib/install_perl_modules.pl
+		"
 
 files_develop=".perlcriticrc o-saft_bench o-saft-docker-dev Dockerfile"
 
@@ -105,7 +98,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.5 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.7 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; dest="$1";  ;;  # last one wins
 	esac
 	shift
@@ -175,7 +168,7 @@ if [ "$mode" = "dest" ]; then
 
 	echo "# installing ..."
 	$try \mkdir -p "$dest/Net"
-	$try \mkdir -p "$dest/OSaft"
+	$try \mkdir -p "$dest/OSaft/Doc"
 	for f in $files_install ; do
 		$try \cp "$f" "$dest/$f"  || exit 4
 	done
@@ -290,12 +283,11 @@ echo ""
 echo "# check for contributed files"
 echo "#--------------------------------------------------------------"
 for c in $files_contrib ; do
-	d="contrib/$c"
-		if [ -e "$d" ]; then
-			echo "# found\t\033[1;32m\t$d \033[0m"
-		else
-			echo "# not found\t\033[1;33m\t$d \033[0m"
-		fi
+	if [ -e "$c" ]; then
+		echo "# found\t\033[1;32m\t$c \033[0m"
+	else
+		echo "# not found\t\033[1;33m\t$c \033[0m"
+	fi
 done
 echo "#--------------------------------------------------------------"
 echo ""
