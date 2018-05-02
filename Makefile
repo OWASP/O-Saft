@@ -114,7 +114,7 @@
 #            make m-MAKEFILE
 #
 #? VERSION
-#?      @(#) Makefile 1.7 18/05/02 00:38:52
+#?      @(#) Makefile 1.8 18/05/03 01:25:29
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -188,7 +188,10 @@ SRC.rc          = .$(SRC.pl)
 # test file
 TEST.dir        = test
 TEST.do         = SSLinfo.pl \
-		  o-saft_bench
+		  o-saft_bench \
+		  critic_345.sh \
+		  test-bunt.pl.txt \
+		  test-o-saft.cgi.sh
 TEST.rc         = .perlcriticrc
 SRC.test        = \
 		  $(TEST.do:%=$(TEST.dir)/%) \
@@ -298,6 +301,8 @@ ALL.critic      = $(ALL.pm)  $(SRC.pl) $(CHK.pl)
 ECHO            = /bin/echo -e
 MAKE            = $(MAKE_COMMAND)
 EXE.bench       = test/o-saft_bench
+EXE.test.bunt   = test/test-bunt.pl.txt
+EXE.test.cgi    = test/test-o-saft.cgi.sh
 EXE.single      = contrib/gen_standalone.sh
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
@@ -306,7 +311,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.7
+_INST.text      = generated from Makefile 1.8
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -412,8 +417,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.7
-tar:     GREP_EDIT = 1.7
+GREP_EDIT = 1.8
+tar:     GREP_EDIT = 1.8
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -508,6 +513,8 @@ $(GEN.tmptgz): $(ALL.tgz)
 HELP-_test      = ______________________________________ targets for testing _
 HELP-bench      = call '$(EXE.bench)' for some benchmarks
 HELP-bench.log  = call '$(EXE.bench)' and save result in '$(BENCH.times)'
+HELP-test.bunt  = test '$(CONTRIB.dir)/bunt.pl' with sample file
+HELP-test.cgi   = test invalid IPs to be rejected by '$(SRC.cgi)'
 HELP-test       = TBD - comming soon
 
 BENCH.times       = $(EXE.bench).times
@@ -518,7 +525,15 @@ bench:
 bench.log:
 	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
 
-.PHONY: bench bench.log
+test.cgi: $(EXE.test.cgi) $(SRC.cgi)
+	@$(TARGET_VERBOSE)
+	$(EXE.test.cgi)
+
+test.bunt: $(EXE.test.bunt)
+	@$(TARGET_VERBOSE)
+	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
+
+.PHONY: bench bench.log test.bunt test.cgi
 
 # internal information
 test-file-1:
@@ -552,6 +567,7 @@ test-target: test-file-1 test-file-2 test-file-3
 HELP-_qa        = _________________________________ targets for code quality _
 HELP-critichelp = print more details about  critic-*  targets
 HELP-critic     = check files with perlcritic
+HELP-critic345  = check files with perlcritic for severity 3,4,5 using test/critic_345.sh
 HELP-tags       = generate tags file for vi
 MORE-critic     = " \
 \# More  critic  targets exist, calling perlcritic with additional options$(_NL)\
@@ -685,6 +701,12 @@ critic-4:       critic
 critic-3:       critic
 critic-2:       critic
 criticp:        critic-pretty
+
+# TODO: replace functionality of test/critic_345.sh with targets above,
+#       just redirect to logfiles is missing
+critic345:
+	-cd $(CRITIC.dir) && \
+	  critic_345.sh $(ALL.critic)
 
 $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) Makefile
 	ctags $^
