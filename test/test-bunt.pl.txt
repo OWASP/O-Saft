@@ -1,0 +1,52 @@
+#!/bin/cat
+
+=== Überschrift 1 ===
+
+Usage: cat test-bunt.pl.txt | ../contrib/bunt.pl
+
+== Description ==
+File with content to test contrib/bunt.pl.
+Results must be checked by humans, cannot be fully automated.
+
+== Überschrift 2 ==
+o-saft.pl mit Argumenten
+
+== Überschrift (ohne Abschluss)
+
+eine normale Zeile
+noch eine Zeile
+
+#dbx# debug Zeile
+normale Zeile
+# auch debug Zeile
+##text Kommentar
+#!     Kommentar
+#?     Kommentar
+
+**ERROR: Fehler wird gemeldet
+normale Zeile
+**WARNING: Warnung wird gemeldet
+normale Zeile	TAB davor	und in der Mitte
+!!Hint: das ist ein Hinweis
+
+#[key]: Zeile mit Keyword am Anfang:	yes
+host:443:Zeile mit Hostname am Anfang:	yes
+
+== Wörter
+ein Text mit yes am Ende:	yes
+ein Text mit no  am Ende:	no
+ein Text mit no  am Anfang:	no (bla bla)
+ein Text mit text am Ende:	weiterer text
+ein Text mit undef am Ende:	<<misteriöser Text>>
+ein Text mit ohne match:	hier steht >> irgendwas
+ein Text mit ohne match:	hier steht >> irgendwas
+
+== Cipher
+=--------------------------------------+-------+-------
+    NULL-SHA256-SHA                    	yes	weak
+    NULL-MD5                    	no	WEAK
+    NULL-SHA                    	yes	WEAK
+    DES-CBC3-SHA                	yes	HIGH
+=--------------------------------------+-------+-------
+
+fertig.
