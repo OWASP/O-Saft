@@ -20,7 +20,12 @@
 #?      Following prefixes (for commands) are not used by o-saft.pl:
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
+#? VERSION
+#?      @(#) .o-saft.pl 1.87 18/05/04 00:57:52
+#? AUTHOR
+#?      13-dec-13 Achim Hoffmann
 #?
+# -----------------------------------------------------------------------------
 
 ###
 ### force to use private openssl
@@ -265,12 +270,12 @@
 #--cfg_text=no-tlsextdebug= <<N/A da --no-tlsextdebug verwendet>>
 #--cfg_text=no-reneg= <<secure renegotiation nicht unterstützt>>
 #--cfg_text=no-STS=<<N/A da STS nicht gesetzt>>
-#--cfg_text=out-checks=\n=== Prüfungen === 
-#--cfg_text=out-ciphers=\n=== Schlüssel: prüfe @@ === 
-#--cfg_text=out-infos=\n=== Informationen === 
-#--cfg_text=out-list==== Liste @@ Schlüssel === 
-#--cfg_text=out-scoring=\n=== Bewertung === 
-#--cfg_text=out-summary=== Schlüssel: Zusammenfassung @@ == 
+#--cfg_text=out-checks=\n=== Prüfungen ===
+#--cfg_text=out-ciphers=\n=== Schlüssel: prüfe @@ ===
+#--cfg_text=out-infos=\n=== Informationen ===
+#--cfg_text=out-list==== Liste @@ Schlüssel ===
+#--cfg_text=out-scoring=\n=== Bewertung ===
+#--cfg_text=out-summary=== Schlüssel: Zusammenfassung @@ ===
 #--cfg_text=out-target=\n==== Zielsystem: @@ ====\n
 #--cfg_text=protocol=<<Protokoll evt. angeboten, es werden aber keine Schlüssel akzeptiert>>
 #--cfg_text=response=<<Antwort>>
