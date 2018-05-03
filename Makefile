@@ -114,7 +114,7 @@
 #            make m-MAKEFILE
 #
 #? VERSION
-#?      @(#) Makefile 1.8 18/05/03 01:25:29
+#?      @(#) Makefile 1.9 18/05/04 01:01:46
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -311,7 +311,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.8
+_INST.text      = generated from Makefile 1.9
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -417,8 +417,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.8
-tar:     GREP_EDIT = 1.8
+GREP_EDIT = 1.9
+tar:     GREP_EDIT = 1.9
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -451,8 +451,10 @@ $(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(CONTRIB.dir) $
 	@$(TARGET_VERBOSE)
 	mkdir -p $@
 
+# cp fails if SRC.pl is read-only, hence we remove it; it is generated anyway
 $(SRC.pl): $(DEV.pl)
 	@$(TARGET_VERBOSE)
+	rm -f $@
 	cp $< $@
 
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
@@ -515,6 +517,7 @@ HELP-bench      = call '$(EXE.bench)' for some benchmarks
 HELP-bench.log  = call '$(EXE.bench)' and save result in '$(BENCH.times)'
 HELP-test.bunt  = test '$(CONTRIB.dir)/bunt.pl' with sample file
 HELP-test.cgi   = test invalid IPs to be rejected by '$(SRC.cgi)'
+HELP-test.warnings = test **WARNING messages of '$(SRC.pl)'
 HELP-test       = TBD - comming soon
 
 BENCH.times       = $(EXE.bench).times
@@ -534,6 +537,154 @@ test.bunt: $(EXE.test.bunt)
 	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
 
 .PHONY: bench bench.log test.bunt test.cgi
+
+# testing warning messages
+# TODO: internal description for targets
+warning.2:
+	@echo "TODO: testing openssl returning error"
+warning.4:
+	@echo "TODO: testing missing IO/Socket/SSL.pm"
+warning.6:
+	@echo "TODO: testing missing Net/DNS.pm"
+warning.7:
+	@echo "TODO: testing missing Time/Local.pm"
+warning.8:
+	@echo "TODO: testing missing Net/SSLhello.pm"
+warning.9:
+	@echo "TODO: testing missing Net/SSLinfo.pm"
+warning.13:
+	@echo "TODO: testing missing Net::SSLeay.pm"
+warning.120:
+	@echo "TODO: testing ancient perl"
+warning.121:
+	@echo "TODO: testing ancient module"
+warning.122:
+	@echo "TODO: testing ancient Net::SSLeay"
+warning.123:
+	@echo "TODO: testing ancient IO::Socket"
+warning.124:
+	@echo "TODO: testing ancient IO::Socket::SSL"
+warning.125:
+	@echo "TODO: testing openssl < 1.0.0"
+warning.126:
+	@echo "TODO: testing missing ALPN functionality"
+warning.127:
+	@echo "TODO: testing Net::SSLeay < 1.56 (ALPN disabled)"
+warning.128:
+	@echo "TODO: testing openssl < 1.0.2 (ALPN disabled)"
+warning.129:
+	@echo "TODO: testing missing NPN functionality"
+warning.130:
+	@echo "TODO: testing Net::SSLeay < 1.46 (ALPN disabled)"
+warning.131:
+	@echo "TODO: testing openssl < 1.0.1 (ALPN disabled)"
+warning.135:
+	@echo "TODO: testing Net::SSLeay < 1.49"
+
+warning.41: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) s_client                            +quit | grep 41
+warning.42:
+	@echo "TODO: testing invalid host-like argument"
+warning.43: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	echo "--cfg_cmd=quit=existing_command" > /tmp/tmprc
+	-$(SRC.pl) --rc=/tmp/tmprc                     +quit | grep 43
+	@-rm /tmp/tmprc
+warning.44: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) +zlib +lzo +open_pgp +fallback      +quit | grep 44
+warning.47: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) +info +cn                    unknown-host | grep 47
+warning.48: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) +check +cn                   unknown-host | grep 48
+warning.49: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) +unknown_command                    +quit | grep 49
+warning.52: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	echo "--option=-with_trailing_spaces  " > /tmp/tmprc
+	-$(SRC.pl) --rc=/tmp/tmprc                     +quit | grep 52
+	@-rm /tmp/tmprc
+warning.53: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) --capath="/path with spaces"        +quit | grep 53
+warning.54: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) --legacy=unknown_legacy             +quit | grep 54
+warning.55: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) --format=unknown_format             +quit | grep 55
+warning.56: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) --range=unknown_cipher-range        +quit | grep 56
+warning.57: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) --ciphercurves=unknown_cipher-curve +quit | grep 57
+warning.70:
+	@echo "TODO: testing missing RC-file"
+warning.71: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	echo "--cfg_unknown=dummy=dummy" > /tmp/tmprc
+	-$(SRC.pl) --rc=/tmp/tmprc                     +quit | grep 71
+	@-rm /tmp/tmprc
+warning.72: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	echo "--cfg_cmd=ignored=dummy" > /tmp/tmprc
+	-$(SRC.pl) --cfg_cmd=/tmp/tmprc                +quit | grep 72
+	@-rm /tmp/tmprc
+warning.73: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	echo "--cfg_cmd=invalid_default_command=default" > /tmp/tmprc
+	-$(SRC.pl) --rc=/tmp/tmprc                     +quit | grep 73
+	@-rm /tmp/tmprc
+warning.74: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	echo "--cfg_cmd=dummy=cn unknown_command" > /tmp/tmprc
+	-$(SRC.pl) --rc=/tmp/tmprc                     +quit | grep 74
+	@-rm /tmp/tmprc
+warning.76:
+	@echo "TODO: testing score sitting will be removed in future"
+warning.111: $(SRC.pl)
+	-@$(TARGET_VERBOSE)
+	@echo "TODO: testing missing Net/DNS.pm"
+	-$(SRC.pl) --mx --nodns                        +quit | grep 111
+warning.112: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	@echo "TODO: testing missing Time/Local.pm (+sts_expired)"
+	-$(SRC.pl) +sts_expired                        +quit | grep 112
+warning.140: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) +cipherraw --dtlsv1                 +quit | grep 140
+warning.141: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	@echo "TODO: testing wrong SSL version"
+	#-$(SRC.pl) +cipherraw --dtlsv9                 +quit | grep 141
+warning.143: $(SRC.pl)
+	@echo "TODO: testing SSL version not supported by Net::SSLeay"
+warning.144:
+	@echo "TODO: testing missing openssl support for -alpn|-npn"
+warning.145:
+	@echo "TODO: testing missing openssl support for -alpn|-npn"
+warning.146:
+	@echo "TODO: testing missing openssl -tlsextdebug option"
+warning.147:
+	@echo "TODO: testing missing openssl executable in Net::SSLinfo"
+	#$(SRC.pl) --openssl=/does/not/exist           +quit | grep 147
+warning.148: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	@echo "TODO: testing missing openssl executable"
+	-$(SRC.pl) --openssl=/does/not/exist           +quit | grep 148
+warning.149: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-$(SRC.pl) --openssl=/does/not/exist           +quit | grep 149
+
+test.warnings: warning.41 warning.43 warning.44 warning.47 warning.48 warning.49 \
+	warning.52 warning.53 warning.54 warning.55 warning.56 \
+	warning.71 warning.72 warning.73 warning.74 \
+	warning.140 warning.148 warning.149
 
 # internal information
 test-file-1:
