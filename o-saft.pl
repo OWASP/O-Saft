@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.790 18/04/14 12:52:43",
-    STR_VERSION => "18.01.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.791 18/05/03 23:45:24",
+    STR_VERSION => "18.04.18",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -2377,6 +2377,7 @@ sub _init_openssldir    {
     # resets cmd{'openssl'}, cmd{'extopenssl'} and cmd{'extsclient'} on error
     # SEE Note:OpenSSL CApath
     # $cmd{'openssl'} not passed as parameter, as it will be changed here
+    return "" if ($cmd{'openssl'} eq "");       # defensive programming
     my $dir = qx($cmd{'openssl'} version -d);   # get something like: OPENSSLDIR: "/usr/local/openssl"
     chomp $dir;
         # if qx() above failed, we get: Use of uninitialized value $dir in ...
@@ -2392,7 +2393,7 @@ sub _init_openssldir    {
         # malloc() problems, in this case print an additional warning.
         # Note that low memory affects external calls only *but not* further
         # control flow herein as Perl already managed to load the script.
-        # For defence programming  print()  is used insted of  _warn().
+        # For defensive programming  print()  is used insted of  _warn().
         print STR_WARN, "002: perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
             print STR_WARN, "003: using external programs disabled.\n";
