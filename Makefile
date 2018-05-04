@@ -114,7 +114,7 @@
 #            make m-MAKEFILE
 #
 #? VERSION
-#?      @(#) Makefile 1.9 18/05/04 01:01:46
+#?      @(#) Makefile 1.10 18/05/05 00:27:43
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -311,7 +311,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.9
+_INST.text      = generated from Makefile 1.10
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -322,6 +322,8 @@ EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 _TAB            = \\011
 _NL             = \\012
 _CR             = \\015
+
+_TODAY_         = $(shell date +m%d)
 
 # internal help
 # (for details about the commands, please see "HACKER's HELP" above)
@@ -417,8 +419,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.9
-tar:     GREP_EDIT = 1.9
+GREP_EDIT = 1.10
+tar:     GREP_EDIT = 1.10
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -517,7 +519,8 @@ HELP-bench      = call '$(EXE.bench)' for some benchmarks
 HELP-bench.log  = call '$(EXE.bench)' and save result in '$(BENCH.times)'
 HELP-test.bunt  = test '$(CONTRIB.dir)/bunt.pl' with sample file
 HELP-test.cgi   = test invalid IPs to be rejected by '$(SRC.cgi)'
-HELP-test.warnings = test **WARNING messages of '$(SRC.pl)'
+HELP-test-warnings = test **WARNING messages of '$(SRC.pl)'
+HELP-test-warnings.log = test **WARNING messages of '$(SRC.pl)' and compare with previous one
 HELP-test       = TBD - comming soon
 
 BENCH.times       = $(EXE.bench).times
@@ -681,10 +684,33 @@ warning.149: $(SRC.pl)
 	@$(TARGET_VERBOSE)
 	-$(SRC.pl) --openssl=/does/not/exist           +quit | grep 149
 
-test.warnings: warning.41 warning.43 warning.44 warning.47 warning.48 warning.49 \
+ALL.warnings    = \
+	warning.41 warning.43 warning.44 warning.47 warning.48 warning.49 \
 	warning.52 warning.53 warning.54 warning.55 warning.56 \
 	warning.71 warning.72 warning.73 warning.74 \
 	warning.140 warning.148 warning.149
+
+test-warnings: $(ALL.warnings)
+
+# $(_WARNING.log) calls "make -s" to avoid printing of executed commands
+_WARNING.log    = $(TEST.dir)/test-warnings-$(_TODAY_).log
+$(_WARNING.log):
+	@$(MAKE) -s $(ALL.warnings) > $@
+
+# target should create a new logfile, then compare it with the curennt one
+# if current logfile is missing use newly created one: "mv ... || cp ..."
+# this avoid errors whe the file is missing
+# if the diff returns nothing, mv newlycreated logfile to target, otherwise
+# restore previous one
+test-warnings.log: $(_WARNING.log) $(SRC.pl)
+	-mv $(TEST.dir)/$@ $@-last \
+	 || cp $(_WARNING.log) $@-last
+	diff   $@-last $(_WARNING.log) \
+	 && mv $(_WARNING.log) $(TEST.dir)/$@ && rm $@-last \
+	 || mv $@-last     $(TEST.dir)/$@ 
+	@ls -l  $(TEST.dir)/$@
+
+.PHONY: test-warnings.log
 
 # internal information
 test-file-1:
