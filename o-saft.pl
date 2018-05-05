@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.792 18/05/05 15:35:16",
+    SID         => "@(#) yeast.pl 1.793 18/05/05 18:17:10",
     STR_VERSION => "18.04.18",          # <== our official version number
 };
 
@@ -2554,7 +2554,7 @@ sub _cfg_set($$)        {
     if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
-        if ($cgi == 0) {
+        if ($cgi == 1) {
             _warn("072: configuration files are not read in CGI mode; ignored");
             return;
         }
