@@ -115,7 +115,7 @@
 #            make m-MAKEFILE
 #
 #? VERSION
-#?      @(#) Makefile 1.12 18/05/05 11:29:43
+#?      @(#) Makefile 1.13 18/05/05 15:36:58
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -312,7 +312,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.12
+_INST.text      = generated from Makefile 1.13
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -420,8 +420,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.12
-tar:     GREP_EDIT = 1.12
+GREP_EDIT = 1.13
+tar:     GREP_EDIT = 1.13
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -523,6 +523,7 @@ HELP-test.cgi   = test invalid IPs to be rejected by '$(SRC.cgi)'
 HELP-warning-NR = test for specific messages number NR of '$(SRC.pl)'
 HELP-test-warnings = test **WARNING messages of '$(SRC.pl)'
 HELP-test-warnings.log = test **WARNING messages of '$(SRC.pl)' and compare with previous one
+HELP-gen-warning-template = generate test/test-warning.Makefile-template:
 HELP-test       = TBD - comming soon
 
 BENCH.times       = $(EXE.bench).times
@@ -544,72 +545,94 @@ test.bunt: $(EXE.test.bunt)
 .PHONY: bench bench.log test.bunt test.cgi
 
 # testing warning messages
-_TEST.host      = +quit
-warning-002: _TEST.cmd  = TODO: testing openssl returning error
-warning-004: _TEST.cmd  = TODO: testing missing IO/Socket/SSL.pm
-warning-006: _TEST.cmd  = TODO: testing missing Net/DNS.pm
-warning-007: _TEST.cmd  = TODO: testing missing Time/Local.pm
-warning-008: _TEST.cmd  = TODO: testing missing Net/SSLhello.pm
-warning-009: _TEST.cmd  = TODO: testing missing Net/SSLinfo.pm
-warning-013: _TEST.cmd  = TODO: testing missing Net::SSLeay.pm
-warning-041: _TEST.cmd  = s_client
-warning-042: _TEST.cmd  = TODO: testing invalid host-like argument
-warning-043: _TEST.cmd  = --rc=/tmp/tmprc --v
-warning-043:                                     _TEST.rc   = --cfg_cmd=new_command=quit
-warning-044: _TEST.cmd  = +zlib +lzo +open_pgp +fallback
-warning-047: _TEST.cmd  = +info  +cn
-warning-047:                                     _TEST.host = unknown-host
-warning-048: _TEST.cmd  = +check +cn
-warning-048:                                     _TEST.host = unknown-host
-warning-049: _TEST.cmd  = +unknown_command
-warning-052: _TEST.cmd  = --rc=/tmp/tmprc
-warning-052:                                     _TEST.rc   = "--option=-with_trailing_spaces   "
-warning-053: _TEST.cmd  = --capath='/path with spaces'
-warning-054: _TEST.cmd  = --legacy=unknown_legacy
-warning-055: _TEST.cmd  = --format=unknown_format
-warning-056: _TEST.cmd  = --range=unknown_range
-warning-057: _TEST.cmd  = --ciphercurves=unknown
-warning-070: _TEST.cmd  = TODO: testing missing RC-file
-warning-071: _TEST.cmd  = --rc=/tmp/tmprc
-warning-071:                                     _TEST.rc   = --cfg_unknown=dummy=dummy
-warning-072: _TEST.cmd  = --cfg_cmd=/tmp/tmprc
-warning-072:                                     _TEST.rc   = --cfg_cmd=ignored=dummy
-warning-073: _TEST.cmd  = --rc=/tmp/tmprc
-warning-073:                                     _TEST.rc   = --cfg_cmd=invalid_default_command=default
-warning-074: _TEST.cmd  = --rc=/tmp/tmprc
-warning-074:                                     _TEST.rc   = "--cfg_cmd=dummy=cn unknown_command"
-warning-076: _TEST.cmd  = TODO: testing score sitting will be removed in future
-warning-111: _TEST.cmd  = --mx --nodns
-warning-111: _TEST.cmd  = TODO: testing missing Net/DNS.pm
-warning-112: _TEST.cmd  = +sts_expired
-warning-112: _TEST.cmd  = TODO: testing missing Time/Local.pm need by +sts_expired
-warning-120: _TEST.cmd  = TODO: testing ancient perl
-warning-121: _TEST.cmd  = TODO: testing ancient module
-warning-122: _TEST.cmd  = TODO: testing ancient Net::SSLeay
-warning-123: _TEST.cmd  = TODO: testing ancient IO::Socket
-warning-124: _TEST.cmd  = TODO: testing ancient IO::Socket::SSL
-warning-125: _TEST.cmd  = TODO: testing openssl < 1.0.0
-warning-126: _TEST.cmd  = TODO: testing missing ALPN functionality
-warning-127: _TEST.cmd  = TODO: testing Net::SSLeay < 1.56, ALPN disabled
-warning-128: _TEST.cmd  = TODO: testing openssl < 1.0.2, ALPN disabled
-warning-129: _TEST.cmd  = TODO: testing missing NPN functionality
-warning-130: _TEST.cmd  = TODO: testing Net::SSLeay < 1.46, ALPN disabled
-warning-131: _TEST.cmd  = TODO: testing openssl < 1.0.1, ALPN disabled
-warning-135: _TEST.cmd  = TODO: testing Net::SSLeay < 1.49
-warning-140: _TEST.cmd  = +cipherraw --dtlsv1
-warning-141: _TEST.cmd  = +cipherraw --dtlsv9
-warning-141: _TEST.cmd  = TODO: testing wrong SSL version
-warning-143: _TEST.cmd  = TODO: testing SSL version not supported by Net::SSLeay
-warning-144: _TEST.cmd  = TODO: testing missing openssl support for -alpn or -npn
-warning-145: _TEST.cmd  = TODO: testing missing openssl support for -alpn or -npn
-warning-146: _TEST.cmd  = TODO: testing missing openssl -tlsextdebug option
-warning-147: _TEST.cmd  = TODO: testing missing openssl executable in Net::SSLinfo
-warning-148: _TEST.cmd  = --openssl=/does/not/exist
-warning-148: _TEST.cmd  = TODO: testing missing openssl executable
-warning-149: _TEST.cmd  = --openssl=/does/not/exist
+TEST.quit       = +quit
+warning-002: TEST.cmd   = TODO: testing openssl returning error
+warning-003: TEST.cmd   = TODO: testing openssl failed with allocate memory
+warning-004: TEST.cmd   = TODO: testing perl returned status
+warning-005: TEST.cmd   = TODO: testing missing IO/Socket/SSL.pm
+warning-006: TEST.cmd   = TODO: testing missing IO/Socket/INET.pm
+warning-007: TEST.cmd   = TODO: testing missing Net/DNS.pm
+warning-008: TEST.cmd   = TODO: testing missing Time/Local.pm
+warning-010: TEST.cmd   = TODO: testing die, missing Net/SSLhello.pm
+warning-011: TEST.cmd   = TODO: testing die, missing Net/SSLinfo.pm
+warning-012: TEST.cmd   = TODO: testing die, missing Net::SSLeay.pm
+warning-013: TEST.cmd   = TODO: testing die, missing o-saft-man.pm
+warning-014: TEST.cmd   = TODO: testing die, missing Net::SSLeay.pm
+warning-015: TEST.cmd   = TODO: testing die, no ciphers found, may happen with openssl pre 1.0.0
+warning-020: TEST.cmd   = TODO: testing die, CGI mode requires strict settings
+warning-041: TEST.cmd   = s_client
+warning-042: TEST.cmd   = TODO: testing invalid host-like argument
+warning-043: TEST.cmd   = --rc=/tmp/tmprc --v
+warning-043:                                     TEST.rc    = --cfg_cmd=new_command=quit
+warning-044: TEST.cmd   = +zlib +lzo +open_pgp +fallback
+warning-047: TEST.cmd   = +info  +cn
+warning-047:                                     TEST.quit  = unknown-host
+warning-048: TEST.cmd   = +check +cn
+warning-048:                                     TEST.quit  = unknown-host
+warning-049: TEST.cmd   = +unknown_command
+warning-052: TEST.cmd   = --rc=/tmp/tmprc
+warning-052:                                     TEST.rc    = "--option=-with_trailing_spaces   "
+warning-053: TEST.cmd   = --capath='/path with spaces'
+warning-054: TEST.cmd   = --legacy=unknown_legacy
+warning-055: TEST.cmd   = --format=unknown_format
+warning-056: TEST.cmd   = --range=unknown_range
+warning-057: TEST.cmd   = --ciphercurves=unknown
+warning-070: TEST.cmd   = TODO: testing missing RC-file
+warning-071: TEST.cmd   = --rc=/tmp/tmprc
+warning-071:                                     TEST.rc    = --cfg_unknown=dummy=dummy
+warning-072: TEST.cmd   = --cfg_cmd=/tmp/tmprc
+warning-072:                                     TEST.rc    = --cfg_cmd=ignored=dummy
+warning-073: TEST.cmd   = --rc=/tmp/tmprc
+warning-073:                                     TEST.rc    = --cfg_cmd=invalid_default_command=default
+warning-074: TEST.cmd   = --rc=/tmp/tmprc
+warning-074:                                     TEST.rc    = "--cfg_cmd=dummy=cn unknown_command"
+warning-076: TEST.cmd   = TODO: testing score sitting will be removed in future
+warning-111: TEST.cmd   = --mx --nodns
+warning-111: TEST.cmd   = TODO: testing missing Net/DNS.pm
+warning-112: TEST.cmd   = +sts_expired
+warning-112: TEST.cmd   = TODO: testing missing Time/Local.pm need by +sts_expired
+warning-120: TEST.cmd   = TODO: testing ancient perl
+warning-121: TEST.cmd   = TODO: testing ancient module
+warning-122: TEST.cmd   = TODO: testing ancient Net::SSLeay
+warning-123: TEST.cmd   = TODO: testing ancient IO::Socket
+warning-124: TEST.cmd   = TODO: testing ancient IO::Socket::SSL
+warning-125: TEST.cmd   = TODO: testing openssl < 1.0.0
+warning-126: TEST.cmd   = TODO: testing missing ALPN functionality
+warning-127: TEST.cmd   = TODO: testing Net::SSLeay < 1.56, ALPN disabled
+warning-128: TEST.cmd   = TODO: testing openssl < 1.0.2, ALPN disabled
+warning-129: TEST.cmd   = TODO: testing missing NPN functionality
+warning-130: TEST.cmd   = TODO: testing Net::SSLeay < 1.46, ALPN disabled
+warning-131: TEST.cmd   = TODO: testing openssl < 1.0.1, ALPN disabled
+warning-135: TEST.cmd   = TODO: testing Net::SSLeay < 1.49
+warning-140: TEST.cmd   = +cipherraw --dtlsv1
+warning-141: TEST.cmd   = +cipherraw --dtlsv9
+warning-141: TEST.cmd   = TODO: testing wrong SSL version
+warning-143: TEST.cmd   = TODO: testing SSL version not supported by Net::SSLeay
+warning-144: TEST.cmd   = TODO: testing missing openssl support for -alpn or -npn
+warning-145: TEST.cmd   = TODO: testing missing openssl support for -alpn or -npn
+warning-146: TEST.cmd   = TODO: testing missing openssl -tlsextdebug option
+warning-147: TEST.cmd   = TODO: testing missing openssl executable in Net::SSLinfo
+warning-148: TEST.cmd   = --openssl=/does/not/exist
+warning-148: TEST.cmd   = TODO: testing missing openssl executable
+warning-149: TEST.cmd   = --openssl=/does/not/exist
 
 # generate list of all targets dynamically from our definitions above
 ALL.warnings    = $(shell awk '/^warning-...:/{sub(":","");print $$1}' Makefile | sort -u)
+
+test/test-warning.Makefile-template: $(SRC.pl)
+	@echo "# generated template targets to test **WARNING messages" > $@
+	@echo "# targets use the message text as TODO (see Makefile)"  >> $@
+	@echo "# Note: texts for TEST.cmd should not contain ; | ()"   >> $@
+	@echo "# Note: not all texts my be useful, it's a template!"   >> $@
+	@echo ""                                                       >> $@
+	perl -nle 'm/^\s*_?warn/ && do {\
+		s/^[^"]*"([^"]*).*/warning-$$1/;\
+		s/:/: TEST.cmd   = TODO:/;\
+		print}' $^ \
+	| sort >> $@
+	@-ls -l $@
+
+gen-warning-template: test/test-warning.Makefile-template
 
 # Testing for **WARNING messages works as follows:
 #   call $(SRC.pl) with command and/or options in question
@@ -618,24 +641,24 @@ ALL.warnings    = $(shell awk '/^warning-...:/{sub(":","");print $$1}' Makefile 
 # For testing all different warning-* targets, the pattern rule  warning-% is
 # used, which gets the message number from the automatic variable $*  and the
 # arguments for $(SRC.pl) with following Makefile variables:
-#   $(_TEST.cmd)    - command and options to be passed to $(SRC.pl)
-#   $(_TEST.host)   - the host to be used for testing, specifying the host is
-#                     often not necessary and then set to the +quit command
-#   $(_TEST.rc)     - content of RC-file to be used by $(SRC.pl)
+#   $(TEST.cmd)     - command and options to be passed to $(SRC.pl)
+#   $(TEST.quit     - +quit command (default), or hostname if it is necessary
+#                     for proper testing the warning message
+#   $(TEST.rc)      - content of RC-file to be used by $(SRC.pl)
 # These variables are set conditinally for each target (see above).
 # Some tests are not yet implemented, or difficult to implement. In this case
-# $(_TEST.cmd) contains a string starting with "TODO:". The  warning-% target
+# $(TEST.cmd) contains a string starting with "TODO:". The  warning-%  target
 # tests the variable for this string and then simply prints it. Otherwise the
 # check will be performed (see  if - else -fi  in target).
 # Note:  even /tmp/o-saft.tmprc  is generated for each call,  it will only be
 # when requested with the  --rc=/tmp/o-saft.tmprc  option.
 warning-%: $(SRC.pl)
 	@$(TARGET_VERBOSE)
-	-if expr "$(_TEST.cmd)" ":" "^TODO" >/dev/null ; then \
-	    echo "$(_TEST.cmd)"; \
+	-if expr "$(TEST.cmd)" ":" "^TODO" >/dev/null ; then \
+	    echo "$(TEST.cmd)"; \
 	else \
-	    echo "$(_TEST.rc)" > /tmp/o-saft.tmprc ; \
-	    $(SRC.pl) $(_TEST.cmd) $(_TEST.host) | grep $* ; \
+	    echo "$(TEST.rc)" > /tmp/o-saft.tmprc ; \
+	    $(SRC.pl) $(TEST.cmd) $(TEST.quit) | grep $* ; \
 	    rm -f /tmp/o-saft.tmprc ; \
 	fi
 
