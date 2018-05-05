@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.791 18/05/03 23:45:24",
+    SID         => "@(#) yeast.pl 1.792 18/05/05 15:35:16",
     STR_VERSION => "18.04.18",          # <== our official version number
 };
 
@@ -178,7 +178,7 @@ my  $cgi  = 0;
 if ($me =~/\.cgi$/) {
     # CGI mode is pretty simple: see {yeast,o-saft}.cgi
     #   code removed here! hence it always fails
-    die STR_ERROR, "010: CGI mode requires strict settings" if ((grep{/--cgi=?/} @ARGV) <= 0);
+    die STR_ERROR, "020: CGI mode requires strict settings" if ((grep{/--cgi=?/} @ARGV) <= 0);
     $cgi = 1;
 } # CGI
 # $me might not be .cgi but called with --cgi-exec option
@@ -358,7 +358,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     $err = _load_file($arg, "trace file");
     if ($err ne "") {
-        die STR_ERROR, "003: $err" unless (-e $arg);
+        die STR_ERROR, "012: $err" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -1858,17 +1858,17 @@ sub _load_modules       {
     my $txt = "";
     if (1 > 0) { # TODO: experimental code
         $txt = _load_file("IO/Socket/SSL.pm", "IO SSL module");
-        warn STR_ERROR, "004: $txt" if ($txt ne "");
+        warn STR_ERROR, "005: $txt" if ($txt ne "");
         # cannot load IO::Socket::INET delayed because we use AF_INET,
         # otherwise we get at startup:
         #    Bareword "AF_INET" not allowed while "strict subs" in use ...
         #$txt = _load_file("IO/Socket/INET.pm", "IO INET module");
-        #warn STR_ERROR, "005: $txt" if ($txt ne "");
+        #warn STR_ERROR, "006: $txt" if ($txt ne "");
     }
     if ($cfg{'need_netdns'} > 0) {
         $txt = _load_file("Net/DNS.pm", "Net module");
         if ($txt ne "") {
-            warn STR_ERROR, "006: $txt";
+            warn STR_ERROR, "007: $txt";
             _warn("111: option --mx disabled");
             $cfg{'usemx'} = 0;
         }
@@ -1876,7 +1876,7 @@ sub _load_modules       {
     if ($cfg{'need_timelocal'} > 0) {
         $txt = _load_file("Time/Local.pm", "Time module");
         if ($txt ne "") {
-            warn STR_ERROR, "007: $txt";
+            warn STR_ERROR, "008: $txt";
             _warn("112: value for +sts_expired not applicable");
             # TODO: need to remove +sts_expired from cfg{do}
         }
@@ -1890,16 +1890,16 @@ sub _load_modules       {
        ) {
         $txt = _load_file("Net/SSLhello.pm", "O-Saft module");  # must be found with @INC
         if ($txt ne "") {
-            die  STR_ERROR, "008: $txt"  if (not _is_do('version'));
-            warn STR_ERROR, "008: $txt";# no reason to die for +version
+            die  STR_ERROR, "010: $txt"  if (not _is_do('version'));
+            warn STR_ERROR, "010: $txt";# no reason to die for +version
         }
         $cfg{'usehttp'} = 0;            # makes no sense for starttls
         # TODO: not (yet) supported for proxy
     }
     $txt = _load_file("Net/SSLinfo.pm", "O-Saft module");       # must be found
     if ($txt ne "") {
-        die  STR_ERROR, "009: $txt"  if (not _is_do('version'));
-        warn STR_ERROR, "009: $txt";    # no reason to die for +version
+        die  STR_ERROR, "011: $txt"  if (not _is_do('version'));
+        warn STR_ERROR, "011: $txt";    # no reason to die for +version
     }
     return;
 } # _load_modules
@@ -2078,7 +2078,7 @@ sub _check_functions    {
     _y_CMD("  check required modules ...");
     if (not defined $Net::SSLeay::VERSION) {# Net::SSLeay auto-loaded by IO::Socket::SSL
         if ($cmd{'extopenssl'} == 0) {
-            die STR_ERROR, "013: Net::SSLeay not found, useless use of SSL advanced forensic tool";
+            die STR_ERROR, "014: Net::SSLeay not found, useless use of SSL advanced forensic tool";
         }
     } else {
         $version_ssleay   = $Net::SSLeay::VERSION;
@@ -2397,7 +2397,7 @@ sub _init_openssldir    {
         print STR_WARN, "002: perl returned error: '$error'\n";
         if ($error =~ m/allocate memory/) {
             print STR_WARN, "003: using external programs disabled.\n";
-            print STR_WARN, "004: data provided by external openssl may be shown as:  <<openssl>>\n";
+            print STR_WARN, "003: data provided by external openssl may be shown as:  <<openssl>>\n";
         }
         _reset_openssl();
         $status = 0;  # avoid following warning below
@@ -2414,7 +2414,7 @@ sub _init_openssldir    {
     }
     if ($status != 0) {                     # on Windoze status may be 256
         $cmd{'openssl'}    = "";
-        print STR_WARN, "005: perl returned status: '$status' ('" . ($status>>8) . "')\n";
+        print STR_WARN, "004: perl returned status: '$status' ('" . ($status>>8) . "')\n";
             # no other warning here, see "some checks are missing" later,
             # this is to avoid bothering the user with warnings, when not used
         # $capath = ""; # should still be empty
@@ -3621,7 +3621,7 @@ sub _get_ciphers_list   {
     }
     if (@ciphers <= 0) {
         print "Errors: " . Net::SSLinfo::errors();
-        die STR_ERROR, "014: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
+        die STR_ERROR, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
     }
     @ciphers    = grep{!/^\s*$/} @ciphers;   # remove empty names
     _trace("_get_ciphers_list\t= @ciphers }"); # TODO: trace a bit late
@@ -7046,7 +7046,7 @@ while ($#argv >= 0) {
         }
         #my  $err = _load_file("o-saft-man.pm", "help file");
         #if ($err ne "") {
-        #    die STR_ERROR, "011: $err" unless (-e $arg);
+        #    die STR_ERROR, "013: $err" unless (-e $arg);
         #}
         # TODO: _load_file() does not yet work, hence following require
         require q{o-saft-man.pm};   ## no critic qw(Modules::RequireBarewordIncludes)
