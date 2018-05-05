@@ -25,8 +25,8 @@
 #        Note: macro is a synonym for variable in Makefiles.
 #        Note: macro definitions in Makefiles must not be sequential!
 #
-#    Remember make's variables:
-#           $@    - target (fiel)
+#    Remember make's automatic variables:
+#           $@    - target (file)
 #           $+    - all dependencies of the target
 #           $^    - all dependencies of the target (without duplicates)
 #           $<    - first dependency of the target
@@ -37,25 +37,26 @@
 #        Use of $$ avoids evaluating $.
 #
 #    Variable, macro names
-#        General rules for variable names in this Makefile:
+#        General rules for our variable names in this Makefile:
 #           * variable names consist only of characters a-zA-Z0-9_.
-#           * variable names start with upper case letters
+#           * variable names start with upper case letters or _
 #
 #        Following name prefixes are used:
-#           * SRC  - defines a source file
-#           * GEN  - defines a genarted file
-#           * EXE  - defines a tools to be used
-#           * ALL  - defines summary variables
-#           * TEST - something related to the test/ directory
-#           * CONTRIB  - something related to the contrib/ directory
-#           * _    - names of internal (helper) variables
-#                    (they are not intended to be overwritten on command line)
-#           * HELP - defines texts to be used in  help  and  doc  target
+#           SRC         - defines a source file
+#           GEN         - defines a genarted file
+#           EXE         - defines a tools to be used
+#           ALL         - defines summary variables
+#           TEST        - something related to the test/ directory
+#           CONTRIB     - something related to the contrib/ directory
+#           CRITIC      - something related to percritic targets
+#           _           - names of internal (helper) variables (they are not
+#                         intended to be overwritten on command line)
+#           HELP        - defines texts to be used in  help  and  doc  target
 #
 #        Following names are used, which potentially conflict with make itself:
-#           * ECHO     - echo command
-#           * MAKE     - make command
-#           * MAKEFILE - Makefile (i.g. myself, but may be redifined)
+#           ECHO        - echo command
+#           MAKE        - make command
+#           MAKEFILE    - Makefile (i.g. myself, but may be redifined)
 #
 #        In general no quotes are used around texts in variables. Though, it is
 #        sometimes necessary to use quotes to  force correct evaluation of used
@@ -114,7 +115,7 @@
 #            make m-MAKEFILE
 #
 #? VERSION
-#?      @(#) Makefile 1.11 18/05/05 11:13:25
+#?      @(#) Makefile 1.12 18/05/05 11:29:43
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -311,7 +312,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.11
+_INST.text      = generated from Makefile 1.12
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -419,8 +420,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.11
-tar:     GREP_EDIT = 1.11
+GREP_EDIT = 1.12
+tar:     GREP_EDIT = 1.12
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -490,8 +491,8 @@ $(GEN.tgz)--to-noisy: $(ALL.tgz)
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
 
-# special target to check for edited files; it only checks the
-# source files of the tool (o-saft.pl) but no other source files
+# Special target to check for edited files; it only checks the
+# source files of the tool (o-saft.pl) but no other source files.
 _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	@grep -q '$(GREP_EDIT)' $? \
@@ -645,11 +646,11 @@ _WARNING.log    = $(TEST.dir)/test-warnings-$(_TODAY_).log
 $(_WARNING.log):
 	@$(MAKE) -s $(ALL.warnings) > $@
 
-# target should create a new logfile, then compare it with the curennt one
-# if current logfile is missing use newly created one: "mv ... || cp ..."
-# this avoid errors whe the file is missing
-# if the diff returns nothing, mv newlycreated logfile to target, otherwise
-# restore previous one
+# Target should create a new logfile, then compare it with the curennt one.
+# If current logfile is missing use newly created one: "mv ... || cp ..." .
+# this avoid errors whe the file is missing.
+# If the diff returns nothing, mv newlycreated logfile to target, otherwise
+# restore previous one.
 test-warnings.log: $(_WARNING.log) $(SRC.pl)
 	-mv $(TEST.dir)/$@ $@-last \
 	 || cp $(_WARNING.log) $@-last
@@ -660,7 +661,7 @@ test-warnings.log: $(_WARNING.log) $(SRC.pl)
 
 .PHONY: test-warnings.log
 
-# internal information
+# internal information (nothing related to $(Project))
 test-file-1:
 test-file-2:
 test-file-3:
