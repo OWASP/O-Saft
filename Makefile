@@ -115,7 +115,7 @@
 #            make m-MAKEFILE
 #
 #? VERSION
-#?      @(#) Makefile 1.15 18/05/06 13:47:24
+#?      @(#) Makefile 1.16 18/05/06 14:42:50
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -131,6 +131,9 @@ MAKEFILE        = Makefile
 # define variable for myself, it allows to use some targets with an other files
 # Note  that  $(MAKEFILE)  is used where any Makefile is possible and  Makefile
 #       is used when exactly this file is meant.
+
+_SID            = 1.16
+# define our own SID as variable, if needed ...
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -312,7 +315,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.15
+_INST.text      = generated from Makefile 1.16
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -365,6 +368,7 @@ default:
 HELP-_known     = _______________________________________ well known targets _
 HELP-all        = does nothing; alias for help
 HELP-clean      = remove all generated files '$(ALL.gen)'
+HELP-release    = generate signed '$(GEN.tgz)' from sources
 HELP-install    = install tool in '$(INSTALL.dir)' using INSTALL.sh, $(INSTALL.dir) must not exist
 HELP-uninstall  = remove installtion directory '$(INSTALL.dir)' completely
 
@@ -390,7 +394,28 @@ uninstall:
 	@$(TARGET_VERBOSE)
 	-rm -r --interactive=never $(INSTALL.dir)
 
-.PHONY: all clean install install-f uninstall
+_RELEASE    = $(shell perl -nle '/^\s*STR_VERSION/ && do { s/.*?"([^"]*)".*/$$1/;print }' $(SRC.pl))
+release: $(GEN.tgz)
+	mkdir -p $(_RELEASE)
+	sha256sum $(GEN.tgz) > $(_RELEASE)/$(GEN.tgz).sha256
+	@cat $(_RELEASE)/$(GEN.tgz).sha256
+	gpg --local-user o-saft -a --detach-sign $(GEN.tgz)
+	gpg --verify $(GEN.tgz).asc $(GEN.tgz)
+	mv $(GEN.tgz).asc $(_RELEASE)/
+	mv $(GEN.tgz)     $(_RELEASE)/
+	@echo "# don't forget:"
+	@echo "#   env OSAFT_VERSION=$(_RELEASE) o-saft-docker build"     
+	@echo "#   o-saft-docker usage"
+	@echo "#   o-saft-docker +VERSION"
+	@echo "#   o-saft-docker +version"
+	@echo "#   o-saft-docker +cipher --enabled --header some.tld"  
+	@echo "#   docker tag owasp/o-saft:latest owasp/o-saft:$(_RELEASE)"
+	@echo "#   docker push owasp/o-saft:latest"
+	@echo "#   # digest: sha256:... in README eintragen"
+	@echo "#   # digest: sha256:... in Dockerfile eintragen"
+# TODO: check if files are edited missing
+
+.PHONY: all clean install install-f uninstall release
 
 variables       = \$$(variables)
 #               # define literal string $(variables) for "make doc"
@@ -420,8 +445,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.15
-tar:     GREP_EDIT = 1.15
+GREP_EDIT = 1.16
+tar:     GREP_EDIT = 1.16
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
