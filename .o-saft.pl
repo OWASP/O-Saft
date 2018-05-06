@@ -21,11 +21,13 @@
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
 #? VERSION
-#?      @(#) .o-saft.pl 1.87 18/05/04 00:57:52
+#?      @(#) .o-saft.pl 1.88 18/05/06 14:03:14
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
+
+#_SID = 1.88; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
