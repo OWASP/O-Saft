@@ -115,7 +115,7 @@
 #            make m-MAKEFILE
 #
 #? VERSION
-#?      @(#) Makefile 1.14 18/05/06 13:00:08
+#?      @(#) Makefile 1.15 18/05/06 13:47:24
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -312,7 +312,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.14
+_INST.text      = generated from Makefile 1.15
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -420,8 +420,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.14
-tar:     GREP_EDIT = 1.14
+GREP_EDIT = 1.15
+tar:     GREP_EDIT = 1.15
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -520,12 +520,10 @@ HELP-bench      = call '$(EXE.bench)' for some benchmarks
 HELP-bench.log  = call '$(EXE.bench)' and save result in '$(BENCH.times)'
 HELP-test.bunt  = test '$(CONTRIB.dir)/bunt.pl' with sample file
 HELP-test.cgi   = test invalid IPs to be rejected by '$(SRC.cgi)'
+HELP-message-STR= test for specific STR in output of '$(SRC.pl)'
 HELP-warning-NR = test for specific messages number NR of '$(SRC.pl)'
 HELP-test-warnings        = test **WARNING messages of '$(SRC.pl)'
 HELP-test-warnings.log    = test **WARNING messages of '$(SRC.pl)' and compare with previous one
-HELP-test-warning-template= generate template Make file for testing warning messages
-HELP-test-warnings-todo   = show not implemented tests for warnings
-HELP-test-warnings-difficult = show tests for warnings which are difficult to implement
 HELP-test       = TBD - comming soon
 
 BENCH.times       = $(EXE.bench).times
@@ -547,150 +545,136 @@ test.bunt: $(EXE.test.bunt)
 .PHONY: bench bench.log test.bunt test.cgi
 
 # testing warning messages
-TEST.quit       = +quit
 _TMP.rc         = /tmp/o-saft.tmprc
 #
 # Each warning-* target defines its (conditional) command to be used with
 # $(SRC.pl). If the definition starts with the literal string "TODO:" the
-# target will only print the text (see warning-%).
+# target will only print the text (see message-%).
 # The TODO texts ending with  "difficult ..." mark messages, which cannot
 # tested easily.
-warning-002: TEST.cmd   = TODO: testing openssl returning error, difficult ...
-warning-003: TEST.cmd   = TODO: testing openssl failed with allocate memory, difficult ...
-warning-004: TEST.cmd   = TODO: testing perl returned status, difficult ...
-warning-005: TEST.cmd   = TODO: testing missing IO/Socket/SSL.pm
-warning-006: TEST.cmd   = TODO: testing missing IO/Socket/INET.pm
-warning-007: TEST.cmd   = TODO: testing missing Net/DNS.pm
-warning-008: TEST.cmd   = TODO: testing missing Time/Local.pm
-#warning-009: TEST.cmd   = free
-warning-010: TEST.cmd   = TODO: testing die, missing Net/SSLhello.pm
-warning-011: TEST.cmd   = TODO: testing die, missing Net/SSLinfo.pm
-warning-012: TEST.cmd   = TODO: testing die, missing Net::SSLeay.pm
-warning-013: TEST.cmd   = TODO: testing die, missing o-saft-man.pm
-warning-014: TEST.cmd   = TODO: testing die, missing Net::SSLeay.pm
-warning-015: TEST.cmd   = TODO: testing die, no ciphers found, may happen with openssl pre 1.0.0, difficult ...
-warning-020: TEST.cmd   = TODO: testing die, CGI mode requires strict settings
-#warning-040: TEST.cmd   = free
-warning-041: TEST.cmd   = s_client
-warning-042: TEST.cmd   = +cn --port=' ' unknown-host
-warning-043: TEST.cmd   = --rc=$(_TMP.rc) --v
-warning-043:                                     TEST.rc    = --cfg_cmd=new_command=quit
-warning-044: TEST.cmd   = +zlib +lzo +open_pgp +fallback
-#warning-045: TEST.cmd   = free
-#warning-046: TEST.cmd   = free
-warning-047: TEST.cmd   = +info  +cn
-warning-047:                                     TEST.quit  = any-host
-warning-048: TEST.cmd   = +check +cn
-warning-048:                                     TEST.quit  = any-host
-warning-049: TEST.cmd   = +unknown_command
-warning-050: TEST.cmd   = +cn --port=
-#warning-051: TEST.cmd   = free
-warning-052: TEST.cmd   = --rc=$(_TMP.rc)
-warning-052:                                     TEST.rc    = "--option=-with_trailing_spaces   "
-warning-053: TEST.cmd   = --capath='/path with spaces'
-warning-054: TEST.cmd   = --legacy=unknown_legacy
-warning-055: TEST.cmd   = --format=unknown_format
-warning-056: TEST.cmd   = --range=unknown_range
-warning-057: TEST.cmd   = --ciphercurves=unknown
-warning-063: TEST.cmd   = --cipher=unknown +cipher
-warning-063:                                     TEST.quit  = any-host
-warning-064: TEST.cmd   = +sts --no-http
-warning-064:                                     TEST.quit  = any-host
-#warning-065: TEST.cmd   = free
-warning-066: TEST.cmd   = --ignore-out=cn +cn
-warning-066:                                     TEST.quit  = any-host
-warning-067: TEST.cmd   = --ignore-out=cn +cn --v
-warning-067:                                     TEST.quit  = any-host
-warning-068: TEST.cmd   = --ignore-out=cn +cn --v
-warning-068:                                     TEST.quit  = any-host
-warning-069: TEST.cmd   = --sniname=wrong +cn
-warning-069:                                     TEST.quit  = $(TEST.host)
-warning-070: TEST.cmd   = --cfg_cmd=$(_TMP.rc)
-warning-070: TEST.cmd   = TODO: need special test target which uses unredable --cfg_cmd=$(_TMP.rc)
-warning-071: TEST.cmd   = --cfg_unknown=dummy=dummy
-warning-072: TEST.cmd   = --cfg_cmd=$(_TMP.rc) --cgi
-warning-073: TEST.cmd   = --cfg_cmd=invalid_default_command=default
-#?# warning-074: TEST.cmd   = --rc=$(_TMP.rc)
-#?# warning-074:                                     TEST.rc    = "--cfg_cmd=dummy=cn unknown_command"
-warning-074: TEST.cmd   = --cfg_cmd=dummy=unknown_command
-#warning-075: TEST.cmd   = free
-warning-076: TEST.cmd   = --cfg_score=dummy=invalid_value
-warning-080: TEST.cmd   = TODO: testing Net::SSLeay < 1.49
-warning-111: TEST.cmd   = --mx --nodns
-warning-111: TEST.cmd   = TODO: testing missing Net/DNS.pm
-warning-112: TEST.cmd   = +sts_expired
-warning-112: TEST.cmd   = TODO: testing missing Time/Local.pm need by +sts_expired
-warning-120: TEST.cmd   = TODO: testing ancient perl
-warning-121: TEST.cmd   = TODO: testing ancient module
-warning-122: TEST.cmd   = TODO: testing ancient Net::SSLeay
-warning-123: TEST.cmd   = TODO: testing ancient IO::Socket
-warning-124: TEST.cmd   = TODO: testing ancient IO::Socket::SSL
-warning-125: TEST.cmd   = TODO: testing openssl < 1.0.0
-warning-126: TEST.cmd   = TODO: testing missing ALPN functionality
-warning-127: TEST.cmd   = TODO: testing Net::SSLeay < 1.56, ALPN disabled
-warning-128: TEST.cmd   = TODO: testing openssl < 1.0.2, ALPN disabled
-warning-129: TEST.cmd   = TODO: testing missing NPN functionality
-warning-130: TEST.cmd   = TODO: testing Net::SSLeay < 1.46, ALPN disabled
-#warning-131: TEST.cmd   = free
-warning-132: TEST.cmd   = TODO: testing openssl < 1.0.1, ALPN disabled
-warning-133: TEST.cmd   = TODO: testing Net::SSLeay without OCSP
-warning-134: TEST.cmd   = TODO: testing Net::SSLeay without EC
-warning-135: TEST.cmd   = TODO: testing Net::SSLeay < 1.49
-warning-140: TEST.cmd   = +cipherraw --dtlsv1
-warning-141: TEST.cmd   = +cipherraw --dtlsv9
-warning-141: TEST.cmd   = TODO: testing wrong or unsupported SSL protocol
-#warning-142: TEST.cmd   = free
-warning-143: TEST.cmd   = TODO: testing SSL protocol not supported by Net::SSLeay, difficult ...
-warning-144: TEST.cmd   = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
-warning-145: TEST.cmd   = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
-warning-146: TEST.cmd   = TODO: testing missing openssl -tlsextdebug option
-warning-147: TEST.cmd   = TODO: testing missing openssl executable in Net::SSLinfo
-warning-148: TEST.cmd   = TODO: testing missing openssl version -d failed, difficult ...
-warning-149: TEST.cmd   = --openssl=/does/not/exist
-warning-201: TEST.cmd   = +cn
-warning-201:                                     TEST.quit  = unknown-host
-warning-202: TEST.cmd   = +cn --exit=HOST1
-warning-202:                                     TEST.quit  = www.skype.com
-#                       # scary: need a reliable FQDN here ---^^^^^^^^^^^^^
-#warning-203: TEST.cmd   = free
-warning-204: TEST.cmd   = TODO: testing connection without SNI, difficult ...
-warning-205: TEST.cmd   = TODO: testing connection failed, difficult ...
-warning-206: TEST.cmd   = TODO: testing connection witout SNI errors from Net::SSLinfo, difficult ...
-warning-207: TEST.cmd   = TODO: testing connection with openssl failed, difficult ...
-warning-208: TEST.cmd   = TODO: testing +check without openssl on Windows, difficult ...
-warning-209: TEST.cmd   = TODO: testing missing SSL version, difficult ...
-warning-301: TEST.cmd   = TODO: testing continous connection errors, difficult ...
-warning-302: TEST.cmd   = TODO: testing max connection errors, difficult ...
-warning-303: TEST.cmd   = TODO: testing unsupported Net::SSLeay::CTX_v2_new, difficult ...
-warning-304: TEST.cmd   = TODO: testing unsupported Net::SSLeay::CTX_v3_new, difficult ...
-warning-305: TEST.cmd   = TODO: testing connection _usesocket failed, difficult ...
-warning-311: TEST.cmd   = TODO: testing  empty  result from openssl, difficult ...
-warning-312: TEST.cmd   = TODO: testing strange result from openssl, difficult ...
-warning-312: TEST.cmd   = TODO: testing unknown result from openssl, difficult ...
-warning-321: TEST.cmd   = TODO: testing _isbleed failed to connect, difficult ...
-warning-322: TEST.cmd   = TODO: testing _isbleed with openTcpSSLconnection failed, difficult ...
-warning-323: TEST.cmd   = TODO: testing heartbleed: no reply, difficult ...
-warning-324: TEST.cmd   = TODO: --sniname=wrong +cn
-warning-324:                                     TEST.quit  = www.skype.com
-#                       # scary: need a reliable FQDN here ---^^^^^^^^^^^^^
-warning-325: TEST.cmd   = TODO: testing connection failed, HTTP disabled, difficult ...
-warning-331: TEST.cmd   = TODO: testing _isccs: failed to connect, difficult ...
-warning-332: TEST.cmd   = TODO: testing _isccs: no reply, difficult ...
-warning-409: TEST.cmd   = --sslv2 --sni +cipherall --exit=HOST4
-warning-409:                                     TEST.quit  = $(TEST.host)
-warning-410: TEST.cmd   = --sslv2 --sni +cipher    --exit=HOST4
-warning-410:                                     TEST.quit  = $(TEST.host)
-warning-411: TEST.cmd   = TODO: testing checked cipher does not match returned cipher, difficult ...
-warning-601: TEST.cmd   = TODO: testing connection failed with protocol error, difficult ...
-warning-602: TEST.cmd   = TODO: testing connection type name mismatch, difficult ...
-warning-631: TEST.cmd   = TODO: testing SSL protocol mismatch for cipher, difficult ...
-warning-801: TEST.cmd   = TODO: testing connection returning unknown label, difficult ...
-warning-811: TEST.cmd   = TODO: ancient openssl version: using '-msg' option to get DH parameters
-warning-821: TEST.cmd   = TODO: can't print certificate sizes without a certificate (--no-cert)
-warning-831: TEST.cmd   = --testing-+quit__without__--trace=arg
-warning-841: TEST.cmd   = TODO: used openssl version differs from compiled Net:SSLeay
-warning-851: TEST.cmd   = TODO: ancient version Net::SSLeay < 1.49
-warning-861: TEST.cmd   = TODO: not all ciphers listed
+warning-002: TEST.args  = TODO: testing openssl returning error, difficult ...
+warning-003: TEST.args  = TODO: testing openssl failed with allocate memory, difficult ...
+warning-004: TEST.args  = TODO: testing perl returned status, difficult ...
+warning-005: TEST.args  = TODO: testing missing IO/Socket/SSL.pm
+warning-006: TEST.args  = TODO: testing missing IO/Socket/INET.pm
+warning-007: TEST.args  = TODO: testing missing Net/DNS.pm
+warning-008: TEST.args  = TODO: testing missing Time/Local.pm
+#warning-009: TEST.args  = free
+warning-010: TEST.args  = TODO: testing die, missing Net/SSLhello.pm
+warning-011: TEST.args  = TODO: testing die, missing Net/SSLinfo.pm
+warning-012: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
+warning-013: TEST.args  = TODO: testing die, missing o-saft-man.pm
+warning-014: TEST.args  = TODO: testing die, missing Net::SSLeay.pm
+warning-015: TEST.args  = TODO: testing die, no ciphers found, may happen with openssl pre 1.0.0, difficult ...
+warning-020: TEST.args  = TODO: testing die, CGI mode requires strict settings
+#warning-040: TEST.args  = free
+warning-041: TEST.args  = s_client                          +quit
+warning-042: TEST.args  = +cn --port=' ' unknown-host       +quit
+warning-043: TEST.args  = --rc=$(_TMP.rc) --v               +quit
+warning-043:                                     TEST.rc = --cfg_cmd=new_command=quit
+warning-044: TEST.args  = +zlib +lzo +open_pgp +fallback     +quit
+#warning-045: TEST.args  = free
+#warning-046: TEST.args  = free
+warning-047: TEST.args  = +info  +cn                        any-host
+warning-048: TEST.args  = +check +cn                        any-host
+warning-049: TEST.args  = +unknown_command                  +quit
+warning-050: TEST.args  = +cn --port=                       +quit
+#warning-051: TEST.args  = free
+warning-052: TEST.args  = --rc=$(_TMP.rc)
+warning-052:                                     TEST.rc = "--option=-with_trailing_spaces   "
+warning-053: TEST.args  = --capath='/path with spaces'      +quit
+warning-054: TEST.args  = --legacy=unknown_legacy           +quit
+warning-055: TEST.args  = --format=unknown_format           +quit
+warning-056: TEST.args  = --range=unknown_range             +quit
+warning-057: TEST.args  = --ciphercurves=unknown            +quit
+warning-063: TEST.args  = --cipher=unknown +cipher          any-host
+warning-064: TEST.args  = +sts --no-http                    any-host
+#warning-065: TEST.args  = free
+warning-066: TEST.args  = --ignore-out=cn +cn               any-host
+warning-067: TEST.args  = --ignore-out=cn +cn --v           any-host
+warning-068: TEST.args  = --ignore-out=cn +cn --v           any-host
+warning-069: TEST.args  = --sniname=wrong +cn               $(TEST.host)
+warning-070: TEST.args  = --cfg_cmd=$(_TMP.rc)              +quit
+warning-070: TEST.args  = TODO: need special test target which uses unredable --cfg_cmd=$(_TMP.rc)
+warning-071: TEST.args  = --cfg_unknown=dummy=dummy         +quit
+warning-072: TEST.args  = --cfg_cmd=$(_TMP.rc) --cgi        +quit
+warning-073: TEST.args  = --cfg_cmd=invalid_default_command=default +quit
+#?# warning-074: TEST.args  = --rc=$(_TMP.rc)                +quit
+#?# warning-074:                                     TEST.rc = "--cfg_cmd=dummy=cn unknown_command"
+warning-074: TEST.args  = --cfg_cmd=dummy=unknown_command   +quit
+#warning-075: TEST.args  = free
+warning-076: TEST.args  = --cfg_score=dummy=invalid_value   +quit
+warning-080: TEST.args  = TODO: testing Net::SSLeay < 1.49
+warning-111: TEST.args  = --mx --nodns                      +quit
+warning-111: TEST.args  = TODO: testing missing Net/DNS.pm
+warning-112: TEST.args  = +sts_expired                      +quit
+warning-112: TEST.args  = TODO: testing missing Time/Local.pm need by +sts_expired
+warning-120: TEST.args  = TODO: testing ancient perl
+warning-121: TEST.args  = TODO: testing ancient module
+warning-122: TEST.args  = TODO: testing ancient Net::SSLeay
+warning-123: TEST.args  = TODO: testing ancient IO::Socket
+warning-124: TEST.args  = TODO: testing ancient IO::Socket::SSL
+warning-125: TEST.args  = TODO: testing openssl < 1.0.0
+warning-126: TEST.args  = TODO: testing missing ALPN functionality
+warning-127: TEST.args  = TODO: testing Net::SSLeay < 1.56, ALPN disabled
+warning-128: TEST.args  = TODO: testing openssl < 1.0.2, ALPN disabled
+warning-129: TEST.args  = TODO: testing missing NPN functionality
+warning-130: TEST.args  = TODO: testing Net::SSLeay < 1.46, ALPN disabled
+#warning-131: TEST.args  = free
+warning-132: TEST.args  = TODO: testing openssl < 1.0.1, ALPN disabled
+warning-133: TEST.args  = TODO: testing Net::SSLeay without OCSP
+warning-134: TEST.args  = TODO: testing Net::SSLeay without EC
+warning-135: TEST.args  = TODO: testing Net::SSLeay < 1.49
+warning-140: TEST.args  = +cipherraw --dtlsv1               +quit
+warning-141: TEST.args  = +cipherraw --dtlsv9               +quit
+warning-141: TEST.args  = TODO: testing wrong or unsupported SSL protocol
+#warning-142: TEST.args  = free
+warning-143: TEST.args  = TODO: testing SSL protocol not supported by Net::SSLeay, difficult ...
+warning-144: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
+warning-145: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
+warning-146: TEST.args  = TODO: testing missing openssl -tlsextdebug option
+warning-147: TEST.args  = TODO: testing missing openssl executable in Net::SSLinfo
+warning-148: TEST.args  = TODO: testing missing openssl version -d failed, difficult ...
+warning-149: TEST.args  = --openssl=/does/not/exist         +quit
+warning-201: TEST.args  = +cn                               unknown-host
+warning-202: TEST.args  = +cn --exit=HOST1                  www.skype.com
+#                       # scary: need a reliable FQDN here -^^^^^^^^^^^^^
+#warning-203: TEST.args  = free
+warning-204: TEST.args  = TODO: testing connection without SNI, difficult ...
+warning-205: TEST.args  = TODO: testing connection failed, difficult ...
+warning-206: TEST.args  = TODO: testing connection witout SNI errors from Net::SSLinfo, difficult ...
+warning-207: TEST.args  = TODO: testing connection with openssl failed, difficult ...
+warning-208: TEST.args  = TODO: testing +check without openssl on Windows, difficult ...
+warning-209: TEST.args  = TODO: testing missing SSL version, difficult ...
+warning-301: TEST.args  = TODO: testing continous connection errors, difficult ...
+warning-302: TEST.args  = TODO: testing max connection errors, difficult ...
+warning-303: TEST.args  = TODO: testing unsupported Net::SSLeay::CTX_v2_new, difficult ...
+warning-304: TEST.args  = TODO: testing unsupported Net::SSLeay::CTX_v3_new, difficult ...
+warning-305: TEST.args  = TODO: testing connection _usesocket failed, difficult ...
+warning-311: TEST.args  = TODO: testing  empty  result from openssl, difficult ...
+warning-312: TEST.args  = TODO: testing strange result from openssl, difficult ...
+warning-312: TEST.args  = TODO: testing unknown result from openssl, difficult ...
+warning-321: TEST.args  = TODO: testing _isbleed failed to connect, difficult ...
+warning-322: TEST.args  = TODO: testing _isbleed with openTcpSSLconnection failed, difficult ...
+warning-323: TEST.args  = TODO: testing heartbleed: no reply, difficult ...
+warning-324: TEST.args  = TODO: --sniname=wrong +cn         
+#                       # scary: need a reliable FQDN here -^^^^^^^^^^^^^ www.skype.com
+warning-325: TEST.args  = TODO: testing connection failed, HTTP disabled, difficult ...
+warning-331: TEST.args  = TODO: testing _isccs: failed to connect, difficult ...
+warning-332: TEST.args  = TODO: testing _isccs: no reply, difficult ...
+warning-409: TEST.args  = --sslv2 --sni +cipherall --exit=HOST4 $(TEST.host)
+warning-410: TEST.args  = --sslv2 --sni +cipher    --exit=HOST4 $(TEST.host)
+warning-411: TEST.args  = TODO: testing checked cipher does not match returned cipher, difficult ...
+warning-601: TEST.args  = TODO: testing connection failed with protocol error, difficult ...
+warning-602: TEST.args  = TODO: testing connection type name mismatch, difficult ...
+warning-631: TEST.args  = TODO: testing SSL protocol mismatch for cipher, difficult ...
+warning-801: TEST.args  = TODO: testing connection returning unknown label, difficult ...
+warning-811: TEST.args  = TODO: ancient openssl version: using '-msg' option to get DH parameters
+warning-821: TEST.args  = TODO: can not print certificate sizes without a certificate, --no-cert
+warning-831: TEST.args  = --testing-+quit__without__--trace=arg +quit
+warning-841: TEST.args  = TODO: used openssl version differs from compiled Net:SSLeay
+warning-851: TEST.args  = TODO: ancient version Net::SSLeay < 1.49
+warning-861: TEST.args  = TODO: not all ciphers listed
 
 # generate list of all targets dynamically from our definitions above
 ALL.warnings    = $(shell awk '/^warning-...:/{sub(":","");print $$1}' Makefile | sort -u)
@@ -699,51 +683,53 @@ _TEST.template  = test/test-warning.Makefile-template
 $(_TEST.template): $(SRC.pl)
 	@echo "# generated template targets to test **WARNING messages" > $@
 	@echo "# targets use the message text as TODO (see Makefile)"  >> $@
-	@echo "# Note: texts for TEST.cmd should not contain ; | ()"   >> $@
+	@echo "# Note: texts for TEST.args should not contain ; | ()"  >> $@
 	@echo "# Note: not all texts my be useful, it's a template!"   >> $@
 	@echo ""                                                       >> $@
 	perl -nle 'm/^\s*_?warn/ && do {\
 		s/^[^"]*"([^"]*).*/warning-$$1/;\
-		s/:/: TEST.cmd   = TODO:/;\
+		s/:/: TEST.args  = TODO:/;\
 		print}' $^ \
 	| sort >> $@
 	@-ls -l $@
 
-test-warning-template: Makefile $(_TEST.template)
+gen-warning-template: Makefile $(_TEST.template)
 # TODO: Makefile dependency does not work, probably need to use $(MAKE)
 
-test-warnings-todo:
+show-warnings-todo:
 	grep "^warning..*TODO" Makefile
 
-test-warnings-difficult:
+show-warnings-difficult:
 	grep "^warning..*difficult" Makefile
 
-# Testing for **WARNING messages works as follows:
+# Testing for messages (i.e **WARNING) works as follows:
 #   call $(SRC.pl) with command and/or options in question
-#   then search (grep) output for message number
+#   then search (grep) output for message (number in case of warnings)
 # For some behaviours of $(SRC.pl) a RC-file is required.
-# For testing all different warning-* targets, the pattern rule  warning-% is
+# For testing all different warning-* targets, the pattern rule  message-% is
 # used, which gets the message number from the automatic variable $*  and the
 # arguments for $(SRC.pl) with following Makefile variables:
-#   $(TEST.cmd)     - command and options to be passed to $(SRC.pl)
-#   $(TEST.quit     - +quit command (default), or hostname if it is necessary
-#                     for proper testing the warning message
+#   $(TEST.args)    - command, options and hostname to be passed to $(SRC.pl)
+#                     +quit  command or  other command and hostname is needed
+#                     for testing the warning message
 #   $(TEST.rc)      - content of RC-file to be used by $(SRC.pl)
 # These variables are set conditinally for each target (see above).
 # Some tests are not yet implemented, or difficult to implement. In this case
-# $(TEST.cmd) contains a string starting with "TODO:". The  warning-%  target
+# $(TEST.args) contains a string starting with "TODO:". The  message-%  target
 # tests the variable for this string and then simply prints it. Otherwise the
 # check will be performed (see  if - else -fi  in target).
-# Note:  even /tmp/o-saft.tmprc  is generated for each call,  it will only be
-# when requested with the  --rc=/tmp/o-saft.tmprc  option.
-warning-%: $(SRC.pl)
+# Note:  even '$(_TMP.rc)'  is generated for each call,  it will only be used
+# when requested with the  --rc=$(_TMP.rc)  option.
+# Hint: we can even test for any string in output, example
+#   make message-Certificate TEST.args="+cn localhost"
+message-%: $(SRC.pl)
 	@$(TARGET_VERBOSE)
-	-if expr "$(TEST.cmd)" ":" "^TODO" >/dev/null ; then \
-	    echo "$@:    $(TEST.cmd)"; \
+	-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
+	    echo "$@:    $(TEST.args)"; \
 	else \
-	    echo "$(TEST.rc)" > /tmp/o-saft.tmprc ; \
-	    $(SRC.pl) $(TEST.cmd) $(TEST.quit) | grep $* ; \
-	    rm -f /tmp/o-saft.tmprc ; \
+	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
+	    $(SRC.pl) $(TEST.args) | grep $* ; \
+	    rm -f $(_TMP.rc) ; \
 	fi
 
 test-warnings: $(ALL.warnings)
@@ -801,7 +787,10 @@ HELP-_qa        = _________________________________ targets for code quality _
 HELP-critichelp = print more details about  critic-*  targets
 HELP-critic     = check files with perlcritic
 HELP-critic345  = check files with perlcritic for severity 3,4,5 using test/critic_345.sh
-HELP-tags       = generate tags file for vi
+HELP-tags       = generate tags file for vi(m)
+HELP-gen-warning-template = generate template Makefile for testing warning messages
+HELP-show-warnings-todo   = show not implemented tests for warnings
+HELP-show-warnings-difficult = show tests for warnings which are difficult to implement
 MORE-critic     = " \
 \# More  critic  targets exist, calling perlcritic with additional options$(_NL)\
 $(_HELP_LINE_)$(_NL)\
