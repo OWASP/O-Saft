@@ -1,0 +1,198 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile        - makefile for help targets of O-Saft project
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Traditional Makefile with help targets for O-Saft project.
+#?      For details please see ../Makefile .
+#?
+#? LIMITATIONS
+#?       Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#
+# HACKER's HELP
+#        For extracting information from this  Makefile,  for example variables
+#        and their definitions, following special syntax is used:
+#           * all texts for documentation (help) are stored in variables
+#           * all these variables are named ith the prefix  HELP-
+#           * anything following the prefix is the name of an existing target
+#             example:   HELP-doc  contains the description of the target  doc
+#           * variable names with prefix  HELP-_  are treated as header texts
+#             example:   HELP-_help = ____ targets for help about Makefile _
+#
+#        Targets in this Makefile are grouped. Each group is headed by the help
+#        texts for the targets. The first line of this group should be a header
+#        text describing the group. Example:
+#           HELP-_group     = _______________________________ some targets _
+#           HELP-help       = print overview of all targets
+#           HELP-doc        = same as help, but evaluates variables
+#        These variables are used by the  help  and  doc  target. Each of these
+#        lines is printed as follows (example above):
+#                    _______________________________ some targets _
+#           help     - print overview of all targets
+#           doc      - same as help, but evaluates variables
+#
+#        To extract and format the texts,  the targets use some external tools,
+#        mainly, awk, sed and tr.  Each tool with its command line arguments is
+#        defined as variable, see corresponding  EXE.*  variables.
+#
+#        The main difference between the target  help  and  doc  is, that  help
+#        uses external tools to extract the information from the Makefile while
+#        doc  uses make's functionality to display  the same information, which
+#        then also evaluates variables used in the texts. Both targets must use
+#        the same text (hence variable definitions).
+#        The  EXE.*  macros used by these targets take care for the formatting.
+#        They rely on the above conventions for variable names.
+#
+#        All variables used for help texts do not contain . (dot), but - (dash)
+#        in their name. This simplifies matching the names, because the dash is
+#        is not a meta character in RegEx and so must not be escaped.
+#
+#        Unfortunately, some of the macros use variables of the  Makefile, like
+#        $(_TAB), while other macros must use the TAB character verbatim, which
+#        is difficult to identify by human eyes.
+#
+#        Additional to the help targets described above, there're targets which
+#        show information about variables and targets:
+#            list, echo, show, macro, pmacro, target
+#        These targets show the information, which is passed in a variable with
+#        the same name as the target itself. Example:
+#            make macro macro=MAKEFILE
+#        To simplify this command line, a special pattern rule exists  for each
+#        of these targets. Example:
+#            make m-MAKEFILE
+#
+#? VERSION
+#?      @(#) Makefile.help 1.1 18/05/09 16:33:12
+#?
+#? AUTHOR
+#?      18-apr-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
+.SUFFIXES:
+
+first-help-target-is-default: default
+
+
+_SID.help       = 1.1
+# define our own SID as variable, if needed ...
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+# internal variables
+_TAB            = \\011
+_NL             = \\012
+_CR             = \\015
+
+# internal help
+# (for details about the commands, please see "HACKER's HELP" above)
+_HELP_INFO_     = \# Name          | Description/Content
+_HELP_LINE_     = \#---------------+------------------------------------------------------------
+_HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_INFO_)\012$(_HELP_LINE_)
+_HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
+
+# tools used to gather information from herein
+EXE.list        = awk '/^[_a-zA-Z][_a-zA-Z.]* *=.*/{print $$1}'
+EXE.eval        = awk -F=    '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
+EXE.help        = sed -n -e 's/^HELP-_[^=]*=[" ]*\([^"]*\)"*/		\1/p' \
+			 -e 's/^HELP-\(.*\)[	 ]*=[" ]*\([^"]*\)"*/ \1    - \2/p'
+EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
+			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
+EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
+			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
+EXE.target      = sed -n -e ':t' -e '/^[^:\043]*$($@)[^:\043]*[:]/{' \
+			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
+EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
+#               # must use " so that make's variables are evaluated correctly
+EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
+
+#_____________________________________________________________________________
+#_____________________________________________________________ help targets __|
+
+HELP-_help      = __________________________ targets for help about Makefile _
+HELP-list       = list all macro names (alias: vars)
+HELP-e-MACRO    = show content of MACRO expanded (all in one line)
+HELP-s-MACRO    = show content of MACRO expanded (one word per line)
+HELP-m-MACRO    = show definition of MACRO as is --exact macro match
+HELP-p-MACRO    = show all definitions of MACRO as is --macro pattern match
+HELP-t-TARGET   = show TARGET --exact target match
+
+#dbx _isempty:  @echo "# target: $($@) - $($($@))."
+# NOTE: following target is adapted to be use in echo, show, macro and target
+#       targets, hence the target name must be recursively evaluated, that's
+#       why we use  $($($@)) instead of $($@)
+_notempty:
+	@if [ '$($($@))' = '' ]; then \
+	    $(ECHO) "$(HELP-$($@))"; \
+	    $(ECHO) "$(_HELP_USAGE_)"; \
+	    exit 1; \
+	fi;
+	@$(ECHO) "$(_HELP_HEADER_)"
+
+_line:
+	@echo ""
+	@$(ECHO) "$(_TAB)$(_TAB)$($($@))"
+
+.PHONY: _notempty _line
+
+list:
+	@$(TARGET_VERBOSE)
+	@$(EXE.list) $(ALL.Makefiles)
+vars: list
+
+eval:
+	@$(TARGET_VERBOSE)
+	@$(ECHO) "$($@)$(_TAB)$(_TAB)- $(HELP-$($@))"
+
+echo:
+	@$(TARGET_VERBOSE)
+	@$(ECHO) '$($($@))'
+
+show: _notempty=show
+show: _notempty
+	@$(TARGET_VERBOSE)
+	@$(ECHO) '$($@) = '
+	@$(ECHO) '$($($@))' | $(EXE.wordperline)
+
+macro: _notempty=macro
+macro: _notempty
+	@$(TARGET_VERBOSE)
+	@$(EXE.macro) $(ALL.Makefiles)
+makro: macro
+
+pmacro: _notempty=pmacro
+pmacro: _notempty
+	@$(TARGET_VERBOSE)
+	@$(EXE.pmacro) $(ALL.Makefiles)
+
+target: _notempty=target
+target: _notempty
+	@$(TARGET_VERBOSE)
+	@$(EXE.target) $(ALL.Makefiles)
+
+# following rules are shortcuts for the above targets
+e-%:
+	@$(MAKE) -s echo=$* echo
+f-%:
+	@$(MAKE) -s eval=$* eval
+_f-%:
+	@$(MAKE) -s _line=$* _line
+s-%:
+	@$(MAKE) -s show=$* show
+m-%:
+	@$(MAKE) -s macro=$* macro
+p-%:
+	@$(MAKE) -s pmacro=$* pmacro
+t-%:
+	@$(MAKE) -s target=$* target
+
+.PHONY: list vars eval echo show macro pmacro target
+
