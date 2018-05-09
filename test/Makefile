@@ -16,7 +16,7 @@
 #       For details please see ../Makefile .
 #
 #? VERSION
-#?      @(#) Makefile 1.1 18/05/08 10:51:57
+#?      @(#) Makefile 1.2 18/05/09 16:13:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -28,7 +28,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 
 first-target-here--is-default: test-warnings
 
-_SID.test       = 1.1
+_SID.test       = 1.2
 # define our own SID as variable, if needed ...
 
 #_____________________________________________________________________________
@@ -52,7 +52,7 @@ EXE.bench       = test/o-saft_bench
 EXE.test.bunt   = test/test-bunt.pl.txt
 EXE.test.cgi    = test/test-o-saft.cgi.sh
 
-_TODAY_         = $(shell date +m%d)
+_TODAY_         = $(shell date +%Y""%m%d)
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
