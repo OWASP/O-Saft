@@ -14,61 +14,11 @@
 #?       Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
-#
-# HACKER's HELP
-#        For extracting information from this  Makefile,  for example variables
-#        and their definitions, following special syntax is used:
-#           * all texts for documentation (help) are stored in variables
-#           * all these variables are named ith the prefix  HELP-
-#           * anything following the prefix is the name of an existing target
-#             example:   HELP-doc  contains the description of the target  doc
-#           * variable names with prefix  HELP-_  are treated as header texts
-#             example:   HELP-_help = ____ targets for help about Makefile _
-#
-#        Targets in this Makefile are grouped. Each group is headed by the help
-#        texts for the targets. The first line of this group should be a header
-#        text describing the group. Example:
-#           HELP-_group     = _______________________________ some targets _
-#           HELP-help       = print overview of all targets
-#           HELP-doc        = same as help, but evaluates variables
-#        These variables are used by the  help  and  doc  target. Each of these
-#        lines is printed as follows (example above):
-#                    _______________________________ some targets _
-#           help     - print overview of all targets
-#           doc      - same as help, but evaluates variables
-#
-#        To extract and format the texts,  the targets use some external tools,
-#        mainly, awk, sed and tr.  Each tool with its command line arguments is
-#        defined as variable, see corresponding  EXE.*  variables.
-#
-#        The main difference between the target  help  and  doc  is, that  help
-#        uses external tools to extract the information from the Makefile while
-#        doc  uses make's functionality to display  the same information, which
-#        then also evaluates variables used in the texts. Both targets must use
-#        the same text (hence variable definitions).
-#        The  EXE.*  macros used by these targets take care for the formatting.
-#        They rely on the above conventions for variable names.
-#
-#        All variables used for help texts do not contain . (dot), but - (dash)
-#        in their name. This simplifies matching the names, because the dash is
-#        is not a meta character in RegEx and so must not be escaped.
-#
-#        Unfortunately, some of the macros use variables of the  Makefile, like
-#        $(_TAB), while other macros must use the TAB character verbatim, which
-#        is difficult to identify by human eyes.
-#
-#        Additional to the help targets described above, there're targets which
-#        show information about variables and targets:
-#            list, echo, show, macro, pmacro, target
-#        These targets show the information, which is passed in a variable with
-#        the same name as the target itself. Example:
-#            make macro macro=MAKEFILE
-#        To simplify this command line, a special pattern rule exists  for each
-#        of these targets. Example:
-#            make m-MAKEFILE
+#       Description see  HELP.doc  below (also used in default target in this
+#       Makefile).
 #
 #? VERSION
-#?      @(#) Makefile.help 1.1 18/05/09 16:33:12
+#?      @(#) Makefile.help 1.2 18/05/15 09:55:54
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -78,11 +28,13 @@
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-help-target-is-default: default
+first-help-target-is-default: help-documentation
 
-
-_SID.help       = 1.1
+_SID.help       = 1.2
 # define our own SID as variable, if needed ...
+
+help-documentation:
+	@echo "$(HELP.doc)"
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -91,9 +43,63 @@ _SID.help       = 1.1
 _TAB            = \\011
 _NL             = \\012
 _CR             = \\015
+T               = $$""(_NL)
+
+# documentation for syntax used herein
+HELP.doc = $(_NL)\
+For extracting information from the Makefiles,  for example macros/variables $(_NL)\
+and their definitions, following special syntax is used: $(_NL)\
+$(_TAB)* all texts for documentation (help) are stored in variables $(_NL)\
+$(_TAB)* all these variables are named with the prefix  HELP- $(_NL)\
+$(_TAB)* anything following the prefix is the name of an existing target $(_NL)\
+$(_TAB)  example:   HELP-doc  contains the description of the target  doc $(_NL)\
+$(_TAB)* variable names with prefix  HELP-_  are treated as header texts $(_NL)\
+$(_TAB)  example:   HELP-_help = ____ targets for help about Makefile _ $(_NL)\
+ $(_NL)\
+Targets in the Makefiles are grouped. Each group is headed by the help texts $(_NL)\
+for the targets. The first line of this group should be a header text descr- $(_NL)\
+ibing the group. Example: $(_NL)\
+$(_TAB)HELP-_group     = _______________________________ some targets _ $(_NL)\
+$(_TAB)HELP-help       = print overview of all targets $(_NL)\
+$(_TAB)HELP-doc        = same as help, but evaluates variables $(_NL)\
+These variables are used by the  help  and  doc  target. Each of these lines $(_NL)\
+is printed as follows (example above): $(_NL)\
+$(_TAB)         _______________________________ some targets _ $(_NL)\
+$(_TAB)help     - print overview of all targets $(_NL)\
+$(_TAB)doc      - same as help, but evaluates variables $(_NL)\
+ $(_NL)\
+To extract and format the texts, the targets use some external tools, mainly $(_NL)\
+awk,  sed  and  tr.  Each tool with its command line arguments is defined as $(_NL)\
+variable, see corresponding  EXE.*  variables. $(_NL)\
+ $(_NL)\
+All variable names used for help texts do not contain . (dot), but - (dash). $(_NL)\
+This simplifies matching the names, because the dash is not a meta character $(_NL)\
+in RegEx and so must not be escaped. $(_NL)\
+ $(_NL)\
+Unfortunately some of the macros use variables of the Makefile, like $(T), $(_NL)\
+while other macros must use the TAB character verbatim,  which  is difficult $(_NL)\
+to identify by human eyes. $(_NL)\
+ $(_NL)\
+The main difference between the target  help  and  doc  is, that  help  uses $(_NL)\
+external tools to extract the information from the Makefile while  doc  uses $(_NL)\
+make's functionality to display  the same information,  which also evaluates $(_NL)\
+variables used in the targets. Both targets use the same text. $(_NL)\
+The  EXE.*  macros used by these targets take care for the formatting.  They $(_NL)\
+rely on the above conventions for variable names. $(_NL)\
+ $(_NL)\
+Additional to the help targets described above, there are targets which show $(_NL)\
+information about variables and targets: $(_NL)\
+$(_TAB) list, echo, show, macro, pmacro, target $(_NL)\
+These targets show the information,  which is passed in a variable  with the $(_NL)\
+same name as the target itself. Example: $(_NL)\
+$(_TAB) make macro macro=MAKEFILE $(_NL)\
+To simplify such command lines,  a special pattern rule exists  for each of $(_NL)\
+these targets. Example: $(_NL)\
+$(_TAB) make m-MAKEFILE $(_NL)\
+
 
 # internal help
-# (for details about the commands, please see "HACKER's HELP" above)
+# (for details about the commands, please see HELP.doc above)
 _HELP_INFO_     = \# Name          | Description/Content
 _HELP_LINE_     = \#---------------+------------------------------------------------------------
 _HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_INFO_)\012$(_HELP_LINE_)
