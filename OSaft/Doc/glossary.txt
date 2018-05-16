@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.2 18/05/16 07:48:33
+# SID	@(#) glossary.txt 1.3 18/05/16 11:45:48
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -155,6 +155,7 @@ ECOH	Elliptic Curve only hash
 # ECRYPT	??
 Ed25519	alias for Curve25519
 Ed448	alias for Curve448
+EdDSA	alias for signatures using public key and private key formats, like Curve448 and Curve25519
 EDE	Encryption-Decryption-Encryption
 EDH	Ephemeral Diffie-Hellman
 EGADS	Entropy Gathering and Distribution System
@@ -474,10 +475,12 @@ WHIRLPOOL	hash function
 X.680	X.680: ASN.1
 X.509	X.509: The Directory - Authentication Framework
 X25519	alias for Curve25519 ?
+X448	alias for Curve448 ?
 X680	X.680: ASN.1
 X509	X.509: The Directory - Authentication Framework
 XCBC	eXtended CBC-MAC
 XCBC-MAC	same as XCBC
+X3DH	Extended Triple Diffie-Hellman
 XEX	XOR Encrypt XOR
 XKMS	XML Key Management Specification
 XMACC	counter-based XOR-MAC
