@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.1 18/01/10 21:53:16
+# SID	@(#) glossary.txt 1.2 18/05/16 07:48:33
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -56,7 +56,7 @@ CBC 	Cipher Block Chaining (sometimes)
 CBC  	Ciplier Block Chaining (sometimes)
 CBC-MAC	Cipher Block Chaining - Message Authentication Code
 CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
-CCM	CBC-MAC Mode
+CCM	CBC-MAC Mode (authenticated encryption block cipher mode)
 CCS	Change Cipher Spec (protocol)
 CDH	?  Diffie-Hellman
 CDP	CRL Distribution Points
@@ -189,7 +189,7 @@ FSB	Fast Syndrome Based Hash
 FSM	Finite State Machine
 FZA	FORTEZZA
 G-DES	??? DES
-GCM	Galois/Counter Mode (block cipher mode)
+GCM	Galois/Counter Mode (authenticated encryption block cipher mode)
 GHASH	Hash funtion used in GCM
 GMAC	MAC for GCM
 Grøstl	hash function (Lars Knudsen, 2010)
@@ -253,6 +253,7 @@ Lucky 13	Break SSL/TLS Protocol
 MARS	
 MAC	Message Authentication Code
 MCF	Modular Crypt Format
+MDC	Modification Detection Code
 MDC2	Modification Detection Code 2 aka Meyer-Schilling
 MDC-2	same as MDC2
 MD2	Message Digest 2
@@ -263,7 +264,7 @@ MEK	Message Encryption Key
 MECAI	Mutually Endorsing CA Infrastrukture
 MGF	Mask Generation Function
 MISTY1	block cipher algorithm
-MQV	Menezes-Qu-Vanstone (authentecated key agreement
+MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MtE	MAC-then-encrypt
 NCP	Normalized Certification Policy (according TS 102 042)
 Neokeon	symmetric block cipher algorithm
@@ -378,7 +379,7 @@ SDES	Security Description Protokol
 SEED	128-bit Symmetric Block Cipher
 Serpent	symmetric key block cipher (128 bit)
 SGC	Server-Gated Cryptography
-SGCM	Sophie Germain Counter Mode (block cipher mode)
+SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
 SHA	Secure Hash Algorithm
 SHA-0	Secure Hash Algorithm (insecure version before 1995)
 SHA-1	Secure Hash Algorithm (since 1995)
