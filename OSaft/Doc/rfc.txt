@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.1 18/01/10 21:53:16
+# SID	@(#) rfc.txt 1.2 18/05/16 07:47:22
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -119,4 +119,9 @@ url	http://tools.ietf.org/
 1135	The Helminthiasis of the Internet
 6698	DNS-Based Authentication of Named Entities (DANE)
 6844	DNS Certification Authority Authorization (CAA) Resource Record
+3610	Counter with CBC-MAC (CCM)
+3852	Cryptographic Message Syntax (CMS)
+5083	Cryptographic Message Syntax (CMS) Authenticated-Enveloped-Data Content Type
+4086	Randomness Requirements for Security
+4107	Guidelines for Cryptographic Key Management
 
