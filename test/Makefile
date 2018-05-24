@@ -16,7 +16,7 @@
 #       For details please see ../Makefile .
 #
 #? VERSION
-#?      @(#) Makefile 1.2 18/05/09 16:13:57
+#?      @(#) Makefile 1.3 18/05/25 01:14:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -26,10 +26,15 @@
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-target-here--is-default: test-warnings
+first-target-here--is-default: testhelp
 
-_SID.test       = 1.2
+_SID.test       = 1.3
 # define our own SID as variable, if needed ...
+
+ifndef ALL.Makefiles                                                           
+include Makefile.inc
+# defines macros if called directly (not from ../makefile)
+endif
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -57,37 +62,65 @@ _TODAY_         = $(shell date +%Y""%m%d)
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
 
+testhelp:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-test)     ; # no quotes!
+	@echo $(MORE-warnings)
+	@echo $(MORE-misc)
+
+.PHONY: testhelp
+
+#_____________________________________________________________________________
+#_____________________________________________________ internal test target __|
+
+# internal information (nothing related to $(Project))
+# Note that the information is from the main Makefile, probably ../Makefile
+test-file-1:
+test-file-2:
+test-file-3:
+test-target: test-file-1 test-file-2 test-file-3
+	@echo 'test-target: test-file-1 test-file-2 test-file-3'
+	@echo '# taget to show some make valiables:'
+	@echo '# $$@  = $@ #'
+	@echo '# $$<  = $< #'
+	@echo '# $$?  = $? #'
+	@echo '# $$^  = $^ #'
+	@echo '# $$+  = $+ #'
+	@echo '# $$|  = $| #'
+	@echo '# $$%  = $% #'
+	@echo '# $$*  = $* #'
+	@echo '# $$>  = $> #'
+	@echo '# $$-  = $- #'
+	@echo '# $$(MAKE)          = $(MAKE)'
+	@echo '# $$(MAKELEVEL)     = $(MAKELEVEL)'
+	@echo '# $$(MAKEFILE)      = $(MAKEFILE)'
+	@echo '# $$(MAKEFILES)     = $(MAKEFILES)'
+	@echo '# $$(MFLAGS)        = $(MFLAGS)'
+	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
+	@echo '# $$(MAKEOVERRIDES) = $(MAKEOVERRIDES)'
+	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
+
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
 HELP-_test      = ______________________________________ targets for testing _
-HELP-bench      = call '$(EXE.bench)' for some benchmarks
-HELP-bench.log  = call '$(EXE.bench)' and save result in '$(BENCH.times)'
-HELP-test.bunt  = test '$(CONTRIB.dir)/bunt.pl' with sample file
-HELP-test.cgi   = test invalid IPs to be rejected by '$(SRC.cgi)'
-HELP-message-STR= test for specific STR in output of '$(SRC.pl)'
-HELP-warning-NR = test for specific messages number NR of '$(SRC.pl)'
-HELP-test-warnings        = test **WARNING messages of '$(SRC.pl)'
-HELP-test-warnings.log    = test **WARNING messages of '$(SRC.pl)' and compare with previous one
-HELP-test       = TBD - comming soon
+HELP-testhelp   = print more targets for testing
+HELP-tests      = make all tests
+HELP-test       = alias for tests
 
-BENCH.times       = $(EXE.bench).times
-BENCH.host        = $(TEST.host)
-bench:
-	$(EXE.bench) $(BENCH.host)
-	@echo "# use '$(MAKE) bench.log' to save result in '$(BENCH.times)'"
-bench.log:
-	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
+#_____________________________________________________________________________
+#_________________________________________________________ testing warnings __|
 
-test.cgi: $(EXE.test.cgi) $(SRC.cgi)
-	@$(TARGET_VERBOSE)
-	$(EXE.test.cgi)
-
-test.bunt: $(EXE.test.bunt)
-	@$(TARGET_VERBOSE)
-	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
-
-.PHONY: bench bench.log test.bunt test.cgi
+MORE-warnings    = " \
+\#               __________________________________________ test warnings _$(_NL)\
+ message-STR     - test for specific STR in output of '$(SRC.pl)'$(_NL)\
+ warning-NR      - test for specific messages number NR of '$(SRC.pl)'$(_NL)\
+ test-warnings   - test **WARNING messages of '$(SRC.pl)'$(_NL)\
+ test-warnings.log    - test **WARNING messages of '$(SRC.pl)' and compare with previous one$(_NL)\
+ gen-warning-template - generate template Makefile for testing warning messages$(_NL)\
+ show-warnings-todo   - show not implemented tests for warnings$(_NL)\
+ show-warnings-difficult - show tests for warnings which are difficult to implement$(_NL)\
+"
 
 # testing warning messages
 _TMP.rc         = /tmp/o-saft.tmprc
@@ -202,7 +235,7 @@ warning-312: TEST.args  = TODO: testing unknown result from openssl, difficult .
 warning-321: TEST.args  = TODO: testing _isbleed failed to connect, difficult ...
 warning-322: TEST.args  = TODO: testing _isbleed with openTcpSSLconnection failed, difficult ...
 warning-323: TEST.args  = TODO: testing heartbleed: no reply, difficult ...
-warning-324: TEST.args  = TODO: --sniname=wrong +cn         
+warning-324: TEST.args  = TODO: --sniname=wrong +cn
 #                       # scary: need a reliable FQDN here -^^^^^^^^^^^^^ www.skype.com
 warning-325: TEST.args  = TODO: testing connection failed, HTTP disabled, difficult ...
 warning-331: TEST.args  = TODO: testing _isccs: failed to connect, difficult ...
@@ -278,7 +311,7 @@ message-%: $(SRC.pl)
 	fi
 
 warning-%: message-%
-	echo ""
+	@echo -n ""
 
 test-warnings: $(ALL.warnings)
 
@@ -289,45 +322,187 @@ $(_WARNING.log):
 
 # Target should create a new logfile, then compare it with the curennt one.
 # If current logfile is missing use newly created one: "mv ... || cp ..." .
-# this avoid errors whe the file is missing.
+# this avoid errors when the file is missing.
 # If the diff returns nothing, mv newlycreated logfile to target, otherwise
 # restore previous one.
 test-warnings.log: $(_WARNING.log) $(SRC.pl)
-	-mv $(TEST.dir)/$@ $@-last \
+	-mv $(TEST.dir)/$@     $@-last \
 	 || cp $(_WARNING.log) $@-last
 	diff   $@-last $(_WARNING.log) \
 	 && mv $(_WARNING.log) $(TEST.dir)/$@ && rm $@-last \
-	 || mv $@-last     $(TEST.dir)/$@ 
+	 || mv $@-last         $(TEST.dir)/$@
 	@ls -l  $(TEST.dir)/$@
 
 .PHONY: test-warnings.log
 
-# internal information (nothing related to $(Project))
-# Note that the information is from the main Makefile, probably ../Makefile
-test-file-1:
-test-file-2:
-test-file-3:
-test-target: test-file-1 test-file-2 test-file-3
-	@echo 'test-target: test-file-1 test-file-2 test-file-3'
-	@echo '# taget to show some make valiables:'
-	@echo '# $$@  = $@ #'
-	@echo '# $$<  = $< #'
-	@echo '# $$?  = $? #'
-	@echo '# $$^  = $^ #'
-	@echo '# $$+  = $+ #'
-	@echo '# $$|  = $| #'
-	@echo '# $$%  = $% #'
-	@echo '# $$*  = $* #'
-	@echo '# $$>  = $> #'
-	@echo '# $$-  = $- #'
-	@echo '# $$(MAKE)          = $(MAKE)'
-	@echo '# $$(MAKELEVEL)     = $(MAKELEVEL)'
-	@echo '# $$(MAKEFILE)      = $(MAKEFILE)'
-	@echo '# $$(MAKEFILES)     = $(MAKEFILES)'
-	@echo '# $$(MFLAGS)        = $(MFLAGS)'
-	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
-	@echo '# $$(MAKEOVERRIDES) = $(MAKEOVERRIDES)'
-	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
+#_____________________________________________________________________________
+#______________________________________________________ testing +cmd --opt  __|
+
+MORE-test       = " \
+\#               ________________________________________ summary targets _$(_NL)\
+ test.help       - test  help   commands and options$(_NL)\
+ test.info       - test  info   commands with localhost$(_NL)\
+ test.check      - test  check  commands with localhost$(_NL)\
+ test.cipher     - test  cipher commands with localhost$(_NL)\
+ test.summary    - test summary commands with localhost$(_NL)\
+ test.local      - test commands with localhost$(_NL)\
+ testrun-CMD     - test specific test target CMD$(_NL)\
+ testrun-CMD.log - test specific test target CMD and store in test/CMD.log$(_NL)\
+"
+
+test_+help-+VERSION:        TEST.args   = +VERSION
+test_+help-+help:           TEST.args   = +help=command
+test_+help-+ciphers:        TEST.args   = +ciphers -V
+test_+help-+version:        TEST.args   = +version
+test_+help-+version--v:     TEST.args   = +version --v --usr
+test_+help---v+vers:        TEST.args   = --v +version
+test_+help---v+help:        TEST.args   = --v +help
+test_-help-command:         TEST.args   = --help=command
+test_-help-options:         TEST.args   = --help=options
+test_-help-cmd:             TEST.args   = --help=cmd
+test_-help-opt:             TEST.args   = --help=opt
+test_-help-alias:           TEST.args   = --help=alias
+test_-help-glossar:         TEST.args   = --help=glossar
+test_-help-rfc:             TEST.args   = --help=rfc
+test_-help-links:           TEST.args   = --help=links
+test_-help-check:           TEST.args   = --help=check
+test_-help-regex:           TEST.args   = --help=regex
+test_-help-WHY:             TEST.args   = --help=WHY
+test_-help-CHECK:           TEST.args   = --help=CHECK
+test_-help-cfg-text:        TEST.args   = --help=cfg-text
+test_-help-gen-wiki:        TEST.args   = --help=gen-wiki
+test_-help-gen-html:        TEST.args   = --help=gen-html
+test_-help-gen-cgi:         TEST.args   = --help=gen-cgi
+test_-help--yeast-data:     TEST.args   = --yeast-data
+test_-help--yeast-prot:     TEST.args   = --yeast-prot
+test_+info:                 TEST.args   = +info
+test_+info--trace-cmd:      TEST.args   = +info   --trace-cmd
+test_+info--trace-key:      TEST.args   = +info   --trace-key
+test_+info--trace-key-norc: TEST.args   = +info   --trace-key --norc
+test_+check:                TEST.args   = +check
+test_+check--trace-key:     TEST.args   = +check  --trace-key
+test_+check--trace-key-norc:  TEST.args   = +check  --trace-key --norc
+test_+check--trace-norc:    TEST.args   = +check  --trace-cmd --trace-time --trace=2 --norc
+test_+check--nossltls:      TEST.args   = +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+test_+cipher:               TEST.args   = +cipher
+test_+cipher--force-openssl:  TEST.args   = +cipher --force-openssl
+test_+cipher--cipher-openssl: TEST.args   = +cipher --cipher-openssl
+test_+cipherall:            TEST.args   = +cipherall
+test_+cipherraw:            TEST.args   = +cipherraw
+test_+cipher-dh:            TEST.args   = +cipher-dh
+test_+cipher-default:       TEST.args   = +cipher-default
+test_+ciphercheck:          TEST.args   = +ciphercheck
+test_+cipher--nossltls:     TEST.args   = +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+test__vuln-+BEAST:          TEST.args   = +BEAST
+test__vuln-+CRIME:          TEST.args   = +CRIME
+test__vuln-+DROWN:          TEST.args   = +DROWN
+test__vuln-+FREAK:          TEST.args   = +FREAK
+test__vuln-+POODLE:         TEST.args   = +POODLE
+test__vuln-+logjam:         TEST.args   = +logjam
+test__vuln-+lucky13:        TEST.args   = +lucky13
+test__vuln-+Sloth:          TEST.args   = +Sloth
+test__vuln-+Sweet32:        TEST.args   = +Sweet32
+test__summ-+bsi:            TEST.args   = +bsi
+test__summ-+TR-02102+:      TEST.args   = +TR-02102+
+test__summ-+EV:             TEST.args   = +EV
+test__summ-+quick:          TEST.args   = +quick --trace-arg
+test__summ-+http:           TEST.args   = +http
+test__summ-+hsts:           TEST.args   = +hsts
+test__summ-+ocsp:           TEST.args   = +ocsp
+test__summ-+preload:        TEST.args   = +preload
+test__summ-+protocols:      TEST.args   = +protocols
+test__summ-+fingerprints:   TEST.args   = +fingerprints
+test__summ-+sizes:          TEST.args   = +sizes
+test__summ-+pfs:            TEST.args   = +pfs
+test__summ-+sts:            TEST.args   = +sts
+test__summ-+sni:            TEST.args   = +sni
+test__summ-+vulns:          TEST.args   = +vulns
+
+# generate list of all targets dynamically from our definitions above
+# note that . inside // below is a meta character
+# note: no sort because we want the sequence as defined above
+ALL.testhelp    = $(shell awk '/^test_.help-/  {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testinfo    = $(shell awk '/^test_.info-/  {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testcheck   = $(shell awk '/^test_.check-/ {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testcipher  = $(shell awk '/^test_.cipher/ {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testsummary = $(shell awk '/^test_.summ-/  {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testlocal   = $(shell awk '/^test_.local-/ {sub(":","");print $$1}' $(ALL.Makefiles))
+
+ALL.tests       = \
+		  $(ALL.testhelp) \
+		  $(ALL.testinfo) \
+		  $(ALL.testcheck) \
+		  $(ALL.testcipher) \
+		  $(ALL.testsummary) \
+		  $(ALL.testlocal)
+ALL.tests.log   = $(ALL.tests:%=%.log)
+
+testrun-%__nur-verwenden-wenn-mehrer-targets-in-ein-File: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	@echo "{## `date +%T`: $(EXE.pl) $(TEST.args) ..."
+	@cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
+	@echo "##}"
+
+testrun-%: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	@cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
+
+test_%: testrun-%
+	@echo -n ""
+
+test_%.log:
+	@$(TARGET_VERBOSE)
+	@$(MAKE) -s test_$* > $@ 2>&1
+	@-diff $(TEST.dir)/$@ $@ \
+	    && rm $@ \
+	    || mv $@ $(TEST.dir)/test_$*-$(_TODAY_).log
+	@ls -l  $(TEST.dir)/$@*
+
+test.help:      $(ALL.testhelp)
+test.info:      $(ALL.testinfo)
+test.check:     $(ALL.testcheck)
+test.cipher:    $(ALL.testcipher)
+test.summary:   $(ALL.testsummary)
+test.local:     $(ALL.testlocal)
+tests:          $(ALL.tests)
+
+# $(_TEST.log) calls "make -s" to avoid printing of executed commands
+_TEST.log       = $(TEST.dir)/test-test-$(_TODAY_).log
+$(_TEST.log):
+	@echo _TEST.log
+	@$(MAKE) -s $(ALL.tests.log) > $@
+
+test-tests.log: $(SRC.pl) $(ALL.tests.log)
+	@echo -n ""
+
+#_____________________________________________________________________________
+#____________________________________________________________ various tests __|
+
+MORE-misc        = " \
+\#               ____________________________________________ misc. tests _$(_NL)\
+ bench           - call '$(EXE.bench)' for some benchmarks$(_NL)\
+ bench.log       - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
+ test.bunt       - test '$(CONTRIB.dir)/bunt.pl' with sample file$(_NL)\
+ test.cgi        - test invalid IPs to be rejected by '$(SRC.cgi)'$(_NL)\
+"
+
+BENCH.times       = $(EXE.bench).times
+BENCH.host        = $(TEST.host)
+bench:
+	$(EXE.bench) $(BENCH.host)
+	@echo "# use '$(MAKE) bench.log' to save result in '$(BENCH.times)'"
+bench.log:
+	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
+
+test.cgi: $(EXE.test.cgi) $(SRC.cgi)
+	@$(TARGET_VERBOSE)
+	$(EXE.test.cgi)
+
+test.bunt: $(EXE.test.bunt)
+	@$(TARGET_VERBOSE)
+	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
+
+.PHONY: bench bench.log test.bunt test.cgi
 
 #_____________________________________________________________________________
 #_________________________________________________ targets for code quality __|
@@ -336,9 +511,7 @@ HELP-_qa        = _________________________________ targets for code quality _
 HELP-critichelp = print more details about  critic-*  targets
 HELP-critic     = check files with perlcritic
 HELP-critic345  = check files with perlcritic for severity 3,4,5 using test/critic_345.sh
-HELP-gen-warning-template = generate template Makefile for testing warning messages
-HELP-show-warnings-todo   = show not implemented tests for warnings
-HELP-show-warnings-difficult = show tests for warnings which are difficult to implement
+
 MORE-critic     = " \
 \# More  critic  targets exist, calling perlcritic with additional options$(_NL)\
 $(_HELP_LINE_)$(_NL)\
