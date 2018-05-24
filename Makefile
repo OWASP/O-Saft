@@ -67,7 +67,7 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.18 18/05/09 16:34:50
+#?      @(#) Makefile 1.19 18/05/24 23:41:28
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -85,7 +85,7 @@ MAKEFILE        = Makefile
 #       is used when exactly this file is meant. $(ALL.Makefiles) is used, when
 #       all Makefiles are needed.
 
-_SID            = 1.18
+_SID            = 1.19
 # define our own SID as variable, if needed ...
 
 #_____________________________________________________________________________
@@ -265,7 +265,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.18
+_INST.text      = generated from Makefile 1.19
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -368,8 +368,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.18
-tar:     GREP_EDIT = 1.18
+GREP_EDIT = 1.19
+tar:     GREP_EDIT = 1.19
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -481,11 +481,11 @@ HELP--vv        = verbose: print target and all dependencies
 # Note: need at least one command for target execution
 %-v: TARGET_VERBOSE=echo "\# $@: $?"
 %-v: %
-	@echo ""
+	@echo -n ""
 
 %-vv: TARGET_VERBOSE=echo "\# $@: $^"
 %-vv: %
-	@echo ""
+	@echo -n ""
 
 # the traditional way, when target-dependent variables do not work
 #%-v:
