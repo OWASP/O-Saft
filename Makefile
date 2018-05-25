@@ -53,6 +53,8 @@
 #                         intended to be overwritten on command line)
 #           HELP        - defines texts to be used in  help  and  doc  target
 #
+#        Note that  ALL.tgz contains the list of all sources to be distributed.
+#
 #        Following names are used, which potentially conflict with make itself:
 #           ECHO        - echo command
 #           MAKE        - make command
@@ -67,7 +69,7 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.19 18/05/24 23:41:28
+#?      @(#) Makefile 1.20 18/05/25 12:52:53
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -85,7 +87,7 @@ MAKEFILE        = Makefile
 #       is used when exactly this file is meant. $(ALL.Makefiles) is used, when
 #       all Makefiles are needed.
 
-_SID            = 1.19
+_SID            = 1.20
 # define our own SID as variable, if needed ...
 
 #_____________________________________________________________________________
@@ -94,7 +96,6 @@ _SID            = 1.19
 Project         = o-saft
 ProjectName     = O-Saft
 INSTALL.dir     = /usr/local/$(Project)
-TEST.host       = localhost
 
 # source files
 SRC.lic         = yeast.lic
@@ -234,6 +235,8 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
+ALL.Makefiles   = Makefile Makefile.help $(TEST.dir)/Makefile
+                # not included: $(TEST.dir)/Makefile.inc
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
@@ -242,7 +245,7 @@ ALL.contrib     = $(SRC.contrib)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.inst) $(GEN.tags)
 ALL.tgz         = \
-		  $(SRC.make) \
+		  $(ALL.Makefiles) $(TEST.dir)/Makefile.inc \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
 		  $(ALL.test) \
@@ -252,7 +255,6 @@ ALL.tgz         = \
 		  $(SRC.doc) \
 		  $(ALL.gen) \
 		  $(ALL.contrib)
-ALL.Makefiles   = Makefile Makefile.help $(TEST.dir)/Makefile
 
 # internal used tools (paths hardcoded!)
 ECHO            = /bin/echo -e
@@ -265,7 +267,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.19
+_INST.text      = generated from Makefile 1.20
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -368,8 +370,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.19
-tar:     GREP_EDIT = 1.19
+GREP_EDIT = 1.20
+tar:     GREP_EDIT = 1.20
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
