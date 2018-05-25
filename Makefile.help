@@ -18,7 +18,7 @@
 #       Makefile).
 #
 #? VERSION
-#?      @(#) Makefile.help 1.2 18/05/15 09:55:54
+#?      @(#) Makefile.help 1.3 18/05/25 12:34:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 
 first-help-target-is-default: help-documentation
 
-_SID.help       = 1.2
+_SID.help       = 1.3
 # define our own SID as variable, if needed ...
 
 help-documentation:
@@ -114,7 +114,7 @@ EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
-EXE.target      = sed -n -e ':t' -e '/^[^:\043]*$($@)[^:\043]*[:]/{' \
+EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
 EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
