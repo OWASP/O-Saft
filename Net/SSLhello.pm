@@ -1924,6 +1924,7 @@ sub openTcpSSLconnection ($$) {
             _trace ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n") if ( ($main::cfg{'trace'} >2) || ($sleepSecs > 0) );
             sleep ($sleepSecs);
         }
+
         { # >> start a block
             local $@ = "";
             eval {
@@ -3549,10 +3550,10 @@ sub compileClientHello ($$$$;$$$$) {
                 "# -->   record_len:      >%04X<\n".
                 "# -->   Handshake protocol: \n".
                 "# -->       msg_type:                >%02X<\n".
-                "# -->       msg_len:             >00%04X<\n".
+                "# -->       msg_len:             >%06X<\n".
                 "# -->       msg_seqNr:             >%04X<\n". # DTLS
                 "# -->       fragment_offset:     >%06X<\n".   # DTLS = 0x000000 if not fragmented
-                "# -->       fragment_len:        >00%04X<\n". # DTLS = msg_len if not fragmented
+                "# -->       fragment_len:        >%06X<\n".   # DTLS = msg_len if not fragmented
                 "# -->       version:               >%04X< (%s)\n".
                 "# -->       challenge/random:      >%s<\n".
                 "# -->       session_id_len:          >%02X<\n".
@@ -4257,9 +4258,6 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                     if ($serverHello{'msg_type'} == $HANDSHAKE_TYPE {'server_hello'}) { ### Serever Hello -> to get the cipher and some supported extensions (planned)
                         _trace2_ ("# -->     Handshake type:    Server Hello (22)\n");
 
-                        if ($serverHello{'msg_len_null_byte'} != 0x00)  {
-                            _error (">>> WARNING (parseHandshakeRecord:): Server '$host:$port': 1st Msg-Len-Byte is *NOT* 0x00/n");
-                        }
                         $cipher =  parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol);
                         $lastCipher = $cipher; # to link further Information to this cipher
 #                       return (parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol),$lastMsgType, 0,""); # moved bebind the 'while-loop'
@@ -4330,11 +4328,11 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                 return ($cipher,$lastMsgType, 0,"");
             } elsif ($recordType == $RECORD_TYPE {'alert'}) {
                 $serverHello{'msg_type'} = 0;           # NO Handshake => set 0
-                $serverHello{'msg_len_null_byte'} = 0;  # NO Handshake => set 0
+                $serverHello{'msg_len_3rd_byte'} = 0;   # NO Handshake => set 0
                 $serverHello{'msg_len'} = 0;            # NO Handshake => set 0
-                $serverHello{'fragment_null_byte'} = 0; # NO Handshake => set 0
+                $serverHello{'fragment_3rd_byte'} = 0;  # NO Handshake => set 0
                 $serverHello{'fragment_offset'} = 0;    # NO Handshake => set 0
-                $serverHello{'fragment_null_byte'} = 0; # NO Handshake => set 0
+                $serverHello{'fragment_3rd_byte'} = 0;  # NO Handshake => set 0
                 $serverHello{'fragment_len'} = 0;       # NO Handshake => set 0
 
                 ($serverHello{'level'},      # C
@@ -4483,7 +4481,7 @@ sub parseServerHello ($$$;$) {
              $serverHello{'record_len'},        # n
 ### perhaps this could be a good point to start a new function to parse a Message => to check certificates etc later###
              $serverHello{'msg_type'},          # C
-             $serverHello{'msg_len_null_byte'}, # C
+             $serverHello{'msg_len_3rd_byte'},  # C
              $serverHello{'msg_len'},           # n
              $rest) = unpack("C n n C C n a*", $buffer);
 
@@ -4493,16 +4491,18 @@ sub parseServerHello ($$$;$) {
                      "# -->    record_version:  >%04X<\n".
                      "# -->    record_len:      >%04X<\n".
                      "# -->       msg_type:         >%02X<\n".
-                     "# -->       msg_len_null_byte:    >%02X<\n".
-                     "# -->       msg_len:           >%04X<\n",
+                     "# -->       msg_len:         >%02X%04X<\n",
                        $serverHello{'record_type'},
                        $serverHello{'record_version'},
                        $serverHello{'record_len'},
                        $serverHello{'msg_type'},
-                       $serverHello{'msg_len_null_byte'}, # prefetched for record_type handshake
+                       $serverHello{'msg_len_3rd_byte'},  # prefetched for record_type handshake
                        $serverHello{'msg_len'}            # prefetched for record_type handshake
                 ));
 
+                $serverHello{'msg_len'} |= $serverHello{'msg_len_3rd_byte'} <<16 if ($serverHello{'msg_len_3rd_byte'} > 0);
+                _trace ("parseServerHello: >>> WARNING: Server '$host:$port': Received a huge message with $serverHello{'msg_len'} bytes\n") if ($serverHello{'msg_len_3rd_byte'} > 0);
+                carp   ("parseServerHello: >>> WARNING: Server '$host:$port': Received a huge message with $serverHello{'msg_len'} bytes\n") if ($serverHello{'msg_len_3rd_byte'} > 0);
                 ($message,                        #a[$serverHello{'msg_len'}]
                 $nextMessages) = unpack("a[$serverHello{'msg_len'}] a*", $rest);
 
@@ -4515,9 +4515,6 @@ sub parseServerHello ($$$;$) {
                     _trace3_ ("# -->     Handshake type:    Server Hello (22)\n");
                     _trace4_ ("# --->    Handshake type:    Server Hello (22)\n");
 
-                    if ($serverHello{'msg_len_null_byte'} != 0x00)  {
-                            _error (">>> WARNING (parseServerHello): Server '$host:$port': 1st Msg-Len-Byte is *NOT* 0x00/n");
-                    }
                     return (parseTLS_ServerHello ($host, $port, $message, $serverHello{'msg_len'},$client_protocol));
                 }
             } elsif    ($serverHello{'record_type'} == $RECORD_TYPE {'alert'}) {
@@ -4525,7 +4522,7 @@ sub parseServerHello ($$$;$) {
                 _trace2_ (sprintf("# -->  Record version:  $serverHello{'record_version'} (0x%04X)\n",$serverHello{'record_version'}));
                 _trace2_ (sprintf("# -->  Record len:      $serverHello{'record_len'}   (0x%04X)\n",$serverHello{'record_len'}));
                 $serverHello{'msg_type'} = 0;          # KEIN Handshake = löschen
-                $serverHello{'msg_len_null_byte'} = 0; # KEIN Handshake = löschen
+                $serverHello{'msg_len_3rd_byte'} = 0;  # KEIN Handshake = löschen
                 $serverHello{'msg_len'} = 0;           # KEIN Handshake = löschen
                 ($serverHello{'level'},      # C
                  $serverHello{'description'} # C
