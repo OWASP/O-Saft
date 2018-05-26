@@ -1921,7 +1921,7 @@ sub openTcpSSLconnection ($$) {
             }
         }
         if ($Net::SSLhello::starttls) {
-            _trace2 ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n");
+            _trace ("openTcpSSLconnection: $host:$port: wait $sleepSecs sec(s) to prevent too many connects\n") if ( ($main::cfg{'trace'} >2) || ($sleepSecs > 0) );
             sleep ($sleepSecs);
         }
         { # >> start a block
