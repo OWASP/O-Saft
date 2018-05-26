@@ -53,7 +53,7 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '18.05.25',
+    SSLHELLO_VERSION=> '18.05.26',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.27 18/03/23 00:06:41',
 };
@@ -366,7 +366,7 @@ sub _hint   {
     #? print hint message if wanted
     # don't print if --no-hint given
     my @txt = @_;
-    return if ((grep{/(:?--no.?hint)/i} @main::ARGV) > 0);
+    return if ((grep{/(:?--no.?hint)/ix} @main::ARGV) > 0);
     local $\ = "\n"; print(STR_HINT, join(" ", @txt));
     return;
 }
@@ -1327,16 +1327,13 @@ sub checkSSLciphers ($$$@) {
         _trace4_ ("\n");
         foreach my $cipher_str (@cipher_str_array) {
             _trace4 ("checkSSLciphers: Cipher-String: >$cipher_str< -> ");
-            ($cipher_str) =~ s/(?:0x03|0x02|0x)? ?([a-fA-F0-9]{2}) ?/chr(hex $1)/eg; ## Str2hex
+            ($cipher_str) =~ s/(?:0x03|0x02|0x)?\s?([a-fA-F0-9]{2})\s?/chr(hex $1)/egx; ## Str2hex
             _trace4_ (" >". hexCodedCipher($cipher_str)."<\n");
 
             $cipher_spec .= $cipher_str; # collect cipher specs
         }
         _trace4_ ("\n");
         $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec);
-        _trace  ("checkSSLciphers(1): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
-        sleep($Net::SSLhello::connect_delay);
-        _trace4 ("checkSSLciphers(1): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
         if ($Net::SSLhello::trace > 0) { #about: _trace
             $i = 0;
             my $anzahl = int length ($acceptedCipher) / 3;
@@ -1354,8 +1351,8 @@ sub checkSSLciphers ($$$@) {
         _trace4_ ("\n");
         foreach my $cipher_str (@cipher_str_array) {
             _trace4 ("checkSSLciphers: Cipher-String: >$cipher_str< -> ");
-            if ($cipher_str !~ /0x02/) { # No SSL2 cipher
-                ($cipher_str) =~ s/(?:0x0[3-9a-fA-F]00|0x)? ?([a-fA-F0-9]{2}) ?/chr(hex $1)/eg; ## Str2hex
+            if ($cipher_str !~ /0x02/x) { # No SSL2 cipher
+                ($cipher_str) =~ s/(?:0x0[3-9a-fA-F]00|0x)?\s?([a-fA-F0-9]{2})\s?/chr(hex $1)/egx; ## Str2hex
                 _trace4_ ("  >". hexCodedCipher($cipher_str)."<");
             } else {
                 _trace4_ ("  SSL2-Cipher suppressed\n");
@@ -1862,12 +1859,12 @@ sub openTcpSSLconnection ($$) {
         if (defined($startTlsTypeHash{uc($Net::SSLhello::starttlsType)})) {
             $starttlsType = $startTlsTypeHash{uc($Net::SSLhello::starttlsType)};
             _trace4 ("openTcpSSLconnection: Index-Nr of StarttlsType $Net::SSLhello::starttlsType is $starttlsType\n");
-            if ( grep {/^$starttlsType$/} ('12', '13', '14','15') ) { # ('12', '13', ...) -> Use of an experimental STARTTLS type
+            if ( grep {/^$starttlsType$/x} ('12', '13', '14','15') ) { # ('12', '13', ...) -> Use of an experimental STARTTLS type
                 if  ($Net::SSLhello::experimental >0) {         # experimental function is are  activated
                     _trace_("\n");
                     _trace ("openTcpSSLconnection: WARNING: use of STARTTLS type $starttls_matrix[$starttlsType][0] is experimental! Send us feedback to o-saft (at) lists.owasp.org, please\n");
                 } else {                                        # use of experimental functions is not permitted (option is not activated)
-                    if ( grep {/^$starttlsType$/} ('12', '13', '14', '15') ) { # experimental and untested
+                    if ( grep {/^$starttlsType$/x} ('12', '13', '14', '15') ) { # experimental and untested
                         OSaft::error_handler->new( {
                             type    => (OERR_SSLHELLO_ABORT_PROGRAM),
                             id      => 'ckeck starttls type (1)',
@@ -1892,12 +1889,12 @@ sub openTcpSSLconnection ($$) {
                         if (($i == 2) || ($i == 4)) { #TX Data needs a different handling
                             $starttls_matrix[$starttlsType][$i] = "$Net::SSLhello::starttlsPhaseArray[$i]";
                             #($starttls_matrix[$starttlsType][$i]) =~ s/(\[^xc]|\c.)/chr(ord('$1'))/eg; ## escape2hex does not work
-                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\r/chr(13)/eg; ## return character
-                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\n/chr(10)/eg; ## new line character
-                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\t/chr(9)/eg;  ## tab character
-                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\e/chr(27)/eg; ## 'esc' character
-                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\x([a-fA-F0-9]{2})/chr(hex $1)/eg; ## Str2hex
-                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\\\/\\/g;      ## escaping the escape character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\r/chr(13)/egx; ## return character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\n/chr(10)/egx; ## new line character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\t/chr(9)/egx;  ## tab character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\e/chr(27)/egx; ## 'esc' character
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\x([a-fA-F0-9]{2})/chr(hex $1)/egx; ## Str2hex
+                            ($starttls_matrix[$starttlsType][$i]) =~ s/\\\\/\\/gx;      ## escaping the escape character
                         } else { # normal copy
                             $starttls_matrix[$starttlsType][$i] = $Net::SSLhello::starttlsPhaseArray[$i];
                         }
@@ -2795,7 +2792,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
 
             #### check for other protocols than ssl (when starttls is used) ####
             if ($Net::SSLhello::starttls)  {
-                if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/i)  { # 554 Security failure; TBD: perhaps more general in the future
+                if ($input =~ /(?:^|\s)554(?:\s|-)security.*?$/ix)  { # 554 Security failure; TBD: perhaps more general in the future
                     _trace2  ("_doCheckSSLciphers ## STARTTLS: received SMTP Reply Code '554 Security failure': (Is the STARTTLS command issued within an existing TLS session?) -> input ignored and try to Retry\n");
                     # retry to send clientHello
                     $my_error = "";
@@ -2817,7 +2814,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                     }
                     next;
                 }
-            } elsif ($input =~ /(?:^|\s)220(?:\s|-).*?$/)  { # service might need STARTTLS
+            } elsif ($input =~ /(?:^|\s)220(?:\s|-).*?$/x)  { # service might need STARTTLS
                  $my_error= "**WARNING: _doCheckSSLciphers: $host:$port looks like an SMTP-Service, probably the option '--starttls' is needed -> target ignored\n";
                  carp ($my_error);
                  return ("");
@@ -3801,8 +3798,8 @@ sub _compileClientHelloExtensions ($$$$@) {
     if ( ($Net::SSLhello::usesni) && ( ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) || ($record_version >= $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLSv09'}) ) ) { # allow to test SNI with version TLSv1 and above or DTLSv09 (OpenSSL pre 0.9.8f), DTLSv1 and above
 
     ### data for extension 'Server Name Indication' in reverse order
-        $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/g;  # delete Spaces, \r and \n
-        $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
+        $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/gx if ($Net::SSLhello::sni_name);     # delete Spaces, \r and \n
+        $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
         unless ($Net::SSLhello::use_sni_name) {
             $clientHello{'extension_sni_name'}     = $host;                                      # Server Name, should be a Name no IP
         } else {
@@ -4050,7 +4047,7 @@ sub parseServerKeyExchange($$$) {
         _trace4("parseServerKeyExchange: ECDH_serverParam: '".$_mySSLinfo{'ECDH_serverParam'}."'\n");
         _trace2("parseServerKeyExchange() done.\n");
         return ("ecdh, ".$_mySSLinfo{'ECDH_serverParam'});
-    } elsif (($keyExchange =~ /^RSA/) || ($keyExchange =~ /^EXP/)) { # check for RSA
+    } elsif (($keyExchange =~ /^RSA/x) || ($keyExchange =~ /^EXP/x)) { # check for RSA
         ($_mySSLinfo{'RSA_ServerParams_modulus_len'},   # n
          $d) = unpack("n a*", $d);
 
@@ -4825,7 +4822,7 @@ sub parseTLS_ServerHello {
             "\n# -->       compression_method:   >%02X<\n",
             $serverHello{'compression_method'}
         ));
-        if ( $serverHello{'extensions_len'} !~ /(?:^$|[\x00]+)/) { # extensions_len > 0
+        if ( $serverHello{'extensions_len'} !~ /(?:^$|[\x00]+)/x) { # extensions_len > 0
             ($serverHello{'extensions'},            # A[]
             $rest) = unpack("a[$serverHello{'extensions_len'}] a*", $rest2);
 
@@ -4898,9 +4895,9 @@ sub _timedOut {
 
 sub _chomp_r { # chomp \r\n
     my $string = shift || "";
-    $string =~ s/(.*?)\r?\n?$/$1/g;
-    if ($string =~ /[^\x20-\x7E\t\r\n]/) { # non printable charachers in string
-        $string =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eig; #Code all Octets as HEX values and seperate then with a 'space'
+    $string =~ s/(.*?)\r?\n?$/$1/gx;
+    if ($string =~ /[^\x20-\x7E\t\r\n]/x) { # non printable charachers in string
+        $string =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eigx; #Code all Octets as HEX values and seperate then with a 'space'
     }
     return ($string);
 }
@@ -4914,9 +4911,8 @@ sub hexCodedString {
     if (!defined($prefix)) { # undefined -> ""
             $prefix = "";
     }
-    $codedString =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eig; # code all octets as HEX values and seperate then with a 'space'
-    $codedString =~
-s/((?:[0-9A-Fa-f]{2}\s){48})(?=[0-9A-Fa-f]{2})/"$1\n$prefix"/eig; # add a new line each 48 HEX-octetts (=144 symbols incl. spaces) if not last octett reached
+    $codedString =~ s/([\x00-\xFF])/sprintf("%02X ", ord($1))/eigx; # code all octets as HEX values and seperate then with a 'space'
+    $codedString =~ s/((?:[0-9A-Fa-f]{2}\s){48})(?=[0-9A-Fa-f]{2})/"$1\n$prefix"/eigx; # add a new line each 48 HEX-octetts (=144 symbols incl. spaces) if not last octett reached
     chomp ($codedString); # delete CR at the end
     chop ($codedString);  # delete 'space' at the end
     return ($codedString);
@@ -4932,8 +4928,8 @@ sub hexCodedCipher {
     if (!defined($prefix)) { # undefined -> ""
             $prefix = "";
     }
-    $codedString =~ s/([\x00-\xFF])/sprintf("%02X", ord($1))/eig; # code all octets as HEX values and seperate then with a 'space'
-    $codedString =~ s/((?:[0-9A-Fa-f]{2}){64})/"$1\n$prefix"/eig; # add a new line each 64 HEX octetts (=128 symbols incl. spaces)
+    $codedString =~ s/([\x00-\xFF])/sprintf("%02X", ord($1))/eigx; # code all octets as HEX values and seperate then with a 'space'
+    $codedString =~ s/((?:[0-9A-Fa-f]{2}){64})/"$1\n$prefix"/eigx; # add a new line each 64 HEX octetts (=128 symbols incl. spaces)
     chomp ($codedString); #delete CR at the end
     return ($codedString); #delete 'space' at the end
 } # hexCodedCipher
@@ -4948,8 +4944,8 @@ sub hexCodedSSL2Cipher {
     if (!defined($prefix)) { # undefined -> ""
             $prefix = "";
     }
-    $codedString =~ s/([\x00-\xFF])([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X%02X ", ord($1), ord($2), ord($3))/eig; #Code all 3-Octet-Ciphers as HEX value-Pairs and separate then with a 'space'
-    $codedString =~ s/((?:[0-9A-Fa-f]{6}){16} )/"$1\n$prefix"/eig; # add a new line each 16 ciphers (=112 symbols incl. spaces)
+    $codedString =~ s/([\x00-\xFF])([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X%02X ", ord($1), ord($2), ord($3))/eigx; #Code all 3-Octet-Ciphers as HEX value-Pairs and separate then with a 'space'
+    $codedString =~ s/((?:[0-9A-Fa-f]{6}){16}\s)/"$1\n$prefix"/eigx; # add a new line each 16 ciphers (=112 symbols incl. spaces)
     chomp ($codedString); #delete CR at the end
     return ($codedString); #delete 'space' at the end
 }
@@ -4963,8 +4959,8 @@ sub hexCodedTLSCipher {
     if (!defined($prefix)) { # undefined -> ""
             $prefix = "";
     }
-    $codedString =~ s/([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X ", ord($1), ord($2))/eig; # code all 2-Octet-Ciphers as HEX value pairs and separate then with a 'space'
-    $codedString =~ s/((?:[0-9A-Fa-f]{4}){16} )/"$1\n$prefix"/eig; # add a new line each 16 ciphers (=80 symbols incl. spaces)
+    $codedString =~ s/([\x00-\xFF])([\x00-\xFF])/sprintf("%02X%02X ", ord($1), ord($2))/eigx; # code all 2-Octet-Ciphers as HEX value pairs and separate then with a 'space'
+    $codedString =~ s/((?:[0-9A-Fa-f]{4}){16}\s)/"$1\n$prefix"/eigx; # add a new line each 16 ciphers (=80 symbols incl. spaces)
     chomp ($codedString);  # delete CR at the end
     return ($codedString); # delete 'space' at the end
 } # hexCodedSSL2Cipher
