@@ -176,7 +176,7 @@ $Net::SSLhello::starttls            = 0;# 1= do STARTTLS
 $Net::SSLhello::starttlsType        = "SMTP";# default: SMTP
 @Net::SSLhello::starttlsPhaseArray  = [];# STARTTLS: customized phases (1-5) and error handling (6-8)
 $Net::SSLhello::starttlsDelay       = 0;# STARTTLS: time to wait in seconds (to slow down the requests)
-$Net::SSLhello::slowServerDelay     = 0;# proxy and STARTLS: time to wait in seconds (for slow proxies and STARTTLS servers)
+$Net::SSLhello::slowServerDelay     = 0;# proxy and STARTTLS: time to wait in seconds (for slow proxies and STARTTLS servers)
 $Net::SSLhello::double_reneg        = 0;# 0=Protection against double renegotiation info is active
 $Net::SSLhello::proxyhost           = "";#
 $Net::SSLhello::proxyport           = "";#
