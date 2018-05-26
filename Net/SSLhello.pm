@@ -1219,8 +1219,8 @@ sub printCipherStringArray ($$$$$@) {
 
     if ($usesni) {
         $sni = "SNI"; #tbd: check in serverHello if SNI is supported by the server
-        $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
-        $sni .= " ($Net::SSLhello::sni_name)" if ($Net::SSLhello::use_sni_name);
+        $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
+        $sni .= " ($Net::SSLhello::sni_name)" if ( ($Net::SSLhello::use_sni_name) && ($Net::SSLhello::sni_name) );
     } else {
         $sni = "no SNI";
     }
