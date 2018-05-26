@@ -1383,9 +1383,6 @@ sub checkSSLciphers ($$$@) {
                     _trace2_ ("\n");
                 }
                 $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # test ciphers and collect accepted ciphers, $dtlsEpoch is only used in DTLS
-                _trace  ("checkSSLciphers(2): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
-                sleep($Net::SSLhello::connect_delay);
-                _trace4 ("checkSSLciphers(2): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
                 _trace2_ ("       ");
                 if ($acceptedCipher) { # received an accepted cipher
                     _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
@@ -1465,9 +1462,6 @@ sub checkSSLciphers ($$$@) {
                 _trace2_ ("\n");
             }
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_spec, $dtlsEpoch); # test ciphers and collect Accepted ciphers
-            _trace  ("checkSSLciphers(3): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
-            sleep($Net::SSLhello::connect_delay);
-            _trace4 ("checkSSLciphers(3): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
             _trace2_ ("       ");
             if ($acceptedCipher) { # received an accepted cipher ## TBD: Error handling using `given'/`when' TBD
                 _trace1_ ("=> found >0x0300".hexCodedCipher($acceptedCipher)."<\n");
@@ -1538,9 +1532,6 @@ sub checkSSLciphers ($$$@) {
             _trace2 ("checkSSLciphers: Check Cipher Prioity for Cipher-Spec >". hexCodedString($cipher_str)."<\n");
             $my_error = ""; # reset error message
             $acceptedCipher = _doCheckSSLciphers($host, $port, $protocol, $cipher_str, $dtlsEpoch, 1); # collect accepted ciphers by priority
-            _trace  ("checkSSLciphers(4): connect delay $cfg{'connect_delay'} second(s)\n")       if ($Net::SSLhello::connect_delay  > 0);
-            sleep($Net::SSLhello::connect_delay);
-            _trace4 ("checkSSLciphers(4): connect delay $cfg{'connect_delay'} second(s) [End]\n") if ($Net::SSLhello::connect_delay  > 0);
             _trace2_ ("#                                  -->". hexCodedCipher($acceptedCipher)."<\n");
             if ($my_error) {
                 _trace2 ("checkSSLciphers (3): '$my_error'\n");
@@ -1910,6 +1901,12 @@ sub openTcpSSLconnection ($$) {
 
     RETRY_TO_OPEN_SSL_CONNECTION: { do { # connect to #server:port (via proxy) and open a ssl connection (use STARTTLS if activated)
         OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'openTcpSSLconnection', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
+        if ( defined($Net::SSLhello::connect_delay) && ($Net::SSLhello::connect_delay > 0) ) {
+            _trace_ ("\n");
+            _trace  ("openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s)\n");
+            sleep($Net::SSLhello::connect_delay);
+            _trace4 ("openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s) [End]\n");
+        }
         alarm (0); # switch off alarm (e.g. for  next retry )
         if ($retryCnt >0) { # retry
             _trace1_ ("\n") if (($retryCnt == 1) && ($main::cfg{'trace'} < 3)); # to catch up '\n' if 1st retry and trace-level is 2 (1 < trace-level < 3)
@@ -2547,6 +2544,12 @@ sub _doCheckSSLciphers ($$$$;$$) {
             return ("");
         }
     } else { # udp (no proxy nor STARTTLS)
+        if ( defined($Net::SSLhello::connect_delay) && ($Net::SSLhello::connect_delay > 0) ) {
+            _trace_ ("\n");
+            _trace  ("_doCheckSSLciphers (udp): connect delay $cfg{'connect_delay'} second(s)\n");
+            sleep($Net::SSLhello::connect_delay);
+            _trace4 ("_doCheckSSLciphers (udp): connect delay $cfg{'connect_delay'} second(s) [End]\n");
+        }
         { # >> start a block
             $my_error = "";
             $socket = IO::Socket::INET->new (
