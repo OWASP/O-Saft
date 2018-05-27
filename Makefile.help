@@ -18,7 +18,7 @@
 #       Makefile).
 #
 #? VERSION
-#?      @(#) Makefile.help 1.3 18/05/25 12:34:37
+#?      @(#) Makefile.help 1.4 18/05/27 13:40:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -28,13 +28,10 @@
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-help-target-is-default: help-documentation
+first-help-target-is-default: help.doc
 
-_SID.help       = 1.3
+_SID.help       = 1.4
 # define our own SID as variable, if needed ...
-
-help-documentation:
-	@echo "$(HELP.doc)"
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -46,7 +43,7 @@ _CR             = \\015
 T               = $$""(_NL)
 
 # documentation for syntax used herein
-HELP.doc = $(_NL)\
+MORE-syntax = $(_NL)\
 For extracting information from the Makefiles,  for example macros/variables $(_NL)\
 and their definitions, following special syntax is used: $(_NL)\
 $(_TAB)* all texts for documentation (help) are stored in variables $(_NL)\
@@ -96,6 +93,12 @@ $(_TAB) make macro macro=MAKEFILE $(_NL)\
 To simplify such command lines,  a special pattern rule exists  for each of $(_NL)\
 these targets. Example: $(_NL)\
 $(_TAB) make m-MAKEFILE $(_NL)\
+ $(_NL)\
+ $(_NL)\
+Naming conventions for targets: $(_NL)\
+$(_TAB) test.name    - public available targets use  .  (dot) as separator $(_NL)\
+$(_TAB) test-name    - internal and pattern rule targets use  -  (dash) as $(_NL)\
+$(_TAB)$(_TAB)$(_TAB)separator $(_NL)\
 
 
 # internal help
@@ -123,13 +126,28 @@ EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 #_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
 
-HELP-_help      = __________________________ targets for help about Makefile _
-HELP-list       = list all macro names (alias: vars)
-HELP-e-MACRO    = show content of MACRO expanded (all in one line)
-HELP-s-MACRO    = show content of MACRO expanded (one word per line)
-HELP-m-MACRO    = show definition of MACRO as is --exact macro match
-HELP-p-MACRO    = show all definitions of MACRO as is --macro pattern match
-HELP-t-TARGET   = show TARGET --exact target match
+MORE-help       = " \
+\#              __________________________ targets for help about Makefile _$(_NL)\
+ list           - list all macro names (alias: vars)$(_NL)\
+ e-MACRO        - show content of MACRO expanded (all in one line)$(_NL)\
+ s-MACRO        - show content of MACRO expanded (one word per line)$(_NL)\
+ m-MACRO        - show definition of MACRO as is --exact macro match$(_NL)\
+ p-MACRO        - show all definitions of MACRO as is --macro pattern match$(_NL)\
+ t-TARGET       - show TARGET --exact target match$(_NL)\
+$(_NL)\
+\#              ________________________________ targets for documentation _$(_NL)\
+ help.doc       - print this documentation$(_NL)\
+ help.test      - print documentation about test targets$(_NL)\
+ help.critic    - print documentation about perlcritiv targets$(_NL)\
+ help.syntax    - print documentation about syntax used in Makefile.*$(_NL)\
+"
+
+help.doc:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-help) ; # no quotes!
+
+help.syntax:
+	@echo "$(MORE-syntax)"
 
 #dbx _isempty:  @echo "# target: $($@) - $($($@))."
 # NOTE: following target is adapted to be use in echo, show, macro and target
