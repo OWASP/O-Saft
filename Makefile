@@ -69,7 +69,7 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.20 18/05/25 12:52:53
+#?      @(#) Makefile 1.21 18/05/27 13:39:05
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
@@ -87,7 +87,7 @@ MAKEFILE        = Makefile
 #       is used when exactly this file is meant. $(ALL.Makefiles) is used, when
 #       all Makefiles are needed.
 
-_SID            = 1.20
+_SID            = 1.21
 # define our own SID as variable, if needed ...
 
 #_____________________________________________________________________________
@@ -267,7 +267,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.20
+_INST.text      = generated from Makefile 1.21
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -356,7 +356,7 @@ HELP-tar        = generate '$(GEN.tgz)' from all source
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources
 HELP-cleantar   = remove '$(GEN.tgz)'
 HELP-cleantmp   = remove '$(TMP.dir)'
-HELP-clean-all  = remove '$(GEN.tgz) $(ALL.gen)'
+HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
 HELP-install-f  = install tool in '$(INSTALL.dir)' using INSTALL.sh, $(INSTALL.dir) may exist
 
 OPT.single = --s
@@ -370,19 +370,19 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.20
-tar:     GREP_EDIT = 1.20
+GREP_EDIT = 1.21
+tar:     GREP_EDIT = 1.21
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
-cleantar:   clean-tar
-cleantgz:   clean-tar
-cleantmp:   clean-tmp
-cleartar:   clean-tar
-cleartgz:   clean-tar
-cleartmp:   clean-tmp
-clear-all:  clean-tar clean
-clean-all:  clean-tar clean
+cleantar:   clean.tar
+cleantgz:   clean.tar
+cleantmp:   clean.tmp
+cleartar:   clean.tar
+cleartgz:   clean.tar
+cleartmp:   clean.tmp
+clear.all:  clean.tar clean
+clean.all:  clean.tar clean
 tgz:    tar
 tar:    OPT.single =
 tgz:    OPT.single =
@@ -391,13 +391,13 @@ tmptgz: OPT.single =
 
 .PHONY: pl cgi pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 
-clean-tmp:
+clean.tmp:
 	@$(TARGET_VERBOSE)
 	rm -rf $(TMP.dir)
-clean-tar:
+clean.tar:
 	@$(TARGET_VERBOSE)
 	rm -rf $(GEN.tgz)
-clean-tgz: clean-tar
+clean.tgz: clean.tar
 
 # targets for generation
 $(TMP.dir)/Net $(TMP.dir)/OSaft $(TMP.dir)/OSaft/Doc $(TMP.dir)/$(CONTRIB.dir) $(TMP.dir)/$(TEST.dir):
