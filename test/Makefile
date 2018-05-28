@@ -21,7 +21,7 @@
 #          * unifiy test.warnings.log and test.tests.log (should use same target)
 #
 #? VERSION
-#?      @(#) Makefile 1.4 18/05/27 13:41:48
+#?      @(#) Makefile 1.5 18/05/28 22:07:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -33,7 +33,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 
 first-target-here--is-default: help.test
 
-_SID.test       = 1.4
+_SID.test       = 1.5
 # define our own SID as variable, if needed ...
 
 ifndef ALL.Makefiles                                                           
@@ -337,7 +337,7 @@ message-%: $(SRC.pl)
 	    echo "$@:    $(TEST.args)"; \
 	else \
 	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
-	    $(EXE.pl) $(TEST.args) | grep $* ; \
+	    $(EXE.pl) $(TEST.args) 2>&1 | grep $* ; \
 	    rm -f $(_TMP.rc) ; \
 	fi
 
@@ -364,6 +364,13 @@ test.warnings.log: $(_WARNING.log) $(SRC.pl)
 	@ls -l  $(TEST.dir)/$@
 
 .PHONY: test.warnings.log
+
+# Target succeeds if message is missing
+no.message-%: $(EXE.pl)
+	@$(TARGET_VERBOSE)
+	@echo "$(TEST.rc)" > $(_TMP.rc)
+	$(EXE.pl) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
+	@rm -f $(_TMP.rc)
 
 #_____________________________________________________________________________
 #______________________________________________________ testing +cmd --opt  __|
