@@ -49,7 +49,7 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '18.05.26',
+    SSLHELLO_VERSION=> '18.05.31',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.27 18/03/23 00:06:41',
 };
@@ -1930,7 +1930,7 @@ sub openTcpSSLconnection ($$) {
                 setsockopt($socket, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"; #L!L! => compatible to 32 and 64-bit
                 setsockopt($socket, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $Net::SSLhello::timeout, 0) ) or croak "Can't set socket Receive-Timeout \'$!\' -> target $host:$port ignored";
                 alarm (0);      # clear alarm
-            } or do {
+            } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {          # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                 $my_error = $@;                                     # save the error message as soon as possible
                 alarm (0);                                          # clear alarm if not done before
                 OSaft::error_handler->new( {
@@ -1940,7 +1940,7 @@ sub openTcpSSLconnection ($$) {
                     warn    => 0,
                 } );
                 next RETRY_TO_OPEN_SSL_CONNECTION;                  # Error -> next retry
-            };                                                      # Do NOT forget the;
+            }};                                                     # End of the section 'or do { if () { ...'. Do NOT forget the;
             alarm (0);                                              # clear alarm if not done before
         } # << end a block
 
@@ -1977,7 +1977,7 @@ sub openTcpSSLconnection ($$) {
                     #   Timeout => $timeout,
                     # ) or die "Can't make a connection to proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport ($@, $!) -> target $host:$port ignored"; # error handling
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                                    # save the error message as soon as possible
                     alarm (0);                                          # clear alarm if not done before
                     OSaft::error_handler->new( {
@@ -1991,7 +1991,7 @@ sub openTcpSSLconnection ($$) {
                     sleep (1);
                     # last; # no retry
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # next retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
             } # << end a block
 
@@ -2005,7 +2005,7 @@ sub openTcpSSLconnection ($$) {
                     alarm($alarmTimeout); # set Alarm for Connect
                     defined(send($socket, $proxyConnect, 0)) || croak "Can't make a connection to $host:$port via proxy $Net::SSLhello::proxyhost:$Net::SSLhello::proxyport [".inet_ntoa($connect2ip).":$Net::SSLhello::proxyport] -> target $host:$port ignored";
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                                 # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     OSaft::error_handler->new( {
@@ -2020,7 +2020,7 @@ sub openTcpSSLconnection ($$) {
                         sleep ($slowServerDelay);
                     }
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
             } # << end a block
 
@@ -2046,7 +2046,7 @@ sub openTcpSSLconnection ($$) {
                         #### TBD TBD received NO Data TBD TBD ###
                     }
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                                 # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     OSaft::error_handler->new( {
@@ -2061,7 +2061,7 @@ sub openTcpSSLconnection ($$) {
                         sleep ($slowServerDelay);
                     }
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
             } # << end a block
 
@@ -2116,7 +2116,7 @@ sub openTcpSSLconnection ($$) {
                     alarm($alarmTimeout);                           # set alarm for connect
                     connect( $socket, pack_sockaddr_in($port, $connect2ip) ) or croak "Can't make a connection to $host:$port [".inet_ntoa($connect2ip).":$port]; -> target ignored ";
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = $@;                                 # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     if (defined ($connect2ip) ) {
@@ -2132,7 +2132,7 @@ sub openTcpSSLconnection ($$) {
                     } );
                     close ($socket) or carp("**WARNING: ". OSaft::error_handler->get_err_str() ."; Can't close socket, too: $!");
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 _trace2 ("openTcpSSLconnection: Connected to server $host:$port\n");
             } # << end a block
@@ -2158,11 +2158,11 @@ sub openTcpSSLconnection ($$) {
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0); #|| die "openTcpSSLconnection: STARTTLS (Phase 1aa): Did *NOT* get any ".$starttls_matrix[$starttlsType][0]." Message from $host:$port\n"; # did not receive a Message ## unless seems to work better than if!!
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "STARTTLS phase #1 failed): $@";    # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # Error -> next retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 if (length ($input) >0) { # received Data => 220 smtp.server.com Simple Mail Transfer Service Ready?
                     _trace2 ("openTcpSSLconnection: ## STARTTLS (Phase 1):  ... Received ".$starttls_matrix[$starttlsType][0]."-Message (1): ".length($input)." bytes: >"._chomp_r($input)."<\n");
@@ -2238,13 +2238,13 @@ sub openTcpSSLconnection ($$) {
                     alarm($alarmTimeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][2], 0)) || die  "Could *NOT* send $starttls_matrix[$starttlsType][0] message '$starttls_matrix[$starttlsType][2]' to $host:$port; target ignored\n";
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "STARTTLS phase #2 failed): $@";    # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     _trace2 ("openTcpSSLconnection: $my_error\n");
                     close ($socket) or carp("**WARNING: openTcpSSLconnection: $my_error Can't close socket, too: $!");
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # next retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 # wait before next read
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
@@ -2268,11 +2268,11 @@ sub openTcpSSLconnection ($$) {
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "STARTTLS phase #3 failed): $@";    # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # Error -> next retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 if (length ($input) >0) { # received Data => 250-smtp.server.com Hello o-saft.localhost?
                     _trace3 ("openTcpSSLconnection: ## STARTTLS (Phase 3): ... Received  $starttls_matrix[$starttlsType][0]-Hello: ".length($input)." bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
@@ -2349,13 +2349,13 @@ sub openTcpSSLconnection ($$) {
                     alarm($Net::SSLhello::timeout); # set Alarm for Connect
                     defined(send($socket, $starttls_matrix[$starttlsType][4], 0)) || die "Could *NOT* send a STARTTLS message to $host:$port; target ignored\n";
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "STARTTLS phase #4 failed): $@";    # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     _trace2 ("openTcpSSLconnection: $my_error\n");
                     close ($socket) or carp("**WARNING: openTcpSSLconnection: ## $my_error Can't close socket, too: $!");
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # next retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 # wait before next read
                 osaft::osaft_sleep (_SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
                 # select(undef, undef, undef, _SLEEP_B4_2ND_READ) if ($sleepSecs > 0) || ($retryCnt > 0); # if slowed down or retry: sleep some ms
@@ -2377,11 +2377,11 @@ sub openTcpSSLconnection ($$) {
                     alarm($alarmTimeout);
                     recv ($socket, $input, 32767, 0);
                     alarm (0);
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "STARTTLS phase #5 failed): $@";    # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     next RETRY_TO_OPEN_SSL_CONNECTION;              # Error -> next retry
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # clear alarm if not done before
                 if (length ($input) >0)  { # received Data => 220
                     _trace3 ("openTcpSSLconnection: ## STARTTLS (Phase 5): ... Received STARTTLS-Answer: ".length($input)." bytes\n      >".substr(_chomp_r($input),0,64)." ...<\n");
@@ -2583,7 +2583,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             alarm($alarmTimeout); # set alarm for connect
             defined(send($socket, $clientHello, 0)) || die "Could *NOT* send ClientHello to $host:$port; $! -> target ignored\n";
             alarm (0);
-        } or do {
+        } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {              # End of eval section, begin of an error section ('or do'), that works for Windows, too.
             $my_error = "send client hello failed: $@";             # save the error message as soon as possible
             alarm (0);                                              # protection against race conditions
             OSaft::error_handler->new( {
@@ -2593,7 +2593,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
                 warn    => 0,
             } );
             return ("");
-        };                                                          # Do NOT forget the;
+        }};                                                         # End of the section 'or do { if () { ...'. Do NOT forget the;
         alarm (0);                                                  # protection against race conditions
 
         ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello)
@@ -2713,7 +2713,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             alarm($alarmTimeout); # set alarm for connect
             defined(send($socket, compileAlertRecord ($protocol, $host, $level, $description, $dtls_epoch, $dtlsSequence++), 0)) || die "Could *NOT* send an alert record to $host:$port; $! -> Error ignored\n";
             alarm (0);
-        } or do {
+        } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {              # End of eval section, begin of an error section ('or do'), that works for Windows, too.
             $my_error = "reset DTLS failed: $@";                    # save the error message as soon as possible
             alarm (0);                                              # protection against race conditions
             OSaft::error_handler->new( {
@@ -2724,7 +2724,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
             } );
             # carp ("_doCheckSSLciphers: $my_error");
             return ("");
-        };                                                          # Do NOT forget the;
+        }};                                                         # End of the section 'or do { if () { ...'. Do NOT forget the;
         alarm (0);                                                  # protection against race conditions
     }
 
@@ -2808,7 +2808,7 @@ sub _readRecord ($$;$$$$) {
                 # opimized with reference to 'https://github.com/noxxi/p5-ssl-tools/blob/master/check-ssl-heartbleed.pl'
                 $success = select($rout = $rin,undef,undef,$Net::SSLhello::timeout);
                 alarm (0); #clear alarm
-            } or do {
+            } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {          # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                 $my_error = "failed to select data: $@";            # save the error message as soon as possible
                 alarm (0);                                          # clear alarm if not done before
                 OSaft::error_handler->new( {
@@ -2820,7 +2820,7 @@ sub _readRecord ($$;$$$$) {
                 carp ("_readRecord (udp): $my_error");
                 _trace4 ("_readRecord (udp) from Server '$host:$port' -> LAST: Received (record) type $recordType, -version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." bytes (from $pduLen expected) after $retryCnt tries:\n");
                 last RETRY_TO_RECEIVE_A_RECORD;
-            };                                                      # Do NOT forget the;
+            }};                                                     # End of the section 'or do { if () { ...'. Do NOT forget the;
             alarm (0);                                              # protection against race conditions
             if ( ! $success) { # nor data NEITHER special event => timeout
                 OSaft::error_handler->new( {
@@ -2842,7 +2842,7 @@ sub _readRecord ($$;$$$$) {
                     _trace4 ("_readRecord (udp): can read (1): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
                     $success = sysread ($socket, $input, $readLen - length($input), length($input)); #if NO success: EOF or other Error while reading Data
                     alarm (0); #clear alarm
-                } or do {
+                } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {      # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                     $my_error = "failed to read data with sysread: $@";     # save the error message as soon as possible
                     alarm (0);                                      # clear alarm if not done before
                     OSaft::error_handler->new( {
@@ -2854,7 +2854,7 @@ sub _readRecord ($$;$$$$) {
                     carp ("_readRecord (udp): $my_error");
                     _trace4 ("_readRecord (udp) -> LAST: Received (record) type $recordType, -version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." bytes (from $pduLen expected) after $retryCnt tries:\n");
                     last RETRY_TO_RECEIVE_A_RECORD;                 # resend the UDP packet
-                };                                                  # Do NOT forget the;
+                }};                                                 # End of the section 'or do { if () { ...'. Do NOT forget the;
                 alarm (0);                                          # protection against race conditions
                 @socketsReady = $select->can_read(0) if ($Net::SSLhello::trace > 3); ###additional debug (use IO::select needed)
                 _trace4 ("_readRecord (udp) can read (2): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n") if (scalar (@socketsReady));
@@ -2906,7 +2906,7 @@ sub _readRecord ($$;$$$$) {
                 _trace4 ("_readRecord (tcp): try to recv (1): (Segement: $segmentCnt, retry: $retryCnt, position: ".length($input)." bytes)\n");
                 $success = recv ($socket, $input2, $readLen - length($input), 0); #if NO success: $success undefined
                 alarm (0); #clear alarm
-            } or do {
+            } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {          # End of eval section, begin of an error section ('or do'), that works for Windows, too.
                 $my_error = "failed to receive data (recv) $@";     # save the error message as soon as possible
                 alarm (0);                                          # clear alarm if not done before
                 OSaft::error_handler->new( {
@@ -2918,7 +2918,7 @@ sub _readRecord ($$;$$$$) {
                 carp ("_readRecord (tcp): $my_error");
                 _trace4 ("_readRecord (tcp): recv -> LAST: Received (record) type $recordType, -version: ".sprintf ("(0x%04X)",$recordVersion)." with ".length($input)." bytes (from $pduLen expected) after $retryCnt tries:\n");
                 last RETRY_TO_RECEIVE_A_RECORD;
-            };                                                      # Do NOT forget the;
+            }};                                                     # End of the section 'or do { if () { ...'. Do NOT forget the;
             alarm (0);                                              # protection against race conditions
             $input  .= $input2;                                     # append new input
             $success = length ($input2);                            # same usage as sysread
@@ -3114,8 +3114,10 @@ RECEVICE_ANSWER:
                 last RECEVICE_ANSWER;
             }
             alarm (0); #clear alarm
-        } or do {$my_local_error = "failed to select text: $@"};          # End of eval select. Do NOT forget the;
-        #$my_error .= $@;                                            # save the error message as soon as possible
+        } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {              # End of eval section, begin of an error section ('or do'), that works for Windows, too.
+            $my_local_error = "failed to select text: $@"
+        }};                                                         # End of the section 'or do { if () { ...'. Do NOT forget the;
+        #$my_error .= $@;                                           # save the error message as soon as possible
         alarm (0);                                                  # protection against race conditions
         if ($my_local_error) {
             $my_local_error = "_readText: unknown Timeout-Error (1): $my_error";
@@ -3132,7 +3134,9 @@ RECEVICE_ANSWER:
                 recv($socket, $input2, $MAXLEN - length($input), 0 );  # EOF or other Error while reading data
                 $input .= $input2;
                 alarm (0); # clear alarm
-            } or do {$my_error = "failed to receice text: $@"};   # End of eval select. Do NOT forget the;
+            } or do { if ( ($@) or ($^O !~ m/MSWin32/) ) {          # End of eval section, begin of an error section ('or do'), that works for Windows, too.
+                $my_error = "failed to receice text: $@"
+            }};                                                     # End of the section 'or do { if () { ...'. Do NOT forget the;
             #$my_error .= $@;                                        # save the error message as soon as possible
             alarm (0);                                              # protection against race conditions
             if ($my_local_error) {
