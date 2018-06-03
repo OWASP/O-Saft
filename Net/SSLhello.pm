@@ -49,7 +49,7 @@ package Net::SSLhello;
 use strict;
 use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
-    SSLHELLO_VERSION=> '18.05.31',
+    SSLHELLO_VERSION=> '18.06.03',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
 #   SSLHELLO_SID    => '@(#) SSLhello.pm 1.27 18/03/23 00:06:41',
 };
@@ -161,6 +161,7 @@ $Net::SSLhello::traceTIME           = 0;# 1=trace prints timestamp
 $Net::SSLhello::usesni              = 1;# 0=do not use SNI extension, 1=use SNI extension (protocol >=tlsv1), 2(or 3): toggle sni (run twice per protocol without and with sni)
 $Net::SSLhello::use_sni_name        = 0;# 0=use hostname (default), 1: use sni_name for SNI mode connections
 $Net::SSLhello::sni_name            = "1";# name to be used for SNI mode connection is use_sni_name=1; ###FIX: "1": quickfix until migration of o-saft.pl is compleated (tbd)
+$Net::SSLhello::force_TLS_extensions= 0;# prevent to not to use TLS extensions in SSLv3
 $Net::SSLhello::timeout             = 2;# time in seconds
 $Net::SSLhello::retry               = 3;# number of retry when timeout occurs
 $Net::SSLhello::connect_delay       = 0;# time to wait in seconds for starting next cipher check
@@ -1307,6 +1308,8 @@ sub checkSSLciphers ($$$@) {
     my $protocol = $PROTOCOL_VERSION{$ssl}; # 0x0002, 0x3000, 0x0301, 0x0302
     my $maxCiphers = $Net::SSLhello::max_ciphers;
     local $\ = ""; # no auto '\n' at the end of the line
+    printParameters () if ($Net::SSLhello::trace >= 4);              # additional trace information
+    
     # error handling uses $@ in this and all sub function (TBD: new error handling)
     OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
 
@@ -3657,10 +3660,16 @@ sub _compileClientHelloExtensions ($$$$@) {
     #my $host = shift || "";
     #my (%clientHello) = @_;
     my $clientHello_extensions = "";
+    my %rhash = reverse %PROTOCOL_VERSION;
+    my $ssl   = $rhash{$version};
+
+    if ( ( ($version == $PROTOCOL_VERSION{'SSLv3'}) && (!$Net::SSLhello::force_TLS_extensions) ) || ($version == $PROTOCOL_VERSION{'SSLv2'}) ) { # prevent to not to use tls extensions with SSLv2 or SSLv3
+        _trace2 ("compileClientHelloExtensions: Protocol $ssl does not support TLS extensions including SNI -> no extension added\n");
+        return ("");
+    }
 
     # ggf auch prüfen, ob Host ein DNS-Name ist
-    if ( ($Net::SSLhello::usesni) && ( ($record_version >= $PROTOCOL_VERSION{'TLSv1'}) || ($record_version >= $PROTOCOL_VERSION{'DTLSfamily'}) || ($record_version == $PROTOCOL_VERSION{'DTLSv09'}) ) ) { # allow to test SNI with version TLSv1 and above or DTLSv09 (OpenSSL pre 0.9.8f), DTLSv1 and above
-
+    if ($Net::SSLhello::usesni) { # allow to test SNI (with version TLSv1 and above or DTLSv09 (OpenSSL pre 0.9.8f), DTLSv1 and above)
     ### data for extension 'Server Name Indication' in reverse order
         $Net::SSLhello::sni_name =~ s/\s*(.*?)\s*\r?\n?/$1/gx if ($Net::SSLhello::sni_name);     # delete Spaces, \r and \n
         $Net::SSLhello::use_sni_name = 1 if ( ($Net::SSLhello::use_sni_name == 0) && ($Net::SSLhello::sni_name) && ($Net::SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
@@ -3684,12 +3693,10 @@ sub _compileClientHelloExtensions ($$$$@) {
             $clientHello{'extension_sni_len'},          #n
             $clientHello{'extension_sni_name'},         #a[$clientHello{'extension_sni_len'}]
         );
-        _trace2 ("compileClientHello: extension_sni_name Extension added (name='$clientHello{'extension_sni_name'}', len=$clientHello{'extension_sni_len'})\n");
-    } elsif ($Net::SSLhello::usesni) { # && ($pduVersion <= $PROTOCOL_VERSION{'TLSv1'})
-        local $my_error = sprintf ("Net::SSLhello: compileClientHello: Extended Client Hellos with Server Name Indication (SNI) are not enabled for SSL3 (a futue option could override this) -> check of virtual Server aborted!\n");
-        print $my_error;
+        _trace2 ("compileClientHelloExtensions ($ssl): extension_sni_name extension added (name='$clientHello{'extension_sni_name'}', len=$clientHello{'extension_sni_len'})\n");
+    } else {
+        _trace2 ("compileClientHelloExtensions ($ssl): NO extension_sni_name extension added\n");
     }
-
     if ($Net::SSLhello::usereneg) { # use secure Renegotiation
         my $anzahl = int length ($clientHello{'cipher_spec'}) / 2;
         my @cipherTable = unpack("a2" x $anzahl, $clientHello{'cipher_spec'});
@@ -3707,9 +3714,9 @@ sub _compileClientHelloExtensions ($$$$@) {
                 $clientHello{'extension_reneg_len'},                    #n = 0x0001
                 $clientHello{'extension_reneg_info_ext_len'},           #c = 0x00
             );
-            _trace2 ("compileClientHello: reneg_info Extension added\n");
+            _trace2 ("compileClientHelloExtensions ($ssl): reneg_info Extension added\n");
         } else {
-            _trace2 ("compileClientHello: *NOT* sent a reneg_info Extension as the cipher_spec includes already the Signalling Cipher Suite Value (TLS_EMPTY_RENEGOTIATION_INFO_SCSV {0x00, 0xFF})\n");
+            _trace2 ("compileClientHelloExtensions ($ssl): *NOT* sent a reneg_info Extension as the cipher_spec includes already the Signalling Cipher Suite Value (TLS_EMPTY_RENEGOTIATION_INFO_SCSV {0x00, 0xFF})\n");
         }
     }
 
@@ -3739,7 +3746,7 @@ sub _compileClientHelloExtensions ($$$$@) {
             $clientHello{'extension_hash_algorithms_list_len'},         #n
             $clientHello{'extension_hash_algorithms_list'},             #a[$clientHello{'extension_hash_algorithms_list_len'}]
         );
-        _trace2 ("compileClientHello: signature_algorithms Extension added\n");
+        _trace2 ("compileClientHelloExtensions ($ssl): signature_algorithms Extension added\n");
     }
 
     # extension elliptic_curves
@@ -3796,7 +3803,7 @@ sub _compileClientHelloExtensions ($$$$@) {
               $clientHello{'extension_ecc_list_len'},                 #n    = 0x00xy
               $clientHello{'extension_ecc_list'},                     #a[$clientHello{'extension_ecc_list_len'}] = 0x00....
             );
-            _trace2 ("compileClientHello: elliptic_curves Extension added\n");
+            _trace2 ("compileClientHelloExtensions ($ssl): elliptic_curve Extension added\n");
         }
 
         if ($Net::SSLhello::useecpoint ) { # use Elliptic Point Formats Extension
@@ -3812,7 +3819,7 @@ sub _compileClientHelloExtensions ($$$$@) {
               $clientHello{'extension_ec_point_formats_list_ele'},    #C    = 0xxy
               $clientHello{'extension_ec_point_formats_list'},        #a[$clientHello{'extension_ec_point_formats_list_ele'}] = 0x00....
             );
-            _trace2 ("compileClientHello: ec_point_formats Extension added\n");
+            _trace2 ("compileClientHelloExtensions ($ssl): ec_point_formats Extension added\n");
         }
     #} #end send always ECC extensions
 
@@ -3823,7 +3830,7 @@ sub _compileClientHelloExtensions ($$$$@) {
             length($clientHello_extensions),            #n
             $clientHello_extensions                     #a[length($clientHello_extensions)]
         );
-        _trace4 (sprintf ("_compileClientHelloExtensions (extensions_total_len = %04X)\n          >", $clientHello{'extensions_total_len'}).hexCodedString ($clientHello_extensions ,"           ")."<\n");
+        _trace4 (sprintf ("_compileClientHelloExtensions ($ssl) (extensions_total_len = %04X)\n          >", $clientHello{'extensions_total_len'}).hexCodedString ($clientHello_extensions ,"           ")."<\n");
     }
     return ($clientHello_extensions);
 } # _compileClientHelloExtensions
@@ -4228,17 +4235,25 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                         ) ) {
                     if ($serverHello{'level'} == 1) { # warning
                         if ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
-                            $sni = "";
-                            unless ($Net::SSLhello::use_sni_name) {
-                                $sni = "'$host'" if ($Net::SSLhello::usesni); # Server Name, should be a Name no IP
-                            } else { # different sni_name
-                                $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
+                            if ( ($Net::SSLhello::usesni) && !( ( ($client_protocol == $PROTOCOL_VERSION{'SSLv3'}) && (!$Net::SSLhello::force_TLS_extensions) ) || ($client_protocol == $PROTOCOL_VERSION{'SSLv2'}) ) ) {           # SNI sent
+                                $sni = "";
+                                unless ($Net::SSLhello::use_sni_name) {
+                                    $sni = "'$host'";           # Server Name, should be a Name no IP
+                                } else {                        # different sni_name
+                                    $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
+                                }
+                                $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($ssl_client): received SSL/TLS warning: Description: $description ($serverHello{'description'}) -> check of virtual server $sni aborted!\n");
+                                _trace4 ($my_error);
+                                carp ("**WARNING: $my_error\n");
+                            } else {                            # NO SNI extension sent
+                                $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($ssl_client): received SSL/TLS warning: Description: $description ($serverHello{'description'}), but NO SNI extension has been sent. -> check of server aborted!");
+                                _trace4 ($my_error);
+                                carp ("**WARNING: $my_error\n");
+                                _hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication)for TLSv1 and higher");
                             }
-                            $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port': received SSL/TLS warning: Description: $description ($serverHello{'description'}) -> check of virtual server $sni aborted!\n");
-                            print $my_error;
                             return ("", $lastMsgType, 0 , "");
                         } else {
-                            carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': received SSL/TLS warning (1): Description: $description ($serverHello{'description'})\n");
+                            carp ("**WARNING: parseHandshakeRecord: Server '$host:$port' ($ssl_client): received SSL/TLS warning (1): Description: $description ($serverHello{'description'})\n");
                         }
                     } elsif ($serverHello{'level'} == 2) { # fatal
                         if ($serverHello{'description'} == 70) { # protocol_version(70): (old) protocol recognized but not supported, is suppressed
@@ -4248,15 +4263,33 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                                 message => sprintf ("unsupported protocol $ssl_client (0x%04X) by $host:$port: received a SSL/TLS-Warning: Description: $description ($serverHello{'description'})", $client_protocol),
                                 warn    => 0,
                             } );
+                        } elsif ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
+                            if ( ($Net::SSLhello::usesni) && !( ( ($client_protocol == $PROTOCOL_VERSION{'SSLv3'}) && (!$Net::SSLhello::force_TLS_extensions) ) || ($client_protocol == $PROTOCOL_VERSION{'SSLv2'}) ) ) {           # SNI sent
+                                $sni = "";
+                                unless ($Net::SSLhello::use_sni_name) {
+                                    $sni = "'$host'" if ($Net::SSLhello::usesni); # Server Name, should be a Name no IP
+                                } else {                            # different sni_name
+                                    $sni = ($Net::SSLhello::sni_name) ? "'$Net::SSLhello::sni_name'" : "''"; # allow empty nonRFC-SNI-Names
+                                }
+                                $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($ssl_client): received fatal SSL/TLS error (2a): Description: $description ($serverHello{'description'}) -> check of virtual server $sni aborted!\n");
+                                _trace4 ($my_error);
+                                carp ("**WARNING: $my_error\n");
+                            } else {                                # NO SNI extension sent
+                                $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($ssl_client): received fatal SSL/TLS error (2b): Description: $description ($serverHello{'description'}), but NO SNI extension has been sent. -> check of server aborted!");
+                                _trace4 ($my_error);
+                                carp ("**WARNING: $my_error\n");
+                                _hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication)for TLSv1 and higher");
+                            }
+                            return ("", $lastMsgType, 0 , "");
                         } else {
                             _trace4 ($my_error);
-                            carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': received fatal SSL/TLS error (2): Description: $description ($serverHello{'description'})\n");
+                            carp ("**WARNING: parseHandshakeRecord: Server '$host:$port' ($ssl_client): received fatal SSL/TLS error (2c): Description: $description ($serverHello{'description'})\n");
                             if ($serverHello{'description'} == 50) { # decode_error (50)
                                 _hint("The server may not support the extension for elliptic curves (ECC) nor discard it silently, consider adding the option '--ssl-nouseecc'.");
                             }
                         }
                     } else { # unknown
-                        carp ("**WARNING: parseHandshakeRecord: Server '$host:$port': received unknown SSL/TLS error level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
+                        carp ("**WARNING: parseHandshakeRecord: Server '$host:$port' ($ssl_client): received unknown SSL/TLS error level ($serverHello{'level'}): Description: $description ($serverHello{'description'})\n");
                     }
                 }
             } else { ################################ to get information about record types that are not parsed, yet #############################
