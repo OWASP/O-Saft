@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.164 Winter Edition 2017
+#?      @(#) 1.165 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.164 18/02/27 23:00:49 Winter Edition 2017}
-set cfg(VERSION) {1.164}
+set cfg(SID)    {@(#) o-saft.tcl 1.165 18/06/03 10:49:57 Winter Edition 2017}
+set cfg(VERSION) {1.165}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -493,10 +493,11 @@ set cfg(tfont)  {flat9x6};      # font used in tablelist::tablelist
 set myX(DESC)       {-- CONFIGURATION window manager geometry ----------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
 #   windows will be larger if the screen supports it (we rely on "wm maxsize")
-set myX(geoO)   "600x720-0+0";  # geometry and position of Help    window
+set myX(geoo)   "660x720"     ; # geometry of Help    window
+set myX(geoO) "$myX(geoo)-0+0"; # geometry and position of Help    window
 set myX(geo-)   "";             #
 set myX(geoS)   "700x720";      # geometry and position of O-Saft  window
-set myX(geoA)   "600x610";      # geometry and position of About   window
+set myX(geoA)   "660x610";      # geometry and position of About   window
 set myX(geoF)   "";             # geometry and position of Filter  window (computed dynamically)
 set myX(geoT)   "";             #
 set myX(minx)   700;            # O-Saft  window min. width
@@ -2482,11 +2483,11 @@ proc search_more  {w search_text regex} {
     # $w is the widget with O-Saft's help text, all matched texts are already
     # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
     # start and end position (index)
-    global search
+    global search myX
     _dbx "($w,»$search_text«)"
     set matches [$w tag ranges HELP-search-pos];# get all match positions
     set cnt  [count_tuples $matches]
-    set this [create_window "$cnt matches for: »$regex«" "600x720"]
+    set this [create_window "$cnt matches for: »$regex«" $myX(geoo)]
     set txt  [create_text $this ""].t
     #{ adjust window, quick&dirty
     wm title $this "Search Results for: $search_text"
@@ -3111,7 +3112,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.164 $vm"
+update_status "o-saft.tcl 1.165 $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
