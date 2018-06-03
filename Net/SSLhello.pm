@@ -1310,7 +1310,6 @@ sub checkSSLciphers ($$$@) {
     local $\ = ""; # no auto '\n' at the end of the line
     printParameters () if ($Net::SSLhello::trace >= 4);              # additional trace information
     
-    # error handling uses $@ in this and all sub function (TBD: new error handling)
     OSaft::error_handler->reset_err( {module => (SSLHELLO), sub => 'checkSSLciphers', print => ($Net::SSLhello::trace > 0), trace => $Net::SSLhello::trace} );
 
     if ($Net::SSLhello::trace > 0) {
@@ -2625,7 +2624,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
              _trace2 ("_doCheckSSLciphers: Error-Message: $my_error\n");
             return ("");
         }
-        _trace2("_doCheckSSLciphers: Server '$host:$port': (protocol $ssl [".sprintf ("0x%04X", $protocol)."], (cecord) type $recordType: received a record with ".length($recordData)." bytes payload (recordData) >".hexCodedString (substr($recordData,0,48),"       ")."< ...)     \n");
+        _trace2("_doCheckSSLciphers: Server '$host:$port': (protocol $ssl [".sprintf ("0x%04X", $protocol)."], (record) type $recordType: received a record with ".length($recordData)." bytes payload (recordData) >".hexCodedString (substr($recordData,0,48),"       ")."< ...)     \n");
 
         if ($recordVersion <= 0) { # got no SSL/TLS/DTLS-PDU
             # Try to read the whole input buffer
@@ -4542,7 +4541,7 @@ sub parseSSL2_ServerHello ($$$;$) {
       $serverHello{'connection_id'}   # n
     ) = unpack("a[$serverHello{'certificate_len'}] a[$serverHello{'cipher_spec_len'}] a[$serverHello{'connection_id_len'}]", $rest);
 
-    _trace4 ("parseServerHello(2): Server '$host:$port':\n");
+    _trace4 ("parseSSL2_ServerHello(2): Server '$host:$port':\n");
 
     _trace2_ ( sprintf (
             "# -->       certificate:          >%s<\n".    # n
