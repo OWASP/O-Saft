@@ -368,7 +368,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.168 Sommer Edition 2018
+#?      @(#) 1.169 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -438,8 +438,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.168 18/06/06 18:06:54 Sommer Edition 2018}
-set cfg(VERSION) {1.168}
+set cfg(SID)    {@(#) o-saft.tcl 1.169 18/06/06 19:42:07 Sommer Edition 2018}
+set cfg(VERSION) {1.169}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1541,7 +1541,7 @@ proc www_browser  {url} {
     #win32# dde execute iexplore WWW_OpenURL http://www.tcl.tk/
     #win32# }
     if {$cfg(VERB)==1} {
-        puts  { exec {*}$prg(BROWSER) $url & }
+        puts  " exec {*}$prg(BROWSER) $url & "
     }
         catch { exec {*}$prg(BROWSER) $url & }
 }; # www_browser
@@ -1917,8 +1917,6 @@ proc create_about {} {
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
     $txt config -bg [get_color osaft]
 
-    bind_browser $txt ABOUT-URL
-
     # search for section headers and mark them bold
     set anf [$txt search -regexp -nolinestop -all -count end {^ *[A-ZÄÖÜß ]+$} 1.0]
     set i 0
@@ -1928,6 +1926,10 @@ proc create_about {} {
         incr i
     }
     $txt tag config sektion -font osaftBold
+
+    # bind buttons and keys
+    bind_browser $txt ABOUT-URL
+    bind  $txt <KeyPress>   "search_view $txt %K"
     return
 }; # create_about
 
@@ -2220,6 +2222,9 @@ proc create_help  {sect} {
             _dbx " $tag:\t[$txt tag ranges $tag]"
         }
     }
+
+    bind $txt <KeyPress>    "search_view $txt %K"
+    #bind $txt <MouseWheel>  "search_view $txt %D" ;# done automatically
 
     set cfg(winH) $this
     if {$sect ne ""} {
@@ -2542,6 +2547,22 @@ proc create_main  {targets} {
 
     return
 }; # create_main
+
+proc search_view  {w key} {
+    #? scroll given text widget according key
+    _dbx "($w,$key)"
+    # following are automatically handled correctly
+    #   Up      { $w yview scroll -1 units }
+    #   Down    { $w yview scroll  1 units }
+    switch $key {
+        Home    { $w index 1.0 }
+        Prior   { $w yview scroll -1 pages }
+        Next    { $w yview scroll  1 pages }
+        End     { $w yview end }
+    }
+    # FIXME: Home and End not yet working
+    return
+}; # search_view
 
 proc search_show  {w mark} {
     #? jump to mark in given text widget
