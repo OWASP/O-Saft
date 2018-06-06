@@ -21,25 +21,35 @@
 #          * unifiy test.warnings.log and test.tests.log (should use same target)
 #
 #? VERSION
-#?      @(#) Makefile 1.5 18/05/28 22:07:11
+#?      @(#) Makefile 1.6 18/06/07 00:54:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
+_SID.test   = 1.6
+
+MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
-first-target-here--is-default: help.test
-
-_SID.test       = 1.5
-# define our own SID as variable, if needed ...
+first-test-target-is-default: help.test
 
 ifndef ALL.Makefiles                                                           
-include Makefile.inc
-# defines macros if called directly (not from ../Makefile)
+-include      Makefile.inc
+-include test/Makefile.inc
+    # defines macros if called directly (not from ../Makefile)
 endif
+
+ifeq (test,$(findstring test,$(PWD)))
+TEST.dir = .
+    # if called inside test directory itself, TEST.dir must be redifined
+endif
+
+-include      Makefile.cgi
+-include test/Makefile.cgi
+    # $(TEST.dir) is not properly set when make's inlcude is executed, hence we
+    # try to include sub-makefiles in all potential matching directories
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -60,7 +70,6 @@ ALL.test        = $(SRC.test)
 # internal used tools (paths hardcoded!)
 EXE.bench       = test/o-saft_bench
 EXE.test.bunt   = test/test-bunt.pl.txt
-EXE.test.cgi    = test/test-o-saft.cgi.sh
 
 _TODAY_         = $(shell date +%Y""%m%d)
 
@@ -97,13 +106,21 @@ help.test.all:
 #_____________________________________________________ internal test target __|
 
 # internal information (nothing related to $(Project))
-# Note that the information is from the main Makefile, probably ../Makefile
+# Note that the $(_SID*) variables indicate if a sub-makefile was included
 test.file-1:
 test,file-2:
 test_file-3:
 test.target: test.file-1 test,file-2 test_file-3
 	@echo 'test.target: test.file-1 test-file-2 test_file-3'
-	@echo '# taget to show some make valiables:'
+	@echo '# show some private make variables:'
+	@echo '# $$(_SID)          = $(_SID)'
+	@echo '# $$(_SID.help)     = $(_SID.help)'
+	@echo '# $$(_SID.test)     = $(_SID.test)'
+	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
+	@echo '# $$(_SID.inc)      = $(_SID.inc)'
+	@echo '# $$(PWD)           = $(PWD)'
+	@echo '# $$(TEST.dir)      = $(TEST.dir)'
+	@echo '# show some make variables:'
 	@echo '# $$@  = $@ #'
 	@echo '# $$<  = $< #'
 	@echo '# $$?  = $? #'
@@ -118,6 +135,7 @@ test.target: test.file-1 test,file-2 test_file-3
 	@echo '# $$(MAKELEVEL)     = $(MAKELEVEL)'
 	@echo '# $$(MAKEFILE)      = $(MAKEFILE)'
 	@echo '# $$(MAKEFILES)     = $(MAKEFILES)'
+	@echo '# $$(MAKEFILE_LIST) = $(MAKEFILE_LIST)'
 	@echo '# $$(MFLAGS)        = $(MFLAGS)'
 	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
 	@echo '# $$(MAKEOVERRIDES) = $(MAKEOVERRIDES)'
@@ -130,7 +148,8 @@ HELP-_test      = ______________________________________ targets for testing _
 HELP-tests      = make all tests
 HELP-test       = alias for tests
 HELP-help.test  = print more targets for testing
-HELP-help.test.all = print available individual targets for testing
+HELP-help.test.all  = print available individual targets for testing
+HELP-help.test.cgi  = print more targets for testing $(SRC.cgi)
 
 # test:  see at end of this file
 
@@ -538,15 +557,11 @@ bench:
 bench.log:
 	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
 
-test.cgi: $(EXE.test.cgi) $(SRC.cgi)
-	@$(TARGET_VERBOSE)
-	$(EXE.test.cgi)
-
 test.bunt: $(EXE.test.bunt)
 	@$(TARGET_VERBOSE)
 	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
 
-.PHONY: bench bench.log test.bunt test.cgi
+.PHONY: bench bench.log test.bunt
 
 #_____________________________________________________________________________
 #_________________________________________________ targets for code quality __|
@@ -721,3 +736,4 @@ test:       tests
 test.log:   tests.log
 
 .PHONY: test tests
+
