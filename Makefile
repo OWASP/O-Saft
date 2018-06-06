@@ -41,6 +41,21 @@
 #           * variable names consist only of characters a-zA-Z0-9_.
 #           * variable names start with upper case letters or _
 #
+#        Internal variables:
+#           _SID        - version in project's Makefile
+#           _SID.*      - version in included Makefiles
+#
+#        The _SID* variables are used to check if sub-makefiles were included.
+#        More variables and targets are defined in following included files:
+#           Makefile.help
+#           test/Makefile
+#           test/Makefile.inc
+#        Where  test/Makefile  may include more files.
+#        Each of the included files may be used independently with  -f  option,
+#        for example::
+#           make -f Makefile.help
+#           make -f test/Makefile
+#
 #        Following name prefixes are used:
 #           SRC         - defines a source file
 #           GEN         - defines a genarted file
@@ -69,26 +84,26 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.21 18/05/27 13:39:05
+#?      @(#) Makefile 1.22 18/06/07 00:05:53
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
+_SID        = 1.22
+    # define our own SID as variable, if needed ...
+
+MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-target-is-default: default
 
-MAKEFILE        = Makefile
-# define variable for myself, it allows to use some targets with an other files
+MAKEFILE    = Makefile
+# define variable for myself, it allows to use some targets within other files
 # Note  that  $(MAKEFILE)  is used where any Makefile is possible and  Makefile
 #       is used when exactly this file is meant. $(ALL.Makefiles) is used, when
 #       all Makefiles are needed.
-
-_SID            = 1.21
-# define our own SID as variable, if needed ...
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -267,7 +282,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.21
+_INST.text      = generated from Makefile 1.22
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -370,8 +385,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.21
-tar:     GREP_EDIT = 1.21
+GREP_EDIT = 1.22
+tar:     GREP_EDIT = 1.22
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
