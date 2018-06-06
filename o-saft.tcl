@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.166 Winter Edition 2017
+#?      @(#) 1.167 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.166 18/06/06 16:15:19 Winter Edition 2017}
-set cfg(VERSION) {1.166}
+set cfg(SID)    {@(#) o-saft.tcl 1.167 18/06/06 16:24:57 Winter Edition 2017}
+set cfg(VERSION) {1.167}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -459,8 +459,8 @@ set cfg(.CFG)   {};                     # contains data from prg(INIT)
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
 set prg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
-set prg(SAFT)   {o-saft.pl};            # name of O-Saft executable
-set prg(INIT)   {.o-saft.pl};           # name of O-Saft's startup file
+set prg(SAFT)        {o-saft.pl};       # name of O-Saft executable
+set prg(INIT)        {.o-saft.pl};      # name of O-Saft's startup file
 
 #   some regex to match output from o-saft.pl or data in .o-saft.pl
 #   mainly used in create_win()
@@ -469,6 +469,11 @@ set prg(rexOPT-cfg)  {^([^=]*)=(.*)};   # match  --cfg-CONF=KEY=VAL
 set prg(rexOUT-head) {^(==|\*\*)};      # match header lines starting with ==
 set prg(rexOUT-int)  {^--(cgi|call)};   # use other tools for that
 set prg(rexCMD-int)  {^\+(cgi|exec)};   # internal use only
+
+#set _me [regsub -all {^[./]*} $prg(SAFT) {}]   ;# remove ./ but prg(SAFT) later
+    # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
+set prg(rexCOMMANDS) "\(o-saft\(.pl|.tcl|-docker\)?|checkAllCiphers.pl|\(/usr/local/\)?openssl|docker|mkdir|ldd|ln|perlapp|perl2exe|pp\)"
+    # most common tools used in help text...
 #-----------------------------------------------------------------------------}
 
 set prg(DESC)       {-- CONFIGURATION external programs ----------------------}
@@ -2165,15 +2170,19 @@ proc create_help  {sect} {
     }
 
     _dbx " 6. search for all examples and highlight them"
-    # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
-    set _me [regsub -all {^[./]*} $prg(SAFT) {}];   # remove ./
-    set anf [$txt search -regexp -nolinestop -all -count end "$_me \[^\\n\]+" 3.0]
+    # search $prg(rexCOMMANDS) if preceeded by at least 9 spaces, these spaces
+    # must then be removed from the match, so they are not highlighted
+    # FIXME: stiil matches some lines accidently, i.e. in  DEBUG  section
+    set anf [$txt search -regexp -nolinestop -all -count end "^ \{9,\}$prg(rexCOMMANDS)\( \[^\\n\]+|$\)" 3.0]
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"]
         _dbx " 6. CODE: $i\tHELP-CODE\t$t"
-        $txt tag add  HELP-CODE $a "$a + $e c"
+        set s 10
+        regexp {^ *} $t spaces                     ;# get count of leading spaces
+        set s [string length $spaces]
+        $txt tag add  HELP-CODE "$a + $s c" "$a + $e c";# start highlight at $s
         incr i
     }
 
