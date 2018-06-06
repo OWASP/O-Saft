@@ -366,7 +366,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.165 Winter Edition 2017
+#?      @(#) 1.166 Winter Edition 2017
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,8 +436,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.165 18/06/03 10:49:57 Winter Edition 2017}
-set cfg(VERSION) {1.165}
+set cfg(SID)    {@(#) o-saft.tcl 1.166 18/06/06 16:15:19 Winter Edition 2017}
+set cfg(VERSION) {1.166}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
@@ -486,15 +486,15 @@ set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-
 set prg(post)       {}         ;# --post=  parameter, if passed on command line
 
 set cfg(DESC)       {-- CONFIGURATION GUI style and layout -------------------}
-set cfg(bstyle) {image};        # button style:  image  or  text
-set cfg(layout) {table};        # layout o-saft.pl's results:  text  or  table
-set cfg(tfont)  {flat9x6};      # font used in tablelist::tablelist
+set cfg(bstyle) {image}        ;# button style:  image  or  text
+set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
+set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
 
 set myX(DESC)       {-- CONFIGURATION window manager geometry ----------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
 #   windows will be larger if the screen supports it (we rely on "wm maxsize")
-set myX(geoo)   "660x720"     ; # geometry of Help    window
-set myX(geoO) "$myX(geoo)-0+0"; # geometry and position of Help    window
+set myX(geoo)   "660x720"      ;# geometry of Help window
+set myX(geoO) "$myX(geoo)-0+0" ;# geometry and position of Help    window
 set myX(geo-)   "";             #
 set myX(geoS)   "700x720";      # geometry and position of O-Saft  window
 set myX(geoA)   "660x610";      # geometry and position of About   window
@@ -2178,14 +2178,14 @@ proc create_help  {sect} {
     }
 
     _dbx " 7. search for all special quoted strings and highlight them"
-    set anf [$txt search -regexp -nolinestop -all -count end {'[^'\n]+'} 3.0]
+    #dbx# puts "$txt\n[$txt get 0.0 end]"
+    set anf [$txt search -regexp -all -count end {'[^']+'} 3.0]
     set i 0
     foreach a $anf {
-        set e [lindex $end $i];
-        set t [$txt get $a "$a + $e c"]
-        _dbx " 7. CODE: $i\tHELP-CODE\t$t"
+        set e [expr [lindex $end $i] - 1];      # without trailing quote
+        set t [$txt get "$a + 1 c" "$a + $e c"];# without leading  quote
+        _dbx " 7. CODE: $i\tHELP-CODE\t'$t'";   # add quotes in debug output
         $txt tag add  HELP-CODE $a "$a + $e c"
-        # FIXME: replacing quotes does no work yet
         $txt replace  $a         "$a + 1 c"        { }
         $txt replace "$a + $e c" "$a + $e c + 1 c" { }
         incr i
@@ -3112,7 +3112,7 @@ theme_init $cfg(bstyle)
 set vm "";      # check if inside docker
 if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
 if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl 1.165 $vm"
+update_status "o-saft.tcl $cfg(VERSION) $vm"
 
 ## load files, if any
 foreach f $cfg(files) {
