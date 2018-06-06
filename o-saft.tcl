@@ -208,7 +208,7 @@ exec wish "$0" ${1+"$@"}
 #. LAYOUT
 #.           +---------------------------------------------------------------+
 #.       (H) | Host:Port [________________________________________]  [+] [-] |
-#.           |                                                               |
+#.           |                                                           [!] |
 #.       (C) | [Start] [+info] [+check] [+cipher] [+quick] [+vulns]      [?] |
 #.       (O) | [ ] --header  [ ] --enabled  [ ] --no-dns  [ ] -no-http  ...  |
 #.           |---------------------------------------------------------------|
@@ -228,7 +228,9 @@ exec wish "$0" ${1+"$@"}
 #.       (O) - CheckButtons for most commonly used options
 #.       (T) - Frame containing panes for commands, options, filter, results.
 #.       (S) - Frame containing Status messages
-#.       [-] - Help about  $0
+#.       [+] - Add line with Host:Port
+#.       [-] - Remove line with Host:Port
+#.       [!] - Help about  $0
 #.       [?] - Help about  o-saft.pl
 #.
 #.      Filter TAB Description
@@ -366,7 +368,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.167 Winter Edition 2017
+#?      @(#) 1.168 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -436,21 +438,21 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.167 18/06/06 16:24:57 Winter Edition 2017}
-set cfg(VERSION) {1.167}
+set cfg(SID)    {@(#) o-saft.tcl 1.168 18/06/06 18:06:54 Sommer Edition 2018}
+set cfg(VERSION) {1.168}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
-set cfg(RCmin)  1.13;                   # expected minimal version of cfg(RC)
+set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
 set cfg(ICH)    [file tail $argv0]
-set cfg(DIR)    [file dirname $argv0];  # directory of cfg(ICH)
-set cfg(ME)     [info script];          # set very early, may be missing later
-set cfg(IMG)    {o-saft-img.tcl};       # where to find image data
+set cfg(DIR)    [file dirname $argv0]  ;# directory of cfg(ICH)
+set cfg(ME)     [info script]          ;# set very early, may be missing later
+set cfg(IMG)    {o-saft-img.tcl}       ;# where to find image data
                                         # O-Saft means built-in
-set cfg(HELP)   "";                     # O-Saft's complete help text
-set cfg(files)  {};                     # files to be loaded at startup --load
-set cfg(.CFG)   {};                     # contains data from prg(INIT)
-                                        # set below and processed in osaft_init
-#et cfg(HELP-key) ""                    # contains linenumber of result table
+set cfg(HELP)   ""                     ;# O-Saft's complete help text
+set cfg(files)  {}                     ;# files to be loaded at startup --load
+set cfg(.CFG)   {}                     ;# contains data from prg(INIT)
+                                       ;# set below and processed in osaft_init
+#et cfg(HELP-key) ""                   ;# contains linenumber of result table
 
 ## configuration file # TODO: add descriptions from contrib/.o-saft.tcl
 # RC-ANF {
@@ -459,16 +461,16 @@ set cfg(.CFG)   {};                     # contains data from prg(INIT)
 #   this is the only section where we know about o-saft.pl
 #   all settings for o-saft.pl go here
 set prg(DESC)   {-- CONFIGURATION o-saft.pl ----------------------------------}
-set prg(SAFT)        {o-saft.pl};       # name of O-Saft executable
-set prg(INIT)        {.o-saft.pl};      # name of O-Saft's startup file
+set prg(SAFT)        {o-saft.pl}       ;# name of O-Saft executable
+set prg(INIT)        {.o-saft.pl}      ;# name of O-Saft's startup file
 
 #   some regex to match output from o-saft.pl or data in .o-saft.pl
 #   mainly used in create_win()
-set prg(DESC)        {-- CONFIGURATION regex to match output from o-saft.pl --}
-set prg(rexOPT-cfg)  {^([^=]*)=(.*)};   # match  --cfg-CONF=KEY=VAL
-set prg(rexOUT-head) {^(==|\*\*)};      # match header lines starting with ==
-set prg(rexOUT-int)  {^--(cgi|call)};   # use other tools for that
-set prg(rexCMD-int)  {^\+(cgi|exec)};   # internal use only
+set prg(DESC)   {-- CONFIGURATION regex to match output from o-saft.pl -------}
+set prg(rexOPT-cfg)  {^([^=]*)=(.*)}   ;# match  --cfg-CONF=KEY=VAL
+set prg(rexOUT-head) {^(==|\*\*)}      ;# match header lines starting with ==
+set prg(rexOUT-int)  {^--(cgi|call)}   ;# use other tools for that
+set prg(rexCMD-int)  {^\+(cgi|exec)}   ;# internal use only
 
 #set _me [regsub -all {^[./]*} $prg(SAFT) {}]   ;# remove ./ but prg(SAFT) later
     # causes problems in regsub on Mac OS X if $prg(SAFT) starts with ./
@@ -476,40 +478,40 @@ set prg(rexCOMMANDS) "\(o-saft\(.pl|.tcl|-docker\)?|checkAllCiphers.pl|\(/usr/lo
     # most common tools used in help text...
 #-----------------------------------------------------------------------------}
 
-set prg(DESC)       {-- CONFIGURATION external programs ----------------------}
-set prg(PERL)       {};                 # full path to perl; empty on *nix
-set prg(BROWSER)    "";                 # external browser program, set below
-set prg(TKPOD)      {O-Saft};           # name of external viewer executable
-set prg(docker-id)  {owasp/o-saft};     # Docker image ID, if needed
-set prg(docker-tag) {latest};           # Docker image tag, if needed
+set prg(DESC)   {-- CONFIGURATION external programs --------------------------}
+set prg(PERL)       {}                 ;# full path to perl; empty on *nix
+set prg(BROWSER)    ""                 ;# external browser program, set below
+set prg(TKPOD)      {O-Saft}           ;# name of external viewer executable
+set prg(docker-id)  {owasp/o-saft}     ;# Docker image ID, if needed
+set prg(docker-tag) {latest}           ;# Docker image tag, if needed
 
-set prg(DESC)       {-- CONFIGURATION default buttons and checkboxes ---------}
+set prg(DESC)   {-- CONFIGURATION default buttons and checkboxes -------------}
 set prg(Ocmd)   {{+check} {+cipher} {+info} {+quick} {+protocols} {+vulns}};
                                 # buttons for quick access commands
 set prg(Oopt)   {{--header} {--enabled} {--no-dns} {--no-http} {--no-sni} {--no-sslv2} {--no-tlsv13}};
                                 # checkboxes for quick access options
-set prg(post)       {}         ;# --post=  parameter, if passed on command line
+set prg(post)   {}             ;# --post=  parameter, if passed on command line
 
-set cfg(DESC)       {-- CONFIGURATION GUI style and layout -------------------}
+set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
 set cfg(bstyle) {image}        ;# button style:  image  or  text
 set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
 set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
 
-set myX(DESC)       {-- CONFIGURATION window manager geometry ----------------}
+set myX(DESC)   {-- CONFIGURATION window manager geometry --------------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
 #   windows will be larger if the screen supports it (we rely on "wm maxsize")
 set myX(geoo)   "660x720"      ;# geometry of Help window
 set myX(geoO) "$myX(geoo)-0+0" ;# geometry and position of Help    window
-set myX(geo-)   "";             #
-set myX(geoS)   "700x720";      # geometry and position of O-Saft  window
-set myX(geoA)   "660x610";      # geometry and position of About   window
-set myX(geoF)   "";             # geometry and position of Filter  window (computed dynamically)
-set myX(geoT)   "";             #
-set myX(minx)   700;            # O-Saft  window min. width
-set myX(miny)   720;            # O-Saft  window min. height
-set myX(lenl)   15;             # fixed width of labels in Options window
-set myX(rpad)   15;             # right padding in the lower right corner
-set myX(padx)   5;              # padding to right border
+set myX(geo-)   ""             ;#
+set myX(geoS)   "700x720"      ;# geometry and position of O-Saft  window
+set myX(geoA)   "660x610"      ;# geometry and position of About   window
+set myX(geoF)   ""             ;# geometry and position of Filter  window (computed dynamically)
+set myX(geoT)   ""             ;#
+set myX(minx)   700            ;# O-Saft  window min. width
+set myX(miny)   720            ;# O-Saft  window min. height
+set myX(lenl)   15             ;# fixed width of labels in Options window
+set myX(rpad)   15             ;# right padding in the lower right corner
+set myX(padx)   5              ;# padding to right border
 
 # RC-END }
 
@@ -536,11 +538,11 @@ set IMG(help) ::tk::icons::question
 if { [regexp {::tk::icons::question} [image names]] == 0} { unset IMG(help); }
     # reset if no icons there, forces text (see cfg_buttons below)
 
-### IMG(...)  #  other images are defined in cfg(IMG)
+#et IMG(...)                   ;#  other images are defined in cfg(IMG)
 
 #et myX(minx)  myX(miny)  myX(geoS)     # see gui_init() below
 #   myX(buffer) ... NOT YET USED
-set myX(buffer) PRIMARY;        # buffer to be used for copy&paste GUI texts
+set myX(buffer) PRIMARY        ;# buffer to be used for copy&paste GUI texts
                                 # any ICCCM like: PRIMARY, SECONDARY, CLIPBOARD
                                 # or: CUT_BUFFER0 .. CUT_BUFFER7
                                 # Hint for X, in particular xterm: .Xresources:
@@ -549,7 +551,7 @@ set myX(buffer) PRIMARY;        # buffer to be used for copy&paste GUI texts
                                 #         <Btn2Up>: insert-selection(PRIMARY,CLIPBOARD) \
                                 #         ... \
 
-set my_bg       "[lindex [. config -bg] 4]";  # default background color
+set my_bg       "[lindex [. config -bg] 4]"    ;# default background color
                                 # this colour is used for buttons too
 
 # define all buttons used in GUI
@@ -1523,21 +1525,21 @@ proc www_browser  {url} {
     #? open URL in browser, uses system's native browser
     global cfg prg
     if {[string length $prg(BROWSER)] < 1} { puts {**WARNING: no browser found}; return; }
-### [tk windowingsystem]  eq "win32"
-# { geht nicht (mit ActiveTcl)
-## package require twapi_com
-## set ie [twapi::comobj InternetExplorer.Application]
-## puts "IE $ie"
-## $ie Visible true
-## set ie [twapi::comobj Firefox.Application]
-## puts "IE $ie"
-## $ie Visible true
-#}
-# { geht (mit ActiveTcl)
-# folgendes funktioniert, aber IE läuft im Vordergrund, d.h. Rest fehlt
-## package require dde
-## dde execute iexplore WWW_OpenURL http://www.tcl.tk/
-#}
+    #win32# [tk windowingsystem]  eq "win32"
+    #win32# { does not work with ActiveTcl
+    #win32# package require twapi_com
+    #win32# set ie [twapi::comobj InternetExplorer.Application]
+    #win32# puts "IE $ie"
+    #win32# $ie Visible true
+    #win32# set ie [twapi::comobj Firefox.Application]
+    #win32# puts "IE $ie"
+    #win32# $ie Visible true
+    #win32# }
+    #win32# { works with ActiveTcl
+    #win32# folgendes funktioniert, aber IE läuft im Vordergrund, d.h. Rest fehlt
+    #win32# package require dde
+    #win32# dde execute iexplore WWW_OpenURL http://www.tcl.tk/
+    #win32# }
     if {$cfg(VERB)==1} {
         puts  { exec {*}$prg(BROWSER) $url & }
     }
@@ -1606,7 +1608,7 @@ proc create_window {title size} {
 }; # create_window
 
 proc create_host  {parent} {
-    #?  frame with label and entry for host:port; $nr is index to hosts()
+    #? frame with label and entry for host:port; $nr is index to hosts()
     global cfg hosts myX
     set host  $hosts($hosts(0))
     incr hosts(0)
@@ -1729,9 +1731,9 @@ proc create_table {parent content} {
             continue
             set col2 $col1
             set col1 ""
-            #??# set col0 "$col0 $col1"
-            #??# set stretch 1
-            #??# tablelist kann kein "colspan"
+            # ?# set col0 "$col0 $col1"
+            # ?# set stretch 1
+            # ?# tablelist kann kein "colspan"
         }
         if {[regexp $prg(SAFT).* $line]} {
             $this.t insert end [list $nr $line]
@@ -1933,7 +1935,7 @@ proc create_pod   {sect} {
     #? create new window with complete help using external viewer
     # for advantages and disadvantages please see contrib/.o-saft.tcl
     global cfg myX prg
-    # TODO: does probably not work on Windows
+    # TODO: does probably not working on Windows
     #tk_messageBox -icon warning -title " using $prg(TKPOD)" \
     #    -message "$prg(TKPOD) will not be closed with $cfg(ICH)"
     _dbx          " $prg(TKPOD) o-saft.pod -geo $myX(geoO) &"
@@ -1942,7 +1944,7 @@ proc create_pod   {sect} {
 }; # create_pod
 
 proc create_help  {sect} {
-    #? create new window with complete help; store widget in cfg(winH)
+    #? create new window with complete help text; store widget in cfg(winH)
     #? if  sect  is given, jump to this section
 
     global cfg myX prg search
@@ -2338,12 +2340,12 @@ proc create_win   {parent title cmd} {
         }
         if {$skip==1}                        { continue; }
         #dbx# puts "DATA $dat"
-        ## skipped general
+        # skipped general
         if {$dat eq ""}                      { continue; }
         if {[regexp $prg(rexOUT-head) $dat]} { continue; }; # ignore header lines
-        ## skipped commands
+        # skipped commands
         if {[regexp $prg(rexCMD-int)  $dat]} { continue; }; # internal use only
-        ## skipped options
+        # skipped options
        #if {"OPTIONS" eq $dat}               { continue; }
         if {[regexp {^--h$}           $dat]} { continue; }
         if {[regexp {^--help}         $dat]} { continue; }
@@ -2368,7 +2370,7 @@ proc create_win   {parent title cmd} {
             continue
         }
         frame $this.$name;              # create frame for command' or options' checkbutton
-### pack [button $this.$name.h -text {?} -command "create_help {$dat}" -borderwidth 1] -side left
+# # pack [button $this.$name.h -text {?} -command "create_help {$dat}" -borderwidth 1] -side left
         if {[regexp {=} $dat]==0} {
             #dbx# puts "create_win: check: $this.$name.c -variable cfg($dat)"
             pack [checkbutton $this.$name.c -text $dat -variable cfg($dat)] -side left -anchor w -fill x
@@ -2434,7 +2436,7 @@ proc create_buttons {parent cmd} {
             # buttons for Commands and Options only
         if {[regexp {^Options\s*for\s*(help|compatibility) } $txt] != 0} { continue }
             # we do not support these options in the GUI
-        ## skipped general
+        # skipped general
         if {$txt eq ""}                      { continue; }
         if {[regexp $prg(rexOUT-head) $txt]} { continue; }; # header or Warning
         if {"OPTIONS" eq $txt}               { continue; }
@@ -2454,6 +2456,92 @@ proc create_buttons {parent cmd} {
         if {[regexp {^Commands to show } $txt]==1} { $this.help_me config -state disable }
     }
 }; # create_buttons
+
+proc create_main  {targets} {
+    #? create main window (the complete GUI)
+    ## main {
+    global cfg prg myX hosts
+    _dbx "(»$targets«)"
+    set w ""
+    pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
+
+    ## create command buttons for simple commands and help
+    pack [frame     $w.fq] -fill x -side bottom
+    pack [button    $w.fq.closeme  -command {exit}] -side right -padx $myX(rpad)
+    if {$cfg(VERB)==1} {
+        #pack [button $w.fq.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
+        # TODO: does not work proper 'cause passing --v fails
+
+        pack [checkbutton $w.fq.img_txt -variable cfg(img_txt) -command {
+            if {$cfg(img_txt)==1} { set cfg(bstyle) "image" }
+            if {$cfg(img_txt)==0} { set cfg(bstyle) "text"  }
+            _dbx " toggle: $cfg(img_txt) # $cfg(bstyle) "
+            theme_init $cfg(bstyle)
+        } \
+        ] -side right
+        if {$cfg(bstyle) eq "image"} { $w.fq.img_txt select }
+        theme_set   $w.fq.img_txt $cfg(bstyle)
+    }
+    pack [frame     $w.fc] -fill x
+    pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -padx 11
+    foreach b $prg(Ocmd) {
+        create_cmd  $w.fc $b;
+    }
+    pack [button    $w.fc.loadresult -command "osaft_load {Load}"] -side left -padx 11
+    pack [button    $w.fc.help -command "create_help {}"] -side right -padx $myX(padx)
+
+    ## create option buttons for simple access
+    pack [frame     $w.fo] -fill x
+    pack [label     $w.fo.ol -text " "] -side left -padx 11
+    foreach b $prg(Oopt) {
+        create_opt  $w.fo $b;
+    }
+    if {[regexp {\-docker$} $prg(SAFT)]} {
+        pack [entry $w.fo.dockerid -textvariable prg(docker-id) -width 12] -anchor w
+        create_tip  $w.fo.dockerid [get_tipp docker-id]
+    }
+
+    ## create notebook object and set up Ctrl+Tab traversal
+    set cfg(objN)   $w.note
+    ttk::notebook   $cfg(objN) -padding 5
+    ttk::notebook::enableTraversal $cfg(objN)
+    pack $cfg(objN) -fill both -expand 1
+
+    ## create TABs: Command and Options
+    set tab_cmds    [create_note $cfg(objN) "Commands"]
+    set tab_opts    [create_note $cfg(objN) "Options"]
+    set tab_filt    [create_note $cfg(objN) "Filter"]
+    create_buttons  $tab_cmds {CMD}; # fill Commands pane
+    create_buttons  $tab_opts {OPT}; # fill Options pane
+    create_filtertab $tab_filt {FIL}; # fill Filter pane
+
+    ## add Save and Reset button in Options pane
+    pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
+    pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
+    osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
+
+    ## create status line
+    pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
+    pack [text      $w.fl.t -relief flat   -height 3 -background [get_color status] ] -fill x
+    set cfg(objS)   $w.fl.t
+    set_readonly $cfg(objS)
+
+    ## add hosts from command line
+    foreach host $targets {         # display hosts
+        if {$hosts(0) > 5} { puts "**WARNING: only 6 hosts possible; '$host' ignored"; continue };
+        create_host $w
+        set hosts($hosts(0)) $host
+    }
+
+    ## add one Host: line  with  +  and  !  button
+    create_host $w
+
+    ## apply themes
+    theme_init $cfg(bstyle)
+    ## main }
+
+    return
+}; # create_main
 
 proc search_show  {w mark} {
     #? jump to mark in given text widget
@@ -3020,13 +3108,13 @@ set cfg(OPTS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=opt }      cfg(
 _dbx                      " exec {*}$prg(PERL) $prg(SAFT) --help=commands"
 set cfg(CMDS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=commands } cfg(CMDS)
 
-##if {2 > [llength [split $cfg(HELP) "\n"]]} {
-##    # failed again, so we have no command and no options also
-##    # would be better to exit here, however some parts of the GUI may work ...
-##    tk_messageBox -icon error \
-##        -message "**ERROR: could not call $prg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
-##    exit 2
-##}
+#if {2 > [llength [split $cfg(HELP) "\n"]]} {
+#    # failed again, so we have no command and no options also
+#    # would be better to exit here, however some parts of the GUI may work ...
+#    tk_messageBox -icon error \
+#        -message "**ERROR: could not call $prg(SAFT); exit;\n\n!!Hint: check PATH environment variable."
+#    exit 2
+#}
 
 gui_init
 
@@ -3038,90 +3126,8 @@ wm geometry     . $myX(geoS)
 bind . <Control-v> {clipboard get}
 bind . <Control-c> {clipboard clear ; clipboard append [selection get]}
 
-set w ""
-pack [frame $w.ft0]; # create dummy frame to keep create_host() happy
-
-## create command buttons for simple commands and help
-pack [frame     $w.fq] -fill x -side bottom
-pack [button    $w.fq.closeme  -command {exit}] -side right -padx $myX(rpad)
-if {$cfg(VERB)==1} {
-    #pack [button $w.fq.r -text "o"  -command "open \"| $argv0\"; exit" ] -side right
-    # TODO: does not work proper 'cause passing --v fails
-
-    pack [checkbutton $w.fq.img_txt -variable cfg(img_txt) -command {
-            if {$cfg(img_txt)==1} { set cfg(bstyle) "image" }
-            if {$cfg(img_txt)==0} { set cfg(bstyle) "text"  }
-            _dbx " toggle: $cfg(img_txt) # $cfg(bstyle) "
-            theme_init $cfg(bstyle)
-    } \
-    ] -side right
-    if {$cfg(bstyle) eq "image"} { $w.fq.img_txt select }
-    theme_set   $w.fq.img_txt $cfg(bstyle)
-}
-pack [frame     $w.fc] -fill x
-pack [button    $w.fc.cmdstart -command "osaft_exec $w.fc {Start}"] -side left -padx 11
-foreach b $prg(Ocmd) {
-    create_cmd  $w.fc $b;
-}
-pack [button    $w.fc.loadresult -command "osaft_load {Load}"] -side left -padx 11
-pack [button    $w.fc.help -command "create_help {}"] -side right -padx $myX(padx)
-
-## create option buttons for simple access
-pack [frame     $w.fo] -fill x
-pack [label     $w.fo.ol -text " "] -side left -padx 11
-foreach b $prg(Oopt) {
-    create_opt  $w.fo $b;
-}
-if {[regexp {\-docker$} $prg(SAFT)]} {
-    pack [entry $w.fo.dockerid -textvariable prg(docker-id) -width 12] -anchor w
-    create_tip  $w.fo.dockerid [get_tipp docker-id]
-}
-
-## create notebook object and set up Ctrl+Tab traversal
-set cfg(objN)   $w.note
-ttk::notebook   $cfg(objN) -padding 5
-ttk::notebook::enableTraversal $cfg(objN)
-pack $cfg(objN) -fill both -expand 1
-
-## create TABs: Command and Options
-set tab_cmds    [create_note $cfg(objN) "Commands"]
-set tab_opts    [create_note $cfg(objN) "Options"]
-set tab_filt    [create_note $cfg(objN) "Filter"]
-create_buttons  $tab_cmds {CMD}; # fill Commands pane
-create_buttons  $tab_opts {OPT}; # fill Options pane
-create_filtertab $tab_filt {FIL}; # fill Filter pane
-
-## add Save and Reset button in Options pane
-pack [button    $tab_opts.saveresult -command {osaft_save "CFG" 0}      ] -side left
-pack [button    $tab_opts.reset      -command {osaft_reset; osaft_init;}] -side left
-osaft_init;     # initialise options from .-osaft.pl (values shown in Options tab)
-
-## create status line
-pack [frame     $w.fl   -relief sunken -borderwidth 1] -fill x
-pack [text      $w.fl.t -relief flat   -height 3 -background [get_color status] ] -fill x
-set cfg(objS)   $w.fl.t
-set_readonly $cfg(objS)
-
-## add hosts from command line
-foreach host $targets {         # display hosts
-    if {$hosts(0) > 5} { puts "**WARNING: only 6 hosts possible; '$host' ignored"; continue };
-    create_host $w
-    set hosts($hosts(0)) $host
-}
-
-## add one Host: line  with  +  and  !  button
-create_host $w
-
-_dbx " hosts: $hosts(0)"
-
-## apply themes
-theme_init $cfg(bstyle)
-
-## some verbose output
-set vm "";      # check if inside docker
-if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
-if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
-update_status "o-saft.tcl $cfg(VERSION) $vm"
+## create main window, see  ## main {  ..  ## main }
+create_main $targets
 
 ## load files, if any
 foreach f $cfg(files) {
@@ -3129,8 +3135,15 @@ foreach f $cfg(files) {
     osaft_load $f
 }
 
-# GUI ready, can initilize tracing if required
+## GUI ready, initilize tracing if required
 if {$cfg(TRACE) > 0} { trace_buttons }
+
+## some verbose output
+_dbx " hosts: $hosts(0)"
+set vm "";      # check if inside docker
+if {[info exist env(osaft_vm_build)]==1}    { set vm "($env(osaft_vm_build))" }
+if {[regexp {\-docker$} $prg(SAFT)]}        { set vm "(using $prg(SAFT))" }
+update_status "o-saft.tcl $cfg(VERSION) $vm"
 
 # must be at end when window was created, otherwise wm data is missing or mis-leading
 if {$cfg(VERB)==1 || $cfg(DEBUG)==1} {
