@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.794 18/05/06 13:50:09",
+    SID         => "@(#) %M% %I% %E% %U%",
     STR_VERSION => "18.04.18",          # <== our official version number
 };
 
@@ -8120,20 +8120,18 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         my $enabled = 0;
         my $_printtitle = 0;    # count title lines; 0 = no ciphers checked
         my @results = ();       # new cipher list for every host
-        my $usesni = $Net::SSLhello::usesni;                        # store SNI for recovery later
         foreach my $ssl (@{$cfg{'version'}}) {
             $_printtitle++;
             next if ($cfg{$ssl} == 0);
-            if ($usesni >= 1) { # Do not use SNI with SSLv2 and SSLv3
+            my $usesni = $Net::SSLhello::usesni;
+            if ($Net::SSLhello::usesni >= 1) { # always test first without SNI
                 # using $Net::SSLhello::usesni instead of $cfg{'usesni'} (even
                 # they should be the same) because Net::SSLhello functions are
                 # called
                 if ($ssl =~ m/^SSLv/) {
                     # SSLv2 has no SNI; SSLv3 has originally no SNI
-                    _warn_nosni("409:", $ssl, $usesni);
-                    $Net::SSLhello::usesni = 0;                     # do not use SNI for this $ssl
-                } else {
-                    $Net::SSLhello::usesni = $usesni;               # restore
+                    _warn_nosni("409:", $ssl, $Net::SSLhello::usesni);
+                    $Net::SSLhello::usesni = 0; # do not use SNI for this $ssl
                 }
             }
             my @all = _get_ciphers_range($ssl, $cfg{'cipherrange'});
@@ -8172,6 +8170,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             } else {
                 Net::SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $Net::SSLhello::usesni, @accepted);
             }
+            $Net::SSLhello::usesni = $usesni;# restore
         } # $ssl
         if ($_printtitle > 0) {
             # SEE Note:+cipherall
