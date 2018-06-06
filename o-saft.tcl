@@ -324,10 +324,7 @@ exec wish "$0" ${1+"$@"}
 #.
 #.   Codeing (general)
 #.      Sequence of function definitions done to avoid forward declarations.
-#.      Following  grep command  will return a list of functions  with a brief
-#.      description for them:
-#.          egrep '(^proc| #\?)' o-saft.tcl
-#.      TBD ...
+#.      See  Debugging Options  below also.
 #.
 #.   Codeing (GUI)
 #.      Images (i.e.for buttons) are defined in  o-saft-img.tcl, which must be
@@ -350,6 +347,12 @@ exec wish "$0" ${1+"$@"}
 #.   Traceing and Debugging
 #.      All output for ..trace and/or --dbx is printed on STDERR.
 #.
+#.   Debugging Options
+#.      --help-flow   - print information about program flow (comments in code)
+#.      --help-procs  - print all proc definitions
+#.      --help-descr  - print all proc definitions and their description
+#.      --help-osaft  - just print text used for help window (help button)
+#.
 #.   Notes about Tcl/Tk
 #.      We try to avoid platform-specific code. The only exceptions (2015) are
 #.      the perl executable and the start method of the external browser.
@@ -368,7 +371,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.169 Sommer Edition 2018
+#?      @(#) 1.171 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -438,8 +441,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.169 18/06/06 19:42:07 Sommer Edition 2018}
-set cfg(VERSION) {1.169}
+set cfg(SID)    {@(#) o-saft.tcl 1.171 18/06/06 23:13:24 Sommer Edition 2018}
+set cfg(VERSION) {1.171}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1668,7 +1671,7 @@ proc create_table {parent content} {
     #? create scrollable table widget and insert given text; returns widget
     #
     # create a table with 4 columns: Nr Label Value Comment
-    # the Nr column is used to revert any sorting 
+    # the Nr column is used to revert any sorting
     # the text for Label column is extracted from the line, anything left of :
     # the text for Value column is extracted from the line, anything right of :
     #   the value is then further separated in a Value and a Comment (if any)
@@ -1749,7 +1752,7 @@ proc create_table {parent content} {
             set col2 ""
             set col0 [regsub {^([^:]+):.*}  $line {\1}] ; # get label
             set col1 [regsub {^[^:]+:\s*} $line {}] ;   # get label
-            #if {[regexp -nocase {^(yes|no\s+\()} $col1]} 
+            #if {[regexp -nocase {^(yes|no\s+\()} $col1]}
                 # NOTE: there my be values like "No other text ..."
             if {[regexp -nocase {^(yes|no)} $col1]} {
                 # lines from +check
@@ -1950,6 +1953,7 @@ proc create_help  {sect} {
     #? if  sect  is given, jump to this section
 
     global cfg myX prg search
+    _dbx "($sect)"
     putv "create_help(»$sect«)"
 
     if {[info exists prg(TKPOD)]==1} {
@@ -1958,45 +1962,6 @@ proc create_help  {sect} {
             return;
         }
     }
-
-    _dbx " 0. collect more documentations with --help=*"
-    set help ""
-    foreach key [list alias data checks regex rfc glossar] {
-        # missing: text ourstr
-        set txt ""
-        _dbx       " 0. $prg(PERL) $prg(SAFT) --help=$key"
-        catch { exec {*}$prg(PERL) $prg(SAFT) --help=$key } txt
-        if {2 < [llength [split $txt "\n"]]} {
-            set txt [regsub -all       {[&]} $txt {\\&}];   # avoid interpretation by regexp
-            # add section header, hardcoded (stolen from o-saft-man.pm)
-            switch $key {
-              {alias}   { set head "Aliases for commands and options"
-                          set txt [regsub -all -line {\n}  $txt "\n        "]
-                        }
-              {data}    { set head "Available informations"
-                          set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
-                              # each key (left) is a command, hence add +
-                        }
-              {checks}  { set head "Available checks"
-                          set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
-                              # each key (left) is a command, hence add +
-                        }
-              {regex}   { set head "Regular expressions used internally"
-                          set txt [regsub -all -line {(\n)(\s*)([^ ]+)}  $txt {\1\2'\3'}]
-                        }
-              {rfc}     { set head "List of RFC related to SSL, TLS" }
-              {glossar} { set head "Glossar" }
-              {text}    { set head "Texts used in various messages" }
-              {ourstr}  { set head "Regular expressions to match our own strings" }
-              {range}   { set head "List of cipherranges" }
-              {compliance} { set head "INFO: Available compliance checks" }
-              {todo}    { set head "Known problems and bugs"              }
-            }
-            append help "\n\nINFO $head\n$txt"
-        }
-    }
-    _dbx " 1. merge HELP and additional help texts"
-    set help [regsub {(\n\nATTRIBUTION)} $cfg(HELP) "$help\n\nATTRIBUTION"];
 
     # uses plain text help text from "o-saft.pl --help"
     # This text is parsed for section header line (all capital characters)
@@ -2029,11 +1994,10 @@ proc create_help  {sect} {
     # In above example  QUICKSTART  and  OPTIONS  are the section headers,
     # --help  is an option and the line starting with  o-saft.pl  will be
     # a command (not to be confused with commands of o-saft.pl).
-    # Idea: probably "o-saft.pl --help=wiki" is better suitable for creating
-    # the help text herein.
     #
     # TODO: some section lines are not detected properly and hence missing
 
+    _dbx " 1. build help window"
     if {[winfo exists $cfg(winH)]} {    # if there is a window, just jump to text
         wm deiconify $cfg(winH)
         set name [str2obj [string trim $sect]]
@@ -2041,8 +2005,7 @@ proc create_help  {sect} {
         return
     }
     set this    [create_window {Help} $myX(geoO)]
-    set help    [regsub -all {===.*?===} $help {}]; # remove informal messages
-    set txt     [create_text $this $help].t;        # $txt is a widget here
+    set txt     [create_text $this $cfg(HELP)].t;        # $txt is a widget here
     set toc     {}
 
     _dbx " 2. add additional buttons for search"
@@ -2072,30 +2035,31 @@ proc create_help  {sect} {
            "
 
     _dbx " 3. search for section head lines, mark them and add (prefix) to text"
-    set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? '()=,:.-]+$} 1.0]
+    set anf [$txt search -regexp -nolinestop -all -count end {^ {0,5}[A-Z][A-Za-z_? '()=+,:.-]+$} 1.0]
     set i 0
     foreach a $anf {
         set e [lindex $end $i];
-        set t [$txt get $a "$a + $e c"];         # don't trim, need leading spaces
+        set t [$txt get $a "$a + $e c"]        ;# don't trim, need leading spaces
         set l [string length $t]
         incr i
         _dbx " 3. HEAD: $i\t$t"
-        if {[notTOC $t]} { continue; };          # skip some special strings
+        if {[notTOC $t]} { continue; }          ;# skip some special strings
         if {[string trim $t] eq ""} { continue };# skip empty entries
-        if {[regexp {^[A-Z][A-Z_? -]+$} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
-        set toc "$toc\n  $t";                   # prefix headline with spaces in TOC
+        if {[regexp {^[A-Z]} $t]} { set toc "$toc\n" };  # add empty line for top level headlines
+        set toc "$toc\n  $t"                   ;# prefix headline with spaces in TOC
         set name [str2obj [string trim $t]]
         $txt tag add  HELP-HEAD       $a "$a + $e c"
         $txt tag add  HELP-HEAD-$name $a "$a + $e c"
     }
     $txt config -state normal
     $txt insert 1.0 "\nCONTENT\n$toc\n"
-    $txt tag     add  HELP-LNK    2.0 2.7;      # add markup
-    $txt tag     add  HELP-LNK-T  2.0 2.7;      #
+    $txt tag     add  HELP-LNK    2.0 2.7      ;# add markup
+    $txt tag     add  HELP-LNK-T  2.0 2.7      ;#
     set_readonly $txt
+puts "TOC:[$txt get 1.0 end]";
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
     if {$nam eq ""} {
-        _dbx " 3. no text available";              # avoid Tcl errors
+        _dbx " 3. no text available"           ;# avoid Tcl errors
         return;
     };
 
@@ -2107,7 +2071,7 @@ proc create_help  {sect} {
         set e [lindex $end $i];
         set t [$txt get $a "$a + $e c"];
         _dbx " 4. TOC: $i\t$t"
-        if {[notTOC $t]} { continue; };          # skip some special strings
+        if {[notTOC $t]} { continue; }         ;# skip some special strings
         incr i
         set name [str2obj [string trim $t]]
         set b [$txt search -regexp {[A-Z]+} $a]
@@ -2845,6 +2809,7 @@ set cfg(TITLE)  {$cfg(TITLE)}"
 proc osaft_about  {mode} {
     #? extract description from myself; returns text
     global arrv argv0
+    _dbx "($mode)"
     set fid [open $argv0 r]
     set txt [read $fid]
     set hlp ""
@@ -2858,6 +2823,91 @@ proc osaft_about  {mode} {
     close $fid
     return $hlp
 }; # osaft_about
+
+proc osaft_procs  {mode} {
+    #? extract procedures and description from myself; returns text
+    #  for debugging only; mode: PROC or DESC or FLOW
+    global arrv argv0
+    _dbx "($mode)"
+    set fid [open $argv0 r]
+    set txt [read $fid]
+    set hlp ""
+    foreach l [split $txt "\r\n"] {
+        if {![regexp {^(proc|\s*#[#?])} $l]} { continue; }
+        if { [regexp {^\s*##}   $l] && $mode eq {FLOW}} { set hlp "$hlp\n$l"; }
+        if { [regexp {^\s*#[?]} $l] && $mode eq {DESC}} { set hlp "$hlp\n$l"; }
+        if { [regexp {^proc}    $l] && $mode eq {DESC}} { set hlp "$hlp\n$l"; }
+        if { [regexp {^proc}    $l] && $mode eq {PROC}} { set hlp "$hlp\n$l"; }
+    }
+    close $fid
+    return $hlp
+}; # osaft_procs
+
+proc osaft_help   {} {
+    #? get help from o-saft.pl --help (for use in own help window)
+    global cfg prg
+    _dbx "()"
+    # get information from O-Saft; it's a performance penulty, but simple ;-)
+    _dbx               " exec {*}$prg(PERL) $prg(SAFT) +help"
+    set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) +help } help
+    if {2 > [llength [split $help "\n"]]} {
+        # exec call failed, probably because  PATH  does not contain . then
+        # prg(SAFT) returns an error, most likely just one line, like:
+        #   couldn't execute "o-saft.pl": no such file or directory
+        # as this message depends on the  lanuguage setting  of the calling
+        # shell, we do not check for any specific string, but for more than
+        # one line, means that $help must be more than one line
+        set prg(SAFT) [file join "." $prg(SAFT)];# try current directory also
+    }
+    _dbx               " exec {*}$prg(PERL) $prg(SAFT) --no-rc +help"
+    set help ""; catch { exec {*}$prg(PERL) $prg(SAFT) --no-rc +help } help
+
+    _dbx " 1. collect more documentations with --help=*"
+    set info ""
+    foreach key [list alias data checks regex rfc glossar] {
+        # missing: text ourstr
+        set txt ""
+        _dbx       " 0. $prg(PERL) $prg(SAFT) --no-rc --help=$key"
+        catch { exec {*}$prg(PERL) $prg(SAFT) --no-rc --help=$key } txt
+        if {2 < [llength [split $txt "\n"]]} {
+            set txt [regsub -all {[&]} $txt {\\&}] ;# avoid interpretation by regexp
+            # add section header, hardcoded (stolen from o-saft-man.pm)
+            switch $key {
+              {alias}   { set head "Aliases for commands and options"
+                          set txt [regsub -all -line {\n}  $txt "\n        "]
+                        }
+              {data}    { set head "Available informations"
+                          set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
+                          set txt [regsub {^(\s*)} $txt {\1        +}] ;# pretty print
+                              # each key (left) is a command, hence add +
+                        }
+              {checks}  { set head "Available checks"
+                          set txt [regsub -all -line {(\n)(\s*)}  $txt {\1        \2+}]
+                          set txt [regsub {^(\s*)} $txt {\1        +}] ;# pretty print
+                              # each key (left) is a command, hence add +
+                        }
+              {regex}   { set head "Regular expressions used internally"
+                          set txt [regsub -all -line {(\n)(\s*)([^ ]+)}  $txt {\1\2'\3'}]
+                        }
+              {rfc}     { set head "List of RFC related to SSL, TLS" }
+              {glossar} { set head "Glossar" }
+              {text}    { set head "Texts used in various messages" }
+              {ourstr}  { set head "Regular expressions to match our own strings" }
+              {range}   { set head "List of cipherranges" }
+              {compliance} { set head "INFO: Available compliance checks" }
+              {todo}    { set head "Known problems and bugs"              }
+            }
+            append info "\n\nINFO $head\n$txt"   ;# initial TAB for $txt important
+        }
+    }
+    _dbx " 2. merge HELP and additional help texts"
+    set help [regsub {(\n\nATTRIBUTION)} $help "$info\n\nATTRIBUTION"];
+    set help [regsub -all {===.*?===} $help {}]    ;# remove informal messages
+
+    #dbx " 3. building TOC from section head lines here is difficult, done in create_help()"
+
+    return $help
+}; # osaft_help
 
 proc osaft_reset  {} {
     #? reset all options in cfg()
@@ -2877,13 +2927,13 @@ proc osaft_reset  {} {
 proc osaft_init   {} {
     #? set values from .o-saft.pl in cfg()
     global cfg prg
-    if {[regexp {\-docker$} $prg(SAFT)]} { return }; # skip in docker mode
+    if {[regexp {\-docker$} $prg(SAFT)]} { return };# skip in docker mode
     foreach l [split $cfg(.CFG) "\r\n"] {
         # expected lines look like:
         #  --no-header
         #  --cfg_cmd=bsi=xxx yyy
         #
-        if {[regexp "^\s*(#|$)" $l]} { continue };  # skip comments
+        if {[regexp "^\s*(#|$)" $l]} { continue }  ;# skip comments
         if {[regexp {=} $l]} {
             regexp $prg(rexOPT-cfg) $l dumm idx val
             # FIXME: there may be multiple  --cfg_cmd=KKK=VVV  settings, but
@@ -3080,14 +3130,29 @@ foreach arg $argv {
         {--trace}   { set   cfg(TRACE)  1;  }
         {--rc}      { osaft_write_rc; exit; }
         {--image}   -
-        {--img}     { set   cfg(bstyle) "image"; }
-        {--text}    { set   cfg(bstyle) "text";  }
+        {--img}     { set   cfg(bstyle) "image";}
+        {--text}    { set   cfg(bstyle) "text"; }
         {--tip}     { set   cfg(TIP)    1;  }
         --load=*    { lappend cfg(files) [regsub {^--load=} $arg {}]; }
         --post=*    { set   prg(post) $arg; }
         {--h}       -
         {--help}    { puts [osaft_about "HELP"]; exit; }
-        *           { lappend targets $arg; }
+
+        {--options__for_debugging__only} { set dumm "" }
+        {--help-o-saft} -
+        {--help-osaft}  -
+        {--helposaft}   -
+        {--osafthelp}   -
+        {--osaft-help}  -
+        {--o-saft-help} { set cfg(DEBUG) 99;    }
+        {--help-flow}   -
+        {--helpflow}    { puts [osaft_procs FLOW]; exit; }
+        {--help-descr}  -
+        {--helpdescr}   { puts [osaft_procs DESC]; exit; }
+        {--help-procs}  -
+        {--helpprocs}   { puts [osaft_procs PROC]; exit; }
+
+        *           { lappend targets $arg;     }
         default     { puts "**WARNING: unknown parameter '$arg'; ignored" }
     }
 }
@@ -3107,27 +3172,17 @@ cfg_update;                     # update configuration as needed
 ## read $cfg(IMG)               # must be read before any widget is created
 read_images $cfg(bstyle);       # more precisely: before first use of theme_set
 
-# get information from O-Saft; it's a performance penulty, but simple ;-)
 # FIXME: prg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
 #        will be empty if O-Saft's default Docker image is not (found) running
 #        workaround: use environment variables, see o-saft-docker
-_dbx                      " exec {*}$prg(PERL) $prg(SAFT) +help"
-set cfg(HELP)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) +help }           cfg(HELP)
-if {2 > [llength [split $cfg(HELP) "\n"]]} {
-    # exec call failed, probably because PATH does not contain . then prg(SAFT)
-    # returns an error, most likely just one line, like:
-    #   couldn't execute "o-saft.pl": no such file or directory
-    # as this message depends on the lanuguage setting of the calling shell, we
-    # do not check for any specific string,  but for more than one line,  means
-    # that cfg(HELP) must be more than one line
-    set prg(SAFT) [file join "." $prg(SAFT)];     # try current directory also
-}
-_dbx                      " exec {*}$prg(PERL) $prg(SAFT) +help"
-set cfg(HELP)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) +help }           cfg(HELP)
+set cfg(HELP)   [osaft_help]
 _dbx                      " exec {*}$prg(PERL) $prg(SAFT) --help=opt"
 set cfg(OPTS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=opt }      cfg(OPTS)
 _dbx                      " exec {*}$prg(PERL) $prg(SAFT) --help=commands"
 set cfg(CMDS)   ""; catch { exec {*}$prg(PERL) $prg(SAFT) --help=commands } cfg(CMDS)
+
+# special debug output
+if {99==$cfg(DEBUG)} { puts "$cfg(HELP)"; exit; }
 
 #if {2 > [llength [split $cfg(HELP) "\n"]]} {
 #    # failed again, so we have no command and no options also
