@@ -21,14 +21,14 @@
 #          * unifiy test.warnings.log and test.tests.log (should use same target)
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.1 18/06/08 12:11:49
+#?      @(#) Makefile.warnings 1.2 18/06/08 17:56:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings = 1.1
+_SID.warnings = 1.2
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -53,7 +53,7 @@ TEST.hosts      =
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
 
-HELP-help.test.warn = print more targets for testing WARNING messages
+HELP-help.test.warnings = print targets for testing WARNING messages
 help.test.warnings:
 	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
 	@echo $(MORE-warnings) ; # no quotes!
@@ -86,7 +86,7 @@ MORE-warnings    = " \
 \#$(_NL)\
 \# To print all available individual  test-*  and  warning-*  targets, use:$(_NL)\
 \#   make help.test.all$(_NL)\
-\# $(_NL)\
+\#$(_NL)\
 \# Examples: $(_NL)\
 \#    make warning-042 $(_NL)\
 \#    make message-Certificate TEST.args='+cn localhost' $(_NL)\
