@@ -21,14 +21,14 @@
 #          * complete with tests from test/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.2 18/06/08 12:14:39
+#?      @(#) Makefile.cgi 1.3 18/06/08 17:57:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi    = 1.2
+_SID.cgi    = 1.3
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -80,6 +80,7 @@ ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.badhost-%)
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
 
+HELP-help.test.cgi  = print targets for testing $(SRC.cgi)
 help.test.cgi:
 	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
 	@echo $(MORE-cgi)      ; # no quotes!
@@ -91,12 +92,12 @@ help.test.cgi:
 #__________________________________________________ targets for testing cgi __|
 
 MORE-cgi        = " \
-\#               ________________________________________ summary targets _$(_NL)\
+\#               ___________________________________________ testing .cgi _$(_NL)\
  test.cgi.badhosts   - test that some hostnames are ignored in $(EXE.pl) $(_NL)\
  test.cgi.badIPs     - test that some IPs are ignored in $(EXE.pl) $(_NL)\
  test.cgi.badall     - test all bad and good IPs and hostnames $(_NL)\
  test.badhost-IP     - check a single IP or hostname if allowed in $(EXP.pl) $(_NL)\
-\# $(_NL)\
+\#$(_NL)\
 \# Examples: $(_NL)\
 \#    make test.badhost-42.42.42.42 $(_NL)\
 \#    make test.badhost-127.0.0.127 $(_NL)\
