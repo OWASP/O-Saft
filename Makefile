@@ -84,14 +84,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.22 18/06/07 00:05:53
+#?      @(#) Makefile 1.23 18/06/08 17:59:53
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID        = 1.22
+_SID        = 1.23
     # define our own SID as variable, if needed ...
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
@@ -250,8 +250,8 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
-ALL.Makefiles   = Makefile Makefile.help $(TEST.dir)/Makefile
-                # not included: $(TEST.dir)/Makefile.inc
+ALL.Makefiles   = Makefile Makefile.help
+                # not included: $(TEST.dir)/Makefile*, will be added there
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
@@ -282,7 +282,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.22
+_INST.text      = generated from Makefile 1.23
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -385,8 +385,8 @@ html:   $(GEN.html)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.22
-tar:     GREP_EDIT = 1.22
+GREP_EDIT = 1.23
+tar:     GREP_EDIT = 1.23
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -516,4 +516,5 @@ HELP--vv        = verbose: print target and all dependencies
 
 include Makefile.help
 include $(TEST.dir)/Makefile
+    # Note that $(TEST.dir)/Makefile includes all other Makefile.* there
 
