@@ -115,7 +115,7 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.6 18/06/08 17:54:59
+#?      @(#) Makefile.help 1.7 18/06/08 18:08:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -127,9 +127,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 
 first-help-target-is-default: help.doc
 
-_SID.help       = 1.6
-
-ALL.Makefiles  += Makefile.help
+_SID.help       = 1.7
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
