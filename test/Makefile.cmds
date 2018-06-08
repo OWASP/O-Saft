@@ -1,0 +1,234 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile        - makefile for testing O-Saft commands and options
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Makefile to perform testing tasks for O-Saft project.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see ../Makefile .
+#
+#       Naming conventions for targets see ../Makefile.help .
+#
+#       TODO:
+#          * 
+#
+#? VERSION
+#?      @(#) Makefile.cmds 1.1 18/06/08 12:11:41
+#?
+#? AUTHOR
+#?      18-apr-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.cmds   = 1.1
+
+MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+.SUFFIXES:
+
+first-cmds-target-is-default: help.test.cmds
+
+ifeq (,$(_SID.test))
+    -include test/Makefile
+endif
+
+ALL.Makefiles  += test/Makefile.cmds
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+# source test file
+
+TEST.host       = localhost
+TEST.hosts      =
+                # list of hosts provided by Makefile.extern
+
+#_____________________________________________________________________________
+#___________________________________________________________ default target __|
+
+help.test.cmds:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-cmds)    ; # no quotes!
+
+help.test.cmds.all:
+	@echo "# individual targets for tests"
+	@$(MAKE) -s echo=ALL.test.cmds     echo
+	@echo ""
+	@$(MAKE) -s echo=ALL.test.cmds.log echo
+	@echo ""
+
+.PHONY: help.test.cmds help.test.cmds.all
+
+#_____________________________________________________________________________
+#______________________________________________________ testing +cmd --opt  __|
+
+MORE-cmds       = " \
+\#               ________________________________________ summary targets _$(_NL)\
+ help.test.cmds.all - print individual targets for testing commands$(_NL)\
+ test.help       - test  help   commands and options$(_NL)\
+ test.info       - test  info   commands with localhost$(_NL)\
+ test.check      - test  check  commands with localhost$(_NL)\
+ test.cipher     - test  cipher commands with localhost$(_NL)\
+ test.summary    - test summary commands with localhost$(_NL)\
+ test.local      - test commands with localhost$(_NL)\
+ testcmd-CMD     - test specific test target CMD$(_NL)\
+ testcmd-CMD.log - test specific test target CMD and store in test/CMD.log$(_NL)\
+\# $(_NL)\
+\# Examples: $(_NL)\
+\#    make testcmd-+cn $(_NL)\
+\#    make testcmd-+cn\ --traceCMD $(_NL)\
+\#    make testcmd-'+cn --traceCMD' $(_NL)\
+"
+
+test-+help-+VERSION:        TEST.args   = +VERSION
+test-+help-+help:           TEST.args   = +help=command
+test-+help-+ciphers:        TEST.args   = +ciphers -V
+test-+help-+version:        TEST.args   = +version
+test-+help-+version--v:     TEST.args   = +version --v --usr
+test-+help---v+vers:        TEST.args   = --v +version
+test-+help---v+help:        TEST.args   = --v +help
+test--help-command:         TEST.args   = --help=command
+test--help-options:         TEST.args   = --help=options
+test--help-cmd:             TEST.args   = --help=cmd
+test--help-opt:             TEST.args   = --help=opt
+test--help-alias:           TEST.args   = --help=alias
+test--help-glossar:         TEST.args   = --help=glossar
+test--help-rfc:             TEST.args   = --help=rfc
+test--help-links:           TEST.args   = --help=links
+test--help-check:           TEST.args   = --help=check
+test--help-regex:           TEST.args   = --help=regex
+test--help-WHY:             TEST.args   = --help=WHY
+test--help-CHECK:           TEST.args   = --help=CHECK
+test--help-cfg-text:        TEST.args   = --help=cfg-text
+test--help-gen-wiki:        TEST.args   = --help=gen-wiki
+test--help-gen-html:        TEST.args   = --help=gen-html
+test--help-gen-cgi:         TEST.args   = --help=gen-cgi
+test--help--yeast-data:     TEST.args   = --yeast-data
+test--help--yeast-prot:     TEST.args   = --yeast-prot
+test-+info:                 TEST.args   = +info
+test-+info--trace-cmd:      TEST.args   = +info   --trace-cmd
+test-+info--trace-key:      TEST.args   = +info   --trace-key
+test-+info--trace-key-norc: TEST.args   = +info   --trace-key --norc
+test-+check:                TEST.args   = +check
+test-+check--trace-key:     TEST.args   = +check  --trace-key
+test-+check--trace-key-norc:  TEST.args   = +check  --trace-key --norc
+test-+check--trace-norc:    TEST.args   = +check  --trace-cmd --trace-time --trace=2 --norc
+test-+check--nossltls:      TEST.args   = +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+test-+cipher:               TEST.args   = +cipher
+test-+cipher--force-openssl:  TEST.args   = +cipher --force-openssl
+test-+cipher--cipher-openssl: TEST.args   = +cipher --cipher-openssl
+test-+cipherall:            TEST.args   = +cipherall
+test-+cipherraw:            TEST.args   = +cipherraw
+test-+cipher-dh:            TEST.args   = +cipher-dh
+test-+cipher-default:       TEST.args   = +cipher-default
+test-+ciphercheck:          TEST.args   = +ciphercheck
+test-+cipher--nossltls:     TEST.args   = +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+test-_vuln-+BEAST:          TEST.args   = +BEAST
+test-_vuln-+CRIME:          TEST.args   = +CRIME
+test-_vuln-+DROWN:          TEST.args   = +DROWN
+test-_vuln-+FREAK:          TEST.args   = +FREAK
+test-_vuln-+POODLE:         TEST.args   = +POODLE
+test-_vuln-+logjam:         TEST.args   = +logjam
+test-_vuln-+lucky13:        TEST.args   = +lucky13
+test-_vuln-+Sloth:          TEST.args   = +Sloth
+test-_vuln-+Sweet32:        TEST.args   = +Sweet32
+test-_summ-+bsi:            TEST.args   = +bsi
+test-_summ-+TR-02102+:      TEST.args   = +TR-02102+
+test-_summ-+EV:             TEST.args   = +EV
+test-_summ-+quick:          TEST.args   = +quick --trace-arg
+test-_summ-+http:           TEST.args   = +http
+test-_summ-+hsts:           TEST.args   = +hsts
+test-_summ-+ocsp:           TEST.args   = +ocsp
+test-_summ-+preload:        TEST.args   = +preload
+test-_summ-+protocols:      TEST.args   = +protocols
+test-_summ-+fingerprints:   TEST.args   = +fingerprints
+test-_summ-+sizes:          TEST.args   = +sizes
+test-_summ-+pfs:            TEST.args   = +pfs
+test-_summ-+sts:            TEST.args   = +sts
+test-_summ-+sni:            TEST.args   = +sni
+test-_summ-+vulns:          TEST.args   = +vulns
+
+# generate list of all targets dynamically from our definitions above
+# note that . inside // below is a meta character
+# note: no sort because we want the sequence as defined above
+ALL.testhelp    = $(shell awk '/^test-.help-/  {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testinfo    = $(shell awk '/^test-.info-/  {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testcheck   = $(shell awk '/^test-.check-/ {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testcipher  = $(shell awk '/^test-.cipher/ {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testsummary = $(shell awk '/^test-.summ-/  {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testlocal   = $(shell awk '/^test-.local-/ {sub(":","");print $$1}' $(ALL.Makefiles))
+
+ALL.test.cmds   = \
+		  $(ALL.testhelp) \
+		  $(ALL.testinfo) \
+		  $(ALL.testcheck) \
+		  $(ALL.testcipher) \
+		  $(ALL.testsummary) \
+		  $(ALL.testlocal)
+ALL.test.cmds.log   = $(ALL.test.cmds:%=%.log)
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+testcmd-%__nur-verwenden-wenn-mehrer-targets-in-ein-File: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	@echo "{## `date +%T`: $(EXE.pl) $(TEST.args) ..."
+	@cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
+	@echo "##}"
+
+testcmd-%: TEST.args += $*
+    # add pattern to TEST.args, make is clever enough to do it only once, so
+    # it doesn't harm previous setting above
+testcmd-%: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	-cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
+
+test-%: testcmd-%
+	@echo -n ""
+
+# Target should create a new logfile, then compare it with the current one. If
+# diff  returns nothing, delete newly created logfile,  otherwise rename newly
+# created file to name which contains the current date.
+# Finally, If current logfile is/was missing, use newly created one:
+# "test ... || mv ..." . This ensures that the file exists afterwards.
+# Note that all target commands are prefixed with - to avoid make reporting of error 
+# reporting if the command fails (as failture is intended, somehow).
+test-%.log:
+	@$(TARGET_VERBOSE)
+	@$(MAKE) -s test-$* > $@ 2>&1
+	@-diff $(TEST.dir)/$@ $@ \
+	    && rm $@ \
+	    || mv $@ $(TEST.dir)/test-$*-$(_TODAY_).log
+	@-test -f $(TEST.dir)/$@  ||  mv $(TEST.dir)/test-$*-$(_TODAY_).log $(TEST.dir)/$@
+	@-ls -l  $(TEST.dir)/test-$(*)*
+
+test.help:      $(ALL.testhelp)
+test.info:      $(ALL.testinfo)
+test.check:     $(ALL.testcheck)
+test.cipher:    $(ALL.testcipher)
+test.summary:   $(ALL.testsummary)
+test.local:     $(ALL.testlocal)
+
+# $(_CMDS.log) calls "make -s" to avoid printing of executed commands
+_CMDS.log       = $(TEST.dir)/test.cmds-$(_TODAY_).log
+$(_CMDS.log):
+	@echo _CMDS.log
+	@$(MAKE) -i -s $(ALL.test.cmds.log) > $@
+
+test.cmds.log: $(SRC.pl) $(ALL.test.cmds.log)
+	@echo -n ""
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(ALL.test.cmds)
+ALL.tests.log  += test.cmds.log
+
