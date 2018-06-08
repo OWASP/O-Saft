@@ -21,14 +21,14 @@
 #          * 
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.1 18/06/08 12:11:41
+#?      @(#) Makefile.cmds 1.2 18/06/08 17:57:33
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds   = 1.1
+_SID.cmds   = 1.2
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -53,6 +53,7 @@ TEST.hosts      =
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
 
+HELP-help.test.cmds = print targets for testing $(SRC.pl) commands and options
 help.test.cmds:
 	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
 	@echo $(MORE-cmds)    ; # no quotes!
@@ -80,7 +81,7 @@ MORE-cmds       = " \
  test.local      - test commands with localhost$(_NL)\
  testcmd-CMD     - test specific test target CMD$(_NL)\
  testcmd-CMD.log - test specific test target CMD and store in test/CMD.log$(_NL)\
-\# $(_NL)\
+\#$(_NL)\
 \# Examples: $(_NL)\
 \#    make testcmd-+cn $(_NL)\
 \#    make testcmd-+cn\ --traceCMD $(_NL)\
