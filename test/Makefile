@@ -21,14 +21,14 @@
 #          * unifiy test.warnings.log and test.tests.log (should use same target)
 #
 #? VERSION
-#?      @(#) Makefile 1.7 18/06/08 17:59:01
+#?      @(#) Makefile 1.8 18/06/08 18:12:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test   = 1.7
+_SID.test   = 1.8
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -176,12 +176,13 @@ message-%: $(SRC.pl)
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
-	    echo "echo '$(TEST.rc)' > $(_TMP.rc)" ; \
 	    echo "$(EXE.pl) $(TEST.args) 2>&1 | grep $* " ; \
 	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
 	    $(EXE.pl) $(TEST.args) 2>&1 | grep $* ; \
 	    rm -f $(_TMP.rc) ; \
 	fi
+# following removed above, too noicy:
+#            echo "echo '$(TEST.rc)' > $(_TMP.rc)" ; 
 
 warning-%: message-%
 	@echo -n ""
