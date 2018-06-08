@@ -115,7 +115,7 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.5 18/06/07 22:44:46
+#?      @(#) Makefile.help 1.6 18/06/08 17:54:59
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -127,8 +127,9 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 
 first-help-target-is-default: help.doc
 
-_SID.help       = 1.5
-# define our own SID as variable, if needed ...
+_SID.help       = 1.6
+
+ALL.Makefiles  += Makefile.help
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -177,7 +178,7 @@ $(_NL)\
 \#              ________________________________ targets for documentation _$(_NL)\
  help.doc       - print this documentation$(_NL)\
  help.test      - print documentation about test targets$(_NL)\
- help.critic    - print documentation about perlcritiv targets$(_NL)\
+ help.critic    - print documentation about perlcritic targets$(_NL)\
  help.syntax    - print documentation about syntax used in Makefile.*$(_NL)\
 "
 
