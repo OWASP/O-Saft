@@ -17,18 +17,15 @@
 #
 #       Naming conventions for targets see ../Makefile.help .
 #
-#       TODO:
-#          * 
-#
 #? VERSION
-#?      @(#) Makefile.cmds 1.2 18/06/08 17:57:33
+#?      @(#) Makefile.cmds 1.3 18/06/10 01:54:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds   = 1.2
+_SID.cmds   = 1.3
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -44,11 +41,9 @@ ALL.Makefiles  += test/Makefile.cmds
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-# source test file
-
 TEST.host       = localhost
 TEST.hosts      =
-                # list of hosts provided by Makefile.extern
+                # list of hosts provided by Makefile.FQDN
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
@@ -79,13 +74,13 @@ MORE-cmds       = " \
  test.cipher     - test  cipher commands with localhost$(_NL)\
  test.summary    - test summary commands with localhost$(_NL)\
  test.local      - test commands with localhost$(_NL)\
- testcmd-CMD     - test specific test target CMD$(_NL)\
- testcmd-CMD.log - test specific test target CMD and store in test/CMD.log$(_NL)\
+ testrun-CMD     - test specific test target CMD$(_NL)\
+ testrun-CMD.log - test specific test target CMD and store in test/CMD.log$(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
-\#    make testcmd-+cn $(_NL)\
-\#    make testcmd-+cn\ --traceCMD $(_NL)\
-\#    make testcmd-'+cn --traceCMD' $(_NL)\
+\#    make testrun-+cn $(_NL)\
+\#    make testrun-+cn\ --traceCMD $(_NL)\
+\#    make testrun-'+cn --traceCMD' $(_NL)\
 "
 
 test-+help-+VERSION:        TEST.args   = +VERSION
@@ -159,12 +154,12 @@ test-_summ-+vulns:          TEST.args   = +vulns
 # generate list of all targets dynamically from our definitions above
 # note that . inside // below is a meta character
 # note: no sort because we want the sequence as defined above
-ALL.testhelp    = $(shell awk '/^test-.help-/  {sub(":","");print $$1}' $(ALL.Makefiles))
-ALL.testinfo    = $(shell awk '/^test-.info-/  {sub(":","");print $$1}' $(ALL.Makefiles))
-ALL.testcheck   = $(shell awk '/^test-.check-/ {sub(":","");print $$1}' $(ALL.Makefiles))
-ALL.testcipher  = $(shell awk '/^test-.cipher/ {sub(":","");print $$1}' $(ALL.Makefiles))
-ALL.testsummary = $(shell awk '/^test-.summ-/  {sub(":","");print $$1}' $(ALL.Makefiles))
-ALL.testlocal   = $(shell awk '/^test-.local-/ {sub(":","");print $$1}' $(ALL.Makefiles))
+ALL.testhelp    = $(shell awk -F: '/^test-.help/   {print $$1}' $(ALL.Makefiles))
+ALL.testinfo    = $(shell awk -F: '/^test-.info/   {print $$1}' $(ALL.Makefiles))
+ALL.testcheck   = $(shell awk -F: '/^test-.check/  {print $$1}' $(ALL.Makefiles))
+ALL.testcipher  = $(shell awk -F: '/^test-.cipher/ {print $$1}' $(ALL.Makefiles))
+ALL.testsummary = $(shell awk -F: '/^test-.summ/   {print $$1}' $(ALL.Makefiles))
+ALL.testlocal   = $(shell awk -F: '/^test-.local/  {print $$1}' $(ALL.Makefiles))
 
 ALL.test.cmds   = \
 		  $(ALL.testhelp) \
@@ -178,20 +173,20 @@ ALL.test.cmds.log   = $(ALL.test.cmds:%=%.log)
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-testcmd-%__nur-verwenden-wenn-mehrer-targets-in-ein-File: $(SRC.pl)
+testrun-%__nur-verwenden-wenn-mehrer-targets-in-ein-File: $(SRC.pl)
 	@$(TARGET_VERBOSE)
 	@echo "{## `date +%T`: $(EXE.pl) $(TEST.args) ..."
 	@cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
 	@echo "##}"
 
-testcmd-%: TEST.args += $*
+testrun-%: TEST.args += $*
     # add pattern to TEST.args, make is clever enough to do it only once, so
     # it doesn't harm previous setting above
-testcmd-%: $(SRC.pl)
+testrun-%: $(SRC.pl)
 	@$(TARGET_VERBOSE)
 	-cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
 
-test-%: testcmd-%
+test-%: testrun-%
 	@echo -n ""
 
 # Target should create a new logfile, then compare it with the current one. If
@@ -201,13 +196,15 @@ test-%: testcmd-%
 # "test ... || mv ..." . This ensures that the file exists afterwards.
 # Note that all target commands are prefixed with - to avoid make reporting of error 
 # reporting if the command fails (as failture is intended, somehow).
+# Note that test-%.log called from within test/ may return:  is up to date.
 test-%.log:
 	@$(TARGET_VERBOSE)
+	@$(eval _NEW.log := $(TEST.dir)/test-$*-$(_TODAY_).log)
 	@$(MAKE) -s test-$* > $@ 2>&1
 	@-diff $(TEST.dir)/$@ $@ \
 	    && rm $@ \
-	    || mv $@ $(TEST.dir)/test-$*-$(_TODAY_).log
-	@-test -f $(TEST.dir)/$@  ||  mv $(TEST.dir)/test-$*-$(_TODAY_).log $(TEST.dir)/$@
+	    || mv $@ $(_NEW.log)
+	@-test -f $(TEST.dir)/$@  ||  mv $(_NEW.log) $(TEST.dir)/$@
 	@-ls -l  $(TEST.dir)/test-$(*)*
 
 test.help:      $(ALL.testhelp)
@@ -216,12 +213,6 @@ test.check:     $(ALL.testcheck)
 test.cipher:    $(ALL.testcipher)
 test.summary:   $(ALL.testsummary)
 test.local:     $(ALL.testlocal)
-
-# $(_CMDS.log) calls "make -s" to avoid printing of executed commands
-_CMDS.log       = $(TEST.dir)/test.cmds-$(_TODAY_).log
-$(_CMDS.log):
-	@echo _CMDS.log
-	@$(MAKE) -i -s $(ALL.test.cmds.log) > $@
 
 test.cmds.log: $(SRC.pl) $(ALL.test.cmds.log)
 	@echo -n ""
