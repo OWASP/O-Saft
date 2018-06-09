@@ -1,0 +1,8 @@
+#
+# file contains hostnames or IPs
+# one name per line
+# each name must start at line start
+# all other lines are ignored
+
+from.Makefile.FQDN
+
