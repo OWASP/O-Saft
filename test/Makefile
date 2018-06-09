@@ -18,17 +18,19 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #       TODO:
+#          * include Makefile.* should be generic
 #          * unifiy test.warnings.log and test.tests.log (should use same target)
+#          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.8 18/06/08 18:12:38
+#?      @(#) Makefile 1.9 18/06/10 01:57:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test   = 1.8
+_SID.test   = 1.9
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -37,7 +39,10 @@ first-test-target-is-default: help.test
 
 ifndef ALL.Makefiles
     -include test/Makefile.inc
-    # defines macros if called directly (not from ../Makefile)
+        # defines macros if called directly (not from ../Makefile)
+    MAKE = $(MAKE_COMMAND) -f $(firstword $(MAKEFILE_LIST))
+        # redefine MAKE if not called from ../Makefile with proper makefile
+        # makefile given with -f option is first in MAKEFILE_LIST, usually
 endif
 
 ifeq (,$(_SID.help))
@@ -50,7 +55,7 @@ ALL.Makefiles  += test/Makefile
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-# source test file
+# test tools (part of distribution)
 TEST.dir        = test
 TEST.do         = SSLinfo.pl \
 		  o-saft_bench \
@@ -84,6 +89,8 @@ help.test:
 	@echo $(MORE-warnings)
 	@echo " $(_HELP_LINE_)"
 	@echo $(MORE-cgi)
+	@echo " $(_HELP_LINE_)"
+	@echo $(MORE-ext)
 	@echo " $(_HELP_LINE_)"
 	@echo $(MORE-misc)
 	@echo " $(_HELP_LINE_)"
@@ -120,7 +127,9 @@ test.target: test.file-1 test,file-2 test_file-3
 	@echo '# show some private make variables:'
 	@echo '# $$(_SID)          = $(_SID)'
 	@echo '# $$(_SID.help)     = $(_SID.help)'
-	@echo '# $$(_SID.test)     = $(_SID.test)'
+	@echo '# $$(_SID.warnings) = $(_SID.warnings)'
+	@echo '# $$(_SID.cmds)     = $(_SID.cmds)'
+	@echo '# $$(_SID.ext)      = $(_SID.ext)'
 	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
 	@echo '# $$(_SID.inc)      = $(_SID.inc)'
 	@echo '# $$(PWD)           = $(PWD)'
@@ -136,14 +145,24 @@ test.target: test.file-1 test,file-2 test_file-3
 	@echo '# $$*  = $* #'
 	@echo '# $$>  = $> #'
 	@echo '# $$-  = $- #'
+	@echo '# $$D  = $D #'
+	@echo '# $$F  = $F #'
 	@echo '# $$(MAKE)          = $(MAKE)'
+	@echo '# $$(CURDIR)        = $(CURDIR)'
+	@echo '# $$(MAKE_COMMAND)  = $(MAKE_COMMAND)'
+	@echo '# $$(MAKE_VERSION)  = $(MAKE_VERSION)'
+	@echo '# $$(MAKE_HOST)     = $(MAKE_HOST)'
 	@echo '# $$(MAKELEVEL)     = $(MAKELEVEL)'
 	@echo '# $$(MAKEFILE)      = $(MAKEFILE)'
 	@echo '# $$(MAKEFILES)     = $(MAKEFILES)'
 	@echo '# $$(MAKEFILE_LIST) = $(MAKEFILE_LIST)'
+	@echo '# $$(MAKEFILE_LIST)F= $(firstword $(MAKEFILE_LIST))'
+	@echo '# $$(MAKEFILE_LIST)L= $(lastword  $(MAKEFILE_LIST))'
 	@echo '# $$(MFLAGS)        = $(MFLAGS)'
 	@echo '# $$(MAKEFLAGS)     = $(MAKEFLAGS)'
 	@echo '# $$(MAKEOVERRIDES) = $(MAKEOVERRIDES)'
+	@echo '# $$(MAKECMDGOALS)  = $(MAKECMDGOALS)'
+	@echo '# $$(GNUMAKEFLAGS)  = $(GNUMAKEFLAGS)'
 	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
 
 #_____________________________________________________________________________
@@ -196,35 +215,27 @@ no.message-%:
 	@rm -f $(_TMP.rc)
 
 #_____________________________________________________________________________
-#_________________________________________________________ testing warnings __|
+#__________________________________________________ include testing targets __|
 
 ifeq (,$(_SID.warnings))
     -include test/Makefile.warnings
 endif
 
-#_____________________________________________________________________________
-#______________________________________________________ testing +cmd --opt  __|
-
 ifeq (,$(_SID.cmds))
     -include test/Makefile.cmds
 endif
 
-#_____________________________________________________________________________
-#_____________________________________________________________ testing .cgi __|
+ifeq (,$(_SID.ext))
+    -include test/Makefile.ext
+endif
 
 ifeq (,$(_SID.cgi))
     -include test/Makefile.cgi
 endif
 
-#_____________________________________________________________________________
-#____________________________________________________________ various tests __|
-
 ifeq (,$(_SID.misc))
     -include test/Makefile.misc
 endif
-
-#_____________________________________________________________________________
-#_____________________________________________________________ code quality __|
 
 ifeq (,$(_SID.critic))
     -include test/Makefile.critic
