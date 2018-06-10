@@ -1,0 +1,214 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile    - makefile for testing O-Saft with external FQDN
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Makefile to perform testing tasks for O-Saft project.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see ../Makefile .
+#
+#       Naming conventions for targets see ../Makefile.help .
+#
+#       TODO:
+#          * unify testcmd* targets here with testrun* in Makefile.cmds
+#
+#? VERSION
+#?      @(#) Makefile.ext 1.1 18/06/10 08:46:35
+#?
+#? AUTHOR
+#?      18-apr-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.ext    = 1.1
+
+MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+.SUFFIXES:
+
+first-ext-target-is-default: help.test.ext
+
+ifeq (,$(_SID.test))
+    -include test/Makefile
+endif
+
+ALL.Makefiles  += test/Makefile.ext
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+TEST.file       = test/Makefile.FQDN
+TEST.host       = localhost
+TEST.hosts      = $(shell grep ^[a-zA-Z0-9] $(TEST.file))
+
+TEST.args       = --header
+#_____________________________________________________________________________
+#___________________________________________________________ default target __|
+
+HELP-help.test.ext  = print targets for testing $(SRC.pl) with external FQDN
+help.test.ext:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-ext)    ; # no quotes!
+
+help.test.ext.all:
+	@echo "# targets for testing all command for all hosts:"
+	@echo "$(ALL.by_host)"
+	@echo "#"
+
+.PHONY: help.test.ext help.test.ext.all
+
+#_____________________________________________________________________________
+#______________________________________ testing command with external hosts __|
+
+MORE-ext        = " \
+\#               ________________________________________ summary targets _$(_NL)\
+ help.test.ext.all  - print individual targets for testing commands$(_NL)\
+ test.ext           - test all commands with all hotnames, alias for test.ext.host$(_NL)\
+ test.ext.host      - test all commands with all hotnames (sorted by host)$(_NL)\
+ test.ext.command   - test all commands with all hotnames (sorted by command) $(_NL)\
+ test.ext.log       - same as test.ext.host but store output in logfile$(_NL)\
+ testcmd-DDD_HOST   - specific test target with HOST$(_NL)\
+ testcmd-DDD_HOST.log   - test specific test target CMD and store in test/testcmd-DDD_HOST.log$(_NL)\
+\#$(_NL)\
+\# Examples: $(_NL)\
+\#    make testcmd-001_localhost $(_NL)\
+\#    make s-ALL.ext.host $(_NL)\
+\#    make TEST.file=file-with-list-of.FQDN s-ALL.ext.host $(_NL)\
+\#    make TEST.hosts='a1.tld a2.tld' s-ALL.ext.host $(_NL)\
+"
+
+# Goal for test targets to archive is to perform all command with all hosts.
+# The hostnames are provided in a simple list: $(TEST.hosts) .
+# The commands couldn't be provided in a make macro all together, because each
+# command may consist of space separated words like: "+info --header".
+# Hence each command is defined in the macro  TEST.args, which will be set for
+# an individual target, for example: testcmd-001 . We have one target for each
+# specific test case, which actually is alist of  commands and options for the
+# tool $(EXE.pl) . Note that the trailing  DDD  (001 in example above) is just
+# a number to make each target unique.
+# To feed the hostname to that target,  the target is defined as  pattern rule
+# testcmd-001_% , which means that we can pass the hostname, for example:
+# testcmd-001_host.some.tld
+# Now  we can simply use:  $(TESTS.hosts:%=testcmd-001_%)  which generates one
+# target for each host in the list. But that would require to build a list for
+# each such target:  testcmd-002_%  and  testcmd-003_%  and so on.
+# As we want to perform all these targets with all hostnames,  this would also
+# require an additional pattern rule for the hostname part. To avoid this add-
+# ditional ruke for each testcmd-DDD, the pattern rule  testcmd-%  is defined,
+# which handles all the individual target which contains the hostname now.
+# Unfortunatelly, this pattern contains  DDD_  (001_host.some.tld from example
+# above) as hostname.  This prefix must then be removed in the target command.
+# The  $(shell awk ...) does the dirty work.
+#
+# Note: following does not work, hnce the solution above:
+#     testcmd-no1: TEST.args  = +quit $*
+#     testcmd-no2: TEST.args := +quit $*
+#
+# Summary:
+#     # define list of hostnames
+#     TEST.hosts    = aa.tld  bb.tld
+#     # define the commands to be used for $(EXE.pl) in the target
+#     testcmd-00c-%: TEST.args = +cipher
+#     testcmd-00i-%: TEST.args = +info
+#
+#     # pattern rule to handle all targets testcmd-DDD_HOSTNAME
+#     testcmd-%
+#
+#     # remove prefix  DDD-  from hostname
+#     $(shell awk 'END{h="$*";sub(/^...-/,"",h);print h}' /dev/null)
+#     #   00c-aa.tld returns: aa.tld
+#
+#     # dynamically generate list of all testcmd-DDD  targets
+#     ALL.externcmd = $(shell awk -F- '/^testcmd-[0-9]/{print $$1}' test/Makefile.ext)
+#     #   returns: testcmd-00c testcmd-00i
+#
+#     # dynamically generate list of all testcmd-DDD for all hostnames
+#     ALL.by_host   = $(foreach host,$(TEST.hosts),$(ALL.externcmd:%=%_$(host)))
+#     #   returns: testcmd-00c_aa.tld testcmd-00i_aa.tld testcmd-00c_bb.tld testcmd_00i-bb.tld
+
+testcmd-000_%:  TEST.args  += +quit
+testcmd-001_%:  TEST.args  += +info
+testcmd-005_%:  TEST.args  += +info --short --showhost --trace=key
+testcmd-006_%:  TEST.args  += +info --no-dns --no-sslv2 --no-sslv3 --experimental
+testcmd-010_%:  TEST.args  += +check
+testcmd-011_%:  TEST.args  += +check --enabled
+testcmd-015_%:  TEST.args  += +check-sni
+testcmd-020_%:  TEST.args  += +cipher
+testcmd-021_%:  TEST.args  += +cipherall
+testcmd-022_%:  TEST.args  += +cipherraw
+testcmd-023_%:  TEST.args  += +cipher-dh
+testcmd-024_%:  TEST.args  += +cipher-default
+testcmd-030_%:  TEST.args  += +protocols
+testcmd-035_%:  TEST.args  += +hsts
+testcmd-066_%:  TEST.args  += +vulns +pfs
+testcmd-070_%:  TEST.args  += +modulus +modulus_exponent +pubkey +pubkey_value +pubkey_algorithm --tracekey --nodns --nohttp
+testcmd-071_%:  TEST.args  += +modulus_exp_1 +modulus_size_oldssl +modulus_exp_65537 +modulus_exp_oldssl +pub_encryption +pub_enc_known +sig_encryp tion +sig_enc_known --tracekey --nodns --nohttp
+testcmd-081_%:  TEST.args  += +cn +subject +altname +serial +serial_hex +serial_int +sernumber +rfc6125_names  --tracekey --nodns --nohttp
+
+# dynamically generate list of all testcmd_DDD  targets
+ALL.externcmd   = $(shell awk -F_ '/^testcmd-[0-9]/{print $$1}' test/Makefile.ext)
+
+# dynamically generate list of all testcmd_DDD for all hostnames
+ALL.extern      = $(foreach host,$(TEST.hosts),$(ALL.externcmd:%=%_$(host)))
+ALL.by_host     = $(foreach host,$(TEST.hosts),$(ALL.externcmd:%=%_$(host)))
+ALL.by_command  = $(foreach cmd,$(ALL.externcmd),$(TEST.hosts:%=$(cmd)_%))
+
+ALL.ext.host    = $(ALL.by_host)
+ALL.ext.host.log= $(ALL.by_host:%=%.log)
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+
+# just an internal info target
+test.extern.internal:
+	@echo $(TEST.hosts)
+	@echo "# ALL.externcmd: $(words $(ALL.externcmd)) : $(ALL.externcmd)"
+	@echo "# ALL.by_host: $(words $(ALL.by_host)) : $(ALL.by_host)"
+	@echo "# ALL.by_cmd : $(words $(ALL.by_command)) : $(ALL.by_command)"
+
+# pattern rule, where pattern $* contains the hostname
+testcmd-%:
+	@$(TARGET_VERBOSE)
+	-cd $(TEST.dir) && $(EXE.pl) $(shell awk 'END{h="$*";sub(/^..._/,"",h);print h}' /dev/null) $(TEST.args)
+# TODO: need to add --no-dns if hostname is an IP
+
+# Target should create a new logfile, then compare it with the current one. If
+# diff  returns nothing, delete newly created logfile,  otherwise rename newly
+# created file to name which contains the current date.
+# Finally, If current logfile is/was missing, use newly created one:
+# "test ... || mv ..." . This ensures that the file exists afterwards.
+# Note that all target commands are prefixed with - to avoid make reporting of error 
+# reporting if the command fails (as failture is intended, somehow).
+# Note that testcmd-%.log called from within test/ may return:  is up to date.    
+testcmd-%.log:
+	@$(TARGET_VERBOSE)
+	@$(eval _NEW.log := $(TEST.dir)/testcmd-$*-$(_TODAY_).log)
+	@$(MAKE) $(MFLAGS) -s testcmd-$* 2>&1 > $@
+	@-diff $(TEST.dir)/$@ $@ \
+	    && rm $@ \
+	    || mv $@ $(_NEW.log)
+	@-test -f $(TEST.dir)/$@  ||  mv $(_NEW.log) $(TEST.dir)/$@
+	@-ls -l  $(TEST.dir)/testcmd-$(*)*
+
+test.ext.host:     $(ALL.by_host)
+test.ext.command:  $(ALL.by_command)
+
+test.ext.host.log: $(SRC.pl) $(ALL.ext.host.log)
+	@echo -n ""
+test.ext.log: test.ext.host.log
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(ALL.ext.host)
+ALL.tests.log  += test.ext.log
+
