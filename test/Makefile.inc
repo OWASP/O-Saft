@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.3 18/06/11 00:32:04
+#?      @(#) Makefile.inc 1.4 18/06/11 00:39:58
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.3
+_SID.inc        = 1.4
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -59,6 +59,9 @@ endif
 
 ifndef ALL.Makefiles
     ALL.Makefiles   = $(firstword $(MAKEFILE_LIST))
+    MAKE        = $(MAKE_COMMAND) -f $(firstword $(MAKEFILE_LIST))
+        # redefine  MAKE  with proper makefile if not called from  ../Makefile
+        # makefile given with -f option is first in  MAKEFILE_LIST, usually
 endif
 
 # internal used tools (paths hardcoded!)
