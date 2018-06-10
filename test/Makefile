@@ -23,19 +23,17 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.9 18/06/10 01:57:24
+#?      @(#) Makefile 1.10 18/06/10 08:59:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test   = 1.9
+_SID.test   = 1.10
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
-
-first-test-target-is-default: help.test
 
 ifndef ALL.Makefiles
     -include test/Makefile.inc
@@ -51,32 +49,6 @@ ifeq (,$(_SID.help))
 endif
 
 ALL.Makefiles  += test/Makefile
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
-
-# test tools (part of distribution)
-TEST.dir        = test
-TEST.do         = SSLinfo.pl \
-		  o-saft_bench \
-		  critic_345.sh \
-		  test-bunt.pl.txt \
-		  test-o-saft.cgi.sh
-TEST.rc         = .perlcriticrc
-SRC.test        = \
-		  $(TEST.do:%=$(TEST.dir)/%) \
-		  $(TEST.rc:%=$(TEST.dir)/%)
-ALL.test        = $(SRC.test)
-
-# internal used tools (paths hardcoded!)
-EXE.bench       = test/o-saft_bench
-EXE.test.bunt   = test/test-bunt.pl.txt
-
-_TODAY_         = $(shell date +%Y""%m%d)
-
-TEST.host       = localhost
-TEST.hosts      =
-                # list of hosts provided by Makefile.extern
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
@@ -113,6 +85,32 @@ help.test.all:
 	@echo ""
 
 .PHONY: help.test help.test.all
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+# test tools (part of distribution)
+TEST.dir        = test
+TEST.do         = SSLinfo.pl \
+		  o-saft_bench \
+		  critic_345.sh \
+		  test-bunt.pl.txt \
+		  test-o-saft.cgi.sh
+TEST.rc         = .perlcriticrc
+SRC.test        = \
+		  $(TEST.do:%=$(TEST.dir)/%) \
+		  $(TEST.rc:%=$(TEST.dir)/%)
+ALL.test        = $(SRC.test)
+
+# internal used tools (paths hardcoded!)
+EXE.bench       = test/o-saft_bench
+EXE.test.bunt   = test/test-bunt.pl.txt
+
+_TODAY_         = $(shell date +%Y""%m%d)
+
+TEST.host       = localhost
+TEST.hosts      =
+                # list of hosts provided by Makefile.extern
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
@@ -189,7 +187,7 @@ test.target: test.file-1 test,file-2 test_file-3
 # Note:  even '$(_TMP.rc)'  is generated for each call,  it will only be used
 # when requested with the  --rc=$(_TMP.rc)  option.
 
-# Target succeeds if message is there
+# target succeeds if message is there
 message-%: $(SRC.pl)
 	@$(TARGET_VERBOSE)
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
@@ -206,7 +204,7 @@ message-%: $(SRC.pl)
 warning-%: message-%
 	@echo -n ""
 
-# Target succeeds if message is missing
+# target succeeds if message is missing
 # TODO: need more examples beside those in test/Makefile.cgi
 no.message-%:
 	@$(TARGET_VERBOSE)
@@ -216,6 +214,11 @@ no.message-%:
 
 #_____________________________________________________________________________
 #__________________________________________________ include testing targets __|
+
+# includes are done explicitly instead of:
+#  include test/Makefile.*
+# to avoid multiple inlcudes of the same file, which would result in make
+# errors complaining about target redfefinitions
 
 ifeq (,$(_SID.warnings))
     -include test/Makefile.warnings
