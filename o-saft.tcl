@@ -155,6 +155,7 @@ exec wish "$0" ${1+"$@"}
 #?      --docker    use o-saft-docker instead of o-saft.pl
 #?      --version   print version number
 #.      +VERSION    print version number (for compatibility with o-saft.pl)
+#.      +quit       exit without GUI (for compatibility with o-saft.pl)
 #?
 #? DOCKER
 #?      This script can be used from within any Docker image. The host is then
@@ -371,7 +372,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.171 Sommer Edition 2018
+#?      @(#) 1.172 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -441,8 +442,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.171 18/06/06 23:13:24 Sommer Edition 2018}
-set cfg(VERSION) {1.171}
+set cfg(SID)    {@(#) o-saft.tcl 1.172 18/06/12 01:04:22 Sommer Edition 2018}
+set cfg(VERSION) {1.172}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -455,6 +456,7 @@ set cfg(HELP)   ""                     ;# O-Saft's complete help text
 set cfg(files)  {}                     ;# files to be loaded at startup --load
 set cfg(.CFG)   {}                     ;# contains data from prg(INIT)
                                        ;# set below and processed in osaft_init
+set cfg(quit)   0                      ;# quit without GUI
 #et cfg(HELP-key) ""                   ;# contains linenumber of result table
 
 ## configuration file # TODO: add descriptions from contrib/.o-saft.tcl
@@ -1316,6 +1318,7 @@ proc update_cursor {cursor} {
 proc update_status {val} {
     #? add text to status line
     global cfg
+    if {$cfg(quit) == 1 } { return }; # no GUI update
     $cfg(objS) config -state normal
     $cfg(objS) insert end "$val\n"
     $cfg(objS) see "end - 2 line"
@@ -3121,6 +3124,7 @@ proc osaft_exec   {parent cmd} {
 set targets "";                 # will later be copied to hosts()
 foreach arg $argv {
     switch -glob $arg {
+        {+quit}     { set   cfg(quit)   1;  }
         {+VERSION}  { puts $cfg(VERSION); exit; }
         {--version} { puts $cfg(SID);     exit; }
         {--docker}  { set   prg(SAFT)   {o-saft-docker}; }
@@ -3270,4 +3274,5 @@ _/"
     #          [tk windowingsystem] # we believe this a window manager property
 
 }
+if {$cfg(quit) == 1 } { exit }
 
