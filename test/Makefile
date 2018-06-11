@@ -23,24 +23,24 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.10 18/06/10 08:59:02
+#?      @(#) Makefile 1.11 18/06/11 15:35:23
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test   = 1.10
+_SID.test   = 1.11
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
+first-test-target-is-default: help.test
+    # otherwise the first target from included files would be used
+
 ifndef ALL.Makefiles
     -include test/Makefile.inc
         # defines macros if called directly (not from ../Makefile)
-    MAKE = $(MAKE_COMMAND) -f $(firstword $(MAKEFILE_LIST))
-        # redefine MAKE if not called from ../Makefile with proper makefile
-        # makefile given with -f option is first in MAKEFILE_LIST, usually
 endif
 
 ifeq (,$(_SID.help))
@@ -68,6 +68,8 @@ help.test:
 	@echo " $(_HELP_LINE_)"
 	@echo $(MORE-critic)
 	@echo " $(_HELP_LINE_)"
+	@echo $(MORE-env)
+	@echo " $(_HELP_LINE_)"
 
 help.test.all:
 	@echo "# individual targets for tests"
@@ -86,11 +88,14 @@ help.test.all:
 
 .PHONY: help.test help.test.all
 
+# FIXME: some of above HELP-* should be extracted from test/Makefile.*
+
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
 # test tools (part of distribution)
 TEST.dir        = test
+TEST.logdir     = $(TEST.dir)/log
 TEST.do         = SSLinfo.pl \
 		  o-saft_bench \
 		  critic_345.sh \
@@ -108,15 +113,39 @@ EXE.test.bunt   = test/test-bunt.pl.txt
 
 _TODAY_         = $(shell date +%Y""%m%d)
 
-TEST.host       = localhost
-TEST.hosts      =
-                # list of hosts provided by Makefile.extern
+# following may be redefined in included Makefiles
+TEST.init       = --header
+TEST.args       =
+
+# macroname for list of hostnames needs to be unique in each Makefile*
+# otherwise some targets in other Makefile* get confused
+#TEST.host       = localhost
+#TEST.hosts      =
+
+MORE-env        = " \
+\# Following variables are intended to be used on command line:$(_NL)\
+\#$(_NL)\
+\#   EXE.pl      - program to perform tests, default: $(EXE.pl)$(_NL)\
+\#   TEST.init   - arguments and options always passed to EXE.pl; default: $(TEST.init)$(_NL)\
+\#   TEST.args   - arguments and options to be passed to EXE.pl per target$(_NL)\
+\#   TEST.host   - hostname to be used for tests (when only one is expected)$(_NL)\
+\#   TEST.hosts  - list of hostnames to perform tests$(_NL)\
+\#   TEST.dir    - directory in which EXE.pl will be executed; default: $(TEST.dir)$(_NL)\
+\#   TEST.dirlog - directory where results of EXE.pl will be stored; default: $(TEST.logdir)$(_NL)\
+\#$(_NL)\
+\# Keep in mind that following files are located in $(TEST.dir):$(_NL)\
+\#   $(EXE.pl)  .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
+\# which are used by EXE.pl or other tools used for the tests.$(_NL)\
+\# The test targets call  EXE.pl  without a path, so it must be found in the$(_NL)\
+\# PATH  environment variable (which should contain .)$(_NL)\
+"
+#  $(SRC.rc)  may not be defined here, hence hardcoded
 
 #_____________________________________________________________________________
 #_____________________________________________________ internal test target __|
 
 # internal information (nothing related to $(Project))
-# Note that the $(_SID*) variables indicate if a sub-makefile was included
+# note that the $(_SID*) variables indicate if a sub-makefile was included
 test.file-1:
 test,file-2:
 test_file-3:
@@ -132,6 +161,7 @@ test.target: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.inc)      = $(_SID.inc)'
 	@echo '# $$(PWD)           = $(PWD)'
 	@echo '# $$(TEST.dir)      = $(TEST.dir)'
+	@echo '# $$(TEST.logdir)   = $(TEST.logdir)'
 	@echo '# show some make variables:'
 	@echo '# $$@  = $@ #'
 	@echo '# $$<  = $< #'
@@ -161,12 +191,36 @@ test.target: test.file-1 test,file-2 test_file-3
 	@echo '# $$(MAKEOVERRIDES) = $(MAKEOVERRIDES)'
 	@echo '# $$(MAKECMDGOALS)  = $(MAKECMDGOALS)'
 	@echo '# $$(GNUMAKEFLAGS)  = $(GNUMAKEFLAGS)'
+	@echo '# $$(.PRECIOUS)     = $(.PRECIOUS)'
+	@echo '# $$(.SECONDARY)    = $(.SECONDARY)'
+	@echo '# $$(.INTERMEDIATE) = $(.INTERMEDIATE)'
+	@echo '# $$(.SUFFIXES)     = $(.SUFFIXES)'
 	@echo '# $$(.VARIABLES)    = $(.VARIABLES)'
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-# FIXME: some of above HELP-* should be extracted from test/Makefile.*
+# target to check for empty hostname list, can also be used for more debugging
+_no-hosts__not-yet-working:
+	@[ "$(eTEST.hosts)" = "" ] && $(eval _ERR := "no TESTS.hosts defined")
+	@[ "$(eTEST.hosts)" = "from.Makefile.FQDN" ] \
+		&& $(eval _ERR := "fake TESTS.hosts defined in $(TEST.file)")
+	@[ -n "$(_ERR)" ] && echo $(_ERR) && exit 2  || echo -n ""
+
+_no-hosts:
+	@-[ "$(eTEST.hosts)" = "" ] \
+		&& echo no TESTS.hosts defined \
+		&& exit 2 \
+		|| echo -n ""
+	@-[ "$(eTEST.hosts)" = "from.Makefile.FQDN" ] \
+		&& echo fake TESTS.hosts defined in $(TEST.file) \
+		&& exit 2 \
+		|| echo -n ""
+
+.PHONY: _no-hosts
+
+$(TEST.logdir):
+	@mkdir $@
 
 # Testing for messages (i.e **WARNING) works as follows:
 #   call $(EXE.pl) with command and/or options in question
@@ -198,8 +252,8 @@ message-%: $(SRC.pl)
 	    $(EXE.pl) $(TEST.args) 2>&1 | grep $* ; \
 	    rm -f $(_TMP.rc) ; \
 	fi
-# following removed above, too noicy:
-#            echo "echo '$(TEST.rc)' > $(_TMP.rc)" ; 
+# following removed from above, too noicy:
+#            echo "echo '$(TEST.rc)' > $(_TMP.rc)" ;
 
 warning-%: message-%
 	@echo -n ""
@@ -211,6 +265,99 @@ no.message-%:
 	@echo "$(TEST.rc)" > $(_TMP.rc)
 	$(EXE.pl) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
 	@rm -f $(_TMP.rc)
+
+# The goal for test targets is to perform (test) all commands with all hosts.
+# The hostnames are provided in a simple list: $(TEST.hosts) .
+# The commands couldn't be provided in a make macro all together, because each
+# command may consist of space separated words like: "+info --header".
+# Hence each command is defined in the macro  TEST.args, which will be set for
+# an individual target, for example: testcmd-001 . We have one target for each
+# specific test case, which actually is alist of  commands and options for the
+# tool $(EXE.pl) . Note that the trailing  DDD  (001 in example above) is just
+# a number to make each target unique.
+# To feed the hostname to that target,  the target is defined as  pattern rule
+# testcmd-001_% , which means that we can pass the hostname, for example:
+# testcmd-001_host.some.tld
+# Now we can simply use:  $(TESTS.hosts:%=testcmd-001_%) , which generates one
+# target for each host in the list. But that would require to build a list for
+# each such target:  testcmd-002_%  and  testcmd-003_%  and so on.
+# As we want to perform all these targets with all hostnames,  this would also
+# require an additional pattern rule for the hostname part.
+# To avoid such a addditional pattern rule for each  testcmd-DDD,  the general
+# pattern rule  testcmd-% is used. It handles all the individual targets which
+# contain the hostname.
+# Unfortunatelly, this pattern contains  DDD_  (for example 001_host.some.tld)
+# as hostname.  This  DDD_  prefix must then be removed in the target command,
+# the  $(shell awk ...)  does the dirty work.
+#
+# Note: following does not work (in GNUmake), hence the solution above:
+#     testcmd-no1: TEST.args  = +quit $*
+#     testcmd-no2: TEST.args := +quit $*
+#
+# Summary:
+#     ### defined in test/Makefile.*
+#     # define list of hostnames
+#     TEST.hosts    = aa.tld  bb.tld
+#     # define the commands to be used for $(EXE.pl) in the target
+#     testcmd-00c-%: TEST.args = +cipher
+#     testcmd-00i-%: TEST.args = +info
+#
+#     ### defined below
+#     # pattern rule to handle all targets testcmd-DDD_HOSTNAME
+#     testcmd-%
+#
+#     # remove prefix  DDD-  from hostname
+#     $(shell awk 'END{h="$*";sub(/^[^_]*-/,"",h);print h}' /dev/null)
+#     # or
+#     $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
+#     #   00c-aa.tld returns: aa.tld
+#
+#     ### defined in test/Makefile.*
+#     # dynamically generate list of all testcmd-DDD  targets
+#     ALL.ext.cmd = $(shell awk -F_ '/^testcmd-[0-9]/{print $$1}' test/Makefile.ext)
+#     #   returns: testcmd-00c testcmd-00i
+#
+#     # dynamically generate list of all testcmd-DDD for all hostnames
+#     ALL.by_host   = $(foreach host,$(TEST.hosts),$(ALL.ext.cmd:%=%_$(host)))
+#     #   returns: testcmd-00c_aa.tld testcmd-00i_aa.tld testcmd-00c_bb.tld testcmd_00i-bb.tld
+
+# general pattern rule, where pattern $* contains the hostname
+testcmd-%__nur-verwenden-wenn-mehrer-targets-in-ein-File: $(SRC.pl)
+	@$(TARGET_VERBOSE)
+	@echo "{## `date +%T`: $(EXE.pl) $(TEST.args) ..."
+	@cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
+	@echo "##}"
+
+testcmd-%:
+	@$(TARGET_VERBOSE)
+	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.args)
+# TODO: need verbose for executed command
+# TODO: need to add --no-dns if hostname is an IP
+
+# alias target
+test-%: testcmd-%
+	@echo -n ""
+
+# Target should create a new logfile, then compare it with the current one. If
+# diff  returns nothing, delete newly created logfile,  otherwise rename newly
+# created file to name which contains the current date.
+# Finally, if current logfile is/was missing, use newly created one:
+# "test ... || mv ..." . This ensures that the file exists afterwards.
+# Note that all target commands are prefixed with - to avoid make reporting of
+# errors if the command fails (as failture is intended, somehow).
+# Note that testcmd-%.log called from within test/ may return:  is up to date.
+# diffs STDERR is discarded (may return: "file does not exist").
+##	@$(eval _NEW.log := $(TEST.logdir)/testcmd-$*-$(_TODAY_).log)
+testcmd-%.log: $(TEST.logdir)
+	@$(TARGET_VERBOSE)
+	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
+	@$(MAKE) $(MFLAGS) -s testcmd-$* > $@ 2>&1
+	@-diff $(TEST.logdir)/$@ $@ 2>/dev/null \
+	    && rm $@ \
+	    || mv $@ $(_NEW.log)
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_NEW.log) $(TEST.logdir)/$@
+	@-ls -l  $(TEST.logdir)/testcmd-$(*)*
+# TODO: target should fail if there is a diff
 
 #_____________________________________________________________________________
 #__________________________________________________ include testing targets __|
@@ -262,6 +409,7 @@ tests:      $(ALL.tests)
 
 tests.log:  $(ALL.tests.logs)
 
+# aliases for convenience
 test:       tests
 test.log:   tests.log
 
