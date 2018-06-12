@@ -82,6 +82,7 @@
 #.          test.name    - public available targets use  .  (dot) as separator
 #.          test-name    - internal and pattern rule targets use  -  (dash) as
 #.                          separator
+#.          test.name.log- same as  test.name  but store results in logfile
 #.
 #.   Makefiles and Includes
 #.      To keep the make's functionality (targets) maintainable, multiple files
@@ -103,19 +104,22 @@
 #.              # if called inside test directory, TEST.dir must be redifined       
 #.          endif
 #.
-#.      Keep in mind, that GNU's make cannot manage recursive includes of the
-#.      same file. This must be check before including, for example with (using
-#.      our private  _SID.*  variable):
+#.      GNU make cannot manage recursive includes of the  same file.  This must
+#.      be check before including, for example with (using our private  _SID.*
+#.      variable):
 #.          ifeq (,$(_SIDtest))                                          
 #.              include test/Makefile
 #.          endif
+#.
+#.   Most included Makefiles.SUFFIX contain very limited comments.  For general
+#.   details of their functionality, see test/Makefile.template .
 #.
 #.   Special Syntax here
 #.      To extract the syntax documentation, all the lines start with  #. , see
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.7 18/06/08 18:08:34
+#?      @(#) Makefile.help 1.8 18/06/13 00:06:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -127,7 +131,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 
 first-help-target-is-default: help.doc
 
-_SID.help       = 1.7
+_SID.help       = 1.8
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
