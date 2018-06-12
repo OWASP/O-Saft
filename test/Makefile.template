@@ -1,0 +1,159 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile    - template makefile for testing ...
+#?
+#? SYNOPSYS
+#?      To be used as template for new targets in Makefile.SUFFIX.
+#?      This file itself is not used (included) in test/Makefile.
+#?
+#? DESCRIPTION
+#?      Template Makefile containing targets for testing SOMETHING.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see
+#           ../Makefile  ../Makefile.help  Makefile.template
+#       Naming conventions for targets see ../Makefile.help .
+#
+#? VERSION
+#?      @(#) Makefile.template 1.1 18/06/13 00:51:51
+#?
+#? AUTHOR
+#?      18-may-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.TMP    = 1.1
+
+MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+.SUFFIXES:
+
+first-TMP-target-is-default: help.test.TMP
+    # otherwise the first target from other included files would be used
+
+ifeq (,$(_SID.test))
+    -include test/Makefile
+    # get general macros for testing from master makefile
+endif
+
+_MYSELF.TMP         = test/Makefile.template
+                    # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
+                    # gets the file of the initial call "make" command
+ALL.Makefiles      += $(_MYSELF.TMP)
+                    # add ourself to private list of all makefiles
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+TEST.TMP.hosts      = host.to.be.tested
+                    # define our list of TEST.hosts
+
+ifdef TEST.hosts
+    TEST.TMP.hosts  = $(TEST.hosts)
+                    # list of TEST.hosts can be passed with environment or on command line
+endif
+
+TEST.args           = $(TEST.init)
+                    # initial  arguments for EXE.pl
+                    # specific arguments will be added in targets below
+
+#_____________________________________________________________________________
+#___________________________________________________________ default target __|
+
+HELP-help.test.TMP  = print targets for testing SOMETHING
+                    # defines message for main Makefile's help* targets
+
+# private help target for this makefile
+help.test.TMP:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-TMP)    ; # no quotes!
+
+#_____________________________________________________________________________
+#_____________________________________________________ internal test target __|
+# just an internal info target
+test.TMP.internal:
+	@echo "# TEST.file:       $(TEST.file)"
+	@echo "# TEST.TMP.hosts:  $(TEST.TMP.hosts)"
+	@echo "# ALL.testTMP:     $(words $(ALL.testTMP))  : $(ALL.testTMP)"
+	@echo "# ALL.test.TMP:    $(words $(ALL.test.TMP)) : $(ALL.test.TMP)"
+	@echo "# testcmd-TMP%:    TEST.init = +quit"
+	@echo "# -------------------------------------------------------------"
+
+.PHONY: help.test.TMP test.TMP.internal
+
+#_____________________________________________________________________________
+#______________________________________________________________ testing ... __|
+
+# description for private help text
+# note that we use quotes here, even if not really necessary (but makes syntax
+# highlighting in some editors more happy ;-)
+MORE-TMP        = " \
+\#               ______________________________________________ testing ... _$(_NL)\
+ test.TMP        - test functionality of SOMETHING$(_NL)\
+ test.TMP.log    - same as test.TMP but store output in $(TEST.dirlog)/$(_NL)\
+\#$(_NL)\
+\# Examples:$(_NL)\
+\#    make e-ALL.testTMP$(_NL)\
+\#    make s-ALL.test.TMP$(_NL)\
+"
+
+# There are two variants of defining unique targets in this Makefile. Only one
+# of them must be used: all from "Variant-1" or all from "Variant-2" !
+
+## Variant-1 {
+# initialize variables for our targets
+testcmd-TMP%:       EXE.pl      = ../program-for.TMP
+                    # program to perform the tests
+testcmd-TMP%:       TEST.init   = +quit
+                    # argument to be passed always to  $(EXE.pl)
+
+# set varables for each unique target
+# note that the % in the pattern rule will be used for the hostname later
+testcmd-TMP001_%:   TEST.args  += +VERSION
+testcmd-TMP002_%:   TEST.args  += --help
+
+ALL.testTMP     = $(shell awk -F% '/^testcmd-TMP..._/ {print $$1}' $(_MYSELF.TMP))
+                # dynamically generate list of all  testcmd_TMPDDD  targets
+
+## Variant-1 }
+
+
+## Variant-2 {
+testTMP-%:          EXE.pl      = ../program-for.TMP
+testTMP-%:          TEST.init   = +quit
+
+testTMP-001_%:      TEST.args  += +VERSION
+testTMP-002_%:      TEST.args  += --help
+
+ALL.testTMP     = $(shell awk -F% '/^testTMP-..._/ {print $$1}' test/Makefile.template)
+
+# pattern rule to map to testcmd-%
+testTMP-%:  testcmd-%
+	@echo -n ""
+
+## Variant-2 }
+
+ALL.test.TMP    = $(foreach host,$(TEST.TMP.hosts),$(ALL.testTMP:%=%$(host)))
+ALL.test.TMP.log= $(ALL.test.TMP:%=%.log)
+                # generate list of all targets
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+test.TMP:       $(ALL.test.TMP)
+test.TMP.log:   $(ALL.test.TMP.log)
+
+# more verbose target: test.TMP-v and test.TMP-vv
+test.TMP-%:     test.TMP.internal test.TMP
+	@echo -n ""
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(All.test.TMP)
+ALL.tests.log  += test.TMP.log
+
