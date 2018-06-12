@@ -13,19 +13,18 @@
 #?      Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
-#       For details please see ../Makefile .
-#
-#       Naming conventions for targets see ../Makefile.help .
+#       For details please see
+#           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.4 18/06/11 15:39:50
+#?      @(#) Makefile.cmds 1.5 18/06/12 23:30:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds   = 1.4
+_SID.cmds   = 1.5
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -37,48 +36,13 @@ ifeq (,$(_SID.test))
     -include test/Makefile
 endif
 
-ALL.Makefiles  += test/Makefile.cmds
-
-#_____________________________________________________________________________
-#___________________________________________________________ default target __|
-
-HELP-help.test.cmds = print targets for testing $(SRC.pl) commands and options
-help.test.cmds:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-cmds)    ; # no quotes!
-
-help.test.cmds.all:
-	@echo "# individual targets for tests"
-	@$(MAKE) -s echo=ALL.test.cmds     echo
-	@echo ""
-	@$(MAKE) -s echo=ALL.test.cmds.log echo
-	@echo ""
-
-.PHONY: help.test.cmds help.test.cmds.all
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
+_MYSELF             = test/Makefile.cmds
+ALL.Makefiles      += $(_MYSELF)
 
 TEST.cmds.hosts     = localhost
 ifdef TEST.hosts
     TEST.cmds.hosts = $(TEST.hosts)
 endif
-
-# initial arguments for EXE.pl; will be completed in targets below
-TEST.args       = $(TEST.init)
-
-#_____________________________________________________________________________
-#_____________________________________________________ internal test target __|
-# just an internal info target
-test.cmds.internal:
-	@echo "# TEST.file:       $(TEST.file)"
-	@echo "# TEST.cmds.hosts: $(TEST.cmds.hosts)"
-	@echo "# ALL.testinfo:    $(words $(ALL.testinfo))  : $(ALL.testinfo)"
-	@echo "# ALL.test.info:   $(words $(ALL.test.info)) : $(ALL.test.info)"
-	@echo "# ALL.test.cmds:   $(words $(ALL.test.cmds)) : $(ALL.test.cmds)"
-
-#_____________________________________________________________________________
-#______________________________________________________ testing +cmd --opt  __|
 
 MORE-cmds       = " \
 \#               ________________________________________ summary targets _$(_NL)\
@@ -119,91 +83,114 @@ MORE-cmds       = " \
 #     make testrun-'+cn --traceCMD'
 #     make testrun-'+cipher --enabled'
 
-# please see test/Makefile for details of following rules and macros
-# note that the  DDD  part of the target name must be unique over all Makefiles
+HELP-help.test.cmds = print targets for testing $(SRC.pl) commands and options
+help.test.cmds:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-cmds)    ; # no quotes!
+
+help.test.cmds.all:
+	@echo "# individual targets for tests"
+	@$(MAKE) -s echo=ALL.test.cmds     echo
+	@echo ""
+	@$(MAKE) -s echo=ALL.test.cmds.log echo
+	@echo ""
+
+test.cmds.internal:
+	@echo "# TEST.file:       $(TEST.file)"
+	@echo "# TEST.cmds.hosts: $(TEST.cmds.hosts)"
+	@echo "# ALL.testinfo:    $(words $(ALL.testinfo))  : $(ALL.testinfo)"
+	@echo "# ALL.test.info:   $(words $(ALL.test.info)) : $(ALL.test.info)"
+	@echo "# ALL.test.cmds:   $(words $(ALL.test.cmds)) : $(ALL.test.cmds)"
+	@echo "# -------------------------------------------------------------"
+
+.PHONY: help.test.cmds help.test.cmds.all test.cmds.internal
+
+testcmd-c%:     EXE.pl      = ../$(SRC.pl)
+testcmd-c%:     TEST.init   = --header
+
 # for better readability, "speaking names" are used for DDD here
 
-testcmd-+help-+VERSION_%:       TEST.args  += +VERSION
-testcmd-+help-+help_%:          TEST.args  += +help=command
-testcmd-+help-+ciphers_%:       TEST.args  += +ciphers -V
-testcmd-+help-+version_%:       TEST.args  += +version
-testcmd-+help-+version--v_%:    TEST.args  += +version --v --usr
-testcmd-+help---v+vers_%:       TEST.args  += --v +version
-testcmd-+help---v+help_%:       TEST.args  += --v +help
-testcmd--help-command_%:        TEST.args  += --help=command
-testcmd--help-options_%:        TEST.args  += --help=options
-testcmd--help-cmd_%:            TEST.args  += --help=cmd
-testcmd--help-opt_%:            TEST.args  += --help=opt
-testcmd--help-alias_%:          TEST.args  += --help=alias
-testcmd--help-glossar_%:        TEST.args  += --help=glossar
-testcmd--help-rfc_%:            TEST.args  += --help=rfc
-testcmd--help-links_%:          TEST.args  += --help=links
-testcmd--help-check_%:          TEST.args  += --help=check
-testcmd--help-regex_%:          TEST.args  += --help=regex
-testcmd--help-WHY_%:            TEST.args  += --help=WHY
-testcmd--help-CHECK_%:          TEST.args  += --help=CHECK
-testcmd--help-cfg-text_%:       TEST.args  += --help=cfg-text
-testcmd--help-gen-wiki_%:       TEST.args  += --help=gen-wiki
-testcmd--help-gen-html_%:       TEST.args  += --help=gen-html
-testcmd--help-gen-cgi_%:        TEST.args  += --help=gen-cgi
-testcmd--help--yeast-data_%:    TEST.args  += --yeast-data
-testcmd--help--yeast-prot_%:    TEST.args  += --yeast-prot
-testcmd-+info_%:                TEST.args  += +info
-testcmd-+info--trace-cmd_%:     TEST.args  += +info   --trace-cmd
-testcmd-+info--trace-key_%:     TEST.args  += +info   --trace-key
-testcmd-+info--trace-key-norc_%:    TEST.args  += +info   --trace-key --norc
-testcmd-+check_%:               TEST.args  += +check
-testcmd-+check--trace-key_%:    TEST.args  += +check  --trace-key
-testcmd-+check--trace-key-norc_%:   TEST.args  += +check  --trace-key --norc
-testcmd-+check--trace-norc_%:   TEST.args  += +check  --trace-cmd --trace-time --trace=2 --norc
-testcmd-+check--nossltls_%:     TEST.args  += +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
-testcmd-+cipher_%:              TEST.args  += +cipher
-testcmd-+cipher--force-openssl_%:   TEST.args  += +cipher --force-openssl
-testcmd-+cipher--cipher-openssl_%:  TEST.args  += +cipher --cipher-openssl
-testcmd-+cipherall_%:           TEST.args  += +cipherall
-testcmd-+cipherraw_%:           TEST.args  += +cipherraw
-testcmd-+cipher-dh_%:           TEST.args  += +cipher-dh
-testcmd-+cipher-default_%:      TEST.args  += +cipher-default
-testcmd-+ciphercheck_%:         TEST.args  += +ciphercheck
-testcmd-+cipher--nossltls_%:    TEST.args  += +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
-testcmd-_vuln-+BEAST_%:         TEST.args  += +BEAST
-testcmd-_vuln-+CRIME_%:         TEST.args  += +CRIME
-testcmd-_vuln-+DROWN_%:         TEST.args  += +DROWN
-testcmd-_vuln-+FREAK_%:         TEST.args  += +FREAK
-testcmd-_vuln-+POODLE_%:        TEST.args  += +POODLE
-testcmd-_vuln-+logjam_%:        TEST.args  += +logjam
-testcmd-_vuln-+lucky13_%:       TEST.args  += +lucky13
-testcmd-_vuln-+Sloth_%:         TEST.args  += +Sloth
-testcmd-_vuln-+Sweet32_%:       TEST.args  += +Sweet32
-testcmd-_summ-+bsi_%:           TEST.args  += +bsi
-testcmd-_summ-+TR-02102+_%:     TEST.args  += +TR-02102+
-testcmd-_summ-+EV_%:            TEST.args  += +EV
-testcmd-_summ-+quick_%:         TEST.args  += +quick --trace-arg
-testcmd-_summ-+http_%:          TEST.args  += +http
-testcmd-_summ-+hsts_%:          TEST.args  += +hsts
-testcmd-_summ-+ocsp_%:          TEST.args  += +ocsp
-testcmd-_summ-+preload_%:       TEST.args  += +preload
-testcmd-_summ-+protocols_%:     TEST.args  += +protocols
-testcmd-_summ-+fingerprints_%:  TEST.args  += +fingerprints
-testcmd-_summ-+sizes_%:         TEST.args  += +sizes
-testcmd-_summ-+pfs_%:           TEST.args  += +pfs
-testcmd-_summ-+sts_%:           TEST.args  += +sts
-testcmd-_summ-+sni_%:           TEST.args  += +sni
-testcmd-_summ-+vulns_%:         TEST.args  += +vulns
+testcmd-c+help-+VERSION_%:      TEST.args  += +VERSION
+testcmd-c+help-+help_%:         TEST.args  += +help=command
+testcmd-c+help-+ciphers_%:      TEST.args  += +ciphers -V
+testcmd-c+help-+version_%:      TEST.args  += +version
+testcmd-c+help-+version--v_%:   TEST.args  += +version --v --usr
+testcmd-c+help---v+vers_%:      TEST.args  += --v +version
+testcmd-c+help---v+help_%:      TEST.args  += --v +help
+testcmd-c-help-command_%:       TEST.args  += --help=command
+testcmd-c-help-options_%:       TEST.args  += --help=options
+testcmd-c-help-cmd_%:           TEST.args  += --help=cmd
+testcmd-c-help-opt_%:           TEST.args  += --help=opt
+testcmd-c-help-alias_%:         TEST.args  += --help=alias
+testcmd-c-help-glossar_%:       TEST.args  += --help=glossar
+testcmd-c-help-rfc_%:           TEST.args  += --help=rfc
+testcmd-c-help-links_%:         TEST.args  += --help=links
+testcmd-c-help-check_%:         TEST.args  += --help=check
+testcmd-c-help-regex_%:         TEST.args  += --help=regex
+testcmd-c-help-WHY_%:           TEST.args  += --help=WHY
+testcmd-c-help-CHECK_%:         TEST.args  += --help=CHECK
+testcmd-c-help-cfg-text_%:      TEST.args  += --help=cfg-text
+testcmd-c-help-gen-wiki_%:      TEST.args  += --help=gen-wiki
+testcmd-c-help-gen-html_%:      TEST.args  += --help=gen-html
+testcmd-c-help-gen-cgi_%:       TEST.args  += --help=gen-cgi
+testcmd-c-help--yeast-data_%:   TEST.args  += --yeast-data
+testcmd-c-help--yeast-prot_%:   TEST.args  += --yeast-prot
+testcmd-c+info_%:               TEST.args  += +info
+testcmd-c+info--trace-cmd_%:    TEST.args  += +info   --trace-cmd
+testcmd-c+info--trace-key_%:    TEST.args  += +info   --trace-key
+testcmd-c+info--trace-key-norc_%:   TEST.args  += +info   --trace-key --norc
+testcmd-c+check_%:              TEST.args  += +check
+testcmd-c+check--trace-key_%:   TEST.args  += +check  --trace-key
+testcmd-c+check--trace-key-norc_%:  TEST.args  += +check  --trace-key --norc
+testcmd-c+check--trace-norc_%:  TEST.args  += +check  --trace-cmd --trace-time --trace=2 --norc
+testcmd-c+check--nossltls_%:    TEST.args  += +check  --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+testcmd-c+cipher_%:             TEST.args  += +cipher
+testcmd-c+cipher--force-openssl_%:  TEST.args  += +cipher --force-openssl
+testcmd-c+cipher--cipher-openssl_%: TEST.args  += +cipher --cipher-openssl
+testcmd-c+cipherall_%:          TEST.args  += +cipherall
+testcmd-c+cipherraw_%:          TEST.args  += +cipherraw
+testcmd-c+cipher-dh_%:          TEST.args  += +cipher-dh
+testcmd-c+cipher-default_%:     TEST.args  += +cipher-default
+testcmd-c+ciphercheck_%:        TEST.args  += +ciphercheck
+testcmd-c+cipher--nossltls_%:   TEST.args  += +cipher --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+testcmd-c_vuln-+BEAST_%:        TEST.args  += +BEAST
+testcmd-c_vuln-+CRIME_%:        TEST.args  += +CRIME
+testcmd-c_vuln-+DROWN_%:        TEST.args  += +DROWN
+testcmd-c_vuln-+FREAK_%:        TEST.args  += +FREAK
+testcmd-c_vuln-+POODLE_%:       TEST.args  += +POODLE
+testcmd-c_vuln-+logjam_%:       TEST.args  += +logjam
+testcmd-c_vuln-+lucky13_%:      TEST.args  += +lucky13
+testcmd-c_vuln-+Sloth_%:        TEST.args  += +Sloth
+testcmd-c_vuln-+Sweet32_%:      TEST.args  += +Sweet32
+testcmd-c_summ-+bsi_%:          TEST.args  += +bsi
+testcmd-c_summ-+TR-02102+_%:    TEST.args  += +TR-02102+
+testcmd-c_summ-+EV_%:           TEST.args  += +EV
+testcmd-c_summ-+quick_%:        TEST.args  += +quick --trace-arg
+testcmd-c_summ-+http_%:         TEST.args  += +http
+testcmd-c_summ-+hsts_%:         TEST.args  += +hsts
+testcmd-c_summ-+ocsp_%:         TEST.args  += +ocsp
+testcmd-c_summ-+preload_%:      TEST.args  += +preload
+testcmd-c_summ-+protocols_%:    TEST.args  += +protocols
+testcmd-c_summ-+fingerprints_%: TEST.args  += +fingerprints
+testcmd-c_summ-+sizes_%:        TEST.args  += +sizes
+testcmd-c_summ-+pfs_%:          TEST.args  += +pfs
+testcmd-c_summ-+sts_%:          TEST.args  += +sts
+testcmd-c_summ-+sni_%:          TEST.args  += +sni
+testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
-# dynamically generate list of all  testcmd_DDD  targets
 # note that . inside // below is a meta character
 # note: no sort because we want the sequence as defined above
-ALL.testhelp    = $(shell awk -F% '/^testcmd-.help/   {print $$1}' test/Makefile.cmds)
-ALL.testinfo    = $(shell awk -F% '/^testcmd-.info/   {print $$1}' test/Makefile.cmds)
-ALL.testcheck   = $(shell awk -F% '/^testcmd-.check/  {print $$1}' test/Makefile.cmds)
-ALL.testcipher  = $(shell awk -F% '/^testcmd-.cipher/ {print $$1}' test/Makefile.cmds)
-ALL.testsummary = $(shell awk -F% '/^testcmd-.summ/   {print $$1}' test/Makefile.cmds)
-ALL.testlocal   = $(shell awk -F% '/^testcmd-.local/  {print $$1}' test/Makefile.cmds)
+ALL.testhelp    = $(shell awk -F% '/^testcmd-c.help/   {print $$1}' $(_MYSELF))
+ALL.testinfo    = $(shell awk -F% '/^testcmd-c.info/   {print $$1}' $(_MYSELF))
+ALL.testcheck   = $(shell awk -F% '/^testcmd-c.check/  {print $$1}' $(_MYSELF))
+ALL.testvuln    = $(shell awk -F% '/^testcmd-c.vuln/   {print $$1}' $(_MYSELF))
+ALL.testcipher  = $(shell awk -F% '/^testcmd-c.cipher/ {print $$1}' $(_MYSELF))
+ALL.testsummary = $(shell awk -F% '/^testcmd-c.summ/   {print $$1}' $(_MYSELF))
+ALL.testlocal   = $(shell awk -F% '/^testcmd-c.local/  {print $$1}' $(_MYSELF))
 
-# dynamically generate list of all  testcmd_DDD  for all hostnames
 ALL.test.help   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testhelp:%=%$(host)))
 ALL.test.info   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testinfo:%=%$(host)))
+ALL.test.vuln   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testvuln:%=%$(host)))
 ALL.test.check  = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcheck:%=%$(host)))
 ALL.test.cipher = $(foreach host,$(TEST.cmds.hosts),$(ALL.testcipher:%=%$(host)))
 ALL.test.summary= $(foreach host,$(TEST.cmds.hosts),$(ALL.testsummary:%=%$(host)))
@@ -218,13 +205,10 @@ ALL.test.cmds   = \
 		  $(ALL.test.local)
 ALL.test.cmds.log   = $(ALL.test.cmds:%=%.log)
 
-#_____________________________________________________________________________
-#______________________________________________________ targets for testing __|
-
 # testrun target to allow something like:  testrun-+my-fancy-command
 # note that we use  testrun-+%  and not  testrun+%  to avoid double definition
 # of the pattern rule (problem in GNUmake)
-# unfortunatelly this restrict the usage to to pattern starting with +
+# unfortunatelly this restrict the usage to pattern starting with +
 testrun-+%: TEST.args += $(TEST.cmds.hosts)
 testrun-%: testcmd-%
 	@echo -n ""
@@ -247,6 +231,8 @@ test.local.log:     $(ALL.test.info:%=%.log)
 
 test.cmds.all:      $(ALL.test.cmds)
 test.cmds.log:      $(ALL.test.cmds.log)
+
+test.cmds.all-%:    test.cmds.internal test.cmds.all
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
