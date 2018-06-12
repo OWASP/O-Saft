@@ -13,37 +13,58 @@
 #?      Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
-#       For details please see ../Makefile .
-#
-#       Naming conventions for targets see ../Makefile.help .
-#
-#       TODO:
-#          * unify testcmd* targets here with testrun* in Makefile.cmds
+#       For details please see
+#           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.2 18/06/11 15:36:47
+#?      @(#) Makefile.ext 1.4 18/06/12 23:28:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext    = 1.2
+_SID.ext    = 1.4
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-ext-target-is-default: help.test.ext
-    # otherwise the first target from included files would be used
 
 ifeq (,$(_SID.test))
     -include test/Makefile
 endif
 
-ALL.Makefiles  += test/Makefile.ext
+_MYSELF             = test/Makefile.ext
+ALL.Makefiles      += $(_MYSELF)
 
-#_____________________________________________________________________________
-#___________________________________________________________ default target __|
+TEST.file           = test/Makefile.FQDN
+# FIXME: TEST.file must depend on targets herein
+ifdef TEST.hosts
+    TEST.ext.hosts  = $(TEST.hosts)
+else
+    TEST.ext.hosts  = $(shell grep ^[a-zA-Z0-9] $(TEST.file))
+endif
+
+MORE-ext        = " \
+\#               ________________________________________ summary targets _$(_NL)\
+ help.test.ext.all  - print available individual targets for testing commands$(_NL)\
+ test.ext           - test all commands with all hotnames, alias for test.ext.host$(_NL)\
+ test.ext.host      - test all commands with all hotnames (sorted by host)$(_NL)\
+ test.ext.host.log  - same as test.ext.host but store output in logfile$(_NL)\
+ test.ext.command   - test all commands with all hotnames (sorted by command)$(_NL)\
+ test.ext.log       - alias for test.ext.host.log$(_NL)\
+ test.ext.host.quick- test some commands with all hotnames$(_NL)\
+\#               ________________________________________ special targets _$(_NL)\
+ testcmd-eDDD_HOST  - specific test target with HOST (available targets see: help.test.ext.all)$(_NL)\
+ testcmd-eDDD_HOST.log  - same as testcmd-DDD_HOST but store output in test/testcmd-DDD_HOST.log$(_NL)\
+\#$(_NL)\
+\# Examples: $(_NL)\
+\#    make testcmd-e001_localhost $(_NL)\
+\#    make s-ALL.ext.host TEST.file=test/Makefile.FQDN $(_NL)\
+\#    make s-ALL.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
+\#    make  test.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
+"
 
 HELP-help.test.ext  = print targets for testing $(SRC.pl) with external FQDN
 help.test.ext:
@@ -55,79 +76,39 @@ help.test.ext.all:
 	@echo "$(ALL.by_host)"
 	@echo "#"
 
-.PHONY: help.test.ext help.test.ext.all
-
-#_____________________________________________________________________________
-#________________________________________________________________ variables __|
-
-TEST.file       = test/Makefile.FQDN
-ifdef TEST.hosts
-    TEST.ext.hosts = $(TEST.hosts)
-else
-    TEST.ext.hosts = $(shell grep ^[a-zA-Z0-9] $(TEST.file))
-endif
-
-# initial arguments for EXE.pl; will be completed in targets below
-TEST.args       = $(TEST.init)
-
-#_____________________________________________________________________________
-#_____________________________________________________ internal test target __|
-# just an internal info target
 test.ext.internal:
 	@echo "# TEST.file:   $(TEST.file)"
 	@echo "# TEST.ext.hosts:  $(TEST.ext.hosts)"
 	@echo "# ALL.ext.cmd: $(words $(ALL.ext.cmd)) : $(ALL.ext.cmd)"
 	@echo "# ALL.by_host: $(words $(ALL.by_host)) : $(ALL.by_host)"
 	@echo "# ALL.by_cmd : $(words $(ALL.by_command)) : $(ALL.by_command)"
+	@echo "# -------------------------------------------------------------"
 
-#_____________________________________________________________________________
-#______________________________________ testing command with external hosts __|
+.PHONY: help.test.ext help.test.ext.all test.ext.internal
 
-MORE-ext        = " \
-\#               ________________________________________ summary targets _$(_NL)\
- help.test.ext.all  - print available individual targets for testing commands$(_NL)\
- test.ext           - test all commands with all hotnames, alias for test.ext.host$(_NL)\
- test.ext.host      - test all commands with all hotnames (sorted by host)$(_NL)\
- test.ext.host.log  - same as test.ext.host but store output in logfile$(_NL)\
- test.ext.command   - test all commands with all hotnames (sorted by command) $(_NL)\
- test.ext.log       - alias for test.ext.host.log$(_NL)\
-\#               ________________________________________ special targets _$(_NL)\
- testcmd-DDD_HOST   - specific test target with HOST (available targets see: help.test.ext.all)$(_NL)\
- testcmd-DDD_HOST.log  - same as testcmd-DDD_HOST but store output in test/testcmd-DDD_HOST.log$(_NL)\
-\#$(_NL)\
-\# Examples: $(_NL)\
-\#    make testcmd-001_localhost $(_NL)\
-\#    make s-ALL.ext.host TEST.file=test/Makefile.FQDN $(_NL)\
-\#    make s-ALL.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
-\#    make  test.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
-"
+testcmd-e%:     EXE.pl      = ../$(SRC.pl)
+testcmd-e%:     TEST.init   = --header
 
-# please see test/Makefile for details of following rules and macros
-# note that the  DDD  part of the target name must be unique over all Makefiles
+testcmd-e000_%: TEST.args  += +quit
+testcmd-e001_%: TEST.args  += +info
+testcmd-e005_%: TEST.args  += +info --short --showhost --trace=key
+testcmd-e006_%: TEST.args  += +info --no-dns --no-sslv2 --no-sslv3 --experimental
+testcmd-e010_%: TEST.args  += +check
+testcmd-e011_%: TEST.args  += +check --enabled
+testcmd-e015_%: TEST.args  += +check-sni
+testcmd-e020_%: TEST.args  += +cipher
+testcmd-e021_%: TEST.args  += +cipherall
+testcmd-e022_%: TEST.args  += +cipherraw
+testcmd-e023_%: TEST.args  += +cipher-dh
+testcmd-e024_%: TEST.args  += +cipher-default
+testcmd-e030_%: TEST.args  += +protocols
+testcmd-e035_%: TEST.args  += +hsts
+testcmd-e066_%: TEST.args  += +vulns +pfs
+testcmd-e070_%: TEST.args  += +modulus +modulus_exponent +pubkey +pubkey_value +pubkey_algorithm --tracekey --nodns --nohttp
+testcmd-e071_%: TEST.args  += +modulus_exp_1 +modulus_size_oldssl +modulus_exp_65537 +modulus_exp_oldssl +pub_encryption +pub_enc_known +sig_encryp tion +sig_enc_known --tracekey --nodns --nohttp
+testcmd-e081_%: TEST.args  += +cn +subject +altname +serial +serial_hex +serial_int +sernumber +rfc6125_names  --tracekey --nodns --nohttp
 
-testcmd-000_%:  TEST.args  += +quit
-testcmd-001_%:  TEST.args  += +info
-testcmd-005_%:  TEST.args  += +info --short --showhost --trace=key
-testcmd-006_%:  TEST.args  += +info --no-dns --no-sslv2 --no-sslv3 --experimental
-testcmd-010_%:  TEST.args  += +check
-testcmd-011_%:  TEST.args  += +check --enabled
-testcmd-015_%:  TEST.args  += +check-sni
-testcmd-020_%:  TEST.args  += +cipher
-testcmd-021_%:  TEST.args  += +cipherall
-testcmd-022_%:  TEST.args  += +cipherraw
-testcmd-023_%:  TEST.args  += +cipher-dh
-testcmd-024_%:  TEST.args  += +cipher-default
-testcmd-030_%:  TEST.args  += +protocols
-testcmd-035_%:  TEST.args  += +hsts
-testcmd-066_%:  TEST.args  += +vulns +pfs
-testcmd-070_%:  TEST.args  += +modulus +modulus_exponent +pubkey +pubkey_value +pubkey_algorithm --tracekey --nodns --nohttp
-testcmd-071_%:  TEST.args  += +modulus_exp_1 +modulus_size_oldssl +modulus_exp_65537 +modulus_exp_oldssl +pub_encryption +pub_enc_known +sig_encryp tion +sig_enc_known --tracekey --nodns --nohttp
-testcmd-081_%:  TEST.args  += +cn +subject +altname +serial +serial_hex +serial_int +sernumber +rfc6125_names  --tracekey --nodns --nohttp
-
-# dynamically generate list of all  testcmd_DDD  targets
-ALL.ext.cmd     = $(shell awk -F_ '/^testcmd-[0-9]/{print $$1}' test/Makefile.ext)
-
-# dynamically generate list of all  testcmd_DDD  for all hostnames
+ALL.ext.cmd     = $(shell awk -F_ '/^testcmd-e[0-9]/{print $$1}' $(_MYSELF))
 ALL.by_host     = $(foreach host,$(TEST.ext.hosts),$(ALL.ext.cmd:%=%_$(host)))
 ALL.by_command  = $(foreach cmd,$(ALL.ext.cmd),$(TEST.ext.hosts:%=$(cmd)_%))
 ALL.extern      = $(ALL.by_host)
@@ -135,15 +116,16 @@ ALL.extern      = $(ALL.by_host)
 ALL.ext.host    = $(ALL.by_host)
 ALL.ext.host.log= $(ALL.by_host:%=%.log)
 
-#_____________________________________________________________________________
-#______________________________________________________ targets for testing __|
-
 # TODO: use target _no-hosts
-# for debugging following targets, add test.ext.internal to its dependencies
 test.ext.host:      $(ALL.by_host)
 test.ext.command:   $(ALL.by_command)
 test.ext.host.log:  $(ALL.ext.host.log)
 test.ext.log:       test.ext.host.log
+
+test.ext.host-%:    test.ext.internal test.ext.host
+
+ALL.ext.quick   = testcmd-e000_ testcmd-e001_ testcmd-e021_ testcmd-e066_
+test.ext.host.quick:     $(foreach host,$(TEST.ext.hosts),$(ALL.ext.quick:%=%_$(host)))
 
 .PHONY: test.ext.host test.ext.command test.ext.host.log test.ext.log
 
