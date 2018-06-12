@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.5 18/06/12 23:30:26
+#?      @(#) Makefile.cmds 1.6 18/06/13 01:02:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds   = 1.5
+_SID.cmds   = 1.6
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -36,8 +36,8 @@ ifeq (,$(_SID.test))
     -include test/Makefile
 endif
 
-_MYSELF             = test/Makefile.cmds
-ALL.Makefiles      += $(_MYSELF)
+_MYSELF.cmds        = test/Makefile.cmds
+ALL.Makefiles      += $(_MYSELF.cmds)
 
 TEST.cmds.hosts     = localhost
 ifdef TEST.hosts
@@ -180,13 +180,13 @@ testcmd-c_summ-+vulns_%:        TEST.args  += +vulns
 
 # note that . inside // below is a meta character
 # note: no sort because we want the sequence as defined above
-ALL.testhelp    = $(shell awk -F% '/^testcmd-c.help/   {print $$1}' $(_MYSELF))
-ALL.testinfo    = $(shell awk -F% '/^testcmd-c.info/   {print $$1}' $(_MYSELF))
-ALL.testcheck   = $(shell awk -F% '/^testcmd-c.check/  {print $$1}' $(_MYSELF))
-ALL.testvuln    = $(shell awk -F% '/^testcmd-c.vuln/   {print $$1}' $(_MYSELF))
-ALL.testcipher  = $(shell awk -F% '/^testcmd-c.cipher/ {print $$1}' $(_MYSELF))
-ALL.testsummary = $(shell awk -F% '/^testcmd-c.summ/   {print $$1}' $(_MYSELF))
-ALL.testlocal   = $(shell awk -F% '/^testcmd-c.local/  {print $$1}' $(_MYSELF))
+ALL.testhelp    = $(shell awk -F% '/^testcmd-c.help/   {print $$1}' $(_MYSELF.cmds))
+ALL.testinfo    = $(shell awk -F% '/^testcmd-c.info/   {print $$1}' $(_MYSELF.cmds))
+ALL.testcheck   = $(shell awk -F% '/^testcmd-c.check/  {print $$1}' $(_MYSELF.cmds))
+ALL.testvuln    = $(shell awk -F% '/^testcmd-c.vuln/   {print $$1}' $(_MYSELF.cmds))
+ALL.testcipher  = $(shell awk -F% '/^testcmd-c.cipher/ {print $$1}' $(_MYSELF.cmds))
+ALL.testsummary = $(shell awk -F% '/^testcmd-c.summ/   {print $$1}' $(_MYSELF.cmds))
+ALL.testlocal   = $(shell awk -F% '/^testcmd-c.local/  {print $$1}' $(_MYSELF.cmds))
 
 ALL.test.help   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testhelp:%=%$(host)))
 ALL.test.info   = $(foreach host,$(TEST.cmds.hosts),$(ALL.testinfo:%=%$(host)))
