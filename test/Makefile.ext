@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.4 18/06/12 23:28:38
+#?      @(#) Makefile.ext 1.5 18/06/13 01:05:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext    = 1.4
+_SID.ext    = 1.5
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -35,8 +35,8 @@ ifeq (,$(_SID.test))
     -include test/Makefile
 endif
 
-_MYSELF             = test/Makefile.ext
-ALL.Makefiles      += $(_MYSELF)
+_MYSELF.ext         = test/Makefile.ext
+ALL.Makefiles      += $(_MYSELF.ext)
 
 TEST.file           = test/Makefile.FQDN
 # FIXME: TEST.file must depend on targets herein
@@ -108,7 +108,7 @@ testcmd-e070_%: TEST.args  += +modulus +modulus_exponent +pubkey +pubkey_value +
 testcmd-e071_%: TEST.args  += +modulus_exp_1 +modulus_size_oldssl +modulus_exp_65537 +modulus_exp_oldssl +pub_encryption +pub_enc_known +sig_encryp tion +sig_enc_known --tracekey --nodns --nohttp
 testcmd-e081_%: TEST.args  += +cn +subject +altname +serial +serial_hex +serial_int +sernumber +rfc6125_names  --tracekey --nodns --nohttp
 
-ALL.ext.cmd     = $(shell awk -F_ '/^testcmd-e[0-9]/{print $$1}' $(_MYSELF))
+ALL.ext.cmd     = $(shell awk -F_ '/^testcmd-e[0-9]/{print $$1}' $(_MYSELF.ext))
 ALL.by_host     = $(foreach host,$(TEST.ext.hosts),$(ALL.ext.cmd:%=%_$(host)))
 ALL.by_command  = $(foreach cmd,$(ALL.ext.cmd),$(TEST.ext.hosts:%=$(cmd)_%))
 ALL.extern      = $(ALL.by_host)
