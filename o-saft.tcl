@@ -372,7 +372,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.172 Sommer Edition 2018
+#?      @(#) 1.173 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -442,8 +442,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.172 18/06/12 01:04:22 Sommer Edition 2018}
-set cfg(VERSION) {1.172}
+set cfg(SID)    {@(#) o-saft.tcl 1.173 18/06/12 18:17:16 Sommer Edition 2018}
+set cfg(VERSION) {1.173}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1313,6 +1313,7 @@ proc update_cursor {cursor} {
             catch {  $c config -cursor $cursor };   # silently discard errors
         }
     }
+    return
 }; # update_cursor
 
 proc update_status {val} {
@@ -1324,6 +1325,7 @@ proc update_status {val} {
     $cfg(objS) see "end - 2 line"
     set_readonly $cfg(objS)
     update idletasks;       # enforce display update
+    return
 }; # update_status
 
 proc toggle_cfg   {w opt val} {
@@ -3240,6 +3242,11 @@ PRG $argv0  -- $cfg(ICH)
  |  RC:        $cfg(RC)\t$rc
  |  O-Saft:    $prg(SAFT)
  |  INIT:      $prg(INIT)\t$ini
+ |  post:      $prg(post)
+ARGS
+ |  argv:      $argv
+ |  targets:   $targets
+ |  files:     $cfg(files)
 CFG
  |  TITLE:     $cfg(TITLE)
  |  debug:     $cfg(DEBUG)
