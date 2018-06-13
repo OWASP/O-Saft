@@ -23,14 +23,14 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.11 18/06/11 15:35:23
+#?      @(#) Makefile 1.12 18/06/13 16:55:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test   = 1.11
+_SID.test   = 1.12
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -48,7 +48,8 @@ ifeq (,$(_SID.help))
     -include ../Makefile.help
 endif
 
-ALL.Makefiles  += test/Makefile
+_MYSELF.test        = test/Makefile
+ALL.Makefiles      += $(_MYSELF.test)
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
@@ -114,8 +115,8 @@ EXE.test.bunt   = test/test-bunt.pl.txt
 _TODAY_         = $(shell date +%Y""%m%d)
 
 # following may be redefined in included Makefiles
-TEST.init       = --header
-TEST.args       =
+# TEST.init       = --header
+# TEST.args       =
 
 # macroname for list of hostnames needs to be unique in each Makefile*
 # otherwise some targets in other Makefile* get confused
@@ -247,9 +248,9 @@ message-%: $(SRC.pl)
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
-	    echo "$(EXE.pl) $(TEST.args) 2>&1 | grep $* " ; \
+	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* " ; \
 	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
-	    $(EXE.pl) $(TEST.args) 2>&1 | grep $* ; \
+	    $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* ; \
 	    rm -f $(_TMP.rc) ; \
 	fi
 # following removed from above, too noicy:
@@ -263,7 +264,7 @@ warning-%: message-%
 no.message-%:
 	@$(TARGET_VERBOSE)
 	@echo "$(TEST.rc)" > $(_TMP.rc)
-	$(EXE.pl) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
+	$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
 	@rm -f $(_TMP.rc)
 
 # The goal for test targets is to perform (test) all commands with all hosts.
@@ -321,16 +322,9 @@ no.message-%:
 #     ALL.by_host   = $(foreach host,$(TEST.hosts),$(ALL.ext.cmd:%=%_$(host)))
 #     #   returns: testcmd-00c_aa.tld testcmd-00i_aa.tld testcmd-00c_bb.tld testcmd_00i-bb.tld
 
-# general pattern rule, where pattern $* contains the hostname
-testcmd-%__nur-verwenden-wenn-mehrer-targets-in-ein-File: $(SRC.pl)
-	@$(TARGET_VERBOSE)
-	@echo "{## `date +%T`: $(EXE.pl) $(TEST.args) ..."
-	@cd  $(TEST.dir)  &&   $(EXE.pl) $(TEST.args) $(TEST.host)
-	@echo "##}"
-
 testcmd-%:
 	@$(TARGET_VERBOSE)
-	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.args)
+	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.init) $(TEST.args)
 # TODO: need verbose for executed command
 # TODO: need to add --no-dns if hostname is an IP
 
@@ -346,8 +340,7 @@ test-%: testcmd-%
 # Note that all target commands are prefixed with - to avoid make reporting of
 # errors if the command fails (as failture is intended, somehow).
 # Note that testcmd-%.log called from within test/ may return:  is up to date.
-# diffs STDERR is discarded (may return: "file does not exist").
-##	@$(eval _NEW.log := $(TEST.logdir)/testcmd-$*-$(_TODAY_).log)
+# diff's STDERR is discarded (may return: "file does not exist").
 testcmd-%.log: $(TEST.logdir)
 	@$(TARGET_VERBOSE)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(_TODAY_))
@@ -365,7 +358,8 @@ testcmd-%.log: $(TEST.logdir)
 # includes are done explicitly instead of:
 #  include test/Makefile.*
 # to avoid multiple inlcudes of the same file, which would result in make
-# errors complaining about target redfefinitions
+# errors complaining about target redefinitions
+# for a detailed description see test/Makefile.template
 
 ifeq (,$(_SID.warnings))
     -include test/Makefile.warnings
@@ -383,6 +377,10 @@ ifeq (,$(_SID.cgi))
     -include test/Makefile.cgi
 endif
 
+ifeq (,$(_SID.tcl))
+    -include test/Makefile.tcl
+endif
+
 ifeq (,$(_SID.misc))
     -include test/Makefile.misc
 endif
@@ -393,8 +391,6 @@ endif
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ test __|
-
-# targets must be at end of Makefile because of macros used as dependencies
 
 HELP-_test      = ______________________________________ targets for testing _
 HELP-tests      = make all tests
