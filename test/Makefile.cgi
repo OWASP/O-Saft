@@ -21,14 +21,14 @@
 #          * complete with tests from test/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.4 18/06/13 15:23:45
+#?      @(#) Makefile.cgi 1.5 18/06/13 16:53:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi    = 1.4
+_SID.cgi    = 1.5
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -39,8 +39,13 @@ ifeq (,$(_SID.test))
     -include test/Makefile
 endif
 
-_MYSELF.cgi     = test/Makefile.cgi
-ALL.Makefiles  += $(_MYSELF.cgi)
+_MYSELF.cgi         = test/Makefile.cgi
+ALL.Makefiles      += $(_MYSELF.cgi)
+
+TEST.cgi.hosts      = localhost
+ifdef TEST.hosts
+    TEST.cgi.hosts  = $(TEST.hosts)
+endif
 
 MORE-cgi        = " \
 \#               ___________________________________________ testing .cgi _$(_NL)\
@@ -50,8 +55,8 @@ MORE-cgi        = " \
  test.badhost-IP     - check a single IP or hostname if allowed in $(EXP.pl) $(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
-\#    make test.badhost-42.42.42.42 $(_NL)\
-\#    make test.badhost-127.0.0.127 $(_NL)\
+\#    make test.badhost_42.42.42.42 $(_NL)\
+\#    make test.badhost_127.0.0.127 $(_NL)\
 \#    make e-test.cgi.bad.hosts $(_NL)\
 \#    make s-test.cgi.bad.IPs $(_NL)\
 "
@@ -96,8 +101,8 @@ test.cgi.bad.IPv6   = \
 	\:\:1         ffff\:\:1  7f00\:1          ffff\:7f00\:1 \
 
 
-ALL.cgi.bad.hosts   = $(test.cgi.bad.hosts:%=test.badhost-%)
-ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.badhost-%)
+ALL.cgi.bad.hosts   = $(test.cgi.bad.hosts:%=test.cgibad_%)
+ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.cgibad_%)
 
 
 # Testing for invalid hostnames and IPs uses following command (example):
@@ -119,16 +124,49 @@ ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.badhost-%)
 # passed as arguments to the recursive MAKE call.
 # "make -i" is used to ensure that all tests are performed.
 
-test.badhost-%: EXE.pl      = ../$(SRC.cgi)
-test.badhost-%:
+_cgi.args   =
+test.cgibad%:       EXE.pl      = ../$(SRC.cgi)
+
+# some characters are enclosed in _ and _ for better readability
+test.cgibad--opt_%: _cgi.args   = --opt=ok.to.show.failed-status
+test.cgibad--cmd_%: _cgi.args   = --cmd=list
+test.cgibad--env_%: _cgi.args   = --env=not-allowed
+test.cgibad--exe_%: _cgi.args   = --exe=not-allowed
+test.cgibad--lib_%: _cgi.args   = --lib=not-allowed
+test.cgibad--cal_%: _cgi.args   = --call=not-allowed
+test.cgibad--ssl_%: _cgi.args   = --openssl=not-allowed
+test.cgibad--c01_%: _cgi.args   = '--bad-char=_<_'
+test.cgibad--c02_%: _cgi.args   = '--bad-char=_>_'
+test.cgibad--c03_%: _cgi.args   = '--bad-char=_;_'
+test.cgibad--c04_%: _cgi.args   = '--bad-char=_~_'
+test.cgibad--c05_%: _cgi.args   = '--bad-char=_?_'
+#test.cgibad--c06_%: _cgi.args   = '--bad-char=_\$$_'
+test.cgibad--c07_%: _cgi.args   = '--bad-char=_%_'
+test.cgibad--c08_%: _cgi.args   = '--bad-char=_\"_'
+test.cgibad--c09_%: _cgi.args   = '--bad-char=_\`_'
+test.cgibad--c10_%: _cgi.args   = '--bad-char=_*_'
+test.cgibad--c11_%: _cgi.args   = '--bad-char=_(_'
+test.cgibad--c12_%: _cgi.args   = '--bad-char=_)_'
+test.cgibad--c13_%: _cgi.args   = '--bad-char=_[_'
+test.cgibad--c14_%: _cgi.args   = '--bad-char=_]_'
+test.cgibad--c15_%: _cgi.args   = '--bad-char=_{_'
+test.cgibad--c16_%: _cgi.args   = '--bad-char=_}_'
+test.cgibad--c20_%: _cgi.args   = '--bad-char=_\#_'
+
+test.cgibad%:
+	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
 	@cd  $(TEST.dir) ; \
 	$(MAKE) -i no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) \
-		TEST.args="--cgi +quit --exit=BEGIN0 --host=$*"
+		TEST.init="--cgi +quit --exit=BEGIN0" \
+		TEST.args="$(_cgi.args) --host=$(_host)"
 
+ALL.testcgiopt  = $(shell awk -F% '/^test.cgibad--/ {print $$1}' $(_MYSELF.cgi))
+ALL.test.cgiopt = $(ALL.testcgiopt:%=%any.FQDN)
 
 test.cgi.badhosts: $(ALL.cgi.bad.hosts)
 test.cgi.badIPs:   $(ALL.cgi.bad.IPs)
 test.cgi.badall:   test.cgi.badhosts test.cgi.badIPs
+test.cgi.bad.opt:  $(ALL.test.cgiopt)
 
 #_____________________________________________________________________________ 
 #_____________________________________________________________________ test __|
