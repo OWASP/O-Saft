@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.4 18/06/11 00:39:58
+#?      @(#) Makefile.inc 1.5 18/06/13 23:03:49
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.4
+_SID.inc        = 1.5
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -46,6 +46,18 @@ endif
 
 ifndef TMP.dir
     TMP.dir     = /tmp/$(Project)
+endif
+
+ifndef SRC.pl
+    SRC.pl      = o-saft.pl
+endif
+
+ifndef SRC.cgi
+    SRC.cgi     = o-saft.cgi
+endif
+
+ifndef SRC.tcl
+    SRC.tcl     = o-saft.tcl
 endif
 
 ifndef MAKEFILE
