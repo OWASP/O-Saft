@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.241 18/04/14 12:51:22";
+my  $man_SID= "@(#) o-saft-man.pm 1.242 18/06/13 22:56:41";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -976,6 +976,30 @@ sub man_help        {
     return;
 } # man_help
 
+sub src_grep        {
+    #? search for given text in source file, then pretty print
+    my $hlp = shift;
+    print "\n";
+    _man_head(14, "Option    ", "Description where program terminates");
+    my $fh  = undef;
+    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
+        while(<$fh>) {
+            next if (m(^\s*#));
+            next if (not m(_EXIT.*$hlp));
+            my $opt     = $_;
+            my $comment = $_;
+            if ($opt =~ m/exit=/) {
+                # line looks like: _yeast_EXIT("exit=BEGIN0 - BEGIN start");
+                $opt =~ s/^[^"]*"/--/;    $opt =~ s/ - .*$//s;
+                $comment =~ s/^[^-]*//; $comment =~ s/".*$//s;
+            }
+            printf("%-15s%s\n", $opt, $comment);
+        }
+        close($fh);
+    }
+    _man_foot(14);
+} # src_grep
+
 sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
@@ -1055,6 +1079,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 	print OSaft::Doc::Data::get("coding.txt", $parent, $version);
         return;
     }
+    src_grep("exit="),          return if ($hlp =~ /^exit$/i);
     # nothing matched so far, try to find special section and only print that
     _man_dbx("printhelp: " . uc($hlp));
     man_help(uc($hlp));
