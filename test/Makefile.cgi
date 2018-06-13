@@ -21,14 +21,14 @@
 #          * complete with tests from test/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.3 18/06/08 17:57:01
+#?      @(#) Makefile.cgi 1.4 18/06/13 15:23:45
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi    = 1.3
+_SID.cgi    = 1.4
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -39,7 +39,29 @@ ifeq (,$(_SID.test))
     -include test/Makefile
 endif
 
-ALL.Makefiles  += test/Makefile.cgi
+_MYSELF.cgi     = test/Makefile.cgi
+ALL.Makefiles  += $(_MYSELF.cgi)
+
+MORE-cgi        = " \
+\#               ___________________________________________ testing .cgi _$(_NL)\
+ test.cgi.badhosts   - test that some hostnames are ignored in $(EXE.pl) $(_NL)\
+ test.cgi.badIPs     - test that some IPs are ignored in $(EXE.pl) $(_NL)\
+ test.cgi.badall     - test all bad and good IPs and hostnames $(_NL)\
+ test.badhost-IP     - check a single IP or hostname if allowed in $(EXP.pl) $(_NL)\
+\#$(_NL)\
+\# Examples: $(_NL)\
+\#    make test.badhost-42.42.42.42 $(_NL)\
+\#    make test.badhost-127.0.0.127 $(_NL)\
+\#    make e-test.cgi.bad.hosts $(_NL)\
+\#    make s-test.cgi.bad.IPs $(_NL)\
+"
+
+HELP-help.test.cgi  = print targets for testing $(SRC.cgi)
+help.test.cgi:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-cgi)      ; # no quotes!
+
+.PHONY: help.test.cgi
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -77,33 +99,6 @@ test.cgi.bad.IPv6   = \
 ALL.cgi.bad.hosts   = $(test.cgi.bad.hosts:%=test.badhost-%)
 ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.badhost-%)
 
-#_____________________________________________________________________________
-#___________________________________________________________ default target __|
-
-HELP-help.test.cgi  = print targets for testing $(SRC.cgi)
-help.test.cgi:
-	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
-	@echo $(MORE-cgi)      ; # no quotes!
-
-.PHONY: help.test.cgi
-
-
-#_____________________________________________________________________________
-#__________________________________________________ targets for testing cgi __|
-
-MORE-cgi        = " \
-\#               ___________________________________________ testing .cgi _$(_NL)\
- test.cgi.badhosts   - test that some hostnames are ignored in $(EXE.pl) $(_NL)\
- test.cgi.badIPs     - test that some IPs are ignored in $(EXE.pl) $(_NL)\
- test.cgi.badall     - test all bad and good IPs and hostnames $(_NL)\
- test.badhost-IP     - check a single IP or hostname if allowed in $(EXP.pl) $(_NL)\
-\#$(_NL)\
-\# Examples: $(_NL)\
-\#    make test.badhost-42.42.42.42 $(_NL)\
-\#    make test.badhost-127.0.0.127 $(_NL)\
-\#    make e-test.cgi.bad.hosts $(_NL)\
-\#    make s-test.cgi.bad.IPs $(_NL)\
-"
 
 # Testing for invalid hostnames and IPs uses following command (example):
 #       o-saft.cgi --cgi +quit --exit=BEGIN0 --host=10.0.0.1
@@ -124,10 +119,12 @@ MORE-cgi        = " \
 # passed as arguments to the recursive MAKE call.
 # "make -i" is used to ensure that all tests are performed.
 
+test.badhost-%: EXE.pl      = ../$(SRC.cgi)
 test.badhost-%:
 	@cd  $(TEST.dir) ; \
-	$(MAKE) -i no.message-exit.BEGIN0 EXE.pl=o-saft.cgi \
+	$(MAKE) -i no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) \
 		TEST.args="--cgi +quit --exit=BEGIN0 --host=$*"
+
 
 test.cgi.badhosts: $(ALL.cgi.bad.hosts)
 test.cgi.badIPs:   $(ALL.cgi.bad.IPs)
