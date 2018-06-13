@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.cmds 1.6 18/06/13 01:02:32
+#?      @(#) Makefile.cmds 1.7 18/06/13 23:05:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cmds   = 1.6
+_SID.cmds   = 1.7
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -133,6 +133,7 @@ testcmd-c-help-cfg-text_%:      TEST.args  += --help=cfg-text
 testcmd-c-help-gen-wiki_%:      TEST.args  += --help=gen-wiki
 testcmd-c-help-gen-html_%:      TEST.args  += --help=gen-html
 testcmd-c-help-gen-cgi_%:       TEST.args  += --help=gen-cgi
+testcmd-c-help-exit_%:          TEST.args  += --help=exit
 testcmd-c-help--yeast-data_%:   TEST.args  += --yeast-data
 testcmd-c-help--yeast-prot_%:   TEST.args  += --yeast-prot
 testcmd-c+info_%:               TEST.args  += +info
