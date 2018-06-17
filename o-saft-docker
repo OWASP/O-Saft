@@ -164,6 +164,13 @@
 #?       must trust the sources: the binary (load or pull) or the  Dockerfile
 #?       (which may be fetched at runtime too) used to build the image.
 #?
+#?       Update June/2018: Crypto-Miner in Docker images detected:
+#?           https://www.fortinet.com/blog/threat-research/yet-another-crypto-mining-botnet.html
+#?           https://kromtech.com/blog/security-center/cryptojacking-invades-cloud-how-modern-containerization-trend-is-exploited-by-attackers
+#?           https://sysdig.com/blog/detecting-cryptojacking/
+#?       That's why we prefer a transparent build of the Docker image. We re-
+#?       comment to build the Docker image for O-Saft using the Dockerfile.
+#?
 #?   Security of the tools executed from within the image (docker run)
 #?       If the image is trustworthy (see before),  the tools executed in the
 #?       image may have security impacts. 
@@ -231,7 +238,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.29 18/04/09 11:18:30
+#?       @(#) o-saft-docker 1.30 18/06/17 20:41:08
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
