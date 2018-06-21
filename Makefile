@@ -84,14 +84,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.23 18/06/08 17:59:53
+#?      @(#) Makefile 1.24 18/06/21 09:48:15
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID        = 1.23
+_SID        = 1.24
     # define our own SID as variable, if needed ...
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
@@ -240,6 +240,7 @@ SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
 TMP.dir         = /tmp/$(Project)
 GEN.html        = $(Project).html
 GEN.cgi.html    = $(Project).cgi.html
+GEN.text        = $(Project).txt
 GEN.wiki        = $(Project).wiki
 GEN.pod         = $(Project).pod
 GEN.src         = $(Project)-standalone.pl
@@ -282,7 +283,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.23
+_INST.text      = generated from Makefile 1.24
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -366,6 +367,7 @@ HELP-pl         = generate '$(SRC.pl)' from managed source files
 HELP-cgi        = generate HTML page for use with CGI '$(GEN.cgi.html)'
 HELP-pod        = generate POD format help '$(GEN.pod)'
 HELP-html       = generate HTML format help '$(GEN.html)'
+HELP-text       = generate plain text  help '$(GEN.text)'
 HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
 HELP-tar        = generate '$(GEN.tgz)' from all source
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources
@@ -382,11 +384,12 @@ pl:     $(SRC.pl)
 cgi:    $(GEN.cgi.html)
 pod:    $(GEN.pod)
 html:   $(GEN.html)
+text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.23
-tar:     GREP_EDIT = 1.23
+GREP_EDIT = 1.24
+tar:     GREP_EDIT = 1.24
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -432,6 +435,10 @@ $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
 $(GEN.pod):  $(SRC.pl) $(OSD.pm) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
+
+$(GEN.text): $(SRC.pl) $(OSD.pm) $(SRC.txt)
+	@$(TARGET_VERBOSE)
+	$(SRC.pl) --no-rc --no-warning --help          > $@
 
 $(GEN.wiki): $(SRC.pl) $(OSD.pm) $(SRC.txt)
 	@$(TARGET_VERBOSE)
