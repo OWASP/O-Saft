@@ -77,6 +77,9 @@
 #?          PATH
 #?              PATH for shell, set to:
 #?                  $OSAFT_DIR:$OSAFT_DIR/contrib:$OPENSSL_DIR/bin:$PATH
+#?          WORK_DIR
+#?              Directory where to build the packages (used for Dockerfile's
+#?              WORKDIR  dieŕective.
 #?
 #? EXAMPLES
 #?      Simple build with defaults:  alpine:edge, o-saft.tgz, openssl-chacha
@@ -112,7 +115,7 @@ MAINTAINER Achim <achim@owasp.org>
 	# OSAFT_VM_FROM must be defined again, otherwise its value is not available
 ARG     OSAFT_VM_FROM
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
-ARG     OSAFT_VM_SHA_OSAFT="a4d85953bdd1e08d20c6f31e9be7ea0af6ae8de3544bbfe823bd1e34ace26e7d"
+ARG     OSAFT_VM_SHA_OSAFT="bc7051a076720fbf30e7dff5518f4813c890ce68dd90ace6f77caa0c850a98d0"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
 ARG     OSAFT_VM_SRC_SSLEAY="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.82.tar.gz"
 ARG     OSAFT_VM_SHA_SSLEAY="5895c519c9986a5e5af88e3b8884bbdc70e709ee829dc6abb9f53155c347c7e5"
@@ -137,7 +140,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.18 17/11/20 23:45:57" \
+	SID="@(#) Dockerfile 1.19 18/07/03 14:01:39" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -148,6 +151,7 @@ ENV     TERM            xterm
 ENV     LD_RUN_PATH     ${OPENSSL_DIR}/lib
 ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
 ENV     BUILD_DIR       /tmp_src
+ENV     WORK_DIR	/
 
 # Install required packages, development tools and libs
 #RUN apk update && \   # no update neded and not wanted
@@ -156,11 +160,12 @@ RUN     apk add --no-cache wget ncurses $OSAFT_VM_APT_INSTALL \
 		 krb5-dev zlib-dev perl perl-readonly perl-dev
 	# perl-io-socket-ssl perl-net-ssleay
 
-WORKDIR	/
+WORKDIR	$WORK_DIR
 
 # Pull, build and install enhanced openssl
 RUN \
 	apk add --no-cache gmp-dev lksctp-tools-dev	&& \
+	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR $OPENSSL_DIR	&& \
 	wget --no-check-certificate $OSAFT_VM_SRC_OPENSSL -O $OSAFT_VM_TAR_OPENSSL && \
 	# check sha256 if there is one
@@ -219,11 +224,12 @@ RUN \
 	$OPENSSL_DIR/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
 	# cleanup
 	apk  del --purge gmp-dev lksctp-tools-dev && \
-	cd   /					&& \
-	rm   -r $BUILD_DIR $OSAFT_VM_TAR_OPENSSL
+	cd    $WORK_DIR				&& \
+	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL
 
 # Pull, build and install Net::SSLeay
 RUN \
+	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
 	wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
 	# check sha256 if there is one
@@ -242,8 +248,8 @@ RUN \
 		# Makefile.PL asks for "network tests", hence pipe "n" as answer
 		# installation in (default) /usr/local, hence no PREFIX=
 	make && make test && make install	&& \
-	cd   /					&& \
-	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SSLEAY
+	cd    $WORK_DIR				&& \
+	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY
 
 # Pull, build and install IO::Socket::SSL
 RUN \
@@ -257,11 +263,12 @@ RUN \
 	cd    $BUILD_DIR			&& \
 	echo "n" | perl Makefile.PL INC=-I$OPENSSL_DIR/include	&& \
 	make && make test && make install	&& \
-	cd   /					&& \
+	cd    $WORK_DIR				&& \
 	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET
 
 # Pull and install O-Saft
 RUN \
+	cd    $WORK_DIR				&& \
 	mkdir -p $OSAFT_DIR			&& \
 	adduser -D -h ${OSAFT_DIR} osaft	&& \
 	\
@@ -274,10 +281,8 @@ RUN \
 	chown -R root:root   $OSAFT_DIR		&& \
 	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl && \
-	mv       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
-	sed -e "s:^#--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:" \
-		< $OSAFT_DIR/.o-saft.pl-orig \
-		> $OSAFT_DIR/.o-saft.pl		&& \
+	cp       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
+	perl  -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:" $OSAFT_DIR/.o-saft.pl && \
 	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
 	rm    -f $OSAFT_VM_TAR_OSAFT
 
@@ -290,9 +295,6 @@ RUN \
 WORKDIR $OSAFT_DIR
 USER    osaft
 RUN     o-saft-docker usage
-	# currently (17.11.17) reports wrong number of ciphers for openssl,
-	# because o-saft-docker relies on owasp/o-saft image, which is not
-	# yet available (tagged).
 
 ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]
 CMD     ["--norc",  "--help=docker"]
