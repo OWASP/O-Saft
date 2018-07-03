@@ -51,7 +51,7 @@ use warnings;
 use constant {  ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     SSLHELLO_VERSION=> '18.06.03',
     SSLHELLO        => 'O-Saft::Net::SSLhello',
-#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.30 18/07/02 20:47:39',
+#   SSLHELLO_SID    => '@(#) SSLhello.pm 1.31 18/07/03 09:16:19',
 };
 use Socket; ## TBD will be deleted soon TBD ###
 use IO::Socket::INET;
@@ -358,6 +358,15 @@ sub _trace1_($){ my @messages = @_; local $\ = ""; print " " . join(" ", @messag
 sub _trace2_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 2); return }
 sub _trace3_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} ==3); return }
 sub _trace4_($){ my @messages = @_; local $\ = ""; print join(" ", @messages)                                           if ($main::cfg{'trace'} > 3); return }
+
+sub _carp   {
+    #? print warning message if wanted
+    # don't print if --no-warning given
+    my @txt = @_;
+    return if ((grep{/(:?--no.?warn)/ix} @main::ARGV) > 0);
+    local $\ = "\n"; carp(STR_WARN, join(" ", @txt));
+    return;
+}
 
 sub _hint   {
     #? print hint message if wanted
