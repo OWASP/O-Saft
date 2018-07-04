@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.1 18/06/12 18:27:52
+#?      @(#) Makefile.tcl 1.2 18/07/05 00:05:21
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl    = 1.1
+_SID.tcl    = 1.2
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -86,6 +86,7 @@ testcmd-tcl006_%: TEST.args  += --v
 testcmd-tcl007_%: TEST.args  += --v --img
 testcmd-tcl008_%: TEST.args  += --v --text
 testcmd-tcl009_%: TEST.args  += --v host1 host2
+#testcmd-tcl010_%: TEST.args  += --v --load=/tmp/some-file
 # TODO:  compare results of testcmd-tcl006 with
 #           testcmd-tcl007, testcmd-tcl008, testcmd-tclcmd-t009
 testcmd-tcl020_%: TEST.args  += --help
@@ -93,6 +94,11 @@ testcmd-tcl021_%: TEST.args  += --help-flow
 testcmd-tcl022_%: TEST.args  += --help-procs
 testcmd-tcl023_%: TEST.args  += --help-descr
 testcmd-tcl024_%: TEST.args  += --help-o-saft
+
+# test some warnings
+#testcmd-tcl030_%: TEST.args  += unknown
+testcmd-tcl031_%: TEST.args  += --v host1 host2 host3 host4 host5 host6 
+#testcmd-tcl032_%: TEST.args  += --load=/tmp/bad  # file with large value > 5000
 
 ALL.testtcl     = $(shell awk -F% '/^testcmd-tcl..._/ {print $$1}' $(_MYSELF.tcl))
 ALL.test.tcl    = $(foreach host,$(TEST.tcl.hosts),$(ALL.testtcl:%=%$(host)))
