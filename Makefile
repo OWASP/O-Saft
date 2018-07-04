@@ -84,14 +84,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.24 18/06/21 09:48:15
+#?      @(#) Makefile 1.25 18/07/04 23:26:10
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID        = 1.24
+_SID        = 1.25
     # define our own SID as variable, if needed ...
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
@@ -181,6 +181,7 @@ CONTRIB.post.awk= \
 		  lazy_checks.awk
 CONTRIB.post    = bunt.pl bunt.sh
 CONTRIB.misc    = \
+		  build_openssl.sh \
 		  cipher_check.sh \
 		  critic.sh \
 		  gen_standalone.sh \
@@ -283,7 +284,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.24
+_INST.text      = generated from Makefile 1.25
 EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
@@ -388,8 +389,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.24
-tar:     GREP_EDIT = 1.24
+GREP_EDIT = 1.25
+tar:     GREP_EDIT = 1.25
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
