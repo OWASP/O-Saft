@@ -198,6 +198,11 @@ exec wish "$0" ${1+"$@"}
 #?
 #?      Selected coloured text will not be highlighted. Anyway it is selected.
 #?
+#?      Some Tk widgets seem to have limits. This may result in errors like:
+#?          X Error of failed request:  BadAlloc (insufficient resources for operation)
+#?      There exist configurations as workaround to avoid such errors, see:
+#?          cfg(max53)
+#?
 #? ARGUMENTS
 #?      All arguments,  except the options described above,  are treated  as a
 #?      hostname to be checked.
@@ -372,7 +377,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.173 Sommer Edition 2018
+#?      @(#) 1.174 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -442,8 +447,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.173 18/06/12 18:17:16 Sommer Edition 2018}
-set cfg(VERSION) {1.173}
+set cfg(SID)    {@(#) o-saft.tcl 1.174 18/07/04 23:16:32 Sommer Edition 2018}
+set cfg(VERSION) {1.174}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -501,6 +506,16 @@ set cfg(DESC)   {-- CONFIGURATION GUI style and layout -----------------------}
 set cfg(bstyle) {image}        ;# button style:  image  or  text
 set cfg(layout) {table}        ;# layout o-saft.pl's results:  text  or  table
 set cfg(tfont)  {flat9x6}      ;# font used in tablelist::tablelist
+set cfg(max53)  4090           ;# max. size of text to be stored in table columns
+#   Some combinations of Tcl/Tk and X-Servers are limited in the size of text,
+#   which can be stored in Tk's table columns. When such a widget is rendered,
+#   the script crashes with following error message:
+#       X Error of failed request:  BadAlloc (insufficient resources for operation)
+#         Major opcode of failed request:  53 (X_CreatePixmap)
+#         Serial number of failed request:  2223
+#         Current serial number in output stream:  2255
+#   To avoid the crash, large texts (greater than this value) can be stripped.
+#   The default value of ~4000 is based on experience.
 
 set myX(DESC)   {-- CONFIGURATION window manager geometry --------------------}
 #   set minimal window sizes to be usable in a 1024x768 screen
@@ -1437,7 +1452,7 @@ proc apply_filter_table {w} {
     #? apply filters for markup in output, data is in table widget $w
     # FIXME: this is ugly code because the regex in f_rex are optimized for
     # use in Tcls's text widget, the regex must be changed to match the values
-    # in Tcl's tableist columns
+    # in Tcl's tablelist columns
     global cfg
     global f_key f_mod f_len f_bg f_fg f_rex f_un f_fn f_cmt; # lists containing filters
     foreach {k key} [array get f_key] {
@@ -1446,8 +1461,9 @@ proc apply_filter_table {w} {
     }
     set nr  -1
     foreach l [$w get 0 end] {
-        #set nr    [lindex $l 0] ;# cannot use stored number, because of leading 0
+        #set nr    [lindex $l 0];# cannot use stored number, because of leading 0
         incr nr
+        set __nr  [lindex $l 0];# number given by get
         set label [lindex $l 1]
         set value [lindex $l 2]
         set cmt   [lindex $l 3]
@@ -1459,8 +1475,8 @@ proc apply_filter_table {w} {
             if {$k eq 0} { continue };
             # extract values from filter table for easy use
             #set key $f_key($k)
-            set mod $f_mod($k); # not used here
-            set len $f_len($k); # not used here
+            set mod $f_mod($k) ;# not used here
+            set len $f_len($k) ;# not used here
             set rex $f_rex($k)
             set fg  $f_fg($k)
             set bg  $f_bg($k)
@@ -1775,6 +1791,11 @@ proc create_table {parent content} {
                 # summary lines of cipher checks
                 set col2 $col1
                 set col1 ""
+            }
+            if {$cfg(max53) < [string length $col2]} {
+                pwarn "comment for '$col0' to large (> $cfg(max53)); stripped"
+                set col2 "[string range $col2 1 $cfg(max53)] ..\[stripped\].." ;# see cfg(max53)
+                # FIXME: need to store orignal text somewhere (notin table)
             }
             set line [list $nr $col0 $col1 $col2]
         } else {
