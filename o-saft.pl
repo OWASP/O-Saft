@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.795 18/06/06 23:50:08",
-    STR_VERSION => "18.04.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.796 18/07/04 11:08:04",
+    STR_VERSION => "18.06.18",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -3358,6 +3358,7 @@ sub _can_connect        {
         # may result in a connection fail
         # SNI is not necessary, as we just want to know if the server responds
         #    however, SNI may be necessary in future ...
+        # Note that $sni may be undef
         $socket = IO::Socket::SSL->new(
             PeerAddr        => $host,
             PeerPort        => $port,
@@ -8099,7 +8100,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     _y_CMD("test connect ...");
     _yeast_TIME("test connect{");# SEE Note:Connection test
     my $connect_ssl = 1;
-    _trace("sni_name " . $cfg{'sni_name'});
+    _trace("sni_name " . ($cfg{'sni_name'} || STR_UNDEF));
     if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
         next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
     }
