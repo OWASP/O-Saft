@@ -71,15 +71,18 @@
 #?              Version of installed OpenSSL
 #?          TERM
 #?              Prefered X-Terminal program.
-#?          LD_RUN_PATH	${OPENSSL_DIR}/lib
-#?              Additional paths for runtime loader, necessary in case of
-#?              linking with "ld -rpath=..." does not work).
+#?          LD_RUN_PATH
+#?              Additional paths for runtime loader, used while linking with
+#?              "ld -rpath=..."
+#?              Linking of openssl, libssl.so and SSLeay.so will use  -rpath
+#?              in LDFLAGS to ensure that the special library will be used.
+#?              Default:${OPENSSL_DIR}/lib
 #?          PATH
 #?              PATH for shell, set to:
 #?                  $OSAFT_DIR:$OSAFT_DIR/contrib:$OPENSSL_DIR/bin:$PATH
 #?          WORK_DIR
 #?              Directory where to build the packages (used for Dockerfile's
-#?              WORKDIR  dieŕective.
+#?              WORKDIR  dierective.
 #?
 #? EXAMPLES
 #?      Simple build with defaults:  alpine:edge, o-saft.tgz, openssl-chacha
@@ -140,7 +143,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.19 18/07/03 14:01:39" \
+	SID="@(#) Dockerfile 1.20 18/07/04 11:01:55" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -191,7 +194,7 @@ RUN \
 	) >> apps/openssl.cnf			&& \
 	# config with all options, even if they are default
 	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
-		# see description for LDFLAGS above
+		# see description for LD_RUN_PATH above
 	./config --prefix=$OPENSSL_DIR --openssldir=$OPENSSL_DIR/ssl	\
 		$OSAFT_VM_DYN_OPENSSL	\
 		--with-krb5-flavor=MIT --with-krb5-dir=/usr/include/krb5/ \
@@ -243,6 +246,7 @@ RUN \
 	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\nconst SSL_METHOD * SSLv3_method()\n\n";}' SSLeay.xs	&& \
 		# quick&dirty patch, results in warning, which can be ignored
 		# Warning: duplicate function definition 'SSLv2_method' detected in SSLeay.xs, line 4256
+	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
 	echo "n" | env OPENSSL_PREFIX=$OPENSSL_DIR perl Makefile.PL \
 		INC=-I$OPENSSL_DIR/include DEFINE=-DOPENSSL_BUILD_UNSAFE=1	&& \
 		# Makefile.PL asks for "network tests", hence pipe "n" as answer
@@ -282,7 +286,7 @@ RUN \
 	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl && \
 	cp       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
-	perl  -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:" $OSAFT_DIR/.o-saft.pl && \
+	perl  -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:" $OSAFT_DIR/.o-saft.pl && \
 	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
 	rm    -f $OSAFT_VM_TAR_OSAFT
 
