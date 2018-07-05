@@ -84,14 +84,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.25 18/07/04 23:26:10
+#?      @(#) Makefile 1.26 18/07/05 23:12:08
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID        = 1.25
+_SID        = 1.26
     # define our own SID as variable, if needed ...
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
@@ -284,8 +284,9 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.25
-EXE.install     = sed   -e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
+_INST.text      = generated from Makefile 1.26
+EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
+			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
 			-e 's@INSERTED_BY_MAKE@$(_INST.text)@'
 
@@ -311,7 +312,7 @@ HELP-_known     = _______________________________________ well known targets _
 HELP-all        = does nothing; alias for help
 HELP-clean      = remove all generated files '$(ALL.gen)'
 HELP-release    = generate signed '$(GEN.tgz)' from sources
-HELP-install    = install tool in '$(INSTALL.dir)' using INSTALL.sh, $(INSTALL.dir) must not exist
+HELP-install    = install tool in '$(INSTALL.dir)' using INSTALL.sh, $(INSTALL.dir) must exist
 HELP-uninstall  = remove installtion directory '$(INSTALL.dir)' completely
 
 $(INSTALL.dir):
@@ -355,7 +356,7 @@ release: $(GEN.tgz)
 	@echo "#   docker push owasp/o-saft:latest"
 	@echo "#   # digest: sha256:... in README eintragen"
 	@echo "#   # digest: sha256:... in Dockerfile eintragen"
-# TODO: check if files are edited missing
+# TODO: check if files are edited or missing
 
 .PHONY: all clean install install-f uninstall release doc default
 
@@ -389,8 +390,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.25
-tar:     GREP_EDIT = 1.25
+GREP_EDIT = 1.26
+tar:     GREP_EDIT = 1.26
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
