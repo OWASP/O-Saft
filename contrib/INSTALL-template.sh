@@ -21,6 +21,7 @@
 #?          --check     - check current installation
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./release_information_only
+#?          --install   - install in default installation directory
 #           This is the behaviour of the old  INSTALL-devel.sh  script.
 #?
 #? OPTIONS
@@ -34,6 +35,7 @@
 #?      $0
 #?      $0 --clean
 #?      $0 --check
+#?      $0 --install
 #?      $0 /opt/bin/
 #?      $0 /opt/bin/ --force
 #?
@@ -42,8 +44,11 @@
 #       The generator (make) inserts some values for internal variables.  In
 #       particular the list of source files to be installed.
 #
+#? DEPENDENCIES
+#?      Following tools are required for proper functionality:
+#?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.8 18/07/05 07:19:59
+#?      @(#) INSTALL-template.sh 1.9 18/07/05 23:13:35
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -57,15 +62,17 @@ bas=${ich%%.*}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 colour="32m"    # 32 green, 34 blue for colour-blind
+clean=./release_information_only
 force=0
 mode="";        # "", check, clean, dest
-dest=""
-clean=./release_information_only
+inst="INSTALLDIR_INSERTED_BY_MAKE"
+
 
 text_miss="missing, try installing with ";	# 'cpan $m'"
 text_dev="did you run »$0 --clean«?"
 text_alt="file from previous installation, try running »$0 --clean« "
 text_old="ancient module found, try installing newer version, at least "
+
 
 files_contrib="
 	CONTRIB_INSERTED_BY_MAKE
@@ -104,8 +111,9 @@ while [ $# -gt 0 ]; do
 		exit 0
 		;;
 	 '-n' | '--n')  try=echo;   ;;
-	  '--check')    mode=check; ;;  # same as bare "check"
-	  '--clean')    mode=clean; ;;  # same as bare "clean"
+	  '--check')    mode=check; ;;
+	  '--clean')    mode=clean; ;;
+	  '--install')  mode=dest;  ;; # install in hardcoded path
 	  '--force')    force=1;    ;;
 	  '--blind')           colour="34m"; ;;
 	  '--color-blind')     colour="34m"; ;;
@@ -114,12 +122,11 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.8 ; exit; ;; # for compatibility to o-saft.pl
-	  *)            mode=dest; dest="$1";  ;;  # last one wins
+	  '+VERSION')   echo 1.9 ; exit; ;; # for compatibility to o-saft.pl
+	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
 done
-
 
 # --------------------------------------------- main
 
@@ -171,36 +178,39 @@ fi; # clean mode }
 
 # ------------------------- install mode  -------- {
 if [ "$mode" = "dest" ]; then
-	[ ! -d "$dest" ] && echo_red "**ERROR: $dest does not exist; exit" && exit 2
+	if [ ! -d "$inst" ]; then
+		echo_red "**ERROR: $inst does not exist; exit"
+		[ "$try" = "echo" ] || exit 2
+	fi
 
 	echo "# remove old files ..."
 	# TODO: argh, hard-coded list of files ...
 	for f in $files_install ; do
-		f="$dest/$f"
+		f="$inst/$f"
 		if [ -e "$f" ]; then
 			$try \rm -f "$f" || exit 3
 		fi
 	done
 
 	echo "# installing ..."
-	$try \mkdir -p "$dest/Net"
-	$try \mkdir -p "$dest/OSaft/Doc"
+	$try \mkdir -p "$inst/Net"
+	$try \mkdir -p "$inst/OSaft/Doc"
 	for f in $files_install ; do
-		$try \cp "$f" "$dest/$f"  || exit 4
+		$try \cp "$f" "$inst/$f"  || exit 4
 	done
 
 	if [ $force -eq 1 ]; then
-		$try \cp .o-saft.pl  "$dest/"         || echo_red ".o-saft.pl  failed"
-		$try \cp contrib/.o-saft.tcl "$dest/" || echo_red ".o-saft.tcl failed"
+		$try \cp .o-saft.pl  "$inst/"         || echo_red ".o-saft.pl  failed"
+		$try \cp contrib/.o-saft.tcl "$inst/" || echo_red ".o-saft.tcl failed"
 	fi
 
-	echo -n "# installation in $dest "; echo_green "completed."
+	echo -n "# installation in $inst "; echo_green "completed."
 	exit 0
 fi; # install mode }
 
 # ------------------------- check mode ----------- {
 if [ "$mode" != "check" ]; then
-	echo_red "**ERROR: unknow mode  $dest; exit"
+	echo_red "**ERROR: unknow mode  $mode; exit"
 	exit 5
 fi
 
@@ -210,7 +220,7 @@ err=0
 
 echo ""
 echo "# check installation"
-echo "# (warnings are ok if git clone will be used for development)"
+echo "# (warnings are ok if 'git clone' will be used for development)"
 echo "#--------------------------------------------------------------"
 # err=`expr $err + 1` ; # errors not counted here
 files="openssl_h-to-perl_hash generate_ciphers_hash o-saft-README"
@@ -224,18 +234,43 @@ done
 echo "#--------------------------------------------------------------"
 
 echo ""
-echo "# check openssl executable"
+echo "# check for installed O-Saft"
 echo "#--------------------------------------------------------------"
-echo -n "# openssl:\t"          && echo_green "`which openssl`"
-echo -n "# openssl version:\t"  && echo_green "`openssl version`"
-# TODO: openssl older than 0x01000000 has no SNI
+for o in o-saft.pl o-saft.tcl ; do
+	for p in `echo $PATH|tr ':' ' '` ; do
+		d="$p/$o"
+		if [ -e "$d" ]; then
+			v=`$p/$o +VERSION`
+			echo -n "# version $v:\t" && echo_green "$d"
+		fi
+	done
+done
+echo "#--------------------------------------------------------------"
+
+echo ""
+echo "# check for installed O-Saft resource files"
+echo "#--------------------------------------------------------------"
+# currently no version check
+rc="$HOME/.o-saft.tcl"
+if [ -e "$rc" ]; then
+	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
+	echo -n "# found $rc\t"   && echo_green "$v"
+	echo -n "# exist $rc\t"   && echo_yellow "consider updating from contrib/.o-saft.tcl"
+else
+	echo -n "# miss. $rc\t"   && echo_yellow "consider copying contrib/.o-saft.tcl into your HOME directory: $HOME"
+fi
+for p in `echo $HOME $PATH|tr ':' ' '` ; do
+	rc="$p/.o-saft.pl"
+	if [ -e "$rc" ]; then
+		echo -n "# $rc\t" && echo_yellow "will be used when started in $p only"
+	fi
+done
 echo "#--------------------------------------------------------------"
 
 echo ""
 echo "# check for installed perl modules"
 echo "#--------------------------------------------------------------"
-modules="Net::DNS Net::SSLeay IO::Socket::SSL Net::SSLinfo Net::SSLhello osaft
-OSaft::error_handler"
+modules="Net::DNS Net::SSLeay IO::Socket::SSL Net::SSLinfo Net::SSLhello osaft OSaft::error_handler"
 for m in $modules ; do
 	echo -n "# testing for $m ...\t"
 	v=`perl -M$m -le 'printf"\t%s",$'$m'::VERSION' 2>/dev/null`
@@ -254,58 +289,70 @@ for m in $modules ; do
 		[ "$c" = "green" ] && echo_green "$v"
 		[ "$c" = "red"   ] && echo_red   "$v , $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
+		[ "$c" = "red"   ] && echo E $err
 	else 
 		text_miss="$text_miss 'cpan $m'"
 		echo_red "$text_miss"
 		err=`expr $err + 1`
+		echo e $err
 	fi
 done
 echo "#--------------------------------------------------------------"
 
 echo ""
-echo "# check for installed O-Saft"
+echo "# check for important perl modules used by O-Saft"
 echo "#--------------------------------------------------------------"
-for o in o-saft.pl o-saft.tcl ; do
-	for p in `echo $PATH|tr ':' ' '` ; do
-		d="$p/$o"
-		if [ -e "$d" ]; then
-			v=`$p/$o +VERSION`
-			echo -n "# O-Saft found ($v):\t" && echo_green "$d"
-		fi
+modules="Net::DNS Net::SSLeay IO::Socket::SSL"
+for p in `echo $PATH|tr ':' ' '` ; do
+	o="$p/o-saft.pl"
+	[ -e "$o" ] || continue
+	echo "# testing $o ...\t"
+	for m in $modules ; do
+		v=`$o --no-warn +version | awk '($1=="'$m'"){print}'`
+		echo_green "$v"
 	done
 done
 echo "#--------------------------------------------------------------"
 
 echo ""
-echo "# check for installed O-Saft resource files"
+echo "# check openssl executable in PATH"
 echo "#--------------------------------------------------------------"
-# currently no version check
-rc="$HOME/.o-saft.tcl"
-if [ -e "$rc" ]; then
-	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
-	echo -n "# $rc found\t"    && echo_green "$v"
-	echo -n "# $rc exists\t"   && echo_yellow "consider updating from contrib/.o-saft.tcl"
-else
-	echo -n "# $rc missing\t"  && echo_yellow "consider copying contrib/.o-saft.tcl into your HOME directory: $HOME"
-fi
-rc="$HOME/.o-saft.pl"
-if [ -e "$rc" ]; then
-	echo -n "# $rc found\t"    && echo_yellow "which will be used when started in $HOME only"
-	err=`expr $err + 1`
-fi
+echo -n "# openssl:\t\t"        && echo_green "`which openssl`"
+echo -n "# openssl version:\t"  && echo_green "`openssl version`"
+# TODO: openssl older than 0x01000000 has no SNI
+echo "#--------------------------------------------------------------"
+
+echo ""
+echo "# check for openssl executable used by O-Saft"
+echo "#--------------------------------------------------------------"
+for p in `echo $PATH|tr ':' ' '` ; do
+	o="$p/yeast.pl"
+	r="$p/.o-saft.pl"
+	if [ -x "$o" ]; then
+		(
+		cd $p
+		openssl=`$o --no-warn +version | awk '/external executable/{print $NF}' | tr '\012' ' '`
+		echo -n "# $o:\t" && echo_green "$openssl"
+		)
+	fi
+done
 echo "#--------------------------------------------------------------"
 
 echo ""
 echo "# check for contributed files"
+echo "# (in $inst )"
 echo "#--------------------------------------------------------------"
 for c in $files_contrib ; do
+	c="$inst/$c"
 	if [ -e "$c" ]; then
 		echo -n "# found\t"     && echo_green "$c"
 	else
 		echo -n "# not found\t" && echo_red   "$c"
+		err=`expr $err + 1`
 	fi
 done
 echo "#--------------------------------------------------------------"
+
 echo ""
 echo -n "# checks\t"
 if [ $err -eq 0 ]; then
