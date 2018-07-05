@@ -18,11 +18,13 @@
 #?
 #?          /absolute/path
 #?                      - copy all necessary files into specified directory
+#?          --install   - copy all necessary files into default directory
 #?          --check     - check current installation
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./release_information_only
-#?          --install   - install in default installation directory
-#           This is the behaviour of the old  INSTALL-devel.sh  script.
+#                This is the behaviour of the old  INSTALL-devel.sh  script.
+#?          --openssl   - use  contrib/build_openssl.sh  to install  openssl
+#?                        and  Net::SSLeay
 #?
 #? OPTIONS
 #?      --h     got it
@@ -42,13 +44,15 @@
 # HACKER's INFO
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts some values for internal variables.  In
-#       particular the list of source files to be installed.
+#       particular the list of source files to be installed. See the strings
+#       INSERTED_BY_MAKE .
+# TODO: --check does not work if installed in other dir than default one
 #
 #? DEPENDENCIES
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.9 18/07/05 23:13:35
+#?      @(#) INSTALL-template.sh 1.10 18/07/05 23:30:38
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -64,6 +68,7 @@ dir=${0%/*}
 colour="32m"    # 32 green, 34 blue for colour-blind
 clean=./release_information_only
 force=0
+optn=""
 mode="";        # "", check, clean, dest
 inst="INSTALLDIR_INSERTED_BY_MAKE"
 
@@ -110,10 +115,11 @@ while [ $# -gt 0 ]; do
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
-	 '-n' | '--n')  try=echo;   ;;
+	 '-n' | '--n')  optn="--n"; try=echo; ;;
 	  '--check')    mode=check; ;;
 	  '--clean')    mode=clean; ;;
 	  '--install')  mode=dest;  ;; # install in hardcoded path
+	  '--openssl')  mode=openssl; ;;
 	  '--force')    force=1;    ;;
 	  '--blind')           colour="34m"; ;;
 	  '--color-blind')     colour="34m"; ;;
@@ -122,7 +128,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.9 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.10 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -165,6 +171,14 @@ if [ "$mode" != "check" ]; then
 	    exit 6
 	fi
 fi
+
+# ------------------------- openssl mode --------- {
+if [ "$mode" = "openssl" ]; then
+	build=contrib/build_openssl.sh
+	[ ! -x "$build" ] && echo_red "**ERROR: $build does not exist; exit" && exit 2
+	$build $optn
+	exit $?
+fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
 if [ "$mode" = "clean" ]; then
