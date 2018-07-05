@@ -26,6 +26,7 @@
 #? OPTIONS
 #?      --h     got it
 #?      --n     do not execute, just show
+#?      --blind use blue instead of green coloured texts
 #?      --force install .o-saft.pl  and  .o-saft.tcl  in  $HOME,  overwrites
 #?              existing ones
 #?
@@ -42,7 +43,7 @@
 #       particular the list of source files to be installed.
 #
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.7 18/04/18 21:40:49
+#?      @(#) INSTALL-template.sh 1.8 18/07/05 07:19:59
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -55,6 +56,7 @@ ich=${0##*/}
 bas=${ich%%.*}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
+colour="32m"    # 32 green, 34 blue for colour-blind
 force=0
 mode="";        # "", check, clean, dest
 dest=""
@@ -83,6 +85,17 @@ files_ancient="generate_ciphers_hash openssl_h-to-perl_hash o-saft-README INSTAL
 
 files_info="CHANGES README o-saft.tgz"
 
+# --------------------------------------------- internal functions
+echo_yellow () {
+	echo "\033[1;33m$@\033[0m"
+}
+echo_green  () {
+	echo "\033[1;$colour$@\033[0m"
+}
+echo_red    () {
+	echo "\033[1;31m$@\033[0m"
+}
+
 # --------------------------------------------- arguments and options
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -94,11 +107,14 @@ while [ $# -gt 0 ]; do
 	  '--check')    mode=check; ;;  # same as bare "check"
 	  '--clean')    mode=clean; ;;  # same as bare "clean"
 	  '--force')    force=1;    ;;
+	  '--blind')           colour="34m"; ;;
+	  '--color-blind')     colour="34m"; ;;
+	  '--colour-blind')    colour="34m"; ;;
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.7 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.8 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; dest="$1";  ;;  # last one wins
 	esac
 	shift
@@ -138,7 +154,7 @@ fi; # default mode }
 if [ "$mode" != "check" ]; then
 	if [ -n "$osaft_vm_build" ]; then
 	    echo "**ERROR: found 'osaft_vm_build=$osaft_vm_build'"
-	    echo "\033[1;31m**ERROR: inside docker only --check possible; exit\033[0m"
+	    echo_red "**ERROR: inside docker only --check possible; exit"
 	    exit 6
 	fi
 fi
@@ -155,7 +171,7 @@ fi; # clean mode }
 
 # ------------------------- install mode  -------- {
 if [ "$mode" = "dest" ]; then
-	[ ! -d "$dest" ] && echo "\033[1;31m**ERROR: $dest does not exist; exit\033[0m" && exit 2
+	[ ! -d "$dest" ] && echo_red "**ERROR: $dest does not exist; exit" && exit 2
 
 	echo "# remove old files ..."
 	# TODO: argh, hard-coded list of files ...
@@ -174,17 +190,17 @@ if [ "$mode" = "dest" ]; then
 	done
 
 	if [ $force -eq 1 ]; then
-		$try \cp .o-saft.pl  "$dest/" || echo "\033[1;31m .o-saft.pl  failed\033[0m"
-		$try \cp contrib/.o-saft.tcl "$dest/" || echo "\033[1;31m .o-saft.tcl failed\033[0m"
+		$try \cp .o-saft.pl  "$dest/"         || echo_red ".o-saft.pl  failed"
+		$try \cp contrib/.o-saft.tcl "$dest/" || echo_red ".o-saft.tcl failed"
 	fi
 
-	echo "# installation in $dest \033[1;32mcompleted.\033[0m"
+	echo -n "# installation in $dest "; echo_green "completed."
 	exit 0
 fi; # install mode }
 
 # ------------------------- check mode ----------- {
 if [ "$mode" != "check" ]; then
-	echo "\033[1;31m**ERROR: unknow mode  $dest; exit"
+	echo_red "**ERROR: unknow mode  $dest; exit"
 	exit 5
 fi
 
@@ -199,19 +215,19 @@ echo "#--------------------------------------------------------------"
 # err=`expr $err + 1` ; # errors not counted here
 files="openssl_h-to-perl_hash generate_ciphers_hash o-saft-README"
 for f in $files ; do
-	[ -e "$f" ] && echo "# found $f ... \t\033[1;33m$text_alt\033[0m"
+	[ -e "$f" ] && echo -n "# found $f ...\t" && echo_yellow "$text_alt"
 done
 files="$files_develop $files_info "
 for f in $files ; do
-	[ -e "$f" ] && echo "# found $f ... \t\033[1;33m$text_dev\033[0m"
+	[ -e "$f" ] && echo -n "# found $f ...\t" && echo_yellow "$text_dev"
 done
 echo "#--------------------------------------------------------------"
 
 echo ""
 echo "# check openssl executable"
 echo "#--------------------------------------------------------------"
-echo -n "# openssl:" && which openssl
-echo -n "# openssl version\033[1;32m\t" && openssl version && echo -n "\033[0m"
+echo -n "# openssl:\t"          && echo_green "`which openssl`"
+echo -n "# openssl version:\t"  && echo_green "`openssl version`"
 # TODO: openssl older than 0x01000000 has no SNI
 echo "#--------------------------------------------------------------"
 
@@ -221,7 +237,7 @@ echo "#--------------------------------------------------------------"
 modules="Net::DNS Net::SSLeay IO::Socket::SSL Net::SSLinfo Net::SSLhello osaft
 OSaft::error_handler"
 for m in $modules ; do
-	echo -n "# testing for $m ..."
+	echo -n "# testing for $m ...\t"
 	v=`perl -M$m -le 'printf"\t%s",$'$m'::VERSION' 2>/dev/null`
 	if [ -n "$v" ]; then
 		case "$m" in
@@ -235,12 +251,12 @@ for m in $modules ; do
 		  'OSaft::Ciphers' )                c="green"; ;;
 		  *) c=`perl -le "print (($expect > $v) ? 'red' : 'green')"`; ;;
 		esac
-		[ "$c" = "green" ] && echo "\033[1;32m\t$v\033[0m"
-		[ "$c" = "red"   ] && echo "\033[1;31m\t$v , $text_old $expect\033[0m"
+		[ "$c" = "green" ] && echo_green "$v"
+		[ "$c" = "red"   ] && echo_red   "$v , $text_old $expect"
 		[ "$c" = "red"   ] && err=`expr $err + 1`
 	else 
 		text_miss="$text_miss 'cpan $m'"
-		echo "\033[1;31m $text_miss\033[0m"
+		echo_red "$text_miss"
 		err=`expr $err + 1`
 	fi
 done
@@ -254,7 +270,7 @@ for o in o-saft.pl o-saft.tcl ; do
 		d="$p/$o"
 		if [ -e "$d" ]; then
 			v=`$p/$o +VERSION`
-			echo "# O-Saft found ($v):\033[1;32m\t$d \033[0m"
+			echo -n "# O-Saft found ($v):\t" && echo_green "$d"
 		fi
 	done
 done
@@ -267,14 +283,14 @@ echo "#--------------------------------------------------------------"
 rc="$HOME/.o-saft.tcl"
 if [ -e "$rc" ]; then
 	v=`awk '/RCSID/{print $3}' $rc | tr -d '{};'`
-	echo "# $rc found\033[1;32m\t$v \033[0m"
-	echo "# $rc exists\t\033[1;33mconsider updating from contrib/.o-saft.tcl\033[0m"
+	echo -n "# $rc found\t"    && echo_green "$v"
+	echo -n "# $rc exists\t"   && echo_yellow "consider updating from contrib/.o-saft.tcl"
 else
-	echo "# $rc missing\t\033[1;33mconsider copying  contrib/.o-saft.tcl into your HOME directory: $HOME\033[0m"
+	echo -n "# $rc missing\t"  && echo_yellow "consider copying contrib/.o-saft.tcl into your HOME directory: $HOME"
 fi
 rc="$HOME/.o-saft.pl"
 if [ -e "$rc" ]; then
-	echo "# $rc found\t\033[1;33m which will be used when started in $HOME only \033[0m"
+	echo -n "# $rc found\t"    && echo_yellow "which will be used when started in $HOME only"
 	err=`expr $err + 1`
 fi
 echo "#--------------------------------------------------------------"
@@ -284,18 +300,18 @@ echo "# check for contributed files"
 echo "#--------------------------------------------------------------"
 for c in $files_contrib ; do
 	if [ -e "$c" ]; then
-		echo "# found\t\033[1;32m\t$c \033[0m"
+		echo -n "# found\t"     && echo_green "$c"
 	else
-		echo "# not found\t\033[1;33m\t$c \033[0m"
+		echo -n "# not found\t" && echo_red   "$c"
 	fi
 done
 echo "#--------------------------------------------------------------"
 echo ""
-echo -n "# checks"
+echo -n "# checks\t"
 if [ $err -eq 0 ]; then
-	echo "\033[1;32m\tpassed\033[0m"
+	echo_green "passed"
 else
-	echo "\033[1;31m\tfailed , $err error(s) detected\033[0m"
+	echo_red   "failed , $err error(s) detected"
 fi
 
 # check mode }
