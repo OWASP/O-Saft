@@ -21,14 +21,14 @@
 #          * complete with tests from test/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.5 18/06/13 16:53:01
+#?      @(#) Makefile.cgi 1.6 18/07/06 11:24:45
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi    = 1.5
+_SID.cgi    = 1.6
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -49,16 +49,20 @@ endif
 
 MORE-cgi        = " \
 \#               ___________________________________________ testing .cgi _$(_NL)\
- test.cgi.badhosts   - test that some hostnames are ignored in $(EXE.pl) $(_NL)\
- test.cgi.badIPs     - test that some IPs are ignored in $(EXE.pl) $(_NL)\
+ test.cgi            - test all bad IPs, hostnames and options for $(SRC.CGI) $(_NL)\
+ test.cgi.log        - same as test.cgi but store output in $(TEST.logdir)/ $(_NL)\
+ test.cgi.badhosts   - test that some hostnames are ignored in $(SRC.cgi) $(_NL)\
+ test.cgi.badIPs     - test that some IPs are ignored in $(SRC.cgi) $(_NL)\
  test.cgi.badall     - test all bad and good IPs and hostnames $(_NL)\
- test.badhost-IP     - check a single IP or hostname if allowed in $(EXP.pl) $(_NL)\
+ test.cgi.badopt     - test bad options and characters$(_NL)\
+ test.badhost-NAME   - check a single NAME (IP or hostname) if allowed in $(SRC.cgi) $(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
 \#    make test.badhost_42.42.42.42 $(_NL)\
 \#    make test.badhost_127.0.0.127 $(_NL)\
-\#    make e-test.cgi.bad.hosts $(_NL)\
-\#    make s-test.cgi.bad.IPs $(_NL)\
+\#    make e-test.cgi.badhosts $(_NL)\
+\#    make s-test.cgi.badIPs $(_NL)\
+\#    make s-test.cgi.badopt $(_NL)\
 "
 
 HELP-help.test.cgi  = print targets for testing $(SRC.cgi)
@@ -154,6 +158,7 @@ test.cgibad--c16_%: _cgi.args   = '--bad-char=_}_'
 test.cgibad--c20_%: _cgi.args   = '--bad-char=_\#_'
 
 test.cgibad%:
+	@$(TARGET_VERBOSE)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
 	@cd  $(TEST.dir) ; \
 	$(MAKE) -i no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) \
@@ -162,15 +167,34 @@ test.cgibad%:
 
 ALL.testcgiopt  = $(shell awk -F% '/^test.cgibad--/ {print $$1}' $(_MYSELF.cgi))
 ALL.test.cgiopt = $(ALL.testcgiopt:%=%any.FQDN)
+ALL.test.cgi    = $(ALL.cgi.bad.hosts) $(ALL.cgi.bad.IPs) $(ALL.test.cgiopt)
 
 test.cgi.badhosts: $(ALL.cgi.bad.hosts)
 test.cgi.badIPs:   $(ALL.cgi.bad.IPs)
 test.cgi.badall:   test.cgi.badhosts test.cgi.badIPs
-test.cgi.bad.opt:  $(ALL.test.cgiopt)
+test.cgi.badopt:   $(ALL.test.cgiopt)
+
+test.cgi:          $(ALL.test.cgi)
+
+_TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
+# use 'make -i ...' because we have targets which fail, which is intended
+$(_TEST.CGI.log):
+	@$(MAKE) -i test.cgi > $@ 2>&1
+
+test.cgi.log: $(_TEST.CGI.log)
+	@$(TARGET_VERBOSE)
+	@diff $(TEST.logdir)/$@ $(_TEST.CGI.log) \
+	    && rm $(_TEST.CGI.log) \
+	    || mv $(_TEST.CGI.log) $(TEST.logdir)/$@
+	@-test -f $(TEST.logdir)/$@  ||  mv $(_TEST.CGI.log) $(TEST.logdir)/$@
+	@ls -l  $(TEST.logdir)/$@*
+# TODO: same target as test.warnings.log
+
+.PHONY: test.cgi.log
 
 #_____________________________________________________________________________ 
 #_____________________________________________________________________ test __|
 
 # feed main Makefile
-ALL.tests      += $(ALL.cgi.bad.hosts) $(ALL.cgi.bad.IPs)
-#ALL.tests.log  +=
+ALL.tests      += $(ALL.test.cgi)
+ALL.tests.log  += test.cgi.log
