@@ -19,14 +19,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.template 1.1 18/06/13 00:51:51
+#?      @(#) Makefile.template 1.2 18/07/06 10:49:02
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TMP    = 1.1
+_SID.TMP    = 1.2
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -93,7 +93,7 @@ test.TMP.internal:
 MORE-TMP        = " \
 \#               ______________________________________________ testing ... _$(_NL)\
  test.TMP        - test functionality of SOMETHING$(_NL)\
- test.TMP.log    - same as test.TMP but store output in $(TEST.dirlog)/$(_NL)\
+ test.TMP.log    - same as test.TMP but store output in $(TEST.logdir)/$(_NL)\
 \#$(_NL)\
 \# Examples:$(_NL)\
 \#    make e-ALL.testTMP$(_NL)\
