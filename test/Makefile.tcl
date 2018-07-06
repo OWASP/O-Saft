@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.2 18/07/05 00:05:21
+#?      @(#) Makefile.tcl 1.3 18/07/06 10:50:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl    = 1.2
+_SID.tcl    = 1.3
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -49,7 +49,7 @@ MORE-tcl         = " \
 \#               ______________________________________________ GUI tests _$(_NL)\
  help.test.tcl.all  - print all targets$(_NL)\
  test.tcl        - test functionality of $(SRC.tcl)$(_NL)\
- test.tcl.log    - same as test.tcl but store output in $(TEST.dirlog)/$(_NL)\
+ test.tcl.log    - same as test.tcl but store output in $(TEST.logdir)/$(_NL)\
 "
 
 HELP-help.test.tcl  = print targets for GUI testing
