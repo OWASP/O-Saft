@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.5 18/06/13 01:05:14
+#?      @(#) Makefile.ext 1.6 18/07/06 10:17:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext    = 1.5
+_SID.ext    = 1.6
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -49,12 +49,12 @@ endif
 MORE-ext        = " \
 \#               ________________________________________ summary targets _$(_NL)\
  help.test.ext.all  - print available individual targets for testing commands$(_NL)\
- test.ext           - test all commands with all hotnames, alias for test.ext.host$(_NL)\
- test.ext.host      - test all commands with all hotnames (sorted by host)$(_NL)\
+ test.ext           - test all commands with all hostnames, alias for test.ext.host$(_NL)\
+ test.ext.host      - test all commands with all hostnames (sorted by host)$(_NL)\
  test.ext.host.log  - same as test.ext.host but store output in logfile$(_NL)\
- test.ext.command   - test all commands with all hotnames (sorted by command)$(_NL)\
+ test.ext.command   - test all commands with all hostnames (sorted by command)$(_NL)\
  test.ext.log       - alias for test.ext.host.log$(_NL)\
- test.ext.host.quick- test some commands with all hotnames$(_NL)\
+ test.ext.host.quick- test some commands with all hostnames$(_NL)\
 \#               ________________________________________ special targets _$(_NL)\
  testcmd-eDDD_HOST  - specific test target with HOST (available targets see: help.test.ext.all)$(_NL)\
  testcmd-eDDD_HOST.log  - same as testcmd-DDD_HOST but store output in test/testcmd-DDD_HOST.log$(_NL)\
