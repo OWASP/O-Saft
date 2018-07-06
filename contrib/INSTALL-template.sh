@@ -52,7 +52,7 @@
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.10 18/07/05 23:30:38
+#?      @(#) INSTALL-template.sh 1.11 18/07/06 09:59:08
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -128,7 +128,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.10 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.11 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
@@ -177,7 +177,18 @@ if [ "$mode" = "openssl" ]; then
 	build=contrib/build_openssl.sh
 	[ ! -x "$build" ] && echo_red "**ERROR: $build does not exist; exit" && exit 2
 	$build $optn
-	exit $?
+	status=$?
+	if [ $status -ne 0 ]; then
+		cat << EoT
+# $build uses its default settings. To check the settings, use:
+#     $0 --openssl --n
+# If other configurations should be used, please use directly:
+#     $build --help
+#     $build --n
+#     $build /path/to/install
+EoT
+	fi
+	exit $status
 fi; # openssl mode }
 
 # ------------------------- clean mode ----------- {
