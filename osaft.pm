@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.03.18',  # official version number of this file
+    OSAFT_VERSION   => '18.06.18',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.140 18/07/08 08:30:45',
+    OSAFT_SID   => '@(#) osaft.pm 1.141 18/07/08 19:52:05',
 
 };
 
@@ -1484,7 +1484,7 @@ our %cfg = (
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
     'cmd-vulns'     => [        # commands for checking known vulnerabilities
                         qw(
-                         beast breach crime drown freak heartbleed logjam
+                         beast breach ccs crime drown freak heartbleed logjam
                          lucky13 poodle rc4 robot sloth sweet32 time
                          hassslv2 hassslv3 compression cipher_pfs session_random
                          renegotiation resumption
@@ -1539,7 +1539,7 @@ our %cfg = (
                         qw(reversehost ip resumption renegotiation
                          session_protocol session_ticket session_random session_lifetime
                          krb5 psk_hint psk_identity srp heartbeat
-                         cipher_selected cipher_pfs crime
+                         cipher_selected cipher_pfs ccs crime
                        )],
     'need-checkhttp'=> [qw(pkp_pins)],  # commands which need checkhttp(); more will be added in _init
     'need-checkprot'=> [        # commands which need checkprot(), should be same as in 'cmd-prots'
