@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.796 18/07/04 11:08:04",
+    SID         => "@(#) yeast.pl 1.797 18/07/08 08:18:36",
     STR_VERSION => "18.06.18",          # <== our official version number
 };
 
@@ -763,6 +763,7 @@ my %check_dest = (  ## target (connection) data
     'cipher_pfs'    => {'txt' => "Target supports PFS (selected cipher)"},
     'cipher_pfsall' => {'txt' => "Target supports PFS (all ciphers)"},
     'closure'       => {'txt' => "Target understands TLS closure alerts"},
+    'compression'   => {'txt' => "Target does not support Compression"},
     'fallback'      => {'txt' => "Target supports fallback from TLSv1.1"},
     'ism'           => {'txt' => "Target is ISM compliant (ciphers only)"},
     'pci'           => {'txt' => "Target is PCI compliant (ciphers only)"},
