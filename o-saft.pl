@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.797 18/07/08 08:18:36",
+    SID         => "@(#) yeast.pl 1.798 18/07/08 10:44:32",
     STR_VERSION => "18.06.18",          # <== our official version number
 };
 
@@ -238,10 +238,21 @@ sub _warn_nosni         {
     return;
 } # _warn_nosni
 
-sub _print_read($$)     { my @txt = @_; printf("=== reading: %s (%s) ===\n", @txt) if ((grep{/(?:--no.?header|--cgi)/i} @ARGV) <= 0); return; }
-    # print information what will be read
-        # $cgi not available, hence we use @ARGV (may contain --cgi or --cgi-exec)
-        # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
+sub _print_read         {
+    #? print information which file will be read
+    #? will only be written if --v or --warn or --trace is given and  --cgi or
+    #? --no-header are not given
+    # $cgi is not (yet) available, hence we use @ARGV, which may contain:
+    # --cgi or --cgi-exec
+    # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
+    my $fil = shift;
+    my @txt = @_;
+    #_dbx "ARGV @ARGV : ". (grep{/(?:--no.?header|--cgi)/i} @ARGV);
+    return if (0 <  (grep{/(?:--no.?header|--cgi)/i}  @ARGV));
+    return if (0 >= (grep{/(?:--warn|--v$|--trace)/i} @ARGV));
+    printf("=== reading: %s (%s) ===\n", $fil, @txt);
+    return;
+} # _print_read
 
 sub _load_file          {
     # load file with Perl's require using the paths in @INC
