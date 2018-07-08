@@ -21,13 +21,13 @@
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
 #? VERSION
-#?      @(#) .o-saft.pl 1.88 18/05/06 14:03:14
+#?      @(#) .o-saft.pl 1.89 18/07/08 08:33:42
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-#_SID = 1.88; # our own SID required for Makefile and some tools
+#_SID = 1.89; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -227,7 +227,7 @@
 ###
 ### redefine command +vulns
 ###
---cfg_cmd=vulns=beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 time hassslv2 hassslv3 cipher_pfs session_random
+--cfg_cmd=vulns=beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 time hassslv2 hassslv3 compression fallback cipher_pfs session_random renegotiation resumption
 
 ###
 ### redefine texts
