@@ -1,5 +1,5 @@
 
-# SID	@(#) links.txt 1.1 18/01/10 21:53:16
+# SID	@(#) links.txt 1.2 18/07/08 19:34:40
 
 # name | description
 #------+----------------------------------------------------------------------+
@@ -8,6 +8,7 @@ OWASP Certificate and Public Key Pinning	https://www.owasp.org/index.php/Certifi
 OWASP HTTP Strict Transport Security	https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
 BSI TR-02102 Teil 2	https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR02102/BSI-TR-02102-2.pdf
 ENISA: Algorithms, Key Sizes and Parameters Report	http://www.enisa.europa.eu/activities/identity-and-trust/library/deliverables/algorithms-key-sizes-and-parameters-report
+EV Certificate	http://www.evsslcertificate.com/
 EV Certificate Guidelines	https://www.cabforum.org/EV_Certificate_Guidelines.pdf
 AIA	http://www.startssl.com/certs/sub.class4.server.ca.crt
 ALPN (draft)	http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
@@ -51,6 +52,7 @@ XMSS	https://eprint.iacr.org/2011/484.pdf
 
 BEAST	?
 BREACH	http://www.breachattack.com/
+CCS	http://ccsinjection.lepidum.co.jp/
 CRIME	http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
 DROWN	https://drownattack.com/
 FREAK	https://freakattack.com/
