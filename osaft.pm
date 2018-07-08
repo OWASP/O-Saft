@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) o-saft-lib.pm 1.139 18/03/26 18:35:20',
+    OSAFT_SID   => '@(#) osaft.pm 1.140 18/07/08 08:30:45',
 
 };
 
@@ -1486,9 +1486,9 @@ our %cfg = (
                         qw(
                          beast breach crime drown freak heartbleed logjam
                          lucky13 poodle rc4 robot sloth sweet32 time
-                         hassslv2 hassslv3 cipher_pfs session_random
+                         hassslv2 hassslv3 compression cipher_pfs session_random
+                         renegotiation resumption
                        )],
-                       #qw(resumption renegotiation) # die auch?
     'cmd-prots'     => [        # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npns next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
