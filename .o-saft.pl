@@ -21,13 +21,13 @@
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
 #? VERSION
-#?      @(#) .o-saft.pl 1.89 18/07/08 08:33:42
+#?      @(#) .o-saft.pl 1.90 18/07/08 19:54:45
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-#_SID = 1.89; # our own SID required for Makefile and some tools
+#_SID = 1.90; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -195,14 +195,14 @@
 ###
 ### redefine command +check
 ###
---cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls12 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random closure sgc zlib open_pgp lzo hasalpn hasnpn fallback renegotiation resumption srp scsv cnt_checks_yes cnt_checks_no cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+--cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls12 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach ccs crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random closure sgc zlib open_pgp lzo hasalpn hasnpn fallback renegotiation resumption srp scsv cnt_checks_yes cnt_checks_no cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
 # useless for +check:    ip
 # don't use   +check:   (SSLv|TLSv)*
 
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls12 cipher cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
+--cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls12 cipher cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast ccs crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify heartbeat expansion compression hostname hsts_sts crl resumption renegotiation
 
 ###
 ### redefine command +sizes
@@ -227,7 +227,7 @@
 ###
 ### redefine command +vulns
 ###
---cfg_cmd=vulns=beast breach crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 time hassslv2 hassslv3 compression fallback cipher_pfs session_random renegotiation resumption
+--cfg_cmd=vulns=beast breach ccs crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 time hassslv2 hassslv3 compression fallback cipher_pfs session_random renegotiation resumption
 
 ###
 ### redefine texts
