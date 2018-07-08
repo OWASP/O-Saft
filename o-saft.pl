@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.798 18/07/08 10:44:32",
-    STR_VERSION => "18.06.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.799 18/07/08 20:01:19",
+    STR_VERSION => "18.06.20",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -731,6 +731,7 @@ my %check_conn = (  ## connection data
     'hostname'      => {'txt' => "Connected hostname equals certificate's Subject"},
     'beast'         => {'txt' => "Connection is safe against BEAST attack (any cipher)"},
     'breach'        => {'txt' => "Connection is safe against BREACH attack"},
+    'ccs'           => {'txt' => "Connection is safe against CCS Injection attack"},
     'crime'         => {'txt' => "Connection is safe against CRIME attack"},
     'drown'         => {'txt' => "Connection is safe against DROWN attack"},
     'time'          => {'txt' => "Connection is safe against TIME attack"},
@@ -929,6 +930,7 @@ our %shorttexts = (
     'ev_chars'      => "No invalid characters in extensions",
     'beast'         => "Safe to BEAST (cipher)",
     'breach'        => "Safe to BREACH",
+    'ccs'           => "Safe to CCS",
     'crime'         => "Safe to CRIME",
     'drown'         => "Safe to DROWN",
     'time'          => "Safe to TIME",
@@ -5401,6 +5403,8 @@ sub checkdest($$)   {
 
     # vulnerabilities
     check_dh($host,$port); # Logjam vulnerability
+    #$checks{'ccs'}->{val}   = _isccs($host, $port);
+    $checks{'ccs'}->{val}   = "<<NOT YET IMPLEMENTED>>";
     $checks{'crime'}->{val} = _iscrime($data{'compression'}->{val}($host), $data{'next_protocols'}->{val}($host));
     foreach my $key (qw(resumption renegotiation)) {
         $value = $data{$key}->{val}($host);
