@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) Net::SSLinfo.pm 1.209 18/03/26 23:17:47',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.210 18/07/11 00:00:27',
 };
 
 ######################################################## public documentation #
@@ -367,7 +367,7 @@ Internal documentation only.
 =head1 General Program Flow
 
 =over
- 
+
 =item _ssleay_socket()
 
     socket()
@@ -539,6 +539,7 @@ our @EXPORT = qw(
         trustout
         ocsp_uri
         ocspid
+        ocsp_response
         before
         after
         dates
@@ -936,6 +937,7 @@ my %_SSLinfo= ( # our internal data structure
     'subject_hash'      => "",  #
     'issuer_hash'       => "",  #
     'aux'               => "",  #
+    'ocsp_response'     => "",  # complete OCSP Response with "openssl -tlsextdebug -status .."
     'pubkey'            => "",  # certificates public key
     'pubkey_algorithm'  => "",  # certificates public key algorithm
     'pubkey_value'      => "",  # certificates public key value (same as modulus)
@@ -1603,7 +1605,7 @@ sub _ssleay_ssl_new {
 sub _ssleay_ssl_np  {
     #? sets CTX for ALPN and/or NPN if possible
     # returns -1 on success, otherwise array with errors
-    # Note: check if functionality is available should be done before, 
+    # Note: check if functionality is available should be done before,
     #       for defensive programming, it's done here again
     # Note  that parameters are different: ALPN array ref. vs. NPN array
     my $ctx         = shift;
@@ -1791,7 +1793,7 @@ sub s_client_check  {
     # Partial example of output:
     # unknown option --help
     # usage: s_client args
-    # 
+    #
     #  -host host     - use -connect instead
     #  -port port     - use -connect instead
     #  -connect host:port - who to connect to (default is localhost:4433)
@@ -2125,7 +2127,7 @@ sub do_ssl_open($$$@) {
         $src = 'Net::SSinfo::do_ssl_new()';
         ($ssl, $ctx, $socket, $method) = do_ssl_new($host, $port, $sslversions,
                $cipher, $Net::SSLinfo::protos_alpn, $Net::SSLinfo::protos_npn,
-               $Net::SSLinfo::socket); 
+               $Net::SSLinfo::socket);
         if (not defined $ssl) { $err = 'undef $ssl'; last; }
         if (not defined $ctx) { $err = 'undef $ctx'; last; }
         $_SSLinfo{'ctx'}      = $ctx;
@@ -2224,7 +2226,28 @@ sub do_ssl_open($$$@) {
         # TODO: certificate chain depth, OCSP
         # see: http://search.cpan.org/~mikem/Net-SSLeay-1.68/lib/Net/SSLeay.pod#Certificate_verification_and_Online_Status_Revocation_Protocol_%28OCSP%29
 
-        #5d. get data related to HTTP(S)
+        #5d. get OSCP related data
+# TODO: related constants
+#        TLSEXT_STATUSTYPE_ocsp V_OCSP_CERTSTATUS_GOOD V_OCSP_CERTSTATUS_REVOKED
+#        V_OCSP_CERTSTATUS_UNKNOWN
+# TODO: check if supported
+#        if (not exists &Net::SSLeay::OCSP_cert2ids) { $cfg{'ssleay'}->{'can_ocsp'} = 0 }
+#        # same as IO::Socket::SSL::can_ocsp() IO::Socket::SSL::can_ocsp_staple()
+# TODO:
+	 # see:https://mojolicious.org/perldoc/Net/SSLeay (same as)
+         #     https://metacpan.org/pod/release/MIKEM/Net-SSLeay-1.81/lib/Net/SSLeay.pod
+         # # Extract OCSP_RESPONSE.
+         # my $resp = eval { Net::SSLeay::d2i_OCSP_RESPONSE($content) };
+
+         # # Check status of response.
+         # my $status = Net::SSLeay::OCSP_response_status($resp);
+         # if ($status != Net::SSLeay::OCSP_RESPONSE_STATUS_SUCCESSFUL())
+         # die "OCSP response failed: " .  Net::SSLeay::OCSP_response_status_str($status);
+
+         # # set TLS extension before doing SSL_connect
+         # Net::SSLeay::set_tlsext_status_type($ssl, Net::SSLeay::TLSEXT_STATUSTYPE_ocsp());
+
+        #5e. get data related to HTTP(S)
         if (0 < $Net::SSLinfo::use_http) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x'; # TODO: <== some servers behave strange if a wrong hostname is passed
@@ -2335,7 +2358,7 @@ sub do_ssl_open($$$@) {
             goto finished;
         }
 
-        #5e. get data from openssl, if required
+        #5f. get data from openssl, if required
         # NOTE: all following are only available when openssl is used
         #       those alredy set before will be overwritten
 
@@ -2474,6 +2497,8 @@ sub do_ssl_open($$$@) {
             #'renegotiation'    => "Renegotiation",
                 # Renegotiation comes with different values, see below
             'dh_parameter'     => "Server Temp Key:",
+            #'ocsp_response'    => "OCSP response:",
+                # this is a multiline value, must be handled special, see below
         );
         my $d    = '';
         my $data = $_SSLinfo{'text'};
@@ -2539,6 +2564,44 @@ sub do_ssl_open($$$@) {
                     # no_alpn: single line, has no value: No ALPN negotiated
             }
         }
+
+            # from s_client:
+            #  OCSP response: no response sent
+            # or:
+            #  OCSP response:
+            #  ======================================
+            #  OCSP Response Data:
+            #      OCSP Response Status: successful (0x0)
+            #      Response Type: Basic OCSP Response
+            #      Version: 1 (0x0)
+            #      Responder Id: 1C6C1E3B17EDF8DAB15CEBCDBC2D315868862497
+            #      Produced At: Jul  7 16:34:44 2018 GMT
+            #      Responses:
+            #      Certificate ID:
+            #        Hash Algorithm: sha1
+            #        Issuer Name Hash: 881A4A74FEFF4652F354BB510FD3A4EEEFE0A1C8
+            #        Issuer Key Hash: 919E3B446C3D579C42772A34D74FD1CC4A972CDA
+            #        Serial Number: 2000036E72ADED906765595FAE000000036E72
+            #      Cert Status: good
+            #      This Update: Jul  7 16:34:44 2018 GMT
+            #      Next Update: Jul 11 16:34:44 2018 GMT
+            #          Response Single Extensions:
+            #              OCSP Archive Cutoff:
+            #                  Jul  7 16:34:44 2017 GMT
+            #
+            #      Signature Algorithm: sha256WithRSAEncryption
+            #      ....
+            # (following Signature and Certificate date not shown and skipped)
+            # TODO: extract single values 'ocsp_response_*' from above output,
+            #       can be done with %match_map
+        $d = $data;
+        $d =~ s/.*?OCSP response:\s*([a-zA-Z0-9,. -]+)[\n\r].*/$1/si;
+        if ($d =~ m/^\s*$/) {
+            $d = $data;
+            $d =~ s/.*?OCSP response:\s*[\n\r]+(.*?)[\n\r][\n\r].*/$1/si;
+            $d =~ s/^[\n\r]*//;
+        }
+        $_SSLinfo{'ocsp_response'} = $d;
 
         $d = $data; $d =~ s/.*?TLS session ticket:\s*[\n\r]+(.*?)\n\n.*/$1_/si;
         if ($data =~ m/TLS session ticket:/) {
@@ -2747,6 +2810,7 @@ sub do_openssl($$$$) {
         # pass -nextprotoneg option to validate 'protocols' support later
         # pass -reconnect option to validate 'resumption' support later
         # pass -tlsextdebug option to validate 'heartbeat' support later
+        # pass -status option to get 'ocsp_response' support later
         # NOTE that openssl 1.x or later is required for -nextprotoneg
         # NOTE that openssl 1.0.2 or later is required for -alpn
         $mode  = 's_client' . $Net::SSLinfo::sclient_opt;
@@ -2756,8 +2820,9 @@ sub do_openssl($$$$) {
 # }
         $mode .= ' -reconnect'   if (1 == $Net::SSLinfo::use_reconnect);
         $mode .= ' -tlsextdebug' if (1 == $Net::SSLinfo::use_extdebug);
+        $mode .= ' -status';
     }
-    if (($mode =~ m/^-?s_client$/) 
+    if (($mode =~ m/^-?s_client$/)
     ||  ($mode =~ m/^-?s_client.*?-cipher/)) {
         $mode .= ' -alpn '         . $Net::SSLinfo::protos_alpn if (1 == $Net::SSLinfo::use_alpn);
         $mode .= ' -nextprotoneg ' . $Net::SSLinfo::protos_npn  if (1 == $Net::SSLinfo::use_npn);
@@ -3311,6 +3376,7 @@ sub heartbeat       { return _SSLinfo_get('heartbeat',        $_[0], $_[1]); }
 sub trustout        { return _SSLinfo_get('trustout',         $_[0], $_[1]); }
 sub ocsp_uri        { return _SSLinfo_get('ocsp_uri',         $_[0], $_[1]); }
 sub ocspid          { return _SSLinfo_get('ocspid',           $_[0], $_[1]); }
+sub ocsp_response   { return _SSLinfo_get('ocsp_response',    $_[0], $_[1]); }
 sub pubkey          { return _SSLinfo_get('pubkey',           $_[0], $_[1]); }
 sub signame         { return _SSLinfo_get('signame',          $_[0], $_[1]); }
 sub sigdump         { return _SSLinfo_get('sigdump',          $_[0], $_[1]); }
