@@ -37,7 +37,7 @@ use constant {
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.210 18/07/11 00:00:27',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.211 18/07/11 00:49:21',
 };
 
 ######################################################## public documentation #
@@ -540,6 +540,11 @@ our @EXPORT = qw(
         ocsp_uri
         ocspid
         ocsp_response
+        ocsp_response_data
+        ocsp_response_status
+        ocsp_cert_status
+        ocsp_next_update
+        ocsp_this_update
         before
         after
         dates
@@ -937,7 +942,12 @@ my %_SSLinfo= ( # our internal data structure
     'subject_hash'      => "",  #
     'issuer_hash'       => "",  #
     'aux'               => "",  #
-    'ocsp_response'     => "",  # complete OCSP Response with "openssl -tlsextdebug -status .."
+    'ocsp_response'     => "",  # selected data from OCSP Response Data
+    'ocsp_response_data'=> "",  # complete OCSP Response with "openssl -tlsextdebug -status .."
+    'ocsp_response_status'=>"", # OCSP Response Data: Response Status
+    'ocsp_cert_status'  => "",  # OCSP Response Data: Cert Status
+    'ocsp_next_update'  => "",  # OCSP Response Data: Next Update
+    'ocsp_this_update'  => "",  # OCSP Response Data: This Update
     'pubkey'            => "",  # certificates public key
     'pubkey_algorithm'  => "",  # certificates public key algorithm
     'pubkey_value'      => "",  # certificates public key value (same as modulus)
@@ -2497,7 +2507,7 @@ sub do_ssl_open($$$@) {
             #'renegotiation'    => "Renegotiation",
                 # Renegotiation comes with different values, see below
             'dh_parameter'     => "Server Temp Key:",
-            #'ocsp_response'    => "OCSP response:",
+            #'ocsp_response_data' => "OCSP response:",
                 # this is a multiline value, must be handled special, see below
         );
         my $d    = '';
@@ -2596,12 +2606,32 @@ sub do_ssl_open($$$@) {
             #       can be done with %match_map
         $d = $data;
         $d =~ s/.*?OCSP response:\s*([a-zA-Z0-9,. -]+)[\n\r].*/$1/si;
-        if ($d =~ m/^\s*$/) {
+        if ($d =~ m/^\s*$/) {   # probably complete OCSP Response Data:
             $d = $data;
             $d =~ s/.*?OCSP response:\s*[\n\r]+(.*?)[\n\r][\n\r].*/$1/si;
             $d =~ s/^[\n\r]*//;
+            if ($d =~ m/OCSP Response Status:\s*([^\n\r]+)[\n\r]/i) {
+                $_SSLinfo{'ocsp_response_status'}  = $1;
+            }
+            if ($d =~ m/Cert Status:\s*([^\n\r]+)[\n\r]/i) {
+                $_SSLinfo{'ocsp_cert_status'}  = $1;
+            }
+            if ($d =~ m/This Update:\s*([^\n\r]+)[\n\r]/i) {
+                $_SSLinfo{'ocsp_this_update'}  = $1;
+            }
+            if ($d =~ m/Next Update:\s*([^\n\r]+)[\n\r]/i) {
+                $_SSLinfo{'ocsp_next_update'}  = $1;
+            }
+            $_SSLinfo{'ocsp_response'}  = 
+                  "Response Status: " . $_SSLinfo{'ocsp_response_status'}
+                . "; Cert Status: "   . $_SSLinfo{'ocsp_cert_status'}
+                . "; This Update: "   . $_SSLinfo{'ocsp_this_update'}
+                . "; Next Update: "   . $_SSLinfo{'ocsp_next_update'};
+            # TODO: no extract more important values
+        } else {                # probably only  OCSP response:
+            $_SSLinfo{'ocsp_response'}  = $d;
         }
-        $_SSLinfo{'ocsp_response'} = $d;
+        $_SSLinfo{'ocsp_response_data'} = $d; # complete string, both cases above
 
         $d = $data; $d =~ s/.*?TLS session ticket:\s*[\n\r]+(.*?)\n\n.*/$1_/si;
         if ($data =~ m/TLS session ticket:/) {
@@ -2810,7 +2840,7 @@ sub do_openssl($$$$) {
         # pass -nextprotoneg option to validate 'protocols' support later
         # pass -reconnect option to validate 'resumption' support later
         # pass -tlsextdebug option to validate 'heartbeat' support later
-        # pass -status option to get 'ocsp_response' support later
+        # pass -status option to get 'ocsp_response_data' support later
         # NOTE that openssl 1.x or later is required for -nextprotoneg
         # NOTE that openssl 1.0.2 or later is required for -alpn
         $mode  = 's_client' . $Net::SSLinfo::sclient_opt;
@@ -3190,6 +3220,30 @@ Get certificate modulus' exponent of the public key.
 
 Get certificate modulus (bit) length of the public key.
 
+=head2 ocsp_response( )
+
+Get OCSP Response (compact list with values from ocsp_response_data()).
+
+=head2 ocsp_response_data( )
+
+Get complete OCSP Response Data.
+
+=head2 ocsp_response_status( )
+
+Get OCSP Response Status value.
+
+=head2 ocsp_cert_status( )
+
+Get OCSP Response Cert Status value.
+
+=head2 ocsp_next_update( )
+
+Get OCSP Response Next Update date.
+
+=head2 ocsp_this_update( )
+
+Get OCSP Response This Update date.
+
 =head2 pubkey( )
 
 Get certificate's public key.
@@ -3377,6 +3431,11 @@ sub trustout        { return _SSLinfo_get('trustout',         $_[0], $_[1]); }
 sub ocsp_uri        { return _SSLinfo_get('ocsp_uri',         $_[0], $_[1]); }
 sub ocspid          { return _SSLinfo_get('ocspid',           $_[0], $_[1]); }
 sub ocsp_response   { return _SSLinfo_get('ocsp_response',    $_[0], $_[1]); }
+sub ocsp_response_data   { return _SSLinfo_get('ocsp_response_data',   $_[0], $_[1]); }
+sub ocsp_response_status { return _SSLinfo_get('ocsp_response_status', $_[0], $_[1]); }
+sub ocsp_cert_status{ return _SSLinfo_get('ocsp_cert_status', $_[0], $_[1]); }
+sub ocsp_next_update{ return _SSLinfo_get('ocsp_next_update', $_[0], $_[1]); }
+sub ocsp_this_update{ return _SSLinfo_get('ocsp_this_update', $_[0], $_[1]); }
 sub pubkey          { return _SSLinfo_get('pubkey',           $_[0], $_[1]); }
 sub signame         { return _SSLinfo_get('signame',          $_[0], $_[1]); }
 sub sigdump         { return _SSLinfo_get('sigdump',          $_[0], $_[1]); }
