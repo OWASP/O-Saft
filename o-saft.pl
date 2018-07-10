@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.799 18/07/08 20:01:19",
-    STR_VERSION => "18.06.20",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.800 18/07/11 01:34:21",
+    STR_VERSION => "18.06.21",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -548,6 +548,12 @@ our %data   = (     # connection and certificate details
     'ocspid'        => {'val' => sub {       __SSLinfo('ocspid',    $_[0], $_[1])}, 'txt' => "Certificate OCSP Hashes"},
     'ocsp_subject_hash'   => {'val' => sub { __SSLinfo('ocsp_subject_hash', $_[0], $_[1])}, 'txt' => "Certificate OCSP Subject Hash"},
     'ocsp_public_hash'    => {'val' => sub { __SSLinfo('ocsp_public_hash',  $_[0], $_[1])}, 'txt' => "Certificate OCSP Public Key Hash"},
+    'ocsp_response' => {'val' => sub { Net::SSLinfo::ocsp_response( $_[0], $_[1])}, 'txt' => "Target's OCSP Response"},
+    'ocsp_response_data'  => {'val' => sub { Net::SSLinfo::ocsp_response_data( $_[0], $_[1])}, 'txt' => "Target's OCSP Response Data"},
+    'ocsp_response_status'=> {'val' => sub { Net::SSLinfo::ocsp_response_status( $_[0], $_[1])}, 'txt' => "Target's OCSP Response Status"},
+    'ocsp_cert_status'    => {'val' => sub { Net::SSLinfo::ocsp_cert_status($_[0], $_[1])}, 'txt' => "Target's OCSP Response Cert Status"},
+    'ocsp_next_update'    => {'val' => sub { Net::SSLinfo::ocsp_next_update($_[0], $_[1])}, 'txt' => "Target's OCSP Response Next Update"},
+    'ocsp_this_update'    => {'val' => sub { Net::SSLinfo::ocsp_this_update($_[0], $_[1])}, 'txt' => "Target's OCSP Response This Update"},
     'subject_hash'  => {'val' => sub { Net::SSLinfo::subject_hash(  $_[0], $_[1])}, 'txt' => "Certificate Subject Name Hash"},
     'issuer_hash'   => {'val' => sub { Net::SSLinfo::issuer_hash(   $_[0], $_[1])}, 'txt' => "Certificate Issuer Name Hash"},
     'selfsigned'    => {'val' => sub { Net::SSLinfo::selfsigned(    $_[0], $_[1])}, 'txt' => "Certificate Validity (signature)"},
@@ -792,6 +798,7 @@ my %check_dest = (  ## target (connection) data
     'psk_hint'      => {'txt' => "Target supports PSK Identity Hint"},
     'psk_identity'  => {'txt' => "Target supports PSK"},
     'srp'           => {'txt' => "Target supports SRP"},
+    'ocsp_stapling' => {'txt' => "Target supports OCSP Stapling"},
     'session_ticket'=> {'txt' => "Target supports TLS Session Ticket"}, # sometimes missing ...
     'session_lifetime'=>{'txt'=> "Target TLS Session Ticket Lifetime"},
     'session_random'=> {'txt' => "Target TLS Session Ticket is random"},
@@ -1005,9 +1012,16 @@ our %shorttexts = (
     'krb5'          => "Krb5 Principal",
     'psk_hint'      => "PSK Identity Hint",
     'psk_identity'  => "PSK Identity",
-    'srp'           => "SRP Username",
-    'master_key'    => "Master-Key",
-    'session_id'    => "Session-ID",
+    'ocsp_stapling' => "OCSP Stapling",
+    'ocsp_response'     => "OCSP Response",
+    'ocsp_response_data'=> "OCSP Response Data",
+    'ocsp_response_status' => "OCSP Response Status",
+    'ocsp_cert_status'  => "OCSP Response Cert Status",
+    'ocsp_next_update'  => "OCSP Response Next Update",
+    'ocsp_this_update'  => "OCSP Response This Update",
+    'srp'               => "SRP Username",
+    'master_key'        => "Master-Key",
+    'session_id'        => "Session-ID",
     'session_protocol'  => "Selected SSL Protocol",
     'session_ticket'    => "TLS Session Ticket",
     'session_lifetime'  => "TLS Session Ticket Lifetime",
@@ -1986,6 +2000,9 @@ sub _check_modules      {
             printf "# %-21s\t%s\t> %s\t%s\n", $mod, $v, $expect, $ok;
         }
     }
+    # TODO: OCSP and OCSP stapling works since  Net::SSLeay 1.78 , we should
+    #       use  Net::SSLeay 1.83  because of some bug fixes there, see:
+    #       https://metacpan.org/changes/distribution/Net-SSLeay
     printf "# %s+%s+%s\n", "-"x21, "-"x7, "-"x15 if ($cfg{verbose} > 1);
     return;
 } # _check_modules
@@ -2116,6 +2133,7 @@ sub _check_functions    {
     # that's why the checks are done here and stored in $cfg{'ssleay'}->*
 
     _y_CMD("  check for proper SNI support ...");
+    # TODO: change to check with: defined &Net::SSLeay::get_servername
     if ($version_iosocket < 1.90) {
         $cfg{'ssleay'}->{'can_sni'} = 0;
     } else {
@@ -2639,7 +2657,7 @@ sub _cfg_set($$)        {
     $val =~ s/(\\n)/\n/g;
     $val =~ s/(\\r)/\r/g;
     $val =~ s/(\\t)/\t/g;
-    _trace("_cfg_set: KEY=$key, LABEL=$val");
+    _trace("_cfg_set: KEY=$key, TYP=$typ, LABEL=$val");
     $checks{$key}->{txt} = $val if ($typ =~ /^CFG-check/);
     $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-data/);
     $data{$key}  ->{txt} = $val if ($typ =~ /^CFG-info/);   # alias for --cfg-data
@@ -5429,6 +5447,8 @@ sub checkdest($$)   {
         $checks{$key}->{val} = ""     if ($checks{$key}->{val} =~ m/^\s*$/);
     }
     $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'} if ($cfg{'use_extdebug'} < 1);
+    $value = $data{'ocsp_response'}->{val}($host);
+    $checks{'ocsp_stapling'}->{val} = $value if ($value =~ /.*no\s*response.*/i);
     return;
 } # checkdest
 
@@ -6253,6 +6273,7 @@ sub printdata($$$)      {
             next if (_is_intern( $key) > 0);
         }
         _y_CMD("(%data)   +" . $key);
+        my $value = $data{$key}->{val}($host);
         if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0) {
             # for +info print multiline data only if --v given
             # if command given explizitely, i.e. +text, print
@@ -6262,7 +6283,7 @@ sub printdata($$$)      {
             }
         }
         if ($cfg{'format'} eq "raw") {      # should be the only place where format=raw counts
-            print $data{$key}->{val}($host);
+            print $value;
         } else {
             print_data($legacy, $host, $port, $key);
         }
