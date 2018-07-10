@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.141 18/07/08 19:52:05',
+    OSAFT_SID   => '@(#) osaft.pm 1.142 18/07/10 23:44:53',
 
 };
 
@@ -1495,7 +1495,9 @@ our %cfg = (
     'ignore-out'    => [],      # commands (output) to be ignored, SEE Note:ignore-out
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only
-                        qw(certificate extensions pem pubkey sigdump text chain chain_verify)
+                        qw(certificate extensions pem pubkey sigdump text
+                         chain chain_verify)
+                                # TODO: ocsp_response may be one line or multiline
                        ],
                     # need-* lists used to improve performance and warning messages
     'need-sslv3'    => [        # commands which need SSLv3 protocol
@@ -1535,10 +1537,10 @@ our %cfg = (
     'need-check_dh' => [        # commands which need check_dh()
                         qw(logjam dh_512 dh_2048 ecdh_256 ecdh_512)
                        ],
-    'need-checkdest'=> [        # commands which need checkprot()
+    'need-checkdest'=> [        # commands which need checkdest()
                         qw(reversehost ip resumption renegotiation
                          session_protocol session_ticket session_random session_lifetime
-                         krb5 psk_hint psk_identity srp heartbeat
+                         krb5 psk_hint psk_identity srp heartbeat ocsp_stapling
                          cipher_selected cipher_pfs ccs crime
                        )],
     'need-checkhttp'=> [qw(pkp_pins)],  # commands which need checkhttp(); more will be added in _init
