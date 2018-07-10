@@ -13,27 +13,28 @@
 #?      Each other line will be passed as one single argument or option.
 #?      Note that all values for  --cfg-cmd=  are all lower case letters.
 #? NEW COMMANDS
-#?      New commands may be defined herein using  --cfg-cmd=  .
+#?      New commands may be defined herein using  --cfg_cmd=  .
 #?      Please see example  +preload  below.
+#?      New Hints may be defined herein using  --cfg_hint=  .
 #?      It is recommended to use a prefix in each private command to avoid
 #?      conflicts with existing (or future) commands in o-saft.pl itself.
 #?      Following prefixes (for commands) are not used by o-saft.pl:
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
 #? VERSION
-#?      @(#) .o-saft.pl 1.90 18/07/08 19:54:45
+#?      @(#) .o-saft.pl 1.91 18/07/11 01:29:36
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-#_SID = 1.90; # our own SID required for Makefile and some tools
+#_SID = 1.91; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
 ###
-#--openssl=/usr/local/bin/openssl
-#--openssl-cnf=
+#--openssl=/usr/local/openssl/bin/openssl
+#--openssl-cnf=/usr/local/openssl/ssl/openssl.cnf
 #--force-openssl
 ### or
 #--lib=/usr/local/lib
@@ -150,7 +151,9 @@
 ###
 # Collection of all info and check commands related to OCSP data.
 #
---cfg_cmd=ocsp=ocsp_subject_hash ocsp_public_hash ocsp_uri ocsp_valid len_ocsp
+--cfg_cmd=ocsp=ocsp_response ocsp_response_status ocsp_cert_status ocsp_this_update ocsp_next_update ocsp_subject_hash ocsp_public_hash ocsp_uri ocsp_valid ocsp_stapling len_ocsp
+
+--cfg_hint=ocsp=use ++oscp_response_data to get the full response
 
 ###
 ### define new command +fingerprints
@@ -186,7 +189,7 @@
 ###
 ### redefine command +info
 ###
---cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify heartbeat expansion compression renegotiation resumption srp krb5 psk_identity psk_hint alpns npns alpn npn next_protocols dh_parameter master_key session_id session_ticket session_lifetime sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins pkp_pins info
+--cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify heartbeat expansion compression renegotiation resumption srp krb5 psk_identity psk_hint ocsp_response alpns npns alpn npn next_protocols dh_parameter master_key session_id session_ticket session_lifetime sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins pkp_pins info
 # useless for +info ('cause aliases): issuer issuer_hash
 # included in +info to be printed with --v :
 #      certificate sigdump pubkey extensions ext_*
@@ -195,7 +198,7 @@
 ###
 ### redefine command +check
 ###
---cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls12 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach ccs crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random closure sgc zlib open_pgp lzo hasalpn hasnpn fallback renegotiation resumption srp scsv cnt_checks_yes cnt_checks_no cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+--cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls12 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach ccs crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired pkp_pins krb5 psk_identity psk_hint master_key session_id session_ticket session_lifetime session_random ocsp_stapling closure sgc zlib open_pgp lzo hasalpn hasnpn fallback renegotiation resumption srp scsv cnt_checks_yes cnt_checks_no cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
 # useless for +check:    ip
 # don't use   +check:   (SSLv|TLSv)*
 
@@ -275,7 +278,7 @@
 #--cfg_text=out-checks=\n=== Prüfungen ===
 #--cfg_text=out-ciphers=\n=== Schlüssel: prüfe @@ ===
 #--cfg_text=out-infos=\n=== Informationen ===
-#--cfg_text=out-list==== Liste @@ Schlüssel ===
+#--cfg_text=out-list==== Liste @@ Schlüssel ====
 #--cfg_text=out-scoring=\n=== Bewertung ===
 #--cfg_text=out-summary=== Schlüssel: Zusammenfassung @@ ===
 #--cfg_text=out-target=\n==== Zielsystem: @@ ====\n
@@ -285,4 +288,9 @@
 #--cfg_text=support=angeboten
 #--cfg_text=undef=<<undefiniert>>
 #--cfg_text=wildcards= <<verwendet Wildcards:@@>>
+
+#
+# unknown option, to force warning "option with trailing spaces"
+#
+#--option=-with_trailing_spaces   
 
