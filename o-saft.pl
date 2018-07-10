@@ -6254,9 +6254,12 @@ sub printdata($$$)      {
         }
         _y_CMD("(%data)   +" . $key);
         if (_is_member( $key, \@{$cfg{'cmd-NL'}}) > 0) {
-            # for +info print multine data only if --v given
+            # for +info print multiline data only if --v given
             # if command given explizitely, i.e. +text, print
-            next if ((_is_do('info') > 0) and ($cfg{'verbose'} <= 0));
+            if ((_is_do('info') > 0) and (0 >= $cfg{'verbose'})) {
+                _hint("multiline data '+$key' for '+info' printed with --v only");
+                next;
+            }
         }
         if ($cfg{'format'} eq "raw") {      # should be the only place where format=raw counts
             print $data{$key}->{val}($host);
