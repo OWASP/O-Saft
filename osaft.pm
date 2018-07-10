@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.142 18/07/10 23:44:53',
+    OSAFT_SID   => '@(#) osaft.pm 1.143 18/07/11 00:53:06',
 
 };
 
@@ -1496,8 +1496,7 @@ our %cfg = (
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only
                         qw(certificate extensions pem pubkey sigdump text
-                         chain chain_verify)
-                                # TODO: ocsp_response may be one line or multiline
+                         chain chain_verify ocsp_response_data)
                        ],
                     # need-* lists used to improve performance and warning messages
     'need-sslv3'    => [        # commands which need SSLv3 protocol
