@@ -51,8 +51,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID     = '@(#) o-saft.cgi 1.19 18/06/07 00:57:33';
-my $VERSION = '17.11.23';
+my $SID     = '@(#) o-saft.cgi 1.20 18/07/11 20:57:11';
+my $VERSION = '18.07.12';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -60,8 +60,8 @@ local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
 
 ##############################################################################
 my $osaft   = "$mepath/o-saft.pl";
-#  $osaft   = '/bin/o-saft/o-saft.pl';      # <== adapt as needed
-my $openssl = '/opt/tools/openssl-chacha';  # <== adapt as needed
+#  $osaft   = '/bin/o-saft/o-saft.pl';          # <== adapt as needed
+my $openssl = '/usr/local/openssl/bin/openssl'; # <== adapt as needed
         # NOTE tainted perl (-T) will complain if the path given in $osaft
         #      or  $openssl  is writable; it also must be an absolute path
 ##############################################################################
@@ -121,9 +121,9 @@ if ($me =~/\.cgi$/) {
 	$cgi = shift @argv || '';       # remove first argument, which must be --cgi
 	                                # || ''   avoids uninitialized value
 	push(@argv, "--cgi-exec");      # some argument which looks like --cgi required for some more checks
-	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?/);
+	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.19\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.20\r\n";
 	if ($qs =~ m/--cmd=html/) {
 		print "Content-type: text/html;  charset=utf-8\r\n";# for --usr* only
 	} else {
