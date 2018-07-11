@@ -26,11 +26,14 @@ normale Zeile
 **ERROR: Fehler wird gemeldet
 normale Zeile
 **WARNING: Warnung wird gemeldet
+**WARNING 0815: Warnung mit Nummer wird gemeldet
 normale Zeile	TAB davor	und in der Mitte
 !!Hint: das ist ein Hinweis
 
 #[key]: Zeile mit Keyword am Anfang:	yes
 host:443:Zeile mit Hostname am Anfang:	yes
+
+host:443:#[host]:Zeile mit Hostname und Keyword am Anfang:	yes
 
 == Wörter
 ein Text mit yes am Ende:	yes
