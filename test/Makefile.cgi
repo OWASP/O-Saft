@@ -21,14 +21,14 @@
 #          * complete with tests from test/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.6 18/07/06 11:24:45
+#?      @(#) Makefile.cgi 1.7 18/07/11 20:48:42
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi    = 1.6
+_SID.cgi    = 1.7
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -58,11 +58,14 @@ MORE-cgi        = " \
  test.badhost-NAME   - check a single NAME (IP or hostname) if allowed in $(SRC.cgi) $(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
+\#    make test.cgi $(_NL)\
 \#    make test.badhost_42.42.42.42 $(_NL)\
 \#    make test.badhost_127.0.0.127 $(_NL)\
 \#    make e-test.cgi.badhosts $(_NL)\
 \#    make s-test.cgi.badIPs $(_NL)\
 \#    make s-test.cgi.badopt $(_NL)\
+\#$(_NL)\
+\# there are no  test.cgi.*.log targets, please use  test.cgi.log  instead $(_NL)\
 "
 
 HELP-help.test.cgi  = print targets for testing $(SRC.cgi)
@@ -155,6 +158,8 @@ test.cgibad--c13_%: _cgi.args   = '--bad-char=_[_'
 test.cgibad--c14_%: _cgi.args   = '--bad-char=_]_'
 test.cgibad--c15_%: _cgi.args   = '--bad-char=_{_'
 test.cgibad--c16_%: _cgi.args   = '--bad-char=_}_'
+test.cgibad--c17_%: _cgi.args   = '--bad-char=_^_'
+test.cgibad--c18_%: _cgi.args   = '--bad-char=_|_'
 test.cgibad--c20_%: _cgi.args   = '--bad-char=_\#_'
 
 test.cgibad%:
