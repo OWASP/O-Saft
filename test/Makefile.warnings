@@ -7,7 +7,9 @@
 #?      make [options] [target] [...]
 #?
 #? DESCRIPTION
-#?      Makefile with targets for testing warnings of O-Saft project.
+#?      Makefile with targets for testing warnings of o-saft.pl .
+#?      All targets succedd, if the warning message is present, they fail, if
+#?      the warning message is not present.
 #?
 #? LIMITATIONS
 #?      Requires GNU Make > 2.0.
@@ -16,18 +18,48 @@
 #       For details please see
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
-#       TODO:
-#          * unifiy test.warnings.log and test.tests.log (should use same target)
+#    How target rules in this Makefile (should) work:
+#       The pattern rule  message-%  from  ./Makefile  is used to check for a
+#       specific warning message. The pattern rule searches (grep) the output
+#       of o-saft.pl for a string, which is the pattern of the target name.
+#       Each target rule  defines its own arguments to be passed to o-saft.pl
+#       Example:
+#           pattern rule:   warning-%
+#           target rule:    warning-049
+#           pattern:        049
+#           arguments:      TEST.args = +unknown_command +quit
+#       This will then be used (as recipe) in the pattern rule:
+#           $(EXE.pl)    $(TEST.args)           2>&1 | grep 049
+#       which finally ealuates to:
+#           ../o-saft.pl +unknown_command +quit 2>&1 | grep 049
+#
+#       A rule succeeds (returns status 0) if the pattern is found.  The rule
+#       fails, if the pattern is not found.  Therfore it is very important to
+#       define  TEST.args  propperly, even  the sequence of the arguments may
+#       count. Mainly the  +quit  command is sufficient to get the warning.
+#       The first target rule  warning-000  is designed to fail.
+#
+#       All targets rules are summarized in the  test.warnings  rule.
+#
+#       To log the results of these tests, only one file will be created, not
+#       one for each target rule. That what  test.warnings.log  does.
+#
+#    Limitations
+#       The name of each individual target rule  contains the pattern (049 in
+#       above example ), which must be serached for in the output of EXE.pl .
+#       As this is just a simple number in all rules here, the search may re-
+#       sult in false positives.  Manual checks of the rules command (recipe)
+#       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.4 18/06/13 00:59:42
+#?      @(#) Makefile.warnings 1.5 18/07/11 23:46:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings = 1.4
+_SID.warnings = 1.5
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -59,6 +91,7 @@ MORE-warnings    = " \
 \#   make message-Certificate TEST.args='+cn localhost'$(_NL)\
 \#$(_NL)\
 \# To print all available individual  test-*  and  warning-*  targets, use:$(_NL)\
+\#   make e-ALL.warnings$(_NL)\
 \#   make help.test.all$(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
@@ -84,11 +117,17 @@ help.test.warnings.all:
 # testing warning messages
 _TMP.rc         = /tmp/o-saft.tmprc
 
+warning-%:   EXE.pl     = ../$(SRC.pl)
+warning-%:   TEST.init  = 
+
 # Each warning-* target defines its (conditional) command to be used with
-# $(SRC.pl). If the definition starts with the literal string "TODO:" the
+# $(EXE.pl). If the definition starts with the literal string "TODO:" the
 # target will only print the text (see message-%).
 # The TODO texts ending with  "difficult ..." mark messages, which cannot
 # tested easily.
+# All other targets should define  TEST.args  with those arguments, which 
+# force the warning message DDD given in the target's name  warning-DDD .
+warning-000: TEST.args  = --invalid_nr_to_show_failed-status
 warning-002: TEST.args  = TODO: testing openssl returning error, difficult ...
 warning-003: TEST.args  = TODO: testing openssl failed with allocate memory, difficult ...
 warning-004: TEST.args  = TODO: testing perl returned status, difficult ...
@@ -213,7 +252,7 @@ warning-841: TEST.args  = TODO: used openssl version differs from compiled Net:S
 warning-851: TEST.args  = TODO: ancient version Net::SSLeay < 1.49
 warning-861: TEST.args  = TODO: not all ciphers listed
 
-ALL.warnings    = $(shell awk -F: '/^warning-/{print $$1}' $(_MYSELF.warnings) | sort -u)
+ALL.warnings    = $(shell awk -F: '/^warning-...:/{print $$1}' $(_MYSELF.warnings) | sort -u)
 
 _TEST.template  = test/test.warning.Makefile-template
 $(_TEST.template): $(SRC.pl)
@@ -241,9 +280,10 @@ warnings.show.difficult:
 test.warnings: $(ALL.warnings)
 
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
-_WARNING.log    = $(TEST.logdir)/test.warnings-$(_TODAY_).log
+_WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@$(MAKE) -i -s $(ALL.warnings) > $@ 2>&1
+	@echo "# Makefile.warnings 1.5: make test.warnings.log" > $@
+	@$(MAKE) -s $(ALL.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
 # diff  returns nothing, delete newly created logfile,  otherwise rename newly
@@ -251,11 +291,13 @@ $(_WARNING.log):
 # Finally, If current logfile is/was missing, use newly created one:
 # "test ... || mv ..." . This ensures that the file exists afterwards.
 test.warnings.log: $(_WARNING.log) $(SRC.pl)
+	@$(TARGET_VERBOSE)
 	@diff $(TEST.logdir)/$@ $(_WARNING.log) \
 	    && rm $(_WARNING.log) \
 	    || mv $(_WARNING.log) $(TEST.logdir)/$@
 	@-test -f $(TEST.logdir)/$@  ||  mv $(_WARNING.log) $(TEST.logdir)/$@
-	@ls -l  $(TEST.logdir)/$@
+	@ls -l  $(TEST.logdir)/$@*
+# TODO: same target as test.cgi.log
 
 .PHONY: test.warnings.log
 
