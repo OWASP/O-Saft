@@ -12,21 +12,31 @@ o-saft.cgi  - wrapper script to start o-saft.pl as CGI script
 =head1 DESCRIPTIONS
 
 Calls ./o-saft.pl if first parameter is  I<--cgi>.
-Returns results as:  Content-type: text/plain
+Returns results as:  Content-type: text/plain;charset=utf-8
 
-Does some lazy checks according parameters:
+Does some lazy checks according parameters and exits if found:
 
 =over 4
 
-=item parameters may not contain other characters than: a-zA-Z0-9,.:_&\!\/=\+-
+=item not characters in parameters:
 
-=item following options are ignored: --env* --exe* --lib* --call* --openssl*
+ a-zA-Z0-9,.:_&\!\/=\+-
 
-=item following hosts are ignored:   localhost, (0|10|127|169|172|192|224|240|255).X.X.X
+=item not allowed options:
 
-=item all IPv6 addresses in URLs are ignored
+--env* --exe* --lib* --call* --openssl*
+
+=item illegal hostnames or IPs:
+
+localhost, (0|10|127|169|172|192|224|240|255).X.X.X
+
+=item any IPv6 addresses in URLs
 
 =back
+
+Exits silently if any above error is detected.
+Exits with verbose error message for detected errors, if environment variable
+I<OSAFT_CGI_TEST>  is set.
 
 =head1 EXAMPLE
 
@@ -51,8 +61,8 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID     = '@(#) o-saft.cgi 1.20 18/07/11 20:57:11';
-my $VERSION = '18.07.12';
+my $SID     = '@(#) o-saft.cgi 1.21 18/07/11 21:22:42';
+my $VERSION = '18.07.18';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -78,8 +88,8 @@ sub _warn_and_exit  {
 	# production environments.
 	# Above detailed error message is for testing only and not intended to
 	# be used and seen when run as a CGI script in a web server.
-	# The client (browser) is not not able to set the environment variable
-	# hence the code should be safe.
+	# As the client (browser) is not able to set the environment variable,
+	# the code should be safe.
 	#
 	# ####################################################################
 	print "";
@@ -92,6 +102,7 @@ if ($ENV{'OSAFT_CGI_TEST'}) {
 
 if (not $ENV{'QUERY_STRING'}) {
 	print "**WARNNG: test mode: restart using args as value in QUERY_STRING\n";
+	_warn_and_exit "call without parameters" if (0 > $#argv);
 	# may be a command line call without QUERY_STRING environment variable
 	# call myself with QUERY_STRING to simulate a call from CGI
 	# NOTE: this produces output before any HTTP header; that's ok here
@@ -123,7 +134,7 @@ if ($me =~/\.cgi$/) {
 	push(@argv, "--cgi-exec");      # some argument which looks like --cgi required for some more checks
 	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.20\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.21\r\n";
 	if ($qs =~ m/--cmd=html/) {
 		print "Content-type: text/html;  charset=utf-8\r\n";# for --usr* only
 	} else {
