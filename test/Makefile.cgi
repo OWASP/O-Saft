@@ -21,14 +21,14 @@
 #          * complete with tests from test/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.7 18/07/11 20:48:42
+#?      @(#) Makefile.cgi 1.8 18/07/11 23:17:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi    = 1.7
+_SID.cgi    = 1.8
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
@@ -103,16 +103,18 @@ test.cgi.bad.IPs    = \
 
 # The IP or hostname becomes part of the target name, hence IPv6 are not
 # possible verbatime because they contain : in the name; the : must be escaped
-# TODO: incomplete list for IPv6
 test.cgi.bad.IPv6   = \
 	\:\:1         ffff\:\:1  7f00\:1          ffff\:7f00\:1 \
 
+# TODO: ff01::1 ff02::1
+# TODO: fe80:21ab:22cd:2323::1 fec0:21ab:22cd:2323::1 feff:21ab:22cd:2323::1
+#       fc00:21ab:22cd:2323::1 fdff:21ab:22cd:2323::1
 
 ALL.cgi.bad.hosts   = $(test.cgi.bad.hosts:%=test.cgibad_%)
 ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.cgibad_%)
 
 
-# Testing for invalid hostnames and IPs uses following command (example):
+# Testing for invalid arguments, hostnames and IPs uses following command:
 #       o-saft.cgi --cgi +quit --exit=BEGIN0 --host=10.0.0.1
 # or
 #       env QUERY_STRING="--cgi&--cmd=quit&--exit=BEGIN0&--host=10.0.0.1" o-saft.cgi
@@ -124,55 +126,65 @@ ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.cgibad_%)
 #       #o-saft.pl  _yeast_EXIT exit=BEGIN0 - BEGIN start
 #
 # The option  --exit=BEGIN0  ensures that nothing will be done in o-saft.pl .
-# The last line is missing for invalid IPs or hostnames. The test succeeds, if
-# it is missing.
-# The target used for each individual IP is  no.message.  It is a pattern rule
-# in the test/Makefile and uses the variables  EXE.pl and TEST.args  which are
-# passed as arguments to the recursive MAKE call.
+# It ensures that the last line of the output contains exit=BEGIN0 . This last
+# line is missing if  o-saft.cgi  exits because  an invalid argument, hostname
+# or IPs was detected. The purpose here is to check if o-saft.cgi exits, hence
+# The test succeeds, if the last line is missing.
+# The target no.message is used for each individual test. It is a pattern rule
+# in the test/Makefile and uses the variables  EXE.pl, TEST.args and TEST.INIT
+# which are passed as arguments to the recursive MAKE call.
 # "make -i" is used to ensure that all tests are performed.
 
-_cgi.args   =
+# testing usage of --cgi  option; means that _cgi.args must be set explicitly
+test.cgibad--cgi00_%: _cgi.args = --cgi --ok.to.show.failed-status +quit --exit=BEGIN0
+test.cgibad--cgi01_%: _cgi.args = --missing--cgi +quit --exit=BEGIN0
+test.cgibad--cgi02_%: _cgi.args = --cgiwrong     +quit --exit=BEGIN0
+test.cgibad--cgi03_%: _cgi.args = --cgi=wrong    +quit --exit=BEGIN0
+test.cgibad--cgi04_%: _cgi.args = --wrongcgi     +quit --exit=BEGIN0
+
+# all tests for bad arguments need the same initial options
+_cgi.args   = --cgi +quit --exit=BEGIN0
 test.cgibad%:       EXE.pl      = ../$(SRC.cgi)
 
 # some characters are enclosed in _ and _ for better readability
-test.cgibad--opt_%: _cgi.args   = --opt=ok.to.show.failed-status
-test.cgibad--cmd_%: _cgi.args   = --cmd=list
-test.cgibad--env_%: _cgi.args   = --env=not-allowed
-test.cgibad--exe_%: _cgi.args   = --exe=not-allowed
-test.cgibad--lib_%: _cgi.args   = --lib=not-allowed
-test.cgibad--cal_%: _cgi.args   = --call=not-allowed
-test.cgibad--ssl_%: _cgi.args   = --openssl=not-allowed
-test.cgibad--c01_%: _cgi.args   = '--bad-char=_<_'
-test.cgibad--c02_%: _cgi.args   = '--bad-char=_>_'
-test.cgibad--c03_%: _cgi.args   = '--bad-char=_;_'
-test.cgibad--c04_%: _cgi.args   = '--bad-char=_~_'
-test.cgibad--c05_%: _cgi.args   = '--bad-char=_?_'
-#test.cgibad--c06_%: _cgi.args   = '--bad-char=_\$$_'
-test.cgibad--c07_%: _cgi.args   = '--bad-char=_%_'
-test.cgibad--c08_%: _cgi.args   = '--bad-char=_\"_'
-test.cgibad--c09_%: _cgi.args   = '--bad-char=_\`_'
-test.cgibad--c10_%: _cgi.args   = '--bad-char=_*_'
-test.cgibad--c11_%: _cgi.args   = '--bad-char=_(_'
-test.cgibad--c12_%: _cgi.args   = '--bad-char=_)_'
-test.cgibad--c13_%: _cgi.args   = '--bad-char=_[_'
-test.cgibad--c14_%: _cgi.args   = '--bad-char=_]_'
-test.cgibad--c15_%: _cgi.args   = '--bad-char=_{_'
-test.cgibad--c16_%: _cgi.args   = '--bad-char=_}_'
-test.cgibad--c17_%: _cgi.args   = '--bad-char=_^_'
-test.cgibad--c18_%: _cgi.args   = '--bad-char=_|_'
-test.cgibad--c20_%: _cgi.args   = '--bad-char=_\#_'
+test.cgibad--opt_%: _cgi.args  += --opt=ok.to.show.failed-status
+test.cgibad--cmd_%: _cgi.args  += --cmd=list
+test.cgibad--env_%: _cgi.args  += --env=not-allowed
+test.cgibad--exe_%: _cgi.args  += --exe=not-allowed
+test.cgibad--lib_%: _cgi.args  += --lib=not-allowed
+test.cgibad--cal_%: _cgi.args  += --call=not-allowed
+test.cgibad--ssl_%: _cgi.args  += --openssl=not-allowed
+test.cgibad--c01_%: _cgi.args  += '--bad-char=_<_'
+test.cgibad--c02_%: _cgi.args  += '--bad-char=_>_'
+test.cgibad--c03_%: _cgi.args  += '--bad-char=_;_'
+test.cgibad--c04_%: _cgi.args  += '--bad-char=_~_'
+test.cgibad--c05_%: _cgi.args  += '--bad-char=_?_'
+#test.cgibad--c06_%: _cgi.args  += '--bad-char=_\$$_'
+test.cgibad--c07_%: _cgi.args  += '--bad-char=_%_'
+test.cgibad--c08_%: _cgi.args  += '--bad-char=_\"_'
+test.cgibad--c09_%: _cgi.args  += '--bad-char=_\`_'
+test.cgibad--c10_%: _cgi.args  += '--bad-char=_*_'
+test.cgibad--c11_%: _cgi.args  += '--bad-char=_(_'
+test.cgibad--c12_%: _cgi.args  += '--bad-char=_)_'
+test.cgibad--c13_%: _cgi.args  += '--bad-char=_[_'
+test.cgibad--c14_%: _cgi.args  += '--bad-char=_]_'
+test.cgibad--c15_%: _cgi.args  += '--bad-char=_{_'
+test.cgibad--c16_%: _cgi.args  += '--bad-char=_}_'
+test.cgibad--c17_%: _cgi.args  += '--bad-char=_^_'
+test.cgibad--c18_%: _cgi.args  += '--bad-char=_|_'
+test.cgibad--c20_%: _cgi.args  += '--bad-char=_\#_'
 
 test.cgibad%:
 	@$(TARGET_VERBOSE)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
 	@cd  $(TEST.dir) ; \
 	$(MAKE) -i no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) \
-		TEST.init="--cgi +quit --exit=BEGIN0" \
+		TEST.init="" \
 		TEST.args="$(_cgi.args) --host=$(_host)"
 
 ALL.testcgiopt  = $(shell awk -F% '/^test.cgibad--/ {print $$1}' $(_MYSELF.cgi))
 ALL.test.cgiopt = $(ALL.testcgiopt:%=%any.FQDN)
-ALL.test.cgi    = $(ALL.cgi.bad.hosts) $(ALL.cgi.bad.IPs) $(ALL.test.cgiopt)
+ALL.test.cgi    = $(ALL.test.cgiopt) $(ALL.cgi.bad.hosts) $(ALL.cgi.bad.IPs)
 
 test.cgi.badhosts: $(ALL.cgi.bad.hosts)
 test.cgi.badIPs:   $(ALL.cgi.bad.IPs)
@@ -184,7 +196,8 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@$(MAKE) -i test.cgi > $@ 2>&1
+	@echo "# Makefile.cgi 1.8: make test.cgi.log" > $@
+	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
 	@$(TARGET_VERBOSE)
