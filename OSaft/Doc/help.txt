@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.7 18/04/14 12:22:48
+# SID   @(#) help.txt 1.8 18/07/12 00:19:56
 
 NAME
 
@@ -145,7 +145,7 @@ SECURITY
 
 CONCEPTS
 
-        The purpose of ''O-Saft'' is to do the work, not to force the user to
+        The purpose of  O-Saft  is to do the work, not to force the user to
         learn a new tool or to install "newer" software first.
         However, the user "should do something" if necessary depending on the
         reported results.
@@ -501,7 +501,7 @@ COMMANDS
           Dumps internal data for SSL connection and target certificate. This
           is mainly for debugging and  should not be used together with other
           commands (except +cipher).
-          Each key-value pair is enclosed in  #{  and  #} .
+          Each key-value pair is enclosed in  '#{'  and  '#}' .
 
           Using  --trace --trace  dumps data of  Net::SSLinfo  too.
 
@@ -519,7 +519,7 @@ COMMANDS
       +cipher
 
           Check target for ciphers,  either all ciphers, or ciphers specified
-          with  --cipher=*  option.
+          with  --cipher=CIPHER  option.
 
           Note that ciphers not supported by the local SSL implementation are
           not checked by default, use  +cipherall or +cipherraw   command.
@@ -724,10 +724,6 @@ OPTIONS
       --help
 
           WYSIWYG
-
-      --help=help
-
-          Show available options to show descriptions (this Options section).
 
       --help=cmd
 
@@ -948,7 +944,7 @@ OPTIONS
 
           Use 'STARTTLS' command to start a TLS connection via protocol. PORT
           PORT may be any of: 'SMTP', 'IMAP', 'IMAP2', 'POP3', 'FTPS', 'RDP',
-          'LDAP' or 'XMPP'
+          'LDAP' or 'XMPP' .
 
           For  --starttls=SMTP  see  --dns-mx  also to use MX records instead
           of host
@@ -1066,7 +1062,7 @@ OPTIONS
       --lib-path=PATH
       --lib=PATH
 
-          'PATH'        is a full path where to find libssl.so and libcrypto.so
+          'PATH'        is a full path where to find libssl.so, libcrypto.so.
 
           See X&HACKER's INFO& below for a detailed description how it works.
 
@@ -1208,7 +1204,7 @@ OPTIONS
             * --cipher=DHE_DSS_WITH_RC4_128_SHA
             * --cipher=0x03000066
             * --cipher=66
-          will be mapped to   DHE-DSS-RC4-SHA
+          will be mapped to   'DHE-DSS-RC4-SHA'
 
           Note: if more than one cipher matches, just one will be selected.
 
@@ -1514,9 +1510,9 @@ OPTIONS
       --slow-server-delay=SEC
 
           Additional delay in seconds  after the server is connected  using a
-          proxy or before starting STARTTLS.
+          proxy or before starting 'STARTTLS'.
           This is useful when connecting via  slow proxy chains or connecting
-          to slow servers before sending the STARTTLS sequence.
+          to slow servers before sending the 'STARTTLS' sequence.
 
       --ssl-maxciphers=CNT
 
@@ -1525,7 +1521,7 @@ OPTIONS
       --ssl-double-reneg
 
           Send SSL extension  'reneg_info'  even if list of ciphers includes
-          TLS_EMPTY_RENEGOTIATION_INFO_SCSV (default: do not include)
+          'TLS_EMPTY_RENEGOTIATION_INFO_SCSV' (default: do not include)
 
 # alias: --sslnodataeqnocipher --nodataeqnocipher
       --ssl-nodata-nocipher
@@ -1834,7 +1830,7 @@ OPTIONS
 
       --cfg-score=KEY=SCORE
 
-          Redefine value for scoring. Sets  %checks{KEY}{score}  to  SCORE.
+          Redefine value for scoring. Sets  %checks{KEY}{score}  to  'SCORE'.
           Most score values are set to 10 by default. Values '0' .. '100' are
           allowed.
 
@@ -1844,7 +1840,7 @@ OPTIONS
           For deatils how scoring works, please see  SCORING  section.
 
           Use the  --trace-key  option for the  +info  and/or  +check command
-          to get the values for  KEY.
+          to get the values for  'KEY'.
 
       --cfg_checks=KEY=TEXT
       --cfg-checks=KEY=TEXT
@@ -1852,7 +1848,7 @@ OPTIONS
       --cfg-data=KEY=TEXT
 
           Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
-          %checks{KEY}{txt}  to  TEXT.
+          %checks{KEY}{txt}  to  'TEXT'.
 
           To get a list of preconfigured labels, use:
               $0 --help=cfg-checks
@@ -1867,7 +1863,7 @@ OPTIONS
       --cfg_text=KEY=TEXT
       --cfg-text=KEY=TEXT
 
-          Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
+          Redefine general texts used in output. Sets  %text{KEY}  to  'TEXT'.
 
           To get a list of preconfigured texts, use:
               $0 --help=cfg-text
@@ -1877,7 +1873,7 @@ OPTIONS
 
       --cfg-hint=KEY=TEXT
 
-          Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  TEXT.
+          Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  'TEXT'.
 
           To get a list of preconfigured texts, use:
               $0 --help=cfg-hint
@@ -2015,7 +2011,7 @@ OPTIONS
 
       --trace-not-me
 
-          Print debugging messages for modules only, but not $0 istself.
+          Print debugging messages for modules only, but not $0 itself.
 
       --trace-sub
       +traceSUB
@@ -2221,11 +2217,11 @@ CHECKS
         Check if target suports  EXPORT ciphers  and/or  DH Parameter is less
         than 2048 bits. ECDH must be greater to 511 bits.
 
-      Lucky 13
+      Lucky13
 
         Check if CBC ciphers are offered.
-        NOTE the recommendation to be safe againts  Lucky 13  was to use  RC4
-        ciphers. But they are also subjetc to attacks (see below).  Hence the
+        NOTE the recommendation  to be safe against  Lucky13  was to use  RC4
+        ciphers. But they are also subject to attacks (see below).  Hence the
         check is only for CBC ciphers.
 
       RC4
@@ -2287,8 +2283,8 @@ CHECKS
 
     Target (server) Configuration and Support
 
-      BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4,
-      ROBOT, SLOTH, Sweet32
+      BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky13, POODLE, RC4, ROBOT,
+      SLOTH, Sweet32
 
         See above.
 
@@ -2563,7 +2559,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
 
           No TLS compression.
 
-        3.4.4 Der Lucky 13-Angriff
+        3.4.4 Der Lucky13-Angriff
         3.4.5 Die "Encrypt-thn-MAC"-Erweiterung
 
           Use of AES-GCM ciphers only.
@@ -2730,7 +2726,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
         3.2.  Strict TLS
 
           Check if server provides Strict Transport Security.
-          (STARTTLS check NOT YET IMPLEMENTED).
+          ('STARTTLS' check NOT YET IMPLEMENTED).
 
         3.3.  Compression
 
@@ -3560,15 +3556,20 @@ INSTALLATION
 
     OpenSSL
 
-        Currently it is recommend to use either the openssl version from
-         https://github.com/PeterMosmans/openssl/ which requires compilation,
-        see  X&Example: Compile OpenSSL&, or use any of the precomiled versions
-        which are available for several platforms at https://testssl.sh/ .
+        Currently (since 18.06.18) it is recommend to build openssl using
+            contrib/build_openssl.sh
+
+        Other possibilities are:
+          * compiling openssl using following sources
+            https://github.com/PeterMosmans/openssl/
+            see  X&Example: Compile OpenSSL&,
+          * use any of the precomiled versions provided by https://testssl.sh/
+          * use Docker owasp/o-saft (which contains a special openssl)
 
         The sources are available at
           * https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.zip
         The precomiled static versions are available at
-          * https://github.com/drwetter/testssl.sh/tree/master/bin
+          * https://github.com/drwetter/testssl.sh/ (see bin directory there)
 
         For all following installation examples we assume:
           * openssl-1.0.2-chacha.zip or openssl-1.0.2d.tar.gz
@@ -3629,6 +3630,8 @@ INSTALLATION
               echo == configure with static libraries
               echo omitt the zlib options if zlib-1g-dev is not installed
               echo omitt the krb5 options if no kerberos libraries available
+              LD_RUN_PATH=/usr/local/openssl/lib
+              LDFLAGS="-rpath=$LD_RUN_PATH" && export LDFLAGS
               ./config --prefix=/usr/local --openssldir=/usr/local/ssl \
                   enable-zlib zlib zlib-dynamic enable-ssl2 \
                   enable-krb5 --with-krb5-flavor=MIT \
@@ -3638,7 +3641,7 @@ INSTALLATION
                   enable-rfc3779 enable-ec_nistp_64_gcc_128 \
                   experimental-jpake -fPIC \
                   -DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES \
-                  shared
+                  -shared
 
               echo == make binaries and libraries
               make depend
@@ -3682,6 +3685,8 @@ INSTALLATION
 
               echo == patch files
               echo "edit SSLeay.xs and change some #if as described below"
+              LD_RUN_PATH=/usr/local/openssl/lib
+              LDFLAGS="-rpath=$LD_RUN_PATH" && export LDFLAGS
               env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
                     INC=-I/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
               make
@@ -4522,7 +4527,7 @@ TODO
              the certificate chain.
           ** TR-03116-4: does not check data in certificate chain
           ** RFC 7525: does not check data in certificate chain
-          ** RFC 7525: 3.2.  Strict TLS (for STARTTLS)
+          ** RFC 7525: 3.2.  Strict TLS (for 'STARTTLS')
           ** RFC 7525: 3.4.  TLS Session Resumption (session ticket must be
              authenticated and encrypted)
           ** RFC 7525: 3.6.  Server Name Indication (more reliable check)
