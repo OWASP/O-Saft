@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 1.2 18/04/16 22:10:46
+# SID   @(#) tools.txt 1.3 18/07/11 16:25:03
 
 NAME
 
@@ -49,7 +49,7 @@ CONCEPTS
 
         These tools can be categorized as follows:
 
-           category       tools
+           category       tools            purpose
          #---------------+----------------+----------------------------------
           CLI             o-saft.pl       # it's me
           General Wrapper o-saft          # use o-saft.pl with prostprocessors
@@ -59,6 +59,7 @@ CONCEPTS
           Postprocess     contrib/*       # prostprocessor tools
           Advanced Tools  contrib/*       # use o-saft.pl in advanced modes
           Installation    INSTALL.sh      # simple installation tool
+          Development     make            # functional testing
           Development     ....            # ... comming soon
          #---------------+----------------+----------------------------------
 
@@ -91,7 +92,16 @@ TOOLS
           o-saft-docker -id=osawp/o-saft
 
     CGI
-        o-saft.cgi TBD
+        o-saft.cgi is a wrapper to start  o-saft.pl  via a webserver.
+        The webpage to use  o-saft.pl  as CGI can be generated with:
+
+          o-saft.pl --no-rc --no-warning --help=gen-cgi
+
+        it cal also be generated using:
+
+          make o-saft.cgi.html
+
+        this HTML form then calls o-saft.cgi with the appropriate parameters.
 
     VM
         o-saft-docker calls  o-saft.pl  in a docker image.
@@ -104,6 +114,7 @@ TOOLS
         of o-saft.pl's output. See the files itself what they do.
 
           contrib/bunt.pl
+          contrib/*.awk
           contrib/* TBD
 
     Advanced Tools
@@ -111,15 +122,26 @@ TOOLS
 
           contrib/cipher_check.sh
 
+        In legacy systems, or when resoources are limited,  a special vesrion
+        o-saft-standalone.pl  can be used.  It is a single Perl script, which
+        contains most functionality. This script can be generated with:
+        
+          make o-saft-standalone.pl
+
     Installation
           INSTALL.sh
+          contrib/build_openssl.sh
           contrib/distribution_install.sh
           contrib/install_perl_modules.pl
           contrib/*_completion_o-saft
 
     Development
+
+        Various, mainly functional, tests have been defined in Makefiles.
+        Simply call  make  (without arguments) to get more informations.
+
+          test/.perlcritic
           contrib/critic.sh
-          contrib/.perlcritic
 
 
 CUSTOMIZATION
@@ -128,7 +150,7 @@ CUSTOMIZATION
 
         * o-saft.pl
            .o-saft.pl
-           o-saft-usr.tcl
+           o-saft-usr.pl
 
         * o-saft.tcl
            .o-saft.tcl
