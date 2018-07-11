@@ -23,14 +23,14 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.12 18/06/13 16:55:38
+#?      @(#) Makefile 1.13 18/07/11 23:44:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test   = 1.12
+_SID.test   = 1.13
 
 MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
@@ -132,7 +132,7 @@ MORE-env        = " \
 \#   TEST.host   - hostname to be used for tests (when only one is expected)$(_NL)\
 \#   TEST.hosts  - list of hostnames to perform tests$(_NL)\
 \#   TEST.dir    - directory in which EXE.pl will be executed; default: $(TEST.dir)$(_NL)\
-\#   TEST.dirlog - directory where results of EXE.pl will be stored; default: $(TEST.logdir)$(_NL)\
+\#   TEST.logdir - directory where results of EXE.pl will be stored; default: $(TEST.logdir)$(_NL)\
 \#$(_NL)\
 \# Keep in mind that following files are located in $(TEST.dir):$(_NL)\
 \#   $(EXE.pl)  .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
@@ -230,6 +230,7 @@ $(TEST.logdir):
 # For testing all different warning-* targets, the pattern rule  message-% is
 # used, which gets the message number from the automatic variable $*  and the
 # arguments for $(SRC.pl) with following Makefile variables:
+#   $(TEST.init)    - command, options to be passed to $(EXE.pl)
 #   $(TEST.args)    - command, options and hostname to be passed to $(EXE.pl)
 #                     +quit  command or  other command and hostname is needed
 #                     for testing the warning message
@@ -243,15 +244,17 @@ $(TEST.logdir):
 # when requested with the  --rc=$(_TMP.rc)  option.
 
 # target succeeds if message is there
-message-%: $(SRC.pl)
+message-%:
 	@$(TARGET_VERBOSE)
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
 	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* " ; \
 	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
-	    $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* ; \
+	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* ; \
+	    _status=$$? ; \
 	    rm -f $(_TMP.rc) ; \
+	    exit $$_status ; \
 	fi
 # following removed from above, too noicy:
 #            echo "echo '$(TEST.rc)' > $(_TMP.rc)" ;
