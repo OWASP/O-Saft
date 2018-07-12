@@ -1,0 +1,95 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile    - makefile for various O-Saft tests
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Makefile containing general testing targets for O-Saft project.
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see ../Makefile .
+#
+#       Naming conventions for targets see ../Makefile.help .
+#
+#? VERSION
+#?      @(#) Makefile.misc 1.1 18/07/12 10:37:06
+#?
+#? AUTHOR
+#?      18-apr-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.misc   = 1.1
+
+MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+.SUFFIXES:
+
+first-misc-target-is-default: help.test.misc
+
+ifeq (,$(_SID.test))
+    -include test/Makefile.misc
+endif
+
+_MYSELF.misc    = test/Makefile.misc
+ALL.Makefiles  += $(_MYSELF.misc)
+
+MORE-misc        = " \
+\#               ____________________________________________ misc. tests _$(_NL)\
+ bench           - call '$(EXE.bench)' for some benchmarks$(_NL)\
+ bench.log       - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
+ test.bunt       - test '$(CONTRIB.dir)/bunt.pl' with sample file$(_NL)\
+"
+
+HELP-help.test.misc = print misc. testing targets
+help.test.misc:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-misc)    ; # no quotes!
+
+.PHONY: help.test.misc
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+BENCH.times       = $(EXE.bench).times
+BENCH.host        = $(TEST.host)
+
+ALL.test.misc     = bench test.bunt
+
+#_____________________________________________________________________________
+#____________________________________________________________ various tests __|
+
+bench:
+	$(EXE.bench) $(BENCH.host)
+	@echo "# use '$(MAKE) bench.log' to save result in '$(BENCH.times)'"
+bench.log:
+	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
+
+test.bunt: $(EXE.test.bunt)
+	@$(TARGET_VERBOSE)
+	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
+
+.PHONY: bench bench.log test.bunt
+
+#_____________________________________________________________________________
+#__________________________________________________ targets for development __|
+
+# following will be shown with "main" Makefile
+HELP-_dev       = __________________________________ targets for development _
+HELP-tags       = generate tags file for vi(m)
+
+$(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles)
+	ctags $^
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(ALL.test.misc)
+ALL.tests.log  += bench.log
+
