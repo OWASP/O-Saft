@@ -6757,6 +6757,7 @@ sub _get_host_port      {
     #   http://[2001:db8:1f70::999:de8:7648:6e8]:42/aa*foo=bar:23/             
     #   http://2001:db8:1f70::999:de8:7648:6e8:42/aa*foo=bar:23/  # invalid, but works
     # NOTE: following regex allow hostnames containing @, _ and many more ...
+    my $last  =  shift; # default port if not specified
     my $arg   =  shift;
     my $prot  =  $arg;
     my $port  =  "";
@@ -6765,6 +6766,7 @@ sub _get_host_port      {
        $host  =~ s#^(?:[^@]+@)?##i;            # strip user:pass, if any
        $host  =~ s#/.*$##;                     # strip /path/and?more
     ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
+    $port  =  $last if not defined $port;
     _y_ARG("arg=$arg => host=$host, port=$port");
     return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
     return "$host:$port";
@@ -7644,7 +7646,7 @@ while ($#argv >= 0) {
     }
 
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
-        my $host_port = _get_host_port($arg);
+        my $host_port = _get_host_port($cfg{port}, $arg);
         _y_ARG("host=    $host_port");
         _yeast("host: $host_port") if ($cfg{'trace'} > 0);
         if ($host_port =~ m/^\s*$/) {
