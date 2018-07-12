@@ -105,9 +105,10 @@
 #?                  --build-arg "OSAFT_VM_SHA_OSAFT=caffee" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
-#?      Build with O-Saft download from github
+#?      Build with development O-Saft download from github
 #?          docker build --force-rm --rm \ 
 #?                  --build-arg "OSAFT_VM_SRC_OSAFT=https://github.com/OWASP/O-Saft/archive/master.tar.gz" \ 
+#?                  --build-arg "OSAFT_VERSION=latest-development" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
 #?      Note that  o-saft-docker  searches for a Docker image  owasp/o-saft
@@ -148,7 +149,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.21 18/07/12 23:06:43" \
+	SID="@(#) Dockerfile 1.22 18/07/12 23:13:02" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -295,7 +296,7 @@ RUN \
 	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl && \
 	cp       $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
-	perl  -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:" $OSAFT_DIR/.o-saft.pl && \
+	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl && \
 	chmod 666 $OSAFT_DIR/.o-saft.pl		&& \
 	rm    -f $OSAFT_VM_TAR_OSAFT
 
