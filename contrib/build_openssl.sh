@@ -105,7 +105,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#) build_openssl.sh 1.1 18/07/04 23:21:41
+#?      @(#) build_openssl.sh 1.2 18/07/12 23:24:23
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -304,7 +304,7 @@ echo "# Adapt O-Saft's .o-saft.pl ..."
 	cd    $WORK_DIR				&& \
 	cp    $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
 	rm   -f ./.o-saft.pl			&& \
-	perl  -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
+	perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
 	chmod 666 ./.o-saft.pl
 
 # Dockerfile 1.20 }
