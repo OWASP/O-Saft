@@ -8,8 +8,9 @@
 #?              Version of this build (should be used as image tag also).
 #?
 #?          OSAFT_VM_FROM
-#?              Base image to be used for this build. Tested images (2017) are:
-#?                  alpine:3.6  alpine:edge  debian:stretch-slim  debian
+#?              Base image to be used for this build. Tested images are:
+#?                  (2017) alpine:3.6  alpine:edge  debian:stretch-slim  debian
+#?                  (2018) alpine:3.8  debian
 #?
 #?          OSAFT_VM_APT_INSTALL
 #?              Additional packages  to be installed in the image.
@@ -89,9 +90,9 @@
 #?          docker build --force-rm --rm \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
-#?      Simple build with base image alpine:3.6
+#?      Simple build with base image alpine:3.8
 #?          docker build --force-rm --rm \ 
-#?                  --build-arg "OSAFT_VM_FROM=alpine:3.6" \ 
+#?                  --build-arg "OSAFT_VM_FROM=alpine:3.8" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
 #?      Build with base image alpine:3.6 and Tcl/Tk
@@ -115,7 +116,7 @@
 #?      so don't forget to tag at least one image with this name.
 #?
 
-ARG     OSAFT_VM_FROM=alpine:edge
+ARG     OSAFT_VM_FROM=alpine:3.8
 
 FROM    $OSAFT_VM_FROM
 MAINTAINER Achim <achim@owasp.org>
@@ -149,7 +150,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.22 18/07/12 23:13:02" \
+	SID="@(#) Dockerfile 1.23 18/07/12 23:17:56" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
