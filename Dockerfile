@@ -105,6 +105,11 @@
 #?                  --build-arg "OSAFT_VM_SHA_OSAFT=caffee" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
+#?      Build with O-Saft download from github
+#?          docker build --force-rm --rm \ 
+#?                  --build-arg "OSAFT_VM_SRC_OSAFT=https://github.com/OWASP/O-Saft/archive/master.tar.gz" \ 
+#?                  -f Dockerfile -t owasp/o-saft .
+#?
 #?      Note that  o-saft-docker  searches for a Docker image  owasp/o-saft
 #?      so don't forget to tag at least one image with this name.
 #?
@@ -143,7 +148,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.20 18/07/04 11:01:55" \
+	SID="@(#) Dockerfile 1.21 18/07/12 23:06:43" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -282,6 +287,10 @@ RUN \
 		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
 	\
 	tar   -xzf $OSAFT_VM_TAR_OSAFT		&& \
+	# handle master directory from github, mv to $OSAFT_DIR
+	[ -d "./O-Saft-master" ] && mv ./O-Saft-master/*           $OSAFT_DIR/	&& \
+	[ -d "./O-Saft-master" ] && mv ./O-Saft-master/.[a-zA-Z]*  $OSAFT_DIR/	&& \
+	[ -d "./O-Saft-master" ] && rm -rf ./O-Saft-master/ 	&& \
 	chown -R root:root   $OSAFT_DIR		&& \
 	chown -R osaft:osaft $OSAFT_DIR/contrib	&& \
 	chown    osaft:osaft $OSAFT_DIR/.o-saft.pl && \
@@ -300,7 +309,7 @@ WORKDIR $OSAFT_DIR
 USER    osaft
 RUN     o-saft-docker usage
 
-ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]
+ENTRYPOINT ["perl", "/O-Saft/o-saft"]
 CMD     ["--norc",  "--help=docker"]
 
 # vim:set ft=dockerfile:
