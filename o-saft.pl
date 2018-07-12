@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.800 18/07/11 01:34:21",
+    SID         => "@(#) yeast.pl 1.801 18/07/12 10:02:46",
     STR_VERSION => "18.06.21",          # <== our official version number
 };
 
@@ -6754,21 +6754,19 @@ sub _get_host_port      {
     #   ftp:42/no-fqdn:42/aa*foo=bar:23
     #   //abc/def    
     #   abc://def    # scary
+    #   http://[2001:db8:1f70::999:de8:7648:6e8]:42/aa*foo=bar:23/             
+    #   http://2001:db8:1f70::999:de8:7648:6e8:42/aa*foo=bar:23/  # invalid, but works
     # NOTE: following regex allow hostnames containing @, _ and many more ...
     my $arg   =  shift;
     my $prot  =  $arg;
+    my $port  =  "";
     my $host  =  $arg;
        $host  =~ s#^(?:[a-z][a-z0-9]*:)?//##i; # strip schema, if any
        $host  =~ s#^(?:[^@]+@)?##i;            # strip user:pass, if any
        $host  =~ s#/.*$##;                     # strip /path/and?more
-    return "" if ($host =~ m/^\s*$/);
-    my $port  =  $host;
-       $port  =~ s#^.*:([0-9]+)$#$1#;          # get port
-       $port  =  $cfg{'port'}  if ($port =~ m/^\s*$/);
-       $port  =  $cfg{'port'}  if ($port eq $host); # use previous port
-       $host  =~ s#(?::[0-9]+)$##;             # strip port
+    ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
     _y_ARG("arg=$arg => host=$host, port=$port");
-    return "" if ($port =~ m/^\s*$/);
+    return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
     return "$host:$port";
 } # _get_host_port
 
