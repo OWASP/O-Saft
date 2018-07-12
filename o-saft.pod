@@ -273,7 +273,7 @@ B<DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYTEMS.>
 
 =head1 CONCEPTS
 
-The purpose of C<>O-SaftC<> is to do the work, not to force the user to
+The purpose of  O-Saft  is to do the work, not to force the user to
 learn a new tool or to install "newer" software first.
 However, the user "should do something" if necessary depending on the
 reported results.
@@ -785,7 +785,7 @@ It can be used just like openssl itself, for example:
 Dumps internal data for SSL connection and target certificate. This
 is mainly for debugging and  should not be used together with other
 commands (except I<+cipher>).
-Each key-value pair is enclosed in  #{  and  #} .
+Each key-value pair is enclosed in  C<#{>  and  C<#}> .
 
 Using  I<--trace> I<--trace>  dumps data of L<Net::SSLinfo|Net::SSLinfo> too.
 
@@ -802,7 +802,7 @@ L</Notes about commands>  below.
 =head3 +cipher
 
 Check target for ciphers,  either all ciphers, or ciphers specified
-with  I<--cipher=*>  option.
+with  I<--cipher=CIPHER>  option.
 
 Note that ciphers not supported by the local SSL implementation are
 not checked by default, use  I<+cipherall> or I<+cipherraw>   command.
@@ -1264,7 +1264,7 @@ This option is a shortcut for  I<--starttls=SMTP> .
 
 Use C<STARTTLS> command to start a TLS connection via protocol. PORT
 PORT may be any of: C<SMTP>, C<IMAP>, C<IMAP2>, C<POP3>, C<FTPS>, C<RDP>,
-C<LDAP> or C<XMPP>
+C<LDAP> or C<XMPP> .
 
 For  I<--starttls=SMTP>  see  I<--dns-mx>  also to use MX records instead
 of host
@@ -1402,7 +1402,7 @@ C<PATH>        is a full path where to find openssl.
 
 =head3 --lib=PATH
 
-C<PATH>        is a full path where to find libssl.so and libcrypto.so
+C<PATH>        is a full path where to find libssl.so, libcrypto.so.
 
 See L</HACKER's INFO> below for a detailed description how it works.
 
@@ -1643,7 +1643,7 @@ Example:
 
 =back
 
-will be mapped to   DHE-DSS-RC4-SHA
+will be mapped to   C<DHE-DSS-RC4-SHA>
 
 Note: if more than one cipher matches, just one will be selected.
 
@@ -2009,9 +2009,9 @@ It does not make sense to use it for other protocols; however ...
 =head3 --slow-server-delay=SEC
 
 Additional delay in seconds  after the server is connected  using a
-proxy or before starting STARTTLS.
+proxy or before starting C<STARTTLS>.
 This is useful when connecting via  slow proxy chains or connecting
-to slow servers before sending the STARTTLS sequence.
+to slow servers before sending the C<STARTTLS> sequence.
 
 =head3 --ssl-maxciphers=CNT
 
@@ -2020,7 +2020,7 @@ Maximal number of ciphers sent in a sslhello (default: 32).
 =head3 --ssl-double-reneg
 
 Send SSL extension  C<reneg_info>  even if list of ciphers includes
-TLS_EMPTY_RENEGOTIATION_INFO_SCSV (default: do not include)
+C<TLS_EMPTY_RENEGOTIATION_INFO_SCSV> (default: do not include)
 
 =head3 --ssl-nodata-nocipher
 
@@ -2510,7 +2510,7 @@ Main purpose is to reduce list of commands or to print them sorted.
 
 =head3 --cfg-score=KEY=SCORE
 
-Redefine value for scoring. Sets  %checks{KEY}{score}  to  SCORE.
+Redefine value for scoring. Sets  %checks{KEY}{score}  to  C<SCORE>.
 Most score values are set to 10 by default. Values C<0> .. C<100> are
 allowed.
 
@@ -2521,7 +2521,7 @@ To get a list of current score settings, use:
 For deatils how scoring works, please see  L</SCORING>  section.
 
 Use the  I<--trace-key>  option for the  I<+info>  and/or  I<+check> command
-to get the values for  KEY.
+to get the values for  C<KEY>.
 
 =head3 --cfg_checks=KEY=TEXT
 
@@ -2532,7 +2532,7 @@ to get the values for  KEY.
 =head3 --cfg-data=KEY=TEXT
 
 Redefine texts used for labels in output. Sets  %data{KEY}{txt}  or
-%checks{KEY}{txt}  to  TEXT.
+%checks{KEY}{txt}  to  C<TEXT>.
 
 To get a list of preconfigured labels, use:
 
@@ -2550,7 +2550,7 @@ Example:
 
 =head3 --cfg-text=KEY=TEXT
 
-Redefine general texts used in output. Sets  %text{KEY}  to  TEXT.
+Redefine general texts used in output. Sets  %text{KEY}  to  C<TEXT>.
 
 To get a list of preconfigured texts, use:
 
@@ -2561,7 +2561,7 @@ when read from L</RC-FILE>.
 
 =head3 --cfg-hint=KEY=TEXT
 
-Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  TEXT.
+Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  C<TEXT>.
 
 To get a list of preconfigured texts, use:
 
@@ -2717,7 +2717,7 @@ Print debugging messages for  o-saft.pl  only, but not any modules.
 
 =head3 --trace-not-me
 
-Print debugging messages for modules only, but not o-saft.pl istself.
+Print debugging messages for modules only, but not o-saft.pl itself.
 
 =head3 --trace-sub
 
@@ -3008,11 +3008,11 @@ Check if target is vulenerable to Logjam attack.
 Check if target suports  EXPORT ciphers  and/or  DH Parameter is less
 than 2048 bits. ECDH must be greater to 511 bits.
 
-=head3 Lucky 13
+=head3 Lucky13
 
 Check if CBC ciphers are offered.
-NOTE the recommendation to be safe againts  Lucky 13  was to use  RC4
-ciphers. But they are also subjetc to attacks (see below).  Hence the
+NOTE the recommendation  to be safe against  Lucky13  was to use  RC4
+ciphers. But they are also subject to attacks (see below).  Hence the
 check is only for CBC ciphers.
 
 =head3 RC4
@@ -3068,9 +3068,9 @@ and https://filippo.io/Ticketbleed/ .
 
 =head2 Target (server) Configuration and Support
 
-=head3 BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky 13, POODLE, RC4,
+=head3 BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky13, POODLE, RC4, ROBOT,
 
-=head3 ROBOT, SLOTH, Sweet32
+=head3 SLOTH, Sweet32
 
 See above.
 
@@ -3600,7 +3600,7 @@ Truncated HMAC according RFC 6066 not recommended.
 
 No TLS compression.
 
-3.4.4 Der Lucky 13-Angriff
+3.4.4 Der Lucky13-Angriff
 3.4.5 Die "Encrypt-thn-MAC"-Erweiterung
 
 Use of AES-GCM ciphers only.
@@ -3773,7 +3773,7 @@ DTLSv1 and DTLSv1.1 must not be supported.
 3.2.  Strict TLS
 
 Check if server provides Strict Transport Security.
-(STARTTLS check NOT YET IMPLEMENTED).
+(C<STARTTLS> check NOT YET IMPLEMENTED).
 
 3.3.  Compression
 
@@ -5071,10 +5071,31 @@ instructions below.
 
 =head2 OpenSSL
 
-Currently it is recommend to use either the openssl version from
-https://github.com/PeterMosmans/openssl/ which requires compilation,
-see  L</Example: Compile OpenSSL>, or use any of the precomiled versions
-which are available for several platforms at https://testssl.sh/ .
+Currently (since 18.06.18) it is recommend to build openssl using
+contrib/build_openssl.sh
+
+Other possibilities are:
+
+=over
+
+=item * compiling openssl using following sources
+
+=back
+
+https://github.com/PeterMosmans/openssl/
+see  L</Example: Compile OpenSSL>,
+
+=over
+
+=item * use any of the precomiled versions provided by https://testssl.sh/
+
+=back
+
+=over
+
+=item * use Docker owasp/o-saft (which contains a special openssl)
+
+=back
 
 The sources are available at
 
@@ -5088,7 +5109,7 @@ The precomiled static versions are available at
 
 =over
 
-=item * https://github.com/drwetter/testssl.sh/tree/master/bin
+=item * https://github.com/drwetter/testssl.sh/ (see bin directory there)
 
 =back
 
@@ -5167,6 +5188,8 @@ Example with openssl-1.0.2d:
 	echo == configure with static libraries
 	echo omitt the zlib options if zlib-1g-dev is not installed
 	echo omitt the krb5 options if no kerberos libraries available
+	LD_RUN_PATH=/usr/local/openssl/lib
+	LDFLAGS="-rpath=$LD_RUN_PATH" & export LDFLAGS&
 	./config --prefix=/usr/local --openssldir=/usr/local/ssl \
 	enable-zlib zlib zlib-dynamic enable-ssl2 \
 	enable-krb5 --with-krb5-flavor=MIT \
@@ -5176,7 +5199,7 @@ Example with openssl-1.0.2d:
 	enable-rfc3779 enable-ec_nistp_64_gcc_128 \
 	experimental-jpake -fPIC \
 	-DTEMP_GOST_TLS -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES \
-	shared
+	-shared
 
 	echo == make binaries and libraries
 	make depend
@@ -5220,6 +5243,8 @@ Building our own library and module (with openssl from C</usr/local>):
 
 	echo == patch files
 	echo "edit SSLeay.xs and change some #if as described below"
+	LD_RUN_PATH=/usr/local/openssl/lib
+	LDFLAGS="-rpath=$LD_RUN_PATH" & export LDFLAGS&
 	env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
        INC=-I/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
 
@@ -6389,7 +6414,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 18.01.18
+@(#) 18.06.21
 
 =head1 AUTHOR
 
@@ -6499,7 +6524,7 @@ the certificate chain.
 
 =over
 
-=item ** RFC 7525: 3.2.  Strict TLS (for STARTTLS)
+=item ** RFC 7525: 3.2.  Strict TLS (for C<STARTTLS>)
 
 =back
 
@@ -6759,7 +6784,7 @@ Generated with:
 # =head1 abbr
 
 
-# # SID	@(#) glossary.txt 1.1 18/01/10 21:53:16
+# # SID	@(#) glossary.txt 1.3 18/05/16 11:45:48
 # 
 # # acronym | description
 # #------+----------------------------------------------------------------------+
@@ -6816,7 +6841,7 @@ Generated with:
 # CBC  	Ciplier Block Chaining (sometimes)
 # CBC-MAC	Cipher Block Chaining - Message Authentication Code
 # CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
-# CCM	CBC-MAC Mode
+# CCM	CBC-MAC Mode (authenticated encryption block cipher mode)
 # CCS	Change Cipher Spec (protocol)
 # CDH	?  Diffie-Hellman
 # CDP	CRL Distribution Points
@@ -6915,6 +6940,7 @@ Generated with:
 # # ECRYPT	??
 # Ed25519	alias for Curve25519
 # Ed448	alias for Curve448
+# EdDSA	alias for signatures using public key and private key formats, like Curve448 and Curve25519
 # EDE	Encryption-Decryption-Encryption
 # EDH	Ephemeral Diffie-Hellman
 # EGADS	Entropy Gathering and Distribution System
@@ -6949,7 +6975,7 @@ Generated with:
 # FSM	Finite State Machine
 # FZA	FORTEZZA
 # G-DES	??? DES
-# GCM	Galois/Counter Mode (block cipher mode)
+# GCM	Galois/Counter Mode (authenticated encryption block cipher mode)
 # GHASH	Hash funtion used in GCM
 # GMAC	MAC for GCM
 # Grøstl	hash function (Lars Knudsen, 2010)
@@ -7013,6 +7039,7 @@ Generated with:
 # MARS	
 # MAC	Message Authentication Code
 # MCF	Modular Crypt Format
+# MDC	Modification Detection Code
 # MDC2	Modification Detection Code 2 aka Meyer-Schilling
 # MDC-2	same as MDC2
 # MD2	Message Digest 2
@@ -7023,7 +7050,7 @@ Generated with:
 # MECAI	Mutually Endorsing CA Infrastrukture
 # MGF	Mask Generation Function
 # MISTY1	block cipher algorithm
-# MQV	Menezes-Qu-Vanstone (authentecated key agreement
+# MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 # MtE	MAC-then-encrypt
 # NCP	Normalized Certification Policy (according TS 102 042)
 # Neokeon	symmetric block cipher algorithm
@@ -7138,7 +7165,7 @@ Generated with:
 # SEED	128-bit Symmetric Block Cipher
 # Serpent	symmetric key block cipher (128 bit)
 # SGC	Server-Gated Cryptography
-# SGCM	Sophie Germain Counter Mode (block cipher mode)
+# SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
 # SHA	Secure Hash Algorithm
 # SHA-0	Secure Hash Algorithm (insecure version before 1995)
 # SHA-1	Secure Hash Algorithm (since 1995)
@@ -7233,10 +7260,12 @@ Generated with:
 # X.680	X.680: ASN.1
 # X.509	X.509: The Directory - Authentication Framework
 # X25519	alias for Curve25519 ?
+# X448	alias for Curve448 ?
 # X680	X.680: ASN.1
 # X509	X.509: The Directory - Authentication Framework
 # XCBC	eXtended CBC-MAC
 # XCBC-MAC	same as XCBC
+# X3DH	Extended Triple Diffie-Hellman
 # XEX	XOR Encrypt XOR
 # XKMS	XML Key Management Specification
 # XMACC	counter-based XOR-MAC
@@ -7258,7 +7287,7 @@ Generated with:
 # =head1 rfc
 
 
-# # SID	@(#) rfc.txt 1.1 18/01/10 21:53:16
+# # SID	@(#) rfc.txt 1.2 18/05/16 07:47:22
 # 
 # # number| title / description
 # #------+----------------------------------------------------------------------+
@@ -7378,6 +7407,11 @@ Generated with:
 # 1135	The Helminthiasis of the Internet
 # 6698	DNS-Based Authentication of Named Entities (DANE)
 # 6844	DNS Certification Authority Authorization (CAA) Resource Record
+# 3610	Counter with CBC-MAC (CCM)
+# 3852	Cryptographic Message Syntax (CMS)
+# 5083	Cryptographic Message Syntax (CMS) Authenticated-Enveloped-Data Content Type
+# 4086	Randomness Requirements for Security
+# 4107	Guidelines for Cryptographic Key Management
 # 
 ## end rfc
 
