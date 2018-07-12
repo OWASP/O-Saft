@@ -47,12 +47,14 @@
 #?      It's highly recommended to do this installation on a separate testing
 #?      system.
 #?
-#?      DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYTEMS.
+#?      DO NOT USE THESE INSTALLATIONS ON PRODUCTIVE SYSTEMS.
 #?
 #? PRECONDITIONS
 #?      Script needs write access to installation directories (/usr/local and
 #?      /usr/local/lib by default).
-#?      Asumes that following perl modules are installed:
+#?      To build openssl, following libraries and include files are needed:
+#?          gmp krb5 lksctp zlib
+#?      Assumes that following perl modules are installed:
 #?          Net::DNS Mozilla::CA libidn.so
 #?
 #? ENVIRONMENT VARIABLES
@@ -105,7 +107,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#) build_openssl.sh 1.2 18/07/12 23:24:23
+#?      @(#) build_openssl.sh 1.3 18/07/12 23:32:46
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
