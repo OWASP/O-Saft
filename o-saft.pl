@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.801 18/07/12 10:02:46",
+    SID         => "@(#) yeast.pl 1.802 18/07/13 00:38:44",
     STR_VERSION => "18.06.21",          # <== our official version number
 };
 
@@ -104,6 +104,17 @@ sub _yeast_EXIT($)  {
     }
     return;
 } # _yeast_EXIT
+sub _yeast_NEXT($)  {
+    # return 1 if parameter matches given argument in @ARGV; 0 otherwise
+    my $txt =  shift;   # example: INIT0 - initialization start
+    my $arg =  $txt;
+       $arg =~ s# .*##; # strip off anything right of a space
+    if ((grep{/(?:([+]|--)$arg).*/i} @ARGV) > 0) {
+        printf STDERR ("#o-saft.pl  _yeast_EXIT $txt\n");
+        return 1;
+    }
+    return 0;
+} # _yeast_NEXT
 
 #$DB::single=1;  # for debugging; start with: PERL5OPT='-dt' $0
 
@@ -2351,7 +2362,6 @@ sub _check_openssl      {
         # save to set $Net::SSLinfo::* here,
         # will be redifined later, see: set defaults for Net::SSLinfo
     if (not defined Net::SSLinfo::s_client_check()) {
-_dbx "S_CLIENT";
         _warn("147: '$cmd{'openssl'}' not available; all openssl functionality disabled");
         _hint("consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
@@ -7652,7 +7662,7 @@ while ($#argv >= 0) {
         if ($host_port =~ m/^\s*$/) {
             _warn("042: invalid host-like argument '$arg'; ignored");
         } else {
-            push(@{$cfg{'hosts'}}, $host_port)      if ($host_port !~ m/^\s*$/);
+            push(@{$cfg{'hosts'}}, $host_port) if ($host_port !~ m/^\s*$/);
         }
     }
 
@@ -8046,7 +8056,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     $port = $cfg{'port'} if ($port =~ m/^\s*$/);
     $cfg{'port'}    = $port;
     $cfg{'host'}    = $host;
-    _yeast_EXIT("exit=HOST0 - perform host start");
+    next if _yeast_NEXT("exit=HOST0 - host $host:$port");
     _y_CMD("host " . ($host||"") . ":$port {");
     _trace(" host: $host {\n");
     # SNI must be set foreach host, but it's always the same name!
@@ -8109,6 +8119,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             my $i = 0;
             foreach my $ip (@ips) {
                 local $? = 0; local $! = undef;
+                # TODO: $rhost  = gethostbyaddr($ipv6, AF_INET6));
                ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
                 $rhost  = $fail if ($? != 0);
                 $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
@@ -8134,7 +8145,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     }
 
     _yeast_TIME("DNS}");
-    _yeast_EXIT("exit=HOST1 - perform host DNS");
+    next if _yeast_NEXT("exit=HOST1 - host DNS");
 
     # Quick check if the target is available
     _y_CMD("test connect ...");
@@ -8222,7 +8233,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _yeast_TIME("cipherraw}");
         next; # FIXME: SEE Note:+cipherall
     } # cipherraw
-    _yeast_EXIT("exit=HOST2 - perform host cipherraw");
+    next if _yeast_NEXT("exit=HOST2 - host cipherraw");
 
     if (_is_do('fallback_protocol')) {
         _y_CMD("protocol fallback support ...");
@@ -8243,7 +8254,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _yeast_TIME("need_default{");
         $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
         foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-            next if (not defined $prot{$ssl}->{opt});
+            next if not defined $prot{$ssl}->{opt};
             my $anf = time();
             # no need to check for "valid" $ssl (like DTLSfamily), done by _get_default()
             $prot{$ssl}->{'cipher_strong'}  = _get_default($ssl, $host, $port, 'strong');
@@ -8262,7 +8273,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         checkprefered($host, $port);
         _yeast_TIME("need_default}");
     }
-    _yeast_EXIT("exit=HOST3 - perform host ciphers start");
+    next if _yeast_NEXT("exit=HOST3 - host ciphers start");
 
     if (_is_do('cipher_default') and ($#{$cfg{'do'}} == 0)) {
         # don't print if not a single command, because +check or +cipher do it
@@ -8285,7 +8296,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         checkciphers($host, $port, @cipher_results); # necessary to compute 'out_summary'
         _yeast_TIME("need_cipher}");
      }
-    _yeast_EXIT("exit=HOST4 - perform host get ciphers");
+    next if _yeast_NEXT("exit=HOST4 - host get ciphers");
 
     # check ciphers manually (required for +check also)
     if (_is_do('cipher') or $check > 0) {
@@ -8322,7 +8333,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         }
         _yeast_TIME("cipher}");
     } # cipher
-    _yeast_EXIT("exit=HOST5 - perform host ciphers end");
+    next if _yeast_NEXT("exit=HOST5 - host ciphers end");
 
     goto CLOSE_SSL if ((_is_do('cipher') > 0) and ($quick == 0));
 
@@ -8423,7 +8434,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
      }
 
     _yeast_TIME("prepare}");
-    _yeast_EXIT("exit=HOST6 - perform host prepare");
+    next if _yeast_NEXT("exit=HOST6 - host prepare");
     usr_pre_print();
 
     if ($check > 0) {
@@ -8465,6 +8476,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
     $cfg{'done'}->{'hosts'}++;
 
     usr_pre_next();
+    next if _yeast_NEXT("exit=HOST8 - host end");
     _yeast_EXIT("exit=HOST9 - perform host end");
 
 } # foreach host
