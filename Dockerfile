@@ -150,7 +150,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.23 18/07/12 23:17:56" \
+	SID="@(#) Dockerfile 1.24 18/07/12 23:30:06" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -167,7 +167,8 @@ ENV     WORK_DIR	/
 #RUN apk update && \   # no update neded and not wanted
 RUN     apk add --no-cache wget ncurses $OSAFT_VM_APT_INSTALL \
 		 gcc make musl-dev linux-headers \
-		 krb5-dev zlib-dev perl perl-readonly perl-dev
+		 krb5-dev zlib-dev perl perl-readonly perl-dev \
+		 ca-certificates
 	# perl-io-socket-ssl perl-net-ssleay
 
 WORKDIR	$WORK_DIR
