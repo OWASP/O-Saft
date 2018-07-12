@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.242 18/06/13 22:56:41";
+my  $man_SID= "@(#) o-saft-man.pm 1.243 18/07/12 20:20:32";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -985,11 +985,12 @@ sub src_grep        {
     if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
         while(<$fh>) {
             next if (m(^\s*#));
-            next if (not m(_EXIT.*$hlp));
+            next if (not m(_(?:EXIT|NEXT).*$hlp));
             my $opt     = $_;
             my $comment = $_;
             if ($opt =~ m/exit=/) {
                 # line looks like: _yeast_EXIT("exit=BEGIN0 - BEGIN start");
+                # or             : _yeast_NEXT("exit=HOST0 - host start");
                 $opt =~ s/^[^"]*"/--/;    $opt =~ s/ - .*$//s;
                 $comment =~ s/^[^-]*//; $comment =~ s/".*$//s;
             }
@@ -998,6 +999,7 @@ sub src_grep        {
         close($fh);
     }
     _man_foot(14);
+    return;
 } # src_grep
 
 sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
