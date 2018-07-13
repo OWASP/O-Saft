@@ -52,16 +52,16 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.6 18/07/13 15:38:18
+#?      @(#) Makefile.warnings 1.7 18/07/13 16:32:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.6
+_SID.warnings   = 1.7
 
-_MYSELF.warnings= test/Makefile.warnings
+_MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
@@ -70,7 +70,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 first-warn-target-is-default: help.test.warnings
 
 ifeq (,$(_SID.test))
-    -include test/Makefile
+    -include t/Makefile
 endif
 
 #_____________________________________________________________________________
@@ -254,7 +254,7 @@ warning-861: TEST.args  = TODO: not all ciphers listed
 
 ALL.warnings    = $(shell awk -F: '/^warning-...:/{print $$1}' $(_MYSELF.warnings) | sort -u)
 
-_TEST.template  = test/test.warning.Makefile-template
+_TEST.template  = t/test.warning.Makefile-template
 $(_TEST.template): $(SRC.pl)
 	@echo "# generated template targets to test **WARNING messages" > $@
 	@echo "# targets use the message text as TODO (see Makefile)"  >> $@
@@ -282,7 +282,7 @@ test.warnings: $(ALL.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.6: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.7: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
