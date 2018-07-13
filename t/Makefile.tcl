@@ -17,16 +17,16 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.4 18/07/13 15:38:28
+#?      @(#) Makefile.tcl 1.5 18/07/13 17:08:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl        = 1.4
+_SID.tcl        = 1.5
 
-_MYSELF.tcl     = test/Makefile.tcl
+_MYSELF.tcl     = t/Makefile.tcl
 ALL.includes   += $(_MYSELF.tcl)
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
@@ -35,7 +35,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 first-tcl-target-is-default: help.test.tcl
 
 ifeq (,$(_SID.test))
-    -include test/Makefile
+    -include t/Makefile
 endif
 
 TEST.tcl.hosts      = localhost
