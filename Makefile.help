@@ -135,17 +135,17 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.10 18/07/13 09:00:18
+#?      @(#) Makefile.help 1.11 18/07/13 09:22:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.10
+_SID.help       = 1.11
 
 _MYSELF.help    = Makefile.help
-ALL.Makefiles  += $(_MYSELF.help
+ALL.Makefiles  += $(_MYSELF.help)
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
