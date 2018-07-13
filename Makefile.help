@@ -135,19 +135,22 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.9 18/06/14 12:01:13
+#?      @(#) Makefile.help 1.10 18/07/13 09:00:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
+_SID.help       = 1.10
+
+_MYSELF.help    = Makefile.help
+ALL.Makefiles  += $(_MYSELF.help
+
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-help-target-is-default: help.doc
-
-_SID.help       = 1.9
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
