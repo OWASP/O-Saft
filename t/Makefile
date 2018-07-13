@@ -23,16 +23,16 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.14 18/07/13 16:09:55
+#?      @(#) Makefile 1.15 18/07/13 16:30:08
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.14
+_SID.test       = 1.15
 
-_MYSELF.test    = test/Makefile
+_MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
@@ -42,7 +42,7 @@ first-test-target-is-default: help.test
     # otherwise the first target from included files would be used
 
 ifndef ALL.Makefiles
-    -include test/Makefile.inc
+    -include t/Makefile.inc
         # defines macros if called directly (not from ../Makefile)
 endif
 
@@ -89,7 +89,7 @@ help.test.all:
 
 .PHONY: help.test help.test.all
 
-# FIXME: some of above HELP-* should be extracted from test/Makefile.*
+# FIXME: some of above HELP-* should be extracted from t/Makefile.*
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -109,8 +109,8 @@ SRC.test        = \
 ALL.test        = $(SRC.test)
 
 # internal used tools (paths hardcoded!)
-EXE.bench       = test/o-saft_bench
-EXE.test.bunt   = test/test-bunt.pl.txt
+EXE.bench       = t/o-saft_bench
+EXE.test.bunt   = t/test-bunt.pl.txt
 
 _TODAY_         = $(shell date +%Y""%m%d)
 
@@ -263,7 +263,7 @@ warning-%: message-%
 	@echo -n ""
 
 # target succeeds if message is missing
-# TODO: need more examples beside those in test/Makefile.cgi
+# TODO: need more examples beside those in t/Makefile.cgi
 no.message-%:
 	@$(TARGET_VERBOSE)
 	@echo "$(TEST.rc)" > $(_TMP.rc)
@@ -299,7 +299,7 @@ no.message-%:
 #     testcmd-no2: TEST.args := +quit $*
 #
 # Summary:
-#     ### defined in test/Makefile.*
+#     ### defined in t/Makefile.*
 #     # define list of hostnames
 #     TEST.hosts    = aa.tld  bb.tld
 #     # define the commands to be used for $(EXE.pl) in the target
@@ -316,7 +316,7 @@ no.message-%:
 #     $(shell echo "$*" | awk -F_ '{print $$2}') $(TEST.args)
 #     #   00c-aa.tld returns: aa.tld
 #
-#     ### defined in test/Makefile.*
+#     ### defined in t/Makefile.*
 #     # dynamically generate list of all testcmd-DDD  targets
 #     ALL.ext.cmd = $(shell awk -F_ '/^testcmd-[0-9]/{print $$1}' test/Makefile.ext)
 #     #   returns: testcmd-00c testcmd-00i
@@ -342,7 +342,7 @@ test-%: testcmd-%
 # "test ... || mv ..." . This ensures that the file exists afterwards.
 # Note that all target commands are prefixed with - to avoid make reporting of
 # errors if the command fails (as failture is intended, somehow).
-# Note that testcmd-%.log called from within test/ may return:  is up to date.
+# Note that  testcmd-%.log  called from within t/ may return:  is up to date.
 # diff's STDERR is discarded (may return: "file does not exist").
 testcmd-%.log: $(TEST.logdir)
 	@$(TARGET_VERBOSE)
@@ -362,38 +362,38 @@ testcmd-%.log: $(TEST.logdir)
 #  include test/Makefile.*
 # to avoid multiple inlcudes of the same file, which would result in make
 # errors complaining about target redefinitions
-# for a detailed description see test/Makefile.template
+# for a detailed description see t/Makefile.template
 
 ifeq (,$(_SID.warnings))
-    -include test/Makefile.warnings
+    -include t/Makefile.warnings
 endif
 
 ifeq (,$(_SID.cmds))
-    -include test/Makefile.cmds
+    -include t/Makefile.cmds
 endif
 
 ifeq (,$(_SID.opt))
-    -include test/Makefile.opt
+    -include t/Makefile.opt
 endif
 
 ifeq (,$(_SID.ext))
-    -include test/Makefile.ext
+    -include t/Makefile.ext
 endif
 
 ifeq (,$(_SID.cgi))
-    -include test/Makefile.cgi
+    -include t/Makefile.cgi
 endif
 
 ifeq (,$(_SID.tcl))
-    -include test/Makefile.tcl
+    -include t/Makefile.tcl
 endif
 
 ifeq (,$(_SID.misc))
-    -include test/Makefile.misc
+    -include t/Makefile.misc
 endif
 
 ifeq (,$(_SID.critic))
-    -include test/Makefile.critic
+    -include t/Makefile.critic
 endif
 
 #_____________________________________________________________________________
