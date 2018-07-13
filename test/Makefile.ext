@@ -17,16 +17,19 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.6 18/07/06 10:17:24
+#?      @(#) Makefile.ext 1.7 18/07/13 15:38:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext    = 1.6
+_SID.ext        = 1.7
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+_MYSELF.ext     = test/Makefile.ext
+ALL.includes   += $(_MYSELF.ext)
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-ext-target-is-default: help.test.ext
@@ -34,9 +37,6 @@ first-ext-target-is-default: help.test.ext
 ifeq (,$(_SID.test))
     -include test/Makefile
 endif
-
-_MYSELF.ext         = test/Makefile.ext
-ALL.Makefiles      += $(_MYSELF.ext)
 
 TEST.file           = test/Makefile.FQDN
 # FIXME: TEST.file must depend on targets herein
