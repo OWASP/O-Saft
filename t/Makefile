@@ -23,14 +23,14 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.15 18/07/13 16:30:08
+#?      @(#) Makefile 1.16 18/07/13 17:15:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.15
+_SID.test       = 1.16
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -95,7 +95,7 @@ help.test.all:
 #________________________________________________________________ variables __|
 
 # test tools (part of distribution)
-TEST.dir        = test
+TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
 TEST.do         = SSLinfo.pl \
 		  o-saft_bench \
@@ -318,7 +318,7 @@ no.message-%:
 #
 #     ### defined in t/Makefile.*
 #     # dynamically generate list of all testcmd-DDD  targets
-#     ALL.ext.cmd = $(shell awk -F_ '/^testcmd-[0-9]/{print $$1}' test/Makefile.ext)
+#     ALL.ext.cmd = $(shell awk -F_ '/^testcmd-[0-9]/{print $$1}' t/Makefile.ext)
 #     #   returns: testcmd-00c testcmd-00i
 #
 #     # dynamically generate list of all testcmd-DDD for all hostnames
@@ -359,7 +359,7 @@ testcmd-%.log: $(TEST.logdir)
 #__________________________________________________ include testing targets __|
 
 # includes are done explicitly instead of:
-#  include test/Makefile.*
+#  include t/Makefile.*
 # to avoid multiple inlcudes of the same file, which would result in make
 # errors complaining about target redefinitions
 # for a detailed description see t/Makefile.template
