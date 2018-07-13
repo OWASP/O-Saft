@@ -64,6 +64,11 @@ function stat(key,val) {
 	line("line",  FNR,    ",");
 	line("key",   arr[1], ",");
 	line("label", arr[2], ",");
+	
+	# ciphers support is listed as yes/no, the cipher column gets this value
+	if (typ == "cipher") {
+            line("supported", arr[3], ",");
+        }
 	line("value", arr[length(arr)], "");
 	print "},";
 	next;
