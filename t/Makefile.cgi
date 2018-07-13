@@ -18,19 +18,19 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #       TODO:
-#          * complete with tests from test/test-o-saft.cgi.sh
+#          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.9 18/07/13 15:38:35
+#?      @(#) Makefile.cgi 1.10 18/07/13 18:16:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.9
+_SID.cgi        = 1.10
 
-_MYSELF.cgi     = test/Makefile.cgi
+_MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
 
 MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
@@ -39,7 +39,7 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 first-cgi-target-is-default: help.test.cgi
 
 ifeq (,$(_SID.test))
-    -include test/Makefile
+    -include t/Makefile
 endif
 
 TEST.cgi.hosts      = localhost
@@ -131,8 +131,8 @@ ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.cgibad_%)
 # or IPs was detected. The purpose here is to check if o-saft.cgi exits, hence
 # The test succeeds, if the last line is missing.
 # The target no.message is used for each individual test. It is a pattern rule
-# in the test/Makefile and uses the variables  EXE.pl, TEST.args and TEST.INIT
-# which are passed as arguments to the recursive MAKE call.
+# in t/Makefile and uses the variables  EXE.pl, TEST.args and TEST.INIT, which
+# are passed as arguments to the recursive MAKE call.
 # "make -i" is used to ensure that all tests are performed.
 
 # testing usage of --cgi  option; means that _cgi.args must be set explicitly
@@ -196,7 +196,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.9: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.10: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
