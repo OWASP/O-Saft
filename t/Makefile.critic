@@ -1,0 +1,218 @@
+#! /usr/bin/make -rRf
+#?
+#? NAME
+#?      Makefile    - makefile for testing o-saft.pl
+#?
+#? SYNOPSYS
+#?      make [options] [target] [...]
+#?
+#? DESCRIPTION
+#?      Makefile to perform testing tasks with perlcritic
+#?
+#? LIMITATIONS
+#?      Requires GNU Make > 2.0.
+#?
+# HACKER's INFO
+#       For details please see ../Makefile .
+#
+#       Naming conventions for targets see ../Makefile.help .
+#
+#       TODO:
+#          * complete with tests from t/test-o-saft.cgi.sh
+#
+#? VERSION
+#?      @(#) Makefile.critic 1.1 18/07/13 18:14:37
+#?
+#? AUTHOR
+#?      18-apr-18 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+_SID.critic     = 1.1
+
+ALL.includes   += t/Makefile.critic
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
+.SUFFIXES:
+
+first-critic-target-is-default: help.test.critic
+
+ifeq (,$(_SID.test))
+    -include t/Makefile
+endif
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+CRITIC.dir      = $(TEST.dir)
+CRITIC.rc       = .perlcriticrc
+CRITIC.severity = -5
+CRITIC.opt      =
+CRITIC.pretty   =
+
+ALL.critic      = $(SRC.pl) $(ALL.pm)
+# $(CHK.pl)
+
+#_____________________________________________________________________________
+#___________________________________________________________ default target __|
+
+HELP-help.critic= print targets for using perlcritic with $(Project)
+help.critic:
+	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@echo $(MORE-critic)   ; # no quotes!
+
+.PHONY: help.critic
+
+critic.help: help.critic
+criticdoc:   help.critic
+
+#_____________________________________________________________________________
+#__________________________________________________ targets for testing cgi __|
+
+MORE-critic     = " \
+\#              ________________________________ targets for code quality _$(_NL)\
+ critic         - check files with perlcritic $(_NL)\
+ critic345      - check files with perlcritic for severity 3,4,5 using t/critic_345.sh $(_NL)\
+ help.critic    - print more details about  critic-*  targets $(_NL)\
+\#$(_NL)\
+\# More  critic  targets exist, calling perlcritic with additional options$(_NL)\
+\#               _______________________________________________ severity _$(_NL)\
+ critic          - perlcritic --severity 5 <all files>$(_NL)\
+ critic-5        - perlcritic --severity 5 <all files>$(_NL)\
+ critic-4        - perlcritic --severity 4 <all files>$(_NL)\
+ critic-3        - perlcritic --severity 3 <all files>$(_NL)\
+ critic-2        - perlcritic --severity 2 <all files>$(_NL)\
+\#               _____________________________________________ statistics _$(_NL)\
+ critic-count    - perlcritic --severity 5 -count$(_NL)\
+ critic-stat     - perlcritic --severity 5 --statistics-only $(_NL)\
+ critic-stat-4   - perlcritic --severity 4 --statistics-only $(_NL)\
+ critic-stat-3   - perlcritic --severity 3 --statistics-only $(_NL)\
+\#               ___________________________________ single file severity _$(_NL)\
+ c5-FILE         - perlcritic --severity 5 FILE$(_NL)\
+ c4-FILE         - perlcritic --severity 4 FILE$(_NL)\
+ c3-FILE         - perlcritic --severity 3 FILE$(_NL)\
+\#               ___________________________ single file verbose severity _$(_NL)\
+ c5v-FILE        - perlcritic --severity 5 FILE --verbose 10$(_NL)\
+ c4v-FILE        - perlcritic --severity 4 FILE --verbose 10$(_NL)\
+ c3v-FILE        - perlcritic --severity 3 FILE --verbose 10$(_NL)\
+\#               _____________________ targets with pretty-printed output _$(_NL)\
+ TARGETp         - call TARGET and pretty print output$(_NL)\
+\#$(_NL)\
+\# Where   FILE   is any of the *.pm or *.pl files (including path).$(_NL)\
+\# Where  TARGET  is any of:$(_NL)\
+\#        critic critic-5 critic-4 critic-3 critic-2 critic-count critic-stat$(_NL)\
+\#$(_NL)\
+\# None of the  critic-*  targets is available with the  -v or -vv  suffix$(_NL)\
+\# because verbose does not make sense here.$(_NL)\
+\#$(_NL)\
+\# Note about perlcritic used here:$(_NL)\
+\#   * perlcritic is executed in directory '$(CRITIC.dir)'$(_NL)\
+\#   * perlcritic uses '$(CRITIC.dir)/$(CRITIC.rc)'$(_NL)\
+\# See also '$(CONTRIB.dir)/critic.sh'$(_NL)\
+"
+#_____________________________________________________________________________
+#_________________________________________________ targets for code quality __|
+
+$(CRITIC.dir):
+	echo C && exit 1
+	@$(TARGET_VERBOSE)
+	@mkdir -p $(CRITIC.dir)
+
+# all targets use $(ALL.critic) as list of sources, which must be set as
+# environment or on command line
+# note that $(ALL.test.critic)  is a list of targets
+
+# target prints command with echo so that it is also shown when called with
+# "make -s critic ..."
+critic: $(CRITIC.dir)
+	@$(TARGET_VERBOSE)
+	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
+	@-cd $(CRITIC.dir) && \
+	  perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
+
+# same target as above but piped to filter for pretty printing
+# because the filter is a pipe, we loose the coloured output from perlcritic
+critic-pretty: $(CRITIC.dir)
+	@$(TARGET_VERBOSE)
+	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
+	@-cd $(CRITIC.dir) && \
+	  perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt) \
+	  | awk '\
+    { gsub(/\.$$/,"");  C=" remove trailing . (for --statistics-only)"; }\
+    /OK$$/{ $$2=$$1; $$1="OK\t"; $$3=""; C=" toggle $1 and $2"; ok=1; } \
+    /: *[0-9][0-9]*$$/{ $$0=sprintf("%d\t%s",$$2,$$1); C=" toggle $1 and $2"; } \
+    /^Average /{ x=$$NF; $$NF=""; $$0=sprintf("%9s %s",x,$$0); } \
+    /^Violatio/{ x=$$NF; $$NF=""; $$0=sprintf("%9s %s",x,$$0); } \
+    /^[0-9 ][0-9 ,]* /{ x=$$1; $$1=""; $$0=sprintf("%9s %s",x,$$0); } \
+    {\
+      gsub(/\.\../,""); C=" remove leading ../"; \
+      gsub(/\:$$/,"");  C=" remove trailing : (for --count)";  \
+      gsub(/ was *$$/,"");  C=" remove trailing string (for --statistics-only)"; \
+      print; \
+    }\
+    END{ if (ok==0){ $$1="failed\t"; print; }}\
+'
+# TODO: above gawk needs to detect errors and then print "failed  filename"
+
+critic-5:       CRITIC.severity = -5
+critic-5p:      CRITIC.severity = -5
+critic-5p:                           CRITIC.pretty = -pretty
+critic-4:       CRITIC.severity = -4
+critic-4p:      CRITIC.severity = -4
+critic-4p:                           CRITIC.pretty = -pretty
+critic-3:       CRITIC.severity = -3
+critic-3p:      CRITIC.severity = -3
+critic-3p:                           CRITIC.pretty = -pretty
+critic-2:       CRITIC.severity = -2
+critic-2p:      CRITIC.severity = -2
+critic-2p:                           CRITIC.pretty = -pretty
+critic-count:                        CRITIC.opt    = -count
+critic-countp:                       CRITIC.pretty = -pretty
+critic-stat:                         CRITIC.opt    = --statistics-only
+critic-statp:                        CRITIC.opt    = --statistics-only
+critic-statp:                        CRITIC.pretty = -pretty
+critic-stat-4:                       CRITIC.opt    = --statistics-only
+critic-stat-4:  CRITIC.severity = -4
+critic-stat-3:                       CRITIC.opt    = --statistics-only
+critic-stat-3:  CRITIC.severity = -3
+
+ALL.test.critic = critic-5 critic-4 critic-3 critic-2 \
+		  critic-count critic-stat critic-stat-4 critic-stat-3
+
+critic-%:
+	$(MAKE) $(MFLAGS) -s critic$(CRITIC.pretty) CRITIC.severity=$(CRITIC.severity) CRITIC.opt=$(CRITIC.opt)
+
+c5-%:
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-5
+c4-%:
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-4
+c3-%:
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-3
+
+c5v-%:
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-5 CRITIC.opt="--verbose 10"
+c4v-%:
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-4 CRITIC.opt="--verbose 10"
+c3v-%:
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-3 CRITIC.opt="--verbose 10"
+# following targets required because they are not catched by critic-%; reason yet unknown
+critic-5:       critic
+critic-4:       critic
+critic-3:       critic
+critic-2:       critic
+criticp:        critic-pretty
+
+# TODO: replace functionality of t/critic_345.sh with targets above,
+#       just redirect to logfiles is missing
+critic345:
+	-cd $(CRITIC.dir) && \
+	  critic_345.sh $(ALL.critic)
+
+.PHONY: critic critic-5 critic-4 critic-3 critic-2 critic345
+
+#_____________________________________________________________________________ 
+#_____________________________________________________________________ test __|
+
+# feed main Makefile
+ALL.tests      += $(ALL.critic)
+#ALL.tests.log  +=
