@@ -112,37 +112,37 @@
 #.          * sub-directories contain a symbolic link to . (itself)
 #.          * Makefiles always include other files with relative paths
 #.      Example:
-#.          ./test/ (directory)  contains:  test -> .
-#.          ./test/Makefile.cgi  contains:  include test/Makefile
+#.          ./t/ (directory)  contains:  t -> .
+#.          ./t/Makefile.cgi  contains:  include t/Makefile
 #.      This avoid sophistcated syntax in the files itself, like:
-#.          ifeq (test,$(findstring test,$(PWD)))                                          
-#.              TEST.dir = .                                                                   
-#.              # if called inside test directory, TEST.dir must be redifined       
+#.          ifeq (t,$(findstring t,$(PWD)))
+#.              TEST.dir = .
+#.              # if called inside t directory,  TEST.dir  must be redifined
 #.          endif
 #.
 #.      GNU make cannot manage recursive includes of the  same file.  This must
 #.      be check before including, for example with (using our private  _SID.*
 #.      variable):
-#.          ifeq (,$(_SIDtest))                                          
-#.              include test/Makefile
+#.          ifeq (,$(_SID.test))
+#.              include t/Makefile
 #.          endif
 #.
 #.   Most included Makefiles.SUFFIX contain very limited comments.  For general
-#.   details of their functionality, see test/Makefile.template .
+#.   details of their functionality, see t/Makefile.template .
 #.
 #.   Special Syntax here
 #.      To extract the syntax documentation, all the lines start with  #. , see
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.12 18/07/13 15:44:34
+#?      @(#) Makefile.help 1.13 18/07/13 16:41:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.12
+_SID.help       = 1.13
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -169,6 +169,7 @@ _HELP_HEADER_   = $(_HELP_LINE_)\012$(_HELP_INFO_)\012$(_HELP_LINE_)
 _HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
 
 # tools used to gather information from herein
+# take care! real TABS are inside the sed commands
 EXE.list        = awk '/^[_a-zA-Z][_a-zA-Z.]* *=.*/{print $$1}'
 EXE.eval        = awk -F=    '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
 EXE.help        = sed -n -e 's/^HELP-_[^=]*=[" ]*\([^"]*\)"*/		\1/p' \
