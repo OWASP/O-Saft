@@ -22,8 +22,8 @@
 #       targets. None of them are disabled explicitly. Therefore some behaviour
 #       may depend on the local make configuration.
 #
-#        Note: macro is a synonym for variable in Makefiles.
-#        Note: macro definitions in Makefiles must not be sequential!
+#        Note: macro is a synonym for variable in makefiles.
+#        Note: macro definitions in makefiles must not be sequential!
 #
 #    Remember make's automatic variables:
 #           $@    - target (file)
@@ -43,7 +43,8 @@
 #
 #        Internal variables:
 #           _SID        - version in project's Makefile
-#           _SID.*      - version in included Makefiles
+#           _SID.*      - version in included makefiles
+#           _MYSELF.*   - name of the Makefile itself
 #
 #        The _SID* variables are used to check if sub-makefiles were included.
 #        More variables and targets are defined in following included files:
@@ -68,15 +69,21 @@
 #                         intended to be overwritten on command line)
 #           HELP        - defines texts to be used in  help  and  doc  target
 #
-#        Note that  ALL.tgz contains the list of all sources to be distributed.
-#
 #        Following names are used, which potentially conflict with make itself:
 #           ECHO        - echo command
 #           MAKE        - make command
 #           MAKEFILE    - Makefile (i.g. myself, but may be redifined)
 #
+#        Notes about some special variables:
+#           ALL.src     - list of all sources to be distributed
+#           ALL.tgz     - same as ALL.src but all sources prefixed with O-Saft/
+#           ALL.test    - list of all sources used for testing the project
+#           ALL.tests   - list of all targets for testing
+#           ALL.includes - dynamically generated list of all included makefiles
+#           ALL.Makefiles - static list of all source makefiles of the project
+#
 #        In general no quotes are used around texts in variables. Though, it is
-#        sometimes necessary to use quotes to  force correct evaluation of used
+#        sometimes necessary to use quotes  to force correct evaluation of used
 #        variables in the text (mainly in target actions).
 #
 # HACKER's HELP
@@ -84,17 +91,21 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.26 18/07/05 23:12:08
+#?      @(#) Makefile 1.27 18/07/13 16:03:36
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID        = 1.26
+_SID            = 1.27
     # define our own SID as variable, if needed ...
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
+ALL.includes   := Makefile
+                # must be  :=  to avoid overwrite after includes
+                # each $(TEST.dir)/Makefile* will add itself to ALL.includes
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-target-is-default: default
@@ -252,8 +263,12 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
-ALL.Makefiles   = Makefile Makefile.help
-                # not included: $(TEST.dir)/Makefile*, will be added there
+ALL.Makefiles   = Makefile Makefile.help \
+		  test/Makefile           test/Makefile.inc \
+		  test/Makefile.opt       test/Makefile.cmds \
+		  test/Makefile.cgi       test/Makefile.tcl \
+		  test/Makefile.ext       test/Makefile.misc \
+		  test/Makefile.warnings  test/Makefile.critic
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
@@ -261,7 +276,7 @@ ALL.test        = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.inst) $(GEN.tags)
-ALL.tgz         = \
+ALL.src         = \
 		  $(ALL.Makefiles) $(TEST.dir)/Makefile.inc \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
@@ -272,6 +287,7 @@ ALL.tgz         = \
 		  $(SRC.doc) \
 		  $(ALL.gen) \
 		  $(ALL.contrib)
+ALL.tgz         = $(ALL.src:%=O-Saft/%)
 
 # internal used tools (paths hardcoded!)
 ECHO            = /bin/echo -e
@@ -284,7 +300,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.26
+_INST.text      = generated from Makefile 1.27
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -371,8 +387,8 @@ HELP-pod        = generate POD format help '$(GEN.pod)'
 HELP-html       = generate HTML format help '$(GEN.html)'
 HELP-text       = generate plain text  help '$(GEN.text)'
 HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
-HELP-tar        = generate '$(GEN.tgz)' from all source
-HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources
+HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
+HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
 HELP-cleantar   = remove '$(GEN.tgz)'
 HELP-cleantmp   = remove '$(TMP.dir)'
 HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
@@ -390,8 +406,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.26
-tar:     GREP_EDIT = 1.26
+GREP_EDIT = 1.27
+tar:     GREP_EDIT = 1.27
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -459,7 +475,7 @@ $(GEN.inst): $(SRC.inst) Makefile
 	$(EXE.install) $(SRC.inst) > $@
 	chmod +x $@
 
-$(GEN.tgz)--to-noisy: $(ALL.tgz)
+$(GEN.tgz)--to-noisy: $(ALL.src)
 	@$(TARGET_VERBOSE)
 	@grep -q '$(GREP_EDIT)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
@@ -476,13 +492,19 @@ _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 
 .PHONY: _notedit
 
-#$(GEN.tgz): _notedit $(ALL.tgz)   # not working properly
+#$(GEN.tgz): _notedit $(ALL.src)   # not working properly
 #     tar: _notedit: Funktion stat failed: file or directory not found
-$(GEN.tgz): $(ALL.tgz)
-	@$(TARGET_VERBOSE)
-	tar zcf $@ $^
 
-$(GEN.tmptgz): $(ALL.tgz)
+# .tgz is tricky: as all memebers should have the directory prefixed, tar needs
+# to be executed in the parent directory and use $(ALL.tgz) as members.
+# The target itself is called in the current directory,  hence the dependencies
+# are local to that which is $(ALL.src). Note that $(ALL.tgz) is generated from
+# $(ALL.src), so it contains the same members
+$(GEN.tgz): $(ALL.src)
+	@$(TARGET_VERBOSE)
+	cd .. && tar zcf $@ $(ALL.tgz)
+
+$(GEN.tmptgz): $(ALL.src)
 	@$(TARGET_VERBOSE)
 	tar zcf $@ $^
 
