@@ -17,16 +17,19 @@
 #           ../Makefile  ../Makefile.help  Makefile.template 
 #
 #? VERSION
-#?      @(#) Makefile.tcl 1.3 18/07/06 10:50:24
+#?      @(#) Makefile.tcl 1.4 18/07/13 15:38:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.tcl    = 1.3
+_SID.tcl        = 1.4
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+_MYSELF.tcl     = test/Makefile.tcl
+ALL.includes   += $(_MYSELF.tcl)
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-tcl-target-is-default: help.test.tcl
@@ -34,10 +37,6 @@ first-tcl-target-is-default: help.test.tcl
 ifeq (,$(_SID.test))
     -include test/Makefile
 endif
-
-_MYSELF.tcl         = test/Makefile.tcl
-# must be hardcoded because $(firstword $(MAKEFILE_LIST)) gets the calling file
-ALL.Makefiles      += $(_MYSELF.tcl)
 
 TEST.tcl.hosts      = localhost
 ifdef TEST.hosts
