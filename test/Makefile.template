@@ -19,16 +19,22 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.template 1.2 18/07/06 10:49:02
+#?      @(#) %M% %I% %E% %U%
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TMP    = 1.2
+_SID.TMP        = %I%
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+_MYSELF.TMP     = test/Makefile.template
+                # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
+                # gets the file of the initial call "make" command
+ALL.includes   += $(_MYSELF.TMP)
+                # add ourself to list of all included makefiles
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-TMP-target-is-default: help.test.TMP
@@ -38,12 +44,6 @@ ifeq (,$(_SID.test))
     -include test/Makefile
     # get general macros for testing from master makefile
 endif
-
-_MYSELF.TMP         = test/Makefile.template
-                    # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
-                    # gets the file of the initial call "make" command
-ALL.Makefiles      += $(_MYSELF.TMP)
-                    # add ourself to private list of all makefiles
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
