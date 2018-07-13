@@ -23,16 +23,19 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.13 18/07/11 23:44:28
+#?      @(#) Makefile 1.14 18/07/13 16:09:55
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test   = 1.13
+_SID.test       = 1.14
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules
+_MYSELF.test    = test/Makefile
+ALL.includes   += $(_MYSELF.test)
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-test-target-is-default: help.test
@@ -47,9 +50,6 @@ ifeq (,$(_SID.help))
     -include    Makefile.help
     -include ../Makefile.help
 endif
-
-_MYSELF.test        = test/Makefile
-ALL.Makefiles      += $(_MYSELF.test)
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
@@ -370,6 +370,10 @@ endif
 
 ifeq (,$(_SID.cmds))
     -include test/Makefile.cmds
+endif
+
+ifeq (,$(_SID.opt))
+    -include test/Makefile.opt
 endif
 
 ifeq (,$(_SID.ext))
