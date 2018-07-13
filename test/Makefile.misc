@@ -18,16 +18,19 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.1 18/07/12 10:37:06
+#?      @(#) Makefile.misc 1.2 18/07/13 15:38:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc   = 1.1
+_SID.misc       = 1.2
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+_MYSELF.misc    = test/Makefile.misc
+ALL.includes   += $(_MYSELF.misc)
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-misc-target-is-default: help.test.misc
@@ -35,9 +38,6 @@ first-misc-target-is-default: help.test.misc
 ifeq (,$(_SID.test))
     -include test/Makefile.misc
 endif
-
-_MYSELF.misc    = test/Makefile.misc
-ALL.Makefiles  += $(_MYSELF.misc)
 
 MORE-misc        = " \
 \#               ____________________________________________ misc. tests _$(_NL)\
