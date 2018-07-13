@@ -21,16 +21,19 @@
 #          * complete with tests from test/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.8 18/07/11 23:17:38
+#?      @(#) Makefile.cgi 1.9 18/07/13 15:38:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi    = 1.8
+_SID.cgi        = 1.9
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+_MYSELF.cgi     = test/Makefile.cgi
+ALL.includes   += $(_MYSELF.cgi)
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-cgi-target-is-default: help.test.cgi
@@ -38,9 +41,6 @@ first-cgi-target-is-default: help.test.cgi
 ifeq (,$(_SID.test))
     -include test/Makefile
 endif
-
-_MYSELF.cgi         = test/Makefile.cgi
-ALL.Makefiles      += $(_MYSELF.cgi)
 
 TEST.cgi.hosts      = localhost
 ifdef TEST.hosts
@@ -196,7 +196,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.8: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.9: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
