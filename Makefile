@@ -49,20 +49,20 @@
 #        The _SID* variables are used to check if sub-makefiles were included.
 #        More variables and targets are defined in following included files:
 #           Makefile.help
-#           test/Makefile
-#           test/Makefile.inc
-#        Where  test/Makefile  may include more files.
+#           t/Makefile
+#           t/Makefile.inc
+#        Where  t/Makefile  may include more files.
 #        Each of the included files may be used independently with  -f  option,
 #        for example::
 #           make -f Makefile.help
-#           make -f test/Makefile
+#           make -f t/Makefile
 #
 #        Following name prefixes are used:
 #           SRC         - defines a source file
 #           GEN         - defines a genarted file
 #           EXE         - defines a tools to be used
 #           ALL         - defines summary variables
-#           TEST        - something related to the test/ directory
+#           TEST        - something related to the t/ directory
 #           CONTRIB     - something related to the contrib/ directory
 #           CRITIC      - something related to percritic targets
 #           _           - names of internal (helper) variables (they are not
@@ -91,14 +91,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.27 18/07/13 16:03:36
+#?      @(#) Makefile 1.28 18/07/13 16:34:04
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.27
+_SID            = 1.28
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -170,7 +170,7 @@ SRC.docker      = \
 SRC.rc          = .$(SRC.pl)
 
 # test file
-TEST.dir        = test
+TEST.dir        = t
 TEST.do         = SSLinfo.pl \
 		  o-saft_bench \
 		  critic_345.sh \
@@ -264,11 +264,11 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
 ALL.Makefiles   = Makefile Makefile.help \
-		  test/Makefile           test/Makefile.inc \
-		  test/Makefile.opt       test/Makefile.cmds \
-		  test/Makefile.cgi       test/Makefile.tcl \
-		  test/Makefile.ext       test/Makefile.misc \
-		  test/Makefile.warnings  test/Makefile.critic
+		  t/Makefile          t/Makefile.inc \
+		  t/Makefile.opt      t/Makefile.cmds \
+		  t/Makefile.cgi      t/Makefile.tcl \
+		  t/Makefile.ext      t/Makefile.misc \
+		  t/Makefile.warnings t/Makefile.critic
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
@@ -300,7 +300,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.27
+_INST.text      = generated from Makefile 1.28
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -406,8 +406,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.27
-tar:     GREP_EDIT = 1.27
+GREP_EDIT = 1.28
+tar:     GREP_EDIT = 1.28
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
