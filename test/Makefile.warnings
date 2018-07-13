@@ -52,16 +52,19 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.5 18/07/11 23:46:39
+#?      @(#) Makefile.warnings 1.6 18/07/13 15:38:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings = 1.5
+_SID.warnings   = 1.6
 
-MAKEFLAGS  += --no-builtin-variables --no-builtin-rules --no-print-directory
+_MYSELF.warnings= test/Makefile.warnings
+ALL.includes   += $(_MYSELF.warnings)
+
+MAKEFLAGS      += --no-builtin-variables --no-builtin-rules --no-print-directory
 .SUFFIXES:
 
 first-warn-target-is-default: help.test.warnings
@@ -69,9 +72,6 @@ first-warn-target-is-default: help.test.warnings
 ifeq (,$(_SID.test))
     -include test/Makefile
 endif
-
-_MYSELF.warnings= test/Makefile.warnings
-ALL.Makefiles  += $(_MYSELF.warnings)
 
 #_____________________________________________________________________________
 #_________________________________________________________ testing warnings __|
@@ -282,7 +282,7 @@ test.warnings: $(ALL.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.5: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.6: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
