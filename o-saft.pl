@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.802 18/07/13 00:38:44",
+    SID         => "@(#) yeast.pl 1.803 18/07/14 10:48:26",
     STR_VERSION => "18.06.21",          # <== our official version number
 };
 
@@ -6137,14 +6137,14 @@ sub printciphercheck($$$$$@)    { ## no critic qw(Subroutines::RequireArgUnpacki
 } # printciphercheck
 
 sub printciphers_dh($$$) {
-    #? print ciphers and DH parameter from target
-    # currently DH parameters are available with openssl only
+    #? print ciphers and DH parameter from target (available with openssl only)
+    # currently DH parameters requires openssl, check must be done in caller
     my ($legacy, $host, $port) = @_;
     my $openssl_version = get_openssl_version($cmd{'openssl'});
     _trace1("printciphers_dh: openssl_version: $openssl_version");
     if ($openssl_version lt "1.0.2") { # yes Perl can do this check  # TODO: move this check to _check_openssl()
         _warn("811: ancient openssl $openssl_version: using '-msg' option to get DH parameters");
-        $cfg{'openssl_msg'} = '-msg' if ($cfg{'openssl'}->{'msg'} == 1);
+        $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
         require Net::SSLhello; # to parse output of '-msg'; ok here, as Perl handles multiple includes proper
             # SEE Note:Stand-alone
     }
