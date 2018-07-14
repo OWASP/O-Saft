@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.803 18/07/14 10:48:26",
+    SID         => "@(#) yeast.pl 1.804 18/07/14 11:28:54",
     STR_VERSION => "18.06.21",          # <== our official version number
 };
 
@@ -8161,6 +8161,13 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
         _warn("325: HTTP disabled, using --no-http");
     }
     _yeast_TIME("test connect}");
+
+    if (_is_do('cipher_dh')) {
+        if (0 >= $cmd{'extopenssl'}) {   # TODO: as long as openssl necessary
+            _warn("408: OpenSSL disabled using --no-openssl, can't check DH parameters; target ignored");
+            next;
+        }
+    }
 
     if (_is_do('cipherraw')) {
         _y_CMD("+cipherraw");
