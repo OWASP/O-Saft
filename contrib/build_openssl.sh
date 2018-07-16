@@ -54,6 +54,7 @@
 #?      /usr/local/lib by default).
 #?      To build openssl, following libraries and include files are needed:
 #?          gmp krb5 lksctp zlib
+#?      Assumes that ca-certificates are install in /etc/ssl/certs/ .
 #?      Assumes that following perl modules are installed:
 #?          Net::DNS Mozilla::CA libidn.so
 #?
@@ -107,7 +108,7 @@
 #?      Simple build with defaults:
 #?          $0
 #? VERSION
-#?      @(#) build_openssl.sh 1.3 18/07/12 23:32:46
+#?      @(#) build_openssl.sh 1.4 18/07/16 12:16:59
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -115,8 +116,8 @@
 # -----------------------------------------------------------------------------
 
 # Parameters passed to build
-OSAFT_VM_SRC_SSLEAY=${OSAFT_VM_SRC_SSLEAY:="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.82.tar.gz"}
-OSAFT_VM_SHA_SSLEAY=${OSAFT_VM_SHA_SSLEAY:="5895c519c9986a5e5af88e3b8884bbdc70e709ee829dc6abb9f53155c347c7e5"}
+OSAFT_VM_SRC_SSLEAY=${OSAFT_VM_SRC_SSLEAY:="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"}
+OSAFT_VM_SHA_SSLEAY=${OSAFT_VM_SHA_SSLEAY:="9d8188b9fb1cae3bd791979c20554925d5e94a138d00414f1a6814549927b0c8"}
 OSAFT_VM_TAR_SSLEAY=${OSAFT_VM_TAR_SSLEAY:="Net-SSLeay.tgz"}
 OSAFT_VM_SRC_OPENSSL=${OSAFT_VM_SRC_OPENSSL:="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz"}
 OSAFT_VM_SHA_OPENSSL=${OSAFT_VM_SHA_OPENSSL:="ad3d99ec091e403a3a7a678ddda38b392e3204515425827c53dc5baa92d61d67"}
