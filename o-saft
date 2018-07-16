@@ -47,7 +47,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.8 18/07/16 14:34:04
+#?      @(#) o-saft 1.9 18/07/16 14:36:07
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -108,8 +108,6 @@ EoT
     esac
     shift
 done
-
-echo "A $* A"
 
 # Note: using $* (instead of $@) does not contain parsed options
 [ -n "$try" ] && echo "# docker=$docker, mode=$mode, post=$post, $*#"
