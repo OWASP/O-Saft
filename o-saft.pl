@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.805 18/07/16 11:27:04",
-    STR_VERSION => "18.06.21",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.806 18/07/16 17:28:04",
+    STR_VERSION => "18.07.18",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -7093,6 +7093,8 @@ while ($#argv >= 0) {
         _warn("021: old (pre 13.12.11) syntax '--set-score=*' obsolete, please use --cfg-score=*; option ignored");
         next;
     }
+    # ignore -post= option passed from shell script; ugly but defensive programming
+    next if ($arg =~ /^-post=(.*)/);
 
     # all options starting with  --usr or --user  are not handled herein
     # push them on $cfg{'usr-args'} so they can be accessd in o-saft-*.pm
