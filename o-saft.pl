@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.804 18/07/14 11:28:54",
+    SID         => "@(#) yeast.pl 1.805 18/07/16 11:27:04",
     STR_VERSION => "18.06.21",          # <== our official version number
 };
 
@@ -331,7 +331,7 @@ _yeast_EXIT("exit=CONF1 - RC-FILE end");
 $cfg{'RC-ARGV'} = [@rc_argv];
 
 %{$cfg{'done'}} = (             # internal administration
-        'hosts'     => 0,
+        'targets'   => 0,
         'dbxfile'   => 0,
         'rc_file'   => 0,
         'init_all'  => 0,
@@ -6754,33 +6754,47 @@ sub printusage_exit     {
     exit 2;
 } # printusage_exit
 
-sub _get_host_port      {
-    #? check argument and return host:port
+sub _get_target         {
+    #? check argument and return array: protocol, host, port, auth
     # allow host, host:port, URL with IPv4, IPv6, FQDN
     #   http://user:pass@f.q.d.n:42/aa*foo=bar:23/
     #    ftp://username:password@hostname/
     #   http://f.q.d.n:42/aa*foo=bar:23/
     #    ftp://f.q.d.n:42/aa*foo=bar:23
     #   ftp:42/no-fqdn:42/aa*foo=bar:23
+    #   dpsmtp://authentication@mail:25/queryParameters
     #   //abc/def    
     #   abc://def    # scary
     #   http://[2001:db8:1f70::999:de8:7648:6e8]:42/aa*foo=bar:23/             
     #   http://2001:db8:1f70::999:de8:7648:6e8:42/aa*foo=bar:23/  # invalid, but works
+    #   cafe::999/aa*foo=bar:23/  # invalid, but works
     # NOTE: following regex allow hostnames containing @, _ and many more ...
     my $last  =  shift; # default port if not specified
     my $arg   =  shift;
+
+    # TODO:  ugly and just simple cases, not very perlish code ...
+    return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*#); # defensive programming
+    return ("https", $arg, $last, "", "") if ($arg !~ m#[:@\\/?]#); # seem to be bare name or IP
+    # something complicated, analyze ...
     my $prot  =  $arg;
+       $prot  =~ s#^\s*([a-z][A-Z0-9]*:)?//.*#$1#i; # get schema (protocol), if any
+       # TODO: inherit previous schema if not found
+       $prot  = "https" if ($prot eq $arg);         # check before stripping :
+       $prot  = "https" if ($prot eq "");
+       $prot  =~ s#:##g;   # strip :
+    my $auth  =  ""; # TODO
+    my $path  =  ""; # TODO
     my $port  =  "";
     my $host  =  $arg;
-       $host  =~ s#^(?:[a-z][a-z0-9]*:)?//##i; # strip schema, if any
+       $host  =~ s#^\s*(?:[a-z][A-Z0-9]*:)?//##i;   # strip schema (protocol), if any
        $host  =~ s#^(?:[^@]+@)?##i;            # strip user:pass, if any
        $host  =~ s#/.*$##;                     # strip /path/and?more
     ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
     $port  =  $last if not defined $port;
-    _y_ARG("arg=$arg => host=$host, port=$port");
-    return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
-    return "$host:$port";
-} # _get_host_port
+    _y_ARG("arg=$arg => prot=$prot, host=$host, port=$port");
+    #return "" if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/));
+    return ($prot, $host, $port, $auth, $path);
+} # _get_target
 
 # end sub
 
@@ -6863,6 +6877,7 @@ while ($#argv >= 0) {
         if ($typ eq 'CAFILE')   { $cfg{'ca_file'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'CAPATH')   { $cfg{'ca_path'}   = $arg;     $typ = 'HOST'; }
         if ($typ eq 'CADEPTH')  { $cfg{'ca_depth'}  = $arg;     $typ = 'HOST'; }
+        # TODO: use cfg{'targets'} for proxy*
         if ($typ eq 'PPORT')    { $cfg{'proxyport'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PUSER')    { $cfg{'proxyuser'} = $arg;     $typ = 'HOST'; }
         if ($typ eq 'PPASS')    { $cfg{'proxypass'} = $arg;     $typ = 'HOST'; }
@@ -6918,6 +6933,7 @@ while ($#argv >= 0) {
             $typ = 'HOST';
         }
         if ($typ eq 'PHOST')    {
+            # TODO: use cfg{'targets'} for proxy
             # allow   user:pass@f.q.d.n:42
             $cfg{'proxyhost'} = $arg;
             if ($arg =~ m#([^@]*)@(.*)#) {              # got username:password
@@ -7656,13 +7672,31 @@ while ($#argv >= 0) {
     }
 
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
-        my $host_port = _get_host_port($cfg{port}, $arg);
-        _y_ARG("host=    $host_port");
-        _yeast("host: $host_port") if ($cfg{'trace'} > 0);
-        if ($host_port =~ m/^\s*$/) {
+        my ($prot, $host, $port, $auth, $path) = _get_target($cfg{port}, $arg);
+        if (($host =~ m/^\s*$/) or ($port =~ m/^\s*$/)){
             _warn("042: invalid host-like argument '$arg'; ignored");
+            # TODO: occours i.e with --port=' ' but not with --host=' '
         } else {
-            push(@{$cfg{'hosts'}}, $host_port) if ($host_port !~ m/^\s*$/);
+            my $idx   = $#{$cfg{'targets'}}; $idx++; # next one
+            my $proxy = 0; # TODO: target parameter for proxy not yet supported
+            _y_ARG("host=    $host:$port");
+            _yeast("host: $host:$port") if ($cfg{'trace'} > 0);
+            # if perlish programming
+            # push(@{$cfg{'targets'}}, [$idx, $prot, $host, $port, $auth, $proxy, $path, $arg]);
+            # elsif people expecting object-oriented programming
+            set_target_orig( $idx, $arg);
+            set_target_nr(   $idx, $idx);
+            set_target_prot( $idx, $prot);
+            set_target_host( $idx, $host);
+            set_target_port( $idx, $port);
+            set_target_auth( $idx, $auth);
+            set_target_proxy($idx, $proxy);
+            set_target_path( $idx, $path);
+            set_target_start($idx, 0);
+            set_target_open( $idx, 0);
+            set_target_stop( $idx, 0);
+            set_target_error($idx, 0);
+            # endif
         }
     }
 
@@ -7672,6 +7706,7 @@ while ($#argv >= 0) {
 
 local $\ = "\n";
 
+# TODO: use cfg{'targets'} for proxy
 if ($cfg{'proxyhost'} ne "" && $cfg{'proxyport'} == 0) {
     my $q = "'";
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
@@ -7731,7 +7766,7 @@ $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
 $ENV{'OPENSSL_CONF'} = $cfg{'openssl_cnf'}  if (defined $cfg{'openssl_cnf'});  ## no critic qw(Variables::RequireLocalizedPunctuationVars
 $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); ## no critic qw(Variables::RequireLocalizedPunctuationVars
 
-_yeast_args();
+_yeast_args();          # all arguments parsed; print with --traceARG
 _yeast_EXIT("exit=ARGS  - options and arguments done");
 _vprintme();
 
@@ -7843,7 +7878,7 @@ _yeast_TIME("ini{");
 $cfg{'out_header'}  = 1 if(0 => $verbose); # verbose uses headers
 $cfg{'out_header'}  = 1 if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
 $cfg{'out_header'}  = 0 if(0 => grep{/--no.?header/} @argv);    # command line option overwrites defaults above
-#cfg{'sni_name'}    = $host;    # see below: loop hosts
+#cfg{'sni_name'}    = $host;    # see below: loop targets
 $sniname            = $cfg{'sni_name'};     # safe setting; may be undef
 if ($cfg{'usehttp'} == 0)   {               # was explizitely set with --no-http 'cause default is 1
     # STS makes no sence without http
@@ -7991,10 +8026,10 @@ usr_pre_main();
 #| main: do the work for all targets
 #| -------------------------------------
 
-# defense, user-friendly programming
+# defensive, user-friendly programming
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenace
-printusage_exit("no target hosts given") if ($#{$cfg{'hosts'}} < 0); # does not make any sense
+printusage_exit("no target hosts given") if ($#{$cfg{'targets'}} <= 0); # does not make any sense
 if (_is_do('cipher')) {
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
         printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
@@ -8051,9 +8086,12 @@ _yeast_TIME("hosts{");
 # run the appropriate SSL tests for each host (ugly code down here):
 $sniname  = $cfg{'sni_name'};   # safe value;  NOTE: may be undef!
 $port     = ($cfg{'port'}||""); # defensive programming ..
-foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
-    ($host, $port)  = split(/:([^:\]]+)$/, $host); # split right most : (remember IPv6)
-    $port = $cfg{'port'} if ($port =~ m/^\s*$/);
+my $idx   = 0;
+foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
+    next if (0 == @{$target}[0]);   # first entry conatins default settings
+    $idx++;
+    $host = get_target_host($idx);
+    $port = get_target_port($idx);
     $cfg{'port'}    = $port;
     $cfg{'host'}    = $host;
     next if _yeast_NEXT("exit=HOST0 - host $host:$port");
@@ -8274,7 +8312,7 @@ foreach my $host (@{$cfg{'hosts'}}) {  # loop hosts
             ##if (_is_do('cipher_selected') and ($#{$cfg{'do'}} == 0)) {
             ##    # +cipher_selected command given, but no other commands; ready
             ##    print_cipherprefered($legacy, $ssl, $host, $port); # need to check if $ssl available first
-            ##    next HOSTS; # TODO: foreach-loop for hosts misses label
+            ##    next HOSTS; # TODO: foreach-loop for targets misses label
             ##}
         }
         checkprefered($host, $port);
@@ -8741,7 +8779,7 @@ Each warning has a unique number. The numbers are grouped as follows:
 
     0xx     startup check, options, arguments
     1xx     check (runtime) functionality
-    2xx     loop hosts
+    2xx     loop targets (hosts)
     3xx     connect functions
     4xx     cipher check functions
     5xx     inernal check functions
