@@ -154,7 +154,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.25 18/07/16 12:32:25" \
+	SID="@(#) Dockerfile 1.26 18/07/16 16:51:46" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -316,7 +316,7 @@ WORKDIR $OSAFT_DIR
 USER    osaft
 RUN     o-saft-docker usage
 
-ENTRYPOINT ["perl", "/O-Saft/o-saft"]
+ENTRYPOINT ["/O-Saft/o-saft"]
 CMD     ["--norc",  "--help=docker"]
 
 # vim:set ft=dockerfile:
