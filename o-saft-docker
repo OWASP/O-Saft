@@ -238,7 +238,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.32 18/07/16 14:54:07
+#?       @(#) o-saft-docker 1.33 18/07/16 17:24:35
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -249,8 +249,9 @@ VERSION="${OSAFT_VERSION:-17.11.11}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
 image_name="${registry}"
-entrypoint='ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]';  # default ENTRYPOINT
-entry__cmd='CMD ["--norc", "--help=docker"]':           # default CMD
+entrypoint_pl='ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]';   # default ENTRYPOINT
+entrypoint_sh='ENTRYPOINT ["/O-Saft/o-saft"]';              # default ENTRYPOINT
+entry__cmd='CMD ["--norc", "--help=docker"]':               # default CMD
 [ -n "$tag" ] && image_name="${registry}:${tag}"
 try=
 exe=o-saft.pl
@@ -318,11 +319,13 @@ docker_usage () {
 
 	# run in Docker image
 
-		$0 apk add tcl tk xvfb
+		$0 apk tcl tk xvfb
 		$0 gui
+		$0 gui your.tld
 
 EoDescription
 }
+# TODO: alpine:3.8 misses 'tablelist' there seems to be no package 'tklib'
 
 docker_hacker () {
 	cat << EoHacker
@@ -441,6 +444,9 @@ docker_cp   ()  {
 	# if we need to reset the entrypoint:
 	# $try \docker container commit       \
 	#	--change='ENTRYPOINT ["perl","/O-Saft/o-saft.pl"]' \
+	# or:
+	# $try \docker container commit       \
+	#	--change='ENTRYPOINT ["/O-Saft/o-saft"]' \
 	#
 }
 
@@ -452,7 +458,7 @@ docker_apk  ()  {
 				--name      ${_id} ${image_name} add --no-cache $@ \
 		|| exit 4
 	$try \docker container commit \
-		--change="${entrypoint}" --change="${entry__cmd}" \
+		--change="${entrypoint_sh}" --change="${entry__cmd}" \
 					    ${_id} ${image_name}
 	$try \docker container rm           ${_id} 
 	return
@@ -470,7 +476,7 @@ docker_apt  ()  {
 				--name      ${_id} ${image_name} install --no-cache $@ \
 		|| exit 4
 	$try \docker container commit \
-		--change="${entrypoint}" --change="${entry__cmd}" \
+		--change="${entrypoint_sh}" --change="${entry__cmd}" \
 					    ${_id} ${image_name}
 	$try \docker container rm           ${_id} 
 }
