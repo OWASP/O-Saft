@@ -22,6 +22,10 @@
 #?
 #?          OSAFT_VM_SHA_OSAFT
 #?              SHA256 checksum for the o-saft.tgz archive.
+#?              Note that the checksum in the Dockerfile provided by this .tgz
+#?              archive is wrong (due to hen-egg-problem).
+#?              https://github.com/OWASP/O-Saft/blob/master/Dockerfile  is the
+#?              most current version and contains proper checksums.
 #?
 #?          OSAFT_VM_TAR_OSAFT
 #?              Name of archive file for O-Saft (during build).
@@ -127,8 +131,8 @@ ARG     OSAFT_VM_FROM
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
 ARG     OSAFT_VM_SHA_OSAFT="bc7051a076720fbf30e7dff5518f4813c890ce68dd90ace6f77caa0c850a98d0"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
-ARG     OSAFT_VM_SRC_SSLEAY="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.82.tar.gz"
-ARG     OSAFT_VM_SHA_SSLEAY="5895c519c9986a5e5af88e3b8884bbdc70e709ee829dc6abb9f53155c347c7e5"
+ARG     OSAFT_VM_SRC_SSLEAY="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"
+ARG     OSAFT_VM_SHA_SSLEAY="9d8188b9fb1cae3bd791979c20554925d5e94a138d00414f1a6814549927b0c8"
 ARG     OSAFT_VM_TAR_SSLEAY="Net-SSLeay.tgz"
 ARG     OSAFT_VM_SRC_SOCKET="http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.052.tar.gz"
 ARG     OSAFT_VM_SHA_SOCKET="e4897a9b17cb18a3c44aa683980d52cef534cdfcb8063d6877c879bfa2f26673"
@@ -150,7 +154,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.24 18/07/12 23:30:06" \
+	SID="@(#) Dockerfile 1.25 18/07/16 12:32:25" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
