@@ -238,7 +238,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.30 18/06/17 20:41:08
+#?       @(#) o-saft-docker 1.31 18/07/16 14:45:36
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -299,6 +299,8 @@ docker_usage () {
 		docker run --rm -it ${image_name} +info your.tld
 	or:
 		$0 +info your.tld
+	or:
+		o-saft -docker +info your.tld
 
       # o-saft.tcl:
 	The GUI  o-saft.tcl  will only work inside Docker if the the packages
