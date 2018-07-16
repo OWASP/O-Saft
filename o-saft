@@ -47,7 +47,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.6 18/02/27 23:09:17
+#?      @(#) o-saft 1.7 18/07/16 14:32:13
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -100,6 +100,7 @@ EoT
             post="`expr "$1" ':' '-post=\(.*\)'`"
             cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
             [ -x "$contrib/$cmd" ] && post="$contrib/$cmd"
+            shift
             break
             ;;
         --) shift; break; ;;
@@ -108,27 +109,31 @@ EoT
     shift
 done
 
-[ -n "$try" ] && echo "# docker=$docker, mode=$mode, post=$post, $@#"
+echo "A $* A"
+
+# Note: using $* (instead of $@) does not contain parsed options
+[ -n "$try" ] && echo "# docker=$docker, mode=$mode, post=$post, $*#"
 
 # docker mode is special
 if [ $docker -eq 1 ]; then
     if [ -n "$osaft_vm_build" ]; then
         echo "**WARNING: option -docker ignored inside VM; exit"
     else
-        o-saft-docker $docker_id $docker_tag -$mode -post=$post $@
+        echo xx o-saft-docker $docker_id $docker_tag -$mode -post=$post $*
+        o-saft-docker $docker_id $docker_tag -$mode -post=$post $*
         exit $?
     fi
 fi
 
 # all other modes
 case "$mode" in
-   #cgi) $try $cgi $post $@ ; ;;
-    gui) $try $gui --post=$post $@ ; ;;
+   #cgi) $try $cgi $post $* ; ;;
+    gui) $try $gui --post=$post $* ; ;;
     *)   if [ -n "$try" ]; then
-            $try "$prg $docker_id $docker_tag $@ | $post"
+            $try "$prg $docker_id $docker_tag $* | $post"
          else
-            echo "$prg $docker_id $docker_tag $@ | $post"
-            $prg $docker_id $docker_tag $@ | $post 
+            echo "$prg $docker_id $docker_tag $* | $post"
+            $prg $docker_id $docker_tag $* | $post 
          fi
          ;;
 esac
