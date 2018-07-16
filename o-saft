@@ -47,7 +47,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.7 18/07/16 14:32:13
+#?      @(#) o-saft 1.8 18/07/16 14:34:04
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -119,7 +119,7 @@ if [ $docker -eq 1 ]; then
     if [ -n "$osaft_vm_build" ]; then
         echo "**WARNING: option -docker ignored inside VM; exit"
     else
-        echo xx o-saft-docker $docker_id $docker_tag -$mode -post=$post $*
+        echo o-saft-docker $docker_id $docker_tag -$mode -post=$post $*
         o-saft-docker $docker_id $docker_tag -$mode -post=$post $*
         exit $?
     fi
