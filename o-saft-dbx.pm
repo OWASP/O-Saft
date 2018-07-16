@@ -97,7 +97,7 @@ or any I<--trace*>  option, which then loads this file automatically.
 #  `use strict;' not usefull here, as we mainly use our global variables
 use warnings;
 
-my  $DBX_SID= "@(#) o-saft-dbx.pm 1.63 18/04/19 13:01:17";
+my  $DBX_SID= "@(#) o-saft-dbx.pm 1.64 18/07/16 11:29:49";
 
 package main;   # ensure that main:: variables are used, if not defined herein
 
@@ -244,7 +244,22 @@ sub _yeast_init {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _yeast("       ca_file= $cfg{'ca_file'}")  if defined $cfg{'ca_file'};
     _yeast("       use_SNI= $Net::SSLinfo::use_SNI, force-sni=$cfg{'forcesni'}, sni_name=$sni_name");
     _yeast("  default port= $cfg{'port'} (last specified)");
-    _yeast("       targets= " . _y_ARR(@{$cfg{'hosts'}}));
+    if (0 == $cfg{'trace'}) { # simple list
+        printf("#%s: %14s= [ ", $cfg{'mename'}, "targets");
+        foreach my $target (@{$cfg{'targets'}}) {
+            next if (0 == @{$target}[0]);   # first entry conatins default settings
+            printf("%s:%s ", @{$target}[2..3]); # the perlish way
+        }
+        printf("]\n");
+    } else { # complete array
+        printf("#%s: %14s targets = [\n", $cfg{'mename'}, "# - - - -ARRAY");
+        printf("#%s: #  Index %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'mename'}, "Prot.", "Hostname or IP", "Port", "Auth", "Proxy", "Path", "Orig. Parameter");
+        foreach my $target (@{$cfg{'targets'}}) {
+            next if (0 == @{$target}[0]);   # first entry conatins default settings
+            printf("#%s:    [%3s] %6s %16s : %5s %10s %5s %10s %s\n", $cfg{'mename'}, @{$target}[0,1..7]);
+        }
+        printf("#%s: %14s ]\n", $cfg{'mename'}, "# - - - -ARRAY");
+    }
     foreach my $key (qw(out_header format legacy showhost usehttp usedns usemx starttls starttls_delay slow_server_delay cipherrange)) {
         printf("#%s: %14s= %s\n", $cfg{'mename'}, $key, $cfg{$key});
            # cannot use _yeast() 'cause of pretty printing
@@ -343,7 +358,13 @@ sub _yeast_args {
                   # NOTE: ($cfg{'trace'} does not work here
     }
     _y_ARG("      from RC-FILE RC-ARGV= " . _y_ARR(@{$cfg{'RC-ARGV'}})) if (0 < $cfg{'verbose'});
-    _y_ARG("           collected hosts= " . _y_ARR(@{$cfg{'hosts'}}));
+    my $txt = "[ ";
+    foreach my $target (@{$cfg{'targets'}}) {
+        next if (0 == @{$target}[0]);   # first entry conatins default settings
+        $txt .= sprintf("%s:%s ", @{$target}[2..3]); # the perlish way
+    }
+    $txt .= "]";
+    _y_ARG("         collected targets= " . $txt);
     if (1 < $cfg{'verbose'}) {
     _y_ARG(" #--v { processed files, arguments and options");
     _y_ARG("    read files and modules= ". _y_ARR(@{$dbx{file}}));
