@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.06.18',  # official version number of this file
+    OSAFT_VERSION   => '18.07.18',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.143 18/07/11 00:53:06',
+    OSAFT_SID   => '@(#) osaft.pm 1.144 18/07/16 11:28:50',
 
 };
 
@@ -157,6 +157,10 @@ Following functions (methods) must be defined in the calling program:
 
 =item %cipher_results
 
+=item %target_desc
+
+=item @target_defaults
+
 =back
 
 =head1 METHODS
@@ -220,6 +224,30 @@ our @EXPORT     = qw(
                 get_cipher_name
                 get_openssl_version
                 get_dh_paramter
+                get_target_nr
+                get_target_prot
+                get_target_host
+                get_target_port
+                get_target_auth
+                get_target_proxy
+                get_target_path
+                get_target_orig
+                get_target_start
+                get_target_open
+                get_target_stop
+                get_target_error
+                set_target_nr
+                set_target_prot
+                set_target_host
+                set_target_port
+                set_target_auth
+                set_target_proxy
+                set_target_path
+                set_target_orig
+                set_target_start
+                set_target_open
+                set_target_stop
+                set_target_error
                 sort_cipher_names
                 printhint
                 osaft_done
@@ -1290,7 +1318,7 @@ our %cfg = (
     'ca_files'      => [qw(ca-certificates.crt certificates.crt certs.pem)],
                                 # common PEM filenames for CAs
     'openssl_env'   => undef,   # environment variable OPENSSL if defined
-    'openssl_cnf'   => undef,   # full path with openssl's openssl.cnf
+    'openssl_cnf'   => undef,   # full path to openssl's openssl.cnf
     'openssl_cnfs'  => [qw(/usr/lib/ssl/openssl.cnf /etc/ssl/openssl.cnf /System//Library/OpenSSL/openssl.cnf /usr/ssl/openssl.cnf)], # NOT YET USED
     'openssl_fips'  => undef,   # NOT YET USED
     'openssl_msg'   => "",      # '-msg': option needed for openssl versions older than 1.0.2 to get the dh_parameter
@@ -1581,13 +1609,16 @@ our %cfg = (
     'tmplib'        => "/tmp/yeast-openssl/",   # temp. directory for openssl and its libraries
     'pass_options'  => "",      # options to be passeed thru to other programs
     'mx_domains'    => [],      # list of mx-domain:port to be processed
-    'hosts'         => [],      # list of host:port to be processed
-    'host'          => "",      # currently scanned host
-    'ip'            => "",      # currently scanned host's IP (machine readable format)
-    'IP'            => "",      # currently scanned host's IP (human readable, doted octed)
-    'rhost'         => "",      # currently scanned host's reverse resolved name
-    'DNS'           => "",      # currently scanned host's other IPs and names (DNS aliases)
-    'port'          => 443,     # port for currently used connections
+    'hosts'         => [],      # list of targets (host:port) to be processed
+                                # since 18.07.18 used in checkAllCiphers.pl only
+    'targets'       => [],      # list of targets (host:port) to be processed
+                                # anon. list, each element is array, see @target_defaults below
+    'port'          => 443,     # port for currently scanned target
+    'host'          => "",      # currently scanned target
+    'ip'            => "",      # currently scanned target's IP (machine readable format)
+    'IP'            => "",      # currently scanned target's IP (human readable, doted octet)
+    'rhost'         => "",      # currently scanned target's reverse resolved name
+    'DNS'           => "",      # currently scanned target's other IPs and names (DNS aliases)
     'timeout'       => 2,       # default timeout in seconds for connections
                                 # Note that some servers do not connect SSL within this time
                                 #      this may result in ciphers marked as  "not supported"
@@ -1952,6 +1983,31 @@ our %cfg = (
    #------------------+---------+----------------------------------------------
 ); # %cfg
 
+our %target_desc = (
+    #--------------+-----------------------------------------------------------
+    # key             description
+    #--------------+-----------------------------------------------------------
+    'Nr'          , # unique index number, idx=0 used for default settings
+    'Protocol'    , # protocol to be checked (schema in URL)
+    'Host'        , # hostname or IP passed as argument, IPv6 enclosed in []
+    'Port'        , # port as passed as argument or default
+    'Auth'        , # authentication string used in URL, if any
+    'Proxy'       , # proxy to be used for connection, index to cfg{targets}[]
+                    # 0 if no proxy, -1 for a proxy itself
+    'Path'        , # path used in URL
+    'orig. Argument', # original argument, used for debugging only
+    # following are run-time values
+    'Time started', # timestamp, connection request started
+    'Time opened' , # timestamp, connection request completed
+    'Time stopped', # timestamp, connection closed
+    'Errors'      , # encountered connection errors
+                    # TODO: may be changed to list of errors in future
+    #--------------+-----------------------------------------------------------
+); # %target_desc
+
+#                       Nr, Prot., Host, Port, Auth, Proxy, Path, orig., run-time ...
+our @target_defaults = [ 0, "https", "", "443",  "",  0,    "",   "",    0, 0, 0, 0, ];
+
 our %dbx = (    # save hardcoded settings (command lists, texts), and debugging data
                 # used in o-saft-dbx.pm only
     'argv'      => undef,       # normal options and arguments
@@ -2297,7 +2353,93 @@ sub sort_cipher_names   {
     return @sorted;
 } # sort_cipher_names
 
-# internal methods
+# TODO: get_target_* and set_target_* should be named get_cfg_target_* ...
+
+=pod
+
+=head2 get_target_nr($idx)
+
+=head2 get_target_prot($idx)
+
+=head2 get_target_host($idx)
+
+=head2 get_target_port($idx)
+
+=head2 get_target_auth($idx)
+
+=head2 get_target_proxy($idx)
+
+=head2 get_target_path($idx)
+
+=head2 get_target_orig($idx)
+
+=head2 get_target_start($idx)
+
+=head2 get_target_open($idx)
+
+=head2 get_target_stop($idx)
+
+=head2 get_target_error($idx)
+
+Get information from internal C<%cfg{'targets'}> data structure.
+
+=head2 set_target_nr($idx, $index)
+
+=head2 set_target_prot($idx, $protocol)
+
+=head2 set_target_host($idx, $host_or_IP)
+
+=head2 set_target_port($idx, $port)
+
+=head2 set_target_auth($idx, $auth-string)
+
+=head2 set_target_proxy($idx, $proxy-index))
+
+=head2 set_target_path($idx $path)
+
+=head2 set_target_orig($idx, $original-argument))
+
+=head2 set_target_start($idx, $start-timestamp)
+
+=head2 set_target_open($idx, $open-timestamp)
+
+=head2 set_target_stop($idx, $end-timestamp)
+
+=head2 set_target_error($idx, $errors)
+
+Set information in internal C<%cfg{'targets'}> data structure.
+
+
+=cut
+
+sub get_target_nr    { my $i=shift; return $cfg{'targets'}[$i][0];  }
+sub get_target_prot  { my $i=shift; return $cfg{'targets'}[$i][1];  }
+sub get_target_host  { my $i=shift; return $cfg{'targets'}[$i][2];  }
+sub get_target_port  { my $i=shift; return $cfg{'targets'}[$i][3];  }
+sub get_target_auth  { my $i=shift; return $cfg{'targets'}[$i][4];  }
+sub get_target_proxy { my $i=shift; return $cfg{'targets'}[$i][5];  }
+sub get_target_path  { my $i=shift; return $cfg{'targets'}[$i][6];  }
+sub get_target_orig  { my $i=shift; return $cfg{'targets'}[$i][7];  }
+sub get_target_start { my $i=shift; return $cfg{'targets'}[$i][8];  }
+sub get_target_open  { my $i=shift; return $cfg{'targets'}[$i][9];  }
+sub get_target_stop  { my $i=shift; return $cfg{'targets'}[$i][10]; }
+sub get_target_error { my $i=shift; return $cfg{'targets'}[$i][11]; }
+sub set_target_nr    { my $i=shift; $cfg{'targets'}[$i][0]  = shift; return; }
+sub set_target_prot  { my $i=shift; $cfg{'targets'}[$i][1]  = shift; return; }
+sub set_target_host  { my $i=shift; $cfg{'targets'}[$i][2]  = shift; return; }
+sub set_target_port  { my $i=shift; $cfg{'targets'}[$i][3]  = shift; return; }
+sub set_target_auth  { my $i=shift; $cfg{'targets'}[$i][4]  = shift; return; }
+sub set_target_proxy { my $i=shift; $cfg{'targets'}[$i][5]  = shift; return; }
+sub set_target_path  { my $i=shift; $cfg{'targets'}[$i][6]  = shift; return; }
+sub set_target_orig  { my $i=shift; $cfg{'targets'}[$i][7]  = shift; return; }
+sub set_target_start { my $i=shift; $cfg{'targets'}[$i][8]  = shift; return; }
+sub set_target_open  { my $i=shift; $cfg{'targets'}[$i][9]  = shift; return; }
+sub set_target_stop  { my $i=shift; $cfg{'targets'}[$i][10] = shift; return; }
+sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
+
+
+#_____________________________________________________________________________
+#_________________________________________________________ internal methods __|
 
 sub _prot_init_value    {
     #? initialize default values in %prot
@@ -2319,6 +2461,8 @@ sub _prot_init_value    {
 } # _prot_init_value
 
 sub _cfg_init   {
+    # initialize targets with entry containing defaults
+    push(@{$cfg{'targets'}}, @target_defaults);
     #? initialize dynamic settings in %cfg, copy data from %prot
     $cfg{'openssl_option_map'}->{$_}  = $prot{$_}->{'opt'} foreach (keys %prot);
     $cfg{'openssl_version_map'}->{$_} = $prot{$_}->{'hex'} foreach (keys %prot);
