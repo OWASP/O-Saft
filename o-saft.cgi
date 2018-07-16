@@ -61,7 +61,7 @@ For testing only, call from command line:
 use strict;
 use warnings;
 
-my $SID     = '@(#) o-saft.cgi 1.21 18/07/11 21:22:42';
+my $SID     = '@(#) o-saft.cgi 1.22 18/07/16 11:32:14';
 my $VERSION = '18.07.18';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -134,7 +134,7 @@ if ($me =~/\.cgi$/) {
 	push(@argv, "--cgi-exec");      # some argument which looks like --cgi required for some more checks
 	die "**ERROR: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 	print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.21\r\n";
+	print "X-O-Saft: OWASP – SSL advanced forensic tool 1.22\r\n";
 	if ($qs =~ m/--cmd=html/) {
 		print "Content-type: text/html;  charset=utf-8\r\n";# for --usr* only
 	} else {
@@ -176,6 +176,7 @@ if ($me =~/\.cgi$/) {
 
 		qr/(-(host|url)=(localhost|(ffff)?::1|(ffff:)?7f00:1))/i,
 			# localhost
+		# TODO: IPv6 localhost:   [7f00:1] .. [7fff:ffff]
 
 		qr/(-(host|url)=((ffff:)?(0|10|127|22[4-9]|23[0-9]|24[0-9]|25[0-5])\.[\d]+.[\d]+.[\d]+))/i,
 			# loopback, mulicast
@@ -206,6 +207,7 @@ if ($me =~/\.cgi$/) {
                 	#   HTTPS://[::ffff:7f00:1]:80/path
                 	#     any:[::ffff:7f00:1]/path     # also matched
                 	# FIXME: also blocks FQDN:port like   cafe:4711/path
+
 		) {
 		#dbx# print "#dbx: $dangerous # $qs\n";
 		_warn_and_exit "$dangerous" if ($qs =~ m#$dangerous#);
