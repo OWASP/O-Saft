@@ -18,14 +18,14 @@
 #       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.misc 1.3 18/07/13 17:12:02
+#?      @(#) Makefile.misc 1.4 18/07/17 16:49:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.misc       = 1.3
+_SID.misc       = 1.4
 
 _MYSELF.misc    = t/Makefile.misc
 ALL.includes   += $(_MYSELF.misc)
@@ -41,9 +41,10 @@ endif
 
 MORE-misc        = " \
 \#               ____________________________________________ misc. tests _$(_NL)\
- bench           - call '$(EXE.bench)' for some benchmarks$(_NL)\
- bench.log       - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
+ test.bench      - call '$(EXE.bench)' for some benchmarks$(_NL)\
+ test.bench.log  - call '$(EXE.bench)' and save result in '$(BENCH.times)'$(_NL)\
  test.bunt       - test '$(CONTRIB.dir)/bunt.pl' with sample file$(_NL)\
+ test.docker     - test docker image$(_NL)\
 "
 
 HELP-help.test.misc = print misc. testing targets
@@ -59,22 +60,30 @@ help.test.misc:
 BENCH.times       = $(EXE.bench).times
 BENCH.host        = $(TEST.host)
 
-ALL.test.misc     = bench test.bunt
+ALL.test.misc     = test.bench test.bunt test.docker
 
 #_____________________________________________________________________________
 #____________________________________________________________ various tests __|
 
-bench:
+bench: test.bench
+test.bench:
 	$(EXE.bench) $(BENCH.host)
-	@echo "# use '$(MAKE) bench.log' to save result in '$(BENCH.times)'"
-bench.log:
+	@echo "# use '$(MAKE) test.bench.log' to save result in '$(BENCH.times)'"
+test.bench.log:
 	$(EXE.bench) $(BENCH.host) >> $(BENCH.times)
 
 test.bunt: $(EXE.test.bunt)
 	@$(TARGET_VERBOSE)
 	-cat $(EXE.test.bunt) | $(CONTRIB.dir)/bunt.pl
 
-.PHONY: bench bench.log test.bunt
+# TODO: simple test, needs to be improved and checked
+test.docker:
+	docker image ls owasp/o-saft
+	$(EXE.docker) +VERSION
+	$(EXE.docker) +version
+	$(EXE.docker) usage
+
+.PHONY: test.bench test.bench.log test.bunt test.docker
 
 #_____________________________________________________________________________
 #__________________________________________________ targets for development __|
@@ -91,5 +100,5 @@ $(GEN.tags): $(SRC.pl) $(ALL.pm) $(CHK.pl) $(SRC.cgi) $(SRC.tcl) $(ALL.Makefiles
 
 # feed main Makefile
 ALL.tests      += $(ALL.test.misc)
-ALL.tests.log  += bench.log
+ALL.tests.log  += test.bench.log
 
