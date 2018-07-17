@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.29 18/07/17 17:13:10
+#?      @(#) Makefile 1.30 18/07/17 21:13:44
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.29
+_SID            = 1.30
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -302,7 +302,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.29
+_INST.text      = generated from Makefile 1.30
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -408,8 +408,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.29
-tar:     GREP_EDIT = 1.29
+GREP_EDIT = 1.30
+tar:     GREP_EDIT = 1.30
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -517,14 +517,16 @@ _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(SRC.txt)
 #$(GEN.tgz): _notedit $(ALL.src)   # not working properly
 #     tar: _notedit: Funktion stat failed: file or directory not found
 
-# .tgz is tricky: as all memebers should have the directory prefixed, tar needs
+# .tgz is tricky:  as all members should have the directory prefixed, tar needs
 # to be executed in the parent directory and use $(ALL.tgz) as members.
 # The target itself is called in the current directory,  hence the dependencies
 # are local to that which is $(ALL.src). Note that $(ALL.tgz) is generated from
-# $(ALL.src), so it contains the same members
+# $(ALL.src), so it contains the same members.  Executing tar in the parent dir
+# would generate the tarball ther also,  hence the tarball is specified as full
+# path with $(PWD).
 $(GEN.tgz): $(ALL.src)
 	@$(TARGET_VERBOSE)
-	cd .. && tar zcf $@ $(ALL.tgz)
+	cd .. && tar zcf $(PWD)/$@ $(ALL.tgz)
 
 $(GEN.tmptgz): $(ALL.src)
 	@$(TARGET_VERBOSE)
