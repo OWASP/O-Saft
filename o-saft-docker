@@ -106,6 +106,7 @@
 #?       This mode builds the Docker image for O-Saft from the Dockerfile. If
 #?       ./Dockerfile is missing following will be used:
 #?           https://github.com/OWASP/O-Saft/raw/master/Dockerfile
+#?       See  ENVIONMENT VARIABLES below for supported environment variables.
 #?
 #?   apk
 #?   apt
@@ -226,6 +227,10 @@
 #?       script:
 #?
 #?           OSAFT_VERSION          - version to be passed to Dockerfile
+#?           OSAFT_VM_SRC_OSAFT     - URL to o-saft.tgz
+#?           OSAFT_VM_SRC_SSLEAY    - URL to Net-SSLeay.tgz
+#?           OSAFT_VM_SRC_SOCKET    - URL to IO-Socket.tgz
+#?           OSAFT_VM_SRC_OPENSSL   - URL to openssl.tgz
 #?           o_saft_docker_name     - contains an image registry name
 #?           o_saft_docker_tag      - contains an image tag
 #?
@@ -239,7 +244,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.34 18/07/17 17:14:38
+#?       @(#) o-saft-docker 1.36 18/07/17 20:08:37
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -260,6 +265,7 @@ dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
 
 check_image_name () {
 	#? check if image with configured registry:tag exists; exit otherwise
+	# This function should be called before most docker commands.
 	# This tool does not allow automatic pull by default.
 	# Most (all?) Docker commands automatically try to pull the specified
 	# image if it does not exist.  More worse, while some Docker commands
@@ -270,9 +276,12 @@ check_image_name () {
 	# This function tries to find existing images matching the configured
 	# image (name). The function exits the script if the found image name
 	# does not equal the configured image name.
-	# This function should be called before most docker commands.
-	#dbx#  \docker image ls ${image_name} -q | \wc -w
-	is_id=`\docker image ls ${image_name} -q | \wc -w`
+	# Lists all images matching the required one. As "docker image ls -q"
+	# reports the image IDs only, duplicate image IDs may be returned.
+	# Images which are just tags, return the same image ID.  Hence we can
+	# simply filter them using "sort -u".
+	#dbx#  \docker image ls ${image_name} -q | \sort -u | \wc -w
+	is_id=`\docker image ls ${image_name} -q | \sort -u | \wc -w`
 	[ "${is_id}" -eq 1 ] && return; # found image, return
 
 	[ "${is_id}" -ne 1 ] && \
@@ -384,17 +393,28 @@ EoStatus
 docker_build () {
 	# build O-Saft Docker image from Dockerfile, mainly using defaults
 	# from Dockerfile; cleanup the containers
+	_arg1=
+	_arg2=
+	_arg3=
+	_arg4=
 	_tar=./o-saft_docker.tar
 	_cfg=./Dockerfile
 	[ ! -e $_cfg ] && $try \wget ${dockerfile} -O $_cfg
+	# pass environment variables (known by Dockerfile) to docker build
+	[ -n "$OSAFT_VERSION" ]        && _arg0="--build-arg OSAFT_VERSION=$OSAFT_VERSION"
+	[ -n "$OSAFT_VM_SRC_OSAFT"   ] && _arg1="--build-arg OSAFT_VM_SRC_OSAFT=$OSAFT_VM_SRC_OSAFT"
+	[ -n "$OSAFT_VM_SRC_SSLEAY"  ] && _arg2="--build-arg OSAFT_VM_SRC_SSLEAY=$OSAFT_VM_SRC_SSLEAY"
+	[ -n "$OSAFT_VM_SRC_SOCKET"  ] && _arg3="--build-arg OSAFT_VM_SRC_SOCKET=$OSAFT_VM_SRC_SOCKET"
+	[ -n "$OSAFT_VM_SRC_OPENSSL" ] && _arg4="--build-arg OSAFT_VM_SRC_OPENSSL=$OSAFT_VM_SRC_OPENSSL"
+	# TODO: do we need more of these variables?
 	$try \docker image build -f ./Dockerfile --force-rm --rm -t ${image_name} \
-		--build-arg "OSAFT_VERSION=$OSAFT_VERSION" .	&& \
+		$_arg0 $_arg1 $_arg2 $_arg3 $_arg4 .	&& \
 	$try \docker image save  -o $_tar ${image_name}	&& \
 	$try \docker image rm    `$try docker image ls -q ${image_name}` && \
 	$try \docker image load  -i $_tar && \
 	$try \rm                    $_tar && \
-	$try \docker image tag   ${image_name} ${image_name}:$OSAFT_VERSION && \
-	$try \docker image tag   ${image_name} o-saft
+	$try \docker image tag   ${image_name} o-saft	&& \
+	$try \docker image tag   ${image_name} ${image_name}:$OSAFT_VERSION
 }
 
 docker_osaft () {
