@@ -17,6 +17,7 @@
 #?       Requires GNU Make > 2.0.
 #?       Requires GNU sed for generating (target) INSTALL.sh.
 #?
+# TODO: move complete documentation to Makefile.help
 # HACKER's INFO
 #       This  Makefile  uses mainly  make's built-in variables (aka macros) and
 #       targets. None of them are disabled explicitly. Therefore some behaviour
@@ -91,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.28 18/07/13 16:34:04
+#?      @(#) Makefile 1.29 18/07/17 17:13:10
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.28
+_SID            = 1.29
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -293,6 +294,7 @@ ALL.tgz         = $(ALL.src:%=O-Saft/%)
 ECHO            = /bin/echo -e
 MAKE            = $(MAKE_COMMAND)
 EXE.single      = contrib/gen_standalone.sh
+EXE.docker      = o-saft-docker
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
 
@@ -300,7 +302,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.28
+_INST.text      = generated from Makefile 1.29
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -363,16 +365,13 @@ release: $(GEN.tgz)
 	mv $(GEN.tgz).asc $(_RELEASE)/
 	mv $(GEN.tgz)     $(_RELEASE)/
 	@echo "# don't forget:"
-	@echo "#   env OSAFT_VERSION=$(_RELEASE) o-saft-docker build"     
-	@echo "#   o-saft-docker usage"
-	@echo "#   o-saft-docker +VERSION"
-	@echo "#   o-saft-docker +version"
-	@echo "#   o-saft-docker +cipher --enabled --header some.tld"  
-	@echo "#   docker tag owasp/o-saft:latest owasp/o-saft:$(_RELEASE)"
-	@echo "#   docker push owasp/o-saft:latest"
-	@echo "#   # digest: sha256:... in README eintragen"
-	@echo "#   # digest: sha256:... in Dockerfile eintragen"
+	@echo "#   # change digest: sha256:... in README; upload to github"
+	@echo "#   # change digest: sha256:... in Dockerfile; upload to github"
+	@echo "#   make docker"
+	@echo "#   make test.docker"
+	@echo "#   make docker.push"
 # TODO: check if files are edited or missing
+
 
 .PHONY: all clean install install-f uninstall release doc default
 
@@ -389,6 +388,9 @@ HELP-text       = generate plain text  help '$(GEN.text)'
 HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
 HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with O-Saft/
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
+HELP-docker     = generate local docker image (release version) and add updated files
+HELP-docker-dev = generate local docker image (development version)
+HELP-docker-push= install local docker image at Docker repository
 HELP-cleantar   = remove '$(GEN.tgz)'
 HELP-cleantmp   = remove '$(TMP.dir)'
 HELP-clean.all  = remove '$(GEN.tgz) $(ALL.gen)'
@@ -406,8 +408,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.28
-tar:     GREP_EDIT = 1.28
+GREP_EDIT = 1.29
+tar:     GREP_EDIT = 1.29
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -425,7 +427,27 @@ tgz:    OPT.single =
 tmptar: OPT.single =
 tmptgz: OPT.single =
 
+# docker target uses our own script to build a proper image
+docker:
+	@$(TARGET_VERBOSE)
+	$(EXE.docker) -OSAFT_VERSION=$(_RELEASE) build
+	$(EXE.docker) cp Dockerfile
+	$(EXE.docker) cp README
+
+docker.dev:
+	@$(TARGET_VERBOSE)
+	docker build --force-rm --rm \
+		--build-arg "OSAFT_VM_SRC_OSAFT=https://github.com/OWASP/O-Saft/archive/master.tar.gz" \
+		--build-arg "OSAFT_VERSION=$(_RELEASE)" \
+		-f Dockerfile -t owasp/o-saft .
+
+# TODO: docker.push should depend on docker, but thats not a file or target
+docker.push:
+	@$(TARGET_VERBOSE)
+	docker push owasp/o-saft:latest
+
 .PHONY: pl cgi pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
+.PHONY: docker docker.dev docker.push
 
 clean.tmp:
 	@$(TARGET_VERBOSE)
