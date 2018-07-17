@@ -135,14 +135,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.13 18/07/13 16:41:44
+#?      @(#) Makefile.help 1.14 18/07/17 16:47:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.13
+_SID.help       = 1.14
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -202,16 +202,20 @@ $(_NL)\
  help.test      - print documentation about test targets$(_NL)\
  help.critic    - print documentation about perlcritic targets$(_NL)\
  help.syntax    - print documentation about syntax used in Makefile.*$(_NL)\
+ help.help      - print internal (development) information about makefiles$(_NL)\
 "
 
 help.doc:
 	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
 	@echo $(MORE-help) ; # no quotes!
 
+help.help:
+	@echo TODO
+
 help.syntax:
 	$(EXE.syntax) Makefile.help
 
-.PHONY: help.doc help.syntax
+.PHONY: help.doc help.help help.syntax
 
 #dbx _isempty:  @echo "# target: $($@) - $($($@))."
 # NOTE: following target is adapted to be use in echo, show, macro and target
