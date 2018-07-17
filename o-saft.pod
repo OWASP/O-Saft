@@ -6414,7 +6414,7 @@ https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
 
 =head1 VERSION
 
-@(#) 18.06.21
+@(#) 18.07.18
 
 =head1 AUTHOR
 
