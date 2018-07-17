@@ -1,6 +1,6 @@
 #! /bin/sh
 #?
-#? File generated from Makefile 1.26
+#? File generated from Makefile 1.30
 #?
 #? NAME
 #?      $0 - install script for O-Saft
@@ -45,14 +45,17 @@
 #       This file is generated from INSTALL-template.sh .
 #       The generator (make) inserts some values for internal variables.  In
 #       particular the list of source files to be installed. See the strings
-#       generated from Makefile 1.26 .
+#       generated from Makefile 1.30 .
 # TODO: --check does not work if installed in other dir than default one
+#
+#       Environment variable inst can be set to installation directory: This
+#       is usefull for development only, hence not officially documented.
 #
 #? DEPENDENCIES
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, tr
 #? VERSION
-#?      @(#) INSTALL-template.sh 1.11 18/07/06 09:59:08
+#?      @(#) INSTALL-template.sh 1.12 18/07/16 11:53:45
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -70,8 +73,7 @@ clean=./release_information_only
 force=0
 optn=""
 mode="";        # "", check, clean, dest
-inst="/usr/local/o-saft"
-
+inst=${inst:="/usr/local/o-saft"}
 
 text_miss="missing, try installing with ";	# 'cpan $m'"
 text_dev="did you run »$0 --clean«?"
@@ -128,7 +130,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 1.11 ; exit; ;; # for compatibility to o-saft.pl
+	  '+VERSION')   echo 1.12 ; exit; ;; # for compatibility to o-saft.pl
 	  *)            mode=dest; inst="$1";  ;;  # last one wins
 	esac
 	shift
