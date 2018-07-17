@@ -23,6 +23,7 @@
 #?       -v      be a bit verbose
 #?       -id=ID  use Docker image ID (registry:tag); default: owasp/o-saft
 #?       -tag=23 use Docker image ID with tag; default: (empty)
+#?       -OSAFT_VERSION=21.11.12  same as OSAFT_VERSION environment variable
 #?       --      pass all remaining parameters to o-saft.pl in Docker image
 #?
 #? QUICKSTART
@@ -238,7 +239,7 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.33 18/07/16 17:24:35
+#?       @(#) o-saft-docker 1.34 18/07/17 17:14:38
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -382,16 +383,17 @@ EoStatus
 
 docker_build () {
 	# build O-Saft Docker image from Dockerfile, mainly using defaults
-	# from Dockerfile
+	# from Dockerfile; cleanup the containers
+	_tar=./o-saft_docker.tar
 	_cfg=./Dockerfile
 	[ ! -e $_cfg ] && $try \wget ${dockerfile} -O $_cfg
-	_tar=o-saft_docker.tar
 	$try \docker image build -f ./Dockerfile --force-rm --rm -t ${image_name} \
-		--build-arg "OSAFT_VERSION=$VERSION" .	&& \
+		--build-arg "OSAFT_VERSION=$OSAFT_VERSION" .	&& \
 	$try \docker image save  -o $_tar ${image_name}	&& \
 	$try \docker image rm    `$try docker image ls -q ${image_name}` && \
 	$try \docker image load  -i $_tar && \
 	$try \rm                    $_tar && \
+	$try \docker image tag   ${image_name} ${image_name}:$OSAFT_VERSION && \
 	$try \docker image tag   ${image_name} o-saft
 }
 
@@ -402,6 +404,8 @@ docker_osaft () {
 }
 
 docker_gui   () {
+        # start GUI in docker with display to host
+	# --entrypoint= not really necessary if ENTRYPOINT=/O-Saft/o-saft
 	$try \docker container run --rm -i  --entrypoint=/O-Saft/o-saft.tcl \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
@@ -517,7 +521,8 @@ while [ $# -gt 0 ]; do
 	            image_name="${registry}:$tag" 
 	            ;;
 	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
-	  '-help')  my_help;        exit 0; ;;
+	  -OSAFT_VERSION=*)     OSAFT_VERSION="`expr "$1" ':' '-OSAFT_VERSION=\(.*\)'`"; ;;
+	  '-help')  my_help;    exit 0; ;;
 	  *)        break;  ;;
 	esac
 	shift
