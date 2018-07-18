@@ -17,14 +17,14 @@
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
 #? VERSION
-#?      @(#) Makefile.ext 1.8 18/07/13 17:06:34
+#?      @(#) Makefile.ext 1.9 18/07/19 00:43:41
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.ext        = 1.8
+_SID.ext        = 1.9
 
 _MYSELF.ext     = t/Makefile.ext
 ALL.includes   += $(_MYSELF.ext)
@@ -64,6 +64,8 @@ MORE-ext        = " \
 \#    make s-ALL.ext.host TEST.file=t/Makefile.FQDN $(_NL)\
 \#    make s-ALL.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
 \#    make  test.ext.host TEST.hosts='a1.tld a2.tld' $(_NL)\
+\#$(_NL)\
+\# To see which commands are executed, simply call 'make -n ...' $(_NL)\
 "
 
 HELP-help.test.ext  = print targets for testing $(SRC.pl) with external FQDN
@@ -119,6 +121,7 @@ ALL.ext.host.log= $(ALL.by_host:%=%.log)
 # TODO: use target _no-hosts
 test.ext.host:      $(ALL.by_host)
 test.ext.command:   $(ALL.by_command)
+test.ext:           test.ext.host
 test.ext.host.log:  $(ALL.ext.host.log)
 test.ext.log:       test.ext.host.log
 
