@@ -1,11 +1,12 @@
 
-# SID	@(#) links.txt 1.2 18/07/08 19:34:40
+# SID	@(#) links.txt 1.3 18/08/08 16:02:10
 
 # name | description
 #------+----------------------------------------------------------------------+
 OWASP TLS Cheat Sheet	https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet
 OWASP Certificate and Public Key Pinning	https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning
 OWASP HTTP Strict Transport Security	https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
+BEAR and LION	https://www.cl.cam.ac.uk/~rja14/Papers/bear-lion.pdf
 BSI TR-02102 Teil 2	https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR02102/BSI-TR-02102-2.pdf
 ENISA: Algorithms, Key Sizes and Parameters Report	http://www.enisa.europa.eu/activities/identity-and-trust/library/deliverables/algorithms-key-sizes-and-parameters-report
 EV Certificate	http://www.evsslcertificate.com/
@@ -33,6 +34,9 @@ Resumtion	https://www.imperialviolet.org/2013/06/27/botchingpfs.html
 SCSV	https://datatracker.ietf.org/doc/draft-bmoeller-tls-downgrade-scsv/?include_text=1
 Server Pinning	https://tools.ietf.org/id/draft-sheffer-tls-pinning-ticket-02.txt
 SNI apache	https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
+SIMON and SPECK	https://eprint.iacr.org/2013/404
+SM4	https://tools.ietf.org/id/draft-crypto-sm4-00.html
+Snuffle	https://cr.yp.to/snuffle/812.pdf
 SPDY/3	http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3
 SPDY Protocol	http://www.chromium.org/spdy/spdy-protocol
 SRI	Subresource Integrity: https://www.w3.org/TR/SRI/ 4/2016
