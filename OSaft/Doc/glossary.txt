@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.3 18/05/16 11:45:48
+# SID	@(#) glossary.txt 1.4 18/08/08 15:57:58
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -35,6 +35,7 @@ BLAKE-512	see BLAKE (512 bit)
 BEAR	block cipher combining stream cipher and hash function
 BDH	Bilinear Diffie-Hellman
 BEAST	Browser Exploit Against SSL/TLS
+BEAST .	fast block cipher for arbitrary blocksizes
 BER	Basic Encoding Rules
 BGP	Boorder Gateway Protocol
 Blowfish	symmetric block cipher
@@ -206,14 +207,18 @@ HAS-160	hash function
 HAS-V	hash function
 HC128	stream cipher
 HC256	stream cipher
+HCH	Hash-Coputer-Hash
+HCTR	a variable-input-length encryption mode
 HEARTBLEED	attack against TLS extension heartbeat
 HEIST	HTTP Encrypted Information can be Stolen through TCP-windows
 HIBE	hierarchical identity-based encryption
 HNF-256	hash function (Harshvardhan Tiwari, Krishna Asawa, 2014)
 HMAC	keyed-Hash Message Authentication Code
 HMQV	h? Menezes-Qu-Vanstone
-HSM	Hardware Security Module
+HPC	Hasty Putting Cipher
 HPKP	HTTP Public Key Pinning
+HPolyC	ChaCha stream cipher with Poly1305 and XChaCha12, XChaCha20
+HSM	Hardware Security Module
 HSR	Header + Secret + Random
 HSTS	HTTP Strict Transport Security
 HTOP	HMAC-Based One-Time Password
@@ -359,6 +364,7 @@ RTN	Routing transit number
 S/KEY	One-time pad Password system
 SA	Subordinate Authority (aka Subordinate CA)
 SACL	System Access Control List
+SAE	Simultaneous Authentication of Equals
 SAFER	Secure And Fast Encryption Routine, block cipher
 Salsa20	stream cipher (by D. Bernstein, 2005)
 Salsa20/8	see scrypt
@@ -368,8 +374,8 @@ SAM	syriac abbreviation mark
 SAN	Subject Alternate Name
 Sarmal	hash function
 SAX	Symmetric Authenticated eXchange
-SCA	Selfsigned CA signature
 SBCS	single-byte character set
+SCA	Selfsigned CA signature
 SCEP	Simple Certificate Enrollment Protocol
 scrypt	password based key derivation function (Colin Percival)
 SCSU	Standard Compression Scheme for Unicode (compressed UTF-16)
@@ -400,19 +406,18 @@ SHA3-512	Secure Hash Algorithm (512 bit)
 SHAKE128	Secure Hash Algorithm (variable bit)
 SHAKE256	Secure Hash Algorithm (variable bit)
 SHAvite-3	hash function (Eli Biham, Orr Dunkelman, 2009)
-SPHINCS	post-quantum hash function
-SPHINCS-256	alias for SPHINCS
-SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
-SWIFFTX	see SWIFFT
 SHS	Secure Hash Standard
 SIA	Subject Information Access (certificate extension)
 SIC	Segmented Integer Counter (alias for CTR)
+SIMON	block cipher combining
 Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 SKID	subject key ID (certificate extension)
 SKIP	Message Skipping Attacks on TLS
 SKIP-TLS	see SKIP
 Skipjack	block cipher encryption algorithm specified as part of the Fortezza
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes
+SM4	Block Cipher Algorithm
+SMS4	see SM4
 SMACK	State Machine AttaCKs
 Snefu	hash function
 SNI	Server Name Indication
@@ -420,6 +425,9 @@ SNOW	word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdah
 Snuffle 2005	see Salsa20
 Snuffle 2008	see ChaCha
 SPDY	Google's application-layer protocol on top of SSL
+SPECK	block cipher combining
+SPHINCS	post-quantum hash function
+SPHINCS-256	alias for SPHINCS
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
 Square	block cipher
@@ -434,16 +442,19 @@ SSLv3	Secure Sockets Layer Version 3
 SSP	Security Support Provider
 SSPI	Security Support Provider Interface
 SST	Serialized Certificate Store format
-SCT	Signed Certificate Timestamp
+STES	stream cipher
 STS	Strict Transport Security
 STS 	Station-to-Station protocol
 Sweet32	Sweet32: Birthday attacks on 64-bit block ciphers in TLS and OpenVPN
+SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
+SWIFFTX	see SWIFFT
 TA	Trust Agent
 TACK	Trust Assertions for Certificate Keys
 TCB	Trusted Computing Base
 TDEA	Tripple DEA
 TEA	Tiny Encryption Algorithm
 TEK	Traffic Encryption Key
+TET	?
 Tiger	hash function
 TIME	Timing Info-leak Made Easy (Exploit SSL/TLS)
 TIME 	A Perfect CRIME? TIME Will Tell
@@ -478,9 +489,11 @@ X25519	alias for Curve25519 ?
 X448	alias for Curve448 ?
 X680	X.680: ASN.1
 X509	X.509: The Directory - Authentication Framework
+X3DH	Extended Triple Diffie-Hellman
 XCBC	eXtended CBC-MAC
 XCBC-MAC	same as XCBC
-X3DH	Extended Triple Diffie-Hellman
+XChaCha12	stream cipher algorithm
+XChaCha20	stream cipher algorithm
 XEX	XOR Encrypt XOR
 XKMS	XML Key Management Specification
 XMACC	counter-based XOR-MAC
