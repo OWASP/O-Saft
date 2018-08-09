@@ -16,18 +16,15 @@
 #       For details please see
 #           ../Makefile  ../Makefile.help  Makefile.template
 #
-#       TODO:
-#          * complete with tests from t/test-o-saft.cgi.sh
-#
 #? VERSION
-#?      @(#) Makefile.cgi 1.11 18/08/10 00:08:10
+#?      @(#) Makefile.cgi 1.12 18/08/10 01:26:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.11
+_SID.cgi        = 1.12
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -54,6 +51,7 @@ MORE-cgi        = " \
  test.cgi.badIPs     - test that some IPs are ignored in $(SRC.cgi) $(_NL)\
  test.cgi.badall     - test all bad and good IPs and hostnames $(_NL)\
  test.cgi.badopt     - test bad options and characters$(_NL)\
+ test.cgi.goodIPs    - test IPs to be passed$(_NL)\
  test.badhost-NAME   - check a single NAME (IP or hostname) if allowed in $(SRC.cgi) $(_NL)\
 \#$(_NL)\
 \# Examples: $(_NL)\
@@ -90,6 +88,7 @@ test.cgi.badIPv4    = \
 	10.0.0.1      10.0.0.255   10.12.34.56   10.255.255.255 \
 	100.64.0.0                               100.64.0.255 \
 	127.0.0.1     127.1.0.1                  127.1.0.255  \
+	127.251.251.1                            127.255.255.255 \
 	169.254.0.1   169.254.1.1                169.254.255.255 \
 	172.16.0.1                               172.19.255.255  \
 	192.0.0.1                                192.0.0.255 \
@@ -111,10 +110,18 @@ test.cgi.badIPv6    = \
 # TODO: fe80:21ab:22cd:2323::1 fec0:21ab:22cd:2323::1 feff:21ab:22cd:2323::1
 #       fc00:21ab:22cd:2323::1 fdff:21ab:22cd:2323::1
 
-test.cgi.badIPs     = $(test.cgi.badIPv4) $(test.cgi.badIPv6)
+# TODO: *goodIP*  not yet ready
+test.cgi.goodIPv4   =
+
+test.cgi.goodIPv6   = \
+	2002\:0\:0\:0\:0\:0\:b0b\:b0b \
+
+test.cgi.badIPs     = $(test.cgi.badIPv4)  $(test.cgi.badIPv6)
+test.cgi.goodIPs    = $(test.cgi.goodIPv4) $(test.cgi.goodIPv6)
 
 ALL.cgi.badhosts    = $(test.cgi.badhosts:%=test.cgibad_%)
 ALL.cgi.badIPs      = $(test.cgi.badIPs:%=test.cgibad_%)
+ALL.cgi.goodIPs     = $(test.cgi.goodIPs:%=test.cgigood_%)
 
 
 # Testing for invalid arguments, hostnames and IPs uses following command:
@@ -145,9 +152,10 @@ test.cgibad--cgi02_%: _cgi.args = --cgiwrong     +quit --exit=BEGIN0
 test.cgibad--cgi03_%: _cgi.args = --cgi=wrong    +quit --exit=BEGIN0
 test.cgibad--cgi04_%: _cgi.args = --wrongcgi     +quit --exit=BEGIN0
 
-# all tests for bad arguments need the same initial options
+# all tests for good or bad arguments need the same initial options
 _cgi.args   = --cgi +quit --exit=BEGIN0
 test.cgibad%:       EXE.pl      = ../$(SRC.cgi)
+test.cgigood%:      EXE.pl      = ../$(SRC.cgi)
 
 # some characters are enclosed in _ and _ for better readability
 test.cgibad--opt_%: _cgi.args  += --opt=ok.to.show.failed-status
@@ -185,21 +193,31 @@ test.cgibad%:
 		TEST.init="" \
 		TEST.args="$(_cgi.args) --host=$(_host)"
 
+# TODO: following target prints "#o-saft.pl..."
+test.cgigood%:
+	@$(TARGET_VERBOSE)
+	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
+	@cd  $(TEST.dir) ; \
+	$(MAKE) -i message-exit.BEGIN0 EXE.pl=$(EXE.pl) \
+		TEST.init="" \
+		TEST.args="$(_cgi.args) --host=$(_host)"
+
 ALL.testcgiopt  = $(shell awk -F% '/^test.cgibad--/ {print $$1}' $(_MYSELF.cgi))
-ALL.test.cgiopt = $(ALL.testcgiopt:%=%any.FQDN)
-ALL.test.cgi    = $(ALL.test.cgiopt) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs)
+ALL.cgi.badopt  = $(ALL.testcgiopt:%=%any.FQDN)
+ALL.test.cgi    = $(ALL.cgi.badopt) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs) $(ALL.cgi.goodIPs)
 
 test.cgi.badhosts: $(ALL.cgi.badhosts)
 test.cgi.badIPs:   $(ALL.cgi.badIPs)
 test.cgi.badall:   test.cgi.badhosts test.cgi.badIPs
-test.cgi.badopt:   $(ALL.test.cgiopt)
+test.cgi.badopt:   $(ALL.cgi.badopt)
+test.cgi.goodIPs:  $(ALL.cgi.goodIPs)
 
 test.cgi:          $(ALL.test.cgi)
 
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.11: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.12: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
