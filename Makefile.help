@@ -94,12 +94,14 @@
 #.      of these targets. Example:
 #.          make m-MAKEFILE
 #.
-#.      Naming conventions for targets:
+#.   Naming conventions for targets:
 #.          tst.name     - public available targets use  .  (dot) as separator
 #.          tst-name     - internal and pattern rule targets use  -  (dash) as
 #.                          separator
 #.          tst.name_arg - some pattern rule targets use  _  to pass parameters
 #.          tst.name.log - same as  test.name  but store results in logfile
+#.          tst%ext      - pattern rule used instead of explicit target rule to
+#.                         allow spelling variants, like tst.ext or tst-ext
 #.
 #.   Makefiles and Includes
 #.      Note that GNU make's  include directive does not understand macros, the
@@ -138,14 +140,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.16 18/08/09 19:35:25
+#?      @(#) Makefile.help 1.17 18/08/09 22:01:11
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.16
+_SID.help       = 1.17
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -199,6 +201,8 @@ MORE-help       = " \
 \#              __________________________ targets for help about Makefile _$(_NL)\
  macros         - list all macro names used in Makefile* (alias: list, vars)$(_NL)\
  targets        - list all targets used in Makefile* (alias: rules)$(_NL)\
+ macros.me      - list all macro names used main Makefile$(_NL)\
+ targets.me     - list all targets used in main Makefile$(_NL)\
  e-MACRO        - show content of MACRO expanded (all in one line)$(_NL)\
  s-MACRO        - show content of MACRO expanded (one word per line)$(_NL)\
  m-MACRO        - show definition of MACRO as is --exact macro match$(_NL)\
@@ -247,13 +251,19 @@ _line:
 macros:
 	@$(TARGET_VERBOSE)
 	@$(EXE.list) $(ALL.Makefiles) | sort
+macros%me:
+	@$(MAKE) -s ALL.Makefiles=$(MAKEFILE) targets
 vars: macros
 list: macros
+lists%me: macros.me
 
 targets:
 	@$(TARGET_VERBOSE)
 	@$(EXE.targets) $(ALL.Makefiles) | sort -u
+targets%me:
+	@$(MAKE) -s ALL.Makefiles=$(MAKEFILE) targets
 rules: targets
+rules%me: targets.me
 
 eval:
 	@$(TARGET_VERBOSE)
