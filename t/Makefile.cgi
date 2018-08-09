@@ -13,22 +13,21 @@
 #?      Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
-#       For details please see ../Makefile .
-#
-#       Naming conventions for targets see ../Makefile.help .
+#       For details please see
+#           ../Makefile  ../Makefile.help  Makefile.template
 #
 #       TODO:
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.cgi 1.10 18/07/13 18:16:26
+#?      @(#) Makefile.cgi 1.11 18/08/10 00:08:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.cgi        = 1.10
+_SID.cgi        = 1.11
 
 _MYSELF.cgi     = t/Makefile.cgi
 ALL.includes   += $(_MYSELF.cgi)
@@ -49,7 +48,7 @@ endif
 
 MORE-cgi        = " \
 \#               ___________________________________________ testing .cgi _$(_NL)\
- test.cgi            - test all bad IPs, hostnames and options for $(SRC.CGI) $(_NL)\
+ test.cgi            - test all bad IPs, hostnames and options for $(SRC.cgi) $(_NL)\
  test.cgi.log        - same as test.cgi but store output in $(TEST.logdir)/ $(_NL)\
  test.cgi.badhosts   - test that some hostnames are ignored in $(SRC.cgi) $(_NL)\
  test.cgi.badIPs     - test that some IPs are ignored in $(SRC.cgi) $(_NL)\
@@ -59,8 +58,9 @@ MORE-cgi        = " \
 \#$(_NL)\
 \# Examples: $(_NL)\
 \#    make test.cgi $(_NL)\
-\#    make test.badhost_42.42.42.42 $(_NL)\
-\#    make test.badhost_127.0.0.127 $(_NL)\
+\#    make test.cgibad_42.42.42.42 $(_NL)\
+\#    make test.cgibad_127.0.0.127 $(_NL)\
+\#    make test.cgibad_localhost   $(_NL)\
 \#    make e-test.cgi.badhosts $(_NL)\
 \#    make s-test.cgi.badIPs $(_NL)\
 \#    make s-test.cgi.badopt $(_NL)\
@@ -78,13 +78,14 @@ help.test.cgi:
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-test.cgi.bad.hosts  = \
+# keep in mind: the targets should succeed for all hostnames and IPs
+
+test.cgi.badhosts   = \
 	hostname.ok.to.show.failed-status \
 	localhost 
 
 # range from - - - - - - - - - - - - - - - - - - to
-test.cgi.bad.IPs    = \
-	$(test.cgi.bad.IPv6) \
+test.cgi.badIPv4    = \
 	0.0.0.1                                  0.0.0.255 \
 	10.0.0.1      10.0.0.255   10.12.34.56   10.255.255.255 \
 	100.64.0.0                               100.64.0.255 \
@@ -102,16 +103,18 @@ test.cgi.bad.IPs    = \
 	240.0.0.1     251.251.251.251            255.255.255.255 \
 
 # The IP or hostname becomes part of the target name, hence IPv6 are not
-# possible verbatime because they contain : in the name; the : must be escaped
-test.cgi.bad.IPv6   = \
+# possible verbatim because they contain : in the name; the : must be escaped
+test.cgi.badIPv6    = \
 	\:\:1         ffff\:\:1  7f00\:1          ffff\:7f00\:1 \
 
 # TODO: ff01::1 ff02::1
 # TODO: fe80:21ab:22cd:2323::1 fec0:21ab:22cd:2323::1 feff:21ab:22cd:2323::1
 #       fc00:21ab:22cd:2323::1 fdff:21ab:22cd:2323::1
 
-ALL.cgi.bad.hosts   = $(test.cgi.bad.hosts:%=test.cgibad_%)
-ALL.cgi.bad.IPs     = $(test.cgi.bad.IPs:%=test.cgibad_%)
+test.cgi.badIPs     = $(test.cgi.badIPv4) $(test.cgi.badIPv6)
+
+ALL.cgi.badhosts    = $(test.cgi.badhosts:%=test.cgibad_%)
+ALL.cgi.badIPs      = $(test.cgi.badIPs:%=test.cgibad_%)
 
 
 # Testing for invalid arguments, hostnames and IPs uses following command:
@@ -184,10 +187,10 @@ test.cgibad%:
 
 ALL.testcgiopt  = $(shell awk -F% '/^test.cgibad--/ {print $$1}' $(_MYSELF.cgi))
 ALL.test.cgiopt = $(ALL.testcgiopt:%=%any.FQDN)
-ALL.test.cgi    = $(ALL.test.cgiopt) $(ALL.cgi.bad.hosts) $(ALL.cgi.bad.IPs)
+ALL.test.cgi    = $(ALL.test.cgiopt) $(ALL.cgi.badhosts) $(ALL.cgi.badIPs)
 
-test.cgi.badhosts: $(ALL.cgi.bad.hosts)
-test.cgi.badIPs:   $(ALL.cgi.bad.IPs)
+test.cgi.badhosts: $(ALL.cgi.badhosts)
+test.cgi.badIPs:   $(ALL.cgi.badIPs)
 test.cgi.badall:   test.cgi.badhosts test.cgi.badIPs
 test.cgi.badopt:   $(ALL.test.cgiopt)
 
@@ -196,7 +199,7 @@ test.cgi:          $(ALL.test.cgi)
 _TEST.CGI.log   = $(TEST.logdir)/test.cgi.log-$(_TODAY_)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.CGI.log):
-	@echo "# Makefile.cgi 1.10: make test.cgi.log" > $@
+	@echo "# Makefile.cgi 1.11: make test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 test.cgi.log: $(_TEST.CGI.log)
