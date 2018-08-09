@@ -93,6 +93,9 @@
 #.      To simplify such command lines, a special pattern rule exists  for each
 #.      of these targets. Example:
 #.          make m-MAKEFILE
+#.      These targets search in  all makefiles, they use  $(MAKEFILE_LIST)  and
+#.      and not our own  $(ALL.Makefiles).  This way the targets work, somehow,
+#.      in all other makefiles too (as they include this one).
 #.
 #.   Naming conventions for targets:
 #.          tst.name     - public available targets use  .  (dot) as separator
@@ -140,14 +143,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.17 18/08/09 22:01:11
+#?      @(#) Makefile.help 1.18 18/08/09 22:36:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.17
+_SID.help       = 1.18
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -201,8 +204,8 @@ MORE-help       = " \
 \#              __________________________ targets for help about Makefile _$(_NL)\
  macros         - list all macro names used in Makefile* (alias: list, vars)$(_NL)\
  targets        - list all targets used in Makefile* (alias: rules)$(_NL)\
- macros.me      - list all macro names used main Makefile$(_NL)\
- targets.me     - list all targets used in main Makefile$(_NL)\
+ macros.me      - list all macro names used in calling Makefile$(_NL)\
+ targets.me     - list all targets used in calling Makefile$(_NL)\
  e-MACRO        - show content of MACRO expanded (all in one line)$(_NL)\
  s-MACRO        - show content of MACRO expanded (one word per line)$(_NL)\
  m-MACRO        - show definition of MACRO as is --exact macro match$(_NL)\
@@ -250,18 +253,20 @@ _line:
 
 macros:
 	@$(TARGET_VERBOSE)
-	@$(EXE.list) $(ALL.Makefiles) | sort
+	@$(EXE.list) $(MAKEFILE_LIST)    | sort
 macros%me:
-	@$(MAKE) -s ALL.Makefiles=$(MAKEFILE) targets
+	@$(TARGET_VERBOSE)
+	@$(EXE.list) $(MAKEFILE)         | sort
 vars: macros
 list: macros
 lists%me: macros.me
 
 targets:
 	@$(TARGET_VERBOSE)
-	@$(EXE.targets) $(ALL.Makefiles) | sort -u
+	@$(EXE.targets) $(MAKEFILE_LIST) | sort -u
 targets%me:
-	@$(MAKE) -s ALL.Makefiles=$(MAKEFILE) targets
+	@$(TARGET_VERBOSE)
+	@$(EXE.targets) $(MAKEFILE)      | sort -u
 rules: targets
 rules%me: targets.me
 
@@ -282,18 +287,18 @@ show: _notempty
 macro: _notempty=macro
 macro: _notempty
 	@$(TARGET_VERBOSE)
-	@$(EXE.macro) $(ALL.Makefiles)
+	@$(EXE.macro) $(MAKEFILE_LIST)
 makro: macro
 
 pmacro: _notempty=pmacro
 pmacro: _notempty
 	@$(TARGET_VERBOSE)
-	@$(EXE.pmacro) $(ALL.Makefiles)
+	@$(EXE.pmacro) $(MAKEFILE_LIST)
 
 target: _notempty=target
 target: _notempty
 	@$(TARGET_VERBOSE)
-	@$(EXE.target) $(ALL.Makefiles)
+	@$(EXE.target) $(MAKEFILE_LIST)
 
 # following rules are shortcuts for the above targets
 e-%:
