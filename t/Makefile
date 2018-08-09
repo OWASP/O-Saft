@@ -13,24 +13,23 @@
 #?      Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
-#       For details please see ../Makefile .
-#
-#       Naming conventions for targets see ../Makefile.help .
+#       For details please see
+#           ../Makefile  ../Makefile.help  Makefile.template
 #
 #       TODO:
 #          * include Makefile.* should be generic
-#          * unifiy test.warnings.log and test.tests.log (should use same target)
+#          * unify test.warnings.log and test.tests.log (should use same target)
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.16 18/07/13 17:15:01
+#?      @(#) Makefile 1.17 18/08/09 23:21:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.16
+_SID.test       = 1.17
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -39,11 +38,10 @@ MAKEFLAGS      += --no-builtin-variables --no-builtin-rules
 .SUFFIXES:
 
 first-test-target-is-default: help.test
-    # otherwise the first target from included files would be used
 
 ifndef ALL.Makefiles
     -include t/Makefile.inc
-        # defines macros if called directly (not from ../Makefile)
+    # defines macros if called directly (not from ../Makefile)
 endif
 
 ifeq (,$(_SID.help))
@@ -118,7 +116,7 @@ _TODAY_         = $(shell date +%Y""%m%d)
 # TEST.init       = --header
 # TEST.args       =
 
-# macroname for list of hostnames needs to be unique in each Makefile*
+# macro Lname for list of hostnames needs to be unique in each Makefile*
 # otherwise some targets in other Makefile* get confused
 #TEST.host       = localhost
 #TEST.hosts      =
@@ -161,8 +159,11 @@ test.target: test.file-1 test,file-2 test_file-3
 	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
 	@echo '# $$(_SID.inc)      = $(_SID.inc)'
 	@echo '# $$(PWD)           = $(PWD)'
+	@echo '# $$(PWD.dir)L      = $(notdir $(PWD))'
 	@echo '# $$(TEST.dir)      = $(TEST.dir)'
 	@echo '# $$(TEST.logdir)   = $(TEST.logdir)'
+	@echo '# $$(ALL.Makefiles) = $(ALL.Makefiles)'
+	@echo '# $$(ALL.includes)  = $(ALL.includes)'
 	@echo '# show some make variables:'
 	@echo '# $$@  = $@ #'
 	@echo '# $$<  = $< #'
