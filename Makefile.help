@@ -33,13 +33,13 @@
 #.      The terms  target,  target rule  or simply  rule  are used, when make's
 #.      rules are meant (a rule consist of dependencies and recipes).
 #.      The term  host  or  hostname  is used for a system (wether it is a FQDN
-#.      or a IP) to be tested with $(EXE.pl).
+#.      or an IP) to be tested with $(EXE.pl).
 #.      The term  argument(s)  is used, when (command line) arguments for to be
 #.      passed to $(EXE.pl) are meant.
 #.
 #.      Note that the O-Saft's documentation uses  target  for the system to be
 #.      tested.
-#.      Also:  arguments  are  command  and  option  in O-Saft's documentation.
+#.      Also:  arguments  are  commands and options  in O-Saft's documentation.
 #.
 #.   Syntax used in all makefiles
 #.      For extracting information from the Makefiles, i.e macros/variables and
@@ -59,7 +59,7 @@
 #.          HELP-help       = print overview of all targets
 #.          HELP-doc        = same as help, but evaluates variables
 #.      These variables are used by the  help  and  doc  target.  Each of these
-#.      lines is printed as follows (example above):
+#.      lines is printed as follows (from example above):
 #.                 _______________________________ some targets _
 #.          help     - print overview of all targets
 #.          doc      - same as help, but evaluates variables
@@ -95,12 +95,15 @@
 #.          make m-MAKEFILE
 #.
 #.      Naming conventions for targets:
-#.          test.name    - public available targets use  .  (dot) as separator
-#.          test-name    - internal and pattern rule targets use  -  (dash) as
+#.          tst.name     - public available targets use  .  (dot) as separator
+#.          tst-name     - internal and pattern rule targets use  -  (dash) as
 #.                          separator
-#.          test.name.log- same as  test.name  but store results in logfile
+#.          tst.name_arg - some pattern rule targets use  _  to pass parameters
+#.          tst.name.log - same as  test.name  but store results in logfile
 #.
 #.   Makefiles and Includes
+#.      Note that GNU make's  include directive does not understand macros, the
+#.      used path must be verbatim.
 #.      To keep the make's functionality (targets) maintainable, multiple files
 #.      are used. They are all named  Makefile  or  Makefile.SUFFIX,  where the
 #.      SUFFIX  describes the content, somehow.  I.g. it should be  possible to
@@ -135,14 +138,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.14 18/07/17 16:47:10
+#?      @(#) Makefile.help 1.15 18/08/09 19:04:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.14
+_SID.help       = 1.15
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
