@@ -138,14 +138,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.15 18/08/09 19:04:26
+#?      @(#) Makefile.help 1.16 18/08/09 19:35:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.15
+_SID.help       = 1.16
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -173,8 +173,8 @@ _HELP_USAGE_    = **USAGE:  $(MAKE) $($@) '$($@)=your-query'
 
 # tools used to gather information from herein
 # take care! real TABS are inside the sed commands
-EXE.list        = awk '/^[_a-zA-Z][_a-zA-Z.]* *=.*/{print $$1}'
-EXE.eval        = awk -F=    '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
+EXE.list        = awk       '/^[_a-zA-Z][_a-zA-Z.]* *=/{sub(/=/,"",$$1);print $$1}'
+EXE.eval        = awk -F=   '/^HELP-_/{print "_f-"$$1}/^HELP-[^ _]/{sub(/HELP-/,"");print "f-"$$1}'
 EXE.help        = sed -n -e 's/^HELP-_[^=]*=[" ]*\([^"]*\)"*/		\1/p' \
 			 -e 's/^HELP-\(.*\)[	 ]*=[" ]*\([^"]*\)"*/ \1    - \2/p'
 EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
@@ -183,6 +183,7 @@ EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
 EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
+EXE.targets     = awk       '/^[_a-zA-Z][_a-zA-Z.]* *:/{sub(/:/,"",$$1);print $$1}'
 EXE.syntax      = sed -n -e 's/^\#\.//p'
 EXE.wordperline = tr -s " $(_TAB)" "$(_NL)$(_NL)"
 #               # must use " so that make's variables are evaluated correctly
@@ -191,9 +192,13 @@ EXE.wordperline = awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 #_____________________________________________________________________________
 #_____________________________________________________________ help targets __|
 
+# no HELP-* macros are used herein to avoid printing their content with "make"
+
+
 MORE-help       = " \
 \#              __________________________ targets for help about Makefile _$(_NL)\
- list           - list all macro names (alias: vars)$(_NL)\
+ macros         - list all macro names used in Makefile* (alias: list, vars)$(_NL)\
+ targets        - list all targets used in Makefile* (alias: rules)$(_NL)\
  e-MACRO        - show content of MACRO expanded (all in one line)$(_NL)\
  s-MACRO        - show content of MACRO expanded (one word per line)$(_NL)\
  m-MACRO        - show definition of MACRO as is --exact macro match$(_NL)\
@@ -210,6 +215,7 @@ $(_NL)\
 
 help.doc:
 	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
+	@$(EXE.help) $(_MYSELF.help)
 	@echo $(MORE-help) ; # no quotes!
 
 help.help:
@@ -238,10 +244,16 @@ _line:
 
 .PHONY: _notempty _line
 
-list:
+macros:
 	@$(TARGET_VERBOSE)
-	@$(EXE.list) $(ALL.Makefiles)
-vars: list
+	@$(EXE.list) $(ALL.Makefiles) | sort
+vars: macros
+list: macros
+
+targets:
+	@$(TARGET_VERBOSE)
+	@$(EXE.targets) $(ALL.Makefiles) | sort -u
+rules: targets
 
 eval:
 	@$(TARGET_VERBOSE)
@@ -289,5 +301,5 @@ p-%:
 t-%:
 	@$(MAKE) -s target=$* target
 
-.PHONY: list vars eval echo show macro pmacro target
+.PHONY: macros targets rules list vars eval echo show macro pmacro target
 
