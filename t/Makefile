@@ -22,14 +22,14 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.17 18/08/09 23:21:30
+#?      @(#) Makefile 1.18 18/08/10 22:54:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.17
+_SID.test       = 1.18
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -371,6 +371,10 @@ endif
 
 ifeq (,$(_SID.cmds))
     -include t/Makefile.cmds
+endif
+
+ifeq (,$(_SID.exit))
+    -include t/Makefile.exit
 endif
 
 ifeq (,$(_SID.opt))
