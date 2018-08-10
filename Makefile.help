@@ -19,11 +19,14 @@
 #?          make e-MAKEFILE
 #?          make p-MAKEFILE
 #?          make t-help.doc
+#?          gake targets
+#?          gake targets.me
 #?
 #? LIMITATIONS
 #?       Requires GNU Make > 2.0.
 #?
 # HACKER's INFO
+#    Description used for target  help.syntax  .
 #.
 #.   Terms used for description of makefiles
 #.      The term  makefile(s)  is used, when files to be used as input for make
@@ -135,6 +138,49 @@
 #.              include t/Makefile
 #.          endif
 #.
+#.   Makefiles
+#.      All targets of the Makefiles --the make system-- are for testing O-Saft
+#.      functionality, code quality, and performance.
+#.      All testing functionality is grouped in individual makefiles. All these
+#.      makefiles reside in the $(TEST.dir) directory (usually ./t ).  The main
+#.      Makefile simply includes all other files. The includes are organised as
+#.      follows:
+#.          Makefile
+#.              include Makefile.help
+#.              include t/Makefile
+#.                  include t/Makefile.inc
+#.                  include t/Makefile.warnings
+#.                  include t/Makefile.cmds
+#.                  include t/Makefile.exit
+#.                  include t/Makefile.opt
+#.                  include t/Makefile.ext
+#.                  include t/Makefile.cgi
+#.                  include t/Makefile.tcl
+#.                  include t/Makefile.misc
+#.                  include t/Makefile.critic
+#.
+#.      To get a list of all makefiles, use:
+#.          make s-ALL.includes
+#.
+#.      Each of the t/Makefile.*  includes  t/Makefile. This allows to use each
+#.      Makefile.* on its own, like:
+#.          make -f t/Makefile.exit
+#.          cd t && make -f Makefile.exit
+#.
+#.      The default target in each makefile simply prints a brief help.
+#.
+#.   Quick Hints
+#.      There are a bunch of targets which provide information about the macros
+#.      and targets from the Makefiles itself.  They are mainly meant to show a
+#.      readable (for humans) information  in contrast to the sometimes cryptic
+#.      syntax of makefiles can do. This is done in  Makefile.help , see:
+#.          make -f Makefile.help
+#.      To get brief (mainly technical) information about a makefile, use:
+#.          make -f t/Makefile.cgi
+#.          make -f t/Makefile.cgi targets.me
+#.          make -f t/Makefile.cgi macros.me
+#.          make -f t/Makefile.cgi s-ALL.test.cgi
+#.
 #.   Most included Makefiles.SUFFIX contain very limited comments.  For general
 #.   details of their functionality, see t/Makefile.template .
 #.
@@ -143,14 +189,14 @@
 #.      EXE.syntax  also.
 #.
 #? VERSION
-#?      @(#) Makefile.help 1.18 18/08/09 22:36:12
+#?      @(#) Makefile.help 1.19 18/08/10 23:54:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.help       = 1.18
+_SID.help       = 1.19
 
 _MYSELF.help    = Makefile.help
 ALL.includes   += $(_MYSELF.help)
@@ -217,16 +263,12 @@ $(_NL)\
  help.test      - print documentation about test targets$(_NL)\
  help.critic    - print documentation about perlcritic targets$(_NL)\
  help.syntax    - print documentation about syntax used in Makefile.*$(_NL)\
- help.help      - print internal (development) information about makefiles$(_NL)\
 "
 
 help.doc:
 	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
 	@$(EXE.help) $(_MYSELF.help)
 	@echo $(MORE-help) ; # no quotes!
-
-help.help:
-	@echo TODO
 
 help.syntax:
 	$(EXE.syntax) Makefile.help
