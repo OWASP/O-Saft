@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.806 18/07/16 17:28:04",
-    STR_VERSION => "18.07.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.807 18/08/10 21:17:57",
+    STR_VERSION => "18.08.08",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -8143,7 +8143,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         # gethostbyaddr() is strange: returns $?==0 but an error message in $!
         # hence just checking $? is not reliable, we do it additionally.
         # If gethostbyaddr()  fails we use Perl's  `or'  to assign our default
-        # text.  This may happen when there're problems with the local name
+        # text.  This may happen when there are problems with the local name
         # resolution.
         # When gethostbyaddr() fails, the connection to the target most likely
         # fails also, which produces more Perl warnings later.
@@ -8157,6 +8157,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $cfg{'rhost'}   = $fail if ($? != 0);
             my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
             my $i = 0;
+            #dbx# printf "@ips = %s\n", join(" - ", @ips);
             foreach my $ip (@ips) {
                 local $? = 0; local $! = undef;
                 # TODO: $rhost  = gethostbyaddr($ipv6, AF_INET6));
@@ -8532,7 +8533,7 @@ _yeast_TIME("hosts}");
 
 usr_pre_exit();
 _yeast_exit();
-_yeast_EXIT("exit=MAIN  - end");    # for symetric reason, rather useless here
+_yeast_EXIT("exit=END   - end");    # for symetric reason, rather useless here
 
 if ($cfg{'exitcode'} == 0) {
     exit 0;
