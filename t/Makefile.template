@@ -16,17 +16,16 @@
 # HACKER's INFO
 #       For details please see
 #           ../Makefile  ../Makefile.help  Makefile.template
-#       Naming conventions for targets see ../Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile.template 1.4 18/07/13 16:50:05
+#?      @(#) Makefile.template 1.5 18/08/11 00:05:20
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.TMP        = 1.4
+_SID.TMP        = 1.5
 
 _MYSELF.TMP     = t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -56,8 +55,9 @@ ifdef TEST.hosts
                     # list of TEST.hosts can be passed with environment or on command line
 endif
 
-TEST.args           = $(TEST.init)
+TEST.init           = --header
                     # initial  arguments for EXE.pl
+TEST.args           = $(TEST.init)
                     # specific arguments will be added in targets below
 
 #_____________________________________________________________________________
