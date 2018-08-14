@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.2 18/05/16 07:47:22
+# SID	@(#) rfc.txt 1.3 18/08/14 17:43:25
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -12,6 +12,7 @@ url	http://tools.ietf.org/
 2246	TLS Version 1.0 (with Cipher Suites)
 4346	TLS Version 1.1 (with Cipher Suites)
 5246	TLS Version 1.2 (with Cipher Suites)
+8446	TLS Version 1.3 (with Cipher Suites)
 4347	DTLS Version 0.9
 6347	DTLS Version 1.2
 2616	Hypertext Transfer Protocol Version 1 (HTTP/1.1)
