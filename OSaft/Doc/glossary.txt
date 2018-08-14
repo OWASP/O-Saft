@@ -1,8 +1,9 @@
 
-# SID	@(#) glossary.txt 1.4 18/08/08 15:57:58
+# SID	@(#) glossary.txt 1.5 18/08/14 18:09:56
 
 # acronym | description
 #------+----------------------------------------------------------------------+
+0-RTT	zero round-trip time
 AA	Attribute Authority
 AAD	additional authenticated data
 ACME	Automated Certificate Management Environment
@@ -156,6 +157,8 @@ ECOH	Elliptic Curve only hash
 # ECRYPT	??
 Ed25519	alias for Curve25519
 Ed448	alias for Curve448
+edwards25519	alias for Curve25519
+edwards448	alias for Curve448
 EdDSA	alias for signatures using public key and private key formats, like Curve448 and Curve25519
 EDE	Encryption-Decryption-Encryption
 EDH	Ephemeral Diffie-Hellman
@@ -212,6 +215,7 @@ HCTR	a variable-input-length encryption mode
 HEARTBLEED	attack against TLS extension heartbeat
 HEIST	HTTP Encrypted Information can be Stolen through TCP-windows
 HIBE	hierarchical identity-based encryption
+HKDF	HMAC-based Extract-and-Expand Key Derivation Function
 HNF-256	hash function (Harshvardhan Tiwari, Krishna Asawa, 2014)
 HMAC	keyed-Hash Message Authentication Code
 HMQV	h? Menezes-Qu-Vanstone
@@ -358,6 +362,7 @@ RNG	Random Number Generator
 ROT-13	see XOR
 ROBOT	Return Of Bleichenbacher's Oracle Threat
 RTP	Real-time Transport Protocol
+RSASSA-PSS	RSA Probabilistic Signature Scheme
 RSA	Rivest Sharmir Adelman (public key cryptographic algorithm)
 RSS-14	Reduced Space Symbology, see GS1
 RTN	Routing transit number
