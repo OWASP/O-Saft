@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.3 18/08/14 17:43:25
+# SID	@(#) rfc.txt 1.4 18/08/14 18:10:17
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -41,6 +41,10 @@ url	http://tools.ietf.org/
 2945	SRP Authentication & Key Exchange System
 2986	PKCS#10
 5967	PKCS#10
+2313	PKCS#1: RSA Cryptography Specifications Version 1.5
+2437	PKCS#1: RSA Cryptography Specifications Version 2.0
+3447	PKCS#1: RSA Cryptography Specifications Version 2.1
+8017	PKCS#1: RSA Cryptography Specifications Version 2.2
 5081	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication
 4309	AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)
 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
@@ -53,11 +57,12 @@ url	http://tools.ietf.org/
 4749	TLS Compression Methods
 5077	TLS session resumption without Server-Side State
 5746	TLS Extension: Renegotiation Indication Extension
-5764	TLS Extension: SRTP
+5764	TLS Extension: Secure Real-time Transport Protocol (SRTP)
 5929	TLS Extension: Channel Bindings
 6066	TLS Extension: Extension Definitions
 7301	TLS Extension: Application-Layer Protocol Negotiation (ALPN)
 7633	TLS Extension: Feature Extension: Must Staple
+8449	TLS Extension: Record Size Limit
 6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
 3711	The Secure Real-time Transport Protocol (SRTP)
 6189	ZRTP: Media Path Key Agreement for Unicast Secure RTP
@@ -82,7 +87,6 @@ url	http://tools.ietf.org/
 4279	TLSPSK: Pre-Shared Key Ciphersuites for TLS
 4357	Additional Cryptographic Algorithms for Use with GOST 28147-89, GOST R 34.10-94, GOST R 34.10-2001, and GOST R 34.11-94 Algorithms
 4491	Using the GOST Algorithms with X509 (GOST R 34.10-94, GOST R 34.10-2001, GOST R 34.11-94)
-4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
 4785	Pre-Shared Key (PSK) Cipher Suites with NULL Encryption for TLS
 5054	Secure Remote Password (SRP) Protocol for TLS Authentication
 5114	Additional Diffie-Hellman Groups for Use with IETF Standards
@@ -92,6 +96,7 @@ url	http://tools.ietf.org/
 5487	Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode
 5489	ECDHE_PSK Cipher Suites for TLS
 5589	Session Initiation Protocol (SIP) Call Control - Transfer
+4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
 5639	Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve Generation
 5903	Elliptic Curve Groups modulo a Prime (ECP Groups) for IKE and IKEv2
 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
@@ -117,6 +122,7 @@ url	http://tools.ietf.org/
 7539	ChaCha20 and Poly1305 for IETF Protocols
 7627	TLS Session Hash and Extended Master Secret Extension
 7905	ChaCha20-Poly1305 Cipher Suites for TLS
+7919	Negotiated Finite Field Diffie-Hellman Ephemeral Parameters for TLS
 1135	The Helminthiasis of the Internet
 6698	DNS-Based Authentication of Named Entities (DANE)
 6844	DNS Certification Authority Authorization (CAA) Resource Record
@@ -125,4 +131,4 @@ url	http://tools.ietf.org/
 5083	Cryptographic Message Syntax (CMS) Authenticated-Enveloped-Data Content Type
 4086	Randomness Requirements for Security
 4107	Guidelines for Cryptographic Key Management
-
+8032	Edwards-Curve Digital Signature Algorithm (EdDSA)
