@@ -35,7 +35,7 @@
 #           $|    - "orde-only" dependencies
 #           $*    - matching files of the rule
 #           $%    - target (archive) member name (rarely used)
-#        Use of $$ avoids evaluating $.
+#        Use of $$ avoids evaluating $ .
 #
 #    Variable, macro names
 #        General rules for our variable names in this Makefile:
@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.30 18/07/17 21:13:44
+#?      @(#) Makefile 1.31 18/08/16 23:59:57
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.30
+_SID            = 1.31
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -152,9 +152,9 @@ OSAFT.pm        = Ciphers.pm error_handler.pm
 USR.pm          = \
 		  $(Project)-dbx.pm \
 		  $(Project)-man.pm \
-		  $(Project)-usr.pm \
-		  osaft.pm
+		  $(Project)-usr.pm
 SRC.pm          = \
+		  osaft.pm \
 		  $(NET.pm:%=Net/%)   \
 		  $(_CIPHER:%=OSaft/%) \
 		  $(OSAFT.pm:%=OSaft/%) \
@@ -170,13 +170,16 @@ SRC.docker      = \
 		  Dockerfile
 SRC.rc          = .$(SRC.pl)
 
+SRC.make        = Makefile
+SRC.misc        = README CHANGES
+SRC.inst        = contrib/INSTALL-template.sh
+
 # test file
 TEST.dir        = t
 TEST.do         = SSLinfo.pl \
-		  o-saft_bench \
+		  o-saft_bench.sh \
 		  critic_345.sh \
-		  test-bunt.pl.txt \
-		  test-o-saft.cgi.sh
+		  test-bunt.pl.txt
 TEST.rc         = .perlcriticrc
 SRC.test        = \
 		  $(TEST.do:%=$(TEST.dir)/%) \
@@ -220,10 +223,6 @@ SRC.contrib     = \
 		  $(CONTRIB.zap:%=$(CONTRIB.dir)/%) \
 		  $(CONTRIB.rc:%=$(CONTRIB.dir)/%)
 
-SRC.make        = Makefile
-SRC.misc        = README CHANGES
-SRC.inst        = contrib/INSTALL-template.sh
-
 # documentation files
 DOC.dir         = docs
 DOC.src         = o-saft.odg o-saft.pdf
@@ -264,21 +263,22 @@ GEN.tgz         = $(Project).tgz
 GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 
 # summary variables
-ALL.Makefiles   = Makefile Makefile.help \
+SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
+ALL.Makefiles   = \
+		  $(SRC.make)         Makefile.help \
 		  t/Makefile          t/Makefile.inc \
 		  t/Makefile.opt      t/Makefile.cmds \
 		  t/Makefile.cgi      t/Makefile.tcl \
 		  t/Makefile.ext      t/Makefile.misc \
 		  t/Makefile.warnings t/Makefile.critic
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
-SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
 ALL.test        = $(SRC.test)
 ALL.contrib     = $(SRC.contrib)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.inst) $(GEN.tags)
 ALL.src         = \
-		  $(ALL.Makefiles) $(TEST.dir)/Makefile.inc \
+		  $(ALL.Makefiles) \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
 		  $(ALL.test) \
@@ -302,7 +302,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.30
+_INST.text      = generated from Makefile 1.31
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -408,8 +408,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.30
-tar:     GREP_EDIT = 1.30
+GREP_EDIT = 1.31
+tar:     GREP_EDIT = 1.31
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
