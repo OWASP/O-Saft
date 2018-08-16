@@ -22,14 +22,14 @@
 #          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.18 18/08/10 22:54:20
+#?      @(#) Makefile 1.19 18/08/17 00:32:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.18
+_SID.test       = 1.19
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -96,10 +96,9 @@ help.test.all:
 TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
 TEST.do         = SSLinfo.pl \
-		  o-saft_bench \
+		  o-saft_bench.sh \
 		  critic_345.sh \
-		  test-bunt.pl.txt \
-		  test-o-saft.cgi.sh
+		  test-bunt.pl.txt
 TEST.rc         = .perlcriticrc
 SRC.test        = \
 		  $(TEST.do:%=$(TEST.dir)/%) \
