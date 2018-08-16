@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.31 18/08/16 23:59:57
+#?      @(#) Makefile 1.32 18/08/17 00:34:22
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.31
+_SID            = 1.32
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -176,14 +176,7 @@ SRC.inst        = contrib/INSTALL-template.sh
 
 # test file
 TEST.dir        = t
-TEST.do         = SSLinfo.pl \
-		  o-saft_bench.sh \
-		  critic_345.sh \
-		  test-bunt.pl.txt
-TEST.rc         = .perlcriticrc
-SRC.test        = \
-		  $(TEST.do:%=$(TEST.dir)/%) \
-		  $(TEST.rc:%=$(TEST.dir)/%)
+# all other definitions are done in t/Makefile*
 
 # contrib files
 CONTRIB.dir     = contrib
@@ -265,12 +258,12 @@ GEN.tmptgz      = $(TMP.dir)/$(GEN.tgz)
 # summary variables
 SRC.exe         = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(DEV.pl) $(SRC.sh)
 ALL.Makefiles   = \
-		  $(SRC.make)         Makefile.help \
-		  t/Makefile          t/Makefile.inc \
-		  t/Makefile.opt      t/Makefile.cmds \
-		  t/Makefile.cgi      t/Makefile.tcl \
-		  t/Makefile.ext      t/Makefile.misc \
-		  t/Makefile.warnings t/Makefile.critic
+		  $(SRC.make) Makefile.help \
+		  $(TEST.dir)/Makefile          $(TEST.dir)/Makefile.inc \
+		  $(TEST.dir)/Makefile.opt      $(TEST.dir)/Makefile.cmds \
+		  $(TEST.dir)/Makefile.cgi      $(TEST.dir)/Makefile.tcl \
+		  $(TEST.dir)/Makefile.ext      $(TEST.dir)/Makefile.misc \
+		  $(TEST.dir)/Makefile.warnings $(TEST.dir)/Makefile.critic
 ALL.osaft       = $(SRC.pl)  $(SRC.tcl) $(CHK.pl)  $(SRC.pm) $(SRC.sh) $(SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(GEN.src) $(SRC.docker)
 ALL.test        = $(SRC.test)
@@ -302,7 +295,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.31
+_INST.text      = generated from Makefile 1.32
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -408,8 +401,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.31
-tar:     GREP_EDIT = 1.31
+GREP_EDIT = 1.32
+tar:     GREP_EDIT = 1.32
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
