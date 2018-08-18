@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.5 18/08/14 18:09:56
+# SID	@(#) glossary.txt 1.6 18/08/18 22:28:57
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -20,15 +20,23 @@ AIA	Authority Information Access (certificate extension)
 AKC	Agreement with Key Confirmation
 AKID	Authority Key IDentifier
 ALPN	Application Layer Protocol Negotiation
+AMASTRID	stream cipher algorithm
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
 ARIA	128-bit Symmetric Block Cipher
 ASN	Autonomous System Number
 ASN.1	Abstract Syntax Notation number One
 BACPA	Blockwise-adaptive chosen-plaintext attack
+BADA55	"locate weak cryptography somewhere", Bernstein, Lange, et al.
+BADA55-VPR-224	improved verifiably pseudorandom 224-bit curve
+BADA55-VR-224	curve useing the same prime as NIST P-224
+BADA55-VR-256	curve useing the same prime as NIST P-256
+BADA55-VR-384	curve useing the same prime as NIST P-384
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
 BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
 BLAKE2	fast secure hashing function (2012)
+BLAKE-32	see BLAKE (32 bit)
+BLAKE-64	see BLAKE (64 bit)
 BLAKE-224	see BLAKE (224 bit)
 BLAKE-256	see BLAKE (256 bit)
 BLAKE-384	see BLAKE (384 bit)
@@ -67,6 +75,9 @@ CFB	Cipher Feedback
 CFB3	Cipher Feedback
 CFBx	Cipher Feedback x bit mode
 ChaCha	stream cipher algorithm
+ChaCha8	see ChaCha
+ChaCha12	see ChaCha
+ChaCha20	see ChaCha
 ChaCha-Poly1305	Authenticated Encryption with Associated Data (AEAD)
 CHAP	Challenge Handshake Authentication Protocol
 CKA	(PKCS#11)
@@ -125,13 +136,16 @@ DLP	Discrete Logarithm Problem
 DN	Distinguished Name
 DNSSEC	DNS Security Extension
 DPA	Dynamic Passcode Authentication (see CAP)
+DRAGON	stream cipher algorithm
 DRBG	Deterministic Random Bit Generator
 DROWN	Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)
 DSA	Digital Signature Algorithm
+DSCP	Differentiated Services Code Point
 DSS	Digital Signature Standard
 DTLS	Datagram TLS
 DTLSv1	Datagram TLS 1.0
-Dual EC DBRG	Dual Elliptic Curve Deterministic Random Bit Generator
+Dual EC DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
+Dual_EC_DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
 DV	Domain Validation
 DV-SSL	Domain Validated Certificate
 EAL	Evaluation Assurance Level
@@ -143,9 +157,14 @@ EBC	Edge Boundery Controller
 EC	Elliptic Curve
 ECB	Electronic Code Book mode
 ECC	Elliptic Curve Cryptography
+ECCSI	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption
 ECDH	Elliptic Curve Diffie-Hellman
 ECDHE	Ephemeral ECDH
+ECDLP	Elliptic Curve Discrete Logarithm Problem
 ECDSA	Elliptic Curve Digital Signature Algorithm
+ECDSA-256	Elliptic Curve Digital Signature Algorithm (256 bits)
+ECDSA-384	Elliptic Curve Digital Signature Algorithm (384 bits)
+ECDSA-521	Elliptic Curve Digital Signature Algorithm (521 bits)
 ECGDSA	Elliptic Curve ??? DSA
 ECHO	hash function (Ryad Benadjila, Olivier Billet, Henri Gilbert, Gilles Macario-Rat, Thomas Peyrin, Matt Robshaw, Yannick Seurin, 2010)
 ECIES	Elliptic Curve Integrated Encryption Scheme
@@ -153,8 +172,10 @@ ECKA	Elliptic Curve Key Agreement
 ECKA-EG	Elliptic Curve Key Agreement of ElGamal Type
 ECKDSA	Elliptic Curve ??? DSA
 ECMQV	Elliptic Curve Menezes-Qu-Vanstone
+ECN	Explicit Congestion Notification
 ECOH	Elliptic Curve only hash
 # ECRYPT	??
+ECSVDP-DH	Elliptic Curve Secret Value Derivation Primitive, Diffie-Hellman version
 Ed25519	alias for Curve25519
 Ed448	alias for Curve448
 edwards25519	alias for Curve25519
@@ -203,13 +224,19 @@ GOST	Gossudarstwenny Standard (block cipher)
 Grainv1	stream cipher (64-bit IV)
 Grainv128	stream cipher (96-bit IV)
 GREASE	Generate Random Extensions And Sustain Extensibility
+GRØSTL256	hash function
+GRØSTL512	hash function
+GROESTL256	alias for GRØSTL256
+GROESTL512	alias for GRØSTL512
 HAIFA	HAsh Iterative FrAmework
 hash127	fast hash function (by Dan Bernstein)
 HAVAL	one-way hashing
 HAS-160	hash function
 HAS-V	hash function
-HC128	stream cipher
-HC256	stream cipher
+HC128	alias for HC128
+HC256	alias for HC256
+HC-128	stream cipher algorithm
+HC-256	stream cipher algorithm
 HCH	Hash-Coputer-Hash
 HCTR	a variable-input-length encryption mode
 HEARTBLEED	attack against TLS extension heartbeat
@@ -227,6 +254,7 @@ HSR	Header + Secret + Random
 HSTS	HTTP Strict Transport Security
 HTOP	HMAC-Based One-Time Password
 IAPM	Integrity Aware Parallelizable Mode (block cipher mode of operation)
+IBE	Identity-Based Encryption
 ICM	Integer Counter Mode (alias for CTR)
 IDP	Issuing Distribution Points
 IDEA	International Data Encryption Algorithm (by James Massey and Xuejia Lai)
@@ -244,14 +272,23 @@ INT-PTXT	Integrity of plaintext
 ISAKMP	Internet Security Association and Key Management Protocol
 IV	Initialization Vector
 JH	hash function (Hongjun Wu, 2011)
+JH-224	see JH (224 bits)
+JH-256	see JH (256 bits)
+JH-384	see JH (384 bits)
+JH-512	see JH (512 bits)
 JSSE	Java Secure Socket Extension
 Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
 KCI	Key Compromise Impersonation
+KDF	Key Derivation Function
 KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 KEK	Key Encryption Key
+KMS	Key Management Service
+KPAK	KMS Public Authentication Key
+KSAK	KMS Secret Authentication Key
 KSK	Key Signing Key (DNSSEC)
 KU	Key Usage
 LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 2008)
+LEXv2	stream cipher algorithm
 LFSR	Linear Feedback Shift Register
 LION	block cipher combining stream cipher and hash function
 LLL	Lenstra–Lenstra–Lovász, lattice basis reduction algorithm
@@ -278,6 +315,12 @@ MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MtE	MAC-then-encrypt
 NCP	Normalized Certification Policy (according TS 102 042)
 Neokeon	symmetric block cipher algorithm
+nistp192	alias for P-192
+nistp224	alias for P-224
+nistp256	alias for P-256
+nistp384	alias for P-384
+nistp521	alias for P-521
+NLSv2	stream cipher algorithm
 nonce	(arbitrary) number used only once
 NPN	Next Protocol Negotiation
 NSS	Network Security Services
@@ -289,6 +332,8 @@ OCB	Offset Codebook Mode (block cipher mode of operation)
 OCB1	same as OCB
 OCB2	improved OCB aka AEM
 OCB3	improved OCB2
+OCELOT1	stream cipher algorithm
+OCELOT2	stream cipher algorithm
 OCSP	Online Certificate Status Protocol
 OCSP stapling	formerly known as: TLS Certificate Status Request
 OFB	Output Feedback
@@ -303,8 +348,16 @@ OV	Organisational Validation
 OV-SSL	Organisational Validated Certificate
 P12	see PKCS#12
 P7B	see PKCS#7
+P-192	Elliptic Curve used in FIPS 186-4 (NIST)
+P-224	Elliptic Curve used in FIPS 186-4 (NIST)
+P-256	Elliptic Curve used in FIPS 186-4 (NIST)
+P-384	Elliptic Curve used in FIPS 186-4 (NIST)
+P-521	Elliptic Curve used in FIPS 186-4 (NIST)
 PACE	Password Authenticated Connection Establishment
+PAD	Peer Authorization Database
 PAKE	Password Authenticated Key Exchange
+Panama	stream cipher algorithm
+PCN	Pre-Congestion Notification
 PBE	Password Based Encryption
 PBKDF2	Password Based Key Derivation Function
 PC	Policy Constraints (certificate extension)
@@ -339,8 +392,14 @@ Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
 POODLE	Padding Oracle On Downgraded Legacy Encryption
 PRF	pseudo-random function
+prime192v1	alias for P-192
+prime224v1	alias for P-224
+prime256v1	alias for P-256
+prime384v1	alias for P-384
+prime521v1	alias for P-521
 PRNG	pseudo-random number generator
 PSK	Pre-shared Key
+PVT	Public Validation Token
 PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
 QUIC	Quick UDP Internet Connection
 RA	Registration Authority (aka Registration CA)
@@ -369,6 +428,7 @@ RTN	Routing transit number
 S/KEY	One-time pad Password system
 SA	Subordinate Authority (aka Subordinate CA)
 SACL	System Access Control List
+SAD	Security Association Database
 SAE	Simultaneous Authentication of Equals
 SAFER	Secure And Fast Encryption Routine, block cipher
 Salsa20	stream cipher (by D. Bernstein, 2005)
@@ -388,6 +448,11 @@ SCSV	Signaling Cipher Suite Value
 SCVP	Server-Based Certificate Validation Protocol
 SCT	Signed Certificate Timestamp
 SDES	Security Description Protokol
+secp192r1	alias for P-192
+secp224r1	alias for P-224
+secp256r1	alias for P-256
+secp384r1	alias for P-384
+secp521r1	alias for P-521
 SEED	128-bit Symmetric Block Cipher
 Serpent	symmetric key block cipher (128 bit)
 SGC	Server-Gated Cryptography
@@ -401,9 +466,10 @@ SHA-224	Secure Hash Algorithm (224 bit)
 SHA-256	Secure Hash Algorithm (256 bit)
 SHA-384	Secure Hash Algorithm (384 bit)
 SHA-512	Secure Hash Algorithm (512 bit)
-SHA1	see for SHA-1 (160 bit)
-SHA2	see for SHA-2 (224, 256, 384 or 512 bit)
-SHA3	see for SHA-3 (224, 256, 384 or 512 bit)
+SHA1	alias for SHA-1 (160 bit)
+SHA2	alias for SHA-2 (224, 256, 384 or 512 bit)
+SHA3	alias for SHA-3 (224, 256, 384 or 512 bit)
+SHA3256	alias for SHA3-256
 SHA3-224	Secure Hash Algorithm (224 bit)
 SHA3-256	Secure Hash Algorithm (256 bit)
 SHA3-384	Secure Hash Algorithm (384 bit)
@@ -416,6 +482,10 @@ SIA	Subject Information Access (certificate extension)
 SIC	Segmented Integer Counter (alias for CTR)
 SIMON	block cipher combining
 Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
+Skein-256-256	see Skein (256 bits)
+Skein-512-256	see Skein (256 bits)
+Skein-512-512	see Skein (512 bits)
+Skein-1024-1024	see Skein (1024 bits)
 SKID	subject key ID (certificate extension)
 SKIP	Message Skipping Attacks on TLS
 SKIP-TLS	see SKIP
@@ -425,14 +495,18 @@ SM4	Block Cipher Algorithm
 SMS4	see SM4
 SMACK	State Machine AttaCKs
 Snefu	hash function
+Snow20	stream cipher algorithm
 SNI	Server Name Indication
 SNOW	word-based synchronous stream ciphers (by Thomas Johansson and Patrik Ekdahl )
 Snuffle 2005	see Salsa20
 Snuffle 2008	see ChaCha
+Sosemanuk	stream cipher algorithm
+SPD	Security Policy Database
 SPDY	Google's application-layer protocol on top of SSL
 SPECK	block cipher combining
 SPHINCS	post-quantum hash function
 SPHINCS-256	alias for SPHINCS
+SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
 Square	block cipher
@@ -441,6 +515,7 @@ SRP	Secure Remote Password protocol
 SRTP	Secure RTP
 SSCD	Secure Signature Creation Device
 SSEE	Sichere Signaturerstellungseinheit (same as SSCD)
+SSK	Secret Signing Key
 SSL	Secure Sockets Layer
 SSLv2	Secure Sockets Layer Version 2
 SSLv3	Secure Sockets Layer Version 3
@@ -473,6 +548,7 @@ TOCTOU	Time-of-check, time-of-use
 TOFU	Trust on First Use
 TR-02102	Technische Richtlinie 02102 (des BSI)
 TR-03116	Technische Richtlinie 03116 (des BSI)
+Trivium	stream cipher algorithm
 TSK	Transmission Security Key
 TSK 	TACK signing key
 TSP	trust-Management Service Provider
@@ -487,6 +563,9 @@ URI	Uniform Resource Identifier
 URL	Uniform Resource Locator
 VMAC	Universal hashing MAC; 64-bit variant of UMAC (by Ted Krovetz and Wei Dai)
 VMPC	stream cipher
+VR-224	alias for BADA55-VR-224
+VR-256	alias for BADA55-VR-256
+VR-384	alias for BADA55-VR-384
 WHIRLPOOL	hash function
 X.680	X.680: ASN.1
 X.509	X.509: The Directory - Authentication Framework
