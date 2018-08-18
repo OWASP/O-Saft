@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.4 18/08/14 18:10:17
+# SID	@(#) rfc.txt 1.5 18/08/18 22:30:09
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -36,6 +36,7 @@ url	http://tools.ietf.org/
 4306	The Internet Key Exchange (IKEv2) Protocol - 2005
 7296	The Internet Key Exchange Protocol 2 (IKEv2) - 2014
 4753	ECP Groups for IKE and IKEv2
+4754	IKE and IKEv2 Authentication Using the Elliptic Curve Digital Signature Algorithm (ECDSA)
 2412	AKLEY Key Determination Protocol (PFS - Perfect Forward Secrec)
 2818	HTTP Over TLS
 2945	SRP Authentication & Key Exchange System
@@ -79,6 +80,8 @@ url	http://tools.ietf.org/
 4158	X509 PKI Certification Path Building
 4387	X509 PKI Operational Protocols: Certificate Store Access via HTTP
 5280	X509 PKI Certificate and Certificate Revocation List (CRL) Profile
+5480	X509 PKI Elliptic Curve Cryptography Subject
+5758	X509 PKI Additional Algorithms and Identifiers for DSA and ECDSA
 6960	X509 Online Certificate Status Protocol (OCSP)
 2712	TLSKRB: Addition of Kerberos Cipher Suites to TLS
 3268	TLSAES: Advanced Encryption Standard (AES) Cipher Suites for TLS
@@ -96,9 +99,12 @@ url	http://tools.ietf.org/
 5487	Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode
 5489	ECDHE_PSK Cipher Suites for TLS
 5589	Session Initiation Protocol (SIP) Call Control - Transfer
+6040	Tunnelling of Explicit Congestion Notification
+6090	Fundamental Elliptic Curve Cryptography Algorithms
 4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
 5639	Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve Generation
 5903	Elliptic Curve Groups modulo a Prime (ECP Groups) for IKE and IKEv2
+6507	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption (ECCSI)
 7027	Elliptic Curve Cryptography (ECC) Brainpool Curves for TLS
 7748	Elliptic Curve for Security
 5741	RFC Streams, Headers, and Boilerplates
