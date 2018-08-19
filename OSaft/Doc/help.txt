@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.8 18/07/12 00:19:56
+# SID   @(#) help.txt 1.9 18/08/20 00:30:20
 
 NAME
 
@@ -404,7 +404,8 @@ COMMANDS
 
       +quit
 
-          Show internal data and exit, used for debugging only.
+          Show internal data and exit, used for testing and debugging only.
+          Please see  TESTING  below.
 
     Commands to check SSL details
 #
@@ -1878,6 +1879,11 @@ OPTIONS
           To get a list of preconfigured texts, use:
               $0 --help=cfg-hint
 
+      --cfg-init=KEY=VALUE
+
+          Set the internal  %cfg  hash.  This options is intended for testing
+          and debugging only. Please see  TESTING  below.
+
       --call=METHOD
 
           See  X&Options for SSL tool&.
@@ -2037,8 +2043,7 @@ OPTIONS
 
       --exit=KEY
 
-          For debugging only: terminate  $0  at specified 'KEY'.
-          For 'KEY' please see:  'grep exit= $0'
+          Terminate  $0  at specified 'KEY'. Please see  TESTING  below.
 
     Options vs. Commands
 
@@ -4289,6 +4294,40 @@ DEBUG
         $0  is known to work with at least:
               IO::Socket::INET 1.31, IO::Socket::SSL 1.22, Net::DNS 0.65
               Net::SSLeay 1.30
+
+
+TESTING
+
+        When talking about "testing the tool", functionl tests are meant.  So
+        this section describes "developer" rather that "user" options.
+
+        Testing the tool is a challenging task. Beside the oddities described
+        elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
+        and error which may occour during runtime.
+
+        Following options and commands are available to improve testing. They
+        mainly can simulate error conditions or stop execution properly (they
+        are not intended for other use cases):
+
+      +quit
+
+          Stop execution after processing all arguments and before precessing
+          any target. The runtime configuration is complete at this point.
+
+      --exit=KEY
+
+          Terminate  $0  at specified 'KEY'.  For available 'KEY' please see:
+              $0 --help=exit
+              grep exit= $0
+
+      --cfg-init=KEY=VALUE
+
+          With this option values in the internal  %cfg  hash can be set:
+
+              $cfg{KEY} = VALUE
+          
+          Only (perl) scalars or arrays can be set. The type will be detected
+          automatically.
 
 
 EXAMPLES
