@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use constant {
-    OSAFT_VERSION   => '18.07.18',  # official version number of this file
+    OSAFT_VERSION   => '18.08.18',  # official version number of this file
   # STR_VERSION => 'dd.mm.yy',      # this must be defined in calling program
     STR_ERROR   => "**ERROR: ",
     STR_WARN    => "**WARNING: ",
@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.144 18/07/16 11:28:50',
+    OSAFT_SID   => '@(#) osaft.pm 1.145 18/08/19 10:15:02',
 
 };
 
@@ -345,6 +345,8 @@ our %tls_error_alerts = ( # mainly RFC6066
     # ID      name                              RFC DTLS OID
     #----+-------------------------------------+----+--+---------------
     0 => [qw( close_notify                      6066  Y  -)],
+#   1 => [qw( warning                           6066  Y  -)],   # ??
+#   2 => [qw( fatal                             6066  Y  -)],   # ??
    10 => [qw( unexpected_message                6066  Y  -)],
    20 => [qw( bad_record_mac                    6066  Y  -)],
    21 => [qw( decryption_failed                 6066  Y  -)],
@@ -382,7 +384,7 @@ our %tls_extensions = ( # RFC 6066
     #----+-----------------------------+----+---+------------------------------
     # ID      name                      RFC DTLS other names
     #----+-----------------------------+----+---+------------------------------
-    0 => [qw( server_name               ????  -   )],
+    0 => [qw( server_name               4366  -   )],   # also 6066
     1 => [qw( max_fragment_length       ????  -   )],
     2 => [qw( client_certificate_url    ????  -   )],
     3 => [qw( trusted_ca_keys           ????  -   )],
@@ -391,7 +393,7 @@ our %tls_extensions = ( # RFC 6066
     6 => [qw( user_mapping              ????  -   )],
     7 => [qw( reserved_7                ????  -   )],
     8 => [qw( reserved_8                ????  -   )],
-    9 => [qw( cert_tape                 5081  -   )],
+    9 => [qw( cert_type                 5081  -   )],   # also 6091
    10 => [qw( ecliptic_curves           4492  -   )],
    11 => [qw( ec_point_formats          4492  -   )],
    12 => [qw( srp                       5054  -   )],
@@ -400,6 +402,7 @@ our %tls_extensions = ( # RFC 6066
 #  ...
 #  34 => [qw( unassigned                5246  -   )],
    35 => [qw( SessionTicket             4507  -   )],
+62208 => [qw( TACK                      ????  -   )],
 65535 => [qw( 65535                     ????  -   )],
 ); # %tls_extensions
 
@@ -407,11 +410,14 @@ my %tls_extensions__text = ( # TODO: this information needs to be added to %tls_
     'extension' => {            # TLS extensions
         '00000'     => "renegotiation info length",     # 0x0000 ??
         '00001'     => "renegotiation length",          # 0x0001 ??
+        '00009'     => "cert type",                     # 0x0009 ??
         '00010'     => "elliptic curves",               # 0x000a length=4
         '00011'     => "EC point formats",              # 0x000b length=2
+        '00012'     => "SRP",                           # 0x000c ??
         '00015'     => "heartbeat",                     # 0x000f length=1
         '00035'     => "session ticket",                # 0x0023 length=0
-        '13172'     => "next protocol",                 # 0x3374 length=NNN
+        '13172'     => "next protocol",     # aka NPN   # 0x3374 length=NNN
+        '62208'     => "TACK",                          # 0xf300 ??
         '65281'     => "renegotiation info",            # 0xff01 length=1
     },
 ); # %tls_extensions__text
@@ -1036,13 +1042,13 @@ our %cipher_names = (
     '0x0300C0AF' => [qw(ECDHE-RSA-AES256-CCM8           ECDHE_ECDSA_WITH_AES_256_CCM_8)], # RFC 7251
     '0x03005600' => [qw(SCSV                            TLS_FALLBACK_SCSV)], # FIXME: according http://tools.ietf.org/html/7507.html
     '0x030000FF' => [qw(INFO_SCSV                       EMPTY_RENEGOTIATION_INFO_SCSV)],
-    '0x0300C01D' => [qw(SRP-AES-128-CBC-SHA             SRP_SHA_WITH_AES_128_CBC_SHA)],
-    '0x0300C020' => [qw(SRP-AES-256-CBC-SHA             SRP_SHA_WITH_AES_256_CBC_SHA)],
     '0x0300C01A' => [qw(SRP-3DES-EDE-CBC-SHA            SRP_SHA_WITH_3DES_EDE_CBC_SHA)],
     '0x0300C01B' => [qw(SRP-RSA-3DES-EDE-CBC-SHA        SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA)],
     '0x0300C01C' => [qw(SRP-DSS-3DES-EDE-CBC-SHA        SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA)],
+    '0x0300C01D' => [qw(SRP-AES-128-CBC-SHA             SRP_SHA_WITH_AES_128_CBC_SHA)],
     '0x0300C01E' => [qw(SRP-RSA-AES-128-CBC-SHA         SRP_SHA_RSA_WITH_AES_128_CBC_SHA)],
     '0x0300C01F' => [qw(SRP-DSS-AES-128-CBC-SHA         SRP_SHA_DSS_WITH_AES_128_CBC_SHA)],
+    '0x0300C020' => [qw(SRP-AES-256-CBC-SHA             SRP_SHA_WITH_AES_256_CBC_SHA)],
     '0x0300C021' => [qw(SRP-RSA-AES-256-CBC-SHA         SRP_SHA_RSA_WITH_AES_256_CBC_SHA)],
     '0x0300C022' => [qw(SRP-DSS-AES-256-CBC-SHA         SRP_SHA_DSS_WITH_AES_256_CBC_SHA)],
     '0x0300C03C' => [qw(RSA-ARIA128-SHA256              RSA_WITH_ARIA_128_CBC_SHA256)],
@@ -1183,15 +1189,20 @@ our %cipher_alias = (
 
 # following are cipher suite values; alias for them not yet implemented
 #   '0x03000003' => [qw(RSA_WITH_RC4_40_MD5)],
-#   '0x03000004' => [qw(RSA_WITH_RC4_128_MD5)],
-#   '0x03000005' => [qw(RSA_WITH_RC4_128_SHA)],
+#   '0x03000004' => [qw(RSA_WITH_RC4_128_MD5)],        # from tlslite
+#   '0x03000005' => [qw(RSA_WITH_RC4_128_SHA)],        # from tlslite
 #   '0x03000006' => [qw(RSA_WITH_RC2_40_MD5)],
+#   '0x0300000A' => [qw(RSA_WITH_3DES_EDE_CBC_SHA)],   # from tlslite
 #   '0x03000017' => [qw(DH_anon_EXPORT_WITH_RC4_40_MD5)],
 #   '0x03000019' => [qw(DH_anon_EXPORT_WITH_DES40_CBC_SHA)],
 #   '0x0300001A' => [qw(DH_anon_WITH_DES_CBC_SHA)],
 #   '0x0300001B' => [qw(DH_anon_WITH_3DES_EDE_CBC_SHA)],#
+#   '0x0300002F' => [qw(RSA_WITH_AES_128_CBC_SHA)],    # from tlslite
 #   '0x03000033' => [qw(DHE_RSA_WITH_AES_128_CBC_SHA)],
+#   '0x03000034' => [qw(DH_ANON_WITH_AES_128_CBC_SHA)],# from tlslite
+#   '0x03000035' => [qw(RSA_WITH_AES_256_CBC_SHA)],    # from tlslite
 #   '0x03000039' => [qw(DHE_RSA_WITH_AES_256_CBC_SHA)],
+#   '0x0300003A' => [qw(DH_ANON_WITH_AES_256_CBC_SHA)],# from tlslite
 #   '0x0300C0AA' => [qw(PSK_DHE_WITH_AES_128_CCM_8)],  # from openssl
 #   '0x0300C0AB' => [qw(PSK_DHE_WITH_AES_256_CCM_8)],  # from openssl
     #!#----------+-------------------------------------+--------------------------+
@@ -1944,13 +1955,13 @@ our %cfg = (
         #    same as above except TLS_RSA_WITH_RC4_128_SHA2
         #
         # Supported by (most) browsers (see SSL_comp_report2011.pdf):
-        #    TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384_P384  (IE8 only)
-        #    TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA*
-        #    TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA*
-        #    TLS_DHE_RSA_WITH_AES_256_CBC_SHA
-        #    TLS_DHE_RSA_WITH_AES_128_CBC_SHA
-        #    TLS_RSA_WITH_RC4_128_SHA
-        #    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
+        #   TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384_P384  (IE8 only)
+        #   TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA*
+        #   TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA*
+        #   TLS_DHE_RSA_WITH_AES_256_CBC_SHA
+        #   TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+        #   TLS_RSA_WITH_RC4_128_SHA
+        #   TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
         #
         # NIST SP800-57 recommendations for key management (part 1):
         'NSA-B'     => "must be AES with CTR or GCM; ECDSA or ECDH and SHA256 or SHA512",
