@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.807 18/08/10 21:17:57",
+    SID         => "@(#) yeast.pl 1.808 18/08/19 16:35:23",
     STR_VERSION => "18.08.08",          # <== our official version number
 };
 
@@ -2405,14 +2405,13 @@ sub _init_opensslexe    {
     }
     $exe =~ s#//#/#g;       # make a nice path (see first path "" above)
     if ($exe eq "" or $exe eq "/") {
+        $exe = "";
         _warn("149: no executable for '$cmd{'openssl'}' found; all openssl functionality disabled");
         _hint("consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
-    } else {
-        $cmd{'openssl'} = $exe;
     }
     _v_print("_init_opensslexe: $exe");
-    return;
+    return $exe;
 } # _init_opensslexe
 
 sub _init_openssldir    {
@@ -2465,6 +2464,29 @@ sub _init_openssldir    {
     _trace("_init_openssldir: ca_path=$cfg{'ca_paths'} .");
     return $capath;
 } # _init_openssldir
+
+sub _init_openssl_ca    {
+    # returns openssl-specific path containing CA file
+    my $ca_path = shift;
+    return $ca_path if (not defined $ca_path or $ca_path eq "");
+    # search in given path
+    foreach my $f (@{$cfg{'ca_files'}}) {   # check if CA exists in 'ca_path'
+        my $ca  = "$cfg{'ca_path'}/$f";
+        print "### 0 PEM file for CA      " . "$ca" if -e "$ca";
+        return "$ca" if -e "$ca";
+    }
+    _warn("058: given path '$ca_path' does not contain a CA file");
+    # search for a path from list, use first containing a CA
+    foreach my $p (@{$cfg{'ca_paths'}}) {
+        foreach my $f (@{$cfg{'ca_files'}}) {
+            if (-e "$p/$f") {
+                _warn("059: found PEM fila for CA; using '--ca-path=$p'");
+                return $p;  # ugly return from inner loop; but exactly what we want
+            }
+        }
+    }
+    return undef;
+} # _init_openssl_ca
 
 sub _initchecks_score   {
     # set all default score values here
@@ -7811,14 +7833,15 @@ if ($cfg{'exec'} == 0)  {
     }
 }
 
-#| add openssl-specific path for CAs
+#| set openssl-specific path for CAs
 #| -------------------------------------
-_init_opensslexe();                         # warnings already printed if empty
+$cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
 if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
     $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
 }
+$cfg{'ca_path'} = _init_openssl_ca($cfg{'ca_path'});
 if (not defined $cfg{'ca_path'} or $cfg{'ca_path'} eq "") {
-    # TODO: probably search for a path from our list in $cfg{'ca_paths'}
+    _warn("060: no PEM fila for CA found; some certificate checks may fail");
 }
 
 #| openssl and Net::SSLeay is picky about path names
