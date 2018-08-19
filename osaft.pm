@@ -21,7 +21,7 @@ use constant {
     STR_DBX     => "#dbx# ",
     STR_UNDEF   => "<<undef>>",
     STR_NOTXT   => "<<>>",
-    OSAFT_SID   => '@(#) osaft.pm 1.145 18/08/19 10:15:02',
+    OSAFT_SID   => '@(#) osaft.pm 1.146 18/08/19 12:43:19',
 
 };
 
@@ -767,6 +767,11 @@ our %ciphers = (
 our %cipher_names = (
 ### Achtung: die hex-Wert sind intern, davon sind nur die letzten 4 oder 6
 ###          Stellen (je nach Protokoll) der eigentliche Wert.
+    # NOTE: cipher suite name beginning with "-OLD" usually will never work (i.e.
+    #       with openssl), as the cipher suite name is without this suffix  -OLD
+    #       This does not matter when we work with the cipher suite name instead
+    #       of the corresponding hex keys, unless the underlaying openssl or libssl
+    #       uses these cipher suite name with suffix -OLD too.
     #
     #!#----------+-------------------------------------+--------------------------+
     #!# constant =>     cipher suite name              # cipher suite value
@@ -955,10 +960,10 @@ our %cipher_names = (
     '0x03000004' => [qw(RC4-MD5                         RSA_RC4_128_MD5)],
     '0x03000005' => [qw(RC4-SHA                         RSA_RC4_128_SHA)],
     '0x03000006' => [qw(EXP-RC2-CBC-MD5                 RSA_RC2_40_MD5)],
-    '0x0300009C' => [qw(AES128-GCM-SHA256               RSA_WITH_AES_128_GCM_SHA256)],
+    '0x0300009C' => [qw(AES128-GCM-SHA256               RSA_WITH_AES_128_GCM_SHA256)],  # see Note(d)
     '0x0300002F' => [qw(AES128-SHA                      RSA_WITH_AES_128_SHA)],
     '0x0300003C' => [qw(AES128-SHA256                   RSA_WITH_AES_128_SHA256)],
-    '0x0300009D' => [qw(AES256-GCM-SHA384               RSA_WITH_AES_256_GCM_SHA384)],
+    '0x0300009D' => [qw(AES256-GCM-SHA384               RSA_WITH_AES_256_GCM_SHA384)],  # see Note(d)
     '0x03000035' => [qw(AES256-SHA                      RSA_WITH_AES_256_SHA)],
     '0x0300003D' => [qw(AES256-SHA256                   RSA_WITH_AES_256_SHA256)],
     '0x03000041' => [qw(CAMELLIA128-SHA                 RSA_WITH_CAMELLIA_128_CBC_SHA)],
@@ -968,11 +973,19 @@ our %cipher_names = (
     '0x0300003B' => [qw(NULL-SHA256                     RSA_WITH_NULL_SHA256)],
     '0x03000096' => [qw(SEED-SHA                        RSA_WITH_SEED_SHA)],
 #
+#    https://tools.ietf.org/html/rfc8446#appendix-B.4 (TLS 1.3)
+    '0x03001301' => [qw(AES128-GCM-SHA256               RSA_WITH_AES_128_GCM_SHA256)],  # TLS 1.3; see Note(d)
+    '0x03001302' => [qw(AES256-GCM-SHA384               RSA_WITH_AES_256_GCM_SHA384)],  # TLS 1.3; see Note(d)
+    '0x03001303' => [qw(CHACHA20-POLY1305-SHA256        CHACHA20_POLY1305_SHA256)],     # TLS 1.3
+    '0x03001304' => [qw(AES128-CCM-SHA256               AES_128_CCM_SHA256)],           # TLS 1.3
+    '0x03001305' => [qw(AES128-CCM8-SHA256              AES_128_CCM_8_SHA256)],         # TLS 1.3
+#
 #    http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-01
+#    https://tools.ietf.org/html/rfc7905
     '0x0300CC12' => [qw(RSA-CHACHA20-POLY1305           RSA_WITH_CHACHA20_POLY1305)],                     # see Note(c)
-    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],    # -"-
-    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],       # -"-
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD  ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],    # -"-
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256)], # -"-
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-SHA256-OLD   DHE_RSA_WITH_CHACHA20_POLY1305_SHA256)],       # -"-
     '0x0300CC20' => [qw(RSA-CHACHA20-SHA                RSA_WITH_CHACHA20_SHA)],
     '0x0300CC21' => [qw(ECDHE-RSA-CHACHA20-SHA          ECDHE_RSA_WITH_CHACHA20_SHA)],
     '0x0300CC22' => [qw(ECDHE-ECDSA-CHACHA20-SHA        ECDHE_ECDSA_WITH_CHACHA20_SHA)],
@@ -1141,6 +1154,14 @@ our %cipher_names = (
     #   according https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-04
     #   some hex keys for ciphers changed
     #   see also: http://tools.ietf.org/html/draft-mavrogiannopoulos-chacha-tls-05
+    #   hex key to be used (RFC, IANA) see:    https://tools.ietf.org/html/rfc7905
+    #   hence the hex keys from drafts are named "OLD-"
+    #
+    # Note(d)
+    #   0x0300009C and 0x0300009D conflicts with 0x03001301 and 0x03001302 (TLS1.3)
+    #   but works here as long as we use the cipher suite names which are converted
+    #   to the proper hex keys by the underlaying (modern >2017) openssl and libssl
+    #   means: we get AES128-GCM-SHA256, AES256-GCM-SHA384 for TLSv1 and TLSv13
 ); # %cipher_names
 
 our %cipher_alias = (
@@ -1169,9 +1190,9 @@ our %cipher_alias = (
     '0x03000093' => [qw(RSA-PSK-3DES-SHA)],            # ??
     '0x03000094' => [qw(RSA-PSK-AES128-CBC-SHA)],      # openssl 1.0.2
     '0x03000095' => [qw(RSA-PSK-AES256-CBC-SHA)],      # openssl 1.0.2
-    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305)], # see Note(c) above
-    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305)], # -"-
-    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305)],   # -"-
+    '0x0300CC13' => [qw(ECDHE-RSA-CHACHA20-POLY1305-OLD)], # see Note(c) above
+    '0x0300CC14' => [qw(ECDHE-ECDSA-CHACHA20-POLY1305-OLD)], # -"-
+    '0x0300CC15' => [qw(DHE-RSA-CHACHA20-POLY1305-OLD)],   # -"-
     '0x0300CC16' => [qw(DHE-PSK-CHACHA20-POLY1305)],   # -"-
     '0x0300CC17' => [qw(PSK-CHACHA20-POLY1305)],       # -"-
     '0x0300CC18' => [qw(ECDHE-PSK-CHACHA20-POLY1305)], # -"-
