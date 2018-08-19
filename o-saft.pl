@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.808 18/08/19 16:35:23",
-    STR_VERSION => "18.08.08",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.809 18/08/20 00:35:47",
+    STR_VERSION => "18.08.18",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -2702,6 +2702,22 @@ sub _cfg_set($$)        {
     _trace("_cfg_set() }");
     return;
 } # _cfg_set
+
+sub _cfg_set_init       {
+    # set value in configuration %cfg; for debugging and test only
+    my ($typ, $arg) = @_;
+    my ($key, $val) = split(/=/, $arg, 2); # left of first = is key
+    _warn("075: TESTING only: setting configuration: 'cfg{$key}=$val';");
+    #_dbx "typeof: " . ref($cfg{$key});
+    SWITCH: for (ref($cfg{$key})) {
+        /^$/     && do {   $cfg{$key}  =  $val ; }; # same as SCALAR
+        /SCALAR/ && do {   $cfg{$key}  =  $val ; };
+        /ARRAY/  && do { @{$cfg{$key}} = ($val); };
+        /HASH/   && do { %{$cfg{$key}} =  $val ; }; # TODO: not yet working
+        /CODE/   && do { _warn("999: cannot set CODE"); };
+    } # SWITCH
+    return;
+} # _cfg_set_init
 
 sub _cfg_set_cipher($$) {
     # set value for security of cipher in configuration %ciphers
@@ -6878,6 +6894,7 @@ while ($#argv >= 0) {
         #   argument to process   what to do                    expect next argument
         #  +---------+----------+------------------------------+--------------------
         if ($typ eq 'CFG-CIPHER') { _cfg_set_cipher($typ, $arg);$typ = 'HOST'; }
+        if ($typ eq 'CFG-INIT') { _cfg_set_init($typ, $arg);    $typ = 'HOST'; }
         if ($typ =~ m/^CFG/)    { _cfg_set($typ, $arg);         $typ = 'HOST'; }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
@@ -7449,6 +7466,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--(?:no|ignore)out(?:put)?$/) { $typ = 'NO_OUT';  }
     if ($arg =~ /^--cfg(.*)$/)          { $typ = 'CFG-' . $1;       } # FIXME: dangerous input
     if ($arg =~ /^--cfgcipher$/)        { $typ = 'CFG-CIPHER';      }
+    if ($arg =~ /^--cfginit$/)          { $typ = 'CFG-INIT';        }
     if ($arg eq  '--call')              { $typ = 'CALL';            }
     if ($arg eq  '--format')            { $typ = 'FORMAT';          }
     if ($arg eq  '--legacy')            { $typ = 'LEGACY';          }
