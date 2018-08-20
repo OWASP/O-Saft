@@ -19,17 +19,17 @@
 #       TODO:
 #          * include Makefile.* should be generic
 #          * unify test.warnings.log and test.tests.log (should use same target)
-#          * rename ALL.tests and ALL.test.log (too similar to ALL.test)
+#          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.19 18/08/17 00:32:51
+#?      @(#) Makefile 1.20 18/08/21 01:21:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.19
+_SID.test       = 1.20
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -47,6 +47,7 @@ endif
 ifeq (,$(_SID.help))
     -include    Makefile.help
     -include ../Makefile.help
+    # it's intended that only one will be found
 endif
 
 #_____________________________________________________________________________
@@ -95,15 +96,14 @@ help.test.all:
 # test tools (part of distribution)
 TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
-TEST.do         = SSLinfo.pl \
-		  o-saft_bench.sh \
-		  critic_345.sh \
-		  test-bunt.pl.txt
-TEST.rc         = .perlcriticrc
-SRC.test        = \
-		  $(TEST.do:%=$(TEST.dir)/%) \
-		  $(TEST.rc:%=$(TEST.dir)/%)
-ALL.test        = $(SRC.test)
+
+# following defined in ../Makefile
+# TEST.do  =
+# SRC.test =
+# ALL.test =
+
+# defined in other t/Makefile*
+# ALL.tests =
 
 # internal used tools (paths hardcoded!)
 EXE.bench       = t/o-saft_bench
@@ -130,6 +130,7 @@ MORE-env        = " \
 \#   TEST.hosts  - list of hostnames to perform tests$(_NL)\
 \#   TEST.dir    - directory in which EXE.pl will be executed; default: $(TEST.dir)$(_NL)\
 \#   TEST.logdir - directory where results of EXE.pl will be stored; default: $(TEST.logdir)$(_NL)\
+\#   TEST.rc     - content of RC-file to be used by $(EXE.pl)$(_NL)\
 \#$(_NL)\
 \# Keep in mind that following files are located in $(TEST.dir):$(_NL)\
 \#   $(EXE.pl)  .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
