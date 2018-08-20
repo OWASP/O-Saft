@@ -12,14 +12,14 @@
 #?      Defines general macros used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 1.7 18/07/13 16:43:20
+#?      @(#) Makefile.inc 1.8 18/08/21 00:55:00
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc        = 1.7
+_SID.inc        = 1.8
 
 ALL.includes   += t/Makefile.inc
 
@@ -44,6 +44,14 @@ endif
 
 ifndef TEST.init
     TEST.init   = --header
+endif
+
+ifndef TEST.dir
+    TEST.dir    = t
+endif
+
+ifndef TEST.logdir
+    TEST.logdir = $(TEST.dir)/log
 endif
 
 ifndef TMP.dir
