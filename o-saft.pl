@@ -66,7 +66,7 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.809 18/08/20 00:35:47",
+    SID         => "@(#) yeast.pl 1.810 18/08/20 08:42:28",
     STR_VERSION => "18.08.18",          # <== our official version number
 };
 
@@ -2472,7 +2472,6 @@ sub _init_openssl_ca    {
     # search in given path
     foreach my $f (@{$cfg{'ca_files'}}) {   # check if CA exists in 'ca_path'
         my $ca  = "$cfg{'ca_path'}/$f";
-        print "### 0 PEM file for CA      " . "$ca" if -e "$ca";
         return "$ca" if -e "$ca";
     }
     _warn("058: given path '$ca_path' does not contain a CA file");
@@ -8198,14 +8197,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $cfg{'rhost'}   = $fail if ($? != 0);
             my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
             my $i = 0;
-            #dbx# printf "@ips = %s\n", join(" - ", @ips);
+            #dbx printf "@ips = %s\n", join(" - ", @ips);
             foreach my $ip (@ips) {
                 local $? = 0; local $! = undef;
                 # TODO: $rhost  = gethostbyaddr($ipv6, AF_INET6));
                ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
                 $rhost  = $fail if ($? != 0);
                 $cfg{'DNS'} .= join(".", unpack("W4", $cfg{'ip'})) . " " . $rhost . "; ";
-                #dbx# printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
+                #dbx printf "[%s] = %s\t%s\n", $i, join(".",unpack("W4",$ip)), $rhost;
             }
             _warn("202: Can't do DNS reverse lookup: for $host: $fail; ignored") if ($cfg{'rhost'} =~ m/gethostbyaddr/);
            _yeast_TIME("test DNS}");
