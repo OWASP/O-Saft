@@ -52,14 +52,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.8 18/07/14 11:27:44
+#?      @(#) Makefile.warnings 1.9 18/08/21 01:27:55
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.8
+_SID.warnings   = 1.9
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -167,6 +167,9 @@ warning-054: TEST.args  = --legacy=unknown_legacy           +quit
 warning-055: TEST.args  = --format=unknown_format           +quit
 warning-056: TEST.args  = --range=unknown_range             +quit
 warning-057: TEST.args  = --ciphercurves=unknown            +quit
+warning-058: TEST.args  = --ca-path=unknown                 +quit
+warning-059: TEST.args  = --ca-path=unknown                 +quit
+warning-060: TEST.args  = --ca-paths=unknown --cfg-init=ca_files=unknown +quit
 warning-063: TEST.args  = --cipher=unknown +cipher          any-host
 warning-064: TEST.args  = +sts --no-http                    any-host
 #warning-065: TEST.args  = free
@@ -175,14 +178,14 @@ warning-067: TEST.args  = --ignore-out=cn +cn --v           any-host
 warning-068: TEST.args  = --ignore-out=cn +cn --v           any-host
 warning-069: TEST.args  = --sniname=wrong +cn               $(TEST.host)
 warning-070: TEST.args  = --cfg_cmd=$(_TMP.rc)              +quit
-warning-070: TEST.args  = TODO: need special test target which uses unredable --cfg_cmd=$(_TMP.rc)
+#warning-070: TEST.args  = TODO: need special test target which uses unredable --cfg_cmd=$(_TMP.rc)
 warning-071: TEST.args  = --cfg_unknown=dummy=dummy         +quit
 warning-072: TEST.args  = --cfg_cmd=$(_TMP.rc) --cgi        +quit
 warning-073: TEST.args  = --cfg_cmd=invalid_default_command=default +quit
 #?# warning-074: TEST.args  = --rc=$(_TMP.rc)                +quit
 #?# warning-074:                                     TEST.rc = "--cfg_cmd=dummy=cn unknown_command"
 warning-074: TEST.args  = --cfg_cmd=dummy=unknown_command   +quit
-#warning-075: TEST.args  = free
+warning-075: TEST.args  = --cfg-init=ca_path=force-message  +quit
 warning-076: TEST.args  = --cfg_score=dummy=invalid_value   +quit
 warning-080: TEST.args  = TODO: testing Net::SSLeay < 1.49
 warning-111: TEST.args  = --mx --nodns                      +quit
@@ -287,7 +290,7 @@ test.warnings: $(ALL.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.8: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.9: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
