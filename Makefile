@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.32 18/08/17 00:34:22
+#?      @(#) Makefile 1.33 18/08/21 01:07:32
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.32
+_SID            = 1.33
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -172,11 +172,7 @@ SRC.rc          = .$(SRC.pl)
 
 SRC.make        = Makefile
 SRC.misc        = README CHANGES
-SRC.inst        = contrib/INSTALL-template.sh
-
-# test file
-TEST.dir        = t
-# all other definitions are done in t/Makefile*
+SRC.inst        = $CONTRIB.dir)/INSTALL-template.sh
 
 # contrib files
 CONTRIB.dir     = contrib
@@ -215,6 +211,20 @@ SRC.contrib     = \
 		  $(CONTRIB.misc:%=$(CONTRIB.dir)/%) \
 		  $(CONTRIB.zap:%=$(CONTRIB.dir)/%) \
 		  $(CONTRIB.rc:%=$(CONTRIB.dir)/%)
+ALL.contrib     = $(SRC.contrib)
+
+# test files
+TEST.dir        = t
+TEST.logdir     = $(TEST.dir)/log
+TEST.do         = SSLinfo.pl \
+                  o-saft_bench.sh \
+                  critic_345.sh \
+                  test-bunt.pl.txt
+CRITIC.rc       = .perlcriticrc
+SRC.test        = \
+                  $(TEST.do:%=$(TEST.dir)/%) \
+                  $(CRITIC.rc:%=$(TEST.dir)/%)
+ALL.test        = $(SRC.test)
 
 # documentation files
 DOC.dir         = docs
@@ -239,7 +249,7 @@ WEB.src         = \
 		  O-Saft_vulnsGUI.png \
 		  O-Saft_CLI__faked.txt
 SRC.web         = $(WEB.src:%=$(WEB.dir)/%)
-
+ALL.doc         = $(SRC.doc) $(SRC.web)
 
 # generated files
 TMP.dir         = /tmp/$(Project)
@@ -271,15 +281,15 @@ ALL.contrib     = $(SRC.contrib)
 ALL.pm          = $(SRC.pm)
 ALL.gen         = $(GEN.src) $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.inst) $(GEN.tags)
 ALL.src         = \
-		  $(ALL.Makefiles) \
 		  $(ALL.exe) \
 		  $(ALL.pm) \
-		  $(ALL.test) \
 		  $(SRC.txt) \
 		  $(SRC.rc) \
 		  $(SRC.misc) \
 		  $(SRC.doc) \
 		  $(ALL.gen) \
+		  $(ALL.Makefiles) \
+		  $(ALL.test) \
 		  $(ALL.contrib)
 ALL.tgz         = $(ALL.src:%=O-Saft/%)
 
@@ -295,7 +305,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.32
+_INST.text      = generated from Makefile 1.33
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -401,8 +411,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.32
-tar:     GREP_EDIT = 1.32
+GREP_EDIT = 1.33
+tar:     GREP_EDIT = 1.33
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
