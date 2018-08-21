@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.810 18/08/20 08:42:28",
-    STR_VERSION => "18.08.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.811 18/08/21 22:57:06",
+    STR_VERSION => "18.08.19",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -2596,6 +2596,7 @@ sub _cfg_set_from_file($$) {
             _cfg_set($typ, $line);
         }
         close($fh);
+        return;
     };
     _warn("070: configuration file '$fil' cannot be opened: $! ; file ignored");
     return;
