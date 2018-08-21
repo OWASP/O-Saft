@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.33 18/08/21 01:07:32
+#?      @(#) Makefile 1.34 18/08/21 23:00:30
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.33
+_SID            = 1.34
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -172,7 +172,7 @@ SRC.rc          = .$(SRC.pl)
 
 SRC.make        = Makefile
 SRC.misc        = README CHANGES
-SRC.inst        = $CONTRIB.dir)/INSTALL-template.sh
+SRC.inst        = $(CONTRIB.dir)/INSTALL-template.sh
 
 # contrib files
 CONTRIB.dir     = contrib
@@ -305,7 +305,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.33
+_INST.text      = generated from Makefile 1.34
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -411,8 +411,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.33
-tar:     GREP_EDIT = 1.33
+GREP_EDIT = 1.34
+tar:     GREP_EDIT = 1.34
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
