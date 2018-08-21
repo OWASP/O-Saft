@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.5 18/08/18 22:30:09
+# SID	@(#) rfc.txt 1.6 18/08/21 22:53:28
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -46,7 +46,8 @@ url	http://tools.ietf.org/
 2437	PKCS#1: RSA Cryptography Specifications Version 2.0
 3447	PKCS#1: RSA Cryptography Specifications Version 2.1
 8017	PKCS#1: RSA Cryptography Specifications Version 2.2
-5081	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication
+5081	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2007
+6091	TLSPGP: Using OpenPGP Keys for Transport Layer Security (TLS) Authentication - 2011
 4309	AES-CCM Mode with IPsec Encapsulating Security Payload (ESP)
 5116	An Interface and Algorithms for Authenticated Encryption (AEAD)
 3749	TLS Compression Method
