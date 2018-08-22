@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 1.6 18/08/18 22:28:57
+# SID	@(#) glossary.txt 1.7 18/08/22 22:11:48
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -26,6 +26,7 @@ ARCFOUR	alias for ARC4
 ARIA	128-bit Symmetric Block Cipher
 ASN	Autonomous System Number
 ASN.1	Abstract Syntax Notation number One
+AtE	Authenticate-then-Encrypt (see also MtE)
 BACPA	Blockwise-adaptive chosen-plaintext attack
 BADA55	"locate weak cryptography somewhere", Bernstein, Lange, et al.
 BADA55-VPR-224	improved verifiably pseudorandom 224-bit curve
@@ -137,6 +138,7 @@ DN	Distinguished Name
 DNSSEC	DNS Security Extension
 DPA	Dynamic Passcode Authentication (see CAP)
 DRAGON	stream cipher algorithm
+DRG	Deterministic Random Generator
 DRBG	Deterministic Random Bit Generator
 DROWN	Decrypting RSA with Obsolete and Weakened eNcryption (Exploit SSL/TLS)
 DSA	Digital Signature Algorithm
@@ -151,11 +153,13 @@ DV-SSL	Domain Validated Certificate
 EAL	Evaluation Assurance Level
 EAP	Extensible Authentication Protocol
 EAP-PSK	Extensible Authentication Protocol using a Pre-Shared Key
-EAX	EAX Mode (block cipher mode)
+EAX	Encrypt-then-Authenticate-then-Translate
+EAX 	EAX Mode (block cipher mode)
 EAXprime	alias for EAX Mode
 EBC	Edge Boundery Controller
 EC	Elliptic Curve
 ECB	Electronic Code Book mode
+ECC 	Error Corection Code
 ECC	Elliptic Curve Cryptography
 ECCSI	Elliptic Curve-Based Certificateless Signatures for Identity-Based Encryption
 ECDH	Elliptic Curve Diffie-Hellman
@@ -193,7 +197,10 @@ EME	ECB-mask-ECB
 EME 	Encoding Method for Encryption
 ESP	Encapsulating Security Payload
 ESSIV	Encrypted salt-sector initialization vector
-EtM	Encrypt-then-MAC
+EtA	Encrypt-then-Authenticate (see also EtM)
+E&A	Encrypt-and-Authenticate (see also E&M)
+E&M	Encrypt-and-MAC (see also E&A)
+EtM	Encrypt-then-MAC (see also EtA)
 ETSI-TS	European Telecommunications Standards Institute - Technical Specification
 EV	Extended Validation
 EV-SSL	Extended Validation Certificate
@@ -306,13 +313,13 @@ MDC-2	same as MDC2
 MD2	Message Digest 2
 MD4	Message Digest 4
 MD5	Message Digest 5
-MEE	MAC-then-Encode-then-Encrypt
+MEE	MAC-then-Encode-then-Encrypt (see also MtE, AtE)
 MEK	Message Encryption Key
 MECAI	Mutually Endorsing CA Infrastrukture
 MGF	Mask Generation Function
 MISTY1	block cipher algorithm
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
-MtE	MAC-then-encrypt
+MtE	MAC-then-encrypt (see also AtE)
 NCP	Normalized Certification Policy (according TS 102 042)
 Neokeon	symmetric block cipher algorithm
 nistp192	alias for P-192
@@ -324,6 +331,7 @@ NLSv2	stream cipher algorithm
 nonce	(arbitrary) number used only once
 NPN	Next Protocol Negotiation
 NSS	Network Security Services
+NTG	none-Deterministic Random Generator
 NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
 NULL	no encryption
 NUMS	nothing up my sleeve numbers
@@ -391,7 +399,9 @@ Poly1305	Authenticator
 Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
 POODLE	Padding Oracle On Downgraded Legacy Encryption
+PQC	Post-Quantum Crypto
 PRF	pseudo-random function
+PRP	pseudo-random permutation
 prime192v1	alias for P-192
 prime224v1	alias for P-224
 prime256v1	alias for P-256
@@ -399,6 +409,7 @@ prime384v1	alias for P-384
 prime521v1	alias for P-521
 PRNG	pseudo-random number generator
 PSK	Pre-shared Key
+PTG	Physical Random Generator
 PVT	Public Validation Token
 PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
 QUIC	Quick UDP Internet Connection
@@ -414,7 +425,7 @@ RC5-64	Rivest Cipher 5, block cipher (64-bit word)
 RC6	Rivest Cipher 6
 RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
 RFC	Request for Comments
-Rijndael	symmetric block cipher algorithm
+Rijndael	symmetric block cipher algorithm (AES)
 RIPEMD	RACE Integrity Primitives Evaluation Message Digest
 RMAC	Randomized MAC (block cipher authentication mode)
 RNG	Random Number Generator
@@ -509,6 +520,7 @@ SPHINCS-256	alias for SPHINCS
 SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
+SPRP	strong pseudo-random permutation
 Square	block cipher
 SRI	Subresource Integrity
 SRP	Secure Remote Password protocol
