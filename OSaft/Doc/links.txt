@@ -1,5 +1,5 @@
 
-# SID	@(#) links.txt 1.3 18/08/08 16:02:10
+# SID	@(#) links.txt 1.4 18/09/07 09:51:20
 
 # name | description
 #------+----------------------------------------------------------------------+
@@ -15,6 +15,7 @@ AIA	http://www.startssl.com/certs/sub.class4.server.ca.crt
 ALPN (draft)	http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02
 ALPN 	https://www.imperialviolet.org/2013/03/20/alpn.html
 CDP	http://www.startssl.com/crt4-crl.crl, http://crl.startssl.com/crt4-crl.crl
+Choosen-boundary attack	http://erlend.oftedal.no/blog/beast/
 CT	http://ctwatch.net/
 False Start	https://www.imperialviolet.org/2012/04/11/falsestart.html
 False Start 	https://technotes.googlecode.com/git/falsestart.html
@@ -37,11 +38,13 @@ SNI apache	https://wiki.apache.org/httpd/NameBasedSSLVHostsWithSNI
 SIMON and SPECK	https://eprint.iacr.org/2013/404
 SM4	https://tools.ietf.org/id/draft-crypto-sm4-00.html
 Snuffle	https://cr.yp.to/snuffle/812.pdf
+BADA55	https://bada55.cr.yp.to/
 SPDY/3	http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3
 SPDY Protocol	http://www.chromium.org/spdy/spdy-protocol
 SRI	Subresource Integrity: https://www.w3.org/TR/SRI/ 4/2016
 SRI (Mozilla)	https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
 TACK	http://tack.io/draft.html, 2013 Moxie Marlinspike, Trevor Perrin
+TLS Lite	http://trevp.net/tlslite/
 Elliptic Curve	https://en.wikipedia.org/wiki/Comparison_of_TLS_implementations#Supported_elliptic_curves
 Elliptic Curve for IPsec	https://www.researchgate.net/profile/Johannes_Merkle/publication/260050106_Standardisierung_der_Brainpool-Kurven_fur_TLS_und_IPSec/links/00b7d52f36a0cc2fdd000000.pdf
 Elliptic Curve 	http://datatracker.ietf.org/doc/draft-mcgrew-tls-aes-ccm-ecc/
@@ -54,7 +57,7 @@ Elliptic Curve      	http://www.teletrust.de/fileadmin/files/oid/ecgdsa_final.pd
 Elliptic Curve       	https://datatracker.ietf.org/doc/draft-harkins-ikev3/
 XMSS	https://eprint.iacr.org/2011/484.pdf
 
-BEAST	?
+BEAST	https://vnhacker.blogspot.com/2011/09/beast.html
 BREACH	http://www.breachattack.com/
 CCS	http://ccsinjection.lepidum.co.jp/
 CRIME	http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
@@ -65,7 +68,7 @@ Lucky 13	?
 LogJam	https://weakdh.org/
 POODLE	https://www.openssl.org/~bodo/ssl-poodle.pdf
 ROBOT	https://robotattack.org/
-SLOTH	?
+SLOTH	https://www.mitls.org/pages/attacks/SLOTH
 SKIP	https://mitls.org/pages/attacks/SMACK
 SMACK	https://mitls.org/pages/attacks/SMACK
 Sweet32	https://sweet32.info/
