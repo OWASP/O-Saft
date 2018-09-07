@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.243 18/07/12 20:20:32";
+my  $man_SID= "@(#) o-saft-man.pm 1.244 18/09/07 21:14:42";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -84,12 +84,13 @@ sub _man_http_head  {
 sub _man_html_head  {
     #? print footer of HTML page
     # SEE HTML:JavaScript
-    _man_dbx("_man_html_head() ...");
+    my $version = shift;
+    _man_dbx("_man_html_head($version) ...");
     print << 'EoHTML';
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title> . :  O - S a f t  &#151;  OWASP SSL advanced forensic tool : . </title>
+<title> . :  O - S a f t  &#151;  OWASP - SSL advanced forensic tool : . </title>
 <script>
 function $(id){return document.getElementById(id);}                            
 function d(id){return $(id).style;}
@@ -171,7 +172,7 @@ function osaft_options(){
  p              {margin-left:     2em;margin-top:0;}
  td             {padding-left:    1em;}
  h2, h3, h4, h5 {margin-bottom: 0.2em;}
- h2             {margin-top:   -1.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
+ body > h2      {margin-top:   -0.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
  li             {margin-left:     2em;}
  div            {                     padding:0.5em; border:1px solid green;}
  div[class=c]   {margin-left:     4em;padding:0.1em; border:0px solid green;}
@@ -187,8 +188,10 @@ function osaft_options(){
 </style>
 </head>
 <body>
- <h2>O - S a f t &#160; &#151; &#160; OWASP SSL advanced forensic tool</h2>
- <!-- hides unwanted text before <body> tag -->
+EoHTML
+    print << "EoHTML";
+ <h2 title=$version >O - S a f t &#160; &#151; &#160; OWASP - SSL advanced forensic tool</h2>
+ <!-- also hides unwanted text before <body> tag -->
 EoHTML
     return;
 } # _man_html_head
@@ -654,7 +657,7 @@ sub man_html        {
     # for concept and functionality of the generated page  SEE HTML:JavaScript
     _man_dbx("man_html() ...");
     _man_http_head();
-    _man_html_head();
+    _man_html_head(STR_VERSION);
     _man_html('html', 'NAME', 'TODO');
     _man_html_foot();
     return;
@@ -766,17 +769,17 @@ sub man_cgi         {
     _man_dbx("man_cgi() ...");
     my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
     _man_http_head();
-    _man_html_head();
+    _man_html_head(STR_VERSION);
 print << "EoHTML";
  <div class=h ><b>Help:</b>
-  <a href="$cgi?--cgi&--help"         target=_help >help</a>
-  <a href="$cgi?--cgi&--help=command" target=_help >commands</a>
-  <a href="$cgi?--cgi&--help=checks"  target=_help >checks</a>
-  <a href="$cgi?--cgi&--help=example" target=_help >examples</a>
-  <a href="$cgi?--cgi&--help=opt"     target=_help >options</a>
-  <a href="$cgi?--cgi&--help=FAQ"     target=_help >FAQ</a>
-  <a href="$cgi?--cgi&--help=abbr"    target=_help >Glossar</a>
-  <a href="$cgi?--cgi&--help=todo"    target=_help >ToDo</a><br>
+  <a href="$cgi?--cgi&--help"         target=_help title="open window with complete help"     >help</a>
+  <a href="$cgi?--cgi&--help=command" target=_help title="open window with help for commands" >commands</a>
+  <a href="$cgi?--cgi&--help=checks"  target=_help title="open window with help for checks"   >checks</a>
+  <a href="$cgi?--cgi&--help=example" target=_help title="open window with examples"          >examples</a>
+  <a href="$cgi?--cgi&--help=opt"     target=_help title="open window with help for options"  >options</a>
+  <a href="$cgi?--cgi&--help=FAQ"     target=_help title="open window with FAQs"              >FAQ</a>
+  <a href="$cgi?--cgi&--help=abbr"    target=_help title="open window with the glossar"       >Glossar</a>
+  <a href="$cgi?--cgi&--help=todo"    target=_help title="open window with help for ToDO"     >ToDo</a><br>
  </div>
  <form action="$cgi" method="GET" target="cmd" >
   <noscript><div>JavaScript disabled. The buttons "Options", "Full GUI" and "Simple GUI" will not work.</div><br></noscript>
@@ -790,7 +793,7 @@ print << "EoHTML";
     </table><br>
     <button onclick="toggle_display(d('a'));return false;" title="show options">Options</button>
     <div id=a >
-        <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all commands and options">Full GUI</button>
+        <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
     <br>
       <div class=n>
 EoHTML
@@ -800,7 +803,7 @@ EoHTML
         # quick buttons for some commands. These quick  buttons shoud get the
         # description from the later generated help text in this page,  hence
         # the buttons are not generated here but using  JavaScript at runtime
-        # so that the corresponding help text can be derivied from the (HTML)
+        # so that the corresponding help text  can be derived from the (HTML)
         # page itself. SEE HTML:JavaScript
     #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
@@ -818,7 +821,7 @@ EoHTML
       </div><!-- class=n -->
     </div><!-- id=a -->
     <div id=b >
-        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI">Simple GUI</button><br>
+        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
         <!-- not yet working properly                                                  
         <input type=text     name=--cmds size=55 title="type any command or option"/>/>
         -->
