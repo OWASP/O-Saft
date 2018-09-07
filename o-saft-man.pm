@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.244 18/09/07 21:14:42";
+my  $man_SID= "@(#) o-saft-man.pm 1.245 18/09/07 21:46:09";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -167,6 +167,8 @@ function osaft_options(){
     border:1px solid black; border-radius:2px; box-shadow:1px 1px 3px #666;
     background:linear-gradient(#fff, #ddd);}
  a[class="b r"]:hover, div[class=h] > a:hover {background:linear-gradient(#ddd, #fff);}
+ p > a[class="b"] {margin-left: -2em; }
+ p > a[class="b"]:hover {background:linear-gradient(#ddd, #fff);}
  .c             {font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
  .q             {border:0px solid white;}
  p              {margin-left:     2em;margin-top:0;}
@@ -250,8 +252,14 @@ sub _man_html_cbox  {
 }
 sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
-sub _man_html_go    { my $key = shift; return sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", "") if ($key eq 'cgi'); return ""; }
-    # SEE HTML:start
+sub _man_html_go    {
+     # SEE HTML:start
+     my $key = shift;
+     return "" if ($key ne 'cgi');
+     my $top = sprintf("%8s<a class=b href='#aCOMMANDS' title='return to top of page'>^</a>\n", "");
+     my $run = sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", "");
+     return "$top$run";
+}
 
 sub _man_html       {
     my $key = shift; # cgi or html
