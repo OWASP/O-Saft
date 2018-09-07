@@ -92,14 +92,14 @@
 #        please see Makefile.help .
 #
 #? VERSION
-#?      @(#) Makefile 1.34 18/08/21 23:00:30
+#?      @(#) Makefile 1.35 18/09/07 20:20:48
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 1.34
+_SID            = 1.35
     # define our own SID as variable, if needed ...
 
 ALL.includes   := Makefile
@@ -305,7 +305,7 @@ EXE.pl          = $(SRC.pl)
 # is sorted using make's built-in sort which removes duplicates
 _INST.contrib   = $(sort $(ALL.contrib))
 _INST.osaft     = $(sort $(ALL.osaft))
-_INST.text      = generated from Makefile 1.34
+_INST.text      = generated from Makefile 1.35
 EXE.install     = sed   -e 's@INSTALLDIR_INSERTED_BY_MAKE@$(INSTALL.dir)@' \
 			-e 's@CONTRIB_INSERTED_BY_MAKE@$(_INST.contrib)@' \
 			-e 's@OSAFT_INSERTED_BY_MAKE@$(_INST.osaft)@' \
@@ -411,8 +411,8 @@ text:   $(GEN.text)
 wiki:   $(GEN.wiki)
 standalone: $(GEN.src)
 tar:    $(GEN.tgz)
-GREP_EDIT = 1.34
-tar:     GREP_EDIT = 1.34
+GREP_EDIT = 1.35
+tar:     GREP_EDIT = 1.35
 tmptar:  GREP_EDIT = something which hopefully does not exist in the file
 tmptar: $(GEN.tmptgz)
 tmptgz: $(GEN.tmptgz)
@@ -475,23 +475,23 @@ $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
 	@$(TARGET_VERBOSE)
 	$(EXE.single) $(OPT.single)
 
-$(GEN.pod):  $(SRC.pl) $(OSD.pm) $(SRC.txt)
+$(GEN.pod):  $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
 
-$(GEN.text): $(SRC.pl) $(OSD.pm) $(SRC.txt)
+$(GEN.text): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	$(SRC.pl) --no-rc --no-warning --help          > $@
 
-$(GEN.wiki): $(SRC.pl) $(OSD.pm) $(SRC.txt)
+$(GEN.wiki): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	$(SRC.pl) --no-rc --no-warning --help=gen-wiki > $@
 
-$(GEN.html): $(SRC.pl) $(OSD.pm) $(SRC.txt)
+$(GEN.html): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	$(SRC.pl) --no-rc --no-warning --help=gen-html > $@
 
-$(GEN.cgi.html): $(SRC.pl) $(OSD.pm) $(SRC.txt)
+$(GEN.cgi.html): $(SRC.pl) $(OSD.pm) $(USR.pm) $(SRC.txt)
 	@$(TARGET_VERBOSE)
 	$(SRC.pl) --no-rc --no-warning --help=gen-cgi  > $@
 
