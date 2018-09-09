@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.246 18/09/08 00:09:55";
+my  $man_SID= "@(#) o-saft-man.pm 1.247 18/09/09 10:04:02";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -160,21 +160,27 @@ function osaft_options(){
         }
         return;
 }
-function osaft_handler(cgi){
-/* set form's action attribute if schema is file:
+function osaft_handler(from,to){
+/* set form's action and a's href attribute if schema is file:
  * replace all href attributes also to new schema
  */
-        var rex = new RegExp(cgi.replace(/\//g, '.'),"");  // lazy convertion to Regex
-        var url = document.forms["o-saft"].action;
-        if (/^file:/.test(location.protocol)===false) { return; } // not a file: schema
-        document.forms["o-saft"].action = "osaft://o-saft.pl";;
-        var arr = document.getElementsByTagName('a');
-        for (var a=0; a<arr.length; a++) {
-            if (rex.test(arr[a].href)===true) {
-                arr[a].href = arr[a].href.replace(rex, 'o-saft.pl').replace(/^file:/, 'osaft:');
+        var rex = new RegExp(from.replace(/\//g, '.'),"");  // lazy convertion to Regex
+        var url = document.forms["o-saft"].action;          // in case we need it
+        if (/^file:/.test(location.protocol)===false) { return false; } // not a file: schema
+        var arr = document.getElementsByTagName('form');
+        for (var tag=0; tag<arr.length; tag++) {
+            if (rex.test(arr[tag].action)===true) {
+                arr[tag].action = arr[tag].action.replace(rex, to).replace(/^file:/, 'osaft:');
             }
         }
-        return;
+        //dbx// alert(document.forms["o-saft"].action);
+        var arr = document.getElementsByTagName('a');
+        for (var tag=0; tag<arr.length; tag++) {
+            if (rex.test(arr[tag].href)===true) {
+                arr[tag].href = arr[tag].href.replace(rex, to).replace(/^file:/, 'osaft:');
+            }
+        }
+        return false;
 }
 function toggle_handler(){
         if (/^file:/.test(location.protocol)===true) { return; }
@@ -217,7 +223,7 @@ function toggle_handler(){
 EoHTML
     print << "EoHTML";
  <h2 title=$version >O - S a f t &#160; &#151; &#160; OWASP - SSL advanced forensic tool
-     <button id=schema style="float: right;" onclick="osaft_handler(osaft_action);;return false;" title="change schema of all\naction and href attributes">Change to osaft: schema</button>
+     <button id=schema style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all\naction and href attributes">Change to osaft: schema</button>
  </h2>
  <!-- also hides unwanted text before <body> tag -->
 EoHTML
@@ -842,6 +848,7 @@ EoHTML
         # so that the corresponding help text  can be derived from the (HTML)
         # page itself. SEE HTML:JavaScript
     #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
+    # show most common used options; layout by lines using BR
     foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
                      no-dns dns no-cert BR
                      no-sni sni   BR
@@ -872,7 +879,8 @@ EoHTML
  </form>
  <hr>
  <script>
-  var osaft_action="/cgi-bin/o-saft.cgi"; // default action used in form an a tags
+  var osaft_action_http="/cgi-bin/o-saft.cgi"; // default action used in FORM and A tags; see osaft_handler()
+  var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
   osaft_commands("a");              // generate quick buttons
   osaft_options();                  // generate title for quick options
   d("a").display="none";            // hide
@@ -884,6 +892,7 @@ EoHTML
 </script>
 EoHTML
     _man_html_foot();
+    # TODO: osaft_action_http, osaft_action_file should be set dynamically
     return;
 } # man_cgi
 
