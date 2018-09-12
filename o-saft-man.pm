@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.247 18/09/09 10:04:02";
+my  $man_SID= "@(#) o-saft-man.pm 1.248 18/09/12 20:48:24";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -244,8 +244,16 @@ EoHTML
     return;
 } # _man_html_foot
 
+sub _man_html_cbox  {
+    #? checkbox with clickable label and hover highlight
+    my $key = shift;
+       $key = '--' . $key;
+    my $id  = '"q'  . $key . '"';
+    return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
+        "", $id, $id, $id, $key);
+} # _man_html_cbox
 sub _man_html_chck  {
-    #? same as _man_html_cbox() but without lable and only if passed parameter start with - or +
+    #? same as _man_html_cbox() but without label and only if passed parameter start with - or +
     my $n = shift || "";
     my $v = '';
     return '' if ($n !~ m/^(?:-|\+)+/);
@@ -274,15 +282,6 @@ sub _man_html_ankor {
     }
     return $a;
 } # _man_html_ankor
-#sub _man_html_cbox($) { my $key = shift; return sprintf("%8s--%-10s<input type=checkbox name=%-12s value='' >&#160;\n", "", $key, '"--' . $key . '"'); }
-sub _man_html_cbox  {
-    #? checkbox with clickable label and hover highlight
-    my $key = shift;
-       $key = '--' . $key;
-    my $id  = '"q'  . $key . '"';
-    return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
-        "", $id, $id, $id, $key);
-}
 sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    {
@@ -303,13 +302,25 @@ sub _man_html       {
     my $p = "";      # for closing p Tag
     _man_dbx("_man_html($key, $anf, $end) ...");
     while ($_ = shift @help) {
+        # NOTE: sequence of following m// and s/// is important
         last if/^TODO/;
         $h=1 if/^=head1 $anf/;
         $h=0 if/^=head1 $end/;
         next if (0 == $h);                          # ignore "out of scope"
         m/^=head1 (.*)/   && do { printf("$p\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);$p="";next;};
-        m/^=head2 (.*)/   && do { print _man_html_go($key); printf("%s\n<h3>%s %s </h3> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;};
-        m/^=head3 (.*)/   && do { $a=$1; printf("%s\n<h4>%s %s </h4> <p onclick='toggle_display(this);return false;'>\n",_man_html_ankor($1),_man_html_chck($1),$1);next;}; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+        m/^=head2 (.*)/   && do {
+                    my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                    print _man_html_go($key);
+                    printf("%s\n<h3>%s %s </h3> <p onclick='toggle_display(this);return false;'>\n",
+                           _man_html_ankor($x), _man_html_chck($x), $x);
+                    next;
+                };
+        m/^=head3 (.*)/   && do {
+                    $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                    printf("%s\n<h4>%s %s </h4> <p onclick='toggle_display(this);return false;'>\n",
+                           _man_html_ankor($a), _man_html_chck($a), $a);
+                    next;
+                };
         m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
