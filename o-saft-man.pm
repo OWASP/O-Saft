@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.248 18/09/12 20:48:24";
+my  $man_SID= "@(#) o-saft-man.pm 1.249 18/09/13 01:16:40";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -190,6 +190,7 @@ function toggle_handler(){
 </script>
 <style>
  .h             {margin-left:     1em;border:0px solid #fff;}
+ .k             {margin-left:     2em;}
  .r             {float:right;}
  .b, div[class=h] > a, input[type=submit]{
     margin:0.1em;padding:0px 0.5em 0px 0.5em;
@@ -199,13 +200,14 @@ function toggle_handler(){
  a[class="b r"]:hover, div[class=h] > a:hover {background:linear-gradient(#ddd, #fff);}
  p > a[class="b"] {margin-left: -2em; }
  p > a[class="b"]:hover {background:linear-gradient(#ddd, #fff);}
- .c             {font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;}
+ .c             {font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;} /* white-space:pro */
  .q             {border:0px solid white;}
  p              {margin-left:     2em;margin-top:0;}
  td             {padding-left:    1em;}
  h2, h3, h4, h5 {margin-bottom: 0.2em;}
  body > h2      {margin-top:   -0.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
- li             {margin-left:     2em;}
+ body > h4      {margin-left:     1em;}
+ li             {margin-left:     3em;}
  div            {                     padding:0.5em; border:1px solid green;}
  div[class=c]   {margin-left:     4em;padding:0.1em; border:0px solid green;}
  div[class=n]   {                                    border:0px solid white;}
@@ -254,15 +256,21 @@ sub _man_html_cbox  {
 } # _man_html_cbox
 sub _man_html_chck  {
     #? same as _man_html_cbox() but without label and only if passed parameter start with - or +
+    my $key = shift; # cgi or html
     my $n = shift || "";
     my $v = '';
     return '' if ($n !~ m/^(?:-|\+)+/);
+    return '' if ($key ne 'cgi');
     if ($n =~ m/^(?:\+)/) { # is command
         $v =  scalar((split(/\s+/,$n))[0]);
         $n =  '--cmd';
     } else { # is option
         $v =  '';
         $n =  scalar((split(/\s+/,$n))[0]);
+        my ($k, $l) = split(/=/,$n);
+        #if (defined $l && $l =~ m/^[A-Z0-9:_-]+/) {
+        #    return sprintf("<label class=k for='%s'>%s=<input type=text name='%s' value='%s' ></label>", $k, $k, $k, $l);
+        #}
     }
     return sprintf("<input type=checkbox name='%s' value='%s' >", $n, $v);
 } # _man_html_chck
@@ -303,34 +311,39 @@ sub _man_html       {
     _man_dbx("_man_html($key, $anf, $end) ...");
     while ($_ = shift @help) {
         # NOTE: sequence of following m// and s/// is important
+        # FIXME: need  s!<<!&lt;&lt;!g; before any print
         last if/^TODO/;
         $h=1 if/^=head1 $anf/;
         $h=0 if/^=head1 $end/;
         next if (0 == $h);                          # ignore "out of scope"
+        # TODO: does not work:      <p onclick='toggle_display(this);return false;'>\n",
         m/^=head1 (.*)/   && do { printf("$p\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);$p="";next;};
         m/^=head2 (.*)/   && do {
                     my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     print _man_html_go($key);
-                    printf("%s\n<h3>%s %s </h3> <p onclick='toggle_display(this);return false;'>\n",
-                           _man_html_ankor($x), _man_html_chck($x), $x);
+                    printf("%s\n<h3>%s %s </h3> <p>\n",
+                           _man_html_ankor($x), _man_html_chck($key,$x), (($x =~ m/=notyet[A-Z0-9:_]/) ? "" : $x));
                     next;
                 };
         m/^=head3 (.*)/   && do {
                     $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-                    printf("%s\n<h4>%s %s </h4> <p onclick='toggle_display(this);return false;'>\n",
-                           _man_html_ankor($a), _man_html_chck($a), $a);
+                    printf("%s\n<h4>%s %s </h4> <p>\n",
+                           _man_html_ankor($a), _man_html_chck($key,$a), (($a =~ m/=notyet[A-Z0-9:_]/) ? "" : $a));
                     next;
                 };
-        m/^\s*S&([^&]*)&/ && do { print "<div class=c >$1</div>\n"; next; }; # code or example line
+        # encode special markup
+        m/^\s*S&([^&]*)&/ && do { my $v=$1; $v=~s!<<!&lt;&lt;!g; print "<div class=c >$v</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
         s!"([^"]*)"!<cite>$1</cite>!g;              # markup examples
         s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
         s!I&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup commands and options
         s!X&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup references inside help
         s!^\s+($parent .*)!<div class=c >$1</div>!; # example line
+        s!^\s+(o-saft.tcl($| .*))!<div class=c >$1</div>!; # example line
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
+        s!<<!&lt;&lt;!g;                            # encode special markup
         # add paragraph for formatting, SEE HTML:p and HTML:JavaScript
         m/^\s*$/ && do { ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     $a = "id='h$a'" if ('' ne $a);
