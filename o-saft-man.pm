@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.249 18/09/13 01:16:40";
+my  $man_SID= "@(#) o-saft-man.pm 1.250 18/09/14 00:00:22";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -160,6 +160,44 @@ function osaft_options(){
         }
         return;
 }
+function osaft_set_default(id){
+/* set value of input fileds with type=text to its default (speciefied in its
+ * attribute osaft-default)
+ */
+        var obj = document.getElementById(id);
+        try { obj.value = obj.getAttribute('osaft-default'); } catch(e) {}
+        return;
+}
+function osaft_enable(){
+/* check all input fileds with type=text if they are disabled, which is set by
+ * see osaft_submit(), then remove the disabled attribute again
+ */
+        var arr = document.getElementsByTagName('input');
+        for (var tag=0; tag<arr.length; tag++) {
+            if (/^text$/.test(arr[tag].type)===true) {
+                arr[tag].removeAttribute('disabled');
+            }
+        }
+        return;
+}
+function osaft_submit(){
+/* check all input fileds with type=text if the value differs from its default
+ * removes the attribute name of the input tag, this ensures, that no name=value
+ * for this input field will be submitted
+ * return true (so that the form will be submitted)
+ */
+        var arr = document.getElementsByTagName('input');
+        for (var tag=0; tag<arr.length; tag++) {
+            if (/^text$/.test(arr[tag].type)===true) {
+                if (arr[tag].value === arr[tag].getAttribute('osaft-default')) {
+                    arr[tag].setAttribute('disabled', true);
+                }
+            }
+        }
+        // ensure that input fields are enabled again
+        setTimeout("osaft_enable()",2000);
+        return true;
+}
 function osaft_handler(from,to){
 /* set form's action and a's href attribute if schema is file:
  * replace all href attributes also to new schema
@@ -190,7 +228,7 @@ function toggle_handler(){
 </script>
 <style>
  .h             {margin-left:     1em;border:0px solid #fff;}
- .k             {margin-left:     2em;}
+ .l             {margin-left:     2em;}
  .r             {float:right;}
  .b, div[class=h] > a, input[type=submit]{
     margin:0.1em;padding:0px 0.5em 0px 0.5em;
@@ -268,9 +306,10 @@ sub _man_html_chck  {
         $v =  '';
         $n =  scalar((split(/\s+/,$n))[0]);
         my ($k, $l) = split(/=/,$n);
-        #if (defined $l && $l =~ m/^[A-Z0-9:_-]+/) {
-        #    return sprintf("<label class=k for='%s'>%s=<input type=text name='%s' value='%s' ></label>", $k, $k, $k, $l);
-        #}
+        if (defined $l && $l =~ m/^[A-Z0-9:_-]+/) {
+            return sprintf("<label class=l onclick=osaft_set_default('%s'); title='click resets to default value'>%s=</label>", $n, $k)
+                 , sprintf("<input type=text id='%s' name='%s' value='%s' osaft-default='%s'>", $n, $k, $l, $l);
+        }
     }
     return sprintf("<input type=checkbox name='%s' value='%s' >", $n, $v);
 } # _man_html_chck
@@ -305,6 +344,7 @@ sub _man_html       {
     my $key = shift; # cgi or html
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
+    my $c = 0;
     my $h = 0;
     my $a = "";      # NOTE: Perl::Critic is scary, SEE Perlcritic:LocalVars
     my $p = "";      # for closing p Tag
@@ -322,13 +362,16 @@ sub _man_html       {
                     my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     print _man_html_go($key);
                     printf("%s\n<h3>%s %s </h3> <p>\n",
-                           _man_html_ankor($x), _man_html_chck($key,$x), (($x =~ m/=notyet[A-Z0-9:_]/) ? "" : $x));
+                           _man_html_ankor($x), _man_html_chck($key,$x), $x );
                     next;
                 };
         m/^=head3 (.*)/   && do {
+                    # commands and options expected with =head3 only
                     $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-                    printf("%s\n<h4>%s %s </h4> <p>\n",
-                           _man_html_ankor($a), _man_html_chck($key,$a), (($a =~ m/=notyet[A-Z0-9:_]/) ? "" : $a));
+                    my $checkbox = "";
+                    printf("%s\n", _man_html_ankor($a));
+                    printf("<h4>%s %s %s </h4> <p>\n",
+                           $checkbox, _man_html_chck($key,$a), (($a =~ m/=[A-Z0-9:_]/) ? "" : $a));
                     next;
                 };
         # encode special markup
@@ -719,7 +762,7 @@ EoHelp
 sub man_html        {
     #? print complete HTML page for o-saft.pl --help=gen-html
     #? recommended usage:   $0 --no-warning --no-header --help=gen-html
-    # for concept and functionality of the generated page  SEE HTML:JavaScript
+    # for concept and functionality of the generated page  SEE HTML:HTML
     _man_dbx("man_html() ...");
     _man_http_head();
     _man_html_head(STR_VERSION);
@@ -824,6 +867,7 @@ sub man_cgi         {
     #? print complete HTML page for o-saft.pl used as CGI
     #? recommended usage:      $0 --no-warning --no-header --help=gen-cgi
     #?    o-saft.cgi?--cgi=&--usr&--no-warning&--no-header=&--cmd=html
+    # for concept and functionality of the generated page  SEE HTML:CGI
     #
     # <a href="$cgi?--cgi&--help=html"    target=_help >help (HTML format)</a>
     # previous link not generated because it prints multiple HTTP headers
@@ -847,7 +891,7 @@ print << "EoHTML";
   <a href="$cgi?--cgi&--help=abbr"    target=_help title="open window with the glossar"       >Glossar</a>
   <a href="$cgi?--cgi&--help=todo"    target=_help title="open window with help for ToDO"     >ToDo</a><br>
  </div>
- <form id="o-saft" action="$cgi" method="GET" target="cmd" >
+ <form id="o-saft" action="$cgi" method="GET" onsubmit="return osaft_submit()" target="cmd" >
   <noscript><div>JavaScript disabled. The buttons "Options", "Full GUI" and "Simple GUI" will not work.</div><br></noscript>
   <input  type=hidden name="--cgi" value="" >
   <fieldset>
@@ -1355,6 +1399,73 @@ The special POD keywords  =pod  and  =cut  cannot be used as  literal text
 in particular in here documents, because (all?) most tools  extracting POD
 from this file (for example perldoc) would be confused.
 Hence these keywords need to be printed in a seperate statement.
+
+
+=head2 HTML:HTML
+
+The complete documentation can be returned as HTML page. The generation is
+straight forward, see  function man_html().  Some details of the generated
+page are described in: SEE HTML:p  and  SEE HTML:JavaScript.
+
+
+=head2 HTML:CGI
+
+The HTML page with the form for the CGI should look as follows  (ASCII art
+not shown properly with perldoc):
+
++------------------------------------------------------------------------+
+| O - S a f t   — ...                                                    T
++------------------------------------------------------------------------+
+| Help: [help] [commands] [checks] [options] [FAQ] [Glossar] [ToDo]      H
+|+---------------------------------------------------------------------+ H
+|| Hostname: [_________________________________] [start]               c |
+||                                                                     c |
+||   [+check]  Check SSL connection ...                                c |
+||   [+cipher] Overview of SSL connection ...                          c |
+||   ...                                                               c |
+||                                                                     c |
+|| [Options]                                                           O |
+||+------------------------------------------------------------------+ | |
+||| ( ) --header     ( ) --enabled     ( ) --options      [Full GUI] q | |
+||| ...                                                              q | |
+||| - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| | |
+||| COMMANDS                                            [Simple GUI] o | |
+||| ( ) +cmd                                                         o | |
+||| ...                                                              o | |
+||| OPTIONS                                                          o | |
+||| ( ) --opt                                                        o | |
+||| (   --opt=[________]                                             o | |
+||| ...                                                              o | |
+||+------------------------------------------------------------------+ | |
+|+---------------------------------------------------------------------+ |
++------------------------------------------------------------------------+
+
+All commands and options avaialable in o-saft.pl are provided in the form.
+Additional to the hostname or URL,  all selected commands and options will
+be passed as QUERY_STRING to o-saft.cgi, when any of the [+command] or any
+[start]  button is clicked.
+
+The Interfase (web page) consist of following sections:
+
+  T    title
+  H    line with buttons openening new TAB with corresponding help text
+  c    input field for the hostname (target) and buttons for the most used
+       commands
+  O    Options button opens the section with the most often used options
+  q    list with the most often used options, and the button [Full GUI] to
+       show all available commands and options
+  o    all available commands and options,  and the button [Simple GUI] to
+       to switch back to the simple list of options
+
+
+=head2 HTML:man_cgi
+
+TODO
+
+
+=head2 HTML:man_html
+
+TODO
 
 
 =head2 HTML:p
