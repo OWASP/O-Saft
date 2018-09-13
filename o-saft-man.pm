@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.251 18/09/14 00:32:23";
+my  $man_SID= "@(#) o-saft-man.pm 1.252 18/09/14 01:33:37";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -124,15 +124,15 @@ function osaft_commands(){
  * existing  tag of text paragraph containing help text has  id=h+cmd
  * generated tag of  quick button  containing help text has  id=q+cmd
  */
-	osaft_buttons();
+        osaft_buttons();
         var arr = document.getElementsByTagName('p');
         for (var p=0; p<arr.length; p++) {
             if (/^h./.test(arr[p].id)===true) {
                 var id = arr[p].id.replace(/^h/, 'q');
-		if ($(id) != undefined) {
-			// button exists, add help text
-                	$(id).innerHTML = $(arr[p].id).innerHTML;
-            	}
+                if ($(id) != undefined) {
+                    // button exists, add help text
+                    $(id).innerHTML = $(arr[p].id).innerHTML;
+                }
             }
         }
         return;
@@ -147,14 +147,14 @@ function osaft_options(){
         for (var p=0; p<arr.length; p++) {
             if (/^h./.test(arr[p].id)===true) {
                 var id = arr[p].id.replace(/^h/, 'q');
-		// TODO: *ssl and *tls must use *SSL
+                // TODO: *ssl and *tls must use *SSL
                 if ($(id) != undefined) {
-                        obj = $(id).parentNode;
-                        if (/^LABEL$/.test(obj.nodeName)===true) {
-                                // checkbox exists, add help text to surrounding
-                                // LABEL
-                                obj.title = $(arr[p].id).innerHTML;
-                        }
+                    obj = $(id).parentNode;
+                    if (/^LABEL$/.test(obj.nodeName)===true) {
+                        // checkbox exists, add help text to surrounding
+                        // LABEL
+                        obj.title = $(arr[p].id).innerHTML;
+                    }
                 }
             }
         }
@@ -270,6 +270,101 @@ EoHTML
     # TODO: need <input name=cgi value="/path/to/o-saft.cgi" />
     return;
 } # _man_html_head
+
+sub _man_form_head  {
+    #? print start of CGI form
+    my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
+        # TODO: use variable for /cgi-bin/o-saft.cgi
+    print << "EoHTML";
+ <div class=h ><b>Help:</b>
+  <a href="$cgi?--cgi&--help"         target=_help title="open window with complete help"     >help</a>
+  <a href="$cgi?--cgi&--help=command" target=_help title="open window with help for commands" >commands</a>
+  <a href="$cgi?--cgi&--help=checks"  target=_help title="open window with help for checks"   >checks</a>
+  <a href="$cgi?--cgi&--help=example" target=_help title="open window with examples"          >examples</a>
+  <a href="$cgi?--cgi&--help=opt"     target=_help title="open window with help for options"  >options</a>
+  <a href="$cgi?--cgi&--help=FAQ"     target=_help title="open window with FAQs"              >FAQ</a>
+  <a href="$cgi?--cgi&--help=abbr"    target=_help title="open window with the glossar"       >Glossar</a>
+  <a href="$cgi?--cgi&--help=todo"    target=_help title="open window with help for ToDO"     >ToDo</a><br>
+ </div>
+ <form id="o-saft" action="$cgi" method="GET" onsubmit="return osaft_submit()" target="cmd" >
+  <noscript><div>
+JavaScript disabled. The buttons for most common commans are missing.<br>
+The buttons "Commands & Options", "Full GUI" and "Simple GUI" will not work.<br>
+All options with values are passd to o-saft.cgi.
+  </div><br></noscript>
+  <input  type=hidden name="--cgi" value="" >
+  <fieldset>
+    <p>
+    Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
+    <input  type=submit name="--cmd" value="+check" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
+    </p>
+    <table id="osaft_buttons">
+    </table><br>
+    <button onclick="toggle_display(d('a'));return false;" title="show options">Commands & Options</button>
+    <div id=a >
+        <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
+    <br>
+      <div class=n>
+EoHTML
+        # Above HTML contains <div class=n> which contains checkboxes for some
+        # options. These checkboxes are added in following  foreach loop.
+        # Above HTML contains  <table id="osaft_buttons">  which contains the
+        # quick buttons for some commands. These quick  buttons shoud get the
+        # description from the later generated help text in this page,  hence
+        # the buttons are not generated here but using  JavaScript at runtime
+        # so that the corresponding help text  can be derived from the (HTML)
+        # page itself. SEE HTML:JavaScript
+    #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
+    # show most common used options; layout by lines using BR
+    foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
+                     no-dns dns no-cert BR
+                     no-sni sni   BR
+                     no-http http BR
+                     header  no-header  no-warnings BR
+                     enabled disabled   BR
+                     traceKEY traceCMD  trace v     BR
+                 )) {
+        if ('BR' eq $key) { print "        <br>\n"; next; }
+        print _man_html_cbox($key);
+    }
+    print _man_html_go("cgi");
+    print << "EoHTML";
+      </div><!-- class=n -->
+    </div><!-- id=a -->
+    <div id=b >
+        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
+        <!-- not yet working properly
+        <input type=text     name=--cmds size=55 title="type any command or option"/>/>
+        -->
+EoHTML
+    return;
+} # _man_form_foot
+
+sub _man_form_foot  {
+    #? print end of CGI form
+    print << "EoHTML";
+</p>
+        <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
+        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
+    </div><!-- id=a -->
+  </fieldset>
+ </form>
+ <hr>
+ <script>
+  var osaft_action_http="/cgi-bin/o-saft.cgi"; // default action used in FORM and A tags; see osaft_handler()
+  var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
+  osaft_commands("a");              // generate quick buttons
+  osaft_options();                  // generate title for quick options
+  d("a").display="none";            // hide
+  d("b").display="none";            // hide
+  toggle_handler();                 // show "change schema" button if file:
+  toggle_checked("--header");       // want nice output
+  toggle_checked("--enabled");      // avoid huge cipher lists
+  toggle_checked("--no-tlsv13");    // most likely not yet implemented
+</script>
+EoHTML
+    return;
+} # _man_form_foot
 
 sub _man_html_foot  {
     #? print footer of HTML page
@@ -497,7 +592,174 @@ sub _man_doc_pod    {
     #_man_doc_opt($typ, $sep, "POD");   # if real POD should be printed
     print "# end $typ\n";
     return;
-} # _man_pod_pod
+} # _man_doc_pod
+
+sub _man_pod_head   {
+    #? print start of POD format
+    print <<'EoHelp';
+#!/usr/bin/env perldoc
+#?
+# Generated by o-saft.pl .
+# Unfortunatelly the format in @help is incomplete,  for example proper  =over
+# and corresponding =back  paragraph is missing. It is mandatory arround =item
+# paragraphs. However, to avoid tools complaining about that,  =over and =back
+# are added to each  =item  to avoid error messages in the viewer tools.
+# Hence the additional identations for text following the =item are missing.
+# Tested viewers: podviewer, perldoc, pod2usage, tkpod
+
+EoHelp
+    print "=pod\n\n=encoding utf8\n\n"; # SEE POD:Syntax
+    return;
+} # _man_pod_head
+
+sub _man_pod_text   {
+    #? print text in POD format
+    my $code  = 0;  # 1 if last printed line was `source code' format
+    my $empty = 0;  # 1 if last printed line was empty
+    while ($_ = shift @help) {          # @help already looks like POD
+        last if m/^(?:=head[1] )?END\s+#/;# very last line in this file
+        m/^$/ && do {  ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
+            if (0 == $empty)  { print; $empty++; }  # empty line, but only one
+            next;
+        };
+        s/^(\s*(?:o-saft\.|checkAll|yeast\.).*)/S&$1&/; # dirty hack; adjust with 14 spaces
+        s/^ {1,13}//;                   # remove leftmost spaces (they are invalid for POD); 14 and more spaces indicate a line with code or example
+        s/^S&\s*([^&]*)&/\t$1/ && do {  # code or example line
+            print "\n" if (0 == ($empty + $code));
+            print; $empty = 0; $code++; next;   # no more changes
+        };
+        $code = 0;
+        s:['`]([^']*)':C<$1>:g;         # markup literal text; # dumm '
+        s:X&([^&]*)&:L</$1>:g;          # markup references inside help
+        s:L&([^&]*)&:L<$1|$1>:g;        # markup other references
+        #s:L<[^(]*(\([^\)]*\)\>).*:>:g;  # POD does not like section in link
+        s:I&([^&]*)&:I<$1>:g;           # markup commands and options
+        s/^([A-Z., -]+)$/B<$1>/;        # bold
+        s/^(=item)\s+(.*)/$1 $2/;       # squeeze spaces
+        my $line = $_;
+        m/^=/ && do {                   # paragraph line
+            # each paragraph line must be surrounded by empty lines
+            # =item paragraph must be inside =over .. =back
+            print "\n"        if (0 == $empty);
+            print "$line"     if $line =~ m/^=[hovbefpc].*/;# any POD keyword
+            _man_pod_item "$line" if $line =~ m/^=item/;    # POD =item keyword
+            print "\n";
+            $empty = 1;
+            next;
+        };
+        print "$line";
+        $empty = 0;
+    }
+    return;
+} # _man_pod_text
+
+sub _man_pod_foot   {
+    #? print end of POD format
+    print <<'EoHelp';
+Generated with:
+
+        o-saft.pl --no-warnings --no-header --help=gen-pod > o-saft.pod
+
+EoHelp
+    print "=cut\n\n";           # SEE POD:Syntax
+    _man_doc_pod('abbr', "-");  # this is for woodoo, see below
+    _man_doc_pod('rfc',  "-");  # this is for woodoo, see below
+    print <<'EoHelp';
+
+# begin woodoo
+
+# Some documentation is plain text, which is  DATA  in Perl sources. As such,
+# it  is  not detected as source,  not as comment,  and  not as documentation
+# by most tools analyzing the source code.
+# O-Saft's public user documentation is plain text stored in  separate files.
+# The files are  usually also not counted as source.
+# Unfortunately, some people solely believe in statistics generated by  magic
+# tools. They use such statistics to measure for example code quality without
+# looking themself at the code.
+# Hence the purpose of this file is to provide real comment and documentation
+# lines from our documentation in format of the used programming language.
+# Hopefully, if these people read this, they change the workflow (means: they
+# also review the source code) or adapt their conclusions having in mind that
+# statistics can be manipulated in many ways. Here we go ...
+#
+# Disclaimer: No offence meant anyhow, neither against any analyzing tool nor
+# against anyone using them. It is just a reminder to use the tools and their
+# results in a wise manner. Measuring quality is more than just automatically
+# generated statistics!
+
+# end woodoo
+
+EoHelp
+    return;
+} # _man_pod_foot
+
+sub _man_wiki_head  {
+    #? print start of mediawiki format
+    print <<'EoHelp';
+==O-Saft==
+This is O-Saft's documentation as you get with:
+ o-saft.pl --help
+<small>On Windows following must be used
+ o-saft.pl --help --v
+</small>
+
+__TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing MediaWiki:Common.css -->
+<!-- position left is no good as the list is too big and then overlaps some texts
+{|align=right
+ |<div>__TOC__</div>
+ |}
+-->
+
+[[Category:OWASP Project]]  [[Category:OWASP_Builders]]  [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]  [[Category:SSL]]  [[Category:Test]]
+----
+EoHelp
+    return;
+} # _man_wiki_head
+
+sub _man_wiki_text  {
+    #? print text of mediawiki format
+    #  convert POD syntax to mediawiki syntax
+    my $mode =  shift;
+    while ($_ = shift @help) {
+        last if/^=head1 TODO/;
+        s/^=head1 (.*)/====$1====/;
+        s/^=head2 (.*)/=====$1=====/;
+        s/^=head3 (.*)/======$1======/;
+        s/^=item (\*\* .*)/$1/;         # list item, second level
+        s/^=item (\* .*)/$1/;           # list item, first level
+        s/^=[^= ]+ *//;                 # remove remaining markup and leading spaces
+        print, next if/^=/;             # no more changes in header lines
+        s:['`]([^']*)':<code>$1</code>:g;  # markup examples # dumm '
+        s/^S&([^&]*)&/  $1/ && do { print; next; }; # code or example line; no more changes
+        s/X&([^&]*)&/[[#$1|$1]]/g;      # markup references inside help
+        s/L&([^&]*)&/\'\'$1\'\'/g;      # markup other references
+        s/I&([^&]*)&/\'\'$1\'\'/g;      # markup commands and options
+        s/^ +//;                        # remove leftmost spaces (they are useless in wiki)
+        if ('colon' eq $mode) {
+            s/^([^=].*)/:$1/;           # ident all lines for better readability
+        } else {
+            s/^([^=*].*)/:$1/;          # ...
+        }
+        s/^:?\s*($parent)/  $1/;        # myself becomes wiki code line
+        s/^:\s+$/\n/;                   # remove empty lines
+        print;
+    }
+    return;
+} # _man_wiki_text
+
+sub _man_wiki_foot  {
+    #? print end of mediawiki format
+    print <<'EoHelp';
+----
+<small>
+Content of this wiki page generated with:
+ o-saft.pl --no-warning --no-header --help=gen-wiki
+</small>
+
+EoHelp
+    return;
+} # _man_wiki_foot
+
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
@@ -775,91 +1037,9 @@ sub man_pod         {
     #? print complete POD page for o-saft.pl --help=gen-pod
     #? recommended usage see at end of this sub
     _man_dbx("man_pod() ...");
-    print <<'EoHelp';
-#!/usr/bin/env perldoc
-#?
-# Generated by o-saft.pl .
-# Unfortunatelly the format in @help is incomplete,  for example proper  =over
-# and corresponding =back  paragraph is missing. It is mandatory arround =item
-# paragraphs. However, to avoid tools complaining about that,  =over and =back
-# are added to each  =item  to avoid error messages in the viewer tools.
-# Hence the additional identations for text following the =item are missing.
-# Tested viewers: podviewer, perldoc, pod2usage, tkpod
-
-EoHelp
-    print "=pod\n\n=encoding utf8\n\n"; # SEE POD:Syntax
-
-    my $code  = 0;  # 1 if last printed line was `source code' format
-    my $empty = 0;  # 1 if last printed line was empty
-    while ($_ = shift @help) {          # @help already looks like POD
-        last if m/^(?:=head[1] )?END\s+#/;# very last line in this file
-        m/^$/ && do {  ## no critic qw(RegularExpressions::ProhibitFixedStringMatches)
-            if (0 == $empty)  { print; $empty++; }  # empty line, but only one
-            next;
-        };
-        s/^(\s*(?:o-saft\.|checkAll|yeast\.).*)/S&$1&/; # dirty hack; adjust with 14 spaces
-        s/^ {1,13}//;                   # remove leftmost spaces (they are invalid for POD); 14 and more spaces indicate a line with code or example
-        s/^S&\s*([^&]*)&/\t$1/ && do {  # code or example line
-            print "\n" if (0 == ($empty + $code));
-            print; $empty = 0; $code++; next;   # no more changes
-        };
-        $code = 0;
-        s:['`]([^']*)':C<$1>:g;         # markup literal text; # dumm '
-        s:X&([^&]*)&:L</$1>:g;          # markup references inside help
-        s:L&([^&]*)&:L<$1|$1>:g;        # markup other references
-        #s:L<[^(]*(\([^\)]*\)\>).*:>:g;  # POD does not like section in link
-        s:I&([^&]*)&:I<$1>:g;           # markup commands and options
-        s/^([A-Z., -]+)$/B<$1>/;        # bold
-        s/^(=item)\s+(.*)/$1 $2/;       # squeeze spaces
-        my $line = $_;
-        m/^=/ && do {                   # paragraph line
-            # each paragraph line must be surrounded by empty lines
-            # =item paragraph must be inside =over .. =back
-            print "\n"        if (0 == $empty);
-            print "$line"     if $line =~ m/^=[hovbefpc].*/;# any POD keyword
-            _man_pod_item "$line" if $line =~ m/^=item/;    # POD =item keyword
-            print "\n";
-            $empty = 1;
-            next;
-        };
-        print "$line";
-        $empty = 0;
-    }
-    print <<'EoHelp';
-Generated with:
-
-        o-saft.pl --no-warnings --no-header --help=gen-pod > o-saft.pod
-
-EoHelp
-    print "=cut\n\n";           # SEE POD:Syntax
-    _man_doc_pod('abbr', "-");  # this is for woodoo, see below
-    _man_doc_pod('rfc',  "-");  # this is for woodoo, see below
-    print <<'EoHelp';
-
-# begin woodoo
-
-# Some documentation is plain text, which is  DATA  in Perl sources. As such,
-# it  is  not detected as source,  not as comment,  and  not as documentation
-# by most tools analyzing the source code.
-# O-Saft's public user documentation is plain text stored in  separate files.
-# The files are  usually also not counted as source.
-# Unfortunately, some people solely believe in statistics generated by  magic
-# tools. They use such statistics to measure for example code quality without
-# looking themself at the code.
-# Hence the purpose of this file is to provide real comment and documentation
-# lines from our documentation in format of the used programming language.
-# Hopefully, if these people read this, they change the workflow (means: they
-# also review the source code) or adapt their conclusions having in mind that
-# statistics can be manipulated in many ways. Here we go ...
-#
-# Disclaimer: No offence meant anyhow, neither against any analyzing tool nor
-# against anyone using them. It is just a reminder to use the tools and their
-# results in a wise manner. Measuring quality is more than just automatically
-# generated statistics!
-
-# end woodoo
-
-EoHelp
+    _man_pod_head();
+    _man_pod_text();
+    _man_pod_foot();
     return;
 } # man_pod
 
@@ -876,95 +1056,11 @@ sub man_cgi         {
     # option  --usr-action=  at script start.
     #
     _man_dbx("man_cgi() ...");
-    my $cgi = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi"; # get action from --usr-action= or set to default
-        # TODO: use variable for /cgi-bin/o-saft.cgi
     _man_http_head();
     _man_html_head(STR_VERSION);
-print << "EoHTML";
- <div class=h ><b>Help:</b>
-  <a href="$cgi?--cgi&--help"         target=_help title="open window with complete help"     >help</a>
-  <a href="$cgi?--cgi&--help=command" target=_help title="open window with help for commands" >commands</a>
-  <a href="$cgi?--cgi&--help=checks"  target=_help title="open window with help for checks"   >checks</a>
-  <a href="$cgi?--cgi&--help=example" target=_help title="open window with examples"          >examples</a>
-  <a href="$cgi?--cgi&--help=opt"     target=_help title="open window with help for options"  >options</a>
-  <a href="$cgi?--cgi&--help=FAQ"     target=_help title="open window with FAQs"              >FAQ</a>
-  <a href="$cgi?--cgi&--help=abbr"    target=_help title="open window with the glossar"       >Glossar</a>
-  <a href="$cgi?--cgi&--help=todo"    target=_help title="open window with help for ToDO"     >ToDo</a><br>
- </div>
- <form id="o-saft" action="$cgi" method="GET" onsubmit="return osaft_submit()" target="cmd" >
-  <noscript><div>
-JavaScript disabled. The buttons for most common commans are missing.<br>
-The buttons "Commands & Options", "Full GUI" and "Simple GUI" will not work.<br>
-All options with values are passd to o-saft.cgi.
-  </div><br></noscript>
-  <input  type=hidden name="--cgi" value="" >
-  <fieldset>
-    <p>
-    Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
-    <input  type=submit name="--cmd" value="+check" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
-    </p>
-    <table id="osaft_buttons">
-    </table><br>
-    <button onclick="toggle_display(d('a'));return false;" title="show options">Commands & Options</button>
-    <div id=a >
-        <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
-    <br>
-      <div class=n>
-EoHTML
-        # Above HTML contains <div class=n> which contains checkboxes for some
-        # options. These checkboxes are added in following  foreach loop.
-        # Above HTML contains  <table id="osaft_buttons">  which contains the
-        # quick buttons for some commands. These quick  buttons shoud get the
-        # description from the later generated help text in this page,  hence
-        # the buttons are not generated here but using  JavaScript at runtime
-        # so that the corresponding help text  can be derived from the (HTML)
-        # page itself. SEE HTML:JavaScript
-    #foreach my $key (qw(cmd cmd cmd cmd)) { print _man_html_cmd($key); }
-    # show most common used options; layout by lines using BR
-    foreach my $key (qw(no-sslv2 no-sslv3 no-tlsv1 no-tlsv11 no-tlsv12 no-tlsv13 BR
-                     no-dns dns no-cert BR
-                     no-sni sni   BR
-                     no-http http BR
-                     header  no-header  no-warnings BR
-                     enabled disabled   BR
-                     traceKEY traceCMD  trace v     BR
-                 )) {
-        if ('BR' eq $key) { print "        <br>\n"; next; }
-        print _man_html_cbox($key);
-    }
-    print _man_html_go("cgi");
-    print << "EoHTML";
-      </div><!-- class=n -->
-    </div><!-- id=a -->
-    <div id=b >
-        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
-        <!-- not yet working properly
-        <input type=text     name=--cmds size=55 title="type any command or option"/>/>
-        -->
-EoHTML
-
+    _man_form_head();
     _man_html('cgi', 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
-    print << "EoHTML";
-</p>
-        <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
-        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
-    </div><!-- id=a -->
-  </fieldset>
- </form>
- <hr>
- <script>
-  var osaft_action_http="/cgi-bin/o-saft.cgi"; // default action used in FORM and A tags; see osaft_handler()
-  var osaft_action_file="/o-saft.cgi";         // default action used if file: ; see osaft_handler()
-  osaft_commands("a");              // generate quick buttons
-  osaft_options();                  // generate title for quick options
-  d("a").display="none";            // hide
-  d("b").display="none";            // hide
-  toggle_handler();                 // show "change schema" button if file:
-  toggle_checked("--header");       // want nice output
-  toggle_checked("--enabled");      // avoid huge cipher lists
-  toggle_checked("--no-tlsv13");    // most likely not yet implemented
-</script>
-EoHTML
+    _man_form_foot();
     _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
     return;
@@ -979,64 +1075,9 @@ sub man_wiki        {
         # leading : (colon). Some versions of mediawiki did not support :*
         # so we can switch this behavior now.
     _man_dbx("man_wiki($mode) ...");
-    my $key = "";
-
-    # 1. generate wiki page header
-    print <<'EoHelp';
-==O-Saft==
-This is O-Saft's documentation as you get with:
- o-saft.pl --help
-<small>On Windows following must be used
- o-saft.pl --help --v
-</small>
-
-__TOC__ <!-- autonumbering is ugly here, but can only be switched of by changing MediaWiki:Common.css -->
-<!-- position left is no good as the list is too big and then overlaps some texts
-{|align=right
- |<div>__TOC__</div>
- |}
--->
-
-[[Category:OWASP Project]]  [[Category:OWASP_Builders]]  [[Category:OWASP_Defenders]]  [[Category:OWASP_Tool]]  [[Category:SSL]]  [[Category:Test]]
-----
-EoHelp
-
-    # 2. generate wiki page content
-    #    extract from herein and convert POD syntax to mediawiki syntax
-    while ($_ = shift @help) {
-        last if/^=head1 TODO/;
-        s/^=head1 (.*)/====$1====/;
-        s/^=head2 (.*)/=====$1=====/;
-        s/^=head3 (.*)/======$1======/;
-        s/^=item (\*\* .*)/$1/;         # list item, second level
-        s/^=item (\* .*)/$1/;           # list item, first level
-        s/^=[^= ]+ *//;                 # remove remaining markup and leading spaces
-        print, next if/^=/;             # no more changes in header lines
-        s:['`]([^']*)':<code>$1</code>:g;  # markup examples # dumm '
-        s/^S&([^&]*)&/  $1/ && do { print; next; }; # code or example line; no more changes
-        s/X&([^&]*)&/[[#$1|$1]]/g;      # markup references inside help
-        s/L&([^&]*)&/\'\'$1\'\'/g;      # markup other references
-        s/I&([^&]*)&/\'\'$1\'\'/g;      # markup commands and options
-        s/^ +//;                        # remove leftmost spaces (they are useless in wiki)
-        if ('colon' eq $mode) {
-            s/^([^=].*)/:$1/;           # ident all lines for better readability
-        } else {
-            s/^([^=*].*)/:$1/;          # ...
-        }
-        s/^:?\s*($parent)/  $1/;        # myself becomes wiki code line
-        s/^:\s+$/\n/;                   # remove empty lines
-        print;
-    }
-
-    # 3. generate wiki page footer
-    print <<'EoHelp';
-----
-<small>
-Content of this wiki page generated with:
- $parent --no-warning --no-header --help=gen-wiki
-</small>
-
-EoHelp
+    _man_wiki_head();
+    _man_wiki_text($mode);
+    _man_wiki_foot();
     return;
 } # man_wiki
 
@@ -1066,9 +1107,9 @@ sub man_help        {
     _man_dbx("man_help($anf, $end) ...");
     # no special help, print full one or parts of it
     my $txt = join ('', @help);
-	# = OSaft::Doc::Data::get("help.txt", $parent, $version);
+        # = OSaft::Doc::Data::get("help.txt", $parent, $version);
     if (1 < (grep{/^--v/} @ARGV)) {     # with --v --v
-	print OSaft::Doc::Data::get_egg("help.txt");
+        print OSaft::Doc::Data::get_egg("help.txt");
         return;
     }
     if ($label =~ m/^name/i)    { $end = "TODO";  }
@@ -1180,7 +1221,7 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         return;
     }
     if ($hlp =~ /^help$/) {
-	#my $hlp = OSaft::Doc::Data::get("help.txt", $parent, $version);
+        #my $hlp = OSaft::Doc::Data::get("help.txt", $parent, $version);
         my $txt  = "";
         foreach (@help) { $txt .= $_ if (m/Options for help and documentation/..m/Options for all commands/); };
             # TODO: quick&dirty match against to fixed strings (=head lines)
@@ -1198,11 +1239,11 @@ sub printhelp       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         return;
     }
     if ($hlp =~ m/^Tools$/i) {    # description for O-Saft tools
-	print OSaft::Doc::Data::get("tools.txt", $parent, $version);
+        print OSaft::Doc::Data::get("tools.txt", $parent, $version);
         return;
     }
     if ($hlp =~ m/^Program.?Code$/i) { # print Program Code description
-	print OSaft::Doc::Data::get("coding.txt", $parent, $version);
+        print OSaft::Doc::Data::get("coding.txt", $parent, $version);
         return;
     }
     src_grep("exit="),          return if ($hlp =~ /^exit$/i);
