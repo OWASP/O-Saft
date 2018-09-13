@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.250 18/09/14 00:00:22";
+my  $man_SID= "@(#) o-saft-man.pm 1.251 18/09/14 00:32:23";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -892,16 +892,20 @@ print << "EoHTML";
   <a href="$cgi?--cgi&--help=todo"    target=_help title="open window with help for ToDO"     >ToDo</a><br>
  </div>
  <form id="o-saft" action="$cgi" method="GET" onsubmit="return osaft_submit()" target="cmd" >
-  <noscript><div>JavaScript disabled. The buttons "Options", "Full GUI" and "Simple GUI" will not work.</div><br></noscript>
+  <noscript><div>
+JavaScript disabled. The buttons for most common commans are missing.<br>
+The buttons "Commands & Options", "Full GUI" and "Simple GUI" will not work.<br>
+All options with values are passd to o-saft.cgi.
+  </div><br></noscript>
   <input  type=hidden name="--cgi" value="" >
   <fieldset>
     <p>
     Hostname: <input type=text name="--url"  size=40 title='hostname or hostname:port or URL' >
-    <input  type=submit name="--cmd" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
+    <input  type=submit name="--cmd" value="+check" title="execute: o-saft.pl +check ..." onclick='this.value="+check";' >
     </p>
     <table id="osaft_buttons">
     </table><br>
-    <button onclick="toggle_display(d('a'));return false;" title="show options">Options</button>
+    <button onclick="toggle_display(d('a'));return false;" title="show options">Commands & Options</button>
     <div id=a >
         <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
     <br>
@@ -928,6 +932,7 @@ EoHTML
         if ('BR' eq $key) { print "        <br>\n"; next; }
         print _man_html_cbox($key);
     }
+    print _man_html_go("cgi");
     print << "EoHTML";
       </div><!-- class=n -->
     </div><!-- id=a -->
@@ -941,7 +946,8 @@ EoHTML
     _man_html('cgi', 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
     print << "EoHTML";
 </p>
-        <input type=reset  value="clear" title="clear all settings"/>
+        <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
+        <button class=r onclick="d('a').display='block';d('b').display='none';return false;" title="switch to simple GUI\nwith most common options only">Simple GUI</button><br>
     </div><!-- id=a -->
   </fieldset>
  </form>
@@ -1424,7 +1430,7 @@ not shown properly with perldoc):
 ||   [+cipher] Overview of SSL connection ...                          c |
 ||   ...                                                               c |
 ||                                                                     c |
-|| [Options]                                                           O |
+|| [Commands & Options]                                                O |
 ||+------------------------------------------------------------------+ | |
 ||| ( ) --header     ( ) --enabled     ( ) --options      [Full GUI] q | |
 ||| ...                                                              q | |
