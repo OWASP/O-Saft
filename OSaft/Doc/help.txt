@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.9 18/08/20 00:30:20
+# SID   @(#) help.txt 1.10 18/09/14 16:20:39
 
 NAME
 
@@ -75,7 +75,7 @@ QUICKSTART
           $0 --help=SECURITY
 
         * Start the simple GUI
-          o-saft.tcl
+          o-saft.tcl 
 
         * Start the simple GUI which uses $0 in a Docker image
           o-saft.tcl --docker
@@ -128,9 +128,9 @@ SECURITY
         are no checks according any kind of code injection.
 
         Care should be taken, when additional tools and modules are installed
-        as described in  INSTALLATION  below.  In particular  we recommend to
-        do such installations into directoies specially prepared for use with
-        $0 . No other tools of your system should use these installations
+        as described in  INSTALLATION  below.  In particular  it is recommend
+        to do these installations into directoies  specially prepared for use
+        with $0 . No other tools of your system should use these installations
         i.e. by accident or because your environment variables point to them.
 
         Note that compilation and installation of additional tools  (openssl,
@@ -241,7 +241,7 @@ TECHNICAL INFORMATION
               cpan Net::SSLeay
 
         Note: if you want to use advanced features of openssl or Net::SSLeay,
-        please see  INSTALLTION  section how to compile and install the tools
+        please see  INSTALLATION section how to compile and install the tools
         fully customized.
 
         Also an openssl executable should be available, but is not mandatory.
@@ -534,7 +534,8 @@ COMMANDS
 
           In contrast to  +cipher  this command has some options to tweak the
           cipher tests, connection results and some strange behaviours of the
-          target. See  X&Options for cipherall command&  for details.
+          target. See  X&Options for  cipherall and cipherraw  command&  for
+          details.
 
       +cipherall
 
@@ -818,7 +819,7 @@ OPTIONS
 
       --help=SECTION
 
-          Show  <SECTION>  from documentation, see  --help=toc  for a list.
+          Show  'SECTION'  from documentation, see  --help=toc  for a list.
           Example:
               $0 --help=EXAMPLES
 
@@ -850,12 +851,12 @@ OPTIONS
       --help=warning
       --help=problem
 
-          Show  KNOWN PROBLEMS  section with  description of known  error and
+          Show  X&KNOWN PROBLEMS&  section with  description of known  error and
           warning messages.
 
       --help=faq
 
-          Show  KNOWN PROBLEMS  and  LIMITATIONS  section.
+          Show  X&KNOWN PROBLEMS&  and  LIMITATIONS  section.
 
       --help=glossary
 
@@ -943,9 +944,9 @@ OPTIONS
       --starttls=SMTP
       --starttls=PROT
 
-          Use 'STARTTLS' command to start a TLS connection via protocol. PORT
-          PORT may be any of: 'SMTP', 'IMAP', 'IMAP2', 'POP3', 'FTPS', 'RDP',
-          'LDAP' or 'XMPP' .
+          Use 'STARTTLS' command to start a TLS connection via protocol.
+          'PROT' may be any of:  'SMTP', 'IMAP', 'IMAP2', 'POP3', 'FTPS',
+          'RDP', 'LDAP' or 'XMPP' .
 
           For  --starttls=SMTP  see  --dns-mx  also to use MX records instead
           of host
@@ -981,6 +982,7 @@ OPTIONS
           * insecure protocols are available
           * insecure ciphers are supported
           * ciphers without PFS are supported (disable with --exitcode-cipher)
+
           In particular, the status code will be the total count of all these
           checks.
 
@@ -1078,17 +1080,13 @@ OPTIONS
 
       --ssl-error
 
-          Stop trying to connect to target if  --ssl-error-max  erros occourd
-          sequentially, or if the total amount of errors  --ssl-error-total
-          is reached.
-
           The connection to  a target may fail, or even block, due to various
-          resons, for example lost network at all, blocking at firewall, etc.
+          reasons for example lost network at all, blocking at firewall, etc.
           In particular when checking ciphers with  +cipher , this may result
           in long delays until results are printed.
           Using this option stops trying to do more connections to the target
-          when  --ssl-error-max  consecutive errors occoured, or if the total
-          amount of errors increases  --ssl-error-total.
+          when  --ssl-error-max=CNT  consecutive errors occoured, or when the
+          total amount of errors increases  --ssl-error-total=CNT.
 
           Note that this may result in loss of information and/or checks.
 #     --ssl-error-delay=SEC        (default: 0).
@@ -1205,6 +1203,7 @@ OPTIONS
             * --cipher=DHE_DSS_WITH_RC4_128_SHA
             * --cipher=0x03000066
             * --cipher=66
+
           will be mapped to   'DHE-DSS-RC4-SHA'
 
           Note: if more than one cipher matches, just one will be selected.
@@ -1489,13 +1488,13 @@ OPTIONS
           Note:  setting empty list or element most likely does not work with
           openssl executable (i.e.  --force-openssl).
 
-    Options for  +cipherall and +cipherraw  command
+    Options for  cipherall and cipherraw  command
 
       --range=RANGE
       --cipherrange=RANGE
 
           Specify range of cipher constants to be tested by  +cipherall.
-          Following RANGEs are supported (see also:  --cipherrange=RANGE):
+          Following RANGEs are supported:
           * 'rfc'               all ciphers defined in various RFCs
           * 'shifted'           'rfc', shifted by 64 bytes to the right
           * 'long'              like 'rfc' but more lazy list of constants
@@ -1589,16 +1588,16 @@ OPTIONS
 
       --ignore-no-reply
 
-          When checking for the  TLS heartbeat extension,  the server may not
+          When checking for the TLS "heartbeat" extension, the server may not
           respond at all, which would result in a  "no reply"  message.  This
           marks the check for  +heartbleed  as 'no'.
           I.g.  a server is  not vulnerable to the  heartbleed attack  if the
-          TLS heartbeat extension is disabled.  Hence the  check result  'no'
+          TLS "heartbeat" extension is disabled. Hence the check result  'no'
           may be mis-leading.  This option  treats the  "no reply"  result as
           "not vulnerable" and returns  'yes'  then.
 
           Note: if the server does not respond for this check,  does not mean
-          that the heartbeat extension is switched off. So if unsure, disable
+          that the "heartbeat" extension is switched off.  If unsure, disable
           this lazy check with  --no-ignore-no-reply .
 
     Options for output format
@@ -1638,6 +1637,7 @@ OPTIONS
           options, it's a best guess and should be parsable in a very similar
           way.
 
+      --legacy=TYPE
       --legacy=compact
 
           Internal format: mainly avoid tabs and spaces format is as follows:
@@ -1872,6 +1872,10 @@ OPTIONS
           Note that \n, \r and \t are replaced by the corresponding character
           when read from RC-FILE.
 
+      --cfg-text=FILE
+
+          Read definitions for  %text{KEY}="my text" from file  'FILE'.
+
       --cfg-hint=KEY=TEXT
 
           Redefine texts used for hints. Sets  %cfg{hints}{KEY}  to  'TEXT'.
@@ -1992,7 +1996,14 @@ OPTIONS
           Example with    --trace-key :
               #serial#          Certificate Serial Number:          deadbeef
 
+      --trace-time
+
+          Prints trace output with timestamps. More timestamps are printed if
+          used together with  --trace-cmd.
+
       --trace=VALUE
+
+          Alias for  --trace-VALUE  options (see above).
 
             Trace Option        Alias Option
           #--------------------+----------------------------#
@@ -2001,11 +2012,7 @@ OPTIONS
           * --trace=arg         same as  --trace-arg
           * --trace=cmd         same as  --trace-cmd
           * --trace=key         same as  --trace-key
-
-      --trace-time
-
-          Prints trace output with timestamps. More timestamps are printed if
-          used together with  --trace-cmd.
+          * --trace=time        same as  --trace-time
 
       --trace=FILE
 
@@ -2130,7 +2137,7 @@ CHECKS
 
       heartbeat
 
-        Check if heartbeat extension is supported by target.
+        Check if "heartbeat" extension is supported by target.
 
       poodle
 
@@ -2159,6 +2166,7 @@ CHECKS
         Check if target supports ALPN. Following messages are evaluated:
               ALPN protocol: h2-14
               No ALPN negotiated
+
         Please see also  CHECKS  ALPN and NPN  below.
 
     SSL Vulnerabilities
@@ -2268,7 +2276,7 @@ CHECKS
 #
 #       Check if target is vulnerable to  SKIP  attack.
 #       Message Skipping Attacks on TLS. Attack to force  server or client  to
-#       skip messages in handshake protocol",
+#       skip messages in handshake protocol,
 
       SLOTH
 
@@ -2565,7 +2573,7 @@ die EC-Verfahren ...  und weitere Erläuterungen siehe Bemerkung 4 in Kapitel 3 
           No TLS compression.
 
         3.4.4 Der Lucky13-Angriff
-        3.4.5 Die "Encrypt-thn-MAC"-Erweiterung
+        3.4.5 Die "Encrypt-then-MAC"-Erweiterung
 
           Use of AES-GCM ciphers only.
           Use of Encrypt-then-MAC according RFC 7366 cannot be checked.
@@ -2911,15 +2919,15 @@ CUSTOMIZATION
 
         Configuration options are used to redefine  texts and labels or score
         settings used in output. The options are:
-          * --cfg-cmd=KEY=LIST
+          * --cfg-cmd=CMD=LIST
           * --cfg-checks=KEY=TEXT
           * --cfg-data=KEY=TEXT
           * --cfg-hint=KEY=TEXT
           * --cfg-text=KEY=TEXT
           * --cfg-cipher=CIPHER=TEXT
 
-        KEY  is the key used in the internal data structure, and  TEXT is the
-        value to be set for this key.  Note that unknown keys will be ignored
+        'KEY'  is the key used in the internal data structure, and  'TEXT' is
+        the value to be set for this key.  Note that unknown keys are ignored
         silently.
 
         If KEY=TEXT is an exiting filename, all lines from that file are read
@@ -2934,13 +2942,13 @@ CUSTOMIZATION
 
     CONFIGURATION FILE
 
-        Note that the file can contain KEY=TEXT pairs for any kind of the
+        Note that the file can contain 'KEY=TEXT' pairs for any kind of the
         configuration as given by the  --cfg-CFG  option.
 
-        For example  when used with  --cfg-text=file  only values for  %text
-        will be set, when used with  --cfg-data=file  only values for  %data
-        will be set, and so on. KEY is not used  when KEY=TEXT is an existing
-        filename. Though, it's recommended to use a non-existing key, i.e.:
+        For example  when used with  --cfg-text=FILE  only values for  %text
+        will be set, when used with  --cfg-data=FILE  only values for  %data
+        will be set, and so on. 'KEY' will not be used when 'KEY=TEXT' is an
+        existing filename. It i recommended to use a non-existing key, i.e.:
         --cfg-text=my_file=some/path/to/private/file .
 
     RC-FILE
@@ -2959,7 +2967,7 @@ CUSTOMIZATION
         of  'KEY VALUE'.
 
         Configurations options must be written like '--cfg-CFG=KEY=VALUE'.
-        Where 'CFG' is any of:  cmd, check, data, text  or score and 'KEY' is
+        Where 'CFG' is any of:  'cmd', 'check', 'data', 'text'  and  'KEY' is
         any key from internal data structure (see above).
 
         All commands and options given on command line will  overwrite  those
@@ -3166,6 +3174,7 @@ KNOWN PROBLEMS
         supported. Subject are mainly  SSLv2, SSLv3 TLSv1.3 and DTLSv1.
         For DTLSv1 the full message looks like:
               invalid SSL_version specified at C:/programs/perl/perl/vendor/lib/IO/Socket/SSL.
+
         See also  X&Note on SSL versions& .
 
         Workaround: use option: --no-sslv2 --no-sslv3 --no-tlsv13 --no-dtlsv1
@@ -3223,7 +3232,7 @@ KNOWN PROBLEMS
         Please report a bug with output of following command:
               $0 +s_client +dump your.tld
 
-    <<openssl did not return DH Paramter>>
+    openssl did not return DH Paramter>>
 
         Text may be part of a value. This means that all checks according  DH
         parameters and logkam attack cannot be done.
@@ -3308,12 +3317,12 @@ KNOWN PROBLEMS
 
           g) target does not respond at all and/or blocks
              Use  --ssl-error
-             For a detailed description, please see "Connection Problems".
+             For a detailed description, please see X&Connection Problems&.
 
         Other options which may help to get closer to the problem's cause:
-        --trace=time,  --timeout=SEC,  --trace,  --trace=cmd
+        --trace-time,  --timeout=SEC,  --trace,  --trace-cmd
 
-        Using  --trace=time   should show following times:
+        Using  --trace-time   should show following times:
           * DNS:             1 -  10 sec
           * need_default:    <5 sec
           * need_cipher:     1 - 299 sec (+cipher with socket)
@@ -3348,7 +3357,8 @@ LIMITATIONS
         The option  --port=PORT  must preceed  --host=HOST  for a target like
         HOST:PORT  .
 
-        The characters  '+' and '='  cannot be used for  --separator  option.
+        The characters  '+' and '='  cannot be used for  --separator=CHAR
+        option.
 
         Following strings should not be used in any value for options:
           '+check', '+info', '+quick', '--header'
@@ -3357,7 +3367,7 @@ LIMITATIONS
         The used  timeout(1)  command cannot be defined with a full path like
         openssl(1)  can with the  --openssl=path/to/openssl .
 
-        --cfg-text=file  cannot be used to redefine the texts  'yes' and 'no'
+        --cfg-text=FILE  cannot be used to redefine the texts  'yes' and 'no'
         as used in the output for  +cipher  command.
 
     Checks (general)
@@ -3455,20 +3465,21 @@ LIMITATIONS
           * --ssl-error-max=3
           * --ssl-error-timeout=6
           * --ssl-error-total=6
+
         no more connections are made if for example  any sequence of timeouts
         occour:
-          0 5 2 2                   - --ssl-error-max matches
-          0 1 3 0 0 0 4 1 2 2 2     - --ssl-error-max matches
-          0 5 0 2 0 2 2 0 2 0 2     - --ssl-error-total matches
+              0 5 2 2                   - --ssl-error-max matches
+              0 1 3 0 0 0 4 1 2 2 2     - --ssl-error-max matches
+              0 5 0 2 0 2 2 0 2 0 2     - --ssl-error-total matches
 
         This allows to fine-tune the condition when to stop connecting to the
         target. For example, continous but not consecutive timeouts may indi-
         cate a bad or instable network connection, but not that the target to
         be connected blocks. In such a case sequence of timeouts like follows
         may be observed (assuming --ssl-error-max=3):
-          0 5 1 2 2 2 4 2 3 2 3 3 3 2
-                ^                 ^____ stop for --ssl-error-timeout=3
-                |______________________ stop for --ssl-error-timeout=2
+              0 5 1 2 2 2 4 2 3 2 3 3 3 2
+              . . . ^                 ^____ stop for --ssl-error-timeout=3
+              . . . |______________________ stop for --ssl-error-timeout=2
 
         On normal (even slow) network connections  dozens of  connections per
         second are usual, hence the timeout is always  0 or 1.  Based on that
@@ -3485,8 +3496,8 @@ LIMITATIONS
         On Windows the usage of  "openssl s_client" needs to be enabled using
         --s_client  option.
 
-        On Windows it's a pain to specify the path for  --openssl=..  option.
-        Variants are:
+        On Windows it's a pain to specify a correct path for  --openssl=TOOL
+        option. Variants are:
           * --openssl=/path/to/openssl.exe
           * --openssl=X:/path/to/openssl.exe
           * --openssl=\path\to\openssl.exe
@@ -3498,8 +3509,8 @@ LIMITATIONS
 
     Debug and Trace Output
 
-        When both  --trace=key  and  --trace=cmd  options are used, output is
-        mixed, obviously. Hint: output for --trace=cmd always contains "CMD".
+        When both  --trace-key  and  --trace-cmd  options are used, output is
+        mixed, obviously. Hint: output for --trace-cmd always contains "CMD".
 
 
 DEPENDENCIES
@@ -3623,14 +3634,14 @@ INSTALLATION
 
               echo == patch files
               vi ssl/tls1.h         +/TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES/
-                       # define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
+                  # define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES  1
               vi ssl/ssl3.h ssl/s{2,3}_lib.c   +"/# *if 0/"
-                       #==> remove all   # if 0  and corresponding  #endif
-                       #    except if lines contain:
-                       #        _FZA
-                       #        /* Fortezza ciphersuite from SSL 3.0
-                       #        /* Do not set the compare functions,
-                       #        if (s->shutdown & SSL_SEND_SHUTDOWN)
+                  #==> remove all   # if 0  and corresponding  #endif
+                  #    except if lines contain:
+                  #        _FZA
+                  #        /* Fortezza ciphersuite from SSL 3.0
+                  #        /* Do not set the compare functions,
+                  #        if (s->shutdown & SSL_SEND_SHUTDOWN)
 
               echo == configure with static libraries
               echo omitt the zlib options if zlib-1g-dev is not installed
@@ -3693,7 +3704,7 @@ INSTALLATION
               LD_RUN_PATH=/usr/local/openssl/lib
               LDFLAGS="-rpath=$LD_RUN_PATH" && export LDFLAGS
               env OPENSSL_PREFIX=/usr/local perl Makefile.PL PREFIX=/usr/local \
-                    INC=-I/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
+                  INC=-I/usr/local/include  DEFINE=-DOPENSSL_BUILD_UNSAFE=1
               make
               make install
               cd /tmp && $0 +version
@@ -3755,7 +3766,7 @@ INSTALLATION
               /usr/local/openssl ciphers -V ALL:eNULL:EXP
 
         The difference should be obvious.
-        Note, the commands using  "ALL:COMPLEMENTOFALL"  and  "ALL:eNULL:EXP"
+        Note, the commands using  'ALL:COMPLEMENTOFALL'  and  'ALL:eNULL:EXP'
         should return the same result.
 
     Testing Net::SSLeay
@@ -3928,7 +3939,7 @@ HACKER's INFO
         uses  another name it must be specified with the  --envlibvar=NAME
         option, where  NAME  is the name of the environment variable.
 
-    Understanding  --exe=PATH, --lib=PATH, --openssl=FILE
+    Understanding  --exe=PATH, --lib=PATH, --openssl=TOOL
 
         If any of  --exe=PATH  or  --lib=PATH  is provided, the pragram calls
         ('exec') itself recursively with all given options, except the option
@@ -3941,7 +3952,7 @@ HACKER's INFO
         This is exactly, what X&Cumbersome Approach& below describes. So these
         option simply provide a shortcut for that.
 
-        Note that  --openssl=FILE  is a full path to the  openssl  executable
+        Note that  --openssl=TOOL  is a full path to the  openssl  executable
         and will not be changed.  However, if it is a relative path, it might
         be searched for using the previously set  'PATH'  (see above).
 
@@ -3957,9 +3968,9 @@ HACKER's INFO
 
         NOTE that no checks are done if the options are set proper. To verify
         the settings, following commands may be used:
-          $0 --lib=YOU-PATH --exe=YOUE-EXE +version
-          $0 --lib=YOU-PATH --exe=YOUE-EXE --v +version
-          $0 --lib=YOU-PATH --exe=YOUE-EXE --v --v +version
+          $0 --lib=YOUR-PATH --exe=YOUR-EXE +version
+          $0 --lib=YOUR-PATH --exe=YOUR-EXE --v +version
+          $0 --lib=YOUR-PATH --exe=YOUR-EXE --v --v +version
 
         Why so many options?  Exactly as described above, these options allow
         the users to tune the behaviour of the tool to their needs.  A common
@@ -4137,10 +4148,10 @@ DEBUG
         prefixed with a  '#'  (mainly as first, left-most character.
         Following formats are used:
 
-           #<space>
+           #[space]
              Additional text for verbosity (--v options).
 
-           #[variable name]<TAB>
+           #[variable name][TAB]
              Internal variable name (--trace-key options).
 
            #o-saft.pl::
@@ -4187,27 +4198,27 @@ DEBUG
                   path to shared libraries
                   full path to openssl.cnf file    <<undef>>
                   common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-                                                   /etc/ssl/openssl.cnf \
-                                                   /System//Library/OpenSSL/openssl.cnf \
-                                                   /usr/ssl/openssl.cnf
+                  .                                /etc/ssl/openssl.cnf \
+                  .                                /System//Library/OpenSSL/openssl.cnf \
+                  .                                /usr/ssl/openssl.cnf
                   URL where to find CRL file       <<undef>>
                   directory with PEM files for CAs /opt/tools/openssl-chacha/ssl/certs
                   PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
                   common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs \
-                                                    /System/Library/OpenSSL
+                  .                                 /System/Library/OpenSSL
                   common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
                   number of supported ciphers      177
                   openssl supported SSL versions   SSLv3 TLSv1 TLSv11 TLSv12
                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-                                                   DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+                  .                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
               = o-saft.pl +cipherall =
                   default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                                                   0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                  .                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
               = Required (and used) Modules =
                   @INC                 ./ ./lib . /bin /usr/share/perl5 \
-                                       /usr/lib/x86_64-linux-gnu/perl5/5.20 \
-                                       /usr/lib/x86_64-linux-gnu/perl/5.20 \
-                                       /usr/share/perl/5.20 /usr/local/lib/site_perl .
+                  .                    /usr/lib/x86_64-linux-gnu/perl5/5.20 \
+                  .                    /usr/lib/x86_64-linux-gnu/perl/5.20 \
+                  .                    /usr/share/perl/5.20 /usr/local/lib/site_perl .
               =   module name            VERSION  found in
               =   ----------------------+--------+------------------------------------------
                   IO::Socket::INET       1.35     /usr/lib/x86_64-linux-gnu/perl/5.20/IO/Socket/INET.pm
@@ -4248,9 +4259,9 @@ DEBUG
                   path to shared libraries
                   full path to openssl.cnf file    <<undef>>
                   common openssl.cnf files         /usr/lib/ssl/openssl.cnf \
-                                                   /etc/ssl/openssl.cnf \
-                                                   /System//Library/OpenSSL/openssl.cnf \
-                                                   /usr/ssl/openssl.cnf
+                  .                                /etc/ssl/openssl.cnf \
+                  .                                /System//Library/OpenSSL/openssl.cnf \
+                  .                                /usr/ssl/openssl.cnf
                   URL where to find CRL file       <<undef>>
                   directory with PEM files for CAs /System/Library/OpenSSL/certs
                   PEM format file with CAs         <<undef>>
@@ -4259,23 +4270,23 @@ DEBUG
                   number of supported ciphers      43
                   openssl supported SSL versions   SSLv2 SSLv3 TLSv1
                   o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 \
-                                                   DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
+                  .                                DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
               **WARNING: ancient version Net::SSLeay 1.35 < 1.49; cannot compare SSLeay with openssl version at o-saft.pl line 4778.
               **WARNING: used openssl version '9470143' differs from compiled Net:SSLeay '1.35'; ignored
               = o-saft.pl +cipherall =
                   default list of ciphers          0x03000000 .. 0x030000FF, 0x0300C000 .. 0x0300C0FF,
-                                                   0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
+                  .                                0x0300CC00 .. 0x0300CCFF, 0x0300FE00 .. 0x0300FFFF,
               = Required (and used) Modules =
                   @INC                 ./ ./lib /bin /Library/Perl/Updates/5.10.0 \
-                                       /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
-                                       /System/Library/Perl/5.10.0 \
-                                       /Library/Perl/5.10.0/darwin-thread-multi-2level \
-                                       /Library/Perl/5.10.0 \
-                                       /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
-                                       /Network/Library/Perl/5.10.0 \
-                                       /Network/Library/Perl \
-                                       /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
-                                       /System/Library/Perl/Extras/5.10.0 .
+                  .                    /System/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                  .                    /System/Library/Perl/5.10.0 \
+                  .                    /Library/Perl/5.10.0/darwin-thread-multi-2level \
+                  .                    /Library/Perl/5.10.0 \
+                  .                    /Network/Library/Perl/5.10.0/darwin-thread-multi-2level \
+                  .                    /Network/Library/Perl/5.10.0 \
+                  .                    /Network/Library/Perl \
+                  .                    /System/Library/Perl/Extras/5.10.0/darwin-thread-multi-2level \
+                  .                    /System/Library/Perl/Extras/5.10.0 .
               =   module name            VERSION  found in
               =   ----------------------+--------+------------------------------------------
                   IO::Socket::INET       1.31     /System/Library/Perl/5.10.0/darwin-thread-multi-2level/IO/Socket/INET.pm
