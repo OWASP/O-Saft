@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.252 18/09/14 01:33:37";
+my  $man_SID= "@(#) o-saft-man.pm 1.253 18/09/14 15:23:48";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -49,6 +49,7 @@ my  $version= "$man_SID";               # version of myself
     $version= _VERSION() if (defined &_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1 if (0 < (grep{/^--header/} @ARGV));
+my  $mytool = qr/(?:$parent|o-saft.tcl|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = OSaft::Doc::Data::get_markup("help.txt", $parent, $version);
 local $\    = "";
 
@@ -380,7 +381,7 @@ EoHTML
 } # _man_html_foot
 
 sub _man_html_cbox  {
-    #? checkbox with clickable label and hover highlight
+    #? return checkbox with clickable label and hover highlight (used for --options only)
     my $key = shift;
        $key = '--' . $key;
     my $id  = '"q'  . $key . '"';
@@ -388,25 +389,28 @@ sub _man_html_cbox  {
         "", $id, $id, $id, $key);
 } # _man_html_cbox
 sub _man_html_chck  {
-    #? same as _man_html_cbox() but without label and only if passed parameter start with - or +
-    my $key = shift; # cgi or html
-    my $n = shift || "";
-    my $v = '';
-    return '' if ($n !~ m/^(?:-|\+)+/);
-    return '' if ($key ne 'cgi');
-    if ($n =~ m/^(?:\+)/) { # is command
-        $v =  scalar((split(/\s+/,$n))[0]);
-        $n =  '--cmd';
+    #? return checkbox, or input field with clickable label (to reset input)
+    my $mode    = shift; # cgi or html
+    my $cmd_opt = shift || "";
+    my $tag_val = '';
+    return '' if ($cmd_opt !~ m/^(?:-|\+)+/);   # defensive programming
+    return $cmd_opt if ($mode ne 'cgi');        # for "html" nocthin special
+    # $cmd_opt may contain:  "--opt1 --opt2"; hence split at spaces and use first
+    if ($cmd_opt =~ m/^(?:\+)/) { # is command
+        $cmd_opt =  '--cmd';
+        $tag_val =  scalar((split(/\s+/, $cmd_opt))[0]);
     } else { # is option
-        $v =  '';
-        $n =  scalar((split(/\s+/,$n))[0]);
-        my ($k, $l) = split(/=/,$n);
-        if (defined $l && $l =~ m/^[A-Z0-9:_-]+/) {
-            return sprintf("<label class=l onclick=osaft_set_default('%s'); title='click resets to default value'>%s=</label>", $n, $k)
-                 , sprintf("<input type=text id='%s' name='%s' value='%s' osaft-default='%s'>", $n, $k, $l, $l);
+        # options are  --opt  or  --opt=VALUE; 
+        $tag_val =  '';                         # checkbox with empty value
+        $cmd_opt =  scalar((split(/\s+/, $cmd_opt))[0]);
+        my ($key, $val) = split(/=/, $cmd_opt); # split into key and value
+        if (defined $val && $val =~ m/^[A-Z0-9:_-]+/) { # --opt=VALUE
+            my $label = sprintf("<label class=l onclick=osaft_set_default('%s'); title='click resets to default value'>%s=</label>", $cmd_opt, $key);
+            my $input = sprintf("<input type=text id='%s' name='%s' value='%s' osaft-default='%s'>", $cmd_opt, $key, $val, $val);
+            return "$label$input";
         }
     }
-    return sprintf("<input type=checkbox name='%s' value='%s' >", $n, $v);
+    return sprintf("<input type=checkbox name='%s' value='%s' >%s", $cmd_opt, $tag_val, $cmd_opt);
 } # _man_html_chck
 sub _man_name_ankor {
     my $n = shift;
@@ -415,7 +419,7 @@ sub _man_name_ankor {
     return $n;
 } # _man_name_ankor
 sub _man_html_ankor {
-    #? print ankor tag for each word in given parameter
+    #? return ankor tag for each word in given parameter
     my $n = shift;
     my $a = '';
     return sprintf('<a name="a%s"></a>', $n) if ($n !~ m/^[-\+]+/);
@@ -427,6 +431,7 @@ sub _man_html_ankor {
 sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    {
+     #? return button "Top" and button "start"
      # SEE HTML:start
      my $key = shift;
      return "" if ($key ne 'cgi');
@@ -456,17 +461,18 @@ sub _man_html       {
         m/^=head2 (.*)/   && do {
                     my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     print _man_html_go($key);
-                    printf("%s\n<h3>%s %s </h3> <p>\n",
-                           _man_html_ankor($x), _man_html_chck($key,$x), $x );
+                    print _man_html_ankor($x) . "\n";
+                    printf("<h3>%s %s </h3> <p>\n", _man_html_chck($key,$x), $x );
                     next;
                 };
         m/^=head3 (.*)/   && do {
                     # commands and options expected with =head3 only
-                    $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-                    my $checkbox = "";
-                    printf("%s\n", _man_html_ankor($a));
-                    printf("<h4>%s %s %s </h4> <p>\n",
-                           $checkbox, _man_html_chck($key,$a), (($a =~ m/=[A-Z0-9:_]/) ? "" : $a));
+                    my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+                    $a=$x;
+                    $x="" if ("cgi" eq $key);
+                    print _man_html_ankor($a) . "\n";
+                    #printf("<h4>%s %s </h4> <p>\n", _man_html_chck($key,$a), $x );
+                     printf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
                     next;
                 };
         # encode special markup
@@ -476,8 +482,7 @@ sub _man_html       {
         s!L&([^&]*)&!<i>$1</i>!g;                   # markup other references
         s!I&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup commands and options
         s!X&([^&]*)&!<a href="#a$1">$1</a>!g;       # markup references inside help
-        s!^\s+($parent .*)!<div class=c >$1</div>!; # example line
-        s!^\s+(o-saft.tcl($| .*))!<div class=c >$1</div>!; # example line
+        s!^\s+($mytool .*)!<div class=c >$1</div>!; # example line
         m/^=item +\* (.*)/&& do { print "<li>$1</li>\n";next;}; # very lazy ...
         m/^=item +\*\* (.*)/  && do{ print "<li type=square style='margin-left:3em'>$1 </li>\n";next;};
         s/^(?:=[^ ]+ )//;                           # remove remaining markup
@@ -740,7 +745,7 @@ sub _man_wiki_text  {
         } else {
             s/^([^=*].*)/:$1/;          # ...
         }
-        s/^:?\s*($parent)/  $1/;        # myself becomes wiki code line
+        s/^:?\s*($mytool)/  $1/;        # myself becomes wiki code line
         s/^:\s+$/\n/;                   # remove empty lines
         print;
     }
@@ -1453,6 +1458,20 @@ Hence these keywords need to be printed in a seperate statement.
 The complete documentation can be returned as HTML page. The generation is
 straight forward, see  function man_html().  Some details of the generated
 page are described in: SEE HTML:p  and  SEE HTML:JavaScript.
+
+In general, following rules must apply to the  input data used to generate
+HTML:
+
+  * strings for commands and options start with '+' or '-'
+  * if options have a value, the syntax must be: --option=VALUE, where the
+    VALUE must be written upper-case
+  * commands and options may be grouped by level 3 head lines
+
+NOTE most functions use following global variables:
+
+  * @help
+  * $parent
+  * $mytool
 
 
 =head2 HTML:CGI
