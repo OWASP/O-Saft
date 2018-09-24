@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.10 18/09/14 16:20:39
+# SID   @(#) help.txt 1.11 18/09/25 00:15:33
 
 NAME
 
@@ -4309,12 +4309,12 @@ DEBUG
 
 TESTING
 
-        When talking about "testing the tool", functionl tests are meant.  So
+        When talking about "testing the tool", functional tests are meant. So
         this section describes "developer" rather that "user" options.
 
         Testing the tool is a challenging task. Beside the oddities described
         elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
-        and error which may occour during runtime.
+        and errors which may occour during runtime.
 
         Following options and commands are available to improve testing. They
         mainly can simulate error conditions or stop execution properly (they
@@ -4327,7 +4327,7 @@ TESTING
 
       --exit=KEY
 
-          Terminate  $0  at specified 'KEY'.  For available 'KEY' please see:
+          Terminate tool at specified 'KEY'. For available 'KEY', please see:
               $0 --help=exit
               grep exit= $0
 
