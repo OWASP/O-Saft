@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.253 18/09/14 15:23:48";
+my  $man_SID= "@(#) o-saft-man.pm 1.254 18/09/25 00:12:03";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -85,8 +85,8 @@ sub _man_http_head  {
 sub _man_html_head  {
     #? print footer of HTML page
     # SEE HTML:JavaScript
-    my $version = shift;
-    _man_dbx("_man_html_head($version) ...");
+    my $vers = shift;
+    _man_dbx("_man_html_head($vers) ...");
     print << 'EoHTML';
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
@@ -183,7 +183,7 @@ function osaft_enable(){
 }
 function osaft_submit(){
 /* check all input fileds with type=text if the value differs from its default
- * removes the attribute name of the input tag, this ensures, that no name=value
+ * adds the attribute disabled to the input tag to ensure that no name=value
  * for this input field will be submitted
  * return true (so that the form will be submitted)
  */
@@ -263,7 +263,7 @@ function toggle_handler(){
 <body>
 EoHTML
     print << "EoHTML";
- <h2 title=$version >O - S a f t &#160; &#151; &#160; OWASP - SSL advanced forensic tool
+ <h2 title=$vers >O - S a f t &#160; &#151; &#160; OWASP - SSL advanced forensic tool
      <button id=schema style="float: right;" onclick="osaft_handler(osaft_action_http,osaft_action_file);" title="change schema of all\naction and href attributes">Change to osaft: schema</button>
  </h2>
  <!-- also hides unwanted text before <body> tag -->
@@ -388,36 +388,42 @@ sub _man_html_cbox  {
     return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
         "", $id, $id, $id, $key);
 } # _man_html_cbox
+
 sub _man_html_chck  {
     #? return checkbox, or input field with clickable label (to reset input)
+    #? to beused for +commands and --options
     my $mode    = shift; # cgi or html
-    my $cmd_opt = shift || "";
+    my $cmd_opt = shift || "";                  # +cmd or --opt or --opt=value
+    my $tag_nam = $cmd_opt;
     my $tag_val = '';
     return '' if ($cmd_opt !~ m/^(?:-|\+)+/);   # defensive programming
     return $cmd_opt if ($mode ne 'cgi');        # for "html" nocthin special
     # $cmd_opt may contain:  "--opt1 --opt2"; hence split at spaces and use first
-    if ($cmd_opt =~ m/^(?:\+)/) { # is command
-        $cmd_opt =  '--cmd';
+    if ($cmd_opt =~ m/^(?:\+)/) { # is command, print simple checkbox
         $tag_val =  scalar((split(/\s+/, $cmd_opt))[0]);
-    } else { # is option
-        # options are  --opt  or  --opt=VALUE; 
+        $tag_nam =  '--cmd';
+    } else { # is optionm print simple checkbox or input field
+        # options are  --opt  or  --opt=VALUE;  SEE HTML:INPUT
         $tag_val =  '';                         # checkbox with empty value
-        $cmd_opt =  scalar((split(/\s+/, $cmd_opt))[0]);
-        my ($key, $val) = split(/=/, $cmd_opt); # split into key and value
+        $tag_nam =  scalar((split(/\s+/, $cmd_opt))[0]);
+        my ($key, $val) = split(/=/, $tag_nam); # split into key and value
         if (defined $val && $val =~ m/^[A-Z0-9:_-]+/) { # --opt=VALUE
-            my $label = sprintf("<label class=l onclick=osaft_set_default('%s'); title='click resets to default value'>%s=</label>", $cmd_opt, $key);
-            my $input = sprintf("<input type=text id='%s' name='%s' value='%s' osaft-default='%s'>", $cmd_opt, $key, $val, $val);
+            my $label = sprintf("<label class=l onclick=osaft_set_default('%s'); title='click resets to default value'>%s=</label>", $tag_nam, $key);
+            my $input = sprintf("<input type=text id='%s' name='%s' value='%s' osaft-default='%s'>", $tag_nam, $key, $val, $val);
             return "$label$input";
+        # else: see below
         }
     }
-    return sprintf("<input type=checkbox name='%s' value='%s' >%s", $cmd_opt, $tag_val, $cmd_opt);
+    return sprintf("<input type=checkbox name='%s' value='%s' >%s", $tag_nam, $tag_val, $cmd_opt);
 } # _man_html_chck
+
 sub _man_name_ankor {
     my $n = shift;
     $n =~ s/,//g;  # remove comma
     #$n =~ s/\s/_/g;# replace spaces
     return $n;
 } # _man_name_ankor
+
 sub _man_html_ankor {
     #? return ankor tag for each word in given parameter
     my $n = shift;
@@ -428,7 +434,7 @@ sub _man_html_ankor {
     }
     return $a;
 } # _man_html_ankor
-sub _man_html_span  { my $key = shift; return sprintf("%8s<span>%s</span><br>\n", "", $key); }
+
 sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    {
      #? return button "Top" and button "start"
@@ -441,6 +447,7 @@ sub _man_html_go    {
 }
 
 sub _man_html       {
+    #? print text in HTML format
     my $key = shift; # cgi or html
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
@@ -467,12 +474,9 @@ sub _man_html       {
                 };
         m/^=head3 (.*)/   && do {
                     # commands and options expected with =head3 only
-                    my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-                    $a=$x;
-                    $x="" if ("cgi" eq $key);
+                    $a=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
                     print _man_html_ankor($a) . "\n";
-                    #printf("<h4>%s %s </h4> <p>\n", _man_html_chck($key,$a), $x );
-                     printf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
+                    printf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
                     next;
                 };
         # encode special markup
@@ -503,7 +507,7 @@ sub _man_html       {
 sub _man_head       {   ## no critic qw(Subroutines::RequireArgUnpacking)
     #? print table header line (dashes)
     my $len1 = shift;   # this line triggers Perl::Critic, stupid :-/
-    my @args = @_;      # .. hence "no critic" pragma in sub line
+    my @args = @_;      # .. hence "no critic" pragma above
     _man_dbx("_man_head(..) ...");
     return if (1 > $cfg_header);
     my $len0 = $len1 - 1;
@@ -1026,17 +1030,23 @@ EoHelp
     return;
 } # man_alias
 
-sub man_html        {
-    #? print complete HTML page for o-saft.pl --help=gen-html
-    #? recommended usage:   $0 --no-warning --no-header --help=gen-html
-    # for concept and functionality of the generated page  SEE HTML:HTML
-    _man_dbx("man_html() ...");
-    _man_http_head();
-    _man_html_head(STR_VERSION);
-    _man_html('html', 'NAME', 'TODO');
-    _man_html_foot();
+sub man_toc         {
+    #? print help table of contents
+    my $typ     = lc(shift) || "";      # || to avoid uninitialized value
+    _man_dbx("man_toc() ..");
+    foreach my $txt (grep{/^=head. /} @help) {  # note: @help is in POD format
+        next if ($txt !~ m/^=head/);
+        next if ($txt =~ m/^=head. *END/);  # skip last line
+        if ($typ =~ m/cfg/) {
+            $txt =~ s/^=head1 *(.*)/{print "--help=$1\n"}/e;
+        } else {
+            # print =head1 and =head2
+            # just =head1 is lame, =head1 and =head2 and =head3 is too much
+            $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
+        }
+    }
     return;
-} # man_html
+} # man_toc
 
 sub man_pod         {
     #? print complete POD page for o-saft.pl --help=gen-pod
@@ -1047,6 +1057,18 @@ sub man_pod         {
     _man_pod_foot();
     return;
 } # man_pod
+
+sub man_html        {
+    #? print complete HTML page for o-saft.pl --help=gen-html
+    #? recommended usage:   $0 --no-warning --no-header --help=gen-html
+    # for concept and functionality of the generated page  SEE HTML:HTML
+    _man_dbx("man_html() ...");
+    _man_http_head();
+    _man_html_head(STR_VERSION);
+    _man_html('html', 'NAME', 'TODO');  # print complete help
+    _man_html_foot();
+    return;
+} # man_html
 
 sub man_cgi         {
     #? print complete HTML page for o-saft.pl used as CGI
@@ -1064,7 +1086,7 @@ sub man_cgi         {
     _man_http_head();
     _man_html_head(STR_VERSION);
     _man_form_head();
-    _man_html('cgi', 'COMMANDS', 'LAZY'); # print help starting at COMMANDS
+    _man_html('cgi', 'COMMANDS', 'LAZY');# print help starting at COMMANDS
     _man_form_foot();
     _man_html_foot();
     # TODO: osaft_action_http, osaft_action_file should be set dynamically
@@ -1085,24 +1107,6 @@ sub man_wiki        {
     _man_wiki_foot();
     return;
 } # man_wiki
-
-sub man_toc         {
-    #? print help table of contents
-    my $typ     = lc(shift) || "";      # || to avoid uninitialized value
-    _man_dbx("man_toc() ..");
-    foreach my $txt (grep{/^=head. /} @help) {  # note: @help is in POD format
-        next if ($txt !~ m/^=head/);
-        next if ($txt =~ m/^=head. *END/);  # skip last line
-        if ($typ =~ m/cfg/) {
-            $txt =~ s/^=head1 *(.*)/{print "--help=$1\n"}/e;
-        } else {
-            # print =head1 and =head2
-            # just =head1 is lame, =head1 and =head2 and =head3 is too much
-            $txt =~ s/^=head([12]) *(.*)/{print "  " x $1, $2,"\n"}/e; # use number from =head as ident
-        }
-    }
-    return;
-} # man_toc
 
 sub man_help        {
     #? print complete user documentation for o-saft.pl as plain text (man-style)
@@ -1467,6 +1471,8 @@ HTML:
     VALUE must be written upper-case
   * commands and options may be grouped by level 3 head lines
 
+Data (text) in this format is returned by  OSaft::Doc::Data::get_markup().
+
 NOTE most functions use following global variables:
 
   * @help
@@ -1508,7 +1514,7 @@ not shown properly with perldoc):
 
 All commands and options avaialable in o-saft.pl are provided in the form.
 Additional to the hostname or URL,  all selected commands and options will
-be passed as QUERY_STRING to o-saft.cgi, when any of the [+command] or any
+be passed as QUERY_STRING to o-saft.cgi (which is the form's action), when
 [start]  button is clicked.
 
 The Interfase (web page) consist of following sections:
@@ -1524,14 +1530,28 @@ The Interfase (web page) consist of following sections:
        to switch back to the simple list of options
 
 
-=head2 HTML:man_cgi
+=head2 HTML:INPUT
 
-TODO
+Options are  --opt  or  --opt=VALUE .  A simple checkbox is sufficient for
+options without a value:
 
+    <input type=checkbox name='--opt' value='' >--opt
 
-=head2 HTML:man_html
+Options with a value need an input field for the value, and a reset button
+to undo changes. Additionally, the key=value should only be send on submit
+of the form if the value was changed.  The change will be checked with the
+form's onsubmit event (which calls osaft_submit(); for details see there). 
+The generated HTML looks like:
 
-TODO
+   <label onclick=osaft_set_default(id) >
+   <input type=text id='--opt=VALUE' name='--opt' value=VALUE osaft=VALUE>
+
+The input field's name is the option itself, and the value is the option's
+value. 
+
+NOTE:  there may be the options  --opt  and  --opt=val  that's why input's
+id attribute is set to  --opt=val instead of just  --opt ; all ids must be
+unique!
 
 
 =head2 HTML:p
