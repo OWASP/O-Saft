@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.254 18/09/25 00:12:03";
+my  $man_SID= "@(#) o-saft-man.pm 1.255 18/09/25 09:32:49";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -301,6 +301,7 @@ All options with values are passd to o-saft.cgi.
     </p>
     <table id="osaft_buttons">
     </table><br>
+    <input type=reset  value="clear" title="clear all settings or reset to defaults"/>
     <button onclick="toggle_display(d('a'));return false;" title="show options">Commands & Options</button>
     <div id=a >
         <button class=r onclick="toggle_display(d('a'));toggle_display(d('b'));return false;" title="switch to full GUI with all\ncommands and options and their description">Full GUI</button>
@@ -384,9 +385,9 @@ sub _man_html_cbox  {
     #? return checkbox with clickable label and hover highlight (used for --options only)
     my $key = shift;
        $key = '--' . $key;
-    my $id  = '"q'  . $key . '"';
+    my $id  = '"q'  . $key . '"';   # ids must be unique
     return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
-        "", $id, $id, $id, $key);
+        "", $id, $id, $key, $key);
 } # _man_html_cbox
 
 sub _man_html_chck  {
