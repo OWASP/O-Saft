@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.03.21',
+    SSLINFO_VERSION => '18.09.18',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.213 18/07/13 00:19:29',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.214 18/09/26 23:29:01',
 };
 
 ######################################################## public documentation #
@@ -2274,9 +2274,17 @@ sub do_ssl_open($$$@) {
             $src = 'Net::SSLeay::ssl_read_all()';
             # use ::ssl_read_all() instead of ::read() to get HTTP body also
             $response = Net::SSLeay::ssl_read_all($ssl) || "<<GET failed>>";
+            _trace("request {\n$host:$port\n$request"); _trace("request }");
+            _trace("response {\n$response");            _trace("response }");
             if ($response =~ /handshake_failed/) {  # may get: http2_handshake_failed
                 $response = "<<HTTP handshake failed>>";
                 # no last; # as it will break checks outside
+            }
+            if ($response =~ /bad client magic byte string/) {  # http2_handshake_failed
+                # dirty hack with goto
+                #$Net::SSLinfo::protos_alpn = "";
+                #goto TRY;
+                $response =  "<<Received bad client magic byte string>>";
             }
 # TODO: Net::SSLeay::read() fails sometimes, i.e. for fancyssl.hboeck.de
 # 03/2015: even using ssl_write_all() and ssl_read_all() does not help
@@ -2307,7 +2315,7 @@ sub do_ssl_open($$$@) {
 #    X-Firefox-Spdy: 3.1
 #    X-Firefox-Spdy: h2             (seen at policy.mta-sts.google.com 9/2016)
 #           X-Firefox-Spdy  most likely returned only for proper User-Agent
-            _trace("\n$response \n# do_ssl_open HTTPS }");
+            _trace("do_ssl_open HTTPS }");
             _trace("do_ssl_open HTTP {");   # HTTP uses its own connection ...
             my %headers;
             $src = 'Net::SSLeay::get_http()';
@@ -2315,7 +2323,12 @@ sub do_ssl_open($$$@) {
                  Net::SSLeay::make_headers('Connection' => 'close', 'Host' => $host)
                  # TODO: test with a browser User-Agent
                  # 'User-Agent' => 'Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0';
-            );
+                );
+            # NOTE that get_http() returns all keys in %headers capitalized
+            my $headers = "";   # for trace only
+            foreach  my $h (keys %headers) { $headers .= "$h: $headers{$h}\n"; }
+            _trace("request {\n$host:$port\n$request"); _trace("request }");
+            _trace("response {\n$headers\n$response");  _trace("response }");
                 # Net::SSLeay 1.58 (and before)
                 # Net::SSLeay::get_http() may return:
                 # Read error: Connection reset by peer (,199725) at blib/lib/Net/SSLeay.pm (autosplit into blib/lib/auto/Net/SSLeay/tcp_read_all.al) line 535.
@@ -2357,7 +2370,7 @@ sub do_ssl_open($$$@) {
                 }
                 $response = ''; # avoid uninitialized value later
             }
-            _trace("\n$response \n# do_ssl_open HTTP }");
+            _trace("do_ssl_open HTTP }");
         }
 
         if (0 == $Net::SSLinfo::use_openssl) {
