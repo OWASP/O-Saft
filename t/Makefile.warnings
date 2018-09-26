@@ -52,14 +52,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.9 18/08/21 01:27:55
+#?      @(#) Makefile.warnings 1.10 18/09/26 23:47:24
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.9
+_SID.warnings   = 1.10
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -252,6 +252,7 @@ warning-411: TEST.args  = TODO: testing checked cipher does not match returned c
 warning-601: TEST.args  = TODO: testing connection failed with protocol error, difficult ...
 warning-602: TEST.args  = TODO: testing connection type name mismatch, difficult ...
 warning-631: TEST.args  = TODO: testing SSL protocol mismatch for cipher, difficult ...
+warning-641: TEST.args  = TODO: testing HTTPS request failed, difficult (needs target with ALPN) ...
 warning-801: TEST.args  = TODO: testing connection returning unknown label, difficult ...
 warning-811: TEST.args  = TODO: ancient openssl version: using '-msg' option to get DH parameters
 warning-821: TEST.args  = TODO: can not print certificate sizes without a certificate, --no-cert
@@ -290,7 +291,7 @@ test.warnings: $(ALL.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.9: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.10: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
