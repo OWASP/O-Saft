@@ -22,14 +22,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.20 18/08/21 01:21:28
+#?      @(#) Makefile 1.21 18/09/27 00:17:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.20
+_SID.test       = 1.21
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -240,9 +240,11 @@ $(TEST.logdir):
 # Some tests are not yet implemented, or difficult to implement. In this case
 # $(TEST.args) contains a string starting with "TODO:". The  message-%  target
 # tests the variable for this string and then simply prints it. Otherwise the
-# check will be performed (see  if - else -fi  in target).
+# check will be performed (see  if - else - fi  in target).
 # Note:  even '$(_TMP.rc)'  is generated for each call,  it will only be used
 # when requested with the  --rc=$(_TMP.rc)  option.
+# Note:  $(TEST.args) may contain special characters, hence it must be quoted
+# when used in the shell. Otherwise syntax errors may occour.
 
 # target succeeds if message is there
 message-%:
@@ -252,7 +254,7 @@ message-%:
 	else \
 	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* " ; \
 	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
-	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* ; \
+	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) "$(TEST.args)" 2>&1 | grep $* ; \
 	    _status=$$? ; \
 	    rm -f $(_TMP.rc) ; \
 	    exit $$_status ; \
