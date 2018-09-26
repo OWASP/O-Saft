@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.811 18/08/21 22:57:06",
-    STR_VERSION => "18.08.19",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.812 18/09/26 23:31:13",
+    STR_VERSION => "18.09.18",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -5510,6 +5510,7 @@ sub checkhttp($$)   {
 
     # collect informations
     my $notxt = " "; # use a variable to make assignments below more human readable
+    my $https_body    = $data{'https_body'}   ->{val}($host) || "";
     my $http_sts      = $data{'http_sts'}     ->{val}($host) || ""; # value may be undefined, avoid Perl error
     my $http_location = $data{'http_location'}->{val}($host) || ""; #  "
     my $hsts_maxage   = $data{'hsts_maxage'}  ->{val}($host);       # 0 is valid here, hence || does not work
@@ -5517,6 +5518,11 @@ sub checkhttp($$)   {
     my $hsts_fqdn     = $http_location;
        $hsts_fqdn     =~ s|^(?:https:)?//([^/]*)|$1|i; # get FQDN even without https:
        $hsts_fqdn     =~ s|/.*$||;                     # remove trailing path
+
+    if ($https_body =~ /^<</) { # private string, see Net::SSLinfo
+        _warn("641: HTTPS response failed, some information and checks are missing");
+        _hint("consider testing with option '--proto-alpn=,' also")   if ($https_body =~ /bad client magic byte string/);
+    }
 
     $checks{'hsts_is301'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC6797 requirement
     $checks{'hsts_is30x'}->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
