@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.11 18/09/25 00:15:33
+# SID   @(#) help.txt 1.12 18/09/27 08:21:50
 
 NAME
 
@@ -746,6 +746,10 @@ OPTIONS
       --help=checks
 
           Show available checks.
+
+      --help=tools
+
+          Description of tools around O-Saft, when, where and how to use.
 
       --help=check-cfg
       --help=cfg-check
