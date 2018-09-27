@@ -22,13 +22,13 @@
 #?          +fy- +ma- +mein- +mea- +meu- +mi- +mia- +mijn- +min- +mio
 #?          +moj- +mo- +moj- +mon- +muj- +my- +nire-
 #? VERSION
-#?      @(#) .o-saft.pl 1.91 18/07/11 01:29:36
+#?      @(#) .o-saft.pl 1.92 18/09/27 08:46:10
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-#_SID = 1.91; # our own SID required for Makefile and some tools
+#_SID = 1.92; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -179,7 +179,7 @@
 ###
 ### redefine command +http
 ###
---cfg_cmd=http=http_status http_location http_refresh http_sts https_status https_server https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins pkp_pins http cipher_pfs
+--cfg_cmd=http=http_status http_location http_refresh http_sts https_status https_server https_location https_refresh https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins pkp_pins http
 
 ###
 ### redefine command +hsts
