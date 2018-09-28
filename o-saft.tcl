@@ -377,7 +377,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.174 Sommer Edition 2018
+#?      @(#) 1.175 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -447,8 +447,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.174 18/07/04 23:16:32 Sommer Edition 2018}
-set cfg(VERSION) {1.174}
+set cfg(SID)    {@(#) o-saft.tcl 1.175 18/09/28 08:46:35 Sommer Edition 2018}
+set cfg(VERSION) {1.175}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2082,7 +2082,7 @@ proc create_help  {sect} {
     $txt tag     add  HELP-LNK    2.0 2.7      ;# add markup
     $txt tag     add  HELP-LNK-T  2.0 2.7      ;#
     set_readonly $txt
-puts "TOC:[$txt get 1.0 end]";
+    #_dbx "TOC:[$txt get 1.0 end]";
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
     if {$nam eq ""} {
         _dbx " 3. no text available"           ;# avoid Tcl errors
