@@ -31,13 +31,13 @@ package Net::SSLinfo;
 use strict;
 use warnings;
 use constant {
-    SSLINFO_VERSION => '18.09.18',
+    SSLINFO_VERSION => '18.09.28',
     SSLINFO         => 'Net::SSLinfo',
     SSLINFO_ERR     => '#Net::SSLinfo::errors:',
     SSLINFO_HASH    => '<<openssl>>',
     SSLINFO_UNDEF   => '<<undefined>>',
     SSLINFO_PEM     => '<<N/A (no PEM)>>',
-    SSLINFO_SID     => '@(#) SSLinfo.pm 1.214 18/09/26 23:29:01',
+    SSLINFO_SID     => '@(#) SSLinfo.pm 1.215 18/09/28 21:52:42',
 };
 
 ######################################################## public documentation #
@@ -783,16 +783,66 @@ sub _setcmd     {
 
 sub _traceSSLbitmasks {
     # print bitmasks of available SSL constants
+    my $txt = shift; # prefix string as in _trace()
+    # cannot use _trace() 'cause we want our own formatting
     my $_op_sub;
     _traceset();
-    foreach my $op (qw(OP_NO_SSLv2 OP_NO_SSLv3 OP_NO_TLSv1 OP_NO_TLSv1_1 OP_NO_TLSv1_2 OP_NO_TLSv1_3 OP_NO_DTLSv1)) {
-        $_op_sub = \&{"Net::SSLeay::$op"};
-        # cannot use _trace() 'cause we want our own formatting
-        printf("#%s SSL version bitmask: %15s ", SSLINFO, $op);
-        if (defined &{"Net::SSLeay::$op"}) {
-            printf("0x%010x\n", &$_op_sub()); # &$_op_sub() same as &{"Net::SSLeay::$op"}() here
+    foreach my $op (qw(
+            OP_ALL
+            OP_MICROSOFT_SESS_ID_BUG
+            OP_NETSCAPE_CHALLENGE_BUG
+            OP_LEGACY_SERVER_CONNECT
+            OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
+            OP_TLSEXT_PADDING
+            OP_MICROSOFT_BIG_SSLV3_BUFFER
+            OP_SAFARI_ECDHE_ECDSA_BUG
+            OP_SSLEAY_080_CLIENT_DH_BUG
+            OP_TLS_D5_BUG
+            OP_TLS_BLOCK_PADDING_BUG
+            OP_DONT_INSERT_EMPTY_FRAGMENTS
+            OP_NO_QUERY_MTU
+            OP_COOKIE_EXCHANGE
+            OP_NO_TICKET
+            OP_CISCO_ANYCONNECT
+            OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+            OP_NO_COMPRESSION
+            OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+            OP_SINGLE_ECDH_USE
+            OP_SINGLE_DH_USE
+            OP_CIPHER_SERVER_PREFERENCE
+            OP_TLS_ROLLBACK_BUG 
+            OP_NO_SSLv2
+            OP_NO_SSLv3
+            OP_NO_TLSv1
+            OP_NO_TLSv1_1
+            OP_NO_TLSv1_2
+            OP_NO_TLSv1_3
+            OP_NO_SSL_MASK
+            OP_NETSCAPE_CA_DN_BUG
+            OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
+            OP_CRYPTOPRO_TLSEXT_BUG
+            OP_SSLREF2_REUSE_CERT_TYPE_BUG
+            OP_MSIE_SSLV2_RSA_PADDING
+            OP_EPHEMERAL_RSA
+            OP_PKCS1_CHECK_1
+            OP_PKCS1_CHECK_2
+            OP_ALLOW_NO_DHE_KEX
+            OP_NON_EXPORT_FIRST
+            OP_NO_CLIENT_RENEGOTIATION
+            OP_NO_ENCRYPT_THEN_MAC
+            OP_NO_RENEGOTIATION
+            OP_PRIORITIZE_CHACHA
+            )) {
+        no strict;  # necessary as we {"Net::SSLeay::$op"}
+        printf("#%s: %-30s ", $txt, $op);
+        ## $_op_sub = \&{"Net::SSLeay::$op"}; # will not catch all values and errors; hence eval() below
+        my $opt;
+        my $_ok = eval { $opt = &{"Net::SSLeay::$op"}; };
+        if (defined $_ok) {
+            my $bit = ((&Net::SSLeay::OP_ALL & $opt)>0) || 0;
+            printf("0x%08x %s\n", $opt, $bit);
         } else {
-            printf("<<undef>>\n");
+            printf("<<$@>>\n"); # error string from Net::SSLeay instead <<undef>>
         }
     }
     return;
@@ -1440,7 +1490,7 @@ sub _ssleay_ctx_new {
             ($ctx = Net::SSLeay::CTX_v23_new()) or last;
             if (defined &Net::SSLeay::SSLv23_method) {
                 $src = 'Net::SSLeay::CTX_set_ssl_version(SSLv23_method)';
-                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method()) or do {$err = $!} and last;
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv23_method())  or do {$err = $!} and last;
                 $src = '';
             } else {
                 $src = 'Net::SSLeay::SSLv23_method()';
@@ -1451,7 +1501,7 @@ sub _ssleay_ctx_new {
             ($ctx = Net::SSLeay::CTX_v3_new()) or last;
             if (defined &Net::SSLeay::SSLv3_method) {
                 $src = 'Net::SSLeay::CTX_set_ssl_version(SSLv3_method)';
-                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv3_method())  or do {$err = $!} and last;
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv3_method())   or do {$err = $!} and last;
                 $src = '';
             } else {
                 $src = 'Net::SSLeay::SSLv3_method()';
@@ -1461,7 +1511,7 @@ sub _ssleay_ctx_new {
             ($ctx = Net::SSLeay::CTX_v2_new()) or last;
             if (defined &Net::SSLeay::SSLv2_method) {
                 $src = 'Net::SSLeay::CTX_set_ssl_version(SSLv2_method)';
-                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv2_method())  or do {$err = $!} and last;
+                Net::SSLeay::CTX_set_ssl_version($ctx, Net::SSLeay::SSLv2_method())   or do {$err = $!} and last;
                 $src = '';
             } else {
                 $src = 'Net::SSLeay::SSLv2_method()';
@@ -1498,9 +1548,11 @@ sub _ssleay_ctx_new {
             # should also be set now
         $src = 'Net::SSLeay::CTX_set_timeout()';
         ($old = Net::SSLeay::CTX_set_timeout($ctx, $Net::SSLinfo::timeout_sec)) or do {$err = $!; } and last;
-        _trace("  ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options($ctx)));
-        _trace("  ::CTX_get_timeout(CTX)= $old -> " . Net::SSLeay::CTX_get_timeout($ctx));
-        _trace("  ::CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
+        _trace("_ssleay_ctx_new ::CTX_get_session_cache_mode(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_session_cache_mode($ctx)));
+        _trace("_ssleay_ctx_new ::CTX_get_timeout(CTX)= $old -> " . Net::SSLeay::CTX_get_timeout($ctx));
+        _trace("_ssleay_ctx_new ::CTX_get_options(CTX)= " . sprintf('0x%08x', Net::SSLeay::CTX_get_options($ctx)));
+        _traceSSLbitmasks(SSLINFO . "::_ssleay_ctx_new CTX options") if (0 < $trace);
+
         _trace("_ssleay_ctx_new: $ctx");
         return $ctx;
     } # TRY
@@ -2094,7 +2146,7 @@ sub do_ssl_open($$$@) {
     _traceset();
     _trace("do_ssl_open(" . ($host||'') . "," . ($port||'') . "," . ($sslversions||'') . "," . ($cipher||'') . ")");
     goto finished if (defined $_SSLinfo{'ssl'});
-    _traceSSLbitmasks() if (0 < $trace);
+    _traceSSLbitmasks(SSLINFO . "::do_ssl_open SSL version bitmask") if (0 < $trace);
 
     #_SSLinfo_reset(); # <== does not work yet as it clears everything
     if ($cipher =~ m/^\s*$/) {
