@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.12 18/09/27 08:21:50
+# SID   @(#) help.txt 1.13 18/09/29 23:55:35
 
 NAME
 
@@ -1430,6 +1430,18 @@ OPTIONS
 
           Do not use  -nextprotoneg  option for openssl.
 
+      --proto-alpn=NAME
+
+          Name of protocol to be added to list of  applcation layer protocols
+          (ALPN), which is used for any connection to the targets.
+          See  --cipher-alpn=NAME  also.
+
+      --proto-npn=NAME
+
+          Name of protocol to be added to list of  next protocol negotiations
+          (NPN), which is used for any connection to the targets.
+          See  --cipher-npn=NAME  also.
+
       --no-reconnect
 
           Do not use  -reconnect  option for openssl.
@@ -1449,18 +1461,6 @@ OPTIONS
           Additional delay in seconds  after each connect for a cipher check.
           This is useful when connecting to servers which have IPS in place,
           or are slow in accepting new connections or requests.
-
-      --proto-alpn=NAME
-
-          Name of protocol to be added to list of  applcation layer protocols
-          (ALPN), which is used for any connection to the targets.
-          See  --cipher-alpn=NAME  also.
-
-      --proto-npn=NAME
-
-          Name of protocol to be added to list of  next protocol negotiations
-          (NPN), which is used for any connection to the targets.
-          See  --cipher-npn=NAME  also.
 
       --cipher-alpn=NAME
 
