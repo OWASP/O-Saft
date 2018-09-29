@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.255 18/09/25 09:32:49";
+my  $man_SID= "@(#) o-saft-man.pm 1.256 18/09/30 00:57:55";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -445,7 +445,14 @@ sub _man_html_go    {
      my $top = sprintf("%8s<a class=b href='#aCOMMANDS' title='return to Commands'>^</a>\n", "");
      my $run = sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", "");
      return "$top$run";
-}
+} # _man_html_go
+
+sub _man_html_cmds  {
+    #? return checkboxes for commands not found in help.txt but are generated dynamically
+    my $txt  = "";
+    my $cmds =  _man_cmd_from_source(); # get all command from %data and %check_*
+    return $txt;
+} # _man_html_cmds
 
 sub _man_html       {
     #? print text in HTML format
@@ -471,6 +478,9 @@ sub _man_html       {
                     print _man_html_go($key);
                     print _man_html_ankor($x) . "\n";
                     printf("<h3>%s %s </h3> <p>\n", _man_html_chck($key,$x), $x );
+                    if ($x =~ m/Commands to show certificate details/) {
+                        print _man_html_cmds();
+                    }
                     next;
                 };
         m/^=head3 (.*)/   && do {
@@ -770,8 +780,99 @@ EoHelp
     return;
 } # _man_wiki_foot
 
+sub _man_cmd_from_source {
+    #? return all command from %data and %check_*
+    my $txt  = "";
+    my $skip = 1;
+    my $fh   = undef;
+    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
+        while(<$fh>) {
+            # find start of data structure
+            # all structure look like:
+            #    our %check_some = ( # description
+            #          'key' => {... 'txt' => "description of value"},
+            #    );
+            # where we extract the description of the checked class from first
+            # line and the command and its description from the data lines
+            if (m/^(?:my|our)\s+%(?:check_(?:[a-z0-9_]+)|data)\s*=\s*\(\s*##*\s*(.*)/) {
+                $skip = 0;
+                $txt .= "\n                  Commands to show results of checked $1\n";
+                next;
+            }
+            $skip = 1, next if (m/^\s*\)\s*;/); # find end of data structure
+            next if (1 == $skip);
+            next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
+            my $t   = "\t";
+           #   $t  .= "\t" if (length($1) < 7);
+            $txt .= sprintf("+%-17s%s\n", $1, $2) if m/^\s+'([^']*)'.*"([^"]*)"/;
+        }
+        close($fh);
+    }
+    return $txt;
+} # _man_cmd_from_source
+
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
+
+sub man_commands    {
+    #? print commands and short description
+    # data is extracted from $parents internal data structure
+    _man_dbx("man_commands($parent) ...");
+    # first print general commands, manually crafted here
+    # TODO needs to be computed, somehow ...
+    print "\n";
+    _man_head(15, "Command", "Description");
+    print <<"EoHelp";
+                  Commands for information about this tool
++dump             Dumps internal data for SSL connection and target certificate.
++exec             Internal command; should not be used directly.
++help             Complete documentation.
++list             Show all ciphers supported by this tool.
++libversion       Show version of openssl.
++quit             Show internal data and exit, used for debugging only.
++VERSION          Just show version and exit.
++version          Show version information for program and Perl modules.
+
+                  Commands to check SSL details
++bsi              Various checks according BSI TR-02102-2 and TR-03116-4 compliance.
++check            Check the SSL connection for security issues.
++check_sni        Check for Server Name Indication (SNI) usage.
++ev               Various checks according certificate's extended Validation (EV).
++http             Perform HTTP checks.
++info             Overview of most important details of the SSL connection.
++info--v          More detailled overview.
++quick            Quick overview of checks.
++protocols        Check for protocols supported by target.
++s_client         Dump data retrieved from  "openssl s_client ..."  call.
++sizes            Check length, size and count of some values in the certificate.
++sni              Check for Server Name Indication (SNI) usage.
++sts              Various checks according STS HTTP header.
++vulns            Check for various vulnerabilities.
+
+                  Commands to test ciphers provided by target
++cipher           Check target for ciphers (using libssl).
++cipher-dh        Check target for ciphers (using libssl), prints also DH parameter.
++cipherall        Check target for all possible ciphers (same format as +cipher).
++cipherraw        Check target for all possible ciphers (special format).
++cipher-default   Check target for (default) selected cipher for each protocol.
++cipher-null      Check if target accepts NULL ciphers.
++cipher-adh       Check if target accepts ciphers with anonymous key exchange.
++cipher-exp       Check if target accepts EXPORT ciphers.
++cipher-cbc       Check if target accepts CBC ciphers.
++cipher-des       Check if target accepts DES ciphers.
++cipher-rc4       Check if target accepts RC4 ciphers.
++cipher-edh       Check if target supports ephemeral ciphers.
++cipher-pfs       Check if target supports ciphers with PFS.
++cipher-strong    Check if target selects strongest cipher.
++cipher-selected  Selected cipher.
+
+EoHelp
+
+    print _man_cmd_from_source();
+    _man_foot(15);
+    print "\n";
+    return;
+} # man_commands
 
 sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print data from hash in tabular form, $typ denotes hash
@@ -893,90 +994,6 @@ EoHelp
     }
     return;
 } # man_table
-
-sub man_commands    {
-    #? print commands and short description
-    # data is extracted from $parents internal data structure
-    my $skip = 1;
-    my $fh   = undef;
-    _man_dbx("man_commands($parent) ...");
-    # first print general commands, manually crafted here
-    # TODO needs to be computed, somehow ...
-    print "\n";
-    _man_head(15, "Command", "Description");
-    print <<"EoHelp";
-                  Commands for information about this tool
-+dump             Dumps internal data for SSL connection and target certificate.
-+exec             Internal command; should not be used directly.
-+help             Complete documentation.
-+list             Show all ciphers supported by this tool.
-+libversion       Show version of openssl.
-+quit             Show internal data and exit, used for debugging only.
-+VERSION          Just show version and exit.
-+version          Show version information for program and Perl modules.
-
-                  Commands to check SSL details
-+bsi              Various checks according BSI TR-02102-2 and TR-03116-4 compliance.
-+check            Check the SSL connection for security issues.
-+check_sni        Check for Server Name Indication (SNI) usage.
-+ev               Various checks according certificate's extended Validation (EV).
-+http             Perform HTTP checks.
-+info             Overview of most important details of the SSL connection.
-+info--v          More detailled overview.
-+quick            Quick overview of checks.
-+protocols        Check for protocols supported by target.
-+s_client         Dump data retrieved from  "openssl s_client ..."  call.
-+sizes            Check length, size and count of some values in the certificate.
-+sni              Check for Server Name Indication (SNI) usage.
-+sts              Various checks according STS HTTP header.
-+vulns            Check for various vulnerabilities.
-
-                  Commands to test ciphers provided by target
-+cipher           Check target for ciphers (using libssl).
-+cipher-dh        Check target for ciphers (using libssl), prints also DH parameter.
-+cipherall        Check target for all possible ciphers (same format as +cipher).
-+cipherraw        Check target for all possible ciphers (special format).
-+cipher-default   Check target for (default) selected cipher for each protocol.
-+cipher-null      Check if target accepts NULL ciphers.
-+cipher-adh       Check if target accepts ciphers with anonymous key exchange.
-+cipher-exp       Check if target accepts EXPORT ciphers.
-+cipher-cbc       Check if target accepts CBC ciphers.
-+cipher-des       Check if target accepts DES ciphers.
-+cipher-rc4       Check if target accepts RC4 ciphers.
-+cipher-edh       Check if target supports ephemeral ciphers.
-+cipher-pfs       Check if target supports ciphers with PFS.
-+cipher-strong    Check if target selects strongest cipher.
-+cipher-selected  Selected cipher.
-
-EoHelp
-
-    if (open($fh, '<:encoding(UTF-8)', $0)) { # need full path for $parent file here
-        while(<$fh>) {
-            # find start of data structure
-            # all structure look like:
-            #    our %check_some = ( # description
-            #          'key' => {... 'txt' => "description of value"},
-            #    );
-            # where we extract the description of the checked class from first
-            # line and the command and its description from the data lines
-            if (m/^(?:my|our)\s+%(?:check_(?:[a-z0-9_]+)|data)\s*=\s*\(\s*##*\s*(.*)/) {
-                $skip = 0;
-                print "\n                  Commands to show results of checked $1\n";
-                next;
-            }
-            $skip = 1, next if (m/^\s*\)\s*;/); # find end of data structure
-            next if (1 == $skip);
-            next if (m/^\s*'(?:SSLv2|SSLv3|D?TLSv1|TLSv11|TLSv12|TLSv13)-/); # skip internal counter
-            my $t   = "\t";
-           #   $t  .= "\t" if (length($1) < 7);
-            printf("+%-17s%s\n", $1, $2) if m/^\s+'([^']*)'.*"([^"]*)"/;
-        }
-        close($fh);
-    }
-    _man_foot(15);
-    print "\n";
-    return;
-} # man_commands
 
 sub man_alias       {
     #? print alias and short description (if available)
