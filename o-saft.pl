@@ -66,8 +66,8 @@ use constant { ## no critic qw(ValuesAndExpressions::ProhibitConstantPragma)
     # NOTE: use Readonly instead of constant is not possible, because constants
     #       are used  for example in the  BEGIN section.  Constants can be used
     #       there but not Readonly variables. Hence  "no critic"  must be used.
-    SID         => "@(#) yeast.pl 1.812 18/09/26 23:31:13",
-    STR_VERSION => "18.09.18",          # <== our official version number
+    SID         => "@(#) yeast.pl 1.813 18/09/30 21:10:08",
+    STR_VERSION => "18.09.29",          # <== our official version number
 };
 
 sub _set_binmode    {
@@ -256,8 +256,7 @@ sub _print_read         {
     # $cgi is not (yet) available, hence we use @ARGV, which may contain:
     # --cgi or --cgi-exec
     # $cfg{'out_header'} not yet properly set, see LIMITATIONS also
-    my $fil = shift;
-    my @txt = @_;
+    my ($fil, @txt) = @_;
     #_dbx "ARGV @ARGV : ". (grep{/(?:--no.?header|--cgi)/i} @ARGV);
     return if (0 <  (grep{/(?:--no.?header|--cgi)/i}  @ARGV));
     return if (0 >= (grep{/(?:--warn|--v$|--trace)/i} @ARGV));
@@ -2484,7 +2483,7 @@ sub _init_openssl_ca    {
             }
         }
     }
-    return undef;
+    return; # same as: return undef
 } # _init_openssl_ca
 
 sub _initchecks_score   {
