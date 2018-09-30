@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.1 18/07/13 18:14:37
+#?      @(#) Makefile.critic 1.2 18/09/30 19:50:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.1
+_SID.critic     = 1.2
 
 ALL.includes   += t/Makefile.critic
 
@@ -57,14 +57,15 @@ ALL.critic      = $(SRC.pl) $(ALL.pm)
 #___________________________________________________________ default target __|
 
 HELP-help.critic= print targets for using perlcritic with $(Project)
-help.critic:
+help.test.critic:
 	@echo " $(_HELP_LINE_)$(_NL) $(_HELP_INFO_)$(_NL) $(_HELP_LINE_)$(_NL)"
 	@echo $(MORE-critic)   ; # no quotes!
 
 .PHONY: help.critic
 
-critic.help: help.critic
-criticdoc:   help.critic
+help.critic: help.test.critic
+critic.help: help.test.critic
+criticdoc:   help.test.critic
 
 #_____________________________________________________________________________
 #__________________________________________________ targets for testing cgi __|
