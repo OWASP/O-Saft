@@ -43,7 +43,7 @@
 #?      contrib/critic.sh
 #?
 #? VERSION
-#?      @(#) %M% %I% %E% %U%
+#?      @(#) .perlcriticrc 1.12 18/09/30 21:34:45
 #
 #? AUTHOR
 #?      06-apr-16 Achim Hoffmann
@@ -666,4 +666,14 @@ verbose     = 8
 	#
 
     # CHECK adapted
+
+
+[-NamingConventions::ProhibitAmbiguousNames]
+
+    # Message:
+	# Ambiguously named variable "last" at line ...
+
+    # CHECK DISABLED
+	# cause we consider following correct and useful:  my $last = '';
+	# Perl::Critic is too pedantic here as it is no problem at all with perl.
 
