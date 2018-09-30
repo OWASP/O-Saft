@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.259 18/09/30 13:27:46";
+my  $man_SID= "@(#) o-saft-man.pm 1.260 18/09/30 18:35:00";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -573,6 +573,16 @@ sub _man_cfg        {
     return;
 } # _man_cfg
 
+sub _man_txt        {
+    #? print text configuration format (replaces \n\r\t )
+    my ($typ, $key, $sep, $txt) = @_;
+    $txt =~ s/(\n)/\\n/g;
+    $txt =~ s/(\r)/\\r/g;
+    $txt =~ s/(\t)/\\t/g;
+    _man_cfg($typ, $key, $sep, $txt);
+    return;
+} # _man_txt
+
 sub _man_pod_item   {
     #? print line as POD =item
     my $line = shift;
@@ -979,20 +989,20 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
             _man_cfg($typ, $key, $sep, $txt);
         }
     }
-    if ($typ =~ m/hint/) {
-        foreach my $key (sort keys %{$cfg{'hint'}}) {
-            $txt =  $cfg{'hints'}->{$key};
-            _man_cfg($typ, $key, $sep, $txt);
-        }
-    }
     if ($typ =~ m/text/) {
         foreach my $key (sort keys %text) {
-            next if ('' eq ref($text{$key})); # skip except string
-            $txt =  $text{$key};
-            $txt =~ s/(\n)/\\n/g;
-            $txt =~ s/(\r)/\\r/g;
-            $txt =~ s/(\t)/\\t/g;
-            _man_cfg($typ, $key, $sep, $txt);
+#_dbx "$key : " . ref($text{$key});
+            if ('' eq ref($text{$key})) {   # string
+                $txt =  $text{$key};
+                _man_txt($typ, $key, $sep, $txt);
+            }
+            if ('HASH' eq ref($text{$key})) {
+                # TODO: not yet printed, as it may confuse the user
+                #foreach my $k (sort keys $text{$key}) {
+                #    $txt =  $text{$key}->{$k};
+                #    _man_txt($typ, "$key($k)", $sep, $txt);
+                #}
+            }
         }
     }
     if ($typ !~ m/cfg/) {
@@ -1313,7 +1323,7 @@ sub _main           {
         }
         exit 0;
     } else {
-    printhelp($ARGV[0]);
+        printhelp($ARGV[0]);
     }
     exit 0;
 } # _main
