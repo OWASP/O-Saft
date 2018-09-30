@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.256 18/09/30 00:57:55";
+my  $man_SID= "@(#) o-saft-man.pm 1.258 18/09/30 12:42:26";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -242,15 +242,16 @@ function toggle_handler(){
  .c             {font-size:12pt !important;border:1px none black;font-family:monospace;background-color:lightgray;} /* white-space:pro */
  .q             {border:0px solid white;}
  p              {margin-left:     2em;margin-top:0;}
- td             {padding-left:    1em;}
+ td             {                     padding-left:    1em;}
  h2, h3, h4, h5 {margin-bottom: 0.2em;}
  body > h2      {margin-top:   -0.5em;padding:  1em; height:1.5em;background-color:black;color:white;}
  body > h4      {margin-left:     1em;}
+ b              {margin-left:     1em;} /* for discrete commands */
  li             {margin-left:     3em;}
  div            {                     padding:0.5em; border:1px solid green;}
  div[class=c]   {margin-left:     4em;padding:0.1em; border:0px solid green;}
  div[class=n]   {                                    border:0px solid white;}
- form           {padding:1em;}
+ form           {                     padding:1em;}
  span           {margin-bottom:   2em;font-size:120%;border:1px solid green;}
  label[class=i] {margin-right:    1em;min-width:8em; border:1px solid white;display:inline-block;}
  label:hover[class=i]{background-color:lightgray;border-bottom:1px solid green;}
@@ -381,6 +382,13 @@ EoHTML
     return;
 } # _man_html_foot
 
+sub _man_html_input {
+    #? return input tag
+    my ($mode, $tag_nam, $tag_val, $cmd_txt) = @_;
+    return $cmd_txt if ($mode ne 'cgi');        # for "html" nothing special
+    return sprintf("<input type=checkbox name='%s' value='%s' >%s", $tag_nam, $tag_val, $cmd_txt);
+} # _man_html_input
+
 sub _man_html_cbox  {
     #? return checkbox with clickable label and hover highlight (used for --options only)
     my $key = shift;
@@ -398,7 +406,7 @@ sub _man_html_chck  {
     my $tag_nam = $cmd_opt;
     my $tag_val = '';
     return '' if ($cmd_opt !~ m/^(?:-|\+)+/);   # defensive programming
-    return $cmd_opt if ($mode ne 'cgi');        # for "html" nocthin special
+    return $cmd_opt if ($mode ne 'cgi');        # for "html" nothing special
     # $cmd_opt may contain:  "--opt1 --opt2"; hence split at spaces and use first
     if ($cmd_opt =~ m/^(?:\+)/) { # is command, print simple checkbox
         $tag_val =  scalar((split(/\s+/, $cmd_opt))[0]);
@@ -415,7 +423,7 @@ sub _man_html_chck  {
         # else: see below
         }
     }
-    return sprintf("<input type=checkbox name='%s' value='%s' >%s", $tag_nam, $tag_val, $cmd_opt);
+    return _man_html_input($mode, $tag_nam, $tag_val, $cmd_opt);
 } # _man_html_chck
 
 sub _man_name_ankor {
@@ -449,8 +457,25 @@ sub _man_html_go    {
 
 sub _man_html_cmds  {
     #? return checkboxes for commands not found in help.txt but are generated dynamically
-    my $txt  = "";
-    my $cmds =  _man_cmd_from_source(); # get all command from %data and %check_*
+    my $key = shift;
+    my $txt = "";
+    my $cmds= _man_cmd_from_source(); # get all command from %data and %check_*
+    foreach my $cmd (split(/[\r\n]/, $cmds)) {
+        next if ($cmd =~ m/^\s*$/);
+        $cmd =~ s/^\s*//;
+        if ($cmd =~ m/^[+]/) {
+            my $desc = "";
+            ($cmd, $desc) = split(/\s+/, $cmd, 2);
+            $txt .= sprintf("<b>%s </b> %s<br />\n", _man_html_input($key, "--cmd", $cmd, $cmd), $desc);
+                # TODO: <b> should be <h4>, but as h4 is a display:block tag,
+                #   the remainig text $desc would be rendered in a new line;
+                #   to avoid this, a <span> with proper CSS needs to be used
+        } else {
+            $txt .= _man_html_go($key) . "\n";
+            $txt .= sprintf("%s\n<h3>%s</h3>\n", _man_html_ankor($cmd), $cmd);
+        }
+    }
+    #print "## $txt ##"; exit;
     return $txt;
 } # _man_html_cmds
 
@@ -459,6 +484,7 @@ sub _man_html       {
     my $key = shift; # cgi or html
     my $anf = shift; # pattern where to start extraction
     my $end = shift; # pattern where to stop extraction
+    my $skip= 0;
     my $c = 0;
     my $h = 0;
     my $a = "";      # NOTE: Perl::Critic is scary, SEE Perlcritic:LocalVars
@@ -471,15 +497,19 @@ sub _man_html       {
         $h=1 if/^=head1 $anf/;
         $h=0 if/^=head1 $end/;
         next if (0 == $h);                          # ignore "out of scope"
+        if (0 < $skip) { $skip--; next; }           # skip some texts
         # TODO: does not work:      <p onclick='toggle_display(this);return false;'>\n",
         m/^=head1 (.*)/   && do { printf("$p\n<h1>%s %s </h1>\n",_man_html_ankor($1),$1);$p="";next;};
         m/^=head2 (.*)/   && do {
                     my $x=$1; ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-                    print _man_html_go($key);
-                    print _man_html_ankor($x) . "\n";
-                    printf("<h3>%s %s </h3> <p>\n", _man_html_chck($key,$x), $x );
-                    if ($x =~ m/Commands to show certificate details/) {
-                        print _man_html_cmds();
+                    if ($x =~ m/Discrete commands to test/) {
+                        # SEE Help:Syntax
+                        # command used for +info and +check have no description in @help
+                        print _man_html_cmds($key); # extract commands from dource code
+                    } else {
+                        print _man_html_go($key);
+                        print _man_html_ankor($x) . "\n";
+                        printf("<h3>%s %s </h3> <p>\n", _man_html_chck($key,$x), $x );
                     }
                     next;
                 };
@@ -490,6 +520,7 @@ sub _man_html       {
                     printf("<h4>%s </h4> <p>\n", _man_html_chck($key,$a));
                     next;
                 };
+        m/Discrete commands,/ && do { $skip=2; next; }; # skip next 3 lines; SEE Help:Syntax
         # encode special markup
         m/^\s*S&([^&]*)&/ && do { my $v=$1; $v=~s!<<!&lt;&lt;!g; print "<div class=c >$v</div>\n"; next; }; # code or example line
         s!'([^']*)'!<span class=c >$1</span>!g;     # markup examples
@@ -820,6 +851,7 @@ sub man_commands    {
     _man_dbx("man_commands($parent) ...");
     # first print general commands, manually crafted here
     # TODO needs to be computed, somehow ...
+    # SEE Help:Syntax
     print "\n";
     _man_head(15, "Command", "Description");
     print <<"EoHelp";
@@ -1467,6 +1499,29 @@ Hence  "no critic Variables::RequireLocalizedPunctuationVars"  needs to be
 set in each line using $a.
 
 
+=head2 Help:Syntax
+
+The text for documentation is derivied from "help.txt" aka @help using:
+
+    OSaft::Doc::Data::get_markup("help.txt")
+
+This text contains some  simple (intermediate) markup,  which then will be
+transformed to the final markup, such as HTML, POD, wiki.
+Some sections in that text are handled special or needs to be completed.
+These specialsections are mainly identified by line starting as follows:
+
+    Commands for ...
+    Commands to ...
+    Descrete commands to test ...
+    Option for ...
+    Option to ...
+
+These strings are hardcoded here. Take care when changing "help.txt".
+See also "OSaft/Doc/Data.pm".
+
+NOTE also that  o-saft.tcl  mainly uses the same texts for extra handling.
+
+
 =head2 POD:Syntax
 
 The special POD keywords  =pod  and  =cut  cannot be used as  literal text
@@ -1500,35 +1555,34 @@ NOTE most functions use following global variables:
 
 =head2 HTML:CGI
 
-The HTML page with the form for the CGI should look as follows  (ASCII art
-not shown properly with perldoc):
+The HTML page with the form for the CGI should look as follows:
 
-+------------------------------------------------------------------------+
-| O - S a f t   — ...                                                    T
-+------------------------------------------------------------------------+
-| Help: [help] [commands] [checks] [options] [FAQ] [Glossar] [ToDo]      H
-|+---------------------------------------------------------------------+ H
-|| Hostname: [_________________________________] [start]               c |
-||                                                                     c |
-||   [+check]  Check SSL connection ...                                c |
-||   [+cipher] Overview of SSL connection ...                          c |
-||   ...                                                               c |
-||                                                                     c |
-|| [Commands & Options]                                                O |
-||+------------------------------------------------------------------+ | |
-||| ( ) --header     ( ) --enabled     ( ) --options      [Full GUI] q | |
-||| ...                                                              q | |
-||| - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| | |
-||| COMMANDS                                            [Simple GUI] o | |
-||| ( ) +cmd                                                         o | |
-||| ...                                                              o | |
-||| OPTIONS                                                          o | |
-||| ( ) --opt                                                        o | |
-||| (   --opt=[________]                                             o | |
-||| ...                                                              o | |
-||+------------------------------------------------------------------+ | |
-|+---------------------------------------------------------------------+ |
-+------------------------------------------------------------------------+
+ +-----------------------------------------------------------------------+
+ | O - S a f t   — ...                                                   T
+ +-----------------------------------------------------------------------+
+ | Help: [help] [commands] [checks] [options] [FAQ] [Glossar] [ToDo]     H
+ |+--------------------------------------------------------------------+ H
+ || Hostname: [_________________________________] [start]              c |
+ ||                                                                    c |
+ ||   [+check]  Check SSL connection ...                               c |
+ ||   [+cipher] Overview of SSL connection ...                         c |
+ ||   ...                                                              c |
+ ||                                                                    c |
+ || [Commands & Options]                                               O |
+ ||+-----------------------------------------------------------------+ | |
+ ||| ( ) --header     ( ) --enabled     ( ) --options     [Full GUI] q | |
+ ||| ...                                                             q | |
+ ||| - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - | | |
+ ||| COMMANDS                                           [Simple GUI] o | |
+ ||| ( ) +cmd                                                        o | |
+ ||| ...                                                             o | |
+ ||| OPTIONS                                                         o | |
+ ||| ( ) --opt                                                       o | |
+ ||| (   --opt=[________]                                            o | |
+ ||| ...                                                             o | |
+ ||+-----------------------------------------------------------------+ | |
+ |+--------------------------------------------------------------------+ |
+ +-----------------------------------------------------------------------+
 
 All commands and options avaialable in o-saft.pl are provided in the form.
 Additional to the hostname or URL,  all selected commands and options will
