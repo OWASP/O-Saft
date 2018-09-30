@@ -52,14 +52,14 @@
 #       are recommended from time to time.
 #
 #? VERSION
-#?      @(#) Makefile.warnings 1.11 18/09/30 19:06:50
+#?      @(#) Makefile.warnings 1.12 18/09/30 19:38:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.warnings   = 1.11
+_SID.warnings   = 1.12
 
 _MYSELF.warnings= t/Makefile.warnings
 ALL.includes   += $(_MYSELF.warnings)
@@ -121,8 +121,9 @@ help.test.warnings.all:
 # testing warning messages
 _TMP.rc         = /tmp/o-saft.tmprc
 
-warning-%:   EXE.pl     = ../$(SRC.pl)
-warning-%:   TEST.init  = 
+test.warnings%:     EXE.pl      = ../$(SRC.pl)
+warning-%:          EXE.pl      = ../$(SRC.pl)
+warning-%:          TEST.init   = 
 
 # Each warning-* target defines its (conditional) command to be used with
 # $(EXE.pl). If the definition starts with the literal string "TODO:" the
@@ -291,7 +292,7 @@ test.warnings: $(ALL.warnings)
 # $(_WARNING.log) calls "make -s" to avoid printing of executed commands
 _WARNING.log    = $(TEST.logdir)/test.warnings.log-$(_TODAY_)
 $(_WARNING.log):
-	@echo "# Makefile.warnings 1.11: make test.warnings.log" > $@
+	@echo "# Makefile.warnings 1.12: make test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
@@ -299,7 +300,9 @@ $(_WARNING.log):
 # created file to name which contains the current date.
 # Finally, If current logfile is/was missing, use newly created one:
 # "test ... || mv ..." . This ensures that the file exists afterwards.
-test.warnings.log: $(_WARNING.log) $(SRC.pl)
+# FIXME: following target should have $(SRC.pl) as dependency,  but that fails
+#        if make is called from within ./t/ directory; hence no dependency
+test.warnings.log: $(_WARNING.log)
 	@$(TARGET_VERBOSE)
 	@diff $(TEST.logdir)/$@ $(_WARNING.log) \
 	    && rm $(_WARNING.log) \
