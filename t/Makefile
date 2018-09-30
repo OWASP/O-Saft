@@ -22,14 +22,14 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 1.21 18/09/27 00:17:17
+#?      @(#) Makefile 1.22 18/09/30 19:12:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.test       = 1.21
+_SID.test       = 1.22
 
 _MYSELF.test    = t/Makefile
 ALL.includes   += $(_MYSELF.test)
@@ -243,8 +243,10 @@ $(TEST.logdir):
 # check will be performed (see  if - else - fi  in target).
 # Note:  even '$(_TMP.rc)'  is generated for each call,  it will only be used
 # when requested with the  --rc=$(_TMP.rc)  option.
-# Note:  $(TEST.args) may contain special characters, hence it must be quoted
-# when used in the shell. Otherwise syntax errors may occour.
+# Note: if $(TEST.args) contains special characters, syntax errors may occour
+# when used in the shell. Quoting  $(TEST.args)  is not possible because then
+# it becomes one string instead of discrete arguments.
+# At least following special characters should not be used: ; & | # < > ` [ ]
 
 # target succeeds if message is there
 message-%:
@@ -254,7 +256,7 @@ message-%:
 	else \
 	    echo "$(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* " ; \
 	    echo "$(TEST.rc)" > $(_TMP.rc) ; \
-	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) "$(TEST.args)" 2>&1 | grep $* ; \
+	    cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | grep $* ; \
 	    _status=$$? ; \
 	    rm -f $(_TMP.rc) ; \
 	    exit $$_status ; \
