@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 1.13 18/09/29 23:55:35
+# SID   @(#) help.txt 1.14 18/09/30 12:44:57
 
 NAME
 
@@ -604,14 +604,9 @@ COMMANDS
 
           Check if target selects weak cipher (oposite of  +cipher-strong).
 
-    Commands to test SSL connection to target
+    Discrete commands to test SSL connection and certificate details
 
-        Please see:
-          $0 --help=commands
-
-    Commands to show certificate details of the target
-
-        Please see:
+        Discrete commands, please see:
           $0 --help=commands
 
     Notes about commands
