@@ -38,7 +38,7 @@ use vars qw(%checks %data %text); ## no critic qw(Variables::ProhibitPackageVars
 use osaft;
 use OSaft::Doc::Data;
 
-my  $man_SID= "@(#) o-saft-man.pm 1.258 18/09/30 12:42:26";
+my  $man_SID= "@(#) o-saft-man.pm 1.259 18/09/30 13:27:46";
 my  $parent = (caller(0))[1] || "O-Saft";# filename of parent, O-Saft if no parent
     $parent =~ s:.*/::;
     $parent =~ s:\\:/:g;                # necessary for Windows only
@@ -328,7 +328,8 @@ EoHTML
                      traceKEY traceCMD  trace v     BR
                  )) {
         if ('BR' eq $key) { print "        <br>\n"; next; }
-        print _man_html_cbox($key);
+        my $tag_nam = '--' . $key;
+        print _man_html_cbox('cgi', "        ", "q$tag_nam", $tag_nam, "", $tag_nam) . "\n";
     }
     print _man_html_go("cgi");
     print << "EoHTML";
@@ -382,20 +383,12 @@ EoHTML
     return;
 } # _man_html_foot
 
-sub _man_html_input {
-    #? return input tag
-    my ($mode, $tag_nam, $tag_val, $cmd_txt) = @_;
+sub _man_html_cbox  { ## no critic qw(Subroutines::ProhibitManyArgs)
+    #? return input checkbox tag with clickable label and hover highlight
+    my ($mode, $prefix, $tag_id, $tag_nam, $tag_val, $cmd_txt) = @_;
     return $cmd_txt if ($mode ne 'cgi');        # for "html" nothing special
-    return sprintf("<input type=checkbox name='%s' value='%s' >%s", $tag_nam, $tag_val, $cmd_txt);
-} # _man_html_input
-
-sub _man_html_cbox  {
-    #? return checkbox with clickable label and hover highlight (used for --options only)
-    my $key = shift;
-       $key = '--' . $key;
-    my $id  = '"q'  . $key . '"';   # ids must be unique
-    return sprintf("%8s<label class=i for=%-12s><input type=checkbox id=%-12s name=%-12s value='' >%s</label>&#160;&#160;\n",
-        "", $id, $id, $key, $key);
+    return sprintf("%s<label class=i for='%s'><input type=checkbox id='%s' name='%s' value='%s' >%s</label>&#160;&#160;",
+        $prefix, $tag_id, $tag_id, $tag_nam, $tag_val, $cmd_txt);
 } # _man_html_cbox
 
 sub _man_html_chck  {
@@ -423,7 +416,7 @@ sub _man_html_chck  {
         # else: see below
         }
     }
-    return _man_html_input($mode, $tag_nam, $tag_val, $cmd_opt);
+    return _man_html_cbox($mode, "", "o$cmd_opt", $tag_nam, $tag_val, $cmd_opt);
 } # _man_html_chck
 
 sub _man_name_ankor {
@@ -444,15 +437,14 @@ sub _man_html_ankor {
     return $a;
 } # _man_html_ankor
 
-sub _man_html_cmd   { my $key = shift; return sprintf("%9s+%-10s<input  type=text     name=%-12s size=8 >\n", "", "", '"--' . $key . '"'); }
 sub _man_html_go    {
-     #? return button "Top" and button "start"
-     # SEE HTML:start
-     my $key = shift;
-     return "" if ($key ne 'cgi');
-     my $top = sprintf("%8s<a class=b href='#aCOMMANDS' title='return to Commands'>^</a>\n", "");
-     my $run = sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", "");
-     return "$top$run";
+    #? return button "Top" and button "start"
+    # SEE HTML:start
+    my $key = shift;
+    return "" if ($key ne 'cgi');
+    my $top = sprintf("%8s<a class=b href='#aCOMMANDS' title='return to Commands'>^</a>\n", "");
+    my $run = sprintf("%8s<input type=submit value='start' title='execute o-saft.pl with selected commands and options'/>\n", "");
+    return "$top$run";
 } # _man_html_go
 
 sub _man_html_cmds  {
@@ -466,7 +458,7 @@ sub _man_html_cmds  {
         if ($cmd =~ m/^[+]/) {
             my $desc = "";
             ($cmd, $desc) = split(/\s+/, $cmd, 2);
-            $txt .= sprintf("<b>%s </b> %s<br />\n", _man_html_input($key, "--cmd", $cmd, $cmd), $desc);
+            $txt .= sprintf("<b>%s </b> %s<br />\n", _man_html_cbox($key, "", "c$cmd", "--cmd", $cmd, $cmd), $desc);
                 # TODO: <b> should be <h4>, but as h4 is a display:block tag,
                 #   the remainig text $desc would be rendered in a new line;
                 #   to avoid this, a <span> with proper CSS needs to be used
@@ -572,13 +564,6 @@ sub _man_opt        {
     printf("%${len}s%s%s\n", @args);
     return;
 } # _man_opt
-sub _man_arr        {
-    my ($ssl, $sep, $dumm) = @_;
-    my @all = ();
-    push(@all, sprintf("0x%08X",$_)) foreach (@{$cfg{'cipherranges'}->{$ssl}});
-    printf("%16s%s%s\n", $ssl, $sep, join(' ', @all));
-    return;
-} # _man_arr
 sub _man_cfg        {
     #? print line in configuration format
     my ($typ, $key, $sep, $txt) = @_;
