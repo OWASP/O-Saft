@@ -21,14 +21,14 @@
 #          * complete with tests from t/test-o-saft.cgi.sh
 #
 #? VERSION
-#?      @(#) Makefile.critic 1.2 18/09/30 19:50:22
+#?      @(#) Makefile.critic 1.3 18/09/30 20:56:19
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.critic     = 1.2
+_SID.critic     = 1.3
 
 ALL.includes   += t/Makefile.critic
 
@@ -52,6 +52,16 @@ CRITIC.pretty   =
 
 ALL.critic      = $(SRC.pl) $(ALL.pm)
 # $(CHK.pl)
+
+# using perlcritic's --verbose options without ( and ) ; see: man perlcritic
+_CRITIC.verb8   = [%p] %m at line %l, column %c.  Severity: %s\n
+_CRITIC.verb10  = %m at line %l, column %c.\n  %p Severity: %s\n%d\n
+# same options, but output prefixed with filename
+_CRITIC.verb8o  = --verbose '%f: $(_CRITIC.verb8)'
+_CRITIC.verb10o = --verbose '%f: $(_CRITIC.verb10)'
+
+CRITIC.opt      = $(_CRITIC.verb8o)
+    # perlcritic --verbose 8 is default ; hence we use this modified
 
 #_____________________________________________________________________________
 #___________________________________________________________ default target __|
@@ -131,6 +141,12 @@ critic: $(CRITIC.dir)
 	@-cd $(CRITIC.dir) && \
 	  perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
 
+cf: $(CRITIC.dir)
+	@$(TARGET_VERBOSE)
+	@echo   "perlcritic $(ALL.critic) $(CRITIC.severity) $(CRITIC.opt)"
+	@-cd $(CRITIC.dir) && \
+	  echo perlcritic $(ALL.critic:%=../%) $(CRITIC.severity) $(CRITIC.opt)
+
 # same target as above but piped to filter for pretty printing
 # because the filter is a pipe, we loose the coloured output from perlcritic
 critic-pretty: $(CRITIC.dir)
@@ -191,11 +207,11 @@ c3-%:
 	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-3
 
 c5v-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-5 CRITIC.opt="--verbose 10"
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-5 CRITIC.opt="$(_CRITIC.verb10o)"
 c4v-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-4 CRITIC.opt="--verbose 10"
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-4 CRITIC.opt="--verbose $(_CRITIC.verb10o)"
 c3v-%:
-	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-3 CRITIC.opt="--verbose 10"
+	@$(MAKE) -s ALL.critic=$* critic$(CRITIC.pretty) CRITIC.severity=-3 CRITIC.opt="--verbose $(_CRITIC.verb10o)"
 # following targets required because they are not catched by critic-%; reason yet unknown
 critic-5:       critic
 critic-4:       critic
