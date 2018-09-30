@@ -377,7 +377,7 @@ exec wish "$0" ${1+"$@"}
 #.       - some widget names are hardcoded
 #.
 #? VERSION
-#?      @(#) 1.175 Sommer Edition 2018
+#?      @(#) 1.176 Sommer Edition 2018
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann (at) sicsec de
@@ -447,8 +447,8 @@ proc copy2clipboard {w shift} {
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" };   # if it is a tclet
 
-set cfg(SID)    {@(#) o-saft.tcl 1.175 18/09/28 08:46:35 Sommer Edition 2018}
-set cfg(VERSION) {1.175}
+set cfg(SID)    {@(#) o-saft.tcl 1.176 18/09/30 13:37:39 Sommer Edition 2018}
+set cfg(VERSION) {1.176}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -2317,6 +2317,10 @@ proc create_win   {parent title cmd} {
         #    --no-openssl
         #    --openssl=TOOL
         #    ...
+        # SEE Help:Syntax in o-saft-man.pm and
+        # also  OSaft/Doc/Data.pm  and  OSaft/Doc/help.txt
+        # Note that "Discrete Commands ..." in cfg(HELP) are missing and have
+        # no description; must use that from cfg(CMDS).
 
     set skip 1;     # skip data until $title found
     foreach l [split $data "\r\n"] {
@@ -2424,6 +2428,7 @@ proc create_buttons {parent cmd} {
               create_tip $parent.of [get_tipp "layout"]
             }
     }
+    #_dbx "$data";
     pack [label  $parent.o$cmd -text $txt ] -fill x -padx 5 -anchor w -side top
     foreach l [split $data "\r\n"] {
         set txt [string trim $l]
