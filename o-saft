@@ -21,8 +21,8 @@
 #?      -gui    start o-saft.tcl with remaining arguments
 #       -tcl    alias for -gui
 #?      -docker start o-saft-docker with remaining arguments
-#       -id=*   passed to o-saft-docker
-#       -tag=*  passed to o-saft-docker
+#?      -id=*   passed to o-saft-docker
+#?      -tag=*  passed to o-saft-docker
 #?      -post="command [options]"
 #?              command to pipe output of  o-saft.pl  to
 #?      --      pass all remaining arguments to  o-saft.pl  or  o-saft.tcl
@@ -52,7 +52,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.12 18/10/01 22:49:39
+#?      @(#) o-saft 1.13 18/10/02 00:08:39
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -106,7 +106,7 @@ EoT
         -post=*)
             post="`expr "$1" ':' '-post=\(.*\)'`"
             cmd=`echo "$post" | awk '{print $1}'`   # remove additional trailing arguments
-            [ -x "$contrib/$cmd" ] && post="$contrib/$cmd"
+            [ -x "$contrib/$cmd" ] && post="$contrib/$post"
             shift
             break
             ;;
