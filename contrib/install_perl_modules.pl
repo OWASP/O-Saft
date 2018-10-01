@@ -20,6 +20,7 @@
 #? OPTIONS
 #?      --n     - do not execute, just show what would be done
 #?      --f     - do not exit if specified  installation  directory exists
+#?      --l     - list avaialble modules to be installed
 #?
 #? LIMITATIONS
 #?      Module tarballs must exist in local  ./  directory.
@@ -35,9 +36,10 @@
 use strict;
 use warnings;
 use Cwd;
-my  $VERSION  = "@(#) install_perl_modules.pl 1.1 17/03/04 19:41:11";
+my  $VERSION  = "@(#) install_perl_modules.pl 1.2 18/10/01 16:38:08";
 my  $pwd      = cwd();
-my  $lib      = "$pwd/lib";
+my  $lib      = "$pwd";
+    $lib      = "$pwd/lib" if ($pwd !~ m#/lib/?#);
 my  $try      = "";         # echo for --n
 my  $force    = 0 ;         # --f
 local $\      = "\n";
@@ -50,6 +52,18 @@ my  @modules  = qw(Net-DNS*gz Net-SSLeay*gz IO-Socket-SSL*gz);
 
 $try    = "echo" if (grep {/^--?n$/} @ARGV);
 $force  = 1      if (grep {/^--?f$/} @ARGV);
+
+if (grep {/^--?l$/} @ARGV) {
+    foreach my $module (@modules) {
+        my $targz =  (sort glob($module))[-1];
+        if (defined $targz) {
+            print "# $try $targz -> $lib";
+        } else {
+            print "# $module\t: not found";
+        }
+    }
+    exit 0;
+}
 
 sub do_install {
     my $try   = shift;
@@ -97,7 +111,7 @@ if (-e $lib) {
 }
 
 foreach my $module (@modules) {
-    print "\n# $try, $module, $lib";
+    print "\n# $try $module -> $lib";
     do_install($try, $module, $lib);
     chdir($pwd);  # not necessary
 }
