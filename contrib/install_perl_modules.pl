@@ -36,7 +36,7 @@
 use strict;
 use warnings;
 use Cwd;
-my  $VERSION  = "@(#) install_perl_modules.pl 1.2 18/10/01 16:38:08";
+my  $VERSION  = "@(#) install_perl_modules.pl 1.3 18/10/01 17:18:09";
 my  $pwd      = cwd();
 my  $lib      = "$pwd";
     $lib      = "$pwd/lib" if ($pwd !~ m#/lib/?#);
@@ -99,6 +99,9 @@ sub do_install {
         push(@args, "install");
         eval { system(@args) };
     };
+    print "# rm $dir ...";
+    @args = ("rm", "-rf", "$dir");
+    chdir("..") and eval { system(@args) };
     return;
 }; # do_install
 
@@ -114,4 +117,18 @@ foreach my $module (@modules) {
     print "\n# $try $module -> $lib";
     do_install($try, $module, $lib);
     chdir($pwd);  # not necessary
+    print <<'EoT';
+# try testing with:
+o-saft.pl +version
+#
+# if it complains that modules cannot be loaded i.e. IO/Socket/SSL.pm or
+# Net/SSLeay.pm , then adding path to @INC in o-saft.pl may help, like:
+    unshift(@INC,
+            "./", "./lib",
+            "./lib/share/perl/5.20.2/",
+            "./lib/lib/x86_64-linux-gnu/perl/5.20.2/",
+    ...
+
+# done.
+EoT
 }
