@@ -41,13 +41,16 @@
 #?          $0 -docker -post='bunt.pl -blind' +cmd --option target
 #?          $0 -docker -gui target
 #?
+#?      Specify program to execute script (if hashbang in file fails):
+#?          $0 -docker -post='perl contrib/bunt.pl' ' +cmd --option target
+#?
 # 
 # Hacker's INFO
 #       Uses options  -h  and  -post=  and not  --h  or  --help  or  --post  to
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.9 18/07/16 14:36:07
+#?      @(#) o-saft 1.10 18/10/01 17:43:38
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -57,9 +60,9 @@
 ich=${0##*/}
 dir=${0%/*};    [ "$dir" = "$0" ] && dir="."    # $0 found via $PATH in .
 try=
-prg=$ich.pl     # most likely ich=o-saft
-gui=$ich.tcl
-cgi=$ich.cgi
+prg=./$ich.pl   # most likely ich=o-saft  ..
+gui=./$ich.tcl  # .. prefixing with ./    ..
+cgi=./$ich.cgi  # .. to avoid problems if . is missing in $PATH
 post="cat"      # default, avoids special handling if -post= missing
 mode=cli        # cli, cgi, gui
 contrib=$dir/contrib
