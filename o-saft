@@ -29,6 +29,8 @@
 #?
 #? LIMITATIONS
 #?      All option listed above must preceed options to be passed through.
+#?      $0  must be install in the same directory as the tools it will call
+#?          $0.pl  $0.cgi  $0.tcl
 #?
 #? EXAMPLES
 #?          $0 +cmd --option target
@@ -50,7 +52,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.10 18/10/01 17:43:38
+#?      @(#) o-saft 1.11 18/10/01 22:15:14
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -59,13 +61,14 @@
 
 ich=${0##*/}
 dir=${0%/*};    [ "$dir" = "$0" ] && dir="."    # $0 found via $PATH in .
+prg=$dir/$ich.pl     # most likely ich=o-saft  ..
+gui=$dir/$ich.tcl
+cgi=$dir/$ich.cgi
+    # all tools are prefix with the path $dir to avoid incomplete $PATH settings
+contrib=$dir/contrib
 try=
-prg=./$ich.pl   # most likely ich=o-saft  ..
-gui=./$ich.tcl  # .. prefixing with ./    ..
-cgi=./$ich.cgi  # .. to avoid problems if . is missing in $PATH
 post="cat"      # default, avoids special handling if -post= missing
 mode=cli        # cli, cgi, gui
-contrib=$dir/contrib
 docker=0        # cli or gui mode
 docker_id=
 docker_tag=
