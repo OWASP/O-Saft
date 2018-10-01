@@ -52,7 +52,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.11 18/10/01 22:15:14
+#?      @(#) o-saft 1.12 18/10/01 22:49:39
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -64,12 +64,13 @@ dir=${0%/*};    [ "$dir" = "$0" ] && dir="."    # $0 found via $PATH in .
 prg=$dir/$ich.pl     # most likely ich=o-saft  ..
 gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
+dok=$dir/$ich-docker
     # all tools are prefix with the path $dir to avoid incomplete $PATH settings
 contrib=$dir/contrib
 try=
 post="cat"      # default, avoids special handling if -post= missing
 mode=cli        # cli, cgi, gui
-docker=0        # cli or gui mode
+docker=0        # cli or gui mode; cannot use $mode because it is needed for docker too
 docker_id=
 docker_tag=
 
@@ -123,8 +124,9 @@ if [ $docker -eq 1 ]; then
     if [ -n "$osaft_vm_build" ]; then
         echo "**WARNING: option -docker ignored inside VM; exit"
     else
-        echo o-saft-docker $docker_id $docker_tag -$mode -post=$post $*
-        o-saft-docker $docker_id $docker_tag -$mode -post=$post $*
+        echo $dok $docker_id $docker_tag -$mode -post=$post $*
+        [ -n "$try" ] && exit 0
+             $dok $docker_id $docker_tag -$mode -post=$post $*
         exit $?
     fi
 fi
@@ -142,3 +144,10 @@ case "$mode" in
          ;;
 esac
 exit 0
+
+
+# NOTE: $cli
+#
+# NOTE: $gui
+#       all parameters are passed to $gui, even they are not yet (2018) used
+#       properly, but most likely treated as hostname
