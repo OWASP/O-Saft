@@ -9,7 +9,7 @@
 #? DESCRIPTION
 #?      Calls  o-saft.pl or o-saft.tcl  with all specified arguments.
 #?      o-saft.pl's  output is piped to the command specified with the  -post=
-#?      option. The command given there must be located in contrib/ directory,
+#?      option. The program given there must be located in contrib/ directory,
 #?      or must be found via  PATH  environment variable. The default is  cat,
 #?      which means that all output is on  STDOUT.
 #?
@@ -23,8 +23,8 @@
 #?      -docker start o-saft-docker with remaining arguments
 #?      -id=*   passed to o-saft-docker
 #?      -tag=*  passed to o-saft-docker
-#?      -post="command [options]"
-#?              command to pipe output of  o-saft.pl  to
+#?      -post="program [options]"
+#?              program to pipe output of  o-saft.pl  to
 #?      --      pass all remaining arguments to  o-saft.pl  or  o-saft.tcl
 #?
 #? LIMITATIONS
@@ -52,7 +52,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 1.13 18/10/02 00:08:39
+#?      @(#) o-saft 1.14 18/10/02 00:33:42
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -133,21 +133,16 @@ fi
 
 # all other modes
 case "$mode" in
-   #cgi) $try $cgi $post $* ; ;;
-    gui) $try $gui --post=$post $* ; ;;
-    *)   if [ -n "$try" ]; then
-            $try "$prg $docker_id $docker_tag $* | $post"
-         else
-            echo "$prg $docker_id $docker_tag $* | $post"
-            $prg $docker_id $docker_tag $* | $post 
-         fi
+    cgi) $try $cgi --cgi $* | $post  ; ;;
+    gui) $try $gui --post="$post" $* ; ;;
+    *)   echo "$prg $docker_id $docker_tag $* | $post"
+         [ -n "$try" ] && exit 0
+               $prg $docker_id $docker_tag $* | $post 
          ;;
 esac
 exit 0
 
 
-# NOTE: $cli
-#
 # NOTE: $gui
 #       all parameters are passed to $gui, even they are not yet (2018) used
 #       properly, but most likely treated as hostname
